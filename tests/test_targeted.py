@@ -5,7 +5,6 @@ import pytest
 
 from pie_evals.node import build as pb
 from pie_evals.orchestrate import dashboard, flops
-from pie_evals.orchestrate import pr_report as prr
 from pie_evals.orchestrate.matrix import Matrix
 from pie_evals.orchestrate.store import Store
 from pie_evals.schema import CellStatus, PerfMetrics, Provenance, Record, Tier
@@ -73,30 +72,7 @@ def test_flops_scale_with_the_rate():
     assert flops.tflops({"decode_tok_s": 1.0}, {"prefill": 1}, None) == {"prefill_tflops": None, "decode_tflops": None}
 
 
-def test_pr_report_flags_a_drop_against_main(tmp_path, matrix, monkeypatch):
-    monkeypatch.setattr(flops, "model_config", lambda repo: QWEN35_08B)
-    cell = _cell(matrix, "m5-max-48g", "ss-128-64")
-    st = Store(tmp_path / "store")
-    t0 = datetime(2026, 9, 1, tzinfo=timezone.utc)
-    for i, v in enumerate([500, 502, 501, 503]):
-        st.write_run([_rec(cell, v, t0 + timedelta(days=i), commit=f"main{i}", run=f"r{i}")], tier=Tier.TARGETED, run_id=f"r{i}")
-    out = _node_out(tmp_path, [_rec(cell, 450, t0 + timedelta(days=9), commit="pr")])
-    rows = prr.node_rows([out])
-    body, verdict = prr.build(rows, prr.main_history(st, exclude_commit="pr"), pie_commit="pr" * 20, mode="targeted",
-                              expected=["m5-max-48g", "m1-max-32g"])
-    assert verdict["regressions"] == 1 and verdict["missing"] == ["m1-max-32g"]
-    assert body.startswith(prr.MARKER) and "🔴" in body and "Slower than main" in body
-
-
-def test_pr_report_keeps_a_noisy_value_out_of_the_verdict(tmp_path, matrix, monkeypatch):
-    monkeypatch.setattr(flops, "model_config", lambda repo: None)
-    cell = _cell(matrix, "m5-max-48g", "c8")
-    out = _node_out(tmp_path, [_rec(cell, 900, datetime.now(timezone.utc), commit="pr", status=CellStatus.NOISY)])
-    body, verdict = prr.build(prr.node_rows([out]), {}, pie_commit="pr" * 20, mode="targeted")
-    assert verdict["noisy"] == 1 and verdict["regressions"] == 0 and "⚠️ noisy" in body
-
-
-def test_dashboard_has_one_series_per_cell(tmp_path, matrix, monkeypatch):
+def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
     monkeypatch.setattr(flops, "model_config", lambda repo: QWEN35_08B)
     st = Store(tmp_path / "store")
     t0 = datetime(2026, 9, 1, tzinfo=timezone.utc)
@@ -104,6 +80,35 @@ def test_dashboard_has_one_series_per_cell(tmp_path, matrix, monkeypatch):
         cell = _cell(matrix, "m5-max-48g", wl)
         for j in range(2):
             st.write_run([_rec(cell, 400 + j, t0 + timedelta(days=j), commit=f"c{j}", run=f"r{i}{j}")], tier=Tier.TARGETED, run_id=f"r{i}{j}")
-    assert dashboard.render(st, tmp_path / "site") == 2
-    html = (tmp_path / "site" / "index.html").read_text()
-    assert "lc-2k-128" in html and "decode_tflops" in html
+    live = [{"name": "a-mac", "status": "online", "busy": True, "labels": [{"name": "self-hosted"}, {"name": "macOS"}, {"name": "m5-max-48g"}]},
+            {"name": "a-pod", "status": "online", "busy": False, "labels": [{"name": "self-hosted"}, {"name": "Linux"}, {"name": "l40s-x1"}]}]
+    data = dashboard.build(st, matrix, live, repo="o/evals", pie_repo="o/pie", lookup_commits=False)
+    assert [c["sha"] for c in data["commits"]] == ["c0", "c1"]
+    assert [(m["id"], m["kind"], m["status"]) for m in data["pool"]] == [("m5-max-48g", "self-hosted", "busy"), ("l40s-x1", "RunPod", "idle")]
+    by_test = data["results"]["m5-max-48g"]["models"]["qwen3.5-0.8b-bf16"]
+    assert set(by_test) == {"ss-128-64", "lc-2k-128"}
+    assert by_test["ss-128-64"]["c1"]["decode"] == 401 and by_test["ss-128-64"]["c1"]["prefill"] == 401 * 30
+    assert [b["id"] for b in data["benchmarks"]] == ["ss-128-64", "lc-1k-128", "lc-2k-128", "c8", "c32"]
+    assert data["people"] == []
+    assert any(m["id"] == "qwen3.5-0.8b-bf16" and m["has_results"] for m in data["models"])
+    (tmp_path / "config.json").write_text('{"since": "c1", "models": []}')
+    assert dashboard.build(st, matrix, live, repo="o/evals", pie_repo="o/pie", config=tmp_path / "config.json", lookup_commits=False)["since"] == "c1"
+    assert dashboard.render(st, matrix, tmp_path / "site", live, repo="o/evals", lookup_commits=False) == 2
+    assert "openRuns" in (tmp_path / "site" / "index.html").read_text()
+
+
+def test_people_access_and_last_active(tmp_path, monkeypatch):
+    runs = [{"workflow_runs": [
+        {"display_title": "pie eval " + "a" * 40, "event": "repository_dispatch", "triggering_actor": {"login": "bot"}, "status": "completed",
+         "run_started_at": "2026-09-21T10:00:00Z", "updated_at": "2026-09-21T10:06:00Z", "created_at": "2026-09-21T10:00:00Z"},
+        {"display_title": "pie eval " + "b" * 40, "event": "workflow_dispatch", "triggering_actor": {"login": "friend"}, "status": "completed",
+         "run_started_at": "2026-09-01T10:00:00Z", "updated_at": "2026-09-01T10:30:00Z", "created_at": "2026-09-01T10:00:00Z"},
+        {"display_title": "pie eval " + "b" * 40, "event": "workflow_dispatch", "triggering_actor": {"login": "friend"}, "status": "completed",
+         "run_started_at": "2026-07-01T10:00:00Z", "updated_at": "2026-07-01T11:00:00Z", "created_at": "2026-07-01T10:00:00Z"},
+    ]}]
+    collaborators = [[{"login": "author", "role_name": "write"}, {"login": "friend", "role_name": "admin"}, {"login": "idle", "role_name": "write"}]]
+    monkeypatch.setattr(dashboard, "_paginate", lambda path: runs if "runs" in path else collaborators)
+    used = dashboard.usage("o/evals", {"a" * 40: "author"})
+    assert used == {"author": {"last": "2026-09-21T10:00:00Z"}, "friend": {"last": "2026-09-01T10:00:00Z"}}
+    rows = dashboard.people("o/evals", {"a" * 40: "author"})
+    assert [(r["login"], r["role"]) for r in rows] == [("author", "write"), ("friend", "admin"), ("idle", "write")]
