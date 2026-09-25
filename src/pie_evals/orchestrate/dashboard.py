@@ -174,7 +174,8 @@ const NL = String.fromCharCode(10);
 const REPO_NAME = DATA.repo.split("/").pop();
 const esc = x => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 const RUNNABLE = [...new Map(DATA.pool.filter(m => m.os === "macos").map(m => [m.id, m])).values()];
-const modelName = id => (DATA.models.find(m => m.id === id) || { name: id }).name;
+const modelOf = id => DATA.models.find(m => m.id === id) || { name: id, quant: "" };
+const modelName = id => { const m = modelOf(id); return m.quant ? `${m.name} · ${m.quant}` : m.name; };
 const macName = id => (DATA.pool.find(m => m.id === id) || DATA.results[id] || { name: id }).name;
 const PER_PAGE = 25;
 let tab = "History", back = "History", me = null, page = 0, denied = "";
@@ -305,9 +306,9 @@ async function configure() {
   const machines = RUNNABLE.filter(m => on("machines", m.id));
   const tests = DATA.benchmarks.filter(b => on("benchmarks", b.id));
 
-  let html = `<div class="card"><table class="compact"><tr><th>model</th><th class="num">size</th></tr>`;
-  for (const m of models) html += `<tr><td>${esc(m.name)}</td><td class="num">${gib(m.gib)}</td></tr>`;
-  if (!models.length) html += `<tr><td colspan="2" class="muted">No model runs.</td></tr>`;
+  let html = `<div class="card"><table class="compact"><tr><th>model</th><th>precision</th><th class="num">size</th></tr>`;
+  for (const m of models) html += `<tr><td>${esc(m.name)}</td><td class="muted">${esc(m.quant || "")}</td><td class="num">${gib(m.gib)}</td></tr>`;
+  if (!models.length) html += `<tr><td colspan="3" class="muted">No model runs.</td></tr>`;
   html += `</table></div><div class="card"><table class="compact"><tr><th>machine</th><th>id</th><th>memory</th><th>status</th></tr>`;
   for (const m of machines) html += `<tr><td>${esc(m.name)}</td><td class="muted">${m.id}</td><td>${m.memory_gib ? m.memory_gib + " GB" : "–"}</td>` +
     `<td><span class="dot ${m.status}"></span>${m.status}</td></tr>`;
@@ -541,6 +542,17 @@ def verdicts(results: dict, commits: list[dict]) -> dict[str, list[dict]]:
     return out
 
 
+def quant_label(scheme: str) -> str:
+    low = scheme.lower()
+    if "u4" in low or "q4" in low:
+        return "4-bit"
+    if "mxfp4" in low:
+        return "mxfp4"
+    if "bf16" in low:
+        return "bf16"
+    return scheme
+
+
 def mac_models(matrix: Matrix) -> list[dict]:
     seen: dict[str, dict] = {}
     for c in matrix.expand():
@@ -549,7 +561,8 @@ def mac_models(matrix: Matrix) -> list[dict]:
                 and c.mode.tp == 1 and c.declared_unsupported_reason is None and a.kind.value == "full"):
             org, _, repo = a.base_model.partition("/")
             seen[a.id] = {"id": a.id, "name": repo or org, "publisher": org if repo else "", "family": a.family,
-                          "scheme": str(a.scheme), "format": str(a.source_format), "gib": a.expected_gib, "context": a.max_context}
+                          "scheme": str(a.scheme), "format": str(a.source_format), "gib": a.expected_gib, "context": a.max_context,
+                          "quant": quant_label(str(a.scheme))}
     names = [m["name"] for m in seen.values()]
     for m in seen.values():
         if names.count(m["name"]) > 1:
