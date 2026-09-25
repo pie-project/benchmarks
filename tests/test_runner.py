@@ -189,3 +189,31 @@ def test_cell_priority_runs_control_then_cheap_shapes_first():
     cells = [cell("closed_loop", 3.0), cell("single_stream", 0.5), cell("control_aa", 0.5), cell("long_context", 1.5)]
     got = sorted(cells, key=cell_priority)
     assert [c.workload.kind.value for c in got] == ["control_aa", "single_stream", "long_context", "closed_loop"]
+
+
+def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
+    from pathlib import Path
+
+    from pie_evals.node.engines.shape import context_tokens_for
+    from pie_evals.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
+    from pie_evals.orchestrate.jobs import make_jobs
+    from pie_evals.orchestrate.matrix import Matrix
+    from pie_evals.schema import Tier
+
+    m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
+    # Qwen3.6-27B (14 GiB) on the 32 GB RTX 5090: two boots; the 0.8B: one
+    for aid, split in (("qwen3.6-27b-mlx4", True), ("qwen3.5-0.8b-bf16", False)):
+        cells = [c for c in m.expand() if c.artifact.id == aid and c.program.id == "text-completion-bench"]
+        jobs = make_jobs(m, Tier.NIGHTLY, pie_commit="c" * 40, platforms=["rtx5090-x1"], engines=["pie"], cells=cells)
+        groups = {}
+        for j in jobs:
+            groups.update(j.cells_by_process())
+        out = split_heavy_processes(groups)
+        keys = sorted(k[2] for k in out)
+        if split:
+            assert any(k.endswith("-short") for k in keys) and any(k.endswith("-long") for k in keys), keys
+            for k, cs in out.items():
+                longs = [context_tokens_for(c.workload) > SHORT_CONTEXT_TOKENS for c in cs]
+                assert all(longs) if k[2].endswith("-long") else not any(longs)
+        else:
+            assert keys == sorted(k[2] for k in groups) and not any(k.endswith(("-short", "-long")) for k in keys)
