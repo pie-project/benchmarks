@@ -85,3 +85,32 @@ def test_before_job_on_a_pod_clears_the_card_first(monkeypatch):
     monkeypatch.setattr(pf, "kill_leftovers", lambda names, thr, to, any_holder=False: calls.append(any_holder) or {"killed": [], "gpu_drain_wait_s": 0.0})
     pf.Preflight().before_job("linux")
     assert calls == [True]
+
+
+def test_any_holder_finds_a_holder_nvidia_smi_cannot_list(monkeypatch):
+    # RunPod container: nvidia-smi's process table is empty, a hung tp2 worker holds both cards
+    me, orphan = os.getpid(), 999996
+    monkeypatch.setattr(pf, "gpu_processes", lambda: [])
+    monkeypatch.setattr(pf, "dev_nvidia_holders", lambda: [{"pid": str(orphan), "name": "python3", "used_mib": ""}, {"pid": str(me), "name": "python3", "used_mib": ""}])
+    monkeypatch.setattr(pf, "_proc_basename", lambda pid: "python3")
+    monkeypatch.setattr(pf, "await_free_gpu", lambda **k: 0.0)
+    monkeypatch.setattr(pf, "time", type("T", (), {"sleep": staticmethod(lambda s: None)}))
+    sent = []
+    monkeypatch.setattr(pf.os, "kill", lambda pid, sig: sent.append((pid, sig)))
+    r = pf.kill_leftovers([], any_holder=True)
+    assert (orphan, pf.signal.SIGKILL) in sent and all(pid != me for pid, _ in sent)
+    assert [k["pid"] for k in r["killed"]] == [orphan]
+
+
+def test_dev_nvidia_holders_reads_proc(tmp_path, monkeypatch):
+    # a fake /proc: 4242 holds /dev/nvidia0, 4243 only a socket
+    for pid, target in ((4242, "/dev/nvidia0"), (4243, "socket:[1]")):
+        fd = tmp_path / str(pid) / "fd"
+        fd.mkdir(parents=True)
+        os.symlink(target, fd / "7")
+    (tmp_path / "self").mkdir()
+    real_listdir, real_readlink = os.listdir, os.readlink
+    monkeypatch.setattr(pf.os, "listdir", lambda p: real_listdir(str(p).replace("/proc", str(tmp_path), 1)))
+    monkeypatch.setattr(pf.os, "readlink", lambda p: real_readlink(str(p).replace("/proc", str(tmp_path), 1)))
+    monkeypatch.setattr(pf, "_proc_basename", lambda pid: "python3")
+    assert [h["pid"] for h in pf.dev_nvidia_holders()] == ["4242"]
