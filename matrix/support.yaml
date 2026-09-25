@@ -53,6 +53,11 @@ unsupported:
   # cells each ran to the cell timeout and the workers kept 2 GB on both cards after the job
   - when: {engine: sglang, platform: l40s-x2, tp: ">1"}
     reason: "SGLang 0.5.20 tp2 hangs on L40S x2 (the pod's cards see no NVLink); every cell is a timeout"
+  # vLLM tp2 hangs the same way, with NCCL P2P/IB already off (nightly 36091390105 s07: gemma-E4B
+  # stalls after the JIT warmup, "No available shared memory broadcast block"); the PRO 6000 x2
+  # pod serves vLLM tp2 with the same image, and pie tp2 serves on this pod (gemma-E4B 111 tok/s)
+  - when: {engine: vllm, platform: l40s-x2, tp: ">1"}
+    reason: "vLLM 0.30 tp2 hangs at load on the L40S x2 pod; every cell is a timeout"
   - when: {engine: pie, backend: cuda, spec_dec: dflash2}
     reason: "CUDA engine exposes no draft head (Metal only) — wiki speculative-decoding/"
   - when: {scheme: fp8, arch: apple7}

@@ -420,6 +420,15 @@ def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
     argv = argv_for(eng, WORKLOADS["ss-128-64"], tmp_path)
     assert flag_value(argv, "--sglang-cuda-graph-max-bs") == "1"
     assert argv[2] == "latency"
+    # a 96 GB card at 0.9 left the graphs and activations 9.5 GiB; kimi-k3 mini ran out at c64
+    big = platform(count=1)
+    big = big.model_copy(update={"memory_gib": 96.0})
+    conc = lambda n: WorkloadSpec(id=f"c{n}", kind="concurrency", params={"concurrency": n, "num_requests": 4 * n, "prefill": 128, "decode": 128})
+    for n, want in ((32, "0.9"), (64, "0.85"), (256, "0.8")):
+        argv = argv_for(make(SglangEngine, plat=big, workload=conc(n)), conc(n), tmp_path)
+        assert flag_value(argv, "--gpu-mem-util") == want, n
+    argv = argv_for(make(SglangEngine, workload=conc(256)), conc(256), tmp_path)
+    assert flag_value(argv, "--gpu-mem-util") == "0.9"  # a 48 GB card served c256 at 0.9
     # gemma (sliding window) gets one uniform KV pool
     eng = make(SglangEngine, art=artifact(id="gemma-4-e4b-bf16", base_model="google/gemma-4-E4B-it", family="gemma4"))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)

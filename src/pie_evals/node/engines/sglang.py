@@ -53,20 +53,26 @@ class SglangEngine(Engine):
         r = self.recipe
         args: list[str] = ["--tp-size", str(max(1, int(self.mode.tp)))]
         gmu = r.get("gpu_mem_util", 0.90)
+        card = float(self.platform.memory_gib or 0.0) / max(1, int(self.mode.tp))
         if gmu is not None:
             # SGLang counts the loaded weights against mem_fraction_static and refuses when
             # they leave no KV room under it (kimi-k3 mini, 18.4 GiB on a 32 GB 5090: "raise
             # --mem-fraction-static above 0.935"); a heavy checkpoint gets the fraction it needs
             weights = float(self.artifact.expected_gib or 0.0)
-            card = float(self.platform.memory_gib or 0.0) / max(1, int(self.mode.tp))
             if weights and card and weights / card > 0.5:
                 gmu = max(float(gmu), 0.95)
             args += ["--gpu-mem-util", str(gmu)]  # -> mem_fraction_static
-        args += ["--max-model-len", str(max_model_len_for(workload))]  # -> context_length
-
         graph_bs = r.get("cuda_graph_max_bs")
         if graph_bs is None:
             graph_bs = workload_concurrency(workload)
+        if gmu is not None and card >= 80 and int(graph_bs) >= 64:
+            # mem_fraction_static leaves the graphs and activations whatever is past it; on a
+            # 96 GB card at 0.9 that was 9.5 GiB, and kimi-k3 mini at c64 wanted 1.2 GiB more
+            # (nightly 36089882075 s04: OOM at c64, c256, mixed, prefix; c32 served)
+            capped = 0.80 if int(graph_bs) >= 256 else 0.85
+            if float(gmu) > capped:
+                args[-1] = str(capped)
+        args += ["--max-model-len", str(max_model_len_for(workload))]  # -> context_length
         args += ["--sglang-cuda-graph-max-bs", str(int(graph_bs))]
 
         if r.get("report_timing", True):
