@@ -182,8 +182,9 @@ def make(cls: type[Engine], *, plat: PlatformSpec | None = None, art: ArtifactSp
          recipe_name: str = "competitive", workload: WorkloadSpec | None = None, **kw) -> Engine:
     plat = plat or platform()
     workload = workload or WORKLOADS["c32"]
-    recipe = load_recipe(str(cls.name), recipe_name, plat, workload)
-    return cls(pie_root=PIE_ROOT, artifact=art or artifact(), platform=plat, mode=mode or Mode(), recipe=recipe, **kw)
+    art = art or artifact()
+    recipe = load_recipe(str(cls.name), recipe_name, plat, workload, family=art.family)
+    return cls(pie_root=PIE_ROOT, artifact=art, platform=plat, mode=mode or Mode(), recipe=recipe, **kw)
 
 
 def argv_for(engine: Engine, workload: WorkloadSpec, tmp_path: Path) -> list[str]:
@@ -429,6 +430,14 @@ def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
         assert flag_value(argv, "--gpu-mem-util") == want, n
     argv = argv_for(make(SglangEngine, workload=conc(256)), conc(256), tmp_path)
     assert flag_value(argv, "--gpu-mem-util") == "0.9"  # a 48 GB card served c256 at 0.9
+    # Kimi-K3's MoE prefill wanted 1.2-1.5 GiB past 0.9 on an A100 from c32 up; the heavy rule still wins on a small card
+    kimi = artifact(id="kimi-k3-mini8", base_model="moonshotai/Kimi-K3", family="kimi_k3", expected_gib=22.0)
+    big = platform(count=1).model_copy(update={"memory_gib": 80.0})
+    argv = argv_for(make(SglangEngine, plat=big, art=kimi, workload=conc(32)), conc(32), tmp_path)
+    assert flag_value(argv, "--gpu-mem-util") == "0.85"
+    small = platform(count=1).model_copy(update={"memory_gib": 32.0})
+    argv = argv_for(make(SglangEngine, plat=small, art=kimi, workload=conc(8)), conc(8), tmp_path)
+    assert flag_value(argv, "--gpu-mem-util") == "0.95"
     # gemma (sliding window) gets one uniform KV pool
     eng = make(SglangEngine, art=artifact(id="gemma-4-e4b-bf16", base_model="google/gemma-4-E4B-it", family="gemma4"))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)

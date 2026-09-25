@@ -26,13 +26,23 @@ def snapshot_dir_if_present(artifact: ArtifactSpec, hf_cache: Path) -> Path | No
     org, _, name = artifact.base_model.partition("/")
     base = hf_cache / f"models--{org}--{name}" / "snapshots"
     marker = artifact.gguf_file or "config.json"  # a GGUF repo carries no config.json
-    if artifact.revision and (base / artifact.revision / marker).exists():
+    if artifact.revision and (base / artifact.revision / marker).exists() and has_weights(base / artifact.revision, artifact):
         return base / artifact.revision
     # a miniature is built beside its source's snapshots (`mini-l0-4-e16`, miniature.py) and
     # sorts after a hex revision: a full row must never pick it up (pie #680 was that —
     # "full" numbers on cards that had built the mini were the mini's)
-    snaps = sorted(d for d in base.glob("*") if (d / marker).exists() and not d.name.startswith("mini-")) if base.exists() else []
+    snaps = sorted(d for d in base.glob("*") if (d / marker).exists() and not d.name.startswith("mini-") and has_weights(d, artifact)) if base.exists() else []
     return snaps[-1] if snaps else None
+
+
+def has_weights(snapshot: Path, artifact: ArtifactSpec) -> bool:
+    """A snapshot whose weight files are gone (the blobs behind the symlinks
+    reclaimed; gemma-4-E4B on the L40S pod, nightly 36099816046 s07) still
+    carries its config.json and would be served: vLLM then boots into
+    "Cannot find any model weights". ``exists`` follows the symlink."""
+    if artifact.gguf_file:
+        return (snapshot / artifact.gguf_file).exists()
+    return any(f.exists() for f in snapshot.glob("*.safetensors"))
 
 
 class SnapshotMissing(FileNotFoundError):
