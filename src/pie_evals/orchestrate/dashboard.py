@@ -208,9 +208,8 @@ function valueAt(mac, model, wl, sha) { return DATA.results[mac]?.models[model]?
 function before(mac, model, wl, sha) {
   const order = [...DATA.commits].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   for (let i = order.findIndex(c => c.sha === sha) - 1; i >= 0; i--) {
-    if (sinceDate() && (order[i].date || "") < sinceDate()) return null;
     const v = valueAt(mac, model, wl, order[i].sha);
-    if (v) return { sha: order[i].sha, ...v };
+    if (v) return { sha: order[i].sha, ...v, stale: sinceDate() ? (order[i].date || "") < sinceDate() : false };
   }
   return null;
 }
@@ -221,8 +220,8 @@ function cell(now, was, key) {
   const b = was?.[key];
   const change = b ? (v / b - 1) * 100 : null;
   const chip = change == null ? "" : `<span class="${change > 0.5 ? "up" : change < -0.5 ? "down" : "muted"}">${change > 0 ? "+" : ""}${change.toFixed(1)}%</span>`;
-  const tip = b ? ` title="before: ${fmt(b)} at ${was.sha.slice(0, 7)}"` : "";
-  return `<td class="num"${tip}>${fmt(v)}</td><td class="num">${chip}</td>`;
+  const tip = b ? ` title="before: ${fmt(b)} at ${was.sha.slice(0, 7)}${was.stale ? ", measured before the config changed" : ""}"` : "";
+  return `<td class="num"${tip}>${fmt(v)}</td><td class="num">${chip}${b && was.stale ? ` <span class="muted" title="the config changed in between">*</span>` : ""}</td>`;
 }
 
 function overview() {
