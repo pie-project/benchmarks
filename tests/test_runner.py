@@ -176,3 +176,16 @@ def test_out_dir_is_absolute_for_subprocesses(job, patched, tmp_path, monkeypatc
     monkeypatch.chdir(tmp_path)
     r = runner_mod.NodeRunner(job, pie_root=tmp_path / "pie", out_dir=Path("out/rel"), hf_cache=patched, build=False)
     assert r.out.is_absolute() and r.out == (tmp_path / "out/rel").resolve()
+
+
+def test_cell_priority_runs_control_then_cheap_shapes_first():
+    from types import SimpleNamespace as NS
+
+    from pie_evals.node.runner import cell_priority
+
+    def cell(kind, est):
+        return NS(workload=NS(kind=NS(value=kind), est_minutes=est))
+
+    cells = [cell("closed_loop", 3.0), cell("single_stream", 0.5), cell("control_aa", 0.5), cell("long_context", 1.5)]
+    got = sorted(cells, key=cell_priority)
+    assert [c.workload.kind.value for c in got] == ["control_aa", "single_stream", "long_context", "closed_loop"]
