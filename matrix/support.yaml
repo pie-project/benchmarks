@@ -58,6 +58,13 @@ unsupported:
   # pod serves vLLM tp2 with the same image, and pie tp2 serves on this pod (gemma-E4B 111 tok/s)
   - when: {engine: vllm, platform: l40s-x2, tp: ">1"}
     reason: "vLLM 0.30 tp2 hangs at load on the L40S x2 pod; every cell is a timeout"
+  # SGLang's static pool for Kimi-K3 mini (weights + the KDA state pool) needs more than 0.935 of a 32 GB
+  # card, and at 0.95 the process sits at 31.2 GiB before the first c8 batch (nightly 36103831529 s10:
+  # ss serves, c8 / lc-1k / lc-2k OOM on 200-400 MiB); a 24 GB card does not load it at all
+  - when: {engine: sglang, artifact: kimi-k3-mini8, platform: rtx5090-x1}
+    reason: "SGLang 0.5.20 leaves no activation room for Kimi-K3 mini on a 32 GB card (OOM from c8)"
+  - when: {engine: sglang, artifact: kimi-k3-mini8, platform: rtx4090-x1}
+    reason: "SGLang 0.5.20 Kimi-K3 mini does not fit a 24 GB card"
   - when: {engine: pie, backend: cuda, spec_dec: dflash2}
     reason: "CUDA engine exposes no draft head (Metal only) — wiki speculative-decoding/"
   - when: {scheme: fp8, arch: apple7}
