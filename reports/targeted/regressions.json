@@ -1,20 +1,20 @@
 [
  {
-  "cell_id": "8acd7ef06e162858",
-  "cell_key": "pie|m5-max-48g|Qwen/Qwen3.5-0.8B@bf16/hf_safetensors|lc-1k-128|text-completion-bench|tp1",
+  "cell_id": "117aa352ddab4a77",
+  "cell_key": "pie|m5-max-48g|Qwen/Qwen3.5-0.8B@bf16/hf_safetensors|ss-128-64|text-completion-bench|tp1",
   "engine": "pie",
   "platform": "m5-max-48g",
   "artifact": "qwen3.5-0.8b-bf16",
-  "workload": "lc-1k-128",
+  "workload": "ss-128-64",
   "program": "text-completion-bench",
   "mode": "tp1",
   "metric": "decode_tok_s",
-  "value": 245.65654114957127,
-  "delta_rel": -0.06792312232905602,
-  "threshold_rel": 0.016367056120645783,
+  "value": 270.6395063261851,
+  "delta_rel": -0.03555687863603627,
+  "threshold_rel": 0.02929409195302832,
   "kind": "regression",
-  "pie_commit": "d5ae100753997bf67e3ad05d5c5df3f5b0626a73",
-  "engine_version": "d5ae10075",
+  "pie_commit": "cf8340610d182b244aa0227613aa7d15c49a8a69",
+  "engine_version": "cf8340610",
   "family": "qwen3_5"
  }
 ]
