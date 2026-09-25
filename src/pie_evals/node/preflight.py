@@ -354,7 +354,10 @@ class Preflight:
         state: dict[str, Any] = {}
         if not _is_mac(platform_os):
             try:
-                state.update(kill_leftovers(leftover_names, self.gpu_threshold_mib, self.gpu_timeout_s))
+                # on a pod the workers of a hung tp2 boot (not named like the engine) held both
+                # cards and failed every later boot of the job: nightly 36091390105 s07
+                pod = bool(os.environ.get("RUNPOD_POD_ID"))
+                state.update(kill_leftovers(leftover_names, self.gpu_threshold_mib, self.gpu_timeout_s, any_holder=pod))
             except TimeoutError as e:
                 state["gpu_drain_error"] = str(e)
         state.update(machine_state(platform_os))
