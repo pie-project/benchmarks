@@ -181,7 +181,7 @@ def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins:
     pins = baseline_pins or {}
     done = set()
     for k, c, s, e, v, rev, kind, cls in zip(keys, commits, statuses, engines, versions, revisions, kinds, classes, strict=True):
-        if s == "not_run":  # the budget never reached it: exactly what a re-dispatch is for
+        if s in ("not_run", "noisy"):  # never reached, or measured on a card that could not agree with itself: a re-dispatch measures again
             continue
         if str(cls or "") == "harness_invalid":
             continue  # the harness, not the engine, failed (dirty card, preflight, budget): no verdict on the cell
