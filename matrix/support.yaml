@@ -42,6 +42,10 @@ unsupported:
   # "view size is not compatible with input tensor's size and stride" / "shape '[-1, 1024]' is invalid" (L40S, 4090, 5090, A100 x2)
   - when: {engine: sglang, family: gemma4}
     reason: "SGLang 0.5.20 gemma-4 crashes in its attention/view path on every card tried; revisit at the next pin"
+  # SGLang tp2 on L40S x2 hangs at load (NCCL never settles): nightly 36081628995 s10, four Kimi-K3 mini
+  # cells each ran to the cell timeout and the workers kept 2 GB on both cards after the job
+  - when: {engine: sglang, platform: l40s-x2, tp: ">1"}
+    reason: "SGLang 0.5.20 tp2 hangs on L40S x2 (the pod's cards see no NVLink); every cell is a timeout"
   - when: {engine: pie, backend: cuda, spec_dec: dflash2}
     reason: "CUDA engine exposes no draft head (Metal only) — wiki speculative-decoding/"
   - when: {scheme: fp8, arch: apple7}
