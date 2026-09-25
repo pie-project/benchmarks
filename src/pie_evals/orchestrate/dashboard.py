@@ -42,6 +42,9 @@ PAGE = """<!doctype html>
   .controls #commit { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .controls .seg { flex: none; }
   .controls [hidden] { display: none; }
+  .controls .grow { flex: 1; }
+  tr.push.flat { cursor: default; }
+  input.rowpick { vertical-align: middle; }
   .seg { display: inline-flex; height: 32px; border: 1px solid #d0d7de; border-radius: 999px; background: #fff; padding: 2px; box-sizing: border-box; }
   .seg button { border: 0; background: none; font: inherit; font-size: 13px; color: #424a53; padding: 0 12px; border-radius: 999px; cursor: pointer; }
   .seg button.on { background: #1f2328; color: #fff; }
@@ -164,6 +167,8 @@ PAGE = """<!doctype html>
 <div class="controls" id="controls">
   <div class="seg" id="unit" role="group" aria-label="unit"><button data-u="" class="on">tok/s</button><button data-u="_tflops">TFLOP/s</button></div>
   <select id="fmac" aria-label="machine"></select><select id="fmodel" aria-label="model"></select>
+  <span class="grow"></span>
+  <button class="act" id="bench" disabled>Bench</button>
 </div>
 <main id="main"></main>
 <div id="modal" class="modal" hidden><div class="sheet"><button class="x" id="close" aria-label="close">×</button><div id="sheet"></div></div></div>
@@ -181,6 +186,7 @@ const PER_PAGE = 25;
 let tab = "History", back = "History", me = null, page = 0, denied = "";
 const pick = { decode: "best", prefill: "best" };
 const filt = { mac: "", model: "" };
+const chosen = new Set();
 const testName = id => DATA.benchmarks.find(b => b.id === id)?.name || id;
 function fillFilters() {
   const macs = Object.keys(DATA.results), models = [...new Set(macs.flatMap(m => Object.keys(DATA.results[m].models)))];
@@ -265,11 +271,14 @@ function overview() {
   document.getElementById("back").onclick = e => { e.preventDefault(); tab = "History"; draw(); };
 }
 
-function openRuns(sha) {
+function openRuns(shas) {
   if (!me) return openSignIn();
-  const c = commitOf(sha), parent = parentOf(sha);
+  const list = Array.isArray(shas) ? shas : [shas];
+  const sha = list[0], c = commitOf(sha), parent = list.length > 1 ? null : parentOf(sha);
   const row = (kind, x, on) => `<label class="toggle"><span>${esc(x.name)}</span><input type="checkbox" class="switch" data-kind="${kind}" value="${x.id}" ${on ? "checked" : ""}></label>`;
-  sheet(`<h2>Add runs to <code>${sha.slice(0, 7)}</code></h2><p class="muted">${esc(c.message)}</p>` +
+  sheet(`<h2>Bench ${list.length > 1 ? `${list.length} commits` : `<code>${sha.slice(0, 7)}</code>`}</h2>` +
+    `<p class="muted">${list.length > 1 ? list.map(x => x.slice(0, 7)).join(", ") : esc(c.message)}</p>` +
+    `<p class="muted">A commit that already has results is measured again and the new numbers replace the old.</p>` +
     `<div class="label">Models</div>${DATA.models.map(m => row("models", m, false)).join("")}` +
     `<div class="label">Machines</div>${RUNNABLE.map(m => row("machines", m, true)).join("") || `<div class="muted">No machine is connected.</div>`}` +
     `<div class="label">Benchmarks</div>${DATA.benchmarks.map(b => row("benchmarks", b, true)).join("")}` +
@@ -280,7 +289,7 @@ function openRuns(sha) {
     const inputs = { models: pick("models").join(","), macs: pick("machines").join(","), benchmarks: pick("benchmarks").join(",") };
     const msg = document.getElementById("msg");
     if (!inputs.models || !inputs.macs || !inputs.benchmarks) { msg.textContent = "Pick at least one model, machine and benchmark."; return; }
-    const shas = [sha, ...(document.getElementById("parent")?.checked ? [parent.sha] : [])];
+    const shas = [...list, ...(document.getElementById("parent")?.checked ? [parent.sha] : [])];
     msg.textContent = "Starting…";
     try {
       for (const s of shas)
@@ -321,20 +330,27 @@ async function configure() {
 }
 
 function pushes() {
-  let html = `<div class="card"><table class="compact fixed"><colgroup><col><col style="width:80px"><col style="width:80px"><col style="width:120px"><col style="width:96px"><col style="width:60px"></colgroup>` +
-             `<tr><th>commit</th>${["decode", "prefill"].map(ph => `<th class="num flip" data-phase="${ph}" title="${ph} ${pick[ph]}, click to flip">${ph[0].toUpperCase()} ${pick[ph] === "best" ? "▲" : "▼"}</th>`).join("")}<th>author</th><th>date</th><th>time</th></tr>`;
+  let html = `<div class="card"><table class="compact fixed"><colgroup><col style="width:34px"><col><col style="width:80px"><col style="width:80px"><col style="width:120px"><col style="width:96px"><col style="width:60px"></colgroup>` +
+             `<tr><th></th><th>commit</th>${["decode", "prefill"].map(ph => `<th class="num flip" data-phase="${ph}" title="${ph} ${pick[ph]}, click to flip">${ph[0].toUpperCase()} ${pick[ph] === "best" ? "▲" : "▼"}</th>`).join("")}<th>author</th><th>date</th><th>time</th></tr>`;
   const pages = Math.max(1, Math.ceil(ALL.length / PER_PAGE));
   page = Math.min(page, pages - 1);
   const isMeasured = new Set(DATA.commits.map(c => c.sha));
   for (const c of ALL.slice(page * PER_PAGE, (page + 1) * PER_PAGE)) {
-    html += `<tr class="push" data-sha="${c.sha}"><td class="clip" title="${esc(c.message)}"><span class="dot${isMeasured.has(c.sha) ? " run" : ""}"${isMeasured.has(c.sha) ? ` title="benchmarked"` : ""}></span><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
+    html += `<tr class="push${isMeasured.has(c.sha) ? "" : " flat"}" data-sha="${c.sha}">` +
+            `<td><input type="checkbox" class="rowpick" value="${c.sha}"${chosen.has(c.sha) ? " checked" : ""}></td><td class="clip" title="${esc(c.message)}"><span class="dot${isMeasured.has(c.sha) ? " run" : ""}"${isMeasured.has(c.sha) ? ` title="benchmarked"` : ""}></span><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
             `${change(c.sha, "decode", pick.decode)}${change(c.sha, "prefill", pick.prefill)}<td class="clip">${esc(c.author)}</td><td>${fmtDate(c.date)}</td><td class="muted">${fmtTime(c.date)}</td></tr>`;
   }
   document.getElementById("main").innerHTML = html + `</table>${pager(pages)}</div>`;
-  document.querySelectorAll("tr.push").forEach(tr => tr.onclick = () => {
-    if (isMeasured.has(tr.dataset.sha)) { sel = tr.dataset.sha; tab = "Overview"; draw(); }
-    else openRuns(tr.dataset.sha);
+  document.querySelectorAll("tr.push").forEach(tr => tr.onclick = e => {
+    if (e.target.classList.contains("rowpick")) return;
+    if (!isMeasured.has(tr.dataset.sha)) return;
+    sel = tr.dataset.sha; tab = "Overview"; draw();
   });
+  document.querySelectorAll("input.rowpick").forEach(x => x.onchange = () => {
+    x.checked ? chosen.add(x.value) : chosen.delete(x.value);
+    document.getElementById("bench").disabled = !chosen.size;
+  });
+  document.getElementById("bench").disabled = !chosen.size;
   document.querySelectorAll(".pager button[data-page]").forEach(b => b.onclick = () => { page = +b.dataset.page; draw(); window.scrollTo(0, 0); });
   document.querySelectorAll("th.flip").forEach(th => th.onclick = () => { const ph = th.dataset.phase; pick[ph] = pick[ph] === "best" ? "worst" : "best"; draw(); });
 }
@@ -451,10 +467,14 @@ function draw() {
   document.getElementById("controls").hidden = tab !== "Overview" && tab !== "History";
   document.getElementById("unit").hidden = tab !== "Overview";
   document.getElementById("fmac").hidden = document.getElementById("fmodel").hidden = tab !== "History";
+  const bench = document.getElementById("bench");
+  bench.hidden = tab !== "History";
+  bench.disabled = !chosen.size;
   document.getElementById("in")?.classList.toggle("on", tab === "Sign in");
   ({ "Overview": overview, "Pipeline": configure, "History": pushes, "Machines": pool, "People": people, "Sign in": signInPage })[tab]();
 }
 fillFilters();
+document.getElementById("bench").onclick = () => { if (chosen.size) openRuns([...chosen]); };
 signIn().then(draw);
 </script>
 </body>
