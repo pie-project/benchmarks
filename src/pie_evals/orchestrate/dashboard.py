@@ -5,7 +5,6 @@ import subprocess
 from collections import defaultdict
 from pathlib import Path
 
-from pie_evals.node.metrics.stats import cov
 from pie_evals.schema import CellStatus, Tier
 
 from . import flops
@@ -135,9 +134,6 @@ PAGE = """<!doctype html>
   .pill.small { padding: 0 12px; gap: 6px; margin-left: 4px; }
   .savebar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   button.act:disabled { opacity: .45; cursor: default; }
-  .vchip { display: inline-block; min-width: 52px; text-align: center; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 1px 8px; }
-  .vchip.up { background: #dafbe1; color: #1a7f37; }
-  .vchip.down { background: #ffebe9; color: #cf222e; }
   .pager { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 14px 0 0; flex-wrap: wrap; }
   .pager .pill { padding: 0 12px; min-width: 32px; justify-content: center; }
   .pager .pill.on { background: #1f2328; border-color: #1f2328; color: #fff; }
@@ -310,14 +306,14 @@ async function configure() {
 }
 
 function pushes() {
-  let html = `<div class="card"><table class="compact fixed"><colgroup><col><col style="width:80px"><col style="width:140px"><col style="width:96px"><col style="width:60px"></colgroup>` +
-             `<tr><th>commit</th><th class="num">speed</th><th>author</th><th>date</th><th>time</th></tr>`;
+  let html = `<div class="card"><table class="compact fixed"><colgroup><col><col style="width:96px"><col style="width:96px"><col style="width:96px"><col style="width:96px"><col style="width:120px"><col style="width:96px"><col style="width:60px"></colgroup>` +
+             `<tr><th>commit</th><th class="num">decode best</th><th class="num">decode worst</th><th class="num">TTFT best</th><th class="num">TTFT worst</th><th>author</th><th>date</th><th>time</th></tr>`;
   const pages = Math.max(1, Math.ceil(ALL.length / PER_PAGE));
   page = Math.min(page, pages - 1);
   const isMeasured = new Set(DATA.commits.map(c => c.sha));
   for (const c of ALL.slice(page * PER_PAGE, (page + 1) * PER_PAGE)) {
     html += `<tr class="push" data-sha="${c.sha}"><td class="clip" title="${esc(c.message)}"><span class="dot${isMeasured.has(c.sha) ? " run" : ""}"${isMeasured.has(c.sha) ? ` title="benchmarked"` : ""}></span><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
-            `<td class="num">${verdictChip(c.sha)}</td><td class="clip">${esc(c.author)}</td><td>${fmtDate(c.date)}</td><td class="muted">${fmtTime(c.date)}</td></tr>`;
+            `${change(c.sha, "decode", "best")}${change(c.sha, "decode", "worst")}${change(c.sha, "prefill", "best")}${change(c.sha, "prefill", "worst")}<td class="clip">${esc(c.author)}</td><td>${fmtDate(c.date)}</td><td class="muted">${fmtTime(c.date)}</td></tr>`;
   }
   document.getElementById("main").innerHTML = html + `</table>${pager(pages)}</div>`;
   document.querySelectorAll("tr.push").forEach(tr => tr.onclick = () => {
@@ -326,13 +322,11 @@ function pushes() {
   });
   document.querySelectorAll(".pager button[data-page]").forEach(b => b.onclick = () => { page = +b.dataset.page; draw(); window.scrollTo(0, 0); });
 }
-function verdictChip(sha) {
-  const v = (DATA.verdicts || {})[sha];
-  if (!v) return "";
-  const tip = v.top.map(t => `${t.label}: ${t.pct > 0 ? "+" : ""}${t.pct}%`).join(NL);
-  if (v.worst) return `<span class="vchip down" title="${esc(tip)}">${v.worst.pct}%</span>`;
-  if (v.best) return `<span class="vchip up" title="${esc(tip)}">+${v.best.pct}%</span>`;
-  return "";
+function change(sha, phase, which) {
+  const c = (((DATA.verdicts || {})[sha] || {})[phase] || {})[which];
+  if (!c) return `<td></td>`;
+  const cls = c.pct > 0 ? "up" : c.pct < 0 ? "down" : "muted";
+  return `<td class="num ${cls}" title="${esc(c.label)}">${c.pct > 0 ? "+" : ""}${c.pct}%</td>`;
 }
 function pager(pages) {
   if (pages < 2) return "";
@@ -508,38 +502,30 @@ def benchmarks(matrix: Matrix) -> list[dict]:
     return tests
 
 
-def verdicts(results: dict, commits: list[dict], since_date: str, tests: list[dict], models: list[dict],
-             *, sigma: float = 3.0, floor: float = 0.01) -> dict[str, dict]:
+def verdicts(results: dict, commits: list[dict], since_date: str, tests: list[dict], models: list[dict]) -> dict[str, dict]:
     order = [c["sha"] for c in sorted(commits, key=lambda c: c["date"] or "")]
     date = {c["sha"]: c["date"] or "" for c in commits}
     test_name = {t["id"]: t["name"] for t in tests}
     model_name = {m["id"]: m["name"] for m in models}
-    changes: dict[str, list[dict]] = {}
+    out: dict[str, dict] = {}
     for r in results.values():
         for model, by_test in r["models"].items():
             for wl, by_commit in by_test.items():
                 for phase in ("prefill", "decode"):
-                    seen: list[float] = []
+                    prev = None
                     for sha in order:
                         v = (by_commit.get(sha) or {}).get(phase)
-                        if v is None:
+                        if v is None or (since_date and date[sha] < since_date):
                             continue
-                        if since_date and date[sha] < since_date:
-                            continue
-                        if seen:
-                            pct = v / seen[-1] - 1
-                            noise = max(sigma * cov(seen[-10:]) if len(seen) >= 2 else 0.0, floor)
-                            changes.setdefault(sha, []).append({
-                                "pct": round(100 * pct, 1), "real": abs(pct) > noise,
-                                "label": f"{r['name']} · {model_name.get(model, model)} · {test_name.get(wl, wl)} · {phase}"})
-                        seen.append(v)
-    out = {}
-    for sha, cs in changes.items():
-        real = [c for c in cs if c["real"]]
-        worst = min((c for c in real if c["pct"] < 0), key=lambda c: c["pct"], default=None)
-        best = max((c for c in real if c["pct"] > 0), key=lambda c: c["pct"], default=None)
-        top = sorted(cs, key=lambda c: -abs(c["pct"]))[:3]
-        out[sha] = {"worst": worst, "best": best, "top": top}
+                        if prev:
+                            c = {"pct": round(100 * (v / prev - 1), 1),
+                                 "label": f"{r['name']} · {model_name.get(model, model)} · {test_name.get(wl, wl)}"}
+                            cell = out.setdefault(sha, {}).setdefault(phase, {"best": c, "worst": c})
+                            if c["pct"] > cell["best"]["pct"]:
+                                cell["best"] = c
+                            if c["pct"] < cell["worst"]["pct"]:
+                                cell["worst"] = c
+                        prev = v
     return out
 
 
