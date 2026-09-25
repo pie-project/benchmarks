@@ -511,9 +511,6 @@ def benchmarks(matrix: Matrix) -> list[dict]:
 
 def verdicts(results: dict, commits: list[dict], since_date: str, tests: list[dict], models: list[dict],
              *, sigma: float = 3.0, floor: float = 0.01) -> dict[str, dict]:
-    """Per measured commit: the worst change beyond noise, the best one, and the largest few,
-    over every machine, model, benchmark and phase, each against the last earlier measured
-    commit of the same cell (never across the stream start)."""
     order = [c["sha"] for c in sorted(commits, key=lambda c: c["date"] or "")]
     date = {c["sha"]: c["date"] or "" for c in commits}
     test_name = {t["id"]: t["name"] for t in tests}
