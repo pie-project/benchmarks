@@ -163,7 +163,7 @@ def _feature_for(backend: str) -> str:
 
 
 #: baseline rows older than this were measured with the recipe of the process's first cell (runner.recipe_for_cell)
-BASELINE_RECIPE_PER_CELL_SINCE = datetime(2026, 9, 25, 6, 45, tzinfo=timezone.utc)
+BASELINE_RECIPE_PER_CELL_SINCE = datetime(2026, 9, 25, 6, 38, tzinfo=timezone.utc)
 
 
 def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins: dict[str, str] | None = None) -> set[str]:
