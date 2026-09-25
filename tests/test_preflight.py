@@ -59,3 +59,29 @@ def test_no_pkill_invocation():
             if "```" in line or line.lstrip().startswith('"'):
                 continue
             assert '"pkill"' not in code and "'pkill'" not in code, f"pkill invoked: {line!r}"
+
+
+def test_any_holder_kills_an_orphan_of_any_name_but_never_us(monkeypatch):
+    # a cancelled shard's vLLM EngineCore (python3) holds the card at the next job's start
+    me, orphan = os.getpid(), 999997
+    monkeypatch.setattr(pf, "gpu_processes", lambda: [
+        {"pid": str(orphan), "name": "/usr/bin/python3", "used_mib": "73409"},
+        {"pid": str(me), "name": "/usr/bin/python3", "used_mib": "10"},
+    ])
+    monkeypatch.setattr(pf, "_proc_basename", lambda pid: "python3")
+    monkeypatch.setattr(pf, "await_free_gpu", lambda **k: 0.0)
+    monkeypatch.setattr(pf, "time", type("T", (), {"sleep": staticmethod(lambda s: None)}))
+    sent = []
+    monkeypatch.setattr(pf.os, "kill", lambda pid, sig: sent.append((pid, sig)))
+    r = pf.kill_leftovers([], any_holder=True)
+    assert (orphan, pf.signal.SIGTERM) in sent and all(pid != me for pid, _ in sent)
+    assert [k["pid"] for k in r["killed"]] == [orphan]
+
+
+def test_before_job_on_a_pod_clears_the_card_first(monkeypatch):
+    monkeypatch.setenv("RUNPOD_POD_ID", "abc")
+    monkeypatch.setattr(pf, "machine_state", lambda os_: {"os": "linux"})
+    calls = []
+    monkeypatch.setattr(pf, "kill_leftovers", lambda names, thr, to, any_holder=False: calls.append(any_holder) or {"killed": [], "gpu_drain_wait_s": 0.0})
+    pf.Preflight().before_job("linux")
+    assert calls == [True]
