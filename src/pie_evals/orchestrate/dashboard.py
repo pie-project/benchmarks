@@ -41,6 +41,7 @@ PAGE = """<!doctype html>
   .up { color: #1a7f37; } .down { color: #b3261e; }
   .controls #commit { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .controls .seg { flex: none; }
+  .controls [hidden] { display: none; }
   .seg { display: inline-flex; height: 32px; border: 1px solid #d0d7de; border-radius: 999px; background: #fff; padding: 2px; box-sizing: border-box; }
   .seg button { border: 0; background: none; font: inherit; font-size: 13px; color: #424a53; padding: 0 12px; border-radius: 999px; cursor: pointer; }
   .seg button.on { background: #1f2328; color: #fff; }
@@ -162,6 +163,7 @@ PAGE = """<!doctype html>
 </div></header>
 <div class="controls" id="controls">
   <div class="seg" id="unit" role="group" aria-label="unit"><button data-u="" class="on">tok/s</button><button data-u="_tflops">TFLOP/s</button></div>
+  <select id="fmac" aria-label="machine"></select><select id="fmodel" aria-label="model"></select>
 </div>
 <main id="main"></main>
 <div id="modal" class="modal" hidden><div class="sheet"><button class="x" id="close" aria-label="close">×</button><div id="sheet"></div></div></div>
@@ -177,6 +179,17 @@ const macName = id => (DATA.pool.find(m => m.id === id) || DATA.results[id] || {
 const PER_PAGE = 25;
 let tab = "History", back = "History", me = null, page = 0, denied = "";
 const pick = { decode: "best", prefill: "best" };
+const filt = { mac: "", model: "" };
+const testName = id => DATA.benchmarks.find(b => b.id === id)?.name || id;
+function fillFilters() {
+  const macs = Object.keys(DATA.results), models = [...new Set(macs.flatMap(m => Object.keys(DATA.results[m].models)))];
+  const opts = (all, ids, name, on) => `<option value="">${all}</option>` + ids.map(id => `<option value="${esc(id)}"${id === on ? " selected" : ""}>${esc(name(id))}</option>`).join("");
+  const fm = document.getElementById("fmac"), fo = document.getElementById("fmodel");
+  fm.innerHTML = opts("all machines", macs, id => DATA.results[id].name, filt.mac);
+  fo.innerHTML = opts("all models", models, modelName, filt.model);
+  fm.onchange = () => { filt.mac = fm.value; draw(); };
+  fo.onchange = () => { filt.model = fo.value; draw(); };
+}
 const token = () => { try { return localStorage.getItem("pie-evals-token"); } catch { return null; } };
 
 const when = d => d ? new Date(d) : null;
@@ -325,10 +338,12 @@ function pushes() {
   document.querySelectorAll("th.flip").forEach(th => th.onclick = () => { const ph = th.dataset.phase; pick[ph] = pick[ph] === "best" ? "worst" : "best"; draw(); });
 }
 function change(sha, phase, which) {
-  const c = (((DATA.verdicts || {})[sha] || {})[phase] || {})[which];
-  if (!c) return `<td></td>`;
+  const cs = ((DATA.verdicts || {})[sha] || []).filter(c => c.phase === phase && (!filt.mac || c.mac === filt.mac) && (!filt.model || c.model === filt.model));
+  if (!cs.length) return `<td></td>`;
+  const c = cs.reduce((a, b) => (which === "best" ? b.pct > a.pct : b.pct < a.pct) ? b : a);
   const cls = c.pct > 0 ? "up" : c.pct < 0 ? "down" : "muted";
-  return `<td class="num ${cls}" title="${esc(c.label)}">${c.pct > 0 ? "+" : ""}${c.pct}%</td>`;
+  const label = `${DATA.results[c.mac].name} · ${modelName(c.model)} · ${testName(c.test)}`;
+  return `<td class="num ${cls}" title="${esc(label)}">${c.pct > 0 ? "+" : ""}${c.pct}%</td>`;
 }
 function pager(pages) {
   if (pages < 2) return "";
@@ -432,10 +447,13 @@ function draw() {
   else if (tab === "Sign in") tab = back;
   document.getElementById("tabs").innerHTML = me ? TABS.map(t => `<button class="${t === tab || (t === "History" && tab === "Overview") ? "on" : ""}">${t}</button>`).join("") : "";
   document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { tab = b.textContent; draw(); });
-  document.getElementById("controls").hidden = tab !== "Overview";
+  document.getElementById("controls").hidden = tab !== "Overview" && tab !== "History";
+  document.getElementById("unit").hidden = tab !== "Overview";
+  document.getElementById("fmac").hidden = document.getElementById("fmodel").hidden = tab !== "History";
   document.getElementById("in")?.classList.toggle("on", tab === "Sign in");
   ({ "Overview": overview, "Pipeline": configure, "History": pushes, "Machines": pool, "People": people, "Sign in": signInPage })[tab]();
 }
+fillFilters();
 signIn().then(draw);
 </script>
 </body>
@@ -504,12 +522,10 @@ def benchmarks(matrix: Matrix) -> list[dict]:
     return tests
 
 
-def verdicts(results: dict, commits: list[dict], tests: list[dict], models: list[dict]) -> dict[str, dict]:
+def verdicts(results: dict, commits: list[dict]) -> dict[str, list[dict]]:
     order = [c["sha"] for c in sorted(commits, key=lambda c: c["date"] or "")]
-    test_name = {t["id"]: t["name"] for t in tests}
-    model_name = {m["id"]: m["name"] for m in models}
-    out: dict[str, dict] = {}
-    for r in results.values():
+    out: dict[str, list[dict]] = {}
+    for mac, r in results.items():
         for model, by_test in r["models"].items():
             for wl, by_commit in by_test.items():
                 for phase in ("prefill", "decode"):
@@ -519,13 +535,8 @@ def verdicts(results: dict, commits: list[dict], tests: list[dict], models: list
                         if v is None:
                             continue
                         if prev:
-                            c = {"pct": round(100 * (v / prev - 1), 1),
-                                 "label": f"{r['name']} · {model_name.get(model, model)} · {test_name.get(wl, wl)}"}
-                            cell = out.setdefault(sha, {}).setdefault(phase, {"best": c, "worst": c})
-                            if c["pct"] > cell["best"]["pct"]:
-                                cell["best"] = c
-                            if c["pct"] < cell["worst"]["pct"]:
-                                cell["worst"] = c
+                            out.setdefault(sha, []).append(
+                                {"mac": mac, "model": model, "test": wl, "phase": phase, "pct": round(100 * (v / prev - 1), 1)})
                         prev = v
     return out
 
@@ -627,7 +638,7 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     return {
         "repo": repo, "pie_repo": pie_repo, "default_model": DEFAULT_MODEL,
         "benchmarks": tests,
-        "verdicts": verdicts(results, commits, tests, models),
+        "verdicts": verdicts(results, commits),
         "commits": commits, "history": all_commits, "results": results, "models": models,
         "pool": _pool(live, matrix, last),
         "people": people(repo, {c["sha"]: c["author"] for c in [*known.values(), *commits]}) if lookup_commits else [],
