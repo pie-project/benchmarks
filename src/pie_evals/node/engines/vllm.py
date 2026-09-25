@@ -32,7 +32,7 @@ class VllmEngine(Engine):
         # the head_dim-512 gemma prefill kernel then compiles once, not per pod
         from pie_evals.node.baselines import cache_root
 
-        return {"FLASHINFER_WORKSPACE_BASE": str(cache_root() / "jit" / "flashinfer")}
+        return {"FLASHINFER_WORKSPACE_BASE": str(cache_root() / "jit" / "flashinfer"), **self.nccl_env()}
 
     def default_python(self) -> str:
         if os.environ.get("VLLM_PY"):

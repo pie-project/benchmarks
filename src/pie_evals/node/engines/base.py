@@ -192,6 +192,18 @@ class Engine(ABC):
         static ones go in ``env_defaults``. The caller's env wins over both."""
         return {}
 
+    def nccl_env(self) -> dict[str, str]:
+        """NCCL settings for a tensor-parallel baseline on a RunPod pod: the
+        container advertises GPU peer access it cannot deliver, and NCCL's init
+        then waits forever — vLLM 0.30 tp2 on the L40S x2 pod printed "vLLM is
+        using nccl==2.29.7" and nothing more for 30 minutes (nightly
+        36081628995 s05); SGLang tp2 hung the same way (s10). Peer-to-peer and
+        InfiniBand off makes NCCL fall back to host-staged copies, which is
+        what the pod's PCIe topology delivers anyway. pie does not use NCCL."""
+        if int(self.mode.tp) > 1 and os.environ.get("RUNPOD_POD_ID"):
+            return {"NCCL_P2P_DISABLE": "1", "NCCL_IB_DISABLE": "1"}
+        return {}
+
     # ---- to implement per engine ---------------------------------------------
     @abstractmethod
     def default_python(self) -> str: ...
