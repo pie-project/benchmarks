@@ -193,7 +193,6 @@ const measured = [...DATA.commits].sort((a, b) => (b.date || "").localeCompare(a
 let sel = measured[0]?.sha || "";
 
 const unitSel = { value: "" };
-const sinceDate = () => DATA.since ? commitOf(DATA.since).date || "" : "";
 document.querySelectorAll("#unit button").forEach(b => b.onclick = () => {
   unitSel.value = b.dataset.u;
   document.querySelectorAll("#unit button").forEach(x => x.classList.toggle("on", x === b));
@@ -205,7 +204,7 @@ function before(mac, model, wl, sha) {
   const order = [...DATA.commits].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   for (let i = order.findIndex(c => c.sha === sha) - 1; i >= 0; i--) {
     const v = valueAt(mac, model, wl, order[i].sha);
-    if (v) return { sha: order[i].sha, ...v, stale: sinceDate() ? (order[i].date || "") < sinceDate() : false };
+    if (v) return { sha: order[i].sha, ...v };
   }
   return null;
 }
@@ -216,8 +215,8 @@ function cell(now, was, key) {
   const b = was?.[key];
   const change = b ? (v / b - 1) * 100 : null;
   const chip = change == null ? "" : `<span class="${change > 0.5 ? "up" : change < -0.5 ? "down" : "muted"}">${change > 0 ? "+" : ""}${change.toFixed(1)}%</span>`;
-  const tip = b ? ` title="before: ${fmt(b)} at ${was.sha.slice(0, 7)}${was.stale ? ", measured before the config changed" : ""}"` : "";
-  return `<td class="num"${tip}>${fmt(v)}</td><td class="num">${chip}${b && was.stale ? ` <span class="muted" title="the config changed in between">*</span>` : ""}</td>`;
+  const tip = b ? ` title="before: ${fmt(b)} at ${was.sha.slice(0, 7)}"` : "";
+  return `<td class="num"${tip}>${fmt(v)}</td><td class="num">${chip}</td>`;
 }
 
 function overview() {
@@ -502,9 +501,8 @@ def benchmarks(matrix: Matrix) -> list[dict]:
     return tests
 
 
-def verdicts(results: dict, commits: list[dict], since_date: str, tests: list[dict], models: list[dict]) -> dict[str, dict]:
+def verdicts(results: dict, commits: list[dict], tests: list[dict], models: list[dict]) -> dict[str, dict]:
     order = [c["sha"] for c in sorted(commits, key=lambda c: c["date"] or "")]
-    date = {c["sha"]: c["date"] or "" for c in commits}
     test_name = {t["id"]: t["name"] for t in tests}
     model_name = {m["id"]: m["name"] for m in models}
     out: dict[str, dict] = {}
@@ -515,7 +513,7 @@ def verdicts(results: dict, commits: list[dict], since_date: str, tests: list[di
                     prev = None
                     for sha in order:
                         v = (by_commit.get(sha) or {}).get(phase)
-                        if v is None or (since_date and date[sha] < since_date):
+                        if v is None:
                             continue
                         if prev:
                             c = {"pct": round(100 * (v / prev - 1), 1),
@@ -576,11 +574,7 @@ def people(repo: str, authors: dict[str, str]) -> list[dict]:
 
 
 def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, pie_repo: str,
-          config: Path = Path("config.json"), lookup_commits: bool = True) -> dict:
-    try:
-        since = json.loads(config.read_text()).get("since", "") if config.is_file() else ""
-    except json.JSONDecodeError:
-        since = ""
+          lookup_commits: bool = True) -> dict:
     tests = benchmarks(matrix)
     concurrency = {b["id"]: b["concurrency"] for b in tests}
     t = store.table(Tier.TARGETED)
@@ -627,11 +621,10 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     models = mac_models(matrix)
     for m in models:
         m["has_results"] = m["id"] in have
-    since_date = next((c["date"] for c in [*commits, *known.values()] if c["sha"] == since), "") if since else ""
     return {
         "repo": repo, "pie_repo": pie_repo, "default_model": DEFAULT_MODEL,
-        "benchmarks": tests, "since": since,
-        "verdicts": verdicts(results, commits, since_date, tests, models),
+        "benchmarks": tests,
+        "verdicts": verdicts(results, commits, tests, models),
         "commits": commits, "history": all_commits, "results": results, "models": models,
         "pool": _pool(live, matrix, last),
         "people": people(repo, {c["sha"]: c["author"] for c in [*known.values(), *commits]}) if lookup_commits else [],
@@ -639,8 +632,8 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
 
 
 def render(store: Store, matrix: Matrix, out: Path, live: list[dict] | None = None, *, repo: str = "pie-project/pie-evals",
-           pie_repo: str = "pie-project/pie", config: Path = Path("config.json"), lookup_commits: bool = True) -> int:
-    data = build(store, matrix, live, repo=repo, pie_repo=pie_repo, config=config, lookup_commits=lookup_commits)
+           pie_repo: str = "pie-project/pie", lookup_commits: bool = True) -> int:
+    data = build(store, matrix, live, repo=repo, pie_repo=pie_repo, lookup_commits=lookup_commits)
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.html").write_text(PAGE.replace("__DATA__", json.dumps(data)))
     return len(data["commits"])
