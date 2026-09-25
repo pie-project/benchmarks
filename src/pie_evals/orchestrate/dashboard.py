@@ -306,8 +306,8 @@ async function configure() {
 }
 
 function pushes() {
-  let html = `<div class="card"><table class="compact fixed"><colgroup><col><col style="width:96px"><col style="width:96px"><col style="width:96px"><col style="width:96px"><col style="width:120px"><col style="width:96px"><col style="width:60px"></colgroup>` +
-             `<tr><th>commit</th><th class="num">decode best</th><th class="num">decode worst</th><th class="num">TTFT best</th><th class="num">TTFT worst</th><th>author</th><th>date</th><th>time</th></tr>`;
+  let html = `<div class="card"><table class="compact fixed"><colgroup><col><col style="width:72px"><col style="width:72px"><col style="width:72px"><col style="width:72px"><col style="width:120px"><col style="width:96px"><col style="width:60px"></colgroup>` +
+             `<tr><th>commit</th><th class="num" title="decode best">D ▲</th><th class="num" title="decode worst">D ▼</th><th class="num" title="prefill best">P ▲</th><th class="num" title="prefill worst">P ▼</th><th>author</th><th>date</th><th>time</th></tr>`;
   const pages = Math.max(1, Math.ceil(ALL.length / PER_PAGE));
   page = Math.min(page, pages - 1);
   const isMeasured = new Set(DATA.commits.map(c => c.sha));
