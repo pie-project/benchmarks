@@ -2,8 +2,8 @@
 
 | status | cells |
 |---|---|
-| pass | 0 |
-| fail | 2 |
+| pass | 2 |
+| fail | 0 |
 | declared_unsupported | 120 |
 | not_run | 214 |
 | noisy | 0 |
@@ -12,8 +12,6 @@
 
 | engine | platform | artifact | workload | program | mode | status | error | message |
 |---|---|---|---|---|---|---|---|---|
-| pie | m5-max-48g | qwen3.5-0.8b-bf16 | control-aa | text-completion-bench | tp1 | fail | load_fail | pie build failed: Command '['cargo', 'build', '--release', '-p', 'pie', '--bin', 'pie', '--features', 'metal']' returned |
-| pie | m5-max-48g | qwen3.5-0.8b-bf16 | ss-128-64 | text-completion-bench | tp1 | fail | load_fail | pie build failed: Command '['cargo', 'build', '--release', '-p', 'pie', '--bin', 'pie', '--features', 'metal']' returned |
 | pie | m1-max-32g | gemma-4-26b-a4b-mlx4 | control-aa | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | gemma-4-26b-a4b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | gemma-4-26b-a4b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
@@ -252,6 +250,6 @@
 | gemma4 | 0/12 | 0/12 | 0/12 | 0/12 |
 | gemma4_moe | 0/6 | 0/6 | 0/6 | 0/6 |
 | gpt_oss | 0/12 | 0/12 | 0/12 | 0/12 |
-| qwen3_5 | 0/6 | 0/6 | 0/6 | 0/6 |
+| qwen3_5 | 0/6 | 0/6 | 0/6 | 2/6 |
 | qwen3_6 | 0/12 | 0/12 | 0/12 | 0/12 |
 | qwen3_6_moe | 0/6 | 0/6 | 0/6 | 0/6 |
