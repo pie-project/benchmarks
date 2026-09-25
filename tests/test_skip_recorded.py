@@ -23,12 +23,13 @@ def test_recorded_cell_keys_are_per_commit_and_tier(tmp_path: Path):
         {"cell_key": "pie|l40s-x1|a|c16|text-completion-bench|tp1", "pie_commit": "aaaa", "status": "fail", "engine": "pie", "error_class": "harness_invalid"},
         {"cell_key": "pie|l40s-x1|a|c128|text-completion-bench|tp1", "pie_commit": "aaaa", "status": "pass", "engine": "pie", "checkpoint_revision": "mini-l0-4-e16", "artifact_kind": "full"},
         {"cell_key": "pie|l40s-x1|a|c256|text-completion-bench|tp1", "pie_commit": "aaaa", "status": "noisy", "engine": "pie"},
+        {"cell_key": "vllm|h100-pcie-x1|k|c8|text-completion-bench|tp1", "pie_commit": None, "status": "fail", "engine": "vllm", "engine_version": "0.30.0", "error_class": "crash"},
     ]
     cols = {name: [row.get(name) for row in rows] for name in ARROW_SCHEMA.names}
     pq.write_table(pa.table(cols, schema=ARROW_SCHEMA), out)
     done = recorded_cell_keys(st, Tier("nightly"), "aaaa", {"vllm": "0.30.0"})
     # every pie outcome at this commit counts, a crash included — not a cell the budget never reached, not another
     # commit, not a full row that served a miniature snapshot, not a noisy measurement; a baseline counts at its pinned
-    # version whatever the pie commit
+    # version whatever the pie commit, and only when it passed (a baseline crash is a recipe fault, remeasured)
     assert done == {rows[0]["cell_key"], rows[1]["cell_key"], rows[3]["cell_key"]}
     assert recorded_cell_keys(st, Tier("smoke"), "aaaa") == set()

@@ -187,6 +187,8 @@ def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins:
             continue  # the harness, not the engine, failed (dirty card, preflight, budget): no verdict on the cell
         if str(rev or "").startswith("mini") and str(kind or "") != "miniature":
             continue  # a full row that served the miniature built beside it (pie #680): not a result
+        if e != "pie" and s != "pass":
+            continue  # a baseline that failed is a recipe or install fault, fixed on the harness side: measure again
         if (e == "pie" and c == pie_commit) or (e != "pie" and v and v == pins.get(str(e))):
             done.add(k)
     return done
