@@ -56,6 +56,32 @@ SHORT_CONTEXT_TOKENS = 8192
 MEMORY_BOUND_MARKS = ("device memory exhausted", "weight residency", "does not hold this deployment")
 
 
+HEAVY_FRACTION = 0.35  # weights past this share of the card: the 32k envelope leaves the pool a seat or two
+
+
+def split_heavy_processes(groups: dict[tuple, list]) -> dict[tuple, list]:
+    """One boot per model serves every cell at the envelope of the longest shape.
+    On a card the weights nearly fill, that envelope starves the concurrency
+    cells: Qwen3.6-27B (14 GiB) on the RTX 5090 booted for lc-32k got a pool of
+    "1 sequences at the declared context", c64 ran serially (p50 latency 152 s)
+    and every request timed out (nightly 36081616837 s13). A heavy model boots
+    twice instead: the shapes under ``SHORT_CONTEXT_TOKENS`` on their own
+    envelope, then the long ones. Light models keep the single boot."""
+    out: dict[tuple, list] = {}
+    for key, cells in groups.items():
+        first = cells[0]
+        per_gpu = float(first.platform.memory_gib or 0) * max(1, int(first.mode.tp))
+        heavy = per_gpu > 0 and float(first.artifact.expected_gib or 0) / per_gpu > HEAVY_FRACTION
+        short = [c for c in cells if context_tokens_for(c.workload) <= SHORT_CONTEXT_TOKENS]
+        if not heavy or not short or len(short) == len(cells):
+            out[key] = cells
+            continue
+        engine, artifact, mode = key
+        out[(engine, artifact, f"{mode}-short")] = short
+        out[(engine, artifact, f"{mode}-long")] = [c for c in cells if c not in short]
+    return out
+
+
 def cell_priority(cell) -> tuple[int, float]:
     """Order of the cells one engine process serves: the control A/A first (if the
     harness cannot agree with itself nothing else is read), then the cheap shapes
@@ -242,7 +268,7 @@ class NodeRunner:
             self.log(f"disk reclaim skipped: {str(e)[:120]}")
         fingerprint = prov.hardware_fingerprint()
         records: list[Record] = []
-        groups = job.cells_by_process()
+        groups = split_heavy_processes(job.cells_by_process())
         self.log(f"{len(groups)} engine processes to run")
         for gkey, cells in groups.items():
             engine_name, artifact_key, mode_key = gkey
