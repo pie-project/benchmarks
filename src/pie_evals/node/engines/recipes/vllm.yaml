@@ -73,6 +73,15 @@ competitive:
         attention_backend:
           value: FLASH_ATTN
           rationale: FA3 is vLLM's fastest Hopper path; FlashInfer trails it there.
+      family:
+        kimi_k3:
+          knobs:
+            attention_backend:
+              value: null
+              rationale: >
+                FA3 has no MLA path either ("head_size not supported, MLA not
+                supported": every Kimi-K3 cell of nightly 36081635037 on the
+                H100). Unset leaves vLLM's own MLA pick.
     apple9:
       knobs: {}
   workload_kind:
