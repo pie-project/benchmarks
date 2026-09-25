@@ -56,6 +56,17 @@ SHORT_CONTEXT_TOKENS = 8192
 MEMORY_BOUND_MARKS = ("device memory exhausted", "weight residency", "does not hold this deployment")
 
 
+def cell_priority(cell) -> tuple[int, float]:
+    """Order of the cells one engine process serves: the control A/A first (if the
+    harness cannot agree with itself nothing else is read), then the cheap shapes
+    before the heavy ones. A 27B on the H100 spent 15 and 19 min on c256 and
+    kv-oversub (estimated 3 each) and the soft budget then dropped its
+    single-stream and long-context cells, the numbers a row is read for (nightly
+    36081635037 s20). The sort is stable, so the interleave shuffle survives
+    within one estimate tier."""
+    return (0 if cell.workload.kind.value == "control_aa" else 1, float(cell.workload.est_minutes))
+
+
 class NodeRunner:
     def __init__(self, job: JobSpec, *, pie_root: Path, out_dir: Path, hf_cache: Path | None = None, runner_name: str | None = None, build: bool = True, download: bool = False):
         self.job = job
@@ -323,8 +334,7 @@ class NodeRunner:
             order = list(cells)
             if job.repetition.interleave:
                 random.Random(self.run_id).shuffle(order)
-            # control cell first: if the harness cannot agree with itself nothing else is read
-            order.sort(key=lambda c: 0 if c.workload.kind.value == "control_aa" else 1)
+            order.sort(key=cell_priority)
             control_ok = True
             model_state = pre.before_model(self.platform) if hasattr(pre, "before_model") else machine_before
             self._last_state = model_state
