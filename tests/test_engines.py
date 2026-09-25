@@ -434,7 +434,7 @@ def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
     kimi = artifact(id="kimi-k3-mini8", base_model="moonshotai/Kimi-K3", family="kimi_k3", expected_gib=22.0)
     big = platform(count=1).model_copy(update={"memory_gib": 80.0})
     argv = argv_for(make(SglangEngine, plat=big, art=kimi, workload=conc(32)), conc(32), tmp_path)
-    assert flag_value(argv, "--gpu-mem-util") == "0.85"
+    assert flag_value(argv, "--gpu-mem-util") == "0.75"
     small = platform(count=1).model_copy(update={"memory_gib": 32.0})
     argv = argv_for(make(SglangEngine, plat=small, art=kimi, workload=conc(8)), conc(8), tmp_path)
     assert flag_value(argv, "--gpu-mem-util") == "0.95"
