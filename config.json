@@ -1,6 +1,7 @@
 {
   "models": [
-    "qwen3.5-0.8b-bf16"
+    "qwen3.5-0.8b-bf16",
+    "qwen3.6-27b-mlx4"
   ],
   "machines": [
     "m5-max-48g"
