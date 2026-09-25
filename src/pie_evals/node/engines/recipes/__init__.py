@@ -123,6 +123,11 @@ def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: Worklo
             override = (section.get(axis) or {}).get(selectors[axis])
             if override:
                 _merge_knobs(knobs, rationale, override.get("knobs", override))
+                # one level of nesting: an arch override may except a family (FA3 on Hopper, but not for MLA)
+                for inner in _OVERRIDE_AXES:
+                    exc = (override.get(inner) or {}).get(selectors[inner]) if inner != axis else None
+                    if exc:
+                        _merge_knobs(knobs, rationale, exc.get("knobs", exc))
     subs = {
         "concurrency": workload_concurrency(workload),
         "num_requests": workload_num_requests(workload),

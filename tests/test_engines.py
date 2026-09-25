@@ -242,6 +242,8 @@ def test_recipe_resolves_concurrency_and_overrides():
     assert not r.get("attention_backend"), "FlashInfer rejects gpt-oss's attention sinks off Hopper"
     r = load_recipe("vllm", "competitive", platform(arch="hopper"), WORKLOADS["c32"], family="gpt_oss")
     assert r["attention_backend"] == "FLASH_ATTN"
+    r = load_recipe("vllm", "competitive", platform(arch="hopper"), WORKLOADS["c32"], family="kimi_k3")
+    assert not r.get("attention_backend"), "FA3 has no MLA path; Kimi keeps vLLM's own pick on Hopper too"
     r = load_recipe("vllm", "competitive", platform(arch="ada"), WORKLOADS["prefix-1k-x64"])
     assert r["prefix_caching"] is True
     r = load_recipe("pie", "competitive", platform(Backend.METAL, "apple9", count=1), WORKLOADS["c32"])
