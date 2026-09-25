@@ -80,6 +80,39 @@ def gpu_processes() -> list[dict[str, str]]:
     return procs
 
 
+def dev_nvidia_holders() -> list[dict[str, str]]:
+    """PIDs in this container with an open ``/dev/nvidia*`` handle.
+
+    nvidia-smi's process table is empty inside a container whose PID namespace
+    is not the host's (a RunPod pod): a hung SGLang tp2 worker held 2131 MiB on
+    both L40S with no PID for ``kill_leftovers`` to act on, and every shard the
+    pod took afterwards was harness_invalid within three minutes. The device
+    files are the one thing every holder has open, and ``/proc`` sees every
+    process of our own container."""
+    found: list[dict[str, str]] = []
+    try:
+        entries = os.listdir("/proc")
+    except OSError:
+        return found
+    for d in entries:
+        if not d.isdigit():
+            continue
+        pid = int(d)
+        try:
+            fds = os.listdir(f"/proc/{pid}/fd")
+        except OSError:
+            continue
+        for fd in fds:
+            try:
+                link = os.readlink(f"/proc/{pid}/fd/{fd}")
+            except OSError:
+                continue
+            if link.startswith("/dev/nvidia") and not link.startswith("/dev/nvidia-caps"):
+                found.append({"pid": str(pid), "name": _proc_basename(pid) or "", "used_mib": ""})
+                break
+    return found
+
+
 def _ancestors(pid: int | None = None) -> set[int]:
     """Our own pid, our process group, and the whole parent chain up to init.
     These must NEVER be killed — the runner, its shell, and the session that
@@ -119,8 +152,9 @@ def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: flo
     EngineCore, SGLang's scheduler, pie serve) holding the whole card — 73 GB
     on an A100 — so that every later shard fails the clean-card check.
 
-    Safety, learned the hard way: we only kill PIDs that nvidia-smi reports as
-    *currently holding a GPU*, matched by **executable basename** (not a
+    Safety, learned the hard way: we only kill PIDs that *currently hold a
+    GPU* — reported by nvidia-smi, or holding a ``/dev/nvidia*`` handle when a
+    container's nvidia-smi lists nobody — matched by **executable basename** (not a
     command-line substring), and never a PID in our own ancestor/group set. A
     broad ``pkill -f`` is forbidden here — the runner's cwd and argv contain
     "pie", so it would kill the runner and the interactive session.
@@ -133,7 +167,11 @@ def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: flo
     killed: list[dict[str, Any]] = []
     if wanted or any_holder:
         targets: list[int] = []
-        for p in gpu_processes():
+        holders = gpu_processes()
+        listed = {p.get("pid") for p in holders}
+        # a container's nvidia-smi may list no process at all: the device handles tell
+        holders += [p for p in dev_nvidia_holders() if p["pid"] not in listed]
+        for p in holders:
             try:
                 pid = int(p["pid"])
             except (KeyError, ValueError):
