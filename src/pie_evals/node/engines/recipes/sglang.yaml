@@ -48,6 +48,16 @@ competitive:
       rationale: >
         No --sglang-enable-torch-compile flag exists in the script. TODO(pie/benches).
         Recorded, not emitted.
+  family:
+    kimi_k3:
+      knobs:
+        gpu_mem_util:
+          value: 0.85
+          rationale: >
+            Past mem_fraction_static SGLang keeps only the graphs and the
+            activations; Kimi-K3's MoE prefill wanted 1.2-1.5 GiB more than
+            0.9 left on an 80 GB A100 (nightly 36099862659 s04, every shape
+            from c32 up) and a 96 GB PRO 6000 (36089882075 s04, from c64).
   arch:
     hopper:
       knobs: {}

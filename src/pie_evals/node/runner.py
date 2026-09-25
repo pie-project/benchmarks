@@ -82,6 +82,18 @@ def split_heavy_processes(groups: dict[tuple, list]) -> dict[tuple, list]:
     return out
 
 
+def recipe_for_cell(recipe: dict, recipe_name: str, cell: Cell) -> dict:
+    """The process's recipe resolved for ``cell``'s own shape. Until nightly
+    36099862659 the recipe was resolved once, for the process's first cell:
+    SGLang then captured graphs to that cell's concurrency (32) and ran every
+    wider shape eager, and vLLM's prefix cache followed the first shape. The
+    keys the boot added (snapshot_dir, pin, program_path) are kept."""
+    fresh = load_recipe(str(cell.engine), recipe_name, cell.platform, cell.workload, family=cell.artifact.family)
+    for k, v in recipe.items():
+        fresh.setdefault(k, v)
+    return fresh
+
+
 def cell_priority(cell) -> tuple[int, float]:
     """Order of the cells one engine process serves: the control A/A first (if the
     harness cannot agree with itself nothing else is read), then the cheap shapes
@@ -377,6 +389,8 @@ class NodeRunner:
                     continue
                 if hasattr(engine, "program_path"):
                     engine.program_path = cell.program.path  # the cell's own inferlet, not the process's first
+                recipe = recipe_for_cell(recipe, recipe_name, cell)
+                engine.recipe = recipe
                 rec = self._run_cell(cell, engine, snapshot, engine_version, recipe, recipe_name, fingerprint, machine_before)
                 if cell.workload.kind.value == "control_aa" and rec.status == CellStatus.NOISY:
                     # a spread a hair past the bound on a freshly booted process withholds every

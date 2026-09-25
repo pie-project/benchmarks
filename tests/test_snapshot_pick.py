@@ -16,8 +16,23 @@ def test_a_full_row_never_picks_the_miniature_built_beside_it(tmp_path: Path):
     for d in (rev, "mini-l0-4-e16"):
         (snaps / d).mkdir(parents=True)
         (snaps / d / "config.json").write_text("{}")
+        (snaps / d / "model.safetensors").write_bytes(b"x")
     assert snapshot_dir_if_present(_art(), tmp_path) == snaps / rev
     # a pinned revision still wins, a cache holding only the mini yields nothing for a full row
     assert snapshot_dir_if_present(_art(revision=rev), tmp_path) == snaps / rev
     (snaps / rev / "config.json").unlink()
     assert snapshot_dir_if_present(_art(), tmp_path) is None
+
+
+def test_a_snapshot_whose_weights_are_gone_is_not_present(tmp_path: Path):
+    # the blobs behind the symlinks were reclaimed; config.json stayed (gemma-4-E4B, nightly 36099816046 s07)
+    snaps = tmp_path / "models--mlx-community--Qwen3.6-35B-A3B-4bit" / "snapshots"
+    rev = "38740b847e4cb78f352aba30aa41c76e08e6eb46"
+    (snaps / rev).mkdir(parents=True)
+    (snaps / rev / "config.json").write_text("{}")
+    (snaps / rev / "model.safetensors").symlink_to(tmp_path / "blobs" / "gone")
+    assert snapshot_dir_if_present(_art(), tmp_path) is None
+    assert snapshot_dir_if_present(_art(revision=rev), tmp_path) is None
+    (tmp_path / "blobs").mkdir()
+    (tmp_path / "blobs" / "gone").write_bytes(b"x")
+    assert snapshot_dir_if_present(_art(), tmp_path) == snaps / rev

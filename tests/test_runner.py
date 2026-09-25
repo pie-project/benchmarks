@@ -63,6 +63,7 @@ def patched(monkeypatch, tmp_path):
     snap = tmp_path / "hf" / "models--Qwen--Qwen3.5-0.8B" / "snapshots" / "abc"
     snap.mkdir(parents=True)
     (snap / "config.json").write_text('{"num_hidden_layers": 28}')
+    (snap / "model.safetensors").write_bytes(b"x")  # a snapshot without weights is not present (snapshots.has_weights)
 
     class P:
         def before_job(self, plat):
@@ -217,3 +218,14 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
                 assert all(longs) if k[2].endswith("-long") else not any(longs)
         else:
             assert keys == sorted(k[2] for k in groups) and not any(k.endswith(("-short", "-long")) for k in keys)
+
+
+def test_recipe_follows_the_cell_and_keeps_what_the_boot_added(job):
+    # SGLang captured graphs to the first cell's concurrency and ran wider shapes eager (nightly 36099862659)
+    ss = next(c for c in job.cells if c.workload.id == "ss-128-64")
+    c8 = next(c for c in job.cells if c.workload.id == "c8")
+    base = runner_mod.load_recipe("pie", "competitive", ss.platform, ss.workload, family=ss.artifact.family)
+    base["snapshot_dir"], base["pin"] = "/snap", "0.30.0"
+    fresh = runner_mod.recipe_for_cell(base, "competitive", c8)
+    assert (base["max_forward_requests"], fresh["max_forward_requests"]) == (1, 8)
+    assert fresh["snapshot_dir"] == "/snap" and fresh["pin"] == "0.30.0"

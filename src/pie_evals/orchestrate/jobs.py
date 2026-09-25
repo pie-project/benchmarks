@@ -162,6 +162,10 @@ def _feature_for(backend: str) -> str:
     return {"cuda": "cuda", "metal": "metal", "vulkan": "vulkan", "wgpu": "wgpu"}[backend]
 
 
+#: baseline rows older than this were measured with the recipe of the process's first cell (runner.recipe_for_cell)
+BASELINE_RECIPE_PER_CELL_SINCE = datetime(2026, 9, 25, 6, 45, tzinfo=timezone.utc)
+
+
 def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins: dict[str, str] | None = None) -> set[str]:
     """Cells the store already holds: pie cells at this pie commit, and baseline
     cells at the engine version the matrix pins (a vLLM number does not change
@@ -178,9 +182,10 @@ def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins:
     revisions = t.column("checkpoint_revision").to_pylist()
     kinds = t.column("artifact_kind").to_pylist()
     classes = t.column("error_class").to_pylist()
+    started = t.column("started_at").to_pylist()
     pins = baseline_pins or {}
     done = set()
-    for k, c, s, e, v, rev, kind, cls in zip(keys, commits, statuses, engines, versions, revisions, kinds, classes, strict=True):
+    for k, c, s, e, v, rev, kind, cls, at in zip(keys, commits, statuses, engines, versions, revisions, kinds, classes, started, strict=True):
         if s in ("not_run", "noisy"):  # never reached, or measured on a card that could not agree with itself: a re-dispatch measures again
             continue
         if str(cls or "") == "harness_invalid":
@@ -189,6 +194,8 @@ def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins:
             continue  # a full row that served the miniature built beside it (pie #680): not a result
         if e != "pie" and s != "pass":
             continue  # a baseline that failed is a recipe or install fault, fixed on the harness side: measure again
+        if e != "pie" and at is not None and at < BASELINE_RECIPE_PER_CELL_SINCE:
+            continue  # measured with the process's first shape's recipe (SGLang graphs at the wrong ceiling): not a number
         if (e == "pie" and c == pie_commit) or (e != "pie" and v and v == pins.get(str(e))):
             done.add(k)
     return done
