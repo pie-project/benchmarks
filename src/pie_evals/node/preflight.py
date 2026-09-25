@@ -111,9 +111,13 @@ def _proc_basename(pid: int) -> str | None:
         return None
 
 
-def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: float = 180) -> dict[str, Any]:
+def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: float = 180, any_holder: bool = False) -> dict[str, Any]:
     """Kill GPU-holding orphans whose executable basename is one of ``names``,
-    then wait for the GPU to drain.
+    then wait for the GPU to drain. With ``any_holder`` every GPU-holding
+    process outside our own ancestry is a target: on a RunPod pod the container
+    is ours alone, and a shard cancelled mid-flight leaves its engine (vLLM's
+    EngineCore, SGLang's scheduler, pie serve) holding the whole card — 73 GB
+    on an A100 — so that every later shard fails the clean-card check.
 
     Safety, learned the hard way: we only kill PIDs that nvidia-smi reports as
     *currently holding a GPU*, matched by **executable basename** (not a
@@ -127,7 +131,7 @@ def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: flo
     wanted = {n.strip() for n in names if n and n.strip()}
     protected = _ancestors()
     killed: list[dict[str, Any]] = []
-    if wanted:
+    if wanted or any_holder:
         targets: list[int] = []
         for p in gpu_processes():
             try:
@@ -138,7 +142,7 @@ def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: flo
                 continue
             base = _proc_basename(pid) or os.path.basename(p.get("name", ""))
             # match on basename equality, or the reported process_name basename
-            if base in wanted or os.path.basename(p.get("name", "")) in wanted:
+            if any_holder or base in wanted or os.path.basename(p.get("name", "")) in wanted:
                 targets.append(pid)
                 killed.append({"pid": pid, "name": base, "used_mib": p.get("used_mib", "")})
         for pid in targets:
@@ -293,9 +297,13 @@ class Preflight:
         state = machine_state(platform_os)
         if not _is_mac(platform_os):
             try:
-                state["gpu_drain_wait_s"] = round(
-                    await_free_gpu(self.gpu_threshold_mib, self.gpu_timeout_s), 2
-                )
+                if os.environ.get("RUNPOD_POD_ID"):
+                    # the pod is ours alone: whatever holds the card now is a leftover
+                    state.update(kill_leftovers([], self.gpu_threshold_mib, self.gpu_timeout_s, any_holder=True))
+                else:
+                    state["gpu_drain_wait_s"] = round(
+                        await_free_gpu(self.gpu_threshold_mib, self.gpu_timeout_s), 2
+                    )
             except TimeoutError as e:
                 state["gpu_drain_error"] = str(e)
         return state

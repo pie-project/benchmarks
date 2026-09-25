@@ -177,11 +177,14 @@ def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins:
     versions = t.column("engine_version").to_pylist()
     revisions = t.column("checkpoint_revision").to_pylist()
     kinds = t.column("artifact_kind").to_pylist()
+    classes = t.column("error_class").to_pylist()
     pins = baseline_pins or {}
     done = set()
-    for k, c, s, e, v, rev, kind in zip(keys, commits, statuses, engines, versions, revisions, kinds, strict=True):
+    for k, c, s, e, v, rev, kind, cls in zip(keys, commits, statuses, engines, versions, revisions, kinds, classes, strict=True):
         if s == "not_run":  # the budget never reached it: exactly what a re-dispatch is for
             continue
+        if str(cls or "") == "harness_invalid":
+            continue  # the harness, not the engine, failed (dirty card, preflight, budget): no verdict on the cell
         if str(rev or "").startswith("mini") and str(kind or "") != "miniature":
             continue  # a full row that served the miniature built beside it (pie #680): not a result
         if (e == "pie" and c == pie_commit) or (e != "pie" and v and v == pins.get(str(e))):
