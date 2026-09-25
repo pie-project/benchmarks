@@ -80,6 +80,7 @@ PAGE = """<!doctype html>
   td.clip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
   .dot.on { background: #1a7f37; margin: 0 0 1px 6px; }
+  .dot.run { background: #1a7f37; }
   .idle { background: #1a7f37; } .busy { background: #bf8700; } .offline { background: #cf222e; }
   .tag { display: inline-block; background: #eaeef2; border-radius: 10px; padding: 0 8px; margin: 0 4px 4px 0; font-size: 13px; }
   .avatar { width: 22px; height: 22px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
@@ -316,7 +317,7 @@ function pushes() {
   page = Math.min(page, pages - 1);
   const isMeasured = new Set(DATA.commits.map(c => c.sha));
   for (const c of ALL.slice(page * PER_PAGE, (page + 1) * PER_PAGE)) {
-    html += `<tr class="push" data-sha="${c.sha}"><td class="clip" title="${esc(c.message)}"><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
+    html += `<tr class="push" data-sha="${c.sha}"><td class="clip" title="${esc(c.message)}"><span class="dot${isMeasured.has(c.sha) ? " run" : ""}"${isMeasured.has(c.sha) ? ` title="benchmarked"` : ""}></span><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
             `<td class="num">${verdictChip(c.sha)}</td><td class="clip">${esc(c.author)}</td><td>${fmtDate(c.date)}</td><td class="muted">${fmtTime(c.date)}</td></tr>`;
   }
   document.getElementById("main").innerHTML = html + `</table>${pager(pages)}</div>`;
@@ -509,7 +510,7 @@ def benchmarks(matrix: Matrix) -> list[dict]:
 
 
 def verdicts(results: dict, commits: list[dict], since_date: str, tests: list[dict], models: list[dict],
-             *, sigma: float = 3.0, floor: float = 0.02) -> dict[str, dict]:
+             *, sigma: float = 3.0, floor: float = 0.01) -> dict[str, dict]:
     """Per measured commit: the worst change beyond noise, the best one, and the largest few,
     over every machine, model, benchmark and phase, each against the last earlier measured
     commit of the same cell (never across the stream start)."""
