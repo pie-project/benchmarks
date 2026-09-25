@@ -80,6 +80,7 @@ PAGE = """<!doctype html>
   .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
   .dot.on { background: #1a7f37; margin: 0 0 1px 6px; }
   .dot.run { background: #1a7f37; }
+  th.flip { cursor: pointer; user-select: none; }
   .idle { background: #1a7f37; } .busy { background: #bf8700; } .offline { background: #cf222e; }
   .tag { display: inline-block; background: #eaeef2; border-radius: 10px; padding: 0 8px; margin: 0 4px 4px 0; font-size: 13px; }
   .avatar { width: 22px; height: 22px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
@@ -175,6 +176,7 @@ const modelName = id => (DATA.models.find(m => m.id === id) || { name: id }).nam
 const macName = id => (DATA.pool.find(m => m.id === id) || DATA.results[id] || { name: id }).name;
 const PER_PAGE = 25;
 let tab = "History", back = "History", me = null, page = 0, denied = "";
+const pick = { decode: "best", prefill: "best" };
 const token = () => { try { return localStorage.getItem("pie-evals-token"); } catch { return null; } };
 
 const when = d => d ? new Date(d) : null;
@@ -305,14 +307,14 @@ async function configure() {
 }
 
 function pushes() {
-  let html = `<div class="card"><table class="compact fixed"><colgroup><col><col style="width:72px"><col style="width:72px"><col style="width:72px"><col style="width:72px"><col style="width:120px"><col style="width:96px"><col style="width:60px"></colgroup>` +
-             `<tr><th>commit</th><th class="num" title="decode best">D ▲</th><th class="num" title="decode worst">D ▼</th><th class="num" title="prefill best">P ▲</th><th class="num" title="prefill worst">P ▼</th><th>author</th><th>date</th><th>time</th></tr>`;
+  let html = `<div class="card"><table class="compact fixed"><colgroup><col><col style="width:80px"><col style="width:80px"><col style="width:120px"><col style="width:96px"><col style="width:60px"></colgroup>` +
+             `<tr><th>commit</th>${["decode", "prefill"].map(ph => `<th class="num flip" data-phase="${ph}" title="${ph} ${pick[ph]}, click to flip">${ph[0].toUpperCase()} ${pick[ph] === "best" ? "▲" : "▼"}</th>`).join("")}<th>author</th><th>date</th><th>time</th></tr>`;
   const pages = Math.max(1, Math.ceil(ALL.length / PER_PAGE));
   page = Math.min(page, pages - 1);
   const isMeasured = new Set(DATA.commits.map(c => c.sha));
   for (const c of ALL.slice(page * PER_PAGE, (page + 1) * PER_PAGE)) {
     html += `<tr class="push" data-sha="${c.sha}"><td class="clip" title="${esc(c.message)}"><span class="dot${isMeasured.has(c.sha) ? " run" : ""}"${isMeasured.has(c.sha) ? ` title="benchmarked"` : ""}></span><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
-            `${change(c.sha, "decode", "best")}${change(c.sha, "decode", "worst")}${change(c.sha, "prefill", "best")}${change(c.sha, "prefill", "worst")}<td class="clip">${esc(c.author)}</td><td>${fmtDate(c.date)}</td><td class="muted">${fmtTime(c.date)}</td></tr>`;
+            `${change(c.sha, "decode", pick.decode)}${change(c.sha, "prefill", pick.prefill)}<td class="clip">${esc(c.author)}</td><td>${fmtDate(c.date)}</td><td class="muted">${fmtTime(c.date)}</td></tr>`;
   }
   document.getElementById("main").innerHTML = html + `</table>${pager(pages)}</div>`;
   document.querySelectorAll("tr.push").forEach(tr => tr.onclick = () => {
@@ -320,6 +322,7 @@ function pushes() {
     else openRuns(tr.dataset.sha);
   });
   document.querySelectorAll(".pager button[data-page]").forEach(b => b.onclick = () => { page = +b.dataset.page; draw(); window.scrollTo(0, 0); });
+  document.querySelectorAll("th.flip").forEach(th => th.onclick = () => { const ph = th.dataset.phase; pick[ph] = pick[ph] === "best" ? "worst" : "best"; draw(); });
 }
 function change(sha, phase, which) {
   const c = (((DATA.verdicts || {})[sha] || {})[phase] || {})[which];
