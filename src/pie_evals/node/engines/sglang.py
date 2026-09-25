@@ -32,7 +32,7 @@ class SglangEngine(Engine):
         # container disk, so a kernel compiles once per (version, arch)
         from pie_evals.node.baselines import cache_root
 
-        return {"SGLANG_JIT_CACHE_DIR": str(cache_root() / "jit" / "sglang")}
+        return {"SGLANG_JIT_CACHE_DIR": str(cache_root() / "jit" / "sglang"), **self.nccl_env()}
 
     def default_python(self) -> str:
         if os.environ.get("SGLANG_PY"):
