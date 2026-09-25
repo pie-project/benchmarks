@@ -32,7 +32,17 @@ class VllmEngine(Engine):
         # the head_dim-512 gemma prefill kernel then compiles once, not per pod
         from pie_evals.node.baselines import cache_root
 
-        return {"FLASHINFER_WORKSPACE_BASE": str(cache_root() / "jit" / "flashinfer"), **self.nccl_env()}
+        # Triton autotune / inductor / vLLM compile caches on the volume as well: a fresh pod's
+        # first round at each batch shape autotuned inside the measurement (H100 gpt-oss mini
+        # c256 14.5k then 20.4k and 20.3k tok/s, nightly 36103844715 s05) and was read as noise
+        jit = cache_root() / "jit"
+        return {
+            "FLASHINFER_WORKSPACE_BASE": str(jit / "flashinfer"),
+            "TRITON_CACHE_DIR": str(jit / "triton"),
+            "TORCHINDUCTOR_CACHE_DIR": str(jit / "inductor"),
+            "VLLM_CACHE_ROOT": str(jit / "vllm"),
+            **self.nccl_env(),
+        }
 
     def default_python(self) -> str:
         if os.environ.get("VLLM_PY"):

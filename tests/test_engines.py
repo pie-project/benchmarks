@@ -565,3 +565,11 @@ def test_tensor_parallel_baselines_disable_nccl_p2p_on_a_pod(monkeypatch):
         assert "NCCL_P2P_DISABLE" not in make(cls).env  # a single card has no peers
     monkeypatch.delenv("RUNPOD_POD_ID")
     assert "NCCL_P2P_DISABLE" not in make(VllmEngine, mode=Mode(id="tp2", tp=2)).env  # a real host keeps its topology
+
+
+def test_baseline_jit_caches_live_on_the_volume():
+    # a fresh pod otherwise autotunes each batch shape inside its first measured round (H100, nightly 36103844715 s05)
+    for cls in (VllmEngine, SglangEngine):
+        env = make(cls).env
+        assert env["TRITON_CACHE_DIR"].endswith("jit/triton") and env["TORCHINDUCTOR_CACHE_DIR"].endswith("jit/inductor")
+    assert make(VllmEngine).env["VLLM_CACHE_ROOT"].endswith("jit/vllm")
