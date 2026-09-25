@@ -201,15 +201,19 @@ def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: flo
 
 def linux_machine_state() -> dict[str, Any]:
     state: dict[str, Any] = {"os": "linux"}
-    out = _run(["nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used",
+    # clocks, power and throttle reasons too: a PRO 6000 pod measured every cell at
+    # CoV 7-28 % (nightly 36083523962 s13/s18) and nothing recorded said why
+    out = _run(["nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,clocks.sm,clocks.mem,power.draw,power.limit,temperature.gpu,clocks_throttle_reasons.active",
                 "--format=csv,noheader,nounits"])
     if out:
         gpus = []
         for line in out.strip().splitlines():
             parts = [x.strip() for x in line.split(",")]
             if len(parts) >= 4:
-                gpus.append({"name": parts[0], "driver": parts[1], "memory_total_mib": parts[2],
-                             "memory_used_mib": parts[3]})
+                g = {"name": parts[0], "driver": parts[1], "memory_total_mib": parts[2], "memory_used_mib": parts[3]}
+                for k, v in zip(("sm_mhz", "mem_mhz", "power_w", "power_limit_w", "temp_c", "throttle_reasons"), parts[4:10], strict=False):
+                    g[k] = v
+                gpus.append(g)
         state["gpus"] = gpus
         if gpus:
             state["driver"] = gpus[0]["driver"]
