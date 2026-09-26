@@ -44,9 +44,12 @@ def _node_out(tmp_path, records):
     return d
 
 
-def test_targeted_is_small_and_pie_only(matrix):
+def test_targeted_is_small_and_baselines_run_on_their_copies(matrix):
     cells = matrix.runnable(Tier.TARGETED)
-    assert cells and all(c.engine.value == "pie" and c.mode.tp == 1 for c in cells)
+    assert cells and all(c.mode.tp == 1 for c in cells)
+    assert {c.engine.value for c in cells} == {"pie", "mlxlm", "llamacpp"}
+    assert all(c.engine.value == "pie" or c.workload.id != "control-aa" for c in cells)
+    assert {c.engine.value for c in cells if c.artifact.baseline_of} >= {"mlxlm", "llamacpp"}
     assert {c.workload.id for c in cells} == {"control-aa", "ss-128-64", "lc-1k-128", "lc-2k-128", "c8", "c32"}
     assert not matrix.check_budget(Tier.TARGETED)
 

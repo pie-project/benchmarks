@@ -244,6 +244,13 @@ function before(mac, model, wl, sha) {
   }
   return null;
 }
+const BASELINES = { mlxlm: "MLX", llamacpp: "llama.cpp" };
+function versus(now, b, name) {
+  if (!b) return `<td></td>`;
+  const part = (tag, k) => now?.[k] && b[k] ? `<span class="${now[k] >= b[k] ? "up" : "down"}">${tag} ${Math.round(100 * now[k] / b[k])}%</span>` : "";
+  const tip = [b.prefill ? `prefill ${Math.round(b.prefill).toLocaleString()}` : "", `decode ${Math.round(b.decode).toLocaleString()} tok/s`].filter(Boolean).join(", ");
+  return `<td class="num" title="${esc(name)} ${esc(b.version)}: ${tip}">${[part("P", "prefill"), part("D", "decode")].filter(Boolean).join(" ")}</td>`;
+}
 function cell(now, was, key) {
   const v = now?.[key];
   if (v == null) return `<td class="num muted">–</td><td></td>`;
@@ -273,12 +280,16 @@ function overview() {
       const tests = DATA.benchmarks.filter(b => byTest[b.id]?.[sel]);
       if (!tests.length) continue;
       any = true;
+      const base = DATA.baselines?.[mac]?.[model] || {};
+      const engines = Object.keys(BASELINES).filter(e => Object.values(base).some(b => b[e]));
       html += `<div class="card"><h2>${esc(r.name)}</h2><table class="compact fixed">` +
-        `<colgroup><col style="width:36%"><col><col><col><col></colgroup>` +
-        `<tr><th>benchmark</th><th class="num">prefill</th><th class="num">change</th><th class="num">decode</th><th class="num">change</th></tr>`;
+        `<colgroup><col style="width:30%"><col><col><col><col>${engines.map(() => `<col style="width:120px">`).join("")}</colgroup>` +
+        `<tr><th>benchmark</th><th class="num">prefill</th><th class="num">change</th><th class="num">decode</th><th class="num">change</th>` +
+        engines.map(e => `<th class="num" title="pie as a share of ${BASELINES[e]} on the same weights">vs ${BASELINES[e]}</th>`).join("") + `</tr>`;
       for (const b of tests) {
         const now = byTest[b.id][sel], was = before(mac, model, b.id, sel);
-        html += `<tr><td class="clip">${esc(b.name)}</td>${cell(now, was, "prefill" + unit)}${cell(now, was, "decode" + unit)}</tr>`;
+        html += `<tr><td class="clip">${esc(b.name)}</td>${cell(now, was, "prefill" + unit)}${cell(now, was, "decode" + unit)}` +
+          engines.map(e => versus(now, base[b.id]?.[e], BASELINES[e])).join("") + `</tr>`;
       }
       html += `</table></div>`;
     }
@@ -666,6 +677,15 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     every = [r for r in t.to_pylist() if r["pie_commit"]] if t.num_rows else []
     rows = [r for r in every if r["status"] == str(CellStatus.PASS)]
     rows.sort(key=lambda r: r["started_at"])
+    baseline_of = {a.id: a.baseline_of for a in matrix.artifacts.values() if a.baseline_of}
+    baselines: dict[str, dict] = {}
+    for r in rows:
+        if r["engine"] != "pie" and r["workload"] in concurrency:
+            single = concurrency[r["workload"]] == 1
+            baselines.setdefault(r["platform"], {}).setdefault(baseline_of.get(r["artifact"], r["artifact"]), {}).setdefault(r["workload"], {})[r["engine"]] = {
+                "prefill": r["prefill_tok_s"] if single else None,
+                "decode": r["decode_tok_s"] if single else r["output_tok_s"], "version": r["engine_version"] or ""}
+    rows = [r for r in rows if r["engine"] == "pie"]
     failed = sorted({(r["pie_commit"], r["platform"], r["artifact"]) for r in every
                      if r["status"] == str(CellStatus.FAIL)
                      and r["workload"] in concurrency and r["artifact"] in SHOWN_MODELS})
@@ -713,7 +733,7 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     return {
         "repo": repo, "pie_repo": pie_repo, "default_model": DEFAULT_MODEL,
         "benchmarks": tests,
-        "verdicts": verdicts(results, commits),
+        "verdicts": verdicts(results, commits), "baselines": baselines,
         "commits": commits, "history": all_commits, "results": results, "models": models,
         "failed": [{"sha": sha, "mac": mac, "model": model} for sha, mac, model in failed],
         "running": in_flight(repo) if lookup_commits else [],
