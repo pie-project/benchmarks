@@ -44,6 +44,24 @@ def _is_mac() -> bool:
 # ---- hardware ------------------------------------------------------------------
 
 
+def gpu_links(topo: str) -> str:
+    """The GPU-to-GPU cells of ``nvidia-smi topo -m`` (``GPU0-GPU1:SYS``), not the
+    legend below it, which names every link kind on every host: a tp2 pod whose
+    cards talk across sockets (SYS) is told apart from one on a switch (PIX)."""
+    rows = [re.sub(r"\x1b\[[0-9;]*m", "", ln).split() for ln in topo.splitlines()]
+    head = next((r for r in rows if r and r[0].startswith("GPU")), None)
+    if head is None:
+        return ""
+    cols = [c for c in head if re.fullmatch(r"GPU\d+", c)]
+    out = []
+    for r in rows:
+        if r is not head and r and re.fullmatch(r"GPU\d+", r[0]):
+            for j, c in enumerate(cols):
+                if c > r[0] and j + 1 < len(r):
+                    out.append(f"{r[0]}-{c}:{r[j + 1]}")
+    return ",".join(out)
+
+
 def _linux_fingerprint() -> dict[str, Any]:
     fp: dict[str, Any] = {"os": "linux", "arch": platform.machine()}
     out = _run(["nvidia-smi", "--query-gpu=name,uuid,driver_version,vbios_version,memory.total",
@@ -63,8 +81,7 @@ def _linux_fingerprint() -> dict[str, Any]:
     if len(gpus) > 1:
         topo = _run(["nvidia-smi", "topo", "-m"])
         if topo:
-            links = sorted(set(re.findall(r"\b(NV\d+|PIX|PXB|PHB|NODE|SYS)\b", topo)))
-            fp["topo"] = ",".join(links)
+            fp["topo"] = gpu_links(topo)
     lscpu = _run(["lscpu"])
     if lscpu:
         for line in lscpu.splitlines():

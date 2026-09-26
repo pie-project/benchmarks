@@ -130,3 +130,9 @@ def test_build_provenance_fills_record_fields(tmp_path):
     assert pv.os_version
     assert pv.machine_state == {"gpu_drain_wait_s": 0.0}
     assert pv.pie_commit is None  # no checkout there
+
+
+def test_gpu_links_reads_the_matrix_not_the_legend():
+    from pie_evals.node.provenance import gpu_links
+    topo = "\tGPU0\tGPU1\tCPU Affinity\tNUMA Affinity\nGPU0\t X \tSYS\t0-31\t0\nGPU1\tSYS\t X \t32-63\t1\n\nLegend:\n  X    = Self\n  SYS  = ...\n  NODE = ...\n  PIX  = ...\n"
+    assert gpu_links(topo) == "GPU0-GPU1:SYS"
