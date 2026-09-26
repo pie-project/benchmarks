@@ -176,8 +176,8 @@ PAGE = """<!doctype html>
   <span id="who"></span>
 </div></header>
 <div class="controls" id="controls">
-  <div class="seg" id="unit" role="group" aria-label="unit"><button data-u="" class="on">tok/s</button><button data-u="_tflops">TFLOP/s</button></div>
   <select id="fmac" aria-label="machine"></select><select id="fmodel" aria-label="model"></select>
+  <div class="seg" id="unit" role="group" aria-label="unit"><button data-u="" class="on">tok/s</button><button data-u="_tflops">TFLOP/s</button></div>
   <span class="grow"></span>
   <button class="act" id="bench" disabled>Bench</button>
 </div>
