@@ -272,7 +272,7 @@ function overview() {
       const tests = DATA.benchmarks.filter(b => byTest[b.id]?.[sel]);
       if (!tests.length) continue;
       any = true;
-      html += `<div class="card"><h2>${esc(r.name)} · ${esc(modelName(model))}</h2><table class="compact fixed">` +
+      html += `<div class="card"><h2>${esc(r.name)}</h2><table class="compact fixed">` +
         `<colgroup><col style="width:36%"><col><col><col><col></colgroup>` +
         `<tr><th>benchmark</th><th class="num">prefill</th><th class="num">change</th><th class="num">decode</th><th class="num">change</th></tr>`;
       for (const b of tests) {
