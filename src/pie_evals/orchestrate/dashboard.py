@@ -330,15 +330,15 @@ async function configure() {
 }
 
 function pushes() {
-  let html = `<div class="card"><table class="compact fixed"><colgroup><col style="width:34px"><col><col style="width:80px"><col style="width:80px"><col style="width:120px"><col style="width:96px"><col style="width:60px"></colgroup>` +
-             `<tr><th></th><th>commit</th>${["decode", "prefill"].map(ph => `<th class="num flip" data-phase="${ph}" title="${ph} ${pick[ph]}, click to flip">${ph[0].toUpperCase()} ${pick[ph] === "best" ? "▲" : "▼"}</th>`).join("")}<th>author</th><th>date</th><th>time</th></tr>`;
+  let html = `<div class="card"><table class="compact fixed"><colgroup><col><col style="width:80px"><col style="width:80px"><col style="width:120px"><col style="width:96px"><col style="width:60px"><col style="width:34px"></colgroup>` +
+             `<tr><th>commit</th>${["decode", "prefill"].map(ph => `<th class="num flip" data-phase="${ph}" title="${ph} ${pick[ph]}, click to flip">${ph[0].toUpperCase()} ${pick[ph] === "best" ? "▲" : "▼"}</th>`).join("")}<th>author</th><th>date</th><th>time</th><th></th></tr>`;
   const pages = Math.max(1, Math.ceil(ALL.length / PER_PAGE));
   page = Math.min(page, pages - 1);
   const isMeasured = new Set(DATA.commits.map(c => c.sha));
   for (const c of ALL.slice(page * PER_PAGE, (page + 1) * PER_PAGE)) {
-    html += `<tr class="push${isMeasured.has(c.sha) ? "" : " flat"}" data-sha="${c.sha}">` +
-            `<td><input type="checkbox" class="rowpick" value="${c.sha}"${chosen.has(c.sha) ? " checked" : ""}></td><td class="clip" title="${esc(c.message)}"><span class="dot${isMeasured.has(c.sha) ? " run" : ""}"${isMeasured.has(c.sha) ? ` title="benchmarked"` : ""}></span><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
-            `${change(c.sha, "decode", pick.decode)}${change(c.sha, "prefill", pick.prefill)}<td class="clip">${esc(c.author)}</td><td>${fmtDate(c.date)}</td><td class="muted">${fmtTime(c.date)}</td></tr>`;
+    html += `<tr class="push${isMeasured.has(c.sha) ? "" : " flat"}" data-sha="${c.sha}"><td class="clip" title="${esc(c.message)}"><span class="dot${isMeasured.has(c.sha) ? " run" : ""}"${isMeasured.has(c.sha) ? ` title="benchmarked"` : ""}></span><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
+            `${change(c.sha, "decode", pick.decode)}${change(c.sha, "prefill", pick.prefill)}<td class="clip">${esc(c.author)}</td><td>${fmtDate(c.date)}</td><td class="muted">${fmtTime(c.date)}</td>` +
+            `<td class="num"><input type="checkbox" class="rowpick" value="${c.sha}"${chosen.has(c.sha) ? " checked" : ""}></td></tr>`;
   }
   document.getElementById("main").innerHTML = html + `</table>${pager(pages)}</div>`;
   document.querySelectorAll("tr.push").forEach(tr => tr.onclick = e => {
