@@ -229,3 +229,15 @@ def test_recipe_follows_the_cell_and_keeps_what_the_boot_added(job):
     fresh = runner_mod.recipe_for_cell(base, "competitive", c8)
     assert (base["max_forward_requests"], fresh["max_forward_requests"]) == (1, 8)
     assert fresh["snapshot_dir"] == "/snap" and fresh["pin"] == "0.30.0"
+
+
+def test_a_slow_first_round_is_confirmed_away_not_withheld(job, patched, tmp_path):
+    # nightly (3 rounds): a first round still warming on a fresh pod gets the policy's confirmation rounds
+    job = job.model_copy(update={"repetition": job.repetition.model_copy(update={"min_rounds": 3, "confirm_rounds": 2, "max_rounds": 5})})
+    FakeEngine.behaviour["ss-128-64"] = [90.0, 100.0, 101.0, 100.0, 100.0]
+    FakeEngine.behaviour["c8"] = [100.0, 80.0, 120.0, 85.0, 118.0]
+    recs, _ = _run(job, patched, tmp_path)
+    ss = next(r for r in recs if r.cell.workload.id == "ss-128-64")
+    assert ss.status == CellStatus.PASS and len(ss.perf.rounds) == 5 and ss.perf.decode_tok_s == 100.0
+    c8 = next(r for r in recs if r.cell.workload.id == "c8")
+    assert c8.status == CellStatus.NOISY and len(c8.perf.rounds) == 5
