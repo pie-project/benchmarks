@@ -2,8 +2,8 @@
 
 | status | cells |
 |---|---|
-| pass | 6 |
-| fail | 11 |
+| pass | 15 |
+| fail | 2 |
 | declared_unsupported | 152 |
 | not_run | 531 |
 | noisy | 5 |
@@ -12,16 +12,7 @@
 
 | engine | platform | artifact | workload | program | mode | status | error | message |
 |---|---|---|---|---|---|---|---|---|
-| llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | ss-128-64 | text-completion-bench | tp1 | fail | crash | ModuleNotFoundError: No module named 'transformers' |
-| llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | c8 | text-completion-bench | tp1 | fail | crash | ModuleNotFoundError: No module named 'transformers' |
-| llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | c32 | text-completion-bench | tp1 | fail | crash | ModuleNotFoundError: No module named 'transformers' |
-| llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-1k-128 | text-completion-bench | tp1 | fail | crash | ModuleNotFoundError: No module named 'transformers' |
-| llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | ModuleNotFoundError: No module named 'transformers' |
-| mlxlm | m5-max-48g | qwen3.5-0.8b-mlx-bf16 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | harness: [Errno 2] No such file or directory: '/tmp/pievenv/bin/python' |
-| mlxlm | m5-max-48g | qwen3.5-0.8b-mlx-bf16 | c8 | text-completion-bench | tp1 | fail | harness_invalid | harness: [Errno 2] No such file or directory: '/tmp/pievenv/bin/python' |
-| mlxlm | m5-max-48g | qwen3.5-0.8b-mlx-bf16 | c32 | text-completion-bench | tp1 | fail | harness_invalid | harness: [Errno 2] No such file or directory: '/tmp/pievenv/bin/python' |
-| mlxlm | m5-max-48g | qwen3.5-0.8b-mlx-bf16 | lc-1k-128 | text-completion-bench | tp1 | fail | harness_invalid | harness: [Errno 2] No such file or directory: '/tmp/pievenv/bin/python' |
-| mlxlm | m5-max-48g | qwen3.5-0.8b-mlx-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | harness_invalid | harness: [Errno 2] No such file or directory: '/tmp/pievenv/bin/python' |
+| llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
