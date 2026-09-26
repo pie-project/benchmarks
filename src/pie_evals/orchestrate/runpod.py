@@ -138,7 +138,8 @@ terminate() {{
 ( sleep $(( {kill_minutes} * 60 )); echo "== self-destruct: {kill_minutes} min"; terminate ) &
 # a card another tenant already holds (5.7 GB on a fresh 5090, nightly 36270282797) fails every shard's clean check: register nothing
 USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | sort -n | tail -1)
-if [ "${{USED:-0}}" -gt 1500 ]; then echo "== GPU not clean at boot: ${{USED}} MiB in use"; sleep {hold}; terminate; exit 1; fi
+CUINIT=$(python3 -c "import ctypes; print(ctypes.CDLL('libcuda.so.1').cuInit(0))" 2>/dev/null || echo none)
+if [ "${{USED:-0}}" -gt 1500 ] || [ "$CUINIT" != 0 ]; then echo "== GPU unusable at boot: ${{USED}} MiB in use, cuInit $CUINIT"; sleep {hold}; terminate; exit 1; fi
 # idle watchdog: a job is running while Runner.Worker exists; {idle_minutes} min without one stops the
 # listener (our own process on this pod), run.sh returns, and the tail of this script removes the
 # registration and terminates the pod
