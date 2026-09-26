@@ -8,7 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from pie_evals.node.metrics.stats import regression_verdict
-from pie_evals.schema import Cell, CellStatus, Tier
+from pie_evals.schema import Cell, CellStatus, RepetitionPolicy, Tier
 
 from .matrix import Matrix
 from .store import Store
@@ -94,7 +94,13 @@ def regressions(matrix: Matrix, store: Store, tier: Tier, *, sigma: float = 3.0)
         prior = h[:-1] if h and abs(h[-1] - float(row["primary_value"])) < 1e-12 else h
         if len(prior) < 3:
             continue
-        v = regression_verdict(float(row["primary_value"]), prior, sigma=sigma)
+        # a change smaller than the spread a single measurement is allowed (the node's NOISY bound)
+        # is not a regression: a 1 % floor failed nightlies on -1.2 % single-stream drifts
+        wl = matrix.workloads.get(str(row["workload"]))
+        steady = wl is not None and str(wl.kind) in ("single_stream", "control_aa", "long_context")
+        policy = RepetitionPolicy()
+        floor = policy.cov_noisy_threshold if steady else policy.cov_noisy_threshold_concurrent
+        v = regression_verdict(float(row["primary_value"]), prior, sigma=sigma, floor_rel=floor)
         if v.regressed or v.improved:
             out.append(
                 {
