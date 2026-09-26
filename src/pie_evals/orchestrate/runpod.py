@@ -136,6 +136,9 @@ terminate() {{
   curl -fsS -X DELETE -H "Authorization: Bearer ${{RUNPOD_API_KEY:-}}" "https://rest.runpod.io/v1/pods/${{RUNPOD_POD_ID:-}}" >/dev/null 2>&1 || true
 }}
 ( sleep $(( {kill_minutes} * 60 )); echo "== self-destruct: {kill_minutes} min"; terminate ) &
+# a card another tenant already holds (5.7 GB on a fresh 5090, nightly 36270282797) fails every shard's clean check: register nothing
+USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | sort -n | tail -1)
+if [ "${{USED:-0}}" -gt 1500 ]; then echo "== GPU not clean at boot: ${{USED}} MiB in use"; sleep {hold}; terminate; exit 1; fi
 # idle watchdog: a job is running while Runner.Worker exists; {idle_minutes} min without one stops the
 # listener (our own process on this pod), run.sh returns, and the tail of this script removes the
 # registration and terminates the pod
