@@ -437,7 +437,9 @@ def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
     assert flag_value(argv, "--gpu-mem-util") == "0.75"
     l40s = platform(count=1)
     argv = argv_for(make(SglangEngine, plat=l40s, art=kimi, workload=conc(256)), conc(256), tmp_path)
-    assert flag_value(argv, "--gpu-mem-util") == "0.9"
+    assert flag_value(argv, "--gpu-mem-util") == "0.82"
+    argv = argv_for(make(SglangEngine, plat=l40s, art=kimi, workload=conc(32)), conc(32), tmp_path)
+    assert flag_value(argv, "--gpu-mem-util") == "0.75"
     small = platform(count=1).model_copy(update={"memory_gib": 32.0})
     argv = argv_for(make(SglangEngine, plat=small, art=kimi, workload=conc(8)), conc(8), tmp_path)
     assert flag_value(argv, "--gpu-mem-util") == "0.95"
