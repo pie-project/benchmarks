@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 1154 |
-| fail | 529 |
-| declared_unsupported | 9612 |
+| pass | 1168 |
+| fail | 504 |
+| declared_unsupported | 9627 |
 | not_run | 4699 |
-| noisy | 156 |
+| noisy | 152 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -502,44 +502,19 @@
 | pie | rtx4090-x1 | qwen3.6-27b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | crash | all 8 requests failed: truth take: channel is poisoned: pipeline: forward failed: direct launch rejected: invalid submis |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mini5 | ss-128-64 | classifier-free-guidance | tp1 | fail | crash | all 8 requests failed: JSONDecodeError: Expecting value: line 1 column 1 (char 0) |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | crash | all 8 requests failed: truth take: channel is poisoned: pipeline: forward failed: direct launch rejected: frame admissio |
-| pie | rtx5090-x1 | gemma-4-26b-a4b-mlx4 | c256 | text-completion-bench | tp1 | fail |  |  |
-| pie | rtx5090-x1 | gemma-4-26b-a4b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: Exception: Failed to launch process: admission rejected: cluster saturated: no healthy worker has |
-| pie | rtx5090-x1 | gemma-4-26b-a4b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
+| pie | rtx5090-x1 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | c256 | text-completion-bench | tp1 | fail |  |  |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | c256 | text-completion-bench | tp1 | fail |  |  |
-| sglang | rtx5090-x1 | gpt-oss-20b-mxfp4 | ss-128-64 | text-completion-bench | tp1 | fail | crash | RuntimeError: Cannot find any model weights with `/workspace/.hf/hub/models--openai--gpt-oss-20b/snapshots/6cee5e81ee839 |
-| sglang | rtx5090-x1 | gpt-oss-20b-mxfp4 | ss-512-256 | text-completion-bench | tp1 | fail | crash | RuntimeError: Cannot find any model weights with `/workspace/.hf/hub/models--openai--gpt-oss-20b/snapshots/6cee5e81ee839 |
-| sglang | rtx5090-x1 | gpt-oss-20b-mxfp4 | c8 | text-completion-bench | tp1 | fail | crash | RuntimeError: Cannot find any model weights with `/workspace/.hf/hub/models--openai--gpt-oss-20b/snapshots/6cee5e81ee839 |
-| sglang | rtx5090-x1 | gpt-oss-20b-mxfp4 | lc-1k-128 | text-completion-bench | tp1 | fail | crash | RuntimeError: Cannot find any model weights with `/workspace/.hf/hub/models--openai--gpt-oss-20b/snapshots/6cee5e81ee839 |
-| sglang | rtx5090-x1 | gpt-oss-20b-mxfp4 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | RuntimeError: Cannot find any model weights with `/workspace/.hf/hub/models--openai--gpt-oss-20b/snapshots/6cee5e81ee839 |
-| sglang | rtx5090-x1 | gpt-oss-20b-mxfp4 | prefix-1k-x64 | prefix-tree-kv-cache | tp1 | fail | crash | RuntimeError: Cannot find any model weights with `/workspace/.hf/hub/models--openai--gpt-oss-20b/snapshots/6cee5e81ee839 |
 | pie | rtx5090-x1 | kimi-k3-mini8 | c256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | kimi-k3-mini8 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | kimi-k3-mini8 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
-| vllm | rtx5090-x1 | kimi-k3-mini8 | c256 | text-completion-bench | tp1 | fail | crash | RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {} |
-| vllm | rtx5090-x1 | kimi-k3-mini8 | kv-oversub | text-completion-bench | tp1 | fail | crash | RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {} |
-| vllm | rtx5090-x1 | kimi-k3-mini8 | ss-128-64 | cacheback-speculative-decoding | tp1,ngram | fail | crash | vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue. See stack trace (above) for the root cause. |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | control-aa | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | ss-128-64 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | ss-512-256 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | c8 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | c32 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | c64 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
 | pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | c256 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | lc-1k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | lc-2k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
 | pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | lc-8k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
 | pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | lc-32k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | prefix-1k-x64 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | mixed-256 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
+| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | mixed-256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | kv-oversub | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | ss-128-64 | classifier-free-guidance | tp1 | fail | crash | pie serve exited before ready: FileNotFoundError: no local snapshot for '/workspace/.hf/hub/models--unsloth--Qwen3.6-27B |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c256 | text-completion-bench | tp1 | fail |  |  |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'Task error: File reconstruction error: Internal Writer Error: Backgrou |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'Task error: File reconstruction error: Internal Writer Error: Backgrou |
 | pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
 | pie | a100-pcie-x1 | gemma-4-31b-mlx4 | lc-1k-128 | snapkv-eviction | tp1 | noisy |  |  |
 | pie | a100-pcie-x1 | gemma-4-e4b-bf16 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
@@ -684,19 +659,15 @@
 | sglang | rtx4090-x1 | qwen3.5-0.8b-bf16 | c32 | text-completion-bench | tp1 | noisy |  |  |
 | sglang | rtx4090-x1 | qwen3.5-0.8b-bf16 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mini5 | ss-128-64 | rs-speculative-decoding | tp1,rs | noisy |  |  |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
+| pie | rtx5090-x1 | gemma-4-26b-a4b-mlx4 | c64 | text-completion-bench | tp1 | noisy |  |  |
+| pie | rtx5090-x1 | gemma-4-26b-a4b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | c8 | text-completion-bench | tp1 | noisy |  |  |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | c64 | text-completion-bench | tp1 | noisy |  |  |
 | pie | rtx5090-x1 | gemma-4-e4b-bf16 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | mixed-256 | text-completion-bench | tp1 | noisy |  |  |
-| sglang | rtx5090-x1 | gpt-oss-20b-mxfp4 | c32 | text-completion-bench | tp1 | noisy |  |  |
 | pie | rtx5090-x1 | kimi-k3-mini8 | c32 | text-completion-bench | tp1 | noisy |  |  |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c8 | text-completion-bench | tp1 | noisy |  |  |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | noisy |  |  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c32 | text-completion-bench | tp1 | noisy |  |  |
 | pie | a100-pcie-x1 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | a100-pcie-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | a100-pcie-x1 | gemma-4-31b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
@@ -5430,6 +5401,7 @@
 | attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the kimi_k3 forward pass is hybrid | 96 |
 | SGLang 0.5.20 tp2 hangs on L40S x2 (the pod's cards see no NVLink); every cell is a timeout | 83 |
 | does not fit: 27.5 GiB per device > 24.0 GiB | 64 |
+| vLLM 0.30 Kimi-K3 mini leaves no KV or activation room on a 32 GB card | 15 |
 | SGLang 0.5.20 leaves no activation room for Kimi-K3 mini on a 32 GB card (OOM from c8) | 15 |
 
 ## pie pass rate by family × platform
@@ -5438,11 +5410,11 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | deepseek_v4 | · | · | · | · | · | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | · | · | · | · | · | · |
 | deepseek_v41 | · | · | · | · | · | · | 0/23 | 0/23 | 0/23 | 0/23 | 0/23 | · | · | · | · | · | · |
-| gemma4 | 34/42 | 0/42 | 0/42 | 0/42 | 18/42 | 0/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 6/42 | 0/42 | 0/42 | 5/42 | 31/42 |
-| gemma4_moe | 20/21 | · | · | 0/21 | 0/21 | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | 0/21 | 0/21 | · | · | 1/21 | 18/21 |
+| gemma4 | 34/42 | 0/42 | 0/42 | 0/42 | 18/42 | 0/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 6/42 | 0/42 | 0/42 | 5/42 | 35/42 |
+| gemma4_moe | 20/21 | · | · | 0/21 | 0/21 | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | 0/21 | 0/21 | · | · | 1/21 | 19/21 |
 | glm5_next | 14/14 | 0/14 | 0/14 | 0/14 | 13/14 | 3/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 11/14 | 0/14 | 0/14 | 0/14 | 14/14 |
-| gpt_oss | 50/63 | 0/63 | 0/63 | 0/63 | 43/63 | 17/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 21/63 | 0/63 | 0/63 | 24/63 | 62/63 |
+| gpt_oss | 50/63 | 0/63 | 0/63 | 0/63 | 43/63 | 17/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 21/63 | 0/63 | 0/63 | 24/63 | 63/63 |
 | kimi_k3 | 13/14 | 0/14 | 0/14 | 0/14 | 12/14 | 12/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 6/14 | 0/14 | 0/14 | · | 10/14 |
 | qwen3_5 | 16/16 | 0/16 | 0/16 | 0/16 | 14/16 | 1/16 | 0/20 | 0/20 | 0/20 | 6/20 | 6/20 | 8/16 | 7/16 | 0/16 | 0/16 | 12/16 | 16/16 |
-| qwen3_6 | 27/32 | 0/32 | 0/32 | 0/32 | 2/32 | 0/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 0/32 | 0/32 | 0/32 | 2/32 | 12/32 |
-| qwen3_6_moe | 31/32 | 0/32 | 0/32 | 14/32 | 14/32 | 22/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 8/32 | 0/32 | 0/32 | 12/32 | 26/32 |
+| qwen3_6 | 27/32 | 0/32 | 0/32 | 0/32 | 2/32 | 0/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 0/32 | 0/32 | 0/32 | 2/32 | 22/32 |
+| qwen3_6_moe | 31/32 | 0/32 | 0/32 | 14/32 | 14/32 | 22/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 8/32 | 0/32 | 0/32 | 12/32 | 29/32 |
