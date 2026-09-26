@@ -46,6 +46,9 @@ PAGE = """<!doctype html>
   .controls .grow { flex: 1; }
   tr.push.flat { cursor: default; }
   input.rowpick { vertical-align: middle; }
+  .dot.wait { background: #d4a72c; }
+  .dot.bad { background: #cf222e; }
+  .dot.part { background: #bc4c00; }
   .seg { display: inline-flex; height: 32px; border: 1px solid #d0d7de; border-radius: 999px; background: #fff; padding: 2px; box-sizing: border-box; }
   .seg button { border: 0; background: none; font: inherit; font-size: 13px; color: #424a53; padding: 0 12px; border-radius: 999px; cursor: pointer; }
   .seg button.on { background: #1f2328; color: #fff; }
@@ -343,8 +346,17 @@ function pushes() {
   const pages = Math.max(1, Math.ceil(ALL.length / PER_PAGE));
   page = Math.min(page, pages - 1);
   const isMeasured = new Set(DATA.commits.map(c => c.sha));
+  const running = new Set(DATA.running || []);
+  const fits = x => (!filt.mac || x.mac === filt.mac) && (!filt.model || x.model === filt.model);
+  const failedAt = sha => (DATA.failed || []).some(f => f.sha === sha && fits(f));
+  const measuredAt = sha => Object.entries(DATA.results).some(([mac, r]) =>
+    (!filt.mac || mac === filt.mac) && Object.entries(r.models).some(([model, byTest]) =>
+      (!filt.model || model === filt.model) && Object.values(byTest).some(byCommit => byCommit[sha])));
+  const state = sha => running.has(sha) ? ["wait", "waiting to run"]
+    : failedAt(sha) ? [measuredAt(sha) ? "part" : "bad", measuredAt(sha) ? "some benchmarks failed" : "failed"]
+    : measuredAt(sha) ? ["run", "benchmarked"] : ["", "not benchmarked"];
   for (const c of ALL.slice(page * PER_PAGE, (page + 1) * PER_PAGE)) {
-    html += `<tr class="push${isMeasured.has(c.sha) ? "" : " flat"}" data-sha="${c.sha}"><td class="clip" title="${esc(c.message)}"><span class="dot${isMeasured.has(c.sha) ? " run" : ""}"${isMeasured.has(c.sha) ? ` title="benchmarked"` : ""}></span><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
+    html += `<tr class="push${isMeasured.has(c.sha) ? "" : " flat"}" data-sha="${c.sha}"><td class="clip" title="${esc(c.message)}"><span class="dot ${state(c.sha)[0]}" title="${state(c.sha)[1]}"></span><code>${c.sha.slice(0, 7)}</code> ${esc(c.message)}</td>` +
             `${change(c.sha, "decode", pick.decode)}${change(c.sha, "prefill", pick.prefill)}<td class="clip">${esc(c.author)}</td><td>${fmtDate(c.date)}</td><td class="muted">${fmtTime(c.date)}</td>` +
             `<td class="num"><input type="checkbox" class="rowpick" value="${c.sha}"${chosen.has(c.sha) ? " checked" : ""}></td></tr>`;
   }
@@ -606,6 +618,18 @@ def _paginate(path: str) -> list:
         return []
 
 
+def in_flight(repo: str) -> list[str]:
+    runs = _gh(f"repos/{repo}/actions/workflows/pie-eval.yml/runs?per_page=50&status=in_progress") or {}
+    queued = _gh(f"repos/{repo}/actions/workflows/pie-eval.yml/runs?per_page=50&status=queued") or {}
+    out = []
+    for run in [*(runs.get("workflow_runs") or []), *(queued.get("workflow_runs") or [])]:
+        title = run.get("display_title") or ""
+        for word in title.replace(",", " ").split():
+            if len(word) >= 7 and all(ch in "0123456789abcdef" for ch in word):
+                out.append(word)
+    return sorted(set(out))
+
+
 def usage(repo: str, authors: dict[str, str]) -> dict[str, dict]:
     pages = _paginate(f"repos/{repo}/actions/workflows/pie-eval.yml/runs?per_page=100")
     out: dict[str, dict] = {}
@@ -633,8 +657,11 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     tests = benchmarks(matrix)
     concurrency = {b["id"]: b["concurrency"] for b in tests}
     t = store.table(Tier.TARGETED)
-    rows = [r for r in t.to_pylist() if r["status"] == str(CellStatus.PASS) and r["pie_commit"]] if t.num_rows else []
+    every = [r for r in t.to_pylist() if r["pie_commit"]] if t.num_rows else []
+    rows = [r for r in every if r["status"] == str(CellStatus.PASS)]
     rows.sort(key=lambda r: r["started_at"])
+    failed = sorted({(r["pie_commit"], r["platform"], r["artifact"]) for r in every
+                     if r["status"] in (str(CellStatus.FAIL), str(CellStatus.NOISY))})
 
     results: dict[str, dict] = {}
     order: list[str] = []
@@ -681,6 +708,8 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
         "benchmarks": tests,
         "verdicts": verdicts(results, commits),
         "commits": commits, "history": all_commits, "results": results, "models": models,
+        "failed": [{"sha": sha, "mac": mac, "model": model} for sha, mac, model in failed],
+        "running": in_flight(repo) if lookup_commits else [],
         "pool": _pool(live, matrix, last),
         "people": people(repo, {c["sha"]: c["author"] for c in [*known.values(), *commits]}) if lookup_commits else [],
     }
