@@ -246,10 +246,10 @@ function before(mac, model, wl, sha) {
 }
 const BASELINES = { mlxlm: "MLX", llamacpp: "llama.cpp" };
 function versus(now, b, name) {
-  if (!b) return `<td></td>`;
-  const part = (tag, k) => now?.[k] && b[k] ? `<span class="${now[k] >= b[k] ? "up" : "down"}">${tag} ${Math.round(100 * now[k] / b[k])}%</span>` : "";
-  const tip = [b.prefill ? `prefill ${Math.round(b.prefill).toLocaleString()}` : "", `decode ${Math.round(b.decode).toLocaleString()} tok/s`].filter(Boolean).join(", ");
-  return `<td class="num" title="${esc(name)} ${esc(b.version)}: ${tip}">${[part("P", "prefill"), part("D", "decode")].filter(Boolean).join(" ")}</td>`;
+  if (!b?.output || !now?.output) return `<td></td>`;
+  const pct = Math.round(100 * now.output / b.output);
+  const tip = `end-to-end output: pie ${Math.round(now.output).toLocaleString()}, ${name} ${b.version} ${Math.round(b.output).toLocaleString()} tok/s`;
+  return `<td class="num ${pct >= 100 ? "up" : "down"}" title="${esc(tip)}">${pct}%</td>`;
 }
 function cell(now, was, key) {
   const v = now?.[key];
@@ -283,9 +283,9 @@ function overview() {
       const base = DATA.baselines?.[mac]?.[model] || {};
       const engines = Object.keys(BASELINES).filter(e => Object.values(base).some(b => b[e]));
       html += `<div class="card"><h2>${esc(r.name)}</h2><table class="compact fixed">` +
-        `<colgroup><col style="width:30%"><col><col><col><col>${engines.map(() => `<col style="width:120px">`).join("")}</colgroup>` +
+        `<colgroup><col style="width:30%"><col><col><col><col>${engines.map(() => `<col style="width:96px">`).join("")}</colgroup>` +
         `<tr><th>benchmark</th><th class="num">prefill</th><th class="num">change</th><th class="num">decode</th><th class="num">change</th>` +
-        engines.map(e => `<th class="num" title="pie as a share of ${BASELINES[e]} on the same weights">vs ${BASELINES[e]}</th>`).join("") + `</tr>`;
+        engines.map(e => `<th class="num" title="pie's end-to-end output tok/s as a share of ${BASELINES[e]}'s on the same weights">vs ${BASELINES[e]}</th>`).join("") + `</tr>`;
       for (const b of tests) {
         const now = byTest[b.id][sel], was = before(mac, model, b.id, sel);
         html += `<tr><td class="clip">${esc(b.name)}</td>${cell(now, was, "prefill" + unit)}${cell(now, was, "decode" + unit)}` +
@@ -681,10 +681,8 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     baselines: dict[str, dict] = {}
     for r in rows:
         if r["engine"] != "pie" and r["workload"] in concurrency:
-            single = concurrency[r["workload"]] == 1
             baselines.setdefault(r["platform"], {}).setdefault(baseline_of.get(r["artifact"], r["artifact"]), {}).setdefault(r["workload"], {})[r["engine"]] = {
-                "prefill": r["prefill_tok_s"] if single else None,
-                "decode": r["decode_tok_s"] if single else r["output_tok_s"], "version": r["engine_version"] or ""}
+                "output": r["output_tok_s"], "version": r["engine_version"] or ""}
     rows = [r for r in rows if r["engine"] == "pie"]
     failed = sorted({(r["pie_commit"], r["platform"], r["artifact"]) for r in every
                      if r["status"] == str(CellStatus.FAIL)
@@ -706,7 +704,7 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
         single = concurrency[r["workload"]] == 1
         mac["models"][r["artifact"]][r["workload"]][r["pie_commit"]] = {
             "prefill": r["prefill_tok_s"] if single else None, "prefill_tflops": tf["prefill_tflops"],
-            "decode": r["decode_tok_s"] if single else r["output_tok_s"], "decode_tflops": tf["decode_tflops"]}
+            "decode": r["decode_tok_s"] if single else r["output_tok_s"], "decode_tflops": tf["decode_tflops"], "output": r["output_tok_s"]}
         have.add(r["artifact"])
 
     known = {c["sha"]: c for c in (history(pie_repo) if lookup_commits else [])}
