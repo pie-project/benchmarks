@@ -67,6 +67,11 @@ class SglangEngine(Engine):
             weights = float(self.artifact.expected_gib or 0.0)
             if weights and card and weights / card > 0.5:
                 gmu = max(float(gmu), 0.95)
+            elif self.artifact.family == "kimi_k3" and card >= 80:
+                # past the static pool SGLang keeps only graphs and activations; Kimi-K3's MoE
+                # prefill wanted 1.5 GiB more than 0.85 left on 80/96 GB cards (nightly 36103857543),
+                # while a 48 GB L40S at 0.75 has no KV left at c256 (36212036845)
+                gmu = min(float(gmu), 0.75)
             args += ["--gpu-mem-util", str(gmu)]  # -> mem_fraction_static
         graph_bs = r.get("cuda_graph_max_bs")
         if graph_bs is None:
