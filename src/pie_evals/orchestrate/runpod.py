@@ -433,15 +433,17 @@ def runner_pod_id(runner: dict) -> str | None:
     return name[len("runpod-"):] if name.startswith("runpod-") else None
 
 
-def reusable_pod(labels: list[str], runners: list[dict]) -> tuple[str, list[str]] | None:
+def reusable_pod(labels: list[str], runners: list[dict], running: set[str] | None = None) -> tuple[str, list[str]] | None:
     """A live pod whose runner carries every wanted label: its pod id and labels.
     One pod per hardware configuration is the point — a second run on the same
-    GPU type queues on it instead of renting a twin."""
+    GPU type queues on it instead of renting a twin. ``running`` is the set of
+    pods RunPod reports RUNNING: a runner stays online for a while after its pod
+    is gone, and a run queued on it waits forever (4090/5090, nightly 36212046002)."""
     want = {x.lower() for x in labels}
     for r in runners:
         pid = runner_pod_id(r)
         have = {str(lab["name"]).lower() for lab in r.get("labels", [])}
-        if pid and r.get("status") == "online" and want <= have:
+        if pid and r.get("status") == "online" and want <= have and (running is None or pid in running):
             return pid, sorted(x for x in have if x not in {"self-hosted", "linux", "x64"} and not x.startswith("img-"))
     return None
 

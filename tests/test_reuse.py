@@ -18,6 +18,9 @@ def test_a_live_pod_with_every_label_is_reused():
     assert runpod.reusable_pod(["self-hosted", "linux", "l40s-x1"], runners)[0] == "aaa"
     assert runpod.reusable_pod(["self-hosted", "linux", "a100-pcie-x1"], runners) is None
     assert runpod.busy_pods(runners) == {"aaa", "bbb"}
+    # a runner still online after RunPod dropped its pod is not a place to queue
+    assert runpod.reusable_pod(["l40s-x1"], runners, running={"bbb"})[0] == "bbb"
+    assert runpod.reusable_pod(["l40s-x1"], runners, running=set()) is None
 
 
 def test_reap_spares_a_busy_pod_until_the_hard_cap(monkeypatch):

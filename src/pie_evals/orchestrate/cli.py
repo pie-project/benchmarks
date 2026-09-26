@@ -252,11 +252,16 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
         except Exception as e:
             runners = []
             click.echo(f"runner list unavailable ({str(e)[:80]}); launching", err=True)
+        try:
+            running = {p["id"] for p in runpod.list_pods() if p.get("desiredStatus") == "RUNNING"}
+        except Exception as e:
+            running = set()  # unknown: rent rather than queue on a pod that may be gone
+            click.echo(f"pod list unavailable ({str(e)[:80]}); not reusing", err=True)
         # the pod as planned first, then what a fallback pod would have seated
         for pid in [x.strip() for x in platform.split(",") if x.strip()]:
             p = m.platforms[pid]
             lab = [x for x in want if x not in m.platforms or m.platforms[x].count <= p.count] if want else p.runner_labels
-            found = runpod.reusable_pod(lab, runners)
+            found = runpod.reusable_pod(lab, runners, running)
             if found:
                 pod_id, have = found
                 click.echo(f"reusing pod {pod_id} ({','.join(have)}): its runner carries every label {pid} needs", err=True)
