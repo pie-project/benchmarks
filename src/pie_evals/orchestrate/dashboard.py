@@ -262,9 +262,13 @@ function overview() {
     (c.author ? `<span><img class="avatar" src="https://github.com/${esc(c.author)}.png?size=40">${esc(c.author)}</span>` : "") +
     (c.date ? `<span title="${fmtDate(c.date)} ${fmtTime(c.date)}">${relTime(c.date)}</span>` : "") +
     `</div></div>`;
+  const here = [...new Set(Object.values(DATA.results).flatMap(r => Object.entries(r.models)
+    .filter(([, byTest]) => DATA.benchmarks.some(b => byTest[b.id]?.[sel])).map(([model]) => model)))];
+  const shown = here.includes(filt.model) ? filt.model : here[0] || "";
   let any = false;
   for (const [mac, r] of Object.entries(DATA.results)) {
     for (const [model, byTest] of Object.entries(r.models)) {
+      if (model !== shown) continue;
       const tests = DATA.benchmarks.filter(b => byTest[b.id]?.[sel]);
       if (!tests.length) continue;
       any = true;
@@ -486,7 +490,8 @@ function draw() {
   document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { tab = b.textContent; draw(); });
   document.getElementById("controls").hidden = tab !== "Overview" && tab !== "History";
   document.getElementById("unit").hidden = tab !== "Overview";
-  document.getElementById("fmac").hidden = document.getElementById("fmodel").hidden = tab !== "History";
+  document.getElementById("fmac").hidden = tab !== "History";
+  document.getElementById("fmodel").hidden = tab !== "History" && tab !== "Overview";
   const bench = document.getElementById("bench");
   bench.hidden = tab !== "History";
   bench.disabled = !chosen.size;
