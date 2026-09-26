@@ -265,8 +265,12 @@ function overview() {
   const here = [...new Set(Object.values(DATA.results).flatMap(r => Object.entries(r.models)
     .filter(([, byTest]) => DATA.benchmarks.some(b => byTest[b.id]?.[sel])).map(([model]) => model)))];
   const shown = here.includes(filt.model) ? filt.model : here[0] || "";
+  const macsHere = Object.entries(DATA.results).filter(([, r]) => Object.entries(r.models)
+    .some(([model, byTest]) => model === shown && DATA.benchmarks.some(b => byTest[b.id]?.[sel]))).map(([mac]) => mac);
+  const onMac = macsHere.includes(filt.mac) ? filt.mac : macsHere[0] || "";
   let any = false;
   for (const [mac, r] of Object.entries(DATA.results)) {
+    if (mac !== onMac) continue;
     for (const [model, byTest] of Object.entries(r.models)) {
       if (model !== shown) continue;
       const tests = DATA.benchmarks.filter(b => byTest[b.id]?.[sel]);
@@ -490,7 +494,7 @@ function draw() {
   document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { tab = b.textContent; draw(); });
   document.getElementById("controls").hidden = tab !== "Overview" && tab !== "History";
   document.getElementById("unit").hidden = tab !== "Overview";
-  document.getElementById("fmac").hidden = tab !== "History";
+  document.getElementById("fmac").hidden = tab !== "History" && tab !== "Overview";
   document.getElementById("fmodel").hidden = tab !== "History" && tab !== "Overview";
   const bench = document.getElementById("bench");
   bench.hidden = tab !== "History";
