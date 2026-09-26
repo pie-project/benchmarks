@@ -67,7 +67,7 @@ class VllmEngine(Engine):
         gmu = r.get("gpu_mem_util", 0.90)
         if gmu is not None:
             card = float(self.platform.memory_gib or 0.0) / max(1, int(self.mode.tp))
-            if self.artifact.family == "kimi_k3" and 0 < card < 80 and workload_concurrency(workload) >= 128:
+            if self.artifact.family == "kimi_k3" and 40 <= card < 80 and workload_concurrency(workload) >= 128:
                 # Kimi-K3's MoE activations at c256 outgrow what vLLM's profile run leaves past 0.9
                 # on a 48 GB L40S (nightly 36212036845 s06: OOM on 1.38 GiB); 80 GB cards serve it at 0.9
                 gmu = min(float(gmu), 0.85)
