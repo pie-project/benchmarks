@@ -197,10 +197,11 @@ const filt = { mac: "", model: "" };
 const chosen = new Set();
 const testName = id => DATA.benchmarks.find(b => b.id === id)?.name || id;
 function fillFilters() {
-  const macs = Object.keys(DATA.results), models = [...new Set(macs.flatMap(m => Object.keys(DATA.results[m].models)))];
+  const macs = [...new Set([...Object.keys(DATA.results), ...RUNNABLE.map(m => m.id)])];
+  const models = [...new Set([...macs.flatMap(m => Object.keys(DATA.results[m]?.models || {})), ...DATA.models.map(m => m.id)])];
   const opts = (all, ids, name, on) => `<option value="">${all}</option>` + ids.map(id => `<option value="${esc(id)}"${id === on ? " selected" : ""}>${esc(name(id))}</option>`).join("");
   const fm = document.getElementById("fmac"), fo = document.getElementById("fmodel");
-  fm.innerHTML = opts("all machines", macs, id => DATA.results[id].name, filt.mac);
+  fm.innerHTML = opts("all machines", macs, id => DATA.results[id]?.name || macName(id), filt.mac);
   fo.innerHTML = opts("all models", models, modelName, filt.model);
   fm.onchange = () => { filt.mac = fm.value; draw(); };
   fo.onchange = () => { filt.model = fo.value; draw(); };
