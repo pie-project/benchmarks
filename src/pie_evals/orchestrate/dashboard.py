@@ -12,6 +12,7 @@ from .matrix import Matrix
 from .store import Store
 
 DEFAULT_MODEL = "qwen3.5-0.8b-bf16"
+SHOWN_MODELS = ("qwen3.5-0.8b-bf16", "qwen3.6-27b-mlx4")
 
 PAGE = """<!doctype html>
 <html lang="en">
@@ -665,7 +666,7 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     measured = {c["sha"] for c in commits}
     all_commits = [c for c in known.values() if c["sha"] not in measured]
 
-    models = mac_models(matrix)
+    models = [m for m in mac_models(matrix) if m["id"] in SHOWN_MODELS]
     for m in models:
         m["has_results"] = m["id"] in have
     return {
