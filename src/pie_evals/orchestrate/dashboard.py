@@ -19,7 +19,7 @@ PAGE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Monitor</title>
+<title>Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2067.89%2067.89'%3E%3Cpath%20d='M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z'%20fill='none'%20stroke='%23000'%20stroke-miterlimit='10'%20stroke-width='8'/%3E%3C/svg%3E">
 <style>
   * { box-sizing: border-box; }
@@ -661,7 +661,8 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     rows = [r for r in every if r["status"] == str(CellStatus.PASS)]
     rows.sort(key=lambda r: r["started_at"])
     failed = sorted({(r["pie_commit"], r["platform"], r["artifact"]) for r in every
-                     if r["status"] in (str(CellStatus.FAIL), str(CellStatus.NOISY))})
+                     if r["status"] == str(CellStatus.FAIL)
+                     and r["workload"] in concurrency and r["artifact"] in SHOWN_MODELS})
 
     results: dict[str, dict] = {}
     order: list[str] = []
