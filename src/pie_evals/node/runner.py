@@ -451,6 +451,11 @@ class NodeRunner:
         return engine, model_path
 
     # ------------------------------------------------------------------ one cell
+    def _noise_bound(self, cell: Cell) -> float:
+        policy = self.job.repetition
+        tight = policy.cov_noisy_threshold if int(cell.mode.tp) <= 1 else policy.cov_noisy_threshold_concurrent
+        return tight if cell.workload.kind.value in ("single_stream", "control_aa", "long_context") else policy.cov_noisy_threshold_concurrent
+
     def _run_cell(self, cell: Cell, engine, snapshot: Path, engine_version: str, recipe: dict, recipe_name: str, fingerprint: dict, machine_state: dict) -> Record:
         t0 = time.monotonic()
         cell = cell.model_copy(update={"engine_version": engine_version})
@@ -474,17 +479,25 @@ class NodeRunner:
                     res = engine.run(cell.workload, common, cell_out / f"r{len(rounds)}", self.cell_timeout_s(cell))
                     results.append(res)
                     rounds.append(self._primary(res.perf))
+            elif cov(rounds) > self._noise_bound(cell):
+                # the policy's confirmation rounds: a first round still warming (a fresh pod's
+                # autotune, H100 nightly 36212062773: 6344/6981/6903) settles in the next ones
+                for _ in range(min(policy.confirm_rounds, policy.max_rounds - len(rounds))):
+                    res = engine.run(cell.workload, common, cell_out / f"r{len(rounds)}", self.cell_timeout_s(cell))
+                    results.append(res)
+                    rounds.append(self._primary(res.perf))
         except EngineLaunchError as e:
             self.log(f"{cell.workload.id}/{cell.program.id}: {e.error_class} {e}")
             return self._failed(cell, e.error_class, str(e), fingerprint, duration=time.monotonic() - t0)
         except Exception as e:
             self.log(f"{cell.workload.id}/{cell.program.id}: harness exception {e}\n{traceback.format_exc()}")
             return self._failed(cell, ErrorClass.HARNESS_INVALID, f"harness: {e}", fingerprint, duration=time.monotonic() - t0)
-        # median round is the record; rounds and CoV travel with it
-        med_idx = sorted(range(len(rounds)), key=lambda i: rounds[i])[len(rounds) // 2]
+        # median of the steady rounds (the last min_rounds) is the record; every round travels with it
+        steady = list(range(len(rounds)))[-policy.min_rounds:] if policy.min_rounds > 1 else list(range(len(rounds)))
+        med_idx = sorted(steady, key=lambda i: rounds[i])[len(steady) // 2]
         perf: PerfMetrics = results[med_idx].perf
         perf.rounds = rounds
-        perf.cov = cov(rounds)
+        perf.cov = cov([rounds[i] for i in steady])
         perf.load_s = results[0].duration_s - (results[med_idx].duration_s if len(results) > 1 else 0) if len(results) > 1 else None
         status = CellStatus.PASS
         invalid = None
@@ -492,7 +505,7 @@ class NodeRunner:
         # single-stream rounds spread like a concurrent shape's (gemma-4-E4B tp2 on
         # L40S x2: A/A spread 2.1 % against the 2 % bound, every cell withheld)
         tight = policy.cov_noisy_threshold if int(cell.mode.tp) <= 1 else policy.cov_noisy_threshold_concurrent
-        thr = tight if cell.workload.kind.value in ("single_stream", "control_aa", "long_context") else policy.cov_noisy_threshold_concurrent
+        thr = self._noise_bound(cell)
         if perf.failed:
             status, invalid = CellStatus.FAIL, f"{perf.failed} of {perf.requests} requests failed"
         elif len(rounds) >= 2 and perf.cov > thr:
