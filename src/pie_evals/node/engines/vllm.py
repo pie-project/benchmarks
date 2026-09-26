@@ -71,6 +71,11 @@ class VllmEngine(Engine):
                 # Kimi-K3's MoE activations at c256 outgrow what vLLM's profile run leaves past 0.9
                 # on a 48 GB L40S (nightly 36212036845 s06: OOM on 1.38 GiB); 80 GB cards serve it at 0.9
                 gmu = min(float(gmu), 0.85)
+            elif self.mode.spec_dec and 0 < card < 40:
+                # a latency boot seats one sequence and hands the rest to kv, then the speculative
+                # warm-up asks 394 MiB past 0.9 on a 24 GB 4090 (gemma-4-E4B ngram, nightly
+                # 36226645744 s05; Kimi-K3 on the 5090 the same); the tput boots of the cell pass
+                gmu = min(float(gmu), 0.85)
             args += ["--gpu-mem-util", str(gmu)]
         args += ["--max-model-len", str(max_model_len_for(workload))]
 

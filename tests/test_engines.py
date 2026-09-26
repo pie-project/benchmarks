@@ -587,3 +587,12 @@ def test_vllm_kimi_leaves_activation_room_at_c256_on_a_48gb_card(tmp_path):
     assert flag_value(argv, "--gpu-mem-util") == "0.85"
     argv = argv_for(make(VllmEngine, plat=platform(count=1), art=kimi, workload=WORKLOADS["c32"]), WORKLOADS["c32"], tmp_path)
     assert flag_value(argv, "--gpu-mem-util") == "0.9"
+
+
+def test_vllm_speculative_boots_leave_warmup_room_on_small_cards(tmp_path):
+    small = platform(count=1).model_copy(update={"memory_gib": 24.0})
+    ss = WORKLOADS["ss-128-64"]
+    argv = argv_for(make(VllmEngine, plat=small, mode=Mode(id="ngram", spec_dec="ngram"), workload=ss), ss, tmp_path)
+    assert flag_value(argv, "--gpu-mem-util") == "0.85"
+    argv = argv_for(make(VllmEngine, plat=small, workload=ss), ss, tmp_path)
+    assert flag_value(argv, "--gpu-mem-util") == "0.9"
