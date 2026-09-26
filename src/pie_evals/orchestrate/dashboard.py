@@ -206,7 +206,7 @@ function fillFilters() {
   if (!macs.includes(filt.mac)) filt.mac = macs[0] || "";
   if (!models.includes(filt.model)) filt.model = models[0] || "";
   const fm = document.getElementById("fmac"), fo = document.getElementById("fmodel");
-  fm.innerHTML = opts("all machines", macs, id => DATA.results[id]?.name || macName(id), filt.mac);
+  fm.innerHTML = opts("all machines", macs, id => id, filt.mac);
   fo.innerHTML = opts("all models", models, modelName, filt.model);
   fm.onchange = () => { filt.mac = fm.value; draw(); };
   fo.onchange = () => { filt.model = fo.value; draw(); };
