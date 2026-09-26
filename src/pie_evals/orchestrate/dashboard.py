@@ -202,7 +202,9 @@ const testName = id => DATA.benchmarks.find(b => b.id === id)?.name || id;
 function fillFilters() {
   const macs = [...new Set([...Object.keys(DATA.results), ...RUNNABLE.map(m => m.id)])];
   const models = [...new Set([...macs.flatMap(m => Object.keys(DATA.results[m]?.models || {})), ...DATA.models.map(m => m.id)])];
-  const opts = (all, ids, name, on) => `<option value="">${all}</option>` + ids.map(id => `<option value="${esc(id)}"${id === on ? " selected" : ""}>${esc(name(id))}</option>`).join("");
+  const opts = (all, ids, name, on) => ids.map(id => `<option value="${esc(id)}"${id === on ? " selected" : ""}>${esc(name(id))}</option>`).join("");
+  if (!macs.includes(filt.mac)) filt.mac = macs[0] || "";
+  if (!models.includes(filt.model)) filt.model = models[0] || "";
   const fm = document.getElementById("fmac"), fo = document.getElementById("fmodel");
   fm.innerHTML = opts("all machines", macs, id => DATA.results[id]?.name || macName(id), filt.mac);
   fo.innerHTML = opts("all models", models, modelName, filt.model);
@@ -262,12 +264,7 @@ function overview() {
     (c.author ? `<span><img class="avatar" src="https://github.com/${esc(c.author)}.png?size=40">${esc(c.author)}</span>` : "") +
     (c.date ? `<span title="${fmtDate(c.date)} ${fmtTime(c.date)}">${relTime(c.date)}</span>` : "") +
     `</div></div>`;
-  const here = [...new Set(Object.values(DATA.results).flatMap(r => Object.entries(r.models)
-    .filter(([, byTest]) => DATA.benchmarks.some(b => byTest[b.id]?.[sel])).map(([model]) => model)))];
-  const shown = here.includes(filt.model) ? filt.model : here[0] || "";
-  const macsHere = Object.entries(DATA.results).filter(([, r]) => Object.entries(r.models)
-    .some(([model, byTest]) => model === shown && DATA.benchmarks.some(b => byTest[b.id]?.[sel]))).map(([mac]) => mac);
-  const onMac = macsHere.includes(filt.mac) ? filt.mac : macsHere[0] || "";
+  const shown = filt.model, onMac = filt.mac;
   let any = false;
   for (const [mac, r] of Object.entries(DATA.results)) {
     if (mac !== onMac) continue;
@@ -286,7 +283,7 @@ function overview() {
       html += `</table></div>`;
     }
   }
-  if (!any) html += `<div class="card muted">No benchmarks ran on this commit.</div>`;
+  if (!any) html += `<div class="card muted">No results for ${esc(modelName(shown))} on ${esc(macName(onMac))} at this commit.</div>`;
   main.innerHTML = html;
   document.getElementById("back").onclick = e => { e.preventDefault(); tab = "History"; draw(); };
 }
