@@ -1,1 +1,20 @@
-[]
+[
+ {
+  "cell_id": "8acd7ef06e162858",
+  "cell_key": "pie|m5-max-48g|Qwen/Qwen3.5-0.8B@bf16/hf_safetensors|lc-1k-128|text-completion-bench|tp1",
+  "engine": "pie",
+  "platform": "m5-max-48g",
+  "artifact": "qwen3.5-0.8b-bf16",
+  "workload": "lc-1k-128",
+  "program": "text-completion-bench",
+  "mode": "tp1",
+  "metric": "decode_tok_s",
+  "value": 249.67546206651917,
+  "delta_rel": -0.04551093709047239,
+  "threshold_rel": 0.02901680384404861,
+  "kind": "regression",
+  "pie_commit": "647abfcb7e6b4c99634c001241b2ba8751d42f16",
+  "engine_version": "647abfcb7",
+  "family": "qwen3_5"
+ }
+]
