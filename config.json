@@ -4,7 +4,8 @@
     "qwen3.6-27b-mlx4"
   ],
   "machines": [
-    "m5-max-48g"
+    "m5-max-48g",
+    "m5-max-128g"
   ],
   "benchmarks": [
     "ss-128-64",
