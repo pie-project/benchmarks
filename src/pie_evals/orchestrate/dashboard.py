@@ -117,6 +117,13 @@ PAGE = """<!doctype html>
   .modal[hidden] { display: none; }
   .sheet { position: relative; background: #fff; border-radius: 10px; width: min(640px, 100%); max-height: 84vh; overflow: auto; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
   .sheet .card { border: 0; margin: 0; }
+  .sheet-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
+  .sheet-head h2 { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chips code { background: #f0f3f6; border-radius: 999px; padding: 2px 10px; font-size: 12px; color: #424a53; }
+  .group { border: 1px solid #eaeef2; border-radius: 12px; padding: 4px 14px 6px; margin-bottom: 12px; }
+  .group .label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #7a838d; margin: 10px 0 2px; }
+  .sheet-foot { position: sticky; bottom: 0; background: #fff; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0 2px; border-top: 1px solid #eaeef2; }
   .tag.new { background: #fff8c5; }
   .signin-wrap { min-height: calc(100vh - 57px - 68px); display: flex; align-items: center; justify-content: center; padding-bottom: 12vh; box-sizing: border-box; }
   .signin-page { width: 100%; max-width: 380px; margin: 0; padding: 32px 28px; text-align: center; display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
@@ -277,14 +284,13 @@ function openRuns(shas) {
   const list = Array.isArray(shas) ? shas : [shas];
   const sha = list[0], c = commitOf(sha), parent = list.length > 1 ? null : parentOf(sha);
   const row = (kind, x, on) => `<label class="toggle"><span>${esc(x.name)}</span><input type="checkbox" class="switch" data-kind="${kind}" value="${x.id}" ${on ? "checked" : ""}></label>`;
-  sheet(`<h2>Bench ${list.length > 1 ? `${list.length} commits` : `<code>${sha.slice(0, 7)}</code>`}</h2>` +
-    `<p class="muted">${list.length > 1 ? list.map(x => x.slice(0, 7)).join(", ") : esc(c.message)}</p>` +
-    `<p class="muted">A commit that already has results is measured again and the new numbers replace the old.</p>` +
-    `<div class="label">Models</div>${DATA.models.map(m => row("models", m, false)).join("")}` +
-    `<div class="label">Machines</div>${RUNNABLE.map(m => row("machines", m, true)).join("") || `<div class="muted">No machine is connected.</div>`}` +
-    `<div class="label">Benchmarks</div>${DATA.benchmarks.map(b => row("benchmarks", b, true)).join("")}` +
-    (parent ? `<label class="toggle"><span>Also measure the commit before (<code>${parent.sha.slice(0, 7)}</code>) to compare</span><input type="checkbox" class="switch" id="parent" checked></label>` : "") +
-    `<div style="margin-top:12px"><button class="act" id="run">Run</button> <span id="msg" class="muted"></span></div>`);
+  sheet(`<div class="sheet-head"><h2>Bench</h2>` +
+    `<div class="chips">${list.map(x => `<code>${x.slice(0, 7)}</code>`).join("")}</div></div>` +
+    `<div class="group"><div class="label">Models</div>${DATA.models.map(m => row("models", m, false)).join("")}</div>` +
+    `<div class="group"><div class="label">Machines</div>${RUNNABLE.map(m => row("machines", m, true)).join("") || `<div class="muted">No machine is connected.</div>`}</div>` +
+    `<div class="group"><div class="label">Benchmarks</div>${DATA.benchmarks.map(b => row("benchmarks", b, true)).join("")}` +
+    (parent ? `<label class="toggle"><span>Also measure <code>${parent.sha.slice(0, 7)}</code>, the commit before</span><input type="checkbox" class="switch" id="parent" checked></label>` : "") +
+    `</div><div class="sheet-foot"><span id="msg" class="muted"></span><button class="act" id="run">Run</button></div>`);
   document.getElementById("run").onclick = async () => {
     const pick = k => [...document.querySelectorAll(`#sheet input[data-kind=${k}]:checked`)].map(x => x.value);
     const inputs = { models: pick("models").join(","), macs: pick("machines").join(","), benchmarks: pick("benchmarks").join(",") };
