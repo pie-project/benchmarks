@@ -15,7 +15,7 @@ from typing import Any
 from pie_evals.schema import EngineName, WorkloadSpec
 
 from .base import Engine, register
-from .shape import is_prefix_workload, max_model_len_for
+from .shape import is_prefix_workload, max_model_len_for, workload_concurrency
 
 _VLLM_KV_DTYPES = {"bf16": "auto", "fp16": "auto", "auto": "auto", "fp8": "fp8", "fp8_e4m3": "fp8_e4m3", "fp8_e5m2": "fp8_e5m2"}
 
@@ -66,6 +66,11 @@ class VllmEngine(Engine):
         args: list[str] = ["--tp-size", str(max(1, int(self.mode.tp)))]
         gmu = r.get("gpu_mem_util", 0.90)
         if gmu is not None:
+            card = float(self.platform.memory_gib or 0.0) / max(1, int(self.mode.tp))
+            if self.artifact.family == "kimi_k3" and 0 < card < 80 and workload_concurrency(workload) >= 128:
+                # Kimi-K3's MoE activations at c256 outgrow what vLLM's profile run leaves past 0.9
+                # on a 48 GB L40S (nightly 36212036845 s06: OOM on 1.38 GiB); 80 GB cards serve it at 0.9
+                gmu = min(float(gmu), 0.85)
             args += ["--gpu-mem-util", str(gmu)]
         args += ["--max-model-len", str(max_model_len_for(workload))]
 

@@ -576,3 +576,12 @@ def test_baseline_jit_caches_live_on_the_volume():
         env = make(cls).env
         assert env["TRITON_CACHE_DIR"].endswith("jit/triton") and env["TORCHINDUCTOR_CACHE_DIR"].endswith("jit/inductor")
     assert make(VllmEngine).env["VLLM_CACHE_ROOT"].endswith("jit/vllm")
+
+
+def test_vllm_kimi_leaves_activation_room_at_c256_on_a_48gb_card(tmp_path):
+    kimi = artifact(id="kimi-k3-mini8", base_model="moonshotai/Kimi-K3", family="kimi_k3", expected_gib=22.0)
+    c256 = WorkloadSpec(id="c256", kind="concurrency", params={"concurrency": 256, "num_requests": 1024, "prefill": 128, "decode": 128})
+    argv = argv_for(make(VllmEngine, plat=platform(count=1), art=kimi, workload=c256), c256, tmp_path)
+    assert flag_value(argv, "--gpu-mem-util") == "0.85"
+    argv = argv_for(make(VllmEngine, plat=platform(count=1), art=kimi, workload=WORKLOADS["c32"]), WORKLOADS["c32"], tmp_path)
+    assert flag_value(argv, "--gpu-mem-util") == "0.9"
