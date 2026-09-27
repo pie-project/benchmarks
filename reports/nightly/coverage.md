@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 2410 |
-| fail | 312 |
+| pass | 2423 |
+| fail | 311 |
 | declared_unsupported | 9671 |
-| not_run | 3622 |
-| noisy | 135 |
+| not_run | 3618 |
+| noisy | 127 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -136,8 +136,7 @@
 | pie | a100-x2 | qwen3.6-27b-mlx4 | ss-128-64 | classifier-free-guidance | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | a100-x2 | qwen3.6-35b-a3b-mini5 | ss-128-64 | rs-speculative-decoding | tp2,rs | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | a100-x2 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | rs-speculative-decoding | tp2,rs | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | h100-pcie-x1 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp1 | fail |  |  |
-| pie | h100-pcie-x1 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
+| pie | h100-pcie-x1 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
 | pie | l40s-x1 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp1 | fail |  |  |
 | pie | l40s-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gemma-4-31b-mlx4: 'Task error: File reconstruction error: IO Error: No space left on device ( |
 | pie | l40s-x1 | gemma-4-31b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
@@ -332,12 +331,10 @@
 | sglang | a100-x2 | qwen3.5-0.8b-bf16 | c32 | text-completion-bench | tp2 | noisy |  |  |
 | sglang | a100-x2 | qwen3.5-0.8b-bf16 | mixed-256 | text-completion-bench | tp2 | noisy |  |  |
 | sglang | a100-x2 | qwen3.5-0.8b-bf16 | c8 | cacheback-speculative-decoding | tp2,ngram | noisy |  |  |
-| pie | h100-pcie-x1 | gemma-4-e4b-bf16 | c256 | text-completion-bench | tp1 | noisy |  |  |
+| pie | h100-pcie-x1 | gemma-4-e4b-bf16 | c64 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | gemma-4-e4b-bf16 | ss-128-64 | cacheback-speculative-decoding | tp1,ngram | noisy |  |  |
-| pie | h100-pcie-x1 | gpt-oss-20b-mxfp4 | lc-1k-128 | snapkv-eviction | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4 | ss-128-64 | cacheback-speculative-decoding | tp1,ngram | noisy |  |  |
 | sglang | h100-pcie-x1 | gpt-oss-20b-mxfp4 | c8 | cacheback-speculative-decoding | tp1,ngram | noisy |  |  |
-| pie | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | c64 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | ss-128-64 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | ss-512-256 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | c8 | text-completion-bench | tp1 | noisy |  |  |
@@ -346,8 +343,6 @@
 | vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | lc-2k-128 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | lc-8k-128 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | lc-32k-128 | text-completion-bench | tp1 | noisy |  |  |
-| vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
-| vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | mixed-256 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | ss-128-64 | cacheback-speculative-decoding | tp1,ngram | noisy |  |  |
 | vllm | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | c8 | cacheback-speculative-decoding | tp1,ngram | noisy |  |  |
 | sglang | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | ss-128-64 | text-completion-bench | tp1 | noisy |  |  |
@@ -359,16 +354,12 @@
 | sglang | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | lc-8k-128 | text-completion-bench | tp1 | noisy |  |  |
 | sglang | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | lc-32k-128 | text-completion-bench | tp1 | noisy |  |  |
 | sglang | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | prefix-1k-x64 | prefix-tree-kv-cache | tp1 | noisy |  |  |
-| sglang | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | ss-128-64 | cacheback-speculative-decoding | tp1,ngram | noisy |  |  |
 | sglang | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | c8 | cacheback-speculative-decoding | tp1,ngram | noisy |  |  |
+| pie | h100-pcie-x1 | qwen3.5-0.8b-bf16 | c32 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | ss-128-64 | text-completion-bench | tp1 | noisy |  |  |
-| vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | c8 | text-completion-bench | tp1 | noisy |  |  |
-| vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | c64 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | c256 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | lc-1k-128 | text-completion-bench | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | lc-2k-128 | text-completion-bench | tp1 | noisy |  |  |
-| vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | lc-32k-128 | text-completion-bench | tp1 | noisy |  |  |
-| vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | prefix-1k-x64 | prefix-tree-kv-cache | tp1 | noisy |  |  |
 | vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | c8 | cacheback-speculative-decoding | tp1,ngram | noisy |  |  |
 | sglang | h100-pcie-x1 | qwen3.5-0.8b-bf16 | c8 | text-completion-bench | tp1 | noisy |  |  |
 | sglang | h100-pcie-x1 | qwen3.5-0.8b-bf16 | lc-8k-128 | text-completion-bench | tp1 | noisy |  |  |
@@ -974,10 +965,6 @@
 | pie | a100-x2 | qwen3.6-35b-a3b-mlx4 | kv-oversub | text-completion-bench | tp2 | not_run |  |  |
 | pie | a100-x2 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | classifier-free-guidance | tp2 | not_run |  |  |
 | pie | h100-pcie-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
-| pie | h100-pcie-x1 | gemma-4-31b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | h100-pcie-x1 | gemma-4-31b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
-| pie | h100-pcie-x1 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
-| pie | h100-pcie-x1 | qwen3.6-27b-gguf-q4km | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | deepseek-v4-flash-mini5 | control-aa | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | deepseek-v4-flash-mini5 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | deepseek-v4-flash-mini5 | ss-512-256 | text-completion-bench | tp1 | not_run |  |  |
@@ -4124,11 +4111,11 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | deepseek_v4 | · | · | · | · | · | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | · | · | · | · | · | · |
 | deepseek_v41 | · | · | · | · | · | · | 0/23 | 0/23 | 0/23 | 0/23 | 0/23 | · | · | · | · | · | · |
-| gemma4 | 38/42 | 0/42 | 0/42 | 36/42 | 34/42 | 33/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 39/42 | 36/42 | 0/42 | 15/42 | 36/42 |
+| gemma4 | 38/42 | 0/42 | 0/42 | 39/42 | 34/42 | 33/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 39/42 | 36/42 | 0/42 | 15/42 | 36/42 |
 | gemma4_moe | 21/21 | · | · | 21/21 | 20/21 | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | 0/21 | 21/21 | · | · | 17/21 | 21/21 |
 | glm5_next | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 14/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | 14/14 | 14/14 |
-| gpt_oss | 42/63 | 0/63 | 0/63 | 61/63 | 60/63 | 53/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 57/63 | 53/63 | 0/63 | 63/63 | 21/63 |
+| gpt_oss | 42/63 | 0/63 | 0/63 | 63/63 | 60/63 | 53/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 57/63 | 53/63 | 0/63 | 63/63 | 21/63 |
 | kimi_k3 | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 1/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | · | 13/14 |
-| qwen3_5 | 15/16 | 0/16 | 0/16 | 16/16 | 15/16 | 13/16 | 0/20 | 0/20 | 0/20 | 6/20 | 6/20 | 8/16 | 12/16 | 16/16 | 0/16 | 16/16 | 15/16 |
-| qwen3_6 | 26/30 | 0/30 | 0/30 | 28/30 | 26/30 | 14/30 | 0/38 | 0/38 | 0/38 | 6/38 | 6/38 | 0/30 | 29/30 | 30/30 | 0/30 | 18/30 | 12/30 |
+| qwen3_5 | 15/16 | 0/16 | 0/16 | 15/16 | 15/16 | 13/16 | 0/20 | 0/20 | 0/20 | 6/20 | 6/20 | 8/16 | 12/16 | 16/16 | 0/16 | 16/16 | 15/16 |
+| qwen3_6 | 26/30 | 0/30 | 0/30 | 30/30 | 26/30 | 14/30 | 0/38 | 0/38 | 0/38 | 6/38 | 6/38 | 0/30 | 29/30 | 30/30 | 0/30 | 18/30 | 12/30 |
 | qwen3_6_moe | 32/32 | 0/32 | 0/32 | 32/32 | 32/32 | 25/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 29/32 | 31/32 | 0/32 | 27/32 | 2/32 |
