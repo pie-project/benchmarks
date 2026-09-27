@@ -246,6 +246,8 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
     errors = []
     want = [x.strip() for x in labels.split(",") if x.strip()] if labels else None
     lab = None
+    runners: list = []
+    running: set | None = None  # None: no reuse
     if reuse and runner_pat and not exec_script:
         try:
             runners = runpod.list_runners(repo, runner_pat)
@@ -257,20 +259,27 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
         except Exception as e:
             running = set()  # unknown: rent rather than queue on a pod that may be gone
             click.echo(f"pod list unavailable ({str(e)[:80]}); not reusing", err=True)
-        # the pod as planned first, then what a fallback pod would have seated
-        for pid in [x.strip() for x in platform.split(",") if x.strip()]:
-            p = m.platforms[pid]
-            lab = [x for x in want if x not in m.platforms or m.platforms[x].count <= p.count] if want else p.runner_labels
-            found = runpod.reusable_pod(lab, runners, running)
-            if found:
-                pod_id, have = found
-                click.echo(f"reusing pod {pod_id} ({','.join(have)}): its runner carries every label {pid} needs", err=True)
-                click.echo(pod_id)
-                if os.environ.get("GITHUB_OUTPUT"):
-                    with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-                        f.write(f"pod_id={pod_id}\nplatform={pid}\nlabels={','.join(lab)}\nreused=true\n")
-                return
+    def reused(pid: str) -> bool:
+        if running is None:
+            return False
+        p = m.platforms[pid]
+        lab = [x for x in want if x not in m.platforms or m.platforms[x].count <= p.count] if want else p.runner_labels
+        found = runpod.reusable_pod(lab, runners, running)
+        if not found:
+            return False
+        pod_id, have = found
+        click.echo(f"reusing pod {pod_id} ({','.join(have)}): its runner carries every label {pid} needs", err=True)
+        click.echo(pod_id)
+        if os.environ.get("GITHUB_OUTPUT"):
+            with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                f.write(f"pod_id={pod_id}\nplatform={pid}\nlabels={','.join(lab)}\nreused=true\n")
+        return True
+
     for pid in [x.strip() for x in platform.split(",") if x.strip()]:
+        # the planned pod is rented before a fallback's live pod is reused: an x1 pod up
+        # must not swallow a run whose x2 shards then never run (pro6000, nightly 36294204789)
+        if reused(pid):
+            return
         plat = m.platforms[pid]
         # a fallback pod seats only the hosted platforms that fit on it
         lab = [x for x in want if x not in m.platforms or m.platforms[x].count <= plat.count] if want else None
