@@ -230,15 +230,18 @@ class NodeRunner:
                 from .build import bench_python
 
                 py = str(bench_python(log=self.log))
+            # a download mid-shard can outgrow what the job-start reclaim left (l40s nightly 36329832366: ENOSPC)
+            from .reclaim import LOW_WATER_GIB, reclaim
+
+            reclaim(self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * 1.2 + 10), log=self.log)
             return ensure_snapshot(cell.artifact, self.hf_cache, pie_root=self.pie_root, python=py, download=self.download, log=self.log)
         except EngineLaunchError:
             raise
         except Exception as e:  # download / shrink failure: the model, not the harness
-            import requests
             from huggingface_hub.errors import LocalEntryNotFoundError
 
-            # the hub unreachable from this pod says nothing of the model: a re-dispatch measures it
-            unreachable = isinstance(e, (LocalEntryNotFoundError, requests.ConnectionError, requests.Timeout, TimeoutError))
+            # the hub unreachable from this pod, or a full disk, says nothing of the model: a re-dispatch measures it
+            unreachable = isinstance(e, (LocalEntryNotFoundError, ConnectionError, TimeoutError)) or type(e).__module__.split(".")[0] in ("requests", "httpx", "urllib3") or (isinstance(e, OSError) and e.errno == 28)
             raise EngineLaunchError(ErrorClass.HARNESS_INVALID if unreachable else ErrorClass.LOAD_FAIL, f"checkpoint unavailable for {cell.artifact.id}: {str(e).strip().splitlines()[-1][:300] if str(e).strip() else e!r}") from e
 
     # ------------------------------------------------------------------ run
