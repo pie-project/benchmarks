@@ -378,6 +378,24 @@
   "family": "qwen3_6"
  },
  {
+  "cell_id": "221c2342e25cfd4e",
+  "cell_key": "pie|pro6000-x1|openai/gpt-oss-20b@mxfp4/hf_safetensors#mini-1a70d05d00|lc-1k-128|tova-attention|tp1",
+  "engine": "pie",
+  "platform": "pro6000-x1",
+  "artifact": "gpt-oss-20b-mxfp4-mini5",
+  "workload": "lc-1k-128",
+  "program": "tova-attention",
+  "mode": "tp1",
+  "metric": "output_tok_s",
+  "value": 407.1318074044847,
+  "delta_rel": 0.036669718685610454,
+  "threshold_rel": 0.027793693349369333,
+  "kind": "improvement",
+  "pie_commit": "1655d32dc9e55347f81dcb2511b75baf1e0fb5f8",
+  "engine_version": "1655d32",
+  "family": "gpt_oss"
+ },
+ {
   "cell_id": "e8d7f767137d0a02",
   "cell_key": "pie|a100-pcie-x1|mlx-community/Qwen3.6-27B-4bit@affine_u4_g64/mlx|ss-128-64|text-completion-bench|tp1",
   "engine": "pie",
