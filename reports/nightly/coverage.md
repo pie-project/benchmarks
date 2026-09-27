@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 2281 |
-| fail | 398 |
-| declared_unsupported | 9627 |
-| not_run | 3692 |
-| noisy | 152 |
+| pass | 2283 |
+| fail | 388 |
+| declared_unsupported | 9671 |
+| not_run | 3666 |
+| noisy | 142 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -107,8 +107,6 @@
 | pie | a100-x2 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | a100-x2 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | a100-x2 | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | a100-x2 | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | a100-x2 | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | a100-x2 | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | a100-x2 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | a100-x2 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
@@ -154,15 +152,11 @@
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | ss-128-64 | rs-speculative-decoding | tp2,rs | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | ss-128-64 | classifier-free-guidance | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
 | pie | pro6000-x1 | gpt-oss-20b-mlx-mxfp4 | lc-8k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: prefill chunk submit @0: pipeline: frame slot 0: pipeline: this fire would grow its sequence to 5 |
 | pie | pro6000-x1 | gpt-oss-20b-mlx-mxfp4 | lc-32k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: prefill chunk submit @0: pipeline: frame slot 0: pipeline: this fire would grow its sequence to 2 |
 | pie | pro6000-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | trackb-h2o | tp1 | fail | crash | all 4 requests failed: bind failed: intrinsic attn_score is not advertised by the engine serving this model (`ModelProfi |
@@ -217,8 +211,6 @@
 | pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | crash | all 8 requests failed: truth take: channel is poisoned: pipeline: forward failed: direct launch rejected: impossible sub |
 | pie | rtx4090-x1 | qwen3.6-27b-mlx4 | c64 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx4090-x1 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: prefill chunk submit @0: pipeline: frame slot 0: pipeline: this fire would grow its sequence to 5 |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx4090-x1 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx4090-x1 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | c256 | text-completion-bench | tp1 | fail |  |  |
@@ -371,8 +363,6 @@
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
@@ -512,16 +502,6 @@
 | pie | l40s-x2 | qwen3.6-35b-a3b-mini5 | ss-128-64 | rs-speculative-decoding | tp2,rs | noisy |  |  |
 | pie | l40s-x2 | qwen3.6-35b-a3b-mlx4 | c32 | text-completion-bench | tp2 | noisy |  |  |
 | pie | l40s-x2 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | rs-speculative-decoding | tp2,rs | noisy |  |  |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | pie | pro6000-x1 | gemma-4-26b-a4b-mlx4 | kv-oversub | text-completion-bench | tp1 | noisy |  |  |
 | pie | pro6000-x1 | glm-5.3-flash-mini8 | ss-128-64 | rs-speculative-decoding | tp1,rs | noisy |  |  |
 | pie | pro6000-x1 | gpt-oss-20b-mlx-mxfp4 | c32 | text-completion-bench | tp1 | noisy |  |  |
@@ -856,8 +836,6 @@
 | pie | a100-pcie-x2 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp2 | not_run |  |  |
 | pie | a100-pcie-x2 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp2 | not_run |  |  |
 | pie | a100-pcie-x2 | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp2 | not_run |  |  |
-| pie | a100-pcie-x2 | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp2 | not_run |  |  |
-| pie | a100-pcie-x2 | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp2 | not_run |  |  |
 | pie | a100-pcie-x2 | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp2 | not_run |  |  |
 | pie | a100-pcie-x2 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp2 | not_run |  |  |
 | pie | a100-pcie-x2 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp2 | not_run |  |  |
@@ -1467,8 +1445,6 @@
 | pie | m1-max-32g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m1-max-32g | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m1-max-32g | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -1486,8 +1462,6 @@
 | mlxlm | m1-max-32g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m1-max-32g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m1-max-32g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m1-max-32g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m1-max-32g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m1-max-32g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -1952,8 +1926,6 @@
 | pie | m2-max | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m2-max | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m2-max | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -1971,8 +1943,6 @@
 | mlxlm | m2-max | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m2-max | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m2-max | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m2-max | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m2-max | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m2-max | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -2437,8 +2407,6 @@
 | pie | m4-pro-48g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m4-pro-48g | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m4-pro-48g | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -2456,8 +2424,6 @@
 | mlxlm | m4-pro-48g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m4-pro-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m4-pro-48g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m4-pro-48g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m4-pro-48g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m4-pro-48g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -2910,8 +2876,6 @@
 | pie | m5-max-128g | qwen3.6-27b-mlx4 | ss-512-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-27b-mlx4 | c64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -2929,8 +2893,6 @@
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -3383,8 +3345,6 @@
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | ss-512-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | c64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -3402,8 +3362,6 @@
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -3809,8 +3767,6 @@
 | pie | pro4500-x1 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | pro4500-x1 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | pro4500-x1 | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | pro4500-x1 | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | pro4500-x1 | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | pro4500-x1 | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | pro4500-x1 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | pro4500-x1 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -4213,8 +4169,6 @@
 | pie | pro6000-x4 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp4 | not_run |  |  |
 | pie | pro6000-x4 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp4 | not_run |  |  |
 | pie | pro6000-x4 | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp4 | not_run |  |  |
-| pie | pro6000-x4 | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp4 | not_run |  |  |
-| pie | pro6000-x4 | qwen3.6-27b-mlx4 | lc-32k-128 | text-completion-bench | tp4 | not_run |  |  |
 | pie | pro6000-x4 | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp4 | not_run |  |  |
 | pie | pro6000-x4 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp4 | not_run |  |  |
 | pie | pro6000-x4 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp4 | not_run |  |  |
@@ -4259,8 +4213,8 @@
 
 | reason | cells |
 |---|---|
-| prefill-rows takes its own input (`ids`); pie_bench.py cannot drive it | 960 |
 | pie has no llama family reader | 955 |
+| prefill-rows takes its own input (`ids`); pie_bench.py cannot drive it | 926 |
 | pie/mini-dit is not an HF repo; needs a checkpoint source | 802 |
 | CUDA engine exposes no draft head (Metal only) — wiki speculative-decoding/ | 764 |
 | shrink_checkpoint.py has no nemotron_h reader (supported: deepseek_v4, deepseek_v41, glm_moe_dsa, gpt_oss, kimi, muse_glimmer, qwen3_5_moe, qwen4_exp) | 666 |
@@ -4274,11 +4228,11 @@
 | attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the qwen3_6 forward pass is hybrid | 204 |
 | SGLang 0.5.20 gemma-4 crashes in its attention/view path on every card tried; revisit at the next pin | 204 |
 | runner image has no nvcc; no CUDA llama.cpp build on pods yet | 204 |
+| shape needs 8320 tokens > the artifact's max_context 4096 | 194 |
+| shape needs 32896 tokens > the artifact's max_context 4096 | 194 |
 | vLLM 0.30.0 has no deepseek_v41 (CSA2/Engram) model; revisit at the next pin | 180 |
 | SGLang 0.5.20 has no deepseek_v41 (CSA2/Engram) model; revisit at the next pin | 180 |
 | gemma4-26b-a4b's 2112-wide dense intermediate halves to 1056, not whole u4g64 groups, so its down plane cannot band (pie #674) | 165 |
-| shape needs 8320 tokens > the artifact's max_context 4096 | 155 |
-| shape needs 32896 tokens > the artifact's max_context 4096 | 155 |
 | vLLM 0.30 tp2 hangs at load on the L40S x2 pod; every cell is a timeout | 134 |
 | attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the qwen3_5 forward pass is hybrid | 102 |
 | attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the glm5_next forward pass is hybrid | 102 |
@@ -4303,5 +4257,5 @@
 | gpt_oss | 61/63 | 0/63 | 0/63 | 61/63 | 60/63 | 53/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 52/63 | 53/63 | 0/63 | 60/63 | 0/63 |
 | kimi_k3 | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 1/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 7/14 | 13/14 | 0/14 | · | 0/14 |
 | qwen3_5 | 14/16 | 0/16 | 0/16 | 16/16 | 15/16 | 13/16 | 0/20 | 0/20 | 0/20 | 6/20 | 6/20 | 8/16 | 15/16 | 16/16 | 0/16 | 15/16 | 15/16 |
-| qwen3_6 | 28/32 | 0/32 | 0/32 | 30/32 | 28/32 | 14/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 16/32 | 32/32 | 0/32 | 19/32 | 0/32 |
+| qwen3_6 | 26/30 | 0/30 | 0/30 | 28/30 | 26/30 | 14/30 | 0/38 | 0/38 | 0/38 | 6/38 | 6/38 | 0/30 | 14/30 | 30/30 | 0/30 | 19/30 | 0/30 |
 | qwen3_6_moe | 31/32 | 0/32 | 0/32 | 32/32 | 32/32 | 25/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 32/32 | 31/32 | 0/32 | 25/32 | 0/32 |
