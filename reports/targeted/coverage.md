@@ -2,17 +2,18 @@
 
 | status | cells |
 |---|---|
-| pass | 33 |
+| pass | 42 |
 | fail | 1 |
 | declared_unsupported | 152 |
-| not_run | 519 |
-| noisy | 0 |
+| not_run | 509 |
+| noisy | 1 |
 
 ## Gaps (expected supported, but not passing)
 
 | engine | platform | artifact | workload | program | mode | status | error | message |
 |---|---|---|---|---|---|---|---|---|
 | llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
+| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | noisy |  |  |
 | pie | m1-max-32g | gemma-4-26b-a4b-mlx4 | control-aa | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | gemma-4-26b-a4b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | gemma-4-26b-a4b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
@@ -432,11 +433,6 @@
 | llamacpp | m5-max-128g | qwen3.6-27b-gguf-q4km | c32 | text-completion-bench | tp1 | not_run |  |  |
 | llamacpp | m5-max-128g | qwen3.6-27b-gguf-q4km | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | llamacpp | m5-max-128g | qwen3.6-27b-gguf-q4km | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
@@ -516,11 +512,6 @@
 | llamacpp | m5-max-48g | qwen3.6-27b-gguf-q4km | c32 | text-completion-bench | tp1 | not_run |  |  |
 | llamacpp | m5-max-48g | qwen3.6-27b-gguf-q4km | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | llamacpp | m5-max-48g | qwen3.6-27b-gguf-q4km | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
