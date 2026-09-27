@@ -462,15 +462,18 @@ class NodeRunner:
         cell_out = self.out / "cells" / cell.cell_id
         common = common_args_for(cell.workload, warmup=2 if self.job.tier in (Tier.SMOKE, Tier.TARGETED) else 3) + list(cell.program.bench_args)
         policy = self.job.repetition
+        # a concurrent shape's round is minutes long (kv-oversub, mixed, c256: 2/3 of a nightly's cell time):
+        # two rounds that agree within its bound are the record; a third comes only through confirmation
+        need = min(policy.min_rounds, 2) if cell.workload.kind.value not in ("single_stream", "control_aa", "long_context") else policy.min_rounds
         rounds: list[float] = []
         results = []
         try:
-            for i in range(policy.min_rounds):
+            for i in range(need):
                 res = engine.run(cell.workload, common, cell_out / f"r{i}", self.cell_timeout_s(cell))
                 results.append(res)
                 rounds.append(self._primary(res.perf))
             hist = self.job.history.get(cell.cell_id, [])
-            if policy.min_rounds == 1:
+            if need == 1:
                 d = decide_repetition(rounds[0], hist, sigma=policy.history_sigma, confirm_rounds=policy.confirm_rounds)
                 self.log(f"{cell.workload.id}/{cell.program.id}: {rounds[0]:.4g} — {d.reason}")
                 for _ in range(d.more_rounds):
@@ -493,7 +496,7 @@ class NodeRunner:
             self.log(f"{cell.workload.id}/{cell.program.id}: harness exception {e}\n{traceback.format_exc()}")
             return self._failed(cell, ErrorClass.HARNESS_INVALID, f"harness: {e}", fingerprint, duration=time.monotonic() - t0)
         # median of the steady rounds (the last min_rounds) is the record; every round travels with it
-        steady = list(range(len(rounds)))[-policy.min_rounds:] if policy.min_rounds > 1 else list(range(len(rounds)))
+        steady = list(range(len(rounds)))[-need:] if need > 1 else list(range(len(rounds)))
         med_idx = sorted(steady, key=lambda i: rounds[i])[len(steady) // 2]
         perf: PerfMetrics = results[med_idx].perf
         perf.rounds = rounds

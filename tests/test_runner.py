@@ -240,4 +240,4 @@ def test_a_slow_first_round_is_confirmed_away_not_withheld(job, patched, tmp_pat
     ss = next(r for r in recs if r.cell.workload.id == "ss-128-64")
     assert ss.status == CellStatus.PASS and len(ss.perf.rounds) == 5 and ss.perf.decode_tok_s == 100.0
     c8 = next(r for r in recs if r.cell.workload.id == "c8")
-    assert c8.status == CellStatus.NOISY and len(c8.perf.rounds) == 5
+    assert c8.status == CellStatus.NOISY and len(c8.perf.rounds) == 4
