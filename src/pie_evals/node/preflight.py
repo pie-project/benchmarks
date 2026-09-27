@@ -220,6 +220,13 @@ def linux_machine_state() -> dict[str, Any]:
     procs = gpu_processes()
     state["gpu_process_count"] = str(len(procs))
     state["gpu_processes"] = [p["name"] for p in procs][:20]
+    # host CPU too: A100 CFG fell 20-42 % on a new pod while every GPU-bound cell held (nightly 36264850727)
+    state["cpu_count"] = str(len(os.sched_getaffinity(0)))
+    try:
+        with open("/proc/cpuinfo") as f:
+            state["cpu_model"] = next((ln.split(":", 1)[1].strip() for ln in f if ln.startswith("model name")), "")
+    except OSError:
+        pass
     try:
         la = os.getloadavg()
         state["loadavg"] = ",".join(f"{x:.2f}" for x in la)
