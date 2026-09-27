@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 2423 |
-| fail | 309 |
+| pass | 2422 |
+| fail | 332 |
 | declared_unsupported | 9673 |
 | not_run | 3618 |
-| noisy | 127 |
+| noisy | 105 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -141,41 +141,64 @@
 | pie | l40s-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gemma-4-31b-mlx4: 'Task error: File reconstruction error: IO Error: No space left on device ( |
 | pie | l40s-x1 | gemma-4-31b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
 | pie | l40s-x1 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gemma-4-31b-mlx4: 'Task error: File reconstruction error: IO Error: No space left on device ( |
-| vllm | l40s-x1 | gemma-4-e4b-bf16 | ss-128-64 | cacheback-speculative-decoding | tp1,ngram | fail | crash | RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1} |
-| vllm | l40s-x1 | gemma-4-e4b-bf16 | c8 | cacheback-speculative-decoding | tp1,ngram | fail | crash | RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {} |
 | sglang | l40s-x1 | kimi-k3-mini8 | c32 | text-completion-bench | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 748.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | sglang | l40s-x1 | kimi-k3-mini8 | c64 | text-completion-bench | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 754.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | sglang | l40s-x1 | kimi-k3-mini8 | prefix-1k-x64 | text-completion-bench | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 766.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | sglang | l40s-x1 | kimi-k3-mini8 | mixed-256 | text-completion-bench | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 382.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | sglang | l40s-x1 | kimi-k3-mini8 | prefix-1k-x64 | prefix-tree-kv-cache | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 766.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | sglang | l40s-x1 | kimi-k3-mini8 | mixed-256 | prefix-tree-kv-cache | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 382.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
-| vllm | l40s-x1 | qwen3.5-0.8b-bf16 | ss-128-64 | cacheback-speculative-decoding | tp1,ngram | fail | load_fail | engine setup: Command '['uv', 'pip', 'install', '--quiet', '--python', '/workspace/pie-evals-cache/venv-vllm-0.30.0/bin/ |
-| vllm | l40s-x1 | qwen3.5-0.8b-bf16 | c8 | cacheback-speculative-decoding | tp1,ngram | fail | load_fail | engine setup: Command '['uv', 'pip', 'install', '--quiet', '--python', '/workspace/pie-evals-cache/venv-vllm-0.30.0/bin/ |
 | pie | l40s-x1 | qwen3.6-27b-gguf-q4km | c256 | text-completion-bench | tp1 | fail |  |  |
 | pie | l40s-x1 | qwen3.6-27b-gguf-q4km | kv-oversub | text-completion-bench | tp1 | fail |  |  |
-| pie | l40s-x1 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | fail |  |  |
-| pie | l40s-x1 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: d |
-| pie | l40s-x2 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-32k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | gemma-4-31b-mlx4 | mixed-256 | text-completion-bench | tp2 | fail |  |  |
-| pie | l40s-x2 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
+| pie | l40s-x1 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | control-aa | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | ss-128-64 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | ss-512-256 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | c8 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | c32 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-1k-128 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-2k-128 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-8k-128 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-32k-128 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | prefix-1k-x64 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | mixed-256 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-1k-128 | trackb-h2o | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-1k-128 | trackb-snapkv | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-1k-128 | snapkv-eviction | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-1k-128 | tova-attention | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-1k-128 | attention-sink | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-1k-128 | sliding-window-attention | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gemma-4-31b-mlx4 | ss-128-64 | classifier-free-guidance | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | control-aa | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | ss-128-64 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | ss-512-256 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | c8 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | c32 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | c64 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | c256 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-2k-128 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-8k-128 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-32k-128 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | prefix-1k-x64 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | mixed-256 | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | kv-oversub | text-completion-bench | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | trackb-h2o | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | trackb-snapkv | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | snapkv-eviction | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | tova-attention | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | attention-sink | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | sliding-window-attention | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
+| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | ss-128-64 | classifier-free-guidance | tp2 | fail | hang | pie serve did not announce PIE_BENCH_SERVER_URL within 1200s |
 | pie | l40s-x2 | qwen3.6-27b-gguf-q4km | kv-oversub | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-gguf-q4km | ss-128-64 | rs-speculative-decoding | tp2,rs | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | ss-512-256 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | c64 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
+| pie | l40s-x2 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp2 | fail |  |  |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | l40s-x2 | qwen3.6-27b-mlx4 | ss-128-64 | rs-speculative-decoding | tp2,rs | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
-| pie | l40s-x2 | qwen3.6-27b-mlx4 | ss-128-64 | classifier-free-guidance | tp2 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating cuda TP engine group for model "defau |
 | pie | pro6000-x1 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
 | pie | pro6000-x2 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp2 | fail |  |  |
 | pie | rtx4090-x1 | gemma-4-26b-a4b-mlx4 | c256 | text-completion-bench | tp1 | fail |  |  |
@@ -361,30 +384,8 @@
 | vllm | h100-pcie-x1 | qwen3.5-0.8b-bf16 | c8 | cacheback-speculative-decoding | tp1,ngram | noisy |  |  |
 | sglang | h100-pcie-x1 | qwen3.5-0.8b-bf16 | c8 | text-completion-bench | tp1 | noisy |  |  |
 | sglang | h100-pcie-x1 | qwen3.5-0.8b-bf16 | lc-8k-128 | text-completion-bench | tp1 | noisy |  |  |
-| pie | l40s-x1 | gemma-4-26b-a4b-mlx4 | c64 | text-completion-bench | tp1 | noisy |  |  |
-| pie | l40s-x1 | gemma-4-e4b-bf16 | c8 | text-completion-bench | tp1 | noisy |  |  |
-| pie | l40s-x1 | gemma-4-e4b-bf16 | c64 | text-completion-bench | tp1 | noisy |  |  |
-| pie | l40s-x1 | gemma-4-e4b-bf16 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
-| pie | l40s-x1 | gemma-4-e4b-bf16 | kv-oversub | text-completion-bench | tp1 | noisy |  |  |
-| pie | l40s-x1 | gpt-oss-20b-mlx-mxfp4 | c8 | text-completion-bench | tp1 | noisy |  |  |
-| pie | l40s-x1 | gpt-oss-20b-mxfp4-mini5 | c64 | text-completion-bench | tp1 | noisy |  |  |
-| pie | l40s-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | snapkv-eviction | tp1 | noisy |  |  |
 | vllm | l40s-x1 | gpt-oss-20b-mxfp4-mini5 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
-| pie | l40s-x1 | qwen3.5-0.8b-bf16 | ss-128-64 | rs-speculative-decoding | tp1,rs | noisy |  |  |
-| pie | l40s-x2 | gemma-4-31b-mlx4 | lc-1k-128 | snapkv-eviction | tp2 | noisy |  |  |
-| pie | l40s-x2 | gemma-4-e4b-bf16 | ss-128-64 | text-completion-bench | tp2 | noisy |  |  |
-| pie | l40s-x2 | gemma-4-e4b-bf16 | c32 | text-completion-bench | tp2 | noisy |  |  |
-| pie | l40s-x2 | gemma-4-e4b-bf16 | prefix-1k-x64 | text-completion-bench | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mlx-mxfp4 | c8 | text-completion-bench | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mxfp4 | c256 | text-completion-bench | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mxfp4 | lc-8k-128 | text-completion-bench | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mxfp4 | kv-oversub | text-completion-bench | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mxfp4 | lc-1k-128 | trackb-snapkv | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mxfp4 | lc-1k-128 | snapkv-eviction | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mxfp4 | lc-1k-128 | tova-attention | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mxfp4-mini5 | c32 | text-completion-bench | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mxfp4-mini5 | c64 | text-completion-bench | tp2 | noisy |  |  |
-| pie | l40s-x2 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | tova-attention | tp2 | noisy |  |  |
+| pie | l40s-x2 | gemma-4-e4b-bf16 | c8 | text-completion-bench | tp2 | noisy |  |  |
 | pie | l40s-x2 | kimi-k3-mini8 | control-aa | text-completion-bench | tp2 | noisy |  |  |
 | pie | l40s-x2 | kimi-k3-mini8 | ss-128-64 | text-completion-bench | tp2 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | pie | l40s-x2 | kimi-k3-mini8 | ss-512-256 | text-completion-bench | tp2 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
@@ -4111,11 +4112,11 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | deepseek_v4 | · | · | · | · | · | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | · | · | · | · | · | · |
 | deepseek_v41 | · | · | · | · | · | · | 0/23 | 0/23 | 0/23 | 0/23 | 0/23 | · | · | · | · | · | · |
-| gemma4 | 38/42 | 0/42 | 0/42 | 39/42 | 34/42 | 33/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 39/42 | 36/42 | 0/42 | 15/42 | 36/42 |
-| gemma4_moe | 21/21 | · | · | 21/21 | 20/21 | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | 0/21 | 21/21 | · | · | 17/21 | 21/21 |
+| gemma4 | 38/42 | 0/42 | 0/42 | 39/42 | 38/42 | 20/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 39/42 | 36/42 | 0/42 | 15/42 | 36/42 |
+| gemma4_moe | 21/21 | · | · | 21/21 | 21/21 | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | 0/21 | 21/21 | · | · | 17/21 | 21/21 |
 | glm5_next | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 14/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | 14/14 | 14/14 |
-| gpt_oss | 42/63 | 0/63 | 0/63 | 63/63 | 60/63 | 53/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 57/63 | 53/63 | 0/63 | 63/63 | 21/63 |
+| gpt_oss | 42/63 | 0/63 | 0/63 | 63/63 | 63/63 | 42/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 57/63 | 53/63 | 0/63 | 63/63 | 21/63 |
 | kimi_k3 | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 1/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | · | 13/14 |
-| qwen3_5 | 15/16 | 0/16 | 0/16 | 15/16 | 15/16 | 13/16 | 0/20 | 0/20 | 0/20 | 6/20 | 6/20 | 8/16 | 12/16 | 16/16 | 0/16 | 16/16 | 15/16 |
-| qwen3_6 | 26/30 | 0/30 | 0/30 | 30/30 | 26/30 | 14/30 | 0/38 | 0/38 | 0/38 | 6/38 | 6/38 | 0/30 | 29/30 | 30/30 | 0/30 | 18/30 | 12/30 |
+| qwen3_5 | 15/16 | 0/16 | 0/16 | 15/16 | 16/16 | 13/16 | 0/20 | 0/20 | 0/20 | 6/20 | 6/20 | 8/16 | 12/16 | 16/16 | 0/16 | 16/16 | 15/16 |
+| qwen3_6 | 26/30 | 0/30 | 0/30 | 30/30 | 27/30 | 23/30 | 0/38 | 0/38 | 0/38 | 6/38 | 6/38 | 0/30 | 29/30 | 30/30 | 0/30 | 18/30 | 12/30 |
 | qwen3_6_moe | 32/32 | 0/32 | 0/32 | 32/32 | 32/32 | 25/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 29/32 | 31/32 | 0/32 | 27/32 | 2/32 |
