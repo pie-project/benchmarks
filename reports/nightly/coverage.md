@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 2269 |
+| pass | 2278 |
 | fail | 410 |
 | declared_unsupported | 9671 |
-| not_run | 3665 |
-| noisy | 135 |
+| not_run | 3655 |
+| noisy | 136 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -517,6 +517,7 @@
 | pie | l40s-x2 | qwen3.6-35b-a3b-mini5 | ss-128-64 | rs-speculative-decoding | tp2,rs | noisy |  |  |
 | pie | l40s-x2 | qwen3.6-35b-a3b-mlx4 | c32 | text-completion-bench | tp2 | noisy |  |  |
 | pie | l40s-x2 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | rs-speculative-decoding | tp2,rs | noisy |  |  |
+| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | noisy |  |  |
 | pie | pro6000-x1 | gemma-4-26b-a4b-mlx4 | kv-oversub | text-completion-bench | tp1 | noisy |  |  |
 | pie | pro6000-x1 | glm-5.3-flash-mini8 | ss-128-64 | rs-speculative-decoding | tp1,rs | noisy |  |  |
 | pie | pro6000-x1 | gpt-oss-20b-mlx-mxfp4 | c32 | text-completion-bench | tp1 | noisy |  |  |
@@ -2899,14 +2900,9 @@
 | pie | m5-max-128g | qwen3.6-27b-mlx4 | ss-128-64 | dflash-block-acceptance | tp1,dflash2 | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-27b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | not_run |  |  |
 | pie | m5-max-128g | qwen3.6-27b-mlx4 | ss-128-64 | classifier-free-guidance | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | ss-512-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | c64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -3368,14 +3364,9 @@
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | dflash-block-acceptance | tp1,dflash2 | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | not_run |  |  |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | classifier-free-guidance | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | ss-512-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | c64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
