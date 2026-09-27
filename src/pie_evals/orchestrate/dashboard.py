@@ -244,7 +244,7 @@ function before(mac, model, wl, sha) {
   }
   return null;
 }
-const BASELINES = { mlxlm: "MLX", llamacpp: "llama.cpp" };
+const BASELINES = { mlxlm: "MLX" };
 function versus(now, b, name) {
   if (!b?.output || !now?.output) return `<td></td>`;
   const pct = Math.round(100 * now.output / b.output);
