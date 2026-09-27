@@ -3,8 +3,8 @@
 | status | cells |
 |---|---|
 | pass | 2423 |
-| fail | 311 |
-| declared_unsupported | 9671 |
+| fail | 309 |
+| declared_unsupported | 9673 |
 | not_run | 3618 |
 | noisy | 127 |
 
@@ -145,10 +145,8 @@
 | vllm | l40s-x1 | gemma-4-e4b-bf16 | c8 | cacheback-speculative-decoding | tp1,ngram | fail | crash | RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {} |
 | sglang | l40s-x1 | kimi-k3-mini8 | c32 | text-completion-bench | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 748.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | sglang | l40s-x1 | kimi-k3-mini8 | c64 | text-completion-bench | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 754.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
-| sglang | l40s-x1 | kimi-k3-mini8 | c256 | text-completion-bench | tp1 | fail | crash | ValueError: Loaded weights leave no GPU memory for the KV cache under --mem-fraction-static=0.82. Raise --mem-fraction-s |
 | sglang | l40s-x1 | kimi-k3-mini8 | prefix-1k-x64 | text-completion-bench | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 766.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | sglang | l40s-x1 | kimi-k3-mini8 | mixed-256 | text-completion-bench | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 382.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
-| sglang | l40s-x1 | kimi-k3-mini8 | kv-oversub | text-completion-bench | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 768.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | sglang | l40s-x1 | kimi-k3-mini8 | prefix-1k-x64 | prefix-tree-kv-cache | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 766.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | sglang | l40s-x1 | kimi-k3-mini8 | mixed-256 | prefix-tree-kv-cache | tp1 | fail | oom | torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 382.00 MiB. GPU 0 has a total capacity of 44.39 GiB of whi |
 | vllm | l40s-x1 | qwen3.5-0.8b-bf16 | ss-128-64 | cacheback-speculative-decoding | tp1,ngram | fail | load_fail | engine setup: Command '['uv', 'pip', 'install', '--quiet', '--python', '/workspace/pie-evals-cache/venv-vllm-0.30.0/bin/ |
@@ -4104,6 +4102,8 @@
 | does not fit: 27.5 GiB per device > 24.0 GiB | 64 |
 | vLLM 0.30 Kimi-K3 mini leaves no KV or activation room on a 32 GB card | 15 |
 | SGLang 0.5.20 leaves no activation room for Kimi-K3 mini on a 32 GB card (OOM from c8) | 15 |
+| SGLang: kimi-k3 c256 on 48 GB has no mem_fraction_static that fits both KV and the 256-wide graph | 1 |
+| SGLang: kimi-k3 kv-oversub on 48 GB has no mem_fraction_static that fits both KV and the MoE prefill | 1 |
 
 ## pie pass rate by family × platform
 
