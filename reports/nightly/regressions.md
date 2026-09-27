@@ -23,6 +23,7 @@
 | improvement | pie | a100-pcie-x1 | qwen3.6-27b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | decode_tok_s | 45.02 | +3.4% | ±2.0% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
 | improvement | pie | a100-pcie-x1 | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | decode_tok_s | 47.91 | +3.5% | ±2.0% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
 | improvement | pie | a100-pcie-x1 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | decode_tok_s | 46.45 | +3.5% | ±2.0% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
+| improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | tova-attention | tp1 | output_tok_s | 407.1 | +3.7% | ±2.8% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
 | improvement | pie | a100-pcie-x1 | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | decode_tok_s | 47.93 | +3.8% | ±2.0% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
 | improvement | pie | a100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | mixed-256 | text-completion-bench | tp1 | output_tok_s | 3691 | +7.5% | ±5.0% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
 | improvement | pie | rtx4090-x1 | gemma-4-26b-a4b-mlx4 | lc-1k-128 | sliding-window-attention | tp1 | output_tok_s | 123.8 | +9.3% | ±4.4% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
