@@ -268,7 +268,7 @@ class NodeRunner:
                     self.emit(self._failed(c, ErrorClass.LOAD_FAIL, f"pie build failed: {e}", None))
             job = job.model_copy(update={"cells": [c for c in job.cells if str(c.engine) != "pie"]})
         pre = pf.Preflight()
-        machine_before = pre.before_job(self.platform)
+        machine_before = pre.before_job(self.platform.os if self.platform else None)
         self._last_state = machine_before  # failure records carry the state the card was in
         if machine_before.get("gpu_drain_error"):
             # a card that already holds someone else's memory (nightly 35963868578: 5.7 GiB,
@@ -323,7 +323,7 @@ class NodeRunner:
                         continue
             recipe_name = "competitive" if str(first.engine) != "pie" else "default"
             try:
-                pre.between_engines(self.platform, [])
+                pre.between_engines(self.platform.os if self.platform else None, [])
                 cls = get_engine(first.engine)
                 recipe = load_recipe(str(first.engine), recipe_name, first.platform, first.workload, family=first.artifact.family)
                 recipe["program_path"] = first.program.path
@@ -414,10 +414,10 @@ class NodeRunner:
             try:
                 if engine:
                     engine.stop()
-                    pre.between_engines(self.platform, engine.leftover_process_names())
+                    pre.between_engines(self.platform.os if self.platform else None, engine.leftover_process_names())
             except Exception as e:
                 self.log(f"teardown: {e}")
-            invalid = pre.after_model(self.platform, model_state)
+            invalid = pre.after_model(self.platform.os if self.platform else None, model_state)
             if invalid:
                 self.log(f"model run invalidated: {invalid}")
                 for r in [r for r in records if r.cell.artifact.artifact_key == artifact_key and r.status == CellStatus.PASS]:
