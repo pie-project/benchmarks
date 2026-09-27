@@ -11,7 +11,7 @@ from . import flops
 from .matrix import Matrix
 from .store import Store
 
-DEFAULT_MODEL = "qwen3.5-0.8b-bf16"
+DEFAULT_MODEL = "qwen3.6-27b-mlx4"
 SHOWN_MODELS = ("qwen3.5-0.8b-bf16", "qwen3.6-27b-mlx4")
 
 PAGE = """<!doctype html>
@@ -201,10 +201,11 @@ const chosen = new Set();
 const testName = id => DATA.benchmarks.find(b => b.id === id)?.name || id;
 function fillFilters() {
   const macs = [...new Set([...Object.keys(DATA.results), ...RUNNABLE.map(m => m.id)])];
-  const models = [...new Set([...macs.flatMap(m => Object.keys(DATA.results[m]?.models || {})), ...DATA.models.map(m => m.id)])];
+  const models = [...new Set([...macs.flatMap(m => Object.keys(DATA.results[m]?.models || {})), ...DATA.models.map(m => m.id)])]
+    .sort((a, b) => (a === DATA.default_model ? -1 : b === DATA.default_model ? 1 : 0));
   const opts = (all, ids, name, on) => ids.map(id => `<option value="${esc(id)}"${id === on ? " selected" : ""}>${esc(name(id))}</option>`).join("");
   if (!macs.includes(filt.mac)) filt.mac = macs[0] || "";
-  if (!models.includes(filt.model)) filt.model = models[0] || "";
+  if (!models.includes(filt.model)) filt.model = models.includes(DATA.default_model) ? DATA.default_model : models[0] || "";
   const fm = document.getElementById("fmac"), fo = document.getElementById("fmodel");
   fm.innerHTML = opts("all machines", macs, id => id, filt.mac);
   fo.innerHTML = opts("all models", models, modelName, filt.model);
@@ -245,11 +246,11 @@ function before(mac, model, wl, sha) {
   return null;
 }
 const BASELINES = { mlxlm: "MLX" };
-function versus(now, b, name) {
-  if (!b?.output || !now?.output) return `<td></td>`;
-  const pct = Math.round(100 * now.output / b.output);
-  const tip = `end-to-end output: pie ${Math.round(now.output).toLocaleString()}, ${name} ${b.version} ${Math.round(b.output).toLocaleString()} tok/s`;
-  return `<td class="num ${pct >= 100 ? "up" : "down"}" title="${esc(tip)}">${pct}%</td>`;
+function baseCell(b, key) {
+  const v = b?.[key];
+  if (v == null) return `<td class="num muted">–</td>`;
+  const tip = b.version ? ` title="${esc(b.version)}"` : "";
+  return `<td class="num"${tip}>${Math.round(v).toLocaleString()}</td>`;
 }
 function cell(now, was, key) {
   const v = now?.[key];
@@ -283,13 +284,13 @@ function overview() {
       const base = DATA.baselines?.[mac]?.[model] || {};
       const engines = Object.keys(BASELINES).filter(e => Object.values(base).some(b => b[e]));
       html += `<div class="card"><h2>${esc(r.name)}</h2><table class="compact fixed">` +
-        `<colgroup><col style="width:30%"><col><col><col><col>${engines.map(() => `<col style="width:96px">`).join("")}</colgroup>` +
+        `<colgroup><col style="width:30%"><col><col><col><col>${engines.map(() => `<col style="width:72px"><col style="width:72px">`).join("")}</colgroup>` +
         `<tr><th>benchmark</th><th class="num">prefill</th><th class="num">change</th><th class="num">decode</th><th class="num">change</th>` +
-        engines.map(e => `<th class="num" title="pie's end-to-end output tok/s as a share of ${BASELINES[e]}'s on the same weights">vs ${BASELINES[e]}</th>`).join("") + `</tr>`;
+        engines.map(e => `<th class="num" title="${BASELINES[e]} prefill tok/s">${BASELINES[e]} P</th><th class="num" title="${BASELINES[e]} decode tok/s">${BASELINES[e]} D</th>`).join("") + `</tr>`;
       for (const b of tests) {
         const now = byTest[b.id][sel], was = before(mac, model, b.id, sel);
         html += `<tr><td class="clip">${esc(b.name)}</td>${cell(now, was, "prefill" + unit)}${cell(now, was, "decode" + unit)}` +
-          engines.map(e => versus(now, base[b.id]?.[e], BASELINES[e])).join("") + `</tr>`;
+          engines.map(e => baseCell(base[b.id]?.[e], "prefill") + baseCell(base[b.id]?.[e], "decode")).join("") + `</tr>`;
       }
       html += `</table></div>`;
     }
@@ -681,8 +682,11 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     baselines: dict[str, dict] = {}
     for r in rows:
         if r["engine"] != "pie" and r["workload"] in concurrency:
+            single = concurrency[r["workload"]] == 1
             baselines.setdefault(r["platform"], {}).setdefault(baseline_of.get(r["artifact"], r["artifact"]), {}).setdefault(r["workload"], {})[r["engine"]] = {
-                "output": r["output_tok_s"], "version": r["engine_version"] or ""}
+                "prefill": r["prefill_tok_s"] if single else None,
+                "decode": r["decode_tok_s"] if single else r["output_tok_s"],
+                "version": r["engine_version"] or ""}
     rows = [r for r in rows if r["engine"] == "pie"]
     failed = sorted({(r["pie_commit"], r["platform"], r["artifact"]) for r in every
                      if r["status"] == str(CellStatus.FAIL)
