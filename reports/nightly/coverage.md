@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 2335 |
-| fail | 382 |
+| pass | 2420 |
+| fail | 296 |
 | declared_unsupported | 9671 |
 | not_run | 3622 |
-| noisy | 140 |
+| noisy | 141 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -211,70 +211,33 @@
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | crash | all 8 requests failed: truth take: channel is poisoned: pipeline: forward failed: direct launch rejected: impossible sub |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | ss-512-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | c8 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | c32 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
+| pie | rtx5090-x1 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp1 | fail |  |  |
+| pie | rtx5090-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | trackb-h2o | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | trackb-snapkv | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | snapkv-eviction | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | tova-attention | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | attention-sink | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | sliding-window-attention | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-31b-mlx4 | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | ss-512-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | c8 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | c32 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | c64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | c256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-8k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-32k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | trackb-h2o | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | trackb-snapkv | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | snapkv-eviction | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | tova-attention | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | attention-sink | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | sliding-window-attention | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gemma-4-e4b-bf16 | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | glm-5.3-flash-mini8 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | ss-512-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | c8 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | c32 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | c64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | c256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-2k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-8k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-32k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | trackb-h2o | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | trackb-snapkv | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | snapkv-eviction | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | tova-attention | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | attention-sink | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | sliding-window-attention | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
+| pie | rtx5090-x1 | gemma-4-31b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
+| pie | rtx5090-x1 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | control-aa | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | ss-128-64 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | ss-512-256 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | c8 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | c32 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | c64 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | c256 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-2k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-8k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-32k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | prefix-1k-x64 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | mixed-256 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | kv-oversub | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | trackb-h2o | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | trackb-snapkv | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | snapkv-eviction | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | tova-attention | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | attention-sink | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | lc-1k-128 | sliding-window-attention | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
+| pie | rtx5090-x1 | gpt-oss-20b-mlx-mxfp4 | ss-128-64 | classifier-free-guidance | tp1 | fail | load_fail | checkpoint unavailable for gpt-oss-20b-mlx-mxfp4: 'The read operation timed out' |
 | pie | rtx5090-x1 | gpt-oss-20b-mxfp4 | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | gpt-oss-20b-mxfp4 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | gpt-oss-20b-mxfp4 | ss-512-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
@@ -296,58 +259,12 @@
 | pie | rtx5090-x1 | gpt-oss-20b-mxfp4 | lc-1k-128 | attention-sink | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | gpt-oss-20b-mxfp4 | lc-1k-128 | sliding-window-attention | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | gpt-oss-20b-mxfp4 | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | ss-512-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | c8 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | c32 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | c64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | c256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-2k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-8k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-32k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | trackb-h2o | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | trackb-snapkv | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | snapkv-eviction | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | tova-attention | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | attention-sink | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | sliding-window-attention | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | ss-512-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | c8 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | c32 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | c64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | c256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | lc-1k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | lc-2k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | kimi-k3-mini8 | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.5-0.8b-bf16 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | ss-512-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | c8 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | c32 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | c64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | c256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | lc-1k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | lc-2k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
+| pie | rtx5090-x1 | kimi-k3-mini8 | c256 | text-completion-bench | tp1 | fail |  |  |
+| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | c256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | lc-8k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | lc-32k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
+| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | mixed-256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | ss-512-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
@@ -360,7 +277,6 @@
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-27b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-27b-mlx4 | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-35b-a3b-mini5 | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-35b-a3b-mini5 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
@@ -376,24 +292,22 @@
 | pie | rtx5090-x1 | qwen3.6-35b-a3b-mini5 | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-35b-a3b-mini5 | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-35b-a3b-mini5 | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mini5 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | qwen3.6-35b-a3b-mini5 | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | ss-512-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c8 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c32 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | harness_invalid | GPU preflight: cuInit answered 999 |
-| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | classifier-free-guidance | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | ss-512-256 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c8 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c32 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c64 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | c256 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
+| pie | rtx5090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | classifier-free-guidance | tp1 | fail | load_fail | checkpoint unavailable for qwen3.6-35b-a3b-mlx4: 'An error happened while trying to locate the files on the Hub, and we  |
 | pie | a100-pcie-x1 | gemma-4-e4b-bf16 | c32 | text-completion-bench | tp1 | noisy |  |  |
 | pie | a100-pcie-x1 | qwen3.5-0.8b-bf16 | ss-128-64 | rs-speculative-decoding | tp1,rs | noisy |  |  |
 | vllm | a100-x2 | kimi-k3-mini8 | prefix-1k-x64 | prefix-tree-kv-cache | tp2 | noisy |  |  |
@@ -534,6 +448,7 @@
 | sglang | rtx4090-x1 | qwen3.5-0.8b-bf16 | c32 | text-completion-bench | tp1 | noisy |  |  |
 | sglang | rtx4090-x1 | qwen3.5-0.8b-bf16 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mini5 | ss-128-64 | classifier-free-guidance | tp1 | noisy |  |  |
+| pie | rtx5090-x1 | qwen3.5-0.8b-bf16 | c64 | text-completion-bench | tp1 | noisy |  |  |
 | pie | a100-pcie-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | a100-pcie-x1 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
 | vllm | a100-pcie-x1 | gemma-4-e4b-bf16 | kv-oversub | text-completion-bench | tp1 | not_run |  |  |
@@ -4199,11 +4114,11 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | deepseek_v4 | · | · | · | · | · | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | · | · | · | · | · | · |
 | deepseek_v41 | · | · | · | · | · | · | 0/23 | 0/23 | 0/23 | 0/23 | 0/23 | · | · | · | · | · | · |
-| gemma4 | 38/42 | 0/42 | 0/42 | 36/42 | 34/42 | 33/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 39/42 | 36/42 | 0/42 | 34/42 | 0/42 |
+| gemma4 | 38/42 | 0/42 | 0/42 | 36/42 | 34/42 | 33/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 39/42 | 36/42 | 0/42 | 34/42 | 36/42 |
 | gemma4_moe | 21/21 | · | · | 21/21 | 20/21 | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | 0/21 | 21/21 | · | · | 16/21 | 21/21 |
-| glm5_next | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 14/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | 13/14 | 13/14 |
-| gpt_oss | 42/63 | 0/63 | 0/63 | 61/63 | 60/63 | 53/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 57/63 | 53/63 | 0/63 | 60/63 | 0/63 |
-| kimi_k3 | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 1/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | · | 0/14 |
+| glm5_next | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 14/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | 13/14 | 14/14 |
+| gpt_oss | 42/63 | 0/63 | 0/63 | 61/63 | 60/63 | 53/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 57/63 | 53/63 | 0/63 | 60/63 | 21/63 |
+| kimi_k3 | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 1/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | · | 13/14 |
 | qwen3_5 | 15/16 | 0/16 | 0/16 | 16/16 | 15/16 | 13/16 | 0/20 | 0/20 | 0/20 | 6/20 | 6/20 | 8/16 | 12/16 | 16/16 | 0/16 | 15/16 | 15/16 |
-| qwen3_6 | 26/30 | 0/30 | 0/30 | 28/30 | 26/30 | 14/30 | 0/38 | 0/38 | 0/38 | 6/38 | 6/38 | 0/30 | 29/30 | 30/30 | 0/30 | 19/30 | 0/30 |
-| qwen3_6_moe | 32/32 | 0/32 | 0/32 | 32/32 | 32/32 | 25/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 29/32 | 31/32 | 0/32 | 25/32 | 0/32 |
+| qwen3_6 | 26/30 | 0/30 | 0/30 | 28/30 | 26/30 | 14/30 | 0/38 | 0/38 | 0/38 | 6/38 | 6/38 | 0/30 | 29/30 | 30/30 | 0/30 | 19/30 | 12/30 |
+| qwen3_6_moe | 32/32 | 0/32 | 0/32 | 32/32 | 32/32 | 25/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 29/32 | 31/32 | 0/32 | 25/32 | 2/32 |
