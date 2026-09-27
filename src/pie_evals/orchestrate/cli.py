@@ -168,7 +168,7 @@ def collect(obj, tier, node_out):
 @click.option("--out", type=click.Path(), default="reports")
 @click.pass_obj
 def report(obj, tier, out):
-    """Render coverage, regressions, baseline ratios, calibration."""
+    """Render coverage, regressions, baseline ratios."""
     m: Matrix = obj["matrix"]
     st: Store = obj["store"]
     t = Tier(tier)
@@ -182,7 +182,6 @@ def report(obj, tier, out):
     ratios = rp.baseline_ratios(m, st, t)
     (outp / "baselines.md").write_text(rp.baseline_markdown(ratios))
     (outp / "baselines.json").write_text(rp.to_json(ratios))
-    (Path(out) / "calibration.md").write_text(rp.calibration(m, st))
     n_reg = sum(1 for r in regs if r["kind"] == "regression")
     trails = sum(1 for r in ratios if not r["pie_leads"])
     click.echo(json.dumps({"cells": len(views), "regressions": n_reg, "pie_trails": trails, "escalate_families": rp.escalation_families(m, st)}))
