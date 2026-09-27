@@ -2,28 +2,17 @@
 
 | status | cells |
 |---|---|
-| pass | 22 |
-| fail | 2 |
+| pass | 33 |
+| fail | 1 |
 | declared_unsupported | 152 |
 | not_run | 519 |
-| noisy | 10 |
+| noisy | 0 |
 
 ## Gaps (expected supported, but not passing)
 
 | engine | platform | artifact | workload | program | mode | status | error | message |
 |---|---|---|---|---|---|---|---|---|
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
 | llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-128g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | pie | m1-max-32g | gemma-4-26b-a4b-mlx4 | control-aa | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | gemma-4-26b-a4b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | gemma-4-26b-a4b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
@@ -569,5 +558,5 @@
 | gemma4_moe | 0/6 | 0/6 | 0/6 | 0/6 | 0/6 |
 | gpt_oss | 0/12 | 0/12 | 0/12 | 0/18 | 0/12 |
 | qwen3_5 | 0/18 | 0/18 | 0/18 | 6/18 | 6/18 |
-| qwen3_6 | 0/12 | 0/12 | 0/12 | 0/18 | 1/12 |
+| qwen3_6 | 0/12 | 0/12 | 0/12 | 6/18 | 6/12 |
 | qwen3_6_moe | 0/6 | 0/6 | 0/6 | 0/6 | 0/6 |
