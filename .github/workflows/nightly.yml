@@ -15,7 +15,7 @@ on:
       max_jobs: { description: "cap on jobs", required: false, default: "" }
       build_platform: { description: "platform for the build/prepare pod", required: false, default: "" }
       max_jobs_per_platform: { description: "cap per platform", required: false, default: "" }
-      skip_recorded: { description: "skip cells the store already holds at this pie commit (re-dispatch after lost launches)", type: boolean, required: false, default: false }
+      skip_recorded: { description: "skip cells the store already holds: pie at this commit, baselines at their pinned version", type: boolean, required: false, default: true }
 
 jobs:
   resolve:
