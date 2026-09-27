@@ -154,6 +154,7 @@ artifacts:
     scheme: affine_u4_g64
     source_format: mlx
     expected_gib: 14.09
+    max_context: 4096
     tiers: [nightly, weekly]
   - id: qwen3.6-35b-a3b-mlx4
     base_model: mlx-community/Qwen3.6-35B-A3B-4bit
