@@ -2,14 +2,22 @@
 
 | kind | engine | platform | artifact | workload | program | mode | metric | value | Δ | threshold | commit/version |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| regression | pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | snapkv-eviction | tp1 | output_tok_s | 98.87 | -23.6% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| regression | pie | rtx5090-x1 | gemma-4-e4b-bf16 | ss-128-64 | classifier-free-guidance | tp1 | output_tok_s | 35.9 | -23.2% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | regression | pie | rtx4090-x1 | gemma-4-e4b-bf16 | kv-oversub | text-completion-bench | tp1 | output_tok_s | 572.1 | -9.7% | ±7.9% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
+| regression | pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | snapkv-eviction | tp1 | output_tok_s | 35.79 | -9.5% | ±5.4% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | regression | pie | l40s-x1 | qwen3.5-0.8b-bf16 | mixed-256 | text-completion-bench | tp1 | output_tok_s | 3467 | -9.2% | ±7.0% | d89cedc09a48f25e58b9d587ce3ec8035a8212d7 |
+| regression | pie | rtx5090-x1 | glm-5.3-flash-mini8 | ss-128-64 | rs-speculative-decoding | tp1,rs | output_tok_s | 144.3 | -8.6% | ±3.4% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | regression | pie | l40s-x1 | qwen3.5-0.8b-bf16 | prefix-1k-x64 | text-completion-bench | tp1 | output_tok_s | 2039 | -8.0% | ±5.0% | d89cedc09a48f25e58b9d587ce3ec8035a8212d7 |
 | regression | pie | l40s-x2 | gemma-4-e4b-bf16 | ss-512-256 | text-completion-bench | tp2 | decode_tok_s | 102.2 | -5.2% | ±2.0% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
 | regression | pie | l40s-x2 | gemma-4-e4b-bf16 | lc-2k-128 | text-completion-bench | tp2 | decode_tok_s | 101.1 | -5.1% | ±3.6% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
+| regression | pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | sliding-window-attention | tp1 | output_tok_s | 69.08 | -4.2% | ±2.7% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| regression | pie | rtx5090-x1 | gemma-4-e4b-bf16 | lc-1k-128 | attention-sink | tp1 | output_tok_s | 80.78 | -3.7% | ±2.8% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| regression | pie | rtx5090-x1 | qwen3.6-27b-gguf-q4km | ss-128-64 | text-completion-bench | tp1 | decode_tok_s | 82.8 | -2.1% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | vllm | rtx4090-x1 | gpt-oss-20b-mxfp4 | ss-128-64 | cacheback-speculative-decoding | tp1,ngram | output_tok_s | 91.8 | +3.1% | ±2.0% | d89cedc09a48f25e58b9d587ce3ec8035a8212d7 |
 | improvement | pie | pro6000-x1 | qwen3.6-35b-a3b-mini5 | lc-8k-128 | text-completion-bench | tp1 | decode_tok_s | 1018 | +3.4% | ±3.1% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | trackb-snapkv | tp1 | output_tok_s | 504.3 | +4.1% | ±2.5% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | qwen3.5-0.8b-bf16 | control-aa | text-completion-bench | tp1 | decode_tok_s | 657.7 | +4.5% | ±4.4% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | qwen3.6-35b-a3b-mini5 | c32 | text-completion-bench | tp1 | output_tok_s | 1.972e+04 | +5.1% | ±5.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4-mini5 | lc-8k-128 | text-completion-bench | tp1 | decode_tok_s | 637 | +5.1% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4-mini5 | ss-512-256 | text-completion-bench | tp1 | decode_tok_s | 679.5 | +5.2% | ±2.3% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
@@ -28,6 +36,7 @@
 | improvement | pie | a100-pcie-x1 | gpt-oss-20b-mlx-mxfp4 | c64 | text-completion-bench | tp1 | output_tok_s | 4417 | +8.4% | ±6.1% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4 | ss-128-64 | text-completion-bench | tp1 | decode_tok_s | 264.5 | +8.9% | ±5.8% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4 | lc-32k-128 | text-completion-bench | tp1 | decode_tok_s | 186.5 | +9.2% | ±2.1% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-32k-128 | text-completion-bench | tp1 | decode_tok_s | 581.2 | +9.2% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4 | lc-1k-128 | attention-sink | tp1 | output_tok_s | 189.9 | +9.3% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | rtx4090-x1 | gemma-4-26b-a4b-mlx4 | lc-1k-128 | sliding-window-attention | tp1 | output_tok_s | 123.8 | +9.3% | ±4.4% | 1655d32dc9e55347f81dcb2511b75baf1e0fb5f8 |
 | improvement | pie | a100-pcie-x1 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | output_tok_s | 254.9 | +9.4% | ±5.9% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
@@ -41,6 +50,7 @@
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4 | lc-8k-128 | text-completion-bench | tp1 | decode_tok_s | 238 | +10.2% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | a100-pcie-x1 | qwen3.6-35b-a3b-mlx4 | c256 | text-completion-bench | tp1 | output_tok_s | 2400 | +10.2% | ±6.1% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4 | lc-1k-128 | sliding-window-attention | tp1 | output_tok_s | 192.3 | +10.6% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | lc-8k-128 | text-completion-bench | tp1 | decode_tok_s | 714 | +10.9% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | a100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | sliding-window-attention | tp1 | output_tok_s | 428 | +10.9% | ±7.9% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | a100-pcie-x1 | gemma-4-e4b-bf16 | kv-oversub | text-completion-bench | tp1 | output_tok_s | 1684 | +10.9% | ±10.4% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | a100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | tova-attention | tp1 | output_tok_s | 339 | +11.4% | ±2.6% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
@@ -92,6 +102,7 @@
 | improvement | pie | a100-pcie-x1 | gpt-oss-20b-mlx-mxfp4 | ss-128-64 | text-completion-bench | tp1 | decode_tok_s | 164.8 | +24.1% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | a100-pcie-x1 | gpt-oss-20b-mlx-mxfp4 | control-aa | text-completion-bench | tp1 | decode_tok_s | 164.9 | +24.2% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4-mini5 | kv-oversub | text-completion-bench | tp1 | output_tok_s | 1.091e+04 | +28.9% | ±10.8% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | ss-128-64 | classifier-free-guidance | tp1 | output_tok_s | 23.29 | +33.7% | ±3.6% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | gpt-oss-20b-mxfp4-mini5 | mixed-256 | text-completion-bench | tp1 | output_tok_s | 8451 | +35.0% | ±15.3% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | a100-pcie-x1 | qwen3.5-0.8b-bf16 | kv-oversub | text-completion-bench | tp1 | output_tok_s | 5371 | +35.5% | ±16.1% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | a100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | mixed-256 | text-completion-bench | tp1 | output_tok_s | 4682 | +36.3% | ±10.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
@@ -99,5 +110,16 @@
 | improvement | pie | a100-pcie-x1 | qwen3.6-35b-a3b-mini5 | mixed-256 | text-completion-bench | tp1 | output_tok_s | 5396 | +39.7% | ±29.7% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | a100-pcie-x1 | qwen3.6-35b-a3b-mini5 | kv-oversub | text-completion-bench | tp1 | output_tok_s | 7922 | +49.5% | ±28.4% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | a100-pcie-x1 | qwen3.5-0.8b-bf16 | mixed-256 | text-completion-bench | tp1 | output_tok_s | 4610 | +49.6% | ±20.5% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | sliding-window-attention | tp1 | output_tok_s | 50.25 | +50.7% | ±4.4% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | attention-sink | tp1 | output_tok_s | 50.31 | +50.8% | ±4.4% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | qwen3.6-35b-a3b-mini5 | mixed-256 | text-completion-bench | tp1 | output_tok_s | 8430 | +51.9% | ±10.6% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | trackb-snapkv | tp1 | output_tok_s | 50.4 | +53.2% | ±4.5% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | decode_tok_s | 66.78 | +55.0% | ±2.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | decode_tok_s | 67.06 | +55.4% | ±4.3% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | tova-attention | tp1 | output_tok_s | 47.26 | +55.7% | ±4.3% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | ss-512-256 | text-completion-bench | tp1 | decode_tok_s | 67.93 | +56.9% | ±4.7% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | trackb-h2o | tp1 | output_tok_s | 48.82 | +57.5% | ±4.3% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | improvement | pie | pro6000-x1 | qwen3.6-35b-a3b-mini5 | kv-oversub | text-completion-bench | tp1 | output_tok_s | 1.401e+04 | +58.5% | ±5.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | ss-128-64 | text-completion-bench | tp1 | decode_tok_s | 73.39 | +62.3% | ±4.4% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | control-aa | text-completion-bench | tp1 | decode_tok_s | 73.67 | +62.9% | ±4.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| improvement | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-1k-128 | snapkv-eviction | tp1 | output_tok_s | 7.333 | +133.0% | ±4.7% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
