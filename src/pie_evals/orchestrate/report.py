@@ -173,16 +173,6 @@ def baseline_markdown(rows: list[dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def calibration(matrix: Matrix, store: Store) -> str:
-    d = store.durations()
-    lines = ["# est_minutes calibration", "", "| workload | declared | observed median (min) | n |", "|---|---|---|---|"]
-    for wid, w in matrix.workloads.items():
-        obs = sorted(d.get(wid, []))
-        med = obs[len(obs) // 2] if obs else None
-        lines.append(f"| {wid} | {w.est_minutes} | {med:.1f} | {len(obs)} |" if med is not None else f"| {wid} | {w.est_minutes} | · | 0 |")
-    return "\n".join(lines) + "\n"
-
-
 def escalation_families(matrix: Matrix, store: Store) -> list[str]:
     """Families with a confirmed smoke regression → promote to nightly."""
     if not matrix.escalation.get("on_smoke_regression_promote_family_to_nightly"):

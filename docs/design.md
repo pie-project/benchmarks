@@ -263,8 +263,6 @@ the first regression signal, baselines excluded, pie builds cached by
 (commit, features) on the network volume, warm pod during working hours.
 **Escalation**: a confirmed smoke regression in a family promotes that
 family's nightly cells into the next nightly run (`suites.yaml`).
-**Calibration**: `reports/calibration.md` compares `est_minutes` with
-recorded durations; the budgets are provisional until the first runs.
 
 ---
 
