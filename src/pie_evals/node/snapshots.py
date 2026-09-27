@@ -66,7 +66,7 @@ def ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path | 
         raise SnapshotMissing(f"checkpoint {artifact.base_model} not in HF cache {hf_cache} (run `pie-evals-node prepare`, or `run --download`; pie's resolve_local_model refuses network)")
     from huggingface_hub import snapshot_download
 
-    log(f"download:{artifact.base_model}@{artifact.revision or 'main'} -> {hf_cache}")
+    log(f"download: {artifact.base_model}@{artifact.revision or 'main'} -> {hf_cache}")
     kw = {"revision": artifact.revision} if artifact.revision else {}
     if artifact.gguf_file:
         kw["allow_patterns"] = ["*.json", artifact.gguf_file]
