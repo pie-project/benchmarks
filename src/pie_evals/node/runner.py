@@ -234,7 +234,12 @@ class NodeRunner:
         except EngineLaunchError:
             raise
         except Exception as e:  # download / shrink failure: the model, not the harness
-            raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"checkpoint unavailable for {cell.artifact.id}: {str(e).strip().splitlines()[-1][:300] if str(e).strip() else e!r}") from e
+            import requests
+            from huggingface_hub.errors import LocalEntryNotFoundError
+
+            # the hub unreachable from this pod says nothing of the model: a re-dispatch measures it
+            unreachable = isinstance(e, (LocalEntryNotFoundError, requests.ConnectionError, requests.Timeout, TimeoutError))
+            raise EngineLaunchError(ErrorClass.HARNESS_INVALID if unreachable else ErrorClass.LOAD_FAIL, f"checkpoint unavailable for {cell.artifact.id}: {str(e).strip().splitlines()[-1][:300] if str(e).strip() else e!r}") from e
 
     # ------------------------------------------------------------------ run
     def run(self) -> list[Record]:
