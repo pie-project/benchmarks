@@ -28,6 +28,16 @@ default:
       rationale: >
         Off: pie tokenizes in the guest, which is part of what the serving
         path costs. Turn on to isolate the engine from the tokenizer.
+  family:
+    qwen3_6:
+      knobs: {}
+      backend:
+        metal:
+          knobs:
+            total_pages:
+              value: 1024
+            engine_option:
+              value: {max_state_slots: 8}
 
 competitive:
   extends: default
