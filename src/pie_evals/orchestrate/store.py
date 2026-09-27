@@ -88,12 +88,3 @@ class Store:
                 continue
             latest[r["cell_id"]] = r
         return latest
-
-    def durations(self) -> dict[str, list[float]]:
-        """workload id -> observed durations, for calibrating est_minutes."""
-        t = self.table()
-        out: dict[str, list[float]] = defaultdict(list)
-        for r in t.select(["workload", "duration_s"]).to_pylist():
-            if r["duration_s"]:
-                out[r["workload"]].append(r["duration_s"] / 60.0)
-        return out
