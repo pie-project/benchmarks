@@ -135,7 +135,9 @@ terminate() {{
   fi
   curl -fsS -X DELETE -H "Authorization: Bearer ${{RUNPOD_API_KEY:-}}" "https://rest.runpod.io/v1/pods/${{RUNPOD_POD_ID:-}}" >/dev/null 2>&1 || true
 }}
-( sleep $(( {kill_minutes} * 60 )); echo "== self-destruct: {kill_minutes} min"; terminate ) &
+# self-destruct is a lease every job extends (tier.yml): a reused pod's fixed timer fired mid-shard (nightly 36264810212)
+echo $(( $(date +%s) + {kill_minutes} * 60 )) > /tmp/pie-evals-deadline
+( while sleep 60; do [ "$(date +%s)" -ge "$(cat /tmp/pie-evals-deadline)" ] && {{ echo "== self-destruct: lease expired"; terminate; break; }}; done ) &
 # a card another tenant already holds (5.7 GB on a fresh 5090, nightly 36270282797) fails every shard's clean check: register nothing
 USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | sort -n | tail -1)
 CUINIT=$(python3 -c "import ctypes; print(ctypes.CDLL('libcuda.so.1').cuInit(0))" 2>/dev/null || echo none)

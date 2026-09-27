@@ -147,6 +147,11 @@ jobs:
           bin="$d/llama-$llama"
           [ -x "$bin/llama-server" ] || { mkdir -p "$bin" && curl -fsSL "https://github.com/ggml-org/llama.cpp/releases/download/$llama/llama-$llama-bin-macos-arm64.tar.gz" | tar xz -C "$bin" --strip-components=1; }
           { echo "MLX_PY=$py/bin/python"; echo "LLAMACPP_PY=$py/bin/python"; echo "LLAMA_SERVER_BIN=$bin/llama-server"; } >> "$GITHUB_ENV"
+      - name: extend the pod's lease
+        if: runner.os == 'Linux'
+        run: |
+          d=$(( $(date +%s) + ${{ fromJSON(needs.expand.outputs.bench_timeout_minutes) }} * 60 ))
+          f=/tmp/pie-evals-deadline; if [ -f $f ] && [ $d -gt "$(cat $f)" ]; then echo $d > $f; fi
       - name: run
         run: .venv/bin/pie-evals-node run --job "jobs/${{ matrix.job_id }}.json" --pie-root "$PIE_ROOT" --out "out/${{ matrix.job_id }}" --download
         env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}" }  # a pod without the volume fetches checkpoints itself; anonymous pulls hit 429
