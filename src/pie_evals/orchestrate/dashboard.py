@@ -245,7 +245,7 @@ function before(mac, model, wl, sha) {
   }
   return null;
 }
-const BASELINES = { mlxlm: "MLX", llamacpp: "llama.cpp" };
+const BASELINES = { mlxlm: "MLX" };
 function baseCell(b, key) {
   const v = b?.[key];
   if (v == null) return `<td class="num muted">–</td>`;
