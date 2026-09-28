@@ -1,23 +1,5 @@
 [
  {
-  "cell_id": "8064a2aee43edd23",
-  "cell_key": "pie|pro6000-x2|google/gemma-4-E4B-it@bf16/hf_safetensors|c64|text-completion-bench|tp2",
-  "engine": "pie",
-  "platform": "pro6000-x2",
-  "artifact": "gemma-4-e4b-bf16",
-  "workload": "c64",
-  "program": "text-completion-bench",
-  "mode": "tp2",
-  "metric": "output_tok_s",
-  "value": 1504.2465913010217,
-  "delta_rel": -0.7434980432676448,
-  "threshold_rel": 0.5106925657800768,
-  "kind": "regression",
-  "pie_commit": "6216f2b250601c9051f1cf81af5b465e8d52b9d7",
-  "engine_version": "6216f2b",
-  "family": "gemma4"
- },
- {
   "cell_id": "8407635e66fd8641",
   "cell_key": "pie|l40s-x2|openai/gpt-oss-20b@mxfp4/hf_safetensors|prefix-1k-x64|text-completion-bench|tp2",
   "engine": "pie",
@@ -52,24 +34,6 @@
   "pie_commit": "6acda1c848e6c27ecaddbb542797a59a44303264",
   "engine_version": "6acda1c",
   "family": "gpt_oss"
- },
- {
-  "cell_id": "17312c98cc9cdf7a",
-  "cell_key": "pie|pro6000-x2|google/gemma-4-E4B-it@bf16/hf_safetensors|c256|text-completion-bench|tp2",
-  "engine": "pie",
-  "platform": "pro6000-x2",
-  "artifact": "gemma-4-e4b-bf16",
-  "workload": "c256",
-  "program": "text-completion-bench",
-  "mode": "tp2",
-  "metric": "output_tok_s",
-  "value": 1415.4723322278046,
-  "delta_rel": -0.5823377052248349,
-  "threshold_rel": 0.4056235310422938,
-  "kind": "regression",
-  "pie_commit": "6216f2b250601c9051f1cf81af5b465e8d52b9d7",
-  "engine_version": "6216f2b",
-  "family": "gemma4"
  },
  {
   "cell_id": "bccd292fb2facb81",
