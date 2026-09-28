@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 2525 |
-| fail | 231 |
+| pass | 2556 |
+| fail | 212 |
 | declared_unsupported | 9673 |
 | not_run | 3604 |
-| noisy | 117 |
+| noisy | 105 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -190,44 +190,25 @@
 | pie | pro6000-x2 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp2 | fail |  |  |
 | pie | rtx4090-x1 | gemma-4-26b-a4b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx4090-x1 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp1 | fail |  |  |
+| pie | rtx4090-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx4090-x1 | gemma-4-31b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
 | pie | rtx4090-x1 | gemma-4-31b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
 | pie | rtx4090-x1 | gemma-4-31b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
-| pie | rtx4090-x1 | gemma-4-e4b-bf16 | c256 | text-completion-bench | tp1 | fail |  |  |
-| pie | rtx4090-x1 | gpt-oss-20b-mxfp4 | c256 | text-completion-bench | tp1 | fail |  |  |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | control-aa | text-completion-bench | tp1 | fail | crash | all 8 requests failed: first frame submit: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by this p |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | ss-128-64 | text-completion-bench | tp1 | fail | crash | all 8 requests failed: first frame submit: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by this p |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | ss-512-256 | text-completion-bench | tp1 | fail | crash | all 8 requests failed: prefill chunk submit @128: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | c8 | text-completion-bench | tp1 | fail | crash | all 32 requests failed: prefill chunk submit @64: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1 s |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | c32 | text-completion-bench | tp1 | fail | crash | all 128 requests failed: prefill chunk submit @16: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1  |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | c64 | text-completion-bench | tp1 | fail | crash | all 256 requests failed: prefill chunk submit @64: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1  |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | c256 | text-completion-bench | tp1 | fail | crash | all 1024 requests failed: prefill chunk submit @64: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1 |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | lc-1k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: prefill chunk submit @128: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: prefill chunk submit @128: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | lc-8k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | lc-32k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | prefix-1k-x64 | text-completion-bench | tp1 | fail | crash | all 64 requests failed: prefill chunk submit @16: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1 s |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | mixed-256 | text-completion-bench | tp1 | fail | crash | all 256 requests failed: prefill chunk submit @32: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1  |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | kv-oversub | text-completion-bench | tp1 | fail | crash | all 256 requests failed: prefill chunk submit @64: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1  |
-| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | crash | all 8 requests failed: truth take: channel is poisoned: pipeline: forward failed: direct launch rejected: frame admissio |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | all 8 requests failed: first frame submit: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by this p |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | crash | all 8 requests failed: truth take: channel is poisoned: pipeline: forward failed: direct launch rejected: frame admissio |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | ss-512-256 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | c8 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | c32 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | c64 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | c256 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
+| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | c64 | text-completion-bench | tp1 | fail | crash | all 256 requests failed: prefill chunk submit @0: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1 s |
+| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | c256 | text-completion-bench | tp1 | fail | crash | all 1024 requests failed: prefill chunk submit @0: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1  |
+| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | lc-8k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: prefill chunk submit @128: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by |
+| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | lc-32k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: prefill chunk submit @128: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by |
+| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | mixed-256 | text-completion-bench | tp1 | fail | crash | all 256 requests failed: prefill chunk submit @0: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1 s |
+| pie | rtx4090-x1 | qwen3.6-27b-gguf-q4km | kv-oversub | text-completion-bench | tp1 | fail | crash | all 256 requests failed: prefill chunk submit @0: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1 s |
+| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | c64 | text-completion-bench | tp1 | fail | crash | all 256 requests failed: TimeoutError:  |
+| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | fail | crash | all 1024 requests failed: prefill chunk submit @0: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1  |
+| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail | crash | all 256 requests failed: prefill chunk submit @0: pipeline: frame slot 0: pipeline: KV capacity: state pool starved: 1 s |
+| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | hang | timed out (hang is only ever observed via timeout) |
+| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | c256 | text-completion-bench | tp1 | fail | crash | all 1024 requests failed: TimeoutError:  |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | rs-speculative-decoding | tp1,rs | fail | crash | all 8 requests failed: truth take: channel is poisoned: pipeline: forward failed: direct launch rejected: impossible sub |
-| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | classifier-free-guidance | tp1 | fail | crash | pie serve exited before ready: RuntimeError: start: boot embedded worker: creating engine for model "default" group 0: i |
+| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | mixed-256 | text-completion-bench | tp1 | fail |  |  |
+| pie | rtx4090-x1 | qwen3.6-35b-a3b-mlx4 | kv-oversub | text-completion-bench | tp1 | fail | hang | timed out (hang is only ever observed via timeout) |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | fail |  |  |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-8k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
 | pie | rtx5090-x1 | gemma-4-31b-mlx4 | lc-32k-128 | text-completion-bench | tp1 | fail | harness_invalid | GPU preflight: cuInit answered 999 |
@@ -342,22 +323,10 @@
 | pie | pro6000-x2 | gpt-oss-20b-mxfp4-mini5 | prefix-1k-x64 | text-completion-bench | tp2 | noisy |  |  |
 | pie | pro6000-x2 | gpt-oss-20b-mxfp4-mini5 | lc-1k-128 | trackb-h2o | tp2 | noisy |  |  |
 | pie | pro6000-x2 | kimi-k3-mini8 | prefix-1k-x64 | text-completion-bench | tp2 | noisy |  |  |
-| pie | rtx4090-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
+| pie | rtx4090-x1 | gemma-4-26b-a4b-mlx4 | c256 | text-completion-bench | tp1 | noisy |  |  |
 | pie | rtx4090-x1 | gemma-4-31b-mlx4 | kv-oversub | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | vllm | rtx4090-x1 | qwen3.5-0.8b-bf16 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
 | sglang | rtx4090-x1 | qwen3.5-0.8b-bf16 | prefix-1k-x64 | text-completion-bench | tp1 | noisy |  |  |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | ss-512-256 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | c64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | prefix-1k-x64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | mixed-256 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | kv-oversub | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | rtx4090-x1 | qwen3.6-27b-mlx4 | ss-128-64 | classifier-free-guidance | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | pie | rtx4090-x1 | qwen3.6-35b-a3b-mini5 | lc-1k-128 | text-completion-bench | tp1 | noisy |  |  |
 | pie | rtx5090-x1 | qwen3.6-35b-a3b-mini5 | c256 | text-completion-bench | tp1 | noisy |  |  |
 | pie | a100-pcie-x1 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp1 | not_run |  |  |
@@ -4009,11 +3978,11 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | deepseek_v4 | · | · | · | · | · | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | · | · | · | · | · | · |
 | deepseek_v41 | · | · | · | · | · | · | 0/23 | 0/23 | 0/23 | 0/23 | 0/23 | · | · | · | · | · | · |
-| gemma4 | 38/42 | 0/42 | 0/42 | 38/42 | 38/42 | 37/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 38/42 | 32/42 | 0/42 | 35/42 | 37/42 |
-| gemma4_moe | 20/21 | · | · | 21/21 | 21/21 | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | 0/21 | 21/21 | · | · | 20/21 | 21/21 |
+| gemma4 | 38/42 | 0/42 | 0/42 | 38/42 | 38/42 | 37/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 38/42 | 32/42 | 0/42 | 36/42 | 37/42 |
+| gemma4_moe | 20/21 | · | · | 21/21 | 21/21 | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | 0/21 | 21/21 | · | · | 19/21 | 21/21 |
 | glm5_next | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 14/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | 14/14 | 14/14 |
-| gpt_oss | 61/63 | 0/63 | 0/63 | 62/63 | 61/63 | 42/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 63/63 | 51/63 | 0/63 | 62/63 | 63/63 |
+| gpt_oss | 61/63 | 0/63 | 0/63 | 62/63 | 61/63 | 42/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 63/63 | 51/63 | 0/63 | 63/63 | 63/63 |
 | kimi_k3 | 14/14 | 0/14 | 0/14 | 14/14 | 14/14 | 1/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | · | 14/14 |
 | qwen3_5 | 14/16 | 0/16 | 0/16 | 15/16 | 16/16 | 15/16 | 0/20 | 0/20 | 0/20 | 6/20 | 6/20 | 8/16 | 14/16 | 16/16 | 0/16 | 16/16 | 16/16 |
-| qwen3_6 | 30/30 | 0/30 | 0/30 | 30/30 | 27/30 | 12/30 | 0/38 | 0/38 | 0/38 | 6/38 | 6/38 | 0/30 | 30/30 | 30/30 | 0/30 | 1/30 | 24/30 |
-| qwen3_6_moe | 32/32 | 0/32 | 0/32 | 32/32 | 32/32 | 11/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 32/32 | 32/32 | 0/32 | 15/32 | 27/32 |
+| qwen3_6 | 30/30 | 0/30 | 0/30 | 30/30 | 27/30 | 12/30 | 0/38 | 0/38 | 0/38 | 6/38 | 6/38 | 0/30 | 30/30 | 30/30 | 0/30 | 20/30 | 24/30 |
+| qwen3_6_moe | 32/32 | 0/32 | 0/32 | 32/32 | 32/32 | 11/32 | 0/40 | 0/40 | 0/40 | 0/40 | 0/40 | 0/32 | 32/32 | 32/32 | 0/32 | 26/32 | 27/32 |
