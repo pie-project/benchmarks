@@ -2,8 +2,8 @@
 
 | platform | artifact | workload | program | mode | baseline | metric | pie | baseline | baseline/pie | inputs match | recipe |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| pro6000-x2 | gemma-4-e4b-bf16 | c256 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 1004 | 1.01e+04 | 10.061× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4-mini5 | c256 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 3927 | 2.783e+04 | 7.087× **pie trails** | **NO** | competitive |
-| pro6000-x2 | gemma-4-e4b-bf16 | c256 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 1448 | 1.01e+04 | 6.978× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4-mini5 | c256 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 3927 | 2.72e+04 | 6.928× **pie trails** | **NO** | competitive |
 | rtx5090-x1 | gemma-4-e4b-bf16 | kv-oversub | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 580.2 | 2995 | 5.162× **pie trails** | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | c64 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 2436 | 1.242e+04 | 5.099× **pie trails** | **NO** | competitive |
@@ -12,9 +12,10 @@
 | pro6000-x2 | gpt-oss-20b-mxfp4-mini5 | c64 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 4224 | 1.876e+04 | 4.443× **pie trails** | **NO** | competitive |
 | rtx4090-x1 | gemma-4-e4b-bf16 | c256 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 1229 | 5191 | 4.224× **pie trails** | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | c32 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 2244 | 9089 | 4.050× **pie trails** | **NO** | competitive |
+| pro6000-x2 | gemma-4-e4b-bf16 | c64 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 1480 | 5248 | 3.546× **pie trails** | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | c256 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 5585 | 1.818e+04 | 3.254× **pie trails** | **NO** | competitive |
-| pro6000-x2 | gemma-4-e4b-bf16 | c64 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 1622 | 5248 | 3.236× **pie trails** | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | c256 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 5585 | 1.767e+04 | 3.164× **pie trails** | **NO** | competitive |
+| pro6000-x2 | gemma-4-e4b-bf16 | kv-oversub | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 862.4 | 2699 | 3.130× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4 | prefix-1k-x64 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 839.1 | 2610 | 3.110× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4 | c256 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 4177 | 1.232e+04 | 2.950× **pie trails** | **NO** | competitive |
 | rtx4090-x1 | gemma-4-e4b-bf16 | c64 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 1153 | 3282 | 2.848× **pie trails** | **NO** | competitive |
@@ -28,7 +29,7 @@
 | pro6000-x2 | gpt-oss-20b-mxfp4-mini5 | kv-oversub | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 6223 | 1.41e+04 | 2.265× **pie trails** | **NO** | competitive |
 | l40s-x2 | gpt-oss-20b-mxfp4 | lc-2k-128 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 95.24 | 215.1 | 2.258× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4-mini5 | c32 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 5591 | 1.223e+04 | 2.187× **pie trails** | **NO** | competitive |
-| pro6000-x2 | gemma-4-e4b-bf16 | c32 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 1312 | 2855 | 2.176× **pie trails** | **NO** | competitive |
+| pro6000-x2 | gemma-4-e4b-bf16 | c32 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 1307 | 2855 | 2.184× **pie trails** | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | lc-1k-128 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 271.7 | 585.3 | 2.154× **pie trails** | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | ss-512-256 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 294.5 | 616.1 | 2.092× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4 | kv-oversub | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 1950 | 4056 | 2.080× **pie trails** | **NO** | competitive |
@@ -40,7 +41,6 @@
 | pro6000-x2 | gpt-oss-20b-mxfp4 | mixed-256 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 1164 | 2370 | 2.037× **pie trails** | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | ss-128-64 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 271.6 | 553.2 | 2.036× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4-mini5 | mixed-256 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 4178 | 8505 | 2.036× **pie trails** | **NO** | competitive |
-| pro6000-x2 | gemma-4-e4b-bf16 | kv-oversub | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 1353 | 2699 | 1.995× **pie trails** | **NO** | competitive |
 | pro6000-x2 | kimi-k3-mini8 | c256 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 3216 | 6349 | 1.974× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4-mini5 | mixed-256 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 4178 | 8247 | 1.974× **pie trails** | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | mixed-256 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 2318 | 4539 | 1.958× **pie trails** | **NO** | competitive |
@@ -61,7 +61,6 @@
 | h100-pcie-x1 | kimi-k3-mini8 | c256 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 3244 | 5134 | 1.583× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4 | lc-8k-128 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 113.5 | 179.5 | 1.582× **pie trails** | **NO** | competitive |
 | a100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | c256 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 1.918e+04 | 3.033e+04 | 1.582× **pie trails** | **NO** | competitive |
-| pro6000-x2 | gemma-4-e4b-bf16 | mixed-256 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 1149 | 1808 | 1.574× **pie trails** | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | lc-8k-128 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 237.4 | 373.1 | 1.572× **pie trails** | **NO** | competitive |
 | rtx5090-x1 | kimi-k3-mini8 | c64 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 1918 | 2982 | 1.554× **pie trails** | **NO** | competitive |
 | h100-pcie-x1 | qwen3.5-0.8b-bf16 | c256 | text-completion-bench | tp1 | sglang 0.5.20 | output_tok_s | 1.583e+04 | 2.423e+04 | 1.531× **pie trails** | **NO** | competitive |
@@ -185,7 +184,6 @@
 | rtx4090-x1 | gpt-oss-20b-mxfp4-mini5 | c256 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 2.458e+04 | 2.464e+04 | 1.002× **pie trails** | **NO** | competitive |
 | pro6000-x2 | gpt-oss-20b-mxfp4 | c64 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 6722 | 6729 | 1.001× **pie trails** | **NO** | competitive |
 | pro6000-x1 | gemma-4-e4b-bf16 | kv-oversub | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 2731 | 2730 | 1.000× | **NO** | competitive |
-| pro6000-x2 | gemma-4-e4b-bf16 | lc-32k-128 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 45.66 | 45.57 | 0.998× | **NO** | competitive |
 | rtx4090-x1 | gpt-oss-20b-mxfp4-mini5 | ss-512-256 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 475.5 | 472.4 | 0.994× | **NO** | competitive |
 | rtx4090-x1 | gemma-4-e4b-bf16 | lc-32k-128 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 28.64 | 28.43 | 0.993× | **NO** | competitive |
 | rtx5090-x1 | gpt-oss-20b-mxfp4-mini5 | kv-oversub | text-completion-bench | tp1 | sglang 0.5.20 | output_tok_s | 2.352e+04 | 2.332e+04 | 0.991× | **NO** | competitive |
@@ -211,6 +209,7 @@
 | h100-pcie-x1 | gemma-4-e4b-bf16 | mixed-256 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 2026 | 1943 | 0.959× | **NO** | competitive |
 | rtx4090-x1 | gemma-4-e4b-bf16 | lc-8k-128 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 58.22 | 55.8 | 0.958× | **NO** | competitive |
 | pro6000-x2 | qwen3.5-0.8b-bf16 | lc-32k-128 | text-completion-bench | tp2 | sglang 0.5.20 | output_tok_s | 191.8 | 183.5 | 0.957× | **NO** | competitive |
+| pro6000-x2 | gemma-4-e4b-bf16 | lc-32k-128 | text-completion-bench | tp2 | vllm 0.30.0 | output_tok_s | 47.7 | 45.57 | 0.955× | **NO** | competitive |
 | a100-pcie-x1 | gpt-oss-20b-mxfp4 | lc-1k-128 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 214.5 | 204.7 | 0.954× | **NO** | competitive |
 | rtx5090-x1 | kimi-k3-mini8 | lc-2k-128 | text-completion-bench | tp1 | vllm 0.30.0 | output_tok_s | 98.4 | 93.83 | 0.954× | **NO** | competitive |
 | h100-pcie-x1 | gpt-oss-20b-mxfp4-mini5 | mixed-256 | text-completion-bench | tp1 | sglang 0.5.20 | output_tok_s | 9131 | 8706 | 0.953× | **NO** | competitive |
