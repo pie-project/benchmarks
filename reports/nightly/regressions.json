@@ -234,6 +234,24 @@
   "family": "gemma4"
  },
  {
+  "cell_id": "c4156c063e44a9f8",
+  "cell_key": "pie|pro6000-x2|google/gemma-4-E4B-it@bf16/hf_safetensors|prefix-1k-x64|text-completion-bench|tp2",
+  "engine": "pie",
+  "platform": "pro6000-x2",
+  "artifact": "gemma-4-e4b-bf16",
+  "workload": "prefix-1k-x64",
+  "program": "text-completion-bench",
+  "mode": "tp2",
+  "metric": "output_tok_s",
+  "value": 627.886984229258,
+  "delta_rel": -0.13291999329149318,
+  "threshold_rel": 0.07131613603231407,
+  "kind": "regression",
+  "pie_commit": "31263bfb91d7eba655cc8973cc13661f7fc8e886",
+  "engine_version": "31263bf",
+  "family": "gemma4"
+ },
+ {
   "cell_id": "90f042ae9ce98d5b",
   "cell_key": "pie|h100-pcie-x1|mlx-community/Qwen3.6-35B-A3B-4bit@affine_u4_g64/mlx#mini-1a70d05d00|c8|text-completion-bench|tp1",
   "engine": "pie",
