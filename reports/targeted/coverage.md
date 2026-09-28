@@ -2,8 +2,8 @@
 
 | status | cells |
 |---|---|
-| pass | 36 |
-| fail | 2 |
+| pass | 35 |
+| fail | 3 |
 | declared_unsupported | 152 |
 | not_run | 509 |
 | noisy | 6 |
@@ -12,6 +12,7 @@
 
 | engine | platform | artifact | workload | program | mode | status | error | message |
 |---|---|---|---|---|---|---|---|---|
+| pie | m5-max-128g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | fail |  |  |
 | llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | all 8 requests failed: out take: channel is poisoned: pipeline: forward failed: direct launch rejected: channel take: de |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
@@ -555,5 +556,5 @@
 | gemma4_moe | 0/6 | 0/6 | 0/6 | 0/6 | 0/6 |
 | gpt_oss | 0/12 | 0/12 | 0/12 | 0/18 | 0/12 |
 | qwen3_5 | 0/18 | 0/18 | 0/18 | 6/18 | 6/18 |
-| qwen3_6 | 0/12 | 0/12 | 0/12 | 6/18 | 0/12 |
+| qwen3_6 | 0/12 | 0/12 | 0/12 | 5/18 | 0/12 |
 | qwen3_6_moe | 0/6 | 0/6 | 0/6 | 0/6 | 0/6 |
