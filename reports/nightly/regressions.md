@@ -15,7 +15,6 @@
 | regression | pie | pro6000-x2 | qwen3.6-27b-mlx4 | ss-128-64 | rs-speculative-decoding | tp2,rs | output_tok_s | 32.67 | -31.5% | ±9.1% | b95c82de68a087f704dcd6b35af448cd90e825eb |
 | regression | pie | rtx5090-x1 | gemma-4-e4b-bf16 | c64 | text-completion-bench | tp1 | output_tok_s | 4191 | -31.4% | ±14.5% | b95c82de68a087f704dcd6b35af448cd90e825eb |
 | regression | pie | pro6000-x2 | gemma-4-e4b-bf16 | lc-1k-128 | trackb-snapkv | tp2 | output_tok_s | 75.98 | -26.1% | ±16.8% | b95c82de68a087f704dcd6b35af448cd90e825eb |
-| regression | pie | pro6000-x2 | gemma-4-e4b-bf16 | prefix-1k-x64 | text-completion-bench | tp2 | output_tok_s | 627.9 | -13.3% | ±7.1% | 31263bfb91d7eba655cc8973cc13661f7fc8e886 |
 | regression | pie | h100-pcie-x1 | qwen3.6-35b-a3b-mini5 | c8 | text-completion-bench | tp1 | output_tok_s | 6532 | -5.5% | ±5.0% | b95c82de68a087f704dcd6b35af448cd90e825eb |
 | regression | pie | h100-pcie-x1 | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | decode_tok_s | 57.39 | -5.0% | ±2.0% | b95c82de68a087f704dcd6b35af448cd90e825eb |
 | regression | pie | h100-pcie-x1 | qwen3.6-27b-gguf-q4km | lc-2k-128 | text-completion-bench | tp1 | decode_tok_s | 57.75 | -3.6% | ±3.3% | b95c82de68a087f704dcd6b35af448cd90e825eb |
