@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
+from statistics import median
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -73,6 +74,17 @@ class Store:
         for r in rows:
             hist[r["cell_id"]].append(float(r["primary_value"]))
         return {k: v[-limit:] for k, v in hist.items()}
+
+    def measured_minutes(self, *, limit: int = 5) -> dict[str, float]:
+        """cell_id -> median wall minutes of its last ``limit`` records that ran."""
+        t = self.table(None)
+        if t.num_rows == 0:
+            return {}
+        rows = sorted((r for r in t.select(["cell_id", "status", "duration_s", "started_at"]).to_pylist() if r["status"] != "not_run" and r["duration_s"]), key=lambda r: r["started_at"])
+        by: dict[str, list[float]] = defaultdict(list)
+        for r in rows:
+            by[r["cell_id"]].append(r["duration_s"] / 60)
+        return {k: median(v[-limit:]) for k, v in by.items()}
 
     def latest_by_cell(self, tier: Tier | None = None) -> dict[str, dict]:
         t = self.table(tier)

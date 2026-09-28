@@ -31,10 +31,14 @@ def process_key(c: Cell) -> tuple:
 ENGINE_CELL_MINUTES = {"vllm": 4.0, "sglang": 3.5}  # measured: 12 vLLM Qwen3.5-0.8B cells took 3860 s on an L40S (nightly 35935510089)
 
 
-def cell_minutes(c: Cell) -> float:
+def cell_minutes(c: Cell, measured: dict[str, float] | None = None) -> float:
+    """The cell's median recorded duration where the store has one (the static
+    estimate left s00 shards' last cells not_run on every platform), else the estimate."""
+    if measured and c.cell_id in measured:
+        return measured[c.cell_id]
     return float(c.workload.est_minutes) + ENGINE_CELL_MINUTES.get(str(c.engine), 0.0)
 
-def shard_groups(cells: list[Cell], budget_minutes: float) -> list[list[Cell]]:
+def shard_groups(cells: list[Cell], budget_minutes: float, measured: dict[str, float] | None = None) -> list[list[Cell]]:
     """Bin-pack cells into jobs of ~budget_minutes. A process group (same
     engine, artifact, mode = one loaded model) is never split; groups are
     placed largest-first into the first shard with room (first-fit
@@ -47,25 +51,25 @@ def shard_groups(cells: list[Cell], budget_minutes: float) -> list[list[Cell]]:
     # cell, so they run without the A/A gate — recorded in the job's notes)
     pieces: list[list[Cell]] = []
     for g in groups.values():
-        if sum(cell_minutes(c) for c in g) <= budget_minutes:
+        if sum(cell_minutes(c, measured) for c in g) <= budget_minutes:
             pieces.append(g)
             continue
-        g = sorted(g, key=lambda c: (0 if c.workload.kind.value == "control_aa" else 1, -cell_minutes(c)))
+        g = sorted(g, key=lambda c: (0 if c.workload.kind.value == "control_aa" else 1, -cell_minutes(c, measured)))
         cur: list[Cell] = []
         load = 0.0
         for c in g:
-            if cur and load + cell_minutes(c) > budget_minutes:
+            if cur and load + cell_minutes(c, measured) > budget_minutes:
                 pieces.append(cur)
                 cur, load = [], 0.0
             cur.append(c)
-            load += cell_minutes(c)
+            load += cell_minutes(c, measured)
         if cur:
             pieces.append(cur)
-    ordered = sorted(pieces, key=lambda g: -sum(cell_minutes(c) for c in g))
+    ordered = sorted(pieces, key=lambda g: -sum(cell_minutes(c, measured) for c in g))
     shards: list[list[Cell]] = []
     loads: list[float] = []
     for g in ordered:
-        need = sum(cell_minutes(c) for c in g)
+        need = sum(cell_minutes(c, measured) for c in g)
         for i, load in enumerate(loads):
             if load + need <= budget_minutes:
                 shards[i].extend(g)
@@ -94,6 +98,7 @@ def make_jobs(
     if engines:
         cells = [c for c in cells if str(c.engine) in engines]
     history = store.history(limit=20) if store else {}
+    measured = store.measured_minutes() if store else {}
     by_plat: dict[str, list[Cell]] = {}
     for c in cells:
         by_plat.setdefault(c.platform.id, []).append(c)
@@ -102,13 +107,13 @@ def make_jobs(
     kill_s = int(budget * matrix.kill_factor * 60)
     jobs = []
     for plat, plat_cells in sorted(by_plat.items()):
-        for idx, shard in enumerate(shard_groups(plat_cells, budget)):
+        for idx, shard in enumerate(shard_groups(plat_cells, budget, measured)):
             # one model per process: order by (engine, artifact, mode) so the node loads each model once
             shard.sort(key=lambda c: (str(c.engine), c.artifact.id, c.mode.key, c.program.id, c.workload.id))
             pins = {e.id: e.pin for e in matrix.engines.values() if e.pin and any(str(c.engine) == e.id for c in shard)}
             seed = f"{tier}|{plat}|{idx}|{pie_commit}|{stamp}|{label or ''}"
             job_id = f"{tier}-{plat}-s{idx:02d}-{stamp}-" + hashlib.sha256(seed.encode()).hexdigest()[:6]
-            est = sum(cell_minutes(c) for c in shard)
+            est = sum(cell_minutes(c, measured) for c in shard)
             jobs.append(
                 JobSpec(
                     job_id=job_id,
