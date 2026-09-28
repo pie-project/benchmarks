@@ -2,10 +2,11 @@
 
 | kind | engine | platform | artifact | workload | program | mode | metric | value | Δ | threshold | commit/version |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| regression | pie | pro6000-x2 | gemma-4-e4b-bf16 | c64 | text-completion-bench | tp2 | output_tok_s | 1504 | -74.3% | ±51.1% | 6216f2b250601c9051f1cf81af5b465e8d52b9d7 |
 | regression | pie | l40s-x2 | gpt-oss-20b-mxfp4 | prefix-1k-x64 | text-completion-bench | tp2 | output_tok_s | 211.1 | -66.5% | ±5.0% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | regression | pie | l40s-x2 | gpt-oss-20b-mxfp4-mini5 | c8 | text-completion-bench | tp2 | output_tok_s | 2242 | -60.6% | ±47.6% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
+| regression | pie | pro6000-x2 | gemma-4-e4b-bf16 | c256 | text-completion-bench | tp2 | output_tok_s | 1415 | -58.2% | ±40.6% | 6216f2b250601c9051f1cf81af5b465e8d52b9d7 |
 | regression | pie | pro6000-x2 | qwen3.5-0.8b-bf16 | c8 | text-completion-bench | tp2 | output_tok_s | 2608 | -53.7% | ±20.7% | fec942409bc3675744a17954890666b6c62f0624 |
-| regression | pie | pro6000-x2 | gemma-4-e4b-bf16 | mixed-256 | text-completion-bench | tp2 | output_tok_s | 476.6 | -53.6% | ±43.2% | fec942409bc3675744a17954890666b6c62f0624 |
 | regression | pie | pro6000-x2 | qwen3.6-35b-a3b-mlx4 | ss-128-64 | rs-speculative-decoding | tp2,rs | output_tok_s | 38.49 | -48.9% | ±22.1% | b95c82de68a087f704dcd6b35af448cd90e825eb |
 | regression | pie | l40s-x2 | gpt-oss-20b-mxfp4 | mixed-256 | text-completion-bench | tp2 | output_tok_s | 572.2 | -43.1% | ±19.3% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
 | regression | pie | l40s-x2 | gpt-oss-20b-mxfp4 | lc-1k-128 | trackb-h2o | tp2 | output_tok_s | 89.16 | -41.6% | ±6.1% | 6acda1c848e6c27ecaddbb542797a59a44303264 |
@@ -98,8 +99,6 @@
 | improvement | pie | pro6000-x1 | qwen3.6-35b-a3b-mlx4 | c32 | text-completion-bench | tp1 | output_tok_s | 5024 | +23.9% | ±12.8% | 5eab5e00b6b2b92d4b9d83320abf0cf97249f5af |
 | improvement | pie | l40s-x1 | kimi-k3-mini8 | c64 | text-completion-bench | tp1 | output_tok_s | 2197 | +24.3% | ±5.5% | b95c82de68a087f704dcd6b35af448cd90e825eb |
 | improvement | pie | pro6000-x1 | qwen3.6-35b-a3b-mlx4 | c256 | text-completion-bench | tp1 | output_tok_s | 4946 | +24.9% | ±10.3% | 5eab5e00b6b2b92d4b9d83320abf0cf97249f5af |
-| improvement | pie | pro6000-x2 | gemma-4-e4b-bf16 | lc-2k-128 | text-completion-bench | tp2 | decode_tok_s | 175.5 | +25.2% | ±24.5% | fec942409bc3675744a17954890666b6c62f0624 |
-| improvement | pie | pro6000-x2 | gemma-4-e4b-bf16 | lc-1k-128 | text-completion-bench | tp2 | decode_tok_s | 179.4 | +25.5% | ±24.7% | fec942409bc3675744a17954890666b6c62f0624 |
 | improvement | pie | rtx4090-x1 | qwen3.6-35b-a3b-mini5 | c32 | text-completion-bench | tp1 | output_tok_s | 1.735e+04 | +25.7% | ±19.8% | 5eab5e00b6b2b92d4b9d83320abf0cf97249f5af |
 | improvement | pie | pro6000-x1 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | output_tok_s | 1733 | +25.9% | ±7.5% | 5eab5e00b6b2b92d4b9d83320abf0cf97249f5af |
 | improvement | pie | h100-pcie-x1 | qwen3.6-27b-mlx4 | c256 | text-completion-bench | tp1 | output_tok_s | 1117 | +25.9% | ±10.4% | b95c82de68a087f704dcd6b35af448cd90e825eb |
