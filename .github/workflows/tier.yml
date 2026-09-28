@@ -17,6 +17,7 @@ on:
       build_platform: { type: string, required: false, default: "" }
       persist: { type: boolean, required: false, default: true }
       skip_recorded: { type: boolean, required: false, default: false }
+      pie_env: { type: string, required: false, default: "" }
     outputs:
       platforms: { value: "${{ jobs.expand.outputs.platforms }}" }
 
@@ -153,7 +154,7 @@ jobs:
           d=$(( $(date +%s) + ${{ fromJSON(needs.expand.outputs.bench_timeout_minutes) }} * 60 ))
           f=/tmp/pie-evals-deadline; if [ -f $f ] && [ $d -gt "$(cat $f)" ]; then echo $d > $f; fi
       - name: run
-        run: .venv/bin/pie-evals-node run --job "jobs/${{ matrix.job_id }}.json" --pie-root "$PIE_ROOT" --out "out/${{ matrix.job_id }}" --download
+        run: env ${{ inputs.pie_env }} .venv/bin/pie-evals-node run --job "jobs/${{ matrix.job_id }}.json" --pie-root "$PIE_ROOT" --out "out/${{ matrix.job_id }}" --download
         env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}" }  # a pod without the volume fetches checkpoints itself; anonymous pulls hit 429
         # on RunPod every cache path comes from the runner's .env (written by the startup script)
       - uses: actions/upload-artifact@v4

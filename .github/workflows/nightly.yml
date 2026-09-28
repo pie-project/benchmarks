@@ -16,6 +16,7 @@ on:
       build_platform: { description: "platform for the build/prepare pod", required: false, default: "" }
       max_jobs_per_platform: { description: "cap per platform", required: false, default: "" }
       skip_recorded: { description: "skip cells the store already holds: pie at this commit, baselines at their pinned version", type: boolean, required: false, default: true }
+      pie_env: { description: "KEY=VALUE pairs set for the node run (A/B diagnostics)", required: false, default: "" }
 
 jobs:
   resolve:
@@ -52,4 +53,5 @@ jobs:
       build_platform: ${{ github.event.inputs.build_platform || '' }}
       max_jobs_per_platform: ${{ github.event.inputs.max_jobs_per_platform || '' }}
       skip_recorded: ${{ github.event.inputs.skip_recorded == 'true' }}
+      pie_env: ${{ github.event.inputs.pie_env || '' }}
     secrets: inherit
