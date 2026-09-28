@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 2543 |
+| pass | 2538 |
 | fail | 214 |
 | declared_unsupported | 9673 |
 | not_run | 3604 |
-| noisy | 116 |
+| noisy | 121 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -302,6 +302,11 @@
 | pie | pro6000-x1 | qwen3.5-0.8b-bf16 | kv-oversub | text-completion-bench | tp1 | noisy |  |  |
 | pie | pro6000-x2 | gemma-4-31b-mlx4 | c64 | text-completion-bench | tp2 | noisy |  |  |
 | pie | pro6000-x2 | gemma-4-31b-mlx4 | c256 | text-completion-bench | tp2 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
+| pie | pro6000-x2 | gemma-4-e4b-bf16 | ss-128-64 | text-completion-bench | tp2 | noisy |  |  |
+| pie | pro6000-x2 | gemma-4-e4b-bf16 | ss-512-256 | text-completion-bench | tp2 | noisy |  |  |
+| pie | pro6000-x2 | gemma-4-e4b-bf16 | c256 | text-completion-bench | tp2 | noisy |  |  |
+| pie | pro6000-x2 | gemma-4-e4b-bf16 | lc-1k-128 | text-completion-bench | tp2 | noisy |  |  |
+| pie | pro6000-x2 | gemma-4-e4b-bf16 | lc-2k-128 | text-completion-bench | tp2 | noisy |  |  |
 | pie | pro6000-x2 | gemma-4-e4b-bf16 | prefix-1k-x64 | text-completion-bench | tp2 | noisy |  |  |
 | pie | pro6000-x2 | gemma-4-e4b-bf16 | lc-1k-128 | trackb-h2o | tp2 | noisy |  |  |
 | pie | pro6000-x2 | gemma-4-e4b-bf16 | lc-1k-128 | snapkv-eviction | tp2 | noisy |  |  |
@@ -3991,7 +3996,7 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | deepseek_v4 | · | · | · | · | · | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | · | · | · | · | · | · |
 | deepseek_v41 | · | · | · | · | · | · | 0/23 | 0/23 | 0/23 | 0/23 | 0/23 | · | · | · | · | · | · |
-| gemma4 | 39/42 | 0/42 | 0/42 | 38/42 | 38/42 | 37/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 38/42 | 35/42 | 0/42 | 36/42 | 37/42 |
+| gemma4 | 39/42 | 0/42 | 0/42 | 38/42 | 38/42 | 37/42 | 0/50 | 0/50 | 0/50 | 0/50 | 0/50 | 0/42 | 38/42 | 30/42 | 0/42 | 36/42 | 37/42 |
 | gemma4_moe | 20/21 | · | · | 19/21 | 21/21 | · | 0/25 | 0/25 | 0/25 | 0/25 | 0/25 | 0/21 | 21/21 | · | · | 19/21 | 21/21 |
 | glm5_next | 14/14 | 0/14 | 0/14 | 13/14 | 14/14 | 14/14 | 0/18 | 0/18 | 0/18 | 0/18 | 0/18 | 6/14 | 14/14 | 13/14 | 0/14 | 14/14 | 14/14 |
 | gpt_oss | 62/63 | 0/63 | 0/63 | 60/63 | 61/63 | 42/63 | 0/75 | 0/75 | 0/75 | 0/75 | 0/75 | 0/63 | 63/63 | 51/63 | 0/63 | 63/63 | 63/63 |
