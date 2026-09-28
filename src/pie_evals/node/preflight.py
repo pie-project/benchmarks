@@ -227,6 +227,11 @@ def linux_machine_state() -> dict[str, Any]:
             state["cpu_model"] = next((ln.split(":", 1)[1].strip() for ln in f if ln.startswith("model name")), "")
     except OSError:
         pass
+    # GPU0-GPU1 link: tp2 gemma c64 was 1.2k tok/s on a SYS (cross-socket) L40S pod and ~4k on NODE ones (pie #777)
+    if len(state.get("gpus", [])) > 1 and (topo := _run(["nvidia-smi", "topo", "-m"])):
+        row = next((ln.split() for ln in topo.splitlines() if ln.split()[:1] == ["GPU0"]), [])
+        if len(row) > 2:
+            state["gpu_link"] = row[2]
     try:
         la = os.getloadavg()
         state["loadavg"] = ",".join(f"{x:.2f}" for x in la)
