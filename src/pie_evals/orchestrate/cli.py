@@ -13,7 +13,6 @@ import click
 from pie_evals.schema import Tier
 
 from . import baselines as bl
-from . import dashboard as dash
 from . import report as rp
 from .jobs import make_jobs
 from .matrix import Matrix, summarize
@@ -189,17 +188,6 @@ def report(obj, tier, out):
         with open(os.environ["GITHUB_OUTPUT"], "a") as f:
             f.write(f"regressions={n_reg}\npie_trails={trails}\n")
 
-
-@main.command("dashboard")
-@click.option("--out", type=click.Path(), default="site", show_default=True)
-@click.option("--repo", default=None, help="owner/name of this repo, whose runners and collaborators the site shows (default: $GITHUB_REPOSITORY)")
-@click.option("--pie-repo", default="pie-project/pie", show_default=True)
-@click.pass_obj
-def dashboard(obj, out, repo, pie_repo):
-    """Render the pie evals site: pushes, machines and people."""
-    repo = repo or os.environ.get("GITHUB_REPOSITORY", "pie-project/pie-evals")
-    n = dash.render(obj["store"], obj["matrix"], Path(out), dash.runners(repo), repo=repo, pie_repo=pie_repo)
-    click.echo(f"{n} pushes -> {out}/index.html")
 
 
 @main.command("watch-baselines")

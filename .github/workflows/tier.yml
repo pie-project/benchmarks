@@ -138,16 +138,6 @@ jobs:
           # RunPod: the startup script sets PIE_ROOT=/tmp/pie (pod-local) and PIE_MIRROR (bare mirror on the volume);
           # the node clones from the mirror and restores the cached build. Macs: a resident checkout under $HOME.
           echo "PIE_ROOT=${PIE_ROOT:-$HOME/pie}" >> "$GITHUB_ENV"
-      - name: baseline engines
-        if: runner.os == 'macOS' && (contains(inputs.engines, 'mlxlm') || contains(inputs.engines, 'llamacpp'))
-        run: |
-          pin() { .venv/bin/python -c "import yaml,sys; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}[sys.argv[1]]['pin'])" "$1"; }
-          d="$HOME/.cache/pie-evals/baselines"; mlx=$(pin mlxlm); llama=$(pin llamacpp)
-          py="$d/mlx-lm-$mlx"
-          [ -x "$py/bin/python" ] || { uv venv --quiet --python 3.12 "$py" && uv pip install --quiet --python "$py/bin/python" "mlx-lm==$mlx" transformers; }
-          bin="$d/llama-$llama"
-          [ -x "$bin/llama-server" ] || { mkdir -p "$bin" && curl -fsSL "https://github.com/ggml-org/llama.cpp/releases/download/$llama/llama-$llama-bin-macos-arm64.tar.gz" | tar xz -C "$bin" --strip-components=1; }
-          { echo "MLX_PY=$py/bin/python"; echo "LLAMACPP_PY=$py/bin/python"; echo "LLAMA_SERVER_BIN=$bin/llama-server"; } >> "$GITHUB_ENV"
       - name: extend the pod's lease
         if: runner.os == 'Linux'
         run: |
