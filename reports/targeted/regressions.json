@@ -1,1 +1,38 @@
-[]
+[
+ {
+  "cell_id": "016fc3d8523a9f72",
+  "cell_key": "pie|m5-max-128g|mlx-community/Qwen3.6-27B-4bit@affine_u4_g64/mlx|lc-2k-128|text-completion-bench|tp1",
+  "engine": "pie",
+  "platform": "m5-max-128g",
+  "artifact": "qwen3.6-27b-mlx4",
+  "workload": "lc-2k-128",
+  "program": "text-completion-bench",
+  "mode": "tp1",
+  "metric": "decode_tok_s",
+  "value": 30.7056321764043,
+  "delta_rel": -0.06296670633976927,
+  "threshold_rel": 0.041910729721923744,
+  "kind": "regression",
+  "pie_commit": "e5db756f2efb5447e4d67f0340db5d88d82395aa",
+  "engine_version": "e5db756f2",
+  "family": "qwen3_6"
+ },
+ {
+  "cell_id": "9d073dafaaa964c9",
+  "cell_key": "pie|m5-max-128g|mlx-community/Qwen3.6-27B-4bit@affine_u4_g64/mlx|lc-1k-128|text-completion-bench|tp1",
+  "engine": "pie",
+  "platform": "m5-max-128g",
+  "artifact": "qwen3.6-27b-mlx4",
+  "workload": "lc-1k-128",
+  "program": "text-completion-bench",
+  "mode": "tp1",
+  "metric": "decode_tok_s",
+  "value": 31.296159079281544,
+  "delta_rel": -0.0554237226671632,
+  "threshold_rel": 0.022325294131466517,
+  "kind": "regression",
+  "pie_commit": "e5db756f2efb5447e4d67f0340db5d88d82395aa",
+  "engine_version": "e5db756f2",
+  "family": "qwen3_6"
+ }
+]
