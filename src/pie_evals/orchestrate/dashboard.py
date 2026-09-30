@@ -760,6 +760,8 @@ def _pool(live: list[dict] | None, matrix: Matrix, last: dict[str, dict]) -> lis
         if not pid:
             continue
         spec = matrix.platforms[pid]
+        if spec.os != "macos":
+            continue
         pool.append({
             "name": spec.accelerator,
             "id": pid,
@@ -778,7 +780,7 @@ def _tokens(n: int) -> str:
 
 def benchmarks(matrix: Matrix) -> list[dict]:
     workloads = {c.workload.id: c.workload for c in matrix.cells_for(Tier.TARGETED)
-                 if str(c.workload.kind) in ("single_stream", "long_context", "concurrency", "prefix_shared")}
+                 if str(c.engine) == "ollama" and str(c.workload.kind) in ("single_stream", "long_context", "concurrency", "prefix_shared")}
     order = sorted(workloads.values(), key=lambda w: (int(w.params.get("concurrency") or 1), int(w.params.get("prefill") or 0)))
     tests = []
     for w in order:
@@ -905,11 +907,11 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     rows = [r for r in every if r["status"] in measured_ok and (r["decode_tok_s"] is not None or r["output_tok_s"] is not None or r["prefill_tok_s"] is not None)]
     rows.sort(key=lambda r: r["started_at"])
     baseline_of = {a.id: a.baseline_of for a in matrix.artifacts.values() if a.baseline_of}
-    label_of = {a.id: a.baseline_label or a.id for a in matrix.artifacts.values() if a.baseline_of}
+    label_of = {a.id: a.baseline_label or a.id for a in matrix.artifacts.values() if a.baseline_of and a.ollama_tag}
     shown = {m["pie"] for m in mac_models(matrix)}
     baselines: dict[str, dict] = {}
     for r in rows:
-        if r["engine"] != "pie" and r["workload"] in concurrency:
+        if r["engine"] == "ollama" and r["workload"] in concurrency:
             single = concurrency[r["workload"]] == 1
             baselines.setdefault(r["platform"], {}).setdefault(baseline_of.get(r["artifact"], r["artifact"]), {}).setdefault(r["workload"], {}).setdefault(label_of.get(r["artifact"], r["engine"]), []).append({
                 "at": r["started_at"].strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -917,7 +919,7 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
                 "decode": r["decode_tok_s"] if single else r["output_tok_s"],
                 "version": r["engine_version"] or "", "ttft": r["ttft_ms_p50"],
                 "noisy": r["invalid_reason"] if r["status"] == str(CellStatus.NOISY) else None})
-    rows = [r for r in rows if r["engine"] == "pie"]
+    rows = [r for r in rows if r["engine"] == "pie" and r["artifact"] in shown]
     failed = sorted({(r["pie_commit"], r["platform"], r["artifact"]) for r in every
                      if r["status"] == str(CellStatus.FAIL)
                      and r["workload"] in concurrency and r["artifact"] in shown})
@@ -975,8 +977,8 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
         "failed": [{"sha": sha, "mac": mac, "model": model} for sha, mac, model in failed],
         "running": in_flight(repo) if lookup_commits else [],
         "pool": _pool(live, matrix, last),
-        "platforms": sorted(matrix.platforms),
-        "specs": {p.id: {"accelerator": p.accelerator, "os": p.os, "memory_gib": int(p.memory_gib)} for p in matrix.platforms.values()},
+        "platforms": sorted(p.id for p in matrix.platforms.values() if p.os == "macos"),
+        "specs": {p.id: {"accelerator": p.accelerator, "os": p.os, "memory_gib": int(p.memory_gib)} for p in matrix.platforms.values() if p.os == "macos"},
         "last": last,
         "people": people(repo, {c["sha"]: c["author"] for c in [*known.values(), *commits]}) if lookup_commits else [],
     }
