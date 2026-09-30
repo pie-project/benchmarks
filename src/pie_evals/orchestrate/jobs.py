@@ -28,7 +28,7 @@ def process_key(c: Cell) -> tuple:
 #: L40S; nightly 35926457671 lost 33 of 78 vLLM cells to the soft budget
 #: because shards were packed on workload time alone); pie serves one
 #: process per model, so its per-cell overhead is a few seconds
-ENGINE_CELL_MINUTES = {"vllm": 4.0, "sglang": 3.5}  # measured: 12 vLLM Qwen3.5-0.8B cells took 3860 s on an L40S (nightly 35935510089)
+ENGINE_CELL_MINUTES = {"vllm": 4.0, "sglang": 3.5, "ollama": 0.5}  # measured: 12 vLLM Qwen3.5-0.8B cells took 3860 s on an L40S (nightly 35935510089)
 
 
 def cell_minutes(c: Cell, measured: dict[str, float] | None = None) -> float:
@@ -137,7 +137,7 @@ def make_jobs(
     return jobs
 
 
-def available_platforms(matrix: Matrix, repo: str, token: str | None = None) -> tuple[list[str], dict[str, str]]:
+def available_platforms(matrix: Matrix, repo: str, token: str | None = None) -> tuple[list[str] | None, dict[str, str]]:
     """Platforms a job can actually land on right now: RunPod ones (an
     ephemeral runner is created per job) and resident ones with an *online*
     registered runner carrying the platform's label. Everything else is
@@ -147,10 +147,9 @@ def available_platforms(matrix: Matrix, repo: str, token: str | None = None) -> 
     try:
         out = subprocess.run(["gh", "api", f"repos/{repo}/actions/runners?per_page=100"], capture_output=True, text=True, env=env, check=True).stdout
         runners = json.loads(out).get("runners", [])
-    except Exception as e:  # no gh / no token: only RunPod platforms are known-schedulable
-        runners, note = [], f"runner list unavailable ({e}); resident platforms skipped"
-    else:
-        note = ""
+    except Exception as e:  # noqa: BLE001
+        return None, {"*": f"runner list unavailable ({str(e).strip()[:120]})"}
+    note = ""
     online = {lab["name"] for r in runners if r.get("status") == "online" for lab in r.get("labels", [])}
     ok, skipped = [], {}
     for p in matrix.platforms.values():
@@ -179,18 +178,14 @@ def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins:
     t = store.table(tier)
     if t.num_rows == 0:
         return set()
-    keys = t.column("cell_key").to_pylist()
-    commits = t.column("pie_commit").to_pylist()
-    statuses = t.column("status").to_pylist()
-    engines = t.column("engine").to_pylist()
-    versions = t.column("engine_version").to_pylist()
-    revisions = t.column("checkpoint_revision").to_pylist()
-    kinds = t.column("artifact_kind").to_pylist()
-    classes = t.column("error_class").to_pylist()
-    started = t.column("started_at").to_pylist()
+    latest = {}
+    for r in t.select(["run_id", "cell_id", "cell_key", "pie_commit", "status", "engine", "engine_version", "checkpoint_revision", "artifact_kind", "error_class", "started_at"]).to_pylist():
+        latest[(r["run_id"], r["cell_id"] or r["cell_key"])] = r
     pins = baseline_pins or {}
     done = set()
-    for k, c, s, e, v, rev, kind, cls, at in zip(keys, commits, statuses, engines, versions, revisions, kinds, classes, started, strict=True):
+    for r in latest.values():
+        k, c, s, e, v, rev, kind, cls, at = (r["cell_key"], r["pie_commit"], r["status"], r["engine"], r["engine_version"], r["checkpoint_revision"],
+                                             r["artifact_kind"], r["error_class"], r["started_at"])
         if s in ("not_run", "noisy"):  # never reached, or measured on a card that could not agree with itself: a re-dispatch measures again
             continue
         if str(cls or "") == "harness_invalid":

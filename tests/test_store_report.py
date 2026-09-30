@@ -91,3 +91,58 @@ def test_jobs_group_one_model_per_process(matrix, tmp_path):
         groups = j.cells_by_process()
         assert all(len({c.artifact.artifact_key for c in g}) == 1 for g in groups.values())
         assert j.model_dump_json()  # serialisable
+
+
+def _pair(matrix, workload="ob-512-200"):
+    cells = matrix.runnable(Tier.TARGETED)
+
+    def pick(aid):
+        return next(c for c in cells if c.workload.id == workload and c.artifact.id == aid and c.platform.id == "m4-pro-48g")
+
+    return pick("gemma-4-26b-a4b-mlx4"), pick("gemma-4-26b-a4b-ollama")
+
+
+def test_baseline_ratio_pairs_the_ollama_arm_through_baseline_of(tmp_path, matrix):
+    pie, ollama = _pair(matrix)
+    assert str(ollama.engine) == "ollama" and ollama.artifact.baseline_of == pie.artifact.id
+    st = Store(tmp_path / "store")
+    now = datetime.now(timezone.utc)
+    rp_ = _rec(pie, 9399, now)
+    ro = _rec(ollama, 9056, now, engine_version="0.34.4")
+    ro.provenance.pie_commit = None
+    ro.provenance.engine_config_recipe = "competitive"
+    st.write_run([rp_, ro], tier=Tier.TARGETED, run_id="n1", when=now)
+    ratios = rp.baseline_ratios(matrix, st, Tier.TARGETED)
+    assert len(ratios) == 1 and ratios[0]["pie_leads"] and ratios[0]["input_ok"]
+    assert ratios[0]["artifact"] == pie.artifact.id and ratios[0]["baseline_artifact"] == ollama.artifact.id
+    assert ratios[0]["baseline"] == "ollama" and ratios[0]["baseline_version"] == "0.34.4"
+    assert abs(ratios[0]["baseline_over_pie"] - 9056 / 9399) < 1e-6
+
+
+def test_baseline_ratio_flags_an_input_mismatch(tmp_path, matrix):
+    pie, ollama = _pair(matrix, "ob-story-200")
+    st = Store(tmp_path / "store")
+    now = datetime.now(timezone.utc)
+    ro = _rec(ollama, 50, now, engine_version="0.34.4")
+    ro.perf.output_tokens = 40
+    st.write_run([_rec(pie, 60, now), ro], tier=Tier.TARGETED, run_id="n1", when=now)
+    (row,) = rp.baseline_ratios(matrix, st, Tier.TARGETED)
+    assert not row["input_ok"] and "**NO**" in rp.baseline_markdown([row])
+
+
+def test_a_baseline_without_its_pie_row_has_no_ratio(tmp_path, matrix):
+    _, ollama = _pair(matrix)
+    st = Store(tmp_path / "store")
+    now = datetime.now(timezone.utc)
+    st.write_run([_rec(ollama, 9056, now, engine_version="0.34.4")], tier=Tier.TARGETED, run_id="n1", when=now)
+    assert rp.baseline_ratios(matrix, st, Tier.TARGETED) == []
+
+
+def test_targeted_mac_jobs_keep_one_engine_per_process(matrix, tmp_path):
+    jobs = make_jobs(matrix, Tier.TARGETED, pie_commit="abc123", store=Store(tmp_path), platforms=["m4-pro-48g"])
+    assert 1 <= len(jobs) <= matrix.suites["targeted"].max_jobs_per_platform
+    for j in jobs:
+        assert j.platform_id == "m4-pro-48g" and j.pie_build_features == ["metal"]
+        groups = j.cells_by_process()
+        assert all(len({c.artifact.artifact_key for c in g}) == 1 for g in groups.values())
+        assert all(len({str(c.engine) for c in g}) == 1 for g in groups.values())

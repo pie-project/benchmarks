@@ -29,6 +29,7 @@ class EngineName(StrEnumBase):
     SGLANG = "sglang"
     LLAMACPP = "llamacpp"
     MLXLM = "mlxlm"
+    OLLAMA = "ollama"
 
 
 class Backend(StrEnumBase):
@@ -51,12 +52,14 @@ class QuantScheme(StrEnumBase):
     GGUF_Q8_0 = "gguf_q8_0"
     AWQ = "awq"
     GPTQ = "gptq"
+    NVFP4 = "nvfp4"
 
 
 class SourceFormat(StrEnumBase):
     HF_SAFETENSORS = "hf_safetensors"
     GGUF = "gguf"
     MLX = "mlx"
+    OLLAMA = "ollama"
 
 
 class ArtifactKind(StrEnumBase):
@@ -168,7 +171,10 @@ class ArtifactSpec(BaseModel):
     max_context: int | None = Field(default=None, description="tokens one sequence may hold on this artifact as pie ships it (the SKU's max_context), when smaller than the HF config's")
     gguf_file: str | None = Field(default=None, description="file name inside a GGUF repo (the arm must be named, never the quant tag)")
     gguf_config_from: str | None = Field(default=None, description="HF repo whose config.json is copied next to the GGUF (pie reads the encoding from config.json; GGUF repos ship none)")
+    display_name: str | None = Field(default=None, description="name the site shows for this model (its Ollama tag)")
+    ollama_tag: str | None = Field(default=None, description="Ollama model tag this artifact is served as (``gemma4:26b``); source_format ollama")
     baseline_of: str | None = Field(default=None, description="the pie artifact whose weights this copy carries, so a baseline engine's numbers compare with it")
+    baseline_label: str | None = Field(default=None, description="column name for this baseline arm on the site (``Ollama``, ``Ollama MLX``)")
     tiers: list[Tier] = Field(default_factory=lambda: [Tier.NIGHTLY, Tier.WEEKLY])
 
     @model_validator(mode="after")
@@ -177,11 +183,19 @@ class ArtifactSpec(BaseModel):
             raise ValueError(f"artifact {self.id}: miniature artifacts need a recipe")
         return self
 
+    @model_validator(mode="after")
+    def _ollama_needs_tag(self) -> ArtifactSpec:
+        if self.source_format == SourceFormat.OLLAMA and not self.ollama_tag:
+            raise ValueError(f"artifact {self.id}: an ollama artifact needs ollama_tag")
+        return self
+
     @property
     def artifact_key(self) -> str:
         key = f"{self.base_model}@{self.scheme}/{self.source_format}"
         if self.kind == ArtifactKind.MINIATURE:
             key += f"#mini-{self.miniature.recipe_hash}"  # type: ignore[union-attr]
+        if self.ollama_tag:
+            key += f"#{self.ollama_tag}"
         return key
 
 

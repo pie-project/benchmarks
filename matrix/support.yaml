@@ -8,6 +8,8 @@
 # source_format, artifact_kind, program, program_category, workload, tp
 # (int or ">1"/">=4"), spec_dec. All listed fields must match.
 unsupported:
+  - when: {engine: pie, artifact: llama-3.2-3b-mlx4}
+    reason: "pie ships no Llama reader"
   # SGLang 0.5.20 cannot serve kimi-k3's widest shapes on a 48 GB L40S at any static fraction: at 0.75
   # no KV fits beside the 256-wide graph, from 0.79 the MoE prefill OOMs by 768 MiB (nightlies 36212036845, 36264810212, 36295501246)
   - when: {engine: sglang, family: kimi_k3, platform: l40s-x1, workload: kv-oversub}
@@ -143,4 +145,7 @@ unsupported:
 # Fit rule: artifact.expected_gib * fit_factor must be <= platform.memory_gib
 # (per TP group). Cells that do not fit are declared_unsupported with reason
 # "does not fit", never silently dropped.
+first_token_broken:
+  muse-glimmer-30b-mlx4: "pie reports the first token before prefill ends on this model, so its prefill and TTFT are not shown"
+
 fit_factor: 1.25
