@@ -96,7 +96,7 @@ def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
     data = dashboard.build(st, matrix, live, repo="o/evals", pie_repo="o/pie", lookup_commits=False)
     assert [c["sha"] for c in data["commits"]] == ["c0", "c1"]
     assert [(m["id"], m["kind"], m["status"]) for m in data["pool"]] == [
-        ("m1-max-32g", "self-hosted", "idle"), ("m5-max-48g", "self-hosted", "busy"), ("l40s-x1", "RunPod", "idle")]
+        ("m1-max-32g", "self-hosted", "idle"), ("m5-max-48g", "self-hosted", "busy")]
     by_test = data["results"]["m5-max-48g"]["models"]["gemma-4-26b-a4b-mlx4"]
     assert set(by_test) == {"ob-story-200", "ob-512-200"}
     assert by_test["ob-story-200"]["c1"]["decode"] == 401 and by_test["ob-story-200"]["c1"]["prefill"] == 401 * 30
@@ -105,8 +105,7 @@ def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
     arm = runs[-1]
     assert arm["at"] and all("at" in v for v in by_test["ob-story-200"].values())
     assert arm["decode"] == 300 and arm["version"] == "0.34.4"
-    assert sorted(b["id"] for b in data["benchmarks"]) == ["c32", "c4", "c8", "ctx-4k-256", "ctx-8k-256", "lc-1k-128", "lc-2k-128",
-                                                          "ob-512-200", "ob-advanced-500", "ob-short-100", "ob-story-200", "ss-128-64"]
+    assert sorted(b["id"] for b in data["benchmarks"]) == ["c4", "ctx-4k-256", "ctx-8k-256", "ob-512-200", "ob-advanced-500", "ob-short-100", "ob-story-200"]
     assert data["people"] == []
     assert any(m["name"] == "gemma4:26b" and m["pie"] == "gemma-4-26b-a4b-mlx4" and m["has_results"] for m in data["models"])
     assert [m["name"] for m in data["models"]] == ["gemma4:26b", "gemma4:26b-mlx", "llama3.2:3b", "muse-glimmer:30b"]
