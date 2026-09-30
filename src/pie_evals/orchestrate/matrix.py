@@ -155,7 +155,7 @@ class Matrix:
 
     def _tiers_for(self, eng: EngineDecl, plat: PlatformSpec, art: ArtifactSpec, wl: WorkloadSpec, prog: ProgramSpec, mode: Mode) -> list[Tier]:
         s = set(eng.tiers) & set(plat.tiers) & set(art.tiers) & set(wl.tiers) & set(prog.tiers) & set(mode.tiers)
-        return [t for t in (Tier.SMOKE, Tier.NIGHTLY, Tier.WEEKLY) if t in s]
+        return [t for t in Tier if t in s]
 
     def _unsupported_reason(self, cell: Cell) -> str | None:
         # the physical rules (context, fit) are stated before the declared ones: a cell

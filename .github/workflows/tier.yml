@@ -148,13 +148,26 @@ jobs:
           bin="$d/llama-$llama"
           [ -x "$bin/llama-server" ] || { mkdir -p "$bin" && curl -fsSL "https://github.com/ggml-org/llama.cpp/releases/download/$llama/llama-$llama-bin-macos-arm64.tar.gz" | tar xz -C "$bin" --strip-components=1; }
           { echo "MLX_PY=$py/bin/python"; echo "LLAMACPP_PY=$py/bin/python"; echo "LLAMA_SERVER_BIN=$bin/llama-server"; } >> "$GITHUB_ENV"
+      - name: ollama
+        if: runner.os == 'macOS' && contains(inputs.engines, 'ollama')
+        run: |
+          bin=$(command -v ollama || echo /usr/local/bin/ollama)
+          if [ -x "$bin" ]; then echo "OLLAMA_BIN=$bin" >> "$GITHUB_ENV"; "$bin" --version || true
+          else echo "::warning::ollama is not installed on this Mac; its cells will fail to load"; fi
       - name: extend the pod's lease
         if: runner.os == 'Linux'
         run: |
           d=$(( $(date +%s) + ${{ fromJSON(needs.expand.outputs.bench_timeout_minutes) }} * 60 ))
           f=/tmp/pie-evals-deadline; if [ -f $f ] && [ $d -gt "$(cat $f)" ]; then echo $d > $f; fi
       - name: run
-        run: env ${{ inputs.pie_env }} .venv/bin/pie-evals-node run --job "jobs/${{ matrix.job_id }}.json" --pie-root "$PIE_ROOT" --out "out/${{ matrix.job_id }}" --download
+        run: |
+          out="out/${{ matrix.job_id }}"
+          pub=""
+          if [ "${{ inputs.persist }}" = "true" ] && [ "${{ inputs.tier }}" = targeted ]; then ( while sleep 600; do nice -n 19 infra/ci/publish-partial.sh "$out" "${{ inputs.tier }}" || true; done ) >/dev/null 2>&1 & pub=$!; fi
+          rc=0
+          env ${{ inputs.pie_env }} .venv/bin/pie-evals-node run --job "jobs/${{ matrix.job_id }}.json" --pie-root "$PIE_ROOT" --out "$out" --download || rc=$?
+          [ -n "$pub" ] && kill "$pub" 2>/dev/null
+          exit $rc
         env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}" }  # a pod without the volume fetches checkpoints itself; anonymous pulls hit 429
         # on RunPod every cache path comes from the runner's .env (written by the startup script)
       - uses: actions/upload-artifact@v4
@@ -179,7 +192,7 @@ jobs:
   # caller granted (callers now grant contents: write); kept inline anyway.
   collect:
     needs: [expand, bench]
-    if: always()
+    if: always() && needs.expand.result == 'success'
     runs-on: ubuntu-latest
     permissions: { contents: write }
     steps:

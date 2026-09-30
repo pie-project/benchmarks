@@ -7,13 +7,15 @@ fill 250 GB (an L40S pod: "cannot write 'layer.36.o_proj': No space left on
 device" mid-import). Before a job starts, when the disk is short, drop what this
 job does not need: imports and builds of other artifacts/commits first, then
 HF repos this job's cells never reference. The next shard that needs them
-fetches again — slower than a cache hit, never a dead pod.
+fetches again — slower than a cache hit, never a dead pod. Ollama's own store
+is left alone: ``ollama rm`` is the user's call.
 """
 
 from __future__ import annotations
 
 import os
 import shutil
+import sys
 from pathlib import Path
 
 from pie_evals.schema import JobSpec
@@ -30,8 +32,9 @@ def free_gib(path: Path) -> float:
 
 
 def cache_root() -> Path | None:
-    p = os.environ.get("PIE_EVALS_CACHE")
-    return Path(p) if p else None
+    from .build import DEFAULT_CACHE
+
+    return Path(os.environ.get("PIE_EVALS_CACHE", DEFAULT_CACHE))
 
 
 def reclaim(job: JobSpec, hf_cache: Path, *, low_water_gib: float = LOW_WATER_GIB, log=print) -> float:
@@ -57,7 +60,10 @@ def reclaim(job: JobSpec, hf_cache: Path, *, low_water_gib: float = LOW_WATER_GI
             if (root / name).exists():
                 _rm(root / name, log)
     if free_gib(probe) < low_water_gib:
-        _drop_hf_repos(hf_cache, wanted_models, log)
+        if sys.platform != "darwin" or os.environ.get("PIE_EVALS_RECLAIM_HF") == "1":
+            _drop_hf_repos(hf_cache, wanted_models, log)
+        else:
+            log(f"disk still short; HF repos are not dropped unless PIE_EVALS_RECLAIM_HF=1 (the cache {hf_cache} is shared)")
     after = free_gib(probe)
     log(f"disk: {after:.0f} GiB free after reclaiming")
     return max(0.0, after - before)

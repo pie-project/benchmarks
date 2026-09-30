@@ -16,7 +16,7 @@ import subprocess
 import uuid
 from pathlib import Path
 
-from pie_evals.schema import ArtifactSpec, SourceFormat
+from pie_evals.schema import ArtifactSpec, QuantScheme, SourceFormat
 
 RELAYOUT_MARK = "would relayout a weight plane"
 
@@ -25,11 +25,13 @@ def needs_import(artifact: ArtifactSpec) -> bool:
     # pie serve reads safetensors and .zt only; mlx and gguf checkpoints go
     # through `pie model import` (nightly 35967154121: the GGUF snapshot dir
     # "holds no .safetensors and no .zt container")
-    return artifact.source_format in (SourceFormat.MLX, SourceFormat.GGUF)
+    return artifact.source_format in (SourceFormat.MLX, SourceFormat.GGUF) or (bool(artifact.pie_sku) and artifact.scheme == QuantScheme.AFFINE_U4_G64)
 
 
 def artifact_root(root: Path | None = None) -> Path:
-    return root or Path(os.environ.get("PIE_EVALS_CACHE", Path.home() / ".cache/pie-evals")) / "artifacts"
+    from .build import DEFAULT_CACHE
+
+    return root or Path(os.environ.get("PIE_EVALS_CACHE", DEFAULT_CACHE)) / "artifacts"
 
 
 def artifact_dir(artifact: ArtifactSpec, commit: str, root: Path | None = None) -> Path:

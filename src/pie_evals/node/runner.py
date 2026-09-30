@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import os
 import random
+import re
 import signal
 import threading
 import time
@@ -33,6 +34,7 @@ from pathlib import Path
 from pie_evals.schema import (
     AccuracyMetrics,
     AccuracyStatus,
+    ArtifactKind,
     Cell,
     CellStatus,
     ErrorClass,
@@ -90,6 +92,8 @@ def recipe_for_cell(recipe: dict, recipe_name: str, cell: Cell) -> dict:
     keys the boot added (snapshot_dir, pin, program_path) are kept."""
     fresh = load_recipe(str(cell.engine), recipe_name, cell.platform, cell.workload, family=cell.artifact.family)
     for k, v in recipe.items():
+        if isinstance(fresh.get(k), str) and fresh[k].startswith("$serve_"):
+            fresh[k] = v
         fresh.setdefault(k, v)
     return fresh
 
@@ -222,6 +226,7 @@ class NodeRunner:
         self.log(f"pie interpreter for the bench: {os.environ.get('PIE_PY', 'python3')}")
 
     def snapshot_dir(self, cell: Cell) -> Path:
+        from .importer import artifact_dir, find_zt, needs_import
         from .snapshots import ensure_snapshot
 
         try:
@@ -234,6 +239,14 @@ class NodeRunner:
             from .reclaim import LOW_WATER_GIB, reclaim
 
             reclaim(self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * 1.2 + 10), log=self.log)
+            if str(cell.engine) == "pie" and self.job.pie_commit and needs_import(cell.artifact) and find_zt(artifact_dir(cell.artifact, self.job.pie_commit)):
+                org, _, name = cell.artifact.base_model.partition("/")
+                snaps = sorted((self.hf_cache / f"models--{org}--{name}" / "snapshots").glob("*/config.json"))
+                if snaps:
+                    return snaps[-1].parent
+            pending = getattr(self, "_prefetch", {}).get(cell.artifact.id)
+            if pending is not None:
+                pending.result()
             return ensure_snapshot(cell.artifact, self.hf_cache, pie_root=self.pie_root, python=py, download=self.download, log=self.log)
         except EngineLaunchError:
             raise
@@ -243,6 +256,26 @@ class NodeRunner:
             # the hub unreachable from this pod, or a full disk, says nothing of the model: a re-dispatch measures it
             unreachable = isinstance(e, (LocalEntryNotFoundError, ConnectionError, TimeoutError)) or type(e).__module__.split(".")[0] in ("requests", "httpx", "urllib3") or (isinstance(e, OSError) and e.errno == 28)
             raise EngineLaunchError(ErrorClass.HARNESS_INVALID if unreachable else ErrorClass.LOAD_FAIL, f"checkpoint unavailable for {cell.artifact.id}: {str(e).strip().splitlines()[-1][:300] if str(e).strip() else e!r}") from e
+
+    def _start_prefetch(self, artifacts) -> None:
+        if not self.download:
+            return
+        from concurrent.futures import ThreadPoolExecutor
+
+        from .importer import artifact_dir, find_zt, needs_import
+        from .snapshots import ensure_snapshot
+
+        pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="prefetch")
+        self._prefetch = {}
+        for art in {a.id: a for a in artifacts}.values():
+            if art.kind == ArtifactKind.MINIATURE:
+                continue
+            if self.job.pie_commit and needs_import(art) and find_zt(artifact_dir(art, self.job.pie_commit)):
+                continue
+            def fetch(a=art):
+                ensure_snapshot(a, self.hf_cache, download=True, log=lambda m: self.log(f"prefetch: {m}"))
+            self._prefetch[art.id] = pool.submit(fetch)
+        pool.shutdown(wait=False)
 
     # ------------------------------------------------------------------ run
     def run(self) -> list[Record]:
@@ -290,6 +323,7 @@ class NodeRunner:
         records: list[Record] = []
         groups = split_heavy_processes(job.cells_by_process())
         self.log(f"{len(groups)} engine processes to run")
+        self._start_prefetch([cells[0].artifact for cells in groups.values()])
         for gkey, cells in groups.items():
             engine_name, artifact_key, mode_key = gkey
             if self.over_budget():
@@ -300,6 +334,10 @@ class NodeRunner:
             snapshot = None
             try:
                 snapshot = self.snapshot_dir(cells[0])
+                if cells[0].artifact.ollama_tag and self.download:
+                    from .engines.ollama import ensure_ollama_model
+
+                    ensure_ollama_model(cells[0].artifact.ollama_tag, pull=True, log=self.log)
             except EngineLaunchError as e:
                 for c in cells:
                     self.emit(self._failed(c, e.error_class, str(e), fingerprint))
@@ -342,7 +380,7 @@ class NodeRunner:
                 # one boot per model: the bench then attaches to this server for every
                 # cell and round instead of reloading the weights each time (gemma-4 E4B
                 # spent ~7 min per round loading; the measurement itself takes seconds)
-                serve_log = self.out / "serve" / f"{artifact_key.replace('/', '_')}-{mode_key}.log"
+                serve_log = self.out / "serve" / f"{re.sub(r'[^A-Za-z0-9._-]', '_', artifact_key)}-{mode_key}.log"
 
                 try:
                     engine, model_path = self._boot(engine, serve_envelope([c.workload for c in cells]), serve_log, cls=cls, first=first, recipe=recipe, num_layers=num_layers, snapshot=snapshot, model_path=model_path)
@@ -397,7 +435,7 @@ class NodeRunner:
                     continue
                 if hasattr(engine, "program_path"):
                     engine.program_path = cell.program.path  # the cell's own inferlet, not the process's first
-                recipe = recipe_for_cell(recipe, recipe_name, cell)
+                recipe = recipe_for_cell(engine.recipe, recipe_name, cell)
                 engine.recipe = recipe
                 rec = self._run_cell(cell, engine, snapshot, engine_version, recipe, recipe_name, fingerprint, machine_before)
                 if cell.workload.kind.value == "control_aa" and rec.status == CellStatus.NOISY:
@@ -468,7 +506,7 @@ class NodeRunner:
         t0 = time.monotonic()
         cell = cell.model_copy(update={"engine_version": engine_version})
         cell_out = self.out / "cells" / cell.cell_id
-        common = common_args_for(cell.workload, warmup=2 if self.job.tier in (Tier.SMOKE, Tier.TARGETED) else 3) + list(cell.program.bench_args)
+        common = common_args_for(cell.workload, warmup=int(cell.workload.params.get("warmup", 2 if self.job.tier in (Tier.SMOKE, Tier.TARGETED) else 3))) + list(cell.program.bench_args)
         policy = self.job.repetition
         # a concurrent shape's round is minutes long (kv-oversub, mixed, c256: 2/3 of a nightly's cell time):
         # two rounds that agree within its bound are the record; a third comes only through confirmation

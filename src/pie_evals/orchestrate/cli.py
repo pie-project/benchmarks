@@ -76,7 +76,7 @@ def check(obj):
 @click.option("--label", default=None)
 @click.option("--skip-unavailable", is_flag=True, help="drop platforms with no RunPod type and no online runner (needs gh + a token with actions:read)")
 @click.option("--repo", default=None, help="owner/name for --skip-unavailable (default: $GITHUB_REPOSITORY)")
-@click.option("--skip-recorded", is_flag=True, help="drop cells the store already holds at this pie commit (a re-dispatch after lost launches)")
+@click.option("--skip-recorded", is_flag=True, help="drop cells the store already holds at this pie commit / baseline pin (a re-dispatch after lost launches)")
 @click.option("--run-label", default=None, help="extra runner label on every pod shard and its pod, so a run's pods take only its own jobs")
 @click.pass_obj
 def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloads, max_jobs, max_jobs_per_platform, out, label, skip_unavailable, repo, skip_recorded, run_label):
@@ -90,8 +90,11 @@ def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloa
     plats = list(platforms) or None
     if skip_unavailable:
         ok, skipped = available_platforms(m, repo or os.environ.get("GITHUB_REPOSITORY", "pie-project/pie-evals"))
-        plats = [p for p in (plats or list(m.platforms))] if plats else list(m.platforms)
-        plats = [p for p in plats if p in ok]
+        if ok is None:
+            plats = plats or [p.id for p in m.platforms.values() if p.runpod_gpu_type]
+            click.echo(f"{skipped['*']}; scheduling only RunPod platforms and those asked for: {', '.join(plats) or 'none'}", err=True)
+        else:
+            plats = [p for p in (plats or list(m.platforms)) if p in ok]
         (outp / "skipped-platforms.json").write_text(json.dumps(skipped, indent=1))
         for pid, why in skipped.items():
             click.echo(f"skip platform {pid}: {why}", err=True)
@@ -107,7 +110,7 @@ def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloa
         before = len(cells)
         cells = [c for c in cells if c.cell_key not in done]
         click.echo(f"skip {before - len(cells)} cells already recorded at {pie_commit[:8]}", err=True)
-    js = make_jobs(m, Tier(tier), pie_commit=pie_commit, store=st, platforms=plats, engines=list(engines) or None, cells=cells, label=label)
+    js = [] if plats == [] else make_jobs(m, Tier(tier), pie_commit=pie_commit, store=st, platforms=plats, engines=list(engines) or None, cells=cells, label=label)
     if max_jobs_per_platform is not None:
         seen: dict[str, int] = {}
         kept = []

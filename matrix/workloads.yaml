@@ -108,3 +108,87 @@ workloads:
     params: {trace: burstgpt-v2, minutes: 10, speedup: 1.0}
     tiers: [weekly]
     est_minutes: 15
+
+  # -- targeted: the ollama-bench shapes, pie against Ollama on the Macs
+  - id: ob-story-200
+    kind: single_stream
+    params:
+      label: Story
+      description: "ollama-bench default: story prompt, 200 tokens out, 6 runs"
+      prompt: "Please write a descriptive story about a llama named Alonso who grows up to be President of the Land of Llamas. Include details about Alonso's childhood, adolescent years, and how he grew up to be a political mover and shaker. Write the story with a sense of whimsy."
+      decode: 200
+      requests: 6
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 1
+  - id: ob-512-200
+    kind: single_stream
+    params:
+      label: Prompt 512
+      description: "ollama-bench -prompt-tokens 512: 512 token prompt, 200 tokens out"
+      prefill: 512
+      decode: 200
+      requests: 6
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 1
+  - id: ob-short-100
+    kind: single_stream
+    params:
+      label: Short story
+      description: "ollama-bench -p \"Write me a short story\" -max-tokens 100"
+      prompt: Write me a short story
+      decode: 100
+      requests: 6
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 0.5
+  - id: ob-advanced-500
+    kind: single_stream
+    params:
+      label: Sampled 500
+      description: "ollama-bench advanced: temperature 0.7, top-p 0.95, seed 42, 500 tokens out, 10 runs"
+      prompt: "Please write a descriptive story about a llama named Alonso who grows up to be President of the Land of Llamas. Include details about Alonso's childhood, adolescent years, and how he grew up to be a political mover and shaker. Write the story with a sense of whimsy."
+      decode: 500
+      requests: 10
+      warmup: 2
+      temperature: 0.7
+      top_p: 0.95
+      seed: 42
+    tiers: [targeted]
+    est_minutes: 2
+  - id: ctx-4k-256
+    kind: long_context
+    params:
+      label: Long prompt 4k
+      description: "4k token prompt, 256 tokens out: prefill speed and decode on a long context"
+      prefill: 4096
+      decode: 256
+      concurrency: 1
+      requests: 4
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 1.5
+  - id: ctx-8k-256
+    kind: long_context
+    params:
+      label: Long context 8k
+      description: "8k token prompt, 256 tokens out: how speed holds as context grows"
+      prefill: 8192
+      decode: 256
+      concurrency: 1
+      requests: 3
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 2.5
+  - id: c4
+    kind: concurrency
+    params:
+      label: 4 at once
+      description: "4 requests sent together, 128 tokens in, 256 out: serving throughput and first token under load"
+      concurrency: 4
+      num_requests: 4
+      prefill: 128
+      decode: 256
+    tiers: [targeted]
+    est_minutes: 1.5

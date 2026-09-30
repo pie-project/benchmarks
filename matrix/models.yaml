@@ -175,8 +175,10 @@ artifacts:
     family: gemma4_moe
     scheme: affine_u4_g64
     source_format: mlx
-    expected_gib: 13.22
-    tiers: [nightly, weekly]
+    pie_sku: gemma4-26b-a4b-u4g64-kv-bf16
+    display_name: gemma4:26b
+    expected_gib: 14.29
+    tiers: [nightly, weekly, targeted]
   - id: gpt-oss-20b-mlx-mxfp4
     base_model: mlx-community/gpt-oss-20b-MXFP4-Q4
     family: gpt_oss
@@ -215,3 +217,61 @@ artifacts:
     scheme: bf16
     expected_gib: 54.0
     tiers: [weekly]
+
+  # ---------------- targeted: pie against Ollama on the Macs ----------------
+  - id: gemma-4-26b-a4b-ollama
+    base_model: mlx-community/gemma-4-26b-a4b-it-4bit
+    family: gemma4_moe
+    scheme: gguf_q4_k_m
+    source_format: ollama
+    ollama_tag: gemma4:26b
+    baseline_of: gemma-4-26b-a4b-mlx4
+    baseline_label: Ollama
+    expected_gib: 15.78
+    tiers: [targeted]
+  - id: gemma-4-26b-a4b-ollama-mlx
+    base_model: mlx-community/gemma-4-26b-a4b-it-4bit
+    family: gemma4_moe
+    scheme: nvfp4
+    source_format: ollama
+    ollama_tag: gemma4:26b-mlx
+    baseline_of: gemma-4-26b-a4b-mlx4
+    baseline_label: Ollama MLX
+    expected_gib: 15.0
+    tiers: [targeted]
+  - id: muse-glimmer-30b-mlx4
+    base_model: meta-models/Muse-Glimmer-30B
+    family: muse_glimmer
+    scheme: affine_u4_g64
+    pie_sku: muse-glimmer-30b-u4g64-kv-bf16
+    display_name: muse-glimmer:30b
+    expected_gib: 18.08
+    tiers: [targeted]
+  - id: muse-glimmer-30b-ollama
+    base_model: mlx-community/Muse-Glimmer-30B-4bit
+    family: muse_glimmer
+    scheme: gguf_q4_k_m
+    source_format: ollama
+    ollama_tag: muse-glimmer:30b
+    baseline_of: muse-glimmer-30b-mlx4
+    baseline_label: Ollama
+    expected_gib: 15.61
+    tiers: [targeted]
+  - id: llama-3.2-3b-mlx4
+    base_model: mlx-community/Llama-3.2-3B-Instruct-4bit
+    family: llama
+    scheme: affine_u4_g64
+    source_format: mlx
+    display_name: llama3.2:3b
+    expected_gib: 1.8
+    tiers: [targeted]
+  - id: llama-3.2-3b-ollama
+    base_model: mlx-community/Llama-3.2-3B-Instruct-4bit
+    family: llama
+    scheme: gguf_q4_k_m
+    source_format: ollama
+    ollama_tag: llama3.2:3b
+    baseline_of: llama-3.2-3b-mlx4
+    baseline_label: Ollama
+    expected_gib: 2.0
+    tiers: [targeted]
