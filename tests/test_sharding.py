@@ -69,3 +69,59 @@ def test_available_platforms_keeps_runpod_and_online_resident(matrix, monkeypatc
     ok, skipped = J.available_platforms(matrix, "o/r")
     assert "l40s-x1" in ok and "m1-max-32g" in ok
     assert "m4-pro-48g" in skipped and "m2-max" in skipped
+
+
+def test_targeted_mac_shards_keep_groups_whole(matrix):
+    cells = [c for c in matrix.runnable(Tier.TARGETED) if c.platform.id == "m4-pro-48g"]
+    budget = 10.0
+    shards = shard_groups(cells, budget)
+    assert len(shards) > 1
+    assert sum(len(s) for s in shards) == len(cells)
+    placement = {}
+    for i, sh in enumerate(shards):
+        for c in sh:
+            placement.setdefault(process_key(c), set()).add(i)
+    groups = {}
+    for c in cells:
+        groups.setdefault(process_key(c), []).append(c)
+    for k, idxs in placement.items():
+        if len(idxs) > 1:
+            assert sum(cell_minutes(c) for c in groups[k]) > budget, f"group {k} split without need"
+
+
+def test_targeted_mac_jobs_build_metal_and_pin_ollama(matrix, tmp_path):
+    jobs = make_jobs(matrix, Tier.TARGETED, pie_commit="abc", store=Store(tmp_path), platforms=["m4-pro-48g"])
+    assert jobs
+    assert any(str(c.engine) == "ollama" for j in jobs for c in j.cells)
+    for j in jobs:
+        assert j.per_cell_timeout_s <= j.kill_s
+        assert j.pie_build_features == ["metal"]
+        if any(str(c.engine) == "ollama" for c in j.cells):
+            assert j.baseline_versions.get("ollama") == matrix.engines["ollama"].pin
+
+
+def _jobs_cli(tmp_path, monkeypatch, *platforms):
+    import json
+
+    from click.testing import CliRunner
+
+    from pie_evals.orchestrate import cli
+    from pie_evals.orchestrate import jobs as J
+
+    def denied(*a, **k):
+        raise RuntimeError("HTTP 403")
+
+    monkeypatch.setattr(J.subprocess, "run", denied)
+    args = ["--matrix", str(ROOT / "matrix"), "--store", str(tmp_path / "store"), "jobs", "--tier", "targeted", "--pie-commit", "c" * 40,
+            "--out", str(tmp_path / "jobs"), "--skip-unavailable"] + [x for p in platforms for x in ("--platform", p)]
+    res = CliRunner().invoke(cli.main, args)
+    assert res.exit_code == 0, res.output
+    return {j["platform"] for j in json.loads((tmp_path / "jobs" / "gh-matrix.json").read_text())["include"]}
+
+
+def test_unknown_runners_schedule_only_the_macs_asked_for(tmp_path, monkeypatch):
+    assert _jobs_cli(tmp_path, monkeypatch, "m5-max-48g") == {"m5-max-48g"}
+
+
+def test_unknown_runners_and_nothing_asked_schedule_no_resident_mac(matrix, tmp_path, monkeypatch):
+    assert _jobs_cli(tmp_path, monkeypatch) <= {p.id for p in matrix.platforms.values() if p.runpod_gpu_type}

@@ -2,9 +2,10 @@
 
 All adapters drive the bench scripts under the pinned pie checkout's
 ``scripts/bench/`` (``pie_bench.py``, ``vllm_bench.py``, ``sglang_bench.py``,
-``llamacpp_bench.py``, ``mlx_bench.py``). Those scripts share
-``scripts/bench/common.py`` — one client, one prompt construction, one JSON
-envelope — which is what makes a cross-engine number a comparison at all.
+``llamacpp_bench.py``, ``mlx_bench.py``), or, for Ollama, this repo's
+``ollama_bench.py``. Those scripts share ``scripts/bench/common.py`` — one
+client, one prompt construction, one JSON envelope — which is what makes a
+cross-engine number a comparison at all.
 The adapter's job is therefore: build the argv for a (artifact, mode,
 workload, recipe), run it under a timeout, classify failure, and lift the
 JSON into ``PerfMetrics``.
@@ -12,7 +13,8 @@ JSON into ``PerfMetrics``.
 An adapter that needs to hold an engine process across workloads (one model
 per process, workloads interleaved inside it) uses the ``serve``/``attach``
 pair; the bench scripts support that through ``PIE_BENCH_SERVE_ONLY`` /
-``PIE_BENCH_SERVER_URL`` for pie and the HTTP server for llama.cpp / mlx-lm.
+``PIE_BENCH_SERVER_URL`` for pie, the HTTP server for llama.cpp / mlx-lm and
+a spawned ``ollama serve`` for Ollama.
 """
 
 from __future__ import annotations
@@ -61,9 +63,9 @@ class BenchResult:
 
 # Patterns that classify a failed run. Order matters: the first match wins.
 _ERROR_PATTERNS: list[tuple[ErrorClass, re.Pattern[str]]] = [
-    (ErrorClass.OOM, re.compile(r"out of memory|CUDA_ERROR_OUT_OF_MEMORY|OutOfMemoryError|cudaErrorMemoryAllocation|MTLResourceOptions.*failed|insufficient memory", re.I)),
+    (ErrorClass.OOM, re.compile(r"out of memory|CUDA_ERROR_OUT_OF_MEMORY|OutOfMemoryError|cudaErrorMemoryAllocation|kIOGPUCommandBufferCallbackErrorOutOfMemory|MTLResourceOptions.*failed|insufficient memory", re.I)),
     (ErrorClass.DOESNT_FIT, re.compile(r"does not fit|refus\w+ .*fit|exceeds .*working set|recommendedMaxWorkingSetSize|host fit check", re.I)),
-    (ErrorClass.LOAD_FAIL, re.compile(r"failed to load|load plan|missing quant metadata|unknown variant|No such file|safetensors|model import|failed to import|not found in cache|resolve_local_model|matches no SKU|no SKU this build|missing .*\.wasm|in /root/\.pie/models|not in HF cache", re.I)),
+    (ErrorClass.LOAD_FAIL, re.compile(r"failed to load|load plan|missing quant metadata|unknown variant|No such file|safetensors|model import|failed to import|not found in cache|resolve_local_model|matches no SKU|no SKU this build|missing .*\.wasm|in /root/\.pie/models|not in HF cache|pull model manifest|model .* not found", re.I)),
     (ErrorClass.CRASH, re.compile(r"Traceback|panicked at|Segmentation fault|SIGSEGV|SIGABRT|invalid resource handle|invalid argument|NCCL error|cudaGraphInstantiate", re.I)),
 ]
 
@@ -243,10 +245,20 @@ class Engine(ABC):
         """Process names that may outlive the parent and hold the GPU (vLLM's EngineCore)."""
         return []
 
+    def stall_s(self) -> int:
+        return int(self.recipe.get("stall_s") or os.environ.get("PIE_EVALS_STALL_S") or 180)
+
+    def watch_pids(self) -> list[int]:
+        return []
+
     # ---- the run -------------------------------------------------------------
+    def script_path(self) -> Path:
+        """The bench script this adapter runs (a path under the pie checkout by default)."""
+        return self.pie_root / self.script
+
     def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
         mode_sub, mode_args = workload_mode_args(workload)
-        argv = [self.python, str(self.pie_root / self.script), mode_sub]
+        argv = [self.python, str(self.script_path()), mode_sub]
         argv += ["--model", self.model_arg()]
         argv += mode_args
         argv += common_args
@@ -263,18 +275,14 @@ class Engine(ABC):
             env["PIE_BENCH_SERVER_URL"] = self.server_url
         (out_dir / "argv.txt").write_text(shlex.join(argv) + "\n")
         t0 = time.monotonic()
-        timed_out = False
-        try:
-            proc = subprocess.run(
-                argv, cwd=str(self.pie_root / "scripts/bench"), env=env, capture_output=True, text=True, timeout=timeout_s
-            )
-            rc, stdout, stderr = proc.returncode, proc.stdout, proc.stderr
-        except subprocess.TimeoutExpired as e:
-            timed_out = True
-            rc, stdout, stderr = -1, (e.stdout or b"").decode(errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or ""), (e.stderr or b"").decode(errors="replace") if isinstance(e.stderr, bytes) else (e.stderr or "")
+        with open(out_dir / "stdout.txt", "w") as so, open(out_dir / "stderr.txt", "w") as se:
+            proc = subprocess.Popen(argv, cwd=str(self.pie_root / "scripts/bench"), env=env, stdout=so, stderr=se, text=True)
+            rc, timed_out, stalled = wait_with_stall_check(proc, timeout_s, self.stall_s(), self.watch_pids)
         dur = time.monotonic() - t0
-        (out_dir / "stdout.txt").write_text(stdout)
-        (out_dir / "stderr.txt").write_text(stderr)
+        stdout = (out_dir / "stdout.txt").read_text(errors="replace")
+        stderr = (out_dir / "stderr.txt").read_text(errors="replace")
+        if stalled:
+            raise EngineLaunchError(ErrorClass.HANG, f"no CPU work from the bench or its engine for {self.stall_s()}s; stopped")
         if rc != 0 or not json_out.exists():
             cls, msg = classify_failure(rc, stderr, stdout, timed_out)
             if rc == 0 and not timed_out:
@@ -291,6 +299,8 @@ class Engine(ABC):
             cls = ErrorClass.HARNESS_INVALID if re.search(r"temperature must be|Failed to parse JSON input", err) else ErrorClass.INCOMPATIBLE if re.search(r"forward-hybrid|not valid on|interface", err) else ErrorClass.CRASH
             raise EngineLaunchError(cls, f"all {len(requests)} requests failed: {err[:300]}")
         perf = perf_from_common_json(summary, requests, self.num_layers, concurrency=int(workload.params.get("concurrency", 1)))
+        if workload.params.get("primary"):
+            perf.primary = str(workload.params["primary"])
         perf.counters.update(self.counters_from_summary(summary))
         perf.resident_gib = self.resident_gib()
         ids = [r.get("output_token_ids") or [] for r in requests]
@@ -298,6 +308,64 @@ class Engine(ABC):
             perf=perf, summary=summary, requests=requests, argv=argv,
             stdout_tail=stdout[-4000:], stderr_tail=stderr[-4000:], duration_s=dur, output_token_ids=ids,
         )
+
+
+def _cpu_seconds(text: str) -> float:
+    days, _, rest = text.strip().rpartition("-")
+    parts = [float(x) for x in rest.split(":")]
+    secs = 0.0
+    for x in parts:
+        secs = secs * 60 + x
+    return secs + (float(days) * 86400 if days else 0.0)
+
+
+def process_table() -> dict[int, tuple[int, float]]:
+    out = subprocess.run(["ps", "-axo", "pid=,ppid=,time="], capture_output=True, text=True, check=False).stdout
+    table = {}
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
+            try:
+                table[int(parts[0])] = (int(parts[1]), _cpu_seconds(parts[2]))
+            except ValueError:
+                continue
+    return table
+
+
+def tree_pids(roots: list[int], table: dict[int, tuple[int, float]]) -> set[int]:
+    pids = {r for r in roots if r in table}
+    grew = True
+    while grew:
+        more = {p for p, (pp, _) in table.items() if pp in pids and p not in pids}
+        pids |= more
+        grew = bool(more)
+    return pids
+
+
+def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: float, extra_pids=lambda: [], poll_s: float = 5.0) -> tuple[int, bool, bool]:
+    start = last_work = time.monotonic()
+    last_cpu = None
+    while True:
+        try:
+            return proc.wait(timeout=poll_s), False, False
+        except subprocess.TimeoutExpired:
+            pass
+        now = time.monotonic()
+        table = process_table()
+        cpu = sum(table[p][1] for p in tree_pids([proc.pid, *extra_pids()], table))
+        if last_cpu is None or cpu > last_cpu + 0.05:
+            last_work = now
+        last_cpu = cpu if last_cpu is None else max(cpu, last_cpu)
+        timed_out, stalled = now - start > timeout_s, now - last_work > stall_s
+        if timed_out or stalled:
+            for p in tree_pids([proc.pid], table) - {proc.pid}:
+                try:
+                    os.kill(p, 9)
+                except OSError:
+                    pass
+            proc.kill()
+            proc.wait()
+            return -1, timed_out, stalled and not timed_out
 
 
 def workload_mode_args(workload: WorkloadSpec) -> tuple[str, list[str]]:
@@ -328,6 +396,6 @@ def register(cls: type[Engine]) -> type[Engine]:
 
 def get_engine(name: str | EngineName) -> type[Engine]:
     # import side effects register the adapters
-    from . import llamacpp, mlxlm, pie, sglang, vllm  # noqa: F401
+    from . import llamacpp, mlxlm, ollama, pie, sglang, vllm  # noqa: F401
 
     return _REGISTRY[str(name)]

@@ -22,9 +22,9 @@ from typing import Any
 
 from pie_evals.schema import Provenance
 
-ENV_PREFIXES = ("NCCL_", "PIE_", "VLLM_", "SGLANG_")
+ENV_PREFIXES = ("NCCL_", "PIE_", "VLLM_", "SGLANG_", "OLLAMA_")
 ENV_EXACT = ("LD_LIBRARY_PATH", "CUDA_VISIBLE_DEVICES", "HF_HUB_CACHE", "HF_HOME", "CUDA_HOME",
-             "TORCH_CUDA_ARCH_LIST", "OMP_NUM_THREADS", "METAL_DEVICE_WRAPPER_TYPE")
+             "TORCH_CUDA_ARCH_LIST", "OMP_NUM_THREADS", "METAL_DEVICE_WRAPPER_TYPE", "MTL_DEBUG_LAYER")
 
 
 def _run(argv: list[str], timeout: float = 30.0, cwd: str | Path | None = None) -> str | None:

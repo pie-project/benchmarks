@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from statistics import median
 from datetime import datetime, timezone
 from pathlib import Path
+from statistics import median
 
 import pyarrow as pa
 import pyarrow.parquet as pq

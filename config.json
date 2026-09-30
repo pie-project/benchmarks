@@ -1,17 +1,20 @@
 {
   "models": [
-    "qwen3.5-0.8b-bf16",
-    "qwen3.6-27b-mlx4"
+    "gemma-4-26b-a4b-ollama",
+    "gemma-4-26b-a4b-ollama-mlx",
+    "muse-glimmer-30b-ollama",
+    "llama-3.2-3b-ollama"
   ],
   "machines": [
-    "m5-max-48g",
-    "m5-max-128g"
+    "m5-max-48g"
   ],
   "benchmarks": [
-    "ss-128-64",
-    "lc-1k-128",
-    "lc-2k-128",
-    "c8",
-    "c32"
+    "ob-story-200",
+    "ob-512-200",
+    "ob-short-100",
+    "ob-advanced-500",
+    "ctx-4k-256",
+    "ctx-8k-256",
+    "c4"
   ]
 }

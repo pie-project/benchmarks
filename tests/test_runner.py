@@ -11,7 +11,7 @@ from pie_evals.node.engines.base import BenchResult, Engine, EngineLaunchError
 from pie_evals.orchestrate.jobs import make_jobs
 from pie_evals.orchestrate.matrix import Matrix
 from pie_evals.orchestrate.store import Store
-from pie_evals.schema import CellStatus, ErrorClass, PerfMetrics, Record, Tier
+from pie_evals.schema import CellStatus, ErrorClass, PerfMetrics, Record, Tier, WorkloadSpec
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -20,6 +20,7 @@ class FakeEngine(Engine):
     name = "pie"
     script = "scripts/bench/fake.py"
     calls: list[str] = []
+    common: dict[str, list[str]] = {}
     behaviour: dict[str, object] = {}
 
     def default_python(self):
@@ -36,6 +37,7 @@ class FakeEngine(Engine):
 
     def run(self, workload, common_args, out_dir, timeout_s):
         FakeEngine.calls.append(workload.id)
+        FakeEngine.common[workload.id] = list(common_args)
         b = FakeEngine.behaviour.get(workload.id)
         if isinstance(b, EngineLaunchError):
             raise b
@@ -55,15 +57,28 @@ def job(tmp_path):
 
 
 @pytest.fixture
+def mac_job(tmp_path):
+    m = Matrix.load(ROOT / "matrix")
+    cells = [c for c in m.runnable(Tier.TARGETED) if c.platform.id == "m4-pro-48g" and c.artifact.id == "gemma-4-26b-a4b-mlx4" and str(c.engine) == "pie"]
+    c8 = WorkloadSpec(id="c8", kind="concurrency", params={"concurrency": 8, "num_requests": 32, "prefill": 128, "decode": 128}, est_minutes=1)
+    cells.append(cells[0].model_copy(update={"workload": c8}))
+    j = make_jobs(m, Tier.TARGETED, pie_commit="deadbeef", store=Store(tmp_path / "store"), platforms=["m4-pro-48g"], cells=cells)[0]
+    assert {c.workload.id for c in j.cells} >= {"control-aa", "ob-story-200", "c8"}
+    return j
+
+
+@pytest.fixture
 def patched(monkeypatch, tmp_path):
     FakeEngine.calls = []
+    FakeEngine.common = {}
     FakeEngine.behaviour = {}
     monkeypatch.setattr(runner_mod, "get_engine", lambda name: FakeEngine)
     monkeypatch.setattr(runner_mod, "load_recipe", lambda *a, **k: {})
-    snap = tmp_path / "hf" / "models--Qwen--Qwen3.5-0.8B" / "snapshots" / "abc"
-    snap.mkdir(parents=True)
-    (snap / "config.json").write_text('{"num_hidden_layers": 28}')
-    (snap / "model.safetensors").write_bytes(b"x")  # a snapshot without weights is not present (snapshots.has_weights)
+    for repo in ("models--Qwen--Qwen3.5-0.8B", "models--mlx-community--gemma-4-26b-a4b-it-4bit"):
+        snap = tmp_path / "hf" / repo / "snapshots" / "abc"
+        snap.mkdir(parents=True)
+        (snap / "config.json").write_text('{"num_hidden_layers": 28}')
+        (snap / "model.safetensors").write_bytes(b"x")  # a snapshot without weights is not present (snapshots.has_weights)
 
     class P:
         def before_job(self, plat):
@@ -80,6 +95,9 @@ def patched(monkeypatch, tmp_path):
     monkeypatch.setattr(runner_mod.prov, "build_provenance", lambda *a, **k: runner_mod.prov.Provenance(harness_commit="h", engine_version="deadbeef", checkpoint_revision="abc", hardware_fingerprint={"gpu": "fake"}))
     # accuracy gate: no reference on this box → skipped, never a failure
     monkeypatch.setattr(runner_mod.NodeRunner, "_accuracy", lambda self, cell, engine, snap: runner_mod.AccuracyMetrics())
+    # no pie binary here: a pinned-sku artifact would go through `pie model import`
+    monkeypatch.setattr("pie_evals.node.reclaim.reclaim", lambda *a, **k: 0.0)
+    monkeypatch.setattr("pie_evals.node.importer.ensure_artifact", lambda art, snap, *a, **k: snap)
     return tmp_path / "hf"
 
 
@@ -202,6 +220,7 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
     from pie_evals.schema import Tier
 
     m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
+    lc32k = WorkloadSpec(id="lc-32k-128", kind="long_context", params={"prefill": 32768, "decode": 128, "concurrency": 1})
     # Qwen3.6-27B (14 GiB) on the 32 GB RTX 5090: two boots; the 0.8B: one
     for aid, split in (("qwen3.6-27b-mlx4", True), ("qwen3.5-0.8b-bf16", False)):
         cells = [c for c in m.expand() if c.artifact.id == aid and c.program.id == "text-completion-bench"]
@@ -209,6 +228,8 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
         groups = {}
         for j in jobs:
             groups.update(j.cells_by_process())
+        # nightly no longer schedules lc-32k on this card: add the long shape the split is about
+        groups = {k: cs + [cs[0].model_copy(update={"workload": lc32k})] for k, cs in groups.items()}
         out = split_heavy_processes(groups)
         keys = sorted(k[2] for k in out)
         if split:
@@ -241,3 +262,87 @@ def test_a_slow_first_round_is_confirmed_away_not_withheld(job, patched, tmp_pat
     assert ss.status == CellStatus.PASS and len(ss.perf.rounds) == 5 and ss.perf.decode_tok_s == 100.0
     c8 = next(r for r in recs if r.cell.workload.id == "c8")
     assert c8.status == CellStatus.NOISY and len(c8.perf.rounds) == 4
+
+
+def test_heavy_model_on_a_small_mac_boots_short_and_long_shapes_apart():
+    from pie_evals.node.engines.shape import context_tokens_for
+    from pie_evals.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
+    from pie_evals.orchestrate.jobs import process_key
+
+    m = Matrix.load(ROOT / "matrix")
+    lc16k = WorkloadSpec(id="lc-16k-128", kind="long_context", params={"prefill": 16384, "decode": 128, "concurrency": 1})
+    for plat, split in (("m1-max-32g", True), ("m5-max-128g", False)):
+        cells = [c for c in m.runnable(Tier.TARGETED) if c.artifact.id == "gemma-4-26b-a4b-mlx4" and c.platform.id == plat and str(c.engine) == "pie"]
+        cells.append(cells[0].model_copy(update={"workload": lc16k}))
+        groups = {process_key(cells[0]): cells}
+        out = split_heavy_processes(groups)
+        keys = sorted(k[2] for k in out)
+        if split:
+            assert keys == ["tp1-long", "tp1-short"], keys
+            for k, cs in out.items():
+                longs = [context_tokens_for(c.workload) > SHORT_CONTEXT_TOKENS for c in cs]
+                assert all(longs) if k[2].endswith("-long") else not any(longs)
+            assert sum(len(cs) for cs in out.values()) == len(cells)
+        else:
+            assert out == groups
+        shipped = {process_key(cells[0]): cells[:-1]}
+        assert (split_heavy_processes(shipped) == shipped) is not split
+
+
+def test_recipe_keeps_the_knobs_the_server_booted_with(mac_job, monkeypatch):
+    monkeypatch.setattr(runner_mod, "load_recipe", lambda engine, name, plat, wl, family=None: {"num_parallel": "$serve_concurrency", "_recipe": name})
+    c8 = next(c for c in mac_job.cells if c.workload.id == "c8")
+    assert runner_mod.recipe_for_cell({"num_parallel": 8}, "competitive", c8)["num_parallel"] == 8
+    assert runner_mod.recipe_for_cell({}, "competitive", c8)["num_parallel"] == "$serve_concurrency"
+
+
+def test_warmup_follows_the_workload(mac_job, patched, tmp_path):
+    _run(mac_job, patched, tmp_path)
+
+    def warm(wl):
+        args = FakeEngine.common[wl]
+        return args[args.index("--warmup") + 1]
+
+    assert warm("ob-512-200") == "1" and warm("ob-advanced-500") == "2"
+
+
+def test_mac_happy_path_runs_every_targeted_shape(mac_job, patched, tmp_path):
+    recs, _ = _run(mac_job, patched, tmp_path)
+    assert {r.status for r in recs} == {CellStatus.PASS}
+    assert FakeEngine.calls[0] == "control-aa"
+    assert {r.cell.workload.id for r in recs} == {c.workload.id for c in mac_job.cells}
+
+
+def test_checkpoints_download_in_the_background(mac_job, patched, tmp_path, monkeypatch):
+    import threading
+
+    from pie_evals.node import snapshots
+
+    real = snapshots.ensure_snapshot
+    threads = []
+
+    def spy(art, hf, **kw):
+        threads.append(threading.current_thread().name)
+        return real(art, hf, download=False)
+
+    monkeypatch.setattr(snapshots, "ensure_snapshot", spy)
+    r = runner_mod.NodeRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
+    recs = r.run()
+    assert recs and any(t.startswith("prefetch") for t in threads)
+
+
+def test_an_imported_artifact_needs_no_source_weights(mac_job, patched, tmp_path, monkeypatch):
+    from pie_evals.node import importer, snapshots
+
+    monkeypatch.setenv("PIE_EVALS_CACHE", str(tmp_path / "cache"))
+    art = mac_job.cells[0].artifact
+    zt_dir = importer.artifact_dir(art, mac_job.pie_commit)
+    zt_dir.mkdir(parents=True)
+    (zt_dir / "m.zt").write_bytes(b"x")
+    org, _, name = art.base_model.partition("/")
+    snap = patched / f"models--{org}--{name}" / "snapshots" / "abc"
+    for f in snap.glob("*.safetensors"):
+        f.unlink()
+    monkeypatch.setattr(snapshots, "ensure_snapshot", lambda *a, **k: (_ for _ in ()).throw(AssertionError("fetched the source")))
+    r = runner_mod.NodeRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
+    assert r.snapshot_dir(mac_job.cells[0]) == snap

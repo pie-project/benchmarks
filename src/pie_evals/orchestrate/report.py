@@ -125,23 +125,34 @@ def regressions_markdown(rows: list[dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _close(a, b, rel: float = 0.01) -> bool:
+    if a is None or b is None:
+        return a == b
+    return abs(a - b) <= rel * max(a, b)
+
+
 def baseline_ratios(matrix: Matrix, store: Store, tier: Tier) -> list[dict]:
-    """pie vs each baseline on the same (platform, artifact, workload, program, mode)."""
+    """pie vs each baseline arm on the same (platform, model, workload, program, mode).
+    A baseline arm is its engine on pie's own artifact, or its own artifact (Ollama
+    serves its own copy of the weights) paired with pie's through ``baseline_of``."""
     latest = store.latest_by_cell(tier)
+    pie_key = {a.id: matrix.artifacts[a.baseline_of].artifact_key for a in matrix.artifacts.values() if a.baseline_of in matrix.artifacts}
     by_key: dict[tuple, dict[str, dict]] = defaultdict(dict)
     for row in latest.values():
         if row["status"] != str(CellStatus.PASS) or row["primary_value"] is None:
             continue
-        key = (row["platform"], row["artifact_key"], row["workload"], row["program"], row["mode"])
-        by_key[key][row["engine"]] = row
+        key = (row["platform"], pie_key.get(row["artifact"], row["artifact_key"]), row["workload"], row["program"], row["mode"])
+        arm = "pie" if row["engine"] == "pie" else row["artifact"] if row["artifact"] in pie_key else row["engine"]
+        by_key[key][arm] = row
     out = []
-    for key, engines in by_key.items():
-        pie = engines.get("pie")
+    for key, arms in by_key.items():
+        pie = arms.get("pie")
         if not pie:
             continue
-        for eng, row in engines.items():
-            if eng == "pie":
+        for arm, row in arms.items():
+            if arm == "pie":
                 continue
+            eng = row["engine"]
             # the same measurement on both sides: aggregate output tok/s whenever
             # both rows carry it (a pie row recorded before the primary metric
             # followed the shape keys on the per-request decode rate and would
@@ -153,10 +164,10 @@ def baseline_ratios(matrix: Matrix, store: Store, tier: Tier) -> list[dict]:
             out.append(
                 {
                     "platform": key[0], "artifact": pie["artifact"], "workload": key[2], "program": key[3], "mode": key[4],
-                    "baseline": eng, "baseline_version": row["engine_version"], "metric": metric, "pie_value": pv,
+                    "baseline": eng, "baseline_artifact": row["artifact"], "baseline_version": row["engine_version"], "metric": metric, "pie_value": pv,
                     "baseline_value": bv, "baseline_over_pie": ratio,
                     "pie_leads": (ratio is not None and ratio < 1.0), "pie_cov": pie["cov"], "baseline_cov": row["cov"],
-                    "input_ok": pie["prompt_tokens"] == row["prompt_tokens"] and pie["output_tokens"] == row["output_tokens"],
+                    "input_ok": _close(pie["prompt_tokens"], row["prompt_tokens"]) and pie["output_tokens"] == row["output_tokens"],
                     "baseline_recipe": row["engine_config_recipe"],
                 }
             )
@@ -168,7 +179,7 @@ def baseline_markdown(rows: list[dict]) -> str:
     for r in rows:
         flag = "" if r["pie_leads"] else " **pie trails**"
         lines.append(
-            f"| {r['platform']} | {r['artifact']} | {r['workload']} | {r['program']} | {r['mode']} | {r['baseline']} {r['baseline_version'] or ''} | {r.get('metric') or ''} | {r['pie_value']:.4g} | {r['baseline_value']:.4g} | {r['baseline_over_pie']:.3f}×{flag} | {'yes' if r['input_ok'] else '**NO**'} | {r['baseline_recipe'] or ''} |"
+            f"| {r['platform']} | {r['artifact']} | {r['workload']} | {r['program']} | {r['mode']} | {r['baseline'] if r['baseline_artifact'] == r['artifact'] else r['baseline_artifact']} {r['baseline_version'] or ''} | {r.get('metric') or ''} | {r['pie_value']:.4g} | {r['baseline_value']:.4g} | {r['baseline_over_pie']:.3f}×{flag} | {'yes' if r['input_ok'] else '**NO**'} | {r['baseline_recipe'] or ''} |"
         )
     return "\n".join(lines) + "\n"
 
