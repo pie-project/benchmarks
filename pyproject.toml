@@ -15,6 +15,7 @@ dependencies = [
 [project.optional-dependencies]
 accuracy = ["torch", "transformers>=4.44", "safetensors", "datasets"]
 orchestrate = ["requests>=2.31"]
+quality = ["lm-eval[ifeval]>=0.4", "transformers", "jinja2"]
 dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [project.scripts]

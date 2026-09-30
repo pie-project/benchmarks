@@ -5,11 +5,14 @@ number taken on a machine that was not in the expected state.
 Linux: the GPU must be drained before an engine loads (vLLM's EngineCore
 outlives its parent; a leftover holds memory and compute). macOS: thermal
 pressure, battery vs AC, low power mode and a second display all change the
-GPU clock, so they are captured before and after each model.
+GPU clock, and another inference process (the resident Ollama app with a model
+loaded, another runner's pie job) shares the GPU. All of it is captured before
+and after each model.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import platform
 import re
@@ -17,7 +20,10 @@ import shutil
 import signal
 import subprocess
 import time
+import urllib.request
 from typing import Any
+
+ENGINE_PROCESSES = ("pie", "ollama", "llama-server", "mlx_lm.server")
 
 
 def _run(argv: list[str], timeout: float = 20.0) -> str | None:
@@ -240,6 +246,29 @@ def linux_machine_state() -> dict[str, Any]:
     return state
 
 
+def engine_processes(exclude: set[int] | None = None) -> list[str]:
+    out = _run(["ps", "-axo", "pid=,comm="]) or ""
+    found = []
+    skip = exclude or set()
+    for line in out.splitlines():
+        parts = line.strip().split(None, 1)
+        if len(parts) != 2 or not parts[0].isdigit() or int(parts[0]) in skip:
+            continue
+        if os.path.basename(parts[1]) in ENGINE_PROCESSES:
+            found.append(f"{os.path.basename(parts[1])}:{parts[0]}")
+    return sorted(found)
+
+
+def ollama_loaded(host: str | None = None) -> list[str]:
+    url = (host or os.environ.get("OLLAMA_HOST") or "127.0.0.1:11434").rstrip("/")
+    url = url if url.startswith("http") else f"http://{url}"
+    try:
+        with urllib.request.urlopen(f"{url}/api/ps", timeout=3) as r:
+            return sorted(m.get("name", "") for m in json.loads(r.read()).get("models", []))
+    except (OSError, ValueError):
+        return []
+
+
 # ---- macOS ----------------------------------------------------------------------
 
 
@@ -313,6 +342,8 @@ def mac_machine_state() -> dict[str, Any]:
         state["loadavg"] = ",".join(f"{x:.2f}" for x in la)
     except (OSError, AttributeError):
         pass
+    state["engine_processes"] = engine_processes()
+    state["ollama_loaded"] = ollama_loaded()
     return state
 
 
@@ -394,6 +425,12 @@ class Preflight:
                 reasons.append("low power mode on")
             if before_state.get("displays") != after.get("displays"):
                 reasons.append(f"display count changed: {before_state.get('displays')}->{after.get('displays')}")
+            new = sorted(set(after.get("engine_processes") or []) - set(before_state.get("engine_processes") or []))
+            if new:
+                reasons.append(f"another inference engine started during the model: {', '.join(new)}")
+            loaded = sorted(set(after.get("ollama_loaded") or []) - set(before_state.get("ollama_loaded") or []))
+            if loaded:
+                reasons.append(f"the resident Ollama loaded a model during the run: {', '.join(loaded)}")
         else:
             if before_state.get("gpu_drain_error"):
                 reasons.append("GPU was not drained before the model: " + str(before_state["gpu_drain_error"]))

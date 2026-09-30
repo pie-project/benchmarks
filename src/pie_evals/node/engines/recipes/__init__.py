@@ -11,6 +11,8 @@
     competitive:
       extends: default
       knobs: {...}
+      family:          # per artifact.family overrides (qwen3_6, gemma4 ...)
+        qwen3_6: {knobs: {...}}
       arch:            # per platform.arch overrides (ada, hopper, blackwell, apple9 ...)
         hopper: {knobs: {...}}
       backend:         # per platform.backend overrides (cuda, metal, ...)
@@ -21,7 +23,9 @@
 A knob may be written as ``{value: X, rationale: "..."}`` or as the bare
 value. Values that depend on the workload are written as ``"$concurrency"``,
 ``"$num_requests"`` or ``"$max_model_len"`` and resolved here, so the yaml can
-say "graph ceiling = concurrency" without knowing the shape.
+say "graph ceiling = concurrency" without knowing the shape. ``"$serve_concurrency"``
+and ``"$serve_context"`` are left as written: they depend on every shape the
+process's one server must hold, and the adapter resolves them when it boots.
 
 ``load_recipe`` returns the flat ``{knob: value}`` mapping the adapters read,
 plus two bookkeeping keys the adapters ignore: ``_recipe`` (the section name)
@@ -132,6 +136,8 @@ def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: Worklo
         "concurrency": workload_concurrency(workload),
         "num_requests": workload_num_requests(workload),
         "max_model_len": max_model_len_for(workload),
+        "serve_concurrency": "$serve_concurrency",
+        "serve_context": "$serve_context",
     }
     out = {k: _resolve_value(v, subs) for k, v in knobs.items()}
     out["_recipe"] = name

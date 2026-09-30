@@ -6,7 +6,7 @@ on:
     workflows: [pie eval, smoke, nightly, weekly]
     types: [completed]
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 permissions: { contents: read, pages: write, id-token: write }
 concurrency: { group: pages, cancel-in-progress: true }
@@ -22,7 +22,7 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
       - run: .venv/bin/pie-evals dashboard --out site
-        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", GH_TOKEN: "${{ secrets.GH_RUNNER_PAT }}" }
+        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", GH_TOKEN: "${{ secrets.GH_RUNNER_PAT || github.token }}" }
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }

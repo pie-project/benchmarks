@@ -81,6 +81,12 @@ suites:
         tp: 1
         os: macos
         workload: [ss-128-64, lc-1k-128, lc-2k-128, c8, c32]
+      - engine: [pie, ollama]
+        program: text-completion-bench
+        artifact_kind: full
+        tp: 1
+        os: macos
+        workload: [ob-story-200, ob-512-200, ob-short-100, ob-advanced-500, ctx-4k-256, ctx-8k-256, c4]
 
 # Escalation: when a smoke cell of a family is flagged (regression confirmed),
 # every nightly cell of that family on the same platform is promoted into the

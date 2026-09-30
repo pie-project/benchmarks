@@ -21,17 +21,23 @@ import time
 from pathlib import Path
 
 PIE_UPSTREAM = "https://github.com/pie-project/pie.git"  # public; pods have no SSH key
-BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy"]  # pie_client + scripts/bench/common.py (pie_client itself rides on PYTHONPATH)
+BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2"]  # pie_client + scripts/bench/common.py (pie_client itself rides on PYTHONPATH); transformers renders the Ollama arm's chat template
+
+
+DEFAULT_CACHE = Path.home() / ".cache/pie-evals"
+DEFAULT_PIE_ROOT = Path("/root/pie")
 
 
 def _cache_root(root: Path | None) -> Path:
-    return root or Path(os.environ.get("PIE_EVALS_CACHE", Path.home() / ".cache/pie-evals"))
+    return root or Path(os.environ.get("PIE_EVALS_CACHE", DEFAULT_CACHE))
 
 
 def bench_python(cache_root: Path | None = None, log=print) -> Path:
-    """A venv on the shared cache that runs pie's bench scripts: the client
-    deps plus the embedded-engine wheel. Created with uv when present (the
-    runner image ships uv but no pip), else python3 -m venv."""
+    """A venv on the shared cache that runs pie's bench scripts (and the Ollama
+    client, which shares their prompt construction): the client deps,
+    transformers for the chat template, plus the embedded-engine wheel.
+    Created with uv when present (the runner image ships uv but no pip), else
+    python3 -m venv."""
     venv = _cache_root(cache_root) / "venv-pie"
     py = venv / "bin" / "python"
     if not py.exists():
