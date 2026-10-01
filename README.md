@@ -40,3 +40,13 @@ The `targeted` tier measures pie against [Ollama](https://github.com/ollama/olla
 ```
 
 A Mac runner is registered with `infra/mac/setup-runner.sh` and removed with `infra/mac/remove-runner.sh`. It needs AC power, Low Power Mode off, Rust with `wasm32-wasip2`, uv and Ollama.
+
+## Trying a change to the harness
+
+Push your change to a branch and start the eval from that branch:
+
+```sh
+gh workflow run pie-eval.yml --ref my-branch -f macs=m5-max-48g -f benchmarks=ob-short-100 -f rerun=true
+```
+
+The run uses the branch's code and saves nothing to `store/`, so the site stays untouched.
