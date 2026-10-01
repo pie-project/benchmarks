@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 89 |
+| pass | 90 |
 | fail | 30 |
 | declared_unsupported | 381 |
 | not_run | 1047 |
-| noisy | 13 |
+| noisy | 12 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -47,7 +47,6 @@
 | ollama | m5-max-48g | gemma-4-26b-a4b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-48g | gemma-4-26b-a4b-ollama | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-48g | llama-3.2-3b-ollama | c4 | text-completion-bench | tp1 | noisy |  |  |
-| pie | m5-max-48g | muse-glimmer-30b-mlx4 | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-48g | muse-glimmer-30b-ollama | c4 | text-completion-bench | tp1 | noisy |  |  |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
@@ -1130,7 +1129,7 @@
 | gemma4 | 0/26 | 0/26 | 0/26 | 0/26 | 0/26 |
 | gemma4_moe | 0/13 | 0/13 | 0/13 | 7/13 | 8/13 |
 | gpt_oss | 0/26 | 0/26 | 0/26 | 0/39 | 0/26 |
-| muse_glimmer | 0/13 | 0/13 | 0/13 | 7/13 | 7/13 |
+| muse_glimmer | 0/13 | 0/13 | 0/13 | 7/13 | 8/13 |
 | qwen3_5 | 0/39 | 0/39 | 0/39 | 6/39 | 6/39 |
 | qwen3_6 | 0/24 | 0/24 | 0/24 | 6/37 | 0/24 |
 | qwen3_6_moe | 0/13 | 0/13 | 0/13 | 0/13 | 0/13 |
