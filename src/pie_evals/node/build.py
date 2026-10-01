@@ -47,6 +47,10 @@ def bench_python(cache_root: Path | None = None, log=print) -> Path:
         else:
             subprocess.run(["python3", "-m", "venv", str(venv)], check=True)
         _pip_install(py, BENCH_DEPS)
+    elif subprocess.run([str(py), "-c", "import transformers, jinja2"], capture_output=True).returncode != 0:
+        # a venv made before the baseline clients needed the chat template renderer
+        log(f"venv: adding the bench client deps to {venv}")
+        _pip_install(py, BENCH_DEPS)
     return py
 
 

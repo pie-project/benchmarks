@@ -14,6 +14,11 @@ from pie_evals.results.store import Store
 from pie_evals.schema import CellStatus, Tier
 
 DEFAULT_MODEL = "gemma-4-26b-a4b-ollama"
+DEFAULT_BASELINE = "Ollama"
+#: the engine that serves an arm, by the format of its copy of the weights
+ARM_ENGINE = {"ollama": "ollama", "gguf": "llamacpp", "mlx": "mlxlm", "splash": "splash"}
+#: the order the "compare against" choices are listed in
+BASELINE_ORDER = ["Ollama", "Ollama MLX", "llama.cpp", "mlx-lm", "Splash"]
 HERE = Path(__file__).resolve().parent
 OLLAMA_ICON = "data:image/png;base64," + base64.b64encode((HERE / "ollama.png").read_bytes()).decode()
 
@@ -127,13 +132,14 @@ def mac_models(matrix: Matrix) -> list[dict]:
     out = []
     for a in matrix.artifacts.values():
         pie = matrix.artifacts.get(a.baseline_of or "")
-        if a.source_format.value != "ollama" or pie is None or not macs:
+        if not a.baseline_label or pie is None or not macs:
             continue
-        out.append({"id": a.id, "name": a.ollama_tag, "pie": pie.id, "label": a.baseline_label or "Ollama", "family": a.family,
+        out.append({"id": a.id, "name": a.ollama_tag or pie.display_name or pie.id, "pie": pie.id, "label": a.baseline_label, "family": a.family,
+                    "engine": ARM_ENGINE.get(a.source_format.value, a.source_format.value),
                     "scheme": str(a.scheme), "format": str(a.source_format), "gib": a.expected_gib, "context": pie.max_context,
                     "quant": quant_label(str(a.scheme)), "first_token_broken": broken.get(pie.id),
                     "unsupported": next(iter(why[pie.id])) if pie.id in why and None not in why[pie.id] else None})
-    return sorted(out, key=lambda m: m["name"])
+    return sorted(out, key=lambda m: (m["name"], m["label"]))
 
 
 def _paginate(path: str) -> list:
@@ -200,13 +206,13 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
     rows = [r for r in every if r["status"] in measured_ok and (r["decode_tok_s"] is not None or r["output_tok_s"] is not None or r["prefill_tok_s"] is not None)]
     rows.sort(key=lambda r: r["started_at"])
     baseline_of = {a.id: a.baseline_of for a in matrix.artifacts.values() if a.baseline_of}
-    label_of = {a.id: a.baseline_label or a.id for a in matrix.artifacts.values() if a.baseline_of and a.ollama_tag}
+    label_of = {a.id: a.baseline_label for a in matrix.artifacts.values() if a.baseline_of and a.baseline_label}
     shown = {m["pie"] for m in mac_models(matrix)}
     baselines: dict[str, dict] = {}
     for r in rows:
-        if r["engine"] == "ollama" and r["workload"] in concurrency:
+        if r["engine"] != "pie" and r["artifact"] in label_of and r["workload"] in concurrency:
             single = concurrency[r["workload"]] == 1
-            baselines.setdefault(r["platform"], {}).setdefault(baseline_of.get(r["artifact"], r["artifact"]), {}).setdefault(r["workload"], {}).setdefault(label_of.get(r["artifact"], r["engine"]), []).append({
+            baselines.setdefault(r["platform"], {}).setdefault(baseline_of.get(r["artifact"], r["artifact"]), {}).setdefault(r["workload"], {}).setdefault(label_of[r["artifact"]], []).append({
                 "at": r["started_at"].strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "prefill": r["prefill_tok_s"],
                 "decode": r["decode_tok_s"] if single else r["output_tok_s"],
@@ -263,7 +269,8 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
         "repo": repo, "pie_repo": pie_repo, "default_model": DEFAULT_MODEL,
         "benchmarks": tests,
         "verdicts": verdicts(results, commits), "baselines": baselines,
-        "baseline_labels": sorted(set(label_of.values())),
+        "baseline_labels": sorted(set(label_of.values()), key=lambda label: (BASELINE_ORDER.index(label) if label in BASELINE_ORDER else len(BASELINE_ORDER), label)),
+        "default_baseline": DEFAULT_BASELINE,
         "quality": quality(store),
         "ollama_icon": OLLAMA_ICON,
         "commits": commits, "history": all_commits, "results": results, "models": models,

@@ -1,6 +1,6 @@
-# mlx-lm recipes. scripts/bench/mlx_bench.py spawns `python -m mlx_lm server`
-# itself; --decode-concurrency comes from --concurrency, the rest from the
-# flags below. Knob -> flag mapping is in MlxlmEngine.engine_args.
+# mlx-lm recipes. The adapter boots `python -m mlx_lm server` once per model
+# with `--decode-concurrency <slots>`. Knob -> flag mapping is in
+# MlxlmEngine.server_cmd.
 
 default:
   knobs:
@@ -22,17 +22,14 @@ default:
         set per family when a speculative mode asks for it.
     server_extra:
       value: []
-      rationale: Extra server flags, joined into --server-extra.
+      rationale: Extra server flags.
+    flush_cache:
+      value: true
+      rationale: Single stream prefill must not be a prefix cache hit.
 
 competitive:
   extends: default
   knobs:
-    decode_concurrency:
-      value: "$concurrency"
-      flag: none
-      rationale: >
-        mlx_bench.py sets --decode-concurrency from --concurrency itself (1 in
-        latency mode). Recorded, not emitted.
     prompt_concurrency:
       value: 8
       rationale: >
@@ -46,3 +43,6 @@ competitive:
           rationale: >
             The prefix shape is 64 variants of one prefix; a cache that holds
             them all is mlx-lm's equivalent of pie's prefix tree for this run.
+        flush_cache:
+          value: false
+          rationale: The shared prefix must stay as written for the cache to find it.

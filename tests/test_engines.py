@@ -11,6 +11,7 @@ rather than at 3am on a runner.
 from __future__ import annotations
 
 import ast
+import json
 import os
 import re
 import sys
@@ -26,8 +27,10 @@ from pie_evals.node.engines.ollama import SCRIPT as OLLAMA_SCRIPT
 from pie_evals.node.engines.ollama import OllamaEngine
 from pie_evals.node.engines.pie import PieEngine
 from pie_evals.node.engines.recipes import load_recipe, recipe_names
+from pie_evals.node.engines.served import SCRIPT as OPENAI_SCRIPT
 from pie_evals.node.engines.sglang import SglangEngine
 from pie_evals.node.engines.shape import max_model_len_for, workload_concurrency
+from pie_evals.node.engines.splash import SplashEngine
 from pie_evals.node.engines.vllm import VllmEngine
 from pie_evals.node.workloads import common_args_for
 from pie_evals.node.workloads.synthetic import WORDS_PER_TOKEN
@@ -225,6 +228,7 @@ def hf_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 def test_registry_resolves_every_engine():
     assert get_engine("pie") is PieEngine
+    assert get_engine("splash") is SplashEngine
     assert get_engine("vllm") is VllmEngine
     assert get_engine("sglang") is SglangEngine
     assert get_engine("llamacpp") is LlamacppEngine
@@ -480,31 +484,51 @@ def test_llamacpp_args(tmp_path, hf_cache, monkeypatch):
     monkeypatch.setenv("LLAMA_SERVER_BIN", "/opt/llama/llama-server")
     art = artifact(id="qwen3-8b-gguf-q4km", base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m",
                    source_format="gguf", gguf_file="Qwen3-8B-Q4_K_M.gguf")
-    eng = make(LlamacppEngine, art=art, workload=WORKLOADS["c32"])
+    eng = make(LlamacppEngine, art=art, workload=WORKLOADS["c32"], python="/usr/bin/python3")
+    cmd = eng.server_cmd(8123, 32, 2048)
+    assert cmd[0] == "/opt/llama/llama-server"
+    assert flag_value(cmd, "--model") == str(hf_cache / "models--Qwen--Qwen3-8B-GGUF/snapshots/abc123/Qwen3-8B-Q4_K_M.gguf")
+    assert flag_value(cmd, "--parallel") == "32" and flag_value(cmd, "--ctx-size") == str(2048 * 32)  # the context is per slot
+    assert flag_value(cmd, "--n-gpu-layers") == "all" and flag_value(cmd, "--flash-attn") == "on"
+    assert cmd[cmd.index("--batch-size"):][:4] == ["--batch-size", "2048", "--ubatch-size", "512"]
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
-    assert argv[1].endswith("scripts/bench/llamacpp_bench.py")
-    assert flag_value(argv, "--gguf-model") == str(hf_cache / "models--Qwen--Qwen3-8B-GGUF/snapshots/abc123/Qwen3-8B-Q4_K_M.gguf")
-    assert flag_value(argv, "--server-bin") == "/opt/llama/llama-server"
-    assert flag_value(argv, "--gpu-layers") == "all"
+    assert Path(argv[1]) == OPENAI_SCRIPT
     # the GGUF repo ships no tokenizer -> --model is the base checkpoint
     assert flag_value(argv, "--model") == "Qwen/Qwen3-8B"
-    extra = flag_value(argv, "--server-extra").split()
-    assert extra[:4] == ["--batch-size", "2048", "--ubatch-size", "512"]
-    assert "--dump-all-token-ids" not in argv  # not parsed by llamacpp_bench.py
-    assert "--ignore-eos" in argv
-    # prefix shape asks for cache reuse
-    eng = make(LlamacppEngine, art=art, workload=WORKLOADS["prefix-1k-x64"])
+    assert json.loads(flag_value(argv, "--extra-body")) == {"cache_prompt": False, "ignore_eos": True}
+    assert "--no-ignore-eos" in argv and "--ignore-eos" not in argv  # the length is pinned in the request body
+    assert "--chat" not in argv and "--no-flush-cache" not in argv
+    # prefix shape asks for cache reuse and keeps its prompts as written
+    eng = make(LlamacppEngine, art=art, workload=WORKLOADS["prefix-1k-x64"], python="/usr/bin/python3")
+    assert "--cache-reuse" in eng.server_cmd(8123, 16, 2048)
     argv = argv_for(eng, WORKLOADS["prefix-1k-x64"], tmp_path)
-    assert "--cache-reuse" in flag_value(argv, "--server-extra").split()
+    assert "--no-flush-cache" in argv and json.loads(flag_value(argv, "--extra-body"))["cache_prompt"] is True
     # metal recipe drops --no-mmap
-    eng = make(LlamacppEngine, art=art, plat=platform(Backend.METAL, "apple9", count=1))
-    argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
-    assert "--no-mmap" not in flag_value(argv, "--server-extra").split()
+    eng = make(LlamacppEngine, art=art, plat=platform(Backend.METAL, "apple9", count=1), python="/usr/bin/python3")
+    assert "--no-mmap" not in eng.server_cmd(8123, 1, 2048)
+
+
+def test_llamacpp_takes_its_tokenizer_from_the_named_checkpoint(hf_cache):
+    art = artifact(base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m", source_format="gguf", gguf_file="Qwen3-8B-Q4_K_M.gguf",
+                   tokenizer_from="mlx-community/Qwen3.6-27B-4bit")
+    (hf_cache / "models--mlx-community--Qwen3.6-27B-4bit/snapshots/def456/tokenizer.json").write_text("{}")
+    eng = make(LlamacppEngine, art=art, python="/usr/bin/python3")
+    assert eng.model_arg() == str(hf_cache / "models--mlx-community--Qwen3.6-27B-4bit/snapshots/def456")
+
+
+@pytest.mark.parametrize("printed,tag", [("version: 0.5.0-dev (build 11312, commit 0c1e57098)", "b11312"), ("version: 10270 (071327508)", "b10270")])
+def test_llamacpp_version_is_the_release_tag_the_matrix_pins(printed, tag, tmp_path, hf_cache, monkeypatch):
+    fake = tmp_path / "llama-server"
+    fake.write_text(f"#!/bin/sh\necho '{printed}' >&2\n")
+    fake.chmod(0o755)
+    monkeypatch.setenv("LLAMA_SERVER_BIN", str(fake))
+    art = artifact(base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m", source_format="gguf", gguf_file="Qwen3-8B-Q4_K_M.gguf")
+    assert make(LlamacppEngine, art=art, python="/usr/bin/python3").version() == tag
 
 
 def test_llamacpp_missing_gguf_is_load_fail(hf_cache):
     art = artifact(base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m", source_format="gguf", gguf_file="nope.gguf")
-    eng = make(LlamacppEngine, art=art)
+    eng = make(LlamacppEngine, art=art, python="/usr/bin/python3")
     from pie_evals.node.engines import EngineLaunchError
 
     with pytest.raises(EngineLaunchError) as e:
@@ -520,17 +544,87 @@ def test_mlxlm_args(tmp_path, hf_cache, monkeypatch):
     art = artifact(id="qwen3.6-27b-mlx4", base_model="mlx-community/Qwen3.6-27B-4bit", family="qwen3_6",
                    scheme="affine_u4_g64", source_format="mlx")
     plat = platform(Backend.METAL, "apple9", count=1)
-    eng = make(MlxlmEngine, art=art, plat=plat, workload=WORKLOADS["c32"])
+    snap = str(hf_cache / "models--mlx-community--Qwen3.6-27B-4bit/snapshots/def456")
+    eng = make(MlxlmEngine, art=art, plat=plat, workload=WORKLOADS["c32"], python="/usr/bin/python3")
+    cmd = eng.server_cmd(8123, 32, 2048)
+    assert cmd[:4] == ["/opt/mlx/bin/python", "-m", "mlx_lm", "server"]  # the pinned mlx-lm, not the client's interpreter
+    assert flag_value(cmd, "--model") == snap and flag_value(cmd, "--decode-concurrency") == "32"
+    assert flag_value(cmd, "--prompt-cache-size") == "0"
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
-    assert argv[0] == "/opt/mlx/bin/python" and argv[1].endswith("scripts/bench/mlx_bench.py")
+    assert argv[0] == "/usr/bin/python3" and Path(argv[1]) == OPENAI_SCRIPT
+    assert flag_value(argv, "--model") == snap and flag_value(argv, "--api-model") == snap
+    assert "--no-ignore-eos" in argv and "--ignore-eos" not in argv and "--extra-body" not in argv
+    eng = make(MlxlmEngine, art=art, plat=plat, workload=WORKLOADS["prefix-1k-x64"], python="/usr/bin/python3")
+    assert flag_value(eng.server_cmd(8123, 16, 2048), "--prompt-cache-size") == "64"
+    assert "--no-flush-cache" in argv_for(eng, WORKLOADS["prefix-1k-x64"], tmp_path)
+
+
+# ---- Splash -----------------------------------------------------------------
+
+
+def splash_artifact() -> ArtifactSpec:
+    return artifact(id="qwen3.6-27b-splash", base_model="mlx-community/Qwen3.6-27B-4bit", family="qwen3_6",
+                    scheme="affine_u4_g64", source_format="splash", baseline_of="qwen3.6-27b-mlx4", baseline_label="Splash")
+
+
+def test_splash_args(tmp_path, hf_cache, monkeypatch):
+    monkeypatch.setenv("SPLASH_BIN", "/opt/splash/bin/splash")
+    plat = platform(Backend.METAL, "apple10", count=1)
+    eng = make(SplashEngine, art=splash_artifact(), plat=plat, workload=WORKLOADS["c32"], python="/usr/bin/python3")
+    cmd = eng.server_cmd(8123, 32, 2048)
+    assert cmd[:4] == ["/opt/splash/bin/splash", "serve", "--model", "mlx-community/Qwen3.6-27B-4bit"]
+    assert flag_value(cmd, "--max-context") == "2048" and "--no-webui" in cmd
+    argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
+    assert Path(argv[1]) == OPENAI_SCRIPT and "--chat" in argv  # Splash renders the chat template itself
+    assert flag_value(argv, "--api-model") == "mlx-community/Qwen3.6-27B-4bit"
     assert flag_value(argv, "--model") == str(hf_cache / "models--mlx-community--Qwen3.6-27B-4bit/snapshots/def456")
-    assert flag_value(argv, "--python") == "/opt/mlx/bin/python"
-    assert flag_value(argv, "--prompt-cache-size") == "0"
-    assert "--no-ignore-eos" in argv and "--ignore-eos" not in argv
-    assert "--dump-all-token-ids" not in argv
-    eng = make(MlxlmEngine, art=art, plat=plat, workload=WORKLOADS["prefix-1k-x64"])
-    argv = argv_for(eng, WORKLOADS["prefix-1k-x64"], tmp_path)
-    assert flag_value(argv, "--prompt-cache-size") == "64"
+    assert json.loads(flag_value(argv, "--extra-body")) == {"reasoning_effort": "none"}
+    default = make(SplashEngine, art=splash_artifact(), plat=plat, recipe_name="default", python="/usr/bin/python3")
+    assert "--max-context" not in default.server_cmd(8123, 1, 2048)  # Splash as shipped sizes its own context
+
+
+def test_served_engines_boot_and_stop_a_server(tmp_path, hf_cache, monkeypatch):
+    """A stand-in server: the adapter waits for it to answer, records the url, and stops it whole."""
+    import sys
+
+    fake = tmp_path / "server.py"
+    fake.write_text(
+        "import http.server, sys\n"
+        "class H(http.server.BaseHTTPRequestHandler):\n"
+        "    def do_GET(self):\n"
+        "        self.send_response(200); self.end_headers(); self.wfile.write(b'{}')\n"
+        "    def log_message(self, *a): pass\n"
+        "http.server.HTTPServer(('127.0.0.1', int(sys.argv[1])), H).serve_forever()\n"
+    )
+
+    class Fake(SplashEngine):
+        def server_cmd(self, port, slots, context):
+            return [sys.executable, str(fake), str(port)]
+
+    eng = make(Fake, art=splash_artifact(), plat=platform(Backend.METAL, "apple10", count=1), python="/usr/bin/python3")
+    eng.serve(WORKLOADS["ss-128-64"], tmp_path / "serve.log", 30)
+    try:
+        assert eng.server_url and eng.server_url.startswith("http://127.0.0.1:")
+        assert flag_value(argv_for(eng, WORKLOADS["ss-128-64"], tmp_path), "--url") == eng.server_url
+        assert eng.counters_from_summary({})["server_load_s"] >= 0 and eng.watch_pids()
+    finally:
+        eng.stop()
+    assert eng.server_url is None and eng.watch_pids() == []
+
+
+def test_a_served_engine_that_dies_at_startup_is_a_load_fail(tmp_path, hf_cache):
+    import sys
+
+    from pie_evals.node.engines import EngineLaunchError
+
+    class Dead(SplashEngine):
+        def server_cmd(self, port, slots, context):
+            return [sys.executable, "-c", "import sys; print('no such model'); sys.exit(3)"]
+
+    eng = make(Dead, art=splash_artifact(), plat=platform(Backend.METAL, "apple10", count=1), python="/usr/bin/python3")
+    with pytest.raises(EngineLaunchError) as e:
+        eng.serve(WORKLOADS["ss-128-64"], tmp_path / "serve.log", 30)
+    assert str(e.value.error_class) == "load_fail" and "no such model" in str(e.value)
 
 
 # ---- drift guard: every emitted flag exists in the real script ------------------
@@ -545,8 +639,6 @@ for _wl in WORKLOADS:
         ("vllm-ngram-fp8", VllmEngine, _wl, {"mode": Mode(id="ngram", spec_dec="ngram"), "art": artifact(kv_dtype="fp8")}),
         ("sglang", SglangEngine, _wl, {}),
         ("sglang-gemma", SglangEngine, _wl, {"art": artifact(family="gemma4")}),
-        ("llamacpp", LlamacppEngine, _wl, {"art": artifact(base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m", source_format="gguf", gguf_file="Qwen3-8B-Q4_K_M.gguf")}),
-        ("mlxlm", MlxlmEngine, _wl, {"plat": platform(Backend.METAL, "apple9", count=1), "art": artifact(base_model="mlx-community/Qwen3.6-27B-4bit", scheme="affine_u4_g64", source_format="mlx")}),
     ]
 
 
@@ -823,11 +915,14 @@ for _mwl in MAC_WORKLOADS:
         ("pie-gemma", PieEngine, _mwl, {"art": mac_artifact(family="gemma4")}),
         ("ollama", OllamaEngine, _mwl, {}),
         ("ollama-default", OllamaEngine, _mwl, {"recipe_name": "default"}),
+        ("llamacpp", LlamacppEngine, _mwl, {"recipe_name": "competitive", "art": mac_artifact(base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m", source_format="gguf", gguf_file="Qwen3-8B-Q4_K_M.gguf")}),
+        ("mlxlm", MlxlmEngine, _mwl, {"recipe_name": "competitive"}),
+        ("splash", SplashEngine, _mwl, {"recipe_name": "competitive", "art": mac_artifact(source_format="splash")}),
     ]
 
 
 @pytest.mark.parametrize("label,cls,wl,over", _MAC_CASES, ids=[f"{c[0]}/{c[2]}" for c in _MAC_CASES])
-def test_every_emitted_flag_on_a_mac_is_parsed_by_the_script(label, cls, wl, over, tmp_path):
+def test_every_emitted_flag_on_a_mac_is_parsed_by_the_script(label, cls, wl, over, tmp_path, hf_cache):
     workload = MAC_WORKLOADS[wl]
     eng = mac_make(cls, workload=workload, **over)
     argv = argv_for(eng, workload, tmp_path)
@@ -835,6 +930,31 @@ def test_every_emitted_flag_on_a_mac_is_parsed_by_the_script(label, cls, wl, ove
     assert accepted, f"no flags parsed from {eng.script_path()}"
     unknown = sorted(set(emitted_flags(argv)) - accepted)
     assert not unknown, f"{label}/{wl}: {eng.script_path().name} does not accept {unknown}"
+
+
+def test_argparse_flags_of_the_openai_script():
+    got = argparse_flags(OPENAI_SCRIPT)
+    assert {"--model", "--max-tokens", "--concurrency", "--num-requests", "--requests", "--dump-all-token-ids"} <= got
+    assert {"--url", "--api-model", "--extra-body", "--chat", "--flush-cache", "--no-flush-cache"} <= got
+
+
+def test_openai_bench_builds_a_completion_or_a_chat_request():
+    sys.path.insert(0, str(BENCHES))
+    sys.path.insert(0, str(OPENAI_SCRIPT.parent))
+    try:
+        import openai_bench
+    finally:
+        sys.path.remove(str(BENCHES))
+        sys.path.remove(str(OPENAI_SCRIPT.parent))
+    base = ["latency", "--model", "X", "--url", "http://h", "--prompt", "p", "--max-tokens", "4", "--no-ignore-eos", "--warmup", "1",
+            "--requests", "1", "--json-out", "f", "--dump-all-token-ids", "--no-think", "--system", "be brief"]
+    args = openai_bench.build_parser().parse_args(base + ["--extra-body", '{"ignore_eos": true}'])
+    body = openai_bench.payload_for(args, "<rendered>", 4)
+    assert body["prompt"] == "<rendered>" and body["ignore_eos"] is True and body["stream"] is True and "messages" not in body
+    args = openai_bench.build_parser().parse_args(base + ["--chat", "--api-model", "m"])
+    body = openai_bench.payload_for(args, "hello", 4)
+    assert body["messages"] == [{"role": "system", "content": "be brief"}, {"role": "user", "content": "hello"}]
+    assert body["model"] == "m" and "prompt" not in body
 
 
 def test_argparse_flags_of_the_ollama_script():

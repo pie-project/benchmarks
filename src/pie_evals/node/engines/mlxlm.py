@@ -1,44 +1,29 @@
-"""mlx-lm adapter: drives ``scripts/bench/mlx_bench.py`` (macOS only).
+"""mlx-lm adapter: boots ``python -m mlx_lm server`` on one MLX checkpoint and
+streams from it (macOS only).
 
-mlx_bench.py spawns ``python -m mlx_lm server`` itself (``--spawn``, the
-default) with the interpreter given by ``--python``. Two things the script is
-explicit about and this adapter honours:
-
-* mlx-lm's server has no ``ignore_eos``; the script refuses ``--ignore-eos``
-  and asks for ``--no-ignore-eos`` on BOTH engines. The common args carry
-  ``--ignore-eos`` for every other engine, so it is rewritten here and the
-  parity check (``check_input_parity``) is what tells whether the pie cell
-  compared against this one stopped at the same token counts.
-* ``--dump-all-token-ids`` is not parsed by mlx_bench.py (no
-  ``add_output_dump_args``); it is dropped from the argv.
+mlx-lm's server has no ``ignore_eos``, so a request may stop before its token
+budget; the summary counts those as ``short_responses``.
 """
 
 from __future__ import annotations
 
 import os
-import socket
 import subprocess
-from pathlib import Path
 
-from pie_evals.schema import EngineName, ErrorClass, WorkloadSpec
+from pie_evals.schema import EngineName, ErrorClass
 
-from .base import Engine, EngineLaunchError, register
+from .base import EngineLaunchError, register
+from .served import ServedEngine
 from .shape import hf_snapshot_dir
 
 
-def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return int(s.getsockname()[1])
-
-
 @register
-class MlxlmEngine(Engine):
+class MlxlmEngine(ServedEngine):
     name = EngineName.MLXLM
-    script = "scripts/bench/mlx_bench.py"
 
-    def default_python(self) -> str:
-        return os.environ.get("MLX_PY") or "/tmp/pievenv/bin/python"
+    def server_python(self) -> str:
+        """The interpreter that has the pinned mlx-lm (not the bench client's)."""
+        return str(self.recipe.get("server_python") or os.environ.get("MLX_PY") or "/tmp/pievenv/bin/python")
 
     def model_arg(self) -> str:
         """Snapshot directory of the MLX checkpoint (mlx-lm and the tokenizer
@@ -51,56 +36,28 @@ class MlxlmEngine(Engine):
             )
         return str(snap)
 
-    def engine_args(self, workload: WorkloadSpec) -> list[str]:
+    def api_model(self) -> str:
+        # mlx-lm loads whatever a request names; naming the served path keeps it on the loaded model
+        return self.model_arg()
+
+    def server_cmd(self, port: int, slots: int, context: int) -> list[str]:
         r = self.recipe
-        args: list[str] = []
-        if self.server_url:
-            args += ["--no-spawn", "--url", self.server_url]
-        else:
-            args += ["--python", self.python, "--port", str(int(r.get("port") or self._port()))]
-            if r.get("server_module"):
-                args += ["--server-module", str(r["server_module"])]
-            extra = r.get("server_extra") or []
-            if isinstance(extra, str):
-                extra = extra.split()
-            if extra:
-                args += ["--server-extra", " ".join(str(x) for x in extra)]
-            # prompt cache: 0 keeps it out of the measurement (the script's
-            # default); the prefix_shared recipe turns it on.
-            args += ["--prompt-cache-size", str(int(r.get("prompt_cache_size", 0)))]
-            args += ["--prompt-concurrency", str(int(r.get("prompt_concurrency", 8)))]
-            args += ["--startup-timeout", str(r.get("startup_timeout", 300))]
-        # --decode-concurrency is derived by the script from --concurrency;
-        # nothing to emit.
-        if r.get("connect_retries") is not None:
-            args += ["--connect-retries", str(int(r["connect_retries"]))]
-        if r.get("request_timeout"):
-            args += ["--request-timeout", str(r["request_timeout"])]
-        return args
-
-    def _port(self) -> int:
-        if not hasattr(self, "_chosen_port"):
-            self._chosen_port = _free_port()
-        return self._chosen_port
-
-    def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
-        argv = super().build_argv(workload, common_args, json_out)
-        out: list[str] = []
-        for a in argv:
-            if a == "--ignore-eos":
-                # see module docstring: mlx-lm cannot pin output length.
-                out.append("--no-ignore-eos")
-            elif a == "--dump-all-token-ids":
-                # TODO(pie/benches): mlx_bench.py has no output-dump flags.
-                continue
-            else:
-                out.append(a)
-        return out
+        extra = r.get("server_extra") or []
+        if isinstance(extra, str):
+            extra = extra.split()
+        module = str(r.get("server_module") or "mlx_lm server").split()
+        return [
+            self.server_python(), "-m", *module, "--model", self.model_arg(), "--host", "127.0.0.1", "--port", str(port),
+            "--decode-concurrency", str(slots), "--prompt-concurrency", str(int(r.get("prompt_concurrency", 8))),
+            # 0 keeps the prompt cache out of the measurement; the prefix_shared recipe turns it on
+            "--prompt-cache-size", str(int(r.get("prompt_cache_size", 0))), "--log-level", "ERROR",
+            *[str(x) for x in extra],
+        ]
 
     def version(self) -> str:
         try:
             out = subprocess.run(
-                [self.python, "-c", "import mlx_lm; print(mlx_lm.__version__)"],
+                [self.server_python(), "-c", "import mlx_lm; print(mlx_lm.__version__)"],
                 capture_output=True, text=True, timeout=120, check=False,
             )
             v = out.stdout.strip().splitlines()

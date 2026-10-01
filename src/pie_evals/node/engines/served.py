@@ -1,0 +1,147 @@
+"""Engines that are a local server speaking OpenAI's ``/v1/completions``.
+
+llama.cpp, mlx-lm and Splash all work the same way from the outside: start a
+server on one model, wait until it answers, stream completions from it. The
+subclass says how to start its server; this class boots it once per model and
+points ``scripts/openai_bench.py`` at it, which stamps the first token and the
+gaps between tokens the way the Ollama client does.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import socket
+import subprocess
+import sys
+import time
+import urllib.request
+from abc import abstractmethod
+from pathlib import Path
+from typing import Any
+
+from pie_evals.schema import ErrorClass, WorkloadSpec
+
+from .base import Engine, EngineLaunchError
+from .shape import max_model_len_for, workload_concurrency
+
+SCRIPT = Path(__file__).resolve().parent / "scripts" / "openai_bench.py"
+
+
+def free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return int(s.getsockname()[1])
+
+
+class ServedEngine(Engine):
+    script = "openai_bench.py"
+    #: path that answers 200 once the model is loaded
+    health_path = "/v1/models"
+    #: the request field that pins the output length, when the server has one
+    ignore_eos_field: str | None = None
+    #: send chat messages (the server renders its template) instead of a rendered prompt
+    chat = False
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.load_s: float | None = None
+        existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
+        self.env["PYTHONPATH"] = ":".join([str(self.pie_root / "scripts" / "bench")] + ([existing] if existing else []))
+
+    # ---- to implement per engine ---------------------------------------------
+    @abstractmethod
+    def server_cmd(self, port: int, slots: int, context: int) -> list[str]:
+        """The command that serves this artifact on ``port`` for ``slots``
+        requests at once, each up to ``context`` tokens."""
+
+    def api_model(self) -> str:
+        """The request's ``model`` field; empty when the server needs none."""
+        return ""
+
+    def extra_body(self) -> dict[str, Any]:
+        """Request fields beyond the OpenAI ones."""
+        return {}
+
+    # ---- the client ----------------------------------------------------------
+    def script_path(self) -> Path:
+        return SCRIPT
+
+    def default_python(self) -> str:
+        if os.environ.get("OPENAI_BENCH_PY"):
+            return os.environ["OPENAI_BENCH_PY"]
+        from pie_evals.node.build import bench_python
+
+        return str(bench_python())
+
+    def engine_args(self, workload: WorkloadSpec) -> list[str]:
+        r = self.recipe
+        args = ["--url", self.server_url or "http://127.0.0.1:8000", "--engine-name", str(self.name)]
+        if self.api_model():
+            args += ["--api-model", self.api_model()]
+        if self.chat:
+            args.append("--chat")
+        body = {**self.extra_body(), **(r.get("extra_body") or {})}
+        if self.ignore_eos_field:
+            body[self.ignore_eos_field] = True
+        if body:
+            args += ["--extra-body", json.dumps(body, sort_keys=True)]
+        if r.get("flush_cache") is False:
+            args.append("--no-flush-cache")
+        if r.get("request_timeout"):
+            args += ["--request-timeout", str(r["request_timeout"])]
+        if workload.params.get("seed") is not None:
+            args += ["--seed", str(workload.params["seed"])]
+        return args
+
+    def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
+        # the output length is pinned through the request body where the server
+        # can do it; the common flag would claim it for the ones that cannot
+        argv = [a for a in super().build_argv(workload, common_args, json_out) if a != "--ignore-eos"]
+        return argv + ["--no-ignore-eos"]
+
+    # ---- the server ----------------------------------------------------------
+    def server_env(self) -> dict[str, str]:
+        return {}
+
+    def serve(self, workload: WorkloadSpec, log_path: Path, timeout_s: int) -> None:
+        if self._server_proc is not None:
+            return
+        port = int(self.recipe.get("port") or free_port())
+        slots, context = workload_concurrency(workload), max_model_len_for(workload)
+        cmd = self.server_cmd(port, slots, context)
+        log_path = Path(log_path)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        url = f"http://127.0.0.1:{port}"
+        t0 = time.monotonic()
+        with open(log_path, "w") as log:
+            log.write(" ".join(cmd) + "\n")
+            log.flush()
+            proc = subprocess.Popen([sys.executable, "-m", "pie_evals.node.engines.lifeline", *cmd],
+                                    env={**os.environ, **self.env, **self.server_env()}, stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT)
+        self._server_proc = proc
+        deadline = t0 + min(timeout_s, int(self.recipe.get("startup_timeout") or timeout_s))
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                self._server_proc = None
+                tail = log_path.read_text(errors="replace").strip().splitlines()[-5:]
+                raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"{self.name} server exited during startup: " + " | ".join(tail)[:500])
+            try:
+                with urllib.request.urlopen(url + self.health_path, timeout=5) as resp:
+                    resp.read()
+                self.server_url, self.load_s = url, time.monotonic() - t0
+                return
+            except OSError:
+                time.sleep(0.5)
+        self.stop()
+        raise EngineLaunchError(ErrorClass.HANG, f"{self.name} server did not answer {self.health_path} in time (see {log_path})")
+
+    def stop(self) -> None:
+        super().stop()
+        self.server_url = None
+
+    def watch_pids(self) -> list[int]:
+        return [self._server_proc.pid] if self._server_proc is not None else []
+
+    def counters_from_summary(self, summary: dict[str, Any]) -> dict[str, float]:
+        return {"server_load_s": float(self.load_s)} if self.load_s is not None else {}

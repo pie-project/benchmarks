@@ -209,7 +209,7 @@
   <span id="who"></span>
 </div></header>
 <div class="controls" id="controls">
-  <select id="fmac" aria-label="machine"></select><select id="fmodel" aria-label="model"></select>
+  <select id="fmac" aria-label="machine"></select><select id="fbase" aria-label="compare against"></select><select id="fmodel" aria-label="model"></select>
   <span class="grow"></span>
   <button class="act" id="bench" disabled>Bench</button>
 </div>
@@ -244,22 +244,32 @@ setInterval(async () => {
 const modelOf = id => DATA.models.find(m => m.id === id) || DATA.models.find(m => m.pie === id) || { name: id, quant: "" };
 const modelName = id => modelOf(id).name;
 const pieOf = id => modelOf(id).pie || id;
-const modelTag = m => `<img class="ol" src="${DATA.ollama_icon}" alt="">${esc(m.name)}`;
+const modelTag = m => (m.engine === "ollama" ? `<img class="ol" src="${DATA.ollama_icon}" alt="">` : "") + esc(m.name);
+const armTag = m => `${modelTag(m)} <span class="muted">${esc(m.label || "")}</span>`;
 const macName = id => (DATA.pool.find(m => m.id === id) || DATA.results[id] || { name: id }).name;
 const PER_PAGE = 20;
 let tab = "Overview", back = "Overview", me = null, page = 0, denied = "";
-const filt = { mac: "", model: "" };
+const filt = { mac: "", model: "", base: "" };
 const chosen = new Set();
 const testName = id => DATA.benchmarks.find(b => b.id === id)?.name || id;
 function fillFilters() {
   const macs = [...new Set([...Object.keys(DATA.results), ...RUNNABLE.map(m => m.id)])];
-  const models = DATA.models.map(m => m.id)
+  const bases = DATA.baseline_labels || [];
+  if (!bases.includes(filt.base)) filt.base = bases.includes(DATA.default_baseline) ? DATA.default_baseline : bases[0] || "";
+  const models = DATA.models.filter(m => m.label === filt.base).map(m => m.id)
     .sort((a, b) => (a === DATA.default_model ? -1 : b === DATA.default_model ? 1 : 0));
   const opts = (all, ids, name, on) => ids.map(id => `<option value="${esc(id)}"${id === on ? " selected" : ""}>${esc(name(id))}</option>`).join("");
   if (!macs.includes(filt.mac)) filt.mac = macs[0] || "";
   if (!models.includes(filt.model)) filt.model = models.includes(DATA.default_model) ? DATA.default_model : models[0] || "";
-  const fm = document.getElementById("fmac"), fo = document.getElementById("fmodel");
+  const fm = document.getElementById("fmac"), fo = document.getElementById("fmodel"), fb = document.getElementById("fbase");
   fm.innerHTML = opts("all machines", macs, id => id, filt.mac);
+  fb.innerHTML = opts("all engines", bases, label => "vs " + label, filt.base);
+  fb.onchange = () => {
+    // keep looking at the same model when the engine it is compared with changes
+    const same = DATA.models.find(m => m.label === fb.value && m.pie === pieOf(filt.model));
+    filt.base = fb.value; filt.model = same ? same.id : "";
+    fillFilters(); draw();
+  };
   fo.innerHTML = opts("all models", models, modelName, filt.model);
   fm.onchange = () => { filt.mac = fm.value; draw(); };
   fo.onchange = () => { filt.model = fo.value; draw(); };
@@ -295,7 +305,7 @@ function orderedModels() {
   let saved = [];
   try { saved = JSON.parse(localStorage.getItem("pie-evals-model-order") || "[]"); } catch {}
   const rank = id => { const i = saved.indexOf(id); return i < 0 ? saved.length + DATA.models.findIndex(m => m.id === id) : i; };
-  return [...DATA.models].sort((a, b) => rank(a.id) - rank(b.id));
+  return DATA.models.filter(m => m.label === filt.base).sort((a, b) => rank(a.id) - rank(b.id));
 }
 function ollamaAt(mac, pie, wl, label, at) {
   const runs = DATA.baselines?.[mac]?.[pie]?.[wl]?.[label] || [];
@@ -410,7 +420,7 @@ function openRuns(shas) {
   if (!me) return openSignIn();
   const list = Array.isArray(shas) ? shas : [shas];
   const sha = list[0], c = commitOf(sha), parent = list.length > 1 ? null : parentOf(sha);
-  const row = (kind, x, on) => `<label class="toggle"><span>${kind === "models" ? modelTag(x) : esc(x.name)}</span><input type="checkbox" class="switch" data-kind="${kind}" value="${x.id}" ${on ? "checked" : ""}></label>`;
+  const row = (kind, x, on) => `<label class="toggle"><span>${kind === "models" ? armTag(x) : esc(x.name)}</span><input type="checkbox" class="switch" data-kind="${kind}" value="${x.id}" ${on ? "checked" : ""}></label>`;
   sheet(`<div class="sheet-head"><h2>Bench</h2>` +
     `<div class="chips">${list.map(x => `<code>${x.slice(0, 7)}</code>`).join("")}</div></div>` +
     `<div class="group"><div class="label">Models</div>${DATA.models.map(m => row("models", m, false)).join("")}</div>` +
@@ -450,7 +460,7 @@ async function configure() {
   const tests = DATA.benchmarks.filter(b => on("benchmarks", b.id));
 
   let html = `<div class="card"><table class="compact"><tr><th>model</th><th>precision</th><th class="num">size</th></tr>`;
-  for (const m of models) html += `<tr><td>${modelTag(m)}</td><td class="muted">${esc(m.quant || "")}</td><td class="num">${gib(m.gib)}</td></tr>`;
+  for (const m of models) html += `<tr><td>${armTag(m)}</td><td class="muted">${esc(m.quant || "")}</td><td class="num">${gib(m.gib)}</td></tr>`;
   if (!models.length) html += `<tr><td colspan="3" class="muted">No model runs.</td></tr>`;
   html += `</table></div><div class="card"><table class="compact"><tr><th>machine</th><th>id</th><th>memory</th><th>status</th></tr>`;
   for (const m of machines) html += `<tr><td>${esc(m.name)}</td><td class="muted">${m.id}</td><td>${m.memory_gib ? m.memory_gib + " GB" : "–"}</td>` +
