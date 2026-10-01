@@ -61,6 +61,14 @@ def check(obj):
     sys.exit(1 if problems else 0)
 
 
+@main.command("docs-only")
+def docs_only_cmd():
+    """Read changed file paths from stdin; print true when all of them are docs or CI files."""
+    from pie_evals.plan.changes import docs_only
+
+    click.echo("true" if docs_only(sys.stdin.read().splitlines()) else "false")
+
+
 @main.command("jobs")
 @click.option("--tier", type=click.Choice([t.value for t in Tier]), required=True)
 @click.option("--pie-commit", default=None)
