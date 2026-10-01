@@ -93,7 +93,7 @@ def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
             st.write_run([_rec(cell, 400 + j, t0 + timedelta(days=j), commit=f"c{j}", run=f"r{i}{j}")], tier=Tier.TARGETED, run_id=f"r{i}{j}")
     ollama = _cell(matrix, "m5-max-48g", "ob-story-200", artifact="gemma-4-26b-a4b-ollama")
     ro = _rec(ollama, 300, t0 + timedelta(days=1), commit="c1", run="o1")
-    ro.provenance.engine_version = "0.34.4"
+    ro.provenance.engine_version = "0.35.0"
     st.write_run([ro], tier=Tier.TARGETED, run_id="o1")
     live = [{"name": "a-mac", "status": "online", "busy": True, "labels": [{"name": "self-hosted"}, {"name": "macOS"}, {"name": "m5-max-48g"}]},
             {"name": "b-mac", "status": "online", "busy": False, "labels": [{"name": "self-hosted"}, {"name": "macOS"}, {"name": "m1-max-32g"}]},
@@ -110,7 +110,7 @@ def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
     runs = data["baselines"]["m5-max-48g"]["gemma-4-26b-a4b-mlx4"]["ob-story-200"][ollama.artifact.baseline_label]
     arm = runs[-1]
     assert arm["at"] and all("at" in v for v in by_test["ob-story-200"].values())
-    assert arm["decode"] == 300 and arm["version"] == "0.34.4"
+    assert arm["decode"] == 300 and arm["version"] == "0.35.0"
     assert sorted(b["id"] for b in data["benchmarks"]) == ["c4", "ctx-4k-256", "ctx-8k-256", "ob-512-200", "ob-advanced-500", "ob-short-100", "ob-story-200"]
     assert data["people"] == []
     assert any(m["name"] == "gemma4:26b" and m["pie"] == "gemma-4-26b-a4b-mlx4" and m["has_results"] for m in data["models"])

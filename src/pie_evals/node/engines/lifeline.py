@@ -15,6 +15,9 @@ def main() -> int:
                 os.killpg(child.pid, sig)
             except ProcessLookupError:
                 return
+            except PermissionError:
+                # macOS refuses the group when one member is already gone; the child itself can still be told
+                child.send_signal(sig)
             try:
                 child.wait(timeout=wait)
             except subprocess.TimeoutExpired:
