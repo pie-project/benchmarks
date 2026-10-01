@@ -59,8 +59,17 @@ def run(job_path, pie_root, out, hf_cache, no_build, only, download):
     mask_gpus(job)
     if only:
         job = job.model_copy(update={"cells": [c for c in job.cells if any(s in c.cell_key for s in only)]})
-    runner = NodeRunner(job, pie_root=Path(pie_root), out_dir=Path(out), hf_cache=Path(hf_cache) if hf_cache else None, build=not no_build, download=download)
-    recs = runner.run()
+    from .machine import MachineBusy, machine_lock
+
+    try:
+        # the runner's clock starts once the machine is ours, so the wait is not taken out of the job's budget
+        with machine_lock(job.job_id, log=lambda m: click.echo(m, err=True)):
+            runner = NodeRunner(job, pie_root=Path(pie_root), out_dir=Path(out), hf_cache=Path(hf_cache) if hf_cache else None, build=not no_build, download=download)
+            recs = runner.run()
+    except MachineBusy as e:
+        # nothing is recorded, so the next run measures these cells
+        click.echo(f"{e}; nothing measured this time", err=True)
+        return
     by = {}
     for r in recs:
         by[str(r.status)] = by.get(str(r.status), 0) + 1
@@ -162,12 +171,15 @@ def prepare_cmd(tier, matrix_dir, platforms, engines_f, programs_f, pie_root, pi
 def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root):
     from pie_evals.quality.run import TasksSkipped, run_quality
 
+    from .machine import machine_lock
+
     skipped = []
-    for a in artifacts:
-        try:
-            run_quality(a, list(tasks), n, matrix_dir=matrix_dir, store_dir=store_dir, pie_root=Path(pie_root), log=lambda m_: click.echo(m_, err=True))
-        except TasksSkipped as e:
-            skipped.append(str(e))
+    with machine_lock("quality", max_wait_s=6 * 3600, log=lambda m_: click.echo(m_, err=True)):
+        for a in artifacts:
+            try:
+                run_quality(a, list(tasks), n, matrix_dir=matrix_dir, store_dir=store_dir, pie_root=Path(pie_root), log=lambda m_: click.echo(m_, err=True))
+            except TasksSkipped as e:
+                skipped.append(str(e))
     if skipped:
         click.echo("skipped tasks: " + "; ".join(skipped), err=True)
         sys.exit(1)
