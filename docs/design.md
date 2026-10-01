@@ -52,7 +52,7 @@ run of the framework is expected to show it.
 
 ### Expansion
 
-`orchestrate/matrix.py` takes the product of the six components and prunes
+`plan/matrix.py` takes the product of the six components and prunes
 in three steps: *inapplicable* combinations are not cells (an engine that
 cannot load the format, TP on a one-device platform, a pie-only program on a
 baseline); *declared unsupported* combinations stay as cells; tiers are the
@@ -272,7 +272,7 @@ Two halves, one repo, decoupled by a CLI boundary:
 
 ```
 node/         runs on the machine under test. Input: one JobSpec JSON. Output: records.jsonl + logs.
-orchestrate/  expand-matrix → jobs, launch-pod, collect, report, watch-baselines. CLIs, no daemon.
+cli.py        expand-matrix → jobs, launch-pod, collect, report, watch-baselines. CLIs, no daemon.
 ```
 
 `node/` does not know about GitHub, RunPod or queues. Today the
@@ -330,7 +330,12 @@ matrix/           declarations: engines, platforms, models, workloads, programs,
 src/pie_evals/
   schema/         Cell, JobSpec, Record (+ parquet schema)
   node/           runner, engines/ (adapters + recipes), workloads/, metrics/, accuracy/, miniature, preflight, provenance
-  orchestrate/    matrix, jobs, store, report, runpod, baselines, cli
+  plan/           matrix, jobs
+  results/        store, report, baselines, flops
+  site/           dashboard, page.html
+  pods/           runpod
+  quality/        lm-eval tasks
+  cli.py          the pie-evals command
 store/records/    parquet, append-only, committed
 reports/          rendered markdown/json, committed
 infra/            RunPod runner image, Mac runner setup

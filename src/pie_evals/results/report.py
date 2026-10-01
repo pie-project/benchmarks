@@ -8,10 +8,9 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from pie_evals.node.metrics.stats import regression_verdict
+from pie_evals.plan.matrix import Matrix
+from pie_evals.results.store import Store
 from pie_evals.schema import Cell, CellStatus, RepetitionPolicy, Tier
-
-from .matrix import Matrix
-from .store import Store
 
 
 @dataclass

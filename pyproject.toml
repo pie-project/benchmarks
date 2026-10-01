@@ -20,7 +20,7 @@ dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [project.scripts]
 pie-evals-node = "pie_evals.node.cli:main"
-pie-evals = "pie_evals.orchestrate.cli:main"
+pie-evals = "pie_evals.cli:main"
 
 [build-system]
 requires = ["hatchling"]

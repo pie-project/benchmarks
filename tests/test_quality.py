@@ -1,8 +1,8 @@
 import json
 
-from pie_evals.orchestrate import dashboard
-from pie_evals.orchestrate.store import Store
 from pie_evals.quality.tasks import Item, score_gsm8k, wilson
+from pie_evals.results.store import Store
+from pie_evals.site import dashboard
 
 
 def test_gsm8k_reads_the_marked_answer_first():

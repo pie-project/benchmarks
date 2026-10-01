@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from .matrix import Matrix
+from pie_evals.plan.matrix import Matrix
 
 
 @dataclass

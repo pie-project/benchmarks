@@ -8,9 +8,9 @@ import pytest
 
 from pie_evals.node import runner as runner_mod
 from pie_evals.node.engines.base import BenchResult, Engine, EngineLaunchError
-from pie_evals.orchestrate.jobs import make_jobs
-from pie_evals.orchestrate.matrix import Matrix
-from pie_evals.orchestrate.store import Store
+from pie_evals.plan.jobs import make_jobs
+from pie_evals.plan.matrix import Matrix
+from pie_evals.results.store import Store
 from pie_evals.schema import CellStatus, ErrorClass, PerfMetrics, Record, Tier, WorkloadSpec
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -215,8 +215,8 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
 
     from pie_evals.node.engines.shape import context_tokens_for
     from pie_evals.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
-    from pie_evals.orchestrate.jobs import make_jobs
-    from pie_evals.orchestrate.matrix import Matrix
+    from pie_evals.plan.jobs import make_jobs
+    from pie_evals.plan.matrix import Matrix
     from pie_evals.schema import Tier
 
     m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
@@ -267,7 +267,7 @@ def test_a_slow_first_round_is_confirmed_away_not_withheld(job, patched, tmp_pat
 def test_heavy_model_on_a_small_mac_boots_short_and_long_shapes_apart():
     from pie_evals.node.engines.shape import context_tokens_for
     from pie_evals.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
-    from pie_evals.orchestrate.jobs import process_key
+    from pie_evals.plan.jobs import process_key
 
     m = Matrix.load(ROOT / "matrix")
     lc16k = WorkloadSpec(id="lc-16k-128", kind="long_context", params={"prefill": 16384, "decode": 128, "concurrency": 1})
