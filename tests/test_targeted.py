@@ -4,10 +4,11 @@ from pathlib import Path
 import pytest
 
 from pie_evals.node import build as pb
-from pie_evals.orchestrate import dashboard, flops
-from pie_evals.orchestrate.matrix import Matrix
-from pie_evals.orchestrate.store import Store
+from pie_evals.plan.matrix import Matrix
+from pie_evals.results import flops
+from pie_evals.results.store import Store
 from pie_evals.schema import CellStatus, PerfMetrics, Provenance, Record, Tier
+from pie_evals.site import dashboard
 
 ROOT = Path(__file__).resolve().parents[1]
 

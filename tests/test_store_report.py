@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 
-from pie_evals.orchestrate import report as rp
-from pie_evals.orchestrate.jobs import make_jobs
-from pie_evals.orchestrate.matrix import Matrix
-from pie_evals.orchestrate.store import Store
+from pie_evals.plan.jobs import make_jobs
+from pie_evals.plan.matrix import Matrix
+from pie_evals.results import report as rp
+from pie_evals.results.store import Store
 from pie_evals.schema import CellStatus, PerfMetrics, Provenance, Record, Tier
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from pie_evals.orchestrate.matrix import Matrix, selector_matches, summarize
+from pie_evals.plan.matrix import Matrix, selector_matches, summarize
 from pie_evals.schema import ArtifactSpec, CellStatus, Tier
 
 ROOT = Path(__file__).resolve().parents[1]

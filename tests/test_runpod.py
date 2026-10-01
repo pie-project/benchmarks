@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from pie_evals.orchestrate import runpod
-from pie_evals.orchestrate.matrix import Matrix
+from pie_evals.plan.matrix import Matrix
+from pie_evals.pods import runpod
 
 ROOT = Path(__file__).resolve().parents[1]
 
