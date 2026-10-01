@@ -161,6 +161,8 @@ artifacts:
     family: qwen3_6_moe
     scheme: affine_u4_g64
     source_format: mlx
+    pie_sku: qwen36-35b-a3b-u4g64-kv-bf16   # the plain row; the import otherwise lands a drafter twin
+    display_name: qwen3.6:35b-a3b
     expected_gib: 18.17
     tiers: [nightly, weekly]
   - id: gemma-4-31b-mlx4
@@ -274,4 +276,160 @@ artifacts:
     baseline_of: llama-3.2-3b-mlx4
     baseline_label: Ollama
     expected_gib: 2.0
+    tiers: [targeted]
+
+  # ---------------- targeted: the models Splash ships for ----------------
+  - id: qwen3.8-27b-mlx4
+    base_model: mlx-community/Qwen3.8-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: mlx
+    pie_sku: qwen38-27b-u4g64-kv-bf16
+    display_name: qwen3.8:27b
+    expected_gib: 14.95
+    max_context: 4096   # as qwen3.6-27b: the family's Metal recipe holds 8 state slots, and a 4k prompt asks a ninth
+    tiers: [targeted]
+  - id: qwen3.8-27b-ollama
+    base_model: mlx-community/Qwen3.8-27B-4bit
+    family: qwen3_6
+    scheme: gguf_q4_k_m
+    source_format: ollama
+    ollama_tag: qwen3.8:27b
+    baseline_of: qwen3.8-27b-mlx4
+    baseline_label: Ollama
+    expected_gib: 16.52
+    tiers: [targeted]
+  - id: qwen3.6-35b-a3b-ollama
+    base_model: mlx-community/Qwen3.6-35B-A3B-4bit
+    family: qwen3_6_moe
+    scheme: gguf_q4_k_m
+    source_format: ollama
+    ollama_tag: qwen3.6:35b-a3b
+    baseline_of: qwen3.6-35b-a3b-mlx4
+    baseline_label: Ollama
+    expected_gib: 21.07
+    tiers: [targeted]
+
+  # ---------------- targeted: Splash, on the upstream MLX checkpoint ----------------
+  - id: qwen3.8-27b-splash
+    base_model: mlx-community/Qwen3.8-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: splash
+    baseline_of: qwen3.8-27b-mlx4
+    baseline_label: Splash
+    expected_gib: 14.95
+    tiers: [targeted]
+  - id: qwen3.6-35b-a3b-splash
+    base_model: mlx-community/Qwen3.6-35B-A3B-4bit
+    family: qwen3_6_moe
+    scheme: affine_u4_g64
+    source_format: splash
+    baseline_of: qwen3.6-35b-a3b-mlx4
+    baseline_label: Splash
+    expected_gib: 19.0
+    tiers: [targeted]
+
+  # ---------------- targeted: mlx-lm, on the same MLX checkpoint pie reads ----------------
+  - id: gemma-4-26b-a4b-mlxlm
+    base_model: mlx-community/gemma-4-26b-a4b-it-4bit
+    family: gemma4_moe
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: gemma-4-26b-a4b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 14.29
+    tiers: [targeted]
+  - id: muse-glimmer-30b-mlxlm
+    base_model: mlx-community/Muse-Glimmer-30B-4bit
+    family: muse_glimmer
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: muse-glimmer-30b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 18.08
+    tiers: [targeted]
+  - id: llama-3.2-3b-mlxlm
+    base_model: mlx-community/Llama-3.2-3B-Instruct-4bit
+    family: llama
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: llama-3.2-3b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 1.8
+    tiers: [targeted]
+  - id: qwen3.8-27b-mlxlm
+    base_model: mlx-community/Qwen3.8-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: qwen3.8-27b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 14.95
+    tiers: [targeted]
+  - id: qwen3.6-35b-a3b-mlxlm
+    base_model: mlx-community/Qwen3.6-35B-A3B-4bit
+    family: qwen3_6_moe
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: qwen3.6-35b-a3b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 19.0
+    tiers: [targeted]
+
+  # ---------------- targeted: llama.cpp, on a Q4_K_M GGUF ----------------
+  - id: gemma-4-26b-a4b-llamacpp
+    base_model: unsloth/gemma-4-26B-A4B-it-GGUF
+    family: gemma4_moe
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: gemma-4-26B-A4B-it-UD-Q4_K_M.gguf
+    tokenizer_from: mlx-community/gemma-4-26b-a4b-it-4bit
+    baseline_of: gemma-4-26b-a4b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 15.78
+    tiers: [targeted]
+  - id: muse-glimmer-30b-llamacpp
+    base_model: meta-models/Muse-Glimmer-30B-GGUF
+    family: muse_glimmer
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Muse-Glimmer-30B-4bit
+    baseline_of: muse-glimmer-30b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 15.61
+    tiers: [targeted]
+  - id: llama-3.2-3b-llamacpp
+    base_model: bartowski/Llama-3.2-3B-Instruct-GGUF
+    family: llama
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Llama-3.2-3B-Instruct-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Llama-3.2-3B-Instruct-4bit
+    baseline_of: llama-3.2-3b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 1.88
+    tiers: [targeted]
+  - id: qwen3.8-27b-llamacpp
+    base_model: unsloth/Qwen3.8-27B-GGUF
+    family: qwen3_6
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Qwen3.8-27B-UD-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Qwen3.8-27B-4bit
+    baseline_of: qwen3.8-27b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 15.33
+    tiers: [targeted]
+  - id: qwen3.6-35b-a3b-llamacpp
+    base_model: unsloth/Qwen3.6-35B-A3B-GGUF
+    family: qwen3_6_moe
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Qwen3.6-35B-A3B-4bit
+    baseline_of: qwen3.6-35b-a3b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 20.61
     tiers: [targeted]

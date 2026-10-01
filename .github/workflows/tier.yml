@@ -148,6 +148,16 @@ jobs:
           bin="$d/llama-$llama"
           [ -x "$bin/llama-server" ] || { mkdir -p "$bin" && curl -fsSL "https://github.com/ggml-org/llama.cpp/releases/download/$llama/llama-$llama-bin-macos-arm64.tar.gz" | tar xz -C "$bin" --strip-components=1; }
           { echo "MLX_PY=$py/bin/python"; echo "LLAMACPP_PY=$py/bin/python"; echo "LLAMA_SERVER_BIN=$bin/llama-server"; } >> "$GITHUB_ENV"
+      - name: splash
+        if: runner.os == 'macOS' && contains(inputs.engines, 'splash')
+        run: |
+          # Splash comes from Homebrew, which serves only the newest release; the record carries the version that ran
+          want=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['splash']['pin'])")
+          have=$(splash --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | tail -1 || true)
+          if [ "$have" != "$want" ] && command -v brew >/dev/null; then brew install incoai/tap/splash 2>/dev/null || brew upgrade incoai/tap/splash || true; fi
+          bin=$(command -v splash || echo /opt/homebrew/bin/splash)
+          if [ -x "$bin" ]; then echo "SPLASH_BIN=$bin" >> "$GITHUB_ENV"; "$bin" --version || true
+          else echo "::warning::splash is not installed on this Mac; its cells will fail to load"; fi
       - name: ollama
         if: runner.os == 'macOS' && contains(inputs.engines, 'ollama')
         run: |

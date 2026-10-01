@@ -30,6 +30,7 @@ class EngineName(StrEnumBase):
     LLAMACPP = "llamacpp"
     MLXLM = "mlxlm"
     OLLAMA = "ollama"
+    SPLASH = "splash"
 
 
 class Backend(StrEnumBase):
@@ -60,6 +61,7 @@ class SourceFormat(StrEnumBase):
     GGUF = "gguf"
     MLX = "mlx"
     OLLAMA = "ollama"
+    SPLASH = "splash"
 
 
 class ArtifactKind(StrEnumBase):
@@ -171,6 +173,7 @@ class ArtifactSpec(BaseModel):
     max_context: int | None = Field(default=None, description="tokens one sequence may hold on this artifact as pie ships it (the SKU's max_context), when smaller than the HF config's")
     gguf_file: str | None = Field(default=None, description="file name inside a GGUF repo (the arm must be named, never the quant tag)")
     gguf_config_from: str | None = Field(default=None, description="HF repo whose config.json is copied next to the GGUF (pie reads the encoding from config.json; GGUF repos ship none)")
+    tokenizer_from: str | None = Field(default=None, description="HF repo whose tokenizer and chat template render this artifact's prompts (a GGUF repo ships none)")
     display_name: str | None = Field(default=None, description="name the site shows for this model (its Ollama tag)")
     ollama_tag: str | None = Field(default=None, description="Ollama model tag this artifact is served as (``gemma4:26b``); source_format ollama")
     baseline_of: str | None = Field(default=None, description="the pie artifact whose weights this copy carries, so a baseline engine's numbers compare with it")
@@ -196,6 +199,9 @@ class ArtifactSpec(BaseModel):
             key += f"#mini-{self.miniature.recipe_hash}"  # type: ignore[union-attr]
         if self.ollama_tag:
             key += f"#{self.ollama_tag}"
+        elif self.baseline_label:
+            # an arm may serve the very checkpoint pie reads (mlx-lm, Splash); its cells are still its own
+            key += f"#{self.baseline_label}"
         return key
 
 
