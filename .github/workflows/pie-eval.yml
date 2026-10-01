@@ -73,4 +73,6 @@ jobs:
       workloads: ${{ needs.start.outputs.workloads }}
       engines: ${{ needs.start.outputs.engines }}
       skip_recorded: ${{ !inputs.rerun }}
+      # a run started from a branch tries that branch's harness and saves nothing
+      persist: ${{ github.ref == 'refs/heads/main' }}
     secrets: inherit
