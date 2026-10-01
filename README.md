@@ -14,7 +14,7 @@ Read `docs/design.md` first.
 - `store/` the measured results, committed. `reports/` the tables built from them.
 - `infra/` RunPod and Mac runner setup. `.github/workflows/` the tiers and bookkeeping.
 
-Each folder has a short README.
+Each folder has a short README. The workflows are listed in [.github/AUTOMATIONS.md](.github/AUTOMATIONS.md).
 
 ## Quick start
 
