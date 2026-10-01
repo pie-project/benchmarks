@@ -48,10 +48,15 @@ def _node_out(tmp_path, records):
 def test_targeted_is_small_and_baselines_run_on_their_copies(matrix):
     cells = matrix.runnable(Tier.TARGETED)
     assert cells and all(c.mode.tp == 1 for c in cells)
-    assert {c.engine.value for c in cells} == {"pie", "mlxlm", "llamacpp", "ollama"}
+    assert {c.engine.value for c in cells} == {"pie", "mlxlm", "llamacpp", "ollama", "splash"}
     assert all(c.engine.value == "pie" or c.workload.id != "control-aa" for c in cells)
-    assert {c.engine.value for c in cells if c.artifact.baseline_of} >= {"mlxlm", "llamacpp", "ollama"}
-    assert all(c.artifact.baseline_of for c in cells if c.engine.value == "ollama")
+    assert {c.engine.value for c in cells if c.artifact.baseline_of} >= {"mlxlm", "llamacpp", "ollama", "splash"}
+    assert all(c.artifact.baseline_of for c in cells if c.engine.value in ("ollama", "splash"))
+    assert not any(c.artifact.baseline_of for c in cells if c.engine.value == "pie")  # pie never runs another engine's copy
+    # on the site's benchmarks pie runs its own checkpoints only, and every other engine only its arms
+    site = [c for c in cells if c.workload.id.startswith(("ob-", "ctx-")) or c.workload.id == "c4"]
+    assert all((c.artifact.baseline_of is None) == (c.engine.value == "pie") for c in site)
+    assert {c.artifact.baseline_label for c in site if c.engine.value != "pie"} >= {"Ollama", "Ollama MLX", "llama.cpp", "mlx-lm", "Splash"}
     assert {c.workload.id for c in cells} == {"control-aa", "ss-128-64", "lc-1k-128", "lc-2k-128", "c8", "c32",
                                               "ob-story-200", "ob-512-200", "ob-short-100", "ob-advanced-500", "ctx-4k-256", "ctx-8k-256", "c4"}
     assert not matrix.check_budget(Tier.TARGETED)
@@ -109,7 +114,13 @@ def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
     assert sorted(b["id"] for b in data["benchmarks"]) == ["c4", "ctx-4k-256", "ctx-8k-256", "ob-512-200", "ob-advanced-500", "ob-short-100", "ob-story-200"]
     assert data["people"] == []
     assert any(m["name"] == "gemma4:26b" and m["pie"] == "gemma-4-26b-a4b-mlx4" and m["has_results"] for m in data["models"])
-    assert [m["name"] for m in data["models"]] == ["gemma4:26b", "gemma4:26b-mlx", "llama3.2:3b", "muse-glimmer:30b"]
+    by_label = lambda label: [m["name"] for m in data["models"] if m["label"] == label]  # noqa: E731
+    assert by_label("Ollama") == ["gemma4:26b", "llama3.2:3b", "muse-glimmer:30b", "qwen3.6:35b-a3b", "qwen3.8:27b"]
+    assert by_label("Ollama MLX") == ["gemma4:26b-mlx"]
+    assert by_label("llama.cpp") == by_label("mlx-lm") == by_label("Ollama")  # every model has both
+    assert by_label("Splash") == ["qwen3.6:35b-a3b", "qwen3.8:27b"]  # Splash ships for these two only
+    assert data["baseline_labels"] == ["Ollama", "Ollama MLX", "llama.cpp", "mlx-lm", "Splash"] and data["default_baseline"] == "Ollama"
+    assert {m["engine"] for m in data["models"]} == {"ollama", "llamacpp", "mlxlm", "splash"}
     assert not any(m["id"].endswith("ollama-bf16") for m in data["models"])
     assert dashboard.render(st, matrix, tmp_path / "site", live, repo="o/evals", lookup_commits=False) == 2
     assert "openRuns" in (tmp_path / "site" / "index.html").read_text()

@@ -7,7 +7,7 @@ Every workflow in this repo, when it runs, and what it needs. Update this file w
 | Workflow | When | What it does | Secrets |
 | --- | --- | --- | --- |
 | `ci` | every push and pull request | lint, tests, matrix check | none |
-| `pie eval` | every pie commit on main, and every 15 minutes | measures pie against Ollama on the Macs and saves the results | `GH_RUNNER_PAT`, `HF_TOKEN` |
+| `pie eval` | every pie commit on main, and every 15 minutes | measures pie against Ollama, llama.cpp, mlx-lm and Splash on the Macs and saves the results | `GH_RUNNER_PAT`, `HF_TOKEN` |
 | `pages` | every push to main, after each eval, and every 10 minutes | rebuilds the web page from `store/` | `HF_TOKEN`, `GH_RUNNER_PAT` |
 | `reap-pods` | hourly, at minute 17 | stops RunPod pods that were left running | `RUNPOD_API_KEY`, `GH_RUNNER_PAT` |
 
