@@ -121,6 +121,9 @@ def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
     assert by_label("Splash") == ["qwen3.6:35b-a3b", "qwen3.8:27b"]  # Splash ships for these two only
     assert data["baseline_labels"] == ["Ollama", "Ollama MLX", "llama.cpp", "mlx-lm", "Splash"] and data["default_baseline"] == "Ollama"
     assert {m["engine"] for m in data["models"]} == {"ollama", "llamacpp", "mlxlm", "splash"}
+    assert {m["name"].split(":")[0]: m["icon"] for m in data["models"]} == {
+        "gemma4": "gemma.svg", "llama3.2": "meta.svg", "muse-glimmer": "meta.svg", "qwen3.6": "qwen.png", "qwen3.8": "qwen.png"}
+    assert all(data["icons"][m["icon"]].startswith("data:image/") for m in data["models"])  # every model has its maker's logo
     assert not any(m["id"].endswith("ollama-bf16") for m in data["models"])
     assert dashboard.render(st, matrix, tmp_path / "site", live, repo="o/evals", lookup_commits=False) == 2
     assert "openRuns" in (tmp_path / "site" / "index.html").read_text()
