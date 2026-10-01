@@ -2,6 +2,8 @@
 
 | kind | engine | platform | artifact | workload | program | mode | metric | value | Δ | threshold | commit/version |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| regression | pie | m5-max-48g | muse-glimmer-30b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | decode_tok_s | 27.24 | -12.4% | ±7.1% | 2195fa8aa93af86cd2d9297d2b8af1cebef14426 |
+| regression | pie | m5-max-48g | muse-glimmer-30b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | decode_tok_s | 28.82 | -12.2% | ±5.3% | 2195fa8aa93af86cd2d9297d2b8af1cebef14426 |
 | regression | pie | m5-max-48g | muse-glimmer-30b-mlx4 | ob-512-200 | text-completion-bench | tp1 | decode_tok_s | 30.05 | -9.4% | ±4.4% | 2195fa8aa93af86cd2d9297d2b8af1cebef14426 |
 | regression | pie | m5-max-48g | muse-glimmer-30b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | decode_tok_s | 29.17 | -8.2% | ±7.2% | 2195fa8aa93af86cd2d9297d2b8af1cebef14426 |
 | regression | pie | m5-max-128g | qwen3.5-0.8b-bf16 | ss-128-64 | text-completion-bench | tp1 | decode_tok_s | 273.6 | -2.9% | ±2.8% | 29965cf7bcaa2ab8354c340a5d212c4ebc2bdb86 |
