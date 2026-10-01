@@ -197,7 +197,7 @@ jobs:
     permissions: { contents: write }
     steps:
       - uses: actions/checkout@v4
-        with: { ref: main, fetch-depth: 0 }
+        with: { ref: "${{ inputs.persist && 'main' || github.ref }}", fetch-depth: 0 }
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
       - uses: actions/download-artifact@v4
