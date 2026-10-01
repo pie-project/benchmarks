@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
@@ -169,11 +170,28 @@ def _feature_for(backend: str) -> str:
 BASELINE_RECIPE_PER_CELL_SINCE = datetime(2026, 9, 25, 6, 38, tzinfo=timezone.utc)
 
 
+#: a baseline that came out noisy this many times at one version is noisy by nature (a drafting engine's
+#: speed follows the text): it is kept as measured instead of being repeated on every run
+NOISY_BASELINE_IS_SETTLED_AFTER = 2
+
+
+def _version_numbers(version: str | None) -> tuple[int, ...]:
+    return tuple(int(n) for n in re.findall(r"\d+", str(version or "")))
+
+
+def at_least_pinned(version: str | None, pin: str | None) -> bool:
+    """The version that ran is the pinned one or a newer one. An app that
+    updates itself (Ollama, Splash from Homebrew) moves past its pin, and its
+    numbers still stand until the pin is raised."""
+    have, want = _version_numbers(version), _version_numbers(pin)
+    return bool(have and want) and have >= want
+
+
 def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins: dict[str, str] | None = None) -> set[str]:
     """Cells the store already holds: pie cells at this pie commit, and baseline
-    cells at the engine version the matrix pins (a vLLM number does not change
-    with pie's commit). A re-dispatch after lost launches, or a new pie commit,
-    then repeats only what never ran."""
+    cells at the engine version the matrix pins, or a newer one (a vLLM number
+    does not change with pie's commit). A re-dispatch after lost launches, or a
+    new pie commit, then repeats only what never ran."""
     t = store.table(tier)
     if t.num_rows == 0:
         return set()
@@ -182,9 +200,15 @@ def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins:
         latest[(r["run_id"], r["cell_id"] or r["cell_key"])] = r
     pins = baseline_pins or {}
     done = set()
+    noisy: dict[str, int] = {}
     for r in latest.values():
         k, c, s, e, v, rev, kind, cls, at = (r["cell_key"], r["pie_commit"], r["status"], r["engine"], r["engine_version"], r["checkpoint_revision"],
                                              r["artifact_kind"], r["error_class"], r["started_at"])
+        if e != "pie" and s == "noisy" and str(cls or "") != "harness_invalid" and at_least_pinned(v, pins.get(str(e))):
+            noisy[k] = noisy.get(k, 0) + 1
+            if noisy[k] >= NOISY_BASELINE_IS_SETTLED_AFTER:
+                done.add(k)
+            continue
         if s in ("not_run", "noisy"):  # never reached, or measured on a card that could not agree with itself: a re-dispatch measures again
             continue
         if str(cls or "") == "harness_invalid":
@@ -195,7 +219,7 @@ def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins:
             continue  # a baseline that failed is a recipe or install fault, fixed on the harness side: measure again
         if e != "pie" and at is not None and at < BASELINE_RECIPE_PER_CELL_SINCE:
             continue  # measured with the process's first shape's recipe (SGLang graphs at the wrong ceiling): not a number
-        if (e == "pie" and c == pie_commit) or (e != "pie" and v and v == pins.get(str(e))):
+        if (e == "pie" and c == pie_commit) or (e != "pie" and at_least_pinned(v, pins.get(str(e)))):
             done.add(k)
     return done
 
