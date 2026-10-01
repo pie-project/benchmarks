@@ -105,6 +105,14 @@ def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloa
         (outp / "skipped-platforms.json").write_text(json.dumps(skipped, indent=1))
         for pid, why in skipped.items():
             click.echo(f"skip platform {pid}: {why}", err=True)
+    from pie_evals.plan.machines import allowed_macs, is_allowed
+
+    allowed = allowed_macs()
+    barred = [p.id for p in m.platforms.values() if not is_allowed(p.id, p.os, allowed)]
+    if barred:
+        for pid in (p for p in (plats or []) if p in barred):
+            click.echo(f"skip platform {pid}: not in config.json machines", err=True)
+        plats = [p for p in (plats or list(m.platforms)) if p not in barred]
     cells = m.expand()
     if programs:
         cells = [c for c in cells if c.program.id in programs]
@@ -208,7 +216,9 @@ def report(obj, tier, out):
 def dashboard(obj, out, repo, pie_repo):
     """Render the pie evals site: pushes, machines and people."""
     repo = repo or os.environ.get("GITHUB_REPOSITORY", "pie-project/pie-evals")
-    n = dash.render(obj["store"], obj["matrix"], Path(out), dash.runners(repo), repo=repo, pie_repo=pie_repo)
+    from pie_evals.plan.machines import allowed_macs
+
+    n = dash.render(obj["store"], obj["matrix"], Path(out), dash.runners(repo), repo=repo, pie_repo=pie_repo, machines=allowed_macs())
     click.echo(f"{n} pushes -> {out}/index.html")
 
 
