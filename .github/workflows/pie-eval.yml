@@ -54,6 +54,10 @@ jobs:
           [[ "$models$macs$workloads$engines" =~ ^[a-z0-9.,-]*$ ]] || { echo "::error::bad input"; exit 1; }
           artifacts=$(.venv/bin/python -c "import sys,yaml; want=set(filter(None,sys.argv[1].split(','))); arts=yaml.safe_load(open('matrix/models.yaml'))['artifacts']; pie={a.get('baseline_of') for a in arts if a['id'] in want}; print(','.join(a['id'] for a in arts if a['id'] in want or a['id'] in pie or (a['id'] not in pie and a.get('baseline_of') in want)))" "$models")
           skip=false; [ -n "$artifacts" ] && [ -n "$workloads" ] || skip=true
+          # a pie commit that only touches docs or CI files cannot move a number; a manual run measures it anyway
+          if [ "${{ github.event_name }}" != workflow_dispatch ] && [ "$(gh api "repos/$PIE_REPO/commits/$COMMIT" --jq '.files[].filename' | .venv/bin/pie-evals docs-only)" = true ]; then
+            skip=true; echo "docs-only pie commit, nothing to measure" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
           echo "commit=$COMMIT models=$models artifacts=$artifacts macs=${macs:-every connected Mac} benchmarks=$workloads engines=$engines skip=$skip" | tee -a "$GITHUB_STEP_SUMMARY"
           { echo "commit=$COMMIT"; echo "artifacts=$artifacts"; echo "macs=$macs"; echo "workloads=$workloads"; echo "engines=$engines"; echo "skip=$skip"; } >> "$GITHUB_OUTPUT"
 
