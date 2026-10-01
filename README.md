@@ -9,11 +9,12 @@ Read `docs/design.md` first.
 
 ## Layout
 
-- `matrix/` — what exists: engines, platforms, models (incl. miniatures), workloads, inferlets, modes, support declarations, tier suites.
-- `src/pie_evals/node/` — runs on the machine under test: `pie-evals-node run --job <spec.json>`.
-- `src/pie_evals/orchestrate/` — `pie-evals expand | check | jobs | collect | report | watch-baselines | launch-pod | reap-pods`.
-- `store/records/` — parquet results, append-only, committed. `reports/` — rendered coverage / regressions / baselines.
-- `infra/` — RunPod runner image and Mac runner setup. `.github/workflows/` — tiers and bookkeeping.
+- `matrix/` what exists: engines, platforms, models, workloads, inferlets, modes, support declarations, tier suites.
+- `src/pie_evals/` the code, one folder per job: `plan/`, `node/`, `results/`, `site/`, `pods/`, `quality/`, `schema/`.
+- `store/` the measured results, committed. `reports/` the tables built from them.
+- `infra/` RunPod and Mac runner setup. `.github/workflows/` the tiers and bookkeeping.
+
+Each folder has a short README.
 
 ## Quick start
 

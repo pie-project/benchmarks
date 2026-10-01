@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from pie_evals.node import reclaim
-from pie_evals.orchestrate.jobs import make_jobs
-from pie_evals.orchestrate.matrix import Matrix
+from pie_evals.plan.jobs import make_jobs
+from pie_evals.plan.matrix import Matrix
 from pie_evals.schema import Tier
 
 ROOT = Path(__file__).resolve().parents[1]

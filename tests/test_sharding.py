@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from pie_evals.orchestrate.jobs import cell_minutes, make_jobs, process_key, shard_groups
-from pie_evals.orchestrate.matrix import Matrix
-from pie_evals.orchestrate.store import Store
+from pie_evals.plan.jobs import cell_minutes, make_jobs, process_key, shard_groups
+from pie_evals.plan.matrix import Matrix
+from pie_evals.results.store import Store
 from pie_evals.schema import Tier
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,7 +61,7 @@ def test_multi_gpu_platforms_only_run_tp_gt1(matrix):
 def test_available_platforms_keeps_runpod_and_online_resident(matrix, monkeypatch):
     import json
 
-    from pie_evals.orchestrate import jobs as J
+    from pie_evals.plan import jobs as J
 
     runners = {"runners": [{"status": "online", "labels": [{"name": "self-hosted"}, {"name": "macos"}, {"name": "m1-max-32g"}]},
                            {"status": "offline", "labels": [{"name": "m4-pro-48g"}]}]}
@@ -105,8 +105,8 @@ def _jobs_cli(tmp_path, monkeypatch, *platforms):
 
     from click.testing import CliRunner
 
-    from pie_evals.orchestrate import cli
-    from pie_evals.orchestrate import jobs as J
+    from pie_evals import cli
+    from pie_evals.plan import jobs as J
 
     def denied(*a, **k):
         raise RuntimeError("HTTP 403")

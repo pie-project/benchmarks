@@ -93,7 +93,7 @@ def load_items(task: str, n: int, log=print):
 
 def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str = "matrix", store_dir: str = "store", pie_root: Path, log=print) -> list[Path]:
     from pie_evals.node.snapshots import ensure_snapshot, hf_cache_dir
-    from pie_evals.orchestrate.matrix import Matrix
+    from pie_evals.plan.matrix import Matrix
 
     m = Matrix.load(matrix_dir)
     art = m.artifacts[artifact_id]

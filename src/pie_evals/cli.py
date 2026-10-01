@@ -10,14 +10,13 @@ from pathlib import Path
 
 import click
 
+from pie_evals.plan.jobs import make_jobs
+from pie_evals.plan.matrix import Matrix, summarize
+from pie_evals.results import baselines as bl
+from pie_evals.results import report as rp
+from pie_evals.results.store import Store
 from pie_evals.schema import Tier
-
-from . import baselines as bl
-from . import dashboard as dash
-from . import report as rp
-from .jobs import make_jobs
-from .matrix import Matrix, summarize
-from .store import Store
+from pie_evals.site import dashboard as dash
 
 
 @click.group()
@@ -81,7 +80,7 @@ def check(obj):
 @click.pass_obj
 def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloads, max_jobs, max_jobs_per_platform, out, label, skip_unavailable, repo, skip_recorded, run_label):
     """Write one JobSpec JSON per platform shard, plus a GitHub Actions matrix file."""
-    from .jobs import available_platforms, plan_pods, recorded_cell_keys
+    from pie_evals.plan.jobs import available_platforms, plan_pods, recorded_cell_keys
 
     m: Matrix = obj["matrix"]
     st: Store = obj["store"]
@@ -237,7 +236,7 @@ def watch_baselines(obj, lock):
 @click.option("--reuse", is_flag=True, help="if a live pod already carries every label, queue on it instead of renting another (needs GH_RUNNER_PAT)")
 @click.pass_obj
 def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_version, network_volume_id, kill_minutes, cuda_versions, debug, exec_script, wait_runner, labels, idle_minutes, reuse):
-    from . import runpod
+    from pie_evals.pods import runpod
 
     m: Matrix = obj["matrix"]
     rp = m.runpod
@@ -321,7 +320,7 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
 @main.command("runpod-gpus")
 def runpod_gpus():
     """List RunPod GPU type ids (what platforms.yaml runpod_gpu_type must use) with price/stock."""
-    from . import runpod
+    from pie_evals.pods import runpod
 
     for g in sorted(runpod.gpu_types(), key=lambda g: str(g.get("id"))):
         click.echo(f"{g.get('id', ''):55s} {g.get('memoryInGb') or '':>4} GB  {g.get('displayName', '')}")
@@ -331,7 +330,7 @@ def runpod_gpus():
 @click.pass_obj
 def runpod_stock(obj):
     """Secure-cloud stock per (platform GPU × volume data center) right now."""
-    from . import runpod
+    from pie_evals.pods import runpod
 
     m: Matrix = obj["matrix"]
     dcs = list((m.runpod.get("volumes") or {}).keys()) or [d["id"] for d in runpod.data_centers() if d.get("storageSupport")]
@@ -348,7 +347,7 @@ def runpod_stock(obj):
 @click.argument("size_gb", type=int, required=False)
 def runpod_volume(action, data_center, size_gb):
     """List network volumes, or create one: runpod-volume create EUR-IS-1 200 (then add it to matrix/runpod.yaml)."""
-    from . import runpod
+    from pie_evals.pods import runpod
 
     if action == "list":
         for v in runpod._req("GET", "/networkvolumes"):
@@ -362,7 +361,7 @@ def runpod_volume(action, data_center, size_gb):
 @click.pass_obj
 def validate_platforms(obj):
     """Check every runpod_gpu_type in platforms.yaml against the live GPU type list. Exit 1 on unknown ids."""
-    from . import runpod
+    from pie_evals.pods import runpod
 
     problems = runpod.validate_platforms(obj["matrix"].platforms)
     for p in problems:
@@ -374,7 +373,7 @@ def validate_platforms(obj):
 @main.command("terminate-pod")
 @click.argument("pod_id")
 def terminate_pod(pod_id):
-    from . import runpod
+    from pie_evals.pods import runpod
 
     runpod.terminate_pod(pod_id)
     click.echo(f"terminated {pod_id}")
@@ -386,7 +385,7 @@ def terminate_pod(pod_id):
 @click.option("--repo", default=None, help="owner/name whose runners say which pods are busy (needs GH_TOKEN); default: $GITHUB_REPOSITORY")
 @click.option("--dry-run", is_flag=True)
 def reap_pods(max_age_hours, hard_max_age_hours, repo, dry_run):
-    from . import runpod
+    from pie_evals.pods import runpod
 
     keep: set[str] = set()
     try:
