@@ -70,6 +70,7 @@ suites:
     enforce_budget: false
     include:
       - engine: pie
+        baseline: false   # an arm is another engine's copy of the weights; pie has its own
         program: text-completion-bench
         artifact_kind: full
         tp: 1

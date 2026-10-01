@@ -52,6 +52,7 @@ def test_targeted_is_small_and_baselines_run_on_their_copies(matrix):
     assert all(c.engine.value == "pie" or c.workload.id != "control-aa" for c in cells)
     assert {c.engine.value for c in cells if c.artifact.baseline_of} >= {"mlxlm", "llamacpp", "ollama", "splash"}
     assert all(c.artifact.baseline_of for c in cells if c.engine.value in ("ollama", "splash"))
+    assert not any(c.artifact.baseline_of for c in cells if c.engine.value == "pie")  # pie never runs another engine's copy
     # on the site's benchmarks pie runs its own checkpoints only, and every other engine only its arms
     site = [c for c in cells if c.workload.id.startswith(("ob-", "ctx-")) or c.workload.id == "c4"]
     assert all((c.artifact.baseline_of is None) == (c.engine.value == "pie") for c in site)
