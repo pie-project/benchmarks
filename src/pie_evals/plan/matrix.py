@@ -207,7 +207,7 @@ class Matrix:
     def budget_report(self, tier: Tier, cells: list[Cell] | None = None) -> dict[str, dict[str, float]]:
         """platform -> {minutes, shards}: estimated GPU-minutes and the number of
         ~job_budget_minutes jobs they shard into (process groups kept whole)."""
-        from .jobs import shard_groups
+        from pie_evals.plan.jobs import shard_groups
 
         out: dict[str, dict[str, float]] = {}
         by_plat: dict[str, list[Cell]] = {}

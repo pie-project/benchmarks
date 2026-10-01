@@ -1,6 +1,6 @@
 import time
 
-from pie_evals.orchestrate import runpod
+from pie_evals.pods import runpod
 
 
 def _runner(pod: str, labels: list[str], busy: bool, status: str = "online") -> dict:

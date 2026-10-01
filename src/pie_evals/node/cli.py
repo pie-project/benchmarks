@@ -102,7 +102,7 @@ def build_cmd(pie_commit, features, pie_root, mirror, target_dir, force):
 def prepare_cmd(tier, matrix_dir, platforms, engines_f, programs_f, pie_root, pie_commit, hf_cache):
     """Fetch every checkpoint and Ollama tag a tier needs (downloads + miniatures) so bench pods find them on the volume.
     Failures are reported per artifact and never abort the rest; exit 1 if any failed."""
-    from pie_evals.orchestrate.matrix import Matrix
+    from pie_evals.plan.matrix import Matrix
     from pie_evals.schema import Tier
 
     from .snapshots import ensure_snapshot, hf_cache_dir
@@ -198,7 +198,7 @@ def preflight_cmd():
 @click.option("--hf-cache", type=click.Path(), default=None)
 def miniature_cmd(artifact, matrix_dir, pie_root, hf_cache):
     """Build (or find) a miniature checkpoint in the HF cache."""
-    from pie_evals.orchestrate.matrix import Matrix
+    from pie_evals.plan.matrix import Matrix
 
     from .miniature import ensure_miniature
 

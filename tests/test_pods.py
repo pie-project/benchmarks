@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from pie_evals.node.cli import mask_gpus
-from pie_evals.orchestrate.jobs import make_jobs, plan_pods
-from pie_evals.orchestrate.matrix import Matrix
+from pie_evals.plan.jobs import make_jobs, plan_pods
+from pie_evals.plan.matrix import Matrix
 from pie_evals.schema import Tier
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,7 +51,7 @@ def test_run_label_isolates_a_runs_pods(tmp_path):
     import sys
 
     out = tmp_path / "jobs"
-    subprocess.run([sys.executable, "-m", "pie_evals.orchestrate.cli", "jobs", "--tier", "nightly", "--pie-commit", "c" * 40, "--platform", "l40s-x1", "--engine", "pie", "--artifact", "qwen3.5-0.8b-bf16", "--run-label", "run-42", "--out", str(out)], check=True, cwd=ROOT, capture_output=True)
+    subprocess.run([sys.executable, "-m", "pie_evals.cli", "jobs", "--tier", "nightly", "--pie-commit", "c" * 40, "--platform", "l40s-x1", "--engine", "pie", "--artifact", "qwen3.5-0.8b-bf16", "--run-label", "run-42", "--out", str(out)], check=True, cwd=ROOT, capture_output=True)
     shards = json.loads((out / "gh-matrix.json").read_text())["include"]
     pods = json.loads((out / "pods.json").read_text())["include"]
     assert shards and all("run-42" in s["labels"] for s in shards)

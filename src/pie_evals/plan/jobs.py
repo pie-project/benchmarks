@@ -10,12 +10,11 @@ import subprocess
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
+from pie_evals.results.store import Store
 from pie_evals.schema import Cell, JobSpec, RepetitionPolicy, Tier
 
-from .store import Store
-
 if TYPE_CHECKING:
-    from .matrix import Matrix
+    from pie_evals.plan.matrix import Matrix
 
 
 def process_key(c: Cell) -> tuple:
