@@ -18,6 +18,24 @@
   "family": "muse_glimmer"
  },
  {
+  "cell_id": "65010bcfff9b91bb",
+  "cell_key": "pie|m5-max-48g|meta-models/Muse-Glimmer-30B@affine_u4_g64/hf_safetensors|ctx-4k-256|text-completion-bench|tp1",
+  "engine": "pie",
+  "platform": "m5-max-48g",
+  "artifact": "muse-glimmer-30b-mlx4",
+  "workload": "ctx-4k-256",
+  "program": "text-completion-bench",
+  "mode": "tp1",
+  "metric": "decode_tok_s",
+  "value": 29.172671053465457,
+  "delta_rel": -0.08199005574749925,
+  "threshold_rel": 0.07165126683730877,
+  "kind": "regression",
+  "pie_commit": "2195fa8aa93af86cd2d9297d2b8af1cebef14426",
+  "engine_version": "2195fa8a",
+  "family": "muse_glimmer"
+ },
+ {
   "cell_id": "930e062243f81e38",
   "cell_key": "pie|m5-max-128g|Qwen/Qwen3.5-0.8B@bf16/hf_safetensors|ss-128-64|text-completion-bench|tp1",
   "engine": "pie",

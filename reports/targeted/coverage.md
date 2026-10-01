@@ -2,16 +2,44 @@
 
 | status | cells |
 |---|---|
-| pass | 84 |
-| fail | 2 |
+| pass | 92 |
+| fail | 30 |
 | declared_unsupported | 381 |
-| not_run | 1083 |
+| not_run | 1047 |
 | noisy | 10 |
 
 ## Gaps (expected supported, but not passing)
 
 | engine | platform | artifact | workload | program | mode | status | error | message |
 |---|---|---|---|---|---|---|---|---|
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-story-200 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-512-200 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-short-100 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-advanced-500 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ctx-4k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ctx-8k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | c4 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-story-200 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-512-200 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-short-100 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-advanced-500 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ctx-4k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ctx-8k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | c4 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | llama-3.2-3b-ollama | ob-story-200 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | llama-3.2-3b-ollama | ob-512-200 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | llama-3.2-3b-ollama | ob-short-100 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | llama-3.2-3b-ollama | ob-advanced-500 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | llama-3.2-3b-ollama | ctx-4k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | llama-3.2-3b-ollama | ctx-8k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | llama-3.2-3b-ollama | c4 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-story-200 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-512-200 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-short-100 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-advanced-500 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-4k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-8k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
+| ollama | m5-max-128g | muse-glimmer-30b-ollama | c4 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
 | llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | all 8 requests failed: drain prefill chunk @32: drop_tok_c take: channel is poisoned: pipeline: forward failed: direct l |
 | ollama | m5-max-48g | gemma-4-26b-a4b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
@@ -733,20 +761,6 @@
 | mlxlm | m5-max-128g | gemma-4-26b-a4b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | gemma-4-26b-a4b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | gemma-4-26b-a4b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | c4 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | c4 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | gemma-4-31b-mlx4 | control-aa | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | gemma-4-31b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | gemma-4-31b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
@@ -827,33 +841,11 @@
 | mlxlm | m5-max-128g | llama-3.2-3b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | llama-3.2-3b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | llama-3.2-3b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | llama-3.2-3b-ollama | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | llama-3.2-3b-ollama | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | llama-3.2-3b-ollama | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | llama-3.2-3b-ollama | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | llama-3.2-3b-ollama | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | llama-3.2-3b-ollama | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | llama-3.2-3b-ollama | c4 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | muse-glimmer-30b-mlx4 | control-aa | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | muse-glimmer-30b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | muse-glimmer-30b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | muse-glimmer-30b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | muse-glimmer-30b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | muse-glimmer-30b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | muse-glimmer-30b-mlx4 | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | muse-glimmer-30b-mlx4 | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | muse-glimmer-30b-mlx4 | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | muse-glimmer-30b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | muse-glimmer-30b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | muse-glimmer-30b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | muse-glimmer-30b-mlx4 | c4 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-128g | muse-glimmer-30b-ollama | c4 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.5-0.8b-bf16 | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.5-0.8b-bf16 | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.5-0.8b-bf16 | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
@@ -1135,7 +1127,7 @@
 | gemma4 | 0/26 | 0/26 | 0/26 | 0/26 | 0/26 |
 | gemma4_moe | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | gpt_oss | 0/26 | 0/26 | 0/26 | 0/39 | 0/26 |
-| muse_glimmer | 0/13 | 0/13 | 0/13 | 0/13 | 8/13 |
+| muse_glimmer | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | qwen3_5 | 0/39 | 0/39 | 0/39 | 6/39 | 6/39 |
 | qwen3_6 | 0/24 | 0/24 | 0/24 | 6/37 | 0/24 |
 | qwen3_6_moe | 0/13 | 0/13 | 0/13 | 0/13 | 0/13 |
