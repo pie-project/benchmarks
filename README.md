@@ -34,7 +34,7 @@ Node prerequisites: the pie checkout (built at the pinned commit by the node), t
 The `targeted` tier measures pie against [Ollama](https://github.com/ollama/ollama), [llama.cpp](https://github.com/ggml-org/llama.cpp), [mlx-lm](https://github.com/ml-explore/mlx-lm) and [Splash](https://github.com/incoai/splash) on self-hosted Apple Silicon Macs. Every pie commit on main (or a manual `pie eval` run) is measured on the Macs listed in `config.json`. pie runs on its own checkpoint; each other engine runs on its own copy of the same model: Ollama on the tag it ships, llama.cpp on a Q4_K_M GGUF, mlx-lm on the MLX checkpoint pie reads, Splash on the two Qwen models it ships for. An engine is measured once per version, not on every pie commit. All engines get the same prompts through pie's `scripts/bench/common.py` client, and the site shows prefill and decode side by side, with a select for the engine to compare against. The `quality` workflow scores the models on gsm8k, ifeval, mmlu, arc and math500.
 
 ```sh
-.venv/bin/pie-evals jobs --tier targeted --pie-commit <sha> --platform m5-max-48g --out jobs
+.venv/bin/pie-evals jobs --tier targeted --pie-commit <sha> --platform m5-max-128g --out jobs
 .venv/bin/pie-evals-node run --job jobs/<job>.json --out out/<job> --download
 .venv/bin/pie-evals collect --tier targeted out/<job> && .venv/bin/pie-evals dashboard --out site
 ```
@@ -46,7 +46,7 @@ A Mac runner is registered with `infra/mac/setup-runner.sh` and removed with `in
 Push your change to a branch and start the eval from that branch:
 
 ```sh
-gh workflow run pie-eval.yml --ref my-branch -f macs=m5-max-48g -f benchmarks=ob-short-100 -f rerun=true
+gh workflow run pie-eval.yml --ref my-branch -f macs=m5-max-128g -f benchmarks=ob-short-100 -f rerun=true
 ```
 
 The run uses the branch's code and saves nothing to `store/`, so the site stays untouched.
