@@ -20,7 +20,22 @@ ARM_ENGINE = {"ollama": "ollama", "gguf": "llamacpp", "mlx": "mlxlm", "splash": 
 #: the order the "compare against" choices are listed in
 BASELINE_ORDER = ["Ollama", "Ollama MLX", "llama.cpp", "mlx-lm", "Splash"]
 HERE = Path(__file__).resolve().parent
-OLLAMA_ICON = "data:image/png;base64," + base64.b64encode((HERE / "ollama.png").read_bytes()).decode()
+#: the maker's logo shown beside a model's name, by the start of its family
+FAMILY_ICON = {"qwen": "qwen.png", "gemma": "gemma.svg", "llama": "meta.svg", "muse": "meta.svg"}
+MIME = {".png": "image/png", ".svg": "image/svg+xml"}
+
+
+def icon_for(family: str) -> str | None:
+    return next((name for prefix, name in FAMILY_ICON.items() if family.startswith(prefix)), None)
+
+
+def icons() -> dict[str, str]:
+    """Each logo file as a data URI, so the page stays one file."""
+    out = {}
+    for name in sorted(set(FAMILY_ICON.values())):
+        path = HERE / "icons" / name
+        out[name] = f"data:{MIME[path.suffix]};base64," + base64.b64encode(path.read_bytes()).decode()
+    return out
 
 PAGE = (HERE / "page.html").read_text()
 
@@ -134,7 +149,7 @@ def mac_models(matrix: Matrix) -> list[dict]:
         pie = matrix.artifacts.get(a.baseline_of or "")
         if not a.baseline_label or pie is None or not macs:
             continue
-        out.append({"id": a.id, "name": a.ollama_tag or pie.display_name or pie.id, "pie": pie.id, "label": a.baseline_label, "family": a.family,
+        out.append({"id": a.id, "name": a.ollama_tag or pie.display_name or pie.id, "pie": pie.id, "label": a.baseline_label, "family": a.family, "icon": icon_for(a.family),
                     "engine": ARM_ENGINE.get(a.source_format.value, a.source_format.value),
                     "scheme": str(a.scheme), "format": str(a.source_format), "gib": a.expected_gib, "context": pie.max_context,
                     "quant": quant_label(str(a.scheme)), "first_token_broken": broken.get(pie.id),
@@ -272,7 +287,7 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
         "baseline_labels": sorted(set(label_of.values()), key=lambda label: (BASELINE_ORDER.index(label) if label in BASELINE_ORDER else len(BASELINE_ORDER), label)),
         "default_baseline": DEFAULT_BASELINE,
         "quality": quality(store),
-        "ollama_icon": OLLAMA_ICON,
+        "icons": icons(),
         "commits": commits, "history": all_commits, "results": results, "models": models,
         "failed": [{"sha": sha, "mac": mac, "model": model} for sha, mac, model in failed],
         "running": in_flight(repo) if lookup_commits else [],
