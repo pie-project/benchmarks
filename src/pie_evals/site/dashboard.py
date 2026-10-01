@@ -208,11 +208,13 @@ def quality(store: Store) -> dict[str, dict]:
 
 
 def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, pie_repo: str,
-          lookup_commits: bool = True) -> dict:
+          lookup_commits: bool = True, machines: set[str] | None = None) -> dict:
+    """``machines`` limits the site to those Macs: the others' results, runners and names are left out."""
+    shown_mac = lambda pid: machines is None or pid in machines  # noqa: E731
     tests = benchmarks(matrix)
     concurrency = {b["id"]: b["concurrency"] for b in tests}
     t = store.table(Tier.TARGETED)
-    every = [r for r in t.to_pylist() if r["pie_commit"]] if t.num_rows else []
+    every = [r for r in t.to_pylist() if r["pie_commit"] and shown_mac(r["platform"])] if t.num_rows else []
     latest = {}
     for r in every:
         latest[(r["run_id"], r["cell_id"] or r["cell_key"])] = r
@@ -291,17 +293,17 @@ def build(store: Store, matrix: Matrix, live: list[dict] | None, *, repo: str, p
         "commits": commits, "history": all_commits, "results": results, "models": models,
         "failed": [{"sha": sha, "mac": mac, "model": model} for sha, mac, model in failed],
         "running": in_flight(repo) if lookup_commits else [],
-        "pool": _pool(live, matrix, last),
-        "platforms": sorted(p.id for p in matrix.platforms.values() if p.os == "macos"),
-        "specs": {p.id: {"accelerator": p.accelerator, "os": p.os, "memory_gib": int(p.memory_gib)} for p in matrix.platforms.values() if p.os == "macos"},
+        "pool": [m for m in _pool(live, matrix, last) if shown_mac(m["id"])],
+        "platforms": sorted(p.id for p in matrix.platforms.values() if p.os == "macos" and shown_mac(p.id)),
+        "specs": {p.id: {"accelerator": p.accelerator, "os": p.os, "memory_gib": int(p.memory_gib)} for p in matrix.platforms.values() if p.os == "macos" and shown_mac(p.id)},
         "last": last,
         "people": people(repo, {c["sha"]: c["author"] for c in [*known.values(), *commits]}) if lookup_commits else [],
     }
 
 
 def render(store: Store, matrix: Matrix, out: Path, live: list[dict] | None = None, *, repo: str = "pie-project/pie-evals",
-           pie_repo: str = "pie-project/pie", lookup_commits: bool = True) -> int:
-    data = build(store, matrix, live, repo=repo, pie_repo=pie_repo, lookup_commits=lookup_commits)
+           pie_repo: str = "pie-project/pie", lookup_commits: bool = True, machines: set[str] | None = None) -> int:
+    data = build(store, matrix, live, repo=repo, pie_repo=pie_repo, lookup_commits=lookup_commits, machines=machines)
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.html").write_text(PAGE.replace("__DATA__", json.dumps(data)))
     return len(data["commits"])
