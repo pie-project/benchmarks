@@ -103,6 +103,8 @@ unsupported:
     reason: "llama.cpp layer-split is not tensor parallel; compared at tp1 only"
   - when: {engine: mlxlm, tp: ">1"}
     reason: "mlx-lm is single device"
+  - when: {engine: mlxlm, family: muse_glimmer}
+    reason: "mlx-lm 0.31.3 ships no muse_glimmer model, so it cannot load Muse Glimmer"
   - when: {program_category: diffusion, engine: vllm}
     reason: "not an LLM serving workload"
   - when: {program_category: diffusion, engine: sglang}

@@ -43,7 +43,7 @@ engines:
     formats: [ollama]
     tiers: [targeted]
     recipe: competitive
-    pin: "0.34.4"
+    pin: "0.35.0"
     release_source: github:ollama/ollama
   - id: splash
     os: [macos]
