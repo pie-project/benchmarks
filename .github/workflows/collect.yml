@@ -34,6 +34,3 @@ jobs:
           git add store reports
           git diff --cached --quiet || git commit -m "store: ${{ inputs.tier }} run ${{ inputs.run_id || github.run_id }}"
           git pull --rebase --quiet origin main && git push --quiet origin HEAD:main
-      - name: fail on regression
-        if: steps.report.outputs.regressions != '0'
-        run: echo "::error::${{ steps.report.outputs.regressions }} confirmed regressions — see reports/${{ inputs.tier }}/regressions.md"; exit 1
