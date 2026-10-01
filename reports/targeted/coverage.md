@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 156 |
-| fail | 39 |
+| pass | 158 |
+| fail | 45 |
 | declared_unsupported | 391 |
-| not_run | 1701 |
-| noisy | 43 |
+| not_run | 1696 |
+| noisy | 40 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -50,7 +50,13 @@
 | llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | all 8 requests failed: drain prefill chunk @32: drop_tok_c take: channel is poisoned: pipeline: forward failed: direct l |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
+| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ob-story-200 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
+| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ob-512-200 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
+| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ob-short-100 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
+| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
+| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
+| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | c4 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
 | pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | pie | m5-max-128g | muse-glimmer-30b-mlx4 | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-48g | gemma-4-26b-a4b-llamacpp | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
@@ -70,15 +76,8 @@
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | mlxlm | m5-max-48g | qwen3.6-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-48g | qwen3.6-35b-a3b-llamacpp | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
-| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ob-story-200 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ob-512-200 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ob-short-100 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
-| pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | c4 | text-completion-bench | tp1 | noisy | harness_invalid | control A/A failed on this process; numbers not read |
 | ollama | m5-max-48g | qwen3.6-35b-a3b-ollama | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-48g | qwen3.6-35b-a3b-ollama | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-48g | qwen3.6-35b-a3b-ollama | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-48g | qwen3.6-35b-a3b-splash | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-48g | qwen3.6-35b-a3b-splash | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-48g | qwen3.6-35b-a3b-splash | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
@@ -87,7 +86,11 @@
 | splash | m5-max-48g | qwen3.6-35b-a3b-splash | c4 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-48g | qwen3.8-27b-llamacpp | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
 | pie | m5-max-48g | qwen3.8-27b-mlx4 | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
+| ollama | m5-max-48g | qwen3.8-27b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
+| ollama | m5-max-48g | qwen3.8-27b-ollama | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-48g | qwen3.8-27b-ollama | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
+| ollama | m5-max-48g | qwen3.8-27b-ollama | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
+| ollama | m5-max-48g | qwen3.8-27b-ollama | c4 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-48g | qwen3.8-27b-splash | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-48g | qwen3.8-27b-splash | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-48g | qwen3.8-27b-splash | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
@@ -1789,12 +1792,7 @@
 | mlxlm | m5-max-48g | qwen3.8-27b-mlxlm | c32 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.8-27b-mlxlm | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.8-27b-mlxlm | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-48g | qwen3.8-27b-ollama | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-48g | qwen3.8-27b-ollama | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-48g | qwen3.8-27b-ollama | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-48g | qwen3.8-27b-ollama | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m5-max-48g | qwen3.8-27b-ollama | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| ollama | m5-max-48g | qwen3.8-27b-ollama | c4 | text-completion-bench | tp1 | not_run |  |  |
 
 ## Declared unsupported
 
