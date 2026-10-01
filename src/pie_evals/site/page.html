@@ -244,7 +244,7 @@ setInterval(async () => {
 const modelOf = id => DATA.models.find(m => m.id === id) || DATA.models.find(m => m.pie === id) || { name: id, quant: "" };
 const modelName = id => modelOf(id).name;
 const pieOf = id => modelOf(id).pie || id;
-const modelTag = m => (m.engine === "ollama" ? `<img class="ol" src="${DATA.ollama_icon}" alt="">` : "") + esc(m.name);
+const modelTag = m => (DATA.icons?.[m.icon] ? `<img class="ol" src="${DATA.icons[m.icon]}" alt="">` : "") + esc(m.name);
 const armTag = m => `${modelTag(m)} <span class="muted">${esc(m.label || "")}</span>`;
 const macName = id => (DATA.pool.find(m => m.id === id) || DATA.results[id] || { name: id }).name;
 const PER_PAGE = 20;
