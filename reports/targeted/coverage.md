@@ -3,9 +3,9 @@
 | status | cells |
 |---|---|
 | pass | 158 |
-| fail | 45 |
-| declared_unsupported | 391 |
-| not_run | 1696 |
+| fail | 38 |
+| declared_unsupported | 451 |
+| not_run | 1643 |
 | noisy | 40 |
 
 ## Gaps (expected supported, but not passing)
@@ -40,13 +40,6 @@
 | ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-4k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
 | ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-8k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
 | ollama | m5-max-128g | muse-glimmer-30b-ollama | c4 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | ob-story-200 | text-completion-bench | tp1 | fail | hang | no CPU work from the bench or its engine for 180s; stopped |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | ob-512-200 | text-completion-bench | tp1 | fail | hang | no CPU work from the bench or its engine for 180s; stopped |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | ob-short-100 | text-completion-bench | tp1 | fail | hang | no CPU work from the bench or its engine for 180s; stopped |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | fail | hang | no CPU work from the bench or its engine for 180s; stopped |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | ctx-4k-256 | text-completion-bench | tp1 | fail | hang | no CPU work from the bench or its engine for 180s; stopped |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | fail | hang | no CPU work from the bench or its engine for 180s; stopped |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | c4 | text-completion-bench | tp1 | fail | hang | no CPU work from the bench or its engine for 180s; stopped |
 | llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | all 8 requests failed: drain prefill chunk @32: drop_tok_c take: channel is poisoned: pipeline: forward failed: direct l |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
@@ -276,18 +269,6 @@
 | pie | m1-max-32g | muse-glimmer-30b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | muse-glimmer-30b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | muse-glimmer-30b-mlx4 | c4 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | c8 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | c32 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m1-max-32g | muse-glimmer-30b-mlxlm | c4 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m1-max-32g | muse-glimmer-30b-ollama | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m1-max-32g | muse-glimmer-30b-ollama | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m1-max-32g | muse-glimmer-30b-ollama | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
@@ -655,18 +636,6 @@
 | pie | m2-max | muse-glimmer-30b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | muse-glimmer-30b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | muse-glimmer-30b-mlx4 | c4 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | c8 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | c32 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m2-max | muse-glimmer-30b-mlxlm | c4 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m2-max | muse-glimmer-30b-ollama | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m2-max | muse-glimmer-30b-ollama | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m2-max | muse-glimmer-30b-ollama | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
@@ -1034,18 +1003,6 @@
 | pie | m4-pro-48g | muse-glimmer-30b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | muse-glimmer-30b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | muse-glimmer-30b-mlx4 | c4 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | c8 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | c32 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m4-pro-48g | muse-glimmer-30b-mlxlm | c4 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m4-pro-48g | muse-glimmer-30b-ollama | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m4-pro-48g | muse-glimmer-30b-ollama | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
 | ollama | m4-pro-48g | muse-glimmer-30b-ollama | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
@@ -1407,18 +1364,6 @@
 | pie | m5-max-128g | muse-glimmer-30b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | muse-glimmer-30b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | muse-glimmer-30b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | c8 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | c32 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-128g | muse-glimmer-30b-mlxlm | c4 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.5-0.8b-bf16 | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.5-0.8b-bf16 | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.5-0.8b-bf16 | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
@@ -1703,11 +1648,6 @@
 | pie | m5-max-48g | muse-glimmer-30b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | muse-glimmer-30b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | muse-glimmer-30b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | c8 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | c32 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
-| mlxlm | m5-max-48g | muse-glimmer-30b-mlxlm | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.5-0.8b-bf16 | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.5-0.8b-bf16 | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.5-0.8b-bf16 | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
@@ -1801,6 +1741,7 @@
 | pie has no llama family reader | 65 |
 | pie/mini-dit is not an HF repo; needs a checkpoint source | 65 |
 | pie ships no Llama reader | 65 |
+| mlx-lm 0.31.3 ships no muse_glimmer model, so it cannot load Muse Glimmer | 60 |
 | does not fit: 112.4 GiB per device > 48.0 GiB | 36 |
 | does not fit: 76.2 GiB per device > 48.0 GiB | 26 |
 | does not fit: 67.5 GiB per device > 48.0 GiB | 26 |
