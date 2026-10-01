@@ -1,3 +1,4 @@
+import os
 import signal
 import subprocess
 import sys
@@ -5,15 +6,19 @@ import threading
 
 
 def main() -> int:
-    child = subprocess.Popen(sys.argv[1:])
+    # its own process group: a server that starts helpers (Splash, Ollama) is stopped whole
+    child = subprocess.Popen(sys.argv[1:], start_new_session=True)
 
     def stop(*_):
-        if child.poll() is None:
-            child.terminate()
+        for sig, wait in ((signal.SIGTERM, 20), (signal.SIGKILL, 5)):
             try:
-                child.wait(timeout=20)
+                os.killpg(child.pid, sig)
+            except ProcessLookupError:
+                return
+            try:
+                child.wait(timeout=wait)
             except subprocess.TimeoutExpired:
-                child.kill()
+                continue
 
     signal.signal(signal.SIGTERM, lambda *a: (stop(), sys.exit(0)))
     signal.signal(signal.SIGINT, lambda *a: (stop(), sys.exit(0)))

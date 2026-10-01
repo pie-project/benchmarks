@@ -29,7 +29,7 @@ engines:
     formats: [gguf]
     tiers: [nightly, weekly]
     recipe: competitive
-    pin: "b10270"
+    pin: "b11312"
     release_source: github:ggml-org/llama.cpp
   - id: mlxlm
     os: [macos]
@@ -45,3 +45,10 @@ engines:
     recipe: competitive
     pin: "0.34.4"
     release_source: github:ollama/ollama
+  - id: splash
+    os: [macos]
+    formats: [splash]
+    tiers: [targeted]
+    recipe: competitive
+    pin: "1.1.0"
+    release_source: github:incoai/splash

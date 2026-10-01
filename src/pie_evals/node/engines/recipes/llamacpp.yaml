@@ -1,8 +1,6 @@
-# llama.cpp recipes. scripts/bench/llamacpp_bench.py spawns llama-server itself and
-# already forces `--flash-attn on`, `--parallel <concurrency>` and a per-slot
-# `--ctx-size`; everything else reaches the server through `--server-extra`
-# (a single space-separated string). Knob -> flag mapping is in
-# LlamacppEngine.engine_args.
+# llama.cpp recipes. The adapter boots llama-server once per model with
+# `--parallel <slots>` and a per-slot `--ctx-size`; other server flags travel in
+# `server_extra`. Knob -> flag mapping is in LlamacppEngine.server_cmd.
 
 default:
   knobs:
@@ -10,15 +8,22 @@ default:
       value: all
       rationale: >
         Fully offloaded (-ngl all); the comparison is against engines that
-        keep every weight on the accelerator. On Apple Silicon a GGUF larger
-        than the Metal working set needs 0 instead (the script's help).
+        keep every weight on the accelerator.
+    flash_attn:
+      value: "on"
+      rationale: The other engines run their own optimized attention; off would benchmark a handicap.
     server_extra:
       value: []
-      rationale: Extra llama-server flags, joined into --server-extra.
-    startup_grace:
-      value: null
-      flag: none
-      rationale: llamacpp_bench.py has a fixed 120 s health deadline and no flag for it.
+      rationale: Extra llama-server flags.
+    cache_prompt:
+      value: false
+      rationale: A request must not reuse the previous request's KV; the client also shuffles each prompt.
+    flush_cache:
+      value: true
+      rationale: Single stream prefill must not be a prefix cache hit.
+    startup_timeout:
+      value: 600
+      rationale: A 30B GGUF takes minutes to page in on a laptop-class Mac.
 
 competitive:
   extends: default
@@ -27,29 +32,21 @@ competitive:
       value: ["--batch-size", "2048", "--ubatch-size", "512", "--no-mmap", "--cont-batching"]
       rationale: >
         Logical batch 2048 / micro-batch 512 is what llama.cpp's own
-        llama-bench uses for prompt throughput; the server default (2048/512)
-        is the same today but pinned so a llama.cpp default change is not read
-        as a regression. --no-mmap makes the load resident the way the other
-        engines' are; continuous batching is the default but named.
-    flash_attn:
-      value: "on"
-      flag: none
-      rationale: The script passes --flash-attn on unconditionally; recorded, not emitted.
-    parallel:
-      value: "$concurrency"
-      flag: none
-      rationale: The script sets --parallel from --concurrency itself; recorded, not emitted.
+        llama-bench uses for prompt throughput; pinned so a llama.cpp default
+        change is not read as a regression. --no-mmap makes the load resident
+        the way the other engines' are; continuous batching is the default but named.
   workload_kind:
     prefix_shared:
       knobs:
+        cache_prompt:
+          value: true
+          rationale: The cached prompt shape measures prefix reuse, so llama.cpp keeps its cache.
+        flush_cache:
+          value: false
+          rationale: The shared prefix must stay as written for the cache to find it.
         server_extra:
           value: ["--batch-size", "2048", "--ubatch-size", "512", "--no-mmap", "--cont-batching", "--cache-reuse", "256"]
-          rationale: >
-            --cache-reuse lets a slot reuse a KV prefix of >=256 tokens; but
-            llamacpp_bench.py sends cache_prompt=false on every request, so
-            the server never consults it. TODO(pie/benches): a
-            --cache-prompt flag is needed for the prefix shape to reach the
-            cache. Emitted anyway - harmless and ready for when it does.
+          rationale: --cache-reuse lets a slot reuse a KV prefix of >=256 tokens.
   backend:
     metal:
       knobs:

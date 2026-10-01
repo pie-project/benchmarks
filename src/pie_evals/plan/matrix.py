@@ -251,6 +251,7 @@ def _cell_field(cell: Cell, key: str) -> Any:
         "scheme": str(cell.artifact.scheme),
         "source_format": str(cell.artifact.source_format),
         "artifact_kind": str(cell.artifact.kind),
+        "baseline": cell.artifact.baseline_of is not None,
         "program": cell.program.id,
         "program_category": cell.program.category,
         "workload": cell.workload.id,
