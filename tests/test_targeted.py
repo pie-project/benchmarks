@@ -125,6 +125,10 @@ def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
         "gemma4": "gemma.svg", "llama3.2": "meta.svg", "muse-glimmer": "meta.svg", "qwen3.6": "qwen.png", "qwen3.8": "qwen.png"}
     assert all(data["icons"][m["icon"]].startswith("data:image/") for m in data["models"])  # every model has its maker's logo
     assert not any(m["id"].endswith("ollama-bf16") for m in data["models"])
+    # a Mac left out of the allowed list is not on the site at all: no results, no runner, no name to pick
+    only = dashboard.build(st, matrix, live, repo="o/evals", pie_repo="o/pie", lookup_commits=False, machines={"m1-max-32g"})
+    assert only["results"] == {} and only["baselines"] == {} and only["commits"] == []
+    assert [m["id"] for m in only["pool"]] == ["m1-max-32g"] and only["platforms"] == ["m1-max-32g"] and list(only["specs"]) == ["m1-max-32g"]
     assert dashboard.render(st, matrix, tmp_path / "site", live, repo="o/evals", lookup_commits=False) == 2
     assert "openRuns" in (tmp_path / "site" / "index.html").read_text()
 
