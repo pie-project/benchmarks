@@ -2,10 +2,10 @@
 
 | status | cells |
 |---|---|
-| pass | 76 |
+| pass | 84 |
 | fail | 2 |
 | declared_unsupported | 381 |
-| not_run | 1091 |
+| not_run | 1083 |
 | noisy | 10 |
 
 ## Gaps (expected supported, but not passing)
@@ -723,19 +723,11 @@
 | mlxlm | m5-max-128g | deepseek-v4-flash-mlx2 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | deepseek-v4-flash-mlx2 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | deepseek-v4-flash-mlx2 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | control-aa | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | ob-story-200 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | c4 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | gemma-4-26b-a4b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | gemma-4-26b-a4b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | gemma-4-26b-a4b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
@@ -1141,7 +1133,7 @@
 |---|---|---|---|---|---|
 | deepseek_v4 | · | · | · | 0/13 | · |
 | gemma4 | 0/26 | 0/26 | 0/26 | 0/26 | 0/26 |
-| gemma4_moe | 0/13 | 0/13 | 0/13 | 0/13 | 8/13 |
+| gemma4_moe | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | gpt_oss | 0/26 | 0/26 | 0/26 | 0/39 | 0/26 |
 | muse_glimmer | 0/13 | 0/13 | 0/13 | 0/13 | 8/13 |
 | qwen3_5 | 0/39 | 0/39 | 0/39 | 6/39 | 6/39 |
