@@ -1,5 +1,23 @@
 [
  {
+  "cell_id": "176f497450dd9863",
+  "cell_key": "pie|m5-max-128g|mlx-community/gemma-4-26b-a4b-it-4bit@affine_u4_g64/mlx|control-aa|text-completion-bench|tp1",
+  "engine": "pie",
+  "platform": "m5-max-128g",
+  "artifact": "gemma-4-26b-a4b-mlx4",
+  "workload": "control-aa",
+  "program": "text-completion-bench",
+  "mode": "tp1",
+  "metric": "decode_tok_s",
+  "value": 147.55352829173844,
+  "delta_rel": -0.03595813898439407,
+  "threshold_rel": 0.02,
+  "kind": "regression",
+  "pie_commit": "61b5167dd75b15597db42db7d03fa700b5f88921",
+  "engine_version": "61b5167dd",
+  "family": "gemma4_moe"
+ },
+ {
   "cell_id": "930e062243f81e38",
   "cell_key": "pie|m5-max-128g|Qwen/Qwen3.5-0.8B@bf16/hf_safetensors|ss-128-64|text-completion-bench|tp1",
   "engine": "pie",

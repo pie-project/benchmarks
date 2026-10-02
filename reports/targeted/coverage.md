@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 258 |
+| pass | 259 |
 | fail | 10 |
 | declared_unsupported | 441 |
 | not_run | 1546 |
-| noisy | 75 |
+| noisy | 74 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -50,7 +50,6 @@
 | splash | m5-max-128g | qwen3.6-35b-a3b-splash | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.6-35b-a3b-splash | c4 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-128g | qwen3.8-27b-llamacpp | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
-| pie | m5-max-128g | qwen3.8-27b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | qwen3.8-27b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | qwen3.8-27b-ollama | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | qwen3.8-27b-ollama | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
@@ -1674,5 +1673,5 @@
 | gpt_oss | 0/26 | 0/26 | 0/26 | 0/39 | 0/26 |
 | muse_glimmer | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | qwen3_5 | 0/13 | 0/13 | 0/13 | 6/13 | 6/13 |
-| qwen3_6 | 0/37 | 0/37 | 0/37 | 13/50 | 5/37 |
+| qwen3_6 | 0/37 | 0/37 | 0/37 | 14/50 | 5/37 |
 | qwen3_6_moe | 0/13 | 0/13 | 0/13 | 8/13 | 0/13 |
