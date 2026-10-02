@@ -120,7 +120,8 @@ def _jobs_cli(tmp_path, monkeypatch, *platforms):
 
 
 def test_unknown_runners_schedule_only_the_macs_asked_for(tmp_path, monkeypatch):
-    assert _jobs_cli(tmp_path, monkeypatch, "m5-max-48g") == {"m5-max-48g"}
+    assert _jobs_cli(tmp_path, monkeypatch, "m5-max-128g") == {"m5-max-128g"}
+    assert _jobs_cli(tmp_path, monkeypatch, "m5-max-48g") == set()  # not on the list in config.json, so never scheduled
 
 
 def test_unknown_runners_and_nothing_asked_schedule_no_resident_mac(matrix, tmp_path, monkeypatch):
