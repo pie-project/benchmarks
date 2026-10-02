@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 246 |
-| fail | 17 |
+| pass | 253 |
+| fail | 14 |
 | declared_unsupported | 451 |
 | not_run | 1538 |
-| noisy | 78 |
+| noisy | 74 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -15,10 +15,7 @@
 | ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-8k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
 | pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: first frame submit: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by this p |
 | pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | fail | crash | all 3 requests failed: prefill chunk submit @4096: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted b |
-| splash | m5-max-128g | qwen3.8-27b-splash | ob-advanced-500 | text-completion-bench | tp1 | fail | load_fail | splash server exited during startup:                         start_new_session, process_group) \|                        |
-| splash | m5-max-128g | qwen3.8-27b-splash | ctx-4k-256 | text-completion-bench | tp1 | fail | load_fail | splash server exited during startup:                         start_new_session, process_group) \|                        |
 | splash | m5-max-128g | qwen3.8-27b-splash | ctx-8k-256 | text-completion-bench | tp1 | fail | load_fail | splash server exited during startup:                         start_new_session, process_group) \|                        |
-| splash | m5-max-128g | qwen3.8-27b-splash | c4 | text-completion-bench | tp1 | fail | load_fail | splash server exited during startup:                         start_new_session, process_group) \|                        |
 | llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | all 8 requests failed: drain prefill chunk @32: drop_tok_c take: channel is poisoned: pipeline: forward failed: direct l |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
@@ -29,15 +26,14 @@
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | c4 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
-| pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | c4 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | gemma-4-26b-a4b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
+| ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | gemma-4-26b-a4b-ollama | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | gemma-4-26b-a4b-ollama-mlx | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-128g | llama-3.2-3b-llamacpp | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | llama-3.2-3b-mlxlm | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
@@ -45,30 +41,27 @@
 | ollama | m5-max-128g | llama-3.2-3b-ollama | c4 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-128g | muse-glimmer-30b-llamacpp | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
 | pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | qwen3.6-35b-a3b-mlxlm | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | qwen3.6-35b-a3b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
+| ollama | m5-max-128g | qwen3.6-35b-a3b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | qwen3.6-35b-a3b-ollama | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-128g | qwen3.6-35b-a3b-ollama | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-128g | qwen3.6-35b-a3b-ollama | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-128g | qwen3.6-35b-a3b-ollama | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.6-35b-a3b-splash | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.6-35b-a3b-splash | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
+| splash | m5-max-128g | qwen3.6-35b-a3b-splash | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.6-35b-a3b-splash | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.6-35b-a3b-splash | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.6-35b-a3b-splash | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.6-35b-a3b-splash | c4 | text-completion-bench | tp1 | noisy |  |  |
-| mlxlm | m5-max-128g | qwen3.8-27b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
+| llamacpp | m5-max-128g | qwen3.8-27b-llamacpp | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | qwen3.8-27b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | qwen3.8-27b-ollama | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | qwen3.8-27b-ollama | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-128g | qwen3.8-27b-ollama | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-128g | qwen3.8-27b-ollama | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
-| ollama | m5-max-128g | qwen3.8-27b-ollama | c4 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.8-27b-splash | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.8-27b-splash | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.8-27b-splash | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
+| splash | m5-max-128g | qwen3.8-27b-splash | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
+| splash | m5-max-128g | qwen3.8-27b-splash | c4 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-48g | gemma-4-26b-a4b-llamacpp | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-48g | gemma-4-26b-a4b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-48g | gemma-4-26b-a4b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
@@ -1672,7 +1665,7 @@
 |---|---|---|---|---|---|
 | deepseek_v4 | · | · | · | 0/13 | · |
 | gemma4 | 0/26 | 0/26 | 0/26 | 0/26 | 0/26 |
-| gemma4_moe | 0/13 | 0/13 | 0/13 | 7/13 | 8/13 |
+| gemma4_moe | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | gpt_oss | 0/26 | 0/26 | 0/26 | 0/39 | 0/26 |
 | muse_glimmer | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | qwen3_5 | 0/13 | 0/13 | 0/13 | 6/13 | 6/13 |
