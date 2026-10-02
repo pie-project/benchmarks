@@ -18,6 +18,24 @@
   "family": "qwen3_5"
  },
  {
+  "cell_id": "ebd1cede0db13b1b",
+  "cell_key": "pie|m5-max-128g|meta-models/Muse-Glimmer-30B@affine_u4_g64/hf_safetensors|ob-512-200|text-completion-bench|tp1",
+  "engine": "pie",
+  "platform": "m5-max-128g",
+  "artifact": "muse-glimmer-30b-mlx4",
+  "workload": "ob-512-200",
+  "program": "text-completion-bench",
+  "mode": "tp1",
+  "metric": "decode_tok_s",
+  "value": 33.107251621534644,
+  "delta_rel": 0.05421307395395849,
+  "threshold_rel": 0.03848107382096089,
+  "kind": "improvement",
+  "pie_commit": "04923c8676103c0e284d66906509d94ac99cafe4",
+  "engine_version": "04923c867",
+  "family": "muse_glimmer"
+ },
+ {
   "cell_id": "3c2e7e55627bc8c1",
   "cell_key": "pie|m5-max-128g|Qwen/Qwen3.5-0.8B@bf16/hf_safetensors|c8|text-completion-bench|tp1",
   "engine": "pie",
