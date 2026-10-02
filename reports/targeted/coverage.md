@@ -2,20 +2,18 @@
 
 | status | cells |
 |---|---|
-| pass | 253 |
-| fail | 14 |
+| pass | 254 |
+| fail | 12 |
 | declared_unsupported | 451 |
 | not_run | 1538 |
-| noisy | 74 |
+| noisy | 75 |
 
 ## Gaps (expected supported, but not passing)
 
 | engine | platform | artifact | workload | program | mode | status | error | message |
 |---|---|---|---|---|---|---|---|---|
-| ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-8k-256 | text-completion-bench | tp1 | fail | load_fail | ollama serve exited during startup (see None) |
 | pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: first frame submit: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by this p |
 | pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | fail | crash | all 3 requests failed: prefill chunk submit @4096: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted b |
-| splash | m5-max-128g | qwen3.8-27b-splash | ctx-8k-256 | text-completion-bench | tp1 | fail | load_fail | splash server exited during startup:                         start_new_session, process_group) \|                        |
 | llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | all 8 requests failed: drain prefill chunk @32: drop_tok_c take: channel is poisoned: pipeline: forward failed: direct l |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
@@ -41,7 +39,7 @@
 | ollama | m5-max-128g | llama-3.2-3b-ollama | c4 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-128g | muse-glimmer-30b-llamacpp | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
-| pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
+| ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | qwen3.6-35b-a3b-mlxlm | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | qwen3.6-35b-a3b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | qwen3.6-35b-a3b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
@@ -61,6 +59,7 @@
 | splash | m5-max-128g | qwen3.8-27b-splash | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.8-27b-splash | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.8-27b-splash | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
+| splash | m5-max-128g | qwen3.8-27b-splash | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.8-27b-splash | c4 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-48g | gemma-4-26b-a4b-llamacpp | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-48g | gemma-4-26b-a4b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
@@ -1670,4 +1669,4 @@
 | muse_glimmer | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | qwen3_5 | 0/13 | 0/13 | 0/13 | 6/13 | 6/13 |
 | qwen3_6 | 0/35 | 0/35 | 0/35 | 12/48 | 5/35 |
-| qwen3_6_moe | 0/13 | 0/13 | 0/13 | 5/13 | 0/13 |
+| qwen3_6_moe | 0/13 | 0/13 | 0/13 | 6/13 | 0/13 |
