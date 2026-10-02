@@ -39,7 +39,7 @@ The `targeted` tier measures pie against [Ollama](https://github.com/ollama/olla
 .venv/bin/pie-evals collect --tier targeted out/<job> && .venv/bin/pie-evals dashboard --out site
 ```
 
-A Mac runner is registered with `infra/mac/setup-runner.sh` and removed with `infra/mac/remove-runner.sh`. It needs AC power, Low Power Mode off, Rust with `wasm32-wasip2`, uv, Ollama and Homebrew (Splash is installed from it; llama.cpp and mlx-lm are fetched at their pinned versions).
+A Mac runner is registered with `infra/mac/setup-runner.sh` and removed with `infra/mac/remove-runner.sh`. It needs AC power, Low Power Mode off, Rust with `wasm32-wasip2`, and uv. Ollama, Splash, llama.cpp and mlx-lm are fetched at their pinned versions; Splash needs macOS 26.4 or newer.
 
 ## Trying a change to the harness
 
