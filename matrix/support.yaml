@@ -149,5 +149,7 @@ unsupported:
 # "does not fit", never silently dropped.
 first_token_broken:
   muse-glimmer-30b-mlx4: "pie reports the first token before prefill ends on this model, so its prefill and TTFT are not shown"
+  qwen3.8-27b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.47 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
+  qwen3.6-35b-a3b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.09 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
 
 fit_factor: 1.25
