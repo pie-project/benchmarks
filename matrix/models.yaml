@@ -287,7 +287,6 @@ artifacts:
     pie_sku: qwen38-27b-u4g64-kv-bf16
     display_name: qwen3.8:27b
     expected_gib: 14.95
-    max_context: 4096   # as qwen3.6-27b: the family's Metal recipe holds 8 state slots, and a 4k prompt asks a ninth
     tiers: [targeted]
   - id: qwen3.8-27b-ollama
     base_model: mlx-community/Qwen3.8-27B-4bit

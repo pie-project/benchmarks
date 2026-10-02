@@ -768,11 +768,11 @@ def test_mac_recipes_resolve_with_rationale(engine):
 
 def test_recipe_overrides_by_family_and_backend():
     r = load_recipe("pie", "default", mac_platform(), MAC_WORKLOADS["c32"], family="qwen3_6")
-    assert r["total_pages"] == 1024 and r["engine_option"] == {"max_state_slots": 8}
+    assert r["total_pages"] == 1024 and r["engine_option"] == {"max_state_slots": 64}
     r = load_recipe("pie", "default", mac_platform(), MAC_WORKLOADS["c32"], family="gemma4")
     assert "total_pages" not in r
     r = load_recipe("pie", "default", mac_platform(), MAC_WORKLOADS["c32"], family="qwen3_6_moe")
-    assert r["total_pages"] == 1024 and r["engine_option"] == {"max_state_slots": 8}  # 35B-A3B does not boot on 48 GB without it
+    assert r["total_pages"] == 1024 and r["engine_option"] == {"max_state_slots": 64}  # 35B-A3B does not boot on 48 GB without it
 
 
 def test_ollama_competitive_leaves_the_server_envelope_to_the_adapter():
