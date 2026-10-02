@@ -141,14 +141,19 @@ def mac_models(matrix: Matrix) -> list[dict]:
     macs = [p for p in matrix.platforms.values() if p.os == "macos"]
     why = {}
     broken = (yaml.safe_load((matrix.root / "support.yaml").read_text()) or {}).get("first_token_broken") or {}
+    runs: set[str] = set()
     for c in matrix.expand():
         if str(c.engine) == "pie" and c.platform.os == "macos":
             why.setdefault(c.artifact.id, set()).add(c.declared_unsupported_reason)
+        elif c.platform.os == "macos" and c.artifact.baseline_of and c.declared_unsupported_reason is None:
+            runs.add(c.artifact.id)
     out = []
     for a in matrix.artifacts.values():
         pie = matrix.artifacts.get(a.baseline_of or "")
         if not a.baseline_label or pie is None or not macs:
             continue
+        if a.id not in runs:
+            continue  # its engine cannot run this model on any Mac (mlx-lm has no Muse Glimmer): no card to leave empty
         out.append({"id": a.id, "name": a.ollama_tag or pie.display_name or pie.id, "pie": pie.id, "label": a.baseline_label, "family": a.family, "icon": icon_for(a.family),
                     "engine": ARM_ENGINE.get(a.source_format.value, a.source_format.value),
                     "scheme": str(a.scheme), "format": str(a.source_format), "gib": a.expected_gib, "context": pie.max_context,
