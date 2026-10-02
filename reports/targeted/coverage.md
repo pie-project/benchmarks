@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 254 |
+| pass | 255 |
 | fail | 12 |
-| declared_unsupported | 451 |
-| not_run | 1538 |
-| noisy | 75 |
+| declared_unsupported | 441 |
+| not_run | 1548 |
+| noisy | 74 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -60,7 +60,6 @@
 | splash | m5-max-128g | qwen3.8-27b-splash | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.8-27b-splash | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | splash | m5-max-128g | qwen3.8-27b-splash | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
-| splash | m5-max-128g | qwen3.8-27b-splash | c4 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-48g | gemma-4-26b-a4b-llamacpp | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-48g | gemma-4-26b-a4b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-48g | gemma-4-26b-a4b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
@@ -434,6 +433,8 @@
 | pie | m1-max-32g | qwen3.8-27b-mlx4 | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | qwen3.8-27b-mlx4 | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | qwen3.8-27b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m1-max-32g | qwen3.8-27b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m1-max-32g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m1-max-32g | qwen3.8-27b-mlx4 | c4 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m1-max-32g | qwen3.8-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m1-max-32g | qwen3.8-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
@@ -801,6 +802,8 @@
 | pie | m2-max | qwen3.8-27b-mlx4 | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | qwen3.8-27b-mlx4 | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | qwen3.8-27b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m2-max | qwen3.8-27b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m2-max | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m2-max | qwen3.8-27b-mlx4 | c4 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m2-max | qwen3.8-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m2-max | qwen3.8-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
@@ -1168,6 +1171,8 @@
 | pie | m4-pro-48g | qwen3.8-27b-mlx4 | ob-512-200 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | qwen3.8-27b-mlx4 | ob-short-100 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | qwen3.8-27b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m4-pro-48g | qwen3.8-27b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m4-pro-48g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m4-pro-48g | qwen3.8-27b-mlx4 | c4 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m4-pro-48g | qwen3.8-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m4-pro-48g | qwen3.8-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
@@ -1435,6 +1440,8 @@
 | pie | m5-max-128g | qwen3.8-27b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.8-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.8-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m5-max-128g | qwen3.8-27b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m5-max-128g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.8-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.8-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-128g | qwen3.8-27b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
@@ -1626,6 +1633,8 @@
 | pie | m5-max-48g | qwen3.8-27b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.8-27b-mlx4 | lc-1k-128 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-48g | qwen3.8-27b-mlx4 | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m5-max-48g | qwen3.8-27b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | not_run |  |  |
+| pie | m5-max-48g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.8-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.8-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
 | mlxlm | m5-max-48g | qwen3.8-27b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
@@ -1655,8 +1664,8 @@
 | does not fit: 67.5 GiB per device > 32.0 GiB | 13 |
 | does not fit: 76.2 GiB per device > 64.0 GiB | 13 |
 | does not fit: 67.5 GiB per device > 64.0 GiB | 13 |
-| shape needs 4352 tokens > the artifact's max_context 4096 | 10 |
-| shape needs 8448 tokens > the artifact's max_context 4096 | 10 |
+| shape needs 4352 tokens > the artifact's max_context 4096 | 5 |
+| shape needs 8448 tokens > the artifact's max_context 4096 | 5 |
 
 ## pie pass rate by family × platform
 
@@ -1668,5 +1677,5 @@
 | gpt_oss | 0/26 | 0/26 | 0/26 | 0/39 | 0/26 |
 | muse_glimmer | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | qwen3_5 | 0/13 | 0/13 | 0/13 | 6/13 | 6/13 |
-| qwen3_6 | 0/35 | 0/35 | 0/35 | 12/48 | 5/35 |
+| qwen3_6 | 0/37 | 0/37 | 0/37 | 12/50 | 5/37 |
 | qwen3_6_moe | 0/13 | 0/13 | 0/13 | 6/13 | 0/13 |
