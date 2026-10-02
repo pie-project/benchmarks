@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 214 |
+| pass | 218 |
 | fail | 66 |
 | declared_unsupported | 451 |
-| not_run | 1549 |
-| noisy | 50 |
+| not_run | 1548 |
+| noisy | 47 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -79,17 +79,14 @@
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | c4 | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
 | pie | m5-max-128g | gemma-4-26b-a4b-mlx4 | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
+| mlxlm | m5-max-128g | gemma-4-26b-a4b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-128g | llama-3.2-3b-llamacpp | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-128g | llama-3.2-3b-llamacpp | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | llama-3.2-3b-mlxlm | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | llama-3.2-3b-mlxlm | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | llama-3.2-3b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
-| llamacpp | m5-max-128g | muse-glimmer-30b-llamacpp | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
-| pie | m5-max-128g | muse-glimmer-30b-mlx4 | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
-| llamacpp | m5-max-128g | qwen3.6-35b-a3b-llamacpp | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
+| mlxlm | m5-max-128g | qwen3.6-35b-a3b-mlxlm | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-128g | qwen3.6-35b-a3b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
-| llamacpp | m5-max-128g | qwen3.8-27b-llamacpp | ob-short-100 | text-completion-bench | tp1 | noisy |  |  |
-| mlxlm | m5-max-128g | qwen3.8-27b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-48g | gemma-4-26b-a4b-llamacpp | ob-512-200 | text-completion-bench | tp1 | noisy |  |  |
 | mlxlm | m5-max-48g | gemma-4-26b-a4b-mlxlm | ob-advanced-500 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-48g | gemma-4-26b-a4b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
@@ -1469,7 +1466,6 @@
 | llamacpp | m5-max-128g | qwen3.8-27b-llamacpp | lc-2k-128 | text-completion-bench | tp1 | not_run |  |  |
 | llamacpp | m5-max-128g | qwen3.8-27b-llamacpp | ob-advanced-500 | text-completion-bench | tp1 | not_run |  |  |
 | llamacpp | m5-max-128g | qwen3.8-27b-llamacpp | ctx-8k-256 | text-completion-bench | tp1 | not_run |  |  |
-| llamacpp | m5-max-128g | qwen3.8-27b-llamacpp | c4 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.8-27b-mlx4 | ss-128-64 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.8-27b-mlx4 | c8 | text-completion-bench | tp1 | not_run |  |  |
 | pie | m5-max-128g | qwen3.8-27b-mlx4 | c32 | text-completion-bench | tp1 | not_run |  |  |
@@ -1706,7 +1702,7 @@
 | gemma4 | 0/26 | 0/26 | 0/26 | 0/26 | 0/26 |
 | gemma4_moe | 0/13 | 0/13 | 0/13 | 7/13 | 8/13 |
 | gpt_oss | 0/26 | 0/26 | 0/26 | 0/39 | 0/26 |
-| muse_glimmer | 0/13 | 0/13 | 0/13 | 7/13 | 8/13 |
+| muse_glimmer | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | qwen3_5 | 0/13 | 0/13 | 0/13 | 6/13 | 6/13 |
 | qwen3_6 | 0/35 | 0/35 | 0/35 | 12/48 | 5/35 |
 | qwen3_6_moe | 0/13 | 0/13 | 0/13 | 0/13 | 0/13 |
