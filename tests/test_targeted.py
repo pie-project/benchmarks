@@ -117,7 +117,8 @@ def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
     by_label = lambda label: [m["name"] for m in data["models"] if m["label"] == label]  # noqa: E731
     assert by_label("Ollama") == ["gemma4:26b", "llama3.2:3b", "muse-glimmer:30b", "qwen3.6:35b-a3b", "qwen3.8:27b"]
     assert by_label("Ollama MLX") == ["gemma4:26b-mlx"]
-    assert by_label("llama.cpp") == by_label("mlx-lm") == by_label("Ollama")  # every model has both
+    assert by_label("llama.cpp") == by_label("Ollama")
+    assert by_label("mlx-lm") == [n for n in by_label("Ollama") if n != "muse-glimmer:30b"]  # mlx-lm cannot load it, so it has no card
     assert by_label("Splash") == ["qwen3.6:35b-a3b", "qwen3.8:27b"]  # Splash ships for these two only
     assert data["baseline_labels"] == ["Ollama", "Ollama MLX", "llama.cpp", "mlx-lm", "Splash"] and data["default_baseline"] == "Ollama"
     assert {m["engine"] for m in data["models"]} == {"ollama", "llamacpp", "mlxlm", "splash"}
