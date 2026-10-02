@@ -2,8 +2,8 @@
 
 | status | cells |
 |---|---|
-| pass | 256 |
-| fail | 12 |
+| pass | 258 |
+| fail | 10 |
 | declared_unsupported | 441 |
 | not_run | 1546 |
 | noisy | 75 |
@@ -12,8 +12,6 @@
 
 | engine | platform | artifact | workload | program | mode | status | error | message |
 |---|---|---|---|---|---|---|---|---|
-| pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: first frame submit: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted by this p |
-| pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | fail | crash | all 3 requests failed: prefill chunk submit @4096: pipeline: frame slot 0: pipeline: KV capacity: state pool exhausted b |
 | llamacpp | m5-max-48g | qwen3.5-0.8b-gguf-bf16 | lc-2k-128 | text-completion-bench | tp1 | fail | crash | all 4 requests failed: HTTPError: HTTP Error 400: Bad Request |
 | pie | m5-max-48g | qwen3.6-27b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | all 8 requests failed: drain prefill chunk @32: drop_tok_c take: channel is poisoned: pipeline: forward failed: direct l |
 | pie | m5-max-48g | qwen3.6-35b-a3b-mlx4 | control-aa | text-completion-bench | tp1 | fail | crash | RuntimeError: pie serve exited before startup completed: |
@@ -1677,4 +1675,4 @@
 | muse_glimmer | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | qwen3_5 | 0/13 | 0/13 | 0/13 | 6/13 | 6/13 |
 | qwen3_6 | 0/37 | 0/37 | 0/37 | 13/50 | 5/37 |
-| qwen3_6_moe | 0/13 | 0/13 | 0/13 | 6/13 | 0/13 |
+| qwen3_6_moe | 0/13 | 0/13 | 0/13 | 8/13 | 0/13 |
