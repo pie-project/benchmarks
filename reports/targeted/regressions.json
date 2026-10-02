@@ -1,23 +1,5 @@
 [
  {
-  "cell_id": "597cc856a6dddc2e",
-  "cell_key": "pie|m5-max-128g|meta-models/Muse-Glimmer-30B@affine_u4_g64/hf_safetensors|ctx-4k-256|text-completion-bench|tp1",
-  "engine": "pie",
-  "platform": "m5-max-128g",
-  "artifact": "muse-glimmer-30b-mlx4",
-  "workload": "ctx-4k-256",
-  "program": "text-completion-bench",
-  "mode": "tp1",
-  "metric": "decode_tok_s",
-  "value": 28.4720164154297,
-  "delta_rel": -0.0449255211272921,
-  "threshold_rel": 0.033339096373992086,
-  "kind": "regression",
-  "pie_commit": "438ee1f8dc86233f4e4f8428c12e5a26f8b70032",
-  "engine_version": "438ee1f8d",
-  "family": "muse_glimmer"
- },
- {
   "cell_id": "930e062243f81e38",
   "cell_key": "pie|m5-max-128g|Qwen/Qwen3.5-0.8B@bf16/hf_safetensors|ss-128-64|text-completion-bench|tp1",
   "engine": "pie",
