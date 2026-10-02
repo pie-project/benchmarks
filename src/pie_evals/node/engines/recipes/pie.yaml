@@ -37,7 +37,7 @@ default:
             total_pages:
               value: 1024
             engine_option:
-              value: {max_state_slots: 8}
+              value: {max_state_slots: 64}
     qwen3_6_moe:
       knobs: {}
       backend:
@@ -49,7 +49,7 @@ default:
                 At its default the KV pool of Qwen3.6-35B-A3B asks 69 GB and a
                 48 GB Mac refuses the load; this is the cap its 27B sibling runs with.
             engine_option:
-              value: {max_state_slots: 8}
+              value: {max_state_slots: 64}
 
 competitive:
   extends: default
