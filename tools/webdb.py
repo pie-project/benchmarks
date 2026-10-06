@@ -135,12 +135,12 @@ def results(a2m: dict[str, str]) -> list[dict]:
     for _, r, cat, model, release in best.values():
         out.append({
             "hardware": r["platform"], "engine": r["engine"],
-            "release": release or "?", "group": "main" if r["engine"] == "pie" else (release or "?"), "released": None,
+            "release": release or "?", "group": "main" if r["engine"] == "pie" else (release or "?"),
             "model": model, "scheme": r["scheme"], "workload": cat,
             **{m: (round(r[m], 2) if isinstance(r[m], (int, float)) else None) for m in METRICS},
-            "accuracy": None, "status": "pass",
+            "accuracy": None,
             "commit": (r["pie_commit"] or "")[:9] if r["engine"] == "pie" else "",
-            "os": None, "measured": str(r["started_at"])[:16],
+            "measured": str(r["started_at"])[:16],
         })
     return out
 
