@@ -713,7 +713,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -729,9 +728,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:34"
     },
     {
@@ -739,7 +736,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -755,9 +751,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:34"
     },
     {
@@ -765,7 +759,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -781,9 +774,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:37"
     },
     {
@@ -791,7 +782,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -807,9 +797,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:37"
     },
     {
@@ -817,7 +805,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -833,9 +820,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:45"
     },
     {
@@ -843,7 +828,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -859,9 +843,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:45"
     },
     {
@@ -869,7 +851,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -885,9 +866,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:46"
     },
     {
@@ -895,7 +874,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -911,9 +889,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.22,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:47"
     },
     {
@@ -921,7 +897,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -937,9 +912,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:48"
     },
     {
@@ -947,7 +920,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -963,9 +935,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:48"
     },
     {
@@ -973,7 +943,6 @@ const DB = {
       "engine": "pie",
       "release": "1b3bff660",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -989,9 +958,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1b3bff660",
-      "os": null,
       "measured": "2026-09-23 20:03"
     },
     {
@@ -999,7 +966,6 @@ const DB = {
       "engine": "pie",
       "release": "1b3bff660",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -1015,9 +981,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1b3bff660",
-      "os": null,
       "measured": "2026-09-23 20:03"
     },
     {
@@ -1025,7 +989,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -1041,9 +1004,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:01"
     },
     {
@@ -1051,7 +1012,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -1067,9 +1027,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:00"
     },
     {
@@ -1077,7 +1035,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -1093,9 +1050,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:21"
     },
     {
@@ -1103,7 +1058,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -1119,9 +1073,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:25"
     },
     {
@@ -1129,7 +1081,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -1145,9 +1096,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:28"
     },
     {
@@ -1155,7 +1104,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -1171,9 +1119,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:28"
     },
     {
@@ -1181,7 +1127,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -1197,9 +1142,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:37"
     },
     {
@@ -1207,7 +1150,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -1223,9 +1165,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:44"
     },
     {
@@ -1233,7 +1173,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -1249,9 +1188,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:46"
     },
     {
@@ -1259,7 +1196,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -1275,9 +1211,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:45"
     },
     {
@@ -1285,7 +1219,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -1301,9 +1234,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:49"
     },
     {
@@ -1311,7 +1242,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -1327,9 +1257,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 19:48"
     },
     {
@@ -1337,7 +1265,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "qwen3-0.6b-bf16",
       "scheme": "bf16",
       "workload": "throughput",
@@ -1353,9 +1280,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 21:56"
     },
     {
@@ -1363,7 +1288,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "qwen3-0.6b-bf16",
       "scheme": "bf16",
       "workload": "single",
@@ -1379,9 +1303,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 21:56"
     },
     {
@@ -1389,7 +1311,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -1405,9 +1326,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-23 00:02"
     },
     {
@@ -1415,7 +1334,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -1431,9 +1349,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-23 00:03"
     },
     {
@@ -1441,7 +1357,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b-mini8",
       "scheme": "bf16",
       "workload": "single",
@@ -1457,9 +1372,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 22:00"
     },
     {
@@ -1467,7 +1380,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b-mini8",
       "scheme": "bf16",
       "workload": "throughput",
@@ -1483,9 +1395,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 22:00"
     },
     {
@@ -1493,7 +1403,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "deepseek-v4-flash-mini6",
       "scheme": "mlx_2bit",
       "workload": "single",
@@ -1509,9 +1418,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 21:55"
     },
     {
@@ -1519,7 +1426,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "deepseek-v4-flash-mini6",
       "scheme": "mlx_2bit",
       "workload": "throughput",
@@ -1535,9 +1441,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 21:55"
     },
     {
@@ -1545,7 +1449,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -1561,9 +1464,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 23:39"
     },
     {
@@ -1571,7 +1472,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -1587,9 +1487,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 23:55"
     },
     {
@@ -1597,7 +1495,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b-mxfp4-mini6",
       "scheme": "mxfp4",
       "workload": "single",
@@ -1613,9 +1510,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 21:50"
     },
     {
@@ -1623,7 +1518,6 @@ const DB = {
       "engine": "pie",
       "release": "1a3b2e2ae",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b-mxfp4-mini6",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -1639,9 +1533,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a3b2e2ae",
-      "os": null,
       "measured": "2026-09-22 21:50"
     },
     {
@@ -1649,7 +1541,6 @@ const DB = {
       "engine": "pie",
       "release": "0538600a7",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -1665,9 +1556,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "0538600a7",
-      "os": null,
       "measured": "2026-09-23 13:54"
     },
     {
@@ -1675,7 +1564,6 @@ const DB = {
       "engine": "pie",
       "release": "0538600a7",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -1691,9 +1579,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "0538600a7",
-      "os": null,
       "measured": "2026-09-23 13:56"
     },
     {
@@ -1701,7 +1587,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -1717,9 +1602,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:03"
     },
     {
@@ -1727,7 +1610,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -1743,9 +1625,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.51,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:05"
     },
     {
@@ -1753,7 +1633,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -1769,9 +1648,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:26"
     },
     {
@@ -1779,7 +1656,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -1795,9 +1671,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:26"
     },
     {
@@ -1805,7 +1679,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -1821,9 +1694,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:28"
     },
     {
@@ -1831,7 +1702,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -1847,9 +1717,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:28"
     },
     {
@@ -1857,7 +1725,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -1873,9 +1740,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:37"
     },
     {
@@ -1883,7 +1748,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -1899,9 +1763,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:37"
     },
     {
@@ -1909,7 +1771,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -1925,9 +1786,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:39"
     },
     {
@@ -1935,7 +1794,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -1951,9 +1809,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:39"
     },
     {
@@ -1961,7 +1817,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -1977,9 +1832,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:42"
     },
     {
@@ -1987,7 +1840,6 @@ const DB = {
       "engine": "pie",
       "release": "620c49023",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -2003,9 +1855,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "620c49023",
-      "os": null,
       "measured": "2026-09-23 18:42"
     },
     {
@@ -2013,7 +1863,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -2029,9 +1878,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:05"
     },
     {
@@ -2039,7 +1886,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -2055,9 +1901,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.44,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:07"
     },
     {
@@ -2065,7 +1909,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -2081,9 +1924,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:29"
     },
     {
@@ -2091,7 +1932,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -2107,9 +1947,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:29"
     },
     {
@@ -2117,7 +1955,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -2133,9 +1970,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:31"
     },
     {
@@ -2143,7 +1978,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -2159,9 +1993,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:31"
     },
     {
@@ -2169,7 +2001,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -2185,9 +2016,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:40"
     },
     {
@@ -2195,7 +2024,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -2211,9 +2039,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:40"
     },
     {
@@ -2221,7 +2047,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -2237,9 +2062,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:42"
     },
     {
@@ -2247,7 +2070,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -2263,9 +2085,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:42"
     },
     {
@@ -2273,7 +2093,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -2289,9 +2108,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:45"
     },
     {
@@ -2299,7 +2116,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -2315,9 +2131,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:45"
     },
     {
@@ -2325,7 +2139,6 @@ const DB = {
       "engine": "pie",
       "release": "0538600a7",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -2341,9 +2154,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "0538600a7",
-      "os": null,
       "measured": "2026-09-23 13:44"
     },
     {
@@ -2351,7 +2162,6 @@ const DB = {
       "engine": "pie",
       "release": "0538600a7",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -2367,9 +2177,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "0538600a7",
-      "os": null,
       "measured": "2026-09-23 13:46"
     },
     {
@@ -2377,7 +2185,6 @@ const DB = {
       "engine": "pie",
       "release": "0538600a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -2393,9 +2200,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "0538600a7",
-      "os": null,
       "measured": "2026-09-23 14:04"
     },
     {
@@ -2403,7 +2208,6 @@ const DB = {
       "engine": "pie",
       "release": "0538600a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -2419,9 +2223,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "0538600a7",
-      "os": null,
       "measured": "2026-09-23 14:04"
     },
     {
@@ -2429,7 +2231,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -2445,9 +2246,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.36,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 09:54"
     },
     {
@@ -2455,7 +2254,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -2471,9 +2269,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 09:55"
     },
     {
@@ -2481,7 +2277,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -2497,9 +2292,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.17,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 09:58"
     },
     {
@@ -2507,7 +2300,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -2523,9 +2315,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 09:59"
     },
     {
@@ -2533,7 +2323,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -2549,9 +2338,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 10:00"
     },
     {
@@ -2559,7 +2346,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -2575,9 +2361,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 10:00"
     },
     {
@@ -2585,7 +2369,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -2601,9 +2384,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:16"
     },
     {
@@ -2611,7 +2392,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -2627,9 +2407,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:17"
     },
     {
@@ -2637,7 +2415,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -2653,9 +2430,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 09:39"
     },
     {
@@ -2663,7 +2438,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -2679,9 +2453,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 06:57"
     },
     {
@@ -2689,7 +2461,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -2705,9 +2476,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 10.55,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 10:34"
     },
     {
@@ -2715,7 +2484,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -2731,9 +2499,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:22"
     },
     {
@@ -2741,7 +2507,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -2757,9 +2522,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 19:47"
     },
     {
@@ -2767,7 +2530,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -2783,9 +2545,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 05:10"
     },
     {
@@ -2793,7 +2553,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -2809,9 +2568,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.3,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 10:16"
     },
     {
@@ -2819,7 +2576,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -2835,9 +2591,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 05:19"
     },
     {
@@ -2845,7 +2599,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -2861,9 +2614,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:05"
     },
     {
@@ -2871,7 +2622,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -2887,9 +2637,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-26 00:07"
     },
     {
@@ -2897,7 +2645,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -2913,9 +2660,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-26 00:07"
     },
     {
@@ -2923,7 +2668,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -2939,9 +2683,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 06:20"
     },
     {
@@ -2949,7 +2691,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -2965,9 +2706,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.25,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 00:04"
     },
     {
@@ -2975,7 +2714,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -2991,9 +2729,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.4,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 08:56"
     },
     {
@@ -3001,7 +2737,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -3017,9 +2752,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 08:58"
     },
     {
@@ -3027,7 +2760,6 @@ const DB = {
       "engine": "pie",
       "release": "31263bfb9",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -3043,9 +2775,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "31263bfb9",
-      "os": null,
       "measured": "2026-09-28 02:47"
     },
     {
@@ -3053,7 +2783,6 @@ const DB = {
       "engine": "pie",
       "release": "31263bfb9",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -3069,9 +2798,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "31263bfb9",
-      "os": null,
       "measured": "2026-09-28 02:48"
     },
     {
@@ -3079,7 +2806,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -3095,9 +2821,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:28"
     },
     {
@@ -3105,7 +2829,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -3121,9 +2844,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:30"
     },
     {
@@ -3131,7 +2852,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -3147,9 +2867,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:08"
     },
     {
@@ -3157,7 +2875,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -3173,9 +2890,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:14"
     },
     {
@@ -3183,7 +2898,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -3199,9 +2913,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.32,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:26"
     },
     {
@@ -3209,7 +2921,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -3225,9 +2936,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-23 22:27"
     },
     {
@@ -3235,7 +2944,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -3251,9 +2959,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 11:27"
     },
     {
@@ -3261,7 +2967,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -3277,9 +2982,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.59,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 11:27"
     },
     {
@@ -3287,7 +2990,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -3303,9 +3005,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 11:51"
     },
     {
@@ -3313,7 +3013,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -3329,9 +3028,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 11:51"
     },
     {
@@ -3339,7 +3036,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -3355,9 +3051,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 06:44"
     },
     {
@@ -3365,7 +3059,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -3381,9 +3074,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 13:19"
     },
     {
@@ -3391,7 +3082,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -3407,9 +3097,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.97,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 05:07"
     },
     {
@@ -3417,7 +3105,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -3433,9 +3120,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -6.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 20:14"
     },
     {
@@ -3443,7 +3128,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -3459,9 +3143,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 12:37"
     },
     {
@@ -3469,7 +3151,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -3485,9 +3166,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -2.95,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 00:37"
     },
     {
@@ -3495,7 +3174,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -3511,9 +3189,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 11:16"
     },
     {
@@ -3521,7 +3197,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -3537,9 +3212,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 16:10"
     },
     {
@@ -3547,7 +3220,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -3563,9 +3235,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 04:03"
     },
     {
@@ -3573,7 +3243,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -3589,9 +3258,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 04:03"
     },
     {
@@ -3599,7 +3266,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -3615,9 +3281,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 04:17"
     },
     {
@@ -3625,7 +3289,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -3641,9 +3304,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 04:17"
     },
     {
@@ -3651,7 +3312,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -3667,9 +3327,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:46"
     },
     {
@@ -3677,7 +3335,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -3693,9 +3350,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:47"
     },
     {
@@ -3703,7 +3358,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -3719,9 +3373,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:08"
     },
     {
@@ -3729,7 +3381,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -3745,9 +3396,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:08"
     },
     {
@@ -3755,7 +3404,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -3771,9 +3419,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 07:42"
     },
     {
@@ -3781,7 +3427,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -3797,9 +3442,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 07:42"
     },
     {
@@ -3807,7 +3450,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -3823,9 +3465,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.15,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 09:39"
     },
     {
@@ -3833,7 +3473,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -3849,9 +3488,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 09:36"
     },
     {
@@ -3859,7 +3496,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -3875,9 +3511,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:26"
     },
     {
@@ -3885,7 +3519,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -3901,9 +3534,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.54,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:31"
     },
     {
@@ -3911,7 +3542,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -3927,9 +3557,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:10"
     },
     {
@@ -3937,7 +3565,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -3953,9 +3580,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:15"
     },
     {
@@ -3963,7 +3588,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -3979,9 +3603,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 12.33,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 08:03"
     },
     {
@@ -3989,7 +3611,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -4005,9 +3626,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 10:55"
     },
     {
@@ -4015,7 +3634,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -4031,9 +3649,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.2,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:19"
     },
     {
@@ -4041,7 +3657,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -4057,9 +3672,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:19"
     },
     {
@@ -4067,7 +3680,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -4083,9 +3695,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 03:35"
     },
     {
@@ -4093,7 +3703,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -4109,9 +3718,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.46,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:00"
     },
     {
@@ -4119,7 +3726,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -4135,9 +3741,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.2,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:01"
     },
     {
@@ -4145,7 +3749,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -4161,9 +3764,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 20:51"
     },
     {
@@ -4171,7 +3772,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -4187,9 +3787,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.17,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 20:52"
     },
     {
@@ -4197,7 +3795,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -4213,9 +3810,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 9.27,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 21:00"
     },
     {
@@ -4223,7 +3818,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -4239,9 +3833,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.2,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 03:48"
     },
     {
@@ -4249,7 +3841,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -4265,9 +3856,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.3,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 03:49"
     },
     {
@@ -4275,7 +3864,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -4291,9 +3879,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:44"
     },
     {
@@ -4301,7 +3887,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -4317,9 +3902,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:47"
     },
     {
@@ -4327,7 +3910,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -4343,9 +3925,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:31"
     },
     {
@@ -4353,7 +3933,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -4369,9 +3948,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:32"
     },
     {
@@ -4379,7 +3956,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -4395,9 +3971,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.46,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:16"
     },
     {
@@ -4405,7 +3979,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -4421,9 +3994,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:40"
     },
     {
@@ -4431,7 +4002,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -4447,9 +4017,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.43,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:07"
     },
     {
@@ -4457,7 +4025,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -4473,9 +4040,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:23"
     },
     {
@@ -4483,7 +4048,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -4499,9 +4063,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 01:52"
     },
     {
@@ -4509,7 +4071,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -4525,9 +4086,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 76.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 11:11"
     },
     {
@@ -4535,7 +4094,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -4551,9 +4109,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 03:29"
     },
     {
@@ -4561,7 +4117,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -4577,9 +4132,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 12.66,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 00:49"
     },
     {
@@ -4587,7 +4140,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -4603,9 +4155,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 04:16"
     },
     {
@@ -4613,7 +4163,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -4629,9 +4178,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 20.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 04:21"
     },
     {
@@ -4639,7 +4186,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -4655,9 +4201,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 18:50"
     },
     {
@@ -4665,7 +4209,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -4681,9 +4224,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 19:01"
     },
     {
@@ -4691,7 +4232,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -4707,9 +4247,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 19:30"
     },
     {
@@ -4717,7 +4255,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -4733,9 +4270,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.15,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 03:58"
     },
     {
@@ -4743,7 +4278,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -4759,9 +4293,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 06:07"
     },
     {
@@ -4769,7 +4301,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -4785,9 +4316,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:11"
     },
     {
@@ -4795,7 +4324,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -4811,9 +4339,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:12"
     },
     {
@@ -4821,7 +4347,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -4837,9 +4362,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 23:23"
     },
     {
@@ -4847,7 +4370,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -4863,9 +4385,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 4.45,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 06:19"
     },
     {
@@ -4873,7 +4393,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -4889,9 +4408,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:50"
     },
     {
@@ -4899,7 +4416,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -4915,9 +4431,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:59"
     },
     {
@@ -4925,7 +4439,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -4941,9 +4454,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:08"
     },
     {
@@ -4951,7 +4462,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -4967,9 +4477,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:13"
     },
     {
@@ -4977,7 +4485,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -4993,9 +4500,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 10:25"
     },
     {
@@ -5003,7 +4508,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -5019,9 +4523,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 10:26"
     },
     {
@@ -5029,7 +4531,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -5045,9 +4546,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:44"
     },
     {
@@ -5055,7 +4554,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -5071,9 +4569,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:47"
     },
     {
@@ -5081,7 +4577,6 @@ const DB = {
       "engine": "pie",
       "release": "4c44c8e70",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -5097,9 +4592,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "4c44c8e70",
-      "os": null,
       "measured": "2026-09-24 00:00"
     },
     {
@@ -5107,7 +4600,6 @@ const DB = {
       "engine": "pie",
       "release": "4c44c8e70",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -5123,9 +4615,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "4c44c8e70",
-      "os": null,
       "measured": "2026-09-24 00:01"
     },
     {
@@ -5133,7 +4623,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -5149,9 +4638,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.35,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 05:46"
     },
     {
@@ -5159,7 +4646,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -5175,9 +4661,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 05:42"
     },
     {
@@ -5185,7 +4669,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -5201,9 +4684,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 05:28"
     },
     {
@@ -5211,7 +4692,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -5227,9 +4707,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 09:48"
     },
     {
@@ -5237,7 +4715,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -5253,9 +4730,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.75,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 19:18"
     },
     {
@@ -5263,7 +4738,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -5279,9 +4753,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 16.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 19:10"
     },
     {
@@ -5289,7 +4761,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -5305,9 +4776,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 19:09"
     },
     {
@@ -5315,7 +4784,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -5331,9 +4799,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 18:57"
     },
     {
@@ -5341,7 +4807,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -5357,9 +4822,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.43,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 18:52"
     },
     {
@@ -5367,7 +4830,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -5383,9 +4845,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.74,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 19:07"
     },
     {
@@ -5393,7 +4853,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -5409,9 +4868,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 19:22"
     },
     {
@@ -5419,7 +4876,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -5435,9 +4891,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 101.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 18:48"
     },
     {
@@ -5445,7 +4899,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -5461,9 +4914,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:00"
     },
     {
@@ -5471,7 +4922,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -5487,9 +4937,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:00"
     },
     {
@@ -5497,7 +4945,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -5513,9 +4960,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:46"
     },
     {
@@ -5523,7 +4968,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -5539,9 +4983,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:48"
     },
     {
@@ -5549,7 +4991,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -5565,9 +5006,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 12:35"
     },
     {
@@ -5575,7 +5014,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -5591,9 +5029,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 10:43"
     },
     {
@@ -5601,7 +5037,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -5617,9 +5052,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.23,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 10:44"
     },
     {
@@ -5627,7 +5060,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -5643,9 +5075,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 11:06"
     },
     {
@@ -5653,7 +5083,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -5669,9 +5098,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 11:11"
     },
     {
@@ -5679,7 +5106,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -5695,9 +5121,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 05:25"
     },
     {
@@ -5705,7 +5129,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -5721,9 +5144,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 05:32"
     },
     {
@@ -5731,7 +5152,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -5747,9 +5167,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.61,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 00:49"
     },
     {
@@ -5757,7 +5175,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -5773,9 +5190,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 05:05"
     },
     {
@@ -5783,7 +5198,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -5799,9 +5213,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 12:51"
     },
     {
@@ -5809,7 +5221,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -5825,9 +5236,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 10.33,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 04:27"
     },
     {
@@ -5835,7 +5244,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -5851,9 +5259,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 17:51"
     },
     {
@@ -5861,7 +5267,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -5877,9 +5282,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 16.56,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 01:07"
     },
     {
@@ -5887,7 +5290,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -5903,9 +5305,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.69,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:05"
     },
     {
@@ -5913,7 +5313,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -5929,9 +5328,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:06"
     },
     {
@@ -5939,7 +5336,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -5955,9 +5351,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:29"
     },
     {
@@ -5965,7 +5359,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -5981,9 +5374,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:29"
     },
     {
@@ -5991,7 +5382,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -6007,9 +5397,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:13"
     },
     {
@@ -6017,7 +5405,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -6033,9 +5420,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:20"
     },
     {
@@ -6043,7 +5428,6 @@ const DB = {
       "engine": "pie",
       "release": "fec942409",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -6059,9 +5443,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "fec942409",
-      "os": null,
       "measured": "2026-09-27 21:30"
     },
     {
@@ -6069,7 +5451,6 @@ const DB = {
       "engine": "pie",
       "release": "fec942409",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -6085,9 +5466,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "fec942409",
-      "os": null,
       "measured": "2026-09-27 21:35"
     },
     {
@@ -6095,7 +5474,6 @@ const DB = {
       "engine": "pie",
       "release": "fec942409",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -6111,9 +5489,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "fec942409",
-      "os": null,
       "measured": "2026-09-27 22:08"
     },
     {
@@ -6121,7 +5497,6 @@ const DB = {
       "engine": "pie",
       "release": "fec942409",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -6137,9 +5512,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "fec942409",
-      "os": null,
       "measured": "2026-09-27 22:08"
     },
     {
@@ -6147,7 +5520,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -6163,9 +5535,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:17"
     },
     {
@@ -6173,7 +5543,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -6189,9 +5558,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 05:18"
     },
     {
@@ -6199,7 +5566,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -6215,9 +5581,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 06:02"
     },
     {
@@ -6225,7 +5589,6 @@ const DB = {
       "engine": "pie",
       "release": "0eeddfede",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -6241,9 +5604,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "0eeddfede",
-      "os": null,
       "measured": "2026-09-23 18:26"
     },
     {
@@ -6251,7 +5612,6 @@ const DB = {
       "engine": "pie",
       "release": "0eeddfede",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -6267,9 +5627,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "0eeddfede",
-      "os": null,
       "measured": "2026-09-23 18:26"
     },
     {
@@ -6277,7 +5635,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -6293,9 +5650,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 15:06"
     },
     {
@@ -6303,7 +5658,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -6319,9 +5673,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 15:08"
     },
     {
@@ -6329,7 +5681,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -6345,9 +5696,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.35,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:57"
     },
     {
@@ -6355,7 +5704,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -6371,9 +5719,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:59"
     },
     {
@@ -6381,7 +5727,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -6397,9 +5742,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.47,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 05:09"
     },
     {
@@ -6407,7 +5750,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -6423,9 +5765,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.3,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:27"
     },
     {
@@ -6433,7 +5773,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -6449,9 +5788,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.21,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 00:50"
     },
     {
@@ -6459,7 +5796,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -6475,9 +5811,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:58"
     },
     {
@@ -6485,7 +5819,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -6501,9 +5834,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:58"
     },
     {
@@ -6511,7 +5842,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -6527,9 +5857,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 3.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 07:04"
     },
     {
@@ -6537,7 +5865,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -6553,9 +5880,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 10:55"
     },
     {
@@ -6563,7 +5888,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -6579,9 +5903,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 75.32,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 07:04"
     },
     {
@@ -6589,7 +5911,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -6605,9 +5926,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:44"
     },
     {
@@ -6615,7 +5934,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -6631,9 +5949,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.25,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:46"
     },
     {
@@ -6641,7 +5957,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -6657,9 +5972,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 02:12"
     },
     {
@@ -6667,7 +5980,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -6683,9 +5995,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 02:13"
     },
     {
@@ -6693,7 +6003,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -6709,9 +6018,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 19:11"
     },
     {
@@ -6719,7 +6026,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -6735,9 +6041,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 18:58"
     },
     {
@@ -6745,7 +6049,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -6761,9 +6064,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 08:56"
     },
     {
@@ -6771,7 +6072,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -6787,9 +6087,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 08:57"
     },
     {
@@ -6797,7 +6095,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -6813,9 +6110,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 13:19"
     },
     {
@@ -6823,7 +6118,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -6839,9 +6133,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:53"
     },
     {
@@ -6849,7 +6141,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -6865,9 +6156,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:53"
     },
     {
@@ -6875,7 +6164,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -6891,9 +6179,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:54"
     },
     {
@@ -6901,7 +6187,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -6917,9 +6202,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.56,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 11:21"
     },
     {
@@ -6927,7 +6210,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -6943,9 +6225,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:59"
     },
     {
@@ -6953,7 +6233,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -6969,9 +6248,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:55"
     },
     {
@@ -6979,7 +6256,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -6995,9 +6271,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:17"
     },
     {
@@ -7005,7 +6279,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -7021,9 +6294,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:19"
     },
     {
@@ -7031,7 +6302,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -7047,9 +6317,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:11"
     },
     {
@@ -7057,7 +6325,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -7073,9 +6340,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:12"
     },
     {
@@ -7083,7 +6348,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -7099,9 +6363,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:16"
     },
     {
@@ -7109,7 +6371,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -7125,9 +6386,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.31,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 06:45"
     },
     {
@@ -7135,7 +6394,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -7151,9 +6409,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.63,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 06:55"
     },
     {
@@ -7161,7 +6417,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -7177,9 +6432,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 05:40"
     },
     {
@@ -7187,7 +6440,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -7203,9 +6455,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.46,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:25"
     },
     {
@@ -7213,7 +6463,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -7229,9 +6478,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:30"
     },
     {
@@ -7239,7 +6486,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -7255,9 +6501,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 03:04"
     },
     {
@@ -7265,7 +6509,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -7281,9 +6524,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 23:08"
     },
     {
@@ -7291,7 +6532,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -7307,9 +6547,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 20:20"
     },
     {
@@ -7317,7 +6555,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -7333,9 +6570,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.74,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 17:52"
     },
     {
@@ -7343,7 +6578,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -7359,9 +6593,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.34,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 16:18"
     },
     {
@@ -7369,7 +6601,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -7385,9 +6616,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 15:20"
     },
     {
@@ -7395,7 +6624,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -7411,9 +6639,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:01"
     },
     {
@@ -7421,7 +6647,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -7437,9 +6662,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:25"
     },
     {
@@ -7447,7 +6670,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -7463,9 +6685,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:26"
     },
     {
@@ -7473,7 +6693,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -7489,9 +6708,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.63,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 13:18"
     },
     {
@@ -7499,7 +6716,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -7515,9 +6731,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.89,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 07:47"
     },
     {
@@ -7525,7 +6739,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -7541,9 +6754,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.36,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:45"
     },
     {
@@ -7551,7 +6762,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -7567,9 +6777,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.14,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:46"
     },
     {
@@ -7577,7 +6785,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -7593,9 +6800,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 18:37"
     },
     {
@@ -7603,7 +6808,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -7619,9 +6823,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 18:53"
     },
     {
@@ -7629,7 +6831,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -7645,9 +6846,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 07:40"
     },
     {
@@ -7655,7 +6854,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -7671,9 +6869,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 07:41"
     },
     {
@@ -7681,7 +6877,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -7697,9 +6892,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:41"
     },
     {
@@ -7707,7 +6900,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -7723,9 +6915,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:40"
     },
     {
@@ -7733,7 +6923,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -7749,9 +6938,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:33"
     },
     {
@@ -7759,7 +6946,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -7775,9 +6961,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.35,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:38"
     },
     {
@@ -7785,7 +6969,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -7801,9 +6984,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:55"
     },
     {
@@ -7811,7 +6992,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -7827,9 +7007,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.37,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:57"
     },
     {
@@ -7837,7 +7015,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -7853,9 +7030,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:49"
     },
     {
@@ -7863,7 +7038,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -7879,9 +7053,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:50"
     },
     {
@@ -7889,7 +7061,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -7905,9 +7076,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:09"
     },
     {
@@ -7915,7 +7084,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -7931,9 +7099,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:22"
     },
     {
@@ -7941,7 +7107,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -7957,9 +7122,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:16"
     },
     {
@@ -7967,7 +7130,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -7983,9 +7145,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:43"
     },
     {
@@ -7993,7 +7153,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -8009,9 +7168,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:44"
     },
     {
@@ -8019,7 +7176,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -8035,9 +7191,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 07:35"
     },
     {
@@ -8045,7 +7199,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8061,9 +7214,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:29"
     },
     {
@@ -8071,7 +7222,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8087,9 +7237,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:43"
     },
     {
@@ -8097,7 +7245,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -8113,9 +7260,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:21"
     },
     {
@@ -8123,7 +7268,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -8139,9 +7283,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:21"
     },
     {
@@ -8149,7 +7291,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8165,9 +7306,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:50"
     },
     {
@@ -8175,7 +7314,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8191,9 +7329,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:59"
     },
     {
@@ -8201,7 +7337,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8217,9 +7352,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.78,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 19:53"
     },
     {
@@ -8227,7 +7360,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8243,9 +7375,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 22:19"
     },
     {
@@ -8253,7 +7383,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -8269,9 +7398,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 23:30"
     },
     {
@@ -8279,7 +7406,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -8295,9 +7421,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:55"
     },
     {
@@ -8305,7 +7429,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -8321,9 +7444,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:56"
     },
     {
@@ -8331,7 +7452,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8347,9 +7467,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:03"
     },
     {
@@ -8357,7 +7475,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -8373,9 +7490,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:03"
     },
     {
@@ -8383,7 +7498,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -8399,9 +7513,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:28"
     },
     {
@@ -8409,7 +7521,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -8425,9 +7536,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:28"
     },
     {
@@ -8435,7 +7544,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -8451,9 +7559,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.15,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 09:13"
     },
     {
@@ -8461,7 +7567,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -8477,9 +7582,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.36,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 12:34"
     },
     {
@@ -8487,7 +7590,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -8503,9 +7605,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 04:05"
     },
     {
@@ -8513,7 +7613,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -8529,9 +7628,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 04:15"
     },
     {
@@ -8539,7 +7636,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8555,9 +7651,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:55"
     },
     {
@@ -8565,7 +7659,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -8581,9 +7674,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:10"
     },
     {
@@ -8591,7 +7682,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8607,9 +7697,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:48"
     },
     {
@@ -8617,7 +7705,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -8633,9 +7720,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 23.55,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 22:19"
     },
     {
@@ -8643,7 +7728,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8659,9 +7743,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 11:37"
     },
     {
@@ -8669,7 +7751,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -8685,9 +7766,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 11:42"
     },
     {
@@ -8695,7 +7774,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8711,9 +7789,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.63,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:09"
     },
     {
@@ -8721,7 +7797,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -8737,9 +7812,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.72,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:11"
     },
     {
@@ -8747,7 +7820,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8763,9 +7835,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 20:27"
     },
     {
@@ -8773,7 +7843,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8789,9 +7858,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:35"
     },
     {
@@ -8799,7 +7866,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -8815,9 +7881,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:20"
     },
     {
@@ -8825,7 +7889,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -8841,9 +7904,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:20"
     },
     {
@@ -8851,7 +7912,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -8867,9 +7927,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:32"
     },
     {
@@ -8877,7 +7935,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -8893,9 +7950,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:33"
     },
     {
@@ -8903,7 +7958,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -8919,9 +7973,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 00:44"
     },
     {
@@ -8929,7 +7981,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -8945,9 +7996,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 04:03"
     },
     {
@@ -8955,7 +8004,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -8971,9 +8019,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 7.26,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 04:06"
     },
     {
@@ -8981,7 +8027,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -8997,9 +8042,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.15,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:53"
     },
     {
@@ -9007,7 +8050,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -9023,9 +8065,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:53"
     },
     {
@@ -9033,7 +8073,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -9049,9 +8088,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 22:37"
     },
     {
@@ -9059,7 +8096,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -9075,9 +8111,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -14.7,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-24 06:03"
     },
     {
@@ -9085,7 +8119,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -9101,9 +8134,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 8.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-24 06:08"
     },
     {
@@ -9111,7 +8142,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -9127,9 +8157,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:06"
     },
     {
@@ -9137,7 +8165,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -9153,9 +8180,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:07"
     },
     {
@@ -9163,7 +8188,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -9179,9 +8203,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.14,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:17"
     },
     {
@@ -9189,7 +8211,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -9205,9 +8226,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:18"
     },
     {
@@ -9215,7 +8234,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -9231,9 +8249,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 14:45"
     },
     {
@@ -9241,7 +8257,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -9257,9 +8272,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 14:46"
     },
     {
@@ -9267,7 +8280,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -9283,9 +8295,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:27"
     },
     {
@@ -9293,7 +8303,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -9309,9 +8318,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:27"
     },
     {
@@ -9319,7 +8326,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -9335,9 +8341,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.85,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 20:46"
     },
     {
@@ -9345,7 +8349,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -9361,9 +8364,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.31,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 20:48"
     },
     {
@@ -9371,7 +8372,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -9387,9 +8387,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 21:01"
     },
     {
@@ -9397,7 +8395,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -9413,9 +8410,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:10"
     },
     {
@@ -9423,7 +8418,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -9439,9 +8433,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:12"
     },
     {
@@ -9449,7 +8441,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -9465,9 +8456,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:36"
     },
     {
@@ -9475,7 +8464,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -9491,9 +8479,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:37"
     },
     {
@@ -9501,7 +8487,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -9517,9 +8502,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:59"
     },
     {
@@ -9527,7 +8510,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -9543,9 +8525,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:59"
     },
     {
@@ -9553,7 +8533,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -9569,9 +8548,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:01"
     },
     {
@@ -9579,7 +8556,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -9595,9 +8571,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:04"
     },
     {
@@ -9605,7 +8579,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -9621,9 +8594,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 17:32"
     },
     {
@@ -9631,7 +8602,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -9647,9 +8617,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 17:36"
     },
     {
@@ -9657,7 +8625,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -9673,9 +8640,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 08:46"
     },
     {
@@ -9683,7 +8648,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -9699,9 +8663,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.17,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 08:48"
     },
     {
@@ -9709,7 +8671,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -9725,9 +8686,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:06"
     },
     {
@@ -9735,7 +8694,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -9751,9 +8709,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:07"
     },
     {
@@ -9761,7 +8717,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -9777,9 +8732,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 06:57"
     },
     {
@@ -9787,7 +8740,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -9803,9 +8755,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:54"
     },
     {
@@ -9813,7 +8763,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -9829,9 +8778,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:55"
     },
     {
@@ -9839,7 +8786,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -9855,9 +8801,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.64,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:12"
     },
     {
@@ -9865,7 +8809,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -9881,9 +8824,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:59"
     },
     {
@@ -9891,7 +8832,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -9907,9 +8847,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:59"
     },
     {
@@ -9917,7 +8855,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -9933,9 +8870,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.96,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 07:07"
     },
     {
@@ -9943,7 +8878,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -9959,9 +8893,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:05"
     },
     {
@@ -9969,7 +8901,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -9985,9 +8916,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:01"
     },
     {
@@ -9995,7 +8924,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -10011,9 +8939,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 18:38"
     },
     {
@@ -10021,7 +8947,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -10037,9 +8962,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 18:40"
     },
     {
@@ -10047,7 +8970,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -10063,9 +8985,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:27"
     },
     {
@@ -10073,7 +8993,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -10089,9 +9008,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:28"
     },
     {
@@ -10099,7 +9016,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -10115,9 +9031,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -2.85,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 01:41"
     },
     {
@@ -10125,7 +9039,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -10141,9 +9054,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 37.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-28 00:33"
     },
     {
@@ -10151,7 +9062,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -10167,9 +9077,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 23.75,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-28 00:47"
     },
     {
@@ -10177,7 +9085,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -10193,9 +9100,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 07:29"
     },
     {
@@ -10203,7 +9108,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -10219,9 +9123,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 13:41"
     },
     {
@@ -10229,7 +9131,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -10245,9 +9146,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 11:28"
     },
     {
@@ -10255,7 +9154,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -10271,9 +9169,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.26,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 11:31"
     },
     {
@@ -10281,7 +9177,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -10297,9 +9192,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 15:37"
     },
     {
@@ -10307,7 +9200,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -10323,9 +9215,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 15:37"
     },
     {
@@ -10333,7 +9223,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -10349,9 +9238,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:31"
     },
     {
@@ -10359,7 +9246,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -10375,9 +9261,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:19"
     },
     {
@@ -10385,7 +9269,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -10401,9 +9284,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:58"
     },
     {
@@ -10411,7 +9292,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -10427,9 +9307,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 18:00"
     },
     {
@@ -10437,7 +9315,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -10453,9 +9330,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:33"
     },
     {
@@ -10463,7 +9338,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -10479,9 +9353,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.36,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 17:36"
     },
     {
@@ -10489,7 +9361,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -10505,9 +9376,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 02:53"
     },
     {
@@ -10515,7 +9384,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -10531,9 +9399,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.83,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 20:19"
     },
     {
@@ -10541,7 +9407,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -10557,9 +9422,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.45,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 03:00"
     },
     {
@@ -10567,7 +9430,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -10583,9 +9445,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:09"
     },
     {
@@ -10593,7 +9453,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -10609,9 +9468,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:09"
     },
     {
@@ -10619,7 +9476,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -10635,9 +9491,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 19:51"
     },
     {
@@ -10645,7 +9499,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -10661,9 +9514,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 19:48"
     },
     {
@@ -10671,7 +9522,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -10687,9 +9537,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:35"
     },
     {
@@ -10697,7 +9545,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -10713,9 +9560,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 02:32"
     },
     {
@@ -10723,7 +9568,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -10739,9 +9583,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.27,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 02:35"
     },
     {
@@ -10749,7 +9591,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -10765,9 +9606,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 22:51"
     },
     {
@@ -10775,7 +9614,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -10791,9 +9629,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:02"
     },
     {
@@ -10801,7 +9637,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -10817,9 +9652,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:02"
     },
     {
@@ -10827,7 +9660,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -10843,9 +9675,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.45,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:16"
     },
     {
@@ -10853,7 +9683,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -10869,9 +9698,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:27"
     },
     {
@@ -10879,7 +9706,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -10895,9 +9721,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.26,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 23:21"
     },
     {
@@ -10905,7 +9729,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -10921,9 +9744,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.64,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 23:24"
     },
     {
@@ -10931,7 +9752,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -10947,9 +9767,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:37"
     },
     {
@@ -10957,7 +9775,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -10973,9 +9790,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.48,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:38"
     },
     {
@@ -10983,7 +9798,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -10999,9 +9813,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:06"
     },
     {
@@ -11009,7 +9821,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -11025,9 +9836,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.48,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:08"
     },
     {
@@ -11035,7 +9844,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -11051,9 +9859,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:03"
     },
     {
@@ -11061,7 +9867,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -11077,9 +9882,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:12"
     },
     {
@@ -11087,7 +9890,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -11103,9 +9905,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:21"
     },
     {
@@ -11113,7 +9913,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -11129,9 +9928,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 13:43"
     },
     {
@@ -11139,7 +9936,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -11155,9 +9951,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 14:02"
     },
     {
@@ -11165,7 +9959,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -11181,9 +9974,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 14:05"
     },
     {
@@ -11191,7 +9982,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -11207,9 +9997,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.36,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:35"
     },
     {
@@ -11217,7 +10005,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -11233,9 +10020,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.57,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:36"
     },
     {
@@ -11243,7 +10028,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -11259,9 +10043,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 7.2,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 14:02"
     },
     {
@@ -11269,7 +10051,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -11285,9 +10066,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.69,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 14:12"
     },
     {
@@ -11295,7 +10074,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -11311,9 +10089,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.23,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 14:13"
     },
     {
@@ -11321,7 +10097,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -11337,9 +10112,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:27"
     },
     {
@@ -11347,7 +10120,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -11363,9 +10135,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:29"
     },
     {
@@ -11373,7 +10143,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -11389,9 +10158,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.72,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:55"
     },
     {
@@ -11399,7 +10166,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -11415,9 +10181,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 8.79,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 01:23"
     },
     {
@@ -11425,7 +10189,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -11441,9 +10204,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 10:11"
     },
     {
@@ -11451,7 +10212,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -11467,9 +10227,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.17,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 10:22"
     },
     {
@@ -11477,7 +10235,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -11493,9 +10250,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:12"
     },
     {
@@ -11503,7 +10258,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -11519,9 +10273,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:13"
     },
     {
@@ -11529,7 +10281,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -11545,9 +10296,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:09"
     },
     {
@@ -11555,7 +10304,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -11571,9 +10319,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:09"
     },
     {
@@ -11581,7 +10327,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -11597,9 +10342,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:16"
     },
     {
@@ -11607,7 +10350,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -11623,9 +10365,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:16"
     },
     {
@@ -11633,7 +10373,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -11649,9 +10388,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:54"
     },
     {
@@ -11659,7 +10396,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -11675,9 +10411,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:57"
     },
     {
@@ -11685,7 +10419,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -11701,9 +10434,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 16:09"
     },
     {
@@ -11711,7 +10442,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -11727,9 +10457,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 16:10"
     },
     {
@@ -11737,7 +10465,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -11753,9 +10480,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.31,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 07:33"
     },
     {
@@ -11763,7 +10488,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -11779,9 +10503,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:49"
     },
     {
@@ -11789,7 +10511,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -11805,9 +10526,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:49"
     },
     {
@@ -11815,7 +10534,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -11831,9 +10549,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:20"
     },
     {
@@ -11841,7 +10557,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -11857,9 +10572,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:20"
     },
     {
@@ -11867,7 +10580,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -11883,9 +10595,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.2,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 09:32"
     },
     {
@@ -11893,7 +10603,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -11909,9 +10618,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.49,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 16:56"
     },
     {
@@ -11919,7 +10626,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -11935,9 +10641,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:36"
     },
     {
@@ -11945,7 +10649,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -11961,9 +10664,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:33"
     },
     {
@@ -11971,7 +10672,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -11987,9 +10687,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:18"
     },
     {
@@ -11997,7 +10695,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -12013,9 +10710,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.34,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:19"
     },
     {
@@ -12023,7 +10718,6 @@ const DB = {
       "engine": "pie",
       "release": "7b86476fb",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -12039,9 +10733,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "7b86476fb",
-      "os": null,
       "measured": "2026-09-24 13:08"
     },
     {
@@ -12049,7 +10741,6 @@ const DB = {
       "engine": "pie",
       "release": "7b86476fb",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -12065,9 +10756,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "7b86476fb",
-      "os": null,
       "measured": "2026-09-24 13:09"
     },
     {
@@ -12075,7 +10764,6 @@ const DB = {
       "engine": "pie",
       "release": "d4a2bc7e1",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -12091,9 +10779,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d4a2bc7e1",
-      "os": null,
       "measured": "2026-09-24 01:15"
     },
     {
@@ -12101,7 +10787,6 @@ const DB = {
       "engine": "pie",
       "release": "d4a2bc7e1",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -12117,9 +10802,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "d4a2bc7e1",
-      "os": null,
       "measured": "2026-09-24 01:18"
     },
     {
@@ -12127,7 +10810,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -12143,9 +10825,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 15:39"
     },
     {
@@ -12153,7 +10833,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -12169,9 +10848,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 15:40"
     },
     {
@@ -12179,7 +10856,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -12195,9 +10871,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:19"
     },
     {
@@ -12205,7 +10879,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -12221,9 +10894,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:19"
     },
     {
@@ -12231,7 +10902,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -12247,9 +10917,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.82,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 07:37"
     },
     {
@@ -12257,7 +10925,6 @@ const DB = {
       "engine": "pie",
       "release": "7b86476fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -12273,9 +10940,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "7b86476fb",
-      "os": null,
       "measured": "2026-09-24 13:20"
     },
     {
@@ -12283,7 +10948,6 @@ const DB = {
       "engine": "pie",
       "release": "7b86476fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -12299,9 +10963,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "7b86476fb",
-      "os": null,
       "measured": "2026-09-24 13:20"
     },
     {
@@ -12309,7 +10971,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -12325,9 +10986,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:03"
     },
     {
@@ -12335,7 +10994,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -12351,9 +11009,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:05"
     },
     {
@@ -12361,7 +11017,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -12377,9 +11032,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.23,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:03"
     },
     {
@@ -12387,7 +11040,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -12403,9 +11055,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:24"
     },
     {
@@ -12413,7 +11063,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -12429,9 +11078,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.61,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:15"
     },
     {
@@ -12439,7 +11086,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -12455,9 +11101,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.54,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:56"
     },
     {
@@ -12465,7 +11109,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -12481,9 +11124,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.35,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:59"
     },
     {
@@ -12491,7 +11132,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -12507,9 +11147,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.29,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:52"
     },
     {
@@ -12517,7 +11155,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -12533,9 +11170,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:52"
     },
     {
@@ -12543,7 +11178,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -12559,9 +11193,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 10:09"
     },
     {
@@ -12569,7 +11201,6 @@ const DB = {
       "engine": "pie",
       "release": "e06ff3593",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -12585,9 +11216,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e06ff3593",
-      "os": null,
       "measured": "2026-09-23 10:09"
     },
     {
@@ -12595,7 +11224,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -12611,9 +11239,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:26"
     },
     {
@@ -12621,7 +11247,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -12637,9 +11262,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:27"
     },
     {
@@ -12647,7 +11270,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -12663,9 +11285,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:54"
     },
     {
@@ -12673,7 +11293,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -12689,9 +11308,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:36"
     },
     {
@@ -12699,7 +11316,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -12715,9 +11331,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:06"
     },
     {
@@ -12725,7 +11339,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -12741,9 +11354,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 06:21"
     },
     {
@@ -12751,7 +11362,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -12767,9 +11377,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 06:22"
     },
     {
@@ -12777,7 +11385,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -12793,9 +11400,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 04:16"
     },
     {
@@ -12803,7 +11408,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -12819,9 +11423,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 04:16"
     },
     {
@@ -12829,7 +11431,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -12845,9 +11446,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:44"
     },
     {
@@ -12855,7 +11454,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -12871,9 +11469,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 20:46"
     },
     {
@@ -12881,7 +11477,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -12897,9 +11492,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 20:46"
     },
     {
@@ -12907,7 +11500,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -12923,9 +11515,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 03:40"
     },
     {
@@ -12933,7 +11523,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -12949,9 +11538,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 3.51,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 04:29"
     },
     {
@@ -12959,7 +11546,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -12975,9 +11561,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 20:21"
     },
     {
@@ -12985,7 +11569,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -13001,9 +11584,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 18:07"
     },
     {
@@ -13011,7 +11592,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -13027,9 +11607,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:53"
     },
     {
@@ -13037,7 +11615,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -13053,9 +11630,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:54"
     },
     {
@@ -13063,7 +11638,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -13079,9 +11653,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 06:01"
     },
     {
@@ -13089,7 +11661,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -13105,9 +11676,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.58,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 09:37"
     },
     {
@@ -13115,7 +11684,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -13131,9 +11699,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.56,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 18:40"
     },
     {
@@ -13141,7 +11707,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -13157,9 +11722,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:08"
     },
     {
@@ -13167,7 +11730,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -13183,9 +11745,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.35,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:09"
     },
     {
@@ -13193,7 +11753,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -13209,9 +11768,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 08:27"
     },
     {
@@ -13219,7 +11776,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -13235,9 +11791,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -4.57,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 08:43"
     },
     {
@@ -13245,7 +11799,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -13261,9 +11814,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 10:23"
     },
     {
@@ -13271,7 +11822,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -13287,9 +11837,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 10:24"
     },
     {
@@ -13297,7 +11845,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -13313,9 +11860,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.15,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 10:46"
     },
     {
@@ -13323,7 +11868,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -13339,9 +11883,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 10:46"
     },
     {
@@ -13349,7 +11891,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -13365,9 +11906,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.4,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-24 23:52"
     },
     {
@@ -13375,7 +11914,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -13391,9 +11929,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.73,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 04:07"
     },
     {
@@ -13401,7 +11937,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -13417,9 +11952,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 07:30"
     },
     {
@@ -13427,7 +11960,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -13443,9 +11975,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.52,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 07:51"
     },
     {
@@ -13453,7 +11983,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -13469,9 +11998,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 07:52"
     },
     {
@@ -13479,7 +12006,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -13495,9 +12021,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:07"
     },
     {
@@ -13505,7 +12029,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -13521,9 +12044,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:19"
     },
     {
@@ -13531,7 +12052,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -13547,9 +12067,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:02"
     },
     {
@@ -13557,7 +12075,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -13573,9 +12090,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:12"
     },
     {
@@ -13583,7 +12098,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -13599,9 +12113,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.15,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:50"
     },
     {
@@ -13609,7 +12121,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -13625,9 +12136,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:56"
     },
     {
@@ -13635,7 +12144,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -13651,9 +12159,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 15:27"
     },
     {
@@ -13661,7 +12167,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -13677,9 +12182,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.17,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 15:47"
     },
     {
@@ -13687,7 +12190,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -13703,9 +12205,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 15:47"
     },
     {
@@ -13713,7 +12213,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -13729,9 +12228,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 15:58"
     },
     {
@@ -13739,7 +12236,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -13755,9 +12251,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 15:58"
     },
     {
@@ -13765,7 +12259,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -13781,9 +12274,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.96,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:30"
     },
     {
@@ -13791,7 +12282,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -13807,9 +12297,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:32"
     },
     {
@@ -13817,7 +12305,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -13833,9 +12320,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:35"
     },
     {
@@ -13843,7 +12328,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -13859,9 +12343,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.4,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 17:28"
     },
     {
@@ -13869,7 +12351,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -13885,9 +12366,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 114.94,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 17:13"
     },
     {
@@ -13895,7 +12374,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -13911,9 +12389,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 05:20"
     },
     {
@@ -13921,7 +12397,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -13937,9 +12412,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.53,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 22:18"
     },
     {
@@ -13947,7 +12420,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -13963,9 +12435,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 00:34"
     },
     {
@@ -13973,7 +12443,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -13989,9 +12458,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:53"
     },
     {
@@ -13999,7 +12466,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -14015,9 +12481,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:53"
     },
     {
@@ -14025,7 +12489,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -14041,9 +12504,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:54"
     },
     {
@@ -14051,7 +12512,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -14067,9 +12527,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:54"
     },
     {
@@ -14077,7 +12535,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -14093,9 +12550,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.54,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:30"
     },
     {
@@ -14103,7 +12558,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -14119,9 +12573,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:30"
     },
     {
@@ -14129,7 +12581,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -14145,9 +12596,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:39"
     },
     {
@@ -14155,7 +12604,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -14171,9 +12619,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:39"
     },
     {
@@ -14181,7 +12627,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -14197,9 +12642,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:43"
     },
     {
@@ -14207,7 +12650,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -14223,9 +12665,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.33,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:45"
     },
     {
@@ -14233,7 +12673,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -14249,9 +12688,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:05"
     },
     {
@@ -14259,7 +12696,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -14275,9 +12711,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:09"
     },
     {
@@ -14285,7 +12719,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -14301,9 +12734,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:18"
     },
     {
@@ -14311,7 +12742,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -14327,9 +12757,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.25,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 08:23"
     },
     {
@@ -14337,7 +12765,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -14353,9 +12780,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 5.36,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 15:02"
     },
     {
@@ -14363,7 +12788,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -14379,9 +12803,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 31.71,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 22:06"
     },
     {
@@ -14389,7 +12811,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -14405,9 +12826,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 25.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 22:26"
     },
     {
@@ -14415,7 +12834,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -14431,9 +12849,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:02"
     },
     {
@@ -14441,7 +12857,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -14457,9 +12872,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:08"
     },
     {
@@ -14467,7 +12880,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -14483,9 +12895,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.47,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:37"
     },
     {
@@ -14493,7 +12903,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -14509,9 +12918,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:38"
     },
     {
@@ -14519,7 +12926,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -14535,9 +12941,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:57"
     },
     {
@@ -14545,7 +12949,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -14561,9 +12964,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:58"
     },
     {
@@ -14571,7 +12972,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -14587,9 +12987,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.17,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-24 23:56"
     },
     {
@@ -14597,7 +12995,6 @@ const DB = {
       "engine": "pie",
       "release": "6216f2b25",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -14613,9 +13010,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6216f2b25",
-      "os": null,
       "measured": "2026-09-28 03:09"
     },
     {
@@ -14623,7 +13018,6 @@ const DB = {
       "engine": "pie",
       "release": "6216f2b25",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -14639,9 +13033,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "6216f2b25",
-      "os": null,
       "measured": "2026-09-28 03:11"
     },
     {
@@ -14649,7 +13041,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -14665,9 +13056,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:15"
     },
     {
@@ -14675,7 +13064,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -14691,9 +13079,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:16"
     },
     {
@@ -14701,7 +13087,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -14717,9 +13102,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 09:44"
     },
     {
@@ -14727,7 +13110,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -14743,9 +13125,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.68,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 09:45"
     },
     {
@@ -14753,7 +13133,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -14769,9 +13148,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:48"
     },
     {
@@ -14779,7 +13156,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -14795,9 +13171,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:48"
     },
     {
@@ -14805,7 +13179,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -14821,9 +13194,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:57"
     },
     {
@@ -14831,7 +13202,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -14847,9 +13217,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:57"
     },
     {
@@ -14857,7 +13225,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -14873,9 +13240,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:50"
     },
     {
@@ -14883,7 +13248,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -14899,9 +13263,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 16:08"
     },
     {
@@ -14909,7 +13271,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -14925,9 +13286,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 16:08"
     },
     {
@@ -14935,7 +13294,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -14951,9 +13309,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.27,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:49"
     },
     {
@@ -14961,7 +13317,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -14977,9 +13332,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.4,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:50"
     },
     {
@@ -14987,7 +13340,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15003,9 +13355,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:02"
     },
     {
@@ -15013,7 +13363,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -15029,9 +13378,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:10"
     },
     {
@@ -15039,7 +13386,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -15055,9 +13401,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:12"
     },
     {
@@ -15065,7 +13409,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15081,9 +13424,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:33"
     },
     {
@@ -15091,7 +13432,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -15107,9 +13447,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:33"
     },
     {
@@ -15117,7 +13455,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -15133,9 +13470,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:10"
     },
     {
@@ -15143,7 +13478,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -15159,9 +13493,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:11"
     },
     {
@@ -15169,7 +13501,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -15185,9 +13516,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:40"
     },
     {
@@ -15195,7 +13524,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15211,9 +13539,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:44"
     },
     {
@@ -15221,7 +13547,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -15237,9 +13562,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:55"
     },
     {
@@ -15247,7 +13570,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -15263,9 +13585,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -3.26,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:57"
     },
     {
@@ -15273,7 +13593,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15289,9 +13608,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.7,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:38"
     },
     {
@@ -15299,7 +13616,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15315,9 +13631,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:11"
     },
     {
@@ -15325,7 +13639,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -15341,9 +13654,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:25"
     },
     {
@@ -15351,7 +13662,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -15367,9 +13677,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:26"
     },
     {
@@ -15377,7 +13685,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -15393,9 +13700,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:57"
     },
     {
@@ -15403,7 +13708,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -15419,9 +13723,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:59"
     },
     {
@@ -15429,7 +13731,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -15445,9 +13746,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 16:22"
     },
     {
@@ -15455,7 +13754,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -15471,9 +13769,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.21,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 16:26"
     },
     {
@@ -15481,7 +13777,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15497,9 +13792,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 11:45"
     },
     {
@@ -15507,7 +13800,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -15523,9 +13815,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 11:47"
     },
     {
@@ -15533,7 +13823,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15549,9 +13838,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:33"
     },
     {
@@ -15559,7 +13846,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -15575,9 +13861,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.47,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:43"
     },
     {
@@ -15585,7 +13869,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15601,9 +13884,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:00"
     },
     {
@@ -15611,7 +13892,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -15627,9 +13907,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:07"
     },
     {
@@ -15637,7 +13915,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -15653,9 +13930,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:18"
     },
     {
@@ -15663,7 +13938,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -15679,9 +13953,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:19"
     },
     {
@@ -15689,7 +13961,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15705,9 +13976,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:40"
     },
     {
@@ -15715,7 +13984,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -15731,9 +13999,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:48"
     },
     {
@@ -15741,7 +14007,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -15757,9 +14022,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.31,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:14"
     },
     {
@@ -15767,7 +14030,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15783,9 +14045,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:40"
     },
     {
@@ -15793,7 +14053,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15809,9 +14068,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:01"
     },
     {
@@ -15819,7 +14076,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -15835,9 +14091,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:02"
     },
     {
@@ -15845,7 +14099,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -15861,9 +14114,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 15:20"
     },
     {
@@ -15871,7 +14122,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15887,9 +14137,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:00"
     },
     {
@@ -15897,7 +14145,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -15913,9 +14160,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:00"
     },
     {
@@ -15923,7 +14168,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -15939,9 +14183,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:56"
     },
     {
@@ -15949,7 +14191,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -15965,9 +14206,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:57"
     },
     {
@@ -15975,7 +14214,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -15991,9 +14229,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:38"
     },
     {
@@ -16001,7 +14237,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16017,9 +14252,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:24"
     },
     {
@@ -16027,7 +14260,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -16043,9 +14275,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.15,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:31"
     },
     {
@@ -16053,7 +14283,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -16069,9 +14298,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:21"
     },
     {
@@ -16079,7 +14306,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -16095,9 +14321,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 12:05"
     },
     {
@@ -16105,7 +14329,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -16121,9 +14344,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 12:07"
     },
     {
@@ -16131,7 +14352,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -16147,9 +14367,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:22"
     },
     {
@@ -16157,7 +14375,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -16173,9 +14390,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:22"
     },
     {
@@ -16183,7 +14398,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16199,9 +14413,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 15:41"
     },
     {
@@ -16209,7 +14421,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -16225,9 +14436,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 14:22"
     },
     {
@@ -16235,7 +14444,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -16251,9 +14459,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:02"
     },
     {
@@ -16261,7 +14467,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -16277,9 +14482,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:28"
     },
     {
@@ -16287,7 +14490,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16303,9 +14505,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:03"
     },
     {
@@ -16313,7 +14513,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -16329,9 +14528,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 04:55"
     },
     {
@@ -16339,7 +14536,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -16355,9 +14551,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 04:55"
     },
     {
@@ -16365,7 +14559,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16381,9 +14574,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:05"
     },
     {
@@ -16391,7 +14582,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -16407,9 +14597,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:07"
     },
     {
@@ -16417,7 +14605,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -16433,9 +14620,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.26,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:41"
     },
     {
@@ -16443,7 +14628,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -16459,9 +14643,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:23"
     },
     {
@@ -16469,7 +14651,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -16485,9 +14666,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:09"
     },
     {
@@ -16495,7 +14674,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16511,9 +14689,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 18:02"
     },
     {
@@ -16521,7 +14697,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -16537,9 +14712,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 10:56"
     },
     {
@@ -16547,7 +14720,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16563,9 +14735,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 16:48"
     },
     {
@@ -16573,7 +14743,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -16589,9 +14758,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 16:57"
     },
     {
@@ -16599,7 +14766,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16615,9 +14781,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:17"
     },
     {
@@ -16625,7 +14789,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -16641,9 +14804,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.61,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:04"
     },
     {
@@ -16651,7 +14812,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -16667,9 +14827,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:02"
     },
     {
@@ -16677,7 +14835,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -16693,9 +14850,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:36"
     },
     {
@@ -16703,7 +14858,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -16719,9 +14873,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:37"
     },
     {
@@ -16729,7 +14881,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -16745,9 +14896,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:24"
     },
     {
@@ -16755,7 +14904,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -16771,9 +14919,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 18:14"
     },
     {
@@ -16781,7 +14927,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -16797,9 +14942,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 18:14"
     },
     {
@@ -16807,7 +14950,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16823,9 +14965,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 08:30"
     },
     {
@@ -16833,7 +14973,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -16849,9 +14988,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 07:58"
     },
     {
@@ -16859,7 +14996,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -16875,9 +15011,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 22:07"
     },
     {
@@ -16885,7 +15019,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16901,9 +15034,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:47"
     },
     {
@@ -16911,7 +15042,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -16927,9 +15057,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:57"
     },
     {
@@ -16937,7 +15065,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -16953,9 +15080,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:57"
     },
     {
@@ -16963,7 +15088,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -16979,9 +15103,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:11"
     },
     {
@@ -16989,7 +15111,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -17005,9 +15126,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.27,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:12"
     },
     {
@@ -17015,7 +15134,6 @@ const DB = {
       "engine": "pie",
       "release": "029df4a8d",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -17031,9 +15149,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.17,
       "accuracy": null,
-      "status": "pass",
       "commit": "029df4a8d",
-      "os": null,
       "measured": "2026-09-23 23:55"
     },
     {
@@ -17041,7 +15157,6 @@ const DB = {
       "engine": "pie",
       "release": "029df4a8d",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -17057,9 +15172,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "029df4a8d",
-      "os": null,
       "measured": "2026-09-23 23:40"
     },
     {
@@ -17067,7 +15180,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -17083,9 +15195,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:41"
     },
     {
@@ -17093,7 +15203,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -17109,9 +15218,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.22,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:42"
     },
     {
@@ -17119,7 +15226,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -17135,9 +15241,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:23"
     },
     {
@@ -17145,7 +15249,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -17161,9 +15264,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:24"
     },
     {
@@ -17171,7 +15272,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -17187,9 +15287,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 09:24"
     },
     {
@@ -17197,7 +15295,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -17213,9 +15310,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 09:24"
     },
     {
@@ -17223,7 +15318,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -17239,9 +15333,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:35"
     },
     {
@@ -17249,7 +15341,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -17265,9 +15356,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:45"
     },
     {
@@ -17275,7 +15364,6 @@ const DB = {
       "engine": "pie",
       "release": "1cd135883",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -17291,9 +15379,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "1cd135883",
-      "os": null,
       "measured": "2026-09-24 09:47"
     },
     {
@@ -17301,7 +15387,6 @@ const DB = {
       "engine": "pie",
       "release": "1cd135883",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -17317,9 +15402,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1cd135883",
-      "os": null,
       "measured": "2026-09-24 09:49"
     },
     {
@@ -17327,7 +15410,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -17343,9 +15425,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 01:31"
     },
     {
@@ -17353,7 +15433,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -17369,9 +15448,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 01:33"
     },
     {
@@ -17379,7 +15456,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -17395,9 +15471,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.27,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:45"
     },
     {
@@ -17405,7 +15479,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -17421,9 +15494,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:08"
     },
     {
@@ -17431,7 +15502,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -17447,9 +15517,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 22:08"
     },
     {
@@ -17457,7 +15525,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -17473,9 +15540,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.52,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 19:02"
     },
     {
@@ -17483,7 +15548,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -17499,9 +15563,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 79.44,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 18:56"
     },
     {
@@ -17509,7 +15571,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -17525,9 +15586,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:01"
     },
     {
@@ -17535,7 +15594,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -17551,9 +15609,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:08"
     },
     {
@@ -17561,7 +15617,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -17577,9 +15632,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.7,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:10"
     },
     {
@@ -17587,7 +15640,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -17603,9 +15655,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 94.59,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 19:21"
     },
     {
@@ -17613,7 +15663,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -17629,9 +15678,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 14.76,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 19:28"
     },
     {
@@ -17639,7 +15686,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -17655,9 +15701,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:24"
     },
     {
@@ -17665,7 +15709,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -17681,9 +15724,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:12"
     },
     {
@@ -17691,7 +15732,6 @@ const DB = {
       "engine": "pie",
       "release": "e71652199",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -17707,9 +15747,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e71652199",
-      "os": null,
       "measured": "2026-09-23 21:02"
     },
     {
@@ -17717,7 +15755,6 @@ const DB = {
       "engine": "pie",
       "release": "e71652199",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -17733,9 +15770,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e71652199",
-      "os": null,
       "measured": "2026-09-23 21:02"
     },
     {
@@ -17743,7 +15778,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -17759,9 +15793,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 11:59"
     },
     {
@@ -17769,7 +15801,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -17785,9 +15816,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:56"
     },
     {
@@ -17795,7 +15824,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -17811,9 +15839,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:58"
     },
     {
@@ -17821,7 +15847,6 @@ const DB = {
       "engine": "pie",
       "release": "e71652199",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -17837,9 +15862,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.48,
       "accuracy": null,
-      "status": "pass",
       "commit": "e71652199",
-      "os": null,
       "measured": "2026-09-23 21:22"
     },
     {
@@ -17847,7 +15870,6 @@ const DB = {
       "engine": "pie",
       "release": "e71652199",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -17863,9 +15885,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.31,
       "accuracy": null,
-      "status": "pass",
       "commit": "e71652199",
-      "os": null,
       "measured": "2026-09-23 21:10"
     },
     {
@@ -17873,7 +15893,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -17889,9 +15908,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.54,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 11:53"
     },
     {
@@ -17899,7 +15916,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -17915,9 +15931,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.97,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:52"
     },
     {
@@ -17925,7 +15939,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -17941,9 +15954,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:54"
     },
     {
@@ -17951,7 +15962,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -17967,9 +15977,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.7,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 10:11"
     },
     {
@@ -17977,7 +15985,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -17993,9 +16000,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.87,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 10:22"
     },
     {
@@ -18003,7 +16008,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -18019,9 +16023,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 16:19"
     },
     {
@@ -18029,7 +16031,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -18045,9 +16046,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.97,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 16:20"
     },
     {
@@ -18055,7 +16054,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -18071,9 +16069,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 08:41"
     },
     {
@@ -18081,7 +16077,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -18097,9 +16092,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 08:42"
     },
     {
@@ -18107,7 +16100,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -18123,9 +16115,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 18:01"
     },
     {
@@ -18133,7 +16123,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -18149,9 +16138,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:53"
     },
     {
@@ -18159,7 +16146,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -18175,9 +16161,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:53"
     },
     {
@@ -18185,7 +16169,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -18201,9 +16184,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:57"
     },
     {
@@ -18211,7 +16192,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -18227,9 +16207,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:01"
     },
     {
@@ -18237,7 +16215,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -18253,9 +16230,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:38"
     },
     {
@@ -18263,7 +16238,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -18279,9 +16253,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:38"
     },
     {
@@ -18289,7 +16261,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -18305,9 +16276,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:05"
     },
     {
@@ -18315,7 +16284,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -18331,9 +16299,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:35"
     },
     {
@@ -18341,7 +16307,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -18357,9 +16322,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:35"
     },
     {
@@ -18367,7 +16330,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -18383,9 +16345,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.77,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 22:25"
     },
     {
@@ -18393,7 +16353,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -18409,9 +16368,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:43"
     },
     {
@@ -18419,7 +16376,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -18435,9 +16391,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:37"
     },
     {
@@ -18445,7 +16399,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -18461,9 +16414,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:38"
     },
     {
@@ -18471,7 +16422,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -18487,9 +16437,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:24"
     },
     {
@@ -18497,7 +16445,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -18513,9 +16460,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 14:19"
     },
     {
@@ -18523,7 +16468,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -18539,9 +16483,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 4.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:13"
     },
     {
@@ -18549,7 +16491,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -18565,9 +16506,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 18:23"
     },
     {
@@ -18575,7 +16514,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -18591,9 +16529,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 18:28"
     },
     {
@@ -18601,7 +16537,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -18617,9 +16552,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:41"
     },
     {
@@ -18627,7 +16560,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -18643,9 +16575,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.5,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:19"
     },
     {
@@ -18653,7 +16583,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -18669,9 +16598,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:23"
     },
     {
@@ -18679,7 +16606,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -18695,9 +16621,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:45"
     },
     {
@@ -18705,7 +16629,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -18721,9 +16644,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:46"
     },
     {
@@ -18731,7 +16652,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -18747,9 +16667,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.89,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:29"
     },
     {
@@ -18757,7 +16675,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -18773,9 +16690,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.92,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:31"
     },
     {
@@ -18783,7 +16698,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -18799,9 +16713,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 08:44"
     },
     {
@@ -18809,7 +16721,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -18825,9 +16736,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -3.2,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 09:32"
     },
     {
@@ -18835,7 +16744,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -18851,9 +16759,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:36"
     },
     {
@@ -18861,7 +16767,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -18877,9 +16782,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:37"
     },
     {
@@ -18887,7 +16790,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -18903,9 +16805,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:06"
     },
     {
@@ -18913,7 +16813,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -18929,9 +16828,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:07"
     },
     {
@@ -18939,7 +16836,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -18955,9 +16851,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:54"
     },
     {
@@ -18965,7 +16859,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -18981,9 +16874,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:55"
     },
     {
@@ -18991,7 +16882,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -19007,9 +16897,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.17,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:02"
     },
     {
@@ -19017,7 +16905,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -19033,9 +16920,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:03"
     },
     {
@@ -19043,7 +16928,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -19059,9 +16943,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:16"
     },
     {
@@ -19069,7 +16951,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -19085,9 +16966,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 18:59"
     },
     {
@@ -19095,7 +16974,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -19111,9 +16989,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:00"
     },
     {
@@ -19121,7 +16997,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -19137,9 +17012,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:16"
     },
     {
@@ -19147,7 +17020,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -19163,9 +17035,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:16"
     },
     {
@@ -19173,7 +17043,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -19189,9 +17058,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 09:05"
     },
     {
@@ -19199,7 +17066,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -19215,9 +17081,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 09:09"
     },
     {
@@ -19225,7 +17089,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -19241,9 +17104,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 09:14"
     },
     {
@@ -19251,7 +17112,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -19267,9 +17127,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 09:15"
     },
     {
@@ -19277,7 +17135,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -19293,9 +17150,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 23:15"
     },
     {
@@ -19303,7 +17158,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -19319,9 +17173,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 23:16"
     },
     {
@@ -19329,7 +17181,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -19345,9 +17196,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:15"
     },
     {
@@ -19355,7 +17204,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -19371,9 +17219,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:16"
     },
     {
@@ -19381,7 +17227,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -19397,9 +17242,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:35"
     },
     {
@@ -19407,7 +17250,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -19423,9 +17265,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:37"
     },
     {
@@ -19433,7 +17273,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -19449,9 +17288,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 18:28"
     },
     {
@@ -19459,7 +17296,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -19475,9 +17311,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 18:29"
     },
     {
@@ -19485,7 +17319,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -19501,9 +17334,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.15,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 03:52"
     },
     {
@@ -19511,7 +17342,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -19527,9 +17357,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 13:02"
     },
     {
@@ -19537,7 +17365,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -19553,9 +17380,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 13:02"
     },
     {
@@ -19563,7 +17388,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -19579,9 +17403,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 03:42"
     },
     {
@@ -19589,7 +17411,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -19605,9 +17426,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.36,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 03:46"
     },
     {
@@ -19615,7 +17434,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -19631,9 +17449,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 22:19"
     },
     {
@@ -19641,7 +17457,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -19657,9 +17472,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 22:20"
     },
     {
@@ -19667,7 +17480,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -19683,9 +17495,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:58"
     },
     {
@@ -19693,7 +17503,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -19709,9 +17518,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.14,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 23:00"
     },
     {
@@ -19719,7 +17526,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -19735,9 +17541,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:44"
     },
     {
@@ -19745,7 +17549,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -19761,9 +17564,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:44"
     },
     {
@@ -19771,7 +17572,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -19787,9 +17587,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:00"
     },
     {
@@ -19797,7 +17595,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -19813,9 +17610,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:01"
     },
     {
@@ -19823,7 +17618,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -19839,9 +17633,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 10:39"
     },
     {
@@ -19849,7 +17641,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -19865,9 +17656,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.21,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 10:40"
     },
     {
@@ -19875,7 +17664,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -19891,9 +17679,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.53,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 10:18"
     },
     {
@@ -19901,7 +17687,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -19917,9 +17702,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 10:18"
     },
     {
@@ -19927,7 +17710,6 @@ const DB = {
       "engine": "pie",
       "release": "7b86476fb",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -19943,9 +17725,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -3.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "7b86476fb",
-      "os": null,
       "measured": "2026-09-24 13:56"
     },
     {
@@ -19953,7 +17733,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -19969,9 +17748,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:42"
     },
     {
@@ -19979,7 +17756,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -19995,9 +17771,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 02:10"
     },
     {
@@ -20005,7 +17779,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -20021,9 +17794,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.45,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:16"
     },
     {
@@ -20031,7 +17802,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -20047,9 +17817,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.4,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:41"
     },
     {
@@ -20057,7 +17825,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -20073,9 +17840,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 11:16"
     },
     {
@@ -20083,7 +17848,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -20099,9 +17863,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.22,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 11:17"
     },
     {
@@ -20109,7 +17871,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -20125,9 +17886,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:00"
     },
     {
@@ -20135,7 +17894,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -20151,9 +17909,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:01"
     },
     {
@@ -20161,7 +17917,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -20177,9 +17932,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:18"
     },
     {
@@ -20187,7 +17940,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -20203,9 +17955,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:18"
     },
     {
@@ -20213,7 +17963,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -20229,9 +17978,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:51"
     },
     {
@@ -20239,7 +17986,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -20255,9 +18001,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:52"
     },
     {
@@ -20265,7 +18009,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -20281,9 +18024,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.17,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:52"
     },
     {
@@ -20291,7 +18032,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -20307,9 +18047,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:59"
     },
     {
@@ -20317,7 +18055,6 @@ const DB = {
       "engine": "pie",
       "release": "0c97fb305",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -20333,9 +18070,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "0c97fb305",
-      "os": null,
       "measured": "2026-09-24 04:45"
     },
     {
@@ -20343,7 +18078,6 @@ const DB = {
       "engine": "pie",
       "release": "0c97fb305",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -20359,9 +18093,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "0c97fb305",
-      "os": null,
       "measured": "2026-09-24 04:47"
     },
     {
@@ -20369,7 +18101,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -20385,9 +18116,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:06"
     },
     {
@@ -20395,7 +18124,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -20411,9 +18139,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:08"
     },
     {
@@ -20421,7 +18147,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -20437,9 +18162,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:21"
     },
     {
@@ -20447,7 +18170,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -20463,9 +18185,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:24"
     },
     {
@@ -20473,7 +18193,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -20489,9 +18208,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:24"
     },
     {
@@ -20499,7 +18216,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -20515,9 +18231,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.3,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:26"
     },
     {
@@ -20525,7 +18239,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -20541,9 +18254,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:41"
     },
     {
@@ -20551,7 +18262,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -20567,9 +18277,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.3,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:54"
     },
     {
@@ -20577,7 +18285,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -20593,9 +18300,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.46,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-26 17:13"
     },
     {
@@ -20603,7 +18308,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -20619,9 +18323,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:33"
     },
     {
@@ -20629,7 +18331,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -20645,9 +18346,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 06:38"
     },
     {
@@ -20655,7 +18354,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -20671,9 +18369,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 06:43"
     },
     {
@@ -20681,7 +18377,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -20697,9 +18392,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 06:54"
     },
     {
@@ -20707,7 +18400,6 @@ const DB = {
       "engine": "pie",
       "release": "bbb286615",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -20723,9 +18415,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "bbb286615",
-      "os": null,
       "measured": "2026-09-24 06:55"
     },
     {
@@ -20733,7 +18423,6 @@ const DB = {
       "engine": "pie",
       "release": "034304521",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -20749,9 +18438,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "034304521",
-      "os": null,
       "measured": "2026-09-23 23:43"
     },
     {
@@ -20759,7 +18446,6 @@ const DB = {
       "engine": "pie",
       "release": "034304521",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -20775,9 +18461,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "034304521",
-      "os": null,
       "measured": "2026-09-23 23:52"
     },
     {
@@ -20785,7 +18469,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -20801,9 +18484,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 21:36"
     },
     {
@@ -20811,7 +18492,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -20827,9 +18507,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 21:38"
     },
     {
@@ -20837,7 +18515,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -20853,9 +18530,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:40"
     },
     {
@@ -20863,7 +18538,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -20879,9 +18553,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.73,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:44"
     },
     {
@@ -20889,7 +18561,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -20905,9 +18576,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:38"
     },
     {
@@ -20915,7 +18584,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -20931,9 +18599,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.61,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:25"
     },
     {
@@ -20941,7 +18607,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -20957,9 +18622,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:50"
     },
     {
@@ -20967,7 +18630,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -20983,9 +18645,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 06:24"
     },
     {
@@ -20993,7 +18653,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -21009,9 +18668,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 06:25"
     },
     {
@@ -21019,7 +18676,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -21035,9 +18691,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:29"
     },
     {
@@ -21045,7 +18699,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -21061,9 +18714,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:31"
     },
     {
@@ -21071,7 +18722,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -21087,9 +18737,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 09:45"
     },
     {
@@ -21097,7 +18745,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -21113,9 +18760,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 09:46"
     },
     {
@@ -21123,7 +18768,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -21139,9 +18783,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 04:20"
     },
     {
@@ -21149,7 +18791,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -21165,9 +18806,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 04:20"
     },
     {
@@ -21175,7 +18814,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -21191,9 +18829,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 10:32"
     },
     {
@@ -21201,7 +18837,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -21217,9 +18852,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:52"
     },
     {
@@ -21227,7 +18860,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -21243,9 +18875,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.23,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:53"
     },
     {
@@ -21253,7 +18883,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -21269,9 +18898,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:13"
     },
     {
@@ -21279,7 +18906,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -21295,9 +18921,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 19:54"
     },
     {
@@ -21305,7 +18929,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -21321,9 +18944,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 19:53"
     },
     {
@@ -21331,7 +18952,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -21347,9 +18967,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 20:02"
     },
     {
@@ -21357,7 +18975,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -21373,9 +18990,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 20:01"
     },
     {
@@ -21383,7 +18998,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -21399,9 +19013,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.38,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 15:43"
     },
     {
@@ -21409,7 +19021,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -21425,9 +19036,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:04"
     },
     {
@@ -21435,7 +19044,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -21451,9 +19059,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 18:11"
     },
     {
@@ -21461,7 +19067,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -21477,9 +19082,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 18:13"
     },
     {
@@ -21487,7 +19090,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -21503,9 +19105,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:59"
     },
     {
@@ -21513,7 +19113,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -21529,9 +19128,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:59"
     },
     {
@@ -21539,7 +19136,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -21555,9 +19151,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 21:53"
     },
     {
@@ -21565,7 +19159,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -21581,9 +19174,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.55,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 22:06"
     },
     {
@@ -21591,7 +19182,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -21607,9 +19197,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 01:04"
     },
     {
@@ -21617,7 +19205,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -21633,9 +19220,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:41"
     },
     {
@@ -21643,7 +19228,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -21659,9 +19243,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:13"
     },
     {
@@ -21669,7 +19251,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -21685,9 +19266,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:14"
     },
     {
@@ -21695,7 +19274,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -21711,9 +19289,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:45"
     },
     {
@@ -21721,7 +19297,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -21737,9 +19312,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:47"
     },
     {
@@ -21747,7 +19320,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -21763,9 +19335,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 09:47"
     },
     {
@@ -21773,7 +19343,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -21789,9 +19358,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:00"
     },
     {
@@ -21799,7 +19366,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -21815,9 +19381,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:33"
     },
     {
@@ -21825,7 +19389,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -21841,9 +19404,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.21,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:59"
     },
     {
@@ -21851,7 +19412,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -21867,9 +19427,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.33,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:09"
     },
     {
@@ -21877,7 +19435,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -21893,9 +19450,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.61,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:14"
     },
     {
@@ -21903,7 +19458,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -21919,9 +19473,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:56"
     },
     {
@@ -21929,7 +19481,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -21945,9 +19496,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:10"
     },
     {
@@ -21955,7 +19504,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -21971,9 +19519,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:10"
     },
     {
@@ -21981,7 +19527,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -21997,9 +19542,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:12"
     },
     {
@@ -22007,7 +19550,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -22023,9 +19565,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:50"
     },
     {
@@ -22033,7 +19573,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22049,9 +19588,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:39"
     },
     {
@@ -22059,7 +19596,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22075,9 +19611,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:43"
     },
     {
@@ -22085,7 +19619,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22101,9 +19634,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:21"
     },
     {
@@ -22111,7 +19642,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22127,9 +19657,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:23"
     },
     {
@@ -22137,7 +19665,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -22153,9 +19680,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 9.54,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:44"
     },
     {
@@ -22163,7 +19688,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22179,9 +19703,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 20:22"
     },
     {
@@ -22189,7 +19711,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22205,9 +19726,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.44,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 23:43"
     },
     {
@@ -22215,7 +19734,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -22231,9 +19749,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 13:33"
     },
     {
@@ -22241,7 +19757,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -22257,9 +19772,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 13:35"
     },
     {
@@ -22267,7 +19780,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -22283,9 +19795,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 21:34"
     },
     {
@@ -22293,7 +19803,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -22309,9 +19818,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 21:35"
     },
     {
@@ -22319,7 +19826,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22335,9 +19841,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:40"
     },
     {
@@ -22345,7 +19849,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22361,9 +19864,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:41"
     },
     {
@@ -22371,7 +19872,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -22387,9 +19887,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:56"
     },
     {
@@ -22397,7 +19895,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -22413,9 +19910,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:56"
     },
     {
@@ -22423,7 +19918,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22439,9 +19933,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:59"
     },
     {
@@ -22449,7 +19941,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22465,9 +19956,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 22:00"
     },
     {
@@ -22475,7 +19964,6 @@ const DB = {
       "engine": "pie",
       "release": "7b86476fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22491,9 +19979,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.6,
       "accuracy": null,
-      "status": "pass",
       "commit": "7b86476fb",
-      "os": null,
       "measured": "2026-09-24 12:43"
     },
     {
@@ -22501,7 +19987,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -22517,9 +20002,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.26,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:53"
     },
     {
@@ -22527,7 +20010,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -22543,9 +20025,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:54"
     },
     {
@@ -22553,7 +20033,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -22569,9 +20048,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.59,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 18:55"
     },
     {
@@ -22579,7 +20056,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -22595,9 +20071,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 69.95,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-24 19:19"
     },
     {
@@ -22605,7 +20079,6 @@ const DB = {
       "engine": "pie",
       "release": "0c97fb305",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22621,9 +20094,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "0c97fb305",
-      "os": null,
       "measured": "2026-09-24 05:27"
     },
     {
@@ -22631,7 +20102,6 @@ const DB = {
       "engine": "pie",
       "release": "0c97fb305",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22647,9 +20117,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "0c97fb305",
-      "os": null,
       "measured": "2026-09-24 05:27"
     },
     {
@@ -22657,7 +20125,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22673,9 +20140,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:50"
     },
     {
@@ -22683,7 +20148,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22699,9 +20163,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.78,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 05:01"
     },
     {
@@ -22709,7 +20171,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22725,9 +20186,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:14"
     },
     {
@@ -22735,7 +20194,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22751,9 +20209,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.53,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:17"
     },
     {
@@ -22761,7 +20217,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22777,9 +20232,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:55"
     },
     {
@@ -22787,7 +20240,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22803,9 +20255,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:58"
     },
     {
@@ -22813,7 +20263,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -22829,9 +20278,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 18:49"
     },
     {
@@ -22839,7 +20286,6 @@ const DB = {
       "engine": "vllm",
       "release": "0.30.0",
       "group": "0.30.0",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -22855,9 +20301,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 22.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 23:14"
     },
     {
@@ -22865,7 +20309,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22881,9 +20324,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 12:51"
     },
     {
@@ -22891,7 +20332,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22907,9 +20347,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 12:53"
     },
     {
@@ -22917,7 +20355,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -22933,9 +20370,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:45"
     },
     {
@@ -22943,7 +20378,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22959,9 +20393,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 15:46"
     },
     {
@@ -22969,7 +20401,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -22985,9 +20416,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 08:35"
     },
     {
@@ -22995,7 +20424,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -23011,9 +20439,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 07:15"
     },
     {
@@ -23021,7 +20447,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -23037,9 +20462,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 07:16"
     },
     {
@@ -23047,7 +20470,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -23063,9 +20485,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 03:40"
     },
     {
@@ -23073,7 +20493,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -23089,9 +20508,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.98,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 03:49"
     },
     {
@@ -23099,7 +20516,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -23115,9 +20531,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 06:03"
     },
     {
@@ -23125,7 +20539,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -23141,9 +20554,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 14:34"
     },
     {
@@ -23151,7 +20562,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -23167,9 +20577,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 14:44"
     },
     {
@@ -23177,7 +20585,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -23193,9 +20600,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.29,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:09"
     },
     {
@@ -23203,7 +20608,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -23219,9 +20623,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:10"
     },
     {
@@ -23229,7 +20631,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -23245,9 +20646,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 01:05"
     },
     {
@@ -23255,7 +20654,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -23271,9 +20669,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:38"
     },
     {
@@ -23281,7 +20677,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -23297,9 +20692,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:40"
     },
     {
@@ -23307,7 +20700,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -23323,9 +20715,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:22"
     },
     {
@@ -23333,7 +20723,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -23349,9 +20738,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:23"
     },
     {
@@ -23359,7 +20746,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -23375,9 +20761,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 06:45"
     },
     {
@@ -23385,7 +20769,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -23401,9 +20784,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 06:46"
     },
     {
@@ -23411,7 +20792,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -23427,9 +20807,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:38"
     },
     {
@@ -23437,7 +20815,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -23453,9 +20830,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:39"
     },
     {
@@ -23463,7 +20838,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -23479,9 +20853,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 01:06"
     },
     {
@@ -23489,7 +20861,6 @@ const DB = {
       "engine": "pie",
       "release": "5cb9eb18b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -23505,9 +20876,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "5cb9eb18b",
-      "os": null,
       "measured": "2026-09-24 08:50"
     },
     {
@@ -23515,7 +20884,6 @@ const DB = {
       "engine": "pie",
       "release": "5cb9eb18b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -23531,9 +20899,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "5cb9eb18b",
-      "os": null,
       "measured": "2026-09-24 08:50"
     },
     {
@@ -23541,7 +20907,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -23557,9 +20922,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.31,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-24 23:50"
     },
     {
@@ -23567,7 +20930,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -23583,9 +20945,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.51,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-24 23:51"
     },
     {
@@ -23593,7 +20953,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -23609,9 +20968,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:40"
     },
     {
@@ -23619,7 +20976,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -23635,9 +20991,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:42"
     },
     {
@@ -23645,7 +20999,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -23661,9 +21014,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.52,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:40"
     },
     {
@@ -23671,7 +21022,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -23687,9 +21037,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:50"
     },
     {
@@ -23697,7 +21045,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -23713,9 +21060,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 16:18"
     },
     {
@@ -23723,7 +21068,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -23739,9 +21083,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 07:20"
     },
     {
@@ -23749,7 +21091,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -23765,9 +21106,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.22,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 07:20"
     },
     {
@@ -23775,7 +21114,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -23791,9 +21129,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:12"
     },
     {
@@ -23801,7 +21137,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -23817,9 +21152,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.85,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:19"
     },
     {
@@ -23827,7 +21160,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -23843,9 +21175,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 15:38"
     },
     {
@@ -23853,7 +21183,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -23869,9 +21198,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 15:39"
     },
     {
@@ -23879,7 +21206,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -23895,9 +21221,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:56"
     },
     {
@@ -23905,7 +21229,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -23921,9 +21244,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:57"
     },
     {
@@ -23931,7 +21252,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -23947,9 +21267,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:24"
     },
     {
@@ -23957,7 +21275,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -23973,9 +21290,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 10:24"
     },
     {
@@ -23983,7 +21298,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -23999,9 +21313,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.44,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 11:38"
     },
     {
@@ -24009,7 +21321,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -24025,9 +21336,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.43,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-24 11:39"
     },
     {
@@ -24035,7 +21344,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -24051,9 +21359,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 154.88,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 18:47"
     },
     {
@@ -24061,7 +21367,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -24077,9 +21382,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 18:51"
     },
     {
@@ -24087,7 +21390,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -24103,9 +21405,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:18"
     },
     {
@@ -24113,7 +21413,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -24129,9 +21428,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.88,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:19"
     },
     {
@@ -24139,7 +21436,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -24155,9 +21451,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:37"
     },
     {
@@ -24165,7 +21459,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -24181,9 +21474,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:39"
     },
     {
@@ -24191,7 +21482,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -24207,9 +21497,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:46"
     },
     {
@@ -24217,7 +21505,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -24233,9 +21520,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 3.91,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 02:06"
     },
     {
@@ -24243,7 +21528,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -24259,9 +21543,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 02:09"
     },
     {
@@ -24269,7 +21551,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -24285,9 +21566,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 12:05"
     },
     {
@@ -24295,7 +21574,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -24311,9 +21589,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:49"
     },
     {
@@ -24321,7 +21597,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -24337,9 +21612,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.26,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:54"
     },
     {
@@ -24347,7 +21620,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -24363,9 +21635,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.94,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:58"
     },
     {
@@ -24373,7 +21643,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -24389,9 +21658,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 02:55"
     },
     {
@@ -24399,7 +21666,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -24415,9 +21681,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -6.93,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 03:06"
     },
     {
@@ -24425,7 +21689,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -24441,9 +21704,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:41"
     },
     {
@@ -24451,7 +21712,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -24467,9 +21727,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 10:48"
     },
     {
@@ -24477,7 +21735,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -24493,9 +21750,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.91,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:05"
     },
     {
@@ -24503,7 +21758,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -24519,9 +21773,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:07"
     },
     {
@@ -24529,7 +21781,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -24545,9 +21796,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 16:39"
     },
     {
@@ -24555,7 +21804,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -24571,9 +21819,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 16:42"
     },
     {
@@ -24581,7 +21827,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -24597,9 +21842,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:08"
     },
     {
@@ -24607,7 +21850,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -24623,9 +21865,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:09"
     },
     {
@@ -24633,7 +21873,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -24649,9 +21888,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:44"
     },
     {
@@ -24659,7 +21896,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -24675,9 +21911,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:45"
     },
     {
@@ -24685,7 +21919,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -24701,9 +21934,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.6,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 20:52"
     },
     {
@@ -24711,7 +21942,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -24727,9 +21957,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.44,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 21:01"
     },
     {
@@ -24737,7 +21965,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -24753,9 +21980,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 00:28"
     },
     {
@@ -24763,7 +21988,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -24779,9 +22003,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 00:29"
     },
     {
@@ -24789,7 +22011,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -24805,9 +22026,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:09"
     },
     {
@@ -24815,7 +22034,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -24831,9 +22049,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:10"
     },
     {
@@ -24841,7 +22057,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -24857,9 +22072,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:59"
     },
     {
@@ -24867,7 +22080,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -24883,9 +22095,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 05:10"
     },
     {
@@ -24893,7 +22103,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -24909,9 +22118,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.14,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 05:17"
     },
     {
@@ -24919,7 +22126,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -24935,9 +22141,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:17"
     },
     {
@@ -24945,7 +22149,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -24961,9 +22164,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:27"
     },
     {
@@ -24971,7 +22172,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -24987,9 +22187,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.41,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 20:24"
     },
     {
@@ -24997,7 +22195,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -25013,9 +22210,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 07:59"
     },
     {
@@ -25023,7 +22218,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -25039,9 +22233,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.55,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 07:59"
     },
     {
@@ -25049,7 +22241,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25065,9 +22256,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:40"
     },
     {
@@ -25075,7 +22264,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -25091,9 +22279,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:42"
     },
     {
@@ -25101,7 +22287,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -25117,9 +22302,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:35"
     },
     {
@@ -25127,7 +22310,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -25143,9 +22325,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.76,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 01:39"
     },
     {
@@ -25153,7 +22333,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25169,9 +22348,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.65,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 11:02"
     },
     {
@@ -25179,7 +22356,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -25195,9 +22371,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:33"
     },
     {
@@ -25205,7 +22379,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -25221,9 +22394,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 22:01"
     },
     {
@@ -25231,7 +22402,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25247,9 +22417,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 17:47"
     },
     {
@@ -25257,7 +22425,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -25273,9 +22440,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 17:54"
     },
     {
@@ -25283,7 +22448,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -25299,9 +22463,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-24 00:20"
     },
     {
@@ -25309,7 +22471,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -25325,9 +22486,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-24 00:20"
     },
     {
@@ -25335,7 +22494,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25351,9 +22509,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:49"
     },
     {
@@ -25361,7 +22517,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -25377,9 +22532,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.38,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 13:50"
     },
     {
@@ -25387,7 +22540,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -25403,9 +22555,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:01"
     },
     {
@@ -25413,7 +22563,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -25429,9 +22578,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.65,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 14:01"
     },
     {
@@ -25439,7 +22586,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -25455,9 +22601,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 09:40"
     },
     {
@@ -25465,7 +22609,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25481,9 +22624,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.47,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 07:38"
     },
     {
@@ -25491,7 +22632,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -25507,9 +22647,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 07:43"
     },
     {
@@ -25517,7 +22655,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -25533,9 +22670,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:29"
     },
     {
@@ -25543,7 +22678,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -25559,9 +22693,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 01:30"
     },
     {
@@ -25569,7 +22701,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -25585,9 +22716,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 20:05"
     },
     {
@@ -25595,7 +22724,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -25611,9 +22739,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 20:26"
     },
     {
@@ -25621,7 +22747,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25637,9 +22762,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:04"
     },
     {
@@ -25647,7 +22770,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -25663,9 +22785,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:26"
     },
     {
@@ -25673,7 +22793,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -25689,9 +22808,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:27"
     },
     {
@@ -25699,7 +22816,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25715,9 +22831,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 16:17"
     },
     {
@@ -25725,7 +22839,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -25741,9 +22854,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.32,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 16:17"
     },
     {
@@ -25751,7 +22862,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -25767,9 +22877,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:04"
     },
     {
@@ -25777,7 +22885,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -25793,9 +22900,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:15"
     },
     {
@@ -25803,7 +22908,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -25819,9 +22923,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.23,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 16:26"
     },
     {
@@ -25829,7 +22931,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25845,9 +22946,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 16:47"
     },
     {
@@ -25855,7 +22954,6 @@ const DB = {
       "engine": "pie",
       "release": "5cb9eb18b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -25871,9 +22969,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "5cb9eb18b",
-      "os": null,
       "measured": "2026-09-24 09:21"
     },
     {
@@ -25881,7 +22977,6 @@ const DB = {
       "engine": "pie",
       "release": "5cb9eb18b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25897,9 +22992,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "5cb9eb18b",
-      "os": null,
       "measured": "2026-09-24 09:21"
     },
     {
@@ -25907,7 +23000,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -25923,9 +23015,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:49"
     },
     {
@@ -25933,7 +23023,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -25949,9 +23038,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:51"
     },
     {
@@ -25959,7 +23046,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -25975,9 +23061,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 03:20"
     },
     {
@@ -25985,7 +23069,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -26001,9 +23084,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:31"
     },
     {
@@ -26011,7 +23092,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -26027,9 +23107,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.42,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:33"
     },
     {
@@ -26037,7 +23115,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -26053,9 +23130,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.7,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 01:08"
     },
     {
@@ -26063,7 +23138,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -26079,9 +23153,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 21:04"
     },
     {
@@ -26089,7 +23161,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -26105,9 +23176,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:17"
     },
     {
@@ -26115,7 +23184,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -26131,9 +23199,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 19:22"
     },
     {
@@ -26141,7 +23207,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -26157,9 +23222,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 18:22"
     },
     {
@@ -26167,7 +23230,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -26183,9 +23245,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 18:23"
     },
     {
@@ -26193,7 +23253,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -26209,9 +23268,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:03"
     },
     {
@@ -26219,7 +23276,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -26235,9 +23291,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:22"
     },
     {
@@ -26245,7 +23299,6 @@ const DB = {
       "engine": "pie",
       "release": "fec942409",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -26261,9 +23314,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "fec942409",
-      "os": null,
       "measured": "2026-09-27 22:50"
     },
     {
@@ -26271,7 +23322,6 @@ const DB = {
       "engine": "pie",
       "release": "fec942409",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -26287,9 +23337,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -20.77,
       "accuracy": null,
-      "status": "pass",
       "commit": "fec942409",
-      "os": null,
       "measured": "2026-09-27 22:53"
     },
     {
@@ -26297,7 +23345,6 @@ const DB = {
       "engine": "pie",
       "release": "fec942409",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -26313,9 +23360,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.37,
       "accuracy": null,
-      "status": "pass",
       "commit": "fec942409",
-      "os": null,
       "measured": "2026-09-27 23:40"
     },
     {
@@ -26323,7 +23368,6 @@ const DB = {
       "engine": "pie",
       "release": "fec942409",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -26339,9 +23383,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "fec942409",
-      "os": null,
       "measured": "2026-09-27 23:41"
     },
     {
@@ -26349,7 +23391,6 @@ const DB = {
       "engine": "pie",
       "release": "00b79d7b6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -26365,9 +23406,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "00b79d7b6",
-      "os": null,
       "measured": "2026-09-23 23:33"
     },
     {
@@ -26375,7 +23414,6 @@ const DB = {
       "engine": "pie",
       "release": "00b79d7b6",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -26391,9 +23429,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "00b79d7b6",
-      "os": null,
       "measured": "2026-09-23 23:33"
     },
     {
@@ -26401,7 +23437,6 @@ const DB = {
       "engine": "pie",
       "release": "00b79d7b6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -26417,9 +23452,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "00b79d7b6",
-      "os": null,
       "measured": "2026-09-23 23:34"
     },
     {
@@ -26427,7 +23460,6 @@ const DB = {
       "engine": "pie",
       "release": "00b79d7b6",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -26443,9 +23475,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "00b79d7b6",
-      "os": null,
       "measured": "2026-09-23 23:34"
     },
     {
@@ -26453,7 +23483,6 @@ const DB = {
       "engine": "pie",
       "release": "0eeddfede",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -26469,9 +23498,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "0eeddfede",
-      "os": null,
       "measured": "2026-09-23 14:45"
     },
     {
@@ -26479,7 +23506,6 @@ const DB = {
       "engine": "pie",
       "release": "0eeddfede",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -26495,9 +23521,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "0eeddfede",
-      "os": null,
       "measured": "2026-09-23 14:45"
     },
     {
@@ -26505,7 +23529,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -26521,9 +23544,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.21,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:22"
     },
     {
@@ -26531,7 +23552,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -26547,9 +23567,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.43,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:22"
     },
     {
@@ -26557,7 +23575,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -26573,9 +23590,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:43"
     },
     {
@@ -26583,7 +23598,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -26599,9 +23613,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.21,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 03:44"
     },
     {
@@ -26609,7 +23621,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -26625,9 +23636,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:01"
     },
     {
@@ -26635,7 +23644,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -26651,9 +23659,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.25,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:02"
     },
     {
@@ -26661,7 +23667,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -26677,9 +23682,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 18:32"
     },
     {
@@ -26687,7 +23690,6 @@ const DB = {
       "engine": "pie",
       "release": "e3348d485",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -26703,9 +23705,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e3348d485",
-      "os": null,
       "measured": "2026-09-23 18:32"
     },
     {
@@ -26713,7 +23713,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -26729,9 +23728,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 6.5,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-24 20:55"
     },
     {
@@ -26739,7 +23736,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -26755,9 +23751,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.22,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 16:03"
     },
     {
@@ -26765,7 +23759,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -26781,9 +23774,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 15:57"
     },
     {
@@ -26791,7 +23782,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -26807,9 +23797,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:19"
     },
     {
@@ -26817,7 +23805,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -26833,9 +23820,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:19"
     },
     {
@@ -26843,7 +23828,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -26859,9 +23843,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 08:52"
     },
     {
@@ -26869,7 +23851,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -26885,9 +23866,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:07"
     },
     {
@@ -26895,7 +23874,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -26911,9 +23889,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:06"
     },
     {
@@ -26921,7 +23897,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -26937,9 +23912,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.99,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 20:44"
     },
     {
@@ -26947,7 +23920,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -26963,9 +23935,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-24 20:54"
     },
     {
@@ -26973,7 +23943,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -26989,9 +23958,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.84,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 10:52"
     },
     {
@@ -26999,7 +23966,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -27015,9 +23981,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:32"
     },
     {
@@ -27025,7 +23989,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -27041,9 +24004,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:33"
     },
     {
@@ -27051,7 +24012,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -27067,9 +24027,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:01"
     },
     {
@@ -27077,7 +24035,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27093,9 +24050,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 09:06"
     },
     {
@@ -27103,7 +24058,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -27119,9 +24073,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:09"
     },
     {
@@ -27129,7 +24081,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27145,9 +24096,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 06:09"
     },
     {
@@ -27155,7 +24104,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -27171,9 +24119,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 16:58"
     },
     {
@@ -27181,7 +24127,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -27197,9 +24142,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.28,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 17:00"
     },
     {
@@ -27207,7 +24150,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -27223,9 +24165,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 17:29"
     },
     {
@@ -27233,7 +24173,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27249,9 +24188,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 17:29"
     },
     {
@@ -27259,7 +24196,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -27275,9 +24211,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:19"
     },
     {
@@ -27285,7 +24219,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27301,9 +24234,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:20"
     },
     {
@@ -27311,7 +24242,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27327,9 +24257,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 05:41"
     },
     {
@@ -27337,7 +24265,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -27353,9 +24280,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:48"
     },
     {
@@ -27363,7 +24288,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27379,9 +24303,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:48"
     },
     {
@@ -27389,7 +24311,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -27405,9 +24326,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:31"
     },
     {
@@ -27415,7 +24334,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27431,9 +24349,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 3.59,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:44"
     },
     {
@@ -27441,7 +24357,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -27457,9 +24372,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 01:57"
     },
     {
@@ -27467,7 +24380,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -27483,9 +24395,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 01:58"
     },
     {
@@ -27493,7 +24403,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -27509,9 +24418,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:55"
     },
     {
@@ -27519,7 +24426,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27535,9 +24441,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 20:06"
     },
     {
@@ -27545,7 +24449,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27561,9 +24464,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:52"
     },
     {
@@ -27571,7 +24472,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -27587,9 +24487,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-27 12:59"
     },
     {
@@ -27597,7 +24495,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -27613,9 +24510,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:07"
     },
     {
@@ -27623,7 +24518,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27639,9 +24533,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 19:19"
     },
     {
@@ -27649,7 +24541,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -27665,9 +24556,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:17"
     },
     {
@@ -27675,7 +24564,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27691,9 +24579,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 12:17"
     },
     {
@@ -27701,7 +24587,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27717,9 +24602,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 18:04"
     },
     {
@@ -27727,7 +24610,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -27743,9 +24625,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:08"
     },
     {
@@ -27753,7 +24633,6 @@ const DB = {
       "engine": "pie",
       "release": "c90dd15fc",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -27769,9 +24648,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "c90dd15fc",
-      "os": null,
       "measured": "2026-09-23 17:08"
     },
     {
@@ -27779,7 +24656,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -27795,9 +24671,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 14:24"
     },
     {
@@ -27805,7 +24679,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -27821,9 +24694,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:21"
     },
     {
@@ -27831,7 +24702,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-31b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27847,9 +24717,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 18:23"
     },
     {
@@ -27857,7 +24725,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -27873,9 +24740,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:17"
     },
     {
@@ -27883,7 +24748,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -27899,9 +24763,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.67,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 21:19"
     },
     {
@@ -27909,7 +24771,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "single",
@@ -27925,9 +24786,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:48"
     },
     {
@@ -27935,7 +24794,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-e4b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -27951,9 +24809,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-27 17:49"
     },
     {
@@ -27961,7 +24817,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -27977,9 +24832,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 02:19"
     },
     {
@@ -27987,7 +24840,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -28003,9 +24855,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:58"
     },
     {
@@ -28013,7 +24863,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -28029,9 +24878,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 00:58"
     },
     {
@@ -28039,7 +24886,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28055,9 +24901,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.27,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-24 00:47"
     },
     {
@@ -28065,7 +24909,6 @@ const DB = {
       "engine": "pie",
       "release": "3801f8926",
       "group": "main",
-      "released": null,
       "model": "glm-5.3-flash",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -28081,9 +24924,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.53,
       "accuracy": null,
-      "status": "pass",
       "commit": "3801f8926",
-      "os": null,
       "measured": "2026-09-24 01:03"
     },
     {
@@ -28091,7 +24932,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -28107,9 +24947,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:18"
     },
     {
@@ -28117,7 +24955,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -28133,9 +24970,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:18"
     },
     {
@@ -28143,7 +24978,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28159,9 +24993,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.92,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:20"
     },
     {
@@ -28169,7 +25001,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -28185,9 +25016,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.52,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 04:20"
     },
     {
@@ -28195,7 +25024,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -28211,9 +25039,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 19.29,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 22:42"
     },
     {
@@ -28221,7 +25047,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "gpt-oss-20b",
       "scheme": "mxfp4",
       "workload": "single",
@@ -28237,9 +25062,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 22:44"
     },
     {
@@ -28247,7 +25070,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "throughput",
@@ -28263,9 +25085,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 107.98,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 23:04"
     },
     {
@@ -28273,7 +25093,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "kimi-k3",
       "scheme": "mxfp4",
       "workload": "single",
@@ -28289,9 +25108,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.55,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 23:06"
     },
     {
@@ -28299,7 +25116,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -28315,9 +25131,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 16.82,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 23:08"
     },
     {
@@ -28325,7 +25139,6 @@ const DB = {
       "engine": "sglang",
       "release": "0.5.20",
       "group": "0.5.20",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -28341,9 +25154,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-23 23:10"
     },
     {
@@ -28351,7 +25162,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28367,9 +25177,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-02 01:32"
     },
     {
@@ -28377,7 +25185,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -28393,9 +25200,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-02 01:34"
     },
     {
@@ -28403,7 +25208,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28419,9 +25223,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 19:10"
     },
     {
@@ -28429,7 +25231,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -28445,9 +25246,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 19:14"
     },
     {
@@ -28455,7 +25254,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28471,9 +25269,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 19:37"
     },
     {
@@ -28481,7 +25277,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -28497,9 +25292,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 19:38"
     },
     {
@@ -28507,7 +25300,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -28523,9 +25315,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.82,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 02:17"
     },
     {
@@ -28533,7 +25323,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -28549,9 +25338,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 3.63,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 14:32"
     },
     {
@@ -28559,7 +25346,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28575,9 +25361,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 04:25"
     },
     {
@@ -28585,7 +25369,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -28601,9 +25384,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 04:25"
     },
     {
@@ -28611,7 +25392,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28627,9 +25407,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 04:54"
     },
     {
@@ -28637,7 +25415,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.34.4",
       "group": "0.34.4",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -28653,9 +25430,7 @@ const DB = {
       "resident_gib": 20.88,
       "load_s": -0.86,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 04:56"
     },
     {
@@ -28663,7 +25438,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28679,9 +25453,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 05:00"
     },
     {
@@ -28689,7 +25461,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -28705,9 +25476,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 05:00"
     },
     {
@@ -28715,7 +25484,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28731,9 +25499,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 05:05"
     },
     {
@@ -28741,7 +25507,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -28757,9 +25522,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 05:07"
     },
     {
@@ -28767,7 +25530,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28783,9 +25545,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 05:13"
     },
     {
@@ -28793,7 +25553,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -28809,9 +25568,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-01 05:13"
     },
     {
@@ -28819,7 +25576,6 @@ const DB = {
       "engine": "splash",
       "release": "1.1.0",
       "group": "1.1.0",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -28835,9 +25591,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.21,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 15:36"
     },
     {
@@ -28845,7 +25599,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -28861,9 +25614,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 19:50"
     },
     {
@@ -28871,7 +25622,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -28887,9 +25637,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.64,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 19:52"
     },
     {
@@ -28897,7 +25645,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -28913,9 +25660,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 23:23"
     },
     {
@@ -28923,7 +25668,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -28939,9 +25683,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 20:00"
     },
     {
@@ -28949,7 +25691,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -28965,9 +25706,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.97,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 20:09"
     },
     {
@@ -28975,7 +25714,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -28991,9 +25729,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 20:14"
     },
     {
@@ -29001,7 +25737,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -29017,9 +25752,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.74,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 20:41"
     },
     {
@@ -29027,7 +25760,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29043,9 +25775,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 00:26"
     },
     {
@@ -29053,7 +25783,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29069,9 +25798,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 00:27"
     },
     {
@@ -29079,7 +25806,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29095,9 +25821,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -4.76,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 00:40"
     },
     {
@@ -29105,7 +25829,6 @@ const DB = {
       "engine": "pie",
       "release": "d719c8ac0",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29121,9 +25844,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.92,
       "accuracy": null,
-      "status": "pass",
       "commit": "d719c8ac0",
-      "os": null,
       "measured": "2026-10-01 01:37"
     },
     {
@@ -29131,7 +25852,6 @@ const DB = {
       "engine": "pie",
       "release": "d719c8ac0",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29147,9 +25867,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "d719c8ac0",
-      "os": null,
       "measured": "2026-10-01 01:41"
     },
     {
@@ -29157,7 +25875,6 @@ const DB = {
       "engine": "splash",
       "release": "1.1.0",
       "group": "1.1.0",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29173,9 +25890,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.45,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 01:54"
     },
     {
@@ -29183,7 +25898,6 @@ const DB = {
       "engine": "splash",
       "release": "1.1.0",
       "group": "1.1.0",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29199,9 +25913,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -2.92,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 15:41"
     },
     {
@@ -29209,7 +25921,6 @@ const DB = {
       "engine": "pie",
       "release": "8dc5fdd14",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29225,9 +25936,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8dc5fdd14",
-      "os": null,
       "measured": "2026-10-04 15:18"
     },
     {
@@ -29235,7 +25944,6 @@ const DB = {
       "engine": "pie",
       "release": "8dc5fdd14",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29251,9 +25959,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8dc5fdd14",
-      "os": null,
       "measured": "2026-10-04 15:19"
     },
     {
@@ -29261,7 +25967,6 @@ const DB = {
       "engine": "pie",
       "release": "8dc5fdd14",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29277,9 +25982,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8dc5fdd14",
-      "os": null,
       "measured": "2026-10-04 15:23"
     },
     {
@@ -29287,7 +25990,6 @@ const DB = {
       "engine": "pie",
       "release": "8dc5fdd14",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29303,9 +26005,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8dc5fdd14",
-      "os": null,
       "measured": "2026-10-04 15:25"
     },
     {
@@ -29313,7 +26013,6 @@ const DB = {
       "engine": "pie",
       "release": "8dc5fdd14",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29329,9 +26028,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8dc5fdd14",
-      "os": null,
       "measured": "2026-10-04 15:55"
     },
     {
@@ -29339,7 +26036,6 @@ const DB = {
       "engine": "pie",
       "release": "8dc5fdd14",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29355,9 +26051,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8dc5fdd14",
-      "os": null,
       "measured": "2026-10-04 15:56"
     },
     {
@@ -29365,7 +26059,6 @@ const DB = {
       "engine": "pie",
       "release": "8dc5fdd14",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29381,9 +26074,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8dc5fdd14",
-      "os": null,
       "measured": "2026-10-04 15:58"
     },
     {
@@ -29391,7 +26082,6 @@ const DB = {
       "engine": "pie",
       "release": "8dc5fdd14",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29407,9 +26097,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8dc5fdd14",
-      "os": null,
       "measured": "2026-10-04 16:00"
     },
     {
@@ -29417,7 +26105,6 @@ const DB = {
       "engine": "pie",
       "release": "cfa839f15",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29433,9 +26120,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "cfa839f15",
-      "os": null,
       "measured": "2026-10-05 21:36"
     },
     {
@@ -29443,7 +26128,6 @@ const DB = {
       "engine": "pie",
       "release": "cfa839f15",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29459,9 +26143,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "cfa839f15",
-      "os": null,
       "measured": "2026-10-05 21:37"
     },
     {
@@ -29469,7 +26151,6 @@ const DB = {
       "engine": "pie",
       "release": "cfa839f15",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29485,9 +26166,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "cfa839f15",
-      "os": null,
       "measured": "2026-10-05 21:42"
     },
     {
@@ -29495,7 +26174,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -29511,9 +26189,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 20:53"
     },
     {
@@ -29521,7 +26197,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -29537,9 +26212,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.36,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 20:54"
     },
     {
@@ -29547,7 +26220,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29563,9 +26235,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.45,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 21:01"
     },
     {
@@ -29573,7 +26243,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29589,9 +26258,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 21:03"
     },
     {
@@ -29599,7 +26266,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29615,9 +26281,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 21:08"
     },
     {
@@ -29625,7 +26289,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29641,9 +26304,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 21:08"
     },
     {
@@ -29651,7 +26312,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29667,9 +26327,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 21:12"
     },
     {
@@ -29677,7 +26335,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29693,9 +26350,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 21:13"
     },
     {
@@ -29703,7 +26358,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -29719,9 +26373,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 21:21"
     },
     {
@@ -29729,7 +26381,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29745,9 +26396,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 21:25"
     },
     {
@@ -29755,7 +26404,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -29771,9 +26419,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.34,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 03:22"
     },
     {
@@ -29781,7 +26427,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -29797,9 +26442,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.54,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 05:19"
     },
     {
@@ -29807,7 +26450,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.34.4",
       "group": "0.34.4",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -29823,9 +26465,7 @@ const DB = {
       "resident_gib": 16.98,
       "load_s": -3.81,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 05:25"
     },
     {
@@ -29833,7 +26473,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -29849,9 +26488,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.66,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 22:55"
     },
     {
@@ -29859,7 +26496,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "nvfp4",
       "workload": "single",
@@ -29875,9 +26511,7 @@ const DB = {
       "resident_gib": 17.02,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 02:08"
     },
     {
@@ -29885,7 +26519,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "nvfp4",
       "workload": "throughput",
@@ -29901,9 +26534,7 @@ const DB = {
       "resident_gib": 17.02,
       "load_s": -0.25,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 02:09"
     },
     {
@@ -29911,7 +26542,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -29927,9 +26557,7 @@ const DB = {
       "resident_gib": 6.57,
       "load_s": -0.35,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 02:15"
     },
     {
@@ -29937,7 +26565,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -29953,9 +26580,7 @@ const DB = {
       "resident_gib": 6.57,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 02:16"
     },
     {
@@ -29963,7 +26588,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -29979,9 +26603,7 @@ const DB = {
       "resident_gib": 17.23,
       "load_s": -0.29,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 02:27"
     },
     {
@@ -29989,7 +26611,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -30005,9 +26626,7 @@ const DB = {
       "resident_gib": 17.23,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 02:34"
     },
     {
@@ -30015,7 +26634,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -30031,9 +26649,7 @@ const DB = {
       "resident_gib": 20.88,
       "load_s": 1.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 15:32"
     },
     {
@@ -30041,7 +26657,6 @@ const DB = {
       "engine": "splash",
       "release": "1.1.0",
       "group": "1.1.0",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30057,9 +26672,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.66,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 15:45"
     },
     {
@@ -30067,7 +26680,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -30083,9 +26695,7 @@ const DB = {
       "resident_gib": 20.9,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 00:26"
     },
     {
@@ -30093,7 +26703,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -30109,9 +26718,7 @@ const DB = {
       "resident_gib": 20.9,
       "load_s": 0.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 00:28"
     },
     {
@@ -30119,7 +26726,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -30135,9 +26741,7 @@ const DB = {
       "resident_gib": 16.98,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 00:40"
     },
     {
@@ -30145,7 +26749,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -30161,9 +26764,7 @@ const DB = {
       "resident_gib": 16.98,
       "load_s": 5.9,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 00:46"
     },
     {
@@ -30171,7 +26772,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30187,9 +26787,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-02 01:05"
     },
     {
@@ -30197,7 +26795,6 @@ const DB = {
       "engine": "pie",
       "release": "c371273ba",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30213,9 +26810,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "c371273ba",
-      "os": null,
       "measured": "2026-10-02 01:05"
     },
     {
@@ -30223,7 +26818,6 @@ const DB = {
       "engine": "splash",
       "release": "1.1.0",
       "group": "1.1.0",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30239,9 +26833,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.34,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 01:09"
     },
     {
@@ -30249,7 +26841,6 @@ const DB = {
       "engine": "splash",
       "release": "1.1.0",
       "group": "1.1.0",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30265,9 +26856,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.58,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 01:10"
     },
     {
@@ -30275,7 +26864,6 @@ const DB = {
       "engine": "splash",
       "release": "1.1.0",
       "group": "1.1.0",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30291,9 +26879,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.7,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 01:17"
     },
     {
@@ -30301,7 +26887,6 @@ const DB = {
       "engine": "splash",
       "release": "1.1.0",
       "group": "1.1.0",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30317,9 +26902,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.79,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-02 03:30"
     },
     {
@@ -30327,7 +26910,6 @@ const DB = {
       "engine": "pie",
       "release": "2195fa8aa",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30343,9 +26925,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "2195fa8aa",
-      "os": null,
       "measured": "2026-09-30 17:06"
     },
     {
@@ -30353,7 +26933,6 @@ const DB = {
       "engine": "pie",
       "release": "2195fa8aa",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30369,9 +26948,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2195fa8aa",
-      "os": null,
       "measured": "2026-09-30 17:10"
     },
     {
@@ -30379,7 +26956,6 @@ const DB = {
       "engine": "pie",
       "release": "2195fa8aa",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30395,9 +26971,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "2195fa8aa",
-      "os": null,
       "measured": "2026-09-30 17:39"
     },
     {
@@ -30405,7 +26979,6 @@ const DB = {
       "engine": "pie",
       "release": "2195fa8aa",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30421,9 +26994,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "2195fa8aa",
-      "os": null,
       "measured": "2026-09-30 17:41"
     },
     {
@@ -30431,7 +27002,6 @@ const DB = {
       "engine": "pie",
       "release": "2195fa8aa",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30447,9 +27017,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "2195fa8aa",
-      "os": null,
       "measured": "2026-09-30 17:54"
     },
     {
@@ -30457,7 +27025,6 @@ const DB = {
       "engine": "pie",
       "release": "2195fa8aa",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30473,9 +27040,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "2195fa8aa",
-      "os": null,
       "measured": "2026-09-30 17:58"
     },
     {
@@ -30483,7 +27048,6 @@ const DB = {
       "engine": "pie",
       "release": "95d04622b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30499,9 +27063,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "95d04622b",
-      "os": null,
       "measured": "2026-10-02 11:44"
     },
     {
@@ -30509,7 +27071,6 @@ const DB = {
       "engine": "pie",
       "release": "95d04622b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30525,9 +27086,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "95d04622b",
-      "os": null,
       "measured": "2026-10-02 11:44"
     },
     {
@@ -30535,7 +27094,6 @@ const DB = {
       "engine": "pie",
       "release": "95d04622b",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30551,9 +27109,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "95d04622b",
-      "os": null,
       "measured": "2026-10-02 11:49"
     },
     {
@@ -30561,7 +27117,6 @@ const DB = {
       "engine": "pie",
       "release": "95d04622b",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30577,9 +27132,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "95d04622b",
-      "os": null,
       "measured": "2026-10-02 11:50"
     },
     {
@@ -30587,7 +27140,6 @@ const DB = {
       "engine": "pie",
       "release": "95d04622b",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30603,9 +27155,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "95d04622b",
-      "os": null,
       "measured": "2026-10-02 11:57"
     },
     {
@@ -30613,7 +27163,6 @@ const DB = {
       "engine": "pie",
       "release": "95d04622b",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30629,9 +27178,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "95d04622b",
-      "os": null,
       "measured": "2026-10-02 11:58"
     },
     {
@@ -30639,7 +27186,6 @@ const DB = {
       "engine": "pie",
       "release": "d719c8ac0",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30655,9 +27201,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d719c8ac0",
-      "os": null,
       "measured": "2026-09-30 19:47"
     },
     {
@@ -30665,7 +27209,6 @@ const DB = {
       "engine": "pie",
       "release": "d719c8ac0",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30681,9 +27224,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d719c8ac0",
-      "os": null,
       "measured": "2026-09-30 19:47"
     },
     {
@@ -30691,7 +27232,6 @@ const DB = {
       "engine": "pie",
       "release": "d719c8ac0",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30707,9 +27247,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d719c8ac0",
-      "os": null,
       "measured": "2026-09-30 19:56"
     },
     {
@@ -30717,7 +27255,6 @@ const DB = {
       "engine": "pie",
       "release": "d719c8ac0",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30733,9 +27270,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d719c8ac0",
-      "os": null,
       "measured": "2026-09-30 19:57"
     },
     {
@@ -30743,7 +27278,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -30759,9 +27293,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.22,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 02:19"
     },
     {
@@ -30769,7 +27301,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -30785,9 +27316,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.38,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 02:39"
     },
     {
@@ -30795,7 +27324,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.34.4",
       "group": "0.34.4",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -30811,9 +27339,7 @@ const DB = {
       "resident_gib": 20.88,
       "load_s": 1.38,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 03:06"
     },
     {
@@ -30821,7 +27347,6 @@ const DB = {
       "engine": "pie",
       "release": "61b5167dd",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30837,9 +27362,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "61b5167dd",
-      "os": null,
       "measured": "2026-10-02 09:20"
     },
     {
@@ -30847,7 +27370,6 @@ const DB = {
       "engine": "pie",
       "release": "61b5167dd",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30863,9 +27385,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "61b5167dd",
-      "os": null,
       "measured": "2026-10-02 09:21"
     },
     {
@@ -30873,7 +27393,6 @@ const DB = {
       "engine": "pie",
       "release": "04923c867",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30889,9 +27408,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "04923c867",
-      "os": null,
       "measured": "2026-10-02 10:09"
     },
     {
@@ -30899,7 +27416,6 @@ const DB = {
       "engine": "pie",
       "release": "04923c867",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30915,9 +27431,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "04923c867",
-      "os": null,
       "measured": "2026-10-02 10:09"
     },
     {
@@ -30925,7 +27439,6 @@ const DB = {
       "engine": "pie",
       "release": "04923c867",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30941,9 +27454,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.57,
       "accuracy": null,
-      "status": "pass",
       "commit": "04923c867",
-      "os": null,
       "measured": "2026-10-02 11:03"
     },
     {
@@ -30951,7 +27462,6 @@ const DB = {
       "engine": "pie",
       "release": "04923c867",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -30967,9 +27477,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "04923c867",
-      "os": null,
       "measured": "2026-10-02 10:16"
     },
     {
@@ -30977,7 +27485,6 @@ const DB = {
       "engine": "pie",
       "release": "04923c867",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -30993,9 +27500,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "04923c867",
-      "os": null,
       "measured": "2026-10-02 10:23"
     },
     {
@@ -31003,7 +27508,6 @@ const DB = {
       "engine": "pie",
       "release": "04923c867",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31019,9 +27523,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "04923c867",
-      "os": null,
       "measured": "2026-10-02 10:25"
     },
     {
@@ -31029,7 +27531,6 @@ const DB = {
       "engine": "pie",
       "release": "04923c867",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31045,9 +27546,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "04923c867",
-      "os": null,
       "measured": "2026-10-02 10:51"
     },
     {
@@ -31055,7 +27554,6 @@ const DB = {
       "engine": "pie",
       "release": "04923c867",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31071,9 +27569,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.4,
       "accuracy": null,
-      "status": "pass",
       "commit": "04923c867",
-      "os": null,
       "measured": "2026-10-02 10:52"
     },
     {
@@ -31081,7 +27577,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31097,9 +27592,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-30 17:02"
     },
     {
@@ -31107,7 +27600,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31123,9 +27615,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-30 17:02"
     },
     {
@@ -31133,7 +27623,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31149,9 +27638,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-30 17:16"
     },
     {
@@ -31159,7 +27646,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31175,9 +27661,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-30 17:18"
     },
     {
@@ -31185,7 +27669,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -31201,9 +27684,7 @@ const DB = {
       "resident_gib": 16.98,
       "load_s": -9.32,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 15:02"
     },
     {
@@ -31211,7 +27692,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.35.0",
       "group": "0.35.0",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -31227,9 +27707,7 @@ const DB = {
       "resident_gib": 16.98,
       "load_s": -9.98,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 15:12"
     },
     {
@@ -31237,7 +27715,6 @@ const DB = {
       "engine": "pie",
       "release": "2b69b5dd6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31253,9 +27730,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2b69b5dd6",
-      "os": null,
       "measured": "2026-10-02 13:09"
     },
     {
@@ -31263,7 +27738,6 @@ const DB = {
       "engine": "pie",
       "release": "2b69b5dd6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31279,9 +27753,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2b69b5dd6",
-      "os": null,
       "measured": "2026-10-02 13:10"
     },
     {
@@ -31289,7 +27761,6 @@ const DB = {
       "engine": "pie",
       "release": "2b69b5dd6",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31305,9 +27776,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2b69b5dd6",
-      "os": null,
       "measured": "2026-10-02 13:14"
     },
     {
@@ -31315,7 +27784,6 @@ const DB = {
       "engine": "pie",
       "release": "2b69b5dd6",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31331,9 +27799,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2b69b5dd6",
-      "os": null,
       "measured": "2026-10-02 13:16"
     },
     {
@@ -31341,7 +27807,6 @@ const DB = {
       "engine": "pie",
       "release": "2b69b5dd6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31357,9 +27822,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2b69b5dd6",
-      "os": null,
       "measured": "2026-10-02 13:45"
     },
     {
@@ -31367,7 +27830,6 @@ const DB = {
       "engine": "pie",
       "release": "2b69b5dd6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31383,9 +27845,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2b69b5dd6",
-      "os": null,
       "measured": "2026-10-02 13:46"
     },
     {
@@ -31393,7 +27853,6 @@ const DB = {
       "engine": "pie",
       "release": "2b69b5dd6",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31409,9 +27868,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2b69b5dd6",
-      "os": null,
       "measured": "2026-10-02 13:48"
     },
     {
@@ -31419,7 +27876,6 @@ const DB = {
       "engine": "pie",
       "release": "2b69b5dd6",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31435,9 +27891,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2b69b5dd6",
-      "os": null,
       "measured": "2026-10-02 13:50"
     },
     {
@@ -31445,7 +27899,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -31461,9 +27914,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.2,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 03:33"
     },
     {
@@ -31471,7 +27922,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31487,9 +27937,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-10-01 03:55"
     },
     {
@@ -31497,7 +27945,6 @@ const DB = {
       "engine": "pie",
       "release": "b50ef8f62",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31513,9 +27960,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b50ef8f62",
-      "os": null,
       "measured": "2026-10-05 21:11"
     },
     {
@@ -31523,7 +27968,6 @@ const DB = {
       "engine": "pie",
       "release": "b50ef8f62",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31539,9 +27983,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b50ef8f62",
-      "os": null,
       "measured": "2026-10-05 21:12"
     },
     {
@@ -31549,7 +27991,6 @@ const DB = {
       "engine": "pie",
       "release": "b50ef8f62",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31565,9 +28006,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b50ef8f62",
-      "os": null,
       "measured": "2026-10-05 21:16"
     },
     {
@@ -31575,7 +28014,6 @@ const DB = {
       "engine": "pie",
       "release": "b50ef8f62",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31591,9 +28029,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b50ef8f62",
-      "os": null,
       "measured": "2026-10-05 21:17"
     },
     {
@@ -31601,7 +28037,6 @@ const DB = {
       "engine": "pie",
       "release": "b50ef8f62",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31617,9 +28052,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b50ef8f62",
-      "os": null,
       "measured": "2026-10-05 21:23"
     },
     {
@@ -31627,7 +28060,6 @@ const DB = {
       "engine": "pie",
       "release": "b50ef8f62",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31643,9 +28075,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.38,
       "accuracy": null,
-      "status": "pass",
       "commit": "b50ef8f62",
-      "os": null,
       "measured": "2026-10-05 21:24"
     },
     {
@@ -31653,7 +28083,6 @@ const DB = {
       "engine": "pie",
       "release": "b50ef8f62",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31669,9 +28098,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b50ef8f62",
-      "os": null,
       "measured": "2026-10-05 21:26"
     },
     {
@@ -31679,7 +28106,6 @@ const DB = {
       "engine": "pie",
       "release": "b50ef8f62",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31695,9 +28121,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b50ef8f62",
-      "os": null,
       "measured": "2026-10-05 21:28"
     },
     {
@@ -31705,7 +28129,6 @@ const DB = {
       "engine": "pie",
       "release": "438ee1f8d",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31721,9 +28144,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "438ee1f8d",
-      "os": null,
       "measured": "2026-10-02 12:36"
     },
     {
@@ -31731,7 +28152,6 @@ const DB = {
       "engine": "pie",
       "release": "438ee1f8d",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31747,9 +28167,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "438ee1f8d",
-      "os": null,
       "measured": "2026-10-02 12:36"
     },
     {
@@ -31757,7 +28175,6 @@ const DB = {
       "engine": "pie",
       "release": "438ee1f8d",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31773,9 +28190,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "438ee1f8d",
-      "os": null,
       "measured": "2026-10-02 12:41"
     },
     {
@@ -31783,7 +28198,6 @@ const DB = {
       "engine": "pie",
       "release": "438ee1f8d",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31799,9 +28213,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "438ee1f8d",
-      "os": null,
       "measured": "2026-10-02 12:44"
     },
     {
@@ -31809,7 +28221,6 @@ const DB = {
       "engine": "pie",
       "release": "438ee1f8d",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31825,9 +28236,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "438ee1f8d",
-      "os": null,
       "measured": "2026-10-02 12:56"
     },
     {
@@ -31835,7 +28244,6 @@ const DB = {
       "engine": "pie",
       "release": "438ee1f8d",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31851,9 +28259,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "438ee1f8d",
-      "os": null,
       "measured": "2026-10-02 12:57"
     },
     {
@@ -31861,7 +28267,6 @@ const DB = {
       "engine": "pie",
       "release": "438ee1f8d",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -31877,9 +28282,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "438ee1f8d",
-      "os": null,
       "measured": "2026-10-02 13:00"
     },
     {
@@ -31887,7 +28290,6 @@ const DB = {
       "engine": "pie",
       "release": "438ee1f8d",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -31903,9 +28305,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "438ee1f8d",
-      "os": null,
       "measured": "2026-10-02 13:01"
     },
     {
@@ -31913,7 +28313,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -31929,9 +28328,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-30 22:15"
     },
     {
@@ -31939,7 +28336,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -31955,9 +28351,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-30 22:16"
     },
     {
@@ -31965,7 +28359,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -31981,9 +28374,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.29,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-30 22:22"
     },
     {
@@ -31991,7 +28382,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "b11312",
       "group": "b11312",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -32007,9 +28397,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-30 22:22"
     },
     {
@@ -32017,7 +28405,6 @@ const DB = {
       "engine": "pie",
       "release": "9970d82a4",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32033,9 +28420,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9970d82a4",
-      "os": null,
       "measured": "2026-10-02 12:09"
     },
     {
@@ -32043,7 +28428,6 @@ const DB = {
       "engine": "pie",
       "release": "9970d82a4",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32059,9 +28443,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9970d82a4",
-      "os": null,
       "measured": "2026-10-02 12:09"
     },
     {
@@ -32069,7 +28451,6 @@ const DB = {
       "engine": "pie",
       "release": "9970d82a4",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32085,9 +28466,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9970d82a4",
-      "os": null,
       "measured": "2026-10-02 12:13"
     },
     {
@@ -32095,7 +28474,6 @@ const DB = {
       "engine": "pie",
       "release": "9970d82a4",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32111,9 +28489,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9970d82a4",
-      "os": null,
       "measured": "2026-10-02 12:15"
     },
     {
@@ -32121,7 +28497,6 @@ const DB = {
       "engine": "pie",
       "release": "9970d82a4",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32137,9 +28512,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9970d82a4",
-      "os": null,
       "measured": "2026-10-02 12:22"
     },
     {
@@ -32147,7 +28520,6 @@ const DB = {
       "engine": "pie",
       "release": "9970d82a4",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32163,9 +28535,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.36,
       "accuracy": null,
-      "status": "pass",
       "commit": "9970d82a4",
-      "os": null,
       "measured": "2026-10-02 12:23"
     },
     {
@@ -32173,7 +28543,6 @@ const DB = {
       "engine": "pie",
       "release": "9970d82a4",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32189,9 +28558,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9970d82a4",
-      "os": null,
       "measured": "2026-10-02 12:26"
     },
     {
@@ -32199,7 +28566,6 @@ const DB = {
       "engine": "pie",
       "release": "9970d82a4",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32215,9 +28581,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9970d82a4",
-      "os": null,
       "measured": "2026-10-02 12:27"
     },
     {
@@ -32225,7 +28589,6 @@ const DB = {
       "engine": "pie",
       "release": "61b5167dd",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32241,9 +28604,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "61b5167dd",
-      "os": null,
       "measured": "2026-10-02 09:25"
     },
     {
@@ -32251,7 +28612,6 @@ const DB = {
       "engine": "pie",
       "release": "61b5167dd",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32267,9 +28627,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "61b5167dd",
-      "os": null,
       "measured": "2026-10-02 09:26"
     },
     {
@@ -32277,7 +28635,6 @@ const DB = {
       "engine": "pie",
       "release": "61b5167dd",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32293,9 +28650,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.93,
       "accuracy": null,
-      "status": "pass",
       "commit": "61b5167dd",
-      "os": null,
       "measured": "2026-10-02 09:33"
     },
     {
@@ -32303,7 +28658,6 @@ const DB = {
       "engine": "pie",
       "release": "61b5167dd",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32319,9 +28673,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "61b5167dd",
-      "os": null,
       "measured": "2026-10-02 09:35"
     },
     {
@@ -32329,7 +28681,6 @@ const DB = {
       "engine": "pie",
       "release": "61b5167dd",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32345,9 +28696,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.2,
       "accuracy": null,
-      "status": "pass",
       "commit": "61b5167dd",
-      "os": null,
       "measured": "2026-10-02 09:45"
     },
     {
@@ -32355,7 +28704,6 @@ const DB = {
       "engine": "pie",
       "release": "61b5167dd",
       "group": "main",
-      "released": null,
       "model": "qwen3.8-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32371,9 +28719,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "61b5167dd",
-      "os": null,
       "measured": "2026-10-02 09:51"
     },
     {
@@ -32381,7 +28727,6 @@ const DB = {
       "engine": "pie",
       "release": "95d04622b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32397,9 +28742,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "95d04622b",
-      "os": null,
       "measured": "2026-10-02 12:04"
     },
     {
@@ -32407,7 +28750,6 @@ const DB = {
       "engine": "pie",
       "release": "95d04622b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-35b-a3b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32423,9 +28765,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "95d04622b",
-      "os": null,
       "measured": "2026-10-02 12:04"
     },
     {
@@ -32433,7 +28773,6 @@ const DB = {
       "engine": "pie",
       "release": "9694f8048",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32449,9 +28788,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9694f8048",
-      "os": null,
       "measured": "2026-09-30 19:14"
     },
     {
@@ -32459,7 +28796,6 @@ const DB = {
       "engine": "pie",
       "release": "9694f8048",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32475,9 +28811,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9694f8048",
-      "os": null,
       "measured": "2026-09-30 19:15"
     },
     {
@@ -32485,7 +28819,6 @@ const DB = {
       "engine": "pie",
       "release": "9694f8048",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32501,9 +28834,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9694f8048",
-      "os": null,
       "measured": "2026-09-30 19:19"
     },
     {
@@ -32511,7 +28842,6 @@ const DB = {
       "engine": "pie",
       "release": "9694f8048",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32527,9 +28857,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9694f8048",
-      "os": null,
       "measured": "2026-09-30 19:21"
     },
     {
@@ -32537,7 +28865,6 @@ const DB = {
       "engine": "pie",
       "release": "859a7ee8a",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32553,9 +28880,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "859a7ee8a",
-      "os": null,
       "measured": "2026-09-27 01:52"
     },
     {
@@ -32563,7 +28888,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -32579,9 +28903,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-25 14:20"
     },
     {
@@ -32589,7 +28911,6 @@ const DB = {
       "engine": "pie",
       "release": "a4cf0f0fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -32605,9 +28926,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "a4cf0f0fb",
-      "os": null,
       "measured": "2026-09-25 14:22"
     },
     {
@@ -32615,7 +28934,6 @@ const DB = {
       "engine": "pie",
       "release": "094732caa",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32631,9 +28949,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "094732caa",
-      "os": null,
       "measured": "2026-09-25 18:24"
     },
     {
@@ -32641,7 +28957,6 @@ const DB = {
       "engine": "pie",
       "release": "094732caa",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32657,9 +28972,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "094732caa",
-      "os": null,
       "measured": "2026-09-25 18:24"
     },
     {
@@ -32667,7 +28980,6 @@ const DB = {
       "engine": "pie",
       "release": "c94b9e9d4",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -32683,9 +28995,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "c94b9e9d4",
-      "os": null,
       "measured": "2026-09-25 14:25"
     },
     {
@@ -32693,7 +29003,6 @@ const DB = {
       "engine": "pie",
       "release": "c94b9e9d4",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -32709,9 +29018,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "c94b9e9d4",
-      "os": null,
       "measured": "2026-09-25 14:27"
     },
     {
@@ -32719,7 +29026,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.34.4",
       "group": "0.34.4",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -32735,9 +29041,7 @@ const DB = {
       "resident_gib": 0.96,
       "load_s": 0.75,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-29 19:26"
     },
     {
@@ -32745,7 +29049,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.34.4",
       "group": "0.34.4",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -32761,9 +29064,7 @@ const DB = {
       "resident_gib": 16.19,
       "load_s": -0.47,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-29 08:10"
     },
     {
@@ -32771,7 +29072,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32787,9 +29087,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-29 03:05"
     },
     {
@@ -32797,7 +29095,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32813,9 +29110,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-29 12:32"
     },
     {
@@ -32823,7 +29118,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32839,9 +29133,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-29 03:15"
     },
     {
@@ -32849,7 +29141,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -32865,9 +29156,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-29 12:27"
     },
     {
@@ -32875,7 +29164,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -32891,9 +29179,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 13:06"
     },
     {
@@ -32901,7 +29187,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -32917,9 +29202,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 13:07"
     },
     {
@@ -32927,7 +29210,6 @@ const DB = {
       "engine": "pie",
       "release": "6cc569f74",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -32943,9 +29225,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "6cc569f74",
-      "os": null,
       "measured": "2026-09-27 01:14"
     },
     {
@@ -32953,7 +29233,6 @@ const DB = {
       "engine": "pie",
       "release": "6cc569f74",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -32969,9 +29248,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "6cc569f74",
-      "os": null,
       "measured": "2026-09-27 01:15"
     },
     {
@@ -32979,7 +29256,6 @@ const DB = {
       "engine": "pie",
       "release": "6cc569f74",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -32995,9 +29271,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6cc569f74",
-      "os": null,
       "measured": "2026-09-27 01:18"
     },
     {
@@ -33005,7 +29279,6 @@ const DB = {
       "engine": "pie",
       "release": "6cc569f74",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -33021,9 +29294,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.56,
       "accuracy": null,
-      "status": "pass",
       "commit": "6cc569f74",
-      "os": null,
       "measured": "2026-09-27 01:42"
     },
     {
@@ -33031,7 +29302,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -33047,9 +29317,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:57"
     },
     {
@@ -33057,7 +29325,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -33073,9 +29340,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -7.43,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:21"
     },
     {
@@ -33083,7 +29348,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -33099,9 +29363,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:42"
     },
     {
@@ -33109,7 +29371,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -33125,9 +29386,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.09,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:44"
     },
     {
@@ -33135,7 +29394,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -33151,9 +29409,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:44"
     },
     {
@@ -33161,7 +29417,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -33177,9 +29432,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:44"
     },
     {
@@ -33187,7 +29440,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -33203,9 +29455,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 17:36"
     },
     {
@@ -33213,7 +29463,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -33229,9 +29478,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 17:37"
     },
     {
@@ -33239,7 +29486,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -33255,9 +29501,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 18:24"
     },
     {
@@ -33265,7 +29509,6 @@ const DB = {
       "engine": "pie",
       "release": "647abfcb7",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -33281,9 +29524,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "647abfcb7",
-      "os": null,
       "measured": "2026-09-25 18:24"
     },
     {
@@ -33291,7 +29532,6 @@ const DB = {
       "engine": "pie",
       "release": "026e1b663",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -33307,9 +29547,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "026e1b663",
-      "os": null,
       "measured": "2026-09-25 13:40"
     },
     {
@@ -33317,7 +29555,6 @@ const DB = {
       "engine": "pie",
       "release": "026e1b663",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -33333,9 +29570,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.18,
       "accuracy": null,
-      "status": "pass",
       "commit": "026e1b663",
-      "os": null,
       "measured": "2026-09-25 13:42"
     },
     {
@@ -33343,7 +29578,6 @@ const DB = {
       "engine": "pie",
       "release": "82f219183",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -33359,9 +29593,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "82f219183",
-      "os": null,
       "measured": "2026-09-28 16:06"
     },
     {
@@ -33369,7 +29601,6 @@ const DB = {
       "engine": "pie",
       "release": "82f219183",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -33385,9 +29616,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -4.68,
       "accuracy": null,
-      "status": "pass",
       "commit": "82f219183",
-      "os": null,
       "measured": "2026-09-28 16:27"
     },
     {
@@ -33395,7 +29624,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -33411,9 +29639,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.85,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-28 16:02"
     },
     {
@@ -33421,7 +29647,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.34.4",
       "group": "0.34.4",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "nvfp4",
       "workload": "throughput",
@@ -33437,9 +29662,7 @@ const DB = {
       "resident_gib": 17.02,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-29 12:21"
     },
     {
@@ -33447,7 +29670,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.34.4",
       "group": "0.34.4",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -33463,9 +29685,7 @@ const DB = {
       "resident_gib": 2.87,
       "load_s": -1.64,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-29 12:22"
     },
     {
@@ -33473,7 +29693,6 @@ const DB = {
       "engine": "pie",
       "release": "dc6181635",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -33489,9 +29708,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "dc6181635",
-      "os": null,
       "measured": "2026-09-25 14:49"
     },
     {
@@ -33499,7 +29716,6 @@ const DB = {
       "engine": "pie",
       "release": "dc6181635",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -33515,9 +29731,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "dc6181635",
-      "os": null,
       "measured": "2026-09-25 14:49"
     },
     {
@@ -33525,7 +29739,6 @@ const DB = {
       "engine": "pie",
       "release": "ce1e0015c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -33541,9 +29754,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.95,
       "accuracy": null,
-      "status": "pass",
       "commit": "ce1e0015c",
-      "os": null,
       "measured": "2026-09-28 12:59"
     },
     {
@@ -33551,7 +29762,6 @@ const DB = {
       "engine": "pie",
       "release": "ce1e0015c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -33567,9 +29777,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "ce1e0015c",
-      "os": null,
       "measured": "2026-09-28 13:17"
     },
     {
@@ -33577,7 +29785,6 @@ const DB = {
       "engine": "pie",
       "release": "3fc7342b8",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -33593,9 +29800,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "3fc7342b8",
-      "os": null,
       "measured": "2026-09-25 14:50"
     },
     {
@@ -33603,7 +29808,6 @@ const DB = {
       "engine": "pie",
       "release": "3fc7342b8",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -33619,9 +29823,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "3fc7342b8",
-      "os": null,
       "measured": "2026-09-25 14:50"
     },
     {
@@ -33629,7 +29831,6 @@ const DB = {
       "engine": "pie",
       "release": "9929bcff9",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -33645,9 +29846,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "9929bcff9",
-      "os": null,
       "measured": "2026-09-25 14:08"
     },
     {
@@ -33655,7 +29854,6 @@ const DB = {
       "engine": "pie",
       "release": "9929bcff9",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -33671,9 +29869,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.39,
       "accuracy": null,
-      "status": "pass",
       "commit": "9929bcff9",
-      "os": null,
       "measured": "2026-09-25 14:10"
     },
     {
@@ -33681,7 +29877,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -33697,9 +29892,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:14"
     },
     {
@@ -33707,7 +29900,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -33723,9 +29915,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 17:14"
     },
     {
@@ -33733,7 +29923,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -33749,9 +29938,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 18:23"
     },
     {
@@ -33759,7 +29946,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -33775,9 +29961,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 18:23"
     },
     {
@@ -33785,7 +29969,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -33801,9 +29984,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.95,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 02:19"
     },
     {
@@ -33811,7 +29992,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -33827,9 +30007,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 02:34"
     },
     {
@@ -33837,7 +30015,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -33853,9 +30030,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-29 23:27"
     },
     {
@@ -33863,7 +30038,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -33879,9 +30053,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-29 23:28"
     },
     {
@@ -33889,7 +30061,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -33905,9 +30076,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-29 23:29"
     },
     {
@@ -33915,7 +30084,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -33931,9 +30099,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-29 23:36"
     },
     {
@@ -33941,7 +30107,6 @@ const DB = {
       "engine": "pie",
       "release": "094732caa",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -33957,9 +30122,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "094732caa",
-      "os": null,
       "measured": "2026-09-25 17:18"
     },
     {
@@ -33967,7 +30130,6 @@ const DB = {
       "engine": "pie",
       "release": "094732caa",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -33983,9 +30145,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "094732caa",
-      "os": null,
       "measured": "2026-09-25 17:19"
     },
     {
@@ -33993,7 +30153,6 @@ const DB = {
       "engine": "pie",
       "release": "01926146a",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -34009,9 +30168,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "01926146a",
-      "os": null,
       "measured": "2026-09-25 17:08"
     },
     {
@@ -34019,7 +30176,6 @@ const DB = {
       "engine": "pie",
       "release": "01926146a",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -34035,9 +30191,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "01926146a",
-      "os": null,
       "measured": "2026-09-25 17:08"
     },
     {
@@ -34045,7 +30199,6 @@ const DB = {
       "engine": "pie",
       "release": "f9214a104",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34061,9 +30214,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "f9214a104",
-      "os": null,
       "measured": "2026-09-28 13:16"
     },
     {
@@ -34071,7 +30222,6 @@ const DB = {
       "engine": "pie",
       "release": "f9214a104",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34087,9 +30237,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -2.32,
       "accuracy": null,
-      "status": "pass",
       "commit": "f9214a104",
-      "os": null,
       "measured": "2026-09-28 13:33"
     },
     {
@@ -34097,7 +30245,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -34113,9 +30260,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-25 13:58"
     },
     {
@@ -34123,7 +30268,6 @@ const DB = {
       "engine": "pie",
       "release": "072064353",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -34139,9 +30283,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "072064353",
-      "os": null,
       "measured": "2026-09-25 14:00"
     },
     {
@@ -34149,7 +30291,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34165,9 +30306,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.41,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:54"
     },
     {
@@ -34175,7 +30314,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34191,9 +30329,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.91,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-27 00:17"
     },
     {
@@ -34201,7 +30337,6 @@ const DB = {
       "engine": "pie",
       "release": "859a7ee8a",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -34217,9 +30352,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "859a7ee8a",
-      "os": null,
       "measured": "2026-09-26 22:56"
     },
     {
@@ -34227,7 +30360,6 @@ const DB = {
       "engine": "pie",
       "release": "859a7ee8a",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -34243,9 +30375,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "859a7ee8a",
-      "os": null,
       "measured": "2026-09-26 22:57"
     },
     {
@@ -34253,7 +30383,6 @@ const DB = {
       "engine": "pie",
       "release": "859a7ee8a",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34269,9 +30398,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.64,
       "accuracy": null,
-      "status": "pass",
       "commit": "859a7ee8a",
-      "os": null,
       "measured": "2026-09-26 23:23"
     },
     {
@@ -34279,7 +30406,6 @@ const DB = {
       "engine": "pie",
       "release": "fe9712818",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34295,9 +30421,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "fe9712818",
-      "os": null,
       "measured": "2026-09-28 15:06"
     },
     {
@@ -34305,7 +30429,6 @@ const DB = {
       "engine": "pie",
       "release": "fe9712818",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34321,9 +30444,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -7.66,
       "accuracy": null,
-      "status": "pass",
       "commit": "fe9712818",
-      "os": null,
       "measured": "2026-09-28 15:24"
     },
     {
@@ -34331,7 +30452,6 @@ const DB = {
       "engine": "pie",
       "release": "8e5f0accb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -34347,9 +30467,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8e5f0accb",
-      "os": null,
       "measured": "2026-09-26 23:25"
     },
     {
@@ -34357,7 +30475,6 @@ const DB = {
       "engine": "pie",
       "release": "8e5f0accb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -34373,9 +30490,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8e5f0accb",
-      "os": null,
       "measured": "2026-09-26 23:25"
     },
     {
@@ -34383,7 +30498,6 @@ const DB = {
       "engine": "pie",
       "release": "8e5f0accb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34399,9 +30513,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.73,
       "accuracy": null,
-      "status": "pass",
       "commit": "8e5f0accb",
-      "os": null,
       "measured": "2026-09-26 23:29"
     },
     {
@@ -34409,7 +30521,6 @@ const DB = {
       "engine": "pie",
       "release": "8e5f0accb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34425,9 +30536,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.32,
       "accuracy": null,
-      "status": "pass",
       "commit": "8e5f0accb",
-      "os": null,
       "measured": "2026-09-26 23:53"
     },
     {
@@ -34435,7 +30544,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -34451,9 +30559,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:50"
     },
     {
@@ -34461,7 +30567,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -34477,9 +30582,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:51"
     },
     {
@@ -34487,7 +30590,6 @@ const DB = {
       "engine": "pie",
       "release": "4e46aff0c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -34503,9 +30605,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "4e46aff0c",
-      "os": null,
       "measured": "2026-09-25 17:23"
     },
     {
@@ -34513,7 +30613,6 @@ const DB = {
       "engine": "pie",
       "release": "4e46aff0c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -34529,9 +30628,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "4e46aff0c",
-      "os": null,
       "measured": "2026-09-25 17:24"
     },
     {
@@ -34539,7 +30636,6 @@ const DB = {
       "engine": "pie",
       "release": "ce1e0015c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34555,9 +30651,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "ce1e0015c",
-      "os": null,
       "measured": "2026-09-28 12:58"
     },
     {
@@ -34565,7 +30659,6 @@ const DB = {
       "engine": "pie",
       "release": "ce1e0015c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34581,9 +30674,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -2.85,
       "accuracy": null,
-      "status": "pass",
       "commit": "ce1e0015c",
-      "os": null,
       "measured": "2026-09-28 13:13"
     },
     {
@@ -34591,7 +30682,6 @@ const DB = {
       "engine": "pie",
       "release": "2195fa8aa",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34607,9 +30697,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "2195fa8aa",
-      "os": null,
       "measured": "2026-09-29 19:27"
     },
     {
@@ -34617,7 +30705,6 @@ const DB = {
       "engine": "pie",
       "release": "2195fa8aa",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34633,9 +30720,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "2195fa8aa",
-      "os": null,
       "measured": "2026-09-29 19:28"
     },
     {
@@ -34643,7 +30728,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34659,9 +30743,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 18:25"
     },
     {
@@ -34669,7 +30751,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34685,9 +30766,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 18:25"
     },
     {
@@ -34695,7 +30774,6 @@ const DB = {
       "engine": "pie",
       "release": "8ee83ec26",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34711,9 +30789,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8ee83ec26",
-      "os": null,
       "measured": "2026-09-28 14:43"
     },
     {
@@ -34721,7 +30797,6 @@ const DB = {
       "engine": "pie",
       "release": "8ee83ec26",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34737,9 +30812,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 3.27,
       "accuracy": null,
-      "status": "pass",
       "commit": "8ee83ec26",
-      "os": null,
       "measured": "2026-09-28 15:04"
     },
     {
@@ -34747,7 +30820,6 @@ const DB = {
       "engine": "pie",
       "release": "e5db756f2",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34763,9 +30835,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e5db756f2",
-      "os": null,
       "measured": "2026-09-29 02:15"
     },
     {
@@ -34773,7 +30843,6 @@ const DB = {
       "engine": "pie",
       "release": "e5db756f2",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34789,9 +30858,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "e5db756f2",
-      "os": null,
       "measured": "2026-09-29 02:19"
     },
     {
@@ -34799,7 +30866,6 @@ const DB = {
       "engine": "pie",
       "release": "e5db756f2",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34815,9 +30881,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.64,
       "accuracy": null,
-      "status": "pass",
       "commit": "e5db756f2",
-      "os": null,
       "measured": "2026-09-29 02:34"
     },
     {
@@ -34825,7 +30889,6 @@ const DB = {
       "engine": "pie",
       "release": "e5db756f2",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34841,9 +30904,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "e5db756f2",
-      "os": null,
       "measured": "2026-09-29 02:40"
     },
     {
@@ -34851,7 +30912,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -34867,9 +30927,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 17:35"
     },
     {
@@ -34877,7 +30935,6 @@ const DB = {
       "engine": "pie",
       "release": "e12917c6c",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -34893,9 +30950,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e12917c6c",
-      "os": null,
       "measured": "2026-09-25 17:36"
     },
     {
@@ -34903,7 +30958,6 @@ const DB = {
       "engine": "pie",
       "release": "66573d836",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -34919,9 +30973,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "66573d836",
-      "os": null,
       "measured": "2026-09-25 17:15"
     },
     {
@@ -34929,7 +30981,6 @@ const DB = {
       "engine": "pie",
       "release": "66573d836",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -34945,9 +30996,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "66573d836",
-      "os": null,
       "measured": "2026-09-25 17:16"
     },
     {
@@ -34955,7 +31004,6 @@ const DB = {
       "engine": "pie",
       "release": "01926146a",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -34971,9 +31019,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "01926146a",
-      "os": null,
       "measured": "2026-09-25 18:24"
     },
     {
@@ -34981,7 +31027,6 @@ const DB = {
       "engine": "pie",
       "release": "01926146a",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -34997,9 +31042,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "01926146a",
-      "os": null,
       "measured": "2026-09-25 18:24"
     },
     {
@@ -35007,7 +31050,6 @@ const DB = {
       "engine": "pie",
       "release": "5eb2c95a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -35023,9 +31065,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eb2c95a7",
-      "os": null,
       "measured": "2026-09-27 00:51"
     },
     {
@@ -35033,7 +31073,6 @@ const DB = {
       "engine": "pie",
       "release": "5eb2c95a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -35049,9 +31088,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eb2c95a7",
-      "os": null,
       "measured": "2026-09-27 00:51"
     },
     {
@@ -35059,7 +31096,6 @@ const DB = {
       "engine": "pie",
       "release": "5eb2c95a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35075,9 +31111,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eb2c95a7",
-      "os": null,
       "measured": "2026-09-27 00:55"
     },
     {
@@ -35085,7 +31119,6 @@ const DB = {
       "engine": "pie",
       "release": "5eb2c95a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35101,9 +31134,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.86,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eb2c95a7",
-      "os": null,
       "measured": "2026-09-27 01:19"
     },
     {
@@ -35111,7 +31142,6 @@ const DB = {
       "engine": "pie",
       "release": "4e46aff0c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35127,9 +31157,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "4e46aff0c",
-      "os": null,
       "measured": "2026-09-25 17:24"
     },
     {
@@ -35137,7 +31165,6 @@ const DB = {
       "engine": "pie",
       "release": "4e46aff0c",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35153,9 +31180,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "4e46aff0c",
-      "os": null,
       "measured": "2026-09-25 17:24"
     },
     {
@@ -35163,7 +31188,6 @@ const DB = {
       "engine": "pie",
       "release": "1c54bb7a2",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -35179,9 +31203,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1c54bb7a2",
-      "os": null,
       "measured": "2026-09-25 19:41"
     },
     {
@@ -35189,7 +31211,6 @@ const DB = {
       "engine": "pie",
       "release": "1c54bb7a2",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -35205,9 +31226,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1c54bb7a2",
-      "os": null,
       "measured": "2026-09-25 19:41"
     },
     {
@@ -35215,7 +31234,6 @@ const DB = {
       "engine": "pie",
       "release": "1c54bb7a2",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35231,9 +31249,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1c54bb7a2",
-      "os": null,
       "measured": "2026-09-25 19:42"
     },
     {
@@ -35241,7 +31257,6 @@ const DB = {
       "engine": "pie",
       "release": "1c54bb7a2",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35257,9 +31272,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1c54bb7a2",
-      "os": null,
       "measured": "2026-09-25 19:42"
     },
     {
@@ -35267,7 +31280,6 @@ const DB = {
       "engine": "pie",
       "release": "82f219183",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35283,9 +31295,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "82f219183",
-      "os": null,
       "measured": "2026-09-28 15:50"
     },
     {
@@ -35293,7 +31303,6 @@ const DB = {
       "engine": "pie",
       "release": "82f219183",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35309,9 +31318,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "82f219183",
-      "os": null,
       "measured": "2026-09-28 15:50"
     },
     {
@@ -35319,7 +31326,6 @@ const DB = {
       "engine": "pie",
       "release": "14e0d1622",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -35335,9 +31341,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "14e0d1622",
-      "os": null,
       "measured": "2026-09-27 00:22"
     },
     {
@@ -35345,7 +31349,6 @@ const DB = {
       "engine": "pie",
       "release": "14e0d1622",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -35361,9 +31364,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "14e0d1622",
-      "os": null,
       "measured": "2026-09-27 00:22"
     },
     {
@@ -35371,7 +31372,6 @@ const DB = {
       "engine": "pie",
       "release": "14e0d1622",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35387,9 +31387,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.51,
       "accuracy": null,
-      "status": "pass",
       "commit": "14e0d1622",
-      "os": null,
       "measured": "2026-09-27 00:26"
     },
     {
@@ -35397,7 +31395,6 @@ const DB = {
       "engine": "pie",
       "release": "14e0d1622",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35413,9 +31410,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "14e0d1622",
-      "os": null,
       "measured": "2026-09-27 00:50"
     },
     {
@@ -35423,7 +31418,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35439,9 +31433,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-30 13:20"
     },
     {
@@ -35449,7 +31441,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35465,9 +31456,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-30 13:20"
     },
     {
@@ -35475,7 +31464,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35491,9 +31479,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-30 13:25"
     },
     {
@@ -35501,7 +31487,6 @@ const DB = {
       "engine": "pie",
       "release": "29965cf7b",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35517,9 +31502,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "29965cf7b",
-      "os": null,
       "measured": "2026-09-30 13:28"
     },
     {
@@ -35527,7 +31510,6 @@ const DB = {
       "engine": "pie",
       "release": "cd8a04d38",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -35543,9 +31525,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "cd8a04d38",
-      "os": null,
       "measured": "2026-09-25 13:46"
     },
     {
@@ -35553,7 +31533,6 @@ const DB = {
       "engine": "pie",
       "release": "cd8a04d38",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -35569,9 +31548,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "cd8a04d38",
-      "os": null,
       "measured": "2026-09-25 13:48"
     },
     {
@@ -35579,7 +31556,6 @@ const DB = {
       "engine": "pie",
       "release": "8ee83ec26",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35595,9 +31571,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8ee83ec26",
-      "os": null,
       "measured": "2026-09-28 15:19"
     },
     {
@@ -35605,7 +31579,6 @@ const DB = {
       "engine": "pie",
       "release": "8ee83ec26",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35621,9 +31594,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "8ee83ec26",
-      "os": null,
       "measured": "2026-09-28 15:24"
     },
     {
@@ -35631,7 +31602,6 @@ const DB = {
       "engine": "pie",
       "release": "98aef60fd",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35647,9 +31617,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "98aef60fd",
-      "os": null,
       "measured": "2026-09-28 15:45"
     },
     {
@@ -35657,7 +31625,6 @@ const DB = {
       "engine": "pie",
       "release": "98aef60fd",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35673,9 +31640,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "98aef60fd",
-      "os": null,
       "measured": "2026-09-28 16:04"
     },
     {
@@ -35683,7 +31648,6 @@ const DB = {
       "engine": "pie",
       "release": "66573d836",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35699,9 +31663,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "66573d836",
-      "os": null,
       "measured": "2026-09-25 18:23"
     },
     {
@@ -35709,7 +31671,6 @@ const DB = {
       "engine": "pie",
       "release": "66573d836",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35725,9 +31686,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "66573d836",
-      "os": null,
       "measured": "2026-09-25 18:23"
     },
     {
@@ -35735,7 +31694,6 @@ const DB = {
       "engine": "pie",
       "release": "9ac2b5771",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35751,9 +31709,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "9ac2b5771",
-      "os": null,
       "measured": "2026-09-28 14:19"
     },
     {
@@ -35761,7 +31717,6 @@ const DB = {
       "engine": "pie",
       "release": "9ac2b5771",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35777,9 +31732,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "9ac2b5771",
-      "os": null,
       "measured": "2026-09-28 14:41"
     },
     {
@@ -35787,7 +31740,6 @@ const DB = {
       "engine": "pie",
       "release": "859a7ee8a",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -35803,9 +31755,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "859a7ee8a",
-      "os": null,
       "measured": "2026-09-26 22:56"
     },
     {
@@ -35813,7 +31763,6 @@ const DB = {
       "engine": "pie",
       "release": "859a7ee8a",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -35829,9 +31778,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "859a7ee8a",
-      "os": null,
       "measured": "2026-09-26 22:56"
     },
     {
@@ -35839,7 +31786,6 @@ const DB = {
       "engine": "pie",
       "release": "859a7ee8a",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -35855,9 +31801,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "859a7ee8a",
-      "os": null,
       "measured": "2026-09-26 22:59"
     },
     {
@@ -35865,7 +31809,6 @@ const DB = {
       "engine": "pie",
       "release": "859a7ee8a",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -35881,9 +31824,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -3.51,
       "accuracy": null,
-      "status": "pass",
       "commit": "859a7ee8a",
-      "os": null,
       "measured": "2026-09-26 23:22"
     },
     {
@@ -35891,7 +31832,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -35907,9 +31847,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 13:06"
     },
     {
@@ -35917,7 +31855,6 @@ const DB = {
       "engine": "pie",
       "release": "d89cedc09",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -35933,9 +31870,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d89cedc09",
-      "os": null,
       "measured": "2026-09-26 13:07"
     },
     {
@@ -35943,7 +31878,6 @@ const DB = {
       "engine": "pie",
       "release": "d5c113f01",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -35959,9 +31893,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d5c113f01",
-      "os": null,
       "measured": "2026-09-25 17:22"
     },
     {
@@ -35969,7 +31901,6 @@ const DB = {
       "engine": "pie",
       "release": "d5c113f01",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -35985,9 +31916,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d5c113f01",
-      "os": null,
       "measured": "2026-09-25 17:23"
     },
     {
@@ -35995,7 +31924,6 @@ const DB = {
       "engine": "pie",
       "release": "d5c113f01",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36011,9 +31939,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d5c113f01",
-      "os": null,
       "measured": "2026-09-25 17:23"
     },
     {
@@ -36021,7 +31947,6 @@ const DB = {
       "engine": "pie",
       "release": "d5c113f01",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36037,9 +31962,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "d5c113f01",
-      "os": null,
       "measured": "2026-09-25 17:23"
     },
     {
@@ -36047,7 +31970,6 @@ const DB = {
       "engine": "pie",
       "release": "733731164",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36063,9 +31985,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "733731164",
-      "os": null,
       "measured": "2026-09-29 01:26"
     },
     {
@@ -36073,7 +31993,6 @@ const DB = {
       "engine": "pie",
       "release": "733731164",
       "group": "main",
-      "released": null,
       "model": "gemma-4-26b-a4b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36089,9 +32008,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.13,
       "accuracy": null,
-      "status": "pass",
       "commit": "733731164",
-      "os": null,
       "measured": "2026-09-29 01:28"
     },
     {
@@ -36099,7 +32016,6 @@ const DB = {
       "engine": "pie",
       "release": "733731164",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36115,9 +32031,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.58,
       "accuracy": null,
-      "status": "pass",
       "commit": "733731164",
-      "os": null,
       "measured": "2026-09-29 01:44"
     },
     {
@@ -36125,7 +32039,6 @@ const DB = {
       "engine": "pie",
       "release": "733731164",
       "group": "main",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36141,9 +32054,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.23,
       "accuracy": null,
-      "status": "pass",
       "commit": "733731164",
-      "os": null,
       "measured": "2026-09-29 01:47"
     },
     {
@@ -36151,7 +32062,6 @@ const DB = {
       "engine": "pie",
       "release": "c34127ac9",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36167,9 +32077,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 2.83,
       "accuracy": null,
-      "status": "pass",
       "commit": "c34127ac9",
-      "os": null,
       "measured": "2026-09-28 14:10"
     },
     {
@@ -36177,7 +32085,6 @@ const DB = {
       "engine": "pie",
       "release": "c34127ac9",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36193,9 +32100,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -1.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "c34127ac9",
-      "os": null,
       "measured": "2026-09-28 14:34"
     },
     {
@@ -36203,7 +32108,6 @@ const DB = {
       "engine": "pie",
       "release": "5d5cd9b38",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -36219,9 +32123,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5d5cd9b38",
-      "os": null,
       "measured": "2026-09-25 13:37"
     },
     {
@@ -36229,7 +32131,6 @@ const DB = {
       "engine": "pie",
       "release": "5d5cd9b38",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -36245,9 +32146,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.46,
       "accuracy": null,
-      "status": "pass",
       "commit": "5d5cd9b38",
-      "os": null,
       "measured": "2026-09-25 13:39"
     },
     {
@@ -36255,7 +32154,6 @@ const DB = {
       "engine": "pie",
       "release": "26307c20f",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -36271,9 +32169,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.12,
       "accuracy": null,
-      "status": "pass",
       "commit": "26307c20f",
-      "os": null,
       "measured": "2026-09-25 13:43"
     },
     {
@@ -36281,7 +32177,6 @@ const DB = {
       "engine": "pie",
       "release": "26307c20f",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -36297,9 +32192,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "26307c20f",
-      "os": null,
       "measured": "2026-09-25 13:45"
     },
     {
@@ -36307,7 +32200,6 @@ const DB = {
       "engine": "pie",
       "release": "8e5f0accb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -36323,9 +32215,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8e5f0accb",
-      "os": null,
       "measured": "2026-09-26 23:23"
     },
     {
@@ -36333,7 +32223,6 @@ const DB = {
       "engine": "pie",
       "release": "8e5f0accb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -36349,9 +32238,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8e5f0accb",
-      "os": null,
       "measured": "2026-09-26 23:24"
     },
     {
@@ -36359,7 +32246,6 @@ const DB = {
       "engine": "pie",
       "release": "8e5f0accb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36375,9 +32261,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.35,
       "accuracy": null,
-      "status": "pass",
       "commit": "8e5f0accb",
-      "os": null,
       "measured": "2026-09-26 23:27"
     },
     {
@@ -36385,7 +32269,6 @@ const DB = {
       "engine": "pie",
       "release": "8e5f0accb",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36401,9 +32284,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -2.66,
       "accuracy": null,
-      "status": "pass",
       "commit": "8e5f0accb",
-      "os": null,
       "measured": "2026-09-26 23:50"
     },
     {
@@ -36411,7 +32292,6 @@ const DB = {
       "engine": "pie",
       "release": "8c0b1c8fd",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -36427,9 +32307,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8c0b1c8fd",
-      "os": null,
       "measured": "2026-09-25 17:17"
     },
     {
@@ -36437,7 +32315,6 @@ const DB = {
       "engine": "pie",
       "release": "8c0b1c8fd",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -36453,9 +32330,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8c0b1c8fd",
-      "os": null,
       "measured": "2026-09-25 17:18"
     },
     {
@@ -36463,7 +32338,6 @@ const DB = {
       "engine": "pie",
       "release": "43c08fe4b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -36479,9 +32353,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.06,
       "accuracy": null,
-      "status": "pass",
       "commit": "43c08fe4b",
-      "os": null,
       "measured": "2026-09-25 14:42"
     },
     {
@@ -36489,7 +32361,6 @@ const DB = {
       "engine": "pie",
       "release": "43c08fe4b",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -36505,9 +32376,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "43c08fe4b",
-      "os": null,
       "measured": "2026-09-25 14:44"
     },
     {
@@ -36515,7 +32384,6 @@ const DB = {
       "engine": "pie",
       "release": "f9214a104",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36531,9 +32399,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "f9214a104",
-      "os": null,
       "measured": "2026-09-28 13:21"
     },
     {
@@ -36541,7 +32407,6 @@ const DB = {
       "engine": "pie",
       "release": "f9214a104",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36557,9 +32422,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 11.46,
       "accuracy": null,
-      "status": "pass",
       "commit": "f9214a104",
-      "os": null,
       "measured": "2026-09-28 13:39"
     },
     {
@@ -36567,7 +32430,6 @@ const DB = {
       "engine": "pie",
       "release": "fe9712818",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36583,9 +32445,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "fe9712818",
-      "os": null,
       "measured": "2026-09-28 15:30"
     },
     {
@@ -36593,7 +32453,6 @@ const DB = {
       "engine": "pie",
       "release": "fe9712818",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36609,9 +32468,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "fe9712818",
-      "os": null,
       "measured": "2026-09-28 15:30"
     },
     {
@@ -36619,7 +32476,6 @@ const DB = {
       "engine": "pie",
       "release": "c34127ac9",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36635,9 +32491,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "c34127ac9",
-      "os": null,
       "measured": "2026-09-28 13:56"
     },
     {
@@ -36645,7 +32499,6 @@ const DB = {
       "engine": "pie",
       "release": "c34127ac9",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36661,9 +32514,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -2.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "c34127ac9",
-      "os": null,
       "measured": "2026-09-28 14:17"
     },
     {
@@ -36671,7 +32522,6 @@ const DB = {
       "engine": "pie",
       "release": "6cc569f74",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -36687,9 +32537,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "6cc569f74",
-      "os": null,
       "measured": "2026-09-27 01:20"
     },
     {
@@ -36697,7 +32545,6 @@ const DB = {
       "engine": "pie",
       "release": "6cc569f74",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -36713,9 +32560,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "6cc569f74",
-      "os": null,
       "measured": "2026-09-27 01:21"
     },
     {
@@ -36723,7 +32568,6 @@ const DB = {
       "engine": "pie",
       "release": "6cc569f74",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36739,9 +32583,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "6cc569f74",
-      "os": null,
       "measured": "2026-09-27 01:24"
     },
     {
@@ -36749,7 +32591,6 @@ const DB = {
       "engine": "pie",
       "release": "6cc569f74",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36765,9 +32606,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.7,
       "accuracy": null,
-      "status": "pass",
       "commit": "6cc569f74",
-      "os": null,
       "measured": "2026-09-27 01:48"
     },
     {
@@ -36775,7 +32614,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -36791,9 +32629,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 19:36"
     },
     {
@@ -36801,7 +32637,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -36817,9 +32652,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 19:38"
     },
     {
@@ -36827,7 +32660,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36843,9 +32675,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 19:41"
     },
     {
@@ -36853,7 +32683,6 @@ const DB = {
       "engine": "pie",
       "release": "a77a63226",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36869,9 +32698,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "a77a63226",
-      "os": null,
       "measured": "2026-09-25 19:41"
     },
     {
@@ -36879,7 +32706,6 @@ const DB = {
       "engine": "pie",
       "release": "63de20b36",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36895,9 +32721,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "63de20b36",
-      "os": null,
       "measured": "2026-09-28 15:55"
     },
     {
@@ -36905,7 +32729,6 @@ const DB = {
       "engine": "pie",
       "release": "63de20b36",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36921,9 +32744,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "63de20b36",
-      "os": null,
       "measured": "2026-09-28 15:55"
     },
     {
@@ -36931,7 +32752,6 @@ const DB = {
       "engine": "pie",
       "release": "8c0b1c8fd",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -36947,9 +32767,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8c0b1c8fd",
-      "os": null,
       "measured": "2026-09-25 18:24"
     },
     {
@@ -36957,7 +32775,6 @@ const DB = {
       "engine": "pie",
       "release": "8c0b1c8fd",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -36973,9 +32790,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "8c0b1c8fd",
-      "os": null,
       "measured": "2026-09-25 18:24"
     },
     {
@@ -36983,7 +32798,6 @@ const DB = {
       "engine": "pie",
       "release": "108974943",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -36999,9 +32813,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.11,
       "accuracy": null,
-      "status": "pass",
       "commit": "108974943",
-      "os": null,
       "measured": "2026-09-25 13:53"
     },
     {
@@ -37009,7 +32821,6 @@ const DB = {
       "engine": "pie",
       "release": "108974943",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37025,9 +32836,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "108974943",
-      "os": null,
       "measured": "2026-09-25 13:55"
     },
     {
@@ -37035,7 +32844,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -37051,9 +32859,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.34,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 02:19"
     },
     {
@@ -37061,7 +32867,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -37077,9 +32882,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-27 02:33"
     },
     {
@@ -37087,7 +32890,6 @@ const DB = {
       "engine": "pie",
       "release": "733731164",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -37103,9 +32905,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "733731164",
-      "os": null,
       "measured": "2026-09-28 15:57"
     },
     {
@@ -37113,7 +32913,6 @@ const DB = {
       "engine": "pie",
       "release": "733731164",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -37129,9 +32928,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "733731164",
-      "os": null,
       "measured": "2026-09-28 15:57"
     },
     {
@@ -37139,7 +32936,6 @@ const DB = {
       "engine": "pie",
       "release": "e5db756f2",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -37155,9 +32951,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.99,
       "accuracy": null,
-      "status": "pass",
       "commit": "e5db756f2",
-      "os": null,
       "measured": "2026-09-28 17:37"
     },
     {
@@ -37165,7 +32959,6 @@ const DB = {
       "engine": "pie",
       "release": "e5db756f2",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -37181,9 +32974,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.62,
       "accuracy": null,
-      "status": "pass",
       "commit": "e5db756f2",
-      "os": null,
       "measured": "2026-09-28 17:54"
     },
     {
@@ -37191,7 +32982,6 @@ const DB = {
       "engine": "pie",
       "release": "591e92d58",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -37207,9 +32997,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "591e92d58",
-      "os": null,
       "measured": "2026-09-28 15:25"
     },
     {
@@ -37217,7 +33005,6 @@ const DB = {
       "engine": "pie",
       "release": "591e92d58",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -37233,9 +33020,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.33,
       "accuracy": null,
-      "status": "pass",
       "commit": "591e92d58",
-      "os": null,
       "measured": "2026-09-28 15:44"
     },
     {
@@ -37243,7 +33028,6 @@ const DB = {
       "engine": "pie",
       "release": "cf8340610",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37259,9 +33043,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "cf8340610",
-      "os": null,
       "measured": "2026-09-25 14:05"
     },
     {
@@ -37269,7 +33051,6 @@ const DB = {
       "engine": "pie",
       "release": "cf8340610",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37285,9 +33066,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.08,
       "accuracy": null,
-      "status": "pass",
       "commit": "cf8340610",
-      "os": null,
       "measured": "2026-09-25 14:07"
     },
     {
@@ -37295,7 +33074,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.34.4",
       "group": "0.34.4",
-      "released": null,
       "model": "muse-glimmer-30b",
       "scheme": "gguf_q4_k_m",
       "workload": "throughput",
@@ -37311,9 +33089,7 @@ const DB = {
       "resident_gib": 16.58,
       "load_s": -1.2,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-29 12:25"
     },
     {
@@ -37321,7 +33097,6 @@ const DB = {
       "engine": "pie",
       "release": "065697f4d",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -37337,9 +33112,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.02,
       "accuracy": null,
-      "status": "pass",
       "commit": "065697f4d",
-      "os": null,
       "measured": "2026-09-28 18:16"
     },
     {
@@ -37347,7 +33120,6 @@ const DB = {
       "engine": "pie",
       "release": "065697f4d",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -37363,9 +33135,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.83,
       "accuracy": null,
-      "status": "pass",
       "commit": "065697f4d",
-      "os": null,
       "measured": "2026-09-28 18:32"
     },
     {
@@ -37373,7 +33143,6 @@ const DB = {
       "engine": "pie",
       "release": "b8c306d9e",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37389,9 +33158,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b8c306d9e",
-      "os": null,
       "measured": "2026-09-25 17:20"
     },
     {
@@ -37399,7 +33166,6 @@ const DB = {
       "engine": "pie",
       "release": "b8c306d9e",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37415,9 +33181,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b8c306d9e",
-      "os": null,
       "measured": "2026-09-25 17:20"
     },
     {
@@ -37425,7 +33189,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37441,9 +33204,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:04"
     },
     {
@@ -37451,7 +33212,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37467,9 +33227,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:04"
     },
     {
@@ -37477,7 +33235,6 @@ const DB = {
       "engine": "pie",
       "release": "07b27be28",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37493,9 +33250,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "07b27be28",
-      "os": null,
       "measured": "2026-09-26 13:05"
     },
     {
@@ -37503,7 +33258,6 @@ const DB = {
       "engine": "pie",
       "release": "07b27be28",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37519,9 +33273,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "07b27be28",
-      "os": null,
       "measured": "2026-09-26 13:05"
     },
     {
@@ -37529,7 +33281,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -37545,9 +33296,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-28 13:43"
     },
     {
@@ -37555,7 +33304,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -37571,9 +33319,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-28 14:04"
     },
     {
@@ -37581,7 +33327,6 @@ const DB = {
       "engine": "pie",
       "release": "14e0d1622",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37597,9 +33342,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "14e0d1622",
-      "os": null,
       "measured": "2026-09-27 00:18"
     },
     {
@@ -37607,7 +33350,6 @@ const DB = {
       "engine": "pie",
       "release": "14e0d1622",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37623,9 +33365,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "14e0d1622",
-      "os": null,
       "measured": "2026-09-27 00:19"
     },
     {
@@ -37633,7 +33373,6 @@ const DB = {
       "engine": "pie",
       "release": "14e0d1622",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -37649,9 +33388,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.07,
       "accuracy": null,
-      "status": "pass",
       "commit": "14e0d1622",
-      "os": null,
       "measured": "2026-09-27 00:22"
     },
     {
@@ -37659,7 +33396,6 @@ const DB = {
       "engine": "pie",
       "release": "14e0d1622",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -37675,9 +33411,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "14e0d1622",
-      "os": null,
       "measured": "2026-09-27 00:45"
     },
     {
@@ -37685,7 +33419,6 @@ const DB = {
       "engine": "pie",
       "release": "5eb2c95a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37701,9 +33434,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eb2c95a7",
-      "os": null,
       "measured": "2026-09-27 00:46"
     },
     {
@@ -37711,7 +33442,6 @@ const DB = {
       "engine": "pie",
       "release": "5eb2c95a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37727,9 +33457,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eb2c95a7",
-      "os": null,
       "measured": "2026-09-27 00:46"
     },
     {
@@ -37737,7 +33465,6 @@ const DB = {
       "engine": "pie",
       "release": "5eb2c95a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -37753,9 +33480,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eb2c95a7",
-      "os": null,
       "measured": "2026-09-27 00:49"
     },
     {
@@ -37763,7 +33488,6 @@ const DB = {
       "engine": "pie",
       "release": "5eb2c95a7",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -37779,9 +33503,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -3.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eb2c95a7",
-      "os": null,
       "measured": "2026-09-27 01:13"
     },
     {
@@ -37789,7 +33511,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37805,9 +33526,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:53"
     },
     {
@@ -37815,7 +33534,6 @@ const DB = {
       "engine": "pie",
       "release": "6acda1c84",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37831,9 +33549,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "6acda1c84",
-      "os": null,
       "measured": "2026-09-26 23:54"
     },
     {
@@ -37841,7 +33557,6 @@ const DB = {
       "engine": "pie",
       "release": "7b86476fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37857,9 +33572,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "7b86476fb",
-      "os": null,
       "measured": "2026-09-25 14:15"
     },
     {
@@ -37867,7 +33580,6 @@ const DB = {
       "engine": "pie",
       "release": "7b86476fb",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37883,9 +33595,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "7b86476fb",
-      "os": null,
       "measured": "2026-09-25 14:17"
     },
     {
@@ -37893,7 +33603,6 @@ const DB = {
       "engine": "pie",
       "release": "d5ae10075",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37909,9 +33618,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "d5ae10075",
-      "os": null,
       "measured": "2026-09-25 14:02"
     },
     {
@@ -37919,7 +33626,6 @@ const DB = {
       "engine": "pie",
       "release": "d5ae10075",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37935,9 +33641,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "d5ae10075",
-      "os": null,
       "measured": "2026-09-25 14:03"
     },
     {
@@ -37945,7 +33649,6 @@ const DB = {
       "engine": "pie",
       "release": "07b27be28",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -37961,9 +33664,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "07b27be28",
-      "os": null,
       "measured": "2026-09-26 13:05"
     },
     {
@@ -37971,7 +33672,6 @@ const DB = {
       "engine": "pie",
       "release": "07b27be28",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -37987,9 +33687,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "07b27be28",
-      "os": null,
       "measured": "2026-09-26 13:05"
     },
     {
@@ -37997,7 +33695,6 @@ const DB = {
       "engine": "pie",
       "release": "b8c306d9e",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38013,9 +33710,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b8c306d9e",
-      "os": null,
       "measured": "2026-09-25 17:20"
     },
     {
@@ -38023,7 +33718,6 @@ const DB = {
       "engine": "pie",
       "release": "b8c306d9e",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -38039,9 +33733,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "b8c306d9e",
-      "os": null,
       "measured": "2026-09-25 17:20"
     },
     {
@@ -38049,7 +33741,6 @@ const DB = {
       "engine": "pie",
       "release": "5f72f8f7f",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38065,9 +33756,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "5f72f8f7f",
-      "os": null,
       "measured": "2026-09-28 16:29"
     },
     {
@@ -38075,7 +33764,6 @@ const DB = {
       "engine": "pie",
       "release": "5f72f8f7f",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -38091,9 +33779,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.45,
       "accuracy": null,
-      "status": "pass",
       "commit": "5f72f8f7f",
-      "os": null,
       "measured": "2026-09-28 16:35"
     },
     {
@@ -38101,7 +33787,6 @@ const DB = {
       "engine": "pie",
       "release": "e5db756f2",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38117,9 +33802,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e5db756f2",
-      "os": null,
       "measured": "2026-09-28 15:59"
     },
     {
@@ -38127,7 +33810,6 @@ const DB = {
       "engine": "pie",
       "release": "e5db756f2",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -38143,9 +33825,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "e5db756f2",
-      "os": null,
       "measured": "2026-09-28 15:59"
     },
     {
@@ -38153,7 +33833,6 @@ const DB = {
       "engine": "pie",
       "release": "98aef60fd",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38169,9 +33848,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "98aef60fd",
-      "os": null,
       "measured": "2026-09-28 15:34"
     },
     {
@@ -38179,7 +33856,6 @@ const DB = {
       "engine": "pie",
       "release": "98aef60fd",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -38195,9 +33871,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.34,
       "accuracy": null,
-      "status": "pass",
       "commit": "98aef60fd",
-      "os": null,
       "measured": "2026-09-28 15:41"
     },
     {
@@ -38205,7 +33879,6 @@ const DB = {
       "engine": "ollama",
       "release": "0.34.4",
       "group": "0.34.4",
-      "released": null,
       "model": "llama-3.2-3b",
       "scheme": "gguf_q4_k_m",
       "workload": "single",
@@ -38221,9 +33894,7 @@ const DB = {
       "resident_gib": 6.57,
       "load_s": -0.1,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-28 18:22"
     },
     {
@@ -38231,7 +33902,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -38247,9 +33917,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:04"
     },
     {
@@ -38257,7 +33925,6 @@ const DB = {
       "engine": "pie",
       "release": "1655d32dc",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -38273,9 +33940,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1655d32dc",
-      "os": null,
       "measured": "2026-09-26 13:04"
     },
     {
@@ -38283,7 +33948,6 @@ const DB = {
       "engine": "pie",
       "release": "6f32df0a9",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -38299,9 +33963,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "6f32df0a9",
-      "os": null,
       "measured": "2026-09-25 14:28"
     },
     {
@@ -38309,7 +33971,6 @@ const DB = {
       "engine": "pie",
       "release": "6f32df0a9",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -38325,9 +33986,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "6f32df0a9",
-      "os": null,
       "measured": "2026-09-25 14:30"
     },
     {
@@ -38335,7 +33994,6 @@ const DB = {
       "engine": "pie",
       "release": "591e92d58",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38351,9 +34009,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "591e92d58",
-      "os": null,
       "measured": "2026-09-28 15:32"
     },
     {
@@ -38361,7 +34017,6 @@ const DB = {
       "engine": "pie",
       "release": "591e92d58",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -38377,9 +34032,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "591e92d58",
-      "os": null,
       "measured": "2026-09-28 15:32"
     },
     {
@@ -38387,7 +34040,6 @@ const DB = {
       "engine": "pie",
       "release": "ca2d8f78d",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -38403,9 +34055,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.41,
       "accuracy": null,
-      "status": "pass",
       "commit": "ca2d8f78d",
-      "os": null,
       "measured": "2026-09-25 13:49"
     },
     {
@@ -38413,7 +34063,6 @@ const DB = {
       "engine": "pie",
       "release": "ca2d8f78d",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -38429,9 +34078,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "ca2d8f78d",
-      "os": null,
       "measured": "2026-09-25 13:51"
     },
     {
@@ -38439,7 +34086,6 @@ const DB = {
       "engine": "pie",
       "release": "1a87f3d79",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -38455,9 +34101,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.04,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a87f3d79",
-      "os": null,
       "measured": "2026-09-25 13:55"
     },
     {
@@ -38465,7 +34109,6 @@ const DB = {
       "engine": "pie",
       "release": "1a87f3d79",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -38481,9 +34124,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.05,
       "accuracy": null,
-      "status": "pass",
       "commit": "1a87f3d79",
-      "os": null,
       "measured": "2026-09-25 13:57"
     },
     {
@@ -38491,7 +34132,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38507,9 +34147,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.19,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-28 13:37"
     },
     {
@@ -38517,7 +34155,6 @@ const DB = {
       "engine": "pie",
       "release": "5eab5e00b",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -38533,9 +34170,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 1.24,
       "accuracy": null,
-      "status": "pass",
       "commit": "5eab5e00b",
-      "os": null,
       "measured": "2026-09-28 13:54"
     },
     {
@@ -38543,7 +34178,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -38559,9 +34193,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:36"
     },
     {
@@ -38569,7 +34201,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -38585,9 +34216,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:36"
     },
     {
@@ -38595,7 +34224,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38611,9 +34239,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:36"
     },
     {
@@ -38621,7 +34247,6 @@ const DB = {
       "engine": "pie",
       "release": "981b18774",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -38637,9 +34262,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "981b18774",
-      "os": null,
       "measured": "2026-09-25 19:36"
     },
     {
@@ -38647,7 +34270,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "10270 (071327508)",
       "group": "10270 (071327508)",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -38663,9 +34285,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 4.69,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 19:13"
     },
     {
@@ -38673,7 +34293,6 @@ const DB = {
       "engine": "llamacpp",
       "release": "10270 (071327508)",
       "group": "10270 (071327508)",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -38689,9 +34308,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 19:15"
     },
     {
@@ -38699,7 +34316,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -38715,9 +34331,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 19:15"
     },
     {
@@ -38725,7 +34339,6 @@ const DB = {
       "engine": "mlxlm",
       "release": "0.31.3",
       "group": "0.31.3",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -38741,9 +34354,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.16,
       "accuracy": null,
-      "status": "pass",
       "commit": "",
-      "os": null,
       "measured": "2026-09-25 19:18"
     },
     {
@@ -38751,7 +34362,6 @@ const DB = {
       "engine": "pie",
       "release": "1d525f282",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -38767,9 +34377,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1d525f282",
-      "os": null,
       "measured": "2026-09-25 14:22"
     },
     {
@@ -38777,7 +34385,6 @@ const DB = {
       "engine": "pie",
       "release": "1d525f282",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -38793,9 +34400,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1d525f282",
-      "os": null,
       "measured": "2026-09-25 14:24"
     },
     {
@@ -38803,7 +34408,6 @@ const DB = {
       "engine": "pie",
       "release": "065697f4d",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38819,9 +34423,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "065697f4d",
-      "os": null,
       "measured": "2026-09-28 16:05"
     },
     {
@@ -38829,7 +34431,6 @@ const DB = {
       "engine": "pie",
       "release": "065697f4d",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -38845,9 +34446,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "065697f4d",
-      "os": null,
       "measured": "2026-09-28 16:05"
     },
     {
@@ -38855,7 +34454,6 @@ const DB = {
       "engine": "pie",
       "release": "1c54bb7a2",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "single",
@@ -38871,9 +34469,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.01,
       "accuracy": null,
-      "status": "pass",
       "commit": "1c54bb7a2",
-      "os": null,
       "measured": "2026-09-25 19:45"
     },
     {
@@ -38881,7 +34477,6 @@ const DB = {
       "engine": "pie",
       "release": "1c54bb7a2",
       "group": "main",
-      "released": null,
       "model": "qwen3.5-0.8b",
       "scheme": "bf16",
       "workload": "throughput",
@@ -38897,9 +34492,7 @@ const DB = {
       "resident_gib": null,
       "load_s": 0.0,
       "accuracy": null,
-      "status": "pass",
       "commit": "1c54bb7a2",
-      "os": null,
       "measured": "2026-09-25 19:47"
     },
     {
@@ -38907,7 +34500,6 @@ const DB = {
       "engine": "pie",
       "release": "1c54bb7a2",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38923,9 +34515,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1c54bb7a2",
-      "os": null,
       "measured": "2026-09-25 19:47"
     },
     {
@@ -38933,7 +34523,6 @@ const DB = {
       "engine": "pie",
       "release": "1c54bb7a2",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -38949,9 +34538,7 @@ const DB = {
       "resident_gib": null,
       "load_s": null,
       "accuracy": null,
-      "status": "pass",
       "commit": "1c54bb7a2",
-      "os": null,
       "measured": "2026-09-25 19:47"
     },
     {
@@ -38959,7 +34546,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "single",
@@ -38975,9 +34561,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.03,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-28 17:57"
     },
     {
@@ -38985,7 +34569,6 @@ const DB = {
       "engine": "pie",
       "release": "b95c82de6",
       "group": "main",
-      "released": null,
       "model": "qwen3.6-27b",
       "scheme": "affine_u4_g64",
       "workload": "throughput",
@@ -39001,9 +34584,7 @@ const DB = {
       "resident_gib": null,
       "load_s": -0.87,
       "accuracy": null,
-      "status": "pass",
       "commit": "b95c82de6",
-      "os": null,
       "measured": "2026-09-28 18:12"
     }
   ],
