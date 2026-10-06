@@ -2,11 +2,11 @@
 
 | status | cells |
 |---|---|
-| pass | 258 |
+| pass | 257 |
 | fail | 10 |
 | declared_unsupported | 441 |
 | not_run | 1546 |
-| noisy | 75 |
+| noisy | 76 |
 
 ## Gaps (expected supported, but not passing)
 
@@ -36,6 +36,7 @@
 | mlxlm | m5-max-128g | llama-3.2-3b-mlxlm | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | llama-3.2-3b-ollama | c4 | text-completion-bench | tp1 | noisy |  |  |
 | llamacpp | m5-max-128g | muse-glimmer-30b-llamacpp | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
+| pie | m5-max-128g | muse-glimmer-30b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | muse-glimmer-30b-ollama | ob-story-200 | text-completion-bench | tp1 | noisy |  |  |
 | ollama | m5-max-128g | muse-glimmer-30b-ollama | ctx-8k-256 | text-completion-bench | tp1 | noisy |  |  |
 | pie | m5-max-128g | qwen3.6-35b-a3b-mlx4 | c4 | text-completion-bench | tp1 | noisy |  |  |
@@ -1672,7 +1673,7 @@
 | gemma4 | 0/26 | 0/26 | 0/26 | 0/26 | 0/26 |
 | gemma4_moe | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
 | gpt_oss | 0/26 | 0/26 | 0/26 | 0/39 | 0/26 |
-| muse_glimmer | 0/13 | 0/13 | 0/13 | 8/13 | 8/13 |
+| muse_glimmer | 0/13 | 0/13 | 0/13 | 7/13 | 8/13 |
 | qwen3_5 | 0/13 | 0/13 | 0/13 | 6/13 | 6/13 |
 | qwen3_6 | 0/37 | 0/37 | 0/37 | 14/50 | 5/37 |
 | qwen3_6_moe | 0/13 | 0/13 | 0/13 | 7/13 | 0/13 |
