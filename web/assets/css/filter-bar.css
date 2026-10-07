@@ -32,6 +32,7 @@
 
 .filter-button {
   display: inline-flex;
+  white-space: nowrap;
   align-items: center;
   gap: 6px;
   height: var(--control-height);
@@ -51,4 +52,40 @@
 .filter.is-set .engine-tag,
 .filter.is-set .hardware-tag {
   color: var(--color-label);
+}
+
+.filter.is-set .popup-chevron {
+  stroke: var(--color-accent);
+}
+
+.filter.is-set .filter-button {
+  padding-right: 4px;
+}
+
+.filter-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  opacity: .75;
+}
+
+.filter-clear:hover {
+  opacity: 1;
+}
+
+.filter-clear svg {
+  width: 8px;
+  height: 8px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
 }
