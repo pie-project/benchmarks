@@ -15,12 +15,21 @@ Pie.state = {
     this.query = "";
   },
 
-  setFilter(key, value) {
-    if (value) {
-      this.filters[key] = value;
+  selected(key) {
+    return this.filters[key] || [];
+  },
+
+  setFilter(key, values) {
+    if (values.length) {
+      this.filters[key] = values;
     } else {
       delete this.filters[key];
     }
+  },
+
+  toggleFilter(key, value) {
+    const current = this.selected(key);
+    this.setFilter(key, current.includes(value) ? current.filter((entry) => entry !== value) : [...current, value]);
   },
 
   cycleSort(key) {
