@@ -65,7 +65,7 @@ window.Pie = window.Pie || {};
   };
 
   const matchesFilters = (row, filters) =>
-    Object.entries(filters).every(([key, value]) => !value || String(row[key]) === value);
+    Object.entries(filters).every(([key, values]) => !values.length || values.includes(String(row[key])));
 
   const compare = (key, direction) => (a, b) => {
     const emptyOrder = format.isEmpty(a[key]) - format.isEmpty(b[key]);

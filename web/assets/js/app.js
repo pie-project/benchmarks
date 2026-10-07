@@ -54,9 +54,20 @@
     popover.onPick((key, value) => {
       if (key === popover.RELEASE) {
         state.release = value;
+      } else if (value === popover.ALL) {
+        state.setFilter(key, []);
+      } else if (value === popover.EVERY) {
+        state.setFilter(key, query.filterValues(state.table, key).map((entry) => entry.value));
       } else {
-        state.setFilter(key, value);
+        state.toggleFilter(key, value);
       }
+      render();
+      popover.refresh(state);
+    });
+
+    filters.onClear((key) => {
+      state.setFilter(key, []);
+      popover.close();
       render();
     });
   };
@@ -66,7 +77,7 @@
       state.cycleSort(key);
       render();
     });
-    table.onShowResults((key, value) => navigate("results", { [key]: value }));
+    table.onShowResults((key, value) => navigate("results", { [key]: [value] }));
     table.container.addEventListener("scroll", () => popover.close());
   };
 
