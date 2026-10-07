@@ -199,6 +199,21 @@
   .steps li.bad { color: #cf222e; }
   .steps li.bad .st { border-color: #cf222e; background: #cf222e; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .filters { max-width: 1000px; margin: 0 auto; padding: 16px 16px 0; display: grid; gap: 10px; }
+  .filters[hidden] { display: none; }
+  .frow { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .flabel { flex: none; width: 64px; font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: #6e6e73; }
+  .fseg { display: inline-flex; gap: 2px; padding: 2px; max-width: 100%; overflow-x: auto; scrollbar-width: none; background: #e8e8ed; border-radius: 9px; }
+  .fseg::-webkit-scrollbar { display: none; }
+  .fseg button, .fchips button { border: 0; font: inherit; font-size: 13px; font-weight: 500; color: #1d1d1f; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s, box-shadow .15s; }
+  .fseg button { padding: 5px 14px; background: none; border-radius: 7px; }
+  .fseg button.on { background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 0 0 .5px rgba(0, 0, 0, .04); }
+  .fchips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+  .fchips button { padding: 5px 12px; background: #e8e8ed; border-radius: 999px; }
+  .fchips button:hover { background: #dcdce1; }
+  .fchips button.on { background: #0071e3; color: #fff; }
+  .fseg button:focus-visible, .fchips button:focus-visible { outline: 2px solid #0071e3; outline-offset: 2px; }
+  @media (max-width: 640px) { .frow { flex-direction: column; align-items: flex-start; gap: 6px; } .flabel { width: auto; } }
 </style>
 </head>
 <body>
@@ -208,8 +223,8 @@
   <span class="grow"></span>
   <span id="who"></span>
 </div></header>
+<div class="filters" id="filters"></div>
 <div class="controls" id="controls">
-  <select id="fmac" aria-label="machine"></select><select id="fbase" aria-label="compare against"></select><select id="fmodel" aria-label="model"></select>
   <span class="grow"></span>
   <button class="act" id="bench" disabled>Bench</button>
 </div>
@@ -249,30 +264,45 @@ const armTag = m => `${modelTag(m)} <span class="muted">${esc(m.label || "")}</s
 const macName = id => (DATA.pool.find(m => m.id === id) || DATA.results[id] || { name: id }).name;
 const PER_PAGE = 20;
 let tab = "Overview", back = "Overview", me = null, page = 0, denied = "";
-const filt = { mac: "", model: "", base: "" };
+const filt = { mac: "", models: new Set(), base: "" };
+// no model chip on means every model; otherwise only the chips that are on
+const modelOn = pie => !filt.models.size || [...filt.models].some(id => pieOf(id) === pie);
 const chosen = new Set();
 const testName = id => DATA.benchmarks.find(b => b.id === id)?.name || id;
 function fillFilters() {
   const macs = [...new Set([...Object.keys(DATA.results), ...RUNNABLE.map(m => m.id)])];
   const bases = DATA.baseline_labels || [];
   if (!bases.includes(filt.base)) filt.base = bases.includes(DATA.default_baseline) ? DATA.default_baseline : bases[0] || "";
-  const models = DATA.models.filter(m => m.label === filt.base).map(m => m.id)
-    .sort((a, b) => (a === DATA.default_model ? -1 : b === DATA.default_model ? 1 : 0));
-  const opts = (all, ids, name, on) => ids.map(id => `<option value="${esc(id)}"${id === on ? " selected" : ""}>${esc(name(id))}</option>`).join("");
   if (!macs.includes(filt.mac)) filt.mac = macs[0] || "";
-  if (!models.includes(filt.model)) filt.model = models.includes(DATA.default_model) ? DATA.default_model : models[0] || "";
-  const fm = document.getElementById("fmac"), fo = document.getElementById("fmodel"), fb = document.getElementById("fbase");
-  fm.innerHTML = opts("all machines", macs, id => id, filt.mac);
-  fb.innerHTML = opts("all engines", bases, label => "vs " + label, filt.base);
-  fb.onchange = () => {
-    // keep looking at the same model when the engine it is compared with changes
-    const same = DATA.models.find(m => m.label === fb.value && m.pie === pieOf(filt.model));
-    filt.base = fb.value; filt.model = same ? same.id : "";
+  const models = DATA.models.filter(m => m.label === filt.base)
+    .sort((a, b) => (a.id === DATA.default_model ? -1 : b.id === DATA.default_model ? 1 : 0));
+  for (const id of [...filt.models]) if (!models.some(m => m.id === id)) filt.models.delete(id);
+  const seg = (kind, items, on) => `<div class="fseg" role="group">` + items.map(([id, name]) =>
+    `<button type="button" data-kind="${kind}" data-id="${esc(id)}" aria-pressed="${id === on}"${id === on ? ' class="on"' : ""}>${esc(name)}</button>`).join("") + `</div>`;
+  const chips = `<div class="fchips" role="group">` +
+    `<button type="button" data-kind="model" data-id="" aria-pressed="${!filt.models.size}"${filt.models.size ? "" : ' class="on"'}>All</button>` +
+    models.map(m => `<button type="button" data-kind="model" data-id="${esc(m.id)}" aria-pressed="${filt.models.has(m.id)}"${filt.models.has(m.id) ? ' class="on"' : ""}>${esc(m.name)}</button>`).join("") + `</div>`;
+  const el = document.getElementById("filters");
+  el.innerHTML =
+    `<div class="frow"><span class="flabel">Hardware</span>${seg("mac", macs.map(id => [id, id]), filt.mac)}</div>` +
+    `<div class="frow"><span class="flabel">Engine</span>${seg("base", bases.map(label => [label, label]), filt.base)}</div>` +
+    `<div class="frow"><span class="flabel">Model</span>${chips}</div>`;
+  el.onclick = e => {
+    const b = e.target.closest("button[data-kind]");
+    if (!b) return;
+    const { kind, id } = b.dataset;
+    if (kind === "mac") filt.mac = id;
+    else if (kind === "base") {
+      // keep looking at the same models when the engine they are compared with changes
+      filt.models = new Set([...filt.models].map(m => DATA.models.find(x => x.label === id && x.pie === pieOf(m))?.id).filter(Boolean));
+      filt.base = id;
+    } else if (!id) filt.models.clear();
+    else {
+      if (filt.models.has(id)) filt.models.delete(id); else filt.models.add(id);
+      if (filt.models.size === models.length) filt.models.clear();
+    }
     fillFilters(); draw();
   };
-  fo.innerHTML = opts("all models", models, modelName, filt.model);
-  fm.onchange = () => { filt.mac = fm.value; draw(); };
-  fo.onchange = () => { filt.model = fo.value; draw(); };
 }
 const token = () => { try { return localStorage.getItem("pie-evals-token"); } catch { return null; } };
 
@@ -305,7 +335,16 @@ function orderedModels() {
   let saved = [];
   try { saved = JSON.parse(localStorage.getItem("pie-evals-model-order") || "[]"); } catch {}
   const rank = id => { const i = saved.indexOf(id); return i < 0 ? saved.length + DATA.models.findIndex(m => m.id === id) : i; };
-  return DATA.models.filter(m => m.label === filt.base).sort((a, b) => rank(a.id) - rank(b.id));
+  return DATA.models.filter(m => m.label === filt.base && (!filt.models.size || filt.models.has(m.id))).sort((a, b) => rank(a.id) - rank(b.id));
+}
+// the newest pie measurement of one machine / model / workload, whichever commit made it
+function latestPie(mac, pie, wl) {
+  let best = null;
+  for (const [sha, r] of Object.entries(DATA.results[mac]?.models[pie]?.[wl] || {})) {
+    const at = (r && r.at) || commitOf(sha).date || "";
+    if (r && (!best || at > best.at)) best = { sha, r, at };
+  }
+  return best;
 }
 function ollamaAt(mac, pie, wl, label, at) {
   const runs = DATA.baselines?.[mac]?.[pie]?.[wl]?.[label] || [];
@@ -328,30 +367,29 @@ function metricBar(pv, ov, noisy, unit, m, running, now, note) {
 }
 function overview() {
   const main = document.getElementById("main");
-  const mac = filt.mac, done = measured.find(c => !inFlight.has(c.sha))?.sha || "";
-  const c = sel ? commitOf(sel) : null;
-  let html = `<div class="commit-head"><div class="title">${c ? esc(c.message) || sel.slice(0, 7) : "No pie commit measured yet"}</div><div class="meta">` +
-    (c ? `<a class="sha" href="https://github.com/${DATA.pie_repo}/commit/${sel}" target="_blank"><code>${sel.slice(0, 7)}</code></a>` : "") +
+  const mac = filt.mac;
+  const shown = orderedModels().flatMap(m => DATA.benchmarks.map(b => latestPie(mac, m.pie, b.id))).filter(Boolean);
+  const newest = shown.reduce((a, b) => (!a || b.at > a.at ? b : a), null);
+  const c = newest ? commitOf(newest.sha) : null;
+  let html = `<div class="commit-head"><div class="title">${c ? esc(c.message) || newest.sha.slice(0, 7) : "Nothing measured yet on this machine"}</div><div class="meta">` +
+    `<span class="muted">latest result for each setup on ${esc(macName(mac))}</span>` +
+    (c ? `<a class="sha" href="https://github.com/${DATA.pie_repo}/commit/${newest.sha}" target="_blank"><code>${newest.sha.slice(0, 7)}</code></a>` : "") +
     (c?.author ? `<span><img class="avatar" src="https://github.com/${esc(c.author)}.png?size=40">${esc(c.author)}</span>` : "") +
-    (c?.date ? `<span title="${fmtDate(c.date)} ${fmtTime(c.date)}">${relTime(c.date)}</span>` : "") +
-    `<span class="muted">${esc(macName(mac))}</span>` +
-    (inFlight.has(sel) ? `<span class="running">measuring now</span>` : "") +
-    (sel && sel !== home ? `<a href="#" id="latest">back to latest</a>` : "") +
-    (inFlight.has(sel) && done && done !== sel ? `<a href="#" id="done">last complete: ${done.slice(0, 7)}</a>` : "") + `</div></div>`;
+    (c?.date ? `<span title="${fmtDate(c.date)} ${fmtTime(c.date)}">${relTime(c.date)}</span>` : "") + `</div></div>`;
   const rows = [];
   for (const m of orderedModels()) {
     const byTest = DATA.results[mac]?.models[m.pie] || {};
     let body = "";
-    const running = inFlight.has(sel);
+    const running = false;
     const ftb = m.first_token_broken;
     if (ftb) body += `<tr><td colspan="6" class="muted">${esc(ftb)}.</td></tr>`;
     for (const b of DATA.benchmarks) {
-      const raw = sel ? byTest[b.id]?.[sel] : null;
+      const hit = latestPie(mac, m.pie, b.id), raw = hit?.r;
       const now = raw && ftb ? {...raw, prefill: null, ttft: null} : raw;
       const ol = ollamaAt(mac, m.pie, b.id, m.label, now?.at);
       const noisy = [now?.noisy && `pie: ${now.noisy}`, ol?.noisy && `${m.label}: ${ol.noisy}`].filter(Boolean).join("; ");
       const multi = b.concurrency > 1;
-      body += `<tr title="${esc(b.description)}"><td class="clip">${esc(b.name)}</td>` +
+      body += `<tr title="${esc(b.description)}"><td class="clip">${esc(b.name)}${hit && hit.sha !== newest.sha ? ` <span class="muted" title="pie measured at commit ${hit.sha.slice(0, 7)}, ${relTime(hit.at)}">${hit.sha.slice(0, 7)}</span>` : ""}</td>` +
         `${metricBar(now?.decode, ol?.decode, noisy, multi ? "tok/s total" : "tok/s", m, running, now)}` +
         `${metricBar(now?.prefill, ol?.prefill, noisy, multi ? "tok/s per request" : "tok/s", m, running, now)}` +
         pair(now?.ttft, ol?.ttft, false, ms, `time to first token (median), pie / ${m.label}`) + `</tr>`;
@@ -413,8 +451,6 @@ function overview() {
   main.querySelectorAll("details.quality").forEach(d => d.addEventListener("toggle", () => {
     if (d.open) openQuality.add(d.dataset.model); else openQuality.delete(d.dataset.model);
   }));
-  document.getElementById("latest")?.addEventListener("click", e => { e.preventDefault(); sel = home; draw(); });
-  document.getElementById("done")?.addEventListener("click", e => { e.preventDefault(); sel = done; draw(); });
 }
 function openRuns(shas) {
   if (!me) return openSignIn();
@@ -480,11 +516,11 @@ function pushes() {
   page = Math.min(page, pages - 1);
   const isMeasured = new Set(DATA.commits.map(c => c.sha));
   const running = new Set(DATA.running || []);
-  const fits = x => (!filt.mac || x.mac === filt.mac) && (!filt.model || x.model === pieOf(filt.model));
+  const fits = x => (!filt.mac || x.mac === filt.mac) && modelOn(x.model);
   const failedAt = sha => (DATA.failed || []).some(f => f.sha === sha && fits(f));
   const measuredAt = sha => Object.entries(DATA.results).some(([mac, r]) =>
     (!filt.mac || mac === filt.mac) && Object.entries(r.models).some(([model, byTest]) =>
-      (!filt.model || model === pieOf(filt.model)) && Object.values(byTest).some(byCommit => byCommit[sha])));
+      modelOn(model) && Object.values(byTest).some(byCommit => byCommit[sha])));
   const state = sha => running.has(sha) ? ["wait", "waiting to run"]
     : failedAt(sha) ? [measuredAt(sha) ? "part" : "bad", measuredAt(sha) ? "some benchmarks failed" : "failed"]
     : measuredAt(sha) ? ["run", "benchmarked"] : ["", "not benchmarked"];
@@ -701,9 +737,8 @@ function draw() {
   else if (me && tab === "Sign in") tab = back;
   document.getElementById("tabs").innerHTML = (me ? TABS : ["Overview"]).map(t => `<button class="${t === tab ? "on" : ""}">${t}</button>`).join("");
   document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { tab = b.textContent; draw(); });
-  document.getElementById("controls").hidden = tab !== "Overview" && tab !== "History";
-  document.getElementById("fmac").hidden = tab !== "History" && tab !== "Overview";
-  document.getElementById("fmodel").hidden = tab !== "History";
+  document.getElementById("controls").hidden = tab !== "History";
+  document.getElementById("filters").hidden = tab !== "Overview" && tab !== "History";
   const bench = document.getElementById("bench");
   bench.hidden = tab !== "History";
   bench.disabled = !chosen.size;
