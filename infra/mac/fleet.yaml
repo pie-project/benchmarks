@@ -1,0 +1,25 @@
+# The resident Macs (on the team tailnet). fleet.sh reads this; keep one key per line.
+# id is the platform id in matrix/platforms.yaml and the runner label.
+macs:
+  - id: m2-16g
+    host: macbook-air-test-m2-16gb      # 100.121.32.37  MacBook Air M2 16GB
+    user: anton
+  - id: m3-16g
+    host: macbook-air-test-m3-16gb      # 100.90.67.100  MacBook Air M3 16GB
+    user: anton
+  - id: m4-pro-48g
+    host: macbook-pro-test-m4-pro-48gb  # 100.90.201.111 MacBook Pro M4 Pro 48GB
+    user: anton
+  - id: m5-16g
+    host: macbook-air-test-m5-16gb      # 100.112.37.51  MacBook Air M5 16GB
+    user: anton
+  - id: m5-max-64g
+    host: macbook-pro-test-m5-max-64gb  # 100.72.172.75  MacBook Pro M5 Max 64GB
+    user: anton
+  - id: m5-max-128g
+    host: lius-macbook-pro-test         # 100.101.151.21 MacBook Pro 16" M5 Max 128GB
+    user: anton
+
+# Never used as runners and never touched by fleet.sh.
+reserved:
+  - host: macbook-pro-test-m5-128gb     # 100.87.85.82   M5 Max 128GB Space Black: exclusive Etude testing

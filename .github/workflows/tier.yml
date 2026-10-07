@@ -136,13 +136,13 @@ jobs:
       - name: pie root
         run: |
           # RunPod: the startup script sets PIE_ROOT=/tmp/pie (pod-local) and PIE_MIRROR (bare mirror on the volume);
-          # the node clones from the mirror and restores the cached build. Macs: a resident checkout under $HOME.
+          # the node clones from the mirror and restores the cached build. Macs: ~/workspace/pie-evals/pie, set in the runner .env by infra/mac/install.sh.
           echo "PIE_ROOT=${PIE_ROOT:-$HOME/pie}" >> "$GITHUB_ENV"
       - name: baseline engines
         if: runner.os == 'macOS' && (contains(inputs.engines, 'mlxlm') || contains(inputs.engines, 'llamacpp'))
         run: |
           pin() { .venv/bin/python -c "import yaml,sys; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}[sys.argv[1]]['pin'])" "$1"; }
-          d="$HOME/.cache/pie-evals/baselines"; mlx=$(pin mlxlm); llama=$(pin llamacpp)
+          d="${PIE_EVALS_CACHE:-$HOME/.cache/pie-evals}/baselines"; mlx=$(pin mlxlm); llama=$(pin llamacpp)
           py="$d/mlx-lm-$mlx"
           [ -x "$py/bin/python" ] || { uv venv --quiet --python 3.12 "$py" && uv pip install --quiet --python "$py/bin/python" "mlx-lm==$mlx" transformers; }
           bin="$d/llama-$llama"
@@ -153,7 +153,7 @@ jobs:
         run: |
           # the release tarball at the pinned version, unpacked beside the other baselines: no Homebrew needed, and no drift
           pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['splash']['pin'])")
-          dir="$HOME/.cache/pie-evals/baselines/splash-$pin"
+          dir="${PIE_EVALS_CACHE:-$HOME/.cache/pie-evals}/baselines/splash-$pin"
           if [ ! -x "$dir/bin/splash" ]; then
             rm -rf "$dir" && mkdir -p "$dir/bin"
             curl -fsSL "https://github.com/incoai/splash/releases/download/$pin/splash-$pin-arm64-macos26.tar.gz" | tar xz -C "$dir" --strip-components=1
@@ -167,7 +167,7 @@ jobs:
         run: |
           # the release at the pinned version, not the app on the machine: the app updates itself past the pin
           pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['ollama']['pin'])")
-          dir="$HOME/.cache/pie-evals/baselines/ollama-$pin"
+          dir="${PIE_EVALS_CACHE:-$HOME/.cache/pie-evals}/baselines/ollama-$pin"
           if [ ! -x "$dir/ollama" ]; then
             rm -rf "$dir" && mkdir -p "$dir"
             curl -fsSL "https://github.com/ollama/ollama/releases/download/v$pin/ollama-darwin.tgz" | tar xz -C "$dir"

@@ -34,5 +34,5 @@ Every workflow in this repo, when it runs, and what it needs. Update this file w
 
 ## Machines
 
-- Macs are resident GitHub runners. `config.json` lists the only Macs that may be used: a Mac not listed there gets no job from any workflow or from the site's Bench button, and is not shown on the site. Add one with `infra/mac/setup-runner.sh`.
+- Macs are resident GitHub runners. `config.json` lists the only Macs that may be used: a Mac not listed there gets no job from any workflow or from the site's Bench button, and is not shown on the site. Add one to `infra/mac/fleet.yaml` and run `infra/mac/fleet.sh install <id>`.
 - RunPod pods are rented per run and end themselves when idle. `reap-pods` is the last safety net.

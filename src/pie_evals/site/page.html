@@ -608,8 +608,8 @@ async function addMac() {
     return;
   }
   const before = new Set(((await gh(`repos/${DATA.repo}/actions/runners?per_page=100`).catch(() => null))?.runners || []).map(r => r.id));
-  const url = `https://raw.githubusercontent.com/${DATA.repo}/main/infra/mac/setup-runner.sh`;
-  const cmd = `curl -fsSL ${url} | bash -s ${reg.token}`;
+  const url = `https://raw.githubusercontent.com/${DATA.repo}/main/infra/mac/install.sh`;
+  const cmd = `mkdir -p ~/workspace/pie-evals && curl -fsSL ${url} -o ~/workspace/pie-evals/install.sh && bash ~/workspace/pie-evals/install.sh ${reg.token}`;
   const expires = reg.expires_at ? `${fmtTime(reg.expires_at)}` : "in an hour";
   sheet(`<div class="sheet-head"><h2>Add this Mac</h2></div>` +
     `<p>Open Terminal on the Mac you want to add and run:</p>` +
@@ -659,7 +659,7 @@ async function removeOne(r) {
     sheet(`<div class="sheet-head"><h2>Remove ${esc(r.name)}</h2></div><p>GitHub refused a removal token. Removing runners needs admin rights on ${esc(DATA.repo)}.</p><p class="muted">${esc(err.slice(0, 200))}</p>`);
     return;
   }
-  const cmd = `curl -fsSL https://raw.githubusercontent.com/${DATA.repo}/main/infra/mac/remove-runner.sh | bash -s ${tok.token}`;
+  const cmd = `curl -fsSL https://raw.githubusercontent.com/${DATA.repo}/main/infra/mac/uninstall.sh | bash -s ${tok.token}`;
   sheet(`<div class="sheet-head"><h2>Remove ${esc(r.name)}</h2></div>` +
     `<p>On that Mac, run this in Terminal to stop the service and unregister it:</p>` +
     `<div class="cmd"><code>${esc(cmd)}</code><button class="act" id="copy">Copy</button></div>` +

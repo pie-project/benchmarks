@@ -279,7 +279,7 @@ cli.py        expand-matrix → jobs, launch-pod, collect, report, watch-baselin
 orchestrator is **GitHub Actions**; every node is a **self-hosted runner**
 with only outbound connectivity:
 
-- Macs are resident runners (`infra/mac/setup-runner.sh`), one runner per
+- Macs are resident runners (`infra/mac/fleet.sh`, `infra/mac/install.sh`), one runner per
   machine, labels = platform id.
 - RunPod pods are ephemeral runners on **`pieproject/runpod-ci-runner`**
   (github.com/pie-project/runpod-ci-runner — the image pie's own CUDA CI
