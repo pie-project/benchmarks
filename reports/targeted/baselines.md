@@ -5,7 +5,6 @@
 | m5-max-48g | gemma-4-26b-a4b-mlx4 | cache-2k | text-completion-bench | tp1 | gemma-4-26b-a4b-ollama 0.34.4 | output_tok_s | 34.11 | 97.56 | 2.861× **pie trails** | **NO** | competitive |
 | m5-max-48g | gemma-4-26b-a4b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | gemma-4-26b-a4b-ollama-mlx 0.34.4 | output_tok_s | 27.87 | 48.15 | 1.727× **pie trails** | yes | competitive |
 | m5-max-48g | gemma-4-26b-a4b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | gemma-4-26b-a4b-mlxlm 0.31.3 | output_tok_s | 27.87 | 46.65 | 1.674× **pie trails** | **NO** | competitive |
-| m5-max-128g | qwen3.8-27b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | qwen3.8-27b-splash 1.1.0 | output_tok_s | 30.22 | 47.23 | 1.563× **pie trails** | **NO** | competitive |
 | m5-max-128g | qwen3.6-27b-mlx4 | c32 | text-completion-bench | tp1 | mlxlm 0.31.3 | output_tok_s | 84.78 | 128.4 | 1.515× **pie trails** | **NO** | competitive |
 | m5-max-128g | qwen3.8-27b-mlx4 | c4 | text-completion-bench | tp1 | qwen3.8-27b-splash 1.1.0 | output_tok_s | 86.5 | 130 | 1.503× **pie trails** | **NO** | competitive |
 | m5-max-48g | qwen3.8-27b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | qwen3.8-27b-splash 1.1.0 | output_tok_s | 28.83 | 41.81 | 1.450× **pie trails** | **NO** | competitive |
@@ -17,7 +16,6 @@
 | m5-max-48g | qwen3.8-27b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | qwen3.8-27b-mlxlm 0.31.3 | output_tok_s | 28.83 | 29.91 | 1.037× **pie trails** | **NO** | competitive |
 | m5-max-48g | gemma-4-26b-a4b-mlx4 | ob-512-200 | text-completion-bench | tp1 | gemma-4-26b-a4b-ollama-mlx 0.34.4 | output_tok_s | 112.6 | 115.8 | 1.029× **pie trails** | **NO** | competitive |
 | m5-max-48g | qwen3.8-27b-mlx4 | ob-512-200 | text-completion-bench | tp1 | qwen3.8-27b-mlxlm 0.31.3 | output_tok_s | 28.86 | 29.44 | 1.020× **pie trails** | yes | competitive |
-| m5-max-128g | qwen3.8-27b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | qwen3.8-27b-mlxlm 0.31.3 | output_tok_s | 30.22 | 30.81 | 1.019× **pie trails** | **NO** | competitive |
 | m5-max-48g | qwen3.8-27b-mlx4 | ob-story-200 | text-completion-bench | tp1 | qwen3.8-27b-mlxlm 0.31.3 | output_tok_s | 28.98 | 29.16 | 1.006× **pie trails** | **NO** | competitive |
 | m5-max-128g | qwen3.6-27b-mlx4 | c8 | text-completion-bench | tp1 | mlxlm 0.31.3 | output_tok_s | 88.69 | 85.07 | 0.959× | **NO** | competitive |
 | m5-max-128g | qwen3.8-27b-mlx4 | ob-short-100 | text-completion-bench | tp1 | qwen3.8-27b-mlxlm 0.31.3 | output_tok_s | 32.46 | 31.02 | 0.956× | **NO** | competitive |
@@ -61,7 +59,6 @@
 | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ob-short-100 | text-completion-bench | tp1 | qwen3.6-35b-a3b-mlxlm 0.31.3 | output_tok_s | 156.2 | 117.9 | 0.755× | **NO** | competitive |
 | m5-max-128g | qwen3.8-27b-mlx4 | ob-short-100 | text-completion-bench | tp1 | qwen3.8-27b-llamacpp b11312 | output_tok_s | 32.46 | 24.48 | 0.754× | **NO** | competitive |
 | m5-max-48g | muse-glimmer-30b-mlx4 | ob-short-100 | text-completion-bench | tp1 | muse-glimmer-30b-llamacpp b11312 | output_tok_s | 32.6 | 24.54 | 0.753× | **NO** | competitive |
-| m5-max-128g | qwen3.8-27b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | qwen3.8-27b-ollama 0.35.0 | output_tok_s | 30.22 | 22.52 | 0.745× | **NO** | competitive |
 | m5-max-48g | qwen3.8-27b-mlx4 | ob-story-200 | text-completion-bench | tp1 | qwen3.8-27b-llamacpp b11312 | output_tok_s | 28.98 | 21.53 | 0.743× | **NO** | competitive |
 | m5-max-48g | qwen3.8-27b-mlx4 | ob-advanced-500 | text-completion-bench | tp1 | qwen3.8-27b-llamacpp b11312 | output_tok_s | 28.83 | 21.37 | 0.741× | **NO** | competitive |
 | m5-max-48g | qwen3.5-0.8b-bf16 | c8 | text-completion-bench | tp1 | qwen3.5-0.8b-gguf-bf16 10270 (071327508) | output_tok_s | 1068 | 783.6 | 0.734× | **NO** | competitive |
@@ -109,13 +106,13 @@
 | m5-max-48g | muse-glimmer-30b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | muse-glimmer-30b-llamacpp b11312 | output_tok_s | 27.49 | 12.8 | 0.466× | yes | competitive |
 | m5-max-48g | gemma-4-26b-a4b-mlx4 | c4 | text-completion-bench | tp1 | gemma-4-26b-a4b-ollama-mlx 0.34.4 | output_tok_s | 284 | 122.6 | 0.432× | **NO** | competitive |
 | m5-max-48g | gemma-4-26b-a4b-mlx4 | c4 | text-completion-bench | tp1 | gemma-4-26b-a4b-mlxlm 0.31.3 | output_tok_s | 284 | 121.4 | 0.428× | **NO** | competitive |
-| m5-max-128g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | qwen3.8-27b-mlxlm 0.31.3 | output_tok_s | 27.93 | 11.81 | 0.423× | **NO** | competitive |
+| m5-max-128g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | qwen3.8-27b-mlxlm 0.31.3 | output_tok_s | 27.79 | 11.81 | 0.425× | **NO** | competitive |
 | m5-max-128g | gemma-4-26b-a4b-mlx4 | ctx-4k-256 | text-completion-bench | tp1 | gemma-4-26b-a4b-llamacpp b11312 | output_tok_s | 120.1 | 50.02 | 0.416× | yes | competitive |
 | m5-max-128g | qwen3.6-35b-a3b-mlx4 | c4 | text-completion-bench | tp1 | qwen3.6-35b-a3b-llamacpp b11312 | output_tok_s | 427.1 | 177.3 | 0.415× | **NO** | competitive |
 | m5-max-48g | qwen3.5-0.8b-bf16 | c32 | text-completion-bench | tp1 | qwen3.5-0.8b-gguf-bf16 10270 (071327508) | output_tok_s | 1957 | 810.2 | 0.414× | **NO** | competitive |
 | m5-max-128g | gemma-4-26b-a4b-mlx4 | c4 | text-completion-bench | tp1 | gemma-4-26b-a4b-ollama 0.35.0 | output_tok_s | 351.2 | 143.7 | 0.409× | **NO** | competitive |
 | m5-max-48g | qwen3.8-27b-mlx4 | c4 | text-completion-bench | tp1 | qwen3.8-27b-mlxlm 0.31.3 | output_tok_s | 71.96 | 28.61 | 0.398× | **NO** | competitive |
-| m5-max-128g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | qwen3.8-27b-llamacpp b11312 | output_tok_s | 27.93 | 9.925 | 0.355× | yes | competitive |
+| m5-max-128g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | qwen3.8-27b-llamacpp b11312 | output_tok_s | 27.79 | 9.925 | 0.357× | yes | competitive |
 | m5-max-48g | qwen3.5-0.8b-bf16 | c32 | text-completion-bench | tp1 | qwen3.5-0.8b-mlx-bf16 0.31.3 | output_tok_s | 1957 | 692.8 | 0.354× | **NO** | competitive |
 | m5-max-48g | muse-glimmer-30b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | muse-glimmer-30b-ollama 0.34.4 | output_tok_s | 27.35 | 9.652 | 0.353× | yes | competitive |
 | m5-max-128g | muse-glimmer-30b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | muse-glimmer-30b-llamacpp b11312 | output_tok_s | 28.62 | 9.979 | 0.349× | yes | competitive |
@@ -128,5 +125,5 @@
 | m5-max-128g | gemma-4-26b-a4b-mlx4 | c4 | text-completion-bench | tp1 | gemma-4-26b-a4b-ollama-mlx 0.35.0 | output_tok_s | 351.2 | 111.4 | 0.317× | **NO** | competitive |
 | m5-max-128g | qwen3.6-35b-a3b-mlx4 | c4 | text-completion-bench | tp1 | qwen3.6-35b-a3b-mlxlm 0.31.3 | output_tok_s | 427.1 | 132.6 | 0.310× | **NO** | competitive |
 | m5-max-128g | qwen3.6-35b-a3b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | qwen3.6-35b-a3b-llamacpp b11312 | output_tok_s | 128.5 | 39.83 | 0.310× | yes | competitive |
-| m5-max-128g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | qwen3.8-27b-ollama 0.35.0 | output_tok_s | 27.93 | 7.716 | 0.276× | **NO** | competitive |
+| m5-max-128g | qwen3.8-27b-mlx4 | ctx-8k-256 | text-completion-bench | tp1 | qwen3.8-27b-ollama 0.35.0 | output_tok_s | 27.79 | 7.716 | 0.278× | **NO** | competitive |
 | m5-max-128g | qwen3.6-35b-a3b-mlx4 | c4 | text-completion-bench | tp1 | qwen3.6-35b-a3b-ollama 0.35.0 | output_tok_s | 427.1 | 114.7 | 0.269× | **NO** | competitive |
