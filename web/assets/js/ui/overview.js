@@ -102,17 +102,67 @@ window.Pie = window.Pie || {};
       ${body}
     </section>`;
 
-  // 1. Where we stand: an activity ring of wins, and three numbers beside it
-  const standing = (decode, prefill) => {
+  // pie's median decode advantage per tag, oldest to newest, up to the picked release
+  const releasePoints = (state, models) => {
+    const tags = Pie.store.tables.tags || [];
+    const upto = tags.findIndex((tag) => tag.id === state.release);
+    const { hardware, workload } = state.overview;
+    const points = [];
+    for (const tag of tags.slice(Math.max(upto, 0)).reverse()) {
+      const rows = Pie.store.snapshot(tag.id).filter((row) => row.hardware === hardware && row.workload === workload);
+      if (!rows.some((row) => !row.stale)) continue;
+      const list = comparisons(groupByModel(rows), models, "decode_tok_s");
+      if (list.length) points.push({ tag: tag.id, date: tag.date, r: median(list.map((c) => c.r)), n: list.length });
+    }
+    return points;
+  };
+
+  // a small line of those points: a dot per tag, its value above, the tag below
+  const trend = (points) => {
+    const height = 112, top = 30, bottom = 78;
+    const logs = points.map((p) => Math.log(p.r));
+    const lo = Math.min(0, ...logs), hi = Math.max(0, ...logs);
+    const pad = (hi - lo) * 0.1 || 0.05;
+    const y = (r) => bottom - ((Math.log(r) - (lo - pad)) / (hi - lo + 2 * pad)) * (bottom - top);
+    const x = (i) => `${8 + (i * 84) / (points.length - 1)}%`;
+    const parity = y(1).toFixed(1);
+    const segments = points.slice(1).map((p, i) =>
+      `<line class="trend-line" x1="${x(i)}" y1="${y(points[i].r).toFixed(1)}" x2="${x(i + 1)}" y2="${y(p.r).toFixed(1)}"/>`).join("");
+    const marks = points.map((p, i) => {
+      const tip = `${p.tag}${p.date ? `, ${Pie.format.date(p.date)}` : ""}\nMedian decode ${delta(p.r)} over ${p.n} comparisons`;
+      const cy = y(p.r).toFixed(1);
+      return `<g data-tip="${esc(tip)}">
+          <circle class="trend-hit" cx="${x(i)}" cy="${cy}" r="14"/>
+          <circle class="trend-dot" cx="${x(i)}" cy="${cy}" r="5"/>
+          <text class="trend-value" x="${x(i)}" y="${(y(p.r) - 13).toFixed(1)}" text-anchor="middle">${delta(p.r)}</text>
+          <text class="trend-tag" x="${x(i)}" y="${height - 4}" text-anchor="middle">${esc(p.tag)}</text>
+        </g>`;
+    }).join("");
+    return `
+      <svg class="trend" width="100%" height="${height}" role="img" aria-label="pie's median decode advantage by release">
+        <line class="trend-parity" x1="0" x2="100%" y1="${parity}" y2="${parity}"/>
+        ${segments}${marks}
+      </svg>`;
+  };
+
+  // 1. Where we stand: an activity ring of wins, and beside it the median advantage across releases
+  const standing = (decode, points) => {
     const wins = decode.filter((c) => c.r > 1);
     const share = decode.length ? wins.length / decode.length : 0;
     const size = 168, stroke = 20, radius = (size - stroke) / 2, length = 2 * Math.PI * radius;
+    const c = size / 2;
     const ring = `
       <div class="ring" role="img" aria-label="pie decodes faster in ${wins.length} of ${decode.length} comparisons">
-        <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
-          <circle class="ring-track" cx="${size / 2}" cy="${size / 2}" r="${radius}" stroke-width="${stroke}"/>
-          ${share > 0 ? `<circle class="ring-fill" cx="${size / 2}" cy="${size / 2}" r="${radius}" stroke-width="${stroke}"
-            stroke-dasharray="${(length * share).toFixed(2)} ${length.toFixed(2)}" transform="rotate(-90 ${size / 2} ${size / 2})"/>` : ""}
+        <svg viewBox="0 0 ${size} ${size}" aria-hidden="true">
+          <defs>
+            <linearGradient id="ring-gradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" class="ring-stop-start"/>
+              <stop offset="1" class="ring-stop-end"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-track" cx="${c}" cy="${c}" r="${radius}" stroke-width="${stroke}"/>
+          ${share > 0 ? `<circle class="ring-fill" cx="${c}" cy="${c}" r="${radius}" stroke-width="${stroke}"
+            stroke-dasharray="${(length * share).toFixed(2)} ${length.toFixed(2)}" transform="rotate(-90 ${c} ${c})"/>` : ""}
         </svg>
         <div class="ring-center">
           <div class="ring-value">${wins.length}<span>/${decode.length}</span></div>
@@ -120,83 +170,120 @@ window.Pie = window.Pie || {};
         </div>
       </div>`;
 
-    const tile = (figure, r, caption) => `
-      <div class="stat-tile">
-        <div class="stat-value ${r === null ? "is-empty" : tone(r)}">${figure}</div>
-        <div class="stat-caption">${caption}</div>
+    const mid = median(decode.map((entry) => entry.r));
+    const side = `
+      <div class="stand-side">
+        <div class="stand-label">Median decode</div>
+        <div class="stand-value ${tone(mid)}">${delta(mid)}</div>
+        ${points.length >= 2 ? `<div class="stand-trend">${trend(points)}</div>` : ""}
       </div>`;
-    const decodeMid = median(decode.map((c) => c.r));
-    const prefillMid = median(prefill.map((c) => c.r));
-    const best = wins.length ? wins.reduce((a, b) => (b.r > a.r ? b : a)) : null;
-    const tiles = [
-      tile(decodeMid === null ? "—" : delta(decodeMid), decodeMid, "median decode"),
-      tile(prefillMid === null ? "—" : delta(prefillMid), prefillMid, "median prefill"),
-      tile(best ? multiple(best.r) : "—", best ? best.r : null,
-        best ? `${esc(names().model(best.model))} vs ${esc(names().engine(best.engine))}` : "no decode win yet"),
-    ].join("");
 
-    return section("Where we stand", "Decode, one model against one engine",
-      `<div class="standing">${ring}<div class="stat-tiles">${tiles}</div></div>`);
+    return section("Where we stand", "One model against one engine, decode",
+      `<div class="standing${points.length >= 2 ? " has-trend" : ""}">${ring}${side}</div>`);
   };
 
-  // 2. Against each engine: models down, engines across, pie ÷ engine in every cell
-  const HEAT_STEPS = [0.03, 0.15, 0.5]; // |change| thresholds for steps 1, 2, 3
-  const heatStep = (r) => {
-    const change = Math.abs(r - 1);
-    const step = HEAT_STEPS.filter((t) => change >= t).length;
-    return step === 0 ? "heat-0" : `heat-${r > 1 ? "p" : "n"}${step}`;
+  // 2. Against each engine: models down, engines across, a small activity ring per pairing.
+  // The arc closes at 2× (or ½×): clockwise and green where pie leads, counter-clockwise and red where it trails.
+  const PARITY = 0.03;
+  const miniRing = (cx, cy, r) => {
+    const radius = 23, stroke = 4.5, length = 2 * Math.PI * radius;
+    const near = Math.abs(r - 1) < PARITY;
+    const kind = near ? "is-even" : r > 1 ? "is-ahead" : "is-behind";
+    const share = Math.min(Math.abs(Math.log2(r)), 1);
+    const turn = `rotate(-90 ${cx} ${cy})`;
+    const arc = near ? "" : `<circle class="mini-arc" cx="${cx}" cy="${cy}" r="${radius}" stroke-width="${stroke}"
+        stroke-dasharray="${Math.max(length * share, 0.01).toFixed(2)} ${length.toFixed(2)}"
+        transform="${r < 1 ? `translate(${2 * cx} 0) scale(-1 1) ${turn}` : turn}"/>`;
+    return `
+        <circle class="mini-track ${kind}" cx="${cx}" cy="${cy}" r="${radius}" stroke-width="${stroke}"/>${arc ? arc.replace("mini-arc", `mini-arc ${kind}`) : ""}
+        <text class="mini-value ${kind}" x="${cx}" y="${cy + 4}" text-anchor="middle">${delta(r)}</text>`;
   };
+
+  // setups too big for the selected Mac: {model: {engine: GiB needed}}, from the planner's fit rule
+  let tooBig = {};
+  let macMemory = null;
+  const misfit = (model, engine) => tooBig[model]?.[engine];
+  const fitNote = (gib) => `Needs about ${Math.round(gib)} GB${macMemory ? `; this Mac has ${macMemory} GB` : ""}`;
+  // a small "no entry" mark: a hairline circle with a slash
+  const noFitMark = (cx, cy) => `
+    <circle class="nofit-mark" cx="${cx}" cy="${cy}" r="9"/>
+    <line class="nofit-mark" x1="${cx - 6.4}" y1="${cy + 6.4}" x2="${cx + 6.4}" y2="${cy - 6.4}"/>`;
 
   const heatmap = (byModel, models, metric) => {
     const list = comparisons(byModel, models, metric.key);
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
     const engines = [...new Set(Object.values(byModel).flat().filter((row) => !isPie(row)).map((row) => row.engine))]
       .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
-    const rowsShown = models.filter((id) => (byModel[id] || []).some(isPie));
-    const control = segmented("metric", METRICS, metric.id, "is-small");
+    const rowsShown = models.filter((id) => (byModel[id] || []).some(isPie) || misfit(id, Pie.engines.primary));
     if (!engines.length || !rowsShown.length) return "";
 
-    const cell = 44, gap = 2, n = engines.length;
-    const colX = (j) => `${(j * 100) / n}%`;
-    const colMid = (j) => `${((j + 0.5) * 100) / n}%`;
-    const head = engines.map((engine, j) =>
-      `<text class="heat-head" x="${colMid(j)}" y="14" text-anchor="middle">${esc(names().engine(engine))}</text>`).join("");
+    const labelWidth = 136, col = 78, row = 64, head = 24;
+    const width = labelWidth + engines.length * col;
+    const height = head + rowsShown.length * row;
+    const heads = engines.map((engine, j) =>
+      `<text class="heat-head" x="${labelWidth + (j + 0.5) * col}" y="14" text-anchor="middle">${esc(names().engine(engine))}</text>`).join("");
     const body = rowsShown.map((model, i) => {
-      const y = 24 + i * cell;
-      return engines.map((engine, j) => {
+      const cy = head + i * row + row / 2;
+      const label = `<text class="heat-label" x="0" y="${cy + 4}">${esc(names().model(model))}</text>`;
+      // pie itself cannot load this model here: one quiet line across the row
+      const pieNeeds = misfit(model, Pie.engines.primary);
+      if (pieNeeds && !(byModel[model] || []).some(isPie)) {
+        const mid = labelWidth + (engines.length * col) / 2;
+        return label + `<g data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds)}`)}">
+            <rect class="heat-hit" x="${labelWidth}" y="${cy - row / 2}" width="${engines.length * col}" height="${row}"/>
+            ${noFitMark(mid - 52, cy)}
+            <text class="nofit-text" x="${mid - 36}" y="${cy + 4}">Doesn't fit</text>
+          </g>`;
+      }
+      return label + engines.map((engine, j) => {
+        const cx = labelWidth + (j + 0.5) * col;
+        const hit = `<rect class="heat-hit" x="${cx - col / 2}" y="${cy - row / 2}" width="${col}" height="${row}"/>`;
         const c = list.find((entry) => entry.model === model && entry.engine === engine);
         if (!c) {
-          return `<rect class="heat-cell heat-empty" x="${colX(j)}" y="${y}" width="${100 / n}%" height="${cell}" rx="10"
-            stroke-width="${gap * 2}" data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\nNo data`)}"/>`;
+          const needs = misfit(model, engine);
+          if (needs) {
+            return `<g data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\n${names().engine(engine)} doesn't fit. ${fitNote(needs)}`)}">${hit}
+              ${noFitMark(cx, cy)}</g>`;
+          }
+          return `<g data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\nNo data`)}">${hit}
+            <circle class="heat-empty" cx="${cx}" cy="${cy}" r="2.5"/></g>`;
         }
-        const stale = c.pie.stale || c.other.stale;
         const tip = [
           `${names().model(model)} vs ${names().engine(engine)}`,
           `${metric.label}: pie ${value(c.pie[metric.key])}, ${names().engine(engine)} ${value(c.other[metric.key])} tok/s`,
           c.other.stale ? `${names().engine(engine)}: ${when(c.other)}` : "",
           c.pie.stale ? `pie: ${when(c.pie)}` : "",
         ].filter(Boolean).join("\n");
-        return `<g class="${heatStep(c.r)}${stale ? " is-stale" : ""}" data-tip="${esc(tip)}">
-            <rect class="heat-cell" x="${colX(j)}" y="${y}" width="${100 / n}%" height="${cell}" rx="10" stroke-width="${gap * 2}"/>
-            <text class="heat-value" x="${colMid(j)}" y="${y + cell / 2 + 5}" text-anchor="middle">${delta(c.r)}</text>
-          </g>`;
+        return `<g data-tip="${esc(tip)}">${hit}${miniRing(cx, cy, c.r)}</g>`;
       }).join("");
     }).join("");
-    const labels = rowsShown.map((model) => `<div class="heat-label">${esc(names().model(model))}</div>`).join("");
-    const height = 24 + rowsShown.length * cell;
 
     return section("Against each engine", `pie ÷ engine, ${metric.label.toLowerCase()} tok/s`, `
       <div class="heatmap">
-        <div class="heat-labels">${labels}</div>
-        <svg class="heat-grid" width="100%" height="${height}" role="img"
-          aria-label="pie against each engine, ${metric.label.toLowerCase()}">${head}${body}</svg>
-      </div>`, control, "is-narrow");
+        ${segmented("metric", METRICS, metric.id, "is-small")}
+        <svg class="heat-grid" viewBox="0 0 ${width} ${height}" width="${width}" role="img"
+          aria-label="pie against each engine, ${metric.label.toLowerCase()}">
+          <defs>
+            <linearGradient id="heat-ahead" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" class="heat-stop-ahead-start"/><stop offset="1" class="heat-stop-ahead-end"/>
+            </linearGradient>
+            <linearGradient id="heat-behind" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" class="heat-stop-behind-start"/><stop offset="1" class="heat-stop-behind-end"/>
+            </linearGradient>
+          </defs>
+          ${heads}${body}
+        </svg>
+      </div>`);
   };
 
   // 3. By model: one card per model, a lollipop per engine
-  const figure = (rows) => {
+  const figure = (model, rows) => {
     const pie = rows.find((row) => isPie(row) && row.decode_tok_s);
     const others = rows.filter((row) => !isPie(row) && row.decode_tok_s);
+    const pieNeeds = misfit(model, Pie.engines.primary);
+    if (!pie && pieNeeds) {
+      return `<div class="figure is-empty">Doesn't fit</div><div class="figure-caption">${esc(fitNote(pieNeeds))}</div>`;
+    }
     if (!pie || !others.length) {
       return `<div class="figure is-empty">—</div><div class="figure-caption">${pie ? "no other engine yet" : "no pie run yet"}</div>`;
     }
@@ -206,8 +293,13 @@ window.Pie = window.Pie || {};
       <div class="figure-caption">decode vs ${esc(names().engine(best.engine))}, the fastest other</div>`;
   };
 
-  const lollipops = (rows, metric) => {
+  const lollipops = (model, rows, metric) => {
     const bars = rows.filter((row) => row[metric.key]).sort((a, b) => b[metric.key] - a[metric.key]);
+    // engines that cannot load the model on this Mac get a row of their own, below the measured ones
+    const engineOrder = Pie.store.tables.engines.map((e) => e.id);
+    const misfits = Object.keys(tooBig[model] || {})
+      .filter((engine) => !rows.some((row) => row.engine === engine))
+      .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
     if (!bars.length) return "";
     const max = bars[0][metric.key];
     return `
@@ -232,57 +324,21 @@ window.Pie = window.Pie || {};
               <span class="lollipop-value">${value(row[metric.key])}</span>
             </div>`;
         }).join("")}
+        ${misfits.map((engine) => `
+            <div class="lollipop-row is-nofit${isPie({ engine }) ? " is-primary" : ""}" data-tip="${esc(`${names().engine(engine)}\nDoesn't fit. ${fitNote(tooBig[model][engine])}`)}">
+              <span class="lollipop-label">${esc(names().engine(engine))}</span>
+              <span class="lollipop-nofit">Doesn't fit</span>
+              <span class="lollipop-value"></span>
+            </div>`).join("")}
       </figure>`;
   };
 
   const card = (model, rows) => `
     <article class="model-card">
       <h3>${esc(names().model(model))}</h3>
-      ${figure(rows)}
-      <div class="model-card-charts">${METRICS.map((metric) => lollipops(rows, metric)).join("")}</div>
+      ${figure(model, rows)}
+      <div class="model-card-charts">${METRICS.map((metric) => lollipops(model, rows, metric)).join("")}</div>
     </article>`;
-
-  // 4. Across releases: pie's median decode advantage per tag, oldest to newest, up to the picked release
-  const releases = (state, models) => {
-    const tags = Pie.store.tables.tags || [];
-    const upto = tags.findIndex((tag) => tag.id === state.release);
-    const { hardware, workload } = state.overview;
-    const points = [];
-    for (const tag of tags.slice(Math.max(upto, 0)).reverse()) {
-      const rows = Pie.store.snapshot(tag.id).filter((row) => row.hardware === hardware && row.workload === workload);
-      if (!rows.some((row) => !row.stale)) continue;
-      const list = comparisons(groupByModel(rows), models, "decode_tok_s");
-      if (list.length) points.push({ tag: tag.id, date: tag.date, r: median(list.map((c) => c.r)), n: list.length });
-    }
-    if (points.length < 2) return "";
-
-    const height = 150, top = 30, bottom = 118;
-    const logs = points.map((p) => Math.log(p.r));
-    const lo = Math.min(0, ...logs), hi = Math.max(0, ...logs);
-    const pad = (hi - lo) * 0.15 || 0.05;
-    const y = (r) => bottom - ((Math.log(r) - (lo - pad)) / (hi - lo + 2 * pad)) * (bottom - top);
-    const inset = points.length > 1 ? 10 : 50;
-    const x = (i) => `${inset + (i * (100 - 2 * inset)) / Math.max(points.length - 1, 1)}%`;
-    const parity = y(1);
-    const segments = points.slice(1).map((p, i) =>
-      `<line class="trend-line" x1="${x(i)}" y1="${y(points[i].r).toFixed(1)}" x2="${x(i + 1)}" y2="${y(p.r).toFixed(1)}"/>`).join("");
-    const marks = points.map((p, i) => {
-      const tip = `${p.tag}${p.date ? `, ${Pie.format.date(p.date)}` : ""}\nMedian decode ${delta(p.r)} over ${p.n} comparisons`;
-      return `<g data-tip="${esc(tip)}">
-          <circle class="trend-hit" cx="${x(i)}" cy="${y(p.r).toFixed(1)}" r="14"/>
-          <circle class="trend-dot" cx="${x(i)}" cy="${y(p.r).toFixed(1)}" r="5"/>
-          <text class="trend-value" x="${x(i)}" y="${(y(p.r) - 13).toFixed(1)}" text-anchor="middle">${delta(p.r)}</text>
-          <text class="trend-tag" x="${x(i)}" y="${height - 6}" text-anchor="middle">${esc(p.tag)}</text>
-        </g>`;
-    }).join("");
-    const svg = `
-      <svg class="trend" width="100%" height="${height}" role="img" aria-label="pie's median decode advantage by release">
-        <line class="trend-parity" x1="0" x2="100%" y1="${parity.toFixed(1)}" y2="${parity.toFixed(1)}"/>
-        <text class="trend-axis" x="0" y="${(parity - 5).toFixed(1)}">parity</text>
-        ${segments}${marks}
-      </svg>`;
-    return section("Across releases", "Median decode advantage", svg);
-  };
 
   // macs with any row in this release, in catalog order
   const macsIn = (rows) => {
@@ -336,17 +392,15 @@ window.Pie = window.Pie || {};
       const models = Pie.store.tables.models
         .map((model) => model.id)
         .filter((id) => !query || names().model(id).toLowerCase().includes(query) || id.includes(query));
-      const shown = models.filter((id) => byModel[id]);
-      const missing = models.filter((id) => !byModel[id]);
+      tooBig = (Pie.store.tables.no_fit || {})[hardware] || {};
+      macMemory = Pie.store.index.hardware[hardware]?.memory_gib || null;
+      // measured models first, then the ones too big for this Mac
+      const shown = [...models.filter((id) => byModel[id]), ...models.filter((id) => !byModel[id] && tooBig[id])];
+      const missing = models.filter((id) => !byModel[id] && !tooBig[id]);
       const metric = METRICS.find((m) => m.id === state.overview.metric);
 
       const decode = comparisons(byModel, shown, "decode_tok_s");
-      const prefill = comparisons(byModel, shown, "prefill_tok_s");
-      const stale = shown.some((id) => byModel[id].some((row) => row.stale));
-      const notes = [
-        stale ? "Lighter marks are from an earlier release." : "",
-        missing.length ? `No data yet: ${missing.map((id) => esc(names().model(id))).join(", ")}.` : "",
-      ].filter(Boolean);
+      const missingNote = missing.length ? `No data yet: ${missing.map((id) => esc(names().model(id))).join(", ")}.` : "";
       const workloadLabel = WORKLOADS.find((w) => w.id === workload).label;
 
       element.innerHTML = `
@@ -356,11 +410,10 @@ window.Pie = window.Pie || {};
             ${popup("overview-workload", "Workload", workloadLabel)}
           </div>
           ${decode.length
-            ? standing(decode, prefill) + heatmap(byModel, shown, metric)
+            ? standing(decode, releasePoints(state, shown)) + heatmap(byModel, shown, metric)
             : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
-          ${shown.length ? section("By model", "", `<div class="model-grid">${shown.map((id) => card(id, byModel[id])).join("")}</div>`) : ""}
-          ${releases(state, shown)}
-          ${notes.length ? `<p class="overview-footnote">${notes.join(" ")}</p>` : ""}
+          ${shown.length ? section("By model", "", `<div class="model-grid">${shown.map((id) => card(id, byModel[id] || [])).join("")}</div>`) : ""}
+          ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
         </div>`;
       return shown.length;
     },

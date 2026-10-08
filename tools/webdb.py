@@ -206,6 +206,37 @@ def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, whe
     return snaps
 
 
+def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: list[str], model_ids: list[str]) -> dict:
+    """{hardware: {model: {engine: GiB needed}}} for every setup that cannot fit, by the planner's own fit rule
+    (expected_gib × fit_factor > memory_gib). An engine's weights are its configured artifact; pie runs the MLX one."""
+    factor = float(load("support").get("fit_factor", 1.25))
+    arts = {a["id"]: a for a in load("models")["artifacts"]}
+    need: dict[tuple[str, str], float] = {}
+    for model in model_ids:
+        for engine in engine_ids:
+            if engine == "pie":
+                ids = [i for i, a in arts.items() if a2m.get(i) == model and a.get("source_format") == "mlx" and a.get("kind") != "miniature"]
+            else:
+                ids = [i for i in config["models"] if i.endswith(f"-{engine}") and a2m.get(i) == model]
+            sizes = [arts[i]["expected_gib"] for i in ids if arts.get(i, {}).get("expected_gib")]
+            if sizes:
+                need[(model, engine)] = min(sizes) * factor
+        # without its own artifact on record, pie needs at least what the lightest other engine needs
+        if (model, "pie") not in need and "pie" in engine_ids:
+            others = [gib for (m, _), gib in need.items() if m == model]
+            if others:
+                need[(model, "pie")] = min(others)
+    out: dict[str, dict] = {}
+    for hw in hw_rows:
+        memory = hw.get("memory_gib")
+        if not memory:
+            continue
+        for (model, engine), gib in need.items():
+            if gib > memory:
+                out.setdefault(hw["id"], {}).setdefault(model, {})[engine] = round(gib, 1)
+    return out
+
+
 def main() -> None:
     store = Store(sys.argv[1] if len(sys.argv) > 1 else None)
     a2m, models = artifact_to_model()
@@ -229,8 +260,10 @@ def main() -> None:
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
     qkeys = sorted({k for rows in scores.values() for k in rows})
     quality = stack(order, scores, qkeys, lambda item, key, src: {k: v for k, v in item.items() if k != "_at"}, lambda item: item["date"])
+    hw_rows = [h for h in hardware() if h["id"] in hardware_ids]
     db = {"tags": tags, "snapshots": snaps, "quality_snapshots": quality,
-          "hardware": [h for h in hardware() if h["id"] in hardware_ids],
+          "no_fit": no_fit(a2m, config, hw_rows, engine_ids, model_ids),
+          "hardware": hw_rows,
           "engines": mac_engines, "models": [m for m in models if m["id"] in model_ids],
           "workloads": workloads(), "quality": quality.get(order[0], []) if order else []}
     (WEB / "data").mkdir(parents=True, exist_ok=True)
