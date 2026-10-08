@@ -105,6 +105,9 @@ def make_jobs(
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     budget = matrix.job_budget_minutes
     kill_s = int(budget * matrix.kill_factor * 60)
+    if tier == Tier.TARGETED:
+        # our own Macs, not rented pods: a shard may run long (first model pulls, slow engines) rather than be killed
+        kill_s = max(kill_s, 6 * 3600)
     jobs = []
     for plat, plat_cells in sorted(by_plat.items()):
         for idx, shard in enumerate(shard_groups(plat_cells, budget, measured)):
