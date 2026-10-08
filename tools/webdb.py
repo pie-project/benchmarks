@@ -196,14 +196,17 @@ def quality_by_tag(store, a2m):
     return tagged, meta
 
 
-def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, when) -> dict[str, list[dict]]:
-    """For each tag, one row per key: the tag's own, else the newest tag not later than it (marked stale); never a later tag."""
+def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, when, empty=None) -> dict[str, list[dict]]:
+    """For each tag, one row per key: the tag's own, else the newest tag not later than it (marked stale); never a later tag.
+    A key no tag up to this one has measured gets an empty row (``empty``), so every key is always listed."""
     snaps: dict[str, list[dict]] = {}
     for i, t in enumerate(order):
         out = []
         for key in keys:
             src = next((u for u in order[i:] if key in tagged.get(u, {})), None)
             if src is None:
+                if empty is not None:
+                    out.append({**empty(key, t), "stale": None, "empty": True})
                 continue
             item = tagged[src][key]
             out.append({**row(item, key, src), "stale": None if src == t else {"tag": src, "measured": when(item)}})
@@ -262,7 +265,12 @@ def main() -> None:
     order = [x["id"] for x in tags]
     # the site's default order: engine, then model, then hardware, then workload
     grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c in ("single", "throughput")]
-    snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
+    def empty_result(key: tuple, tag: str) -> dict:
+        hw, engine, model, cat = key
+        return {"hardware": hw, "engine": engine, "release": tag, "group": tag, "version": "", "model": model, "scheme": None,
+                "workload": cat, **{m: None for m in METRICS}, "accuracy": None, "commit": "", "measured": ""}
+
+    snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]), empty=empty_result)
     hw_rows = [h for h in hardware() if h["id"] in hardware_ids]
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
     for t in order:
