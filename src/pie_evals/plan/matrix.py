@@ -4,7 +4,7 @@ Expansion is the product engine × platform × artifact × workload × program �
 mode, pruned in this order:
 
 1. *inapplicable* combinations are not cells at all (an engine that cannot
-   load the artifact's format, an engine that does not run on the OS, a
+   load the artifact's format, an artifact restricted to other platforms, an engine that does not run on the OS, a
    program restricted to other workloads/families, a TP mode on a platform
    with fewer devices, a pie-only program on a baseline engine);
 2. *declared unsupported* combinations (support.yaml, and the fit rule) are
@@ -126,6 +126,8 @@ class Matrix:
                     continue
                 for art in self.artifacts.values():
                     if str(art.source_format) not in eng.formats:
+                        continue
+                    if art.platforms is not None and plat.id not in art.platforms:
                         continue
                     for mode in self.modes.values():
                         if mode.tp > 1 and (plat.count < mode.tp or not plat.tp_capable):

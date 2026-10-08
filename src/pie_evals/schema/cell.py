@@ -179,6 +179,7 @@ class ArtifactSpec(BaseModel):
     ollama_tag: str | None = Field(default=None, description="Ollama model tag this artifact is served as (``gemma4:26b``); source_format ollama")
     baseline_of: str | None = Field(default=None, description="the pie artifact whose weights this copy carries, so a baseline engine's numbers compare with it")
     baseline_label: str | None = Field(default=None, description="column name for this baseline arm on the site (``Ollama``, ``Ollama MLX``)")
+    platforms: list[str] | None = Field(default=None, description="the only platform ids this artifact runs on (None = every platform); elsewhere it is not a cell at all")
     tiers: list[Tier] = Field(default_factory=lambda: [Tier.NIGHTLY, Tier.WEEKLY])
 
     @model_validator(mode="after")
@@ -203,6 +204,9 @@ class ArtifactSpec(BaseModel):
         elif self.baseline_label:
             # an arm may serve the very checkpoint pie reads (mlx-lm, Splash); its cells are still its own
             key += f"#{self.baseline_label}"
+        if self.platforms:
+            # a platform's own copy of a checkpoint another artifact also names (the TPU's)
+            key += "#" + "+".join(self.platforms)
         return key
 
 
