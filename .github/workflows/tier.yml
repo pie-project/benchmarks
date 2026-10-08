@@ -133,6 +133,8 @@ jobs:
       - name: install harness
         run: |
           # uv venvs carry no pip: install through uv when it exists, plain venv+pip otherwise (Macs)
+          # the runner's service PATH may lack ~/.local/bin, where uv lives; without uv the system python (3.9) cannot install the project
+          export PATH="$HOME/.local/bin:/opt/homebrew/bin:$PATH"
           if command -v uv >/dev/null; then uv venv --quiet .venv && uv pip install --quiet --python .venv/bin/python -e "."
           else python3 -m venv .venv && .venv/bin/pip install -q -e "."; fi
       - name: pie root
