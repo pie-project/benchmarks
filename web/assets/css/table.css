@@ -52,6 +52,16 @@
   color: var(--color-label);
 }
 
+/* row numbers, the way Numbers shows them: small, grey, right-aligned, out of the way */
+.data-table .row-number {
+  width: 1%;
+  padding-right: 4px;
+  font-size: 11px;
+  color: var(--color-label-tertiary);
+  text-align: right;
+  user-select: none;
+}
+
 .data-table td {
   height: var(--row-height);
   background: var(--color-row);

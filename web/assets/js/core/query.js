@@ -14,7 +14,7 @@ window.Pie = window.Pie || {};
         title: tag.id,
         date: tag.date ? format.date(tag.date) : "",
         group: GROUPS[tag.kind] || "Earlier runs",
-        runs: store.snapshot(tag.id).filter((row) => !row.stale && row.workload !== store.NO_FIT).length,
+        runs: store.snapshot(tag.id).filter((row) => !row.stale && store.isMeasured(row)).length,
       }));
 
   const matchesSearch = (row, columns, query) => {

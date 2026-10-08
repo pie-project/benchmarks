@@ -21,12 +21,14 @@ window.Pie = window.Pie || {};
     results: {
       label: "Results",
       section: "measurements",
-      filters: ["hardware", "engine", "model", "workload"],
+      filters: ["hardware", "engine", "model", "workload", "status"],
+      numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
         reference("model", "Model", "Setup", "models"),
         reference("hardware", "Hardware", "Setup", "hardware"),
         reference("workload", "Workload", "Setup", "workloads"),
+        text("status", "Status", "Setup", { status: true }),
         text("release", "Release", "Setup", { code: true }),
         text("scheme", "Quantization", "Setup", { code: true }),
         number("decode_tok_s", "Decode", "Speed", "tok/s", 1),
@@ -39,11 +41,11 @@ window.Pie = window.Pie || {};
         number("latency_ms_p50", "E2E p50", "Latency", "ms", 0),
         number("latency_ms_p99", "E2E p99", "Latency", "ms", 0),
         number("resident_gib", "Memory", "Resources", "GiB", 1),
-        number("needs_gib", "Needs", "Resources", "GiB", 1),
         number("load_s", "Load time", "Resources", "s", 1),
         number("accuracy", "Accuracy", "Quality", "", 3, { planned: true }),
         text("commit", "pie commit", "Run", { code: true }),
         text("measured", "Measured", "Run", { code: true }),
+        text("note", "Note", "Run", { wide: true }),
       ],
     },
 
@@ -51,6 +53,7 @@ window.Pie = window.Pie || {};
       label: "Quality",
       section: "measurements",
       filters: ["model", "engine", "task"],
+      numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
         reference("model", "Model", "Setup", "models"),
