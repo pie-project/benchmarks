@@ -1,9 +1,9 @@
 name: ci
 on:
   push:
-    paths-ignore: ["web/**", "docs/**", "**/*.md", "store/**", "reports/**"]
+    paths-ignore: ["web/**", "docs/**", "**/*.md"]
   pull_request:
-    paths-ignore: ["web/**", "docs/**", "**/*.md", "store/**", "reports/**"]
+    paths-ignore: ["web/**", "docs/**", "**/*.md"]
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
