@@ -1,7 +1,6 @@
 name: ci
+# pull requests only: a merge into main was already tested on its pull request
 on:
-  push:
-    paths-ignore: ["web/**", "docs/**", "**/*.md"]
   pull_request:
     paths-ignore: ["web/**", "docs/**", "**/*.md"]
 concurrency:
