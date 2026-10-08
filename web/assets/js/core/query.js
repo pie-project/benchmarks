@@ -11,7 +11,8 @@ window.Pie = window.Pie || {};
       .map((tag) => ({
         id: tag.id,
         label: tag.id,
-        title: tag.date ? `${tag.id} — ${format.date(tag.date)}` : tag.id,
+        title: tag.id,
+        date: tag.date ? format.date(tag.date) : "",
         group: GROUPS[tag.kind] || "Earlier runs",
         runs: store.snapshot(tag.id).filter((row) => !row.stale).length,
       }));
