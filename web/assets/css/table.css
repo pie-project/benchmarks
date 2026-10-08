@@ -79,6 +79,10 @@
   cursor: pointer;
 }
 
+.data-table tbody tr.is-stale td {
+  color: var(--color-label-tertiary);
+}
+
 .data-table tbody tr.is-highlighted td {
   background: var(--color-row-highlight);
 }
