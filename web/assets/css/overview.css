@@ -1,22 +1,14 @@
 /* The overview: four quiet sections, each answering one question about where pie stands. */
-/* a faint wash of pie's ring colours behind everything, so the glass panels have something to frost */
 .overview {
   flex: 1;
   overflow: auto;
-  background-color: var(--color-background);
-  background-image: var(--overview-ambient);
-  background-repeat: no-repeat;
-  background-attachment: local;
 }
 
-/* Apple's glass material: translucent fill, background blur, a hairline rim lit from above, a soft lift */
+/* panels are drawn, not filled: a hairline rounded outline on the plain page */
 .model-card,
 .heat-table {
-  border: .5px solid var(--glass-rim);
-  background: var(--glass-fill);
-  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
-  -webkit-backdrop-filter: blur(28px) saturate(170%);
-  backdrop-filter: blur(28px) saturate(170%);
+  border: 1px solid var(--color-panel-outline);
+  background: none;
 }
 
 .overview[hidden],
