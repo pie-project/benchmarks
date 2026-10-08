@@ -93,6 +93,14 @@
   color: var(--color-label-tertiary);
 }
 
+.data-table tbody tr.is-unmeasured td {
+  color: var(--color-label-tertiary);
+}
+
+.data-table tbody tr.is-unmeasured td.is-empty {
+  color: var(--color-label-quaternary);
+}
+
 .data-table tbody tr.is-highlighted td {
   background: var(--color-row-highlight);
 }

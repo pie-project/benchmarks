@@ -37,7 +37,9 @@ window.Pie = window.Pie || {};
 
     let stale = "";
     // highlight the rows measured under the selected tag; filled-in rows from an older run stay plain
-    if ((state.table === "results" || state.table === "quality") && !row.stale) classes.push("is-highlighted");
+    if ((state.table === "results" || state.table === "quality") && !row.stale && store.isMeasured(row)) classes.push("is-highlighted");
+    // a listed setup with no numbers stays in the table, in quiet grey
+    if (state.table === "results" && !store.isMeasured(row)) classes.push("is-unmeasured");
     if (row.stale) {
       classes.push("is-stale");
       const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";
