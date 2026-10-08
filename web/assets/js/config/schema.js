@@ -47,6 +47,7 @@ window.Pie = window.Pie || {};
         reference("engine", "Engine", "Setup", "engines"),
         reference("model", "Model", "Setup", "models"),
         text("task", "Task", "Setup"),
+        text("release", "Release", "Setup", { code: true }),
         text("version", "Version", "Setup", { code: true }),
         text("artifact", "Weights", "Setup", { code: true }),
         number("score", "Score", "Result", "", 3),

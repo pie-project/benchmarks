@@ -1,14 +1,15 @@
 name: quality
-run-name: quality ${{ inputs.artifacts }}
+run-name: quality ${{ inputs.tag || 'manual' }} ${{ inputs.artifacts }}
 permissions: { contents: read }
 concurrency: { group: quality, cancel-in-progress: false }
 on:
   workflow_dispatch:
     inputs:
+      tag: { description: "release tag (0.5.2) or a custom name; empty: manual-<time>", required: false, default: "" }
       artifacts: { description: "comma-separated artifact ids", required: true, default: "gemma-4-26b-a4b-ollama,gemma-4-26b-a4b-ollama-mlx,muse-glimmer-30b-ollama,llama-3.2-3b-ollama" }
       tasks: { description: "comma-separated tasks (gsm8k, ifeval, mmlu, arc, math500)", required: false, default: "gsm8k,ifeval,mmlu,arc,math500" }
       n: { description: "questions per task", required: false, default: "100" }
-      mac: { description: "Mac id", type: choice, options: [m5-max-64g, m4-pro-48g, m3-16g, m2-16g, m5-16g], default: "m5-max-64g" }
+      mac: { description: "Mac id", type: choice, options: [m5-max-128g, m5-max-64g, m4-pro-48g, m3-16g, m2-16g, m5-16g], default: "m5-max-128g" }
 
 jobs:
   quality:
@@ -18,12 +19,21 @@ jobs:
       - uses: actions/checkout@v4
         with: { ref: main }
       - name: install harness
-        run: uv venv --quiet .venv && uv pip install --quiet --python .venv/bin/python -e ".[quality]"
-      - name: run
-        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
         run: |
+          # the runner's service PATH may lack uv, cargo and Homebrew: add them for this step and every later one
+          export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/opt/homebrew/bin:$PATH"
+          printf '%s\n' "$HOME/.local/bin" "$HOME/.cargo/bin" /opt/homebrew/bin >> "$GITHUB_PATH"
+          uv venv --quiet .venv && uv pip install --quiet --python .venv/bin/python -e ".[quality]"
+      - name: run
+        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}", TAG: "${{ inputs.tag }}" }
+        run: |
+          # scores are stored under a tag, like benchmark runs: a release (0.5.2) or a named manual run
+          [ -n "$TAG" ] || TAG="manual-$(date -u +%Y%m%d-%H%M)"
+          [[ "$TAG" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "::error::bad tag '$TAG'"; exit 1; }
+          kind=manual; [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && kind=release
+          echo "tag=$TAG ($kind)" | tee -a "$GITHUB_STEP_SUMMARY"
           echo "PIE_ROOT=${PIE_ROOT:-$HOME/pie}"
           args=""
           for a in $(echo "${{ inputs.artifacts }}" | tr ',' ' '); do args="$args --artifact $a"; done
           for t in $(echo "${{ inputs.tasks }}" | tr ',' ' '); do args="$args --task $t"; done
-          .venv/bin/pie-evals-node quality $args --n "${{ inputs.n }}" --pie-root "${PIE_ROOT:-$HOME/pie}"
+          .venv/bin/pie-evals-node quality $args --n "${{ inputs.n }}" --pie-root "${PIE_ROOT:-$HOME/pie}" --tag "$TAG" --tag-kind "$kind"

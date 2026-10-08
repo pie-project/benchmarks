@@ -154,54 +154,56 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
     }
 
 
-def snapshots(store, a2m: dict[str, str], hardware_ids: list[str], engine_ids: list[str], model_ids: list[str]):
-    """Tags newest first, and for each tag the grid of every hardware x engine x model x workload that has a run.
-
-    A cell measured under the tag shows that run. Otherwise it shows the newest run from any other tag,
-    marked ``stale`` with that tag and date. A cell never measured is left out.
-    """
+def results_by_tag(store, a2m, hardware_ids, engine_ids):
+    """The picked run per setup under each tag, and each tag's kind and newest time."""
     cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind"]
             + METRICS)
     rows = [r for r in store.table().select(cols).to_pylist()
             if r["status"] in ("pass", "noisy") and r["platform"] in hardware_ids and r["engine"] in engine_ids]
     by_tag: dict[str, list[dict]] = {}
-    kinds: dict[str, str] = {}
     for r in rows:
-        tag = r["tag"] or LEGACY
-        by_tag.setdefault(tag, []).append(r)
-        kinds[tag] = r["tag_kind"] or ("legacy" if tag == LEGACY else "manual")
+        by_tag.setdefault(r["tag"] or LEGACY, []).append(r)
     tagged = {t: pick(rs, a2m) for t, rs in by_tag.items()}
-    info = [{"id": t, "kind": kinds[t], "date": local(max(r["started_at"] for r in rs)),
-             "commit": next((r["pie_commit"][:9] for r in rs if r["engine"] == "pie" and r["pie_commit"]), "")}
-            for t, rs in by_tag.items()]
-    info.sort(key=lambda x: x["date"], reverse=True)  # the newest tag is the default on the site
-    order = [x["id"] for x in info]
+    meta = {t: {"kind": rs[0]["tag_kind"] or ("legacy" if t == LEGACY else "manual"), "at": max(r["started_at"] for r in rs),
+                "commit": next((r["pie_commit"][:9] for r in rs if r["engine"] == "pie" and r["pie_commit"]), "")}
+            for t, rs in by_tag.items()}
+    return tagged, meta
 
-    # the site's default order: engine, then model, then hardware, then workload
-    grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c in ("single", "throughput")]
+
+def quality_by_tag(store, a2m):
+    """The newest score per (engine, model, weights, task) under each tag, and each tag's kind and newest time."""
+    from datetime import datetime
+
+    tagged: dict[str, dict[tuple, dict]] = {}
+    meta: dict[str, dict] = {}
+    for q in store.quality():
+        t = q.get("tag") or LEGACY
+        at = datetime.fromisoformat(q["date"].replace("Z", "+00:00"))
+        row = {"model": a2m.get(q["model"], q["model"]), "engine": q["engine"], "artifact": q["artifact"],
+               "task": q["task"], "score": round(q["score"], 3), "ci_low": round(q["ci95"][0], 3),
+               "ci_high": round(q["ci95"][1], 3), "n": q["n"], "version": q.get("version"),
+               "minutes": q.get("minutes"), "date": local(at)[:10], "release": t, "_at": at}
+        key = (row["engine"], row["model"], row["artifact"], row["task"])
+        if key not in tagged.setdefault(t, {}) or at > tagged[t][key]["_at"]:
+            tagged[t][key] = row
+        m = meta.setdefault(t, {"kind": q.get("tag_kind") or ("legacy" if t == LEGACY else "manual"), "at": at, "commit": ""})
+        m["at"] = max(m["at"], at)
+    return tagged, meta
+
+
+def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, when) -> dict[str, list[dict]]:
+    """For each tag, one row per key: the tag's own, else the newest tag not later than it (marked stale); never a later tag."""
     snaps: dict[str, list[dict]] = {}
     for i, t in enumerate(order):
         out = []
-        for key in grid:
-            # this tag's run, or else the newest tag that is not later than this one; a later tag never fills in
-            src = next((u for u in order[i:] if key in tagged[u]), None)
+        for key in keys:
+            src = next((u for u in order[i:] if key in tagged.get(u, {})), None)
             if src is None:
                 continue
-            r = tagged[src][key][1]
-            stale = None if src == t else {"tag": src, "measured": local(r["started_at"])}
-            out.append({**as_row(r, key, src), "stale": stale})
+            item = tagged[src][key]
+            out.append({**row(item, key, src), "stale": None if src == t else {"tag": src, "measured": when(item)}})
         snaps[t] = out
-    return info, snaps
-
-
-def quality(store, a2m: dict[str, str]) -> list[dict]:
-    out = []
-    for q in store.quality():
-        out.append({"model": a2m.get(q["model"], q["model"]), "engine": q["engine"], "artifact": q["artifact"],
-                    "task": q["task"], "score": round(q["score"], 3), "ci_low": round(q["ci95"][0], 3),
-                    "ci_high": round(q["ci95"][1], 3), "n": q["n"], "version": q.get("version"),
-                    "minutes": q.get("minutes"), "date": q["date"][:10]})
-    return out
+    return snaps
 
 
 def main() -> None:
@@ -212,13 +214,28 @@ def main() -> None:
     hardware_ids = config["machines"] + sorted(LEGACY_MACS - set(config["machines"]))
     mac_engines = [e for e in engines() if "macos" in e["os"]]
     model_ids = sorted({a2m[a] for a in config["models"] if a in a2m})
-    tags, snaps = snapshots(store, a2m, hardware_ids, [e["id"] for e in mac_engines], model_ids)
-    db = {"tags": tags, "snapshots": snaps, "hardware": [h for h in hardware() if h["id"] in hardware_ids],
+    engine_ids = [e["id"] for e in mac_engines]
+    results, rmeta = results_by_tag(store, a2m, hardware_ids, engine_ids)
+    scores, qmeta = quality_by_tag(store, a2m)
+    # one list of tags for both tables: a tag with only quality scores still gets a results table, filled from earlier tags
+    meta = dict(qmeta)
+    for t, m in rmeta.items():
+        meta[t] = {**m, "at": max(m["at"], qmeta[t]["at"])} if t in qmeta else m
+    tags = sorted(({"id": t, "kind": m["kind"], "date": local(m["at"]), "commit": m["commit"]} for t, m in meta.items()),
+                  key=lambda x: x["date"], reverse=True)  # the newest tag is the default on the site
+    order = [x["id"] for x in tags]
+    # the site's default order: engine, then model, then hardware, then workload
+    grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c in ("single", "throughput")]
+    snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
+    qkeys = sorted({k for rows in scores.values() for k in rows})
+    quality = stack(order, scores, qkeys, lambda item, key, src: {k: v for k, v in item.items() if k != "_at"}, lambda item: item["date"])
+    db = {"tags": tags, "snapshots": snaps, "quality_snapshots": quality,
+          "hardware": [h for h in hardware() if h["id"] in hardware_ids],
           "engines": mac_engines, "models": [m for m in models if m["id"] in model_ids],
-          "workloads": workloads(), "quality": quality(store, a2m)}
+          "workloads": workloads(), "quality": quality.get(order[0], []) if order else []}
     (WEB / "data").mkdir(parents=True, exist_ok=True)
     (WEB / "data" / "db.js").write_text("const DB = " + json.dumps(db, indent=2, default=str) + ";\n")
-    print({k: len(v) for k, v in db.items()}, {t["id"]: len(snaps[t["id"]]) for t in tags})
+    print({k: len(v) for k, v in db.items()}, {t["id"]: (len(snaps[t["id"]]), len(quality[t["id"]])) for t in tags})
 
 
 if __name__ == "__main__":
