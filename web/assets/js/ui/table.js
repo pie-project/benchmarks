@@ -36,7 +36,8 @@ window.Pie = window.Pie || {};
     let link = "";
 
     let stale = "";
-    if (state.table === "results" && engines.isPrimary(row.engine)) classes.push("is-highlighted");
+    // highlight the rows measured under the selected tag; filled-in rows from an older run stay plain
+    if (state.table === "results" && !row.stale) classes.push("is-highlighted");
     if (row.stale) {
       classes.push("is-stale");
       const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";
