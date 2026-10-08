@@ -10,11 +10,11 @@ on:
     - cron: "*/15 * * * *"   # results land in the database during a run; the site picks them up within 15 minutes
   workflow_dispatch:
 permissions: { contents: read }
-concurrency: { group: pages, cancel-in-progress: true }
 jobs:
   # the Mac reads the database (liszt is on the tailnet, GitHub's runners are not)
   build:
     runs-on: [self-hosted, site]  # a laptop that only builds the site: never waits behind a benchmark
+    concurrency: { group: pages-build, cancel-in-progress: true }  # a newer build replaces an older one
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +38,8 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # a started deploy always finishes: cancelling one mid-way leaves Pages stuck in "updating_pages"
+    concurrency: { group: pages-deploy, cancel-in-progress: false }
     permissions: { contents: read, pages: write, id-token: write }
     environment:
       name: github-pages

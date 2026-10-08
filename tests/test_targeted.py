@@ -54,7 +54,7 @@ def test_targeted_is_small_and_baselines_run_on_their_copies(matrix):
     site = [c for c in cells if c.workload.id.startswith(("ob-", "ctx-")) or c.workload.id == "c4"]
     assert all((c.artifact.baseline_of is None) == (c.engine.value == "pie") for c in site)
     assert {c.artifact.baseline_label for c in site if c.engine.value != "pie"} >= {"Ollama", "Ollama MLX", "llama.cpp", "mlx-lm", "Splash"}
-    assert {c.workload.id for c in cells} == {"control-aa", "ss-128-64", "lc-1k-128", "lc-2k-128", "c8", "c32",
+    assert {c.workload.id for c in cells} == {"control-aa", "ss-128-64", "ss-512-256", "lc-1k-128", "lc-2k-128", "c8", "c32",
                                               "ob-story-200", "ob-512-200", "ob-short-100", "ob-advanced-500", "ctx-4k-256", "ctx-8k-256", "c4"}
     assert not matrix.check_budget(Tier.TARGETED)
 
