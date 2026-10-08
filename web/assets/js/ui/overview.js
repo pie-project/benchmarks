@@ -233,7 +233,11 @@ window.Pie = window.Pie || {};
   let tooBig = {};
   let macMemory = null;
   const misfit = (model, engine) => tooBig[model]?.[engine];
-  const fitNote = (gib) => `Needs about ${Math.round(gib)} GB${macMemory ? `; this Mac has ${macMemory} GB` : ""}`;
+  const fitNote = (gib, model) => {
+    // MoE models say whether their experts stream from the SSD; dense ones carry "n/a"
+    const streaming = ["Without", "With"].includes(Pie.store.index.models[model]?.ssd_streaming) ? Pie.store.index.models[model].ssd_streaming : "";
+    return `Needs about ${Math.round(gib)} GB${streaming ? ` ${streaming.toLowerCase()} SSD streaming` : ""}${macMemory ? `; this Mac has ${macMemory} GB` : ""}`;
+  };
   // a small "no entry" mark: a hairline circle with a slash
   const noFitMark = (cx, cy) => `
     <circle class="nofit-mark" cx="${cx}" cy="${cy}" r="9"/>
@@ -259,7 +263,7 @@ window.Pie = window.Pie || {};
       const pieNeeds = misfit(model, Pie.engines.primary);
       if (pieNeeds && !(byModel[model] || []).some(isPie)) {
         const mid = labelWidth + (engines.length * col) / 2;
-        return label + `<g data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds)}`)}">
+        return label + `<g data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`)}">
             <rect class="heat-hit" x="${labelWidth}" y="${cy - row / 2}" width="${engines.length * col}" height="${row}"/>
             ${noFitMark(mid - 52, cy)}
             <text class="nofit-text" x="${mid - 36}" y="${cy + 4}">Doesn't fit</text>
@@ -272,7 +276,7 @@ window.Pie = window.Pie || {};
         if (!c) {
           const needs = misfit(model, engine);
           if (needs) {
-            return `<g data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\n${names().engine(engine)} doesn't fit. ${fitNote(needs)}`)}">${hit}
+            return `<g data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\n${names().engine(engine)} doesn't fit. ${fitNote(needs, model)}`)}">${hit}
               ${noFitMark(cx, cy)}</g>`;
           }
           return `<g data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\nNo data`)}">${hit}
@@ -312,7 +316,7 @@ window.Pie = window.Pie || {};
     const others = rows.filter((row) => !isPie(row) && row.decode_tok_s);
     const pieNeeds = misfit(model, Pie.engines.primary);
     if (!pie && pieNeeds) {
-      return `<div class="figure is-empty">Doesn't fit</div><div class="figure-caption">${esc(fitNote(pieNeeds))}</div>`;
+      return `<div class="figure is-empty">Doesn't fit</div><div class="figure-caption">${esc(fitNote(pieNeeds, model))}</div>`;
     }
     if (!pie || !others.length) {
       return `<div class="figure is-empty">—</div><div class="figure-caption">${pie ? "no other engine yet" : "no pie run yet"}</div>`;
@@ -355,7 +359,7 @@ window.Pie = window.Pie || {};
             </div>`;
         }).join("")}
         ${misfits.map((engine) => `
-            <div class="lollipop-row is-nofit${isPie({ engine }) ? " is-primary" : ""}" data-tip="${esc(`${names().engine(engine)}\nDoesn't fit. ${fitNote(tooBig[model][engine])}`)}">
+            <div class="lollipop-row is-nofit${isPie({ engine }) ? " is-primary" : ""}" data-tip="${esc(`${names().engine(engine)}\nDoesn't fit. ${fitNote(tooBig[model][engine], model)}`)}">
               <span class="lollipop-label">${esc(names().engine(engine))}</span>
               <span class="lollipop-nofit">Doesn't fit</span>
               <span class="lollipop-value"></span>
@@ -373,7 +377,7 @@ window.Pie = window.Pie || {};
   // macs with any row in this release, in catalog order
   const macsIn = (rows) => {
     const counts = {};
-    for (const row of rows) counts[row.hardware] = (counts[row.hardware] || 0) + 1;
+    for (const row of rows) if (row.workload !== Pie.store.NO_FIT) counts[row.hardware] = (counts[row.hardware] || 0) + 1;
     const order = Pie.store.tables.hardware.map((hw) => hw.id);
     return Object.keys(counts).sort((a, b) => order.indexOf(a) - order.indexOf(b)).map((id) => ({ id, count: counts[id] }));
   };

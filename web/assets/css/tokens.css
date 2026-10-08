@@ -68,8 +68,6 @@
   --color-ring-prefill-start: #6fe3e8;
   --color-ring-prefill: #00a7c2;
 
-  /* a fine sand grain: fractal noise, dark specks at a whisper of opacity */
-  --overview-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.4 -.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='.14'/%3E%3C/svg%3E");
 
   --shadow-menu: 0 0 0 .5px rgba(0, 0, 0, .12), 0 10px 30px rgba(0, 0, 0, .12);
 }
@@ -126,8 +124,6 @@
   --color-ring-decode: #30d158;
   --color-ring-prefill-start: #7af0f2;
   --color-ring-prefill: #3ac8e0;
-
-  --overview-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.4 -.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='.12'/%3E%3C/svg%3E");
 
   --shadow-menu: 0 0 0 .5px rgba(255, 255, 255, .12), 0 12px 36px rgba(0, 0, 0, .5);
 }
