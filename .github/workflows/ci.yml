@@ -1,12 +1,26 @@
 name: ci
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore: ["web/**", "docs/**", "**/*.md", "store/**", "reports/**"]
+  pull_request:
+    paths-ignore: ["web/**", "docs/**", "**/*.md", "store/**", "reports/**"]
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv && uv pip install ruff
+      - run: .venv/bin/ruff check src tests
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
-      - run: uv venv && uv pip install -e ".[dev,orchestrate]"
-      - run: .venv/bin/ruff check src tests
-      - run: .venv/bin/pytest -q
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - run: uv venv && uv pip install -e ".[dev,orchestrate]" pytest-xdist
+      - run: .venv/bin/pytest -q -n auto
       - run: .venv/bin/pie-evals check
