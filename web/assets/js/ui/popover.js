@@ -5,6 +5,7 @@ window.Pie = window.Pie || {};
   const RELEASE = "release";
   const MAC = "overview-mac";
   const WORKLOAD = "overview-workload";
+  const METRIC = "overview-metric";
   const ALL = "";
   let owner = null;
   let onPick = () => {};
@@ -47,6 +48,13 @@ window.Pie = window.Pie || {};
         `<span class="popover-label">${Pie.format.escape(workload.label)}</span>`))
       .join("");
 
+  // the engine grid's measure: decode or prefill
+  const metricMenu = (state) =>
+    Pie.overview.metrics()
+      .map((metric) => option(metric.id, metric.id === state.overview.metric,
+        `<span class="popover-label">${Pie.format.escape(metric.label)}</span>`))
+      .join("");
+
   // A macOS pull-down with a checkmark per picked value: clicking toggles and the menu stays open.
   const filterMenu = (state, key) => {
     const column = Pie.schema[state.table].columns.find((entry) => entry.key === key);
@@ -69,6 +77,7 @@ window.Pie = window.Pie || {};
     RELEASE,
     MAC,
     WORKLOAD,
+    METRIC,
     ALL,
 
     isOpenFor(key) {
@@ -81,14 +90,14 @@ window.Pie = window.Pie || {};
         return;
       }
       owner = key;
-      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : filterMenu(state, key);
+      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === METRIC ? metricMenu(state) : filterMenu(state, key);
       element.scrollTop = 0;
       place(anchor);
     },
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
-      if (element.hidden || !owner || owner === RELEASE || owner === MAC || owner === WORKLOAD) return;
+      if (element.hidden || !owner || owner === RELEASE || owner === MAC || owner === WORKLOAD || owner === METRIC) return;
       const scroll = element.scrollTop;
       element.innerHTML = filterMenu(state, owner);
       element.scrollTop = scroll;
@@ -109,7 +118,7 @@ window.Pie = window.Pie || {};
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = owner;
-        if (key === RELEASE || key === MAC || key === WORKLOAD) this.close();
+        if (key === RELEASE || key === MAC || key === WORKLOAD || key === METRIC) this.close();
         onPick(key, target.dataset.value);
       });
     },

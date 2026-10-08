@@ -16,6 +16,7 @@ window.Pie = window.Pie || {};
   let onChange = () => {};
   let onOpenMac = () => {};
   let onOpenWorkload = () => {};
+  let onOpenMetric = () => {};
 
   const esc = (value) => Pie.format.escape(value);
   const names = () => Pie.store.names;
@@ -54,12 +55,6 @@ window.Pie = window.Pie || {};
   const when = (row) =>
     row.stale ? `From ${row.stale.tag}, ${Pie.format.date(row.stale.measured)}` : `Measured ${Pie.format.date(row.measured)}`;
 
-  const segmented = (name, items, selected, extra = "") => `
-    <div class="segmented ${extra}" role="radiogroup" data-control="${name}">
-      ${items.map((item) => `
-        <button class="segment${item.id === selected ? " is-selected" : ""}" type="button" role="radio"
-          aria-checked="${item.id === selected}" data-value="${esc(item.id)}">${esc(item.label)}</button>`).join("")}
-    </div>`;
 
   // a pop-up button: the same control as the release picker at the top right
   const popup = (id, label, current) => `
@@ -265,7 +260,7 @@ window.Pie = window.Pie || {};
 
     return section("Against each engine", `pie ÷ engine, ${metric.label.toLowerCase()} tok/s`, `
       <div class="heatmap">
-        ${segmented("metric", METRICS, metric.id, "is-small")}
+        ${popup("overview-metric", "Speed", metric.label)}
         <svg class="heat-grid" viewBox="0 0 ${width} ${height}" width="${width}" role="img"
           aria-label="pie against each engine, ${metric.label.toLowerCase()}">
           <defs>
@@ -373,6 +368,14 @@ window.Pie = window.Pie || {};
       onOpenWorkload = handler;
     },
 
+    metrics() {
+      return METRICS;
+    },
+
+    onOpenMetric(handler) {
+      onOpenMetric = handler;
+    },
+
     // keep the hardware, workload and metric choice valid for the selected release
     settle(state) {
       const macs = macsIn(Pie.store.snapshot(state.release));
@@ -429,18 +432,10 @@ window.Pie = window.Pie || {};
 
     bind(state) {
       element.addEventListener("click", (event) => {
-        const segment = event.target.closest(".segment");
-        if (!segment) return;
-        const control = segment.closest("[data-control]").dataset.control;
-        state.overview[control] = segment.dataset.value;
-        onChange();
-      });
-
-      element.addEventListener("click", (event) => {
-        const button = event.target.closest("#overview-mac, #overview-workload");
+        const button = event.target.closest("#overview-mac, #overview-workload, #overview-metric");
         if (!button) return;
         event.stopPropagation();
-        (button.id === "overview-mac" ? onOpenMac : onOpenWorkload)(button);
+        ({ "overview-mac": onOpenMac, "overview-workload": onOpenWorkload, "overview-metric": onOpenMetric })[button.id](button);
       });
 
       // one tooltip for every mark: what it compares, the values, and when they were measured

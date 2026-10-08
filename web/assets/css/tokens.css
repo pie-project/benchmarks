@@ -58,7 +58,6 @@
 
   --color-card: #f5f5f7;
   --color-bar-other: #aeaeb2;
-  --color-segment-thumb: #ffffff;
   --color-lollipop-other: #8e8e93;
 
   /* gradients along the rings: a lighter step of the same hue into the full one */
@@ -113,7 +112,6 @@
 
   --color-card: #2a2a2c;
   --color-bar-other: #7c7c80;
-  --color-segment-thumb: #636366;
   --color-lollipop-other: #8e8e93;
 
   --color-ring-start: #5ac8fa;
