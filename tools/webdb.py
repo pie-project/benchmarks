@@ -170,7 +170,8 @@ def snapshots(store, a2m: dict[str, str], hardware_ids: list[str], engine_ids: l
     info.sort(key=lambda x: x["date"], reverse=True)  # the newest tag is the default on the site
     order = [x["id"] for x in info]
 
-    grid = [(hw, e, m, c) for hw in hardware_ids for e in engine_ids for m in model_ids for c in ("single", "throughput")]
+    # the site's default order: engine, then model, then hardware, then workload
+    grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c in ("single", "throughput")]
     snaps: dict[str, list[dict]] = {}
     for i, t in enumerate(order):
         out = []
