@@ -7,6 +7,8 @@ on:
     inputs:
       tier: { type: string, required: true }
       pie_commit: { type: string, required: true }
+      tag: { type: string, required: false, default: "" }
+      tag_kind: { type: string, required: false, default: "" }
       platforms: { type: string, required: false, default: "" }
       engines: { type: string, required: false, default: "" }
       programs: { type: string, required: false, default: "" }
@@ -183,7 +185,7 @@ jobs:
         run: |
           out="out/${{ matrix.job_id }}"
           pub=""
-          if [ "${{ inputs.persist }}" = "true" ] && [ "${{ inputs.tier }}" = targeted ]; then ( export PIE_EVALS_DB="${{ secrets.PIE_EVALS_DB }}"; while sleep 600; do nice -n 19 infra/ci/publish-partial.sh "$out" "${{ inputs.tier }}" || true; done ) >/dev/null 2>&1 & pub=$!; fi
+          if [ "${{ inputs.persist }}" = "true" ] && [ "${{ inputs.tier }}" = targeted ]; then ( export PIE_EVALS_DB="${{ secrets.PIE_EVALS_DB }}"; while sleep 600; do nice -n 19 infra/ci/publish-partial.sh "$out" "${{ inputs.tier }}" "${{ inputs.tag }}" "${{ inputs.tag_kind }}" || true; done ) >/dev/null 2>&1 & pub=$!; fi
           rc=0
           env ${{ inputs.pie_env }} .venv/bin/pie-evals-node run --job "jobs/${{ matrix.job_id }}.json" --pie-root "$PIE_ROOT" --out "$out" --download || rc=$?
           [ -n "$pub" ] && kill "$pub" 2>/dev/null
@@ -226,4 +228,4 @@ jobs:
         run: |
           shopt -s nullglob
           dirs=(out/out-*)
-          if [ ${#dirs[@]} -gt 0 ]; then .venv/bin/pie-evals collect --tier "${{ inputs.tier }}" "${dirs[@]}"; else echo "::warning::no node outputs"; fi
+          if [ ${#dirs[@]} -gt 0 ]; then .venv/bin/pie-evals collect --tier "${{ inputs.tier }}" --tag "${{ inputs.tag }}" --tag-kind "${{ inputs.tag_kind }}" "${dirs[@]}"; else echo "::warning::no node outputs"; fi

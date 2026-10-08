@@ -201,6 +201,42 @@ platforms:
     interconnect: uma
     runner_labels: [self-hosted, macos, m5-max-128g]
     tiers: [smoke, nightly, weekly]
+  - id: m2-16g
+    os: macos
+    backend: metal
+    accelerator: Apple M2
+    arch: apple8
+    memory_gib: 16
+    interconnect: uma
+    runner_labels: [self-hosted, macos, m2-16g]
+    tiers: [smoke, nightly, weekly]
+  - id: m3-16g
+    os: macos
+    backend: metal
+    accelerator: Apple M3
+    arch: apple9
+    memory_gib: 16
+    interconnect: uma
+    runner_labels: [self-hosted, macos, m3-16g]
+    tiers: [smoke, nightly, weekly]
+  - id: m5-16g
+    os: macos
+    backend: metal
+    accelerator: Apple M5
+    arch: apple10
+    memory_gib: 16
+    interconnect: uma
+    runner_labels: [self-hosted, macos, m5-16g]
+    tiers: [smoke, nightly, weekly]
+  - id: m5-max-64g
+    os: macos
+    backend: metal
+    accelerator: Apple M5 Max
+    arch: apple10
+    memory_gib: 64
+    interconnect: uma
+    runner_labels: [self-hosted, macos, m5-max-64g]
+    tiers: [smoke, nightly, weekly]
   - id: a100-pcie-x2
     os: linux
     backend: cuda

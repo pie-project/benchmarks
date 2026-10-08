@@ -44,14 +44,17 @@ def Store(root: Path | str | None = None) -> BaseStore:  # noqa: N802 - kept as 
 
 class BaseStore:
     # ---- write -----------------------------------------------------------------------
-    def write_run(self, records: list[Record], *, tier: Tier, run_id: str, when: datetime | None = None) -> str:
+    def write_run(self, records: list[Record], *, tier: Tier, run_id: str, when: datetime | None = None,
+                  tag: str | None = None, tag_kind: str | None = None) -> str:
         problems = {r.cell_id: r.validate_for_store() for r in records}
         bad = {k: v for k, v in problems.items() if v}
         if bad:
             raise ValueError(f"records missing mandatory provenance: {json.dumps(bad)[:2000]}")
-        return self._write_table(records_to_table(records), tier=tier, run_id=run_id, when=when or datetime.now(timezone.utc))
+        return self._write_table(records_to_table(records), tier=tier, run_id=run_id, when=when or datetime.now(timezone.utc),
+                                 tag=tag, tag_kind=tag_kind)
 
-    def import_node_output(self, node_out: Path, *, tier: Tier, run_id: str) -> str | None:
+    def import_node_output(self, node_out: Path, *, tier: Tier, run_id: str, tag: str | None = None,
+                           tag_kind: str | None = None) -> str | None:
         """Node writes ``records.jsonl``; the collector lifts it into the store.
         A node that crashed before its first record leaves no file: that is
         reported by the caller, not an exception that loses the other nodes."""
@@ -61,9 +64,9 @@ class BaseStore:
         recs = [Record.model_validate_json(line) for line in f.read_text().splitlines() if line.strip()]
         if not recs:
             return None
-        return self.write_run(recs, tier=tier, run_id=run_id)
+        return self.write_run(recs, tier=tier, run_id=run_id, tag=tag, tag_kind=tag_kind)
 
-    def _write_table(self, t: pa.Table, *, tier: Tier, run_id: str, when: datetime) -> str:
+    def _write_table(self, t: pa.Table, *, tier: Tier, run_id: str, when: datetime, tag=None, tag_kind=None) -> str:
         raise NotImplementedError
 
     def write_quality(self, summary: dict) -> str:
@@ -127,7 +130,7 @@ class DirStore(BaseStore):
         self.root = Path(root)
         self.records_dir = self.root / "records"
 
-    def _write_table(self, t, *, tier, run_id, when) -> str:
+    def _write_table(self, t, *, tier, run_id, when, tag=None, tag_kind=None) -> str:
         out = self.records_dir / str(tier) / when.strftime("%Y-%m") / f"{run_id}.parquet"
         out.parent.mkdir(parents=True, exist_ok=True)
         pq.write_table(t, out, compression="zstd")
@@ -175,6 +178,8 @@ SCHEMA_SQL = (
     "CREATE INDEX IF NOT EXISTS records_run ON records (run_id);\n"
     "CREATE INDEX IF NOT EXISTS records_tier_started ON records (tier, started_at);\n"
     "CREATE INDEX IF NOT EXISTS records_cell ON records (cell_id);\n"
+    "ALTER TABLE records ADD COLUMN IF NOT EXISTS tag text, ADD COLUMN IF NOT EXISTS tag_kind text;\n"
+    "CREATE INDEX IF NOT EXISTS records_tag ON records (tag);\n"
     "CREATE TABLE IF NOT EXISTS quality (artifact text NOT NULL, task text NOT NULL, model text, engine text, "
     "score double precision, n integer, date timestamptz, summary jsonb NOT NULL, samples jsonb, "
     "stored_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (artifact, task));\n"
@@ -199,9 +204,9 @@ class PgStore(BaseStore):
             self._ready = True
         return conn
 
-    def _write_table(self, t, *, tier, run_id, when) -> str:
-        cols = ARROW_SCHEMA.names
-        rows = [tuple(r[c] for c in cols) for r in t.to_pylist()]
+    def _write_table(self, t, *, tier, run_id, when, tag=None, tag_kind=None) -> str:
+        cols = ARROW_SCHEMA.names + ["tag", "tag_kind"]
+        rows = [tuple(r[c] for c in ARROW_SCHEMA.names) + (tag, tag_kind) for r in t.to_pylist()]
         with self.connect() as conn, conn.transaction(), conn.cursor() as cur:
             cur.execute("DELETE FROM records WHERE run_id = %s", (run_id,))
             with cur.copy(f"COPY records ({', '.join(cols)}) FROM STDIN") as cp:
@@ -225,15 +230,17 @@ class PgStore(BaseStore):
         return f"postgres quality {summary['artifact']}/{summary['task']}"
 
     def table(self, tier: Tier | None = None) -> pa.Table:
-        sql = f"SELECT {', '.join(_LEAN)} FROM records" + (" WHERE tier = %s" if tier else "")
+        sql = f"SELECT {', '.join(_LEAN)}, tag, tag_kind FROM records" + (" WHERE tier = %s" if tier else "")
         with self.connect() as conn, conn.cursor() as cur:
             cur.execute(sql, (str(tier),) if tier else None)
             rows = cur.fetchall()
-        if not rows:
-            return ARROW_SCHEMA.empty_table()
-        cols = {n: [r[i] for r in rows] for i, n in enumerate(_LEAN)}
+        n = len(_LEAN)
+        cols = {name: [r[i] for r in rows] for i, name in enumerate(_LEAN)}
         cols["record_json"] = [None] * len(rows)
-        return pa.table({n: cols[n] for n in ARROW_SCHEMA.names}, schema=ARROW_SCHEMA)
+        # tag and tag_kind follow the arrow schema: untagged runs are None
+        t = pa.table({name: cols[name] for name in ARROW_SCHEMA.names}, schema=ARROW_SCHEMA)
+        return t.append_column("tag", pa.array([r[n] for r in rows], pa.string())).append_column(
+            "tag_kind", pa.array([r[n + 1] for r in rows], pa.string()))
 
     def quality(self) -> list[dict]:
         with self.connect() as conn, conn.cursor() as cur:
