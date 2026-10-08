@@ -7,24 +7,34 @@ on:
     workflows: [pie eval, smoke, nightly, weekly]
     types: [completed]
   workflow_dispatch:
-permissions: { contents: read, pages: write, id-token: write }
+permissions: { contents: read }
 concurrency: { group: pages, cancel-in-progress: true }
 jobs:
-  deploy:
+  # the Mac reads the database (liszt is on the tailnet, GitHub's runners are not)
+  build:
     runs-on: [self-hosted, macos, m5-max-64g]
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+    env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
         with: { ref: main }
       - uses: astral-sh/setup-uv@v5
       - run: uv venv && uv pip install -e ".[web]"
       - name: site at /
-        env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
         run: |
           .venv/bin/python tools/webdb.py
           mkdir -p site && cp -R web/. site/
+      - uses: actions/upload-artifact@v4
+        with: { name: site-files, path: site, retention-days: 3 }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions: { contents: read, pages: write, id-token: write }
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: site-files, path: site }
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }
