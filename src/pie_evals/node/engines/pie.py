@@ -72,7 +72,13 @@ _BACKEND_TO_ENGINE: dict[Backend, str] = {
     Backend.METAL: "metal",
     Backend.VULKAN: "vulkan",
     Backend.WGPU: "wgpu",
+    # pie_bench.py has no --engine xla; its metal arm boots `pie serve` as a
+    # subprocess, and XLA_SHIM (its --pie-bin) turns that config into the XLA engine's
+    Backend.XLA: "metal",
 }
+
+#: the ``pie`` stand-in for the XLA engine (see scripts/pie_xla.py)
+XLA_SHIM = Path(__file__).resolve().parent / "scripts" / "pie_xla.py"
 
 #: recipe knob -> flag, value passed through as ``str(value)``.
 _DIRECT_FLAGS: tuple[tuple[str, str], ...] = (
@@ -152,6 +158,9 @@ class PieEngine(Engine):
         sdk_paths = [
             str(self.pie_root / "python" / "client" / "src"),
             str(self.pie_root / "python" / "server" / "python"),
+            # pie moved python/ under packages/ (pie #838)
+            str(self.pie_root / "packages" / "python" / "client" / "src"),
+            str(self.pie_root / "packages" / "python" / "server" / "python"),
         ]
         existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
         self.env["PYTHONPATH"] = ":".join(sdk_paths + ([existing] if existing else []))
@@ -160,6 +169,12 @@ class PieEngine(Engine):
             ld = self.env.get("LD_LIBRARY_PATH") or os.environ.get("LD_LIBRARY_PATH")
             self.env["LD_LIBRARY_PATH"] = ":".join([str(shim)] + ([ld] if ld else []))
         self._server_log = None
+        if self.platform is not None and self.platform.backend == Backend.XLA:
+            self.env["PIE_XLA_REAL_PIE"] = str(self.pie_root / "target" / "release" / "pie")
+            try:
+                XLA_SHIM.chmod(0o755)
+            except OSError:
+                pass
 
     # ---- program (inferlet) ------------------------------------------------
     @property
@@ -202,6 +217,10 @@ class PieEngine(Engine):
             # a comma-separated list (build_config splits on ","); repeating
             # the flag would keep only the last value.
             args += ["--device", ",".join(f"cuda:{i}" for i in range(tp)), "--tp-size", str(tp)]
+        elif self.platform.backend == Backend.XLA:
+            args += ["--device", str(r.get("device") or "tpu:0")]
+            if not r.get("pie_bin"):
+                args += ["--pie-bin", str(XLA_SHIM)]
         elif r.get("device"):
             args += ["--device", str(r["device"])]
 

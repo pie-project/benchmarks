@@ -50,6 +50,18 @@ default:
                 48 GB Mac refuses the load; this is the cap its 27B sibling runs with.
             engine_option:
               value: {max_state_slots: 64}
+  backend:
+    xla:
+      knobs:
+        max_forward_tokens:
+          value: 2048
+          rationale: >
+            The XLA engine's own default (XlaEngineOptions). The TPU runs through
+            pie_bench's metal arm, which always writes this knob, at 10240 unless set.
+        max_forward_requests:
+          value: 64
+          rationale: >
+            The XLA engine's own default; covers c32. The metal arm would write 512.
 
 competitive:
   extends: default

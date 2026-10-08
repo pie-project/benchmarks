@@ -167,7 +167,7 @@ def available_platforms(matrix: Matrix, repo: str, token: str | None = None) -> 
 
 
 def _feature_for(backend: str) -> str:
-    return {"cuda": "cuda", "metal": "metal", "vulkan": "vulkan", "wgpu": "wgpu"}[backend]
+    return {"cuda": "cuda", "metal": "metal", "vulkan": "vulkan", "wgpu": "wgpu", "xla": "xla"}[backend]
 
 
 #: baseline rows older than this were measured with the recipe of the process's first cell (runner.recipe_for_cell)
