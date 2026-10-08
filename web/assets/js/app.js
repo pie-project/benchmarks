@@ -79,6 +79,8 @@
         state.release = value;
       } else if (key === popover.MAC) {
         state.overview.hardware = value;
+      } else if (key === popover.METRIC) {
+        state.overview.metric = value;
       } else if (key === popover.WORKLOAD) {
         state.overview.workload = value;
       } else if (value === popover.ALL) {
@@ -125,6 +127,7 @@
     overview.onChange(render);
     overview.onOpenMac((anchor) => popover.open(anchor, popover.MAC, state));
     overview.onOpenWorkload((anchor) => popover.open(anchor, popover.WORKLOAD, state));
+    overview.onOpenMetric((anchor) => popover.open(anchor, popover.METRIC, state));
   };
 
   readHash();
