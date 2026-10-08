@@ -56,19 +56,11 @@
         state.release = value;
       } else if (value === popover.ALL) {
         state.setFilter(key, []);
-      } else if (value === popover.EVERY) {
-        state.setFilter(key, query.filterValues(state.table, key).map((entry) => entry.value));
       } else {
         state.toggleFilter(key, value);
       }
       render();
       popover.refresh(state);
-    });
-
-    filters.onClear((key) => {
-      state.setFilter(key, []);
-      popover.close();
-      render();
     });
   };
 

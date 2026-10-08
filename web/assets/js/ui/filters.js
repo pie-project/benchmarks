@@ -4,7 +4,6 @@ window.Pie = window.Pie || {};
   const list = document.getElementById("filter-list");
   const hideEmpty = document.getElementById("hide-empty");
   const chevron = '<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>';
-  const cross = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>';
 
   const plural = (column) => {
     if (column.label === "Hardware") return column.label;
@@ -27,16 +26,11 @@ window.Pie = window.Pie || {};
     const set = values.length > 0;
     const label = set ? `${summary(column, values)}${chevron}` : `${column.label}${chevron}`;
     const title = set ? ` title="${Pie.format.escape(values.map((value) => plainName(column, value)).join(", "))}"` : "";
-    const clear = set
-      ? `<button class="filter-clear" type="button" data-clear="${column.key}" aria-label="Clear ${Pie.format.escape(column.label.toLowerCase())}">${cross}</button>`
-      : "";
     return `
       <span class="filter${set ? " is-set" : ""}">
-        <button class="filter-button" type="button" data-filter="${column.key}" aria-haspopup="menu"${title}>${label}</button>${clear}
+        <button class="filter-button" type="button" data-filter="${column.key}" aria-haspopup="menu"${title}>${label}</button>
       </span>`;
   };
-
-  let onClear = () => {};
 
   Pie.filters = {
     hideEmpty,
@@ -53,18 +47,9 @@ window.Pie = window.Pie || {};
     onOpen(handler) {
       list.addEventListener("click", (event) => {
         event.stopPropagation();
-        const clear = event.target.closest("[data-clear]");
-        if (clear) {
-          onClear(clear.dataset.clear);
-          return;
-        }
         const button = event.target.closest("[data-filter]");
         if (button) handler(button, button.dataset.filter);
       });
-    },
-
-    onClear(handler) {
-      onClear = handler;
     },
   };
 })();
