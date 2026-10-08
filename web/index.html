@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="assets/css/filter-bar.css">
   <link rel="stylesheet" href="assets/css/table.css">
   <link rel="stylesheet" href="assets/css/popover.css">
+  <link rel="stylesheet" href="assets/css/overview.css">
 </head>
 <body>
   <aside class="sidebar" id="sidebar">
@@ -69,9 +70,12 @@
     <div class="table-container" id="table-container">
       <table class="data-table" id="data-table"></table>
     </div>
+
+    <div class="overview" id="overview" hidden></div>
   </main>
 
   <div class="popover" id="popover" role="menu" hidden></div>
+  <div class="chart-tooltip" id="chart-tooltip" role="tooltip" hidden></div>
 
   <script src="data/db.js"></script>
 
@@ -90,6 +94,7 @@
   <script src="assets/js/ui/popover.js"></script>
   <script src="assets/js/ui/filters.js"></script>
   <script src="assets/js/ui/table.js"></script>
+  <script src="assets/js/ui/overview.js"></script>
 
   <script src="assets/js/app.js"></script>
 </body>

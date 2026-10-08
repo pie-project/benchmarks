@@ -1,5 +1,17 @@
 (() => {
-  const { state, store, query, sidebar, toolbar, popover, filters, table, preferences } = Pie;
+  const { state, store, query, sidebar, toolbar, popover, filters, table, preferences, overview } = Pie;
+  const filterBar = document.querySelector(".filter-bar");
+
+  // the overview's Mac and workload live in the address, so a reload or a shared link keeps them
+  const readHash = () => {
+    const [view, hardware, workload] = decodeURIComponent(location.hash.slice(1)).split("/");
+    if (view === "overview") Object.assign(state.overview, { hardware: hardware || null, workload: workload || "single" });
+  };
+
+  const writeHash = () => {
+    const hash = state.table === "overview" ? `#overview/${state.overview.hardware || ""}/${state.overview.workload}` : "";
+    if (location.hash !== hash) history.replaceState(null, "", hash || location.pathname + location.search);
+  };
 
   const ensureRelease = () => {
     const options = query.releaseOptions();
@@ -10,11 +22,22 @@
 
   const render = () => {
     ensureRelease();
-    const rows = query.visibleRows(state);
+    const isOverview = state.table === "overview";
+    filterBar.hidden = isOverview;
+    table.container.hidden = isOverview;
+    overview.element.hidden = !isOverview;
     sidebar.render(state);
-    toolbar.render(state, rows.length, store.rows(state.table).length);
-    filters.render(state);
-    table.render(state, rows);
+    if (isOverview) {
+      const models = overview.render(state);
+      toolbar.render(state, 0, 0);
+      toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
+    } else {
+      const rows = query.visibleRows(state);
+      toolbar.render(state, rows.length, store.rows(state.table).length);
+      filters.render(state);
+      table.render(state, rows);
+    }
+    writeHash();
   };
 
   const navigate = (tableName, initialFilters = {}) => {
@@ -93,7 +116,14 @@
     });
   };
 
+  const bindOverview = () => {
+    overview.bind(state);
+    overview.onChange(render);
+  };
+
+  readHash();
   bindToolbar();
+  bindOverview();
   bindFilters();
   bindTable();
   bindGlobal();

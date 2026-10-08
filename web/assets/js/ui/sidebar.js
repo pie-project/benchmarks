@@ -8,7 +8,7 @@ window.Pie = window.Pie || {};
     <button class="sidebar-item${selected ? " is-selected" : ""}" type="button" data-table="${id}" aria-current="${selected}">
       ${Pie.icon(id)}
       <span>${schema.label}</span>
-      <span class="sidebar-count">${Pie.store.rows(id).length}</span>
+      ${schema.view ? "" : `<span class="sidebar-count">${Pie.store.rows(id).length}</span>`}
     </button>`;
 
   const section = (section, current) => {
