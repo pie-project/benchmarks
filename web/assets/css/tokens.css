@@ -56,6 +56,10 @@
   --color-engine-sglang: #34c759;
   --color-engine-default: #a3a3a3;
 
+  --color-card: #f5f5f7;
+  --color-bar-other: #aeaeb2;
+  --color-segment-thumb: #ffffff;
+
   --shadow-menu: 0 0 0 .5px rgba(0, 0, 0, .12), 0 10px 30px rgba(0, 0, 0, .12);
 }
 
@@ -100,6 +104,10 @@
   --color-engine-splash: #40c8e0;
   --color-engine-vllm: #ff375f;
   --color-engine-sglang: #30d158;
+
+  --color-card: #2a2a2c;
+  --color-bar-other: #7c7c80;
+  --color-segment-thumb: #5a5a5e;
 
   --shadow-menu: 0 0 0 .5px rgba(255, 255, 255, .12), 0 12px 36px rgba(0, 0, 0, .5);
 }

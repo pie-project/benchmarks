@@ -11,6 +11,13 @@ window.Pie = window.Pie || {};
   ];
 
   Pie.schema = {
+    overview: {
+      label: "Overview",
+      section: "measurements",
+      view: "overview",  // not a table: pie against the other engines, model by model
+      filters: [],
+      columns: [],
+    },
     results: {
       label: "Results",
       section: "measurements",
