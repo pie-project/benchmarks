@@ -261,3 +261,15 @@ platforms:
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition"
     tp_capable: true
     tiers: [smoke, nightly, weekly]
+  # ---- Google Cloud TPU: a VM created per run by .github/workflows/tpu.yml and deleted after it
+  # (no runner registers this label; the GPU nightly's --skip-unavailable drops it). pie only.
+  - id: tpu-v6e-1
+    os: linux
+    backend: xla
+    accelerator: TPU v6e (Trillium)
+    arch: trillium
+    count: 1
+    memory_gib: 32
+    interconnect: ici
+    runner_labels: [tpu-v6e-1]
+    tiers: [nightly]

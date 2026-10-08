@@ -27,6 +27,13 @@ global_exclude:
   # a 4-GPU platform exists for tp4 (tp2 is the 2-GPU platform's job)
   - {platform: pro6000-x4, tp: 2}
   - {platform: h100-sxm-x4, tp: 2}
+  # the TPU runs pie alone, on its own artifact, on a single request and a throughput shape;
+  # its artifact runs nowhere else
+  - {platform: tpu-v6e-1, not_engine: pie}
+  - {platform: tpu-v6e-1, not_artifact: qwen3.5-0.8b-xla}
+  - {platform: tpu-v6e-1, not_program: text-completion-bench}
+  - {platform: tpu-v6e-1, not_workload: [ss-512-256, c32]}
+  - {artifact: qwen3.5-0.8b-xla, not_platform: tpu-v6e-1}
 
 suites:
   smoke:
@@ -71,6 +78,7 @@ suites:
     include:
       - engine: pie
         baseline: false   # an arm is another engine's copy of the weights; pie has its own
+        not_artifact: qwen3.5-0.8b-xla   # the TPU's copy: this include would put it back on every Mac
         program: text-completion-bench
         artifact_kind: full
         tp: 1
@@ -85,6 +93,7 @@ suites:
       # the Mac site: pie on its own checkpoints, every other engine on its copy of the same model
       - engine: pie
         baseline: false
+        not_artifact: qwen3.5-0.8b-xla
         program: text-completion-bench
         artifact_kind: full
         tp: 1

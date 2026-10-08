@@ -22,6 +22,15 @@ artifacts:
     tiers: [smoke, nightly, weekly]
     pie_sku: qwen35-d0.8b-bf16-kv-bf16   # the tp>1 artifact is imported as this row (import picks the first fitting row otherwise: the u4g64 twin, which has no tp2)
 
+  # the same checkpoint for pie's XLA engine (TPU): imported as a .xla.zt and served only on tpu-v6e-1
+  # (suites.yaml global_exclude), so the TPU nightly plans pie cells on it and nothing else
+  - id: qwen3.5-0.8b-xla
+    base_model: Qwen/Qwen3.5-0.8B
+    family: qwen3_5
+    scheme: bf16
+    expected_gib: 1.6
+    tiers: [nightly]
+
   - id: qwen3.5-0.8b-mlx-bf16
     base_model: mlx-community/Qwen3.5-0.8B-bf16
     family: qwen3_5

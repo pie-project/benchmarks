@@ -40,6 +40,7 @@ class Backend(StrEnumBase):
     METAL = "metal"
     VULKAN = "vulkan"
     WGPU = "wgpu"
+    XLA = "xla"  # pie's TPU engine (engine-xla over libtpu)
 
 
 class QuantScheme(StrEnumBase):

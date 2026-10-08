@@ -1,0 +1,170 @@
+name: tpu
+# pie's TPU engine (crates/engine-xla, crates/kernels-xla) on one Trillium chip. A Cloud TPU VM
+# is created for the run and deleted after it, whatever happens. The schedule measures pie main
+# only when a commit since the last measured one touched the XLA crates; a manual run always runs.
+# Results go to the database as nightly rows on tpu-v6e-1, tagged main-<first 9 of the sha>.
+permissions: { contents: read, actions: read }
+on:
+  schedule:
+    - cron: "0 9 * * *"  # 09:00 UTC daily
+  workflow_dispatch:
+    inputs:
+      pie_commit: { description: "pie commit (default: main)", required: false, default: "" }
+concurrency: { group: tpu, cancel-in-progress: false }  # one TPU VM at a time
+env:
+  GCP_PROJECT: pie-project-510103
+  TPU_ZONE: us-east5-b
+  TPU_TYPE: v6e-1
+  TPU_RUNTIME: v2-alpha-tpuv6e
+  TPU_NAME: pie-evals-tpu-${{ github.run_id }}-${{ github.run_attempt }}
+
+jobs:
+  decide:
+    runs-on: ubuntu-latest
+    outputs:
+      commit: ${{ steps.c.outputs.commit }}
+      run: ${{ steps.d.outputs.run }}
+    steps:
+      - id: c
+        name: pie commit
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          C="${{ github.event.inputs.pie_commit }}"
+          [ -z "$C" ] && C=$(git ls-remote https://github.com/pie-project/pie.git refs/heads/main | cut -f1)
+          if ! [[ "$C" =~ ^[0-9a-f]{40}$ ]]; then C=$(gh api "repos/pie-project/pie/commits/$C" --jq .sha); fi
+          echo "commit=$C" >> "$GITHUB_OUTPUT"
+      - id: d
+        name: did the XLA crates change since the last TPU run?
+        env: { GH_TOKEN: "${{ github.token }}", C: "${{ steps.c.outputs.commit }}" }
+        run: |
+          if [ "${{ github.event_name }}" = workflow_dispatch ]; then echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          # the collect job of every run that stored results uploads the commit it measured
+          id=$(gh api "repos/${{ github.repository }}/actions/artifacts?name=tpu-last-commit&per_page=100" \
+               --jq '[.artifacts[] | select(.expired | not)] | sort_by(.created_at) | last | .id // empty')
+          last=""
+          if [ -n "$id" ]; then
+            gh api "repos/${{ github.repository }}/actions/artifacts/$id/zip" > last.zip
+            last=$(unzip -p last.zip commit.txt | tr -d '[:space:]')
+          fi
+          if [ -z "$last" ]; then echo "no earlier TPU run: measuring $C"; echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$last" = "$C" ]; then echo "$C already measured"; echo "run=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if ! gh api "repos/pie-project/pie/compare/$last...$C" > compare.json; then
+            echo "cannot compare $last...$C: measuring"; echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files=$(jq '.files | length' compare.json)
+          xla=$(jq '[.files[].filename | select(startswith("crates/engine-xla/") or startswith("crates/kernels-xla/"))] | length' compare.json)
+          echo "since ${last:0:9}: $files files changed, $xla in the XLA crates"
+          # the compare API lists at most 300 files: a longer list may hide an XLA change
+          if [ "$xla" -gt 0 ] || [ "$files" -ge 300 ]; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
+
+  bench:
+    needs: decide
+    if: needs.decide.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 210
+    env: { C: "${{ needs.decide.outputs.commit }}" }
+    outputs:
+      job_id: ${{ steps.jobs.outputs.job_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv && uv pip install -e .
+      - name: job spec
+        id: jobs
+        run: |
+          .venv/bin/pie-evals jobs --tier nightly --pie-commit "$C" --platform tpu-v6e-1 --out jobs
+          n=$(jq '.include | length' jobs/gh-matrix.json)
+          [ "$n" = 1 ] || { echo "::error::expected one tpu-v6e-1 job, the plan has $n"; exit 1; }
+          echo "job_id=$(jq -r '.include[0].job_id' jobs/gh-matrix.json)" >> "$GITHUB_OUTPUT"
+      - uses: google-github-actions/auth@v2
+        with: { credentials_json: "${{ secrets.GCP_TPU_SA_KEY }}" }
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: create the TPU VM
+        run: |
+          gcloud compute tpus tpu-vm create "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" \
+            --accelerator-type "$TPU_TYPE" --version "$TPU_RUNTIME" --labels "owner=pie-evals,run=${{ github.run_id }}" --quiet
+      - name: wait for READY
+        run: |
+          for _ in $(seq 1 60); do
+            s=$(gcloud compute tpus tpu-vm describe "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --format 'value(state)')
+            echo "state: $s"; [ "$s" = READY ] && exit 0; sleep 10
+          done
+          echo "::error::the TPU VM is not READY after 10 minutes"; exit 1
+      - name: copy the harness and the job
+        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}" }
+        run: |
+          tar czf /tmp/pie-evals.tgz --exclude=.git --exclude=.venv .
+          ( umask 077; : > /tmp/vm.env; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" > /tmp/vm.env || true )
+          # the first ssh pushes the key; retried while the VM's sshd and the key settle
+          for i in 1 2 3 4 5; do
+            gcloud compute tpus tpu-vm scp /tmp/pie-evals.tgz /tmp/vm.env "$TPU_NAME": --project "$GCP_PROJECT" --zone "$TPU_ZONE" \
+              --strict-host-key-checking=no --quiet && break
+            [ "$i" = 5 ] && exit 1; sleep 20
+          done
+          gcloud compute tpus tpu-vm ssh "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet \
+            --command 'rm -rf ~/pie-evals && mkdir ~/pie-evals && tar xzf ~/pie-evals.tgz -C ~/pie-evals'
+      - name: build pie and run the job
+        env: { JOB_ID: "${{ steps.jobs.outputs.job_id }}" }
+        run: |
+          vm() { gcloud compute tpus tpu-vm ssh "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet --command "$1"; }
+          # detached on the VM, so a dropped ssh session does not stop the build or the bench
+          vm "cd ~/pie-evals && setsid nohup bash -c 'set -a; . ~/vm.env; set +a; bash infra/tpu/run-on-vm.sh $C jobs/$JOB_ID.json; echo \$? > ~/run.done' > ~/run.log 2>&1 < /dev/null &"
+          while ! rc=$(vm 'cat ~/run.done 2>/dev/null' 2>/dev/null) || [ -z "$rc" ]; do sleep 60; done
+          vm 'tail -n 200 ~/run.log'
+          echo "exit $rc"; [ "$rc" = 0 ]
+      - name: fetch the records
+        if: always() && steps.jobs.outputs.job_id != ''
+        run: |
+          mkdir -p out
+          gcloud compute tpus tpu-vm scp --recurse "$TPU_NAME:pie-evals/out/${{ steps.jobs.outputs.job_id }}" out/ \
+            --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet || echo "::warning::no node output on the VM"
+          gcloud compute tpus tpu-vm scp "$TPU_NAME:run.log" out/ --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet || true
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.jobs.outputs.job_id != ''
+        with: { name: "out-${{ steps.jobs.outputs.job_id }}", path: "out/${{ steps.jobs.outputs.job_id }}", retention-days: 30, if-no-files-found: warn }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: tpu-run-log, path: out/run.log, retention-days: 30, if-no-files-found: ignore }
+
+  # its own job, so the VM is deleted even when the bench job's runner is lost or the job times out
+  teardown:
+    needs: [decide, bench]
+    if: always() && needs.decide.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with: { credentials_json: "${{ secrets.GCP_TPU_SA_KEY }}" }
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: delete the TPU VM
+        run: |
+          if gcloud compute tpus tpu-vm describe "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" >/dev/null 2>&1; then
+            gcloud compute tpus tpu-vm delete "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --quiet
+          else
+            echo "no VM $TPU_NAME"
+          fi
+
+  # the Mac reaches the database on liszt over the tailnet; GitHub's runners do not
+  collect:
+    needs: [decide, bench]
+    if: always() && needs.decide.outputs.run == 'true' && needs.bench.outputs.job_id != ''
+    runs-on: [self-hosted, macos, m5-max-64g]
+    env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}", C: "${{ needs.decide.outputs.commit }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv && uv pip install -e ".[orchestrate]"
+      - uses: actions/download-artifact@v4
+        with: { pattern: "out-*", path: out }
+      - name: import into the database
+        id: import
+        run: |
+          shopt -s nullglob
+          dirs=(out/out-*)
+          n=0; for d in "${dirs[@]}"; do [ -s "$d/records.jsonl" ] && n=$((n + 1)); done
+          [ "$n" -gt 0 ] || { echo "::error::no records from the TPU"; exit 1; }
+          .venv/bin/pie-evals collect --tier nightly --tag "main-${C:0:9}" --tag-kind manual "${dirs[@]}"
+          mkdir -p last && echo "$C" > last/commit.txt
+      # what the next scheduled run compares against
+      - uses: actions/upload-artifact@v4
+        if: steps.import.outcome == 'success'
+        with: { name: tpu-last-commit, path: last/commit.txt, retention-days: 90 }
