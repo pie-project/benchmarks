@@ -292,7 +292,7 @@ window.Pie = window.Pie || {};
       }).join("");
     }).join("");
 
-    return section("Against each engine", `pie ÷ engine, ${metric.label.toLowerCase()} tok/s`, `
+    return section("Against each engine", `How pie’s ${metric.label.toLowerCase()} speed compares, model by model`, `
       <div class="heatmap">
         ${popup("overview-metric", "Speed", metric.label)}
         <svg class="heat-grid" viewBox="0 0 ${width} ${height}" width="${width}" role="img"
