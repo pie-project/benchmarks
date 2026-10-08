@@ -45,6 +45,14 @@
   color: var(--color-on-accent);
 }
 
+.popover-detail {
+  margin-left: auto;
+  padding-left: 20px;
+  color: var(--color-label-tertiary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .popover-check {
   display: inline-flex;
   flex: none;

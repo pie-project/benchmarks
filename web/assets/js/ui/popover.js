@@ -23,7 +23,10 @@ window.Pie = window.Pie || {};
         `<div class="popover-heading">${group}</div>` +
         options
           .filter((release) => release.group === group)
-          .map((release) => option(release.id, release.id === state.release, Pie.format.escape(release.title)))
+          // the date sits right-aligned in grey, the way macOS menus show secondary text
+          .map((release) => option(release.id, release.id === state.release,
+            `<span class="popover-label">${Pie.format.escape(release.title)}</span>` +
+            (release.date ? `<span class="popover-detail">${Pie.format.escape(release.date)}</span>` : "")))
           .join(""))
       .join(`<div class="popover-separator"></div>`);
   };
