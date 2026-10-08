@@ -4,7 +4,6 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("popover");
   const RELEASE = "release";
   const ALL = "";
-  const EVERY = "__every__";
   let owner = null;
   let onPick = () => {};
 
@@ -15,9 +14,6 @@ window.Pie = window.Pie || {};
     <button class="popover-option" type="button" role="${role}" aria-checked="${selected}" data-value="${Pie.format.escape(value)}">
       ${check(selected)}${label}
     </button>`;
-
-  const action = (value, label, disabled) => `
-    <button class="popover-action" type="button" data-value="${value}"${disabled ? " disabled" : ""}>${label}</button>`;
 
   const releaseMenu = (state) =>
     `<div class="popover-heading">pie release</div>` +
@@ -33,8 +29,7 @@ window.Pie = window.Pie || {};
     const values = entries
       .map((entry) => option(entry.value, current.includes(entry.value), Pie.format.option(column, entry.value), "menuitemcheckbox"))
       .join("");
-    const actions = `<div class="popover-actions">${action(EVERY, "Select All", current.length === entries.length)}${action(ALL, "Clear", !current.length)}</div>`;
-    return `${option(ALL, !current.length, `All ${Pie.filters.plural(column).toLowerCase()}`)}<div class="popover-separator"></div>${values}<div class="popover-separator"></div>${actions}`;
+    return `${option(ALL, !current.length, `All ${Pie.filters.plural(column).toLowerCase()}`)}<div class="popover-separator"></div>${values}`;
   };
 
   const place = (anchor) => {
@@ -47,7 +42,6 @@ window.Pie = window.Pie || {};
   Pie.popover = {
     RELEASE,
     ALL,
-    EVERY,
 
     isOpenFor(key) {
       return owner === key && !element.hidden;
