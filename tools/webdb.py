@@ -13,6 +13,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import yaml
 
@@ -24,6 +25,7 @@ WEB = ROOT / "web"
 # Each site workload maps to measured workloads, best first.
 SINGLE = ["ss-512-256", "ob-512-200", "ss-128-64", "ob-short-100", "ob-story-200"]
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
+SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 LEGACY = "legacy"  # runs from before tags: no tag, used only as a fallback
 WL_PRIORITY = {wl: (cat, i) for cat, ids in (("single", SINGLE), ("throughput", THROUGHPUT)) for i, wl in enumerate(ids)}
 
@@ -116,6 +118,11 @@ def workloads() -> list[dict]:
 LEGACY_MACS = {"m5-max-128g"}
 
 
+def local(ts) -> str:
+    """A run time as Pacific 'YYYY-MM-DD HH:MM' (the store keeps UTC)."""
+    return ts.astimezone(SITE_TZ).strftime("%Y-%m-%d %H:%M") if ts is not None else ""
+
+
 def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
     """The row to show for each (hardware, engine, model, workload category): the best-matching workload, then the newest."""
     best: dict[tuple, tuple] = {}
@@ -143,7 +150,7 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         **{m: (round(r[m], 2) if isinstance(r[m], (int, float)) else None) for m in METRICS},
         "accuracy": None,
         "commit": (r["pie_commit"] or "")[:9] if engine == "pie" else "",
-        "measured": str(r["started_at"])[:16],
+        "measured": local(r["started_at"]),
     }
 
 
@@ -164,7 +171,7 @@ def snapshots(store, a2m: dict[str, str], hardware_ids: list[str], engine_ids: l
         by_tag.setdefault(tag, []).append(r)
         kinds[tag] = r["tag_kind"] or ("legacy" if tag == LEGACY else "manual")
     tagged = {t: pick(rs, a2m) for t, rs in by_tag.items()}
-    info = [{"id": t, "kind": kinds[t], "date": str(max(r["started_at"] for r in rs))[:16],
+    info = [{"id": t, "kind": kinds[t], "date": local(max(r["started_at"] for r in rs)),
              "commit": next((r["pie_commit"][:9] for r in rs if r["engine"] == "pie" and r["pie_commit"]), "")}
             for t, rs in by_tag.items()]
     info.sort(key=lambda x: x["date"], reverse=True)  # the newest tag is the default on the site
@@ -181,7 +188,7 @@ def snapshots(store, a2m: dict[str, str], hardware_ids: list[str], engine_ids: l
             if src is None:
                 continue
             r = tagged[src][key][1]
-            stale = None if src == t else {"tag": src, "measured": str(r["started_at"])[:16]}
+            stale = None if src == t else {"tag": src, "measured": local(r["started_at"])}
             out.append({**as_row(r, key, src), "stale": stale})
         snaps[t] = out
     return info, snaps
