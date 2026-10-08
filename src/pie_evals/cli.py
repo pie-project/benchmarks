@@ -160,9 +160,11 @@ def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloa
 
 @main.command("collect")
 @click.option("--tier", type=click.Choice([t.value for t in Tier]), required=True)
+@click.option("--tag", default=None, help="the release or manual tag this run belongs to")
+@click.option("--tag-kind", type=click.Choice(["release", "manual"]), default=None)
 @click.argument("node_out", nargs=-1, type=click.Path(exists=True))
 @click.pass_obj
-def collect(obj, tier, node_out):
+def collect(obj, tier, tag, tag_kind, node_out):
     """Import node output directories (records.jsonl) into the store."""
     st: Store = obj["store"]
     problems = []
@@ -170,7 +172,7 @@ def collect(obj, tier, node_out):
         d = Path(d)
         run_id = (d / "run_id.txt").read_text().strip() if (d / "run_id.txt").exists() else d.name
         try:
-            p = st.import_node_output(d, tier=Tier(tier), run_id=run_id)
+            p = st.import_node_output(d, tier=Tier(tier), run_id=run_id, tag=tag or None, tag_kind=tag_kind or None)
         except Exception as e:
             problems.append(f"{d}: {e}")
             click.echo(f"{d}: IMPORT FAILED: {e}", err=True)
