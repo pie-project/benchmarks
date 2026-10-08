@@ -27,6 +27,7 @@ SINGLE = ["ss-512-256", "ob-512-200", "ss-128-64", "ob-short-100", "ob-story-200
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 LEGACY = "legacy"  # runs from before tags: no tag, used only as a fallback
+NO_FIT = "no-fit"  # the site's third workload: a setup too big for the Mac, listed with no numbers
 WL_PRIORITY = {wl: (cat, i) for cat, ids in (("single", SINGLE), ("throughput", THROUGHPUT)) for i, wl in enumerate(ids)}
 
 ENGINE_META = {
@@ -71,6 +72,8 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
         row["params_b"] = float(sizes[0]) if sizes else None
         row["active_b"] = float(active.group(1)) if active else row["params_b"]
         row["architecture"] = "MoE" if active or "moe" in (row["family"] or "") else "dense"
+        # one definition per model today, every expert resident: no SSD streaming. A streaming twin would fit smaller Macs.
+        row["ssd_streaming"] = "Without" if row["architecture"] == "MoE" else "n/a"
         row["schemes"] = ", ".join(sorted(row["schemes"]))
         row["size_gib"] = None
         row["context"] = None
@@ -111,6 +114,8 @@ def workloads() -> list[dict]:
         p = params.get(src, {})
         out.append({"id": cat, "label": label, "concurrency": p.get("concurrency") or (1 if cat == "single" else 32),
                     "prompt_tokens": p.get("prefill"), "output_tokens": p.get("decode"), "benchmark": ", ".join(ids)})
+    out.append({"id": NO_FIT, "label": "Doesn't fit", "concurrency": None, "prompt_tokens": None, "output_tokens": None,
+                "benchmark": "none: the weights need more memory than the Mac has"})
     return out
 
 
@@ -258,11 +263,25 @@ def main() -> None:
     # the site's default order: engine, then model, then hardware, then workload
     grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c in ("single", "throughput")]
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
+    hw_rows = [h for h in hardware() if h["id"] in hardware_ids]
+    misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
+    for t in order:
+        seen = {(r["hardware"], r["engine"], r["model"]) for r in snaps[t]}
+        macs = {r["hardware"] for r in snaps[t]}  # only the Macs this tag ran on
+        for hw, models_ in misfits.items():
+            if hw not in macs:
+                continue
+            for model, by_engine in models_.items():
+                for engine, gib in by_engine.items():
+                    if (hw, engine, model) in seen:
+                        continue
+                    snaps[t].append({"hardware": hw, "engine": engine, "release": t, "group": t, "version": "", "model": model,
+                                     "scheme": None, "workload": NO_FIT, **{m: None for m in METRICS}, "accuracy": None,
+                                     "commit": "", "measured": "", "needs_gib": gib, "stale": None})
     qkeys = sorted({k for rows in scores.values() for k in rows})
     quality = stack(order, scores, qkeys, lambda item, key, src: {k: v for k, v in item.items() if k != "_at"}, lambda item: item["date"])
-    hw_rows = [h for h in hardware() if h["id"] in hardware_ids]
     db = {"tags": tags, "snapshots": snaps, "quality_snapshots": quality,
-          "no_fit": no_fit(a2m, config, hw_rows, engine_ids, model_ids),
+          "no_fit": misfits,
           "hardware": hw_rows,
           "engines": mac_engines, "models": [m for m in models if m["id"] in model_ids],
           "workloads": workloads(), "quality": quality.get(order[0], []) if order else []}
