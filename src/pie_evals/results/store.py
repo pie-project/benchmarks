@@ -69,7 +69,7 @@ class BaseStore:
     def _write_table(self, t: pa.Table, *, tier: Tier, run_id: str, when: datetime, tag=None, tag_kind=None) -> str:
         raise NotImplementedError
 
-    def write_quality(self, summary: dict) -> str:
+    def write_quality(self, summary: dict, *, tag: str | None = None, tag_kind: str | None = None) -> str:
         raise NotImplementedError
 
     # ---- read ------------------------------------------------------------------------
@@ -136,7 +136,8 @@ class DirStore(BaseStore):
         pq.write_table(t, out, compression="zstd")
         return str(out)
 
-    def write_quality(self, summary: dict) -> str:
+    def write_quality(self, summary: dict, *, tag: str | None = None, tag_kind: str | None = None) -> str:
+        summary = {**summary, "tag": tag, "tag_kind": tag_kind} if tag else summary
         path = self.root / "quality" / f"{summary['artifact']}-{summary['task']}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(summary, indent=1))
@@ -180,6 +181,11 @@ SCHEMA_SQL = (
     "CREATE INDEX IF NOT EXISTS records_cell ON records (cell_id);\n"
     "ALTER TABLE records ADD COLUMN IF NOT EXISTS tag text, ADD COLUMN IF NOT EXISTS tag_kind text;\n"
     "CREATE INDEX IF NOT EXISTS records_tag ON records (tag);\n"
+    # quality scores stack per tag like results: '' is the untagged (legacy) score
+    "ALTER TABLE quality ADD COLUMN IF NOT EXISTS tag text NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS tag_kind text;\n"
+    "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'quality_tag_key') THEN "
+    "ALTER TABLE quality DROP CONSTRAINT IF EXISTS quality_pkey; "
+    "CREATE UNIQUE INDEX quality_tag_key ON quality (artifact, task, tag); END IF; END $$;\n"
     "CREATE TABLE IF NOT EXISTS quality (artifact text NOT NULL, task text NOT NULL, model text, engine text, "
     "score double precision, n integer, date timestamptz, summary jsonb NOT NULL, samples jsonb, "
     "stored_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (artifact, task));\n"
@@ -216,20 +222,20 @@ class PgStore(BaseStore):
                     cp.write_row(row)
         return f"postgres records run_id={run_id} ({len(rows)} rows)"
 
-    def write_quality(self, summary: dict) -> str:
+    def write_quality(self, summary: dict, *, tag: str | None = None, tag_kind: str | None = None) -> str:
         from psycopg.types.json import Jsonb
 
         head = {k: v for k, v in summary.items() if k != "samples"}
         with self.connect() as conn, conn.transaction():
             conn.execute(
-                "INSERT INTO quality (artifact, task, model, engine, score, n, date, summary, samples) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (artifact, task) DO UPDATE SET "
-                "model = EXCLUDED.model, engine = EXCLUDED.engine, score = EXCLUDED.score, n = EXCLUDED.n, date = EXCLUDED.date, "
-                "summary = EXCLUDED.summary, samples = EXCLUDED.samples, stored_at = now()",
-                (summary["artifact"], summary["task"], summary.get("model"), summary.get("engine"), summary.get("score"),
-                 summary.get("n"), summary.get("date"), Jsonb(head), Jsonb(summary.get("samples"))),
+                "INSERT INTO quality (artifact, task, tag, tag_kind, model, engine, score, n, date, summary, samples) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (artifact, task, tag) DO UPDATE SET "
+                "tag_kind = EXCLUDED.tag_kind, model = EXCLUDED.model, engine = EXCLUDED.engine, score = EXCLUDED.score, n = EXCLUDED.n, "
+                "date = EXCLUDED.date, summary = EXCLUDED.summary, samples = EXCLUDED.samples, stored_at = now()",
+                (summary["artifact"], summary["task"], tag or "", tag_kind, summary.get("model"), summary.get("engine"),
+                 summary.get("score"), summary.get("n"), summary.get("date"), Jsonb(head), Jsonb(summary.get("samples"))),
             )
-        return f"postgres quality {summary['artifact']}/{summary['task']}"
+        return f"postgres quality {summary['artifact']}/{summary['task']} tag={tag or 'legacy'}"
 
     def table(self, tier: Tier | None = None) -> pa.Table:
         sql = f"SELECT {', '.join(_LEAN)}, tag, tag_kind FROM records" + (" WHERE tier = %s" if tier else "")
@@ -246,5 +252,5 @@ class PgStore(BaseStore):
 
     def quality(self) -> list[dict]:
         with self.connect() as conn, conn.cursor() as cur:
-            cur.execute("SELECT summary FROM quality ORDER BY artifact, task")
-            return [r[0] for r in cur.fetchall()]
+            cur.execute("SELECT summary, tag, tag_kind FROM quality ORDER BY artifact, task, tag")
+            return [{**r[0], "tag": r[1] or None, "tag_kind": r[2]} for r in cur.fetchall()]

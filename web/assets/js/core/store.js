@@ -15,6 +15,8 @@ window.Pie = window.Pie || {};
 
   // the rows shown for a tag: every combination, with a stale marker where that tag had no run
   const snapshot = (tag) => snapshots[tag] || [];
+  // quality scores stack per tag the same way; an export without them falls back to the flat list
+  const qualitySnapshot = (tag) => (tables.quality_snapshots ? tables.quality_snapshots[tag] || [] : tables.quality || []);
 
   const countResults = () => {
     for (const [table, key] of Object.entries(resultKeys)) {
@@ -58,6 +60,7 @@ window.Pie = window.Pie || {};
     resultKeys,
 
     snapshot,
+    qualitySnapshot,
 
     rows(table) {
       return table === "results" ? snapshot(newestTag) : tables[table];

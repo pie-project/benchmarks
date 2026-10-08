@@ -40,7 +40,9 @@ window.Pie = window.Pie || {};
 
   const visibleRows = (state) => {
     const schema = Pie.schema[state.table];
-    const source = state.table === "results" ? store.snapshot(state.release) : store.rows(state.table);
+    const source = state.table === "results" ? store.snapshot(state.release)
+      : state.table === "quality" ? store.qualitySnapshot(state.release)
+      : store.rows(state.table);
     const query = state.query.trim().toLowerCase();
 
     const rows = source.filter((row) => matchesFilters(row, state.filters) && matchesSearch(row, schema.columns, query));
