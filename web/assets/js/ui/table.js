@@ -35,14 +35,20 @@ window.Pie = window.Pie || {};
     const classes = [];
     let link = "";
 
+    let stale = "";
     if (state.table === "results" && engines.isPrimary(row.engine)) classes.push("is-highlighted");
+    if (row.stale) {
+      classes.push("is-stale");
+      const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";
+      stale = ` title="From ${format.escape(row.stale.tag)}${when}: this tag has no run for this setup"`;
+    }
     if (resultKey) {
       classes.push("is-link");
       link = ` data-result-key="${resultKey}" data-result-value="${format.escape(row.id)}" title="Show results"`;
     }
 
     const cells = columns.map((column) => bodyCell(column, row)).join("");
-    return `<tr class="${classes.join(" ")}"${link}>${cells}</tr>`;
+    return `<tr class="${classes.join(" ")}"${link || stale}>${cells}</tr>`;
   };
 
   Pie.table = {

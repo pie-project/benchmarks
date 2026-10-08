@@ -10,10 +10,16 @@ window.Pie = window.Pie || {};
     workloads: "workload",
   };
 
+  const snapshots = tables.snapshots || {};
+  const newestTag = (tables.tags || []).find((tag) => snapshots[tag.id]?.length)?.id;
+
+  // the rows shown for a tag: every combination, with a stale marker where that tag had no run
+  const snapshot = (tag) => snapshots[tag] || [];
+
   const countResults = () => {
     for (const [table, key] of Object.entries(resultKeys)) {
       const counts = {};
-      for (const row of tables.results) {
+      for (const row of snapshot(newestTag)) {
         counts[row[key]] = (counts[row[key]] || 0) + 1;
       }
       for (const row of tables[table]) {
@@ -51,12 +57,14 @@ window.Pie = window.Pie || {};
     names,
     resultKeys,
 
+    snapshot,
+
     rows(table) {
-      return tables[table];
+      return table === "results" ? snapshot(newestTag) : tables[table];
     },
 
     coverage(table, column) {
-      const rows = tables[table];
+      const rows = Pie.store.rows(table);
       if (!rows.length) return 0;
       return rows.filter((row) => !Pie.format.isEmpty(row[column.key])).length / rows.length;
     },
