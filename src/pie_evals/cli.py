@@ -16,12 +16,11 @@ from pie_evals.results import baselines as bl
 from pie_evals.results import report as rp
 from pie_evals.results.store import Store
 from pie_evals.schema import Tier
-from pie_evals.site import dashboard as dash
 
 
 @click.group()
 @click.option("--matrix", "matrix_dir", default="matrix", show_default=True)
-@click.option("--store", "store_dir", default="store", show_default=True)
+@click.option("--store", "store_dir", default=None, help="postgresql://... or a directory (default: $PIE_EVALS_DB, else ./store)")
 @click.pass_context
 def main(ctx, matrix_dir, store_dir):
     ctx.obj = {"matrix": Matrix.load(matrix_dir), "store": Store(store_dir)}
@@ -181,6 +180,27 @@ def collect(obj, tier, node_out):
         sys.exit(1)
 
 
+@main.command("import-store")
+@click.argument("src", type=click.Path(exists=True))
+@click.pass_obj
+def import_store(obj, src):
+    """Copy a store directory (records/**.parquet, quality/*.json) into the store. Safe to repeat."""
+    import pyarrow.parquet as pq
+
+    from pie_evals.results.store import DirStore
+    from pie_evals.schema.record import ARROW_SCHEMA
+
+    st, d = obj["store"], DirStore(src)
+    files = d.files()
+    for i, f in enumerate(files, 1):
+        st._write_table(pq.read_table(f, schema=ARROW_SCHEMA), tier=Tier(f.parts[-3]), run_id=f.stem, when=None)
+        if i % 100 == 0 or i == len(files):
+            click.echo(f"{i}/{len(files)} runs", err=True)
+    for f in sorted((d.root / "quality").glob("*.json")):
+        st.write_quality(json.loads(f.read_text()))
+    click.echo(f"{len(files)} runs, {len(list((d.root / 'quality').glob('*.json')))} quality summaries")
+
+
 @main.command("report")
 @click.option("--tier", type=click.Choice([t.value for t in Tier]), required=True)
 @click.option("--out", type=click.Path(), default="reports")
@@ -206,20 +226,6 @@ def report(obj, tier, out):
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a") as f:
             f.write(f"regressions={n_reg}\npie_trails={trails}\n")
-
-
-@main.command("dashboard")
-@click.option("--out", type=click.Path(), default="site", show_default=True)
-@click.option("--repo", default=None, help="owner/name of this repo, whose runners and collaborators the site shows (default: $GITHUB_REPOSITORY)")
-@click.option("--pie-repo", default="pie-project/pie", show_default=True)
-@click.pass_obj
-def dashboard(obj, out, repo, pie_repo):
-    """Render the pie evals site: pushes, machines and people."""
-    repo = repo or os.environ.get("GITHUB_REPOSITORY", "pie-project/pie-evals")
-    from pie_evals.plan.machines import allowed_macs
-
-    n = dash.render(obj["store"], obj["matrix"], Path(out), dash.runners(repo), repo=repo, pie_repo=pie_repo, machines=allowed_macs())
-    click.echo(f"{n} pushes -> {out}/index.html")
 
 
 @main.command("watch-baselines")

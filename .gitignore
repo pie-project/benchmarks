@@ -7,3 +7,4 @@ jobs/
 .pytest_cache/
 .ruff_cache/
 /site/
+/web/data/db.js

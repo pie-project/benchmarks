@@ -91,15 +91,17 @@ def load_items(task: str, n: int, log=print):
         return None
 
 
-def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str = "matrix", store_dir: str = "store", pie_root: Path, log=print) -> list[Path]:
+def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str = "matrix", store_dir: str | None = None, pie_root: Path, log=print) -> list[str]:
     from pie_evals.node.snapshots import ensure_snapshot, hf_cache_dir
     from pie_evals.plan.matrix import Matrix
+    from pie_evals.results.store import Store
 
+    store = Store(store_dir)
     m = Matrix.load(matrix_dir)
     art = m.artifacts[artifact_id]
     engine = "ollama" if art.source_format == SourceFormat.OLLAMA else "pie"
     snapshot = ensure_snapshot(art, hf_cache_dir(), download=True, log=log)
-    written: list[Path] = []
+    written: list[str] = []
     skipped: list[str] = []
     for task in tasks:
         load, score, max_tokens = TASKS[task]
@@ -122,9 +124,7 @@ def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str =
             "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "samples": [{"id": i.id, "score": s, "text": t} for i, s, t in zip(items, scores, texts, strict=True)],
         }
-        path = Path(store_dir) / "quality" / f"{art.id}-{task}.json"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(summary, indent=1))
+        path = store.write_quality(summary)
         log(f"quality {art.id} {task}: {correct:.0f}/{len(scores)} = {summary['score']:.1%} (95% {lo:.1%}..{hi:.1%}) in {summary['minutes']} min")
         written.append(path)
     if skipped:
