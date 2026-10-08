@@ -11,8 +11,8 @@ window.Pie = window.Pie || {};
   };
 
   const snapshots = tables.snapshots || {};
-  // the third workload: a setup too big for the Mac, listed with no numbers
-  const NO_FIT = "no-fit";
+  // every combination has a row; only pass and noisy ones carry numbers (older exports have no status: all measured)
+  const isMeasured = (row) => !row.status || row.status === "pass" || row.status === "noisy";
   const newestTag = (tables.tags || []).find((tag) => snapshots[tag.id]?.length)?.id;
 
   // the rows shown for a tag: every combination, with a stale marker where that tag had no run
@@ -24,7 +24,7 @@ window.Pie = window.Pie || {};
     for (const [table, key] of Object.entries(resultKeys)) {
       const counts = {};
       for (const row of snapshot(newestTag)) {
-        if (row.workload === NO_FIT) continue;
+        if (!isMeasured(row)) continue;
         counts[row[key]] = (counts[row[key]] || 0) + 1;
       }
       for (const row of tables[table]) {
@@ -63,7 +63,7 @@ window.Pie = window.Pie || {};
     resultKeys,
 
     snapshot,
-    NO_FIT,
+    isMeasured,
     qualitySnapshot,
 
     rows(table) {
