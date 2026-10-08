@@ -11,7 +11,7 @@ permissions: { contents: read, pages: write, id-token: write }
 concurrency: { group: pages, cancel-in-progress: true }
 jobs:
   deploy:
-    runs-on: [self-hosted, macos, m5-max-128g]
+    runs-on: [self-hosted, macos, m5-max-64g]
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
