@@ -306,8 +306,8 @@ with only outbound connectivity:
   list before anything launches. `runpod-check.yml` is the cheap first run:
   one pod on a stock image, preflight only, ~10 GPU-minutes.
 - Bookkeeping is git: node outputs come back as job artifacts, `collect`
-  lifts them into `store/records/<tier>/<month>/<run>.parquet` and renders
-  `reports/`; both are committed. Provenance is mandatory — a record that
+  lifts them into the Postgres database on liszt, one row per cell, under
+  the run's tag; nothing is committed. Provenance is mandatory — a record that
   cannot say what it measured is refused by the store.
 - Baseline freshness: `watch-baselines` checks PyPI/GitHub against the pins
   in `engines.yaml`; a newer release re-runs baseline cells only (their
@@ -335,8 +335,6 @@ src/pie_evals/
   pods/           runpod
   quality/        lm-eval tasks
   cli.py          the pie-evals command
-store/records/    parquet, append-only, committed
-reports/          rendered markdown/json, committed
 infra/            RunPod runner image, Mac runner setup
 .github/workflows tier.yml (reusable), smoke/nightly/weekly, collect, reap, ci
 ```

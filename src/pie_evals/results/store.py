@@ -208,7 +208,9 @@ class PgStore(BaseStore):
         cols = ARROW_SCHEMA.names + ["tag", "tag_kind"]
         rows = [tuple(r[c] for c in ARROW_SCHEMA.names) + (tag, tag_kind) for r in t.to_pylist()]
         with self.connect() as conn, conn.transaction(), conn.cursor() as cur:
-            cur.execute("DELETE FROM records WHERE run_id = %s", (run_id,))
+            # replace the run: by its name and by the run ids its rows carry (old files name the run differently)
+            ids = sorted({run_id} | {r[0] for r in rows if r[0]})
+            cur.execute("DELETE FROM records WHERE run_id = ANY(%s)", (ids,))
             with cur.copy(f"COPY records ({', '.join(cols)}) FROM STDIN") as cp:
                 for row in rows:
                     cp.write_row(row)

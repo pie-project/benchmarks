@@ -19,7 +19,7 @@ workloads:
   - id: ss-512-256
     kind: single_stream
     params: {prefill: 512, decode: 256}
-    tiers: [nightly, weekly]
+    tiers: [nightly, weekly, targeted]
     est_minutes: 1
 
   # -- concurrency sweep (closed loop; num_requests = 4 x concurrency as in pie-bench)
@@ -31,7 +31,7 @@ workloads:
   - id: c32
     kind: concurrency
     params: {concurrency: 32, num_requests: 128, prefill: 128, decode: 128}
-    tiers: [smoke, nightly, weekly]
+    tiers: [smoke, nightly, weekly, targeted]
     est_minutes: 1.5
   - id: c64
     kind: concurrency
