@@ -27,6 +27,12 @@ global_exclude:
   # a 4-GPU platform exists for tp4 (tp2 is the 2-GPU platform's job)
   - {platform: pro6000-x4, tp: 2}
   - {platform: h100-sxm-x4, tp: 2}
+  # the TPU runs pie alone, on its own artifact (models.yaml keeps that artifact off every other
+  # platform), on a single request and a throughput shape
+  - {platform: tpu-v6e-1, not_engine: pie}
+  - {platform: tpu-v6e-1, not_artifact: qwen3.5-0.8b-xla}
+  - {platform: tpu-v6e-1, not_program: text-completion-bench}
+  - {platform: tpu-v6e-1, not_workload: [ss-512-256, c32]}
 
 suites:
   smoke:
