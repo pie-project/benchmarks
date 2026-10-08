@@ -18,7 +18,7 @@ window.Pie = window.Pie || {};
       const options = Pie.query.releaseOptions();
       elements.title.textContent = Pie.schema[state.table].label;
       elements.subtitle.textContent = Pie.format.count(shown, total);
-      elements.releaseValue.textContent = options.find((option) => option.id === state.release)?.label || state.release;
+      elements.releaseValue.textContent = options.find((option) => option.id === state.release)?.label || state.release || "No runs yet";
     },
 
     clearSearch() {
