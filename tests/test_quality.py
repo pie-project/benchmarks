@@ -2,7 +2,6 @@ import json
 
 from pie_evals.quality.tasks import Item, score_gsm8k, wilson
 from pie_evals.results.store import Store
-from pie_evals.site import dashboard
 
 
 def test_gsm8k_reads_the_marked_answer_first():
@@ -19,12 +18,11 @@ def test_wilson_interval_brackets_the_rate():
     assert wilson(0, 0) == (0.0, 0.0)
 
 
-def test_site_reads_quality_summaries(tmp_path):
+def test_store_reads_quality_summaries(tmp_path):
     q = tmp_path / "quality"
     q.mkdir()
     (q / "gemma-4-26b-a4b-ollama-gsm8k.json").write_text(json.dumps({"artifact": "gemma-4-26b-a4b-ollama", "task": "gsm8k", "score": 0.9, "ci95": [0.8, 0.95], "n": 100, "samples": [1]}))
-    got = dashboard.quality(Store(tmp_path))
-    assert got == {"gemma-4-26b-a4b-ollama": {"gsm8k": {"score": 0.9, "ci95": [0.8, 0.95], "n": 100, "version": None, "date": None, "engine": None, "empty": None}}}
+    assert Store(tmp_path).quality() == [{"artifact": "gemma-4-26b-a4b-ollama", "task": "gsm8k", "score": 0.9, "ci95": [0.8, 0.95], "n": 100}]
 
 
 def test_scores_grade_the_answer_not_the_thinking():
