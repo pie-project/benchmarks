@@ -154,7 +154,9 @@ def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloa
         click.echo(f"pod {p['pod']}: {len(p['jobs'])} jobs, {p['est_minutes']} est min, kill {p['kill_minutes']} min, labels {','.join(p['labels'])}", err=True)
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-            f.write(f"kill_minutes={m.kill_minutes}\nbench_timeout_minutes={int(m.kill_minutes) + 15}\njobs={len(js)}\n")  # workflow expressions cannot add
+            # shards of one Mac run one after another (the machine lock), so a shard may first wait out the ones ahead of it
+            per_mac = max([sum(1 for j in js if j.platform_id == p) for p in {j.platform_id for j in js}] or [1])
+            f.write(f"kill_minutes={m.kill_minutes}\nbench_timeout_minutes={int(m.kill_minutes) * per_mac + 15}\njobs={len(js)}\n")  # workflow expressions cannot add
             f.write(f"pods={json.dumps({'include': pods})}\n")
 
 
