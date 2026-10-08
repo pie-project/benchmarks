@@ -192,6 +192,27 @@ SCHEMA_SQL = (
 )
 
 
+def _good(status, decode, prefill) -> bool:
+    """A row the site shows with numbers: pass or noisy with a measured speed."""
+    return status in ("pass", "noisy") and (decode is not None or prefill is not None)
+
+
+def _tag_keep(cur, rows: list, tag: str, cols: list[str]) -> set:
+    """Cell keys whose good row is already stored under this tag: new rows for them are skipped.
+    Broken stored rows for the other cell keys are deleted, so the new run replaces only what is broken."""
+    ck = cols.index("cell_key")
+    keys = sorted({r[ck] for r in rows if r[ck]})
+    if not keys:
+        return set()
+    cur.execute("SELECT cell_key, status, decode_tok_s, prefill_tok_s FROM records WHERE tag = %s AND cell_key = ANY(%s)", (tag, keys))
+    good, broken = set(), set()
+    for key, status, dec, pre in cur.fetchall():
+        (good if _good(status, dec, pre) else broken).add(key)
+    replace = sorted(broken - good)
+    if replace:
+        cur.execute("DELETE FROM records WHERE tag = %s AND cell_key = ANY(%s)", (tag, replace))
+    return good
+
 class PgStore(BaseStore):
     def __init__(self, dsn: str):
         self.dsn = dsn
@@ -217,10 +238,15 @@ class PgStore(BaseStore):
             # replace the run: by its name and by the run ids its rows carry (old files name the run differently)
             ids = sorted({run_id} | {r[0] for r in rows if r[0]})
             cur.execute("DELETE FROM records WHERE run_id = ANY(%s)", (ids,))
+            # a tag keeps its good rows: a later run of the same tag only fills in or replaces broken rows
+            keep = _tag_keep(cur, rows, tag, cols) if tag else set()
+            ck = cols.index("cell_key")
+            written = [row for row in rows if row[ck] not in keep]
             with cur.copy(f"COPY records ({', '.join(cols)}) FROM STDIN") as cp:
-                for row in rows:
+                for row in written:
                     cp.write_row(row)
-        return f"postgres records run_id={run_id} ({len(rows)} rows)"
+        kept = len(rows) - len(written)
+        return f"postgres records run_id={run_id} ({len(written)} rows written, {kept} kept: good rows already stored under tag {tag or 'legacy'})"
 
     def write_quality(self, summary: dict, *, tag: str | None = None, tag_kind: str | None = None) -> str:
         from psycopg.types.json import Jsonb
