@@ -1,4 +1,4 @@
-/* The overview: calm cards on the window background, one per model, with thin bars. */
+/* The overview: calm cards, one big number each, thin bars. */
 .overview {
   flex: 1;
   overflow: auto;
@@ -11,55 +11,78 @@
 }
 
 .overview-inner {
-  max-width: 1120px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 20px var(--edge) 40px;
+  padding: 24px var(--edge) 48px;
 }
 
+/* the Mac pop-up on the left, the workload segments on the right */
 .overview-controls {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-/* a macOS segmented control: one filled track, the picked segment a raised thumb */
+/* the Mac pop-up is the release picker; it keeps its label even where the toolbar's hides it */
+.overview-mac {
+  margin-left: -8px;
+  color: var(--color-label);
+  font: inherit;
+  font-size: 13px;
+}
+
+.overview-mac .release-picker-label {
+  display: inline;
+}
+
+/* a macOS / iOS segmented control: one filled track, the picked segment a raised thumb */
 .segmented {
   display: inline-flex;
-  max-width: 100%;
-  overflow-x: auto;
+  flex: none;
+  height: 28px;
   padding: 2px;
+  border: 0;
   border-radius: 8px;
   background: var(--color-fill);
-  scrollbar-width: none;
-}
-
-.segmented::-webkit-scrollbar {
-  display: none;
 }
 
 .segment {
+  position: relative;
   flex: none;
+  min-width: 96px;
   height: 24px;
-  padding: 0 12px;
+  padding: 0 14px;
   border: 0;
   border-radius: 6px;
   background: none;
   color: var(--color-label);
   font: inherit;
   font-size: 13px;
+  font-weight: 500;
   white-space: nowrap;
   cursor: default;
 }
 
-.segment:hover:not(.is-selected) {
-  background: var(--color-hover);
+/* a hairline between two unselected segments, gone next to the thumb */
+.segment + .segment::before {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  width: 1px;
+  background: var(--color-separator);
+  content: "";
+}
+
+.segment.is-selected::before,
+.segment.is-selected + .segment::before {
+  display: none;
 }
 
 .segment.is-selected {
   background: var(--color-segment-thumb);
-  font-weight: 500;
-  box-shadow: 0 0 0 .5px var(--color-separator);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 1px 1px rgba(0, 0, 0, .04);
 }
 
 .segment:focus-visible {
@@ -67,54 +90,25 @@
   outline-offset: 1px;
 }
 
-.overview-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 24px;
-  margin: 22px 2px 16px;
+/* the page's one headline figure */
+.overview-stat {
+  margin: 28px 0 24px;
 }
 
-.overview-summary p {
-  margin: 0;
-  font-size: 15px;
-  color: var(--color-label-secondary);
-}
-
-.overview-summary strong {
-  color: var(--color-label);
+.overview-stat-value {
+  font-family: var(--font-display);
+  font-size: 34px;
   font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
-.overview-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  font-size: 12px;
+.overview-stat-caption,
+.figure-caption {
+  margin-top: 2px;
+  font-size: 13px;
   color: var(--color-label-secondary);
-}
-
-.overview-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  background: var(--color-bar-other);
-}
-
-.swatch.is-primary {
-  background: var(--color-engine-pie);
-}
-
-.swatch.is-stale {
-  background: var(--color-bar-other);
-  opacity: .4;
 }
 
 .model-grid {
@@ -130,60 +124,43 @@
 }
 
 .model-card {
-  padding: 18px 20px 20px;
-  border-radius: 14px;
+  padding: 20px 22px 22px;
+  border-radius: 16px;
   background: var(--color-card);
 }
 
-.model-card-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .model-card h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -.01em;
-}
-
-.model-card-meta {
-  flex: none;
-  font-size: 12px;
-  color: var(--color-label-tertiary);
-}
-
-.overview-headline {
-  min-height: 18px;
-  margin: 4px 0 16px;
+  margin: 0 0 12px;
   font-size: 13px;
-  line-height: 1.4;
+  font-weight: 500;
   color: var(--color-label-secondary);
 }
 
-.overview-headline strong {
+.figure {
+  font-family: var(--font-display);
+  font-size: 30px;
   font-weight: 600;
-  color: var(--color-label);
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
-.overview-headline strong.is-ahead {
+.figure.is-ahead {
   color: var(--color-positive);
 }
 
-.overview-headline strong.is-behind {
+.figure.is-behind {
   color: var(--color-negative);
 }
 
-.overview-headline-muted {
+.figure.is-empty {
   color: var(--color-label-tertiary);
 }
 
 .model-card-charts {
   display: grid;
-  gap: 16px;
+  gap: 18px;
+  margin-top: 20px;
 }
 
 .bar-chart {
@@ -191,32 +168,24 @@
 }
 
 .bar-chart figcaption {
-  display: flex;
-  gap: 5px;
   margin-bottom: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-label-secondary);
+  color: var(--color-label);
 }
 
-.bar-chart-unit {
+.bar-chart figcaption span {
   font-weight: 400;
   color: var(--color-label-tertiary);
 }
 
-/* one engine per row: name, then a thin bar growing from a shared baseline with its value at the tip */
+/* one engine per row: name, a thin rounded bar from a shared baseline, the value right-aligned */
 .bar-row {
   display: grid;
-  grid-template-columns: 74px minmax(0, 1fr);
+  grid-template-columns: 70px minmax(0, 1fr) 52px;
   align-items: center;
   gap: 10px;
-  height: 22px;
-  margin-top: 2px;
-  border-radius: 5px;
-}
-
-.bar-row:hover {
-  background: var(--color-hover);
+  height: 20px;
 }
 
 .bar-label {
@@ -229,21 +198,17 @@
 
 .bar-row.is-primary .bar-label {
   color: var(--color-label);
-  font-weight: 600;
 }
 
 .bar-track {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   min-width: 0;
 }
 
 .bar {
-  flex: none;
-  width: calc((100% - 56px) * var(--share));
-  height: 10px;
-  border-radius: 0 4px 4px 0;
+  display: block;
+  width: calc(100% * var(--share));
+  height: 6px;
+  border-radius: 3px;
   background: var(--color-bar-other);
 }
 
@@ -252,74 +217,24 @@
 }
 
 .bar-row.is-stale .bar {
-  opacity: .4;
+  opacity: .35;
 }
 
 .bar-value {
-  flex: none;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  color: var(--color-label);
+  color: var(--color-label-secondary);
+  text-align: right;
   white-space: nowrap;
 }
 
-.bar-row.is-stale .bar-value {
-  color: var(--color-label-secondary);
-}
-
-.model-card-note {
-  margin: 14px 0 0;
-  font-size: 11px;
-  color: var(--color-label-tertiary);
-}
-
-/* the phone's Mac picker: a filled pop-up button over a native menu */
-.overview-popup {
-  position: relative;
-  display: none;
-  align-items: center;
-}
-
-.overview-popup select {
-  height: 28px;
-  padding: 0 28px 0 12px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--color-fill);
+.bar-row.is-primary .bar-value {
   color: var(--color-label);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  -webkit-appearance: none;
-  appearance: none;
 }
 
-.overview-popup svg {
-  position: absolute;
-  right: 10px;
-  width: 8px;
-  height: 12px;
-  fill: none;
-  stroke: var(--color-label-secondary);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  pointer-events: none;
-}
-
-@media (max-width: 640px) {
-  .segmented[data-control="hardware"] {
-    display: none;
-  }
-
-  .overview-popup {
-    display: inline-flex;
-  }
-}
-
-.overview-missing,
+.overview-footnote,
 .overview-empty {
-  margin: 20px 2px 0;
+  margin: 24px 2px 0;
   font-size: 12px;
   color: var(--color-label-tertiary);
 }
@@ -328,6 +243,25 @@
   padding: 60px var(--edge);
   font-size: 15px;
   text-align: center;
+}
+
+@media (max-width: 480px) {
+  .overview-controls {
+    gap: 8px;
+  }
+
+  .overview-mac .release-picker-label {
+    display: none;
+  }
+
+  .segment {
+    min-width: 0;
+    padding: 0 10px;
+  }
+
+  .model-card {
+    padding: 18px 18px 20px;
+  }
 }
 
 .chart-tooltip {
