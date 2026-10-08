@@ -360,17 +360,14 @@ def main() -> None:
     unsupported = unsupported_reasons(a2m, config, hardware_ids, engine_ids, model_ids)
     memory = {h["id"]: h.get("memory_gib") for h in hw_rows}
     streams = {m["id"]: m.get("ssd_streaming") for m in models}
-    # every combination of Mac, engine, model and workload has a row in every tag that ran on that Mac:
+    # every combination of Mac, engine, model and workload has a row in every tag, on every Mac, run there or not:
     # its numbers, or why there are none (too big, unsupported, failed, not reached)
     for t in order:
         have = {(r["hardware"], r["engine"], r["model"], r["workload"]): r for r in snaps[t]}
         tried = attempts.get(t, {})
-        macs = {k[0] for k in have} | {k[0] for k in tried}
         filled = []
         for key in grid:
             hw, engine, model, cat = key
-            if hw not in macs:
-                continue
             row = have.get(key)
             if row is not None:
                 if row["stale"] and key in tried:  # the older numbers stand in; say what happened this time
