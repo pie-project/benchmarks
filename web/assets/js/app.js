@@ -35,8 +35,8 @@
       const rows = query.visibleRows(state);
       if (state.table === "results") {
         // every enumerated setup of the selected release counts, measured or not; the measured ones are said apart
-        toolbar.render(state, rows.length, query.resultRows(state).length);
-        toolbar.elements.subtitle.textContent += ` · ${rows.filter((row) => !row.empty && row.workload !== store.NO_FIT).length} measured`;
+        toolbar.render(state, rows.length, store.snapshot(state.release).length);
+        toolbar.elements.subtitle.textContent += ` · ${rows.filter(store.isMeasured).length} measured`;
       } else {
         toolbar.render(state, rows.length, store.rows(state.table).length);
       }

@@ -5,7 +5,7 @@ window.Pie = window.Pie || {};
   const logo = document.querySelector(".sidebar-logo");
 
   // results count the selected release's enumerated setups, measured or not
-  const count = (id, state) => (id === "results" ? Pie.store.grid(state.release).length : Pie.store.rows(id).length);
+  const count = (id, state) => (id === "results" ? Pie.store.snapshot(state.release).length : Pie.store.rows(id).length);
 
   const item = (id, schema, selected, state) => `
     <button class="sidebar-item${selected ? " is-selected" : ""}" type="button" data-table="${id}" aria-current="${selected}">

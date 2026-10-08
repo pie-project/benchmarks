@@ -20,11 +20,7 @@ window.Pie = window.Pie || {};
     return `<th class="${classes}" data-sort="${column.key}" title="${hint}">${column.label}${unit}${headerMeta(column, coverage)}${sort}</th>`;
   };
 
-  // an enumerated setup nothing measured: its Release cell says so quietly, the numbers stay dashes
-  const emptyNote = (row) => (row.needs_gib ? "Doesn't fit" : "No run");
-
   const bodyCell = (column, row) => {
-    if (row.empty && column.key === "release") return `<td class="is-empty is-note">${emptyNote(row)}</td>`;
     const value = row[column.key];
     const classes = [
       column.type === "number" ? "is-numeric" : "",
@@ -34,18 +30,16 @@ window.Pie = window.Pie || {};
     return `<td class="${classes}">${format.value(column, value)}</td>`;
   };
 
-  const bodyRow = (row, columns, state) => {
+  const bodyRow = (row, columns, state, index) => {
     const resultKey = store.resultKeys[state.table];
     const classes = [];
     let link = "";
 
     let stale = "";
     // highlight the rows measured under the selected tag; filled-in rows from an older run stay plain
-    if ((state.table === "results" || state.table === "quality") && !row.stale && !row.empty) classes.push("is-highlighted");
-    if (row.empty) {
-      classes.push("is-unmeasured");
-      stale = ` title="${row.needs_gib ? `Too big for this Mac: needs ${row.needs_gib} GiB` : `Nothing measured for this setup up to ${format.escape(row.release)}`}"`;
-    }
+    if ((state.table === "results" || state.table === "quality") && !row.stale && store.isMeasured(row)) classes.push("is-highlighted");
+    // a listed setup with no numbers stays in the table, in quiet grey
+    if (state.table === "results" && !store.isMeasured(row)) classes.push("is-unmeasured");
     if (row.stale) {
       classes.push("is-stale");
       const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";
@@ -57,7 +51,8 @@ window.Pie = window.Pie || {};
     }
 
     const cells = columns.map((column) => bodyCell(column, row)).join("");
-    return `<tr class="${classes.join(" ")}"${link || stale}>${cells}</tr>`;
+    const number = Pie.schema[state.table].numbered ? `<td class="row-number">${index + 1}</td>` : "";
+    return `<tr class="${classes.join(" ")}"${link || stale}>${number}${cells}</tr>`;
   };
 
   Pie.table = {
@@ -70,10 +65,12 @@ window.Pie = window.Pie || {};
 
     render(state, rows) {
       const columns = this.visibleColumns(state);
-      const head = `<thead><tr>${columns.map((column) => headerCell(column, state)).join("")}</tr></thead>`;
+      const numbered = Pie.schema[state.table].numbered;
+      const corner = numbered ? `<th class="row-number" aria-label="Row"></th>` : "";
+      const head = `<thead><tr>${corner}${columns.map((column) => headerCell(column, state)).join("")}</tr></thead>`;
       const body = rows.length
-        ? `<tbody>${rows.map((row) => bodyRow(row, columns, state)).join("")}</tbody>`
-        : `<tbody><tr><td class="table-empty" colspan="${columns.length}">Nothing matches these filters</td></tr></tbody>`;
+        ? `<tbody>${rows.map((row, index) => bodyRow(row, columns, state, index)).join("")}</tbody>`
+        : `<tbody><tr><td class="table-empty" colspan="${columns.length + (numbered ? 1 : 0)}">Nothing matches these filters</td></tr></tbody>`;
       table.innerHTML = head + body;
     },
 

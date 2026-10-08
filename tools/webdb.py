@@ -27,7 +27,6 @@ SINGLE = ["ss-512-256", "ob-512-200", "ss-128-64", "ob-short-100", "ob-story-200
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 LEGACY = "legacy"  # runs from before tags: no tag, used only as a fallback
-NO_FIT = "no-fit"  # the site's third workload: a setup too big for the Mac, listed with no numbers
 WL_PRIORITY = {wl: (cat, i) for cat, ids in (("single", SINGLE), ("throughput", THROUGHPUT)) for i, wl in enumerate(ids)}
 
 ENGINE_META = {
@@ -114,8 +113,6 @@ def workloads() -> list[dict]:
         p = params.get(src, {})
         out.append({"id": cat, "label": label, "concurrency": p.get("concurrency") or (1 if cat == "single" else 32),
                     "prompt_tokens": p.get("prefill"), "output_tokens": p.get("decode"), "benchmark": ", ".join(ids)})
-    out.append({"id": NO_FIT, "label": "Doesn't fit", "concurrency": None, "prompt_tokens": None, "output_tokens": None,
-                "benchmark": "none: the weights need more memory than the Mac has"})
     return out
 
 
@@ -156,7 +153,101 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "accuracy": None,
         "commit": (r["pie_commit"] or "")[:9] if engine == "pie" else "",
         "measured": local(r["started_at"]),
+        "status": r["status"], "note": "",
     }
+
+
+def empty_row(key: tuple, tag: str, status: str, note: str) -> dict:
+    """A combination with no numbers in this tag: it still gets its row, with the reason."""
+    hw, engine, model, cat = key
+    return {"hardware": hw, "engine": engine, "release": tag, "group": tag, "version": "", "model": model, "scheme": None,
+            "workload": cat, **{m: None for m in METRICS}, "accuracy": None, "commit": "", "measured": "",
+            "status": status, "note": note, "stale": None}
+
+
+def attempts_by_tag(store, a2m, hardware_ids, engine_ids) -> dict[str, dict[tuple, dict]]:
+    """The newest attempt that left no numbers (fail, not_run) per setup under each tag: the reason a cell is empty."""
+    cols = (["platform", "engine", "artifact", "workload", "status", "error_class", "error_message", "invalid_reason", "started_at", "tag"]
+            + ["decode_tok_s", "prefill_tok_s", "output_tok_s"])
+    rows = store.table().select(cols).to_pylist()
+    # a process whose control run crashed leaves its benchmarks without numbers; their reason is that crash
+    crashed: dict[tuple, dict] = {}
+    for r in sorted((r for r in rows if r["workload"] == "control-aa" and r["status"] == "fail"), key=lambda r: r["started_at"]):
+        crashed[(r["platform"], r["engine"], r["artifact"], r["tag"])] = r  # the newest crash wins
+    out: dict[str, dict[tuple, dict]] = {}
+    for r in rows:
+        if measured(r) or r["platform"] not in hardware_ids or r["engine"] not in engine_ids:
+            continue
+        if r["status"] in ("pass", "noisy"):
+            crash = crashed.get((r["platform"], r["engine"], r["artifact"], r["tag"]))
+            r = {**r, "status": "fail", "error_message": f"Could not start: {first_line(crash)}" if crash else "Finished without numbers"}
+        cat = WL_PRIORITY.get(r["workload"], (None,))[0]
+        if not cat:
+            continue
+        key = (r["platform"], r["engine"], a2m.get(r["artifact"], r["artifact"]), cat)
+        t = r["tag"] or LEGACY
+        if key not in out.setdefault(t, {}) or r["started_at"] > out[t][key]["started_at"]:
+            out[t][key] = r
+    return out
+
+
+def first_line(r: dict) -> str:
+    lines = (r.get("error_message") or r.get("invalid_reason") or r.get("error_class") or "").strip().splitlines()
+    return lines[0].removeprefix("RuntimeError: ").rstrip(": ") if lines else ""
+
+
+def attempt_note(r: dict) -> str:
+    """One line on why an attempt left no numbers."""
+    msg = (r.get("error_message") or r.get("invalid_reason") or r.get("error_class") or "").strip().splitlines()
+    msg = msg[0] if msg else ""
+    if r["status"] == "not_run" and "hard deadline" in msg:
+        return "The job ran out of time before this setup started"
+    return (msg[:1].upper() + msg[1:])[:160] if msg else ("Failed" if r["status"] == "fail" else "Not run")
+
+
+def unsupported_reasons(a2m: dict[str, str], config: dict, hardware_ids: list[str], engine_ids: list[str], model_ids: list[str]) -> dict[tuple, str]:
+    """{(hardware, engine, model): reason} for setups the matrix declares unsupported, or that an engine has no build of."""
+    from pie_evals.plan.matrix import Matrix, selector_matches
+    from pie_evals.schema import Tier
+
+    m = Matrix.load(ROOT / "matrix")
+    wanted = set(config["models"])
+    pie_arts = {a.baseline_of for a in m.artifacts.values() if a.id in wanted and a.baseline_of}
+    # every copy of a configured model counts, not only the configured arm: an arm left out of
+    # config.json because its engine cannot load the model still carries that reason
+    arms = {a.id for a in m.artifacts.values() if a.id in wanted or a.id in pie_arts or a.baseline_of in pie_arts}
+    benches = set(config.get("benchmarks", []))
+    seen: dict[tuple, list[str | None]] = {}
+    for c in m.cells_for(Tier.TARGETED):
+        if c.platform.id not in hardware_ids or str(c.engine) not in engine_ids or c.artifact.id not in arms:
+            continue
+        # the release runs pair pie with its own weights and every other engine with its copy, nothing else
+        if (str(c.engine) == "pie") != (c.artifact.baseline_of is None):
+            continue
+        if benches and c.workload.id not in benches:
+            continue
+        model = a2m.get(c.artifact.id)
+        if model not in model_ids:
+            continue
+        # the declared rules first: an engine that cannot load a model at all says so even where it would not fit;
+        # the fit rule speaks for itself elsewhere, with the sizes
+        reason = next((rule.reason for rule in m.unsupported if selector_matches(rule.when, c)), None)
+        if reason is None and c.declared_unsupported_reason and not c.declared_unsupported_reason.startswith("does not fit"):
+            reason = c.declared_unsupported_reason
+        seen.setdefault((c.platform.id, str(c.engine), model), []).append(reason)
+    out = {k: next(r for r in rs if r) for k, rs in seen.items() if rs and all(rs)}
+    names = {e: ENGINE_META.get(e, (e,))[0] for e in engine_ids}
+    for hw in hardware_ids:
+        for e in engine_ids:
+            for model in model_ids:
+                if (hw, e, model) not in seen:
+                    out[(hw, e, model)] = f"{names[e]} has no build of this model"
+    return out
+
+
+def measured(r: dict) -> bool:
+    """Passed (or noisy) and carrying at least one number."""
+    return r["status"] in ("pass", "noisy") and any(r.get(m) is not None for m in ("decode_tok_s", "prefill_tok_s", "output_tok_s"))
 
 
 def results_by_tag(store, a2m, hardware_ids, engine_ids):
@@ -164,7 +255,7 @@ def results_by_tag(store, a2m, hardware_ids, engine_ids):
     cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind"]
             + METRICS)
     rows = [r for r in store.table().select(cols).to_pylist()
-            if r["status"] in ("pass", "noisy") and r["platform"] in hardware_ids and r["engine"] in engine_ids]
+            if measured(r) and r["platform"] in hardware_ids and r["engine"] in engine_ids]
     by_tag: dict[str, list[dict]] = {}
     for r in rows:
         by_tag.setdefault(r["tag"] or LEGACY, []).append(r)
@@ -196,17 +287,14 @@ def quality_by_tag(store, a2m):
     return tagged, meta
 
 
-def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, when, empty=None) -> dict[str, list[dict]]:
-    """For each tag, one row per key: the tag's own, else the newest tag not later than it (marked stale); never a later tag.
-    A key no tag up to this one has measured gets an empty row (``empty``), so every key is always listed."""
+def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, when) -> dict[str, list[dict]]:
+    """For each tag, one row per key: the tag's own, else the newest tag not later than it (marked stale); never a later tag."""
     snaps: dict[str, list[dict]] = {}
     for i, t in enumerate(order):
         out = []
         for key in keys:
             src = next((u for u in order[i:] if key in tagged.get(u, {})), None)
             if src is None:
-                if empty is not None:
-                    out.append({**empty(key, t), "stale": None, "empty": True})
                 continue
             item = tagged[src][key]
             out.append({**row(item, key, src), "stale": None if src == t else {"tag": src, "measured": when(item)}})
@@ -265,32 +353,38 @@ def main() -> None:
     order = [x["id"] for x in tags]
     # the site's default order: engine, then model, then hardware, then workload
     grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c in ("single", "throughput")]
-    def empty_result(key: tuple, tag: str) -> dict:
-        hw, engine, model, cat = key
-        return {"hardware": hw, "engine": engine, "release": tag, "group": tag, "version": "", "model": model, "scheme": None,
-                "workload": cat, **{m: None for m in METRICS}, "accuracy": None, "commit": "", "measured": ""}
-
-    snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]), empty=empty_result)
+    snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
     hw_rows = [h for h in hardware() if h["id"] in hardware_ids]
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
+    attempts = attempts_by_tag(store, a2m, hardware_ids, engine_ids)
+    unsupported = unsupported_reasons(a2m, config, hardware_ids, engine_ids, model_ids)
+    memory = {h["id"]: h.get("memory_gib") for h in hw_rows}
+    streams = {m["id"]: m.get("ssd_streaming") for m in models}
+    # every combination of Mac, engine, model and workload has a row in every tag, on every Mac, run there or not:
+    # its numbers, or why there are none (too big, unsupported, failed, not reached)
     for t in order:
-        measured = [r for r in snaps[t] if not r.get("empty")]  # the enumerated empty rows are not runs
-        seen = {(r["hardware"], r["engine"], r["model"]) for r in measured}
-        macs = {r["hardware"] for r in measured}  # only the Macs this tag ran on
-        for r in snaps[t]:  # an empty row for a setup too big for its Mac says so
-            gib = misfits.get(r["hardware"], {}).get(r["model"], {}).get(r["engine"])
-            if r.get("empty") and gib is not None:
-                r["needs_gib"] = gib
-        for hw, models_ in misfits.items():
-            if hw not in macs:
+        have = {(r["hardware"], r["engine"], r["model"], r["workload"]): r for r in snaps[t]}
+        tried = attempts.get(t, {})
+        filled = []
+        for key in grid:
+            hw, engine, model, cat = key
+            row = have.get(key)
+            if row is not None:
+                if row["stale"] and key in tried:  # the older numbers stand in; say what happened this time
+                    row["note"] = f"In {t}: {attempt_note(tried[key])[:1].lower()}{attempt_note(tried[key])[1:]}"
+                filled.append(row)
                 continue
-            for model, by_engine in models_.items():
-                for engine, gib in by_engine.items():
-                    if (hw, engine, model) in seen:
-                        continue
-                    snaps[t].append({"hardware": hw, "engine": engine, "release": t, "group": t, "version": "", "model": model,
-                                     "scheme": None, "workload": NO_FIT, **{m: None for m in METRICS}, "accuracy": None,
-                                     "commit": "", "measured": "", "needs_gib": gib, "stale": None})
+            gib = misfits.get(hw, {}).get(model, {}).get(engine)
+            if gib:
+                streaming = f" {streams[model].lower()} SSD streaming" if streams.get(model) in ("With", "Without") else ""
+                filled.append(empty_row(key, t, "no_fit", f"Needs about {round(gib)} GB{streaming}; this Mac has {memory.get(hw)} GB"))
+            elif (hw, engine, model) in unsupported:
+                filled.append(empty_row(key, t, "unsupported", unsupported[(hw, engine, model)]))
+            elif key in tried:
+                filled.append(empty_row(key, t, "fail" if tried[key]["status"] == "fail" else "not_run", attempt_note(tried[key])))
+            else:
+                filled.append(empty_row(key, t, "not_run", "Not run in this release"))
+        snaps[t] = filled
     qkeys = sorted({k for rows in scores.values() for k in rows})
     quality = stack(order, scores, qkeys, lambda item, key, src: {k: v for k, v in item.items() if k != "_at"}, lambda item: item["date"])
     db = {"tags": tags, "snapshots": snaps, "quality_snapshots": quality,
