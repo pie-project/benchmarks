@@ -36,7 +36,7 @@ The `targeted` tier measures pie against [Ollama](https://github.com/ollama/olla
 ```sh
 .venv/bin/pie-evals jobs --tier targeted --pie-commit <sha> --platform m5-max-128g --out jobs
 .venv/bin/pie-evals-node run --job jobs/<job>.json --out out/<job> --download
-.venv/bin/pie-evals collect --tier targeted out/<job> && .venv/bin/pie-evals dashboard --out site
+.venv/bin/pie-evals collect --tier targeted out/<job>
 ```
 
 A Mac runner is registered with `infra/mac/setup-runner.sh` and removed with `infra/mac/remove-runner.sh`. It needs AC power, Low Power Mode off, Rust with `wasm32-wasip2`, and uv. Ollama, Splash, llama.cpp and mlx-lm are fetched at their pinned versions; Splash needs macOS 26.4 or newer.
