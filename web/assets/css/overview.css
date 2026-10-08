@@ -1,0 +1,352 @@
+/* The overview: calm cards on the window background, one per model, with thin bars. */
+.overview {
+  flex: 1;
+  overflow: auto;
+}
+
+.overview[hidden],
+.filter-bar[hidden],
+.table-container[hidden] {
+  display: none;
+}
+
+.overview-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px var(--edge) 40px;
+}
+
+.overview-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* a macOS segmented control: one filled track, the picked segment a raised thumb */
+.segmented {
+  display: inline-flex;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--color-fill);
+  scrollbar-width: none;
+}
+
+.segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.segment {
+  flex: none;
+  height: 24px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-label);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.segment:hover:not(.is-selected) {
+  background: var(--color-hover);
+}
+
+.segment.is-selected {
+  background: var(--color-segment-thumb);
+  font-weight: 500;
+  box-shadow: 0 0 0 .5px var(--color-separator);
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.overview-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin: 22px 2px 16px;
+}
+
+.overview-summary p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-label-secondary);
+}
+
+.overview-summary strong {
+  color: var(--color-label);
+  font-weight: 600;
+}
+
+.overview-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--color-label-secondary);
+}
+
+.overview-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--color-bar-other);
+}
+
+.swatch.is-primary {
+  background: var(--color-engine-pie);
+}
+
+.swatch.is-stale {
+  background: var(--color-bar-other);
+  opacity: .4;
+}
+
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .model-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.model-card {
+  padding: 18px 20px 20px;
+  border-radius: 14px;
+  background: var(--color-card);
+}
+
+.model-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.model-card h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+
+.model-card-meta {
+  flex: none;
+  font-size: 12px;
+  color: var(--color-label-tertiary);
+}
+
+.overview-headline {
+  min-height: 18px;
+  margin: 4px 0 16px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-label-secondary);
+}
+
+.overview-headline strong {
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.overview-headline strong.is-ahead {
+  color: var(--color-positive);
+}
+
+.overview-headline strong.is-behind {
+  color: var(--color-negative);
+}
+
+.overview-headline-muted {
+  color: var(--color-label-tertiary);
+}
+
+.model-card-charts {
+  display: grid;
+  gap: 16px;
+}
+
+.bar-chart {
+  margin: 0;
+}
+
+.bar-chart figcaption {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-label-secondary);
+}
+
+.bar-chart-unit {
+  font-weight: 400;
+  color: var(--color-label-tertiary);
+}
+
+/* one engine per row: name, then a thin bar growing from a shared baseline with its value at the tip */
+.bar-row {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 5px;
+}
+
+.bar-row:hover {
+  background: var(--color-hover);
+}
+
+.bar-label {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--color-label-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-row.is-primary .bar-label {
+  color: var(--color-label);
+  font-weight: 600;
+}
+
+.bar-track {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bar {
+  flex: none;
+  width: calc((100% - 56px) * var(--share));
+  height: 10px;
+  border-radius: 0 4px 4px 0;
+  background: var(--color-bar-other);
+}
+
+.bar-row.is-primary .bar {
+  background: var(--color-engine-pie);
+}
+
+.bar-row.is-stale .bar {
+  opacity: .4;
+}
+
+.bar-value {
+  flex: none;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-label);
+  white-space: nowrap;
+}
+
+.bar-row.is-stale .bar-value {
+  color: var(--color-label-secondary);
+}
+
+.model-card-note {
+  margin: 14px 0 0;
+  font-size: 11px;
+  color: var(--color-label-tertiary);
+}
+
+/* the phone's Mac picker: a filled pop-up button over a native menu */
+.overview-popup {
+  position: relative;
+  display: none;
+  align-items: center;
+}
+
+.overview-popup select {
+  height: 28px;
+  padding: 0 28px 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-fill);
+  color: var(--color-label);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.overview-popup svg {
+  position: absolute;
+  right: 10px;
+  width: 8px;
+  height: 12px;
+  fill: none;
+  stroke: var(--color-label-secondary);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .segmented[data-control="hardware"] {
+    display: none;
+  }
+
+  .overview-popup {
+    display: inline-flex;
+  }
+}
+
+.overview-missing,
+.overview-empty {
+  margin: 20px 2px 0;
+  font-size: 12px;
+  color: var(--color-label-tertiary);
+}
+
+.overview-empty {
+  padding: 60px var(--edge);
+  font-size: 15px;
+  text-align: center;
+}
+
+.chart-tooltip {
+  position: fixed;
+  z-index: 20;
+  max-width: 260px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--color-menu);
+  box-shadow: var(--shadow-menu);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-label);
+  white-space: pre-line;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.chart-tooltip[hidden] {
+  display: none;
+}

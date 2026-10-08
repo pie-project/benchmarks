@@ -63,6 +63,7 @@ window.Pie = window.Pie || {};
     qualitySnapshot,
 
     rows(table) {
+      if (Pie.schema[table]?.view) return [];
       return table === "results" ? snapshot(newestTag) : tables[table];
     },
 
