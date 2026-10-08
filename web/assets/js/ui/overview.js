@@ -195,16 +195,17 @@ window.Pie = window.Pie || {};
         </svg>
       </div>`;
 
-    const legend = (label, figure, cls) => `
+    // numbers in plain ink, labels in grey; a dot in the ring's colour ties each one to its ring
+    const legend = (label, figure, dot, empty) => `
       <div class="stand-metric">
-        <div class="stand-label">${label}</div>
-        <div class="stand-value ${cls}">${figure}</div>
+        <div class="stand-label"><span class="stand-dot ${dot}"></span>${label}</div>
+        <div class="stand-value${empty ? " is-empty" : ""}">${figure}</div>
       </div>`;
-    const medianCls = (mid, key) => (mid === null ? "is-empty" : mid < 0.995 ? "is-behind" : mid > 1.005 ? `is-${key}` : "");
+    const dotOf = (mid, key) => `fit-${key}${mid !== null && mid < 0.995 ? " is-behind" : ""}`;
     const side = [
-      legend("pie leads", `${wins.length}<span>/${decode.length}</span>`, "is-leads"),
-      legend("Median decode", decodeMid === null ? "—" : delta(decodeMid), medianCls(decodeMid, "decode")),
-      legend("Median prefill", prefillMid === null ? "—" : delta(prefillMid), medianCls(prefillMid, "prefill")),
+      legend("pie leads", `${wins.length}<span>/${decode.length}</span>`, "fit-leads", false),
+      legend("Median decode", decodeMid === null ? "—" : delta(decodeMid), dotOf(decodeMid, "decode"), decodeMid === null),
+      legend("Median prefill", prefillMid === null ? "—" : delta(prefillMid), dotOf(prefillMid, "prefill"), prefillMid === null),
     ].join("");
 
     return section("Where we stand", "One model against one engine",
