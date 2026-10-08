@@ -30,7 +30,7 @@ window.Pie = window.Pie || {};
     return `<td class="${classes}">${format.value(column, value)}</td>`;
   };
 
-  const bodyRow = (row, columns, state) => {
+  const bodyRow = (row, columns, state, index) => {
     const resultKey = store.resultKeys[state.table];
     const classes = [];
     let link = "";
@@ -49,7 +49,8 @@ window.Pie = window.Pie || {};
     }
 
     const cells = columns.map((column) => bodyCell(column, row)).join("");
-    return `<tr class="${classes.join(" ")}"${link || stale}>${cells}</tr>`;
+    const number = Pie.schema[state.table].numbered ? `<td class="row-number">${index + 1}</td>` : "";
+    return `<tr class="${classes.join(" ")}"${link || stale}>${number}${cells}</tr>`;
   };
 
   Pie.table = {
@@ -62,10 +63,12 @@ window.Pie = window.Pie || {};
 
     render(state, rows) {
       const columns = this.visibleColumns(state);
-      const head = `<thead><tr>${columns.map((column) => headerCell(column, state)).join("")}</tr></thead>`;
+      const numbered = Pie.schema[state.table].numbered;
+      const corner = numbered ? `<th class="row-number" aria-label="Row"></th>` : "";
+      const head = `<thead><tr>${corner}${columns.map((column) => headerCell(column, state)).join("")}</tr></thead>`;
       const body = rows.length
-        ? `<tbody>${rows.map((row) => bodyRow(row, columns, state)).join("")}</tbody>`
-        : `<tbody><tr><td class="table-empty" colspan="${columns.length}">Nothing matches these filters</td></tr></tbody>`;
+        ? `<tbody>${rows.map((row, index) => bodyRow(row, columns, state, index)).join("")}</tbody>`
+        : `<tbody><tr><td class="table-empty" colspan="${columns.length + (numbered ? 1 : 0)}">Nothing matches these filters</td></tr></tbody>`;
       table.innerHTML = head + body;
     },
 
