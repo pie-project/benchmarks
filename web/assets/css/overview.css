@@ -196,25 +196,49 @@
   gap: 20px;
 }
 
+.heat-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* as wide as the content column: names on the left, one even column per engine */
 .heat-grid {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  overflow: visible;
+  display: grid;
+  grid-template-columns: max-content repeat(var(--engines), minmax(0, 1fr));
+  align-items: center;
+  align-self: stretch;
+  column-gap: 12px;
 }
 
 .heat-head {
+  padding-bottom: 6px;
   font-size: 12px;
-  fill: var(--color-label-secondary);
+  color: var(--color-label-secondary);
+  text-align: center;
+  white-space: nowrap;
 }
 
 .heat-label {
   font-size: 13px;
-  fill: var(--color-label);
+  white-space: nowrap;
 }
 
-.heat-hit {
-  fill: transparent;
+.heat-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+}
+
+.heat-cell-svg {
+  display: block;
+  overflow: visible;
+}
+
+.heat-row-nofit {
+  grid-column: 2 / -1;
+  gap: 8px;
 }
 
 .heat-empty {
@@ -231,7 +255,7 @@
 
 .nofit-text {
   font-size: 13px;
-  fill: var(--color-label-secondary);
+  color: var(--color-label-secondary);
 }
 
 .mini-track,
