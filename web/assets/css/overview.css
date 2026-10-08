@@ -128,42 +128,55 @@
 }
 
 .section-caption,
-.figure-caption,
-.stat-caption {
+.figure-caption {
   margin-top: 2px;
   font-size: 13px;
   color: var(--color-label-secondary);
 }
 
-/* 1. where we stand: an activity ring, then three big numbers */
+/* 1. where we stand: an activity ring, and beside it the median advantage and its trend, centred as one unit */
 .standing {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 56px;
 }
 
 .ring {
   position: relative;
   flex: none;
-  width: 168px;
-  height: 168px;
+  width: 176px;
+  height: 176px;
 }
 
 .ring svg {
   display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
 .ring circle {
   fill: none;
-  stroke: var(--color-engine-pie);
 }
 
 .ring-track {
+  stroke: var(--color-engine-pie);
   opacity: .16;
 }
 
 .ring-fill {
+  stroke: url(#ring-gradient);
   stroke-linecap: round;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .12));
+}
+
+.ring-stop-start {
+  stop-color: var(--color-ring-start);
+}
+
+.ring-stop-end {
+  stop-color: var(--color-engine-pie);
 }
 
 .ring-center {
@@ -193,15 +206,43 @@
   color: var(--color-label-secondary);
 }
 
-.stat-tiles {
-  display: grid;
-  flex: 1;
-  max-width: 600px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
+.stand-side {
+  flex: 0 1 380px;
+  min-width: 0;
 }
 
-.stat-value,
+.stand-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label-secondary);
+}
+
+.stand-value {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+
+.stand-value.is-ahead,
+.figure.is-ahead {
+  color: var(--color-positive);
+}
+
+.stand-value.is-behind,
+.figure.is-behind {
+  color: var(--color-negative);
+}
+
+.figure.is-empty {
+  color: var(--color-label-tertiary);
+}
+
+.stand-trend {
+  margin-top: 8px;
+}
+
 .figure {
   font-family: var(--font-display);
   font-weight: 600;
@@ -209,54 +250,22 @@
   line-height: 1.1;
 }
 
-.stat-value {
-  font-size: 34px;
-}
-
 .figure {
   font-size: 30px;
 }
 
-.stat-value.is-ahead,
-.figure.is-ahead {
-  color: var(--color-positive);
-}
-
-.stat-value.is-behind,
-.figure.is-behind {
-  color: var(--color-negative);
-}
-
-.stat-value.is-empty,
-.figure.is-empty {
-  color: var(--color-label-tertiary);
-}
-
-/* 2. against each engine: models down, engines across, green and red around a grey parity */
-.overview-section.is-narrow {
-  max-width: 820px;
-}
-
+/* 2. against each engine: a grid of small activity rings, centred, the Decode | Prefill switch above */
 .heatmap {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 14px;
-}
-
-.heat-labels {
-  padding-top: 24px;
-}
-
-.heat-label {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  height: 44px;
-  font-size: 13px;
-  white-space: nowrap;
+  gap: 20px;
 }
 
 .heat-grid {
   display: block;
+  max-width: 100%;
+  height: auto;
   overflow: visible;
 }
 
@@ -265,38 +274,97 @@
   fill: var(--color-label-secondary);
 }
 
-.heat-cell {
-  stroke: var(--color-background);
+.heat-label {
+  font-size: 13px;
+  fill: var(--color-label);
+}
+
+.heat-hit {
+  fill: transparent;
 }
 
 .heat-empty {
-  fill: var(--color-heat-empty);
+  fill: var(--color-label-quaternary);
 }
 
-.heat-0 .heat-cell { fill: var(--color-heat-0); }
-.heat-p1 .heat-cell { fill: var(--color-heat-p1); }
-.heat-p2 .heat-cell { fill: var(--color-heat-p2); }
-.heat-p3 .heat-cell { fill: var(--color-heat-p3); }
-.heat-n1 .heat-cell { fill: var(--color-heat-n1); }
-.heat-n2 .heat-cell { fill: var(--color-heat-n2); }
-.heat-n3 .heat-cell { fill: var(--color-heat-n3); }
+/* a setup too big for this Mac: a hairline "no entry" mark, never a colour */
+.nofit-mark {
+  fill: none;
+  stroke: var(--color-label-tertiary);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
 
-.heat-value {
-  font-size: 14px;
+.nofit-text {
+  font-size: 13px;
+  fill: var(--color-label-secondary);
+}
+
+.mini-track,
+.mini-arc {
+  fill: none;
+}
+
+.mini-track {
+  stroke: var(--color-label-quaternary);
+  opacity: .6;
+}
+
+.mini-track.is-ahead {
+  stroke: var(--color-positive);
+  opacity: .16;
+}
+
+.mini-track.is-behind {
+  stroke: var(--color-negative);
+  opacity: .16;
+}
+
+.mini-arc {
+  stroke-linecap: round;
+}
+
+.mini-arc.is-ahead {
+  stroke: url(#heat-ahead);
+}
+
+.mini-arc.is-behind {
+  stroke: url(#heat-behind);
+}
+
+.heat-stop-ahead-start {
+  stop-color: var(--color-heat-ahead-start);
+}
+
+.heat-stop-ahead-end {
+  stop-color: var(--color-positive);
+}
+
+.heat-stop-behind-start {
+  stop-color: var(--color-heat-behind-start);
+}
+
+.heat-stop-behind-end {
+  stop-color: var(--color-negative);
+}
+
+.mini-value {
+  font-size: 11px;
   font-weight: 600;
-  fill: var(--color-heat-ink);
+  letter-spacing: -.01em;
+  fill: var(--color-label);
   pointer-events: none;
 }
 
-.heat-p3 .heat-value,
-.heat-n3 .heat-value {
-  fill: var(--color-heat-ink-strong);
+.mini-value.is-even {
+  fill: var(--color-label-secondary);
 }
 
 /* 3. by model: calm cards, one big number each, lollipops */
 .model-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 16px;
 }
 
@@ -323,6 +391,10 @@
   display: grid;
   gap: 18px;
   margin-top: 20px;
+}
+
+.model-card-charts:empty {
+  display: none;
 }
 
 .lollipop-chart {
@@ -390,6 +462,15 @@
   opacity: .45;
 }
 
+.lollipop-nofit {
+  font-size: 12px;
+  color: var(--color-label-tertiary);
+}
+
+.lollipop-row.is-nofit .lollipop-label {
+  color: var(--color-label-tertiary);
+}
+
 .lollipop-value {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -398,10 +479,9 @@
   white-space: nowrap;
 }
 
-/* 4. across releases: one thin line, a dot per tag */
+/* the release trend beside the ring: one thin line, a dot per tag */
 .trend {
   display: block;
-  max-width: 820px;
   overflow: visible;
 }
 
@@ -410,7 +490,6 @@
   stroke-width: 1;
 }
 
-.trend-axis,
 .trend-tag {
   font-size: 12px;
   fill: var(--color-label-secondary);
@@ -458,36 +537,40 @@
 }
 
 @media (max-width: 700px) {
-  .standing {
+  .standing.has-trend {
     flex-direction: column;
     align-items: stretch;
     gap: 28px;
   }
 
-  .ring {
+  .standing.has-trend .ring {
     align-self: center;
   }
 
-  .stat-tiles {
-    gap: 12px;
+  .standing.has-trend .stand-side {
+    flex: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .standing {
+    gap: 28px;
   }
 
-  .stat-value {
-    font-size: 26px;
+  .ring {
+    width: 148px;
+    height: 148px;
+  }
+
+  .ring-value,
+  .stand-value {
+    font-size: 34px;
   }
 }
 
 @media (max-width: 480px) {
   .overview-popup .release-picker-label {
     display: none;
-  }
-
-  .heat-label {
-    font-size: 12px;
-  }
-
-  .heat-value {
-    font-size: 13px;
   }
 
   .model-card {

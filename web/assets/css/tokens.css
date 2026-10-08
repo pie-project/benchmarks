@@ -61,17 +61,10 @@
   --color-segment-thumb: #ffffff;
   --color-lollipop-other: #8e8e93;
 
-  /* the heatmap: grey at parity, three steps of green (pie ahead) and red (pie behind) */
-  --color-heat-empty: rgba(118, 118, 128, .05);
-  --color-heat-0: #f0f0f2;
-  --color-heat-p1: #dcf1e1;
-  --color-heat-p2: #a6dcb3;
-  --color-heat-p3: #1f7a35;
-  --color-heat-n1: #fde0de;
-  --color-heat-n2: #f6aaa4;
-  --color-heat-n3: #c9001a;
-  --color-heat-ink: rgba(0, 0, 0, .85);
-  --color-heat-ink-strong: #ffffff;
+  /* gradients along the rings: a lighter step of the same hue into the full one */
+  --color-ring-start: #4aa8ff;
+  --color-heat-ahead-start: #34c759;
+  --color-heat-behind-start: #ff5e57;
 
   --shadow-menu: 0 0 0 .5px rgba(0, 0, 0, .12), 0 10px 30px rgba(0, 0, 0, .12);
 }
@@ -123,16 +116,9 @@
   --color-segment-thumb: #636366;
   --color-lollipop-other: #8e8e93;
 
-  --color-heat-empty: rgba(255, 255, 255, .03);
-  --color-heat-0: #2e2e30;
-  --color-heat-p1: #1f3a27;
-  --color-heat-p2: #1f6a37;
-  --color-heat-p3: #30d158;
-  --color-heat-n1: #45201f;
-  --color-heat-n2: #8c2a25;
-  --color-heat-n3: #ff453a;
-  --color-heat-ink: rgba(255, 255, 255, .88);
-  --color-heat-ink-strong: #000000;
+  --color-ring-start: #5ac8fa;
+  --color-heat-ahead-start: #63e68a;
+  --color-heat-behind-start: #ff7b72;
 
   --shadow-menu: 0 0 0 .5px rgba(255, 255, 255, .12), 0 12px 36px rgba(0, 0, 0, .5);
 }
