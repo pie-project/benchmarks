@@ -39,6 +39,16 @@ def _github_latest(repo: str) -> str | None:
     return r.json().get("tag_name")
 
 
+def _github_newest(repo: str) -> str | None:
+    """The newest non-draft release, pre-releases included."""
+    import requests
+
+    r = requests.get(f"https://api.github.com/repos/{repo}/releases", timeout=30, params={"per_page": 20}, headers={"Accept": "application/vnd.github+json"})
+    if r.status_code != 200:
+        return None
+    return next((x["tag_name"] for x in r.json() if not x.get("draft")), None)
+
+
 def _vkey(v: str) -> tuple:
     nums = [int(x) for x in re.findall(r"\d+", v)]
     return tuple(nums)

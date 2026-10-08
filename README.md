@@ -11,7 +11,7 @@ Read `docs/design.md` first.
 
 - `matrix/` what exists: engines, platforms, models, workloads, inferlets, modes, support declarations, tier suites.
 - `src/pie_evals/` the code, one folder per job: `plan/`, `node/`, `results/`, `site/`, `pods/`, `quality/`, `schema/`.
-- `store/` the measured results, committed. `reports/` the tables built from them.
+- Results live in the Postgres database on liszt (`PIE_EVALS_DB`); nothing is committed back to git.
 - `infra/` RunPod and Mac runner setup. `.github/workflows/` the tiers and bookkeeping.
 
 Each folder has a short README. The workflows are listed in [.github/AUTOMATIONS.md](.github/AUTOMATIONS.md).
@@ -49,4 +49,4 @@ Push your change to a branch and start the eval from that branch:
 gh workflow run pie-eval.yml --ref my-branch -f macs=m5-max-64g -f benchmarks=ob-short-100 -f rerun=true
 ```
 
-The run uses the branch's code and saves nothing to `store/`, so the site stays untouched.
+The run uses the branch's code and saves nothing to the database, so the site stays untouched.

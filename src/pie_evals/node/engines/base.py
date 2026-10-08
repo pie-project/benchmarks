@@ -225,7 +225,22 @@ class Engine(ABC):
         return {}
 
     def resident_gib(self) -> float | None:
-        return None
+        """Resident memory of the engine's processes and their children, in GiB."""
+        roots = set(self.watch_pids())
+        if not roots:
+            return None
+        try:
+            out = subprocess.run(["ps", "-A", "-o", "pid=,ppid=,rss="], capture_output=True, text=True, timeout=10).stdout
+        except Exception:  # noqa: BLE001
+            return None
+        rows = [tuple(int(x) for x in line.split()) for line in out.splitlines() if len(line.split()) == 3]
+        tree, grew = set(roots), True
+        while grew:
+            more = {pid for pid, ppid, _ in rows if ppid in tree and pid not in tree}
+            tree |= more
+            grew = bool(more)
+        kib = sum(rss for pid, _, rss in rows if pid in tree)
+        return round(kib / 2**20, 2) if kib else None
 
     # ---- optional long-lived server (one model per process) ------------------
     def serve(self, workload: WorkloadSpec, log_path: Path, timeout_s: int) -> None:

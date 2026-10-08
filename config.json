@@ -26,12 +26,7 @@
     "m5-max-64g"
   ],
   "benchmarks": [
-    "ob-story-200",
-    "ob-512-200",
-    "ob-short-100",
-    "ob-advanced-500",
-    "ctx-4k-256",
-    "ctx-8k-256",
-    "c4"
+    "ss-512-256",
+    "c32"
   ]
 }

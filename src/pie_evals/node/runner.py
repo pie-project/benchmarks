@@ -547,7 +547,10 @@ class NodeRunner:
         perf: PerfMetrics = results[med_idx].perf
         perf.rounds = rounds
         perf.cov = cov([rounds[i] for i in steady])
-        perf.load_s = results[0].duration_s - (results[med_idx].duration_s if len(results) > 1 else 0) if len(results) > 1 else None
+        # a served engine loads the model when its server starts; otherwise the first round's extra time over the median
+        served = (perf.counters or {}).get("server_load_s")
+        warm = results[0].duration_s - results[med_idx].duration_s if len(results) > 1 else None
+        perf.load_s = served if served is not None else (warm if warm is not None and warm > 0 else None)
         status = CellStatus.PASS
         invalid = None
         # a tensor-parallel process adds collective latency to every step, so its

@@ -23,7 +23,7 @@ from pie_evals.schema import Tier
 @click.option("--store", "store_dir", default=None, help="postgresql://... or a directory (default: $PIE_EVALS_DB, else ./store)")
 @click.pass_context
 def main(ctx, matrix_dir, store_dir):
-    ctx.obj = {"matrix": Matrix.load(matrix_dir), "store": Store(store_dir)}
+    ctx.obj = {"matrix": Matrix.load(matrix_dir), "matrix_dir": matrix_dir, "store": Store(store_dir)}
 
 
 @main.command("expand")
@@ -238,6 +238,46 @@ def report(obj, tier, out):
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a") as f:
             f.write(f"regressions={n_reg}\npie_trails={trails}\n")
+
+
+@main.command("pins")
+@click.argument("action", type=click.Choice(["latest", "set"]))
+@click.argument("assignments", required=False, default="")
+@click.pass_obj
+def pins(obj, action, assignments):
+    """latest: print id=version for each engine's newest release. set id=version,...: write those pins into matrix/engines.yaml."""
+    import re
+
+    from pie_evals.results import baselines as bl
+
+    m: Matrix = obj["matrix"]
+    if action == "latest":
+        out = []
+        for e in m.engines.values():
+            if not e.release_source:
+                continue
+            kind, ident = e.release_source.split(":", 1)
+            if kind == "pypi":
+                v = bl._pypi_latest(ident)
+            elif e.id == "llamacpp":
+                v = bl._github_newest(ident)  # its builds are tagged bNNNN and published as pre-releases
+            else:
+                v = bl._github_latest(ident)
+            if not v:
+                raise click.ClickException(f"no release found for {e.id} at {e.release_source}")
+            out.append(f"{e.id}={v.lstrip('v')}")
+        click.echo(",".join(out))
+        return
+    path = Path(obj["matrix_dir"]) / "engines.yaml"
+    text = path.read_text()
+    for item in filter(None, assignments.split(",")):
+        eid, version = item.split("=", 1)
+        pat = re.compile(r'(  - id: ' + re.escape(eid) + r'\n(?:    [^\n]*\n)*?    pin: )"[^"]*"')
+        text, n = pat.subn(lambda mm, v=version: f'{mm.group(1)}"{v}"', text, count=1)
+        if n != 1:
+            raise click.ClickException(f"no pin line for {eid}")
+    path.write_text(text)
+    click.echo(f"pinned {assignments}")
 
 
 @main.command("watch-baselines")

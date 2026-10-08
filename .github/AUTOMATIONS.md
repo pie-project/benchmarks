@@ -21,7 +21,7 @@ A commit without a tag is not measured. Each run is stored with its tag (a relea
 | `nightly` | pie against the other engines on rented GPUs | same as smoke |
 | `weekly` | the largest set of models and machines | same as smoke |
 | `quality` | scores models on gsm8k, ifeval, mmlu, arc and math500 on a Mac | `HF_TOKEN` |
-| `collect` | imports the results of an earlier run into `store/` | none |
+| `collect` | imports the results of an earlier run into the database | `PIE_EVALS_DB` |
 | `runpod-check` | rents one pod for a few minutes to check the RunPod setup | `RUNPOD_API_KEY`, `GH_RUNNER_PAT` |
 
 `smoke` can also be started by the pie repo with a `pie-commit` dispatch. The `nightly` and `weekly` schedules are switched off until their cost is known.

@@ -16,7 +16,6 @@ on:
       macs: { description: "comma-separated Mac ids (empty: config.json)", required: false, default: "" }
       benchmarks: { description: "comma-separated workload ids (empty: config.json)", required: false, default: "" }
       engines: { description: "any of pie,ollama,llamacpp,mlxlm,splash (default all)", required: false, default: "pie,ollama,llamacpp,mlxlm,splash" }
-      rerun: { description: "measure again even if already recorded", type: boolean, required: false, default: false }
 
 env:
   PIE_REPO: ${{ vars.PIE_REPO || 'pie-project/pie' }}
@@ -27,6 +26,7 @@ jobs:
     outputs:
       tag: ${{ steps.p.outputs.tag }}
       tag_kind: ${{ steps.p.outputs.tag_kind }}
+      pins: ${{ steps.p.outputs.pins }}
       commit: ${{ steps.p.outputs.commit }}
       artifacts: ${{ steps.p.outputs.artifacts }}
       macs: ${{ steps.p.outputs.macs }}
@@ -52,7 +52,12 @@ jobs:
           if [ -z "$TAG" ] && [ "${{ github.event_name }}" = workflow_dispatch ]; then TAG="manual-$(date -u +%Y%m%d-%H%M)"; fi
           [[ "$TAG" =~ ^[A-Za-z0-9._-]*$ ]] || { echo "::error::bad tag '$TAG'"; exit 1; }
           kind=manual; [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && kind=release
-          [ -n "$COMMIT" ] || COMMIT=$(gh api "repos/$PIE_REPO/commits/${TAG:-main}" --jq .sha 2>/dev/null || gh api "repos/$PIE_REPO/commits/main" --jq .sha)
+          if [ -z "$COMMIT" ]; then
+            # a git tag names its commit; a manual name that is not a tag measures pie main
+            c=$(gh api "repos/$PIE_REPO/commits/$TAG" --jq .sha 2>/dev/null) || c=""
+            [[ "$c" =~ ^[0-9a-f]{40}$ ]] || c=$(gh api "repos/$PIE_REPO/commits/main" --jq .sha)
+            COMMIT=$c
+          fi
           [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::pie_commit must be a full sha, got '$COMMIT'"; exit 1; }
           models=$(jq -r '.models // [] | join(",")' config.json); macs=$(jq -r '.machines // [] | join(",")' config.json); workloads=$(jq -r '.benchmarks // [] | join(",")' config.json)
           engines=pie,ollama,llamacpp,mlxlm,splash
@@ -67,6 +72,10 @@ jobs:
             skip=true; echo "docs-only pie commit, nothing to measure" | tee -a "$GITHUB_STEP_SUMMARY"
           fi
           echo "tag=$TAG tag_kind=$kind commit=$COMMIT models=$models artifacts=$artifacts macs=${macs:-every connected Mac} benchmarks=$workloads engines=$engines skip=$skip" | tee -a "$GITHUB_STEP_SUMMARY"
+          # the competitors at their newest release today: a fair comparison at the time of this tag
+          pins=$(.venv/bin/pie-evals pins latest)
+          echo "competitors: $pins" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "pins=$pins" >> "$GITHUB_OUTPUT"
           { echo "tag=$TAG"; echo "tag_kind=$kind"; echo "commit=$COMMIT"; echo "artifacts=$artifacts"; echo "macs=$macs"; echo "workloads=$workloads"; echo "engines=$engines"; echo "skip=$skip"; } >> "$GITHUB_OUTPUT"
 
   run:
@@ -78,11 +87,13 @@ jobs:
       pie_commit: ${{ needs.start.outputs.commit }}
       tag: ${{ needs.start.outputs.tag }}
       tag_kind: ${{ needs.start.outputs.tag_kind }}
+      pins: ${{ needs.start.outputs.pins }}
       artifacts: ${{ needs.start.outputs.artifacts }}
       platforms: ${{ needs.start.outputs.macs }}
       workloads: ${{ needs.start.outputs.workloads }}
       engines: ${{ needs.start.outputs.engines }}
-      skip_recorded: ${{ !inputs.rerun }}
+      # a tag is a fresh measurement of everything: pie at the tag, competitors at their releases today
+      skip_recorded: false
       # a run started from a branch tries that branch's harness and saves nothing
       persist: ${{ github.ref == 'refs/heads/main' }}
     secrets: inherit
