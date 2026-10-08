@@ -1,7 +1,12 @@
 /* The overview: four quiet sections, each answering one question about where pie stands. */
+/* the page's own colour with a fine sand grain over it, scrolling with the content */
 .overview {
   flex: 1;
   overflow: auto;
+  background-color: var(--color-background);
+  background-image: var(--overview-grain);
+  background-size: 180px 180px;
+  background-attachment: local;
 }
 
 .overview[hidden],
