@@ -63,13 +63,16 @@ def run(job_path, pie_root, out, hf_cache, no_build, only, download):
 
     try:
         # the runner's clock starts once the machine is ours, so the wait is not taken out of the job's budget
-        with machine_lock(job.job_id, log=lambda m: click.echo(m, err=True)):
+        # a Mac with two runners gets two shards at once: the second waits for the first however long it takes
+        # (the workflow's timeout is the bound), instead of giving up and dropping its cells
+        wait_s = float(os.environ.get("PIE_MACHINE_LOCK_WAIT_S") or 24 * 3600)
+        with machine_lock(job.job_id, max_wait_s=wait_s, log=lambda m: click.echo(m, err=True)):
             runner = NodeRunner(job, pie_root=Path(pie_root), out_dir=Path(out), hf_cache=Path(hf_cache) if hf_cache else None, build=not no_build, download=download)
             recs = runner.run()
     except MachineBusy as e:
         # nothing is recorded, so the next run measures these cells
         click.echo(f"{e}; nothing measured this time", err=True)
-        return
+        sys.exit(3)  # a job that measured nothing must not look like a success
     by = {}
     for r in recs:
         by[str(r.status)] = by.get(str(r.status), 0) + 1
