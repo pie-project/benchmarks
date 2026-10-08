@@ -202,7 +202,7 @@ window.Pie = window.Pie || {};
       </div>`;
     const dotOf = (mid, key) => `fit-${key}${mid !== null && mid < 0.995 ? " is-behind" : ""}`;
     const side = [
-      legend("pie leads", `${wins.length}<span>/${decode.length}</span>`, "fit-leads", false),
+      legend("Pie leads", `${wins.length}<span>/${decode.length}</span>`, "fit-leads", false),
       legend("Median decode", decodeMid === null ? "—" : delta(decodeMid), dotOf(decodeMid, "decode"), decodeMid === null),
       legend("Median prefill", prefillMid === null ? "—" : delta(prefillMid), dotOf(prefillMid, "prefill"), prefillMid === null),
     ].join("");
