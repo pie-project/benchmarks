@@ -77,6 +77,8 @@
     popover.onPick((key, value) => {
       if (key === popover.RELEASE) {
         state.release = value;
+      } else if (key === popover.MAC) {
+        state.overview.hardware = value;
       } else if (value === popover.ALL) {
         state.setFilter(key, []);
       } else {
@@ -119,6 +121,7 @@
   const bindOverview = () => {
     overview.bind(state);
     overview.onChange(render);
+    overview.onOpenMac((anchor) => popover.open(anchor, popover.MAC, state));
   };
 
   readHash();
