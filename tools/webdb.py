@@ -112,9 +112,13 @@ def workloads() -> list[dict]:
     return out
 
 
+# runs measured before the tagged runs live on this Mac: they stay on the site as the fallback
+LEGACY_MACS = {"m5-max-128g"}
+
+
 def fleet() -> set[str]:
-    """Only the Macs we operate are shown; every other platform stays in the database."""
-    return set(json.loads((ROOT / "config.json").read_text())["machines"])
+    """Only the Macs we operate are shown, plus the Mac of the untagged runs; every other platform stays in the database."""
+    return set(json.loads((ROOT / "config.json").read_text())["machines"]) | LEGACY_MACS
 
 
 def best_per_key(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, dict]:
