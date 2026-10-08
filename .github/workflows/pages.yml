@@ -23,6 +23,14 @@ jobs:
         run: |
           .venv/bin/python tools/webdb.py
           mkdir -p site && cp -R web/. site/
+          # a new build gets new links, so browsers never keep an old stylesheet or script
+          python3 - <<'PY'
+          import re, os
+          p = "site/index.html"; v = os.environ.get("GITHUB_SHA", "")[:9] or "1"
+          s = open(p).read()
+          s = re.sub(r'(href|src)="(assets/[^"]+|data/[^"]+)"', lambda m: f'{m.group(1)}="{m.group(2)}?v={v}"', s)
+          open(p, "w").write(s)
+          PY
       - uses: actions/upload-artifact@v4
         with: { name: site-files, path: site, retention-days: 3 }
   deploy:
