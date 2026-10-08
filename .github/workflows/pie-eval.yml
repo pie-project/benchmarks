@@ -1,6 +1,6 @@
 name: pie eval
 run-name: pie eval ${{ github.event.client_payload.pie_commit || inputs.pie_commit || 'pie main' }}
-permissions: { contents: write, actions: read }
+permissions: { contents: read, actions: read }
 concurrency:
   group: ${{ github.event_name == 'workflow_dispatch' && format('pie-eval-{0}', github.event.inputs.pie_commit) || 'pie-eval-auto' }}
   cancel-in-progress: false

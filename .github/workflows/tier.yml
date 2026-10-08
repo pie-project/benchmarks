@@ -23,7 +23,7 @@ on:
 
 jobs:
   expand:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macos, m5-max-128g]
     outputs:
       matrix: ${{ steps.jobs.outputs.matrix }}
       kill_minutes: ${{ steps.jobs.outputs.kill_minutes }}
@@ -183,7 +183,7 @@ jobs:
         run: |
           out="out/${{ matrix.job_id }}"
           pub=""
-          if [ "${{ inputs.persist }}" = "true" ] && [ "${{ inputs.tier }}" = targeted ]; then ( while sleep 600; do nice -n 19 infra/ci/publish-partial.sh "$out" "${{ inputs.tier }}" || true; done ) >/dev/null 2>&1 & pub=$!; fi
+          if [ "${{ inputs.persist }}" = "true" ] && [ "${{ inputs.tier }}" = targeted ]; then ( export PIE_EVALS_DB="${{ secrets.PIE_EVALS_DB }}"; while sleep 600; do nice -n 19 infra/ci/publish-partial.sh "$out" "${{ inputs.tier }}" || true; done ) >/dev/null 2>&1 & pub=$!; fi
           rc=0
           env ${{ inputs.pie_env }} .venv/bin/pie-evals-node run --job "jobs/${{ matrix.job_id }}.json" --pie-root "$PIE_ROOT" --out "$out" --download || rc=$?
           [ -n "$pub" ] && kill "$pub" 2>/dev/null
@@ -213,28 +213,17 @@ jobs:
   collect:
     needs: [expand, bench]
     if: always() && needs.expand.result == 'success'
-    runs-on: ubuntu-latest
-    permissions: { contents: write }
+    runs-on: [self-hosted, macos, m5-max-128g]
+    env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
-        with: { ref: "${{ inputs.persist && 'main' || github.ref }}", fetch-depth: 0 }
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
       - uses: actions/download-artifact@v4
         with: { pattern: "out-*", path: out }
-      - name: import into store
+      - name: import into the database
+        if: inputs.persist
         run: |
           shopt -s nullglob
           dirs=(out/out-*)
           if [ ${#dirs[@]} -gt 0 ]; then .venv/bin/pie-evals collect --tier "${{ inputs.tier }}" "${dirs[@]}"; else echo "::warning::no node outputs"; fi
-      - name: reports
-        id: report
-        run: .venv/bin/pie-evals report --tier "${{ inputs.tier }}" --out reports
-      - name: commit store + reports
-        if: inputs.persist
-        run: |
-          git config user.name "pie-evals-bot"; git config user.email "pie-evals-bot@users.noreply.github.com"
-          mkdir -p store/records reports
-          git add -A -- store reports
-          git diff --cached --quiet || git commit -m "store: ${{ inputs.tier }} run ${{ github.run_id }}"
-          git pull --rebase --quiet origin main && git push --quiet origin HEAD:main

@@ -180,6 +180,16 @@ def collect(obj, tier, node_out):
         sys.exit(1)
 
 
+@main.command("store-status")
+@click.pass_obj
+def store_status(obj):
+    """Count what the store holds: records, runs, quality summaries."""
+    st = obj["store"]
+    t = st.table()
+    runs = len(set(t.column("run_id").to_pylist())) if t.num_rows else 0
+    click.echo(json.dumps({"store": st.describe(), "records": t.num_rows, "runs": runs, "quality": len(st.quality())}))
+
+
 @main.command("import-store")
 @click.argument("src", type=click.Path(exists=True))
 @click.pass_obj
