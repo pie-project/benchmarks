@@ -62,31 +62,6 @@
   stroke-linejoin: round;
 }
 
-.popover-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 2px 4px 1px;
-}
-
-.popover-action {
-  height: 22px;
-  padding: 0 6px;
-  border: 0;
-  border-radius: 5px;
-  background: none;
-  color: var(--color-accent);
-  font-size: 12px;
-}
-
-.popover-action:hover:not(:disabled) {
-  background: var(--color-accent-tint);
-}
-
-.popover-action:disabled {
-  color: var(--color-label-tertiary);
-}
-
 .popover-separator {
   height: .5px;
   margin: 5px 6px;
