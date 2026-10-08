@@ -166,7 +166,7 @@ def prepare_cmd(tier, matrix_dir, platforms, engines_f, programs_f, pie_root, pi
 @click.option("--task", "tasks", multiple=True, type=click.Choice(sorted(TASKS)), default=("gsm8k", "ifeval", "mmlu", "arc", "math500"), show_default=True)
 @click.option("--n", type=int, default=100, show_default=True)
 @click.option("--matrix", "matrix_dir", default="matrix")
-@click.option("--store", "store_dir", default="store")
+@click.option("--store", "store_dir", default=None, help="postgresql://... or a directory (default: $PIE_EVALS_DB, else ./store)")
 @click.option("--pie-root", type=click.Path(), default=os.environ.get("PIE_ROOT", str(DEFAULT_PIE_ROOT)))
 def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root):
     from pie_evals.quality.run import TasksSkipped, run_quality

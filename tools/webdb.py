@@ -1,21 +1,22 @@
-"""Build web/data/db.js for the new site from the measured store, with DuckDB.
+"""Build web/data/db.js for the site from the result store (Postgres at $PIE_EVALS_DB).
 
-    .venv/bin/python tools/webdb.py
+    PIE_EVALS_DB=postgresql://... .venv/bin/python tools/webdb.py
 
-The store holds one parquet row per run across every tier and platform. This keeps
+The store holds one row per measured cell across every tier and platform. This keeps
 the newest passing run per platform, engine, model, release and workload-category,
 collapsing the many measured workloads into two the site shows: a single request and
 a throughput (concurrency) run.
 """
 from __future__ import annotations
 
-import glob
 import json
 import re
+import sys
 from pathlib import Path
 
-import duckdb
 import yaml
+
+from pie_evals.results.store import Store
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
@@ -110,16 +111,12 @@ def workloads() -> list[dict]:
     return out
 
 
-def results(a2m: dict[str, str]) -> list[dict]:
+def results(store, a2m: dict[str, str]) -> list[dict]:
     cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at"]
             + METRICS)
-    files = glob.glob(str(ROOT / "store/records/**/*.parquet"), recursive=True)
-    rel = duckdb.sql(f"SELECT {', '.join(cols)} FROM read_parquet({files!r}, union_by_name=true) "
-                     "WHERE status IN ('pass','noisy')").fetchall()
-    names = [c for c in cols]
+    rel = [r for r in store.table().select(cols).to_pylist() if r["status"] in ("pass", "noisy")]
     best: dict[tuple, tuple] = {}
-    for row in rel:
-        r = dict(zip(names, row))
+    for r in rel:
         cat_pri = WL_PRIORITY.get(r["workload"])
         if not cat_pri:
             continue
@@ -145,10 +142,9 @@ def results(a2m: dict[str, str]) -> list[dict]:
     return out
 
 
-def quality(a2m: dict[str, str]) -> list[dict]:
+def quality(store, a2m: dict[str, str]) -> list[dict]:
     out = []
-    for path in sorted((ROOT / "store/quality").glob("*.json")):
-        q = json.loads(path.read_text())
+    for q in store.quality():
         out.append({"model": a2m.get(q["model"], q["model"]), "engine": q["engine"], "artifact": q["artifact"],
                     "task": q["task"], "score": round(q["score"], 3), "ci_low": round(q["ci95"][0], 3),
                     "ci_high": round(q["ci95"][1], 3), "n": q["n"], "version": q.get("version"),
@@ -157,9 +153,10 @@ def quality(a2m: dict[str, str]) -> list[dict]:
 
 
 def main() -> None:
+    store = Store(sys.argv[1] if len(sys.argv) > 1 else None)
     a2m, models = artifact_to_model()
     db = {"releases": [], "hardware": hardware(), "engines": engines(), "models": models,
-          "workloads": workloads(), "results": results(a2m), "quality": quality(a2m)}
+          "workloads": workloads(), "results": results(store, a2m), "quality": quality(store, a2m)}
     (WEB / "data").mkdir(parents=True, exist_ok=True)
     (WEB / "data" / "db.js").write_text("const DB = " + json.dumps(db, indent=2, default=str) + ";\n")
     print({k: len(v) for k, v in db.items()})

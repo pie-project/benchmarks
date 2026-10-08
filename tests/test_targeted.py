@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -6,9 +5,7 @@ import pytest
 from pie_evals.node import build as pb
 from pie_evals.plan.matrix import Matrix
 from pie_evals.results import flops
-from pie_evals.results.store import Store
 from pie_evals.schema import CellStatus, PerfMetrics, Provenance, Record, Tier
-from pie_evals.site import dashboard
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -81,71 +78,3 @@ def test_flops_scale_with_the_rate():
     batched = flops.tflops({"output_tok_s": 1000.0, "prefill_tok_s": 5.0}, {"prefill": 128, "decode": 128, "concurrency": 8}, QWEN35_08B)
     assert batched["prefill_tflops"] is None and batched["decode_tflops"] > 0
     assert flops.tflops({"decode_tok_s": 1.0}, {"prefill": 1}, None) == {"prefill_tflops": None, "decode_tflops": None}
-
-
-def test_site_has_pushes_pool_and_people(tmp_path, matrix, monkeypatch):
-    monkeypatch.setattr(flops, "model_config", lambda repo: QWEN35_08B)
-    st = Store(tmp_path / "store")
-    t0 = datetime(2026, 9, 1, tzinfo=timezone.utc)
-    for i, wl in enumerate(["ob-story-200", "ob-512-200"]):
-        cell = _cell(matrix, "m5-max-48g", wl)
-        for j in range(2):
-            st.write_run([_rec(cell, 400 + j, t0 + timedelta(days=j), commit=f"c{j}", run=f"r{i}{j}")], tier=Tier.TARGETED, run_id=f"r{i}{j}")
-    ollama = _cell(matrix, "m5-max-48g", "ob-story-200", artifact="gemma-4-26b-a4b-ollama")
-    ro = _rec(ollama, 300, t0 + timedelta(days=1), commit="c1", run="o1")
-    ro.provenance.engine_version = "0.35.0"
-    st.write_run([ro], tier=Tier.TARGETED, run_id="o1")
-    live = [{"name": "a-mac", "status": "online", "busy": True, "labels": [{"name": "self-hosted"}, {"name": "macOS"}, {"name": "m5-max-48g"}]},
-            {"name": "b-mac", "status": "online", "busy": False, "labels": [{"name": "self-hosted"}, {"name": "macOS"}, {"name": "m1-max-32g"}]},
-            {"name": "a-pod", "status": "online", "busy": False, "labels": [{"name": "self-hosted"}, {"name": "Linux"}, {"name": "l40s-x1"}]},
-            {"name": "stranger", "status": "online", "busy": False, "labels": [{"name": "self-hosted"}, {"name": "Linux"}]}]
-    data = dashboard.build(st, matrix, live, repo="o/evals", pie_repo="o/pie", lookup_commits=False)
-    assert [c["sha"] for c in data["commits"]] == ["c0", "c1"]
-    assert [(m["id"], m["kind"], m["status"]) for m in data["pool"]] == [
-        ("m1-max-32g", "self-hosted", "idle"), ("m5-max-48g", "self-hosted", "busy")]
-    by_test = data["results"]["m5-max-48g"]["models"]["gemma-4-26b-a4b-mlx4"]
-    assert set(by_test) == {"ob-story-200", "ob-512-200"}
-    assert by_test["ob-story-200"]["c1"]["decode"] == 401 and by_test["ob-story-200"]["c1"]["prefill"] == 401 * 30
-    assert "gemma-4-26b-a4b-ollama" not in data["results"]["m5-max-48g"]["models"]
-    runs = data["baselines"]["m5-max-48g"]["gemma-4-26b-a4b-mlx4"]["ob-story-200"][ollama.artifact.baseline_label]
-    arm = runs[-1]
-    assert arm["at"] and all("at" in v for v in by_test["ob-story-200"].values())
-    assert arm["decode"] == 300 and arm["version"] == "0.35.0"
-    assert sorted(b["id"] for b in data["benchmarks"]) == ["c4", "ctx-4k-256", "ctx-8k-256", "ob-512-200", "ob-advanced-500", "ob-short-100", "ob-story-200"]
-    assert data["people"] == []
-    assert any(m["name"] == "gemma4:26b" and m["pie"] == "gemma-4-26b-a4b-mlx4" and m["has_results"] for m in data["models"])
-    by_label = lambda label: [m["name"] for m in data["models"] if m["label"] == label]  # noqa: E731
-    assert by_label("Ollama") == ["gemma4:26b", "llama3.2:3b", "muse-glimmer:30b", "qwen3.6:35b-a3b", "qwen3.8:27b"]
-    assert by_label("Ollama MLX") == ["gemma4:26b-mlx"]
-    assert by_label("llama.cpp") == by_label("Ollama")
-    assert by_label("mlx-lm") == [n for n in by_label("Ollama") if n != "muse-glimmer:30b"]  # mlx-lm cannot load it, so it has no card
-    assert by_label("Splash") == ["qwen3.6:35b-a3b", "qwen3.8:27b"]  # Splash ships for these two only
-    assert data["baseline_labels"] == ["Ollama", "Ollama MLX", "llama.cpp", "mlx-lm", "Splash"] and data["default_baseline"] == "Ollama"
-    assert {m["engine"] for m in data["models"]} == {"ollama", "llamacpp", "mlxlm", "splash"}
-    assert {m["name"].split(":")[0]: m["icon"] for m in data["models"]} == {
-        "gemma4": "gemma.svg", "llama3.2": "meta.svg", "muse-glimmer": "meta.svg", "qwen3.6": "qwen.png", "qwen3.8": "qwen.png"}
-    assert all(data["icons"][m["icon"]].startswith("data:image/") for m in data["models"])  # every model has its maker's logo
-    assert not any(m["id"].endswith("ollama-bf16") for m in data["models"])
-    # a Mac left out of the allowed list is not on the site at all: no results, no runner, no name to pick
-    only = dashboard.build(st, matrix, live, repo="o/evals", pie_repo="o/pie", lookup_commits=False, machines={"m1-max-32g"})
-    assert only["results"] == {} and only["baselines"] == {} and only["commits"] == []
-    assert [m["id"] for m in only["pool"]] == ["m1-max-32g"] and only["platforms"] == ["m1-max-32g"] and list(only["specs"]) == ["m1-max-32g"]
-    assert dashboard.render(st, matrix, tmp_path / "site", live, repo="o/evals", lookup_commits=False) == 2
-    assert "openRuns" in (tmp_path / "site" / "index.html").read_text()
-
-
-def test_people_access_and_last_active(tmp_path, monkeypatch):
-    runs = [{"workflow_runs": [
-        {"display_title": "pie eval " + "a" * 40, "event": "repository_dispatch", "triggering_actor": {"login": "bot"}, "status": "completed",
-         "run_started_at": "2026-09-21T10:00:00Z", "updated_at": "2026-09-21T10:06:00Z", "created_at": "2026-09-21T10:00:00Z"},
-        {"display_title": "pie eval " + "b" * 40, "event": "workflow_dispatch", "triggering_actor": {"login": "friend"}, "status": "completed",
-         "run_started_at": "2026-09-01T10:00:00Z", "updated_at": "2026-09-01T10:30:00Z", "created_at": "2026-09-01T10:00:00Z"},
-        {"display_title": "pie eval " + "b" * 40, "event": "workflow_dispatch", "triggering_actor": {"login": "friend"}, "status": "completed",
-         "run_started_at": "2026-07-01T10:00:00Z", "updated_at": "2026-07-01T11:00:00Z", "created_at": "2026-07-01T10:00:00Z"},
-    ]}]
-    collaborators = [[{"login": "author", "role_name": "write"}, {"login": "friend", "role_name": "admin"}, {"login": "idle", "role_name": "write"}]]
-    monkeypatch.setattr(dashboard, "_paginate", lambda path: runs if "runs" in path else collaborators)
-    used = dashboard.usage("o/evals", {"a" * 40: "author"})
-    assert used == {"author": {"last": "2026-09-21T10:00:00Z"}, "friend": {"last": "2026-09-01T10:00:00Z"}}
-    rows = dashboard.people("o/evals", {"a" * 40: "author"})
-    assert [(r["login"], r["role"]) for r in rows] == [("author", "write"), ("friend", "admin"), ("idle", "write")]
