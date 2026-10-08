@@ -168,7 +168,9 @@ def prepare_cmd(tier, matrix_dir, platforms, engines_f, programs_f, pie_root, pi
 @click.option("--matrix", "matrix_dir", default="matrix")
 @click.option("--store", "store_dir", default=None, help="postgresql://... or a directory (default: $PIE_EVALS_DB, else ./store)")
 @click.option("--pie-root", type=click.Path(), default=os.environ.get("PIE_ROOT", str(DEFAULT_PIE_ROOT)))
-def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root):
+@click.option("--tag", default=None, help="the release or manual tag these scores belong to")
+@click.option("--tag-kind", type=click.Choice(["release", "manual"]), default=None)
+def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_kind):
     from pie_evals.quality.run import TasksSkipped, run_quality
 
     from .machine import machine_lock
@@ -177,7 +179,8 @@ def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root):
     with machine_lock("quality", max_wait_s=6 * 3600, log=lambda m_: click.echo(m_, err=True)):
         for a in artifacts:
             try:
-                run_quality(a, list(tasks), n, matrix_dir=matrix_dir, store_dir=store_dir, pie_root=Path(pie_root), log=lambda m_: click.echo(m_, err=True))
+                run_quality(a, list(tasks), n, matrix_dir=matrix_dir, store_dir=store_dir, pie_root=Path(pie_root), tag=tag, tag_kind=tag_kind,
+                            log=lambda m_: click.echo(m_, err=True))
             except TasksSkipped as e:
                 skipped.append(str(e))
     if skipped:
