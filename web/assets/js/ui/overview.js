@@ -379,6 +379,45 @@ window.Pie = window.Pie || {};
       <div class="model-card-charts">${METRICS.map((metric) => lollipops(model, rows, metric)).join("")}</div>
     </article>`;
 
+  // an Apple-style gallery: one model card at a time with the next one peeking in, snapping as it scrolls,
+  // page dots below and round arrow buttons beside them
+  const carousel = (cards) => `
+    <div class="carousel">
+      <div class="carousel-track" tabindex="0" aria-label="Models">${cards.join("")}</div>
+      ${cards.length > 1 ? `
+        <div class="carousel-controls">
+          <div class="carousel-dots" role="tablist">${cards.map((_, i) =>
+            `<button class="carousel-dot${i === 0 ? " is-current" : ""}" type="button" role="tab" aria-label="Model ${i + 1}" data-index="${i}"></button>`).join("")}</div>
+          <div class="carousel-paddles">
+            <button class="carousel-paddle" type="button" data-step="-1" aria-label="Previous model" disabled>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg></button>
+            <button class="carousel-paddle" type="button" data-step="1" aria-label="Next model">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
+          </div>
+        </div>` : ""}
+    </div>`;
+
+  // which card sits at the track's left edge, and the dots and paddles to match
+  const syncCarousel = (track) => {
+    const cards = [...track.children];
+    if (!cards.length) return;
+    const left = track.getBoundingClientRect().left;
+    let current = 0;
+    cards.forEach((card, i) => {
+      if (Math.abs(card.getBoundingClientRect().left - left) < Math.abs(cards[current].getBoundingClientRect().left - left)) current = i;
+    });
+    const root = track.closest(".carousel");
+    root.querySelectorAll(".carousel-dot").forEach((dot, i) => dot.classList.toggle("is-current", i === current));
+    const [prev, next] = root.querySelectorAll(".carousel-paddle");
+    if (prev) prev.disabled = track.scrollLeft <= 2;
+    if (next) next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+  };
+
+  const scrollToCard = (track, index) => {
+    const card = track.children[Math.max(0, Math.min(index, track.children.length - 1))];
+    if (card) track.scrollTo({ left: card.offsetLeft - track.offsetLeft, behavior: "smooth" });
+  };
+
   // macs with any row in this release, in catalog order
   const macsIn = (rows) => {
     const counts = {};
@@ -450,7 +489,7 @@ window.Pie = window.Pie || {};
           ${decode.length
             ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + heatmap(byModel, shown)
             : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
-          ${shown.length ? section("By model", "", `<div class="model-grid">${shown.map((id) => card(id, byModel[id] || [])).join("")}</div>`) : ""}
+          ${shown.length ? section("By model", "", carousel(shown.map((id) => card(id, byModel[id] || [])))) : ""}
           ${decode.length ? releases(releasePoints(state, shown)) : ""}
           ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
         </div>`;
@@ -485,6 +524,28 @@ window.Pie = window.Pie || {};
       });
       element.addEventListener("pointerleave", () => (tooltip.hidden = true));
       element.addEventListener("scroll", () => (tooltip.hidden = true));
+
+      // the model gallery: dots jump to a card, paddles step one card, scrolling keeps both in sync
+      element.addEventListener("click", (event) => {
+        const control = event.target.closest(".carousel-dot, .carousel-paddle");
+        if (!control) return;
+        const track = control.closest(".carousel").querySelector(".carousel-track");
+        const current = [...control.closest(".carousel").querySelectorAll(".carousel-dot")].findIndex((dot) => dot.classList.contains("is-current"));
+        scrollToCard(track, control.dataset.index !== undefined ? Number(control.dataset.index) : current + Number(control.dataset.step));
+      });
+      element.addEventListener("scroll", (event) => {
+        if (event.target.classList?.contains("carousel-track")) {
+          tooltip.hidden = true;
+          syncCarousel(event.target);
+        }
+      }, true);
+      element.addEventListener("keydown", (event) => {
+        const track = event.target.closest?.(".carousel-track");
+        if (!track || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) return;
+        event.preventDefault();
+        const current = [...track.closest(".carousel").querySelectorAll(".carousel-dot")].findIndex((dot) => dot.classList.contains("is-current"));
+        scrollToCard(track, current + (event.key === "ArrowRight" ? 1 : -1));
+      });
     },
   };
 })();
