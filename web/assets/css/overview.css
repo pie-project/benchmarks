@@ -225,6 +225,50 @@
   border-top: .5px solid var(--color-separator);
 }
 
+/* side by side: Decode and Prefill share the model names, a hairline between the two groups */
+.heat-group-row + .heat-head-row {
+  border-top: 0;
+}
+
+.heat-group-head {
+  padding-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-label-secondary);
+  text-align: center;
+}
+
+.is-wide .heat-row {
+  column-gap: 0;
+}
+
+.is-wide .is-group-start {
+  border-left: .5px solid var(--color-separator);
+}
+
+.is-wide .heat-head-row {
+  min-height: 30px;
+}
+
+/* the wide table on roomy screens; the two stacked tables where eight columns would crowd */
+.heat-stacked {
+  display: none;
+}
+
+.heat-stacked {
+  gap: 28px;
+}
+
+@media (max-width: 760px) {
+  .heat-wide {
+    display: none;
+  }
+
+  .heat-stacked {
+    display: grid;
+  }
+}
+
 .heat-head-row {
   min-height: 36px;
 }
