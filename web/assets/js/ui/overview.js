@@ -140,46 +140,75 @@ window.Pie = window.Pie || {};
       </svg>`;
   };
 
-  // 2. Across releases: its own block under the ring, only once two tags have data
+  // 5. Across releases: the last block, only once two tags have data
   const releases = (points) =>
     points.length >= 2 ? section("Across releases", "Median decode advantage", `<div class="trend-block">${trend(points)}</div>`) : "";
 
-  // 1. Where we stand: an activity ring of wins, and beside it the median decode and prefill advantage
+  // 1. Where we stand: Apple Fitness rings, one inside the other.
+  // Outer, blue: the share of decode comparisons pie wins. Middle, green: median decode advantage.
+  // Inner, teal: median prefill advantage. An advantage ring closes at 2× and laps past it,
+  // the newest lap drawn over the last with a soft shadow; a deficit runs counter-clockwise in red.
   const standing = (decode, prefill) => {
     const wins = decode.filter((c) => c.r > 1);
-    const share = decode.length ? wins.length / decode.length : 0;
-    const size = 168, stroke = 20, radius = (size - stroke) / 2, length = 2 * Math.PI * radius;
-    const c = size / 2;
+    const decodeMid = median(decode.map((entry) => entry.r));
+    const prefillMid = median(prefill.map((entry) => entry.r));
+    const size = 220, stroke = 22, gap = 3, c = size / 2;
+    const rings = [
+      { key: "leads", share: decode.length ? wins.length / decode.length : 0, ccw: false },
+      { key: "decode", share: decodeMid === null ? 0 : Math.abs(Math.log2(decodeMid)), ccw: decodeMid !== null && decodeMid < 1, behind: decodeMid !== null && decodeMid < 0.995 },
+      { key: "prefill", share: prefillMid === null ? 0 : Math.abs(Math.log2(prefillMid)), ccw: prefillMid !== null && prefillMid < 1, behind: prefillMid !== null && prefillMid < 0.995 },
+    ];
+    const arc = (radius, share, cls, ccw, shadow) => {
+      const length = 2 * Math.PI * radius;
+      const turn = `rotate(-90 ${c} ${c})`;
+      return `<circle class="${cls}${shadow ? " is-lap" : ""}" cx="${c}" cy="${c}" r="${radius}" stroke-width="${stroke}"
+        stroke-dasharray="${Math.max(length * share, 0.01).toFixed(2)} ${length.toFixed(2)}"
+        transform="${ccw ? `translate(${2 * c} 0) scale(-1 1) ${turn}` : turn}"/>`;
+    };
+    const drawn = rings.map((ring, i) => {
+      const radius = c - stroke / 2 - i * (stroke + gap);
+      const kind = `fit-${ring.key}${ring.behind ? " is-behind" : ""}`;
+      const laps = Math.min(ring.share, 3);
+      const whole = Math.floor(laps);
+      const rest = laps - whole;
+      const marks = [];
+      if (whole >= 1) marks.push(arc(radius, 1, `fit-arc ${kind}`, ring.ccw, false));
+      if (rest > 0.002) marks.push(arc(radius, rest, `fit-arc ${kind}`, ring.ccw, whole >= 1));
+      return `<circle class="fit-track ${kind}" cx="${c}" cy="${c}" r="${radius}" stroke-width="${stroke}"/>${marks.join("")}`;
+    }).join("");
+
+    const grad = (id, start, end) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style="stop-color: var(${start})"/><stop offset="1" style="stop-color: var(${end})"/></linearGradient>`;
     const ring = `
       <div class="ring" role="img" aria-label="pie decodes faster in ${wins.length} of ${decode.length} comparisons">
         <svg viewBox="0 0 ${size} ${size}" aria-hidden="true">
           <defs>
-            <linearGradient id="ring-gradient" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" class="ring-stop-start"/>
-              <stop offset="1" class="ring-stop-end"/>
-            </linearGradient>
+            ${grad("fit-leads", "--color-ring-start", "--color-engine-pie")}
+            ${grad("fit-decode", "--color-heat-ahead-start", "--color-ring-decode")}
+            ${grad("fit-prefill", "--color-ring-prefill-start", "--color-ring-prefill")}
+            ${grad("fit-behind", "--color-heat-behind-start", "--color-negative")}
+            <filter id="fit-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="0" stdDeviation="1.6" flood-color="#000" flood-opacity=".28"/>
+            </filter>
           </defs>
-          <circle class="ring-track" cx="${c}" cy="${c}" r="${radius}" stroke-width="${stroke}"/>
-          ${share > 0 ? `<circle class="ring-fill" cx="${c}" cy="${c}" r="${radius}" stroke-width="${stroke}"
-            stroke-dasharray="${(length * share).toFixed(2)} ${length.toFixed(2)}" transform="rotate(-90 ${c} ${c})"/>` : ""}
+          ${drawn}
         </svg>
-        <div class="ring-center">
-          <div class="ring-value">${wins.length}<span>/${decode.length}</span></div>
-          <div class="ring-caption">pie leads</div>
-        </div>
       </div>`;
 
-    const figure = (label, list) => {
-      const mid = median(list.map((entry) => entry.r));
-      return `
-        <div class="stand-metric">
-          <div class="stand-label">${label}</div>
-          <div class="stand-value ${mid === null ? "is-empty" : tone(mid)}">${mid === null ? "—" : delta(mid)}</div>
-        </div>`;
-    };
+    const legend = (label, figure, cls) => `
+      <div class="stand-metric">
+        <div class="stand-label">${label}</div>
+        <div class="stand-value ${cls}">${figure}</div>
+      </div>`;
+    const medianCls = (mid, key) => (mid === null ? "is-empty" : mid < 0.995 ? "is-behind" : mid > 1.005 ? `is-${key}` : "");
+    const side = [
+      legend("pie leads", `${wins.length}<span>/${decode.length}</span>`, "is-leads"),
+      legend("Median decode", decodeMid === null ? "—" : delta(decodeMid), medianCls(decodeMid, "decode")),
+      legend("Median prefill", prefillMid === null ? "—" : delta(prefillMid), medianCls(prefillMid, "prefill")),
+    ].join("");
 
     return section("Where we stand", "One model against one engine",
-      `<div class="standing">${ring}<div class="stand-side">${figure("Median decode", decode)}${figure("Median prefill", prefill)}</div></div>`);
+      `<div class="standing">${ring}<div class="stand-side">${side}</div></div>`);
   };
 
   // 3. Against each engine: models down, engines across, a small activity ring per pairing.
@@ -418,9 +447,10 @@ window.Pie = window.Pie || {};
             ${popup("overview-workload", "Workload", workloadLabel)}
           </div>
           ${decode.length
-            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + releases(releasePoints(state, shown)) + heatmap(byModel, shown, metric)
+            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + heatmap(byModel, shown, metric)
             : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
           ${shown.length ? section("By model", "", `<div class="model-grid">${shown.map((id) => card(id, byModel[id] || [])).join("")}</div>`) : ""}
+          ${decode.length ? releases(releasePoints(state, shown)) : ""}
           ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
         </div>`;
       return shown.length;
