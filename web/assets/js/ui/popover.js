@@ -7,6 +7,7 @@ window.Pie = window.Pie || {};
   const WORKLOAD = "overview-workload";
   const ALL = "";
   let owner = null;
+  let anchor = null;  // the button the open menu belongs to: the menu stays attached to it while the page scrolls
   let onPick = () => {};
 
   const check = (selected) =>
@@ -58,12 +59,19 @@ window.Pie = window.Pie || {};
     return `${option(ALL, !current.length, `All ${Pie.filters.plural(column).toLowerCase()}`)}<div class="popover-separator"></div>${values}`;
   };
 
-  const place = (anchor) => {
-    const box = anchor.getBoundingClientRect();
+  const place = (target) => {
+    const box = target.getBoundingClientRect();
     element.hidden = false;
     element.style.left = `${Math.max(8, Math.min(box.left, window.innerWidth - element.offsetWidth - 8))}px`;
     element.style.top = `${box.bottom + 6}px`;
   };
+
+  // keep an open menu attached to its button when the page scrolls or the window resizes
+  const follow = () => {
+    if (anchor && !element.hidden) place(anchor);
+  };
+  window.addEventListener("scroll", follow, { capture: true, passive: true });
+  window.addEventListener("resize", follow);
 
   Pie.popover = {
     RELEASE,
@@ -75,15 +83,16 @@ window.Pie = window.Pie || {};
       return owner === key && !element.hidden;
     },
 
-    open(anchor, key, state) {
+    open(target, key, state) {
       if (this.isOpenFor(key)) {
         this.close();
         return;
       }
       owner = key;
+      anchor = target;
       element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : filterMenu(state, key);
       element.scrollTop = 0;
-      place(anchor);
+      place(target);
     },
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
@@ -97,6 +106,7 @@ window.Pie = window.Pie || {};
     close() {
       element.hidden = true;
       owner = null;
+      anchor = null;
     },
 
     onPick(handler) {
