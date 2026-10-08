@@ -3,8 +3,10 @@ name: nightly
 # request more than the caller grants (startup_failure otherwise)
 permissions: { contents: read, actions: read }
 on:
-  # schedule disabled until the tier is calibrated: an unfiltered nightly launched 16 pods at once
-  # (re-enable with a platforms/engines filter and max_jobs_per_platform)
+  # scheduled again with caps: at most one pod per platform and 8 jobs a night, so the launch never fans out to 16 pods.
+  # results go to the database and stay off the site (the site shows only our Macs)
+  schedule:
+    - cron: "0 9 * * *"  # 09:00 UTC daily
   workflow_dispatch:
     inputs:
       pie_commit: { description: "pie commit (default: origin/main)", required: false, default: "" }
@@ -49,9 +51,9 @@ jobs:
       engines: ${{ github.event.inputs.engines || '' }}
       programs: ${{ github.event.inputs.programs || '' }}
       artifacts: ${{ github.event.inputs.artifacts || '' }}
-      max_jobs: ${{ github.event.inputs.max_jobs || '' }}
+      max_jobs: ${{ github.event.inputs.max_jobs || '8' }}
       build_platform: ${{ github.event.inputs.build_platform || '' }}
-      max_jobs_per_platform: ${{ github.event.inputs.max_jobs_per_platform || '' }}
+      max_jobs_per_platform: ${{ github.event.inputs.max_jobs_per_platform || '1' }}
       skip_recorded: ${{ github.event.inputs.skip_recorded == 'true' }}
       pie_env: ${{ github.event.inputs.pie_env || '' }}
     secrets: inherit
