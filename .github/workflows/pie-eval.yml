@@ -1,17 +1,17 @@
 name: pie eval
-run-name: pie eval ${{ github.event.client_payload.pie_commit || inputs.pie_commit || 'pie main' }}
+run-name: pie eval ${{ github.event.client_payload.tag || inputs.tag || 'manual' }}
 permissions: { contents: read, actions: read }
 concurrency:
   group: ${{ github.event_name == 'workflow_dispatch' && format('pie-eval-{0}', github.event.inputs.pie_commit) || 'pie-eval-auto' }}
   cancel-in-progress: false
+# Runs only for a release (the pie repo sends the tag) or by hand with a tag. No schedule, no per-commit runs.
 on:
   repository_dispatch:
     types: [pie-eval]
-  schedule:
-    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
-      pie_commit: { description: "pie commit (empty: pie main)", required: false, default: "" }
+      tag: { description: "release tag (0.5.2) or a custom name; empty: manual-<time>", required: false, default: "" }
+      pie_commit: { description: "pie commit (empty: the tag's commit, or pie main)", required: false, default: "" }
       models: { description: "comma-separated model ids (empty: config.json); a baseline arm brings its pie counterpart", required: false, default: "" }
       macs: { description: "comma-separated Mac ids (empty: config.json)", required: false, default: "" }
       benchmarks: { description: "comma-separated workload ids (empty: config.json)", required: false, default: "" }
@@ -25,6 +25,8 @@ jobs:
   start:
     runs-on: ubuntu-latest
     outputs:
+      tag: ${{ steps.p.outputs.tag }}
+      tag_kind: ${{ steps.p.outputs.tag_kind }}
       commit: ${{ steps.p.outputs.commit }}
       artifacts: ${{ steps.p.outputs.artifacts }}
       macs: ${{ steps.p.outputs.macs }}
@@ -39,12 +41,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_RUNNER_PAT || github.token }}
           COMMIT: ${{ github.event.client_payload.pie_commit || github.event.inputs.pie_commit }}
+          TAG: ${{ github.event.client_payload.tag || github.event.inputs.tag }}
           IN_MODELS: ${{ github.event.inputs.models }}
           IN_MACS: ${{ github.event.inputs.macs }}
           IN_WORKLOADS: ${{ github.event.inputs.benchmarks }}
           IN_ENGINES: ${{ github.event.inputs.engines }}
         run: |
-          [ -n "$COMMIT" ] || COMMIT=$(gh api "repos/$PIE_REPO/commits/main" --jq .sha)
+          # a run is a tag: a release from the pie repo, or a named manual run. Nothing else is measured.
+          if [ "${{ github.event_name }}" != workflow_dispatch ] && [ -z "$TAG" ]; then echo "::notice::no tag, nothing to measure"; TAG=""; fi
+          if [ -z "$TAG" ] && [ "${{ github.event_name }}" = workflow_dispatch ]; then TAG="manual-$(date -u +%Y%m%d-%H%M)"; fi
+          [[ "$TAG" =~ ^[A-Za-z0-9._-]*$ ]] || { echo "::error::bad tag '$TAG'"; exit 1; }
+          kind=manual; [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && kind=release
+          [ -n "$COMMIT" ] || COMMIT=$(gh api "repos/$PIE_REPO/commits/${TAG:-main}" --jq .sha 2>/dev/null || gh api "repos/$PIE_REPO/commits/main" --jq .sha)
           [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::pie_commit must be a full sha, got '$COMMIT'"; exit 1; }
           models=$(jq -r '.models // [] | join(",")' config.json); macs=$(jq -r '.machines // [] | join(",")' config.json); workloads=$(jq -r '.benchmarks // [] | join(",")' config.json)
           engines=pie,ollama,llamacpp,mlxlm,splash
@@ -53,13 +61,13 @@ jobs:
           fi
           [[ "$models$macs$workloads$engines" =~ ^[a-z0-9.,-]*$ ]] || { echo "::error::bad input"; exit 1; }
           artifacts=$(.venv/bin/python -c "import sys,yaml; want=set(filter(None,sys.argv[1].split(','))); arts=yaml.safe_load(open('matrix/models.yaml'))['artifacts']; pie={a.get('baseline_of') for a in arts if a['id'] in want}; print(','.join(a['id'] for a in arts if a['id'] in want or a['id'] in pie or (a['id'] not in pie and a.get('baseline_of') in want)))" "$models")
-          skip=false; [ -n "$artifacts" ] && [ -n "$workloads" ] || skip=true
+          skip=false; [ -n "$TAG" ] || skip=true; [ -n "$artifacts" ] && [ -n "$workloads" ] || skip=true
           # a pie commit that only touches docs or CI files cannot move a number; a manual run measures it anyway
           if [ "${{ github.event_name }}" != workflow_dispatch ] && [ "$(gh api "repos/$PIE_REPO/commits/$COMMIT" --jq '.files[].filename' | .venv/bin/pie-evals docs-only)" = true ]; then
             skip=true; echo "docs-only pie commit, nothing to measure" | tee -a "$GITHUB_STEP_SUMMARY"
           fi
-          echo "commit=$COMMIT models=$models artifacts=$artifacts macs=${macs:-every connected Mac} benchmarks=$workloads engines=$engines skip=$skip" | tee -a "$GITHUB_STEP_SUMMARY"
-          { echo "commit=$COMMIT"; echo "artifacts=$artifacts"; echo "macs=$macs"; echo "workloads=$workloads"; echo "engines=$engines"; echo "skip=$skip"; } >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG tag_kind=$kind commit=$COMMIT models=$models artifacts=$artifacts macs=${macs:-every connected Mac} benchmarks=$workloads engines=$engines skip=$skip" | tee -a "$GITHUB_STEP_SUMMARY"
+          { echo "tag=$TAG"; echo "tag_kind=$kind"; echo "commit=$COMMIT"; echo "artifacts=$artifacts"; echo "macs=$macs"; echo "workloads=$workloads"; echo "engines=$engines"; echo "skip=$skip"; } >> "$GITHUB_OUTPUT"
 
   run:
     needs: start
@@ -68,6 +76,8 @@ jobs:
     with:
       tier: targeted
       pie_commit: ${{ needs.start.outputs.commit }}
+      tag: ${{ needs.start.outputs.tag }}
+      tag_kind: ${{ needs.start.outputs.tag_kind }}
       artifacts: ${{ needs.start.outputs.artifacts }}
       platforms: ${{ needs.start.outputs.macs }}
       workloads: ${{ needs.start.outputs.workloads }}

@@ -7,11 +7,11 @@ Every workflow in this repo, when it runs, and what it needs. Update this file w
 | Workflow | When | What it does | Secrets |
 | --- | --- | --- | --- |
 | `ci` | every push and pull request | lint, tests, matrix check | none |
-| `pie eval` | every pie commit on main, and every 15 minutes | measures pie against Ollama, llama.cpp, mlx-lm and Splash on the Macs and saves the results | `GH_RUNNER_PAT`, `HF_TOKEN` |
+| `pie eval` | a pie release (sent by the pie repo with its tag), or by hand with a tag | measures pie and the competitors' latest releases on the Macs and saves the results to the database under that tag | `PIE_EVALS_DB`, `GH_RUNNER_PAT`, `HF_TOKEN` |
 | `pages` | every push to main and after each eval | builds the site from the database on liszt | `PIE_EVALS_DB` |
 | `reap-pods` | hourly, at minute 17 | stops RunPod pods that were left running | `RUNPOD_API_KEY`, `GH_RUNNER_PAT` |
 
-`pie eval` skips a pie commit that only changes docs or CI files. A commit already measured is not measured again.
+A commit without a tag is not measured. Each run is stored with its tag (a release like `0.5.2`, or `manual-<time>`) and its date and time.
 
 ## Started by hand
 
