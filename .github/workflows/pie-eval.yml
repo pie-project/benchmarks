@@ -52,7 +52,12 @@ jobs:
           if [ -z "$TAG" ] && [ "${{ github.event_name }}" = workflow_dispatch ]; then TAG="manual-$(date -u +%Y%m%d-%H%M)"; fi
           [[ "$TAG" =~ ^[A-Za-z0-9._-]*$ ]] || { echo "::error::bad tag '$TAG'"; exit 1; }
           kind=manual; [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && kind=release
-          [ -n "$COMMIT" ] || COMMIT=$(gh api "repos/$PIE_REPO/commits/${TAG:-main}" --jq .sha 2>/dev/null || gh api "repos/$PIE_REPO/commits/main" --jq .sha)
+          if [ -z "$COMMIT" ]; then
+            # a git tag names its commit; a manual name that is not a tag measures pie main
+            c=$(gh api "repos/$PIE_REPO/commits/$TAG" --jq .sha 2>/dev/null) || c=""
+            [[ "$c" =~ ^[0-9a-f]{40}$ ]] || c=$(gh api "repos/$PIE_REPO/commits/main" --jq .sha)
+            COMMIT=$c
+          fi
           [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::pie_commit must be a full sha, got '$COMMIT'"; exit 1; }
           models=$(jq -r '.models // [] | join(",")' config.json); macs=$(jq -r '.machines // [] | join(",")' config.json); workloads=$(jq -r '.benchmarks // [] | join(",")' config.json)
           engines=pie,ollama,llamacpp,mlxlm,splash
