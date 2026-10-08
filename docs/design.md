@@ -332,7 +332,6 @@ src/pie_evals/
   node/           runner, engines/ (adapters + recipes), workloads/, metrics/, accuracy/, miniature, preflight, provenance
   plan/           matrix, jobs
   results/        store, report, baselines, flops
-  site/           dashboard, page.html
   pods/           runpod
   quality/        lm-eval tasks
   cli.py          the pie-evals command
