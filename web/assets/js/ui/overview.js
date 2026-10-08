@@ -243,6 +243,11 @@ window.Pie = window.Pie || {};
     <circle class="nofit-mark" cx="${cx}" cy="${cy}" r="9"/>
     <line class="nofit-mark" x1="${cx - 6.4}" y1="${cy + 6.4}" x2="${cx + 6.4}" y2="${cy - 6.4}"/>`;
 
+  // the grid spans the content column: a label column, then one flexible column per engine,
+  // each cell a small fixed-size ring centred in its column
+  const CELL = 56;
+  const cellSvg = (inner) => `<svg class="heat-cell-svg" viewBox="0 0 ${CELL} ${CELL}" width="${CELL}" height="${CELL}" aria-hidden="true">${inner}</svg>`;
+
   const heatmap = (byModel, models, metric) => {
     const list = comparisons(byModel, models, metric.key);
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
@@ -251,36 +256,28 @@ window.Pie = window.Pie || {};
     const rowsShown = models.filter((id) => (byModel[id] || []).some(isPie) || misfit(id, Pie.engines.primary));
     if (!engines.length || !rowsShown.length) return "";
 
-    const labelWidth = 136, col = 78, row = 64, head = 24;
-    const width = labelWidth + engines.length * col;
-    const height = head + rowsShown.length * row;
-    const heads = engines.map((engine, j) =>
-      `<text class="heat-head" x="${labelWidth + (j + 0.5) * col}" y="14" text-anchor="middle">${esc(names().engine(engine))}</text>`).join("");
-    const body = rowsShown.map((model, i) => {
-      const cy = head + i * row + row / 2;
-      const label = `<text class="heat-label" x="0" y="${cy + 4}">${esc(names().model(model))}</text>`;
+    const mid = CELL / 2;
+    const heads = `<div></div>${engines.map((engine) => `<div class="heat-head">${esc(names().engine(engine))}</div>`).join("")}`;
+    const body = rowsShown.map((model) => {
+      const label = `<div class="heat-label">${esc(names().model(model))}</div>`;
       // pie itself cannot load this model here: one quiet line across the row
       const pieNeeds = misfit(model, Pie.engines.primary);
       if (pieNeeds && !(byModel[model] || []).some(isPie)) {
-        const mid = labelWidth + (engines.length * col) / 2;
-        return label + `<g data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`)}">
-            <rect class="heat-hit" x="${labelWidth}" y="${cy - row / 2}" width="${engines.length * col}" height="${row}"/>
-            ${noFitMark(mid - 52, cy)}
-            <text class="nofit-text" x="${mid - 36}" y="${cy + 4}">Doesn't fit</text>
-          </g>`;
+        return label + `<div class="heat-cell heat-row-nofit" data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`)}">
+            <svg class="heat-cell-svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">${noFitMark(12, 12)}</svg>
+            <span class="nofit-text">Doesn't fit</span>
+          </div>`;
       }
-      return label + engines.map((engine, j) => {
-        const cx = labelWidth + (j + 0.5) * col;
-        const hit = `<rect class="heat-hit" x="${cx - col / 2}" y="${cy - row / 2}" width="${col}" height="${row}"/>`;
+      return label + engines.map((engine) => {
         const c = list.find((entry) => entry.model === model && entry.engine === engine);
         if (!c) {
           const needs = misfit(model, engine);
           if (needs) {
-            return `<g data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\n${names().engine(engine)} doesn't fit. ${fitNote(needs, model)}`)}">${hit}
-              ${noFitMark(cx, cy)}</g>`;
+            return `<div class="heat-cell" data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\n${names().engine(engine)} doesn't fit. ${fitNote(needs, model)}`)}">
+              ${cellSvg(noFitMark(mid, mid))}</div>`;
           }
-          return `<g data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\nNo data`)}">${hit}
-            <circle class="heat-empty" cx="${cx}" cy="${cy}" r="2.5"/></g>`;
+          return `<div class="heat-cell" data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\nNo data`)}">
+            ${cellSvg(`<circle class="heat-empty" cx="${mid}" cy="${mid}" r="2.5"/>`)}</div>`;
         }
         const tip = [
           `${names().model(model)} vs ${names().engine(engine)}`,
@@ -288,15 +285,14 @@ window.Pie = window.Pie || {};
           c.other.stale ? `${names().engine(engine)}: ${when(c.other)}` : "",
           c.pie.stale ? `pie: ${when(c.pie)}` : "",
         ].filter(Boolean).join("\n");
-        return `<g data-tip="${esc(tip)}">${hit}${miniRing(cx, cy, c.r)}</g>`;
+        return `<div class="heat-cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, c.r))}</div>`;
       }).join("");
     }).join("");
 
     return section("Against each engine", `How pie’s ${metric.label.toLowerCase()} speed compares, model by model`, `
       <div class="heatmap">
         ${popup("overview-metric", "Speed", metric.label)}
-        <svg class="heat-grid" viewBox="0 0 ${width} ${height}" width="${width}" role="img"
-          aria-label="pie against each engine, ${metric.label.toLowerCase()}">
+        <svg class="heat-defs" width="0" height="0" aria-hidden="true">
           <defs>
             <linearGradient id="heat-ahead" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" class="heat-stop-ahead-start"/><stop offset="1" class="heat-stop-ahead-end"/>
@@ -305,8 +301,9 @@ window.Pie = window.Pie || {};
               <stop offset="0" class="heat-stop-behind-start"/><stop offset="1" class="heat-stop-behind-end"/>
             </linearGradient>
           </defs>
-          ${heads}${body}
         </svg>
+        <div class="heat-grid" role="table" aria-label="pie against each engine, ${metric.label.toLowerCase()}"
+          style="--engines: ${engines.length}">${heads}${body}</div>
       </div>`);
   };
 
