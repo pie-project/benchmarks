@@ -116,13 +116,8 @@ def workloads() -> list[dict]:
 LEGACY_MACS = {"m5-max-128g"}
 
 
-def fleet() -> set[str]:
-    """Only the Macs we operate are shown, plus the Mac of the untagged runs; every other platform stays in the database."""
-    return set(json.loads((ROOT / "config.json").read_text())["machines"]) | LEGACY_MACS
-
-
-def best_per_key(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, dict]:
-    """One row per (hardware, engine, model, workload category, release) among these runs."""
+def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
+    """The row to show for each (hardware, engine, model, workload category): the best-matching workload, then the newest."""
     best: dict[tuple, tuple] = {}
     for r in rows:
         cat_pri = WL_PRIORITY.get(r["workload"])
@@ -130,74 +125,66 @@ def best_per_key(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, dict]:
             continue
         cat, pri = cat_pri
         model = a2m.get(r["artifact"], r["artifact"])
-        release = (r["pie_commit"] or "")[:9] if r["engine"] == "pie" else r["engine_version"]
-        key = (r["platform"], r["engine"], model, cat, release or "")
-        rank = (-pri, r["started_at"])  # higher-priority workload, then newest
+        key = (r["platform"], r["engine"], model, cat)
+        rank = (-pri, r["started_at"])
         if key not in best or rank > best[key][0]:
-            best[key] = (rank, r, cat, model, release)
-    return {k: v for k, v in best.items()}
+            best[key] = (rank, r)
+    return best
 
 
-def as_row(r: dict, cat: str, model: str, release: str | None) -> dict:
+def as_row(r: dict, key: tuple) -> dict:
+    hw, engine, model, cat = key
+    release = (r["pie_commit"] or "")[:9] if engine == "pie" else r["engine_version"]
     return {
-        "hardware": r["platform"], "engine": r["engine"],
-        "release": release or "?", "group": "main" if r["engine"] == "pie" else (release or "?"),
+        "hardware": hw, "engine": engine,
+        "release": release or "?", "group": "main" if engine == "pie" else (release or "?"),
         "model": model, "scheme": r["scheme"], "workload": cat,
         **{m: (round(r[m], 2) if isinstance(r[m], (int, float)) else None) for m in METRICS},
         "accuracy": None,
-        "commit": (r["pie_commit"] or "")[:9] if r["engine"] == "pie" else "",
+        "commit": (r["pie_commit"] or "")[:9] if engine == "pie" else "",
         "measured": str(r["started_at"])[:16],
     }
 
 
-def snapshots(store, a2m: dict[str, str]):
-    """Tags newest first, and for each tag a complete table of every combination the store has measured.
+def snapshots(store, a2m: dict[str, str], hardware_ids: list[str], engine_ids: list[str], model_ids: list[str]):
+    """Tags newest first, and for each tag the grid of every hardware x engine x model x workload that has a run.
 
-    A combination with no run under a tag is filled from its most recent run under another tag,
-    and marked ``stale`` with that tag and date, so the site always has something to show.
+    A cell measured under the tag shows that run. Otherwise it shows the newest run from any other tag,
+    marked ``stale`` with that tag and date. A cell never measured is left out.
     """
     cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind"]
             + METRICS)
-    allowed = fleet()
     rows = [r for r in store.table().select(cols).to_pylist()
-            if r["status"] in ("pass", "noisy") and r["platform"] in allowed]
+            if r["status"] in ("pass", "noisy") and r["platform"] in hardware_ids and r["engine"] in engine_ids]
     by_tag: dict[str, list[dict]] = {}
     kinds: dict[str, str] = {}
     for r in rows:
         tag = r["tag"] or LEGACY
         by_tag.setdefault(tag, []).append(r)
         kinds[tag] = r["tag_kind"] or ("legacy" if tag == LEGACY else "manual")
-
-    tagged = {t: best_per_key(rs, a2m) for t, rs in by_tag.items()}
-    # the most recent measurement of each combination, and the tag it came from
-    combo = lambda key: key[:4]  # noqa: E731 - hardware, engine, model, workload category
-    latest: dict[tuple, tuple] = {}
+    tagged = {t: pick(rs, a2m) for t, rs in by_tag.items()}
+    latest: dict[tuple, tuple] = {}  # combination -> (measured, tag) of its newest run under any tag
     for t, best in tagged.items():
-        for key, entry in best.items():
-            measured = entry[1]["started_at"]
-            if combo(key) not in latest or measured > latest[combo(key)][0]:
-                latest[combo(key)] = (measured, t)
-    combos = {combo(k) for best in tagged.values() for k in best}
+        for key, (_, r) in best.items():
+            if key not in latest or r["started_at"] > latest[key][0]:
+                latest[key] = (r["started_at"], t)
 
-    info = []
-    for t, rs in by_tag.items():
-        info.append({"id": t, "kind": kinds[t], "date": str(max(r["started_at"] for r in rs))[:16],
-                     "commit": next((r["pie_commit"][:9] for r in rs if r["engine"] == "pie" and r["pie_commit"]), "")})
-    info.sort(key=lambda x: x["date"], reverse=True)
-    info.sort(key=lambda x: x["kind"] == "legacy")  # newest first; legacy last
+    info = [{"id": t, "kind": kinds[t], "date": str(max(r["started_at"] for r in rs))[:16],
+             "commit": next((r["pie_commit"][:9] for r in rs if r["engine"] == "pie" and r["pie_commit"]), "")}
+            for t, rs in by_tag.items()]
+    info.sort(key=lambda x: x["date"], reverse=True)  # the newest tag is the default on the site
 
+    grid = [(hw, e, m, c) for hw in hardware_ids for e in engine_ids for m in model_ids for c in ("single", "throughput")]
     snaps: dict[str, list[dict]] = {}
     for t in (x["id"] for x in info):
         out = []
-        for c in combos:
-            here = [entry for k, entry in tagged[t].items() if combo(k) == c]
-            if here:
-                out += [{**as_row(r, cat, model, release), "stale": None} for _, r, cat, model, release in (e for e in here)]
-                continue
-            src = latest[c][1]
-            for k, (_, r, cat, model, release) in tagged[src].items():
-                if combo(k) == c:
-                    out.append({**as_row(r, cat, model, release), "stale": {"tag": src, "measured": str(r["started_at"])[:16]}})
+        for key in grid:
+            if key in tagged[t]:
+                out.append({**as_row(tagged[t][key][1], key), "stale": None})
+            elif key in latest:
+                src = latest[key][1]
+                r = tagged[src][key][1]
+                out.append({**as_row(r, key), "stale": {"tag": src, "measured": str(r["started_at"])[:16]}})
         snaps[t] = out
     return info, snaps
 
@@ -215,10 +202,15 @@ def quality(store, a2m: dict[str, str]) -> list[dict]:
 def main() -> None:
     store = Store(sys.argv[1] if len(sys.argv) > 1 else None)
     a2m, models = artifact_to_model()
-    tags, snaps = snapshots(store, a2m)
-    allowed = fleet()
-    db = {"tags": tags, "snapshots": snaps, "hardware": [h for h in hardware() if h["id"] in allowed],
-          "engines": engines(), "models": models, "workloads": workloads(), "quality": quality(store, a2m)}
+    # the site's grid: our Macs, the engines that run on a Mac, the models we measure there
+    config = json.loads((ROOT / "config.json").read_text())
+    hardware_ids = config["machines"] + sorted(LEGACY_MACS - set(config["machines"]))
+    mac_engines = [e for e in engines() if "macos" in e["os"]]
+    model_ids = sorted({a2m[a] for a in config["models"] if a in a2m})
+    tags, snaps = snapshots(store, a2m, hardware_ids, [e["id"] for e in mac_engines], model_ids)
+    db = {"tags": tags, "snapshots": snaps, "hardware": [h for h in hardware() if h["id"] in hardware_ids],
+          "engines": mac_engines, "models": [m for m in models if m["id"] in model_ids],
+          "workloads": workloads(), "quality": quality(store, a2m)}
     (WEB / "data").mkdir(parents=True, exist_ok=True)
     (WEB / "data" / "db.js").write_text("const DB = " + json.dumps(db, indent=2, default=str) + ";\n")
     print({k: len(v) for k, v in db.items()}, {t["id"]: len(snaps[t["id"]]) for t in tags})

@@ -6,6 +6,8 @@ on:
   workflow_run:
     workflows: [pie eval, smoke, nightly, weekly]
     types: [completed]
+  schedule:
+    - cron: "*/15 * * * *"   # results land in the database during a run; the site picks them up within 15 minutes
   workflow_dispatch:
 permissions: { contents: read }
 concurrency: { group: pages, cancel-in-progress: true }
