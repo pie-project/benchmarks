@@ -171,10 +171,9 @@
   color: var(--color-label-tertiary);
 }
 
-/* the release trend: its own block, as tall as the ring, centred */
+/* the release trend: its own block, as tall as the ring, as wide as the content column */
 .trend-block {
-  max-width: 640px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .figure {
@@ -190,10 +189,8 @@
 
 /* 2. against each engine: a grid of small activity rings, centred, the Decode | Prefill switch above */
 .heatmap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
+  display: grid;
+  gap: 28px;
 }
 
 .heat-defs {
@@ -202,17 +199,37 @@
   height: 0;
 }
 
-/* as wide as the content column: names on the left, one even column per engine */
-.heat-grid {
+/* an Apple inset table: a small grey group title, then a rounded card of rows */
+.heat-group-title {
+  margin: 0 0 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-label-secondary);
+}
+
+.heat-table {
+  padding: 4px 16px;
+  border-radius: 12px;
+  background: var(--color-card);
+}
+
+/* every row shares the columns: the model name flush left, then one even column per engine */
+.heat-row {
   display: grid;
-  grid-template-columns: max-content repeat(var(--engines), minmax(0, 1fr));
+  grid-template-columns: minmax(120px, 1.4fr) repeat(var(--engines), minmax(0, 1fr));
   align-items: center;
-  align-self: stretch;
-  column-gap: 12px;
+  column-gap: 8px;
+}
+
+.heat-row + .heat-row {
+  border-top: .5px solid var(--color-separator);
+}
+
+.heat-head-row {
+  min-height: 36px;
 }
 
 .heat-head {
-  padding-bottom: 6px;
   font-size: 12px;
   color: var(--color-label-secondary);
   text-align: center;
@@ -220,7 +237,9 @@
 }
 
 .heat-label {
+  overflow: hidden;
   font-size: 13px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -516,6 +535,19 @@
 
   .model-card {
     padding: 18px 18px 20px;
+  }
+
+  .heat-table {
+    padding: 4px 10px;
+  }
+
+  .heat-row {
+    grid-template-columns: minmax(96px, 1.3fr) repeat(var(--engines), minmax(0, 1fr));
+    column-gap: 2px;
+  }
+
+  .heat-label {
+    font-size: 12px;
   }
 }
 
