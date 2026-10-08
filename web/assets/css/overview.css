@@ -338,17 +338,101 @@
 }
 
 /* 3. by model: calm cards, one big number each, lollipops */
-.model-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
+/* the model gallery: one card in full view, the next peeking in, snapping card to card */
+.carousel-track {
+  display: flex;
+  align-items: stretch;
   gap: 16px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  outline: none;
 }
 
-@media (max-width: 900px) {
-  .model-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-track > .model-card {
+  flex: 0 0 min(620px, 86%);
+  scroll-snap-align: start;
+}
+
+.carousel-track:focus-visible > .model-card {
+  box-shadow: 0 0 0 2px var(--color-accent-tint);
+}
+
+/* page dots in the middle, round paddles on the right, like an Apple gallery */
+.carousel-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  margin-top: 18px;
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--color-fill);
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-label-tertiary);
+  transition: width .25s ease, background-color .25s ease;
+}
+
+.carousel-dot.is-current {
+  width: 24px;
+  background: var(--color-label);
+}
+
+.carousel-paddles {
+  position: absolute;
+  right: 0;
+  display: flex;
+  gap: 10px;
+}
+
+.carousel-paddle {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-fill);
+  color: var(--color-label);
+}
+
+.carousel-paddle:disabled {
+  color: var(--color-label-quaternary);
+}
+
+.carousel-paddle svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.carousel-dot:focus-visible,
+.carousel-paddle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .model-card {
@@ -535,6 +619,10 @@
 
   .model-card {
     padding: 18px 18px 20px;
+  }
+
+  .carousel-paddles {
+    display: none;
   }
 
   .heat-table {
