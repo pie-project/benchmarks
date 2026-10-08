@@ -2,7 +2,8 @@ name: pie eval
 run-name: pie eval ${{ github.event.client_payload.tag || inputs.tag || 'manual' }}
 permissions: { contents: read, actions: read }
 concurrency:
-  group: ${{ github.event_name == 'workflow_dispatch' && format('pie-eval-{0}', github.event.inputs.pie_commit) || 'pie-eval-auto' }}
+  # manual runs go side by side (each Mac's own lock keeps two benchmarks off one machine); release dispatches queue per tag
+  group: ${{ github.event_name == 'workflow_dispatch' && format('pie-eval-{0}', github.run_id) || format('pie-eval-{0}', github.event.client_payload.tag) }}
   cancel-in-progress: false
 # Runs only for a release (the pie repo sends the tag) or by hand with a tag. No schedule, no per-commit runs.
 on:

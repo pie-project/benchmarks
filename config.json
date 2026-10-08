@@ -23,7 +23,8 @@
     "m3-16g",
     "m4-pro-48g",
     "m5-16g",
-    "m5-max-64g"
+    "m5-max-64g",
+    "m5-max-128g"
   ],
   "benchmarks": [
     "ss-512-256",
