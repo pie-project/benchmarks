@@ -132,12 +132,13 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
     return best
 
 
-def as_row(r: dict, key: tuple) -> dict:
+def as_row(r: dict, key: tuple, tag: str) -> dict:
+    """``release`` is the tag the run belongs to; ``version`` is what actually ran (pie commit or engine release)."""
     hw, engine, model, cat = key
-    release = (r["pie_commit"] or "")[:9] if engine == "pie" else r["engine_version"]
+    version = (r["pie_commit"] or "")[:9] if engine == "pie" else r["engine_version"]
     return {
         "hardware": hw, "engine": engine,
-        "release": release or "?", "group": "main" if engine == "pie" else (release or "?"),
+        "release": tag, "group": tag, "version": version or "",
         "model": model, "scheme": r["scheme"], "workload": cat,
         **{m: (round(r[m], 2) if isinstance(r[m], (int, float)) else None) for m in METRICS},
         "accuracy": None,
@@ -163,28 +164,24 @@ def snapshots(store, a2m: dict[str, str], hardware_ids: list[str], engine_ids: l
         by_tag.setdefault(tag, []).append(r)
         kinds[tag] = r["tag_kind"] or ("legacy" if tag == LEGACY else "manual")
     tagged = {t: pick(rs, a2m) for t, rs in by_tag.items()}
-    latest: dict[tuple, tuple] = {}  # combination -> (measured, tag) of its newest run under any tag
-    for t, best in tagged.items():
-        for key, (_, r) in best.items():
-            if key not in latest or r["started_at"] > latest[key][0]:
-                latest[key] = (r["started_at"], t)
-
     info = [{"id": t, "kind": kinds[t], "date": str(max(r["started_at"] for r in rs))[:16],
              "commit": next((r["pie_commit"][:9] for r in rs if r["engine"] == "pie" and r["pie_commit"]), "")}
             for t, rs in by_tag.items()]
     info.sort(key=lambda x: x["date"], reverse=True)  # the newest tag is the default on the site
+    order = [x["id"] for x in info]
 
     grid = [(hw, e, m, c) for hw in hardware_ids for e in engine_ids for m in model_ids for c in ("single", "throughput")]
     snaps: dict[str, list[dict]] = {}
-    for t in (x["id"] for x in info):
+    for i, t in enumerate(order):
         out = []
         for key in grid:
-            if key in tagged[t]:
-                out.append({**as_row(tagged[t][key][1], key), "stale": None})
-            elif key in latest:
-                src = latest[key][1]
-                r = tagged[src][key][1]
-                out.append({**as_row(r, key), "stale": {"tag": src, "measured": str(r["started_at"])[:16]}})
+            # this tag's run, or else the newest tag that is not later than this one; a later tag never fills in
+            src = next((u for u in order[i:] if key in tagged[u]), None)
+            if src is None:
+                continue
+            r = tagged[src][key][1]
+            stale = None if src == t else {"tag": src, "measured": str(r["started_at"])[:16]}
+            out.append({**as_row(r, key, src), "stale": stale})
         snaps[t] = out
     return info, snaps
 
