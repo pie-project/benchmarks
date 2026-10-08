@@ -14,7 +14,7 @@ concurrency: { group: pages, cancel-in-progress: true }
 jobs:
   # the Mac reads the database (liszt is on the tailnet, GitHub's runners are not)
   build:
-    runs-on: [self-hosted, macos, m5-max-64g]
+    runs-on: [self-hosted, macos]  # any free Mac: it only needs the tailnet, not a particular machine
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
