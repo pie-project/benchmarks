@@ -4,6 +4,7 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("popover");
   const RELEASE = "release";
   const MAC = "overview-mac";
+  const WORKLOAD = "overview-workload";
   const ALL = "";
   let owner = null;
   let onPick = () => {};
@@ -39,6 +40,13 @@ window.Pie = window.Pie || {};
         `<span class="popover-label">${Pie.format.escape(mac.label)}</span>`))
       .join("");
 
+  // the overview's workload: the same menu as the Mac's
+  const workloadMenu = (state) =>
+    Pie.overview.workloads()
+      .map((workload) => option(workload.id, workload.id === state.overview.workload,
+        `<span class="popover-label">${Pie.format.escape(workload.label)}</span>`))
+      .join("");
+
   // A macOS pull-down with a checkmark per picked value: clicking toggles and the menu stays open.
   const filterMenu = (state, key) => {
     const column = Pie.schema[state.table].columns.find((entry) => entry.key === key);
@@ -60,6 +68,7 @@ window.Pie = window.Pie || {};
   Pie.popover = {
     RELEASE,
     MAC,
+    WORKLOAD,
     ALL,
 
     isOpenFor(key) {
@@ -72,14 +81,14 @@ window.Pie = window.Pie || {};
         return;
       }
       owner = key;
-      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : filterMenu(state, key);
+      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : filterMenu(state, key);
       element.scrollTop = 0;
       place(anchor);
     },
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
-      if (element.hidden || !owner || owner === RELEASE || owner === MAC) return;
+      if (element.hidden || !owner || owner === RELEASE || owner === MAC || owner === WORKLOAD) return;
       const scroll = element.scrollTop;
       element.innerHTML = filterMenu(state, owner);
       element.scrollTop = scroll;
@@ -100,7 +109,7 @@ window.Pie = window.Pie || {};
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = owner;
-        if (key === RELEASE || key === MAC) this.close();
+        if (key === RELEASE || key === MAC || key === WORKLOAD) this.close();
         onPick(key, target.dataset.value);
       });
     },
