@@ -2,57 +2,19 @@ window.Pie = window.Pie || {};
 
 (() => {
   const { store, format, engines } = Pie;
-  const EARLIEST = "0000";
-  const LATEST = "9999";
+  const GROUPS = { release: "Releases", manual: "Manual runs", legacy: "Earlier runs" };
 
-  const releaseOf = (row) => row.released || EARLIEST;
-
-  const releaseOptions = () => {
-    const counts = {};
-    for (const row of store.tables.results) {
-      if (engines.isPrimary(row.engine)) {
-        counts[row.group] = (counts[row.group] || 0) + 1;
-      }
-    }
-
-    const latestMain = store.tables.results
-      .filter((row) => engines.isPrimary(row.engine) && row.group === "main")
-      .map((row) => row.release)
-      .sort((a, b) => Number(a.split("+")[1]) - Number(b.split("+")[1]))
-      .at(-1);
-
-    const main = {
-      id: "main",
-      label: "Latest",
-      title: latestMain ? `Latest (${latestMain})` : "Latest",
-      runs: counts.main || 0,
-    };
-    const tagged = store.tables.releases.map((release) => ({
-      id: release.id,
-      label: release.id,
-      title: `${release.id} — ${format.date(release.date)}`,
-      runs: counts[release.id] || 0,
-    }));
-
-    return [main, ...tagged].filter((option) => option.runs > 0);
-  };
-
-  const comparableResults = (release) => {
-    const cutoff = store.tables.releases.find((tag) => tag.id === release)?.date || LATEST;
-    const newest = {};
-
-    for (const row of store.tables.results) {
-      if (engines.isPrimary(row.engine) || releaseOf(row) > cutoff) continue;
-      const key = [row.hardware, row.engine, row.model, row.workload].join("|");
-      if (!newest[key] || releaseOf(row) > releaseOf(newest[key])) {
-        newest[key] = row;
-      }
-    }
-
-    const competitors = new Set(Object.values(newest));
-    return store.tables.results.filter((row) =>
-      engines.isPrimary(row.engine) ? row.group === release : competitors.has(row));
-  };
+  // one option per tag that has rows, newest first, grouped for the picker
+  const releaseOptions = () =>
+    store.tables.tags
+      .filter((tag) => store.snapshot(tag.id).length)
+      .map((tag) => ({
+        id: tag.id,
+        label: tag.id,
+        title: tag.date ? `${tag.id} — ${format.date(tag.date)}` : tag.id,
+        group: GROUPS[tag.kind] || "Earlier runs",
+        runs: store.snapshot(tag.id).filter((row) => !row.stale).length,
+      }));
 
   const matchesSearch = (row, columns, query) => {
     if (!query) return true;
@@ -77,7 +39,7 @@ window.Pie = window.Pie || {};
 
   const visibleRows = (state) => {
     const schema = Pie.schema[state.table];
-    const source = state.table === "results" ? comparableResults(state.release) : store.rows(state.table);
+    const source = state.table === "results" ? store.snapshot(state.release) : store.rows(state.table);
     const query = state.query.trim().toLowerCase();
 
     const rows = source.filter((row) => matchesFilters(row, state.filters) && matchesSearch(row, schema.columns, query));
@@ -103,7 +65,6 @@ window.Pie = window.Pie || {};
 
   Pie.query = {
     releaseOptions,
-    comparableResults,
     visibleRows,
     filterValues,
   };

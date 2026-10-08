@@ -15,11 +15,18 @@ window.Pie = window.Pie || {};
       ${check(selected)}${label}
     </button>`;
 
-  const releaseMenu = (state) =>
-    `<div class="popover-heading">pie release</div>` +
-    Pie.query.releaseOptions()
-      .map((release) => option(release.id, release.id === state.release, Pie.format.escape(release.title)))
-      .join("");
+  const releaseMenu = (state) => {
+    const options = Pie.query.releaseOptions();
+    const groups = [...new Set(options.map((release) => release.group))];
+    return groups
+      .map((group) =>
+        `<div class="popover-heading">${group}</div>` +
+        options
+          .filter((release) => release.group === group)
+          .map((release) => option(release.id, release.id === state.release, Pie.format.escape(release.title)))
+          .join(""))
+      .join(`<div class="popover-separator"></div>`);
+  };
 
   // A macOS pull-down with a checkmark per picked value: clicking toggles and the menu stays open.
   const filterMenu = (state, key) => {

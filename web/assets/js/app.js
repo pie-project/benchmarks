@@ -4,7 +4,7 @@
   const ensureRelease = () => {
     const options = query.releaseOptions();
     if (!options.some((option) => option.id === state.release)) {
-      state.release = options[0]?.id || "main";
+      state.release = (options.find((option) => option.group === "Releases") || options[0])?.id;
     }
   };
 
