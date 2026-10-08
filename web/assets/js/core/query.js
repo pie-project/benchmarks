@@ -14,7 +14,7 @@ window.Pie = window.Pie || {};
         title: tag.id,
         date: tag.date ? format.date(tag.date) : "",
         group: GROUPS[tag.kind] || "Earlier runs",
-        runs: store.snapshot(tag.id).filter((row) => !row.stale && row.workload !== store.NO_FIT).length,
+        runs: store.measured(tag.id).filter((row) => !row.stale && row.workload !== store.NO_FIT).length,
       }));
 
   const matchesSearch = (row, columns, query) => {
@@ -38,9 +38,13 @@ window.Pie = window.Pie || {};
     return 0;
   };
 
+  // the results a release lists: its enumerated grid, plus the no-fit marks when the workload filter asks for them
+  const resultRows = (state) =>
+    state.selected("workload").includes(store.NO_FIT) ? store.snapshot(state.release) : store.grid(state.release);
+
   const visibleRows = (state) => {
     const schema = Pie.schema[state.table];
-    const source = state.table === "results" ? store.snapshot(state.release)
+    const source = state.table === "results" ? resultRows(state)
       : state.table === "quality" ? store.qualitySnapshot(state.release)
       : store.rows(state.table);
     const query = state.query.trim().toLowerCase();
@@ -68,6 +72,7 @@ window.Pie = window.Pie || {};
 
   Pie.query = {
     releaseOptions,
+    resultRows,
     visibleRows,
     filterValues,
   };

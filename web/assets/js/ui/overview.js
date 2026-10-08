@@ -103,7 +103,7 @@ window.Pie = window.Pie || {};
     const { hardware, workload } = state.overview;
     const points = [];
     for (const tag of tags.slice(Math.max(upto, 0)).reverse()) {
-      const rows = Pie.store.snapshot(tag.id).filter((row) => row.hardware === hardware && row.workload === workload);
+      const rows = Pie.store.measured(tag.id).filter((row) => row.hardware === hardware && row.workload === workload);
       if (!rows.some((row) => !row.stale)) continue;
       const list = comparisons(groupByModel(rows), models, "decode_tok_s");
       if (list.length) points.push({ tag: tag.id, date: tag.date, r: median(list.map((c) => c.r)), n: list.length });
@@ -461,7 +461,7 @@ window.Pie = window.Pie || {};
 
     // the Macs for the pop-up menu, in catalog order
     macs(state) {
-      return macsIn(Pie.store.snapshot(state.release)).map((mac) => ({ id: mac.id, label: macName(mac.id) }));
+      return macsIn(Pie.store.measured(state.release)).map((mac) => ({ id: mac.id, label: macName(mac.id) }));
     },
 
     workloads() {
@@ -479,7 +479,7 @@ window.Pie = window.Pie || {};
 
     // keep the hardware and workload choice valid for the selected release
     settle(state) {
-      const macs = macsIn(Pie.store.snapshot(state.release));
+      const macs = macsIn(Pie.store.measured(state.release));
       if (!macs.some((mac) => mac.id === state.overview.hardware)) {
         state.overview.hardware = macs.reduce((a, b) => (b.count > a.count ? b : a), macs[0] || { id: null }).id;
       }
@@ -489,7 +489,7 @@ window.Pie = window.Pie || {};
     // returns the number of models shown, for the toolbar subtitle
     render(state) {
       this.settle(state);
-      const all = Pie.store.snapshot(state.release);
+      const all = Pie.store.measured(state.release);
       const { hardware, workload } = state.overview;
       if (!macsIn(all).length) {
         element.innerHTML = `<div class="overview-empty">No results for this release yet.</div>`;

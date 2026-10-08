@@ -274,8 +274,13 @@ def main() -> None:
     hw_rows = [h for h in hardware() if h["id"] in hardware_ids]
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
     for t in order:
-        seen = {(r["hardware"], r["engine"], r["model"]) for r in snaps[t]}
-        macs = {r["hardware"] for r in snaps[t]}  # only the Macs this tag ran on
+        measured = [r for r in snaps[t] if not r.get("empty")]  # the enumerated empty rows are not runs
+        seen = {(r["hardware"], r["engine"], r["model"]) for r in measured}
+        macs = {r["hardware"] for r in measured}  # only the Macs this tag ran on
+        for r in snaps[t]:  # an empty row for a setup too big for its Mac says so
+            gib = misfits.get(r["hardware"], {}).get(r["model"], {}).get(r["engine"])
+            if r.get("empty") and gib is not None:
+                r["needs_gib"] = gib
         for hw, models_ in misfits.items():
             if hw not in macs:
                 continue

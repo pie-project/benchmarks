@@ -33,7 +33,13 @@
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
     } else {
       const rows = query.visibleRows(state);
-      toolbar.render(state, rows.length, store.rows(state.table).length);
+      if (state.table === "results") {
+        // every enumerated setup of the selected release counts, measured or not; the measured ones are said apart
+        toolbar.render(state, rows.length, query.resultRows(state).length);
+        toolbar.elements.subtitle.textContent += ` · ${rows.filter((row) => !row.empty && row.workload !== store.NO_FIT).length} measured`;
+      } else {
+        toolbar.render(state, rows.length, store.rows(state.table).length);
+      }
       filters.render(state);
       table.render(state, rows);
     }

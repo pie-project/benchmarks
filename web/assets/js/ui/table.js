@@ -20,7 +20,11 @@ window.Pie = window.Pie || {};
     return `<th class="${classes}" data-sort="${column.key}" title="${hint}">${column.label}${unit}${headerMeta(column, coverage)}${sort}</th>`;
   };
 
+  // an enumerated setup nothing measured: its Release cell says so quietly, the numbers stay dashes
+  const emptyNote = (row) => (row.needs_gib ? "Doesn't fit" : "No run");
+
   const bodyCell = (column, row) => {
+    if (row.empty && column.key === "release") return `<td class="is-empty is-note">${emptyNote(row)}</td>`;
     const value = row[column.key];
     const classes = [
       column.type === "number" ? "is-numeric" : "",
@@ -37,7 +41,11 @@ window.Pie = window.Pie || {};
 
     let stale = "";
     // highlight the rows measured under the selected tag; filled-in rows from an older run stay plain
-    if ((state.table === "results" || state.table === "quality") && !row.stale) classes.push("is-highlighted");
+    if ((state.table === "results" || state.table === "quality") && !row.stale && !row.empty) classes.push("is-highlighted");
+    if (row.empty) {
+      classes.push("is-unmeasured");
+      stale = ` title="${row.needs_gib ? `Too big for this Mac: needs ${row.needs_gib} GiB` : `Nothing measured for this setup up to ${format.escape(row.release)}`}"`;
+    }
     if (row.stale) {
       classes.push("is-stale");
       const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";

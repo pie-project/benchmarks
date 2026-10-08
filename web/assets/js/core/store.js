@@ -17,13 +17,17 @@ window.Pie = window.Pie || {};
 
   // the rows shown for a tag: every combination, with a stale marker where that tag had no run
   const snapshot = (tag) => snapshots[tag] || [];
+  // the runs among them: the export also lists every setup nothing measured, as an empty row
+  const measured = (tag) => snapshot(tag).filter((row) => !row.empty);
+  // the enumerated grid: every hardware, engine, model and workload, measured or not (no-fit marks are extra)
+  const grid = (tag) => snapshot(tag).filter((row) => row.workload !== NO_FIT);
   // quality scores stack per tag the same way; an export without them falls back to the flat list
   const qualitySnapshot = (tag) => (tables.quality_snapshots ? tables.quality_snapshots[tag] || [] : tables.quality || []);
 
   const countResults = () => {
     for (const [table, key] of Object.entries(resultKeys)) {
       const counts = {};
-      for (const row of snapshot(newestTag)) {
+      for (const row of measured(newestTag)) {
         if (row.workload === NO_FIT) continue;
         counts[row[key]] = (counts[row[key]] || 0) + 1;
       }
@@ -63,6 +67,8 @@ window.Pie = window.Pie || {};
     resultKeys,
 
     snapshot,
+    measured,
+    grid,
     NO_FIT,
     qualitySnapshot,
 
