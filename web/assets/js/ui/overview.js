@@ -247,9 +247,56 @@ window.Pie = window.Pie || {};
   const CELL = 52;
   const cellSvg = (inner) => `<svg class="heat-cell-svg" viewBox="0 0 ${CELL} ${CELL}" width="${CELL}" height="${CELL}" aria-hidden="true">${inner}</svg>`;
 
+  // one ring cell: the ring, a "doesn't fit" mark, or a quiet dot where nothing was measured
+  const heatCell = (byModel, model, engine, metric, list, extra = "") => {
+    const mid = CELL / 2;
+    const c = list.find((entry) => entry.model === model && entry.engine === engine);
+    if (!c) {
+      const needs = misfit(model, engine);
+      if (needs) {
+        return `<div class="heat-cell${extra}" role="cell" data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\n${names().engine(engine)} doesn't fit. ${fitNote(needs, model)}`)}">
+          ${cellSvg(noFitMark(mid, mid))}</div>`;
+      }
+      return `<div class="heat-cell${extra}" role="cell" data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\n${metric.label}: no data`)}">
+        ${cellSvg(`<circle class="heat-empty" cx="${mid}" cy="${mid}" r="2.5"/>`)}</div>`;
+    }
+    const tip = [
+      `${names().model(model)} vs ${names().engine(engine)}`,
+      `${metric.label}: pie ${value(c.pie[metric.key])}, ${names().engine(engine)} ${value(c.other[metric.key])} tok/s`,
+      c.other.stale ? `${names().engine(engine)}: ${when(c.other)}` : "",
+      c.pie.stale ? `pie: ${when(c.pie)}` : "",
+    ].filter(Boolean).join("\n");
+    return `<div class="heat-cell${extra}" role="cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, c.r))}</div>`;
+  };
+
+  // the wide layout: one table, the model names once on the left, Decode and Prefill side by side
+  const wideTable = (byModel, rowsShown, engines) => {
+    const lists = METRICS.map((metric) => comparisons(byModel, rowsShown, metric.key));
+    const n = engines.length;
+    const groups = `<div class="heat-row heat-group-row" role="row"><div></div>${METRICS.map((metric, g) =>
+      `<div class="heat-group-head${g ? " is-group-start" : ""}" role="columnheader" style="grid-column: span ${n}">${metric.label}</div>`).join("")}</div>`;
+    const head = `<div class="heat-row heat-head-row" role="row"><div role="columnheader"></div>${METRICS.map((_, g) =>
+      engines.map((engine, j) => `<div class="heat-head${g && !j ? " is-group-start" : ""}" role="columnheader">${esc(names().engine(engine))}</div>`).join("")).join("")}</div>`;
+    const rows = rowsShown.map((model) => {
+      const label = `<div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>`;
+      const pieNeeds = misfit(model, Pie.engines.primary);
+      if (pieNeeds && !(byModel[model] || []).some(isPie)) {
+        return `<div class="heat-row" role="row">${label}<div class="heat-cell heat-row-nofit" role="cell"
+            data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`)}">
+            <svg class="heat-cell-svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">${noFitMark(12, 12)}</svg>
+            <span class="nofit-text">Doesn't fit</span>
+          </div></div>`;
+      }
+      const cells = METRICS.map((metric, g) =>
+        engines.map((engine, j) => heatCell(byModel, model, engine, metric, lists[g], g && !j ? " is-group-start" : "")).join("")).join("");
+      return `<div class="heat-row" role="row">${label}${cells}</div>`;
+    }).join("");
+    return `<div class="heat-table is-wide" role="table" aria-label="pie against each engine, decode and prefill"
+      style="--engines: ${n * METRICS.length}">${groups}${head}${rows}</div>`;
+  };
+
   const heatTable = (byModel, rowsShown, engines, metric) => {
     const list = comparisons(byModel, rowsShown, metric.key);
-    const mid = CELL / 2;
     const head = `<div class="heat-row heat-head-row" role="row"><div role="columnheader"></div>${engines.map((engine) =>
       `<div class="heat-head" role="columnheader">${esc(names().engine(engine))}</div>`).join("")}</div>`;
     const rows = rowsShown.map((model) => {
@@ -263,25 +310,7 @@ window.Pie = window.Pie || {};
             <span class="nofit-text">Doesn't fit</span>
           </div></div>`;
       }
-      const cells = engines.map((engine) => {
-        const c = list.find((entry) => entry.model === model && entry.engine === engine);
-        if (!c) {
-          const needs = misfit(model, engine);
-          if (needs) {
-            return `<div class="heat-cell" role="cell" data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\n${names().engine(engine)} doesn't fit. ${fitNote(needs, model)}`)}">
-              ${cellSvg(noFitMark(mid, mid))}</div>`;
-          }
-          return `<div class="heat-cell" role="cell" data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\nNo data`)}">
-            ${cellSvg(`<circle class="heat-empty" cx="${mid}" cy="${mid}" r="2.5"/>`)}</div>`;
-        }
-        const tip = [
-          `${names().model(model)} vs ${names().engine(engine)}`,
-          `${metric.label}: pie ${value(c.pie[metric.key])}, ${names().engine(engine)} ${value(c.other[metric.key])} tok/s`,
-          c.other.stale ? `${names().engine(engine)}: ${when(c.other)}` : "",
-          c.pie.stale ? `pie: ${when(c.pie)}` : "",
-        ].filter(Boolean).join("\n");
-        return `<div class="heat-cell" role="cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, c.r))}</div>`;
-      }).join("");
+      const cells = engines.map((engine) => heatCell(byModel, model, engine, metric, list)).join("");
       return `<div class="heat-row" role="row">${label}${cells}</div>`;
     }).join("");
     return `
@@ -311,7 +340,8 @@ window.Pie = window.Pie || {};
             </linearGradient>
           </defs>
         </svg>
-        ${METRICS.map((metric) => heatTable(byModel, rowsShown, engines, metric)).join("")}
+        <div class="heat-wide">${wideTable(byModel, rowsShown, engines)}</div>
+        <div class="heat-stacked">${METRICS.map((metric) => heatTable(byModel, rowsShown, engines, metric)).join("")}</div>
       </div>`);
   };
 
