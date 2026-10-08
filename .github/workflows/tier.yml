@@ -26,7 +26,7 @@ on:
 
 jobs:
   expand:
-    runs-on: [self-hosted, macos, m5-max-64g]
+    runs-on: [self-hosted, macos]  # any free Mac: it only needs the tailnet, not a particular machine
     outputs:
       matrix: ${{ steps.jobs.outputs.matrix }}
       kill_minutes: ${{ steps.jobs.outputs.kill_minutes }}
@@ -227,7 +227,7 @@ jobs:
   collect:
     needs: [expand, bench]
     if: always() && needs.expand.result == 'success'
-    runs-on: [self-hosted, macos, m5-max-64g]
+    runs-on: [self-hosted, macos]  # any free Mac: it only needs the tailnet, not a particular machine
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
