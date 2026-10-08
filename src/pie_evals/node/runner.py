@@ -322,6 +322,8 @@ class NodeRunner:
         fingerprint = prov.hardware_fingerprint()
         records: list[Record] = []
         groups = split_heavy_processes(job.cells_by_process())
+        # pie is what we measure: its processes go first, so a job that runs long never drops pie for a competitor
+        groups = dict(sorted(groups.items(), key=lambda kv: str(kv[0][0]) != "pie"))
         self.log(f"{len(groups)} engine processes to run")
         self._start_prefetch([cells[0].artifact for cells in groups.values()])
         for gkey, cells in groups.items():
