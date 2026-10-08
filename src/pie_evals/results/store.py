@@ -73,6 +73,9 @@ class BaseStore:
     def table(self, tier: Tier | None = None) -> pa.Table:
         raise NotImplementedError
 
+    def describe(self) -> str:
+        return str(self.root) if hasattr(self, "root") else "postgres"
+
     def quality(self) -> list[dict]:
         """Every quality summary, without its samples."""
         raise NotImplementedError
@@ -182,6 +185,9 @@ class PgStore(BaseStore):
     def __init__(self, dsn: str):
         self.dsn = dsn
         self._ready = False
+
+    def describe(self) -> str:
+        return "postgres " + self.dsn.split("@")[-1]
 
     def connect(self):
         import psycopg

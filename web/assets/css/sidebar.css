@@ -141,12 +141,3 @@
   }
 }
 
-.sidebar-classic {
-  margin-top: auto;
-  padding: 8px 10px;
-  font-size: 12px;
-  color: var(--color-label-secondary);
-  text-decoration: none;
-  border-radius: var(--radius-control);
-}
-.sidebar-classic:hover { background: var(--color-hover); color: var(--color-label); }
