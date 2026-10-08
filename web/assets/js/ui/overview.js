@@ -117,9 +117,9 @@ window.Pie = window.Pie || {};
     return points;
   };
 
-  // a small line of those points: a dot per tag, its value above, the tag below
+  // a line of those points, as tall as the ring: a dot per tag, its value above, the tag below
   const trend = (points) => {
-    const height = 112, top = 30, bottom = 78;
+    const height = 176, top = 36, bottom = 140;
     const logs = points.map((p) => Math.log(p.r));
     const lo = Math.min(0, ...logs), hi = Math.max(0, ...logs);
     const pad = (hi - lo) * 0.1 || 0.05;
@@ -132,10 +132,10 @@ window.Pie = window.Pie || {};
       const tip = `${p.tag}${p.date ? `, ${Pie.format.date(p.date)}` : ""}\nMedian decode ${delta(p.r)} over ${p.n} comparisons`;
       const cy = y(p.r).toFixed(1);
       return `<g data-tip="${esc(tip)}">
-          <circle class="trend-hit" cx="${x(i)}" cy="${cy}" r="14"/>
-          <circle class="trend-dot" cx="${x(i)}" cy="${cy}" r="5"/>
-          <text class="trend-value" x="${x(i)}" y="${(y(p.r) - 13).toFixed(1)}" text-anchor="middle">${delta(p.r)}</text>
-          <text class="trend-tag" x="${x(i)}" y="${height - 4}" text-anchor="middle">${esc(p.tag)}</text>
+          <circle class="trend-hit" cx="${x(i)}" cy="${cy}" r="16"/>
+          <circle class="trend-dot" cx="${x(i)}" cy="${cy}" r="6"/>
+          <text class="trend-value" x="${x(i)}" y="${(y(p.r) - 16).toFixed(1)}" text-anchor="middle">${delta(p.r)}</text>
+          <text class="trend-tag" x="${x(i)}" y="${height - 6}" text-anchor="middle">${esc(p.tag)}</text>
         </g>`;
     }).join("");
     return `
@@ -145,8 +145,12 @@ window.Pie = window.Pie || {};
       </svg>`;
   };
 
-  // 1. Where we stand: an activity ring of wins, and beside it the median advantage across releases
-  const standing = (decode, points) => {
+  // 2. Across releases: its own block under the ring, only once two tags have data
+  const releases = (points) =>
+    points.length >= 2 ? section("Across releases", "Median decode advantage", `<div class="trend-block">${trend(points)}</div>`) : "";
+
+  // 1. Where we stand: an activity ring of wins, and beside it the median decode and prefill advantage
+  const standing = (decode, prefill) => {
     const wins = decode.filter((c) => c.r > 1);
     const share = decode.length ? wins.length / decode.length : 0;
     const size = 168, stroke = 20, radius = (size - stroke) / 2, length = 2 * Math.PI * radius;
@@ -170,19 +174,20 @@ window.Pie = window.Pie || {};
         </div>
       </div>`;
 
-    const mid = median(decode.map((entry) => entry.r));
-    const side = `
-      <div class="stand-side">
-        <div class="stand-label">Median decode</div>
-        <div class="stand-value ${tone(mid)}">${delta(mid)}</div>
-        ${points.length >= 2 ? `<div class="stand-trend">${trend(points)}</div>` : ""}
-      </div>`;
+    const figure = (label, list) => {
+      const mid = median(list.map((entry) => entry.r));
+      return `
+        <div class="stand-metric">
+          <div class="stand-label">${label}</div>
+          <div class="stand-value ${mid === null ? "is-empty" : tone(mid)}">${mid === null ? "—" : delta(mid)}</div>
+        </div>`;
+    };
 
-    return section("Where we stand", "One model against one engine, decode",
-      `<div class="standing${points.length >= 2 ? " has-trend" : ""}">${ring}${side}</div>`);
+    return section("Where we stand", "One model against one engine",
+      `<div class="standing">${ring}<div class="stand-side">${figure("Median decode", decode)}${figure("Median prefill", prefill)}</div></div>`);
   };
 
-  // 2. Against each engine: models down, engines across, a small activity ring per pairing.
+  // 3. Against each engine: models down, engines across, a small activity ring per pairing.
   // The arc closes at 2× (or ½×): clockwise and green where pie leads, counter-clockwise and red where it trails.
   const PARITY = 0.03;
   const miniRing = (cx, cy, r) => {
@@ -276,7 +281,7 @@ window.Pie = window.Pie || {};
       </div>`);
   };
 
-  // 3. By model: one card per model, a lollipop per engine
+  // 4. By model: one card per model, a lollipop per engine
   const figure = (model, rows) => {
     const pie = rows.find((row) => isPie(row) && row.decode_tok_s);
     const others = rows.filter((row) => !isPie(row) && row.decode_tok_s);
@@ -410,7 +415,7 @@ window.Pie = window.Pie || {};
             ${popup("overview-workload", "Workload", workloadLabel)}
           </div>
           ${decode.length
-            ? standing(decode, releasePoints(state, shown)) + heatmap(byModel, shown, metric)
+            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + releases(releasePoints(state, shown)) + heatmap(byModel, shown, metric)
             : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
           ${shown.length ? section("By model", "", `<div class="model-grid">${shown.map((id) => card(id, byModel[id] || [])).join("")}</div>`) : ""}
           ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}

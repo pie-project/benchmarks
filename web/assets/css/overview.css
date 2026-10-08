@@ -207,8 +207,9 @@
 }
 
 .stand-side {
-  flex: 0 1 380px;
-  min-width: 0;
+  display: grid;
+  flex: none;
+  gap: 22px;
 }
 
 .stand-label {
@@ -239,8 +240,14 @@
   color: var(--color-label-tertiary);
 }
 
-.stand-trend {
-  margin-top: 8px;
+.stand-value.is-empty {
+  color: var(--color-label-tertiary);
+}
+
+/* the release trend: its own block, as tall as the ring, centred */
+.trend-block {
+  max-width: 640px;
+  margin: 0 auto;
 }
 
 .figure {
@@ -536,21 +543,6 @@
   text-align: center;
 }
 
-@media (max-width: 700px) {
-  .standing.has-trend {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 28px;
-  }
-
-  .standing.has-trend .ring {
-    align-self: center;
-  }
-
-  .standing.has-trend .stand-side {
-    flex: none;
-  }
-}
 
 @media (max-width: 480px) {
   .standing {
