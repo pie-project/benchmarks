@@ -10,6 +10,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pie_evals.node.build import python_dir
+
 from .engines import ENGINES, engine_for, llamacpp_generate, mlxlm_generate, splash_generate
 from .tasks import TASKS, wilson
 
@@ -63,7 +65,7 @@ def _pie_generate(art, snapshot: Path, pie_root: Path, prompts: list[str], max_t
     commit = subprocess.run(["git", "-C", str(pie_root), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
     model = ensure_artifact(art, snapshot, pie_root / "target/release/pie", commit, log=log) if needs_import(art) else snapshot
     script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "quality_pie.py"
-    env = {**os.environ, "PYTHONPATH": ":".join([str(pie_root / "scripts/bench"), str(pie_root / "python/client/src"), str(pie_root / "python/server/python")])}
+    env = {**os.environ, "PYTHONPATH": ":".join([str(pie_root / "scripts/bench"), str(python_dir(pie_root) / "client/src"), str(python_dir(pie_root) / "server/python")])}
     tok = _tokenizer(snapshot)
     token_ids = [tok.encode(r, add_special_tokens=False) for r in _render(snapshot, prompts)]
     with tempfile.TemporaryDirectory() as tmp:
