@@ -24,7 +24,7 @@ window.Pie = window.Pie || {};
         ${tile(name)}
         <div>
           <h2 id="method-${name}">${title}</h2>
-          <p class="method-summary">${summary}</p>
+          ${summary ? `<p class="method-summary">${summary}</p>` : ""}
         </div>
       </header>
       <div class="method-pane-body">${body}</div>
@@ -53,7 +53,6 @@ window.Pie = window.Pie || {};
           ["Cold cache", "A request that reuses cached prompt work would look faster, so every request has its own prefix and the engine's prompt cache is off. Each row records the cached-token count, and the row is marked unverified if that count is missing."],
           ["Prompt tokens", "Prompt tokens are what the engine actually processed, so engines that tokenize slightly differently are still compared by the work they did."],
         ]),
-        p("Prefill rows measured before the cold-cache setup were built with a different definition and are being re-measured.", "method-footnote"),
       ].join(""))}
 
     ${pane("ttft", "Time to first token",
@@ -76,9 +75,8 @@ window.Pie = window.Pie || {};
       ].join(""))}
 
     ${pane("fairness", "Fairness",
-      "Every engine gets the same work, measured the same way.",
+      null,
       [
-        formula("same prompts · same settings · same client and timer"),
         rows([
           ["Same prompts", "The prompts for a workload are generated once with a fixed seed and stored with a checksum; every engine receives the same bytes."],
           ["Same settings", "The same max output tokens, temperature 0, concurrency and workload definition for every engine."],
