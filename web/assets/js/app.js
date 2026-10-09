@@ -45,6 +45,7 @@
       table.render(state, rows);
     }
     writeHash();
+    saveView();
   };
 
   const navigate = (tableName, initialFilters = {}) => {
@@ -139,6 +140,31 @@
     overview.onOpenWorkload((anchor) => popover.open(anchor, popover.WORKLOAD, state));
   };
 
+  // the view a viewer left (page, release, Mac, workload, hide choice) is kept per browser; the address still wins
+  const VIEW_KEY = "pieView";
+  const restoreView = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || "null");
+      if (!saved) return;
+      if (saved.table && Pie.schema[saved.table]) state.table = saved.table;
+      if (saved.release) state.release = saved.release;
+      if (saved.overview) Object.assign(state.overview, saved.overview);
+      state.hideEmpty = Boolean(saved.hideEmpty);
+    } catch {
+      // storage refused or damaged: start from the defaults
+    }
+  };
+  const saveView = () => {
+    try {
+      localStorage.setItem(VIEW_KEY, JSON.stringify({
+        table: state.table, release: state.release, overview: { ...state.overview }, hideEmpty: state.hideEmpty,
+      }));
+    } catch {
+      // private windows can refuse storage
+    }
+  };
+
+  restoreView();
   readHash();
   bindToolbar();
   bindOverview();
