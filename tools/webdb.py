@@ -17,6 +17,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+from pie_evals.quality.parity import rows as parity_rows
 from pie_evals.results.store import Store
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -287,6 +288,19 @@ def quality_by_tag(store, a2m):
     return tagged, meta
 
 
+def parity_by_tag(store, a2m) -> dict[str, list[dict]]:
+    """Per tag, the engine parity of its quality scores: one row per model and task, every engine's cell against pie."""
+    arts = {a["id"]: a for a in load("models")["artifacts"]}
+    by_tag: dict[str, list[dict]] = {}
+    for q in store.quality(samples=True):
+        t = q.get("tag") or LEGACY
+        art = arts.get(q["artifact"], {})  # older summaries carry no scheme or checkpoint: the matrix has them
+        row = {**q, "model": a2m.get(q["model"], q["model"]), "tag": t,
+               "scheme": q.get("scheme") or art.get("scheme"), "checkpoint": q.get("checkpoint") or art.get("base_model")}
+        by_tag.setdefault(t, []).append(row)
+    return {t: parity_rows(rs) for t, rs in by_tag.items()}
+
+
 def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, when) -> dict[str, list[dict]]:
     """For each tag, one row per key: the tag's own, else the newest tag not later than it (marked stale); never a later tag."""
     snaps: dict[str, list[dict]] = {}
@@ -387,7 +401,9 @@ def main() -> None:
         snaps[t] = filled
     qkeys = sorted({k for rows in scores.values() for k in rows})
     quality = stack(order, scores, qkeys, lambda item, key, src: {k: v for k, v in item.items() if k != "_at"}, lambda item: item["date"])
-    db = {"tags": tags, "snapshots": snaps, "quality_snapshots": quality,
+    # parity is per tag and never stacked: a release's table holds only the scores that release measured
+    parity = parity_by_tag(store, a2m)
+    db = {"tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
           "no_fit": misfits,
           "hardware": hw_rows,
           "engines": mac_engines, "models": [m for m in models if m["id"] in model_ids],
@@ -395,6 +411,7 @@ def main() -> None:
     (WEB / "data").mkdir(parents=True, exist_ok=True)
     (WEB / "data" / "db.js").write_text("const DB = " + json.dumps(db, indent=2, default=str) + ";\n")
     print({k: len(v) for k, v in db.items()}, {t["id"]: (len(snaps[t["id"]]), len(quality[t["id"]])) for t in tags})
+    print({t: {f: sum(1 for r in parity[t] if r["flag"] == f) for f in ("ok", "mismatch", "no_pie")} for t in parity})
 
 
 if __name__ == "__main__":
