@@ -122,14 +122,29 @@ def fair_prefill_tok_s(
     return float(statistics.median(rates))
 
 
-def prefill_consistency(prefill_tok_s: float | None, ttft_ms_p50: float | None, prompt_tokens: float | None) -> float | None:
-    """``prefill_tok_s * ttft_s / prompt_tokens``; 1.0 means the three agree."""
-    if not prefill_tok_s or not ttft_ms_p50 or not prompt_tokens:
+def prefill_consistency(
+    prefill_tok_s: float | None,
+    ttft_ms_p50: float | None,
+    prompt_tokens_total: float | None,
+    requests: float | None,
+) -> float | None:
+    """``prefill_tok_s * ttft_s / per_request_prompt``; 1.0 means the three agree.
+
+    ``prompt_tokens_total`` is the sum over the measured requests (the row's
+    ``prompt_tokens``), so the per-request prompt is the total over ``requests``.
+    """
+    if not prefill_tok_s or not ttft_ms_p50 or not prompt_tokens_total or not requests:
         return None
-    return prefill_tok_s * (ttft_ms_p50 / 1000.0) / float(prompt_tokens)
+    per_request = float(prompt_tokens_total) / float(requests)
+    return prefill_tok_s * (ttft_ms_p50 / 1000.0) / per_request
 
 
-def prefill_mismatch(prefill_tok_s: float | None, ttft_ms_p50: float | None, prompt_tokens: float | None) -> bool:
-    """True when prefill x TTFT differs from the prompt length by more than 15%."""
-    ratio = prefill_consistency(prefill_tok_s, ttft_ms_p50, prompt_tokens)
+def prefill_mismatch(
+    prefill_tok_s: float | None,
+    ttft_ms_p50: float | None,
+    prompt_tokens_total: float | None,
+    requests: float | None,
+) -> bool:
+    """True when prefill x TTFT differs from the per-request prompt length by more than 15%."""
+    ratio = prefill_consistency(prefill_tok_s, ttft_ms_p50, prompt_tokens_total, requests)
     return ratio is not None and abs(ratio - 1.0) > PREFILL_TOLERANCE

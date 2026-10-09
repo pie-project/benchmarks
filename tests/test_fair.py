@@ -71,25 +71,31 @@ def test_cache_verdict_cold_when_all_zero():
 # ---- consistency check -----------------------------------------------------
 
 def test_consistent_row_is_not_flagged():
-    # 3234 tokens at 41 ms TTFT is 78,927 tok/s; a row claiming that is consistent
-    assert fair.prefill_mismatch(78927.0, 41.0, 3234) is False
+    # 539 tokens per request at 41 ms TTFT is 13,100 tok/s; the row agrees with itself
+    assert fair.prefill_mismatch(13100.0, 41.0, 3234, 6) is False
 
 
-def test_stored_pie_row_is_flagged():
-    # the stored m5-max-128g qwen3.6 ob-512-200 row: 13,096 tok/s with 41 ms TTFT
-    ratio = fair.prefill_consistency(13096.43, 41.156, 3234)
-    assert ratio == pytest.approx(0.1667, abs=1e-3)
-    assert fair.prefill_mismatch(13096.43, 41.156, 3234) is True
+def test_stored_pie_row_agrees_when_prompt_is_per_request():
+    # m5-max-128g qwen3.6 ob-512-200: the row's prompt_tokens (3234) is the total over 6 requests
+    ratio = fair.prefill_consistency(13096.43, 41.156, 3234, 6)
+    assert ratio == pytest.approx(1.0, abs=1e-3)
+    assert fair.prefill_mismatch(13096.43, 41.156, 3234, 6) is False
+
+
+def test_total_prompt_read_as_per_request_is_flagged():
+    # the same row compared against the total instead of the per-request prompt is off by the request count
+    assert fair.prefill_mismatch(13096.43, 41.156, 3234, 1) is True
 
 
 def test_tolerance_boundary():
-    assert fair.prefill_mismatch(1.15 * 1000, 1000.0, 1000) is False  # ratio 1.15 exactly
-    assert fair.prefill_mismatch(1.16 * 1000, 1000.0, 1000) is True
+    assert fair.prefill_mismatch(1.15 * 1000, 1000.0, 1000, 1) is False  # ratio 1.15 exactly
+    assert fair.prefill_mismatch(1.16 * 1000, 1000.0, 1000, 1) is True
 
 
 def test_consistency_none_without_inputs():
-    assert fair.prefill_mismatch(None, 41.0, 3234) is False
-    assert fair.prefill_consistency(100.0, None, 3234) is None
+    assert fair.prefill_mismatch(None, 41.0, 3234, 6) is False
+    assert fair.prefill_consistency(100.0, None, 3234, 6) is None
+    assert fair.prefill_consistency(100.0, 41.0, 3234, None) is None
 
 
 # ---- cold prompts ----------------------------------------------------------
@@ -210,3 +216,21 @@ def test_cold_common_args_refuses_adapter_without_prompts_file(tmp_path):
     with pytest.raises(EngineLaunchError) as exc:
         eng.cold_common_args(w, [], tmp_path)
     assert exc.value.error_class == ErrorClass.INCOMPATIBLE
+
+
+def test_cold_prompt_file_hash_is_recorded_and_decodable(tmp_path, monkeypatch):
+    import hashlib
+
+    w = _workload({"prefill": 128, "decode": 64, "requests": 6, "warmup": 1, "cold_cache": True})
+    eng = _Fake()
+    eng.cold_common_args(w, [], tmp_path)
+    digest = hashlib.sha256((tmp_path / "cold_prompts.json").read_bytes()).hexdigest()
+    value = float(int(digest[:12], 16))
+    assert int(value) == int(digest[:12], 16)
+    assert format(int(value), "012x") == digest[:12]
+
+
+def test_ollama_adapter_reads_prompts_file():
+    from pie_evals.node.engines.ollama import OllamaEngine
+
+    assert OllamaEngine.supports_prompts_file is True
