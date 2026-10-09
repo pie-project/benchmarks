@@ -61,6 +61,11 @@ def _pip_install(py: Path, args: list[str]) -> None:
         subprocess.run([str(py), "-m", "pip", "install", "-q", *args], check=True)
 
 
+def python_dir(pie_root: Path) -> Path:
+    """pie's python packages: `packages/python` since pie #838, `python` before."""
+    return pie_root / "packages/python" if (pie_root / "packages/python").is_dir() else pie_root / "python"
+
+
 def cache_key(commit: str, features: list[str]) -> str:
     return f"{commit[:12]}-{'+'.join(features) or 'none'}"
 
@@ -149,7 +154,7 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
         else:
             _pip_install(py, ["maturin"])
             maturin = [str(py), "-m", "maturin"]
-        subprocess.run([*maturin, "build", "--release", "-o", str(out), "--features", feats, "-i", str(py)], cwd=pie_root / "python/server", env=env, check=True, timeout=timeout_s)
+        subprocess.run([*maturin, "build", "--release", "-o", str(out), "--features", feats, "-i", str(py)], cwd=python_dir(pie_root) / "server", env=env, check=True, timeout=timeout_s)
     # guest programs: the whole examples/ workspace (every inferlet the matrix can name), built
     # in-tree because bench_inferlet_paths walks up to examples/target; all .wasm are cached
     log("build: every inferlet in examples/ (wasm32-wasip2)")
@@ -189,7 +194,7 @@ def restore(pie_root: Path, commit: str, features: list[str], *, cache_root: Pat
         # pie_bench's staleness guard — and a fresh clone's sources are newer than a cached .so.
         so = subprocess.run([str(py), "-c", "import pie._engine as e; print(e.__file__)"], capture_output=True, text=True).stdout.strip()
         if so:
-            dst = pie_root / "python/server/python/pie" / Path(so).name
+            dst = python_dir(pie_root) / "server/python/pie" / Path(so).name
             shutil.copy(so, dst)
             os.utime(dst, None)
     if set_env:
