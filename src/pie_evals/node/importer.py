@@ -43,6 +43,12 @@ def find_zt(d: Path) -> Path | None:
     return zts[-1] if zts else None
 
 
+def row_flag(pie_bin: Path) -> str:
+    """pie #855 renamed `pie model import --sku` to `--deployment`; older commits still take `--sku`."""
+    help_ = subprocess.run([str(pie_bin), "model", "import", "--help"], capture_output=True, text=True).stdout
+    return "--deployment" if "--deployment" in help_ else "--sku"
+
+
 def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commit: str, *, root: Path | None = None, timeout_s: int = 3600, log=print) -> Path:
     """Return the .zt for ``artifact`` at ``commit``, importing if absent.
     Concurrent pods: import into a private temp dir, then rename into place."""
@@ -55,7 +61,7 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
     source = snapshot / artifact.gguf_file if artifact.gguf_file else snapshot  # a GGUF repo is one file plus the base model's config.json
     argv = [str(pie_bin), "model", "import", str(source), "--out", str(tmp), "--keep-source"]
     if artifact.pie_sku:
-        argv += ["--sku", artifact.pie_sku]
+        argv += [row_flag(pie_bin), artifact.pie_sku]
     env = {**os.environ}
     log(f"import: {' '.join(argv)}")
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s, env=env)
