@@ -23,16 +23,18 @@
   const render = () => {
     ensureRelease();
     const isOverview = state.table === "overview";
-    filterBar.hidden = isOverview;
-    table.container.hidden = isOverview;
+    const isMethod = state.table === "method";
+    filterBar.hidden = isOverview || isMethod;
+    table.container.hidden = isOverview || isMethod;
     overview.element.hidden = !isOverview;
+    Pie.method.render(state);
     parity.render(state);
     sidebar.render(state);
     if (isOverview) {
       const models = overview.render(state);
       toolbar.render(state, 0, 0);
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
-    } else {
+    } else if (!isMethod) {
       const rows = query.visibleRows(state);
       if (state.table === "results") {
         // every enumerated setup of the selected release counts, measured or not; the measured ones are said apart
