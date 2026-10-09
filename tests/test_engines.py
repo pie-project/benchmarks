@@ -959,6 +959,83 @@ def test_openai_bench_builds_a_completion_or_a_chat_request():
     assert body["model"] == "m" and "prompt" not in body
 
 
+def _openai_bench():
+    sys.path.insert(0, str(BENCHES))
+    sys.path.insert(0, str(OPENAI_SCRIPT.parent))
+    try:
+        import openai_bench
+    finally:
+        sys.path.remove(str(BENCHES))
+        sys.path.remove(str(OPENAI_SCRIPT.parent))
+    return openai_bench
+
+
+def test_openai_bench_keeps_the_whole_batch_in_flight_on_a_small_mac(monkeypatch):
+    """c32 means 32 requests at once, not asyncio's default min(32, cpus + 4)."""
+    import asyncio
+    import threading
+
+    ob = _openai_bench()
+    monkeypatch.setattr(os, "cpu_count", lambda: 4)
+    if hasattr(os, "process_cpu_count"):
+        monkeypatch.setattr(os, "process_cpu_count", lambda: 4)
+    monkeypatch.setattr(ob, "make_prompts", lambda args, n: ["p"] * n)
+    monkeypatch.setattr(ob, "hf_chat_prompts_and_counts", lambda model, system, raw, think: (raw, [1] * len(raw)))
+    monkeypatch.setattr(ob, "summarize", lambda **kw: kw)
+    together = threading.Barrier(32)
+
+    def run_one(args, endpoint, prompt, count, max_tokens, server, retries=None):
+        together.wait(timeout=10)  # breaks unless all 32 run at the same time
+        return ob.RequestResult(True, 0.0, 1, 1)
+
+    monkeypatch.setattr(ob, "run_one", run_one)
+    args = ob.build_parser().parse_args([
+        "tput", "--model", "X", "--url", "http://h", "--prompt", "p", "--max-tokens", "4", "--no-ignore-eos",
+        "--warmup", "0", "--num-requests", "64", "--concurrency", "32", "--json-out", "f", "--no-flush-cache",
+    ])
+    summary, results = asyncio.run(ob.run(args))
+    assert all(r.ok for r in results) and summary["config"]["client_in_flight"] == 32
+
+
+def test_openai_bench_resends_only_a_request_the_server_never_read(monkeypatch):
+    import errno
+    import urllib.error
+
+    ob = _openai_bench()
+    monkeypatch.setattr(ob.time, "sleep", lambda s: None)
+    calls = []
+
+    def flaky(url, payload, timeout, on_chunk):
+        calls.append(1)
+        if len(calls) <= 2:
+            raise urllib.error.URLError(ConnectionResetError(errno.ECONNRESET, "Connection reset by peer"))
+
+    monkeypatch.setattr(ob, "post_stream", flaky)
+    retries: list[int] = []
+    ob.post_stream_retrying("http://h", {}, 1.0, None, retries)
+    assert len(calls) == 3 and len(retries) == 2
+
+    def reset_mid_stream(url, payload, timeout, on_chunk):  # the server had the request
+        calls.append(1)
+        raise ConnectionResetError(errno.ECONNRESET, "Connection reset by peer")
+
+    calls.clear()
+    monkeypatch.setattr(ob, "post_stream", reset_mid_stream)
+    with pytest.raises(ConnectionResetError):
+        ob.post_stream_retrying("http://h", {}, 1.0, None, retries)
+    assert len(calls) == 1
+
+    def always_reset(url, payload, timeout, on_chunk):
+        calls.append(1)
+        raise urllib.error.URLError(ConnectionResetError(errno.ECONNRESET, "Connection reset by peer"))
+
+    calls.clear()
+    monkeypatch.setattr(ob, "post_stream", always_reset)
+    with pytest.raises(urllib.error.URLError):
+        ob.post_stream_retrying("http://h", {}, 1.0, None, [])
+    assert len(calls) == ob.CONNECT_TRIES
+
+
 def test_argparse_flags_of_the_ollama_script():
     got = argparse_flags(OLLAMA_SCRIPT)
     assert {"--model", "--max-tokens", "--concurrency", "--num-requests", "--requests", "--dump-all-token-ids"} <= got
