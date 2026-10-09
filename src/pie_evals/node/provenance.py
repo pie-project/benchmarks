@@ -161,6 +161,11 @@ def versions() -> dict[str, Any]:
     return v
 
 
+def harness_commit(path: str | Path) -> str | None:
+    """The pie-evals commit; ``PIE_EVALS_HARNESS_COMMIT`` when the tree was shipped without .git (the TPU VM)."""
+    return git_commit(path) or os.environ.get("PIE_EVALS_HARNESS_COMMIT") or None
+
+
 def git_commit(path: str | Path) -> str | None:
     p = Path(path)
     if not p.exists():
@@ -257,7 +262,7 @@ def build_provenance(
     v = versions()
     hroot = Path(harness_path) if harness_path else harness_root()
     return Provenance(
-        harness_commit=git_commit(hroot) if hroot else None,
+        harness_commit=harness_commit(hroot) if hroot else os.environ.get("PIE_EVALS_HARNESS_COMMIT"),
         pie_commit=git_commit(pie_root),
         pie_build_features=list(pie_build_features or []),
         engine_version=engine_version,

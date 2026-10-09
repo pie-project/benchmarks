@@ -93,8 +93,8 @@ jobs:
       - name: copy the harness and the job
         env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}" }
         run: |
-          tar czf /tmp/pie-evals.tgz --exclude=.git --exclude=.venv .
-          ( umask 077; : > /tmp/vm.env; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" > /tmp/vm.env || true )
+          tar czf /tmp/pie-evals.tgz --exclude=.git --exclude=.venv .  # no .git: provenance reads PIE_EVALS_HARNESS_COMMIT
+          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true )
           # the first ssh pushes the key; retried while the VM's sshd and the key settle
           for i in 1 2 3 4 5; do
             gcloud compute tpus tpu-vm scp /tmp/pie-evals.tgz /tmp/vm.env "$TPU_NAME": --project "$GCP_PROJECT" --zone "$TPU_ZONE" \
