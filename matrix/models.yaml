@@ -23,6 +23,7 @@ artifacts:
     family: qwen3_5
     scheme: bf16
     expected_gib: 1.6
+    pie_sku: qwen35-d0.8b-bf16-kv-bf16   # import picks the u4g64 twin otherwise
     platforms: [tpu-v6e-1]
     tiers: [nightly]
 
