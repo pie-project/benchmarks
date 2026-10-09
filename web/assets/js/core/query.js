@@ -2,7 +2,7 @@ window.Pie = window.Pie || {};
 
 (() => {
   const { store, format, engines } = Pie;
-  const GROUPS = { release: "Releases", manual: "Manual runs", legacy: "Earlier runs" };
+  const GROUPS = { release: "Releases", manual: "Manual runs" };
 
   // one option per tag that has rows, newest first, grouped for the picker
   const releaseOptions = () =>

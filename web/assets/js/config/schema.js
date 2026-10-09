@@ -70,6 +70,13 @@ window.Pie = window.Pie || {};
       ],
     },
 
+    method: {
+      label: "Method",
+      section: "measurements",
+      view: "method",  // not a table: how each number is measured and kept fair
+      filters: [],
+      columns: [],
+    },
     hardware: {
       label: "Hardware",
       section: "catalog",
