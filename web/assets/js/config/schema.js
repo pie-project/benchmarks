@@ -125,6 +125,7 @@ window.Pie = window.Pie || {};
         number("params_b", "Params", "Shape", "B", 1),
         number("active_b", "Active", "Shape", "B", 1),
         number("size_gib", "4-bit size", "Shape", "GiB", 1),
+        number("needs_gib", "Needs", "Shape", "GiB", 1),
         number("context", "Context", "Shape", "tok", 0, { planned: true }),
         text("license", "License", "Identity", { planned: true }),
         text("schemes", "Quantizations", "Weights", { code: true }),

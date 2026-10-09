@@ -67,15 +67,19 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
             row["schemes"].add(a["scheme"])
     for row in by_model.values():
         name = row["name"]
-        sizes = re.findall(r"(\d+(?:\.\d+)?)B", name)
-        active = re.search(r"A(\d+(?:\.\d+)?)B", name)
+        sizes = re.findall(r"(\d+(?:\.\d+)?)b", name, re.I)
+        active = re.search(r"a(\d+(?:\.\d+)?)b", name, re.I)
         row["params_b"] = float(sizes[0]) if sizes else None
         row["active_b"] = float(active.group(1)) if active else row["params_b"]
         row["architecture"] = "MoE" if active or "moe" in (row["family"] or "") else "dense"
         # one definition per model today, every expert resident: no SSD streaming. A streaming twin would fit smaller Macs.
         row["ssd_streaming"] = "Without" if row["architecture"] == "MoE" else "n/a"
         row["schemes"] = ", ".join(sorted(row["schemes"]))
-        row["size_gib"] = None
+        # weights only, from the parameter count and the bits each weight takes (4-bit affine with a 16-bit scale and
+        # bias per 64 weights = 4.5 bits; NVFP4 4-bit with an 8-bit scale per 16 = 4.5 bits)
+        row["size_gib"] = round(row["params_b"] * 1e9 * 4.5 / 8 / 2**30, 1) if row["params_b"] else None
+        # what it takes to fit: the planner's own rule (weights x 1.25 must fit in the Mac's memory)
+        row["needs_gib"] = round(row["size_gib"] * 1.25, 1) if row["size_gib"] else None
         row["context"] = None
         row["license"] = None
     return mapping, list(by_model.values())
