@@ -59,8 +59,7 @@ window.Pie = window.Pie || {};
     container,
 
     visibleColumns(state) {
-      return Pie.schema[state.table].columns.filter((column) =>
-        !(state.hideEmpty && store.coverage(state.table, column) === 0));
+      return Pie.schema[state.table].columns;
     },
 
     render(state, rows) {
