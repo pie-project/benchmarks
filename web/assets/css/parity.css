@@ -1,0 +1,191 @@
+/* The engine parity panel on the Quality page: one row per model and task, one cell per engine, against pie. */
+.parity {
+  flex: none;
+  max-height: 60vh;
+  overflow: auto;
+  border-bottom: .5px solid var(--color-separator);
+}
+
+.parity[hidden] {
+  display: none;
+}
+
+.parity-inner {
+  padding: 16px var(--edge) 18px;
+}
+
+.parity-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 10px;
+}
+
+.parity-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.parity-note {
+  font-size: 12px;
+  color: var(--color-label-secondary);
+}
+
+.parity-alert,
+.parity-summary {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.parity-alert {
+  color: var(--color-negative);
+  background: color-mix(in srgb, var(--color-negative) 10%, transparent);
+}
+
+.parity-summary {
+  color: var(--color-label-secondary);
+  background: var(--color-fill);
+}
+
+.parity-scroll {
+  overflow-x: auto;
+}
+
+.parity-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.parity-table th,
+.parity-table td {
+  padding: 6px 12px;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+  border-bottom: .5px solid var(--color-separator-light);
+}
+
+.parity-table thead th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-label-secondary);
+  border-bottom: .5px solid var(--color-separator);
+}
+
+.parity-table .is-numeric {
+  text-align: right;
+}
+
+.parity-table .is-group-start td {
+  border-top: .5px solid var(--color-separator);
+}
+
+.parity-model {
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.parity-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.parity-scheme {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-label-tertiary);
+}
+
+.parity-cell {
+  text-align: right;
+}
+
+.parity-cell.is-empty {
+  color: var(--color-label-tertiary);
+}
+
+.parity-score {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.parity-ci,
+.parity-delta,
+.parity-answers {
+  display: block;
+  font-size: 11px;
+  color: var(--color-label-secondary);
+}
+
+.parity-cell.is-mismatch .parity-score,
+.parity-answers.is-mismatch {
+  color: var(--color-negative);
+}
+
+.parity-flag {
+  white-space: normal;
+  min-width: 180px;
+}
+
+.parity-model-block + .parity-model-block {
+  margin-top: 14px;
+}
+
+.parity-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.parity-badge.is-ok {
+  color: var(--color-positive);
+  background: color-mix(in srgb, var(--color-positive) 12%, transparent);
+}
+
+.parity-badge.is-mismatch {
+  color: var(--color-negative);
+  background: color-mix(in srgb, var(--color-negative) 12%, transparent);
+}
+
+.parity-badge.is-none {
+  color: var(--color-label-secondary);
+  background: var(--color-fill);
+}
+
+.parity-reason {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--color-negative);
+}
+
+.parity-table .is-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .parity-inner {
+    padding: 12px var(--edge) 14px;
+  }
+}

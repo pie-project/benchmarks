@@ -178,16 +178,23 @@ def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_k
 
     from .machine import machine_lock
 
-    skipped = []
+    skipped, failed = [], []
     with machine_lock("quality", max_wait_s=6 * 3600, log=lambda m_: click.echo(m_, err=True)):
         for a in artifacts:
+            # one engine that fails to load must not drop the other arms of the run: say so, go on, and fail at the end
             try:
                 run_quality(a, list(tasks), n, matrix_dir=matrix_dir, store_dir=store_dir, pie_root=Path(pie_root), tag=tag, tag_kind=tag_kind,
                             log=lambda m_: click.echo(m_, err=True))
             except TasksSkipped as e:
                 skipped.append(str(e))
+            except Exception as e:  # noqa: BLE001
+                failed.append(f"{a}: {type(e).__name__}: {str(e).strip().splitlines()[-1][:200] if str(e).strip() else ''}")
+                click.echo(f"FAIL  {failed[-1]}", err=True)
     if skipped:
         click.echo("skipped tasks: " + "; ".join(skipped), err=True)
+    if failed:
+        click.echo("failed arms: " + "; ".join(failed), err=True)
+    if skipped or failed:
         sys.exit(1)
 
 

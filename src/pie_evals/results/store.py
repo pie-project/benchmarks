@@ -79,8 +79,8 @@ class BaseStore:
     def describe(self) -> str:
         return str(self.root) if hasattr(self, "root") else "postgres"
 
-    def quality(self) -> list[dict]:
-        """Every quality summary, without its samples."""
+    def quality(self, samples: bool = False) -> list[dict]:
+        """Every quality summary; its per-question answers only with ``samples``."""
         raise NotImplementedError
 
     def history(self, tier: Tier | None = None, *, limit: int = 20, engine: str | None = None) -> dict[str, list[float]]:
@@ -140,6 +140,9 @@ class DirStore(BaseStore):
         summary = {**summary, "tag": tag, "tag_kind": tag_kind} if tag else summary
         path = self.root / "quality" / f"{summary['artifact']}-{summary['task']}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
+        # a tag keeps its good score: a stored score is only replaced when it is missing
+        if path.exists() and json.loads(path.read_text()).get("score") is not None:
+            return f"{path} (kept: a score is stored)"
         path.write_text(json.dumps(summary, indent=1))
         return str(path)
 
@@ -153,12 +156,13 @@ class DirStore(BaseStore):
             return ARROW_SCHEMA.empty_table()
         return pa.concat_tables([pq.read_table(f, schema=ARROW_SCHEMA) for f in fs], promote_options="default")
 
-    def quality(self) -> list[dict]:
+    def quality(self, samples: bool = False) -> list[dict]:
         d = self.root / "quality"
         out = []
         for f in sorted(d.glob("*.json")) if d.exists() else []:
             q = json.loads(f.read_text())
-            q.pop("samples", None)
+            if not samples:
+                q.pop("samples", None)
             out.append(q)
         return out
 
@@ -253,15 +257,18 @@ class PgStore(BaseStore):
 
         head = {k: v for k, v in summary.items() if k != "samples"}
         with self.connect() as conn, conn.transaction():
-            conn.execute(
+            cur = conn.execute(
                 "INSERT INTO quality (artifact, task, tag, tag_kind, model, engine, score, n, date, summary, samples) "
                 "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (artifact, task, tag) DO UPDATE SET "
                 "tag_kind = EXCLUDED.tag_kind, model = EXCLUDED.model, engine = EXCLUDED.engine, score = EXCLUDED.score, n = EXCLUDED.n, "
-                "date = EXCLUDED.date, summary = EXCLUDED.summary, samples = EXCLUDED.samples, stored_at = now()",
+                "date = EXCLUDED.date, summary = EXCLUDED.summary, samples = EXCLUDED.samples, stored_at = now() "
+                # a tag keeps its good score: a stored score is only replaced when it is missing (the same rule as the records)
+                "WHERE quality.score IS NULL",
                 (summary["artifact"], summary["task"], tag or "", tag_kind, summary.get("model"), summary.get("engine"),
                  summary.get("score"), summary.get("n"), summary.get("date"), Jsonb(head), Jsonb(summary.get("samples"))),
             )
-        return f"postgres quality {summary['artifact']}/{summary['task']} tag={tag or 'legacy'}"
+        kept = "" if cur.rowcount else " (kept: a score is stored under this tag)"
+        return f"postgres quality {summary['artifact']}/{summary['task']} tag={tag or 'legacy'}{kept}"
 
     def table(self, tier: Tier | None = None) -> pa.Table:
         sql = f"SELECT {', '.join(_LEAN)}, tag, tag_kind FROM records" + (" WHERE tier = %s" if tier else "")
@@ -276,7 +283,7 @@ class PgStore(BaseStore):
         return t.append_column("tag", pa.array([r[n] for r in rows], pa.string())).append_column(
             "tag_kind", pa.array([r[n + 1] for r in rows], pa.string()))
 
-    def quality(self) -> list[dict]:
+    def quality(self, samples: bool = False) -> list[dict]:
         with self.connect() as conn, conn.cursor() as cur:
-            cur.execute("SELECT summary, tag, tag_kind FROM quality ORDER BY artifact, task, tag")
-            return [{**r[0], "tag": r[1] or None, "tag_kind": r[2]} for r in cur.fetchall()]
+            cur.execute("SELECT summary, tag, tag_kind, samples FROM quality ORDER BY artifact, task, tag")
+            return [{**r[0], "tag": r[1] or None, "tag_kind": r[2], **({"samples": r[3] or []} if samples else {})} for r in cur.fetchall()]
