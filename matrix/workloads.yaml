@@ -192,3 +192,43 @@ workloads:
       decode: 256
     tiers: [targeted]
     est_minutes: 1.5
+
+  # -- cold-cache prefill (fair definition): every request starts with its own
+  # tag, so no engine's prefix cache can hit; prefill_tok_s needs cold_cache_verified
+  - id: cold-ss-128-64
+    kind: single_stream
+    params:
+      label: Cold 128
+      description: "128-token prompt, 64 out, unique leading tag per request; prefill and TTFT with a cold cache"
+      prefill: 128
+      decode: 64
+      requests: 6
+      warmup: 1
+      cold_cache: true
+    tiers: [targeted]
+    est_minutes: 1
+  - id: cold-ss-512-200
+    kind: single_stream
+    params:
+      label: Cold 512
+      description: "512-token prompt, 200 out, unique leading tag per request; prefill and TTFT with a cold cache"
+      prefill: 512
+      decode: 200
+      requests: 6
+      warmup: 1
+      cold_cache: true
+    tiers: [targeted]
+    est_minutes: 1
+  - id: cold-ctx-4k-256
+    kind: long_context
+    params:
+      label: Cold 4k
+      description: "4k-token prompt, 256 out, unique leading tag per request; prefill and TTFT with a cold cache"
+      prefill: 4096
+      decode: 256
+      concurrency: 1
+      requests: 4
+      warmup: 1
+      cold_cache: true
+    tiers: [targeted]
+    est_minutes: 1.5
