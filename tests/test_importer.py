@@ -17,6 +17,8 @@ def test_ensure_artifact_runs_import_once(tmp_path, monkeypatch):
     calls = []
 
     def fake_run(argv, **kw):
+        if "--help" in argv:
+            return type("R", (), {"returncode": 0, "stderr": "", "stdout": "      --deployment <NAME>"})()
         calls.append(argv)
         out = Path(argv[argv.index("--out") + 1])
         (out / "qwen36.zt").write_bytes(b"zt")
@@ -25,7 +27,7 @@ def test_ensure_artifact_runs_import_once(tmp_path, monkeypatch):
     monkeypatch.setattr(im.subprocess, "run", fake_run)
     zt = im.ensure_artifact(_art(sku="qwen36-35b-a3b-mini-u4g64-kv-bf16"), tmp_path / "snap", Path("/pie/target/release/pie"), "e06ff359377b", root=tmp_path / "cache", log=lambda *_: None)
     assert zt.name == "qwen36.zt" and zt.parent.name == "qwen36-mini-e06ff359"
-    assert calls[0][:3] == ["/pie/target/release/pie", "model", "import"] and "--sku" in calls[0]
+    assert calls[0][:3] == ["/pie/target/release/pie", "model", "import"] and "--deployment" in calls[0]
     zt2 = im.ensure_artifact(_art(), tmp_path / "snap", Path("/pie/target/release/pie"), "e06ff359377b", root=tmp_path / "cache", log=lambda *_: None)
     assert zt2 == zt and len(calls) == 1  # cached
 
@@ -37,3 +39,8 @@ def test_a_pinned_sku_is_always_imported():
     base = {"id": "g", "base_model": "meta-models/Muse-Glimmer-30B", "family": "muse_glimmer", "scheme": "affine_u4_g64"}
     assert needs_import(ArtifactSpec(**base, pie_sku="muse-glimmer-30b-u4g64-kv-bf16"))
     assert not needs_import(ArtifactSpec(**base))
+
+
+def test_an_older_pie_takes_the_row_as_sku(monkeypatch):
+    monkeypatch.setattr(im.subprocess, "run", lambda argv, **kw: type("R", (), {"stdout": "      --sku <NAME>"})())
+    assert im.row_flag(Path("pie")) == "--sku"
