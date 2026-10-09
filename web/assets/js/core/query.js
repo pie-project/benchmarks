@@ -45,7 +45,10 @@ window.Pie = window.Pie || {};
       : store.rows(state.table);
     const query = state.query.trim().toLowerCase();
 
-    const rows = source.filter((row) => matchesFilters(row, state.filters) && matchesSearch(row, schema.columns, query));
+    // "Hide unavailable" drops the setups that cannot run (too big for the Mac, or unsupported by the engine)
+    const unavailable = (row) => row.status === "no_fit" || row.status === "unsupported";
+    const rows = source.filter((row) => matchesFilters(row, state.filters) && matchesSearch(row, schema.columns, query)
+      && !(state.hideEmpty && unavailable(row)));
     return state.sort ? [...rows].sort(compare(state.sort.key, state.sort.direction)) : rows;
   };
 
