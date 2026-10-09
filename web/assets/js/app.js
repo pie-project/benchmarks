@@ -76,6 +76,11 @@
 
     filters.hideEmpty.addEventListener("click", () => {
       state.hideEmpty = !state.hideEmpty;
+      try {
+        localStorage.setItem("hideUnavailable", state.hideEmpty ? "1" : "0");
+      } catch {
+        // private windows can refuse storage; the choice then lasts for this page only
+      }
       render();
     });
 
