@@ -492,12 +492,18 @@ window.Pie = window.Pie || {};
       this.settle(state);
       const all = Pie.store.snapshot(state.release).filter(Pie.store.isMeasured);
       const { hardware, workload } = state.overview;
+      // the Mac and workload pickers stay on every path, so a Mac with no runs can still be left for another one
+      const controls = () => `
+        <div class="overview-controls">
+          ${popup("overview-mac", "Mac", macName(hardware))}
+          ${popup("overview-workload", "Workload", WORKLOADS.find((w) => w.id === workload).label)}
+        </div>`;
       if (!all.some((row) => row.hardware === hardware)) {
-        element.innerHTML = `<div class="overview-empty">No runs on this Mac for this release yet.</div>`;
+        element.innerHTML = `<div class="overview-inner">${controls()}<div class="overview-empty">No runs on this Mac for this release yet.</div></div>`;
         return 0;
       }
       if (!macsIn(all).length) {
-        element.innerHTML = `<div class="overview-empty">No results for this release yet.</div>`;
+        element.innerHTML = `<div class="overview-inner">${controls()}<div class="overview-empty">No results for this release yet.</div></div>`;
         return 0;
       }
       const query = state.query.trim().toLowerCase();
