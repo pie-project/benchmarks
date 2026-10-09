@@ -34,7 +34,10 @@
       const models = overview.render(state);
       toolbar.render(state, 0, 0);
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
-    } else if (!isMethod) {
+    } else if (isMethod) {
+      toolbar.elements.title.textContent = Pie.schema.method.label;
+      toolbar.elements.subtitle.textContent = "";
+    } else {
       const rows = query.visibleRows(state);
       if (state.table === "results") {
         // every enumerated setup of the selected release counts, measured or not; the measured ones are said apart

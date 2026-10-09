@@ -710,11 +710,171 @@
 }
 
 /* the Method page: plain reading text, the same grey and spacing as the rest of the site */
-.method { padding: 32px 40px 64px; max-width: 760px; }
-.method-head h1 { font-size: 28px; font-weight: 600; margin: 0 0 8px; }
-.method-lede { color: var(--color-label-secondary); margin: 0 0 28px; font-size: 15px; }
-.method-section { margin: 0 0 28px; }
-.method-section h2 { font-size: 18px; font-weight: 600; margin: 0 0 10px; }
-.method-section p, .method-section li { font-size: 14px; line-height: 1.55; color: var(--color-label); margin: 0 0 8px; }
-.method-section ul { padding-left: 20px; margin: 0 0 8px; }
-@media (max-width: 760px) { .method { padding: 24px 16px 48px; } }
+/* the method page: System Settings panes, one topic each */
+.method {
+  flex: 1;
+  overflow: auto;
+}
+
+.method[hidden] { display: none; }
+
+.method-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 56px 32px 96px;
+}
+
+.method-head { margin: 0 0 36px; }
+
+.method-head h1 {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+  margin: 0 0 12px;
+  color: var(--color-label);
+}
+
+.method-lede {
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--color-label-secondary);
+  margin: 0;
+  max-width: 580px;
+}
+
+.method-pane {
+  background: var(--color-card);
+  border-radius: 12px;
+  padding: 20px 20px 18px;
+  margin: 0 0 16px;
+  box-shadow: inset 0 0 0 .5px var(--color-separator-light);
+}
+
+.method-pane-head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.method-tile {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--color-bar-other);
+}
+
+.method-tile svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.method-tile-decode { background: var(--color-ring-decode); }
+.method-tile-prefill { background: var(--color-ring-prefill); }
+.method-tile-ttft { background: var(--color-accent); }
+.method-tile-load { background: var(--color-engine-llamacpp); }
+.method-tile-fairness { background: var(--color-engine-mlxlm); }
+
+.method-pane h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  line-height: 32px;
+  margin: 0;
+  color: var(--color-label);
+}
+
+.method-summary {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--color-label);
+  margin: 2px 0 0;
+}
+
+.method-pane-body { margin: 16px 0 0 46px; }
+
+.method-pane-body p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-label-secondary);
+}
+
+.method-pane-body > * { margin: 0; }
+.method-pane-body > * + * { margin-top: 14px; }
+.method-pane-body > .method-subhead + * { margin-top: 8px; }
+
+.method-formula {
+  background: var(--color-background);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.method-formula-text {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-label);
+  overflow-wrap: anywhere;
+}
+
+.method-formula-note {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-label-secondary);
+  margin-top: 4px;
+}
+
+.method-subhead {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-label-secondary);
+  padding-left: 14px;
+}
+
+.method-rows {
+  list-style: none;
+  padding: 0;
+  background: var(--color-background);
+  border-radius: 8px;
+}
+
+.method-rows li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 14px;
+}
+
+.method-rows li + li { border-top: .5px solid var(--color-separator); }
+
+.method-row-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.method-row-text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-label-secondary);
+}
+
+.method-pane-body .method-footnote { font-size: 13px; }
+
+@media (max-width: 760px) {
+  .method-inner { padding: 32px var(--edge) 64px; }
+  .method-head h1 { font-size: 28px; }
+  .method-pane { padding: 16px; }
+  .method-pane-body { margin-left: 0; }
+}
