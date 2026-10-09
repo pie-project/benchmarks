@@ -19,6 +19,7 @@ a spawned ``ollama serve`` for Ollama.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -39,6 +40,7 @@ from pie_evals.node.fair import (
     cold_prompts,
     cold_request_count,
     fair_prefill_tok_s,
+    prefill_mismatch,
 )
 from pie_evals.schema import (
     ArtifactSpec,
@@ -141,6 +143,8 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
     prefill_tok_s = fair_prefill_tok_s(completed, concurrency=concurrency, config_cached=config_cached)
     counters["fair_def"] = float(FAIR_DEFINITION_VERSION)
     counters["cold_cache_verified"] = 1.0 if verdict == "cold" else 0.0
+    if prefill_tok_s is not None:
+        counters["prefill_ttft_mismatch"] = 1.0 if prefill_mismatch(prefill_tok_s, _pct(ttft, 50), prompt_tok, len(completed)) else 0.0
     # single-stream: the lane's decode rate is the aggregate; concurrency: aggregate output tok/s is the headline
     primary = "decode_tok_s" if (concurrency in (None, 1)) and decode_tok_s else "output_tok_s"
     ms_per_tok_per_layer = None
@@ -305,14 +309,17 @@ class Engine(ABC):
         body = prompt_words_for_tokens(int(workload.params.get("prefill", 128)), salt=workload.id)
         prompts = cold_prompts(body, workload_id=workload.id, seed=COLD_SEED, count=cold_request_count(workload.params))
         path = out_dir / "cold_prompts.json"
-        path.write_text(json.dumps(prompts))
+        path.write_text(json.dumps(prompts, ensure_ascii=False))
         return [*common_args, "--prompts-file", str(path.resolve())]
 
     def run(self, workload: WorkloadSpec, common_args: list[str], out_dir: Path, timeout_s: int) -> BenchResult:
         out_dir.mkdir(parents=True, exist_ok=True)
         json_out = out_dir / "bench.json"
+        cold_sha = None
         if workload.params.get("cold_cache"):
             common_args = self.cold_common_args(workload, common_args, out_dir)
+            cold_sha = hashlib.sha256((out_dir / "cold_prompts.json").read_bytes()).hexdigest()
+            (out_dir / "cold_prompts.sha256").write_text(cold_sha + "\n")
         argv = self.build_argv(workload, common_args, json_out)
         env = {**os.environ, **self.env}
         if self.server_url:
@@ -347,6 +354,9 @@ class Engine(ABC):
             perf.primary = str(workload.params["primary"])
         perf.counters.update(self.counters_from_summary(summary))
         perf.resident_gib = self.resident_gib()
+        if cold_sha is not None:
+            # first 48 bits of the cold prompt file's sha256; exact in a float. decode: format(int(v), "012x")
+            perf.counters["cold_prompts_sha256_48"] = float(int(cold_sha[:12], 16))
         ids = [r.get("output_token_ids") or [] for r in requests]
         return BenchResult(
             perf=perf, summary=summary, requests=requests, argv=argv,
