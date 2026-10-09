@@ -7,12 +7,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import errno
 import json
 import random
 import statistics
 import sys
 import time
+import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from common import (
@@ -43,6 +46,32 @@ def post_stream(url: str, payload: dict[str, Any], timeout: float, on_chunk) -> 
             on_chunk(obj)
 
 
+#: errors a connect or send can end in when the server's accept queue is full;
+#: the request never reached the server, so sending it again is safe
+CONNECT_ERRNOS = {errno.ECONNRESET, errno.EPIPE, errno.EINVAL, errno.ECONNREFUSED}
+CONNECT_TRIES = 5
+
+
+def refused_before_sent(e: Exception) -> bool:
+    """urllib raises ``URLError`` only for failures while connecting or sending
+    the request; a failure after that surfaces as the raw ``OSError``."""
+    return isinstance(e, urllib.error.URLError) and isinstance(e.reason, OSError) and e.reason.errno in CONNECT_ERRNOS
+
+
+def post_stream_retrying(url: str, payload: dict[str, Any], timeout: float, on_chunk, retries: list[int]) -> None:
+    """``post_stream``, sent again when the connection was reset before the
+    server read the request (mlx-lm's Python server listens with a backlog of 5,
+    and some Macs reset what overflows it when 32 requests open at once)."""
+    for attempt in range(CONNECT_TRIES):
+        try:
+            return post_stream(url, payload, timeout, on_chunk)
+        except Exception as e:  # noqa: BLE001
+            if attempt == CONNECT_TRIES - 1 or not refused_before_sent(e):
+                raise
+            retries.append(1)
+            time.sleep(0.05 * (attempt + 1))
+
+
 def payload_for(args: argparse.Namespace, prompt: str, max_tokens: int) -> dict[str, Any]:
     """``prompt`` is the rendered chat template, or with ``--chat`` the user's
     words, which the server then renders itself."""
@@ -60,7 +89,8 @@ def payload_for(args: argparse.Namespace, prompt: str, max_tokens: int) -> dict[
     return payload
 
 
-def run_one(args: argparse.Namespace, endpoint: str, prompt: str, prompt_count: int, max_tokens: int, server: list[dict[str, Any]]) -> RequestResult:
+def run_one(args: argparse.Namespace, endpoint: str, prompt: str, prompt_count: int, max_tokens: int, server: list[dict[str, Any]],
+            retries: list[int] | None = None) -> RequestResult:
     start = time.perf_counter()
     stamps: list[float] = []
     seen: dict[str, Any] = {"usage": {}, "timings": {}}
@@ -77,7 +107,7 @@ def run_one(args: argparse.Namespace, endpoint: str, prompt: str, prompt_count: 
                 break
 
     try:
-        post_stream(endpoint, payload_for(args, prompt, max_tokens), args.request_timeout, on_chunk)
+        post_stream_retrying(endpoint, payload_for(args, prompt, max_tokens), args.request_timeout, on_chunk, [] if retries is None else retries)
     except Exception as e:  # noqa: BLE001
         return RequestResult(False, time.perf_counter() - start, 0, error=f"{type(e).__name__}: {e}")
     end = time.perf_counter()
@@ -120,18 +150,26 @@ async def run(args: argparse.Namespace):
     budgets = [request_max_tokens(args, i) for i in range(len(prompts))]
     endpoint = args.url.rstrip("/") + ("/v1/chat/completions" if args.chat else "/v1/completions")
     server: list[dict[str, Any]] = []
+    retries: list[int] = []
+    # asyncio's default pool holds min(32, cpus + 4) threads, which would cap
+    # c32 at 18 requests in flight on a 14-core Mac; size it to the batch
+    pool = ThreadPoolExecutor(max_workers=batch)
+    loop = asyncio.get_running_loop()
 
     for i in range(args.warmup):
-        await asyncio.to_thread(run_one, args, endpoint, prompts[i], counts[i], budgets[i], [])
+        await loop.run_in_executor(pool, run_one, args, endpoint, prompts[i], counts[i], budgets[i], [], retries)
 
     gate = asyncio.Semaphore(batch)
 
     async def one(p: str, c: int, m: int) -> RequestResult:
         async with gate:
-            return await asyncio.to_thread(run_one, args, endpoint, p, c, m, server)
+            return await loop.run_in_executor(pool, run_one, args, endpoint, p, c, m, server, retries)
 
     t0 = time.perf_counter()
-    results = await asyncio.gather(*(one(p, c, m) for p, c, m in zip(prompts[args.warmup:], counts[args.warmup:], budgets[args.warmup:])))
+    try:
+        results = await asyncio.gather(*(one(p, c, m) for p, c, m in zip(prompts[args.warmup:], counts[args.warmup:], budgets[args.warmup:])))
+    finally:
+        pool.shutdown(wait=False)
     wall = time.perf_counter() - t0
 
     cached = sum(s["cached_tokens"] for s in server)
@@ -139,6 +177,7 @@ async def run(args: argparse.Namespace):
     config = {
         "api_model": args.api_model or "",
         "client_in_flight": batch,
+        "connect_retries": len(retries),
         "raw_prompt": not args.chat,
         "flush_cache": bool(args.flush_cache),
         "prompt_shuffled": bool(args.flush_cache),

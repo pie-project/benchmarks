@@ -114,17 +114,22 @@ async def run(args: argparse.Namespace):
     server: list[dict[str, Any]] = []
     latency = args.mode == "latency"
 
+    # asyncio's default pool holds min(32, cpus + 4) threads, which would cap
+    # the requests in flight below the batch; size it to the batch
+    pool = ThreadPoolExecutor(max_workers=batch)
+    loop = asyncio.get_running_loop()
+
     for i in range(args.warmup):
         if args.flush_cache and latency:
             flush(args, endpoint)
-        await asyncio.to_thread(run_one, args, endpoint, prompts[i], counts[i], budgets[i], [])
+        await loop.run_in_executor(pool, run_one, args, endpoint, prompts[i], counts[i], budgets[i], [])
 
     run_p, run_c, run_b = prompts[args.warmup:], counts[args.warmup:], budgets[args.warmup:]
     gate = asyncio.Semaphore(batch)
 
     async def one(p: str, c: int, m: int) -> RequestResult:
         async with gate:
-            return await asyncio.to_thread(run_one, args, endpoint, p, c, m, server)
+            return await loop.run_in_executor(pool, run_one, args, endpoint, p, c, m, server)
 
     if latency:
         results = []
@@ -141,6 +146,7 @@ async def run(args: argparse.Namespace):
         t0 = time.perf_counter()
         results = await asyncio.gather(*(one(p, c, m) for p, c, m in zip(run_p, run_c, run_b)))
         wall = time.perf_counter() - t0
+    pool.shutdown(wait=False)
 
     pre = [s["prompt_eval_count"] / s["prompt_eval_s"] for s in server if s["prompt_eval_s"] and s["prompt_eval_count"]]
     dec = [s["eval_count"] / s["eval_s"] for s in server if s["eval_s"] and s["eval_count"]]
