@@ -3,7 +3,7 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("method");
 
-  // one System Settings style pane per topic: icon tile, title, a plain sentence, the definition, then details
+  // one outlined card per topic: a small grey line icon, title, a plain sentence, the definition, then details
   const glyphs = {
     decode: '<path d="M4 17a8 8 0 1 1 16 0"/><path d="m12 17 4-5"/>',
     prefill: '<path d="M5 6h14M5 10h14M5 14h9"/><path d="m16 17 2 2 3-4"/>',
@@ -12,7 +12,7 @@ window.Pie = window.Pie || {};
     fairness: '<path d="M12 4v16M8 20h8M5 7h14"/><path d="m5 7-2.5 6a2.5 2.5 0 0 0 5 0L5 7zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0L19 7z"/>',
   };
 
-  const tile = (name) => `<span class="method-tile method-tile-${name}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyphs[name]}</svg></span>`;
+  const icon = (name) => `<svg class="method-icon" viewBox="0 0 24 24" aria-hidden="true">${glyphs[name]}</svg>`;
   const formula = (text, note = "") => `<div class="method-formula"><div class="method-formula-text">${text}</div>${note ? `<div class="method-formula-note">${note}</div>` : ""}</div>`;
   const rows = (items) => `<ul class="method-rows">${items.map(([title, text]) => `<li><span class="method-row-title">${title}</span><span class="method-row-text">${text}</span></li>`).join("")}</ul>`;
   const p = (text, cls = "") => `<p${cls ? ` class="${cls}"` : ""}>${text}</p>`;
@@ -21,11 +21,9 @@ window.Pie = window.Pie || {};
   const pane = (name, title, summary, body) => `
     <section class="method-pane" aria-labelledby="method-${name}">
       <header class="method-pane-head">
-        ${tile(name)}
-        <div>
-          <h2 id="method-${name}">${title}</h2>
-          ${summary ? `<p class="method-summary">${summary}</p>` : ""}
-        </div>
+        ${icon(name)}
+        <h2 id="method-${name}">${title}</h2>
+        ${summary ? `<p class="method-summary">${summary}</p>` : ""}
       </header>
       <div class="method-pane-body">${body}</div>
     </section>`;
