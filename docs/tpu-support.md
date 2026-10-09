@@ -32,3 +32,5 @@ engine-xla runs one replica on one device. Collectives answer only a world of on
 | GLM-5 (glm5-a12b bf16) | about 192 GiB | v6e-8 | $21.60 |
 | Qwen3.8 Flash Next (full, u4g64-u2g128) | about 66 GiB | v6e-4 | $10.80 |
 | Gemma 4 31B / Muse 30B / Qwen3.6 27B, bf16 | 52-58 GiB | v6e-4 | $10.80 (their 4-bit rows fit on one chip) |
+
+_Last reviewed: 2026-10-09._
