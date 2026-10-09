@@ -459,9 +459,9 @@ window.Pie = window.Pie || {};
   Pie.overview = {
     element,
 
-    // the Macs for the pop-up menu, in catalog order
-    macs(state) {
-      return macsIn(Pie.store.snapshot(state.release)).map((mac) => ({ id: mac.id, label: macName(mac.id) }));
+    // every Mac we operate, in catalog order (a Mac with no run in this release still shows in the menu)
+    macs() {
+      return Pie.store.tables.hardware.map((hw) => ({ id: hw.id, label: macName(hw.id) }));
     },
 
     workloads() {
@@ -480,8 +480,9 @@ window.Pie = window.Pie || {};
     // keep the hardware and workload choice valid for the selected release
     settle(state) {
       const macs = macsIn(Pie.store.snapshot(state.release));
-      if (!macs.some((mac) => mac.id === state.overview.hardware)) {
-        state.overview.hardware = macs.reduce((a, b) => (b.count > a.count ? b : a), macs[0] || { id: null }).id;
+      const known = Pie.store.tables.hardware.map((hw) => hw.id);
+      if (!known.includes(state.overview.hardware)) {
+        state.overview.hardware = macs.reduce((a, b) => (b.count > a.count ? b : a), macs[0] || { id: known[0] }).id;
       }
       if (!WORKLOADS.some((w) => w.id === state.overview.workload)) state.overview.workload = "single";
     },
@@ -491,6 +492,10 @@ window.Pie = window.Pie || {};
       this.settle(state);
       const all = Pie.store.snapshot(state.release).filter(Pie.store.isMeasured);
       const { hardware, workload } = state.overview;
+      if (!all.some((row) => row.hardware === hardware)) {
+        element.innerHTML = `<div class="overview-empty">No runs on this Mac for this release yet.</div>`;
+        return 0;
+      }
       if (!macsIn(all).length) {
         element.innerHTML = `<div class="overview-empty">No results for this release yet.</div>`;
         return 0;
