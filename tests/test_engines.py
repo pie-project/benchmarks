@@ -1111,3 +1111,12 @@ def test_a_busy_bench_is_left_to_finish():
     busy = subprocess.Popen([sys.executable, "-c", "import time\nt = time.time()\nwhile time.time() - t < 4: pass"])
     rc, timed_out, stalled = wait_with_stall_check(busy, timeout_s=60, stall_s=2, poll_s=0.5)
     assert (rc, timed_out, stalled) == (0, False, False)
+
+
+def test_pie_prefills_cold_when_its_bench_can_turn_the_prefix_cache_off(tmp_path):
+    for script, cold in (("p.add_argument('--no-prefix-cache')\n", True), ("# an older bench\n", False)):
+        root = tmp_path / str(cold)
+        (root / "scripts/bench").mkdir(parents=True)
+        (root / "scripts/bench/pie_bench.py").write_text(script)
+        eng = PieEngine(pie_root=root, artifact=artifact(), platform=platform(), mode=Mode(), recipe={})
+        assert ("--no-prefix-cache" in argv_for(eng, WORKLOADS["c32"], tmp_path)) is cold

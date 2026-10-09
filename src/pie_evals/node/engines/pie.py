@@ -206,6 +206,12 @@ class PieEngine(Engine):
     def pie_engine_name(self) -> str:
         return _BACKEND_TO_ENGINE[self.platform.backend]
 
+    def _bench_has(self, flag: str) -> bool:
+        try:
+            return flag in self.script_path().read_text()
+        except OSError:
+            return False
+
     def engine_args(self, workload: WorkloadSpec) -> list[str]:
         r = self.recipe
         engine = self.pie_engine_name()
@@ -234,6 +240,10 @@ class PieEngine(Engine):
 
         if r.get("report_timing", True):
             args += ["--report-timing"]
+        # prefill is measured cold for every engine: a bench that can map in prompt
+        # pages an earlier request published runs with that cache off (pie #855 added it)
+        if self._bench_has("--no-prefix-cache"):
+            args += ["--no-prefix-cache"]
 
         for knob, flag in _DIRECT_FLAGS:
             v = r.get(knob)
