@@ -212,6 +212,10 @@ def _tag_keep(cur, rows: list, tag: str, cols: list[str]) -> set:
     good, broken = set(), set()
     for key, status, dec, pre in cur.fetchall():
         (good if _good(status, dec, pre) else broken).add(key)
+    # a "not run" row only says the job never reached the cell: it never replaces a row that already says something
+    st = cols.index("status")
+    not_run = {r[ck] for r in rows if r[ck] and r[st] == "not_run"}
+    good |= (not_run & (good | broken))
     replace = sorted(broken - good)
     if replace:
         cur.execute("DELETE FROM records WHERE tag = %s AND cell_key = ANY(%s)", (tag, replace))
