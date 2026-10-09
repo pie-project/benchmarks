@@ -112,6 +112,8 @@ def ensure_ollama_model(tag: str, *, pull: bool, url: str | None = None, log=pri
 class OllamaEngine(Engine):
     name = EngineName.OLLAMA
     script = "ollama_bench.py"
+    # ollama_bench.py has its own prompt builder; it does not read --prompts-file yet
+    supports_prompts_file = False
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
