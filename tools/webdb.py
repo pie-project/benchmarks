@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -27,7 +28,7 @@ WEB = ROOT / "web"
 SINGLE = ["ss-512-256", "ob-512-200", "ss-128-64", "ob-short-100", "ob-story-200"]
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
-LEGACY = "legacy"  # runs from before tags: no tag, used only as a fallback
+
 WL_PRIORITY = {wl: (cat, i) for cat, ids in (("single", SINGLE), ("throughput", THROUGHPUT)) for i, wl in enumerate(ids)}
 
 ENGINE_META = {
@@ -122,7 +123,7 @@ def workloads() -> list[dict]:
 
 
 # runs measured before the tagged runs live on this Mac: they stay on the site as the fallback
-LEGACY_MACS = {"m5-max-128g"}
+
 
 
 def local(ts) -> str:
@@ -190,7 +191,9 @@ def attempts_by_tag(store, a2m, hardware_ids, engine_ids) -> dict[str, dict[tupl
         if not cat:
             continue
         key = (r["platform"], r["engine"], a2m.get(r["artifact"], r["artifact"]), cat)
-        t = r["tag"] or LEGACY
+        t = r["tag"]
+        if not t:  # untagged runs are not shown
+            continue
         if key not in out.setdefault(t, {}) or r["started_at"] > out[t][key]["started_at"]:
             out[t][key] = r
     return out
@@ -263,9 +266,10 @@ def results_by_tag(store, a2m, hardware_ids, engine_ids):
             if measured(r) and r["platform"] in hardware_ids and r["engine"] in engine_ids]
     by_tag: dict[str, list[dict]] = {}
     for r in rows:
-        by_tag.setdefault(r["tag"] or LEGACY, []).append(r)
+        if r["tag"]:  # untagged runs are not shown: every release is a tag
+            by_tag.setdefault(r["tag"], []).append(r)
     tagged = {t: pick(rs, a2m) for t, rs in by_tag.items()}
-    meta = {t: {"kind": rs[0]["tag_kind"] or ("legacy" if t == LEGACY else "manual"), "at": max(r["started_at"] for r in rs),
+    meta = {t: {"kind": rs[0]["tag_kind"] or "manual", "at": max(r["started_at"] for r in rs),
                 "commit": next((r["pie_commit"][:9] for r in rs if r["engine"] == "pie" and r["pie_commit"]), "")}
             for t, rs in by_tag.items()}
     return tagged, meta
@@ -278,7 +282,9 @@ def quality_by_tag(store, a2m):
     tagged: dict[str, dict[tuple, dict]] = {}
     meta: dict[str, dict] = {}
     for q in store.quality():
-        t = q.get("tag") or LEGACY
+        t = q.get("tag")
+        if not t:
+            continue
         at = datetime.fromisoformat(q["date"].replace("Z", "+00:00"))
         row = {"model": a2m.get(q["model"], q["model"]), "engine": q["engine"], "artifact": q["artifact"],
                "task": q["task"], "score": round(q["score"], 3), "ci_low": round(q["ci95"][0], 3),
@@ -287,7 +293,7 @@ def quality_by_tag(store, a2m):
         key = (row["engine"], row["model"], row["artifact"], row["task"])
         if key not in tagged.setdefault(t, {}) or at > tagged[t][key]["_at"]:
             tagged[t][key] = row
-        m = meta.setdefault(t, {"kind": q.get("tag_kind") or ("legacy" if t == LEGACY else "manual"), "at": at, "commit": ""})
+        m = meta.setdefault(t, {"kind": q.get("tag_kind") or "manual", "at": at, "commit": ""})
         m["at"] = max(m["at"], at)
     return tagged, meta
 
@@ -297,7 +303,9 @@ def parity_by_tag(store, a2m) -> dict[str, list[dict]]:
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     by_tag: dict[str, list[dict]] = {}
     for q in store.quality(samples=True):
-        t = q.get("tag") or LEGACY
+        t = q.get("tag")
+        if not t:
+            continue
         art = arts.get(q["artifact"], {})  # older summaries carry no scheme or checkpoint: the matrix has them
         row = {**q, "model": a2m.get(q["model"], q["model"]), "tag": t,
                "scheme": q.get("scheme") or art.get("scheme"), "checkpoint": q.get("checkpoint") or art.get("base_model")}
@@ -351,12 +359,27 @@ def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: l
     return out
 
 
+def tag_date(tag: str, meta: dict) -> str | None:
+    """A release is dated by its pie publish date; a manual run by when it ran."""
+    if meta["kind"] == "release":
+        for args in (["releases/tags/" + tag, "--jq", ".published_at"], ["commits/" + tag, "--jq", ".commit.committer.date"]):
+            try:
+                out = subprocess.run(["gh", "api", "repos/pie-project/pie/" + args[0], "--jq", args[2]],
+                                     capture_output=True, text=True, timeout=30).stdout.strip()
+            except (OSError, subprocess.SubprocessError):
+                out = ""
+            if out:
+                return out[:10]
+        return None
+    return local(meta["at"])
+
+
 def main() -> None:
     store = Store(sys.argv[1] if len(sys.argv) > 1 else None)
     a2m, models = artifact_to_model()
     # the site's grid: our Macs, the engines that run on a Mac, the models we measure there
     config = json.loads((ROOT / "config.json").read_text())
-    hardware_ids = config["machines"] + sorted(LEGACY_MACS - set(config["machines"]))
+    hardware_ids = config["machines"]
     mac_engines = [e for e in engines() if "macos" in e["os"]]
     model_ids = sorted({a2m[a] for a in config["models"] if a in a2m})
     engine_ids = [e["id"] for e in mac_engines]
@@ -366,8 +389,8 @@ def main() -> None:
     meta = dict(qmeta)
     for t, m in rmeta.items():
         meta[t] = {**m, "at": max(m["at"], qmeta[t]["at"])} if t in qmeta else m
-    tags = sorted(({"id": t, "kind": m["kind"], "date": local(m["at"]), "commit": m["commit"]} for t, m in meta.items()),
-                  key=lambda x: x["date"], reverse=True)  # the newest tag is the default on the site
+    tags = sorted(({"id": t, "kind": m["kind"], "date": tag_date(t, m), "commit": m["commit"]} for t, m in meta.items()),
+                  key=lambda x: x["date"] or "", reverse=True)  # the newest tag is the default on the site
     order = [x["id"] for x in tags]
     # the site's default order: engine, then model, then hardware, then workload
     grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c in ("single", "throughput")]
