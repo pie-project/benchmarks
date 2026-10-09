@@ -1,0 +1,29 @@
+name: reap-tpu
+# Hourly: delete any TPU VM in pie-project-510103 older than 4 hours. The nightly TPU run deletes its own VM when it
+# ends (its bench is capped at 210 minutes), so anything older than 4 hours was left behind and is idle money.
+on:
+  schedule: [{ cron: "23 * * * *" }]
+  workflow_dispatch:
+permissions: { contents: read }
+jobs:
+  reap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with: { credentials_json: "${{ secrets.GCP_TPU_SA_KEY }}" }
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: delete TPU VMs older than 4 hours
+        run: |
+          set -euo pipefail
+          cutoff=$(date -u -d '-4 hours' +%s)
+          gcloud compute tpus tpu-vm list --zone=- --project pie-project-510103 --format='value(name,zone,createTime)' |
+          while read -r name zone created; do
+            [ -n "$name" ] || continue
+            t=$(date -u -d "$created" +%s)
+            if [ "$t" -lt "$cutoff" ]; then
+              echo "deleting $name in $zone (created $created): older than 4 hours"
+              gcloud compute tpus tpu-vm delete "$name" --zone "$zone" --project pie-project-510103 --quiet
+            else
+              echo "keeping $name (created $created)"
+            fi
+          done
