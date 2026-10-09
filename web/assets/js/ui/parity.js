@@ -87,9 +87,9 @@ window.Pie = window.Pie || {};
     const all = (store.tables.parity || {})[state.release] || [];
     element.hidden = state.table !== "quality";
     if (element.hidden) return;
+    // no quality run under this release: the blue highlight already shows that, so the panel stays out of the way
     if (!all.length) {
-      element.innerHTML = `<div class="parity-inner"><div class="parity-head"><h2 class="parity-title">Engine parity</h2></div>
-        <div class="parity-summary">No quality run under this release yet.</div></div>`;
+      element.hidden = true;
       return;
     }
     const rows = visible(state, all);
