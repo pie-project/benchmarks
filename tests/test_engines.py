@@ -974,7 +974,7 @@ def test_a_shape_can_score_on_prefill(tmp_path):
     fake.write_text(
         "import json, sys\n"
         "out = sys.argv[sys.argv.index('--json-out') + 1]\n"
-        "req = {'ok': True, 'latency_s': 0.2, 'ttft_s': 0.1, 'output_tokens': 1, 'prompt_tokens': 512}\n"
+        "req = {'ok': True, 'latency_s': 0.2, 'ttft_s': 0.1, 'output_tokens': 1, 'prompt_tokens': 512, 'cached_prompt_tokens': 0}\n"
         "json.dump({'summary': {'wall_s': 0.2, 'output_tokens': 1, 'prompt_tokens': 512}, 'requests': [req]}, open(out, 'w'))\n"
     )
     root = tmp_path / "pie"

@@ -32,6 +32,14 @@ from typing import Any
 
 import numpy as np
 
+from pie_evals.node.fair import (
+    COLD_SEED,
+    FAIR_DEFINITION_VERSION,
+    cache_verdict,
+    cold_prompts,
+    cold_request_count,
+    fair_prefill_tok_s,
+)
 from pie_evals.schema import (
     ArtifactSpec,
     EngineName,
@@ -110,7 +118,6 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
     ttft = [r["ttft_s"] * 1000.0 for r in completed if r.get("ttft_s") is not None]
     # decode tok/s for a lane = output tokens / (latency - ttft)
     decode_lane = []
-    prefill_lane = []
     itl_all: list[float] = []
     for r in completed:
         lat = r.get("latency_s")
@@ -118,8 +125,6 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
         n = r.get("output_tokens") or 0
         if lat and tt is not None and n > 1 and lat > tt:
             decode_lane.append((n - 1) / (lat - tt))
-        if tt and r.get("prompt_tokens"):
-            prefill_lane.append(r["prompt_tokens"] / tt)
         it = r.get("intertoken_us") or []
         if isinstance(it, list):
             itl_all.extend(float(x) / 1000.0 for x in it)
@@ -130,6 +135,12 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
     # derived counters (device_idle_pct, host_us_per_step, ...) are filled by the pie adapter
     concurrency = concurrency or int((summary.get("config") or {}).get("concurrency") or 0) or None
     decode_tok_s = float(np.median(decode_lane)) if decode_lane else None
+    # prefill: one definition for every engine (see pie_evals.node.fair)
+    config_cached = counters.get("cached_prompt_tokens")
+    verdict = cache_verdict(completed, config_cached)
+    prefill_tok_s = fair_prefill_tok_s(completed, concurrency=concurrency, config_cached=config_cached)
+    counters["fair_def"] = float(FAIR_DEFINITION_VERSION)
+    counters["cold_cache_verified"] = 1.0 if verdict == "cold" else 0.0
     # single-stream: the lane's decode rate is the aggregate; concurrency: aggregate output tok/s is the headline
     primary = "decode_tok_s" if (concurrency in (None, 1)) and decode_tok_s else "output_tok_s"
     ms_per_tok_per_layer = None
@@ -138,7 +149,7 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
     return PerfMetrics(
         primary=primary,
         decode_tok_s=decode_tok_s,
-        prefill_tok_s=float(np.median(prefill_lane)) if prefill_lane else None,
+        prefill_tok_s=prefill_tok_s,
         output_tok_s=output_tok_s or None,
         ttft_ms_p50=_pct(ttft, 50) if ttft else (summary.get("ttft_p50_ms") or None),
         ttft_ms_p99=_pct(ttft, 99) if ttft else (summary.get("ttft_p99_ms") or None),
@@ -281,9 +292,27 @@ class Engine(ABC):
         argv += ["--json-out", str(json_out), "--dump-all-token-ids"]
         return argv
 
+    #: True when the bench script reads ``--prompts-file`` (scripts/bench/common.py's
+    #: ``make_prompts``). Cold-cache workloads need it; an adapter without it refuses them.
+    supports_prompts_file: bool = True
+
+    def cold_common_args(self, workload: WorkloadSpec, common_args: list[str], out_dir: Path) -> list[str]:
+        """Swap the shape's prompts for the cold prompt list, one per request, same for every engine."""
+        from pie_evals.node.workloads.synthetic import prompt_words_for_tokens
+
+        if not self.supports_prompts_file:
+            raise EngineLaunchError(ErrorClass.INCOMPATIBLE, f"{self.name.value}: cold-cache runs need --prompts-file in the bench script")
+        body = prompt_words_for_tokens(int(workload.params.get("prefill", 128)), salt=workload.id)
+        prompts = cold_prompts(body, workload_id=workload.id, seed=COLD_SEED, count=cold_request_count(workload.params))
+        path = out_dir / "cold_prompts.json"
+        path.write_text(json.dumps(prompts))
+        return [*common_args, "--prompts-file", str(path.resolve())]
+
     def run(self, workload: WorkloadSpec, common_args: list[str], out_dir: Path, timeout_s: int) -> BenchResult:
         out_dir.mkdir(parents=True, exist_ok=True)
         json_out = out_dir / "bench.json"
+        if workload.params.get("cold_cache"):
+            common_args = self.cold_common_args(workload, common_args, out_dir)
         argv = self.build_argv(workload, common_args, json_out)
         env = {**os.environ, **self.env}
         if self.server_url:
