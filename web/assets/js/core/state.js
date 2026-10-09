@@ -7,7 +7,14 @@ Pie.state = {
   query: "",
   filters: {},
   sort: null,
-  hideEmpty: false,
+  // the Hide unavailable choice is kept per viewer, so it survives a reload
+  hideEmpty: (() => {
+    try {
+      return localStorage.getItem("hideUnavailable") === "1";
+    } catch {
+      return false;
+    }
+  })(),
 
   reset(table, filters = {}) {
     this.table = table;
