@@ -10,9 +10,10 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pie_evals.schema import SourceFormat
-
+from .engines import ENGINES, engine_for, llamacpp_generate, mlxlm_generate, splash_generate
 from .tasks import TASKS, wilson
+
+LABELS = {"pie": "pie", "ollama": "Ollama", "llamacpp": "llama.cpp", "mlxlm": "mlx-lm", "splash": "Splash"}
 
 SYSTEM = "You are a helpful assistant."
 
@@ -35,10 +36,10 @@ def _render(snapshot: Path, prompts: list[str]) -> list[str]:
     return out
 
 
-def _ollama_generate(tag: str, snapshot: Path, prompts: list[str], max_tokens: int, log) -> tuple[list[str], str]:
+def _ollama_generate(tag: str, tok_dir: Path, prompts: list[str], max_tokens: int, log) -> tuple[list[str], str]:
     from pie_evals.node.engines.ollama import server_version, start_server, stop_server
 
-    rendered = _render(snapshot, prompts)
+    rendered = _render(tok_dir, prompts)
     proc, url = start_server({"OLLAMA_KEEP_ALIVE": "-1", "OLLAMA_CONTEXT_LENGTH": "4096", "OLLAMA_NUM_PARALLEL": "4", "OLLAMA_NOHISTORY": "1"}, None, 60)
     try:
         def one(p: str) -> str:
@@ -75,6 +76,36 @@ def _pie_generate(art, snapshot: Path, pie_root: Path, prompts: list[str], max_t
         return json.loads(out.read_text()), commit[:12]
 
 
+def tokenizer_dir(art, hf_cache: Path, log=print) -> Path:
+    """Where a model's tokenizer and chat template come from. A GGUF repo ships neither: its ``tokenizer_from`` repo does."""
+    from huggingface_hub import snapshot_download
+
+    from pie_evals.node.snapshots import TOKENIZER_PATTERNS
+
+    repo = art.tokenizer_from or art.gguf_config_from
+    if not repo:
+        raise RuntimeError(f"{art.id}: no tokenizer repo (tokenizer_from) for a GGUF arm")
+    log(f"tokenizer: {repo}")
+    return Path(snapshot_download(repo, cache_dir=str(hf_cache), allow_patterns=TOKENIZER_PATTERNS, token=os.environ.get("HF_TOKEN") or None))
+
+
+def generate(engine: str, art, snapshot: Path | None, tok_dir: Path | None, pie_root: Path, prompts: list[str], max_tokens: int, log) -> tuple[list[str], str]:
+    """Greedy answers to ``prompts`` on one engine, and the engine's version string."""
+    if engine == "pie":
+        return _pie_generate(art, snapshot, pie_root, prompts, max_tokens, log)
+    if engine == "ollama":
+        return _ollama_generate(art.ollama_tag, tok_dir, prompts, max_tokens, log)
+    if engine == "splash":
+        return splash_generate(art, prompts, SYSTEM, max_tokens, log)
+    rendered = _render(tok_dir, prompts)
+    bos = _tokenizer(tok_dir).bos_token
+    if engine == "mlxlm":
+        return mlxlm_generate(snapshot, rendered, max_tokens, bos, log)
+    if engine == "llamacpp":
+        return llamacpp_generate(art, rendered, max_tokens, bos, log)
+    raise ValueError(f"no engine {engine!r} (one of {', '.join(ENGINES)})")
+
+
 class TasksSkipped(Exception):
     def __init__(self, artifact: str, tasks: list[str], written: list[Path]):
         super().__init__(f"{artifact}: skipped {', '.join(tasks)}")
@@ -99,8 +130,14 @@ def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str =
     store = Store(store_dir)
     m = Matrix.load(matrix_dir)
     art = m.artifacts[artifact_id]
-    engine = "ollama" if art.source_format == SourceFormat.OLLAMA else "pie"
-    snapshot = ensure_snapshot(art, hf_cache_dir(), download=True, log=log)
+    engine = engine_for(art)
+    # the weights: pie and mlx-lm read the MLX checkpoint, Ollama its own store, llama.cpp the GGUF (its tokenizer comes
+    # from another repo), Splash fetches its own
+    snapshot = tok_dir = None
+    if engine == "llamacpp":
+        tok_dir = tokenizer_dir(art, hf_cache_dir(), log)
+    elif engine != "splash":
+        snapshot = tok_dir = ensure_snapshot(art, hf_cache_dir(), download=True, log=log)
     written: list[str] = []
     skipped: list[str] = []
     for task in tasks:
@@ -110,15 +147,13 @@ def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str =
             skipped.append(task)
             continue
         t0 = time.monotonic()
-        if engine == "ollama":
-            texts, version = _ollama_generate(art.ollama_tag, snapshot, [i.prompt for i in items], max_tokens, log)
-        else:
-            texts, version = _pie_generate(art, snapshot, pie_root, [i.prompt for i in items], max_tokens, log)
+        texts, version = generate(engine, art, snapshot, tok_dir, pie_root, [i.prompt for i in items], max_tokens, log)
         scores = [score(i, t) for i, t in zip(items, texts, strict=True)]
         correct = sum(scores)
         lo, hi = wilson(correct, len(scores))
         summary = {
-            "artifact": art.id, "model": art.baseline_of or art.id, "engine": engine, "label": art.baseline_label or ("pie" if engine == "pie" else "Ollama"),
+            "artifact": art.id, "model": art.baseline_of or art.id, "engine": engine, "label": art.baseline_label or LABELS[engine],
+            "checkpoint": art.base_model, "scheme": str(art.scheme),
             "task": task, "n": len(scores), "correct": correct, "score": correct / len(scores) if scores else None, "ci95": [lo, hi],
             "version": version, "empty": sum(1 for t in texts if not t), "minutes": round((time.monotonic() - t0) / 60, 1),
             "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
