@@ -708,3 +708,13 @@
 .chart-tooltip[hidden] {
   display: none;
 }
+
+/* the Method page: plain reading text, the same grey and spacing as the rest of the site */
+.method { padding: 32px 40px 64px; max-width: 760px; }
+.method-head h1 { font-size: 28px; font-weight: 600; margin: 0 0 8px; }
+.method-lede { color: var(--color-label-secondary); margin: 0 0 28px; font-size: 15px; }
+.method-section { margin: 0 0 28px; }
+.method-section h2 { font-size: 18px; font-weight: 600; margin: 0 0 10px; }
+.method-section p, .method-section li { font-size: 14px; line-height: 1.55; color: var(--color-label); margin: 0 0 8px; }
+.method-section ul { padding-left: 20px; margin: 0 0 8px; }
+@media (max-width: 760px) { .method { padding: 24px 16px 48px; } }
