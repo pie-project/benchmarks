@@ -722,9 +722,8 @@
   margin: 0 auto;
   padding: 56px var(--edge) 96px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
-  align-items: start;
 }
 
 .method-head { grid-column: 1 / -1; margin: 0 0 20px; }
@@ -856,7 +855,7 @@
 .method-pane-body .method-footnote { font-size: 13px; }
 
 @media (max-width: 760px) {
-  .method-inner { padding: 32px var(--edge) 64px; grid-template-columns: minmax(0, 1fr); }
+  .method-inner { padding: 32px var(--edge) 64px; }
   .method-head h1 { font-size: 32px; }
   .method-pane { padding: 22px 20px 24px; }
   .method-pane h2 { font-size: 23px; }
