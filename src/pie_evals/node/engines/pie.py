@@ -284,7 +284,8 @@ class PieEngine(Engine):
             if v is not None:
                 args += [flag, str(v)]
         for knob, flag in _BOOL_OPTIONAL_FLAGS:
-            v = r.get(knob)
+            # a workload may pin a knob the recipe defaults (T0 pins pretokenized prompts)
+            v = workload.params.get(knob, r.get(knob))
             if v is True:
                 args.append(flag)
             elif v is False:
