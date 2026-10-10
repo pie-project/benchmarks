@@ -19,7 +19,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from pie_evals.schema import Backend, EngineName, ErrorClass, WorkloadSpec
+from pie_evals.schema import Backend, EngineName, ErrorClass, WorkloadKind, WorkloadSpec
 
 from .base import Engine, EngineLaunchError, classify_failure, register
 from .shape import max_model_len_for
@@ -212,10 +212,24 @@ class PieEngine(Engine):
         except OSError:
             return False
 
+    def speculates(self, workload: WorkloadSpec) -> bool:
+        """Draft-and-verify decode for this row. ``speculation`` in the recipe forces
+        it on or off; ``auto`` (the default) speculates single-stream rows only, since
+        drafting costs throughput under concurrency. Needs the artifact's drafter row."""
+        mode = str(self.recipe.get("speculation", "auto"))
+        if mode == "off" or not (self.artifact.pie_sku and "dflash" in self.artifact.pie_sku):
+            return False
+        return mode == "on" or workload.kind == WorkloadKind.SINGLE_STREAM
+
     def engine_args(self, workload: WorkloadSpec) -> list[str]:
         r = self.recipe
         engine = self.pie_engine_name()
-        args: list[str] = ["--engine", engine, "--inferlet-dir", str(self.inferlet_dir)]
+        spec = self.speculates(workload)
+        inferlet = self.pie_root / "examples/dflash-speculative-bench" if spec else self.inferlet_dir
+        self.env["PIE_BENCH_INFERLET_DIR"] = str(inferlet)
+        args: list[str] = ["--engine", engine, "--inferlet-dir", str(inferlet)]
+        if not spec:
+            args += ["--no-system-speculation"]
 
         if self.platform.backend == Backend.CUDA:
             tp = max(1, int(self.mode.tp))

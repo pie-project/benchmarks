@@ -158,6 +158,7 @@ artifacts:
     family: qwen3_6
     scheme: affine_u4_g64
     source_format: mlx
+    pie_sku: qwen36-27b-dflash-u4g64-kv-bf16   # pie speculates single-stream rows with this drafter row (recipe speculation)
     expected_gib: 14.09
     max_context: 4096
     tiers: [nightly, weekly]
