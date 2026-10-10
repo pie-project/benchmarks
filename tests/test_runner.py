@@ -144,6 +144,23 @@ def test_control_failure_invalidates_process(job, patched, tmp_path):
     assert FakeEngine.calls.count("control-aa") == 6
 
 
+def test_a_mac_run_keeps_numbers_after_a_failed_control(job, patched, tmp_path):
+    FakeEngine.behaviour["control-aa"] = [100.0, 130.0, 130.0, 100.0, 130.0, 130.0]
+    recs, _ = _run(job.model_copy(update={"control_marks_noisy": True}), patched, tmp_path)
+    others = [r for r in recs if r.cell.workload.id != "control-aa"]
+    assert others and all(r.status == CellStatus.NOISY and r.error_class is None and r.perf and r.perf.rounds for r in others)
+    assert all("control A/A failed" in (r.invalid_reason or "") for r in others)
+
+
+def test_a_workload_round_timeout_lifts_the_job_cap(job, tmp_path):
+    from types import SimpleNamespace as NS
+
+    r = runner_mod.NodeRunner(job.model_copy(update={"per_cell_timeout_s": 1800, "kill_s": 99999}), pie_root=tmp_path, out_dir=tmp_path / "o", build=False)
+    slow = NS(workload=NS(est_minutes=1.5, params={"round_timeout_s": 3000}))
+    plain = NS(workload=NS(est_minutes=1.5, params={}))
+    assert r.cell_timeout_s(slow) == 3000 and r.cell_timeout_s(plain) == 900
+
+
 def test_noisy_control_gets_one_more_look(job, patched, tmp_path):
     FakeEngine.behaviour["control-aa"] = [100.0, 130.0]  # the second look settles at 130 every round
     recs, _ = _run(job, patched, tmp_path)

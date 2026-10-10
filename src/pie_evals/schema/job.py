@@ -40,6 +40,8 @@ class JobSpec(BaseModel):
         description="cell_id -> recent primary-metric values, shipped with the job so the node can decide repetitions offline",
     )
     control_required: bool = True
+    #: a failed control A/A marks the process's rows noisy (numbers kept) instead of withholding them
+    control_marks_noisy: bool = False
     output_dir: str = "out"
     budget_s: int = Field(default=3600, description="soft budget: no new cell starts after this")
     kill_s: int = Field(default=5400, description="hard deadline: the runner's watchdog kills everything at this point")

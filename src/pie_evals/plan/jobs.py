@@ -133,6 +133,8 @@ def make_jobs(
                     # a Mac's first run spends much of its time downloading models: its soft budget is the hard limit
                     budget_s=kill_s if tier == Tier.TARGETED else int(budget * 60),
                     kill_s=kill_s,
+                    # a Mac release run reports every row: a noisy laptop marks its rows noisy rather than empty
+                    control_marks_noisy=tier == Tier.TARGETED,
                     est_minutes=est,
                 )
             )

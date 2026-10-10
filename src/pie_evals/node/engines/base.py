@@ -111,7 +111,7 @@ def _pct(values: list[float], q: float) -> float | None:
     return float(np.percentile(np.asarray(values, dtype=float), q))
 
 
-def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]], num_layers: int | None, concurrency: int | None = None) -> PerfMetrics:
+def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]], num_layers: int | None, concurrency: int | None = None, *, cold_tags: bool = False) -> PerfMetrics:
     """Lift ``scripts/bench/common.py``'s BenchSummary + RequestResult rows."""
     completed = [r for r in requests if r.get("ok")]
     out_tok = int(summary.get("output_tokens") or sum(r.get("output_tokens", 0) for r in completed))
@@ -140,6 +140,12 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
     decode_tok_s = float(np.median(decode_lane)) if decode_lane else None
     # prefill: one definition for every engine (see pie_evals.node.fair)
     config_cached = counters.get("cached_prompt_tokens")
+    # a cold-cache workload tags every prompt's start, so no prefix can hit: an engine that
+    # does not report its cache count is taken as cold by construction, and the row says so
+    by_construction = config_cached is None and cold_tags
+    if by_construction:
+        config_cached = 0.0
+        counters["cold_by_construction"] = 1.0
     verdict = cache_verdict(completed, config_cached)
     prefill_tok_s = fair_prefill_tok_s(completed, concurrency=concurrency, config_cached=config_cached)
     counters["fair_def"] = float(FAIR_DEFINITION_VERSION)
@@ -353,7 +359,7 @@ class Engine(ABC):
             err = next((str(r.get("error") or "") for r in failed if r.get("error")), "(no error text)")
             cls = ErrorClass.HARNESS_INVALID if re.search(r"temperature must be|Failed to parse JSON input", err) else ErrorClass.INCOMPATIBLE if re.search(r"forward-hybrid|not valid on|interface", err) else ErrorClass.CRASH
             raise EngineLaunchError(cls, f"all {len(requests)} requests failed: {err[:300]}")
-        perf = perf_from_common_json(summary, requests, self.num_layers, concurrency=int(workload.params.get("concurrency", 1)))
+        perf = perf_from_common_json(summary, requests, self.num_layers, concurrency=int(workload.params.get("concurrency", 1)), cold_tags=bool(workload.params.get("cold_cache")))
         if workload.params.get("primary"):
             perf.primary = str(workload.params["primary"])
         perf.counters.update(self.counters_from_summary(summary))
