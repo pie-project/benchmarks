@@ -110,6 +110,14 @@ def cell_priority(cell) -> tuple[int, float]:
     return (0 if cell.workload.kind.value == "control_aa" else 1, float(cell.workload.est_minutes))
 
 
+
+def import_reason(e: Exception) -> str:
+    """The line of a failed `pie model import` that says why: pie marks it `✗`, and the
+    line after it is a generic hint that alone names no cause."""
+    lines = [ln.strip() for ln in str(e).strip().splitlines() if ln.strip()]
+    marked = [ln for ln in lines if ln.startswith("✗")]
+    return marked[-1] if marked else (lines[-1] if lines else "")
+
 class NodeRunner:
     def __init__(self, job: JobSpec, *, pie_root: Path, out_dir: Path, hf_cache: Path | None = None, runner_name: str | None = None, build: bool = True, download: bool = False):
         self.job = job
@@ -364,7 +372,7 @@ class NodeRunner:
                         model_path = ensure_artifact(first.artifact, snapshot, self.pie_root / "target/release/pie", self.job.pie_commit, log=self.log)
                     except Exception as e:
                         for c in cells:
-                            self.emit(self._failed(c, ErrorClass.LOAD_FAIL, f"artifact import: {str(e).strip().splitlines()[-1][:900]}", fingerprint))
+                            self.emit(self._failed(c, ErrorClass.LOAD_FAIL, f"artifact import: {import_reason(e)[:900]}", fingerprint))
                         continue
             recipe_name = "competitive" if str(first.engine) != "pie" else "default"
             try:

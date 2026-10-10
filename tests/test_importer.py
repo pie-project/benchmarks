@@ -44,3 +44,32 @@ def test_a_pinned_sku_is_always_imported():
 def test_an_older_pie_takes_the_row_as_sku(monkeypatch):
     monkeypatch.setattr(im.subprocess, "run", lambda argv, **kw: type("R", (), {"stdout": "      --sku <NAME>"})())
     assert im.row_flag(Path("pie")) == "--sku"
+
+
+def test_a_drafter_row_is_imported_by_repository_id_with_its_drafter(tmp_path, monkeypatch):
+    calls = []
+
+    def fake_run(argv, **kw):
+        if "--help" in argv:
+            return type("R", (), {"returncode": 0, "stderr": "", "stdout": "      --deployment <NAME>"})()
+        calls.append(argv)
+        out = Path(argv[argv.index("--out") + 1])
+        (out / "q.zt").write_bytes(b"zt")
+        return type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
+
+    monkeypatch.setattr(im.subprocess, "run", fake_run)
+    art = ArtifactSpec(id="q27", base_model="mlx-community/Qwen3.6-27B-4bit", family="qwen3_6", scheme=QuantScheme.AFFINE_U4_G64,
+                       source_format=SourceFormat.MLX, pie_sku="qwen36-27b-dflash-u4g64-kv-bf16", pie_drafter="dflash")
+    im.ensure_artifact(art, tmp_path / "snap", Path("/pie"), "e06ff359377b", root=tmp_path / "cache", log=lambda *_: None)
+    argv = calls[0]
+    assert argv[3] == "mlx-community/Qwen3.6-27B-4bit", "a local path matches no published head"
+    assert argv[argv.index("--drafter") + 1] == "dflash"
+    assert argv[argv.index("--deployment") + 1] == "qwen36-27b-dflash-u4g64-kv-bf16"
+
+
+def test_a_failed_import_is_recorded_by_the_line_that_says_why():
+    from pie_evals.node.runner import import_reason
+
+    e = RuntimeError("pie model import failed for q (exit 1):\n✗ --deployment r: `r` does not read this checkpoint: no `aux.fc.weight`\n"
+                     "This import converts for the deployment named and for no other")
+    assert "aux.fc.weight" in import_reason(e)
