@@ -87,6 +87,8 @@ def common_args_for(workload: WorkloadSpec, warmup: int = 2) -> list[str]:
         args += ["--unique-prompts"]
     else:
         raise ValueError(kind)
+    if p.get("request_timeout_s"):
+        args += ["--request-timeout", str(int(p["request_timeout_s"]))]
     return args
 
 

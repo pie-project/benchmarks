@@ -18,7 +18,8 @@ workloads:
     est_minutes: 0.5
   - id: ss-512-256
     kind: single_stream
-    params: {prefill: 512, decode: 256}
+    # cold prompts (a unique leading tag per request): the row's prefill is a real prefill for every engine
+    params: {prefill: 512, decode: 256, requests: 8, cold_cache: true}
     tiers: [nightly, weekly, targeted]
     est_minutes: 1
 
@@ -30,7 +31,8 @@ workloads:
     est_minutes: 1
   - id: c32
     kind: concurrency
-    params: {concurrency: 32, num_requests: 128, prefill: 128, decode: 128}
+    # a dense 27B on a 48 GB Mac serves 128 requests in 12-25 min: requests and rounds get the time to finish
+    params: {concurrency: 32, num_requests: 128, prefill: 128, decode: 128, request_timeout_s: 2400, round_timeout_s: 3000}
     tiers: [smoke, nightly, weekly, targeted]
     est_minutes: 1.5
   - id: c64

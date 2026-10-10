@@ -234,3 +234,14 @@ def test_ollama_adapter_reads_prompts_file():
     from pie_evals.node.engines.ollama import OllamaEngine
 
     assert OllamaEngine.supports_prompts_file is True
+
+
+def test_cold_tagged_run_without_a_cache_count_is_cold_by_construction():
+    from pie_evals.node.engines.base import perf_from_common_json
+    reqs = [{"ok": True, "latency_s": 1.0, "ttft_s": 0.2, "output_tokens": 64, "prompt_tokens": 512, "intertoken_us": []}] * 4
+    summary = {"config": {"concurrency": 1}}
+    cold = perf_from_common_json(summary, reqs, None, concurrency=1, cold_tags=True)
+    assert cold.prefill_tok_s is not None
+    assert cold.counters["cold_cache_verified"] == 1.0 and cold.counters["cold_by_construction"] == 1.0
+    plain = perf_from_common_json(summary, reqs, None, concurrency=1)
+    assert plain.prefill_tok_s is None and plain.counters["cold_cache_verified"] == 0.0
