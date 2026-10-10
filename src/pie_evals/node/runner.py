@@ -159,8 +159,9 @@ class NodeRunner:
         ten minutes), under the job-wide cap and the kill deadline. Nightly
         35959142812 lost a whole 60-minute shard to one hung 30-second cell
         (pie #649): the flat 5400 s cap let it run to the client's timeout."""
-        scaled = max(600.0, float(cell.workload.est_minutes) * 60.0 * 10.0)
-        return int(min(self.job.per_cell_timeout_s, scaled, self.remaining_to_kill_s()))
+        scaled = max(600.0, float(cell.workload.est_minutes) * 60.0 * 10.0, float(cell.workload.params.get("round_timeout_s") or 0))
+        cap = max(self.job.per_cell_timeout_s, int(cell.workload.params.get("round_timeout_s") or 0))
+        return int(min(cap, scaled, self.remaining_to_kill_s()))
 
     def _start_watchdog(self) -> None:
         """Hard deadline: at ``job.kill_s`` (= budget × kill_factor) kill every
@@ -440,7 +441,7 @@ class NodeRunner:
                 if self.over_budget():
                     self.log(f"soft budget exhausted at t+{self.elapsed_s():.0f}s; remaining cells of this process not started")
                     break
-                if not control_ok and job.control_required:
+                if not control_ok and job.control_required and not job.control_marks_noisy:
                     rec = self._invalid(cell, "control A/A failed on this process; numbers not read", fingerprint)
                     records.append(rec)
                     self.emit(rec)
@@ -450,6 +451,9 @@ class NodeRunner:
                 recipe = recipe_for_cell(engine.recipe, recipe_name, cell)
                 engine.recipe = recipe
                 rec = self._run_cell(cell, engine, snapshot, engine_version, recipe, recipe_name, fingerprint, machine_before)
+                if not control_ok and rec.status == CellStatus.PASS:
+                    # a noisy machine still yields numbers: the row keeps them, marked noisy, as a competitor's noisy row is
+                    rec = rec.model_copy(update={"status": CellStatus.NOISY, "invalid_reason": "control A/A failed on this process"})
                 if cell.workload.kind.value == "control_aa" and rec.status == CellStatus.NOISY:
                     # a spread a hair past the bound on a freshly booted process withholds every
                     # number of the process (gemma-4-E4B tp2: 5.6 % against 5 %); one more look
@@ -460,7 +464,7 @@ class NodeRunner:
                         rec = again
                 if cell.workload.kind.value == "control_aa" and rec.status != CellStatus.PASS:
                     control_ok = False
-                    self.log("control A/A failed; remaining cells in this process are HARNESS_INVALID")
+                    self.log("control A/A failed; remaining cells in this process are " + ("NOISY" if job.control_marks_noisy else "HARNESS_INVALID"))
                 records.append(rec)
                 self._done.add(cell.cell_id)
                 self.emit(rec)
