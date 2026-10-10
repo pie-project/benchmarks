@@ -14,6 +14,8 @@ on:
       max_jobs: { description: "cap on jobs", required: false, default: "" }
       build_platform: { description: "platform for the build/prepare pod", required: false, default: "" }
       max_jobs_per_platform: { description: "cap per platform", required: false, default: "" }
+      artifacts: { description: "comma-separated artifact ids", required: false, default: "" }
+      pie_env: { description: "KEY=VALUE pairs set for the node run (A/B diagnostics)", required: false, default: "" }
 jobs:
   resolve:
     runs-on: ubuntu-latest
@@ -39,4 +41,6 @@ jobs:
       max_jobs: ${{ github.event.inputs.max_jobs || '' }}
       build_platform: ${{ github.event.inputs.build_platform || '' }}
       max_jobs_per_platform: ${{ github.event.inputs.max_jobs_per_platform || '' }}
+      artifacts: ${{ github.event.inputs.artifacts || '' }}
+      pie_env: ${{ github.event.inputs.pie_env || '' }}
     secrets: inherit
