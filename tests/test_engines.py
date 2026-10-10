@@ -1153,3 +1153,19 @@ def test_pie_speculates_single_stream_and_the_recipe_can_force_it(tmp_path):
     assert not eng.speculates(single)
     eng = mac_make(PieEngine, art=mac_artifact())
     assert not eng.speculates(single)
+
+
+def test_pie_in_served_mode_has_its_server_watched(tmp_path):
+    import subprocess
+    import sys
+
+    eng = PieEngine(pie_root=tmp_path, artifact=artifact(), platform=platform(), mode=Mode(), recipe={})
+    assert eng.watch_pids() == []
+    server = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        eng._server_proc = server
+        assert eng.watch_pids() == [server.pid], "the stall watchdog must count the engine's CPU, not only the client's"
+    finally:
+        server.kill()
+        server.wait()
+    assert eng.watch_pids() == [], "a server that exited is not watched"

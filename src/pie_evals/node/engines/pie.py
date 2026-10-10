@@ -426,6 +426,12 @@ class PieEngine(Engine):
                 self._server_log = log
                 return
 
+    def watch_pids(self) -> list[int]:
+        # served mode runs the engine in its own process; the bench is only a client
+        # that idles on its socket while the engine works, so the stall watchdog must
+        # count the server's CPU too (a slow cell was otherwise stopped as a hang)
+        return [self._server_proc.pid] if self._server_proc is not None and self._server_proc.poll() is None else []
+
     @staticmethod
     def _kill(proc: subprocess.Popen, log: Any) -> None:
         proc.terminate()
