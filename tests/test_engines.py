@@ -311,6 +311,19 @@ def test_pie_program_path_is_settable(tmp_path):
     assert eng3.program_path == "x/y" and eng3.inferlet_dir == PIE_ROOT / "x/y"
 
 
+def test_a_workload_pins_a_knob_the_recipe_defaults(tmp_path):
+    """T0 serves pretokenized prompts whatever the recipe says: the gate
+    judges the engine on the reference's own rendering, not pie's template."""
+    from pie_evals.schema import WorkloadKind
+
+    eng = make(PieEngine, workload=WORKLOADS["c32"])
+    eng.recipe.update({"pretokenized_prompts": False})
+    t0 = WorkloadSpec(id="t0", kind=WorkloadKind.SINGLE_STREAM, params={"requests": 1, "decode": 64, "pretokenized_prompts": True})
+    argv = argv_for(eng, t0, tmp_path)
+    assert "--pretokenized-prompts" in argv and "--no-pretokenized-prompts" not in argv
+    assert "--no-pretokenized-prompts" in argv_for(eng, WORKLOADS["c32"], tmp_path)
+
+
 def test_pie_metal_and_recipe_passthrough(tmp_path):
     plat = platform(Backend.METAL, "apple9", count=1)
     eng = make(PieEngine, plat=plat, workload=WORKLOADS["c32"])
