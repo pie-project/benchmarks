@@ -18,8 +18,9 @@ window.Pie = window.Pie || {};
   const p = (text, cls = "") => `<p${cls ? ` class="${cls}"` : ""}>${text}</p>`;
   const subhead = (text) => `<h3 class="method-subhead">${text}</h3>`;
 
+  let order = 0;
   const pane = (name, title, summary, body) => `
-    <section class="method-pane" aria-labelledby="method-${name}">
+    <section class="method-pane" style="order: ${order++}" aria-labelledby="method-${name}">
       <header class="method-pane-head">
         ${icon(name)}
         <h2 id="method-${name}">${title}</h2>
@@ -28,20 +29,17 @@ window.Pie = window.Pie || {};
       <div class="method-pane-body">${body}</div>
     </section>`;
 
-  const content = `
-    <header class="method-head">
-      <h1>How we measure</h1>
-      <p class="method-lede">Every number on this site comes from the same client, timer and prompts for every engine. These are the definitions.</p>
-    </header>
-
-    ${pane("decode", "Decode",
+  // Two columns that stack on their own: a card sits right under the card above it in its
+  // column, never under the taller card of the column beside it. Cards alternate between
+  // the columns in reading order.
+  const panes = [
+    `${pane("decode", "Decode",
       "Decode is the speed at which tokens are generated after the first one.",
       [
         formula("(output tokens − 1) ÷ (latency − TTFT)", "The output tokens after the first, divided by the time from the first token to the last. TTFT is the time to first token, explained below."),
         p("The row shows the median of the measured requests, in tokens per second. Warm-up requests are not counted."),
-      ].join(""))}
-
-    ${pane("prefill", "Prefill",
+      ].join(""))}`,
+    `${pane("prefill", "Prefill",
       "Prefill is how fast the engine reads the prompt before the first token.",
       [
         formula("prompt tokens ÷ TTFT", "For each request."),
@@ -51,18 +49,16 @@ window.Pie = window.Pie || {};
           ["Cold cache", "A request that reuses cached prompt work would look faster, so every request has its own prefix and the engine's prompt cache is off. Each row records the cached-token count, and the row is marked unverified if that count is missing."],
           ["Prompt tokens", "Prompt tokens are what the engine actually processed, so engines that tokenize slightly differently are still compared by the work they did."],
         ]),
-      ].join(""))}
-
-    ${pane("ttft", "Time to first token",
+      ].join(""))}`,
+    `${pane("ttft", "Time to first token",
       "How long you wait before the first word of the answer appears.",
       [
         formula("TTFT = first generated token − request sent", "Measured on the client."),
         rows([
           ["Inter-token latency", "ITL is the gap between consecutive tokens."],
         ]),
-      ].join(""))}
-
-    ${pane("load", "Load time",
+      ].join(""))}`,
+    `${pane("load", "Load time",
       "Load time is how long the engine takes to be ready to serve the model, in seconds.",
       [
         rows([
@@ -70,9 +66,8 @@ window.Pie = window.Pie || {};
           ["Other engines", "The first run's extra time over the median run, which is the cost of the first call."],
         ]),
         p("Load time includes reading the weights from disk, so it depends on what the operating system has cached. Compare load times only on the same machine and after the same restart.", "method-footnote"),
-      ].join(""))}
-
-    ${pane("fairness", "Fairness",
+      ].join(""))}`,
+    `${pane("fairness", "Fairness",
       null,
       [
         rows([
@@ -83,7 +78,17 @@ window.Pie = window.Pie || {};
           ["Noise checks", "A row is marked noisy when repeated rounds vary by more than 5%, and each process runs a control check (A/A) that must agree with itself."],
           ["Failures stay visible", "A setup that did not run is kept with its reason, not dropped."],
         ]),
-      ].join(""))}`;
+      ].join(""))}`
+  ];
+  const column = (side) => `<div class="method-col">${panes.filter((_, i) => i % 2 === side).join("")}</div>`;
+
+  const content = `
+    <header class="method-head">
+      <h1>How we measure</h1>
+      <p class="method-lede">Every number on this site comes from the same client, timer and prompts for every engine. These are the definitions.</p>
+    </header>
+
+    <div class="method-cols">${column(0)}${column(1)}</div>`;
 
   Pie.method = {
     element,

@@ -728,6 +728,21 @@
 
 .method-head { grid-column: 1 / -1; margin: 0 0 20px; }
 
+/* Two columns that stack independently: each card follows the one above it in its own column */
+.method-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.method-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
 .method-head h1 {
   font-family: var(--font-display);
   font-size: 40px;
@@ -856,6 +871,9 @@
 
 @media (max-width: 760px) {
   .method-inner { padding: 32px var(--edge) 64px; }
+  /* one column: the cards return to reading order */
+  .method-cols { display: flex; flex-direction: column; }
+  .method-col { display: contents; }
   .method-head h1 { font-size: 32px; }
   .method-pane { padding: 22px 20px 24px; }
   .method-pane h2 { font-size: 23px; }
