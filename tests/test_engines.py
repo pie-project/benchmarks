@@ -1102,6 +1102,22 @@ def test_an_idle_bench_is_stopped_as_a_hang():
     assert stalled and not timed_out and idle.poll() is not None
 
 
+def test_a_hang_leaves_a_dump_of_what_the_tree_was_doing():
+    import subprocess
+    import sys
+
+    from pie_evals.node.engines.base import stall_dump, wait_with_stall_check
+
+    idle = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    dumps = []
+    rc, timed_out, stalled = wait_with_stall_check(
+        idle, timeout_s=60, stall_s=2, poll_s=0.5, on_stall=lambda pids: dumps.append(stall_dump(pids))
+    )
+    assert stalled and len(dumps) == 1
+    assert f"== pid {idle.pid}:" in dumps[0] and "time.sleep" in dumps[0]
+    assert "-- tid" in dumps[0] or "Thread" in dumps[0], "every thread of the stalled process is listed"
+
+
 def test_a_busy_bench_is_left_to_finish():
     import subprocess
     import sys

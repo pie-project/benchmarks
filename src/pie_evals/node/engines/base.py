@@ -24,6 +24,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import time
 from abc import ABC, abstractmethod
@@ -328,7 +329,10 @@ class Engine(ABC):
         t0 = time.monotonic()
         with open(out_dir / "stdout.txt", "w") as so, open(out_dir / "stderr.txt", "w") as se:
             proc = subprocess.Popen(argv, cwd=str(self.pie_root / "scripts/bench"), env=env, stdout=so, stderr=se, text=True)
-            rc, timed_out, stalled = wait_with_stall_check(proc, timeout_s, self.stall_s(), self.watch_pids)
+            rc, timed_out, stalled = wait_with_stall_check(
+                proc, timeout_s, self.stall_s(), self.watch_pids,
+                on_stall=lambda pids: (out_dir / "stall-dump.txt").write_text(stall_dump(pids)),
+            )
         dur = time.monotonic() - t0
         stdout = (out_dir / "stdout.txt").read_text(errors="replace")
         stderr = (out_dir / "stderr.txt").read_text(errors="replace")
@@ -396,7 +400,41 @@ def tree_pids(roots: list[int], table: dict[int, tuple[int, float]]) -> set[int]
     return pids
 
 
-def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: float, extra_pids=lambda: [], poll_s: float = 5.0) -> tuple[int, bool, bool]:
+def stall_dump(pids: list[int]) -> str:
+    """What a stalled process tree is doing when the watchdog gives up on it:
+    the GPUs' utilization (busy with no CPU work points at a device-side wait,
+    e.g. ranks blocked in a collective; idle points at a host-side deadlock)
+    and every thread's stack — gdb's when it is installed and may attach,
+    otherwise the kernel's view from /proc."""
+    out = []
+    smi = subprocess.run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used", "--format=csv,noheader"],
+                         capture_output=True, text=True, check=False, timeout=30)
+    out.append("== nvidia-smi (index, util, mem)\n" + (smi.stdout or smi.stderr))
+    gdb = shutil.which("gdb")
+    for pid in pids:
+        try:
+            cmd = Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ").decode(errors="replace")[:300]
+        except OSError:
+            continue
+        out.append(f"== pid {pid}: {cmd}")
+        if gdb:
+            bt = subprocess.run([gdb, "-p", str(pid), "-batch", "-nx", "-ex", "set pagination off", "-ex", "thread apply all bt 30"],
+                                capture_output=True, text=True, check=False, timeout=120)
+            if bt.returncode == 0 and "Thread" in bt.stdout:
+                out.append(bt.stdout)
+                continue
+            out.append(f"(gdb could not attach: {bt.stderr.strip()[-200:]})")
+        for task in sorted(Path(f"/proc/{pid}/task").glob("*")):
+            def read(name: str) -> str:
+                try:
+                    return (task / name).read_text(errors="replace").strip()
+                except OSError:
+                    return "?"
+            out.append(f"-- tid {task.name} {read('comm')} wchan={read('wchan')}\n{read('stack')}")
+    return "\n".join(out)
+
+
+def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: float, extra_pids=lambda: [], poll_s: float = 5.0, on_stall=None) -> tuple[int, bool, bool]:
     start = last_work = time.monotonic()
     last_cpu = None
     while True:
@@ -411,6 +449,11 @@ def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: flo
             last_work = now
         last_cpu = cpu if last_cpu is None else max(cpu, last_cpu)
         timed_out, stalled = now - start > timeout_s, now - last_work > stall_s
+        if stalled and not timed_out and on_stall is not None:
+            try:
+                on_stall(sorted(tree_pids([proc.pid, *extra_pids()], table)))
+            except Exception:  # a dump must never turn a recorded hang into a harness crash
+                pass
         if timed_out or stalled:
             for p in tree_pids([proc.pid], table) - {proc.pid}:
                 try:
