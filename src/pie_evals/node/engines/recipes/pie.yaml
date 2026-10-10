@@ -23,6 +23,12 @@ default:
         Per-token client stamps (TTFT, inter-token gaps) are what PerfMetrics
         reads decode tok/s and ITL from. vLLM and SGLang run with the same
         flag so all three are measured from the client vantage.
+    speculation:
+      value: auto
+      rationale: >
+        Draft-and-verify decode (the model's DFlash drafter) for single-stream rows only;
+        concurrency rows decode plain, since drafting costs throughput under load.
+        "on" or "off" forces it for every row. Only rows whose artifact has a drafter row speculate.
     pretokenized_prompts:
       value: false
       rationale: >

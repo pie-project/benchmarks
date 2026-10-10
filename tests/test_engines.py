@@ -1120,3 +1120,20 @@ def test_pie_prefills_cold_when_its_bench_can_turn_the_prefix_cache_off(tmp_path
         (root / "scripts/bench/pie_bench.py").write_text(script)
         eng = PieEngine(pie_root=root, artifact=artifact(), platform=platform(), mode=Mode(), recipe={})
         assert ("--no-prefix-cache" in argv_for(eng, WORKLOADS["c32"], tmp_path)) is cold
+
+
+
+def test_pie_speculates_single_stream_and_the_recipe_can_force_it(tmp_path):
+    single, conc = MAC_WORKLOADS["ss-128-64"], MAC_WORKLOADS["c32"]
+    eng = mac_make(PieEngine, art=mac_artifact(pie_sku="qwen36-27b-dflash-u4g64-kv-bf16"))
+    assert eng.speculates(single) and not eng.speculates(conc)
+    assert flag_value(argv_for(eng, single, tmp_path), "--inferlet-dir").endswith("examples/dflash-speculative-bench")
+    argv = argv_for(eng, conc, tmp_path)
+    assert flag_value(argv, "--inferlet-dir").endswith("examples/text-completion-bench")
+    assert "--no-system-speculation" in argv
+    eng.recipe["speculation"] = "on"
+    assert eng.speculates(conc)
+    eng.recipe["speculation"] = "off"
+    assert not eng.speculates(single)
+    eng = mac_make(PieEngine, art=mac_artifact())
+    assert not eng.speculates(single)
