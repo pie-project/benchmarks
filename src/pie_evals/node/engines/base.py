@@ -425,7 +425,7 @@ def stall_dump(pids: list[int]) -> str:
                 continue
             out.append(f"(gdb could not attach: {bt.stderr.strip()[-200:]})")
         for task in sorted(Path(f"/proc/{pid}/task").glob("*")):
-            def read(name: str) -> str:
+            def read(name: str, task: Path = task) -> str:
                 try:
                     return (task / name).read_text(errors="replace").strip()
                 except OSError:
