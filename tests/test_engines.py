@@ -1102,6 +1102,22 @@ def test_an_idle_bench_is_stopped_as_a_hang():
     assert stalled and not timed_out and idle.poll() is not None
 
 
+def test_a_hang_leaves_a_dump_of_what_the_tree_was_doing():
+    import subprocess
+    import sys
+
+    from pie_evals.node.engines.base import stall_dump, wait_with_stall_check
+
+    idle = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    dumps = []
+    rc, timed_out, stalled = wait_with_stall_check(
+        idle, timeout_s=60, stall_s=2, poll_s=0.5, on_stall=lambda pids: dumps.append(stall_dump(pids))
+    )
+    assert stalled and len(dumps) == 1
+    assert f"== pid {idle.pid}:" in dumps[0] and "time.sleep" in dumps[0]
+    assert "-- tid" in dumps[0] or "Thread" in dumps[0], "every thread of the stalled process is listed"
+
+
 def test_a_busy_bench_is_left_to_finish():
     import subprocess
     import sys
@@ -1137,3 +1153,19 @@ def test_pie_speculates_single_stream_and_the_recipe_can_force_it(tmp_path):
     assert not eng.speculates(single)
     eng = mac_make(PieEngine, art=mac_artifact())
     assert not eng.speculates(single)
+
+
+def test_pie_in_served_mode_has_its_server_watched(tmp_path):
+    import subprocess
+    import sys
+
+    eng = PieEngine(pie_root=tmp_path, artifact=artifact(), platform=platform(), mode=Mode(), recipe={})
+    assert eng.watch_pids() == []
+    server = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        eng._server_proc = server
+        assert eng.watch_pids() == [server.pid], "the stall watchdog must count the engine's CPU, not only the client's"
+    finally:
+        server.kill()
+        server.wait()
+    assert eng.watch_pids() == [], "a server that exited is not watched"
