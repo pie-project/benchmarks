@@ -59,7 +59,13 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
     tmp = d.parent / f".tmp-{d.name}-{os.uname().nodename}-{os.getpid()}-{uuid.uuid4().hex[:6]}"  # pods on one volume share pids (pie #650: a shared spool zeroes the loser)
     tmp.mkdir(parents=True, exist_ok=True)
     source = snapshot / artifact.gguf_file if artifact.gguf_file else snapshot  # a GGUF repo is one file plus the base model's config.json
-    argv = [str(pie_bin), "model", "import", str(source), "--out", str(tmp), "--keep-source"]
+    if artifact.pie_drafter:
+        # a drafter row reads planes only its published head carries (`aux.*`), so the import
+        # names the base model by repository id: pie looks the head up for that id, fetches it,
+        # and lands target and head together. A local path would match no published head.
+        argv = [str(pie_bin), "model", "import", artifact.base_model, "--drafter", artifact.pie_drafter, "--out", str(tmp), "--keep-source"]
+    else:
+        argv = [str(pie_bin), "model", "import", str(source), "--out", str(tmp), "--keep-source"]
     if artifact.pie_sku:
         argv += [row_flag(pie_bin), artifact.pie_sku]
     env = {**os.environ}
