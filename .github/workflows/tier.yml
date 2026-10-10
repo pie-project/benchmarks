@@ -240,4 +240,9 @@ jobs:
         run: |
           shopt -s nullglob
           dirs=(out/out-*)
-          if [ ${#dirs[@]} -gt 0 ]; then .venv/bin/pie-evals collect --tier "${{ inputs.tier }}" --tag "${{ inputs.tag }}" --tag-kind "${{ inputs.tag_kind }}" "${dirs[@]}"; else echo "::warning::no node outputs"; fi
+          # `--tag-kind` is a Choice of release|manual; an untagged tier (smoke, scheduled nightly) has
+          # neither, so pass the flags only when set rather than an empty "" the Choice rejects.
+          tagargs=()
+          [ -n "${{ inputs.tag }}" ] && tagargs+=(--tag "${{ inputs.tag }}")
+          [ -n "${{ inputs.tag_kind }}" ] && tagargs+=(--tag-kind "${{ inputs.tag_kind }}")
+          if [ ${#dirs[@]} -gt 0 ]; then .venv/bin/pie-evals collect --tier "${{ inputs.tier }}" "${tagargs[@]}" "${dirs[@]}"; else echo "::warning::no node outputs"; fi
