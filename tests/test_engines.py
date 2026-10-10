@@ -805,6 +805,22 @@ def test_pie_metal_args(tmp_path):
     assert eng.env["PYTHONPATH"].startswith(f"{PIE_ROOT}/python/client/src:{PIE_ROOT}/python/server/python")
 
 
+def test_the_metal_pool_holds_one_request_at_the_declared_context(tmp_path):
+    eng = mac_make(PieEngine)
+    lc = WorkloadSpec(id="lc-32k-128", kind="long_context", params={"prefill": 32768, "decode": 128, "concurrency": 1})
+    argv = argv_for(eng, lc, tmp_path)
+    mml = int(flag_value(argv, "--max-model-len"))
+    assert int(flag_value(argv, "--total-pages")) * 32 >= mml  # the engine's 1024 holds 32k
+    eng.recipe["total_pages"] = 1024  # qwen3.6 on metal pins it
+    assert int(flag_value(argv_for(eng, lc, tmp_path), "--total-pages")) * 32 >= mml
+    eng.recipe["total_pages"] = 4096
+    assert flag_value(argv_for(eng, lc, tmp_path), "--total-pages") == "4096"
+    eng.recipe["total_pages"] = 1024
+    assert flag_value(argv_for(eng, MAC_WORKLOADS["c32"], tmp_path), "--total-pages") == "1024"
+    eng.recipe.pop("total_pages")
+    assert "--total-pages" not in argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
+
+
 def test_pie_recipe_passthrough(tmp_path):
     eng = mac_make(PieEngine, art=mac_artifact(family="gemma4"))
     eng.recipe.update({"frame_submit_depth": 4, "max_forward_requests": 32, "engine_option": {"max_state_slots": 128, "sku": "$pie_sku"}})

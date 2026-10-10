@@ -126,6 +126,24 @@ _STORE_TRUE_FLAGS: tuple[tuple[str, str], ...] = (
 )
 
 
+#: the Metal engine's own ``total_pages`` and ``kv_page_size`` defaults
+#: (pie ``MetalEngineOptions``).
+METAL_TOTAL_PAGES = 1024
+METAL_PAGE_SIZE = 32
+
+
+def metal_total_pages(pinned: Any, max_model_len: int) -> int | None:
+    """``--total-pages`` for a Metal boot: the recipe's cap, raised to hold one
+    request at ``max_model_len``. The engine's pool is fixed at boot (1024
+    pages, 32k tokens, unless pinned), so lc-32k's 32k prompt + decode was refused
+    on every Mac ("allocation of 1027 units can never fit (pool total 1024)")."""
+    floor = -(-max_model_len // METAL_PAGE_SIZE)
+    base = int(pinned) if pinned is not None else METAL_TOTAL_PAGES
+    if base >= floor:
+        return pinned
+    return floor
+
+
 def _scalar(v: Any) -> str:
     """Format a value the way pie_bench's ``--engine-option`` parser reads it back."""
     if isinstance(v, bool):
@@ -261,6 +279,8 @@ class PieEngine(Engine):
 
         for knob, flag in _DIRECT_FLAGS:
             v = r.get(knob)
+            if knob == "total_pages" and self.platform.backend == Backend.METAL:
+                v = metal_total_pages(v, max_model_len_for(workload))
             if v is not None:
                 args += [flag, str(v)]
         for knob, flag in _BOOL_OPTIONAL_FLAGS:
