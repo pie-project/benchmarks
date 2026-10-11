@@ -175,11 +175,7 @@ def t0_via_engine(
     engine_ids: list[list[int]] = []
     prompt_ids: list[list[int]] = []
     reported_prompt_tokens: list[int] = []
-    # Pretokenized: the engine reads the reference's own rendering, so the gate
-    # judges the engine and not its chat template (pie's Qwen cue omits the empty
-    # think block HF's no-think rendering adds; that is a template difference).
-    wl = WorkloadSpec(id="t0", kind=WorkloadKind.SINGLE_STREAM,
-                      params={"requests": 1, "decode": max_new_tokens, "pretokenized_prompts": True})
+    wl = WorkloadSpec(id="t0", kind=WorkloadKind.SINGLE_STREAM, params={"requests": 1, "decode": max_new_tokens})
     for pid, text in prompts:
         common = ["--prompt", text, "--max-tokens", str(max_new_tokens), "--temperature", "0", "--top-p", "1",
                   "--ignore-eos", "--warmup", "0", "--no-think", "--no-unique-prompts"]
