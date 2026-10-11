@@ -57,3 +57,17 @@ def test_a_snapshot_whose_weights_are_gone_is_not_present(tmp_path: Path):
     (tmp_path / "blobs").mkdir()
     (tmp_path / "blobs" / "gone").write_bytes(b"x")
     assert snapshot_dir_if_present(_art(), tmp_path) == snaps / rev
+
+
+def test_the_revision_main_resolved_to_wins_over_hex_order(tmp_path: Path):
+    # hex order is no order: with several revisions cached, the last one sorted is arbitrary
+    repo = tmp_path / "models--mlx-community--Qwen3.6-35B-A3B-4bit"
+    old, new = "f000000000000000000000000000000000000000", "38740b847e4cb78f352aba30aa41c76e08e6eb46"
+    for d in (old, new):
+        (repo / "snapshots" / d).mkdir(parents=True)
+        (repo / "snapshots" / d / "config.json").write_text("{}")
+    (repo / "refs").mkdir()
+    (repo / "refs" / "main").write_text(new)
+    # an imported row needs no weights in the snapshot; a served one does
+    assert snapshot_dir_if_present(_art(), tmp_path, weights=False) == repo / "snapshots" / new
+    assert snapshot_dir_if_present(_art(), tmp_path) is None
