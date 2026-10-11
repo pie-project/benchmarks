@@ -32,7 +32,11 @@ window.Pie = window.Pie || {};
         text("release", "Release", "Setup", { code: true }),
         text("scheme", "Quantization", "Setup", { code: true }),
         number("decode_tok_s", "Decode", "Speed", "tok/s", 1),
-        number("prefill_tok_s", "Prefill", "Speed", "tok/s", 0),
+        number("prefill_tok_s", "Prefill", "Speed", "tok/s", 0, {
+          // under load the first token waits behind other requests, so no fair prefill rate exists
+          na: (row) => row.workload === "throughput",
+          naHint: "Not measured under load: with 32 requests at once, time to first token is mostly queueing, not prefill",
+        }),
         number("output_tok_s", "Output", "Speed", "tok/s", 1),
         number("ttft_ms_p50", "TTFT p50", "Latency", "ms", 0),
         number("ttft_ms_p99", "TTFT p99", "Latency", "ms", 0),

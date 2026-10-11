@@ -155,7 +155,7 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "hardware": hw, "engine": engine,
         "release": tag, "group": tag, "version": version or "",
         "model": model, "scheme": r["scheme"], "workload": cat,
-        **{m: (round(r[m], 2) if isinstance(r[m], (int, float)) else None) for m in METRICS},
+        **{m: (round(r[m], 2) if isinstance(r[m], (int, float)) and not (m == "prefill_tok_s" and cat == "throughput") else None) for m in METRICS},
         "accuracy": None,
         "commit": (r["pie_commit"] or "")[:9] if engine == "pie" else "",
         "measured": local(r["started_at"]),
