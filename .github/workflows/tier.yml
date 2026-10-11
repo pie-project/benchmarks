@@ -142,8 +142,10 @@ jobs:
           # add them for this step and every later one
           export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/opt/homebrew/bin:$PATH"
           printf '%s\n' "$HOME/.local/bin" "$HOME/.cargo/bin" /opt/homebrew/bin >> "$GITHUB_PATH"
-          if command -v uv >/dev/null; then uv venv --quiet .venv && uv pip install --quiet --python .venv/bin/python -e "."
-          else python3 -m venv .venv && .venv/bin/pip install -q -e "."; fi
+          # Macs also take the T0 reference (mlx-lm), which the accuracy gate imports in this process
+          pkg="."; [ "$RUNNER_OS" = macOS ] && pkg=".[accuracy]"
+          if command -v uv >/dev/null; then uv venv --quiet .venv && uv pip install --quiet --python .venv/bin/python -e "$pkg"
+          else python3 -m venv .venv && .venv/bin/pip install -q -e "$pkg"; fi
       - name: competitor releases for this run
         if: inputs.pins != ''
         run: .venv/bin/pie-evals pins set "${{ inputs.pins }}"
