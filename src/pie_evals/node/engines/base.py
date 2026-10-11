@@ -111,6 +111,10 @@ def _pct(values: list[float], q: float) -> float | None:
     return float(np.percentile(np.asarray(values, dtype=float), q))
 
 
+#: cached tokens per request a cold-tagged run may show from the prompt's shared opening
+COLD_OPENING_TOKENS = 32
+
+
 def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]], num_layers: int | None, concurrency: int | None = None, *, cold_tags: bool = False) -> PerfMetrics:
     """Lift ``scripts/bench/common.py``'s BenchSummary + RequestResult rows."""
     completed = [r for r in requests if r.get("ok")]
@@ -146,6 +150,11 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
     if by_construction:
         config_cached = 0.0
         counters["cold_by_construction"] = 1.0
+    # on tagged prompts only the opening before the tag can hit (Ollama: ~15 of 555 tokens);
+    # that is not a warm cache, so the row is cold and says how much the opening was
+    elif cold_tags and config_cached and completed and config_cached / len(completed) <= COLD_OPENING_TOKENS:
+        counters["cold_opening_cached_per_request"] = config_cached / len(completed)
+        config_cached = 0.0
     verdict = cache_verdict(completed, config_cached)
     prefill_tok_s = fair_prefill_tok_s(completed, concurrency=concurrency, config_cached=config_cached)
     counters["fair_def"] = float(FAIR_DEFINITION_VERSION)
