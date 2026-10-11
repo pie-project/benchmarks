@@ -85,16 +85,19 @@ def classify_failure(returncode: int, stderr: str, stdout: str, timed_out: bool)
     if timed_out:
         return ErrorClass.HANG, "timed out (hang is only ever observed via timeout)"
     text = stderr + "\n" + stdout
-    # A Python traceback is described by its exception line (the last
-    # "SomeError: ..." line), never by a code line that happens to contain a
-    # keyword ("resolved_model = resolve_local_model(args.model)" is not a message).
+    # A Python traceback is described by its exception (the last
+    # "SomeError: ..." line and the lines its message runs on to), never by a
+    # code line that happens to contain a keyword ("resolved_model =
+    # resolve_local_model(args.model)" is not a message). pie_bench's startup
+    # failure puts the server's own refusal on those following lines.
     if "Traceback (most recent call last)" in text:
-        lines = [ln for ln in text.splitlines() if ln.strip()]
-        exc = next((ln.strip() for ln in reversed(lines) if re.match(r"^[A-Za-z_][A-Za-z0-9_.]*(Error|Exception|Exit|Interrupt)\b", ln.strip())), lines[-1].strip() if lines else "Traceback")
+        lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+        at = next((i for i in reversed(range(len(lines))) if re.match(r"^[A-Za-z_][A-Za-z0-9_.]*(Error|Exception|Exit|Interrupt)\b", lines[i])), len(lines) - 1)
+        exc = " | ".join(lines[at:]) or "Traceback"
         for cls, pat in _ERROR_PATTERNS[:3]:
             if pat.search(exc):
-                return cls, exc[:400]
-        return ErrorClass.CRASH, exc[:400]
+                return cls, exc[:1000]
+        return ErrorClass.CRASH, exc[:1000]
     for cls, pat in _ERROR_PATTERNS:
         m = pat.search(text)
         if m:
