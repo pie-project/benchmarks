@@ -8,6 +8,46 @@ def test_a_traceback_is_told_by_its_whole_message():
   File "pie_bench.py", line 689, in serve
     raise RuntimeError(
 RuntimeError: pie serve exited before startup completed:
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
+  INFO gateway worker-facing listener up
   creating engine for model "default" group 0
   impossible submission: the device does not hold this deployment: recommendedMaxWorkingSetSize is 40200896512 bytes
 """

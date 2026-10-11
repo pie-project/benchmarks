@@ -94,10 +94,13 @@ def classify_failure(returncode: int, stderr: str, stdout: str, timed_out: bool)
         lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
         at = next((i for i in reversed(range(len(lines))) if re.match(r"^[A-Za-z_][A-Za-z0-9_.]*(Error|Exception|Exit|Interrupt)\b", lines[i])), len(lines) - 1)
         exc = " | ".join(lines[at:]) or "Traceback"
+        # the exception line, then the end of what follows: the server's
+        # refusal comes last, after its startup logs
+        told = exc if len(exc) <= 1000 else lines[at][:300] + " | ... " + exc[-690:]
         for cls, pat in _ERROR_PATTERNS[:3]:
             if pat.search(exc):
-                return cls, exc[:1000]
-        return ErrorClass.CRASH, exc[:1000]
+                return cls, told
+        return ErrorClass.CRASH, told
     for cls, pat in _ERROR_PATTERNS:
         m = pat.search(text)
         if m:
