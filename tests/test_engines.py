@@ -834,6 +834,15 @@ def test_the_metal_pool_holds_one_request_at_the_declared_context(tmp_path):
     assert "--total-pages" not in argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
 
 
+def test_pie_names_the_tokenizer_beside_an_imported_artifact(tmp_path, monkeypatch):
+    eng = mac_make(PieEngine)
+    eng.recipe["tokenizer_dir"] = "/hf/snapshot"
+    monkeypatch.setattr(PieEngine, "_bench_has", lambda self, flag: True)
+    assert flag_value(argv_for(eng, MAC_WORKLOADS["c32"], tmp_path), "--tokenizer") == "/hf/snapshot"
+    monkeypatch.setattr(PieEngine, "_bench_has", lambda self, flag: False)  # a pie before the flag
+    assert "--tokenizer" not in argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
+
+
 def test_pie_recipe_passthrough(tmp_path):
     eng = mac_make(PieEngine, art=mac_artifact(family="gemma4"))
     eng.recipe.update({"frame_submit_depth": 4, "max_forward_requests": 32, "engine_option": {"max_state_slots": 128, "sku": "$pie_sku"}})
