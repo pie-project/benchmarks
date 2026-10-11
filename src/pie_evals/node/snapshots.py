@@ -25,16 +25,27 @@ def hf_cache_dir() -> Path:
     return Path(os.environ.get("HF_HUB_CACHE") or (Path(os.environ["HF_HOME"]) / "hub" if os.environ.get("HF_HOME") else Path.home() / ".cache/huggingface/hub"))
 
 
-def snapshot_dir_if_present(artifact: ArtifactSpec, hf_cache: Path) -> Path | None:
+def snapshot_dir_if_present(artifact: ArtifactSpec, hf_cache: Path, weights: bool = True) -> Path | None:
+    """The artifact's pinned revision, else the one the hub's ``main`` last
+    resolved to, else any; ``weights=False`` for a row served from its
+    imported .zt, which needs only the snapshot's config and tokenizer."""
     org, _, name = artifact.base_model.partition("/")
-    base = hf_cache / f"models--{org}--{name}" / "snapshots"
+    repo = hf_cache / f"models--{org}--{name}"
+    base = repo / "snapshots"
     marker = artifact.gguf_file or "config.json"  # a GGUF repo carries no config.json
-    if artifact.revision and (base / artifact.revision / marker).exists() and has_weights(base / artifact.revision, artifact):
-        return base / artifact.revision
+
     # a miniature is built beside its source's snapshots (`mini-l0-4-e16`, miniature.py) and
     # sorts after a hex revision: a full row must never pick it up (pie #680 was that —
     # "full" numbers on cards that had built the mini were the mini's)
-    snaps = sorted(d for d in base.glob("*") if (d / marker).exists() and not d.name.startswith("mini-") and has_weights(d, artifact)) if base.exists() else []
+    def usable(d: Path) -> bool:
+        return (d / marker).exists() and not d.name.startswith("mini-") and (not weights or has_weights(d, artifact))
+
+    main = repo / "refs" / "main"
+    # hex order is no order: with several revisions cached, the last one sorted is arbitrary
+    for rev in (artifact.revision, main.read_text().strip() if main.is_file() else None):
+        if rev and usable(base / rev):
+            return base / rev
+    snaps = sorted(d for d in base.glob("*") if usable(d)) if base.exists() else []
     return snaps[-1] if snaps else None
 
 
@@ -49,6 +60,22 @@ def has_weights(snapshot: Path, artifact: ArtifactSpec) -> bool:
     if artifact.gguf_file:
         return (snapshot / artifact.gguf_file).exists()
     return any(f.exists() for f in snapshot.glob("*.safetensors"))
+
+
+def with_tokenizer(artifact: ArtifactSpec, snapshot: Path, hf_cache: Path, log=print) -> Path:
+    """The snapshot with its tokenizer and chat template on disk. A row pie
+    imports by repository id is fetched by pie's own importer, which reads
+    neither ``chat_template.jinja`` nor the tokenizer config's template; T0
+    renders the reference prompt from them (Qwen3.6-27B on the 128g rendered
+    14 tokens where its template writes 30)."""
+    from huggingface_hub import snapshot_download
+
+    try:
+        snapshot_download(artifact.base_model, revision=snapshot.name, cache_dir=str(hf_cache),
+                          allow_patterns=TOKENIZER_PATTERNS, token=os.environ.get("HF_TOKEN") or None)
+    except Exception as e:  # offline, or a local-only revision: render with what is there
+        log(f"tokenizer files for {artifact.base_model}@{snapshot.name} not fetched: {e}")
+    return snapshot
 
 
 class SnapshotMissing(FileNotFoundError):

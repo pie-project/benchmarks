@@ -237,7 +237,7 @@ class NodeRunner:
 
     def snapshot_dir(self, cell: Cell) -> Path:
         from .importer import artifact_dir, find_zt, needs_import
-        from .snapshots import ensure_snapshot
+        from .snapshots import ensure_snapshot, snapshot_dir_if_present
 
         try:
             py = os.environ.get("PIE_PY")
@@ -250,10 +250,9 @@ class NodeRunner:
 
             reclaim(self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * 1.2 + 10), log=self.log)
             if str(cell.engine) == "pie" and self.job.pie_commit and needs_import(cell.artifact) and find_zt(artifact_dir(cell.artifact, self.job.pie_commit)):
-                org, _, name = cell.artifact.base_model.partition("/")
-                snaps = sorted((self.hf_cache / f"models--{org}--{name}" / "snapshots").glob("*/config.json"))
-                if snaps:
-                    return snaps[-1].parent
+                snap = snapshot_dir_if_present(cell.artifact, self.hf_cache, weights=False)
+                if snap:
+                    return snap
             pending = getattr(self, "_prefetch", {}).get(cell.artifact.id)
             if pending is not None:
                 pending.result()
@@ -616,6 +615,9 @@ class NodeRunner:
         if cell.program.accuracy_gate != "token_parity" or cell.workload.id != "ss-128-64":
             return AccuracyMetrics(status=AccuracyStatus.NOT_RUN)
         try:
+            from .snapshots import with_tokenizer
+
+            snapshot = with_tokenizer(cell.artifact, snapshot, self.hf_cache, log=self.log)
             cache = Path(os.environ.get("PIE_EVALS_CACHE", Path.home() / ".cache/pie-evals")) / "refcache"
             return t0_via_engine(cell, engine, snapshot, self.platform.os, pie_root=self.pie_root, cache_dir=cache,
                                  out_dir=self.out / "cells" / cell.cell_id / "t0", timeout_s=self.job.per_cell_timeout_s)

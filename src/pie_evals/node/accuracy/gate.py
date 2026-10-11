@@ -4,7 +4,7 @@ reference's teacher-forced logits at the first divergence."""
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from pathlib import Path
 from typing import Any
 
@@ -54,10 +54,16 @@ def run_t0(
     prompt_ids: list[list[int]],
     ulp: float = BF16_ULP,
     reference: str | None = None,
+    stops: Collection[int] = (),
 ) -> AccuracyMetrics:
     """Per prompt: find the first divergent token; if any, teacher-force the
     reference on ``prompt + shared prefix`` and adjudicate the two candidates
     at that position with the logit-gap rule.
+
+    Both sides are compared through the reference's first stop token in
+    ``stops`` and no further: what an ``ignore_eos`` run writes past the end
+    of the answer is the model reading a turn it was never trained to
+    continue, where a near-tie decides every token.
 
     ``teacher_forced_logits_fn(ids)`` returns ``[len(ids), vocab]`` where row
     ``i`` predicts the token after ``ids[i]`` — so the row for the divergent
@@ -73,7 +79,9 @@ def run_t0(
     benign: list[bool] = []
     detail: list[dict] = []
     for i, (eng, ref, prompt) in enumerate(zip(engine_output_ids, reference_ids, prompt_ids)):
-        d = first_divergence(list(eng), list(ref))
+        end = next((at + 1 for at, t in enumerate(ref) if t in stops), len(ref))
+        eng, ref = list(eng)[:end], list(ref)[:end]
+        d = first_divergence(eng, ref)
         divergences.append(d)
         if d is None:
             continue
@@ -123,6 +131,23 @@ def bench_system_prompt(pie_root: str | Path) -> str:
         return m.group(1) if m else BENCH_SYSTEM_DEFAULT
     except OSError:
         return BENCH_SYSTEM_DEFAULT
+
+
+def stop_ids(snapshot_dir: str | Path) -> set[int]:
+    """The checkpoint's end-of-turn tokens: ``eos_token_id`` of its
+    generation_config.json, else of its config.json (or text_config)."""
+    import json
+
+    snap = Path(snapshot_dir)
+    for name in ("generation_config.json", "config.json"):
+        try:
+            cfg = json.loads((snap / name).read_text())
+        except (OSError, ValueError):
+            continue
+        eos = cfg.get("eos_token_id", cfg.get("text_config", {}).get("eos_token_id"))
+        if eos is not None:
+            return {int(t) for t in (eos if isinstance(eos, list) else [eos])}
+    return set()
 
 
 def render_like_bench(snapshot_dir: str | Path, system: str, prompt: str, enable_thinking: bool | None = False) -> list[int]:
@@ -200,4 +225,4 @@ def t0_via_engine(
     def tf(ids: list[int]):
         return cache.teacher_forced_logits(ref, revision, ids)
 
-    return run_t0(engine_ids, reference_ids, tf, prompt_ids, reference=kind)
+    return run_t0(engine_ids, reference_ids, tf, prompt_ids, reference=kind, stops=stop_ids(snapshot_dir))

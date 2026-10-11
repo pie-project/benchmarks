@@ -244,6 +244,30 @@ def test_run_t0_length_mismatch_fails_without_adjudication():
     assert fn.calls == []
 
 
+def test_run_t0_compares_through_the_reference_stop_and_no_further():
+    # the engine matches through the stop token (6) and wanders after it
+    fn = _fake_tf(20, {})
+    m = run_t0([[1, 2, 6, 9, 9]], [[1, 2, 6, 4, 5]], fn, [[7]], stops={6})
+    assert m.status == AccuracyStatus.PASS
+    assert m.t0_first_divergence == [None]
+    assert fn.calls == []
+    # a divergence before the stop is still judged
+    fn = _fake_tf(20, {1: (6, 5, 2.5)})
+    m = run_t0([[1, 5, 6]], [[1, 6, 4]], fn, [[7]], stops={6})
+    assert m.status == AccuracyStatus.FAIL
+    assert m.t0_first_divergence == [1]
+    assert m.t0_max_logit_gap == pytest.approx(2.5)
+
+
+def test_stop_ids_read_generation_config_then_config(tmp_path):
+    from pie_evals.node.accuracy.gate import stop_ids
+
+    (tmp_path / "config.json").write_text('{"text_config": {"eos_token_id": 1}}')
+    assert stop_ids(tmp_path) == {1}
+    (tmp_path / "generation_config.json").write_text('{"eos_token_id": [1, 106, 50]}')
+    assert stop_ids(tmp_path) == {1, 106, 50}
+
+
 def test_run_t0_prompt_count_mismatch():
     with pytest.raises(ValueError):
         run_t0([[1]], [[1], [2]], _fake_tf(4, {}), [[0]])
