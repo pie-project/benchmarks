@@ -382,6 +382,7 @@ class NodeRunner:
                 recipe = load_recipe(str(first.engine), recipe_name, first.platform, first.workload, family=first.artifact.family)
                 recipe["program_path"] = first.program.path
                 recipe["snapshot_dir"] = str(model_path)
+                recipe["tokenizer_dir"] = str(snapshot)  # model_path may be an imported .zt file
                 if str(first.engine) in self.job.baseline_versions:
                     from .baselines import SPECS, ensure_baseline
 
