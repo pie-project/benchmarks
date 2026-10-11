@@ -216,7 +216,11 @@ def _tag_keep(cur, rows: list, tag: str, cols: list[str]) -> set:
     st = cols.index("status")
     not_run = {r[ck] for r in rows if r[ck] and r[st] == "not_run"}
     good |= (not_run & (good | broken))
-    replace = sorted(broken - good)
+    # a newer good row replaces an older good one (a rerun that adds prefill must show); a broken one never does
+    dec, pre = cols.index("decode_tok_s"), cols.index("prefill_tok_s")
+    newer = {r[ck] for r in rows if r[ck] and _good(r[st], r[dec], r[pre])}
+    good -= newer
+    replace = sorted((broken | newer) - good)
     if replace:
         cur.execute("DELETE FROM records WHERE tag = %s AND cell_key = ANY(%s)", (tag, replace))
     return good
