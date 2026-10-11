@@ -284,8 +284,7 @@ class PieEngine(Engine):
             if v is not None:
                 args += [flag, str(v)]
         for knob, flag in _BOOL_OPTIONAL_FLAGS:
-            # a workload may pin a knob the recipe defaults (T0 pins pretokenized prompts)
-            v = workload.params.get(knob, r.get(knob))
+            v = r.get(knob)
             if v is True:
                 args.append(flag)
             elif v is False:
@@ -293,9 +292,6 @@ class PieEngine(Engine):
         for knob, flag in _STORE_TRUE_FLAGS:
             if r.get(knob):
                 args.append(flag)
-        # pretokenized prompts load the tokenizer from --model unless told: a .zt is a file
-        if r.get("tokenizer_dir") and self._bench_has("--tokenizer"):
-            args += ["--tokenizer", str(r["tokenizer_dir"])]
 
         # TODO(pie/benches): the worker takes the quantization SKU as
         # `[model] sku`, but pie_bench.py builds ModelConfig without it and has
