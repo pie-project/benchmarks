@@ -22,6 +22,9 @@ window.Pie = window.Pie || {};
 
   const bodyCell = (column, row) => {
     const value = row[column.key];
+    if (column.na?.(row) && format.isEmpty(value)) {
+      return `<td class="is-numeric is-empty" title="${format.escape(column.naHint || "")}">n/a</td>`;
+    }
     const classes = [
       column.type === "number" ? "is-numeric" : "",
       column.code && !format.isEmpty(value) ? "is-code" : "",
