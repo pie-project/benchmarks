@@ -425,9 +425,14 @@ class Preflight:
                 reasons.append("low power mode on")
             if before_state.get("displays") != after.get("displays"):
                 reasons.append(f"display count changed: {before_state.get('displays')}->{after.get('displays')}")
-            new = sorted(set(after.get("engine_processes") or []) - set(before_state.get("engine_processes") or []))
+            before = set(before_state.get("engine_processes") or [])
+            new = sorted(set(after.get("engine_processes") or []) - before)
             if new:
                 reasons.append(f"another inference engine started during the model: {', '.join(new)}")
+            # the resident Ollama is judged by what it loads; any other engine already up
+            # shares the GPU too (a pie serve a cancelled job left: nightly 38073785969)
+            if stale := sorted(p for p in before if not p.startswith("ollama:")):
+                reasons.append(f"another inference engine was already running: {', '.join(stale)}")
             loaded = sorted(set(after.get("ollama_loaded") or []) - set(before_state.get("ollama_loaded") or []))
             if loaded:
                 reasons.append(f"the resident Ollama loaded a model during the run: {', '.join(loaded)}")

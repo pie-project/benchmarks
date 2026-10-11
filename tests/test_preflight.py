@@ -168,6 +168,13 @@ def test_after_model_reads_a_steady_machine_as_clean(monkeypatch):
     assert pf.Preflight().after_model("macos", _state()) == []
 
 
+def test_after_model_reads_an_engine_left_running_as_unclean(monkeypatch):
+    before = _state(engine_processes=["ollama:101", "pie:48330"])
+    monkeypatch.setattr(pf, "machine_state", lambda os_=None: before)
+    reasons = " | ".join(pf.Preflight().after_model("macos", before))
+    assert "pie:48330" in reasons and "ollama:101" not in reasons
+
+
 def test_after_model_names_every_change(monkeypatch):
     after = _state(thermal_warning="yes", cpu_speed_limit="70", power_source="battery", low_power_mode="on",
                    displays="2", engine_processes=["ollama:101", "pie:555"], ollama_loaded=["gemma4:26b"])
