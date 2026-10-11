@@ -245,3 +245,12 @@ def test_cold_tagged_run_without_a_cache_count_is_cold_by_construction():
     assert cold.counters["cold_cache_verified"] == 1.0 and cold.counters["cold_by_construction"] == 1.0
     plain = perf_from_common_json(summary, reqs, None, concurrency=1)
     assert plain.prefill_tok_s is None and plain.counters["cold_cache_verified"] == 0.0
+
+
+def test_a_cold_tagged_run_with_a_cached_opening_is_cold():
+    from pie_evals.node.engines.base import perf_from_common_json
+    reqs = [{"ok": True, "latency_s": 1.0, "ttft_s": 0.2, "output_tokens": 64, "prompt_tokens": 555, "intertoken_us": []}] * 8
+    opening = perf_from_common_json({"config": {"concurrency": 1, "cached_prompt_tokens": 120}}, reqs, None, concurrency=1, cold_tags=True)
+    assert opening.prefill_tok_s is not None and opening.counters["cold_opening_cached_per_request"] == 15
+    warm = perf_from_common_json({"config": {"concurrency": 1, "cached_prompt_tokens": 4000}}, reqs, None, concurrency=1, cold_tags=True)
+    assert warm.prefill_tok_s is None
