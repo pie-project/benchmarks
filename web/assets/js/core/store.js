@@ -72,7 +72,7 @@ window.Pie = window.Pie || {};
     },
 
     coverage(table, column) {
-      const rows = Pie.store.rows(table);
+      const rows = Pie.store.rows(table).filter((row) => !column.na?.(row));
       if (!rows.length) return 0;
       return rows.filter((row) => !Pie.format.isEmpty(row[column.key])).length / rows.length;
     },
