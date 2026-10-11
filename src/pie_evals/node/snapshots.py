@@ -51,6 +51,22 @@ def has_weights(snapshot: Path, artifact: ArtifactSpec) -> bool:
     return any(f.exists() for f in snapshot.glob("*.safetensors"))
 
 
+def with_tokenizer(artifact: ArtifactSpec, snapshot: Path, hf_cache: Path, log=print) -> Path:
+    """The snapshot with its tokenizer and chat template on disk. A row pie
+    imports by repository id is fetched by pie's own importer, which reads
+    neither ``chat_template.jinja`` nor the tokenizer config's template; T0
+    renders the reference prompt from them (Qwen3.6-27B on the 128g rendered
+    14 tokens where its template writes 30)."""
+    from huggingface_hub import snapshot_download
+
+    try:
+        snapshot_download(artifact.base_model, revision=snapshot.name, cache_dir=str(hf_cache),
+                          allow_patterns=TOKENIZER_PATTERNS, token=os.environ.get("HF_TOKEN") or None)
+    except Exception as e:  # offline, or a local-only revision: render with what is there
+        log(f"tokenizer files for {artifact.base_model}@{snapshot.name} not fetched: {e}")
+    return snapshot
+
+
 class SnapshotMissing(FileNotFoundError):
     pass
 
