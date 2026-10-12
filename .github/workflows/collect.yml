@@ -10,6 +10,7 @@ on:
       run_id: { description: "run whose out-* artifacts to import (empty: this run)", required: false, default: "" }
       tag: { description: "tag the rows belong to (0.5.3-b1); empty: untagged", required: false, default: "" }
       tag_kind: { description: "release or manual (empty: from the tag)", required: false, default: "" }
+      drop_tags: { description: "comma-separated manual tags to delete from the database instead of importing", required: false, default: "" }
 
 jobs:
   collect:
@@ -19,11 +20,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
+      - name: drop manual tags
+        if: inputs.drop_tags != ''
+        run: for t in $(echo "${{ inputs.drop_tags }}" | tr ',' ' '); do .venv/bin/pie-evals drop-tag "$t"; done
       - uses: actions/download-artifact@v4
+        if: inputs.drop_tags == ''
         with: { pattern: "out-*", path: out, run-id: "${{ inputs.run_id || github.run_id }}", github-token: "${{ github.token }}" }
       - name: check the database
         run: .venv/bin/pie-evals store-status
       - name: import into the database
+        if: inputs.drop_tags == ''
         run: |
           shopt -s nullglob
           dirs=(out/out-*)

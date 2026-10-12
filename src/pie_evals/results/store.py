@@ -125,6 +125,11 @@ class BaseStore:
         return latest
 
 
+    def drop_tag(self, tag: str) -> int:
+        """Delete every record of a manual tag; returns how many went."""
+        raise NotImplementedError
+
+
 class DirStore(BaseStore):
     def __init__(self, root: Path | str = "store"):
         self.root = Path(root)
@@ -226,6 +231,15 @@ def _tag_keep(cur, rows: list, tag: str, cols: list[str]) -> set:
     return good
 
 class PgStore(BaseStore):
+    def drop_tag(self, tag: str) -> int:
+        with self.connect() as conn, conn.transaction(), conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT tag_kind FROM records WHERE tag = %s", (tag,))
+            kinds = {k for (k,) in cur.fetchall()}
+            if "release" in kinds:
+                raise ValueError(f"{tag} is a release tag; releases are never dropped")
+            cur.execute("DELETE FROM records WHERE tag = %s", (tag,))
+            return cur.rowcount
+
     def __init__(self, dsn: str):
         self.dsn = dsn
         self._ready = False
