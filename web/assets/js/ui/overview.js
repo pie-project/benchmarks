@@ -100,7 +100,7 @@ window.Pie = window.Pie || {};
     "Across releases": ["#ff9f0a", '<path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/>'],
   };
   const sectionIcon = (title) => {
-    const icon = SECTION_ICONS[title];
+    const icon = SECTION_ICONS[/^Where .* stands$/.test(title) ? "Where we stand" : title];
     return icon ? `<span class="section-icon" style="--tint: ${icon[0]}"><svg viewBox="0 0 24 24" aria-hidden="true">${icon[1]}</svg></span>` : "";
   };
 
@@ -243,7 +243,7 @@ window.Pie = window.Pie || {};
       legend("Median prefill", prefillMid === null ? "—" : delta(prefillMid), dotOf(prefillMid, "prefill"), prefillMid === null),
     ].join("");
 
-    return section("Where we stand", "One model against one engine",
+    return section(`Where ${baseName()} stands`, "One model against one engine",
       `<div class="standing">${ring}<div class="stand-side">${side}</div></div>`);
   };
 
