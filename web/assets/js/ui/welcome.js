@@ -23,7 +23,7 @@ window.Pie = window.Pie || {};
       <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware.</p>
     </header>
     <header class="method-head welcome-trust">
-      <h2>A note to the reader</h2>
+      <h2>Why Pie Benchmarks?</h2>
       <p class="method-lede">Measuring inference engines accurately is difficult, and a comparison is only as credible as its fairness. Fairness toward every engine measured here is therefore our first obligation to the reader.</p>
       <p class="method-lede">This site is a continuous record. Each Pie release is measured against the most recent release of every other engine available at that time, so each release records the state of the field on the date it was measured.</p>
       <p class="welcome-sign">With love, the Pie team!</p>
