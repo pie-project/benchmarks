@@ -28,7 +28,9 @@ window.Pie = window.Pie || {};
     </header>
     <header class="method-head welcome-trust">
       <h2>Message to a Reader</h2>
-      <p class="method-lede">We believe your data and your models belong on your own machine. Running AI locally keeps both private, yet we know the frustration of a model that crawls on your own computer. We built Pie to change that: to make local inference humane, fast, and as effortless as any cloud service, so that keeping AI private is never a compromise.</p>
+      <p class="method-lede">Every question you ask a cloud model leaves your hands. It travels to a data center you will never see, runs on hardware you do not control, and is kept under terms you did not write. Your drafts, your code, your health questions, your half-formed ideas, the most personal things you think, quietly become someone else’s data.</p>
+      <p class="method-lede">It does not have to be this way. The computer on your desk is already powerful enough to run the models that matter, and your words never need to leave it. What has been missing is not the hardware but the software: an engine that makes local AI as fast and as effortless as the cloud, so that choosing privacy never means choosing less.</p>
+      <p class="method-lede">That is why we built Pie, and why we measure it in the open against every engine we can. Intelligence should run where you live, answer only to you, and belong to everyone. This is our step toward that future.</p>
       <p class="welcome-sign">With love, the Pie team!</p>
     </header>
     </div>`;
