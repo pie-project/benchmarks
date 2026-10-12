@@ -8,6 +8,7 @@ window.Pie = window.Pie || {};
   const ENGINE = "overview-engine";
   const HEAT_MAC = "overview-heat-mac";
   const MODEL = "overview-model";
+  const STAND_MAC = "overview-stand-mac";
   const ALL = "";
   let owner = null;
   let anchor = null;  // the button the open menu belongs to: the menu stays attached to it while the page scrolls
@@ -97,6 +98,7 @@ window.Pie = window.Pie || {};
     ENGINE,
     HEAT_MAC,
     MODEL,
+    STAND_MAC,
     ALL,
 
     isOpenFor(key) {
@@ -110,14 +112,14 @@ window.Pie = window.Pie || {};
       }
       owner = key;
       anchor = target;
-      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
+      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
       element.scrollTop = 0;
       place(target);
     },
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
-      if (element.hidden || !owner || owner === RELEASE || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL) return;
+      if (element.hidden || !owner || owner === RELEASE || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC) return;
       const scroll = element.scrollTop;
       element.innerHTML = filterMenu(state, owner);
       element.scrollTop = scroll;
@@ -139,7 +141,7 @@ window.Pie = window.Pie || {};
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = owner;
-        if (key === RELEASE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL) this.close();
+        if (key === RELEASE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC) this.close();
         onPick(key, target.dataset.value);
       });
     },
