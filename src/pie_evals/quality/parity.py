@@ -18,7 +18,7 @@ from __future__ import annotations
 import math
 
 AGREE_FLOOR = 0.95
-ENGINE_RANK = {"pie": 0, "mlxlm": 1, "splash": 2, "llamacpp": 3, "ollama": 4}
+ENGINE_RANK = {"pie": 0, "mlxlm": 1, "splash": 2, "llamacpp": 3}
 #: engines whose answers come from their own chat template: not comparable exactly
 OWN_TEMPLATE = {"splash"}
 

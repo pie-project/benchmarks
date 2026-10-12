@@ -50,7 +50,7 @@ def mask_gpus(job: JobSpec, env: dict | None = None) -> str | None:
 @click.option("--hf-cache", type=click.Path(), default=None)
 @click.option("--no-build", is_flag=True, help="use the pie binary already in target/release")
 @click.option("--only", multiple=True, help="restrict to cells whose key contains this substring")
-@click.option("--download", is_flag=True, help="fetch missing full checkpoints and Ollama tags here (default: no — `prepare` does that once before the fan-out)")
+@click.option("--download", is_flag=True, help="fetch missing full checkpoints here (default: no — `prepare` does that once before the fan-out)")
 def run(job_path, pie_root, out, hf_cache, no_build, only, download):
     """Execute a JobSpec and write records.jsonl under --out."""
     from .runner import NodeRunner
@@ -112,7 +112,7 @@ def build_cmd(pie_commit, features, pie_root, mirror, target_dir, force):
 @click.option("--pie-commit", default=None, help="import quantized checkpoints as .zt artifacts for this commit (needs the built pie binary)")
 @click.option("--hf-cache", type=click.Path(), default=None)
 def prepare_cmd(tier, matrix_dir, platforms, engines_f, programs_f, pie_root, pie_commit, hf_cache):
-    """Fetch every checkpoint and Ollama tag a tier needs (downloads + miniatures) so bench pods find them on the volume.
+    """Fetch every checkpoint a tier needs (downloads + miniatures) so bench pods find them on the volume.
     Failures are reported per artifact and never abort the rest; exit 1 if any failed."""
     from pie_evals.plan.matrix import Matrix
     from pie_evals.schema import Tier
@@ -139,10 +139,6 @@ def prepare_cmd(tier, matrix_dir, platforms, engines_f, programs_f, pie_root, pi
     for aid, art in sorted(arts.items()):
         try:
             p = ensure_snapshot(art, cache, pie_root=Path(pie_root), python=shrink_py, log=say)
-            if art.ollama_tag:
-                from .engines.ollama import ensure_ollama_model
-
-                ensure_ollama_model(art.ollama_tag, pull=True, log=say)
             if pie_commit and needs_import(art) and pie_bin.exists():
                 p = ensure_artifact(art, p, pie_bin, pie_commit, log=say)
             click.echo(f"ok    {aid}: {p}")
@@ -164,8 +160,8 @@ def prepare_cmd(tier, matrix_dir, platforms, engines_f, programs_f, pie_root, pi
     sys.exit(1 if failed else 0)
 
 
-@main.command("quality", help="Score model quality (GSM8K, IFEval, MMLU, ARC, MATH-500) on sampled questions, on the Ollama arm of each model.")
-@click.option("--artifact", "artifacts", multiple=True, required=True, help="artifact id from matrix/models.yaml (a pie checkpoint or an Ollama arm)")
+@main.command("quality", help="Score model quality (GSM8K, IFEval, MMLU, ARC, MATH-500) on sampled questions, on each model's arms.")
+@click.option("--artifact", "artifacts", multiple=True, required=True, help="artifact id from matrix/models.yaml (a pie checkpoint or a baseline arm)")
 @click.option("--task", "tasks", multiple=True, type=click.Choice(sorted(TASKS)), default=("gsm8k", "ifeval", "mmlu", "arc", "math500"), show_default=True)
 @click.option("--n", type=int, default=100, show_default=True)
 @click.option("--matrix", "matrix_dir", default="matrix")

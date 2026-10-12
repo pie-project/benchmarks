@@ -6,7 +6,7 @@ import threading
 
 
 def main() -> int:
-    # its own process group: a server that starts helpers (Splash, Ollama) is stopped whole
+    # its own process group: a server that starts helpers (Splash) is stopped whole
     child = subprocess.Popen(sys.argv[1:], start_new_session=True)
 
     def stop(*_):

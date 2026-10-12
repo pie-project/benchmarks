@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
 from pie_evals.plan.matrix import Matrix, selector_matches, summarize
 from pie_evals.schema import ArtifactSpec, CellStatus, Tier
@@ -87,33 +86,31 @@ def test_smoke_includes_every_program_at_least_once(matrix, cells):
     assert expected - runnable <= {"diffusion-parity", "mini-dit-parity", "prefill-rows", "prefix-tree-kv-cache", "mtp-speculative-decoding", "cacheback-speculative-decoding", "lora-probe"}, expected - runnable
 
 
-def test_ollama_runs_only_ollama_weights_on_macs(cells):
-    ollama = [c for c in cells if str(c.engine) == "ollama"]
-    assert ollama
-    for c in ollama:
-        assert c.artifact.source_format.value == "ollama" and c.artifact.ollama_tag, c.cell_key
+def test_splash_runs_only_splash_weights_on_macs(cells):
+    splash = [c for c in cells if str(c.engine) == "splash"]
+    assert splash
+    for c in splash:
+        assert c.artifact.source_format.value == "splash", c.cell_key
         assert c.platform.os == "macos" and c.platform.backend.value == "metal", c.cell_key
-    assert not [c for c in cells if str(c.engine) != "ollama" and c.artifact.source_format.value == "ollama"]
+    assert not [c for c in cells if str(c.engine) != "splash" and c.artifact.source_format.value == "splash"]
 
 
-def test_every_ollama_artifact_pairs_with_a_pie_artifact(matrix):
+def test_every_baseline_arm_pairs_with_a_pie_artifact(matrix):
     for a in matrix.artifacts.values():
-        if a.source_format.value == "ollama":
+        if a.baseline_label:
             assert a.baseline_of in matrix.artifacts, a.id
-            assert matrix.artifacts[a.baseline_of].source_format.value != "ollama", a.id
+            assert not matrix.artifacts[a.baseline_of].baseline_label, a.id
 
 
 def test_control_aa_is_pie_only(cells):
     assert all(str(c.engine) == "pie" for c in cells if c.workload.kind.value == "control_aa")
 
 
-def test_ollama_artifact_needs_a_tag():
-    base = {"id": "x-ollama", "base_model": "org/x", "family": "x", "scheme": "gguf_q4_k_m", "source_format": "ollama"}
-    with pytest.raises(ValidationError, match="ollama_tag"):
-        ArtifactSpec(**base)
-    a = ArtifactSpec(**base, ollama_tag="x:7b")
-    assert a.artifact_key.endswith("#x:7b")
-    assert ArtifactSpec(**{**base, "ollama_tag": "x:7b-mlx"}).artifact_key != a.artifact_key
+def test_a_baseline_arm_on_the_same_checkpoint_has_its_own_key():
+    base = {"id": "x-mlx4", "base_model": "org/x", "family": "x", "scheme": "affine_u4_g64", "source_format": "mlx"}
+    a = ArtifactSpec(**base, baseline_label="mlx-lm")
+    assert a.artifact_key.endswith("#mlx-lm")
+    assert ArtifactSpec(**base).artifact_key != a.artifact_key
 
 
 def test_fit_rule_marks_big_models_on_small_macs(matrix, cells):
@@ -129,12 +126,12 @@ def test_context_rule_marks_shapes_past_max_context(matrix, cells):
     assert "max_context" in matrix._physical_reason(short)
 
 
-def test_selector_matches_the_ollama_arm(cells):
-    c = next(c for c in cells if str(c.engine) == "ollama")
+def test_selector_matches_the_splash_arm(cells):
+    c = next(c for c in cells if str(c.engine) == "splash")
     assert selector_matches({"tp": ">=1"}, c)
     assert not selector_matches({"tp": ">1"}, c)
     assert selector_matches({"not_engine": ["pie"]}, c)
-    assert not selector_matches({"engine": "ollama", "not_source_format": "ollama"}, c)
+    assert not selector_matches({"engine": "splash", "not_source_format": "splash"}, c)
 
 
 def test_targeted_budget_holds(matrix, cells):

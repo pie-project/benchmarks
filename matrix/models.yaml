@@ -168,7 +168,7 @@ artifacts:
     family: qwen3_6_moe
     scheme: affine_u4_g64
     source_format: mlx
-    pie_sku: qwen36-35b-a3b-dflash-u4g64-kv-bf16   # single-stream rows speculate, as Splash and Ollama do
+    pie_sku: qwen36-35b-a3b-dflash-u4g64-kv-bf16   # single-stream rows speculate, as Splash does
     pie_drafter: dflash   # z-lab/Qwen3.6-35B-A3B-DFlash
     display_name: qwen3.6:35b-a3b
     expected_gib: 18.17
@@ -185,7 +185,7 @@ artifacts:
     family: gemma4_moe
     scheme: affine_u4_g64
     source_format: mlx
-    pie_sku: gemma4-26b-a4b-dflash-u4g64-kv-bf16   # single-stream rows speculate, as Ollama's MTP does
+    pie_sku: gemma4-26b-a4b-dflash-u4g64-kv-bf16   # single-stream rows speculate
     pie_drafter: dflash   # z-lab/gemma-4-26B-A4B-it-DFlash
     display_name: gemma4:26b
     expected_gib: 14.29
@@ -229,27 +229,7 @@ artifacts:
     expected_gib: 54.0
     tiers: [weekly]
 
-  # ---------------- targeted: pie against Ollama on the Macs ----------------
-  - id: gemma-4-26b-a4b-ollama
-    base_model: mlx-community/gemma-4-26b-a4b-it-4bit
-    family: gemma4_moe
-    scheme: gguf_q4_k_m
-    source_format: ollama
-    ollama_tag: gemma4:26b
-    baseline_of: gemma-4-26b-a4b-mlx4
-    baseline_label: Ollama
-    expected_gib: 15.78
-    tiers: [targeted]
-  - id: gemma-4-26b-a4b-ollama-mlx
-    base_model: mlx-community/gemma-4-26b-a4b-it-4bit
-    family: gemma4_moe
-    scheme: nvfp4
-    source_format: ollama
-    ollama_tag: gemma4:26b-mlx
-    baseline_of: gemma-4-26b-a4b-mlx4
-    baseline_label: Ollama MLX
-    expected_gib: 15.0
-    tiers: [targeted]
+  # ---------------- targeted: pie's own checkpoints on the Macs ----------------
   - id: muse-glimmer-30b-mlx4
     base_model: meta-models/Muse-Glimmer-30B
     family: muse_glimmer
@@ -257,16 +237,6 @@ artifacts:
     pie_sku: muse-glimmer-30b-u4g64-kv-bf16
     display_name: muse-glimmer:30b
     expected_gib: 18.08
-    tiers: [targeted]
-  - id: muse-glimmer-30b-ollama
-    base_model: mlx-community/Muse-Glimmer-30B-4bit
-    family: muse_glimmer
-    scheme: gguf_q4_k_m
-    source_format: ollama
-    ollama_tag: muse-glimmer:30b
-    baseline_of: muse-glimmer-30b-mlx4
-    baseline_label: Ollama
-    expected_gib: 15.61
     tiers: [targeted]
   - id: qwen3.8-27b-mlx4
     base_model: mlx-community/Qwen3.8-27B-4bit
@@ -290,26 +260,6 @@ artifacts:
     pie_drafter: dflash2
     display_name: qwen3.8:27b dflash2
     expected_gib: 15.0
-    tiers: [targeted]
-  - id: qwen3.8-27b-ollama
-    base_model: mlx-community/Qwen3.8-27B-4bit
-    family: qwen3_6
-    scheme: gguf_q4_k_m
-    source_format: ollama
-    ollama_tag: qwen3.8:27b
-    baseline_of: qwen3.8-27b-mlx4
-    baseline_label: Ollama
-    expected_gib: 16.52
-    tiers: [targeted]
-  - id: qwen3.6-35b-a3b-ollama
-    base_model: mlx-community/Qwen3.6-35B-A3B-4bit
-    family: qwen3_6_moe
-    scheme: gguf_q4_k_m
-    source_format: ollama
-    ollama_tag: qwen3.6:35b-a3b
-    baseline_of: qwen3.6-35b-a3b-mlx4
-    baseline_label: Ollama
-    expected_gib: 21.07
     tiers: [targeted]
 
   # ---------------- targeted: Splash, on the upstream MLX checkpoint ----------------

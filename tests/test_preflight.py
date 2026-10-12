@@ -151,15 +151,15 @@ def test_pmset_batt_lowpower_and_displays():
 
 
 def test_engine_processes_skips_our_own_children(monkeypatch):
-    ps = "  101 /opt/homebrew/bin/ollama\n  102 /Users/x/pie/target/release/pie\n  103 /usr/bin/python3\n  104 ollama\n"
+    ps = "  101 /opt/homebrew/bin/llama-server\n  102 /Users/x/pie/target/release/pie\n  103 /usr/bin/python3\n  104 llama-server\n"
     monkeypatch.setattr(pf, "_run", lambda argv, timeout=20.0: ps)
-    assert pf.engine_processes() == ["ollama:101", "ollama:104", "pie:102"]
-    assert pf.engine_processes(exclude={104}) == ["ollama:101", "pie:102"]
+    assert pf.engine_processes() == ["llama-server:101", "llama-server:104", "pie:102"]
+    assert pf.engine_processes(exclude={104}) == ["llama-server:101", "pie:102"]
 
 
 def _state(**over):
     base = {"os": "macos", "thermal_warning": "no", "cpu_speed_limit": "100", "power_source": "ac",
-            "displays": "1", "engine_processes": ["ollama:101"], "ollama_loaded": []}
+            "displays": "1", "engine_processes": []}
     return {**base, **over}
 
 
@@ -169,21 +169,20 @@ def test_after_model_reads_a_steady_machine_as_clean(monkeypatch):
 
 
 def test_after_model_reads_an_engine_left_running_as_unclean(monkeypatch):
-    before = _state(engine_processes=["ollama:101", "pie:48330"])
+    before = _state(engine_processes=["pie:48330"])
     monkeypatch.setattr(pf, "machine_state", lambda os_=None: before)
     reasons = " | ".join(pf.Preflight().after_model("macos", before))
-    assert "pie:48330" in reasons and "ollama:101" not in reasons
+    assert "pie:48330" in reasons
 
 
 def test_after_model_names_every_change(monkeypatch):
     after = _state(thermal_warning="yes", cpu_speed_limit="70", power_source="battery", low_power_mode="on",
-                   displays="2", engine_processes=["ollama:101", "pie:555"], ollama_loaded=["gemma4:26b"])
+                   displays="2", engine_processes=["pie:555"])
     monkeypatch.setattr(pf, "machine_state", lambda os_=None: after)
     reasons = " | ".join(pf.Preflight().after_model("macos", _state()))
     for want in ("thermal state changed", "power source changed", "running on battery", "low power mode on",
-                 "display count changed", "pie:555", "gemma4:26b"):
+                 "display count changed", "pie:555"):
         assert want in reasons, want
-    assert "ollama:101" not in reasons
 
 
 def test_the_runner_holding_the_gpu_is_no_other_process(monkeypatch):

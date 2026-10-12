@@ -38,13 +38,6 @@ engines:
     recipe: competitive
     pin: "0.31.3"
     release_source: pypi:mlx-lm
-  - id: ollama
-    os: [macos]
-    formats: [ollama]
-    tiers: [targeted]
-    recipe: competitive
-    pin: "0.35.0"
-    release_source: github:ollama/ollama
   - id: splash
     os: [macos]
     formats: [splash]

@@ -5,9 +5,7 @@ fetches checkpoints itself: full artifacts through ``huggingface_hub``
 (``HF_TOKEN`` honoured for gated repos), miniatures through pie's
 ``shrink_checkpoint.py`` (see ``miniature.py``). ``prepare`` does this for
 every artifact of a tier before the bench fan-out so that N bench pods find
-everything on the shared volume. An Ollama artifact's weights live in Ollama's
-own store; its HF repo only supplies the tokenizer and chat template the shared
-client renders prompts with, so only those files are fetched for it.
+everything on the shared volume.
 """
 
 from __future__ import annotations
@@ -15,7 +13,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from pie_evals.schema import ArtifactKind, ArtifactSpec, SourceFormat
+from pie_evals.schema import ArtifactKind, ArtifactSpec
 
 WEIGHT_PATTERNS = ["*.json", "*.safetensors", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.py", "*.jinja"]
 TOKENIZER_PATTERNS = ["*.json", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.jinja"]
@@ -53,10 +51,7 @@ def has_weights(snapshot: Path, artifact: ArtifactSpec) -> bool:
     """A snapshot whose weight files are gone (the blobs behind the symlinks
     reclaimed; gemma-4-E4B on the L40S pod, nightly 36099816046 s07) still
     carries its config.json and would be served: vLLM then boots into
-    "Cannot find any model weights". ``exists`` follows the symlink. An
-    Ollama artifact needs only the tokenizer."""
-    if artifact.source_format == SourceFormat.OLLAMA:
-        return any((snapshot / f).exists() for f in ("tokenizer.json", "tokenizer.model", "tokenizer_config.json"))
+    "Cannot find any model weights". ``exists`` follows the symlink."""
     if artifact.gguf_file:
         return (snapshot / artifact.gguf_file).exists()
     return any(f.exists() for f in snapshot.glob("*.safetensors"))
@@ -101,9 +96,7 @@ def ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path | 
 
     log(f"download: {artifact.base_model}@{artifact.revision or 'main'} -> {hf_cache}")
     kw = {"revision": artifact.revision} if artifact.revision else {}
-    if artifact.source_format == SourceFormat.OLLAMA:
-        kw["allow_patterns"] = TOKENIZER_PATTERNS
-    elif artifact.gguf_file:
+    if artifact.gguf_file:
         kw["allow_patterns"] = ["*.json", artifact.gguf_file]
     else:
         kw["allow_patterns"] = WEIGHT_PATTERNS

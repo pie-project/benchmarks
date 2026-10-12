@@ -7,8 +7,7 @@ fill 250 GB (an L40S pod: "cannot write 'layer.36.o_proj': No space left on
 device" mid-import). Before a job starts, when the disk is short, drop what this
 job does not need: imports and builds of other artifacts/commits first, then
 HF repos this job's cells never reference. The next shard that needs them
-fetches again — slower than a cache hit, never a dead pod. Ollama's own store
-is left alone: ``ollama rm`` is the user's call.
+fetches again — slower than a cache hit, never a dead pod.
 """
 
 from __future__ import annotations

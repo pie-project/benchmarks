@@ -1,10 +1,5 @@
 {
   "models": [
-    "gemma-4-26b-a4b-ollama",
-    "gemma-4-26b-a4b-ollama-mlx",
-    "muse-glimmer-30b-ollama",
-    "qwen3.8-27b-ollama",
-    "qwen3.6-35b-a3b-ollama",
     "qwen3.8-27b-splash",
     "qwen3.6-35b-a3b-splash",
     "gemma-4-26b-a4b-mlxlm",

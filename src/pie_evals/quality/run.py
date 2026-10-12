@@ -5,8 +5,6 @@ import os
 import subprocess
 import tempfile
 import time
-import urllib.request
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,7 +13,7 @@ from pie_evals.node.build import python_dir
 from .engines import ENGINES, engine_for, llamacpp_generate, mlxlm_generate, splash_generate
 from .tasks import TASKS, wilson
 
-LABELS = {"pie": "pie", "ollama": "Ollama", "llamacpp": "llama.cpp", "mlxlm": "mlx-lm", "splash": "Splash"}
+LABELS = {"pie": "pie", "llamacpp": "llama.cpp", "mlxlm": "mlx-lm", "splash": "Splash"}
 
 SYSTEM = "You are a helpful assistant."
 
@@ -36,26 +34,6 @@ def _render(snapshot: Path, prompts: list[str]) -> list[str]:
         except Exception:  # noqa: BLE001
             out.append(tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True))
     return out
-
-
-def _ollama_generate(tag: str, tok_dir: Path, prompts: list[str], max_tokens: int, log) -> tuple[list[str], str]:
-    from pie_evals.node.engines.ollama import server_version, start_server, stop_server
-
-    rendered = _render(tok_dir, prompts)
-    proc, url = start_server({"OLLAMA_KEEP_ALIVE": "-1", "OLLAMA_CONTEXT_LENGTH": "4096", "OLLAMA_NUM_PARALLEL": "4", "OLLAMA_NOHISTORY": "1"}, None, 60)
-    try:
-        def one(p: str) -> str:
-            body = {"model": tag, "prompt": p, "raw": True, "stream": False,
-                    "options": {"num_predict": max_tokens, "temperature": 0, "top_p": 1, "seed": 0}, "keep_alive": "30m"}
-            req = urllib.request.Request(f"{url}/api/generate", data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
-            with urllib.request.urlopen(req, timeout=1200) as r:
-                return json.loads(r.read()).get("response", "")
-
-        with ThreadPoolExecutor(max_workers=4) as pool:
-            texts = list(pool.map(one, rendered))
-        return texts, server_version()
-    finally:
-        stop_server(proc)
 
 
 def _pie_generate(art, snapshot: Path, pie_root: Path, prompts: list[str], max_tokens: int, log) -> tuple[list[str], str]:
@@ -95,8 +73,6 @@ def generate(engine: str, art, snapshot: Path | None, tok_dir: Path | None, pie_
     """Greedy answers to ``prompts`` on one engine, and the engine's version string."""
     if engine == "pie":
         return _pie_generate(art, snapshot, pie_root, prompts, max_tokens, log)
-    if engine == "ollama":
-        return _ollama_generate(art.ollama_tag, tok_dir, prompts, max_tokens, log)
     if engine == "splash":
         return splash_generate(art, prompts, SYSTEM, max_tokens, log)
     rendered = _render(tok_dir, prompts)
@@ -133,7 +109,7 @@ def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str =
     m = Matrix.load(matrix_dir)
     art = m.artifacts[artifact_id]
     engine = engine_for(art)
-    # the weights: pie and mlx-lm read the MLX checkpoint, Ollama its own store, llama.cpp the GGUF (its tokenizer comes
+    # the weights: pie and mlx-lm read the MLX checkpoint, llama.cpp the GGUF (its tokenizer comes
     # from another repo), Splash fetches its own
     snapshot = tok_dir = None
     if engine == "llamacpp":

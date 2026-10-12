@@ -86,12 +86,12 @@ def test_relevant_env():
         "NCCL_P2P_DISABLE": "1", "PIE_HOME": "/x", "VLLM_USE_V1": "1", "SGLANG_X": "y",
         "LD_LIBRARY_PATH": "/usr/lib", "CUDA_VISIBLE_DEVICES": "0,1", "HF_HUB_CACHE": "/hf",
         "HOME": "/root", "PATH": "/bin", "SECRET_TOKEN": "nope",
-        "OLLAMA_NUM_PARALLEL": "8", "MTL_DEBUG_LAYER": "0",
+        "MTL_DEBUG_LAYER": "0",
     }
     out = relevant_env(env)
     assert set(out) == {"NCCL_P2P_DISABLE", "PIE_HOME", "VLLM_USE_V1", "SGLANG_X",
                         "LD_LIBRARY_PATH", "CUDA_VISIBLE_DEVICES", "HF_HUB_CACHE",
-                        "OLLAMA_NUM_PARALLEL", "MTL_DEBUG_LAYER"}
+                        "MTL_DEBUG_LAYER"}
     assert list(out) == sorted(out)
 
 
