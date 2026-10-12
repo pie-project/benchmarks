@@ -64,6 +64,7 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
         row = by_model.setdefault(mid, {"id": mid, "name": model_name(base), "family": a.get("family"),
                                         "base_model": base, "schemes": set(), "artifacts": 0})
         row["artifacts"] += 1
+        row["draft"] = row.get("draft") or bool(a.get("pie_drafter"))
         if a.get("scheme"):
             row["schemes"].add(a["scheme"])
     for row in by_model.values():
@@ -76,6 +77,7 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
         # one definition per model today, every expert resident: no SSD streaming. A streaming twin would fit smaller Macs.
         row["ssd_streaming"] = "Without" if row["architecture"] == "MoE" else "n/a"
         row["schemes"] = ", ".join(sorted(row["schemes"]))
+        row["draft"] = "true" if row.get("draft") else "false"
         # weights only, from the parameter count and the bits each weight takes (4-bit affine with a 16-bit scale and
         # bias per 64 weights = 4.5 bits; NVFP4 4-bit with an 8-bit scale per 16 = 4.5 bits)
         row["size_gib"] = round(row["params_b"] * 1e9 * 4.5 / 8 / 2**30, 1) if row["params_b"] else None

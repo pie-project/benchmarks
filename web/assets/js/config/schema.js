@@ -133,6 +133,7 @@ window.Pie = window.Pie || {};
         text("family", "Family", "Identity", { code: true }),
         text("architecture", "Architecture", "Shape"),
         text("ssd_streaming", "SSD streaming", "Shape"),
+        text("draft", "Draft", "Shape", { hint: "pie decodes single-stream rows with a drafter (speculative decoding)" }),
         number("params_b", "Params", "Shape", "B", 1),
         number("active_b", "Active", "Shape", "B", 1),
         number("size_gib", "4-bit size", "Shape", "GiB", 1),

@@ -168,7 +168,8 @@ artifacts:
     family: qwen3_6_moe
     scheme: affine_u4_g64
     source_format: mlx
-    pie_sku: qwen36-35b-a3b-u4g64-kv-bf16   # the plain row; the import otherwise lands a drafter twin
+    pie_sku: qwen36-35b-a3b-dflash-u4g64-kv-bf16   # single-stream rows speculate, as Splash and Ollama do
+    pie_drafter: dflash   # z-lab/Qwen3.6-35B-A3B-DFlash
     display_name: qwen3.6:35b-a3b
     expected_gib: 18.17
     tiers: [nightly, weekly]
@@ -184,7 +185,8 @@ artifacts:
     family: gemma4_moe
     scheme: affine_u4_g64
     source_format: mlx
-    pie_sku: gemma4-26b-a4b-u4g64-kv-bf16
+    pie_sku: gemma4-26b-a4b-dflash-u4g64-kv-bf16   # single-stream rows speculate, as Ollama's MTP does
+    pie_drafter: dflash   # z-lab/gemma-4-26B-A4B-it-DFlash
     display_name: gemma4:26b
     expected_gib: 14.29
     tiers: [nightly, weekly, targeted]
@@ -271,7 +273,8 @@ artifacts:
     family: qwen3_6
     scheme: affine_u4_g64
     source_format: mlx
-    pie_sku: qwen38-27b-u4g64-kv-bf16
+    pie_sku: qwen38-27b-dflash2-u4g64-kv-bf16   # single-stream rows speculate, as Splash's DFlash2 does
+    pie_drafter: dflash2   # z-lab/Qwen3.8-27B-DFlash2
     display_name: qwen3.8:27b
     expected_gib: 14.95
     tiers: [targeted]
@@ -284,6 +287,7 @@ artifacts:
     scheme: affine_u4_g64
     source_format: mlx
     pie_sku: qwen38-27b-dflash2-u4g64-kv-bf16
+    pie_drafter: dflash2
     display_name: qwen3.8:27b dflash2
     expected_gib: 15.0
     tiers: [targeted]
