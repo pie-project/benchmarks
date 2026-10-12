@@ -892,7 +892,8 @@
 }
 
 .welcome-banner {
-  height: 220px;
+  position: relative;
+  height: 280px;
   margin: 0 0 32px;
   border-radius: 18px;
   background:
@@ -921,4 +922,13 @@
   letter-spacing: -.02em;
   line-height: 1.15;
   margin: 0 0 12px;
+}
+
+.welcome-banner-logo {
+  position: absolute;
+  right: 28px;
+  bottom: 24px;
+  width: 44px;
+  height: 44px;
+  color: #fff;
 }
