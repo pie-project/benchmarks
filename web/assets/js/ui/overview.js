@@ -669,7 +669,7 @@ window.Pie = window.Pie || {};
             ${popup("overview-engine", "Engine", baseName())}
           </div>
           ${decode.length
-            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + heatSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model)
+            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + acrossMacs(all, workload, state.overview.model) + heatSection(state, all, models, workload)
             : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
           ${shown.length ? section("By model", "", carousel(shown.map((id) => card(id, byModel[id] || [])))) : ""}
           ${qualityTable(state.release)}
