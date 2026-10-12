@@ -1015,70 +1015,10 @@
   color: var(--color-label-secondary);
 }
 
-/* the art beside the welcome and the note: pinned to the right of the text column, hidden when there is no room */
-.welcome-body { position: relative; }
+/* the welcome's message and Pie sections read wider than the method page's lede */
+.welcome-trust .method-lede { max-width: 920px; }
 
-.welcome-art {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  right: 0;
-  width: 290px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* one layer: a rounded square laid flat into a diamond, with its label upright on top */
-.stack-layer {
-  position: relative;
-  width: 260px;
-  height: 150px;
-  margin-top: -98px;
-  display: grid;
-  place-items: center;
-}
-
-.stack-layer:first-child { margin-top: 0; }
-
-/* each layer rests on the one below it */
-.stack-layer.is-weights { z-index: 3; }
-.stack-layer.is-engine { z-index: 2; }
-.stack-layer.is-silicon { z-index: 1; }
-
-.stack-layer::before {
-  content: "";
-  position: absolute;
-  width: 168px;
-  height: 168px;
-  border-radius: 34px;
-  transform: rotateX(58deg) rotateZ(45deg);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35);
-}
-
-.stack-layer.is-weights::before { background: linear-gradient(135deg, #5ac8ff, #6b5cff 52%, #e07cff); }
-/* the engine layer: a fine grid of points laid over its gradient, like a die seen from above */
-.stack-layer.is-engine::before {
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, .55) 1.3px, transparent 1.8px) 0 0 / 16px 16px,
-    linear-gradient(rgba(255, 255, 255, .12) 1px, transparent 1px) 0 0 / 32px 32px,
-    linear-gradient(90deg, rgba(255, 255, 255, .12) 1px, transparent 1px) 0 0 / 32px 32px,
-    linear-gradient(135deg, #5fe0ff, #5a72ff 55%, #a87bff);
-}
-.stack-layer.is-engine { height: 196px; }
-.stack-layer.is-engine::before { width: 230px; height: 230px; border-radius: 46px; }
-.stack-layer.is-silicon::before {
-  background: linear-gradient(135deg, #4a5a8c, #232c4f 60%, #1b2140);
-  box-shadow: inset 0 0 0 1px rgba(140, 170, 255, .35);
-}
-
-
-
-@media (max-width: 1100px) {
-  .welcome-art { display: none; }
-}
+.welcome-pie { margin-top: 20px; }
 
 .welcome-version {
   margin-left: 2px;
@@ -1090,5 +1030,3 @@
   color: #6e6e73;
   background: #f2f2f7;
 }
-
-.welcome-pie { margin-top: 20px; }
