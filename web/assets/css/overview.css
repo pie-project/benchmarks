@@ -1017,9 +1017,9 @@
 }
 
 .welcome-sign {
-  margin: 20px 0 0;
-  font-size: 15px;
-  font-style: italic;
+  margin: 12px 0 0;
+  font-size: 17px;
+  line-height: 1.5;
   color: var(--color-label-secondary);
 }
 
