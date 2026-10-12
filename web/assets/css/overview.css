@@ -1020,7 +1020,8 @@
 
 .welcome-art {
   position: absolute;
-  top: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   right: 24px;
   width: 280px;
   display: flex;
