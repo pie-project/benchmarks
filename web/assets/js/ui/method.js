@@ -36,13 +36,13 @@ window.Pie = window.Pie || {};
     `${pane("decode", "Decode",
       "Decode is the speed at which tokens are generated after the first one.",
       [
-        formula("(output tokens − 1) ÷ (latency − TTFT)", "The output tokens after the first, divided by the time from the first token to the last. TTFT is the time to first token, explained below."),
+        formula("(output tokens − 1) ÷ (latency − TTFT)"),
         p("The row shows the median of the measured requests, in tokens per second. Warm-up requests are not counted."),
       ].join(""))}`,
     `${pane("prefill", "Prefill",
       "Prefill is how fast the engine reads the prompt before the first token.",
       [
-        formula("prompt tokens ÷ TTFT", "For each request."),
+        formula("prompt tokens ÷ TTFT"),
         subhead("This is only measured where it can be compared fairly"),
         rows([
           ["Single request at a time", "Under load, requests wait in a queue, so their prefill speed is not a property of the engine."],
