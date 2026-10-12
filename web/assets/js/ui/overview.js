@@ -8,6 +8,7 @@ window.Pie = window.Pie || {};
   const WORKLOADS = [
     { id: "single", label: "Single request" },
     { id: "throughput", label: "Throughput" },
+    { id: "ram_overload", label: "RAM Overload" },
   ];
   const METRICS = [
     { id: "decode_tok_s", key: "decode_tok_s", label: "Decode" },
@@ -752,7 +753,7 @@ window.Pie = window.Pie || {};
           </div>
           ${decode.length
             ? standSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
-            : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
+            : `<div class="overview-none">${all.some((row) => row.workload === workload) ? `No ${esc(baseName())} runs on this Mac yet.` : `No results for ${esc(workloadLabel)} yet.`}</div>`}
           ${qualityTable(state.release)}
           ${decode.length ? releases(releasePoints(state, shown)) : ""}
           ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
