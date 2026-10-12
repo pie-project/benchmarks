@@ -13,7 +13,7 @@ window.Pie = window.Pie || {};
   };
 
   const icon = (name) => `<svg class="method-icon" viewBox="0 0 24 24" aria-hidden="true">${glyphs[name]}</svg>`;
-  const formula = (text, note = "") => `<div class="method-formula"><div class="method-formula-text">${text}</div>${note ? `<div class="method-formula-note">${note}</div>` : ""}</div>`;
+  const formula = (text, note = "") => `<div class="method-formula"><div class="method-formula-text">${text.replace(/ ([=−+×÷/]) /g, ' <span class="op">$1</span> ')}</div>${note ? `<div class="method-formula-note">${note}</div>` : ""}</div>`;
   const rows = (items) => `<ul class="method-rows">${items.map(([title, text]) => `<li><span class="method-row-title">${title}</span><span class="method-row-text">${text}</span></li>`).join("")}</ul>`;
   const p = (text, cls = "") => `<p${cls ? ` class="${cls}"` : ""}>${text}</p>`;
   const subhead = (text) => `<h3 class="method-subhead">${text}</h3>`;
