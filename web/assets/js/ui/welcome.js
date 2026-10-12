@@ -6,7 +6,7 @@ window.Pie = window.Pie || {};
   const content = `
     <div class="welcome-banner">
       <div class="welcome-banner-copy">
-        <h2 class="welcome-banner-title">Run Pie on your Mac!</h2>
+        <h2 class="welcome-banner-title">Run AI on your Mac!</h2>
         <p class="welcome-banner-sub">Free and private, for the whole world. With love, the Pie team.</p>
       </div>
       <div class="welcome-banner-actions">
