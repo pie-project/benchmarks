@@ -95,6 +95,16 @@ class HFReference:
             logits = self.model(input_ids=x, use_cache=False).logits[0]
         return logits.float().cpu().numpy().astype(np.float32)
 
+    def close(self) -> None:
+        """Hands the device back: the engine under test shares it and sized
+        itself to what was free before this reference loaded."""
+        import gc
+
+        del self.model
+        gc.collect()
+        if self.torch.cuda.is_available():
+            self.torch.cuda.empty_cache()
+
 
 # ---- mlx_lm ---------------------------------------------------------------------
 
@@ -140,6 +150,33 @@ def load_reference(kind: str, snapshot_dir: str | Path, **kw: Any) -> HFReferenc
     if kind == "hf":
         return HFReference(snapshot_dir, **kw)
     raise ValueError(f"unknown reference kind {kind!r}")
+
+
+class LazyReference:
+    """A reference built on its first use, so a run whose outputs the cache
+    already holds never loads the weights beside the engine; ``close`` frees
+    whatever it loaded."""
+
+    def __init__(self, kind: str, snapshot_dir: str | Path, **kw: Any):
+        self.name = kind
+        self._make = lambda: load_reference(kind, snapshot_dir, **kw)
+        self._ref: HFReference | MlxReference | None = None
+
+    def _loaded(self) -> HFReference | MlxReference:
+        if self._ref is None:
+            self._ref = self._make()
+        return self._ref
+
+    def greedy(self, prompt_ids: list[int], max_new_tokens: int) -> list[int]:
+        return self._loaded().greedy(prompt_ids, max_new_tokens)
+
+    def teacher_forced_logits(self, ids: list[int]) -> np.ndarray:
+        return self._loaded().teacher_forced_logits(ids)
+
+    def close(self) -> None:
+        ref, self._ref = self._ref, None
+        if ref is not None and hasattr(ref, "close"):
+            ref.close()
 
 
 # ---- cache ----------------------------------------------------------------------

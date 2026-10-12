@@ -14,6 +14,7 @@ from pie_evals.results.store import Store
 from pie_evals.schema import CellStatus, ErrorClass, PerfMetrics, Record, Tier, WorkloadSpec
 
 ROOT = Path(__file__).resolve().parents[1]
+REAL_ACCURACY = runner_mod.NodeRunner._accuracy
 
 
 class FakeEngine(Engine):
@@ -363,3 +364,28 @@ def test_an_imported_artifact_needs_no_source_weights(mac_job, patched, tmp_path
     monkeypatch.setattr(snapshots, "ensure_snapshot", lambda *a, **k: (_ for _ in ()).throw(AssertionError("fetched the source")))
     r = runner_mod.NodeRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
     assert r.snapshot_dir(mac_job.cells[0]) == snap
+
+
+def test_t0_is_judged_once_the_engine_is_down(job, patched, tmp_path, monkeypatch):
+    """The reference loads where the engine was: judged beside a live engine,
+    a 16 GB reference and the engine serving it do not share a 24 GB card."""
+    from pie_evals.node.accuracy import gate
+    from pie_evals.schema import AccuracyMetrics, AccuracyStatus
+
+    events: list[str] = []
+    monkeypatch.setattr(runner_mod.NodeRunner, "_accuracy", REAL_ACCURACY)
+    monkeypatch.setattr(gate, "skip_reason", lambda cell: None)
+    monkeypatch.setattr("pie_evals.node.snapshots.with_tokenizer", lambda art, snap, hf, log=None: snap)
+    monkeypatch.setattr(gate, "t0_engine_outputs", lambda engine, snap, **kw: gate.T0Outputs([[1]], [[2]]))
+    monkeypatch.setattr(FakeEngine, "stop", lambda self: events.append("stop"), raising=False)
+
+    def judge(outputs, cell, snap, platform_os, **kw):
+        events.append("judge")
+        return AccuracyMetrics(status=AccuracyStatus.FAIL)
+
+    monkeypatch.setattr(gate, "t0_judge", judge)
+    _, lines = _run(job, patched, tmp_path)
+    assert events.index("judge") > events.index("stop")
+    ss = [r for r in lines if r.cell.workload.id == "ss-128-64"][-1]
+    assert ss.accuracy.status == AccuracyStatus.FAIL and ss.status == CellStatus.FAIL
+    assert ss.error_class == ErrorClass.GATE_FAIL
