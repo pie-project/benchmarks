@@ -162,7 +162,7 @@ window.Pie = window.Pie || {};
     },
 
     quality_tasks: {
-      label: "Quality benchmarks",
+      label: "Benchmarks",
       section: "catalog",
       filters: [],
       columns: [

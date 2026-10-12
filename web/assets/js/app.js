@@ -1,5 +1,5 @@
 (() => {
-  const { state, store, query, sidebar, toolbar, popover, filters, table, preferences, overview, parity } = Pie;
+  const { state, store, query, sidebar, toolbar, popover, filters, table, preferences, overview } = Pie;
   const filterBar = document.querySelector(".filter-bar");
 
   // the overview's Mac and workload live in the address, so a reload or a shared link keeps them
@@ -28,7 +28,6 @@
     table.container.hidden = isOverview || isMethod;
     overview.element.hidden = !isOverview;
     Pie.method.render(state);
-    parity.render(state);
     sidebar.render(state);
     if (isOverview) {
       const models = overview.render(state);
