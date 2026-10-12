@@ -1022,9 +1022,3 @@
   line-height: 1.5;
   color: var(--color-label-secondary);
 }
-
-.welcome-heart {
-  font-style: normal;
-  color: #ff5a8a;
-  text-shadow: 0 0 10px rgba(255, 90, 138, .5);
-}
