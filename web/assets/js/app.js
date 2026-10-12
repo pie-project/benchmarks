@@ -102,6 +102,8 @@
         state.overview.hardware = value;
       } else if (key === popover.WORKLOAD) {
         state.overview.workload = value;
+      } else if (key === popover.ENGINE) {
+        state.overview.engine = value;
       } else if (value === popover.ALL) {
         state.setFilter(key, []);
       } else {
@@ -146,6 +148,7 @@
     overview.onChange(render);
     overview.onOpenMac((anchor) => popover.open(anchor, popover.MAC, state));
     overview.onOpenWorkload((anchor) => popover.open(anchor, popover.WORKLOAD, state));
+    overview.onOpenEngine((anchor) => popover.open(anchor, popover.ENGINE, state));
   };
 
   // the view a viewer left (page, release, Mac, workload, hide choice) is kept per browser; the address still wins
