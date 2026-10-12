@@ -1,0 +1,65 @@
+# Diagnostic: one cell on one resident Mac, with macOS `sample` attached to the serving
+# process while it runs (PIE_EVALS_SAMPLE_SECS, node/profile.py). Sampling slows the
+# process, so the numbers from this run are not comparable; use the profile, not the tok/s.
+name: profile
+run-name: profile ${{ inputs.engine }} ${{ inputs.artifact }} on ${{ inputs.machine }}
+on:
+  workflow_dispatch:
+    inputs:
+      machine: { description: "Mac platform id, a runner label (e.g. m5-max-64g)", required: true, default: "m5-max-64g" }
+      engine: { description: "pie, splash, ollama, mlxlm or llamacpp", required: true, default: "splash" }
+      artifact: { description: "artifact id from matrix/models.yaml", required: true, default: "qwen3.8-27b-splash" }
+      workload: { description: "workload id", required: false, default: "ss-512-256" }
+      pie_commit: { description: "pie commit", required: false, default: "424758165ecb6a78a72d0344c0f7abec7fec1aab" }
+      sample_secs: { description: "seconds of sampling per engine boot", required: false, default: "120" }
+permissions: { contents: read }
+concurrency: { group: "profile-${{ inputs.machine }}", cancel-in-progress: false }  # one profile per Mac at a time
+jobs:
+  profile:
+    runs-on: [self-hosted, "${{ inputs.machine }}"]
+    timeout-minutes: 90
+    env:
+      HF_TOKEN: "${{ secrets.HF_TOKEN }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv && uv pip install -e ".[orchestrate]"
+      - name: splash
+        if: inputs.engine == 'splash'
+        run: |
+          # same pinned release and wrapper as tier.yml, cached beside the other baselines
+          pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['splash']['pin'])")
+          dir="$HOME/.cache/pie-evals/baselines/splash-$pin"
+          if [ ! -x "$dir/bin/splash" ]; then
+            rm -rf "$dir" && mkdir -p "$dir/bin"
+            curl -fsSL "https://github.com/incoai/splash/releases/download/$pin/splash-$pin-arm64-macos26.tar.gz" | tar xz -C "$dir" --strip-components=1
+            printf '#!/bin/sh\nexport PYTHONDONTWRITEBYTECODE=1\nexec "%s/python/bin/python3" -u "%s/install/launcher.py" "$@"\n' "$dir" "$dir" > "$dir/bin/splash"
+            chmod 0755 "$dir/bin/splash"
+          fi
+          "$dir/bin/splash" --version
+          echo "SPLASH_BIN=$dir/bin/splash" >> "$GITHUB_ENV"
+      - name: ollama
+        if: inputs.engine == 'ollama'
+        run: |
+          pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['ollama']['pin'])")
+          dir="$HOME/.cache/pie-evals/baselines/ollama-$pin"
+          if [ ! -x "$dir/ollama" ]; then
+            rm -rf "$dir" && mkdir -p "$dir"
+            curl -fsSL "https://github.com/ollama/ollama/releases/download/v$pin/ollama-darwin.tgz" | tar xz -C "$dir"
+          fi
+          "$dir/ollama" --version
+          echo "OLLAMA_BIN=$dir/ollama" >> "$GITHUB_ENV"
+      - name: job spec
+        run: |
+          .venv/bin/pie-evals jobs --tier targeted --pie-commit "${{ inputs.pie_commit }}" \
+            --platform "${{ inputs.machine }}" --engine "${{ inputs.engine }}" \
+            --artifact "${{ inputs.artifact }}" --workload "${{ inputs.workload }}" --out jobs
+          ls jobs
+      - name: profile
+        run: |
+          job=$(ls jobs/*.json | head -1)
+          out="out/profile"
+          PIE_EVALS_SAMPLE_SECS="${{ inputs.sample_secs }}" .venv/bin/pie-evals-node run --job "$job" --pie-root "$HOME/pie" --out "$out" --download
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: "profile-${{ inputs.engine }}-${{ inputs.artifact }}", path: "out/profile", retention-days: 30 }
