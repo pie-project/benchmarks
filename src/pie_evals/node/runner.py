@@ -141,6 +141,7 @@ class NodeRunner:
         self.t_start = time.monotonic()
         self._killed = threading.Event()
         self._done: set[str] = set()
+        self._t0_pending: dict[str, tuple] = {}
         self._last_state: dict = {}
         self._start_watchdog()
 
@@ -474,6 +475,7 @@ class NodeRunner:
                     pre.between_engines(self.platform.os if self.platform else None, engine.leftover_process_names())
             except Exception as e:
                 self.log(f"teardown: {e}")
+            self._judge_t0(records)
             invalid = pre.after_model(self.platform.os if self.platform else None, model_state)
             if invalid:
                 self.log(f"model run invalidated: {invalid}")
@@ -610,8 +612,11 @@ class NodeRunner:
     def _accuracy(self, cell: Cell, engine, snapshot: Path) -> AccuracyMetrics:
         """T0 token parity, once per engine process: it is a property of the
         loaded model, not of the workload, so it rides on the ``ss-128-64``
-        cell of each process and every other cell of that process is NOT_RUN."""
-        from .accuracy.gate import skip_reason, t0_via_engine
+        cell of each process and every other cell of that process is NOT_RUN.
+        The engine answers the T0 prompts here; the reference judges them in
+        ``_judge_t0`` once the engine is down, so the cell stays NOT_RUN until
+        then."""
+        from .accuracy.gate import T0Outputs, skip_reason, t0_engine_outputs
 
         skip = skip_reason(cell)
         if skip is not None:
@@ -622,12 +627,34 @@ class NodeRunner:
             from .snapshots import with_tokenizer
 
             snapshot = with_tokenizer(cell.artifact, snapshot, self.hf_cache, log=self.log)
-            cache = Path(os.environ.get("PIE_EVALS_CACHE", Path.home() / ".cache/pie-evals")) / "refcache"
-            return t0_via_engine(cell, engine, snapshot, self.platform.os, pie_root=self.pie_root, cache_dir=cache,
-                                 out_dir=self.out / "cells" / cell.cell_id / "t0", timeout_s=self.job.per_cell_timeout_s)
+            outputs = t0_engine_outputs(engine, snapshot, pie_root=self.pie_root,
+                                        out_dir=self.out / "cells" / cell.cell_id / "t0", timeout_s=self.job.per_cell_timeout_s)
         except Exception as e:  # a missing reference is not a pie failure
             self.log(f"accuracy gate skipped: {e}")
             return AccuracyMetrics(status=AccuracyStatus.SKIPPED_NO_REFERENCE, detail={"error": str(e)[:300]})
+        if not isinstance(outputs, T0Outputs):
+            return outputs
+        self._t0_pending[cell.cell_id] = (outputs, snapshot)
+        return AccuracyMetrics(status=AccuracyStatus.NOT_RUN)
+
+    def _judge_t0(self, records: list[Record]) -> None:
+        """Judge the T0 answers this process's engine gave, now that it is down."""
+        from .accuracy.gate import t0_judge
+
+        cache = Path(os.environ.get("PIE_EVALS_CACHE", Path.home() / ".cache/pie-evals")) / "refcache"
+        pending, self._t0_pending = self._t0_pending, {}
+        for rec in [r for r in records if r.cell_id in pending]:
+            outputs, snapshot = pending[rec.cell_id]
+            try:
+                accuracy = t0_judge(outputs, rec.cell, snapshot, self.platform.os, cache_dir=cache)
+            except Exception as e:  # a missing reference is not a pie failure
+                self.log(f"accuracy gate skipped: {e}")
+                accuracy = AccuracyMetrics(status=AccuracyStatus.SKIPPED_NO_REFERENCE, detail={"error": str(e)[:300]})
+            rec.accuracy = accuracy
+            if accuracy.status == AccuracyStatus.FAIL and rec.status == CellStatus.PASS:
+                rec.status = CellStatus.FAIL
+                rec.error_class = ErrorClass.GATE_FAIL
+            self.emit(rec)
 
     def _not_run(self, cell: Cell, reason: str) -> Record:
         p = prov.Provenance(runner=self.runner_name, pie_commit=self.job.pie_commit)

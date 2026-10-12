@@ -20,7 +20,12 @@ from pie_evals.node.accuracy import (
 )
 from pie_evals.node.accuracy.gate import SAME_WEIGHTS_REFERENCE, run_t0, skip_reason
 from pie_evals.node.accuracy.prompts import LONG_PROMPT_TARGET_WORDS, t0_prompts
-from pie_evals.node.accuracy.reference import ReferenceCache, prompt_hash, reference_for
+from pie_evals.node.accuracy.reference import (
+    LazyReference,
+    ReferenceCache,
+    prompt_hash,
+    reference_for,
+)
 from pie_evals.schema import (
     AccuracyStatus,
     ArtifactKind,
@@ -388,6 +393,33 @@ def test_a_program_that_states_no_prompt_count_is_not_judged(tmp_path, monkeypat
         def run(self, wl, args, out, timeout):
             return SimpleNamespace(output_token_ids=[[7, 8]], requests=[{"prompt_tokens": 0}])
 
-    m = gate.t0_via_engine(None, Engine(), tmp_path, "linux", pie_root=tmp_path, cache_dir=tmp_path, out_dir=tmp_path)
+    m = gate.t0_engine_outputs(Engine(), tmp_path, pie_root=tmp_path, out_dir=tmp_path)
     assert m.status == AccuracyStatus.SKIPPED_NO_REFERENCE
     assert m.detail["mismatch"][0][1:] == (3, 0)
+
+
+def test_a_cached_reference_never_loads_beside_the_engine(tmp_path, monkeypatch):
+    """The engine under test shares the device: a reference whose outputs are
+    cached must not load its weights, and a loaded one hands them back."""
+    import pie_evals.node.accuracy.reference as reference
+
+    cache = ReferenceCache(tmp_path / "refcache")
+    cache.put("rev", "greedy", [1, 2, 3], 4, np.asarray([5, 6, 7, 8]))
+    loads, closes = [], []
+
+    class Loaded:
+        def greedy(self, ids, n):
+            return [9] * n
+
+        def close(self):
+            closes.append(True)
+
+    monkeypatch.setattr(reference, "load_reference", lambda kind, snap, **kw: loads.append(kind) or Loaded())
+    ref = LazyReference("hf", tmp_path)
+    assert cache.greedy(ref, "rev", [1, 2, 3], 4) == [5, 6, 7, 8]
+    ref.close()
+    assert loads == [] and closes == []
+
+    assert cache.greedy(ref, "rev", [4], 2) == [9, 9]
+    ref.close()
+    assert loads == ["hf"] and closes == [True]
