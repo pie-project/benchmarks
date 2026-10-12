@@ -1205,3 +1205,13 @@ def test_pie_in_served_mode_has_its_server_watched(tmp_path):
         server.kill()
         server.wait()
     assert eng.watch_pids() == [], "a server that exited is not watched"
+
+
+def test_a_dflash2_row_drafts_at_its_trained_block(tmp_path):
+    single, conc = MAC_WORKLOADS["ss-128-64"], MAC_WORKLOADS["c32"]
+    eng = mac_make(PieEngine, art=mac_artifact(pie_sku="qwen38-27b-dflash2-u4g64-kv-bf16"))
+    argv = argv_for(eng, single, tmp_path)
+    assert "block=8" in argv and "no_mask=true" in argv
+    assert "block=8" not in argv_for(eng, conc, tmp_path)
+    v1 = mac_make(PieEngine, art=mac_artifact(pie_sku="qwen36-27b-dflash-u4g64-kv-bf16"))
+    assert "block=8" not in argv_for(v1, single, tmp_path)
