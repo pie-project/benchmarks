@@ -32,7 +32,12 @@ window.Pie = window.Pie || {};
       <p class="method-lede">That is why we built Pie, and why we measure it in the open against every engine we can. Intelligence should run where you live, answer only to you, and belong to everyone. This is our step toward that future.</p>
       <p class="welcome-sign">With love, the Pie team!</p>
     </header>
-    </div>`;
+    </div>
+    <header class="method-head welcome-trust welcome-pie">
+      <h2>Pie: Programmable Inference Engine</h2>
+      <p class="method-lede">Most inference engines today grew one model and one feature at a time, and many have become hard to extend and harder to maintain. We built Pie to give the open-source community a cleaner foundation.</p>
+      <p class="method-lede">Pie borrows its design from operating systems. It manages the hardware as precisely as a kernel manages memory and compute, and runs your programs on top of it as lightweight processes called inferlets. The result is an engine that is simple to build on, and fast and fluid for everyone who uses it.</p>
+    </header>`;
 
   Pie.welcome = {
     element,
