@@ -717,7 +717,6 @@ window.Pie = window.Pie || {};
       // the Mac and workload pickers stay on every path, so a Mac with no runs can still be left for another one
       const controls = () => `
         <div class="overview-controls">
-          ${popup("overview-mac", "Mac", macName(hardware))}
           ${popup("overview-workload", "Workload", WORKLOADS.find((w) => w.id === workload).label)}
           ${popup("overview-engine", "Engine", baseName())}
         </div>`;
@@ -748,7 +747,6 @@ window.Pie = window.Pie || {};
         <div class="overview-inner">
           ${RING_DEFS}
           <div class="overview-controls">
-            ${popup("overview-mac", "Mac", macName(hardware))}
             ${popup("overview-workload", "Workload", workloadLabel)}
             ${popup("overview-engine", "Engine", baseName())}
           </div>
