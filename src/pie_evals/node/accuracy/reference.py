@@ -82,9 +82,16 @@ class HFReference:
                 min_new_tokens=max_new_tokens,
                 do_sample=False,
                 num_beams=1,
-                pad_token_id=self.model.config.pad_token_id or self.model.config.eos_token_id,
+                # the generation config states the ids; a multimodal config
+                # (Gemma4Config) keeps none at its top level
+                pad_token_id=self._pad_token_id(),
             )
         return [int(t) for t in out[0, ids.shape[1]:].tolist()]
+
+    def _pad_token_id(self) -> int | None:
+        gen = self.model.generation_config
+        pad = gen.pad_token_id if gen.pad_token_id is not None else gen.eos_token_id
+        return pad[0] if isinstance(pad, list) else pad
 
     def teacher_forced_logits(self, ids: list[int]) -> np.ndarray:
         """``[len(ids), vocab]`` float32 logits; row ``i`` is the distribution
