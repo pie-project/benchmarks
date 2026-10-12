@@ -184,3 +184,19 @@ def test_after_model_names_every_change(monkeypatch):
                  "display count changed", "pie:555", "gemma4:26b"):
         assert want in reasons, want
     assert "ollama:101" not in reasons
+
+
+def test_the_runner_holding_the_gpu_is_no_other_process(monkeypatch):
+    # T0's transformers reference loads on the GPU inside the runner itself
+    import os
+
+    import pie_evals.node.preflight as pf
+
+    monkeypatch.setattr(pf, "_run", lambda cmd, *a, **k: "")
+    monkeypatch.setattr(pf, "gpu_processes", lambda: [
+        {"pid": str(os.getpid()), "name": "/venv/bin/python3", "used_mib": "1800"},
+        {"pid": "999997", "name": "/usr/bin/other", "used_mib": "900"},
+    ])
+    state = pf.linux_machine_state()
+    assert state["gpu_process_count"] == "1"
+    assert state["gpu_processes"] == ["/usr/bin/other"]

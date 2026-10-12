@@ -223,7 +223,9 @@ def linux_machine_state() -> dict[str, Any]:
         state["gpus"] = gpus
         if gpus:
             state["driver"] = gpus[0]["driver"]
-    procs = gpu_processes()
+    # the runner itself is no other process: its T0 reference (transformers)
+    # loads on the GPU in-process, after the before-state was taken
+    procs = [p for p in gpu_processes() if p["pid"] != str(os.getpid())]
     state["gpu_process_count"] = str(len(procs))
     state["gpu_processes"] = [p["name"] for p in procs][:20]
     # host CPU too: A100 CFG fell 20-42 % on a new pod while every GPU-bound cell held (nightly 36264850727)
