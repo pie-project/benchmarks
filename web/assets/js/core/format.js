@@ -39,7 +39,7 @@ Pie.format = {
     return `<span class="hardware-tag">${this.escape(id)}</span>`;
   },
 
-  statusLabels: { pass: "Measured", noisy: "Noisy", fail: "Failed", not_run: "Not run", unsupported: "Unsupported", no_fit: "Doesn't fit" },
+  statusLabels: { pass: "Measured", noisy: "Noisy", fail: "Failed", not_run: "Not run", unsupported: "Unsupported", no_fit: "Doesn't fit", no_data: "No data" },
 
   statusTag(status) {
     return `<span class="status-tag is-${this.escape(status)}">${this.escape(this.statusLabels[status] || status)}</span>`;
