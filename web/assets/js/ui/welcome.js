@@ -7,7 +7,8 @@ window.Pie = window.Pie || {};
     <div class="welcome-banner">
       <div class="welcome-banner-copy">
         <h2 class="welcome-banner-title">Run AI on your Mac!</h2>
-        <p class="welcome-banner-sub">Free and private, for the whole world. With love, the Pie team.</p>
+        <p class="welcome-banner-sub">Free and private, for the whole world.</p>
+        <p class="welcome-banner-sign">With love, the Pie team <span class="welcome-heart" aria-label="love">♥</span></p>
       </div>
       <div class="welcome-banner-actions">
         <a class="welcome-banner-link is-primary" href="https://liszt.ai/etude" target="_blank" rel="noopener"><svg class="is-stroke" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>Download</a>
