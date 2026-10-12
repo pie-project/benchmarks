@@ -56,10 +56,11 @@ window.Pie = window.Pie || {};
     quality: {
       label: "Quality",
       section: "measurements",
-      filters: ["model", "engine", "task"],
+      filters: ["model", "engine", "task", "status"],
       numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
+        text("status", "Status", "Setup", { status: true }),
         reference("model", "Model", "Setup", "models"),
         text("task", "Task", "Setup"),
         text("release", "Release", "Setup", { code: true }),

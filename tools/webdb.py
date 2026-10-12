@@ -134,6 +134,20 @@ QUALITY_TASKS = [
 ]
 
 
+def quality_arms(config: dict) -> list[tuple[str, str]]:
+    """(engine, artifact) for each competitor arm in config.json and the pie arm it is compared with."""
+    arts = {a["id"]: a for a in load("models")["artifacts"]}
+    out: list[tuple[str, str]] = []
+    for aid in config["models"]:
+        eng = next((e for e in ("llamacpp", "mlxlm", "splash", "ollama") if aid.endswith(f"-{e}") or f"-{e}-" in aid), None)
+        if eng:
+            out.append((eng, aid))
+        pie = arts.get(aid, {}).get("baseline_of")
+        if pie and ("pie", pie) not in out:
+            out.append(("pie", pie))
+    return out
+
+
 def quality_tasks() -> list[dict]:
     from pie_evals.quality.tasks import TASKS
 
@@ -447,6 +461,16 @@ def main() -> None:
         snaps[t] = filled
     qkeys = sorted({k for rows in scores.values() for k in rows})
     quality = stack(order, scores, qkeys, lambda item, key, src: {k: v for k, v in item.items() if k != "_at"}, lambda item: item["date"])
+    # every arm the release compares, on every task, has a row like the results table: its score, or "not run"
+    arms = quality_arms(config)
+    tasks = [t["id"] for t in quality_tasks()]
+    for t in order:
+        have = {(r["engine"], r["artifact"], r["task"]) for r in quality[t]}
+        quality[t] += [{"model": a2m.get(art, art), "engine": eng, "artifact": art, "task": task, "score": None,
+                        "release": t, "status": "not_run", "stale": None}
+                       for eng, art in arms for task in tasks if (eng, art, task) not in have]
+        for r in quality[t]:
+            r.setdefault("status", "pass")
     # parity is per tag and never stacked: a release's table holds only the scores that release measured
     parity = parity_by_tag(store, a2m)
     db = {"tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
