@@ -178,6 +178,10 @@ class Matrix:
                 need = int(cell.workload.params.get("shared_prefix", 0)) + int(cell.workload.params.get("unique_suffix", 0)) + int(cell.workload.params.get("decode", 0))
             if need > cell.artifact.max_context:
                 return f"shape needs {need} tokens > the artifact's max_context {cell.artifact.max_context}"
+        # a block drafter's program speculates with the head the import lands
+        # beside the target: an artifact that publishes none has nothing to draft with
+        if str(cell.mode.spec_dec or "").startswith("dflash") and not cell.artifact.pie_drafter:
+            return "the artifact ships no draft head for a dflash program to draft with"
         # fit rule: weights per TP group must fit with headroom
         if cell.artifact.expected_gib is not None:
             per_device = cell.artifact.expected_gib * self.fit_factor / max(1, cell.mode.tp)

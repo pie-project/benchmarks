@@ -84,7 +84,8 @@ def test_smoke_includes_every_program_at_least_once(matrix, cells):
     expected = {p.id for p in matrix.programs.values() if Tier.SMOKE in p.tiers}
     assert not (expected - progs), expected - progs
     runnable = {c.program.id for c in matrix.runnable(Tier.SMOKE, cells)}
-    assert expected - runnable <= {"diffusion-parity", "mini-dit-parity", "prefill-rows", "prefix-tree-kv-cache", "mtp-speculative-decoding", "cacheback-speculative-decoding", "lora-probe"}, expected - runnable
+    # no smoke artifact ships a dflash head (the miniatures have none to draft with)
+    assert expected - runnable <= {"diffusion-parity", "mini-dit-parity", "prefill-rows", "prefix-tree-kv-cache", "mtp-speculative-decoding", "cacheback-speculative-decoding", "lora-probe", "dflash-speculative-bench"}, expected - runnable
 
 
 def test_ollama_runs_only_ollama_weights_on_macs(cells):
@@ -143,3 +144,9 @@ def test_targeted_budget_holds(matrix, cells):
 
 def test_cell_status_enum_complete():
     assert {s.value for s in CellStatus} == {"pass", "fail", "declared_unsupported", "not_run", "noisy"}
+
+
+def test_a_dflash_program_runs_only_where_the_import_lands_a_head(cells):
+    dflash = [c for c in cells if str(c.mode.spec_dec or "").startswith("dflash") and not c.declared_unsupported_reason]
+    assert dflash, "no artifact with a draft head pairs with the dflash programs"
+    assert all(c.artifact.pie_drafter for c in dflash)
