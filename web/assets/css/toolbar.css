@@ -155,3 +155,45 @@
     display: none;
   }
 }
+
+/* the report sheet: a small macOS-style dialog over the page */
+.report-dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 0;
+  border: .5px solid var(--color-panel-outline);
+  border-radius: 14px;
+  color: var(--color-label);
+  background: var(--color-menu);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
+}
+
+.report-dialog::backdrop { background: rgba(0, 0, 0, .3); backdrop-filter: blur(2px); }
+
+.report-form { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.report-form h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.report-hint { margin: 0; font-size: 13px; line-height: 1.45; color: var(--color-label-secondary); }
+
+.report-kinds { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--color-fill); align-self: flex-start; }
+.report-kinds label { cursor: pointer; }
+.report-kinds input { position: absolute; opacity: 0; pointer-events: none; }
+.report-kinds span { display: block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--color-label-secondary); }
+.report-kinds input:checked + span { color: var(--color-label); background: var(--color-card); box-shadow: 0 0 0 .5px var(--color-panel-outline), 0 1px 2px rgba(0, 0, 0, .12); }
+.report-kinds input:focus-visible + span { outline: 2px solid var(--color-accent); }
+
+.report-form textarea {
+  resize: vertical;
+  padding: 10px 12px;
+  border: .5px solid var(--color-panel-outline);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-label);
+  background: var(--color-background);
+}
+
+.report-form textarea:focus { outline: 2px solid var(--color-accent); outline-offset: -1px; }
+
+.report-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.report-actions button { height: 28px; padding: 0 14px; border-radius: 7px; font: inherit; font-size: 13px; cursor: pointer; }
+.report-cancel { border: .5px solid var(--color-panel-outline); color: var(--color-label); background: var(--color-card); }
+.report-send { border: 0; color: var(--color-on-accent); background: var(--color-accent); font-weight: 500; }
