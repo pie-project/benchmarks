@@ -53,7 +53,6 @@ window.Pie = window.Pie || {};
         number("latency_ms_p99", "E2E p99", "Latency", "ms", 0),
         number("resident_gib", "Memory", "Resources", "GiB", 1),
         number("load_s", "Load time", "Resources", "s", 1),
-        number("accuracy", "Accuracy", "Quality", "", 3, { planned: true }),
         text("commit", "pie commit", "Run", { code: true }),
         text("measured", "Measured", "Run", { code: true }),
         text("note", "Note", "Run", { wide: true }),
