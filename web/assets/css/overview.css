@@ -924,14 +924,6 @@
   margin: 0 0 12px;
 }
 
-.welcome-banner-logo {
-  position: absolute;
-  right: 24px;
-  bottom: 20px;
-  width: 26px;
-  height: 26px;
-  color: #fff;
-}
 
 /* Apple-style pair: a filled primary pill and a frosted secondary one */
 .welcome-banner-actions {
