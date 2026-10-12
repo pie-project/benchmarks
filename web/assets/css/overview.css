@@ -1035,12 +1035,17 @@
   position: relative;
   width: 260px;
   height: 150px;
-  margin-top: -18px;
+  margin-top: -40px;
   display: grid;
   place-items: center;
 }
 
 .stack-layer:first-child { margin-top: 0; }
+
+/* each layer rests on the one below it */
+.stack-layer.is-weights { z-index: 3; }
+.stack-layer.is-engine { z-index: 2; }
+.stack-layer.is-silicon { z-index: 1; }
 
 .stack-layer::before {
   content: "";
