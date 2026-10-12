@@ -1015,3 +1015,16 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.welcome-banner-sign {
+  margin: 10px 0 0;
+  font-size: 14px;
+  font-style: italic;
+  opacity: .85;
+}
+
+.welcome-heart {
+  font-style: normal;
+  color: #ff5a8a;
+  text-shadow: 0 0 10px rgba(255, 90, 138, .5);
+}
