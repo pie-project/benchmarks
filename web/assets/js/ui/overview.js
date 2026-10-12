@@ -19,6 +19,7 @@ window.Pie = window.Pie || {};
   let onOpenEngine = () => {};
   let onOpenHeatMac = () => {};
   let onOpenModel = () => {};
+  let onOpenStandMac = () => {};
 
   const esc = (value) => Pie.format.escape(value);
   const names = () => Pie.store.names;
@@ -183,7 +184,7 @@ window.Pie = window.Pie || {};
   // Outer, blue: the share of decode comparisons pie wins. Middle, green: median decode advantage.
   // Inner, teal: median prefill advantage. An advantage ring closes at 2× and laps past it,
   // the newest lap drawn over the last with a soft shadow; a deficit runs counter-clockwise in red.
-  const standing = (decode, prefill) => {
+  const standing = (decode, prefill, mac) => {
     const wins = decode.filter((c) => c.r > 1);
     const decodeMid = median(decode.map((entry) => entry.r));
     const prefillMid = median(prefill.map((entry) => entry.r));
@@ -244,7 +245,7 @@ window.Pie = window.Pie || {};
     ].join("");
 
     return section(`Where ${baseName()} stands`, "One model against one engine",
-      `<div class="standing">${ring}<div class="stand-side">${side}</div></div>`);
+      `<div class="standing">${ring}<div class="stand-side">${side}</div></div>`, popup("overview-stand-mac", "Mac", macName(mac)));
   };
 
   // 3. Against each engine: models down, engines across, a small activity ring per pairing.
@@ -609,6 +610,19 @@ window.Pie = window.Pie || {};
   };
 
   // macs with any row in this release, in catalog order
+  // Where <engine> stands, on its own Mac
+  const standSection = (state, all, models, workload) => {
+    const mac = state.overview.standMac || state.overview.hardware;
+    const byModel = groupByModel(all.filter((row) => row.hardware === mac && row.workload === workload));
+    const shown = models.filter((id) => byModel[id]);
+    const decode = comparisons(byModel, shown, "decode_tok_s");
+    if (!decode.length) {
+      return section(`Where ${baseName()} stands`, "One model against one engine",
+        `<div class="overview-none">No ${esc(baseName())} runs on this Mac yet.</div>`, popup("overview-stand-mac", "Mac", macName(mac)));
+    }
+    return standing(decode, comparisons(byModel, shown, "prefill_tok_s"), mac);
+  };
+
   // Against each engine on its own Mac: the no-fit marks follow that Mac, then return to the page's
   const heatSection = (state, all, models, workload) => {
     const mac = state.overview.heatMac || state.overview.hardware;
@@ -659,6 +673,10 @@ window.Pie = window.Pie || {};
       onOpenModel = handler;
     },
 
+    onOpenStandMac(handler) {
+      onOpenStandMac = handler;
+    },
+
     onOpenMac(handler) {
       onOpenMac = handler;
     },
@@ -679,6 +697,7 @@ window.Pie = window.Pie || {};
       const ran = new Set(Pie.store.snapshot(state.release).filter(Pie.store.isMeasured).map((r) => r.engine));
       if (!state.overview.engine || !ran.has(state.overview.engine)) state.overview.engine = Pie.engines.primary;
       if (!macs.some((m) => m.id === state.overview.heatMac)) state.overview.heatMac = state.overview.hardware;
+      if (!macs.some((m) => m.id === state.overview.standMac)) state.overview.standMac = state.overview.hardware;
       const models = this.models(state).map((m) => m.id);
       if (!models.includes(state.overview.model)) state.overview.model = models[0] || null;
     },
@@ -734,7 +753,7 @@ window.Pie = window.Pie || {};
             ${popup("overview-engine", "Engine", baseName())}
           </div>
           ${decode.length
-            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
+            ? standSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
             : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
           ${qualityTable(state.release)}
           ${decode.length ? releases(releasePoints(state, shown)) : ""}
@@ -755,11 +774,11 @@ window.Pie = window.Pie || {};
           onChange();
           return;
         }
-        const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine, #overview-heat-mac, #overview-model");
+        const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine, #overview-heat-mac, #overview-model, #overview-stand-mac");
         if (!button) return;
         event.stopPropagation();
         ({ "overview-mac": onOpenMac, "overview-workload": onOpenWorkload, "overview-engine": onOpenEngine,
-          "overview-heat-mac": onOpenHeatMac, "overview-model": onOpenModel })[button.id](button);
+          "overview-heat-mac": onOpenHeatMac, "overview-model": onOpenModel, "overview-stand-mac": onOpenStandMac })[button.id](button);
       });
 
       // one tooltip for every mark: what it compares, the values, and when they were measured
