@@ -140,7 +140,8 @@ svg {
 
 .status-tag.is-not_run::before,
 .status-tag.is-unsupported::before,
-.status-tag.is-no_fit::before {
+.status-tag.is-no_fit::before,
+.status-tag.is-no_data::before {
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--color-label-tertiary);
 }
