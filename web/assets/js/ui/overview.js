@@ -637,6 +637,17 @@ window.Pie = window.Pie || {};
     return html;
   };
 
+  // "Updated 2 hr ago", the way Apple's apps date their data; the full time on hover
+  const updated = () => {
+    const at = Pie.store.tables.updated_at ? new Date(Pie.store.tables.updated_at) : null;
+    if (!at || Number.isNaN(at.getTime())) return "";
+    const minutes = Math.max(0, Math.round((Date.now() - at.getTime()) / 60000));
+    const when = minutes < 1 ? "just now" : minutes < 60 ? `${minutes} min ago` : minutes < 24 * 60 ? `${Math.round(minutes / 60)} hr ago`
+      : at.toLocaleDateString(undefined, { month: "short", day: "numeric", year: at.getFullYear() === new Date().getFullYear() ? undefined : "numeric" });
+    const full = at.toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" });
+    return `<span class="overview-updated" title="${esc(full)}">Updated ${esc(when)}</span>`;
+  };
+
   const macsIn = (rows) => {
     const counts = {};
     for (const row of rows) if (Pie.store.isMeasured(row)) counts[row.hardware] = (counts[row.hardware] || 0) + 1;
@@ -720,6 +731,7 @@ window.Pie = window.Pie || {};
         <div class="overview-controls">
           ${popup("overview-workload", "Workload", WORKLOADS.find((w) => w.id === workload).label)}
           ${popup("overview-engine", "Engine", baseName())}
+          ${updated()}
         </div>`;
       if (!all.some((row) => row.hardware === hardware)) {
         element.innerHTML = `<div class="overview-inner">${controls()}<div class="overview-empty">No runs on this Mac for this release yet.</div></div>`;
@@ -750,6 +762,7 @@ window.Pie = window.Pie || {};
           <div class="overview-controls">
             ${popup("overview-workload", "Workload", workloadLabel)}
             ${popup("overview-engine", "Engine", baseName())}
+            ${updated()}
           </div>
           ${decode.length
             ? standSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
