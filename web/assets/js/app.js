@@ -5,7 +5,10 @@
   // the overview's Mac and workload live in the address, so a reload or a shared link keeps them
   const readHash = () => {
     const [view, hardware, workload] = decodeURIComponent(location.hash.slice(1)).split("/");
-    if (view === "overview") Object.assign(state.overview, { hardware: hardware || null, workload: workload || "single" });
+    if (view === "overview") {
+      state.table = "overview";
+      Object.assign(state.overview, { hardware: hardware || null, workload: workload || "single" });
+    }
   };
 
   const writeHash = () => {
@@ -23,10 +26,11 @@
   const render = () => {
     ensureRelease();
     const isOverview = state.table === "overview";
-    const isMethod = state.table === "method";
+    const isMethod = state.table === "method" || state.table === "welcome";
     filterBar.hidden = isOverview || isMethod;
     table.container.hidden = isOverview || isMethod;
     overview.element.hidden = !isOverview;
+    Pie.welcome.render(state);
     Pie.method.render(state);
     sidebar.render(state);
     if (isOverview) {
@@ -34,7 +38,7 @@
       toolbar.render(state, 0, 0);
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
     } else if (isMethod) {
-      toolbar.elements.title.textContent = Pie.schema.method.label;
+      toolbar.elements.title.textContent = Pie.schema[state.table].label;
       toolbar.elements.subtitle.textContent = "";
     } else {
       const rows = query.visibleRows(state);

@@ -11,6 +11,13 @@ window.Pie = window.Pie || {};
   ];
 
   Pie.schema = {
+    welcome: {
+      label: "Welcome",
+      section: "measurements",
+      view: "welcome",  // not a table: why the numbers can be trusted
+      filters: [],
+      columns: [],
+    },
     overview: {
       label: "Overview",
       section: "measurements",
@@ -88,6 +95,7 @@ window.Pie = window.Pie || {};
       filters: ["location", "class", "backend"],
       columns: [
         text("name", "Name", "Identity"),
+        text("resource", "Resource", "Identity"),
         text("id", "ID", "Identity", { code: true }),
         text("class", "Class", "Identity"),
         text("location", "Location", "Identity"),
