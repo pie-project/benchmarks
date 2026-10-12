@@ -26,12 +26,13 @@
   const render = () => {
     ensureRelease();
     const isOverview = state.table === "overview";
-    const isMethod = state.table === "method" || state.table === "welcome";
+    const isMethod = ["method", "welcome", "inferlets"].includes(state.table);
     filterBar.hidden = isOverview || isMethod;
     table.container.hidden = isOverview || isMethod;
     overview.element.hidden = !isOverview;
     Pie.welcome.render(state);
     Pie.method.render(state);
+    Pie.inferlets.render(state);
     sidebar.render(state);
     if (isOverview) {
       const models = overview.render(state);
