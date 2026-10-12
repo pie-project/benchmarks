@@ -18,8 +18,6 @@ window.Pie = window.Pie || {};
   const p = (text, cls = "") => `<p${cls ? ` class="${cls}"` : ""}>${text}</p>`;
   const subhead = (text) => `<h3 class="method-subhead">${text}</h3>`;
 
-  const principle = (icon, title, text) => `<div class="method-principle"><svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><h3>${title}</h3><p>${text}</p></div>`;
-
   let order = 0;
   const pane = (name, title, summary, body) => `
     <section class="method-pane" style="order: ${order++}" aria-labelledby="method-${name}">
@@ -91,22 +89,11 @@ window.Pie = window.Pie || {};
   const content = `
     <header class="method-head">
       <h1>How we measure</h1>
+      <p class="method-lede">Measuring inference engines accurately is difficult, and a comparison is only as credible as its fairness. Fairness toward every engine measured here is therefore our first obligation to the reader.</p>
+      <p class="method-lede">Each engine is evaluated under the configuration its own maintainers recommend for the model and the kind of generation in question, so that its results reflect what its users would reasonably expect of it. pie runs on every platform in this study, which allows each model to be compared on each machine without omission.</p>
+      <p class="method-lede">This site is a continuous record. Each pie release is measured against the most recent release of every other engine available at that time, so each release records the state of the field on the date it was measured.</p>
+      <p class="method-lede">Every engine is measured under two conditions: a single request at a time, as a single agent or thread would issue them, and many concurrent requests, enough to saturate the bandwidth of the hardware. Together they show how well each engine manages memory and compute for each model, on each machine.</p>
     </header>
-
-    <section class="method-note" aria-label="A note to the reader">
-      <div class="method-note-eyebrow">A note to the reader</div>
-      <p class="method-note-lead">Measuring inference engines accurately is difficult, and a comparison is only as credible as its fairness. Fairness toward every engine measured here is therefore our first obligation to the reader.</p>
-      <div class="method-note-grid">
-        ${principle('<path d="M12 3v18M5 7h14M7 7l-3 7a3 3 0 0 0 6 0L7 7zM17 7l-3 7a3 3 0 0 0 6 0l-3-7z"/>', "Each engine at its best",
-          "Every engine runs under the configuration its own maintainers recommend for the model and the kind of generation, so its results reflect what its users would reasonably expect of it.")}
-        ${principle('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>', "Every platform, no gaps",
-          "pie runs on every platform in this study, so each model is compared on each machine without omission.")}
-        ${principle('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', "A continuous record",
-          "Each pie release is measured against the newest release of every other engine available at that time, so each release records the state of the field on the date it was measured.")}
-        ${principle('<path d="M4 12h4M4 7h10M4 17h16"/>', "One request and many",
-          "Every engine is measured with a single request at a time, as one agent or thread would issue them, and with enough concurrent requests to saturate the hardware: together they show how each engine manages memory and compute.")}
-      </div>
-    </section>
 
     <div class="method-cols">${column(0)}${column(1)}</div>`;
 
