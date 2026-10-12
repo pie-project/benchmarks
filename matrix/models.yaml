@@ -279,6 +279,7 @@ artifacts:
   # single-stream rows (pie.py speculates()). Checks whether the drafter closes the gap to Splash.
   - id: qwen3.8-27b-mlx4-dflash2
     base_model: mlx-community/Qwen3.8-27B-4bit
+    variant: dflash2
     family: qwen3_6
     scheme: affine_u4_g64
     source_format: mlx
