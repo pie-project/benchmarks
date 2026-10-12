@@ -55,8 +55,9 @@ jobs:
           [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::pie_commit must be a full sha, got '$COMMIT'"; exit 1; }
           # every arm of the models in config.json, and the pie arm each one is compared with
           want=$(jq -r '.models // [] | join(",")' config.json)
-          [ -n "$IN_ARTIFACTS" ] && want=$IN_ARTIFACTS
           artifacts=$(.venv/bin/python -c "import sys,yaml; want=set(filter(None,sys.argv[1].split(','))); arts=yaml.safe_load(open('matrix/models.yaml'))['artifacts']; pie={a.get('baseline_of') for a in arts if a['id'] in want}; print(','.join(a['id'] for a in arts if a['id'] in want or a['id'] in pie or (a['id'] not in pie and a.get('baseline_of') in want)))" "$want")
+          # an explicit list is scored as given, so a run split across Macs does not repeat the pie arms
+          [ -n "$IN_ARTIFACTS" ] && artifacts=$IN_ARTIFACTS
           # the fastest free Mac: the 128 GB one, then the 64 GB one, whichever has an idle runner first; none idle: the 128 GB one
           mac="$IN_MAC"
           if [ -z "$mac" ] || [ "$mac" = auto ]; then
