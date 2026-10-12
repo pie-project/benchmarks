@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable, Collection
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -189,21 +190,28 @@ def render_like_bench(snapshot_dir: str | Path, system: str, prompt: str, enable
     return tok(f"{system}\n\n{prompt}" if system else prompt)["input_ids"]
 
 
-def t0_via_engine(
-    cell: Cell,
+@dataclass
+class T0Outputs:
+    """What the engine answered for the T0 prompt set, held until the engine
+    is down: the reference then loads on a device the engine no longer holds
+    (a 24 GB card has no room for a 16 GB reference beside the engine that
+    serves those weights, nightly rtx4090 gemma-4-E4B)."""
+
+    engine_ids: list[list[int]]
+    prompt_ids: list[list[int]]
+
+
+def t0_engine_outputs(
     engine: Any,
     snapshot_dir: str | Path,
-    platform_os: str,
     *,
     pie_root: str | Path,
-    cache_dir: str | Path,
     out_dir: str | Path,
     max_new_tokens: int = 64,
     timeout_s: int = 900,
-    reference_device: str | None = None,
-) -> AccuracyMetrics:
+) -> T0Outputs | AccuracyMetrics:
     """Run the fixed T0 prompt set through the engine adapter (greedy,
-    ``ignore_eos``, one request per prompt) and compare with the reference.
+    ``ignore_eos``, one request per prompt).
 
     The engine renders prompts through scripts/bench/common.py's chat template;
     the reference tokenizes the same rendering and the prompt-token count the
@@ -215,7 +223,6 @@ def t0_via_engine(
     from pie_evals.schema import WorkloadKind, WorkloadSpec
 
     from .prompts import t0_prompts
-    from .reference import ReferenceCache, load_reference, reference_for
 
     out_dir = Path(out_dir)
     system = bench_system_prompt(pie_root)
@@ -242,13 +249,33 @@ def t0_via_engine(
             status=AccuracyStatus.SKIPPED_NO_REFERENCE,
             detail={"error": "prompt token count differs between engine and reference rendering", "mismatch": mismatch},
         )
+    return T0Outputs(engine_ids, prompt_ids)
+
+
+def t0_judge(
+    outputs: T0Outputs,
+    cell: Cell,
+    snapshot_dir: str | Path,
+    platform_os: str,
+    *,
+    cache_dir: str | Path,
+    max_new_tokens: int = 64,
+    reference_device: str | None = None,
+) -> AccuracyMetrics:
+    """Compare the engine's T0 answers with the reference. The reference is
+    built only when the cache misses, and handed back when this returns."""
+    from .reference import LazyReference, ReferenceCache, reference_for
+
     kind = reference_for(platform_os, str(cell.artifact.source_format))
-    ref = load_reference(kind, snapshot_dir, **({"device": reference_device} if reference_device else {}))
+    ref = LazyReference(kind, snapshot_dir, **({"device": reference_device} if reference_device else {}))
     cache = ReferenceCache(cache_dir)
     revision = Path(snapshot_dir).name
-    reference_ids = [cache.greedy(ref, revision, p, max_new_tokens) for p in prompt_ids]
 
     def tf(ids: list[int]):
         return cache.teacher_forced_logits(ref, revision, ids)
 
-    return run_t0(engine_ids, reference_ids, tf, prompt_ids, reference=kind, stops=stop_ids(snapshot_dir))
+    try:
+        reference_ids = [cache.greedy(ref, revision, p, max_new_tokens) for p in outputs.prompt_ids]
+        return run_t0(outputs.engine_ids, reference_ids, tf, outputs.prompt_ids, reference=kind, stops=stop_ids(snapshot_dir))
+    finally:
+        ref.close()
