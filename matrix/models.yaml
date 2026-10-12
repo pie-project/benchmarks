@@ -283,6 +283,7 @@ artifacts:
     scheme: affine_u4_g64
     source_format: mlx
     pie_sku: qwen38-27b-dflash2-u4g64-kv-bf16
+    pie_drafter: dflash2   # the import fetches the z-lab/Qwen3.8-27B-DFlash2 head: the plain checkpoint has no aux.* planes
     display_name: qwen3.8:27b dflash2
     expected_gib: 15.0
     platforms: [m5-max-64g]   # gives this drafter row its own identity: without it the plan drops it as a duplicate of qwen3.8-27b-mlx4
