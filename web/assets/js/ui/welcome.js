@@ -4,7 +4,7 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("welcome");
 
   const content = `
-    <img class="welcome-banner" src="assets/img/welcome-banner.jpg" alt="Pieb" width="2000" height="766">
+    <div class="welcome-banner" aria-hidden="true"></div>
     <header class="method-head welcome-intro">
       <h1>Welcome to Pieb</h1>
       <p class="welcome-tagline">A fair comparison of inference engines.</p>
