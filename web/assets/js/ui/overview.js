@@ -346,6 +346,38 @@ window.Pie = window.Pie || {};
   };
 
   // 4. By model: one card per model, a lollipop per engine
+  // quality against each engine: a row per model and task, pie's score over the engine's on the same questions
+  const qualityTable = (release) => {
+    const rows = Pie.store.qualitySnapshot(release).filter((r) => typeof r.score === "number");
+    const pieRows = rows.filter(isPie);
+    if (!pieRows.length) return "";
+    const engineOrder = Pie.store.tables.engines.map((e) => e.id);
+    const engines = [...new Set(rows.filter((r) => !isPie(r)).map((r) => r.engine))]
+      .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
+    if (!engines.length) return "";
+    const keys = [...new Map(pieRows.map((r) => [`${r.model}|${r.task}`, r])).values()]
+      .sort((a, b) => names().model(a.model).localeCompare(names().model(b.model)) || a.task.localeCompare(b.task));
+    const mid = CELL / 2;
+    const head = `<div class="heat-row heat-head-row" role="row"><div role="columnheader"></div>${engines.map((engine) =>
+      `<div class="heat-head" role="columnheader">${esc(names().engine(engine))}</div>`).join("")}</div>`;
+    const body = keys.map((p) => {
+      const label = `${names().model(p.model)} · ${p.task}`;
+      const cells = engines.map((engine) => {
+        const o = rows.find((r) => r.engine === engine && r.model === p.model && r.task === p.task);
+        if (!o || !o.score || !p.score) {
+          return `<div class="heat-cell" role="cell" data-tip="${esc(`${label} vs ${names().engine(engine)}\nno score`)}">
+            ${cellSvg(`<circle class="heat-empty" cx="${mid}" cy="${mid}" r="2.5"/>`)}</div>`;
+        }
+        const tip = `${label} vs ${names().engine(engine)}\npie ${(p.score * 100).toFixed(1)}%, ${names().engine(engine)} ${(o.score * 100).toFixed(1)}% (n=${o.n})`;
+        return `<div class="heat-cell" role="cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, p.score / o.score))}</div>`;
+      }).join("");
+      return `<div class="heat-row" role="row"><div class="heat-label" role="rowheader" title="${esc(label)}">${esc(label)}</div>${cells}</div>`;
+    }).join("");
+    return section("Quality against each engine", "pie’s score on each task, against the same task on each engine", `
+      <div class="heatmap"><div class="heat-table" role="table" aria-label="pie quality against each engine"
+        style="--engines: ${engines.length}">${head}${body}</div></div>`);
+  };
+
   const figure = (model, rows) => {
     const pie = rows.find((row) => isPie(row) && row.decode_tok_s);
     const others = rows.filter((row) => !isPie(row) && row.decode_tok_s);
@@ -530,6 +562,7 @@ window.Pie = window.Pie || {};
           ${decode.length
             ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + heatmap(byModel, shown)
             : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
+          ${qualityTable(state.release)}
           ${shown.length ? section("By model", "", carousel(shown.map((id) => card(id, byModel[id] || [])))) : ""}
           ${decode.length ? releases(releasePoints(state, shown)) : ""}
           ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
