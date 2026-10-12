@@ -275,6 +275,17 @@ artifacts:
     display_name: qwen3.8:27b
     expected_gib: 14.95
     tiers: [targeted]
+  # pie with the Qwen3.8 DFlash2 drafter: the same weights as qwen3.8-27b-mlx4, speculating
+  # single-stream rows (pie.py speculates()). Checks whether the drafter closes the gap to Splash.
+  - id: qwen3.8-27b-mlx4-dflash2
+    base_model: mlx-community/Qwen3.8-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: mlx
+    pie_sku: qwen38-27b-dflash2-u4g64-kv-bf16
+    display_name: qwen3.8:27b dflash2
+    expected_gib: 15.0
+    tiers: [targeted]
   - id: qwen3.8-27b-ollama
     base_model: mlx-community/Qwen3.8-27B-4bit
     family: qwen3_6

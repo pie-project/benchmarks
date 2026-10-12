@@ -46,6 +46,7 @@ from pie_evals.schema import (
 )
 
 from . import preflight as pf
+from . import profile
 from . import provenance as prov
 from .engines import EngineLaunchError, get_engine
 from .engines.recipes import load_recipe
@@ -509,6 +510,9 @@ class NodeRunner:
             recipe["snapshot_dir"] = str(model_path)
             engine = cls(pie_root=self.pie_root, artifact=first.artifact, platform=first.platform, mode=first.mode, recipe=recipe, num_layers=num_layers)
             engine.serve(shape, serve_log, int(min(self.job.load_timeout_s, self.remaining_to_kill_s())))
+        sample = profile.start(engine.watch_pids(), self.out / "profile" / f"{first.engine}-{first.artifact.id}.txt")
+        if sample is not None:
+            self.log(f"sampling {first.engine} {first.artifact.id} (PIE_EVALS_SAMPLE_SECS)")
         return engine, model_path
 
     # ------------------------------------------------------------------ one cell
