@@ -89,6 +89,14 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
+
+    inferlets: {
+      label: "Inferlets",
+      section: "measurements",
+      view: "inferlets",  // not a table yet: the page is under development
+      filters: [],
+      columns: [],
+    },
     hardware: {
       label: "Hardware",
       section: "catalog",
