@@ -135,10 +135,15 @@ def bench_system_prompt(pie_root: str | Path) -> str:
 
 def stop_ids(snapshot_dir: str | Path) -> set[int]:
     """The checkpoint's end-of-turn tokens: ``eos_token_id`` of its
-    generation_config.json, else of its config.json (or text_config)."""
+    generation_config.json, else of its config.json (or text_config), and the
+    tokenizer's ``eos_token``. A chat checkpoint may state only its
+    end-of-text there (Qwen3.5 has no generation_config.json and its config
+    says ``<|endoftext|>``) while its turns end on the tokenizer's
+    ``<|im_end|>``, past which a reply is ignore_eos filler."""
     import json
 
     snap = Path(snapshot_dir)
+    stops: set[int] = set()
     for name in ("generation_config.json", "config.json"):
         try:
             cfg = json.loads((snap / name).read_text())
@@ -146,8 +151,25 @@ def stop_ids(snapshot_dir: str | Path) -> set[int]:
             continue
         eos = cfg.get("eos_token_id", cfg.get("text_config", {}).get("eos_token_id"))
         if eos is not None:
-            return {int(t) for t in (eos if isinstance(eos, list) else [eos])}
-    return set()
+            stops = {int(t) for t in (eos if isinstance(eos, list) else [eos])}
+            break
+    stops.update(_tokenizer_eos(snap))
+    return stops
+
+
+def _tokenizer_eos(snap: Path) -> set[int]:
+    """The id of tokenizer_config.json's ``eos_token``, found among
+    tokenizer.json's added tokens; empty where either does not say."""
+    import json
+
+    try:
+        eos = json.loads((snap / "tokenizer_config.json").read_text()).get("eos_token")
+        added = json.loads((snap / "tokenizer.json").read_text()).get("added_tokens", [])
+    except (OSError, ValueError):
+        return set()
+    if isinstance(eos, dict):
+        eos = eos.get("content")
+    return {int(t["id"]) for t in added if eos is not None and t.get("content") == eos}
 
 
 def render_like_bench(snapshot_dir: str | Path, system: str, prompt: str, enable_thinking: bool | None = False) -> list[int]:
@@ -185,9 +207,10 @@ def t0_via_engine(
 
     The engine renders prompts through scripts/bench/common.py's chat template;
     the reference tokenizes the same rendering and the prompt-token count the
-    engine reported is checked against it. A count mismatch means the two
-    saw different inputs: the gate then returns SKIPPED_NO_REFERENCE with the
-    detail, never a FAIL that is really a template difference.
+    engine reported is checked against it. A count mismatch, or no count at
+    all, means the two may have seen different inputs: the gate then returns
+    SKIPPED_NO_REFERENCE with the detail, never a FAIL that is really a
+    template difference.
     """
     from pie_evals.schema import WorkloadKind, WorkloadSpec
 
@@ -210,7 +233,10 @@ def t0_via_engine(
         engine_ids.append(list(res.output_token_ids[0]))
         reported_prompt_tokens.append(int(res.requests[0].get("prompt_tokens") or 0))
         prompt_ids.append(render_like_bench(snapshot_dir, system, text, enable_thinking=False))
-    mismatch = [(pid, len(p), n) for (pid, _), p, n in zip(prompts, prompt_ids, reported_prompt_tokens) if n and n != len(p)]
+    # A run that states no count (a program that is not the bench, e.g.
+    # classifier-free-guidance, renders its own prompt) cannot be shown to
+    # have read the reference's input either.
+    mismatch = [(pid, len(p), n) for (pid, _), p, n in zip(prompts, prompt_ids, reported_prompt_tokens) if n != len(p)]
     if mismatch:
         return AccuracyMetrics(
             status=AccuracyStatus.SKIPPED_NO_REFERENCE,

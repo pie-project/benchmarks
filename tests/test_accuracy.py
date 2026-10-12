@@ -268,6 +268,19 @@ def test_stop_ids_read_generation_config_then_config(tmp_path):
     assert stop_ids(tmp_path) == {1, 106, 50}
 
 
+def test_stop_ids_take_the_tokenizers_turn_end(tmp_path):
+    # Qwen3.5: no generation_config.json, config says <|endoftext|>, and the
+    # chat turn ends on the tokenizer's <|im_end|>
+    from pie_evals.node.accuracy.gate import stop_ids
+
+    (tmp_path / "config.json").write_text('{"text_config": {"eos_token_id": 248044}}')
+    (tmp_path / "tokenizer_config.json").write_text('{"eos_token": "<|im_end|>", "pad_token": "<|endoftext|>"}')
+    (tmp_path / "tokenizer.json").write_text(
+        '{"added_tokens": [{"id": 248044, "content": "<|endoftext|>"}, {"id": 248046, "content": "<|im_end|>"}]}'
+    )
+    assert stop_ids(tmp_path) == {248044, 248046}
+
+
 def test_run_t0_prompt_count_mismatch():
     with pytest.raises(ValueError):
         run_t0([[1]], [[1], [2]], _fake_tf(4, {}), [[0]])
@@ -359,3 +372,22 @@ def test_reference_cache_roundtrip(tmp_path):
     assert prompt_hash([1, 2, 3]) != prompt_hash([1, 2, 4])
     files = list((tmp_path / "refcache" / "abc123").glob("*.npz"))
     assert len(files) == 4 and not any(f.name.endswith(".tmp.npz") for f in files)
+
+
+def test_a_program_that_states_no_prompt_count_is_not_judged(tmp_path, monkeypatch):
+    # classifier-free-guidance renders its own prompt and reports 0 prompt
+    # tokens; nothing shows it read the reference's input, so no verdict
+    from types import SimpleNamespace
+
+    from pie_evals.node.accuracy import gate
+
+    monkeypatch.setattr(gate, "bench_system_prompt", lambda root: "sys")
+    monkeypatch.setattr(gate, "render_like_bench", lambda snap, system, text, enable_thinking=False: [1, 2, 3])
+
+    class Engine:
+        def run(self, wl, args, out, timeout):
+            return SimpleNamespace(output_token_ids=[[7, 8]], requests=[{"prompt_tokens": 0}])
+
+    m = gate.t0_via_engine(None, Engine(), tmp_path, "linux", pie_root=tmp_path, cache_dir=tmp_path, out_dir=tmp_path)
+    assert m.status == AccuracyStatus.SKIPPED_NO_REFERENCE
+    assert m.detail["mismatch"][0][1:] == (3, 0)
