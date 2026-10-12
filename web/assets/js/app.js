@@ -105,6 +105,10 @@
         state.overview.workload = value;
       } else if (key === popover.ENGINE) {
         state.overview.engine = value;
+      } else if (key === popover.HEAT_MAC) {
+        state.overview.heatMac = value;
+      } else if (key === popover.MODEL) {
+        state.overview.model = value;
       } else if (value === popover.ALL) {
         state.setFilter(key, []);
       } else {
@@ -150,6 +154,8 @@
     overview.onOpenMac((anchor) => popover.open(anchor, popover.MAC, state));
     overview.onOpenWorkload((anchor) => popover.open(anchor, popover.WORKLOAD, state));
     overview.onOpenEngine((anchor) => popover.open(anchor, popover.ENGINE, state));
+    overview.onOpenHeatMac((anchor) => popover.open(anchor, popover.HEAT_MAC, state));
+    overview.onOpenModel((anchor) => popover.open(anchor, popover.MODEL, state));
   };
 
   // the view a viewer left (page, release, Mac, workload, hide choice) is kept per browser; the address still wins

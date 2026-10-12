@@ -17,6 +17,8 @@ window.Pie = window.Pie || {};
   let onOpenMac = () => {};
   let onOpenWorkload = () => {};
   let onOpenEngine = () => {};
+  let onOpenHeatMac = () => {};
+  let onOpenModel = () => {};
 
   const esc = (value) => Pie.format.escape(value);
   const names = () => Pie.store.names;
@@ -325,7 +327,7 @@ window.Pie = window.Pie || {};
       </div>`;
   };
 
-  const heatmap = (byModel, models) => {
+  const heatmap = (byModel, models, mac) => {
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
     const engines = [...new Set(Object.values(byModel).flat().filter((row) => !isPie(row)).map((row) => row.engine))]
       .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
@@ -346,7 +348,53 @@ window.Pie = window.Pie || {};
         </svg>
         <div class="heat-wide">${wideTable(byModel, rowsShown, engines)}</div>
         <div class="heat-stacked">${METRICS.map((metric) => heatTable(byModel, rowsShown, engines, metric)).join("")}</div>
-      </div>`);
+      </div>`, popup("overview-heat-mac", "Mac", macName(mac)));
+  };
+
+  // across Macs: one model, a row per Mac, the picked engine against each other engine
+  const macCell = (rows, mac, engine, metric, model) => {
+    const mid = CELL / 2;
+    const title = `${macName(mac)}: ${baseName()} vs ${names().engine(engine)}`;
+    const mine = rows.find(isPie);
+    const other = rows.find((row) => row.engine === engine);
+    if (!mine?.[metric.key] || !other?.[metric.key]) {
+      const needs = ((Pie.store.tables.no_fit || {})[mac] || {})[model]?.[mine ? engine : base];
+      if (needs) {
+        return `<div class="heat-cell" role="cell" data-tip="${esc(`${title}\nDoesn't fit (needs about ${Math.round(needs)} GB)`)}">${cellSvg(noFitMark(mid, mid))}</div>`;
+      }
+      return `<div class="heat-cell" role="cell" data-tip="${esc(`${title}\n${metric.label}: no data`)}">
+        ${cellSvg(`<circle class="heat-empty" cx="${mid}" cy="${mid}" r="2.5"/>`)}</div>`;
+    }
+    const r = mine[metric.key] / other[metric.key];
+    const tip = `${title}\n${metric.label}: ${baseName()} ${value(mine[metric.key])}, ${names().engine(engine)} ${value(other[metric.key])} tok/s`;
+    return `<div class="heat-cell" role="cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, r))}</div>`;
+  };
+
+  const acrossMacs = (all, workload, model) => {
+    if (!model) return "";
+    const rows = all.filter((row) => row.model === model && row.workload === workload);
+    const engineOrder = Pie.store.tables.engines.map((e) => e.id);
+    const engines = [...new Set(rows.filter((row) => !isPie(row)).map((row) => row.engine))]
+      .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
+    const macs = Pie.store.tables.hardware.map((hw) => hw.id)
+      .filter((mac) => rows.some((row) => row.hardware === mac) || ((Pie.store.tables.no_fit || {})[mac] || {})[model]);
+    if (!engines.length || !macs.length) return "";
+    const n = engines.length;
+    const groups = `<div class="heat-row heat-group-row" role="row"><div></div>${METRICS.map((metric, g) =>
+      `<div class="heat-group-head${g ? " is-group-start" : ""}" role="columnheader" style="grid-column: span ${n}">${metric.label}</div>`).join("")}</div>`;
+    const head = `<div class="heat-row heat-head-row" role="row"><div role="columnheader"></div>${METRICS.map((_, g) =>
+      engines.map((engine, j) => `<div class="heat-head${g && !j ? " is-group-start" : ""}" role="columnheader">${esc(names().engine(engine))}</div>`).join("")).join("")}</div>`;
+    const body = macs.map((mac) => {
+      const here = rows.filter((row) => row.hardware === mac);
+      const cells = METRICS.map((metric, g) => engines.map((engine, j) => {
+        const cell = macCell(here, mac, engine, metric, model);
+        return g && !j ? cell.replace('class="heat-cell"', 'class="heat-cell is-group-start"') : cell;
+      }).join("")).join("");
+      return `<div class="heat-row" role="row"><div class="heat-label" role="rowheader">${esc(macName(mac))}</div>${cells}</div>`;
+    }).join("");
+    return section("Across Macs", `How ${baseName()}’s speed compares on each Mac, for one model`, `
+      <div class="heatmap"><div class="heat-table is-wide" role="table" aria-label="${esc(baseName())} against each engine on each Mac"
+        style="--engines: ${n * METRICS.length}">${groups}${head}${body}</div></div>`, popup("overview-model", "Model", names().model(model)));
   };
 
   // 4. By model: one card per model, a lollipop per engine
@@ -497,6 +545,19 @@ window.Pie = window.Pie || {};
   };
 
   // macs with any row in this release, in catalog order
+  // Against each engine on its own Mac: the no-fit marks follow that Mac, then return to the page's
+  const heatSection = (state, all, models, workload) => {
+    const mac = state.overview.heatMac || state.overview.hardware;
+    const byModel = groupByModel(all.filter((row) => row.hardware === mac && row.workload === workload));
+    const keep = [tooBig, macMemory];
+    tooBig = (Pie.store.tables.no_fit || {})[mac] || {};
+    macMemory = Pie.store.index.hardware[mac]?.memory_gib || null;
+    const shown = [...models.filter((id) => byModel[id]), ...models.filter((id) => !byModel[id] && tooBig[id])];
+    const html = heatmap(byModel, shown, mac);
+    [tooBig, macMemory] = keep;
+    return html;
+  };
+
   const macsIn = (rows) => {
     const counts = {};
     for (const row of rows) if (Pie.store.isMeasured(row)) counts[row.hardware] = (counts[row.hardware] || 0) + 1;
@@ -526,6 +587,14 @@ window.Pie = window.Pie || {};
       onOpenEngine = handler;
     },
 
+    onOpenHeatMac(handler) {
+      onOpenHeatMac = handler;
+    },
+
+    onOpenModel(handler) {
+      onOpenModel = handler;
+    },
+
     onOpenMac(handler) {
       onOpenMac = handler;
     },
@@ -545,6 +614,15 @@ window.Pie = window.Pie || {};
       if (!WORKLOADS.some((w) => w.id === state.overview.workload)) state.overview.workload = "single";
       const ran = new Set(Pie.store.snapshot(state.release).filter(Pie.store.isMeasured).map((r) => r.engine));
       if (!state.overview.engine || !ran.has(state.overview.engine)) state.overview.engine = Pie.engines.primary;
+      if (!macs.some((m) => m.id === state.overview.heatMac)) state.overview.heatMac = state.overview.hardware;
+      const models = this.models(state).map((m) => m.id);
+      if (!models.includes(state.overview.model)) state.overview.model = models[0] || null;
+    },
+
+    // models with numbers in this release, in the catalog's order, for the Across Macs picker
+    models(state) {
+      const ran = new Set(Pie.store.snapshot(state.release).filter(Pie.store.isMeasured).map((r) => r.model));
+      return Pie.store.tables.models.filter((m) => ran.has(m.id)).map((m) => ({ id: m.id, label: names().model(m.id) }));
     },
 
     // returns the number of models shown, for the toolbar subtitle
@@ -591,7 +669,7 @@ window.Pie = window.Pie || {};
             ${popup("overview-engine", "Engine", baseName())}
           </div>
           ${decode.length
-            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + heatmap(byModel, shown)
+            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + heatSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model)
             : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
           ${shown.length ? section("By model", "", carousel(shown.map((id) => card(id, byModel[id] || [])))) : ""}
           ${qualityTable(state.release)}
@@ -607,10 +685,11 @@ window.Pie = window.Pie || {};
 
     bind(state) {
       element.addEventListener("click", (event) => {
-        const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine");
+        const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine, #overview-heat-mac, #overview-model");
         if (!button) return;
         event.stopPropagation();
-        ({ "overview-mac": onOpenMac, "overview-workload": onOpenWorkload, "overview-engine": onOpenEngine })[button.id](button);
+        ({ "overview-mac": onOpenMac, "overview-workload": onOpenWorkload, "overview-engine": onOpenEngine,
+          "overview-heat-mac": onOpenHeatMac, "overview-model": onOpenModel })[button.id](button);
       });
 
       // one tooltip for every mark: what it compares, the values, and when they were measured
