@@ -17,9 +17,9 @@ window.Pie = window.Pie || {};
     </div>
     <div class="welcome-body">
     <div class="welcome-art" aria-hidden="true">
-      <div class="stack-layer is-weights"><span>Model Weights</span></div>
-      <div class="stack-layer is-engine"><span>Inference Engine</span></div>
-      <div class="stack-layer is-silicon"><span>GPU Silicon</span></div>
+      <div class="stack-layer is-weights" title="Model weights"><svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 16 9 5 9-5"/></svg></div>
+      <div class="stack-layer is-engine" title="Inference engine"><svg class="is-pie" viewBox="0 0 67.89 67.89"><path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z"/></svg></div>
+      <div class="stack-layer is-silicon" title="GPU silicon"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2.5v3M15 2.5v3M9 18.5v3M15 18.5v3M2.5 9h3M2.5 15h3M18.5 9h3M18.5 15h3"/></svg></div>
     </div>
     <header class="method-head welcome-intro">
       <h1>LLM Inference Engine Benchmarks</h1>
