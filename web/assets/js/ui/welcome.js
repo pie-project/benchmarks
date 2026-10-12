@@ -4,6 +4,7 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("welcome");
 
   const content = `
+    <img class="welcome-banner" src="assets/img/welcome-banner.jpg" alt="Pieb: Programmable Inference Engine Benchmark. Comprehensive benchmark for inference engines." width="2000" height="766">
     <header class="method-head">
       <h1>Why trust these numbers</h1>
       <p class="method-lede">Measuring inference engines accurately is difficult, and a comparison is only as credible as its fairness. Fairness toward every engine measured here is therefore our first obligation to the reader.</p>

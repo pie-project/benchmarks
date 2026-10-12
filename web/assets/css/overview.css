@@ -890,3 +890,12 @@
   .method-pane { padding: 22px 20px 24px; }
   .method-pane h2 { font-size: 23px; }
 }
+
+.welcome-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 0 32px;
+  border-radius: 18px;
+  border: .5px solid var(--color-panel-outline);
+}
