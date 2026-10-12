@@ -264,7 +264,7 @@ window.Pie = window.Pie || {};
           ${cellSvg(noFitMark(mid, mid))}</div>`;
       }
       return `<div class="heat-cell${extra}" role="cell" data-tip="${esc(`${names().model(model)} vs ${names().engine(engine)}\n${metric.label}: no data`)}">
-        ${cellSvg(`<circle class="heat-empty" cx="${mid}" cy="${mid}" r="2.5"/>`)}</div>`;
+        ${cellSvg(noFitMark(mid, mid))}</div>`;
     }
     const tip = [
       `${names().model(model)} vs ${names().engine(engine)}`,
@@ -363,7 +363,7 @@ window.Pie = window.Pie || {};
         return `<div class="heat-cell" role="cell" data-tip="${esc(`${title}\nDoesn't fit (needs about ${Math.round(needs)} GB)`)}">${cellSvg(noFitMark(mid, mid))}</div>`;
       }
       return `<div class="heat-cell" role="cell" data-tip="${esc(`${title}\n${metric.label}: no data`)}">
-        ${cellSvg(`<circle class="heat-empty" cx="${mid}" cy="${mid}" r="2.5"/>`)}</div>`;
+        ${cellSvg(noFitMark(mid, mid))}</div>`;
     }
     const r = mine[metric.key] / other[metric.key];
     const tip = `${title}\n${metric.label}: ${baseName()} ${value(mine[metric.key])}, ${names().engine(engine)} ${value(other[metric.key])} tok/s`;
@@ -428,7 +428,7 @@ window.Pie = window.Pie || {};
         const title = `${names().model(model)}: ${baseName()} vs ${names().engine(engine)}`;
         if (!pairs.length) {
           return `<div class="heat-cell" role="cell" data-tip="${esc(`${title}\nno score yet`)}">
-            ${cellSvg(`<circle class="heat-empty" cx="${mid}" cy="${mid}" r="2.5"/>`)}</div>`;
+            ${cellSvg(noFitMark(mid, mid))}</div>`;
         }
         const same = pairs.filter(([p, o]) => (p.ci_high ?? p.score) >= (o.ci_low ?? o.score));
         const tip = [title, ...pairs.map(([p, o]) =>
