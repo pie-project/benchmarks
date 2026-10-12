@@ -790,7 +790,14 @@ def test_literal_prompt_param_is_sent_as_is():
     assert flag_value(args, "--max-tokens") == "200"
 
 
-def test_pie_metal_args(tmp_path):
+def _a_page_count_pie(monkeypatch):
+    """A pie from before its pool was sized in bytes (pie #929)."""
+    has = PieEngine._bench_has
+    monkeypatch.setattr(PieEngine, "_bench_has", lambda self, flag: flag != "--device-kv-budget" and has(self, flag))
+
+
+def test_pie_metal_args(tmp_path, monkeypatch):
+    _a_page_count_pie(monkeypatch)
     eng = mac_make(PieEngine)
     argv = argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
     assert argv[1].endswith("scripts/bench/pie_bench.py") and argv[2] == "tput"
@@ -805,7 +812,8 @@ def test_pie_metal_args(tmp_path):
     assert eng.env["PYTHONPATH"].startswith(f"{PIE_ROOT}/python/client/src:{PIE_ROOT}/python/server/python")
 
 
-def test_the_metal_pool_holds_one_request_at_the_declared_context(tmp_path):
+def test_the_metal_pool_holds_one_request_at_the_declared_context(tmp_path, monkeypatch):
+    _a_page_count_pie(monkeypatch)
     eng = mac_make(PieEngine)
     lc = WorkloadSpec(id="lc-32k-128", kind="long_context", params={"prefill": 32768, "decode": 128, "concurrency": 1})
     argv = argv_for(eng, lc, tmp_path)
@@ -819,6 +827,18 @@ def test_the_metal_pool_holds_one_request_at_the_declared_context(tmp_path):
     assert flag_value(argv_for(eng, MAC_WORKLOADS["c32"], tmp_path), "--total-pages") == "1024"
     eng.recipe.pop("total_pages")
     assert "--total-pages" not in argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
+
+
+def test_a_pie_that_sizes_its_pool_in_bytes_gets_no_page_count(tmp_path, monkeypatch):
+    eng = mac_make(PieEngine)
+    monkeypatch.setattr(PieEngine, "_bench_has", lambda self, flag: True)
+    eng.recipe["total_pages"] = 1024  # qwen3.6 on metal pins it for an older pie
+    argv = argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
+    assert "--total-pages" not in argv
+    assert flag_value(argv, "--gpu-mem-util") == "0.9"  # the share holds on Metal too
+    assert "--device-kv-budget" not in argv  # unstated, the pool fills the share
+    eng.recipe["device_kv_budget"] = "8GiB"
+    assert flag_value(argv_for(eng, MAC_WORKLOADS["c32"], tmp_path), "--device-kv-budget") == "8GiB"
 
 
 def test_pie_recipe_passthrough(tmp_path):

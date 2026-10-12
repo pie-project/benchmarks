@@ -83,6 +83,7 @@ XLA_SHIM = Path(__file__).resolve().parent / "scripts" / "pie_xla.py"
 #: recipe knob -> flag, value passed through as ``str(value)``.
 _DIRECT_FLAGS: tuple[tuple[str, str], ...] = (
     ("total_pages", "--total-pages"),
+    ("device_kv_budget", "--device-kv-budget"),
     ("swap_pool_size", "--swap-pool-size"),
     ("frame_size", "--frame-size"),
     ("frame_submit_depth", "--frame-submit-depth"),
@@ -264,10 +265,13 @@ class PieEngine(Engine):
 
         args += ["--max-model-len", str(max_model_len_for(workload))]
 
+        # A pie that sizes its pool in bytes (`[model] device_kv_budget`, pie
+        # #929) has no page-count key, and its `device_memory_share` holds on
+        # every engine; an older one took --total-pages, and a fraction only
+        # on cuda_native.
+        bytes_pool = self._bench_has("--device-kv-budget")
         gmu = r.get("gpu_mem_util", 0.90)
-        if gmu is not None and engine == "cuda_native":
-            # The Metal engine has no memory-fraction knob; pie_bench ignores
-            # the flag there, so it is only emitted where it means something.
+        if gmu is not None and (engine == "cuda_native" or bytes_pool):
             args += ["--gpu-mem-util", str(gmu)]
 
         if r.get("report_timing", True):
@@ -279,7 +283,9 @@ class PieEngine(Engine):
 
         for knob, flag in _DIRECT_FLAGS:
             v = r.get(knob)
-            if knob == "total_pages" and self.platform.backend == Backend.METAL:
+            if knob == "total_pages" and bytes_pool:
+                v = None
+            elif knob == "total_pages" and self.platform.backend == Backend.METAL:
                 v = metal_total_pages(v, max_model_len_for(workload))
             if v is not None:
                 args += [flag, str(v)]
