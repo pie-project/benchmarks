@@ -334,7 +334,7 @@ window.Pie = window.Pie || {};
     const rowsShown = models.filter((id) => (byModel[id] || []).some(isPie) || misfit(id, base));
     if (!engines.length || !rowsShown.length) return "";
 
-    return section("Against each engine", `How ${baseName()}’s speed compares, model by model`, `
+    return section("Across models", `How ${baseName()}’s speed compares on one Mac, model by model`, `
       <div class="heatmap">
         <svg class="heat-defs" width="0" height="0" aria-hidden="true">
           <defs>
