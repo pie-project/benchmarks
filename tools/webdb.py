@@ -124,6 +124,23 @@ def workloads() -> list[dict]:
     return out
 
 
+# the quality benchmarks: what each task asks, where its questions come from, how an answer is scored
+QUALITY_TASKS = [
+    ("gsm8k", "Grade-school math word problems, worked step by step", "openai/gsm8k (test)", "final number matches"),
+    ("ifeval", "Following explicit instructions (length, format, keywords)", "google/IFEval", "every instruction met"),
+    ("mmlu", "Multiple-choice knowledge across 57 subjects", "cais/mmlu (test)", "chosen letter matches"),
+    ("arc", "Grade-school science reasoning, multiple choice", "allenai/ai2_arc (ARC-Challenge test)", "chosen letter matches"),
+    ("math500", "Competition math, final answer in boxed form", "HuggingFaceH4/MATH-500", "final answer equivalent"),
+]
+
+
+def quality_tasks() -> list[dict]:
+    from pie_evals.quality.tasks import TASKS
+
+    return [{"id": t, "task": t, "description": d, "source": src, "scoring": sc, "max_tokens": TASKS[t][2]}
+            for t, d, src, sc in QUALITY_TASKS if t in TASKS]
+
+
 # runs measured before the tagged runs live on this Mac: they stay on the site as the fallback
 
 
@@ -436,7 +453,7 @@ def main() -> None:
           "no_fit": misfits,
           "hardware": hw_rows,
           "engines": mac_engines, "models": [m for m in models if m["id"] in model_ids],
-          "workloads": workloads(), "quality": quality.get(order[0], []) if order else []}
+          "workloads": workloads(), "quality_tasks": quality_tasks(), "quality": quality.get(order[0], []) if order else []}
     (WEB / "data").mkdir(parents=True, exist_ok=True)
     (WEB / "data" / "db.js").write_text("const DB = " + json.dumps(db, indent=2, default=str) + ";\n")
     print({k: len(v) for k, v in db.items()}, {t["id"]: (len(snaps[t["id"]]), len(quality[t["id"]])) for t in tags})
