@@ -932,3 +932,21 @@
   height: 26px;
   color: #fff;
 }
+
+.welcome-banner-link {
+  position: absolute;
+  left: 24px;
+  bottom: 20px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(255, 255, 255, .18);
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .45);
+  backdrop-filter: blur(12px) saturate(1.6);
+  transition: background .15s ease;
+}
+
+.welcome-banner-link:hover { background: rgba(255, 255, 255, .3); }
