@@ -74,12 +74,6 @@ def _pie_generate(art, snapshot: Path, pie_root: Path, prompts: list[str], max_t
         argv = [str(bench_python()), str(script), "--items", str(items), "--out", str(out), "--system", SYSTEM, "--max-tokens", str(max_tokens), "--",
                 "latency", "--model", str(model), "--engine", "metal", "--inferlet-dir", str(pie_root / "examples/text-completion-bench"),
                 "--max-model-len", "4096", "--requests", "1"]
-        # size pie's pool the way the benchmarks do (pie.yaml): a byte-sized pool takes the memory share,
-        # and a hybrid Qwen holds 64 state slots rather than its default, or one sequence does not fit
-        if "--device-kv-budget" in (pie_root / "scripts/bench/pie_bench.py").read_text():
-            argv += ["--gpu-mem-util", "0.9"]
-        if art.family in ("qwen3_6", "qwen3_6_moe"):
-            argv += ["--engine-option", "max_state_slots=64"]
         subprocess.run(argv, cwd=str(pie_root / "scripts/bench"), env=env, check=True, timeout=6 * 3600)
         return json.loads(out.read_text()), commit[:12]
 
