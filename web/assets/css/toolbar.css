@@ -164,7 +164,6 @@
   border-radius: 14px;
   color: var(--color-label);
   background: var(--color-menu);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
 }
 
 .report-dialog::backdrop { background: rgba(0, 0, 0, .3); backdrop-filter: blur(2px); }
@@ -177,7 +176,7 @@
 .report-kinds label { cursor: pointer; }
 .report-kinds input { position: absolute; opacity: 0; pointer-events: none; }
 .report-kinds span { display: block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--color-label-secondary); }
-.report-kinds input:checked + span { color: var(--color-label); background: var(--color-card); box-shadow: 0 0 0 .5px var(--color-panel-outline), 0 1px 2px rgba(0, 0, 0, .12); }
+.report-kinds input:checked + span { color: var(--color-label); background: var(--color-card); box-shadow: 0 0 0 .5px var(--color-panel-outline); }
 .report-kinds input:focus-visible + span { outline: 2px solid var(--color-accent); }
 
 .report-form textarea {
