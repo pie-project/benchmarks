@@ -6,8 +6,8 @@ window.Pie = window.Pie || {};
   const content = `
     <div class="welcome-banner">
       <div class="welcome-banner-copy">
-        <h2 class="welcome-banner-title">Étude is here.</h2>
-        <p class="welcome-banner-sub">Run pie on your Mac.</p>
+        <h2 class="welcome-banner-title">Run pie on your Mac!</h2>
+        <p class="welcome-banner-sub">Free and private, for the whole world. With love, the Pie team.</p>
       </div>
       <div class="welcome-banner-actions">
         <a class="welcome-banner-link is-primary" href="https://liszt.ai/etude" target="_blank" rel="noopener"><svg class="is-stroke" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>Download</a>
