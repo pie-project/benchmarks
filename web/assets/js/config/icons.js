@@ -1,6 +1,7 @@
 window.Pie = window.Pie || {};
 
 Pie.icons = {
+  welcome: '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
   overview: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   results: '<path d="M4 5h16M4 12h16M4 19h16"/>',
   quality: '<path d="m5 12 4 4 10-10"/>',

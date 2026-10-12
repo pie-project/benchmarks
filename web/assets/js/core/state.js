@@ -1,7 +1,7 @@
 window.Pie = window.Pie || {};
 
 Pie.state = {
-  table: "overview",
+  table: "welcome",
   overview: { hardware: null, workload: "single" },
   release: "main",
   query: "",
