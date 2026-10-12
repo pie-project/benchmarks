@@ -5,14 +5,13 @@ number taken on a machine that was not in the expected state.
 Linux: the GPU must be drained before an engine loads (vLLM's EngineCore
 outlives its parent; a leftover holds memory and compute). macOS: thermal
 pressure, battery vs AC, low power mode and a second display all change the
-GPU clock, and another inference process (the resident Ollama app with a model
-loaded, another runner's pie job) shares the GPU. All of it is captured before
+GPU clock, and another inference process (another runner's pie job, a server a
+cancelled job left) shares the GPU. All of it is captured before
 and after each model.
 """
 
 from __future__ import annotations
 
-import json
 import os
 import platform
 import re
@@ -20,10 +19,9 @@ import shutil
 import signal
 import subprocess
 import time
-import urllib.request
 from typing import Any
 
-ENGINE_PROCESSES = ("pie", "ollama", "llama-server", "mlx_lm.server")
+ENGINE_PROCESSES = ("pie", "llama-server", "mlx_lm.server")
 
 
 def _run(argv: list[str], timeout: float = 20.0) -> str | None:
@@ -261,16 +259,6 @@ def engine_processes(exclude: set[int] | None = None) -> list[str]:
     return sorted(found)
 
 
-def ollama_loaded(host: str | None = None) -> list[str]:
-    url = (host or os.environ.get("OLLAMA_HOST") or "127.0.0.1:11434").rstrip("/")
-    url = url if url.startswith("http") else f"http://{url}"
-    try:
-        with urllib.request.urlopen(f"{url}/api/ps", timeout=3) as r:
-            return sorted(m.get("name", "") for m in json.loads(r.read()).get("models", []))
-    except (OSError, ValueError):
-        return []
-
-
 # ---- macOS ----------------------------------------------------------------------
 
 
@@ -345,7 +333,6 @@ def mac_machine_state() -> dict[str, Any]:
     except (OSError, AttributeError):
         pass
     state["engine_processes"] = engine_processes()
-    state["ollama_loaded"] = ollama_loaded()
     return state
 
 
@@ -431,13 +418,9 @@ class Preflight:
             new = sorted(set(after.get("engine_processes") or []) - before)
             if new:
                 reasons.append(f"another inference engine started during the model: {', '.join(new)}")
-            # the resident Ollama is judged by what it loads; any other engine already up
-            # shares the GPU too (a pie serve a cancelled job left: nightly 38073785969)
-            if stale := sorted(p for p in before if not p.startswith("ollama:")):
+            # an engine already up shares the GPU too (a pie serve a cancelled job left: nightly 38073785969)
+            if stale := sorted(before):
                 reasons.append(f"another inference engine was already running: {', '.join(stale)}")
-            loaded = sorted(set(after.get("ollama_loaded") or []) - set(before_state.get("ollama_loaded") or []))
-            if loaded:
-                reasons.append(f"the resident Ollama loaded a model during the run: {', '.join(loaded)}")
         else:
             if before_state.get("gpu_drain_error"):
                 reasons.append("GPU was not drained before the model: " + str(before_state["gpu_drain_error"]))

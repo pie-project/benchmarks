@@ -37,7 +37,6 @@ ENGINE_META = {
     "sglang":   ("SGLang", "Apache-2.0", "sgl-project/sglang"),
     "llamacpp": ("llama.cpp", "MIT", "ggml-org/llama.cpp"),
     "mlxlm":    ("MLX", "MIT", "ml-explore/mlx-lm"),
-    "ollama":   ("Ollama", "MIT", "ollama/ollama"),
     "splash":   ("Splash", None, "incoai/splash"),
 }
 METRICS = ["decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "ttft_ms_p99",
@@ -107,7 +106,6 @@ def hardware() -> list[dict]:
 # what each engine can draft with, filled by hand from its docs and release notes
 SPECULATIVE = {
     "pie": "Yes: DFlash, DFlash2, MTP drafters",
-    "ollama": "Yes: MTP, where the model ships it (gemma 4)",
     "splash": "Yes: DFlash2",
     "llamacpp": "Yes: a separate draft model (--model-draft)",
     "mlxlm": "Yes: a separate draft model (--draft-model)",
@@ -152,7 +150,7 @@ def quality_arms(config: dict) -> list[tuple[str, str]]:
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     out: list[tuple[str, str]] = []
     for aid in config["models"]:
-        eng = next((e for e in ("llamacpp", "mlxlm", "splash", "ollama") if aid.endswith(f"-{e}") or f"-{e}-" in aid), None)
+        eng = next((e for e in ("llamacpp", "mlxlm", "splash") if aid.endswith(f"-{e}") or f"-{e}-" in aid), None)
         if eng:
             out.append((eng, aid))
         pie = arts.get(aid, {}).get("baseline_of")

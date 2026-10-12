@@ -89,15 +89,15 @@ def test_targeted_mac_shards_keep_groups_whole(matrix):
             assert sum(cell_minutes(c) for c in groups[k]) > budget, f"group {k} split without need"
 
 
-def test_targeted_mac_jobs_build_metal_and_pin_ollama(matrix, tmp_path):
+def test_targeted_mac_jobs_build_metal_and_pin_splash(matrix, tmp_path):
     jobs = make_jobs(matrix, Tier.TARGETED, pie_commit="abc", store=Store(tmp_path), platforms=["m4-pro-48g"])
     assert jobs
-    assert any(str(c.engine) == "ollama" for j in jobs for c in j.cells)
+    assert any(str(c.engine) == "splash" for j in jobs for c in j.cells)
     for j in jobs:
         assert j.per_cell_timeout_s <= j.kill_s
         assert j.pie_build_features == ["metal"]
-        if any(str(c.engine) == "ollama" for c in j.cells):
-            assert j.baseline_versions.get("ollama") == matrix.engines["ollama"].pin
+        if any(str(c.engine) == "splash" for c in j.cells):
+            assert j.baseline_versions.get("splash") == matrix.engines["splash"].pin
 
 
 def _jobs_cli(tmp_path, monkeypatch, *platforms):

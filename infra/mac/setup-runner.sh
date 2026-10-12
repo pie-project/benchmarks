@@ -24,7 +24,7 @@ if ! curl -fsSL "https://raw.githubusercontent.com/$REPO/main/matrix/platforms.y
 fi
 
 step 2 "Checking tools"
-for t in git uv cargo ollama; do
+for t in git uv cargo; do
   if command -v "$t" >/dev/null; then ok "$t"; else warn "$t not found (install it before the first run)"; fi
 done
 pmset -g batt | grep -q "AC Power" && ok "on AC power" || warn "on battery: runs on battery are recorded as noisy"

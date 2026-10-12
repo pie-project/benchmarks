@@ -23,8 +23,6 @@ from pie_evals.node.engines import get_engine
 from pie_evals.node.engines.base import Engine
 from pie_evals.node.engines.llamacpp import LlamacppEngine
 from pie_evals.node.engines.mlxlm import MlxlmEngine
-from pie_evals.node.engines.ollama import SCRIPT as OLLAMA_SCRIPT
-from pie_evals.node.engines.ollama import OllamaEngine
 from pie_evals.node.engines.pie import PieEngine
 from pie_evals.node.engines.recipes import load_recipe, recipe_names
 from pie_evals.node.engines.served import SCRIPT as OPENAI_SCRIPT
@@ -704,7 +702,7 @@ def test_vllm_speculative_boots_leave_warmup_room_on_small_cards(tmp_path):
     assert flag_value(argv, "--gpu-mem-util") == "0.9"
 
 
-# ---- Mac: pie on Metal, Ollama ----------------------------------------------------
+# ---- Mac: pie on Metal ----------------------------------------------------------
 
 
 def mac_platform(arch: str = "apple9", memory_gib: float = 48.0) -> PlatformSpec:
@@ -719,13 +717,6 @@ def mac_artifact(**over) -> ArtifactSpec:
     return ArtifactSpec(**base)
 
 
-def ollama_artifact(**over) -> ArtifactSpec:
-    base = {"id": "qwen3.6-27b-ollama", "source_format": "ollama", "scheme": "gguf_q4_k_m",
-            "ollama_tag": "qwen3.6:27b", "baseline_of": "muse-glimmer-30b-mlx4"}
-    base.update(over)
-    return mac_artifact(**base)
-
-
 MAC_WORKLOADS = {
     "control-aa": WorkloadSpec(id="control-aa", kind="control_aa", params={"prefill": 128, "decode": 64, "rounds": 2}),
     "ob-story-200": WorkloadSpec(id="ob-story-200", kind="single_stream", params={"prompt": "Tell a story about a llama.", "decode": 200, "requests": 6, "warmup": 1}),
@@ -735,24 +726,20 @@ MAC_WORKLOADS = {
     "c32": WorkloadSpec(id="c32", kind="concurrency", params={"concurrency": 32, "num_requests": 128, "prefill": 128, "decode": 128}),
 }
 
-MAC_RECIPE = {PieEngine: "default", OllamaEngine: "competitive"}
+MAC_RECIPE = {PieEngine: "default", LlamacppEngine: "competitive", MlxlmEngine: "competitive", SplashEngine: "competitive"}
 
 
 def mac_make(cls: type[Engine], *, plat: PlatformSpec | None = None, art: ArtifactSpec | None = None, mode: Mode | None = None,
              recipe_name: str | None = None, workload: WorkloadSpec | None = None, **kw) -> Engine:
     plat = plat or mac_platform()
     workload = workload or MAC_WORKLOADS["c32"]
-    art = art or (ollama_artifact() if cls is OllamaEngine else mac_artifact())
+    art = art or mac_artifact()
     recipe = load_recipe(str(cls.name), recipe_name or MAC_RECIPE[cls], plat, workload, family=art.family)
     kw.setdefault("python", "/usr/bin/python3")
     return cls(pie_root=PIE_ROOT, artifact=art, platform=plat, mode=mode or Mode(), recipe=recipe, **kw)
 
 
-def test_registry_resolves_ollama():
-    assert get_engine("ollama") is OllamaEngine
-
-
-@pytest.mark.parametrize("engine", ["pie", "ollama"])
+@pytest.mark.parametrize("engine", ["pie"])
 def test_mac_recipes_resolve_with_rationale(engine):
     names = recipe_names(engine)
     assert "default" in names
@@ -773,15 +760,6 @@ def test_recipe_overrides_by_family_and_backend():
     assert "total_pages" not in r
     r = load_recipe("pie", "default", mac_platform(), MAC_WORKLOADS["c32"], family="qwen3_6_moe")
     assert r["total_pages"] == 1024 and r["engine_option"] == {"max_state_slots": 64}  # 35B-A3B does not boot on 48 GB without it
-
-
-def test_ollama_competitive_leaves_the_server_envelope_to_the_adapter():
-    for wl in MAC_WORKLOADS.values():
-        r = load_recipe("ollama", "competitive", mac_platform(), wl)
-        assert r["num_parallel"] == "$serve_concurrency"
-        assert r["context_length"] == "$serve_context"
-    r = load_recipe("ollama", "default", mac_platform(), MAC_WORKLOADS["c32"])
-    assert r["num_parallel"] is None and r["context_length"] is None
 
 
 def test_literal_prompt_param_is_sent_as_is():
@@ -861,43 +839,11 @@ def test_pie_serve_is_a_noop_on_metal(tmp_path):
     assert eng.server_url is None and eng._server_proc is None
 
 
-def test_ollama_args(tmp_path):
-    eng = mac_make(OllamaEngine)
-    argv = argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
-    assert Path(argv[1]) == OLLAMA_SCRIPT and OLLAMA_SCRIPT.parts[-2:] == ("scripts", "ollama_bench.py")
-    assert OLLAMA_SCRIPT.parent.parent.name == "engines" and OLLAMA_SCRIPT.is_file()
-    assert argv[2] == "tput"
-    assert flag_value(argv, "--ollama-model") == "qwen3.6:27b"
-    assert flag_value(argv, "--model") == "mlx-community/Qwen3.6-27B-4bit"
-    assert "--no-ignore-eos" in argv and "--ignore-eos" not in argv
-    assert "--dump-all-token-ids" in argv
-    assert str(PIE_ROOT / "scripts" / "bench") in eng.env["PYTHONPATH"].split(":")
-
-
-def test_ollama_recipe_flags(tmp_path):
-    eng = mac_make(OllamaEngine, recipe_name="default")
-    eng.server_url = "http://127.0.0.1:5555"
-    eng.recipe.update({"options": {"num_ctx": 4096}, "flush_cache": False, "request_timeout": 600})
-    argv = argv_for(eng, MAC_WORKLOADS["ss-128-64"], tmp_path)
-    assert flag_value(argv, "--url") == "http://127.0.0.1:5555"
-    assert flag_value(argv, "--keep-alive") == "30m"
-    assert flag_value(argv, "--options") == '{"num_ctx": 4096}'
-    assert "--no-flush-cache" in argv
-    assert flag_value(argv, "--request-timeout") == "600"
-
-
-def test_ollama_flushes_every_slot_it_booted(tmp_path):
-    eng = mac_make(OllamaEngine)
-    assert flag_value(argv_for(eng, MAC_WORKLOADS["ss-128-64"], tmp_path), "--flush-slots") == "1"
-    eng.slots = 8
-    assert flag_value(argv_for(eng, MAC_WORKLOADS["ss-128-64"], tmp_path), "--flush-slots") == "8"
-
-
-def test_advanced_shape_carries_temperature_and_ollama_seed(tmp_path):
+def test_advanced_shape_carries_temperature_and_seed(tmp_path):
     adv = WorkloadSpec(id="ob-advanced-500", kind="single_stream", params={"prompt": "p", "decode": 500, "temperature": 0.7, "top_p": 0.95, "seed": 42})
     assert flag_value(common_args_for(adv), "--temperature") == "0.7"
     assert flag_value(common_args_for(adv), "--top-p") == "0.95"
-    argv = argv_for(mac_make(OllamaEngine), adv, tmp_path)
+    argv = argv_for(mac_make(MlxlmEngine), adv, tmp_path)
     assert flag_value(argv, "--seed") == "42"
     assert "--seed" not in argv_for(mac_make(PieEngine), adv, tmp_path)
 
@@ -907,52 +853,11 @@ def test_top_p_defaults_to_one():
     assert flag_value(common_args_for(plain), "--top-p") == "1"
 
 
-def test_ollama_keeps_its_cache_on_the_cached_prompt_shape():
-    cache = WorkloadSpec(id="cache-2k", kind="prefix_shared", params={"shared_prefix": 2048, "unique_suffix": 64, "variants": 8, "decode": 64, "concurrency": 1})
-    assert load_recipe("ollama", "competitive", mac_platform(), cache)["flush_cache"] is False
-    assert load_recipe("ollama", "competitive", mac_platform(), MAC_WORKLOADS["ss-128-64"])["flush_cache"] is True
-
-
-def test_ollama_server_env_maps_recipe_knobs():
-    eng = mac_make(OllamaEngine)
-    eng.recipe = {**eng.recipe, "num_parallel": 8, "context_length": 4096, "flash_attention": True, "kv_cache_type": "q8_0"}
-    env = eng.server_env(MAC_WORKLOADS["c8"])
-    assert env["OLLAMA_NUM_PARALLEL"] == "8" and env["OLLAMA_CONTEXT_LENGTH"] == "4096"
-    assert env["OLLAMA_FLASH_ATTENTION"] == "1" and env["OLLAMA_KV_CACHE_TYPE"] == "q8_0"
-    assert env["OLLAMA_KEEP_ALIVE"] == "-1"
-    eng.recipe["flash_attention"] = False
-    assert eng.server_env(MAC_WORKLOADS["c8"])["OLLAMA_FLASH_ATTENTION"] == "0"
-    env = mac_make(OllamaEngine, recipe_name="default").server_env(MAC_WORKLOADS["c8"])
-    assert not {"OLLAMA_NUM_PARALLEL", "OLLAMA_CONTEXT_LENGTH", "OLLAMA_FLASH_ATTENTION", "OLLAMA_KV_CACHE_TYPE"} & set(env)
-
-
-def test_ollama_never_sweeps_the_resident_app():
-    assert mac_make(OllamaEngine).leftover_process_names() == []
-
-
-def test_ollama_bench_parses_the_argv_shape():
-    sys.path.insert(0, str(BENCHES))
-    sys.path.insert(0, str(OLLAMA_SCRIPT.parent))
-    try:
-        import ollama_bench
-    finally:
-        sys.path.remove(str(BENCHES))
-        sys.path.remove(str(OLLAMA_SCRIPT.parent))
-    args = ollama_bench.build_parser().parse_args([
-        "latency", "--model", "X", "--ollama-model", "t", "--prompt", "p", "--max-tokens", "4", "--no-ignore-eos",
-        "--warmup", "1", "--requests", "1", "--json-out", "f", "--dump-all-token-ids", "--no-think",
-    ])
-    assert args.ollama_model == "t" and args.model == "X" and args.max_tokens == 4
-    assert args.ignore_eos is False and args.flush_cache is True
-
-
 _MAC_CASES = []
 for _mwl in MAC_WORKLOADS:
     _MAC_CASES += [
         ("pie", PieEngine, _mwl, {}),
         ("pie-gemma", PieEngine, _mwl, {"art": mac_artifact(family="gemma4")}),
-        ("ollama", OllamaEngine, _mwl, {}),
-        ("ollama-default", OllamaEngine, _mwl, {"recipe_name": "default"}),
         ("llamacpp", LlamacppEngine, _mwl, {"recipe_name": "competitive", "art": mac_artifact(base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m", source_format="gguf", gguf_file="Qwen3-8B-Q4_K_M.gguf")}),
         ("mlxlm", MlxlmEngine, _mwl, {"recipe_name": "competitive"}),
         ("splash", SplashEngine, _mwl, {"recipe_name": "competitive", "art": mac_artifact(source_format="splash")}),
@@ -1070,12 +975,6 @@ def test_openai_bench_resends_only_a_request_the_server_never_read(monkeypatch):
     with pytest.raises(urllib.error.URLError):
         ob.post_stream_retrying("http://h", {}, 1.0, None, [])
     assert len(calls) == ob.CONNECT_TRIES
-
-
-def test_argparse_flags_of_the_ollama_script():
-    got = argparse_flags(OLLAMA_SCRIPT)
-    assert {"--model", "--max-tokens", "--concurrency", "--num-requests", "--requests", "--dump-all-token-ids"} <= got
-    assert {"--ollama-model", "--flush-cache", "--no-flush-cache"} <= got
 
 
 def test_a_shape_can_score_on_prefill(tmp_path):

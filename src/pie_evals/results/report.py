@@ -132,8 +132,8 @@ def _close(a, b, rel: float = 0.01) -> bool:
 
 def baseline_ratios(matrix: Matrix, store: Store, tier: Tier) -> list[dict]:
     """pie vs each baseline arm on the same (platform, model, workload, program, mode).
-    A baseline arm is its engine on pie's own artifact, or its own artifact (Ollama
-    serves its own copy of the weights) paired with pie's through ``baseline_of``."""
+    A baseline arm is its engine on pie's own artifact, or its own artifact (llama.cpp
+    serves its own GGUF copy of the weights) paired with pie's through ``baseline_of``."""
     latest = store.latest_by_cell(tier)
     pie_key = {a.id: matrix.artifacts[a.baseline_of].artifact_key for a in matrix.artifacts.values() if a.baseline_of in matrix.artifacts}
     by_key: dict[tuple, dict[str, dict]] = defaultdict(dict)

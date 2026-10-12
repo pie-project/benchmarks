@@ -55,7 +55,6 @@ window.Pie = window.Pie || {};
       [
         formula("TTFT = first token received − request sent"),
         rows([
-          ["Ollama", "Streams the answer over HTTP (/api/generate). The client stamps the first streamed chunk that carries a token."],
           ["llama.cpp, mlx-lm, Splash", "Stream over their OpenAI-compatible HTTP API (server-sent events). The client stamps the first chunk that carries a token."],
           ["pie", "Has no HTTP gateway: the client starts the program on pie over its websocket, and the program sends a t0 message the moment the first sampled token reaches it. The client stamps that message's arrival, so pie's TTFT includes the same round trip back to the client as the others'."],
           ["Speculative decoding", "A drafted row is timed the same way: the drafting program sends t0 after the prefill's token, before the first draft."],
@@ -66,7 +65,7 @@ window.Pie = window.Pie || {};
       "Load time is how long the engine takes to be ready to serve the model, in seconds.",
       [
         rows([
-          ["Engines that run a server", "Ollama, llama.cpp, mlx-lm, Splash, pie: the time from starting the server until it answers."],
+          ["Engines that run a server", "llama.cpp, mlx-lm, Splash, pie: the time from starting the server until it answers."],
           ["Other engines", "The first run's extra time over the median run, which is the cost of the first call."],
         ]),
         p("Load time includes reading the weights from disk, so it depends on what the operating system has cached. Compare load times only on the same machine and after the same restart.", "method-footnote"),

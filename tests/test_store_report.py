@@ -99,31 +99,31 @@ def _pair(matrix, workload="ob-512-200"):
     def pick(aid):
         return next(c for c in cells if c.workload.id == workload and c.artifact.id == aid and c.platform.id == "m4-pro-48g")
 
-    return pick("gemma-4-26b-a4b-mlx4"), pick("gemma-4-26b-a4b-ollama")
+    return pick("gemma-4-26b-a4b-mlx4"), pick("gemma-4-26b-a4b-llamacpp")
 
 
-def test_baseline_ratio_pairs_the_ollama_arm_through_baseline_of(tmp_path, matrix):
-    pie, ollama = _pair(matrix)
-    assert str(ollama.engine) == "ollama" and ollama.artifact.baseline_of == pie.artifact.id
+def test_baseline_ratio_pairs_the_llamacpp_arm_through_baseline_of(tmp_path, matrix):
+    pie, arm = _pair(matrix)
+    assert str(arm.engine) == "llamacpp" and arm.artifact.baseline_of == pie.artifact.id
     st = Store(tmp_path / "store")
     now = datetime.now(timezone.utc)
     rp_ = _rec(pie, 9399, now)
-    ro = _rec(ollama, 9056, now, engine_version="0.34.4")
+    ro = _rec(arm, 9056, now, engine_version="b11312")
     ro.provenance.pie_commit = None
     ro.provenance.engine_config_recipe = "competitive"
     st.write_run([rp_, ro], tier=Tier.TARGETED, run_id="n1", when=now)
     ratios = rp.baseline_ratios(matrix, st, Tier.TARGETED)
     assert len(ratios) == 1 and ratios[0]["pie_leads"] and ratios[0]["input_ok"]
-    assert ratios[0]["artifact"] == pie.artifact.id and ratios[0]["baseline_artifact"] == ollama.artifact.id
-    assert ratios[0]["baseline"] == "ollama" and ratios[0]["baseline_version"] == "0.34.4"
+    assert ratios[0]["artifact"] == pie.artifact.id and ratios[0]["baseline_artifact"] == arm.artifact.id
+    assert ratios[0]["baseline"] == "llamacpp" and ratios[0]["baseline_version"] == "b11312"
     assert abs(ratios[0]["baseline_over_pie"] - 9056 / 9399) < 1e-6
 
 
 def test_baseline_ratio_flags_an_input_mismatch(tmp_path, matrix):
-    pie, ollama = _pair(matrix, "ob-story-200")
+    pie, arm = _pair(matrix, "ob-story-200")
     st = Store(tmp_path / "store")
     now = datetime.now(timezone.utc)
-    ro = _rec(ollama, 50, now, engine_version="0.34.4")
+    ro = _rec(arm, 50, now, engine_version="b11312")
     ro.perf.output_tokens = 40
     st.write_run([_rec(pie, 60, now), ro], tier=Tier.TARGETED, run_id="n1", when=now)
     (row,) = rp.baseline_ratios(matrix, st, Tier.TARGETED)
@@ -131,10 +131,10 @@ def test_baseline_ratio_flags_an_input_mismatch(tmp_path, matrix):
 
 
 def test_a_baseline_without_its_pie_row_has_no_ratio(tmp_path, matrix):
-    _, ollama = _pair(matrix)
+    _, arm = _pair(matrix)
     st = Store(tmp_path / "store")
     now = datetime.now(timezone.utc)
-    st.write_run([_rec(ollama, 9056, now, engine_version="0.34.4")], tier=Tier.TARGETED, run_id="n1", when=now)
+    st.write_run([_rec(arm, 9056, now, engine_version="b11312")], tier=Tier.TARGETED, run_id="n1", when=now)
     assert rp.baseline_ratios(matrix, st, Tier.TARGETED) == []
 
 

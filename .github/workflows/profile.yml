@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       machine: { description: "Mac platform id, a runner label (e.g. m5-max-64g)", required: true, default: "m5-max-64g" }
-      engine: { description: "pie, splash, ollama, mlxlm or llamacpp", required: true, default: "splash" }
+      engine: { description: "pie, splash, mlxlm or llamacpp", required: true, default: "splash" }
       artifact: { description: "artifact id from matrix/models.yaml", required: true, default: "qwen3.8-27b-splash" }
       workload: { description: "workload id", required: false, default: "ss-512-256" }
       pie_commit: { description: "pie commit", required: false, default: "424758165ecb6a78a72d0344c0f7abec7fec1aab" }
@@ -38,17 +38,6 @@ jobs:
           fi
           "$dir/bin/splash" --version
           echo "SPLASH_BIN=$dir/bin/splash" >> "$GITHUB_ENV"
-      - name: ollama
-        if: inputs.engine == 'ollama'
-        run: |
-          pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['ollama']['pin'])")
-          dir="$HOME/.cache/pie-evals/baselines/ollama-$pin"
-          if [ ! -x "$dir/ollama" ]; then
-            rm -rf "$dir" && mkdir -p "$dir"
-            curl -fsSL "https://github.com/ollama/ollama/releases/download/v$pin/ollama-darwin.tgz" | tar xz -C "$dir"
-          fi
-          "$dir/ollama" --version
-          echo "OLLAMA_BIN=$dir/ollama" >> "$GITHUB_ENV"
       - name: job spec
         run: |
           .venv/bin/pie-evals jobs --tier targeted --pie-commit "${{ inputs.pie_commit }}" \

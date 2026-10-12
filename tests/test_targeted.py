@@ -45,15 +45,15 @@ def _node_out(tmp_path, records):
 def test_targeted_is_small_and_baselines_run_on_their_copies(matrix):
     cells = matrix.runnable(Tier.TARGETED)
     assert cells and all(c.mode.tp == 1 for c in cells)
-    assert {c.engine.value for c in cells} == {"pie", "mlxlm", "llamacpp", "ollama", "splash"}
+    assert {c.engine.value for c in cells} == {"pie", "mlxlm", "llamacpp", "splash"}
     assert all(c.engine.value == "pie" or c.workload.id != "control-aa" for c in cells)
-    assert {c.engine.value for c in cells if c.artifact.baseline_of} >= {"mlxlm", "llamacpp", "ollama", "splash"}
-    assert all(c.artifact.baseline_of for c in cells if c.engine.value in ("ollama", "splash"))
+    assert {c.engine.value for c in cells if c.artifact.baseline_of} >= {"mlxlm", "llamacpp", "splash"}
+    assert all(c.artifact.baseline_of for c in cells if c.engine.value == "splash")
     assert not any(c.artifact.baseline_of for c in cells if c.engine.value == "pie")  # pie never runs another engine's copy
     # on the site's benchmarks pie runs its own checkpoints only, and every other engine only its arms
     site = [c for c in cells if c.workload.id.startswith(("ob-", "ctx-")) or c.workload.id == "c4"]
     assert all((c.artifact.baseline_of is None) == (c.engine.value == "pie") for c in site)
-    assert {c.artifact.baseline_label for c in site if c.engine.value != "pie"} >= {"Ollama", "Ollama MLX", "llama.cpp", "mlx-lm", "Splash"}
+    assert {c.artifact.baseline_label for c in site if c.engine.value != "pie"} >= {"llama.cpp", "mlx-lm", "Splash"}
     assert {c.workload.id for c in cells} == {"control-aa", "ss-128-64", "ss-512-256", "lc-1k-128", "lc-2k-128", "c8", "c32",
                                               "ob-story-200", "ob-512-200", "ob-short-100", "ob-advanced-500", "ctx-4k-256", "ctx-8k-256", "c4",
                                               "cold-ss-128-64", "cold-ss-512-200", "cold-ctx-4k-256"}

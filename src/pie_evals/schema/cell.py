@@ -29,7 +29,6 @@ class EngineName(StrEnumBase):
     SGLANG = "sglang"
     LLAMACPP = "llamacpp"
     MLXLM = "mlxlm"
-    OLLAMA = "ollama"
     SPLASH = "splash"
 
 
@@ -61,7 +60,6 @@ class SourceFormat(StrEnumBase):
     HF_SAFETENSORS = "hf_safetensors"
     GGUF = "gguf"
     MLX = "mlx"
-    OLLAMA = "ollama"
     SPLASH = "splash"
 
 
@@ -176,10 +174,9 @@ class ArtifactSpec(BaseModel):
     gguf_file: str | None = Field(default=None, description="file name inside a GGUF repo (the arm must be named, never the quant tag)")
     gguf_config_from: str | None = Field(default=None, description="HF repo whose config.json is copied next to the GGUF (pie reads the encoding from config.json; GGUF repos ship none)")
     tokenizer_from: str | None = Field(default=None, description="HF repo whose tokenizer and chat template render this artifact's prompts (a GGUF repo ships none)")
-    display_name: str | None = Field(default=None, description="name the site shows for this model (its Ollama tag)")
-    ollama_tag: str | None = Field(default=None, description="Ollama model tag this artifact is served as (``gemma4:26b``); source_format ollama")
+    display_name: str | None = Field(default=None, description="name the site shows for this model (``gemma4:26b``)")
     baseline_of: str | None = Field(default=None, description="the pie artifact whose weights this copy carries, so a baseline engine's numbers compare with it")
-    baseline_label: str | None = Field(default=None, description="column name for this baseline arm on the site (``Ollama``, ``Ollama MLX``)")
+    baseline_label: str | None = Field(default=None, description="column name for this baseline arm on the site (``llama.cpp``, ``mlx-lm``)")
     variant: str | None = Field(default=None, description="what sets this artifact apart from another serving the same checkpoint (e.g. ``dflash2``, a drafter deployment); part of its cells' identity")
     platforms: list[str] | None = Field(default=None, description="the only platform ids this artifact runs on (None = every platform); elsewhere it is not a cell at all")
     tiers: list[Tier] = Field(default_factory=lambda: [Tier.NIGHTLY, Tier.WEEKLY])
@@ -190,20 +187,12 @@ class ArtifactSpec(BaseModel):
             raise ValueError(f"artifact {self.id}: miniature artifacts need a recipe")
         return self
 
-    @model_validator(mode="after")
-    def _ollama_needs_tag(self) -> ArtifactSpec:
-        if self.source_format == SourceFormat.OLLAMA and not self.ollama_tag:
-            raise ValueError(f"artifact {self.id}: an ollama artifact needs ollama_tag")
-        return self
-
     @property
     def artifact_key(self) -> str:
         key = f"{self.base_model}@{self.scheme}/{self.source_format}"
         if self.kind == ArtifactKind.MINIATURE:
             key += f"#mini-{self.miniature.recipe_hash}"  # type: ignore[union-attr]
-        if self.ollama_tag:
-            key += f"#{self.ollama_tag}"
-        elif self.baseline_label:
+        if self.baseline_label:
             # an arm may serve the very checkpoint pie reads (mlx-lm, Splash); its cells are still its own
             key += f"#{self.baseline_label}"
         if self.variant:
