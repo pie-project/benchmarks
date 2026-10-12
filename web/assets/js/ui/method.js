@@ -53,9 +53,13 @@ window.Pie = window.Pie || {};
     `${pane("ttft", "Time to first token",
       "How long you wait before the first word of the answer appears.",
       [
-        formula("TTFT = first generated token − request sent", "Measured on the client."),
+        formula("TTFT = first token received − request sent", "Both stamps are taken by the same benchmark client, on the same Mac, with the same clock."),
         rows([
-          ["Inter-token latency", "ITL is the gap between consecutive tokens."],
+          ["Ollama", "Streams the answer over HTTP (/api/generate). The client stamps the first streamed chunk that carries a token."],
+          ["llama.cpp, mlx-lm, Splash", "Stream over their OpenAI-compatible HTTP API (server-sent events). The client stamps the first chunk that carries a token."],
+          ["pie", "Has no HTTP gateway: the client starts the program on pie over its websocket, and the program sends a t0 message the moment the first sampled token reaches it. The client stamps that message's arrival, so pie's TTFT includes the same round trip back to the client as the others'."],
+          ["Speculative decoding", "A drafted row is timed the same way: the drafting program sends t0 after the prefill's token, before the first draft."],
+          ["Inter-token latency", "ITL is the gap between consecutive tokens: the client's arrival stamps for HTTP engines, and the program's own per-token gaps after t0 for pie. A drafting round hands over its accepted tokens at once, so they arrive 0 ms apart."],
         ]),
       ].join(""))}`,
     `${pane("load", "Load time",
