@@ -758,8 +758,10 @@
   line-height: 1.5;
   color: var(--color-label-secondary);
   margin: 0;
-  max-width: 580px;
+  max-width: 680px;
 }
+
+.method-lede + .method-lede { margin-top: 12px; }
 
 .method-pane {
   border: 1px solid var(--color-panel-outline);
