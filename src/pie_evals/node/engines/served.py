@@ -4,7 +4,7 @@ llama.cpp, mlx-lm and Splash all work the same way from the outside: start a
 server on one model, wait until it answers, stream completions from it. The
 subclass says how to start its server; this class boots it once per model and
 points ``scripts/openai_bench.py`` at it, which stamps the first token and the
-gaps between tokens the way the Ollama client does.
+gaps between tokens the same way for every server.
 """
 
 from __future__ import annotations

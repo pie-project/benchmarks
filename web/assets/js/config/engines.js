@@ -7,7 +7,6 @@ Pie.engines = {
     pie: "var(--color-engine-pie)",
     llamacpp: "var(--color-engine-llamacpp)",
     mlxlm: "var(--color-engine-mlxlm)",
-    ollama: "var(--color-engine-ollama)",
     splash: "var(--color-engine-splash)",
     vllm: "var(--color-engine-vllm)",
     sglang: "var(--color-engine-sglang)",

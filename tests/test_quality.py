@@ -21,8 +21,8 @@ def test_wilson_interval_brackets_the_rate():
 def test_store_reads_quality_summaries(tmp_path):
     q = tmp_path / "quality"
     q.mkdir()
-    (q / "gemma-4-26b-a4b-ollama-gsm8k.json").write_text(json.dumps({"artifact": "gemma-4-26b-a4b-ollama", "task": "gsm8k", "score": 0.9, "ci95": [0.8, 0.95], "n": 100, "samples": [1]}))
-    assert Store(tmp_path).quality() == [{"artifact": "gemma-4-26b-a4b-ollama", "task": "gsm8k", "score": 0.9, "ci95": [0.8, 0.95], "n": 100}]
+    (q / "gemma-4-26b-a4b-llamacpp-gsm8k.json").write_text(json.dumps({"artifact": "gemma-4-26b-a4b-llamacpp", "task": "gsm8k", "score": 0.9, "ci95": [0.8, 0.95], "n": 100, "samples": [1]}))
+    assert Store(tmp_path).quality() == [{"artifact": "gemma-4-26b-a4b-llamacpp", "task": "gsm8k", "score": 0.9, "ci95": [0.8, 0.95], "n": 100}]
 
 
 def test_scores_grade_the_answer_not_the_thinking():
@@ -106,7 +106,6 @@ def test_engine_comes_from_the_artifact_format():
 
     from pie_evals.quality.engines import engine_for, strip_bos
 
-    assert engine_for(A(source_format="ollama", baseline_label="Ollama")) == "ollama"
     assert engine_for(A(source_format="gguf", baseline_label="llama.cpp")) == "llamacpp"
     assert engine_for(A(source_format="splash", baseline_label="Splash")) == "splash"
     assert engine_for(A(source_format="mlx", baseline_label="mlx-lm")) == "mlxlm"
@@ -131,7 +130,7 @@ def test_parity_compares_answers_only_on_the_same_weights():
     b = [{"id": str(i), "text": "#### 2" if i < 3 else "#### 1"} for i in range(10)]
     same = rows([_arm("x-mlx4", "pie", 0.8, samples=a), _arm("x-mlxlm", "mlxlm", 0.8, samples=b)])[0]
     assert same["arms"][1]["agree"] == 0.7 and same["arms"][1]["agree_flag"] == "mismatch" and same["flag"] == "mismatch"
-    gguf = rows([_arm("x-mlx4", "pie", 0.8, samples=a), _arm("x-ollama", "ollama", 0.8, samples=b, scheme="gguf_q4_k_m")])[0]
+    gguf = rows([_arm("x-mlx4", "pie", 0.8, samples=a), _arm("x-llamacpp", "llamacpp", 0.8, samples=b, scheme="gguf_q4_k_m")])[0]
     assert gguf["arms"][1]["agree_flag"] == "n/a" and gguf["flag"] == "ok"
     splash = rows([_arm("x-mlx4", "pie", 0.8, samples=a), _arm("x-splash", "splash", 0.8, samples=b)])[0]
     assert splash["arms"][1]["agree_flag"] == "n/a"

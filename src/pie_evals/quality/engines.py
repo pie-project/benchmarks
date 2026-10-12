@@ -22,14 +22,12 @@ from pathlib import Path
 
 from pie_evals.schema import SourceFormat
 
-ENGINES = ("pie", "ollama", "llamacpp", "mlxlm", "splash")
+ENGINES = ("pie", "llamacpp", "mlxlm", "splash")
 PARALLEL = 4
 
 
 def engine_for(art) -> str:
     """The engine an artifact runs on, read from its format (and its label for mlx-lm, the one MLX arm that is not pie)."""
-    if art.source_format == SourceFormat.OLLAMA:
-        return "ollama"
     if art.source_format == SourceFormat.GGUF:
         return "llamacpp"
     if art.source_format == SourceFormat.SPLASH:

@@ -23,7 +23,7 @@ competitive:
   knobs:
     max_context:
       value: "$serve_context"
-      rationale: Longest shape of the process, rounded like pie max-model-len, as Ollama is given.
+      rationale: Longest shape of the process, rounded like pie max-model-len.
   workload_kind:
     prefix_shared:
       knobs:

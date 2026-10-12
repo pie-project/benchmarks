@@ -2,8 +2,8 @@
 
 All adapters drive the bench scripts under the pinned pie checkout's
 ``scripts/bench/`` (``pie_bench.py``, ``vllm_bench.py``, ``sglang_bench.py``,
-``llamacpp_bench.py``, ``mlx_bench.py``), or, for Ollama, this repo's
-``ollama_bench.py``. Those scripts share ``scripts/bench/common.py`` — one
+``llamacpp_bench.py``, ``mlx_bench.py``), or this repo's ``openai_bench.py``
+for the OpenAI-compatible servers. Those scripts share ``scripts/bench/common.py`` — one
 client, one prompt construction, one JSON envelope — which is what makes a
 cross-engine number a comparison at all.
 The adapter's job is therefore: build the argv for a (artifact, mode,
@@ -13,8 +13,8 @@ JSON into ``PerfMetrics``.
 An adapter that needs to hold an engine process across workloads (one model
 per process, workloads interleaved inside it) uses the ``serve``/``attach``
 pair; the bench scripts support that through ``PIE_BENCH_SERVE_ONLY`` /
-``PIE_BENCH_SERVER_URL`` for pie, the HTTP server for llama.cpp / mlx-lm and
-a spawned ``ollama serve`` for Ollama.
+``PIE_BENCH_SERVER_URL`` for pie and the HTTP server for llama.cpp, mlx-lm
+and Splash.
 """
 
 from __future__ import annotations
@@ -156,7 +156,7 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
     if by_construction:
         config_cached = 0.0
         counters["cold_by_construction"] = 1.0
-    # on tagged prompts only the opening before the tag can hit (Ollama: ~15 of 555 tokens);
+    # on tagged prompts only the opening before the tag can hit (~15 of 555 tokens);
     # that is not a warm cache, so the row is cold and says how much the opening was
     elif cold_tags and config_cached and completed and config_cached / len(completed) <= COLD_OPENING_TOKENS:
         counters["cold_opening_cached_per_request"] = config_cached / len(completed)
@@ -514,6 +514,6 @@ def register(cls: type[Engine]) -> type[Engine]:
 
 def get_engine(name: str | EngineName) -> type[Engine]:
     # import side effects register the adapters
-    from . import llamacpp, mlxlm, ollama, pie, sglang, splash, vllm  # noqa: F401
+    from . import llamacpp, mlxlm, pie, sglang, splash, vllm  # noqa: F401
 
     return _REGISTRY[str(name)]

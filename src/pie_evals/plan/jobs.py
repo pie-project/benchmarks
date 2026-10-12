@@ -28,7 +28,7 @@ def process_key(c: Cell) -> tuple:
 #: L40S; nightly 35926457671 lost 33 of 78 vLLM cells to the soft budget
 #: because shards were packed on workload time alone); pie serves one
 #: process per model, so its per-cell overhead is a few seconds
-ENGINE_CELL_MINUTES = {"vllm": 4.0, "sglang": 3.5, "ollama": 0.5}  # measured: 12 vLLM Qwen3.5-0.8B cells took 3860 s on an L40S (nightly 35935510089)
+ENGINE_CELL_MINUTES = {"vllm": 4.0, "sglang": 3.5}  # measured: 12 vLLM Qwen3.5-0.8B cells took 3860 s on an L40S (nightly 35935510089)
 
 
 def cell_minutes(c: Cell, measured: dict[str, float] | None = None) -> float:
@@ -187,7 +187,7 @@ def _version_numbers(version: str | None) -> tuple[int, ...]:
 
 def at_least_pinned(version: str | None, pin: str | None) -> bool:
     """The version that ran is the pinned one or a newer one. An app that
-    updates itself (Ollama, Splash from Homebrew) moves past its pin, and its
+    updates itself (Splash from Homebrew) moves past its pin, and its
     numbers still stand until the pin is raised."""
     have, want = _version_numbers(version), _version_numbers(pin)
     return bool(have and want) and have >= want

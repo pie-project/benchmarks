@@ -21,7 +21,7 @@ import time
 from pathlib import Path
 
 PIE_UPSTREAM = "https://github.com/pie-project/pie.git"  # public; pods have no SSH key
-BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2"]  # pie_client + scripts/bench/common.py (pie_client itself rides on PYTHONPATH); transformers renders the Ollama arm's chat template
+BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2"]  # pie_client + scripts/bench/common.py (pie_client itself rides on PYTHONPATH); transformers renders chat templates
 
 
 DEFAULT_CACHE = Path.home() / ".cache/pie-evals"
@@ -33,8 +33,8 @@ def _cache_root(root: Path | None) -> Path:
 
 
 def bench_python(cache_root: Path | None = None, log=print) -> Path:
-    """A venv on the shared cache that runs pie's bench scripts (and the Ollama
-    client, which shares their prompt construction): the client deps,
+    """A venv on the shared cache that runs pie's bench scripts (and this repo's
+    clients, which share their prompt construction): the client deps,
     transformers for the chat template, plus the embedded-engine wheel.
     Created with uv when present (the runner image ships uv but no pip), else
     python3 -m venv."""

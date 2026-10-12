@@ -93,7 +93,7 @@ jobs:
         run: .venv/bin/pie-evals-node build --pie-commit "${{ needs.start.outputs.commit }}" --features metal --pie-root "$PIE_ROOT"
       - name: baseline engines
         run: |
-          # the pins and locations of the benchmark's competitor setup (tier.yml): mlx-lm, llama.cpp, Splash, Ollama
+          # the pins and locations of the benchmark's competitor setup (tier.yml): mlx-lm, llama.cpp, Splash
           pin() { .venv/bin/python -c "import yaml,sys; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}[sys.argv[1]]['pin'])" "$1"; }
           d="$HOME/.cache/pie-evals/baselines"; mlx=$(pin mlxlm); llama=$(pin llamacpp)
           py="$d/mlx-lm-$mlx"
@@ -110,13 +110,6 @@ jobs:
           fi
           if "$sdir/bin/splash" --version; then echo "SPLASH_BIN=$sdir/bin/splash" >> "$GITHUB_ENV"
           else echo "::warning::splash $splash does not run on this Mac; its arms will fail to load"; fi
-          ollama=$(pin ollama); odir="$d/ollama-$ollama"
-          if [ ! -x "$odir/ollama" ]; then
-            rm -rf "$odir" && mkdir -p "$odir"
-            curl -fsSL "https://github.com/ollama/ollama/releases/download/v$ollama/ollama-darwin.tgz" | tar xz -C "$odir"
-          fi
-          if "$odir/ollama" --version; then echo "OLLAMA_BIN=$odir/ollama" >> "$GITHUB_ENV"
-          else echo "::warning::ollama $ollama does not run on this Mac; its arms will fail to load"; fi
       - name: run
         run: |
           # scores are stored under the tag, like benchmark runs: a release (0.5.2) or a named manual run

@@ -178,18 +178,6 @@ jobs:
           fi
           if "$dir/bin/splash" --version; then echo "SPLASH_BIN=$dir/bin/splash" >> "$GITHUB_ENV"
           else echo "::warning::splash $pin does not run on this Mac (it needs macOS 26.4 or newer); its cells will fail to load"; fi
-      - name: ollama
-        if: runner.os == 'macOS' && contains(inputs.engines, 'ollama')
-        run: |
-          # the release at the pinned version, not the app on the machine: the app updates itself past the pin
-          pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['ollama']['pin'])")
-          dir="$HOME/.cache/pie-evals/baselines/ollama-$pin"
-          if [ ! -x "$dir/ollama" ]; then
-            rm -rf "$dir" && mkdir -p "$dir"
-            curl -fsSL "https://github.com/ollama/ollama/releases/download/v$pin/ollama-darwin.tgz" | tar xz -C "$dir"
-          fi
-          if "$dir/ollama" --version; then echo "OLLAMA_BIN=$dir/ollama" >> "$GITHUB_ENV"
-          else echo "::warning::ollama $pin does not run on this Mac; its cells will fail to load"; fi
       - name: extend the pod's lease
         if: runner.os == 'Linux'
         run: |
