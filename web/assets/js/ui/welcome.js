@@ -18,7 +18,7 @@ window.Pie = window.Pie || {};
     </div>
     <header class="method-head welcome-intro">
       <h1>LLM Inference Engine Benchmarks</h1>
-      <p class="welcome-tagline">A fair comparison of inference engines.</p>
+      <p class="welcome-tagline">A fair comparison of local inference engines.</p>
       <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware. We measure single-request latency and concurrent throughput using configurations recommended by each engine’s maintainers.</p>
     </header>
     <header class="method-head welcome-trust">
