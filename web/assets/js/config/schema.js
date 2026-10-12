@@ -160,5 +160,18 @@ window.Pie = window.Pie || {};
         number("_results", "Results", "Coverage", "", 0),
       ],
     },
+
+    quality_tasks: {
+      label: "Quality benchmarks",
+      section: "catalog",
+      filters: [],
+      columns: [
+        text("task", "Task", "Identity", { code: true }),
+        text("description", "What it tests", "Identity", { wide: true }),
+        text("source", "Questions from", "Identity", { code: true }),
+        text("scoring", "Scored by", "Method"),
+        number("max_tokens", "Answer budget", "Method", "tok", 0),
+      ],
+    },
   };
 })();
