@@ -22,7 +22,7 @@ window.Pie = window.Pie || {};
       <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware. We measure single-request latency and concurrent throughput using configurations recommended by each engine’s maintainers.</p>
     </header>
     <header class="method-head welcome-trust">
-      <h2>Why trust these numbers</h2>
+      <h2>A note to the reader</h2>
       <p class="method-lede">Measuring inference engines accurately is difficult, and a comparison is only as credible as its fairness. Fairness toward every engine measured here is therefore our first obligation to the reader.</p>
       <p class="method-lede">Each engine is evaluated under the configuration its own maintainers recommend for the model and the kind of generation in question, so that its results reflect what its users would reasonably expect of it. Pie runs on every platform in this study, which allows each model to be compared on each machine without omission.</p>
       <p class="method-lede">This site is a continuous record. Each Pie release is measured against the most recent release of every other engine available at that time, so each release records the state of the field on the date it was measured.</p>
