@@ -1059,7 +1059,14 @@
 }
 
 .stack-layer.is-weights::before { background: linear-gradient(135deg, #5ac8ff, #6b5cff 52%, #e07cff); }
-.stack-layer.is-engine::before { background: linear-gradient(135deg, #5fe0ff, #5a72ff 55%, #a87bff); }
+/* the engine layer: a fine grid of points laid over its gradient, like a die seen from above */
+.stack-layer.is-engine::before {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, .55) 1.3px, transparent 1.8px) 0 0 / 16px 16px,
+    linear-gradient(rgba(255, 255, 255, .12) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgba(255, 255, 255, .12) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(135deg, #5fe0ff, #5a72ff 55%, #a87bff);
+}
 .stack-layer.is-engine { height: 196px; }
 .stack-layer.is-engine::before { width: 230px; height: 230px; border-radius: 46px; }
 .stack-layer.is-silicon::before {
