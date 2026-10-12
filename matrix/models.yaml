@@ -285,6 +285,7 @@ artifacts:
     pie_sku: qwen38-27b-dflash2-u4g64-kv-bf16
     display_name: qwen3.8:27b dflash2
     expected_gib: 15.0
+    platforms: [m5-max-64g]   # gives this drafter row its own identity: without it the plan drops it as a duplicate of qwen3.8-27b-mlx4
     tiers: [targeted]
   - id: qwen3.8-27b-ollama
     base_model: mlx-community/Qwen3.8-27B-4bit
