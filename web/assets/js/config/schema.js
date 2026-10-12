@@ -117,8 +117,6 @@ window.Pie = window.Pie || {};
         text("repo", "Repo", "Identity", { code: true }),
         text("os", "OS", "Support"),
         text("formats", "Formats", "Support"),
-        text("continuous_batching", "Batching", "Features", { planned: true }),
-        text("prefix_cache", "Prefix cache", "Features", { planned: true }),
         text("speculative", "Speculative", "Features", { planned: true }),
         text("structured_output", "Structured output", "Features", { planned: true }),
         number("_results", "Results", "Coverage", "", 0),
