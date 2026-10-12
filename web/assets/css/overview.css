@@ -1038,19 +1038,6 @@
   user-select: none;
 }
 
-/* the beams that join the layers */
-.welcome-art::before {
-  content: "";
-  position: absolute;
-  top: 70px;
-  bottom: 70px;
-  left: 50%;
-  width: 70px;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, transparent, rgba(120, 200, 255, .22) 20%, transparent 35%, transparent 65%, rgba(160, 140, 255, .22) 80%, transparent);
-  filter: blur(2px);
-}
-
 /* one layer: a rounded square laid flat into a diamond, with its label upright on top */
 .stack-layer {
   position: relative;
@@ -1070,14 +1057,14 @@
   height: 168px;
   border-radius: 34px;
   transform: rotateX(58deg) rotateZ(45deg);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35), 0 26px 44px -12px rgba(108, 92, 255, .55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35);
 }
 
 .stack-layer.is-weights::before { background: linear-gradient(135deg, #5ac8ff, #6b5cff 52%, #e07cff); }
 .stack-layer.is-engine::before { background: linear-gradient(135deg, #5fe0ff, #5a72ff 55%, #a87bff); }
 .stack-layer.is-silicon::before {
   background: linear-gradient(135deg, #4a5a8c, #232c4f 60%, #1b2140);
-  box-shadow: inset 0 0 0 1px rgba(140, 170, 255, .35), 0 26px 44px -12px rgba(70, 110, 255, .6);
+  box-shadow: inset 0 0 0 1px rgba(140, 170, 255, .35);
 }
 
 .stack-layer span {
