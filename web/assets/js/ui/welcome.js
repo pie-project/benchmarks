@@ -8,7 +8,6 @@ window.Pie = window.Pie || {};
       <div class="welcome-banner-copy">
         <h2 class="welcome-banner-title">Run AI on your Mac!</h2>
         <p class="welcome-banner-sub">Free and private, for the whole world.</p>
-        <p class="welcome-banner-sign">With love, the Pie team <span class="welcome-heart" aria-label="love">♥</span></p>
       </div>
       <div class="welcome-banner-actions">
         <a class="welcome-banner-link is-primary" href="https://liszt.ai/etude" target="_blank" rel="noopener"><svg class="is-stroke" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>Download</a>
@@ -27,6 +26,7 @@ window.Pie = window.Pie || {};
       <p class="method-lede">Each engine is evaluated under the configuration its own maintainers recommend for the model and the kind of generation in question, so that its results reflect what its users would reasonably expect of it. Pie runs on every platform in this study, which allows each model to be compared on each machine without omission.</p>
       <p class="method-lede">This site is a continuous record. Each Pie release is measured against the most recent release of every other engine available at that time, so each release records the state of the field on the date it was measured.</p>
       <p class="method-lede">Every engine is measured under two conditions: a single request at a time, as a single agent or thread would issue them, and many concurrent requests, enough to saturate the bandwidth of the hardware. Together they show how well each engine manages memory and compute for each model, on each machine.</p>
+      <p class="welcome-sign">With love, the Pie team <span class="welcome-heart" aria-label="love">♥</span></p>
     </header>`;
 
   Pie.welcome = {
