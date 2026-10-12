@@ -90,12 +90,29 @@ window.Pie = window.Pie || {};
     return byModel;
   };
 
+  // each section's mark: a white glyph on a tinted rounded square, as Apple's settings show theirs
+  const SECTION_ICONS = {
+    "Where we stand": ["#0a84ff", '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/>'],
+    "Across Macs": ["#5e5ce6", '<rect x="4" y="5" width="16" height="11" rx="1.6"/><path d="M9 20h6M12 16v4"/>'],
+    "Across models": ["#bf5af2", '<path d="M12 4 4 8l8 4 8-4-8-4z"/><path d="m4 12 8 4 8-4"/><path d="m4 16 8 4 8-4"/>'],
+    "By model": ["#30d158", '<path d="M5 19V9M10 19V5M15 19v-7M20 19v-4"/>'],
+    "Quality against each engine": ["#34c759", '<path d="m6 12.5 4 4 8-9"/>'],
+    "Across releases": ["#ff9f0a", '<path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/>'],
+  };
+  const sectionIcon = (title) => {
+    const icon = SECTION_ICONS[title];
+    return icon ? `<span class="section-icon" style="--tint: ${icon[0]}"><svg viewBox="0 0 24 24" aria-hidden="true">${icon[1]}</svg></span>` : "";
+  };
+
   const section = (title, caption, body, extra = "", modifier = "") => `
     <section class="overview-section ${modifier}">
       <div class="section-head">
-        <div>
+        <div class="section-heading">
+          ${sectionIcon(title)}
+          <div>
           <h2 class="section-title">${esc(title)}</h2>
           ${caption ? `<div class="section-caption">${caption}</div>` : ""}
+          </div>
         </div>
         ${extra}
       </div>
@@ -327,13 +344,48 @@ window.Pie = window.Pie || {};
       </div>`;
   };
 
-  const heatmap = (byModel, models, mac) => {
+  // a section's view: rings of the picked engine against each other, or bars of every engine's tok/s
+  const viewToggle = (key, current) => `
+    <div class="view-toggle" role="group" aria-label="View">
+      ${[["rings", "Rings"], ["bars", "Bars"]].map(([id, label]) =>
+        `<button type="button" class="${current === id ? "is-active" : ""}" data-view-key="${key}" data-view="${id}" aria-pressed="${current === id}">${label}</button>`).join("")}
+    </div>`;
+  const tools = (...parts) => `<div class="section-tools">${parts.join("")}</div>`;
+
+  // one entry per row (a model or a Mac): Decode and Prefill, a bar per engine, longest bar = fastest in that row
+  const barsBlock = (entries, engines) => {
+    const order = [base, ...engines.filter((e) => e !== base)];
+    const body = entries.map(({ label, rows, note }) => {
+      if (note) return `<div class="bars-row"><div class="bars-label">${esc(label)}</div><div class="bars-note">${esc(note)}</div></div>`;
+      const groups = METRICS.map((metric) => {
+        const lines = order.map((engine) => ({ engine, v: rows.find((r) => r.engine === engine)?.[metric.key] })).filter((x) => x.v);
+        if (!lines.length) return `<div class="bars-group"><div class="bars-head">${metric.label}</div><div class="bars-empty">no data</div></div>`;
+        const top = Math.max(...lines.map((x) => x.v));
+        return `<div class="bars-group"><div class="bars-head">${metric.label} <span>tok/s</span></div>${lines.map(({ engine, v }) => `
+          <div class="bars-line${engine === base ? " is-primary" : ""}">
+            <span class="bars-name">${esc(names().engine(engine))}</span>
+            <span class="bars-track"><span class="bars-fill" style="width: ${(100 * v / top).toFixed(1)}%"></span></span>
+            <span class="bars-value">${value(v)}</span>
+          </div>`).join("")}</div>`;
+      }).join("");
+      return `<div class="bars-row"><div class="bars-label">${esc(label)}</div>${groups}</div>`;
+    }).join("");
+    return `<div class="bars-table">${body}</div>`;
+  };
+
+  const heatmap = (byModel, models, mac, view) => {
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
     const engines = [...new Set(Object.values(byModel).flat().filter((row) => !isPie(row)).map((row) => row.engine))]
       .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
     const rowsShown = models.filter((id) => (byModel[id] || []).some(isPie) || misfit(id, base));
     if (!engines.length || !rowsShown.length) return "";
 
+    const head = tools(viewToggle("modelsView", view), popup("overview-heat-mac", "Mac", macName(mac)));
+    if (view === "bars") {
+      const entries = rowsShown.map((id) => ({ label: names().model(id), rows: byModel[id] || [],
+        note: !(byModel[id] || []).some(isPie) && misfit(id, base) ? `Doesn't fit. ${fitNote(misfit(id, base), id)}` : "" }));
+      return section("Across models", `How ${baseName()}’s speed compares on one Mac, model by model`, barsBlock(entries, engines), head);
+    }
     return section("Across models", `How ${baseName()}’s speed compares on one Mac, model by model`, `
       <div class="heatmap">
         <svg class="heat-defs" width="0" height="0" aria-hidden="true">
@@ -348,7 +400,7 @@ window.Pie = window.Pie || {};
         </svg>
         <div class="heat-wide">${wideTable(byModel, rowsShown, engines)}</div>
         <div class="heat-stacked">${METRICS.map((metric) => heatTable(byModel, rowsShown, engines, metric)).join("")}</div>
-      </div>`, popup("overview-heat-mac", "Mac", macName(mac)));
+      </div>`, head);
   };
 
   // across Macs: one model, a row per Mac, the picked engine against each other engine
@@ -370,7 +422,7 @@ window.Pie = window.Pie || {};
     return `<div class="heat-cell" role="cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, r))}</div>`;
   };
 
-  const acrossMacs = (all, workload, model) => {
+  const acrossMacs = (all, workload, model, view) => {
     if (!model) return "";
     const rows = all.filter((row) => row.model === model && row.workload === workload);
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
@@ -379,10 +431,19 @@ window.Pie = window.Pie || {};
     const macs = Pie.store.tables.hardware.map((hw) => hw.id)
       .filter((mac) => rows.some((row) => row.hardware === mac) || ((Pie.store.tables.no_fit || {})[mac] || {})[model]);
     if (!engines.length || !macs.length) return "";
+    const head = tools(viewToggle("macsView", view), popup("overview-model", "Model", names().model(model)));
+    if (view === "bars") {
+      const entries = macs.map((mac) => {
+        const here = rows.filter((row) => row.hardware === mac);
+        const needs = ((Pie.store.tables.no_fit || {})[mac] || {})[model]?.[base];
+        return { label: macName(mac), rows: here, note: !here.some(isPie) && needs ? `Doesn't fit (needs about ${Math.round(needs)} GB)` : "" };
+      });
+      return section("Across Macs", `How ${baseName()}’s speed compares on each Mac, for one model`, barsBlock(entries, engines), head);
+    }
     const n = engines.length;
     const groups = `<div class="heat-row heat-group-row" role="row"><div></div>${METRICS.map((metric, g) =>
       `<div class="heat-group-head${g ? " is-group-start" : ""}" role="columnheader" style="grid-column: span ${n}">${metric.label}</div>`).join("")}</div>`;
-    const head = `<div class="heat-row heat-head-row" role="row"><div role="columnheader"></div>${METRICS.map((_, g) =>
+    const heads = `<div class="heat-row heat-head-row" role="row"><div role="columnheader"></div>${METRICS.map((_, g) =>
       engines.map((engine, j) => `<div class="heat-head${g && !j ? " is-group-start" : ""}" role="columnheader">${esc(names().engine(engine))}</div>`).join("")).join("")}</div>`;
     const body = macs.map((mac) => {
       const here = rows.filter((row) => row.hardware === mac);
@@ -394,7 +455,7 @@ window.Pie = window.Pie || {};
     }).join("");
     return section("Across Macs", `How ${baseName()}’s speed compares on each Mac, for one model`, `
       <div class="heatmap"><div class="heat-table is-wide" role="table" aria-label="${esc(baseName())} against each engine on each Mac"
-        style="--engines: ${n * METRICS.length}">${groups}${head}${body}</div></div>`, popup("overview-model", "Model", names().model(model)));
+        style="--engines: ${n * METRICS.length}">${groups}${heads}${body}</div></div>`, head);
   };
 
   // 4. By model: one card per model, a lollipop per engine
@@ -553,7 +614,7 @@ window.Pie = window.Pie || {};
     tooBig = (Pie.store.tables.no_fit || {})[mac] || {};
     macMemory = Pie.store.index.hardware[mac]?.memory_gib || null;
     const shown = [...models.filter((id) => byModel[id]), ...models.filter((id) => !byModel[id] && tooBig[id])];
-    const html = heatmap(byModel, shown, mac);
+    const html = heatmap(byModel, shown, mac, state.overview.modelsView || "rings");
     [tooBig, macMemory] = keep;
     return html;
   };
@@ -669,9 +730,8 @@ window.Pie = window.Pie || {};
             ${popup("overview-engine", "Engine", baseName())}
           </div>
           ${decode.length
-            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + acrossMacs(all, workload, state.overview.model) + heatSection(state, all, models, workload)
+            ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
             : `<div class="overview-none">No pie runs on this Mac yet.</div>`}
-          ${shown.length ? section("By model", "", carousel(shown.map((id) => card(id, byModel[id] || [])))) : ""}
           ${qualityTable(state.release)}
           ${decode.length ? releases(releasePoints(state, shown)) : ""}
           ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
@@ -685,6 +745,12 @@ window.Pie = window.Pie || {};
 
     bind(state) {
       element.addEventListener("click", (event) => {
+        const toggle = event.target.closest("[data-view-key]");
+        if (toggle) {
+          state.overview[toggle.dataset.viewKey] = toggle.dataset.view;
+          onChange();
+          return;
+        }
         const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine, #overview-heat-mac, #overview-model");
         if (!button) return;
         event.stopPropagation();
