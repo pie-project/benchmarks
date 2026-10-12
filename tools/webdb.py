@@ -471,6 +471,9 @@ def main() -> None:
                        for eng, art in arms for task in tasks if (eng, art, task) not in have]
         for r in quality[t]:
             r.setdefault("status", "pass")
+        # the results page's order: engine, then model, then task
+        rank = lambda xs, x: xs.index(x) if x in xs else len(xs)  # noqa: E731
+        quality[t].sort(key=lambda r: (rank(engine_ids, r["engine"]), rank(model_ids, r["model"]), r["model"], rank(tasks, r["task"])))
     # parity is per tag and never stacked: a release's table holds only the scores that release measured
     parity = parity_by_tag(store, a2m)
     db = {"tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
