@@ -936,8 +936,8 @@
 /* Apple-style pair: a filled primary pill and a frosted secondary one */
 .welcome-banner-actions {
   position: absolute;
-  left: 24px;
-  bottom: 20px;
+  left: 28px;
+  bottom: 24px;
   display: flex;
   gap: 10px;
 }
@@ -975,8 +975,8 @@
 /* the banner's message, above its buttons: an eyebrow, a headline, one line */
 .welcome-banner-copy {
   position: absolute;
-  left: 24px;
-  bottom: 68px;
+  left: 28px;
+  top: 26px;
   color: #fff;
 }
 
@@ -992,7 +992,7 @@
 }
 
 .welcome-banner-title {
-  margin: 10px 0 2px;
+  margin: 0 0 4px;
   font-family: var(--font-display);
   font-size: 34px;
   font-weight: 700;
