@@ -104,6 +104,19 @@ window.Pie = window.Pie || {};
     return icon ? `<span class="section-icon" style="--tint: ${icon[0]}"><svg viewBox="0 0 24 24" aria-hidden="true">${icon[1]}</svg></span>` : "";
   };
 
+  // the ring gradients every ring on the page paints with: drawn once, whatever each section shows
+  const RING_DEFS = `
+    <svg class="heat-defs" width="0" height="0" aria-hidden="true">
+      <defs>
+        <linearGradient id="heat-ahead" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" class="heat-stop-ahead-start"/><stop offset="1" class="heat-stop-ahead-end"/>
+        </linearGradient>
+        <linearGradient id="heat-behind" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" class="heat-stop-behind-start"/><stop offset="1" class="heat-stop-behind-end"/>
+        </linearGradient>
+      </defs>
+    </svg>`;
+
   const section = (title, caption, body, extra = "", modifier = "") => `
     <section class="overview-section ${modifier}">
       <div class="section-head">
@@ -388,16 +401,6 @@ window.Pie = window.Pie || {};
     }
     return section("Across models", `How ${baseName()}’s speed compares on one Mac, model by model`, `
       <div class="heatmap">
-        <svg class="heat-defs" width="0" height="0" aria-hidden="true">
-          <defs>
-            <linearGradient id="heat-ahead" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" class="heat-stop-ahead-start"/><stop offset="1" class="heat-stop-ahead-end"/>
-            </linearGradient>
-            <linearGradient id="heat-behind" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" class="heat-stop-behind-start"/><stop offset="1" class="heat-stop-behind-end"/>
-            </linearGradient>
-          </defs>
-        </svg>
         <div class="heat-wide">${wideTable(byModel, rowsShown, engines)}</div>
         <div class="heat-stacked">${METRICS.map((metric) => heatTable(byModel, rowsShown, engines, metric)).join("")}</div>
       </div>`, head);
@@ -724,6 +727,7 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="overview-inner">
+          ${RING_DEFS}
           <div class="overview-controls">
             ${popup("overview-mac", "Mac", macName(hardware))}
             ${popup("overview-workload", "Workload", workloadLabel)}
