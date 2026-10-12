@@ -9,7 +9,6 @@ window.Pie = window.Pie || {};
       <h1>Welcome to Pieb</h1>
       <p class="welcome-tagline">A fair comparison of inference engines.</p>
       <p class="method-lede">Pieb is an independent benchmark platform for measuring inference performance across engines, models, and hardware. We measure single-request latency and concurrent throughput using configurations recommended by each engine’s maintainers.</p>
-      <p class="method-lede">Our goal is simple: make inference performance measurable, reproducible, and comparable — so everyone can see what actually works best.</p>
     </header>
     <header class="method-head welcome-trust">
       <h2>Why trust these numbers</h2>
