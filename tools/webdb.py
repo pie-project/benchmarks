@@ -13,6 +13,7 @@ import json
 import re
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -495,7 +496,12 @@ def main() -> None:
         quality[t].sort(key=lambda r: (rank(engine_ids, r["engine"]), rank(model_ids, r["model"]), r["model"], rank(tasks, r["task"])))
     # parity is per tag and never stacked: a release's table holds only the scores that release measured
     parity = parity_by_tag(store, a2m)
-    db = {"tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
+    # when the newest measurement or score was taken: the site's "Updated" line
+    stamps = [r["started_at"] for r in store.table().select(["started_at"]).to_pylist() if r["started_at"] is not None]
+    stamps += [datetime.fromisoformat(q["date"].replace("Z", "+00:00")) for q in store.quality() if q.get("date")]
+    stamps = [t if t.tzinfo else t.replace(tzinfo=ZoneInfo("UTC")) for t in stamps]
+    updated_at = max(stamps).isoformat() if stamps else None
+    db = {"updated_at": updated_at, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
           "no_fit": misfits,
           "hardware": hw_rows,
           "engines": mac_engines, "models": [m for m in models if m["id"] in model_ids],
