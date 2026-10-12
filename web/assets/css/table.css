@@ -52,13 +52,13 @@
   color: var(--color-label);
 }
 
-/* row numbers, the way Numbers shows them: small, grey, right-aligned, out of the way */
+/* row numbers: small and grey, starting at the same edge as any table's first column */
 .data-table .row-number {
   width: 1%;
   padding-right: 4px;
   font-size: 11px;
   color: var(--color-label-tertiary);
-  text-align: right;
+  text-align: left;
   user-select: none;
 }
 
