@@ -5,6 +5,7 @@ window.Pie = window.Pie || {};
   const RELEASE = "release";
   const MAC = "overview-mac";
   const WORKLOAD = "overview-workload";
+  const ENGINE = "overview-engine";
   const ALL = "";
   let owner = null;
   let anchor = null;  // the button the open menu belongs to: the menu stays attached to it while the page scrolls
@@ -48,6 +49,13 @@ window.Pie = window.Pie || {};
         `<span class="popover-label">${Pie.format.escape(workload.label)}</span>`))
       .join("");
 
+  // the overview's base engine: the one every other engine is measured against
+  const engineMenu = (state) =>
+    Pie.overview.engines(state)
+      .map((engine) => option(engine.id, engine.id === state.overview.engine,
+        `<span class="popover-label">${Pie.format.escape(engine.label)}</span>`))
+      .join("");
+
   // A macOS pull-down with a checkmark per picked value: clicking toggles and the menu stays open.
   const filterMenu = (state, key) => {
     const column = Pie.schema[state.table].columns.find((entry) => entry.key === key);
@@ -77,6 +85,7 @@ window.Pie = window.Pie || {};
     RELEASE,
     MAC,
     WORKLOAD,
+    ENGINE,
     ALL,
 
     isOpenFor(key) {
@@ -90,14 +99,14 @@ window.Pie = window.Pie || {};
       }
       owner = key;
       anchor = target;
-      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : filterMenu(state, key);
+      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : filterMenu(state, key);
       element.scrollTop = 0;
       place(target);
     },
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
-      if (element.hidden || !owner || owner === RELEASE || owner === MAC || owner === WORKLOAD) return;
+      if (element.hidden || !owner || owner === RELEASE || owner === MAC || owner === WORKLOAD || owner === ENGINE) return;
       const scroll = element.scrollTop;
       element.innerHTML = filterMenu(state, owner);
       element.scrollTop = scroll;
@@ -119,7 +128,7 @@ window.Pie = window.Pie || {};
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = owner;
-        if (key === RELEASE || key === MAC || key === WORKLOAD) this.close();
+        if (key === RELEASE || key === MAC || key === WORKLOAD || key === ENGINE) this.close();
         onPick(key, target.dataset.value);
       });
     },

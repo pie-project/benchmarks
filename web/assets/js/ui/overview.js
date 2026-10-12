@@ -16,10 +16,14 @@ window.Pie = window.Pie || {};
   let onChange = () => {};
   let onOpenMac = () => {};
   let onOpenWorkload = () => {};
+  let onOpenEngine = () => {};
 
   const esc = (value) => Pie.format.escape(value);
   const names = () => Pie.store.names;
-  const isPie = (row) => Pie.engines.isPrimary(row.engine);
+  // the engine every other one is measured against: the picked one, pie unless the viewer chose another
+  let base = Pie.engines.primary;
+  const baseName = () => names().engine(base);
+  const isPie = (row) => row.engine === base;
 
   // "Apple M5 Max" + 64 GiB -> "M5 Max 64GB": two Macs share a chip, so the memory tells them apart
   const macName = (id) => {
@@ -202,7 +206,7 @@ window.Pie = window.Pie || {};
       </div>`;
     const dotOf = (mid, key) => `fit-${key}${mid !== null && mid < 0.995 ? " is-behind" : ""}`;
     const side = [
-      legend("Pie leads", `${wins.length}<span>/${decode.length}</span>`, "fit-leads", false),
+      legend(`${baseName()} leads`, `${wins.length}<span>/${decode.length}</span>`, "fit-leads", false),
       legend("Median decode", decodeMid === null ? "—" : delta(decodeMid), dotOf(decodeMid, "decode"), decodeMid === null),
       legend("Median prefill", prefillMid === null ? "—" : delta(prefillMid), dotOf(prefillMid, "prefill"), prefillMid === null),
     ].join("");
@@ -262,9 +266,9 @@ window.Pie = window.Pie || {};
     }
     const tip = [
       `${names().model(model)} vs ${names().engine(engine)}`,
-      `${metric.label}: pie ${value(c.pie[metric.key])}, ${names().engine(engine)} ${value(c.other[metric.key])} tok/s`,
+      `${metric.label}: ${baseName()} ${value(c.pie[metric.key])}, ${names().engine(engine)} ${value(c.other[metric.key])} tok/s`,
       c.other.stale ? `${names().engine(engine)}: ${when(c.other)}` : "",
-      c.pie.stale ? `pie: ${when(c.pie)}` : "",
+      c.pie.stale ? `${baseName()}: ${when(c.pie)}` : "",
     ].filter(Boolean).join("\n");
     return `<div class="heat-cell${extra}" role="cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, c.r))}</div>`;
   };
@@ -279,7 +283,7 @@ window.Pie = window.Pie || {};
       engines.map((engine, j) => `<div class="heat-head${g && !j ? " is-group-start" : ""}" role="columnheader">${esc(names().engine(engine))}</div>`).join("")).join("")}</div>`;
     const rows = rowsShown.map((model) => {
       const label = `<div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>`;
-      const pieNeeds = misfit(model, Pie.engines.primary);
+      const pieNeeds = misfit(model, base);
       if (pieNeeds && !(byModel[model] || []).some(isPie)) {
         return `<div class="heat-row" role="row">${label}<div class="heat-cell heat-row-nofit" role="cell"
             data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`)}">
@@ -302,7 +306,7 @@ window.Pie = window.Pie || {};
     const rows = rowsShown.map((model) => {
       const label = `<div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>`;
       // pie itself cannot load this model here: one quiet line across the row
-      const pieNeeds = misfit(model, Pie.engines.primary);
+      const pieNeeds = misfit(model, base);
       if (pieNeeds && !(byModel[model] || []).some(isPie)) {
         return `<div class="heat-row" role="row">${label}<div class="heat-cell heat-row-nofit" role="cell"
             data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`)}">
@@ -325,10 +329,10 @@ window.Pie = window.Pie || {};
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
     const engines = [...new Set(Object.values(byModel).flat().filter((row) => !isPie(row)).map((row) => row.engine))]
       .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
-    const rowsShown = models.filter((id) => (byModel[id] || []).some(isPie) || misfit(id, Pie.engines.primary));
+    const rowsShown = models.filter((id) => (byModel[id] || []).some(isPie) || misfit(id, base));
     if (!engines.length || !rowsShown.length) return "";
 
-    return section("Against each engine", "How pie’s speed compares, model by model", `
+    return section("Against each engine", `How ${baseName()}’s speed compares, model by model`, `
       <div class="heatmap">
         <svg class="heat-defs" width="0" height="0" aria-hidden="true">
           <defs>
@@ -373,19 +377,19 @@ window.Pie = window.Pie || {};
       const cells = engines.map((engine) => {
         const pairs = pieRows.filter((p) => p.model === model).map((p) => [p, rows.find((r) =>
           r.engine === engine && r.model === model && r.task === p.task)]).filter(([, o]) => o);
-        const title = `${names().model(model)}: pie vs ${names().engine(engine)}`;
+        const title = `${names().model(model)}: ${baseName()} vs ${names().engine(engine)}`;
         if (!pairs.length) {
           return `<div class="heat-cell" role="cell" data-tip="${esc(`${title}\nno score yet`)}">
             ${cellSvg(`<circle class="heat-empty" cx="${mid}" cy="${mid}" r="2.5"/>`)}</div>`;
         }
         const same = pairs.filter(([p, o]) => (p.ci_high ?? p.score) >= (o.ci_low ?? o.score));
         const tip = [title, ...pairs.map(([p, o]) =>
-          `${p.task}: pie ${pct(p.score)}, ${names().engine(engine)} ${pct(o.score)}${same.includes(pairs.find((x) => x[0] === p)) ? "" : "  (pie lower)"}`)].join("\n");
+          `${p.task}: ${baseName()} ${pct(p.score)}, ${names().engine(engine)} ${pct(o.score)}${same.includes(pairs.find((x) => x[0] === p)) ? "" : `  (${baseName()} lower)`}`)].join("\n");
         return `<div class="heat-cell" role="cell" data-tip="${esc(tip)}">${cellSvg(qualityMark(mid, mid, same.length === pairs.length, `${same.length}/${pairs.length}`))}</div>`;
       }).join("");
       return `<div class="heat-row" role="row"><div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>${cells}</div>`;
     }).join("");
-    return section("Quality against each engine", "Tasks where pie’s answers score the same as the engine’s, model by model", `
+    return section("Quality against each engine", `Tasks where ${baseName()}’s answers score the same as the engine’s, model by model`, `
       <div class="heatmap"><div class="heat-table" role="table" aria-label="pie quality against each engine"
         style="--engines: ${engines.length}">${head}${body}</div></div>`);
   };
@@ -393,12 +397,12 @@ window.Pie = window.Pie || {};
   const figure = (model, rows) => {
     const pie = rows.find((row) => isPie(row) && row.decode_tok_s);
     const others = rows.filter((row) => !isPie(row) && row.decode_tok_s);
-    const pieNeeds = misfit(model, Pie.engines.primary);
+    const pieNeeds = misfit(model, base);
     if (!pie && pieNeeds) {
       return `<div class="figure is-empty">Doesn't fit</div><div class="figure-caption">${esc(fitNote(pieNeeds, model))}</div>`;
     }
     if (!pie || !others.length) {
-      return `<div class="figure is-empty">—</div><div class="figure-caption">${pie ? "no other engine yet" : "no pie run yet"}</div>`;
+      return `<div class="figure is-empty">—</div><div class="figure-caption">${pie ? "no other engine yet" : `no ${baseName()} run yet`}</div>`;
     }
     const best = others.reduce((a, b) => (b.decode_tok_s > a.decode_tok_s ? b : a));
     const r = pie.decode_tok_s / best.decode_tok_s;
@@ -512,6 +516,16 @@ window.Pie = window.Pie || {};
       return WORKLOADS;
     },
 
+    // engines with numbers in this release, in the catalog's order
+    engines(state) {
+      const ran = new Set(Pie.store.snapshot(state.release).filter(Pie.store.isMeasured).map((r) => r.engine));
+      return Pie.store.tables.engines.filter((e) => ran.has(e.id)).map((e) => ({ id: e.id, label: names().engine(e.id) }));
+    },
+
+    onOpenEngine(handler) {
+      onOpenEngine = handler;
+    },
+
     onOpenMac(handler) {
       onOpenMac = handler;
     },
@@ -529,11 +543,14 @@ window.Pie = window.Pie || {};
         state.overview.hardware = macs.reduce((a, b) => (b.count > a.count ? b : a), macs[0] || { id: known[0] }).id;
       }
       if (!WORKLOADS.some((w) => w.id === state.overview.workload)) state.overview.workload = "single";
+      const ran = new Set(Pie.store.snapshot(state.release).filter(Pie.store.isMeasured).map((r) => r.engine));
+      if (!state.overview.engine || !ran.has(state.overview.engine)) state.overview.engine = Pie.engines.primary;
     },
 
     // returns the number of models shown, for the toolbar subtitle
     render(state) {
       this.settle(state);
+      base = state.overview.engine || Pie.engines.primary;
       const all = Pie.store.snapshot(state.release).filter(Pie.store.isMeasured);
       const { hardware, workload } = state.overview;
       // the Mac and workload pickers stay on every path, so a Mac with no runs can still be left for another one
@@ -541,6 +558,7 @@ window.Pie = window.Pie || {};
         <div class="overview-controls">
           ${popup("overview-mac", "Mac", macName(hardware))}
           ${popup("overview-workload", "Workload", WORKLOADS.find((w) => w.id === workload).label)}
+          ${popup("overview-engine", "Engine", baseName())}
         </div>`;
       if (!all.some((row) => row.hardware === hardware)) {
         element.innerHTML = `<div class="overview-inner">${controls()}<div class="overview-empty">No runs on this Mac for this release yet.</div></div>`;
@@ -570,6 +588,7 @@ window.Pie = window.Pie || {};
           <div class="overview-controls">
             ${popup("overview-mac", "Mac", macName(hardware))}
             ${popup("overview-workload", "Workload", workloadLabel)}
+            ${popup("overview-engine", "Engine", baseName())}
           </div>
           ${decode.length
             ? standing(decode, comparisons(byModel, shown, "prefill_tok_s")) + heatmap(byModel, shown)
@@ -588,10 +607,10 @@ window.Pie = window.Pie || {};
 
     bind(state) {
       element.addEventListener("click", (event) => {
-        const button = event.target.closest("#overview-mac, #overview-workload");
+        const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine");
         if (!button) return;
         event.stopPropagation();
-        (button.id === "overview-mac" ? onOpenMac : onOpenWorkload)(button);
+        ({ "overview-mac": onOpenMac, "overview-workload": onOpenWorkload, "overview-engine": onOpenEngine })[button.id](button);
       });
 
       // one tooltip for every mark: what it compares, the values, and when they were measured
