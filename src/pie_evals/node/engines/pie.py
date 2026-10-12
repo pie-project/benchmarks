@@ -249,6 +249,10 @@ class PieEngine(Engine):
         args: list[str] = ["--engine", engine, "--inferlet-dir", str(inferlet)]
         if not spec:
             args += ["--no-system-speculation"]
+        elif "dflash2" in (self.artifact.pie_sku or ""):
+            # the bench defaults to the v1 head (16-row block, masked last layer); DFlash2 is
+            # trained at 8 rows and all-causal, and drafts out of distribution at any other shape
+            args += ["--extra-input", "block=8", "--extra-input", "no_mask=true"]
 
         if self.platform.backend == Backend.CUDA:
             tp = max(1, int(self.mode.tp))
