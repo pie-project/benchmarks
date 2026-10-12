@@ -118,7 +118,6 @@ window.Pie = window.Pie || {};
         text("os", "OS", "Support"),
         text("formats", "Formats", "Support"),
         text("speculative", "Speculative", "Features", { planned: true }),
-        text("structured_output", "Structured output", "Features", { planned: true }),
         number("_results", "Results", "Coverage", "", 0),
       ],
     },
