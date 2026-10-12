@@ -27,8 +27,7 @@ window.Pie = window.Pie || {};
       <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware.</p>
     </header>
     <header class="method-head welcome-trust">
-      <h2>Why Pie Benchmarks?</h2>
-      <p class="method-lede">Measuring inference engines accurately is difficult, and a comparison is only as credible as its fairness. Fairness toward every engine measured here is therefore our first obligation to the reader.</p>
+      <h2>Message to a Reader</h2>
       <p class="method-lede">We believe your data and your models belong on your own machine. Running AI locally keeps both private, yet we know the frustration of a model that crawls on your own computer. We built Pie to change that: to make local inference humane, fast, and as effortless as any cloud service, so that keeping AI private is never a compromise.</p>
       <p class="welcome-sign">With love, the Pie team!</p>
     </header>
