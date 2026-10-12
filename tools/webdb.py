@@ -480,6 +480,11 @@ def main() -> None:
         quality[t] += [{"model": a2m.get(art, art), "engine": eng, "artifact": art, "task": task, "score": None,
                         "release": t, "status": "not_run", "stale": None}
                        for eng, art in arms for task in tasks if (eng, art, task) not in have]
+        # an engine with no arm for a model (it cannot run it here) still has its rows, marked no data
+        armed = {(eng, a2m.get(art, art)) for eng, art in arms}
+        quality[t] += [{"model": model, "engine": eng, "artifact": "", "task": task, "score": None,
+                        "release": t, "status": "no_data", "stale": None}
+                       for eng in engine_ids for model in model_ids if (eng, model) not in armed for task in tasks]
         for r in quality[t]:
             r.setdefault("status", "pass")
         # the results page's order: engine, then model, then task
