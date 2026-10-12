@@ -129,6 +129,10 @@ class BaseStore:
         """Delete every record of a manual tag; returns how many went."""
         raise NotImplementedError
 
+    def drop_engine(self, engine: str) -> tuple[int, int]:
+        """Delete every result and quality score of an engine; returns (records, scores) deleted."""
+        raise NotImplementedError
+
 
 class DirStore(BaseStore):
     def __init__(self, root: Path | str = "store"):
@@ -239,6 +243,13 @@ class PgStore(BaseStore):
                 raise ValueError(f"{tag} is a release tag; releases are never dropped")
             cur.execute("DELETE FROM records WHERE tag = %s", (tag,))
             return cur.rowcount
+
+    def drop_engine(self, engine: str) -> tuple[int, int]:
+        with self.connect() as conn, conn.transaction(), conn.cursor() as cur:
+            cur.execute("DELETE FROM records WHERE engine = %s", (engine,))
+            records = cur.rowcount
+            cur.execute("DELETE FROM quality WHERE engine = %s", (engine,))
+            return records, cur.rowcount
 
     def __init__(self, dsn: str):
         self.dsn = dsn

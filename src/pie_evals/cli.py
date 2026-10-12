@@ -206,6 +206,17 @@ def drop_tag(obj, tag):
     click.echo(f"{tag}: {obj['store'].drop_tag(tag)} records deleted")
 
 
+@main.command("drop-engine")
+@click.argument("engine")
+@click.pass_obj
+def drop_engine(obj, engine):
+    """Delete every result and quality score of an engine (pie is refused)."""
+    if engine == "pie":
+        raise click.UsageError("pie's own results are never dropped")
+    records, scores = obj["store"].drop_engine(engine)
+    click.echo(f"{engine}: {records} records and {scores} quality scores deleted")
+
+
 @main.command("import-store")
 @click.argument("src", type=click.Path(exists=True))
 @click.pass_obj
