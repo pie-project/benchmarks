@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -193,6 +194,16 @@ def store_status(obj):
     t = st.table()
     runs = len(set(t.column("run_id").to_pylist())) if t.num_rows else 0
     click.echo(json.dumps({"store": st.describe(), "records": t.num_rows, "runs": runs, "quality": len(st.quality())}))
+
+
+@main.command("drop-tag")
+@click.argument("tag")
+@click.pass_obj
+def drop_tag(obj, tag):
+    """Delete every record of a manual tag (a release tag is refused)."""
+    if re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", tag):
+        raise click.UsageError(f"{tag} is a release tag; releases are never dropped")
+    click.echo(f"{tag}: {obj['store'].drop_tag(tag)} records deleted")
 
 
 @main.command("import-store")
