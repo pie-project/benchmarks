@@ -53,7 +53,7 @@ window.Pie = window.Pie || {};
     `${pane("ttft", "Time to first token",
       "How long you wait before the first word of the answer appears.",
       [
-        formula("TTFT = first token received − request sent", "Both stamps are taken by the same benchmark client, on the same Mac, with the same clock."),
+        formula("TTFT = first token received − request sent"),
         rows([
           ["Ollama", "Streams the answer over HTTP (/api/generate). The client stamps the first streamed chunk that carries a token."],
           ["llama.cpp, mlx-lm, Splash", "Stream over their OpenAI-compatible HTTP API (server-sent events). The client stamps the first chunk that carries a token."],
