@@ -19,6 +19,7 @@ window.Pie = window.Pie || {};
       <p class="welcome-tagline">Performance without compromise.</p>
       <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware.</p>
     </header>
+    <!-- hidden for now
     <header class="method-head welcome-trust">
       <h2>Message to a Reader</h2>
       <p class="method-lede">Every question you ask a cloud model leaves your hands. It travels to a data center you will never see, runs on hardware you do not control, and is kept under terms you did not write. Your drafts, your code, your health questions, your half-formed ideas, the most personal things you think, quietly become someone else’s data.</p>
@@ -30,7 +31,8 @@ window.Pie = window.Pie || {};
       <h2>Pie: Programmable Inference Engine</h2>
       <p class="method-lede">Most inference engines today grew one model and one feature at a time, and many have become hard to extend and harder to maintain. We built Pie to give the open-source community a cleaner foundation.</p>
       <p class="method-lede">Pie borrows its design from operating systems. It manages the hardware as precisely as a kernel manages memory and compute, and runs your programs on top of it as lightweight processes called inferlets. The result is an engine that is simple to build on, and fast and fluid for everyone who uses it.</p>
-    </header>`;
+    </header>
+    -->`;
 
   Pie.welcome = {
     element,
