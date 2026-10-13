@@ -251,3 +251,28 @@
 .platform-table thead th.platform-corner:not(.platform-group-head):not(.is-overall),
 .platform-table thead th.platform-corner.platform-group-head,
 .platform-table thead th.platform-corner.is-overall { z-index: 5; background: var(--color-chrome); }
+
+/* a platform's header row: its badge and name, what it is and how many machines; the label stays in view when scrolling sideways */
+.platform-table tbody tr.platform-group-row th {
+  height: 40px;
+  padding: 0;
+  text-align: left;
+  background: var(--color-chrome);
+  border-bottom: .5px solid var(--color-separator);
+}
+.platform-group-row .platform-group-name {
+  position: sticky;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 var(--edge);
+  font-size: 13px;
+}
+.platform-group-row .platform-group-name b { font-weight: 600; color: var(--color-label); }
+.platform-group-row .platform-group-name > span:last-child { font-size: 12px; font-weight: 400; color: var(--color-label-tertiary); }
+.platform-group-row .sidebar-glyph[style] { width: 20px; height: 20px; border-radius: 5px; }
+.platform-group-row .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; }
+.platform-group-row .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
+.platform-table tbody tr.platform-group-row:hover th { background: var(--color-chrome); }
+.platform-table tbody tr.platform-group-row th:first-child { position: static; }
