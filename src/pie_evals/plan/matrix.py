@@ -40,6 +40,15 @@ from pie_evals.schema import (
 )
 
 
+def gpu_gib(memory_gib: float, interconnect: str | None = "uma") -> float:
+    """What a device's GPU can hold. A Mac shares its memory: macOS lets the GPU wire about two thirds of
+    it up to 36 GB and three quarters above (recommendedMaxWorkingSetSize: 53 084 MiB of 64 GB, 38 338 MiB
+    of 48 GB), so a model that fits the RAM can still not fit the GPU (gpt-oss-20b on a 16 GB Air)."""
+    if interconnect != "uma":
+        return memory_gib
+    return memory_gib * (2 / 3 if memory_gib <= 36 else 0.75)
+
+
 @dataclass
 class EngineDecl:
     id: str
@@ -185,7 +194,7 @@ class Matrix:
         # fit rule: weights per TP group must fit with headroom
         if cell.artifact.expected_gib is not None:
             per_device = cell.artifact.expected_gib * self.fit_factor / max(1, cell.mode.tp)
-            available = cell.platform.memory_gib / max(1, cell.platform.count) if cell.platform.interconnect != "uma" else cell.platform.memory_gib
+            available = cell.platform.memory_gib / max(1, cell.platform.count) if cell.platform.interconnect != "uma" else gpu_gib(cell.platform.memory_gib)
             if per_device > available:
                 return f"does not fit: {per_device:.1f} GiB per device > {available:.1f} GiB"
         return None
