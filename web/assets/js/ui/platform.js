@@ -22,6 +22,16 @@ window.Pie = window.Pie || {};
   ];
   const platformOf = (hw) => PLATFORMS.find((p) => p.has(hw));
 
+  // a model's maker as a small app-icon badge: a monogram on the maker's tint, no borrowed logos
+  const MAKERS = [
+    { test: /^qwen/, name: "Alibaba", mark: "Q", tint: ["#7b61ff", "#5b3fe6"] },
+    { test: /^gemma/, name: "Google", mark: "G", tint: ["#4f8bff", "#2563eb"] },
+    { test: /^gpt_oss/, name: "OpenAI", mark: "O", tint: ["#636366", "#3a3a3c"] },
+    { test: /^muse/, name: "Meta", mark: "M", tint: ["#2f8cff", "#0866ff"] },
+  ];
+  const makerOf = (model) => MAKERS.find((m) => m.test.test(Pie.store.index.models[model]?.family || "")) || { name: "", mark: "•", tint: ["#8e8e93", "#636366"] };
+  const badge = (maker) => `<span class="model-badge" style="--from: ${maker.tint[0]}; --to: ${maker.tint[1]}" aria-hidden="true">${maker.mark}</span>`;
+
   const chipName = (id) => String(Pie.store.index.hardware[id]?.name || id).replace(/^Apple\s+/, "");
   const macName = (id) => {
     const hw = Pie.store.index.hardware[id];
@@ -108,8 +118,10 @@ window.Pie = window.Pie || {};
       const median = sorted.length ? sorted[sorted.length >> 1] : null;
       const head = `<tr>${grouped ? '<th class="platform-corner platform-group-head" scope="col">Platform</th>' : ""}<th class="platform-corner${grouped ? " is-second" : ""}" scope="col">Hardware</th>${models.map((model) => {
         const m = Pie.store.index.models[model] || {};
-        const sub = [m.family, m.params_b ? `${m.params_b}B` : ""].filter(Boolean).join(" · ");
-        return `<th scope="col"><span class="platform-model">${esc(names().model(model))}</span><span class="platform-sub">${esc(sub)}</span></th>`;
+        const maker = makerOf(model);
+        const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
+        const sub = [maker.name, size].filter(Boolean).join(" · ");
+        return `<th scope="col">${badge(maker)}<span class="platform-model">${esc(names().model(model))}</span><span class="platform-sub">${esc(sub)}</span></th>`;
       }).join("")}</tr>`;
 
       element.innerHTML = `
