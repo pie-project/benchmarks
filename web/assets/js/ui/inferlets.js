@@ -76,78 +76,21 @@ window.Pie = window.Pie || {};
       <ul class="store-list">${shelf.map(row).join("")}</ul>
     </section>
     <section class="store-shelf">
-      <h2 class="store-shelf-title">Playground</h2>
-      <div class="term" id="term">
+      <h2 class="store-shelf-title">Playground <span class="store-dev">In development</span></h2>
+      <div class="term is-placeholder">
         <div class="term-bar"><span class="term-lights" aria-hidden="true"><i></i><i></i><i></i></span></div>
-        <div class="term-body" id="term-body"></div>
-        <label class="term-line"><span class="term-prompt">pie&gt;</span><input id="term-input" type="text" autocomplete="off" spellcheck="false" aria-label="Playground command"></label>
+        <div class="term-body"><div class="term-out is-dim">The playground is in development. Soon you can try the inferlets you switch on right here.</div></div>
       </div>
     </section>`;
 
-  // the playground: a terminal over the inferlets switched on. The site has no engine to run them on,
-  // so `run` writes the commands that run one on your own machine.
-  const playground = () => {
-    const body = element.querySelector("#term-body");
-    const input = element.querySelector("#term-input");
-    const print = (text, cls = "") => {
-      const line = document.createElement("div");
-      line.className = `term-out ${cls}`;
-      line.textContent = text;
-      body.append(line);
-      body.scrollTop = body.scrollHeight;
-    };
-    const byId = (id) => all().find((item) => item.id === id);
-    const help = () => print([
-      "help                      show these commands",
-      "ls                        inferlets added to the playground",
-      'run <inferlet> "prompt"   the commands that run it on your Mac',
-      "clear                     clear the window",
-    ].join("\n"), "is-dim");
-    const ls = () => {
-      const list = [...added].map(byId).filter(Boolean);
-      print(list.length ? list.map((item) => `${item.id.padEnd(26)}${item.name}`).join("\n") : "No inferlets yet. Switch one on above.", list.length ? "" : "is-dim");
-    };
-    const run = (args) => {
-      const match = /^(\S+)\s*(?:"([^"]*)"|(.*))?$/.exec(args.trim());
-      const item = match && byId(match[1]);
-      if (!item) return print(`Unknown inferlet: ${args.trim().split(/\s+/)[0] || "(none)"}. Try ls.`, "is-error");
-      if (!added.has(item.id)) return print(`${item.name} is not added. Switch it on above first.`, "is-error");
-      const prompt = (match[2] ?? match[3] ?? "").trim() || "The capital of France is";
-      print([
-        `# ${item.name}: run it on your Mac`,
-        "curl -fsSL https://pie-project.org/install.sh | bash",
-        "pie model import Qwen/Qwen3.5-0.8B",
-        "git clone https://github.com/pie-project/pie && cd pie",
-        `pie run examples/${item.example} -- --prompt ${JSON.stringify(prompt)}`,
-      ].join("\n"), "is-code");
-    };
-    print("Welcome to the pie playground. Type help to begin.", "is-dim");
-    input.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter") return;
-      const command = input.value.trim();
-      input.value = "";
-      if (!command) return;
-      print(`pie> ${command}`, "is-echo");
-      const [verb, ...rest] = command.split(/\s+/);
-      if (verb === "help") help();
-      else if (verb === "ls") ls();
-      else if (verb === "run") run(command.slice(3));
-      else if (verb === "clear") body.innerHTML = "";
-      else print(`Unknown command: ${verb}. Type help.`, "is-error");
-    });
-    element.querySelector("#term").addEventListener("click", (event) => {
-      if (!event.target.closest("input")) input.focus();
-    });
-    element.addEventListener("change", (event) => {
-      const box = event.target.closest("[data-inferlet]");
-      if (!box) return;
-      const item = byId(box.dataset.inferlet);
-      if (box.checked) added.add(item.id);
-      else added.delete(item.id);
-      save();
-      print(`${box.checked ? "Added" : "Removed"} ${item.name}.`, "is-dim");
-    });
-  };
+  // the switches are remembered for this viewer; the playground that will run them is in development
+  const remember = () => element.addEventListener("change", (event) => {
+    const box = event.target.closest("[data-inferlet]");
+    if (!box) return;
+    if (box.checked) added.add(box.dataset.inferlet);
+    else added.delete(box.dataset.inferlet);
+    save();
+  });
 
   Pie.inferlets = {
     element,
@@ -156,7 +99,7 @@ window.Pie = window.Pie || {};
       if (!element.hidden && element.dataset.ready !== "1") {
         element.innerHTML = `<div class="method-inner">${content}</div>`;
         element.dataset.ready = "1";
-        playground();
+        remember();
       }
     },
   };
