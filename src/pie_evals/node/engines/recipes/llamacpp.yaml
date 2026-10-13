@@ -51,8 +51,13 @@ competitive:
     metal:
       knobs:
         server_extra:
-          value: ["--batch-size", "2048", "--ubatch-size", "512", "--cont-batching"]
+          value: ["--batch-size", "2048", "--ubatch-size", "512", "--cont-batching", "--kv-unified"]
           rationale: >
             No --no-mmap on Apple Silicon: the whole mapping is wired into the
             unified working set either way and mmap is what lets a large GGUF
-            load at all there.
+            load at all there. --kv-unified shares one KV buffer across the
+            slots: without it each of 32 slots keeps its own sliding-window
+            cache, and Gemma 4 31B asks 62.9 GB on a Mac whose GPU working set
+            is 53 GB (every request a Metal out-of-memory "Compute error",
+            targeted 38336669202); shared, it asks 49.4 GB. Numerics, batch
+            sizes and throughput are unchanged (Gemma 4 12B, 1 and 32 streams).
