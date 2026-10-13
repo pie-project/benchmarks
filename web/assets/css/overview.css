@@ -1181,8 +1181,25 @@
 }
 
 .rank-value { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-label); }
-.rank-bar { flex: 1; width: 44px; display: flex; align-items: flex-end; border-radius: 8px; background: var(--color-fill); overflow: hidden; }
-.rank-fill { width: 100%; border-radius: 8px; background: linear-gradient(180deg, #5ac8fa, var(--color-engine-pie)); }
+.rank-chart { position: relative; padding-left: 52px; }
+.rank-axis { position: absolute; left: 16px; font-size: 11px; color: var(--color-label-tertiary, var(--color-label-secondary)); font-variant-numeric: tabular-nums; }
+.rank-axis-top { top: 48px; }
+.rank-axis-bottom { bottom: 50px; }
+.rank-bar { position: relative; flex: 1; width: 44px; border-radius: 8px; background: var(--color-fill); }
+.rank-fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 8px; background: linear-gradient(180deg, rgba(90, 200, 250, .55), rgba(10, 132, 255, .55)); }
+.rank-range { position: absolute; left: 50%; width: 2px; margin-left: -1px; background: var(--color-label); z-index: 1; }
+.rank-range::before, .rank-range::after { content: ""; position: absolute; left: -6px; width: 14px; height: 2px; background: var(--color-label); }
+.rank-range::before { top: 0; }
+.rank-range::after { bottom: 0; }
+.rank-mark { position: absolute; left: -8px; right: -8px; height: 3px; margin-bottom: -1.5px; border-radius: 2px; background: var(--color-engine-pie); box-shadow: 0 0 0 2px var(--color-background); }
+.rank-value.is-quiet { color: var(--color-label-secondary); }
+.rank-value { color: var(--color-engine-pie); }
+.rank-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 22px; margin-top: 12px; font-size: 12px; color: var(--color-label-secondary); }
+.rank-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.rank-legend i { display: inline-block; }
+.rank-legend .is-bar { width: 10px; height: 10px; border-radius: 3px; background: rgba(10, 132, 255, .55); }
+.rank-legend .is-range { width: 2px; height: 12px; background: var(--color-label); }
+.rank-legend .is-mark { width: 14px; height: 4px; border-radius: 2px; background: var(--color-engine-pie); }
 .rank-name { font-size: 12px; color: var(--color-label-secondary); text-align: center; line-height: 1.3; }
 
 /* release history: a quiet disclosure at the foot of the overview */
