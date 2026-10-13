@@ -138,9 +138,6 @@ def workloads() -> list[dict]:
         p = params.get(src, {})
         out.append({"id": cat, "label": label, "concurrency": p.get("concurrency") or (1 if cat == "single" else 32),
                     "prompt_tokens": p.get("prefill"), "output_tokens": p.get("decode"), "benchmark": ", ".join(ids)})
-    # a workload the site offers before it has numbers: more requests than the Mac's memory holds at once
-    out.append({"id": "ram_overload", "label": "RAM Overload", "concurrency": None, "prompt_tokens": None, "output_tokens": None,
-                "benchmark": "planned"})
     return out
 
 
