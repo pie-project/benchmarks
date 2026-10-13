@@ -51,21 +51,19 @@ window.Pie = window.Pie || {};
   };
   const all = () => shelf;
   const toggle = (item, label = "") => `
-    <label class="store-toggle"${item.example ? "" : ' title="Not available yet"'}>${label ? `<span>${label}</span>` : ""}
-      <input type="checkbox" role="switch" data-inferlet="${esc(item.id)}"${added.has(item.id) ? " checked" : ""}${item.example ? "" : " disabled"}>
+    <label class="store-toggle">${label ? `<span>${label}</span>` : ""}
+      <input type="checkbox" role="switch" data-inferlet="${esc(item.id)}"${added.has(item.id) ? " checked" : ""}>
       <span class="store-switch" aria-hidden="true"></span>
     </label>`;
 
 
-  // an App Store row: icon, a name over one quiet line (workload · what it buys), one control on the right
+  // a tile in a full-width grid: icon and switch on top, then the name, the workload and the figure
   const row = (item) => `
-    <li class="store-row" title="${esc(item.benefit)}">
-      ${icon(item.kind, item.glyph, " is-large")}
-      <div class="store-text">
-        <span class="store-name">${esc(item.name)}</span>
-        <span class="store-workload">${esc(item.workload)} · <b>${esc(item.stat)}</b></span>
-      </div>
-      ${item.example ? toggle(item) : '<span class="store-soon">Soon</span>'}
+    <li class="store-tile" title="${esc(item.benefit)}">
+      <div class="store-tile-top">${icon(item.kind, item.glyph)}${toggle(item)}</div>
+      <span class="store-name">${esc(item.name)}</span>
+      <span class="store-workload">${esc(item.workload)}</span>
+      <span class="store-figure">${esc(item.stat)}</span>
     </li>`;
 
   const content = `
@@ -76,7 +74,7 @@ window.Pie = window.Pie || {};
       <ul class="store-list">${shelf.map(row).join("")}</ul>
     </section>
     <section class="store-shelf">
-      <h2 class="store-shelf-title">Playground <span class="store-dev">In development</span></h2>
+      <h2 class="store-shelf-title">Playground</h2>
       <div class="term is-placeholder">
         <div class="term-bar"><span class="term-lights" aria-hidden="true"><i></i><i></i><i></i></span></div>
         <div class="term-body"><div class="term-out is-dim">The playground is in development. Soon you can try the inferlets you switch on right here.</div></div>
