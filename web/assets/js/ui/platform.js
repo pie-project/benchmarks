@@ -67,7 +67,8 @@ window.Pie = window.Pie || {};
 
   const tip = (mac, model, metric, c) => {
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
-    return [`${names().model(model)} on ${macName(mac)}`, `${metric.label}, single request`,
+    const gap = Math.abs(c.gain) < EVEN ? "Within 2%: even" : `${names().engine(c.pie.engine)} ${Math.abs(Math.round(c.gain * 100))}% ${c.gain > 0 ? "faster" : "slower"} than the fastest other engine`;
+    return [`${names().model(model)} on ${macName(mac)}`, `${metric.label}, single request · ${gap}`,
       ...order.map((r) => `${names().engine(r.engine)}  ${value(r[metric.key], metric.unit)}${r === c.best ? "  (fastest other)" : ""}`)].join("\n");
   };
 
@@ -186,18 +187,18 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="platform-bar">
-          <div class="view-toggle" role="group" aria-label="Metric">
+          <span class="platform-bar-side"></span>
+          <div class="view-toggle platform-switch" role="group" aria-label="Metric">
             ${METRICS.map((m) => `<button type="button" class="${m === metric ? "is-active" : ""}" data-metric="${m.id}" aria-pressed="${m === metric}">${m.label}</button>`).join("")}
           </div>
-          <span class="platform-key is-ahead">${ARROW(true)}${esc(names().engine(base))} faster</span>
-          <span class="platform-key is-behind">${ARROW(false)}${esc(names().engine(base))} slower</span>
-          <span class="platform-key"><i>≈</i>Within 2%</span>
-          <span class="platform-key">${NOFIT}Doesn't fit</span>
-          <span class="platform-summary">${cells.length ? `Faster in ${ahead} of ${cells.length} comparisons. Median ${Math.abs(median) < EVEN ? "even" : `${Math.abs(Math.round(median * 100))}% ${median > 0 ? "faster" : "slower"}`}.` : ""}</span>
-          <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
+          <span class="platform-bar-side is-end">
+            <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
+          </span>
         </div>
         <div class="platform-scroll">
           <table class="platform-table${grouped ? " is-grouped" : ""}">${cols}<thead>${head}</thead><tbody>${body}</tbody></table>
+        </div>
+        <div class="platform-status">${cells.length ? `${esc(names().engine(base))} is faster in ${ahead} of ${cells.length} comparisons. Median ${Math.abs(median) < EVEN ? "even" : `${Math.abs(Math.round(median * 100))}% ${median > 0 ? "faster" : "slower"}`}.` : ""}
         </div>`;
       const macsShown = shownGroups.reduce((n, g) => n + g.macs.length, 0);
       return { macs: macsShown, models: models.length, metric };
