@@ -126,7 +126,10 @@ def llamacpp_generate(art, rendered: list[str], max_tokens: int, bos: str | None
     from huggingface_hub import hf_hub_download
 
     server = os.environ.get("LLAMA_SERVER_BIN") or "llama-server"
-    gguf = hf_hub_download(art.base_model, art.gguf_file)
+    from pie_evals.node.snapshots import gguf_shards
+
+    # a split model is every shard side by side; llama.cpp is handed the first
+    gguf = [hf_hub_download(art.base_model, f) for f in gguf_shards(art.gguf_file)][0]
     port = _free_port()
     cmd = [server, "--model", gguf, "--host", "127.0.0.1", "--port", str(port), "--ctx-size", str(4096 * PARALLEL),
            "--parallel", str(PARALLEL), "--n-gpu-layers", "all", "--flash-attn", "on"]

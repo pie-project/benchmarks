@@ -74,6 +74,9 @@ suites:
   targeted:
     max_jobs_per_platform: 20
     enforce_budget: false
+    exclude:
+      # every other engine runs its own arm, never pie's checkpoint (mlx-lm would measure the MLX one twice)
+      - {not_engine: pie, baseline: false}
     include:
       - engine: pie
         baseline: false   # an arm is another engine's copy of the weights; pie has its own
@@ -83,6 +86,7 @@ suites:
         os: macos
         workload: [control-aa, ss-128-64, ss-512-256, lc-1k-128, lc-2k-128, c8, c32]
       - engine: [mlxlm, llamacpp]
+        baseline: true
         program: text-completion-bench
         artifact_kind: full
         tp: 1
