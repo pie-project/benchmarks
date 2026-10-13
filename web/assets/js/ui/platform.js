@@ -165,7 +165,7 @@ window.Pie = window.Pie || {};
         }).join("")}</tr>`;
       }).join("")).join("");
 
-      const ahead = cells.filter((g) => g >= 0).length;
+      const ahead = cells.filter((g) => g >= EVEN).length;
       const sortedGains = [...cells].sort((a, b) => a - b);
       const median = sortedGains.length ? sortedGains[sortedGains.length >> 1] : null;
       const arrow = (key) => (sortKey === key ? `<span class="column-sort">${dir > 0 ? "↑" : "↓"}</span>` : "");
@@ -190,7 +190,7 @@ window.Pie = window.Pie || {};
           <span class="platform-key is-behind">${ARROW(false)}${esc(names().engine(base))} slower</span>
           <span class="platform-key"><i>≈</i>Within 2%</span>
           <span class="platform-key">${NOFIT}Doesn't fit</span>
-          <span class="platform-summary">${cells.length ? `${esc(names().engine(base))} ahead in <b>${ahead}</b> of ${cells.length} · median <b>${signed(median)}</b>` : ""}</span>
+          <span class="platform-summary">${cells.length ? `Faster in ${ahead} of ${cells.length} comparisons. Median ${Math.abs(median) < EVEN ? "even" : `${Math.abs(Math.round(median * 100))}% ${median > 0 ? "faster" : "slower"}`}.` : ""}</span>
           <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
         </div>
         <div class="platform-scroll">
