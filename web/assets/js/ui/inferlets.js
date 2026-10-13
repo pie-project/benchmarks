@@ -57,18 +57,15 @@ window.Pie = window.Pie || {};
     </label>`;
 
 
+  // an App Store row: icon, a name over one quiet line (workload · what it buys), one control on the right
   const row = (item) => `
-    <li class="store-row">
+    <li class="store-row" title="${esc(item.benefit)}">
       ${icon(item.kind, item.glyph, " is-large")}
       <div class="store-text">
         <span class="store-name">${esc(item.name)}</span>
-        <span class="store-workload">${esc(item.workload)}</span>
-        <span class="store-benefit">${esc(item.benefit)}</span>
+        <span class="store-workload">${esc(item.workload)} · <b>${esc(item.stat)}</b></span>
       </div>
-      <div class="store-side">
-        <span class="store-chip"${item.note ? ` title="${esc(item.note)}"` : ""}>${esc(item.stat)}</span>
-        ${toggle(item)}
-      </div>
+      ${item.example ? toggle(item) : '<span class="store-soon">Soon</span>'}
     </li>`;
 
   const content = `

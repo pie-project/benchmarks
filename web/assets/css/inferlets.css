@@ -206,3 +206,12 @@
 .term-line { display: flex; align-items: center; gap: 8px; padding: 6px 14px 12px; font: 12.5px var(--font-mono); cursor: text; }
 .term-prompt { color: #64d2ff; }
 .term-line input { flex: 1; border: 0; outline: 0; padding: 0; font: inherit; color: #f5f5f7; background: transparent; caret-color: #f5f5f7; }
+
+/* rows, settled: two lines of text, one control centered at the end, separators starting at the text */
+.store-row { position: relative; gap: 14px; padding: 12px 0; border-bottom: 0; }
+.store-row::after { content: ""; position: absolute; right: 0; bottom: 0; left: 70px; border-bottom: .5px solid var(--color-separator); }
+.store-text { gap: 2px; }
+.store-name { font-size: 15px; }
+.store-workload { font-size: 13px; }
+.store-workload b { font-weight: 600; color: var(--color-label); }
+.store-soon { flex: none; font-size: 13px; color: var(--color-label-tertiary); }
