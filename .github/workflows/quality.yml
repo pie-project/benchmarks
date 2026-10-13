@@ -95,6 +95,10 @@ jobs:
       - name: pie build at the tag
         # the scores are the tag's pie: its build replaces the Mac's resident one (cached per commit)
         run: .venv/bin/pie-evals-node build --pie-commit "${{ needs.start.outputs.commit }}" --features metal --pie-root "$PIE_ROOT"
+      - name: competitor releases
+        # the same competitor releases a benchmark run takes (pie-eval.yml: pins latest), so scores and speeds
+        # come from one mlx-lm and one llama.cpp (quality ran mlx-lm 0.31.3 beside a 0.32.0 benchmark)
+        run: .venv/bin/pie-evals pins set "$(.venv/bin/pie-evals pins latest)"
       - name: baseline engines
         run: |
           # the pins and locations of the benchmark's competitor setup (tier.yml): mlx-lm, llama.cpp, Splash
