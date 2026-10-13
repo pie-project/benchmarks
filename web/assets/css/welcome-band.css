@@ -10,3 +10,7 @@
 .welcome-inner > * { width: 100%; }
 
 .welcome-intro.is-second { padding-top: 32px; border-top: .5px solid var(--color-separator); }
+/* not yet available: the same pill, in light grey, not clickable */
+.welcome-cta.is-disabled,
+.welcome-cta.is-disabled:hover,
+.welcome-cta.is-disabled:active { color: var(--color-label-tertiary); background: var(--color-fill); cursor: default; }
