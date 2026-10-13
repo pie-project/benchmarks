@@ -31,6 +31,8 @@ window.Pie = window.Pie || {};
     const v = n >= 100 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 });
     return `${v} ${unit}`;
   };
+  const EVEN = 0.02;  // within ±2% the engines are even: noise, not a result
+  const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/></svg>';
   const signed = (p) => {
     const pct = Math.round(p * 100);
     return pct > 0 ? `+${pct}%` : pct < 0 ? `−${Math.abs(pct)}%` : "0%";
@@ -44,11 +46,6 @@ window.Pie = window.Pie || {};
     const best = others.reduce((a, b) => ((metric.higher ? b[metric.key] > a[metric.key] : b[metric.key] < a[metric.key]) ? b : a));
     const gain = metric.higher ? pie[metric.key] / best[metric.key] - 1 : best[metric.key] / pie[metric.key] - 1;
     return { pie, best, gain, all: [pie, ...others] };
-  };
-
-  const tint = (gain) => {
-    const strength = Math.min(Math.abs(gain) / 0.5, 1);
-    return `--strength: ${(0.14 + 0.46 * strength).toFixed(2)}`;
   };
 
   const tip = (mac, model, metric, c) => {
@@ -94,13 +91,16 @@ window.Pie = window.Pie || {};
         const c = cell(here, metric, base);
         if (c) {
           cells.push(c.gain);
-          return `<td><span class="platform-cell ${c.gain >= 0 ? "is-ahead" : "is-behind"}" style="${tint(c.gain)}" data-tip="${esc(tip(mac, model, metric, c))}">${signed(c.gain)}</span></td>`;
+          const kind = Math.abs(c.gain) < EVEN ? "is-even" : c.gain > 0 ? "is-ahead" : "is-behind";
+          const mark = kind === "is-even" ? "≈" : kind === "is-ahead" ? "▲" : "▼";
+          const text = kind === "is-even" ? "0%" : signed(c.gain).replace(/^[+−]/, "");
+          return `<td><span class="platform-cell ${kind}" data-tip="${esc(tip(mac, model, metric, c))}"><i>${mark}</i>${text}</span></td>`;
         }
         const needs = noFit[mac]?.[model]?.[base];
         // why there is nothing: too big, or the reason the results table gives for pie's row
         const own = snapshot.find((r) => r.hardware === mac && r.model === model && r.engine === base);
         const why = needs ? `Doesn't fit: needs about ${Math.round(needs)} GB` : own?.note || "No data yet";
-        return `<td><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(`${names().model(model)} on ${macName(mac)}\n${why}`)}">${needs ? "Doesn't fit" : "–"}</span></td>`;
+        return `<td><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(`${names().model(model)} on ${macName(mac)}\n${why}`)}">${needs ? NOFIT : "–"}</span></td>`;
       }).join("")}</tr>`).join("")).join("");
 
       const ahead = cells.filter((g) => g >= 0).length;
@@ -117,9 +117,10 @@ window.Pie = window.Pie || {};
           <div class="view-toggle" role="group" aria-label="Metric">
             ${METRICS.map((m) => `<button type="button" class="${m === metric ? "is-active" : ""}" data-metric="${m.id}" aria-pressed="${m === metric}">${m.label}</button>`).join("")}
           </div>
-          <span class="platform-key is-ahead"><i></i>${esc(names().engine(base))} ahead</span>
-          <span class="platform-key is-behind"><i></i>${esc(names().engine(base))} behind</span>
-          <span class="platform-key"><i class="is-dash">–</i>No data</span>
+          <span class="platform-key is-ahead"><i>▲</i>${esc(names().engine(base))} faster</span>
+          <span class="platform-key is-behind"><i>▼</i>${esc(names().engine(base))} slower</span>
+          <span class="platform-key"><i>≈</i>Within 2%</span>
+          <span class="platform-key">${NOFIT}Doesn't fit</span>
           <span class="platform-summary">${cells.length ? `${esc(names().engine(base))} ahead in <b>${ahead}</b> of ${cells.length} · median <b>${signed(median)}</b>` : ""}</span>
         </div>
         <div class="platform-scroll">
