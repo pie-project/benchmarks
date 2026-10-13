@@ -9,8 +9,10 @@ default:
       value: null
       rationale: Splash default, sized automatically within its memory budget.
     server_extra:
-      value: []
-      rationale: Extra `splash serve` flags; none means Splash as shipped, DFlash2 drafting and INT8 KV included.
+      value: ["--kv-format", "bf16"]
+      rationale: >
+        Splash as shipped (DFlash2 drafting included) but with its KV cache in bf16, the precision pie
+        keeps its KV in; Splash's default int8 KV would compare different cache precisions.
     flush_cache:
       value: true
       rationale: Single stream prefill must not be a prefix cache hit; the client shuffles each prompt.
