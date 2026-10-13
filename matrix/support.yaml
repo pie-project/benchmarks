@@ -122,6 +122,13 @@ unsupported:
     reason: "pie has no Gemma 4 E2B deployment"
   - when: {engine: pie, artifact: gemma-4-e4b-mlx4}
     reason: "pie serves Gemma 4 E4B only at bf16 (gemma4-e4b-bf16-kv-bf16), not at 4-bit"
+  # llama.cpp boots one server for the 1- and 32-stream rows; Gemma 4's per-token KV is large (sliding window and all)
+  - when: {engine: llamacpp, artifact: gemma-4-12b-llamacpp, platform: m2-16g}
+    reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 12B's weights that passes the ~10.7 GB a 16 GB Mac's GPU can use (Metal out of memory, targeted 38340671574)"
+  - when: {engine: llamacpp, artifact: gemma-4-12b-llamacpp, platform: m3-16g}
+    reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 12B's weights that passes the ~10.7 GB a 16 GB Mac's GPU can use (Metal out of memory, targeted 38340671574)"
+  - when: {engine: llamacpp, artifact: gemma-4-12b-llamacpp, platform: m5-16g}
+    reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 12B's weights that passes the ~10.7 GB a 16 GB Mac's GPU can use (Metal out of memory, targeted 38340671574)"
   - when: {program_category: diffusion, engine: vllm}
     reason: "not an LLM serving workload"
   - when: {program_category: diffusion, engine: sglang}
