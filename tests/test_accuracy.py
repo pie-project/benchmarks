@@ -404,7 +404,7 @@ def test_a_cached_reference_never_loads_beside_the_engine(tmp_path, monkeypatch)
     import pie_evals.node.accuracy.reference as reference
 
     cache = ReferenceCache(tmp_path / "refcache")
-    cache.put("rev", "greedy", [1, 2, 3], 4, np.asarray([5, 6, 7, 8]))
+    cache.put("rev", "argmax", [1, 2, 3], 4, np.asarray([5, 6, 7, 8]))
     loads, closes = [], []
 
     class Loaded:
@@ -423,3 +423,45 @@ def test_a_cached_reference_never_loads_beside_the_engine(tmp_path, monkeypatch)
     assert cache.greedy(ref, "rev", [4], 2) == [9, 9]
     ref.close()
     assert loads == ["hf"] and closes == [True]
+
+
+def test_a_reply_cached_by_the_eos_masking_reference_is_read_again(tmp_path, monkeypatch):
+    """Replies cached as "greedy" came from `generate(min_new_tokens=...)`,
+    which masked the eos ids; they are not reused."""
+    import pie_evals.node.accuracy.reference as reference
+
+    cache = ReferenceCache(tmp_path / "refcache")
+    cache.put("rev", "greedy", [1, 2, 3], 2, np.asarray([5, 6]))
+
+    class Loaded:
+        def greedy(self, ids, n):
+            return [7] * n
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(reference, "load_reference", lambda kind, snap, **kw: Loaded())
+    assert cache.greedy(LazyReference("hf", tmp_path), "rev", [1, 2, 3], 2) == [7, 7]
+
+
+def test_the_hf_reference_writes_the_end_of_turn_it_ranks_first():
+    """gemma-4's turn ends on an eos id: the reference writes it where the
+    model ranks it first and runs on past it, as the engine under ignore_eos."""
+    torch = pytest.importorskip("torch")
+    from types import SimpleNamespace
+
+    from pie_evals.node.accuracy.reference import HFReference
+
+    eos, vocab = 3, 8
+    script = [5, eos, 6, 7]
+
+    class Model:
+        def __call__(self, input_ids, past_key_values=None, use_cache=True):
+            step = 0 if past_key_values is None else past_key_values + 1
+            logits = torch.zeros(1, input_ids.shape[1], vocab)
+            logits[0, -1, script[step]] = 1.0
+            return SimpleNamespace(logits=logits, past_key_values=step)
+
+    ref = object.__new__(HFReference)
+    ref.torch, ref.device, ref.model = torch, "cpu", Model()
+    assert ref.greedy([1, 2], 4) == [5, eos, 6, 7]
