@@ -8,6 +8,8 @@ window.Pie = window.Pie || {};
     releasePicker: document.getElementById("release-picker"),
     releaseValue: document.getElementById("release-value"),
     suitePicker: document.getElementById("suite-picker"),
+    metricPicker: document.getElementById("metric-picker"),
+    metricValue: document.getElementById("metric-value"),
     suiteValue: document.getElementById("suite-value"),
     themeToggle: document.getElementById("theme-toggle"),
     sidebarToggle: document.getElementById("sidebar-toggle"),
