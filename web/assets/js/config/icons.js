@@ -3,6 +3,7 @@ window.Pie = window.Pie || {};
 Pie.icons = {
   inferlets: '<path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
   welcome: '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+  all_hardware: '<rect x="3" y="4" width="7" height="7" rx="1.4"/><rect x="14" y="4" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>',
   mac: '<rect x="4" y="5" width="16" height="11" rx="1.6"/><path d="M2 19h20"/>',
   overview: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   results: '<path d="M4 5h16M4 12h16M4 19h16"/>',
