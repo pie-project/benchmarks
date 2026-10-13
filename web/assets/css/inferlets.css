@@ -274,3 +274,4 @@
 #inferlets .store-tile .store-switch { background: rgba(255, 255, 255, .28); }
 #inferlets .store-tile .store-toggle input:checked + .store-switch { background: rgba(255, 255, 255, .95); }
 #inferlets .store-tile .store-toggle input:checked + .store-switch::after { background: var(--c2); box-shadow: none; }
+#inferlets .term.is-placeholder .term-body { min-height: 240px; }
