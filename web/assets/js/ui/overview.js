@@ -473,27 +473,7 @@ window.Pie = window.Pie || {};
       <text class="mini-value ${kind}" x="${cx}" y="${cy + 4}" text-anchor="middle">${text}</text>`;
   };
 
-  // quality as bars: a row per model, each task's score per engine, the picked engine in blue
   const TASK_NAMES = { gsm8k: "GSM8K", ifeval: "IFEval", mmlu: "MMLU", arc: "ARC", math500: "MATH-500" };
-  const qualityBars = (rows, models, engines) => {
-    const order = [base, ...engines];
-    const tasks = Object.keys(TASK_NAMES).filter((t) => rows.some((r) => r.task === t));
-    const body = models.map((model) => {
-      const mine = rows.filter((r) => r.model === model);
-      const groups = tasks.map((task) => {
-        const lines = order.map((engine) => ({ engine, r: mine.find((x) => x.engine === engine && x.task === task) })).filter((x) => x.r);
-        if (!lines.length) return "";
-        return `<div class="bars-group"><div class="bars-head">${esc(TASK_NAMES[task])}</div>${lines.map(({ engine, r }) => `
-          <div class="bars-line${engine === base ? " is-primary" : ""}" data-tip="${esc(`${names().model(model)} · ${TASK_NAMES[task]}\n${names().engine(engine)}: ${(r.score * 100).toFixed(1)}% (n=${r.n}${r.ci_low != null ? `, 95% ${(r.ci_low * 100).toFixed(0)}–${(r.ci_high * 100).toFixed(0)}%` : ""})`)}">
-            <span class="bars-name">${esc(names().engine(engine))}</span>
-            <span class="bars-track"><span class="bars-fill" style="width: ${(100 * r.score).toFixed(1)}%"></span></span>
-            <span class="bars-value">${Math.round(r.score * 100)}%</span>
-          </div>`).join("")}</div>`;
-      }).join("");
-      return `<div class="quality-row"><div class="bars-label">${esc(names().model(model))}</div><div class="quality-tasks">${groups}</div></div>`;
-    }).join("");
-    return `<div class="bars-table quality-bars">${body}</div>`;
-  };
 
   // where each model lands on the accuracy scale: its mean over the benchmarks, the picked engine's scores
   const qualityRanking = (rows, models) => {
@@ -515,44 +495,12 @@ window.Pie = window.Pie || {};
     return `<div class="rank-chart" role="img" aria-label="Models ranked by mean accuracy">${columns}</div>`;
   };
 
-  const qualityTable = (release, view = "bars") => {
+  const qualityTable = (release) => {
     const rows = Pie.store.qualitySnapshot(release).filter((r) => typeof r.score === "number");
-    const pieRows = rows.filter(isPie);
-    if (!pieRows.length) return "";
-    const engineOrder = Pie.store.tables.engines.map((e) => e.id);
-    const engines = [...new Set(rows.filter((r) => !isPie(r)).map((r) => r.engine))]
-      .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
     const modelOrder = Pie.store.tables.models.map((m) => m.id);
-    const models = [...new Set(pieRows.map((r) => r.model))].sort((a, b) => modelOrder.indexOf(a) - modelOrder.indexOf(b));
-    if (!engines.length || !models.length) return "";
-    const mid = CELL / 2;
-    const pct = (x) => `${(x * 100).toFixed(0)}%`;
-    const head = `<div class="heat-row heat-head-row" role="row"><div role="columnheader"></div>${engines.map((engine) =>
-      `<div class="heat-head" role="columnheader">${esc(names().engine(engine))}</div>`).join("")}</div>`;
-    const body = models.map((model) => {
-      const cells = engines.map((engine) => {
-        const pairs = pieRows.filter((p) => p.model === model).map((p) => [p, rows.find((r) =>
-          r.engine === engine && r.model === model && r.task === p.task)]).filter(([, o]) => o);
-        const title = `${names().model(model)}: ${baseName()} vs ${names().engine(engine)}`;
-        if (!pairs.length) {
-          return `<div class="heat-cell" role="cell" data-tip="${esc(`${title}\nno score yet`)}">
-            ${cellSvg(noFitMark(mid, mid))}</div>`;
-        }
-        const same = pairs.filter(([p, o]) => (p.ci_high ?? p.score) >= (o.ci_low ?? o.score));
-        const tip = [title, ...pairs.map(([p, o]) =>
-          `${p.task}: ${baseName()} ${pct(p.score)}, ${names().engine(engine)} ${pct(o.score)}${same.includes(pairs.find((x) => x[0] === p)) ? "" : `  (${baseName()} lower)`}`)].join("\n");
-        return `<div class="heat-cell" role="cell" data-tip="${esc(tip)}">${cellSvg(qualityMark(mid, mid, same.length === pairs.length, `${same.length}/${pairs.length}`))}</div>`;
-      }).join("");
-      return `<div class="heat-row" role="row"><div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>${cells}</div>`;
-    }).join("");
-    const switcher = viewToggle("qualityView", view, [["ranking", "Overall"], ["bars", "Detailed"]]);
-    if (view === "ranking") {
-      return section("Quality", "Accuracy on standard benchmarks, engine by engine", qualityRanking(rows, models), switcher);
-    }
-    return section("Quality", "Accuracy on standard benchmarks, engine by engine", qualityBars(rows, models, engines), switcher);
-    return section("Quality", "Accuracy on standard benchmarks, engine by engine", `
-      <div class="heatmap"><div class="heat-table" role="table" aria-label="pie quality against each engine"
-        style="--engines: ${engines.length}">${head}${body}</div></div>`, switcher);
+    const models = [...new Set(rows.map((r) => r.model))].sort((a, b) => modelOrder.indexOf(a) - modelOrder.indexOf(b));
+    if (!models.length) return "";
+    return section("Quality", "Average accuracy across standard benchmarks, best first", qualityRanking(rows, models));
   };
 
   const figure = (model, rows) => {
@@ -814,7 +762,7 @@ window.Pie = window.Pie || {};
           ${decode.length
             ? standSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
             : `<div class="overview-none">${all.some((row) => row.workload === workload) ? `No ${esc(baseName())} runs on this Mac yet.` : `No results for ${esc(workloadLabel)} yet.`}</div>`}
-          ${qualityTable(state.release, state.overview.qualityView || "bars")}
+          ${qualityTable(state.release)}
           ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
         </div>`;
       return shown.length;

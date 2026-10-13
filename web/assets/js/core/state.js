@@ -2,7 +2,7 @@ window.Pie = window.Pie || {};
 
 Pie.state = {
   table: "welcome",
-  overview: { hardware: null, workload: "single", engine: "pie", heatMac: null, standMac: null, model: null, macsView: "rings", modelsView: "rings", qualityView: "bars" },
+  overview: { hardware: null, workload: "single", engine: "pie", heatMac: null, standMac: null, model: null, macsView: "rings", modelsView: "rings" },
   release: "main",
   query: "",
   filters: {},
