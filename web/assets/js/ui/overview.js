@@ -360,9 +360,9 @@ window.Pie = window.Pie || {};
   };
 
   // a section's view: rings of the picked engine against each other, or bars of every engine's tok/s
-  const viewToggle = (key, current) => `
+  const viewToggle = (key, current, options = [["rings", "Rings"], ["bars", "Bars"]]) => `
     <div class="view-toggle" role="group" aria-label="View">
-      ${[["rings", "Rings"], ["bars", "Bars"]].map(([id, label]) =>
+      ${options.map(([id, label]) =>
         `<button type="button" class="${current === id ? "is-active" : ""}" data-view-key="${key}" data-view="${id}" aria-pressed="${current === id}">${label}</button>`).join("")}
     </div>`;
   const tools = (...parts) => `<div class="section-tools">${parts.join("")}</div>`;
@@ -495,6 +495,26 @@ window.Pie = window.Pie || {};
     return `<div class="bars-table quality-bars">${body}</div>`;
   };
 
+  // where each model lands on the accuracy scale: its mean over the benchmarks, the picked engine's scores
+  const qualityRanking = (rows, models) => {
+    const ranked = models.map((model) => {
+      const mine = rows.filter((r) => r.model === model && isPie(r));
+      const pool = mine.length ? mine : rows.filter((r) => r.model === model);
+      const mean = pool.reduce((sum, r) => sum + r.score, 0) / pool.length;
+      return { model, mean, pool };
+    }).filter((x) => x.pool.length).sort((a, b) => b.mean - a.mean);
+    const columns = ranked.map(({ model, mean, pool }) => {
+      const tip = [names().model(model), `Mean accuracy ${(mean * 100).toFixed(1)}%`,
+        ...pool.map((r) => `${TASK_NAMES[r.task] || r.task}: ${(r.score * 100).toFixed(0)}%`)].join("\n");
+      return `<div class="rank-col" data-tip="${esc(tip)}">
+        <span class="rank-value">${Math.round(mean * 100)}%</span>
+        <span class="rank-bar"><span class="rank-fill" style="height: ${(mean * 100).toFixed(1)}%"></span></span>
+        <span class="rank-name">${esc(names().model(model))}</span>
+      </div>`;
+    }).join("");
+    return `<div class="rank-chart" role="img" aria-label="Models ranked by mean accuracy">${columns}</div>`;
+  };
+
   const qualityTable = (release, view = "bars") => {
     const rows = Pie.store.qualitySnapshot(release).filter((r) => typeof r.score === "number");
     const pieRows = rows.filter(isPie);
@@ -525,10 +545,11 @@ window.Pie = window.Pie || {};
       }).join("");
       return `<div class="heat-row" role="row"><div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>${cells}</div>`;
     }).join("");
-    const switcher = viewToggle("qualityView", view);
-    if (view === "bars") {
-      return section("Quality", "Accuracy on standard benchmarks, engine by engine", qualityBars(rows, models, engines), switcher);
+    const switcher = viewToggle("qualityView", view, [["ranking", "Overall"], ["bars", "Detailed"]]);
+    if (view === "ranking") {
+      return section("Quality", "Accuracy on standard benchmarks, engine by engine", qualityRanking(rows, models), switcher);
     }
+    return section("Quality", "Accuracy on standard benchmarks, engine by engine", qualityBars(rows, models, engines), switcher);
     return section("Quality", "Accuracy on standard benchmarks, engine by engine", `
       <div class="heatmap"><div class="heat-table" role="table" aria-label="pie quality against each engine"
         style="--engines: ${engines.length}">${head}${body}</div></div>`, switcher);
