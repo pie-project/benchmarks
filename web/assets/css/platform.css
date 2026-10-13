@@ -197,7 +197,7 @@
 .platform-table th.is-overall { border-right: .5px solid var(--color-separator); }
 .platform-table td.is-overall .platform-cell { font-weight: 600; }
 
-.platform-hide { margin-left: 8px; }
+.platform-bar .platform-hide { margin-left: 8px; font-size: 13px; }
 
 /* the platform column carries the sidebar's badge; machine rows need no mark of their own */
 .platform-group-name { gap: 8px; }
