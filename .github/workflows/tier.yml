@@ -131,6 +131,9 @@ jobs:
     # self-destruct fire at kill_minutes; the job outlives them by a margin so the records get uploaded
     # (nightly 35959142812: a flat 90 fired before the 120-minute watchdog and four shards left nothing)
     timeout-minutes: ${{ fromJSON(needs.expand.outputs.bench_timeout_minutes) }}
+    # a Mac's HF cache only holds benchmark checkpoints: when the disk runs short, drop the ones this job does not use
+    # (targeted 38340671574: the M4 Pro ran out of space mid-download and eight cells failed)
+    env: { PIE_EVALS_RECLAIM_HF: "1" }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
