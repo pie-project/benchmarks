@@ -129,6 +129,8 @@ unsupported:
     reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 12B's weights that passes the ~10.7 GB a 16 GB Mac's GPU can use (Metal out of memory, targeted 38340671574)"
   - when: {engine: llamacpp, artifact: gemma-4-12b-llamacpp, platform: m5-16g}
     reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 12B's weights that passes the ~10.7 GB a 16 GB Mac's GPU can use (Metal out of memory, targeted 38340671574)"
+  - when: {engine: llamacpp, artifact: gemma-4-31b-llamacpp, platform: m4-pro-48g}
+    reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 31B's 17.5 GB of weights that needs about 39 GB, past the ~38 GB a 48 GB Mac's GPU can use (Metal out of memory, 38376994039)"
   - when: {program_category: diffusion, engine: vllm}
     reason: "not an LLM serving workload"
   - when: {program_category: diffusion, engine: sglang}
