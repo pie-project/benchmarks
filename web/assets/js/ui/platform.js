@@ -15,10 +15,17 @@ window.Pie = window.Pie || {};
   ];
   let onChange = () => {};
 
+  // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
+  const APPLE = '<svg class="platform-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
+  const PLATFORMS = [
+    { id: "mac", label: "Apple", sub: "Mac", icon: APPLE, has: (hw) => hw.class === "mac" || hw.vendor === "Apple" },
+  ];
+  const platformOf = (hw) => PLATFORMS.find((p) => p.has(hw));
+
+  const chipName = (id) => String(Pie.store.index.hardware[id]?.name || id).replace(/^Apple\s+/, "");
   const macName = (id) => {
     const hw = Pie.store.index.hardware[id];
-    if (!hw) return id;
-    return `${String(hw.name).replace(/^Apple\s+/, "")}${hw.memory_gib ? ` ${hw.memory_gib} GB` : ""}`;
+    return hw ? `${chipName(id)}${hw.memory_gib ? ` ${hw.memory_gib} GB` : ""}` : id;
   };
   const value = (n, unit) => {
     const v = n >= 100 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 });
@@ -63,14 +70,26 @@ window.Pie = window.Pie || {};
       const base = Pie.engines.primary;
       const snapshot = Pie.store.snapshot(state.release).filter((r) => r.workload === "single");
       const rows = snapshot.filter(Pie.store.isMeasured);
-      const macs = Pie.store.tables.hardware.map((hw) => hw.id);
+      // a platform's own page lists its machines; All hardware lists every platform's, grouped
+      const only = Pie.schema[state.table]?.platform;
+      const groups = PLATFORMS.filter((p) => !only || p.id === only)
+        .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p).map((hw) => hw.id) }))
+        .filter((g) => g.macs.length);
+      const macs = groups.flatMap((g) => g.macs);
+      const grouped = !only;
       const query = state.query.trim().toLowerCase();
       const models = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id))
         .filter((id) => !query || names().model(id).toLowerCase().includes(query));
       const noFit = Pie.store.tables.no_fit || {};
 
       const cells = [];
-      const body = macs.map((mac) => `<tr><th class="platform-row" scope="row">${esc(macName(mac))}</th>${models.map((model) => {
+      const machine = (mac, platform) => {
+        const hw = Pie.store.index.hardware[mac];
+        return `<th class="platform-row" scope="row">${platform.icon}<span>${esc(chipName(mac))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</th>`;
+      };
+      const groupCell = (g) => `<th class="platform-group" scope="rowgroup" rowspan="${g.macs.length}">
+        <span class="platform-group-name">${g.platform.icon}${esc(g.platform.label)}</span><span class="platform-group-sub">${esc(g.platform.sub)}</span></th>`;
+      const body = groups.map((g) => g.macs.map((mac, i) => `<tr${i === 0 ? ' class="is-group-start"' : ""}>${grouped && i === 0 ? groupCell(g) : ""}${machine(mac, g.platform)}${models.map((model) => {
         const here = rows.filter((r) => r.hardware === mac && r.model === model);
         const c = cell(here, metric, base);
         if (c) {
@@ -82,12 +101,12 @@ window.Pie = window.Pie || {};
         const own = snapshot.find((r) => r.hardware === mac && r.model === model && r.engine === base);
         const why = needs ? `Doesn't fit: needs about ${Math.round(needs)} GB` : own?.note || "No data yet";
         return `<td><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(`${names().model(model)} on ${macName(mac)}\n${why}`)}">${needs ? "Doesn't fit" : "–"}</span></td>`;
-      }).join("")}</tr>`).join("");
+      }).join("")}</tr>`).join("")).join("");
 
       const ahead = cells.filter((g) => g >= 0).length;
       const sorted = [...cells].sort((a, b) => a - b);
       const median = sorted.length ? sorted[sorted.length >> 1] : null;
-      const head = `<tr><th class="platform-corner" scope="col">Mac</th>${models.map((model) => {
+      const head = `<tr>${grouped ? '<th class="platform-corner platform-group-head" scope="col">Platform</th>' : ""}<th class="platform-corner${grouped ? " is-second" : ""}" scope="col">Hardware</th>${models.map((model) => {
         const m = Pie.store.index.models[model] || {};
         const sub = [m.family, m.params_b ? `${m.params_b}B` : ""].filter(Boolean).join(" · ");
         return `<th scope="col"><span class="platform-model">${esc(names().model(model))}</span><span class="platform-sub">${esc(sub)}</span></th>`;
@@ -104,7 +123,7 @@ window.Pie = window.Pie || {};
           <span class="platform-summary">${cells.length ? `${esc(names().engine(base))} ahead in <b>${ahead}</b> of ${cells.length} · median <b>${signed(median)}</b>` : ""}</span>
         </div>
         <div class="platform-scroll">
-          <table class="platform-table"><thead>${head}</thead><tbody>${body}</tbody></table>
+          <table class="platform-table${grouped ? " is-grouped" : ""}"><thead>${head}</thead><tbody>${body}</tbody></table>
         </div>`;
       return { macs: macs.length, models: models.length, metric };
     },
