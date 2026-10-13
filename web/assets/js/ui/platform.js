@@ -126,11 +126,13 @@ window.Pie = window.Pie || {};
         const gains = models.map((model) => grid[mac][model].c?.gain).filter((g) => g !== undefined).sort((a, b) => a - b);
         return gains.length ? gains[gains.length >> 1] : null;
       };
-      const sortKey = p.sort?.key || "name";
+      // no sort: the machines in the catalog's order, no arrow anywhere
+      const sortKey = p.sort?.key || null;
       const dir = p.sort?.dir || 1;
       const order = (list) => {
         const named = [...list];
-        if (sortKey === "name") return dir > 0 ? named : named.reverse();
+        if (!sortKey) return named;
+        if (sortKey === "name") return named.sort((a, b) => dir * macName(a).localeCompare(macName(b), undefined, { numeric: true }));
         const val = (mac) => (sortKey === "overall" ? overall(mac) : grid[mac][sortKey]?.c?.gain ?? null);
         // empties sink to the bottom whichever way the column sorts
         return named.sort((a, b) => (val(a) === null) - (val(b) === null) || dir * ((val(a) ?? 0) - (val(b) ?? 0)));
@@ -214,12 +216,12 @@ window.Pie = window.Pie || {};
           onChange();
           return;
         }
-        // a header sorts by its column: again to flip; a new model column starts with pie's best lead on top
+        // a header cycles its column: ascending, then descending, then back to no sort
         const header = event.target.closest("[data-sort]");
         if (!header) return;
         const key = header.dataset.sort;
-        const now = state.platform.sort || { key: "name", dir: 1 };
-        state.platform.sort = now.key === key ? { key, dir: -now.dir } : { key, dir: key === "name" ? 1 : -1 };
+        const now = state.platform.sort;
+        state.platform.sort = now?.key !== key ? { key, dir: 1 } : now.dir > 0 ? { key, dir: -1 } : null;
         onChange();
       });
       element.addEventListener("pointermove", (event) => {
