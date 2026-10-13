@@ -493,8 +493,8 @@ def test_llamacpp_args(tmp_path, hf_cache, monkeypatch):
     assert Path(argv[1]) == OPENAI_SCRIPT
     # the GGUF repo ships no tokenizer -> --model is the base checkpoint
     assert flag_value(argv, "--model") == "Qwen/Qwen3-8B"
-    assert json.loads(flag_value(argv, "--extra-body")) == {"cache_prompt": False, "ignore_eos": True}
-    assert "--no-ignore-eos" in argv and "--ignore-eos" not in argv  # the length is pinned in the request body
+    assert json.loads(flag_value(argv, "--extra-body")) == {"cache_prompt": False}
+    assert "--no-ignore-eos" in argv and "--ignore-eos" not in argv  # stops at EOS, as every engine does
     assert "--chat" not in argv and "--no-flush-cache" not in argv
     # prefix shape asks for cache reuse and keeps its prompts as written
     eng = make(LlamacppEngine, art=art, workload=WORKLOADS["prefix-1k-x64"], python="/usr/bin/python3")
