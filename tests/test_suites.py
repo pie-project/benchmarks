@@ -1,0 +1,111 @@
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+from pie_evals.node.snapshots import gguf_shards
+from pie_evals.plan.matrix import Matrix, cannot_load
+from pie_evals.plan.suites import all_models, load_config, suite_models, suites
+
+ROOT = Path(__file__).resolve().parents[1]
+
+TIER1 = {"qwen3.8-flash-next", "qwen3.8-27b", "qwen3.6-35b-a3b", "qwen3.5-4b", "gemma-4-26b-a4b", "gemma-4-31b", "muse-glimmer-30b"}
+FULL = TIER1 | {"gemma-4-12b", "gemma-4-e2b", "gemma-4-e4b", "gpt-oss-20b", "qwen3.5-9b"}
+
+
+@pytest.fixture(scope="module")
+def matrix():
+    return Matrix.load(ROOT / "matrix")
+
+
+@pytest.fixture(scope="module")
+def config():
+    return load_config(ROOT / "config.json")
+
+
+@pytest.fixture(scope="module")
+def webdb():
+    sys.path.insert(0, str(ROOT / "tools"))
+    import webdb
+
+    return webdb
+
+
+def test_both_suites_name_only_competitor_arms_of_the_matrix(matrix, config):
+    for name, arms in suites(config).items():
+        assert arms, name
+        assert len(arms) == len(set(arms)), name
+        for aid in arms:
+            a = matrix.artifacts[aid]
+            assert a.baseline_of in matrix.artifacts and a.baseline_label, (name, aid)
+            assert cannot_load(matrix, aid.rsplit("-", 1)[1], a) is None, (name, aid)  # an arm in a suite can be run
+
+
+def test_the_full_suite_holds_the_targeted_one(config):
+    assert set(suite_models(config, "targeted")) <= set(suite_models(config, "full"))
+    assert all_models(config) == suite_models(config, "full")
+
+
+def test_suites_cover_their_models(config, webdb):
+    a2m, _ = webdb.artifact_to_model()
+    ids = webdb.suite_model_ids(config, a2m)
+    assert set(ids["targeted"]) == TIER1 and set(ids["full"]) == FULL
+
+
+def test_targeted_is_the_default_and_models_still_reads_as_targeted():
+    assert suite_models({"suites": {"targeted": ["a"], "full": ["a", "b"]}}) == ["a"]
+    old = {"models": ["x-llamacpp"]}
+    assert suite_models(old) == ["x-llamacpp"] and suite_models(old, "full") == []
+    with pytest.raises(ValueError):
+        suite_models(old, "nightly")
+
+
+def test_every_tier1_model_has_pie_llamacpp_and_mlxlm_arms(matrix, config, webdb):
+    a2m, _ = webdb.artifact_to_model()
+    arms = {}
+    for a in matrix.artifacts.values():
+        if a.baseline_of and a2m[a.id] in TIER1 and "targeted" in a.tiers:
+            arms.setdefault(a2m[a.id], set()).add(a.baseline_label)
+            pie = matrix.artifacts[a.baseline_of]
+            assert "targeted" in pie.tiers and pie.source_format != "gguf", a.id
+            if a2m[a.id] not in {"qwen3.8-27b", "qwen3.6-35b-a3b", "gemma-4-26b-a4b", "muse-glimmer-30b"}:
+                assert pie.pie_sku and not pie.pie_drafter and "dflash" not in pie.pie_sku, pie.id  # the plain row
+    assert set(arms) == TIER1
+    for model, labels in arms.items():
+        assert {"llama.cpp", "mlx-lm"} <= labels, model
+        assert ("Splash" in labels) == (model in {"qwen3.8-27b", "qwen3.6-35b-a3b"}), model
+
+
+def test_pie_unsupported_models_say_why(matrix):
+    for aid in ("gemma-4-12b-mlx4", "gemma-4-e2b-mlx4", "gemma-4-e4b-mlx4"):
+        assert cannot_load(matrix, "pie", matrix.artifacts[aid]), aid
+        assert cannot_load(matrix, "mlxlm", matrix.artifacts[aid.replace("-mlx4", "-mlxlm")]) is None
+    assert "qwen4_exp" in cannot_load(matrix, "mlxlm", matrix.artifacts["qwen3.8-flash-next-mlxlm"])
+    assert cannot_load(matrix, "mlxlm", matrix.artifacts["muse-glimmer-30b-mlxlm"])
+    assert cannot_load(matrix, "pie", matrix.artifacts["qwen3.5-4b-mlx4"]) is None
+
+
+def test_a_split_gguf_is_every_shard():
+    assert gguf_shards("Qwen3.5-4B-Q4_K_M.gguf") == ["Qwen3.5-4B-Q4_K_M.gguf"]
+    assert gguf_shards("UD-Q4_K_XL/M-UD-Q4_K_XL-00001-of-00003.gguf") == [
+        "UD-Q4_K_XL/M-UD-Q4_K_XL-00001-of-00003.gguf", "UD-Q4_K_XL/M-UD-Q4_K_XL-00002-of-00003.gguf", "UD-Q4_K_XL/M-UD-Q4_K_XL-00003-of-00003.gguf"]
+
+
+def test_the_cli_prints_a_suite(tmp_path):
+    (tmp_path / "config.json").write_text(json.dumps({"suites": {"targeted": ["a-llamacpp"], "full": ["a-llamacpp", "b-mlxlm"]}}))
+    base = [sys.executable, "-m", "pie_evals.cli", "--matrix", str(ROOT / "matrix"), "--store", str(tmp_path / "store"), "suite"]
+    run = lambda *a: subprocess.run(base + list(a), cwd=tmp_path, capture_output=True, text=True)  # noqa: E731
+    assert run().stdout.strip() == "a-llamacpp"
+    assert run("full").stdout.strip() == "a-llamacpp,b-mlxlm"
+    assert run("nightly").returncode != 0
+
+
+def test_the_site_lists_every_model_of_every_suite(config, webdb):
+    a2m, models = webdb.artifact_to_model()
+    ids = webdb.suite_model_ids(config, a2m)
+    catalog = {m["id"] for m in models if m["id"] in {i for v in ids.values() for i in v}}
+    assert catalog == FULL
+    arms = webdb.quality_arms(config)
+    assert ("pie", "qwen3.8-flash-next-mlx4") in arms and ("llamacpp", "gpt-oss-20b-llamacpp") in arms

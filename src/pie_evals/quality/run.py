@@ -109,6 +109,13 @@ def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str =
     m = Matrix.load(matrix_dir)
     art = m.artifacts[artifact_id]
     engine = engine_for(art)
+    from pie_evals.plan.matrix import cannot_load
+
+    # an arm the matrix says its engine cannot load (pie has no deployment of it) has nothing to score
+    why = cannot_load(m, engine, art)
+    if why:
+        log(f"quality {art.id}: not scored, {why}")
+        return []
     # the weights: pie and mlx-lm read the MLX checkpoint, llama.cpp the GGUF (its tokenizer comes
     # from another repo), Splash fetches its own
     snapshot = tok_dir = None

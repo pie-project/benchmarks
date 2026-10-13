@@ -13,7 +13,8 @@ on:
     inputs:
       tag: { description: "release tag (0.5.2) or a custom name; empty: manual-<time>", required: false, default: "" }
       pie_commit: { description: "pie commit (empty: the tag's commit, or pie main)", required: false, default: "" }
-      artifacts: { description: "comma-separated artifact ids (empty: every arm of config.json's models, with its pie arm)", required: false, default: "" }
+      suite: { description: "config.json suite scored when no artifacts are given: targeted (Tier 1, what a release runs) or full", type: choice, options: [targeted, full], default: "targeted" }
+      artifacts: { description: "comma-separated artifact ids (empty: every arm of the suite, with its pie arm)", required: false, default: "" }
       tasks: { description: "comma-separated tasks (gsm8k, ifeval, mmlu, arc, math500)", required: false, default: "gsm8k,ifeval,mmlu,arc,math500" }
       n: { description: "questions per task", required: false, default: "100" }
       mac: { description: "Mac id, or auto: the fast Mac (m5-max-128g, then m5-max-64g) with an idle runner", type: choice, options: [auto, m5-max-128g, m5-max-64g], default: "auto" }
@@ -38,6 +39,8 @@ jobs:
           REPO: ${{ github.repository }}
           COMMIT: ${{ github.event.client_payload.pie_commit || github.event.inputs.pie_commit }}
           TAG: ${{ github.event.client_payload.tag || github.event.inputs.tag }}
+          # a release dispatch scores the targeted suite
+          SUITE: ${{ github.event.inputs.suite || 'targeted' }}
           IN_ARTIFACTS: ${{ github.event.inputs.artifacts }}
           IN_MAC: ${{ github.event.inputs.mac }}
         run: |
@@ -53,8 +56,9 @@ jobs:
             COMMIT=$c
           fi
           [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::pie_commit must be a full sha, got '$COMMIT'"; exit 1; }
-          # every arm of the models in config.json, and the pie arm each one is compared with
-          want=$(jq -r '.models // [] | join(",")' config.json)
+          # every arm of the suite in config.json, and the pie arm each one is compared with
+          [[ "$SUITE" =~ ^(targeted|full)$ ]] || { echo "::error::bad suite '$SUITE'"; exit 1; }
+          want=$(.venv/bin/pie-evals suite "$SUITE")
           artifacts=$(.venv/bin/python -c "import sys,yaml; want=set(filter(None,sys.argv[1].split(','))); arts=yaml.safe_load(open('matrix/models.yaml'))['artifacts']; pie={a.get('baseline_of') for a in arts if a['id'] in want}; print(','.join(a['id'] for a in arts if a['id'] in want or a['id'] in pie or (a['id'] not in pie and a.get('baseline_of') in want)))" "$want")
           # an explicit list is scored as given, so a run split across Macs does not repeat the pie arms
           [ -n "$IN_ARTIFACTS" ] && artifacts=$IN_ARTIFACTS
@@ -68,7 +72,7 @@ jobs:
             done
           fi
           skip=false; [ -n "$TAG" ] || skip=true; [ -n "$artifacts" ] || skip=true
-          echo "tag=$TAG tag_kind=$kind commit=$COMMIT mac=$mac artifacts=$artifacts skip=$skip" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "tag=$TAG tag_kind=$kind commit=$COMMIT suite=$SUITE mac=$mac artifacts=$artifacts skip=$skip" | tee -a "$GITHUB_STEP_SUMMARY"
           { echo "tag=$TAG"; echo "tag_kind=$kind"; echo "commit=$COMMIT"; echo "artifacts=$artifacts"; echo "mac=$mac"; echo "skip=$skip"; } >> "$GITHUB_OUTPUT"
 
   quality:

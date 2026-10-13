@@ -132,12 +132,15 @@ def hf_snapshot_file(repo_id: str, file_name: str, revision: str | None = None) 
     snap = hf_snapshot_dir(repo_id, revision)
     if snap is None:
         return None
+    # the first shard of a split model stays at its name: llama.cpp finds the others beside it,
+    # and a hub cache's blobs are named by hash
+    split = "-00001-of-" in file_name
     direct = snap / file_name
     if direct.is_file():
-        return direct.resolve()
+        return direct if split else direct.resolve()
     # GGUF repos sometimes nest quant files one directory down (Q4_K_M/...).
     hits = sorted(snap.rglob(Path(file_name).name))
-    return hits[0].resolve() if hits else None
+    return (hits[0] if split else hits[0].resolve()) if hits else None
 
 
 def serve_envelope(workloads: list[WorkloadSpec]) -> WorkloadSpec:

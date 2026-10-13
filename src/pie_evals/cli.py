@@ -61,6 +61,18 @@ def check(obj):
     sys.exit(1 if problems else 0)
 
 
+@main.command("suite")
+@click.argument("name", default="targeted")
+@click.option("--config", "config_path", default="config.json", show_default=True)
+def suite_cmd(name, config_path):
+    """Print the comma-separated arm ids of a suite in config.json (targeted or full)."""
+    from pie_evals.plan.suites import SUITES, load_config, suite_models
+
+    if name not in SUITES:
+        raise click.BadParameter(f"{name!r} is not one of {', '.join(SUITES)}", param_hint="NAME")
+    click.echo(",".join(suite_models(load_config(config_path), name)))
+
+
 @main.command("docs-only")
 def docs_only_cmd():
     """Read changed file paths from stdin; print true when all of them are docs or CI files."""

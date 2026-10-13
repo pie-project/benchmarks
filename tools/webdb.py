@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+from pie_evals.plan.suites import all_models, suites
 from pie_evals.quality.parity import rows as parity_rows
 from pie_evals.results.store import Store
 
@@ -42,6 +43,10 @@ ENGINE_META = {
 }
 METRICS = ["decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "ttft_ms_p99",
            "itl_ms_p50", "itl_ms_p99", "latency_ms_p50", "latency_ms_p99", "resident_gib", "load_s"]
+
+
+# families whose name does not say they route experts
+MOE_FAMILIES = {"gpt_oss", "qwen4_exp"}
 
 
 def load(name: str) -> dict:
@@ -73,7 +78,7 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
         active = re.search(r"a(\d+(?:\.\d+)?)b", name, re.I)
         row["params_b"] = float(sizes[0]) if sizes else None
         row["active_b"] = float(active.group(1)) if active else row["params_b"]
-        row["architecture"] = "MoE" if active or "moe" in (row["family"] or "") else "dense"
+        row["architecture"] = "MoE" if active or "moe" in (row["family"] or "") or row["family"] in MOE_FAMILIES else "dense"
         # one definition per model today, every expert resident: no SSD streaming. A streaming twin would fit smaller Macs.
         row["ssd_streaming"] = "Without" if row["architecture"] == "MoE" else "n/a"
         row["schemes"] = ", ".join(sorted(row["schemes"]))
@@ -149,11 +154,21 @@ QUALITY_TASKS = [
 ]
 
 
+def suite_model_ids(config: dict, a2m: dict[str, str]) -> dict[str, list[str]]:
+    """{suite: [model ids]}: the models each suite's arms (and the pie arms they stand beside) carry."""
+    arts = {a["id"]: a for a in load("models")["artifacts"]}
+    out = {}
+    for name, arms in suites(config).items():
+        ids = [a for aid in arms for a in (aid, arts.get(aid, {}).get("baseline_of")) if a in a2m]
+        out[name] = sorted({a2m[a] for a in ids})
+    return out
+
+
 def quality_arms(config: dict) -> list[tuple[str, str]]:
-    """(engine, artifact) for each competitor arm in config.json and the pie arm it is compared with."""
+    """(engine, artifact) for each competitor arm of any suite in config.json and the pie arm it is compared with."""
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     out: list[tuple[str, str]] = []
-    for aid in config["models"]:
+    for aid in all_models(config):
         eng = next((e for e in ("llamacpp", "mlxlm", "splash") if aid.endswith(f"-{e}") or f"-{e}-" in aid), None)
         if eng:
             out.append((eng, aid))
@@ -267,7 +282,7 @@ def unsupported_reasons(a2m: dict[str, str], config: dict, hardware_ids: list[st
     from pie_evals.schema import Tier
 
     m = Matrix.load(ROOT / "matrix")
-    wanted = set(config["models"])
+    wanted = set(all_models(config))
     pie_arts = {a.baseline_of for a in m.artifacts.values() if a.id in wanted and a.baseline_of}
     # every copy of a configured model counts, not only the configured arm: an arm left out of
     # config.json because its engine cannot load the model still carries that reason
@@ -387,7 +402,7 @@ def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: l
             if engine == "pie":
                 ids = [i for i, a in arts.items() if a2m.get(i) == model and a.get("source_format") == "mlx" and a.get("kind") != "miniature"]
             else:
-                ids = [i for i in config["models"] if i.endswith(f"-{engine}") and a2m.get(i) == model]
+                ids = [i for i in all_models(config) if i.endswith(f"-{engine}") and a2m.get(i) == model]
             sizes = [arts[i]["expected_gib"] for i in ids if arts.get(i, {}).get("expected_gib")]
             if sizes:
                 need[(model, engine)] = min(sizes) * factor
@@ -429,7 +444,9 @@ def main() -> None:
     config = json.loads((ROOT / "config.json").read_text())
     hardware_ids = config["machines"]
     mac_engines = [e for e in engines() if "macos" in e["os"]]
-    model_ids = sorted({a2m[a] for a in config["models"] if a in a2m})
+    # every model of every suite has its rows; the site's suite picker narrows them to one suite's
+    suite_ids = suite_model_ids(config, a2m)
+    model_ids = sorted({m for ids in suite_ids.values() for m in ids})
     engine_ids = [e["id"] for e in mac_engines]
     results, rmeta = results_by_tag(store, a2m, hardware_ids, engine_ids)
     scores, qmeta = quality_by_tag(store, a2m)
@@ -502,7 +519,7 @@ def main() -> None:
     stamps = [t if t.tzinfo else t.replace(tzinfo=ZoneInfo("UTC")) for t in stamps]
     updated_at = max(stamps).isoformat() if stamps else None
     db = {"updated_at": updated_at, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
-          "no_fit": misfits,
+          "no_fit": misfits, "suites": suite_ids,
           "hardware": hw_rows,
           "engines": mac_engines, "models": [m for m in models if m["id"] in model_ids],
           "workloads": workloads(), "quality_tasks": quality_tasks(), "quality": quality.get(order[0], []) if order else []}

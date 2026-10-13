@@ -11,12 +11,25 @@ everything on the shared volume.
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 from pie_evals.schema import ArtifactKind, ArtifactSpec
 
 WEIGHT_PATTERNS = ["*.json", "*.safetensors", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.py", "*.jinja"]
 TOKENIZER_PATTERNS = ["*.json", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.jinja"]
+
+_SPLIT = re.compile(r"-00001-of-(\d{5})\.gguf$")
+
+
+def gguf_shards(gguf_file: str) -> list[str]:
+    """Every file of a GGUF arm: the one named, or each shard of a split model when it names the
+    first (``...-00001-of-00004.gguf``; llama.cpp loads the rest from beside it)."""
+    m = _SPLIT.search(gguf_file)
+    if not m:
+        return [gguf_file]
+    n = int(m.group(1))
+    return [gguf_file[: m.start()] + f"-{i:05d}-of-{n:05d}.gguf" for i in range(1, n + 1)]
 
 
 def hf_cache_dir() -> Path:
@@ -53,7 +66,7 @@ def has_weights(snapshot: Path, artifact: ArtifactSpec) -> bool:
     carries its config.json and would be served: vLLM then boots into
     "Cannot find any model weights". ``exists`` follows the symlink."""
     if artifact.gguf_file:
-        return (snapshot / artifact.gguf_file).exists()
+        return all((snapshot / f).exists() for f in gguf_shards(artifact.gguf_file))
     return any(f.exists() for f in snapshot.glob("*.safetensors"))
 
 
@@ -97,7 +110,7 @@ def ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path | 
     log(f"download: {artifact.base_model}@{artifact.revision or 'main'} -> {hf_cache}")
     kw = {"revision": artifact.revision} if artifact.revision else {}
     if artifact.gguf_file:
-        kw["allow_patterns"] = ["*.json", artifact.gguf_file]
+        kw["allow_patterns"] = ["*.json", *gguf_shards(artifact.gguf_file)]
     else:
         kw["allow_patterns"] = WEIGHT_PATTERNS
     path = snapshot_download(artifact.base_model, cache_dir=str(hf_cache), token=os.environ.get("HF_TOKEN") or None, **kw)  # an empty secret must not become "Bearer "
