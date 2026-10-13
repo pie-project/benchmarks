@@ -46,7 +46,7 @@
     if (isPlatform) {
       const shown = Pie.platform.render(state);
       toolbar.render(state, 0, 0);
-      toolbar.elements.subtitle.textContent = shown.macs ? `pie vs the fastest other engine · ${shown.metric.label}, single request · ${shown.macs} machines × ${shown.models} models` : "";
+      toolbar.elements.subtitle.textContent = shown.macs ? `${shown.macs} ${shown.macs === 1 ? "machine" : "machines"}, ${shown.models} ${shown.models === 1 ? "model" : "models"}` : "";
     } else if (isOverview) {
       const models = overview.render(state);
       toolbar.render(state, 0, 0);
