@@ -43,6 +43,7 @@ window.Pie = window.Pie || {};
   };
   const EVEN = 0.02;  // within ±2% the engines are even: noise, not a result
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/></svg>';
+  const ARROW = (up) => `<svg class="platform-arrow" viewBox="0 0 10 12" aria-hidden="true"><path d="${up ? "M5 10.5V1.8M1.6 5.2 5 1.8l3.4 3.4" : "M5 1.5v8.7M1.6 6.8 5 10.2l3.4-3.4"}"/></svg>`;
   const signed = (p) => {
     const pct = Math.round(p * 100);
     return pct > 0 ? `+${pct}%` : pct < 0 ? `−${Math.abs(pct)}%` : "0%";
@@ -102,9 +103,9 @@ window.Pie = window.Pie || {};
         if (c) {
           cells.push(c.gain);
           const kind = Math.abs(c.gain) < EVEN ? "is-even" : c.gain > 0 ? "is-ahead" : "is-behind";
-          const mark = kind === "is-even" ? "≈" : kind === "is-ahead" ? "▲" : "▼";
+          const mark = kind === "is-even" ? "<i>≈</i>" : ARROW(kind === "is-ahead");
           const text = kind === "is-even" ? "0%" : signed(c.gain).replace(/^[+−]/, "");
-          return `<td><span class="platform-cell ${kind}" data-tip="${esc(tip(mac, model, metric, c))}"><i>${mark}</i>${text}</span></td>`;
+          return `<td><span class="platform-cell ${kind}" data-tip="${esc(tip(mac, model, metric, c))}">${mark}${text}</span></td>`;
         }
         const needs = noFit[mac]?.[model]?.[base];
         // why there is nothing: too big, or the reason the results table gives for pie's row
@@ -121,7 +122,7 @@ window.Pie = window.Pie || {};
         const maker = makerOf(model);
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
         const sub = [maker.name, size].filter(Boolean).join(" · ");
-        return `<th scope="col">${badge(maker)}<span class="platform-model">${esc(names().model(model))}</span><span class="platform-sub">${esc(sub)}</span></th>`;
+        return `<th scope="col"><span class="platform-col">${badge(maker)}<span><span class="platform-model">${esc(names().model(model))}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}</tr>`;
 
       element.innerHTML = `
@@ -129,8 +130,8 @@ window.Pie = window.Pie || {};
           <div class="view-toggle" role="group" aria-label="Metric">
             ${METRICS.map((m) => `<button type="button" class="${m === metric ? "is-active" : ""}" data-metric="${m.id}" aria-pressed="${m === metric}">${m.label}</button>`).join("")}
           </div>
-          <span class="platform-key is-ahead"><i>▲</i>${esc(names().engine(base))} faster</span>
-          <span class="platform-key is-behind"><i>▼</i>${esc(names().engine(base))} slower</span>
+          <span class="platform-key is-ahead">${ARROW(true)}${esc(names().engine(base))} faster</span>
+          <span class="platform-key is-behind">${ARROW(false)}${esc(names().engine(base))} slower</span>
           <span class="platform-key"><i>≈</i>Within 2%</span>
           <span class="platform-key">${NOFIT}Doesn't fit</span>
           <span class="platform-summary">${cells.length ? `${esc(names().engine(base))} ahead in <b>${ahead}</b> of ${cells.length} · median <b>${signed(median)}</b>` : ""}</span>
