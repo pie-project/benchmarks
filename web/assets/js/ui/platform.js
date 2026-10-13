@@ -90,13 +90,12 @@ window.Pie = window.Pie || {};
       const base = Pie.engines.primary;
       const snapshot = Pie.store.snapshot(state.release).filter((r) => r.workload === "single");
       const rows = snapshot.filter(Pie.store.isMeasured);
-      // a platform's own page lists its machines; All hardware lists every platform's, grouped
+      // a platform's own page lists its machines; All hardware lists every platform's, a header row each
       const only = Pie.schema[state.table]?.platform;
       const groups = PLATFORMS.filter((p) => !only || p.id === only)
         .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p).map((hw) => hw.id) }))
         .filter((g) => g.macs.length);
       const macs = groups.flatMap((g) => g.macs);
-      const grouped = !only;
       if (!macs.length) {
         const label = Pie.schema[state.table]?.label || "this platform";
         element.innerHTML = `<div class="platform-empty"><span class="sidebar-glyph" style="--tint: ${Pie.schema[state.table]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(state.table)}</span>
@@ -151,13 +150,14 @@ window.Pie = window.Pie || {};
         const hw = Pie.store.index.hardware[mac];
         return `<th class="platform-row" scope="row"><span>${esc(chipName(mac))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</th>`;
       };
-      const groupCell = (g) => `<th class="platform-group" scope="rowgroup" rowspan="${g.macs.length}">
-        <span class="platform-group-name">${badgeOf(g.platform.id)}${esc(g.platform.label)}</span><span class="platform-group-sub">${esc(g.platform.sub)}</span></th>`;
-      const body = shownGroups.map((g) => g.macs.map((mac, i) => {
+      // a platform heads its machines with a row across the table, as Finder heads a group
+      const groupRow = (g) => `<tr class="platform-group-row"><th colspan="${models.length + 2}" scope="rowgroup">
+        <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span></th></tr>`;
+      const body = shownGroups.map((g) => groupRow(g) + g.macs.map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
           : (() => { const n = number(o); return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(`${macName(mac)}\nMedian of ${models.filter((model) => grid[mac][model].c).length} models: ${signed(o)}`)}">${n.html}</span></td>`; })();
-        return `<tr${i === 0 ? ' class="is-group-start"' : ""}>${grouped && i === 0 ? groupCell(g) : ""}${machine(mac, g.platform)}${overallCell}${models.map((model) => {
+        return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
           if (c) {
@@ -173,8 +173,8 @@ window.Pie = window.Pie || {};
       const sortedGains = [...cells].sort((a, b) => a - b);
       const median = sortedGains.length ? sortedGains[sortedGains.length >> 1] : null;
       const arrow = (key) => (sortKey === key ? `<span class="column-sort">${dir > 0 ? "↑" : "↓"}</span>` : "");
-      const head = `<tr>${grouped ? '<th class="platform-corner platform-group-head" scope="col">Platform</th>' : ""}
-        <th class="platform-corner is-sortable${grouped ? " is-second" : ""}" scope="col" data-sort="name">Hardware${arrow("name")}</th>
+      const head = `<tr>
+        <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
         <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
         const m = Pie.store.index.models[model] || {};
         const maker = makerOf(model);
@@ -183,7 +183,7 @@ window.Pie = window.Pie || {};
         return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" title="Sort by ${esc(names().model(model))}">
           <span class="platform-col">${badge(maker)}<span><span class="platform-model">${esc(names().model(model))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}</tr>`;
-      const cols = `<colgroup>${grouped ? '<col class="col-group">' : ""}<col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}</colgroup>`;
+      const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}</colgroup>`;
 
       element.innerHTML = `
         <div class="platform-bar">
@@ -196,7 +196,7 @@ window.Pie = window.Pie || {};
           </span>
         </div>
         <div class="platform-scroll">
-          <table class="platform-table${grouped ? " is-grouped" : ""}">${cols}<thead>${head}</thead><tbody>${body}</tbody></table>
+          <table class="platform-table">${cols}<thead>${head}</thead><tbody>${body}</tbody></table>
         </div>
         <div class="platform-status">${cells.length ? `${esc(names().engine(base))} is faster in ${ahead} of ${cells.length} comparisons. Median ${Math.abs(median) < EVEN ? "even" : `${Math.abs(Math.round(median * 100))}% ${median > 0 ? "faster" : "slower"}`}.` : ""}
         </div>`;
