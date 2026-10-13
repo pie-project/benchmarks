@@ -227,3 +227,27 @@
   border-top: .5px solid var(--color-separator);
 }
 .platform-status:empty { display: none; }
+
+/* scrolling sideways keeps Platform, Hardware and Overall pinned; the models slide under them */
+.platform-table.is-grouped tbody th.platform-group,
+.platform-table.is-grouped thead th.platform-group-head { position: sticky; left: 0; z-index: 2; }
+.platform-table.is-grouped tbody th.platform-row,
+.platform-table.is-grouped thead th.is-second { position: sticky; left: 150px; z-index: 2; }
+.platform-table tbody th.platform-row,
+.platform-table thead th.platform-corner:not(.platform-group-head):not(.is-overall) { position: sticky; left: 0; z-index: 2; }
+.platform-table.is-grouped tbody th.platform-row,
+.platform-table.is-grouped thead th.is-second { left: 150px; }
+.platform-table td.is-overall,
+.platform-table th.is-overall { position: sticky; left: 190px; z-index: 2; background: var(--color-row); }
+.platform-table.is-grouped td.is-overall,
+.platform-table.is-grouped th.is-overall { left: 340px; }
+.platform-table thead th.platform-corner,
+.platform-table thead th.is-overall { z-index: 4; background: var(--color-table-header); }
+.platform-table tbody tr:hover td.is-overall,
+.platform-table tbody tr:hover th.platform-row { background: var(--color-row-hover); }
+/* the pinned header cells sit above the model heads sliding under them */
+.platform-table thead th.platform-corner.platform-corner { z-index: 5; }
+.platform-table.is-grouped thead th.platform-corner.is-second:not(.is-overall) { left: 150px; }
+.platform-table thead th.platform-corner:not(.platform-group-head):not(.is-overall),
+.platform-table thead th.platform-corner.platform-group-head,
+.platform-table thead th.platform-corner.is-overall { z-index: 5; background: var(--color-chrome); }
