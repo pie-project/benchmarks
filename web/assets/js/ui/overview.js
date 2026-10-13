@@ -98,7 +98,7 @@ window.Pie = window.Pie || {};
     "Across Macs": ["#5e5ce6", '<rect x="4" y="5" width="16" height="11" rx="1.6"/><path d="M9 20h6M12 16v4"/>'],
     "Across models": ["#bf5af2", '<path d="M12 4 4 8l8 4 8-4-8-4z"/><path d="m4 12 8 4 8-4"/><path d="m4 16 8 4 8-4"/>'],
     "By model": ["#30d158", '<path d="M5 19V9M10 19V5M15 19v-7M20 19v-4"/>'],
-    "Quality against each engine": ["#34c759", '<path d="m6 12.5 4 4 8-9"/>'],
+    "Quality": ["#34c759", '<path d="m6 12.5 4 4 8-9"/>'],
     "Across releases": ["#ff9f0a", '<path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/>'],
   };
   const sectionIcon = (title) => {
@@ -473,7 +473,29 @@ window.Pie = window.Pie || {};
       <text class="mini-value ${kind}" x="${cx}" y="${cy + 4}" text-anchor="middle">${text}</text>`;
   };
 
-  const qualityTable = (release) => {
+  // quality as bars: a row per model, each task's score per engine, the picked engine in blue
+  const TASK_NAMES = { gsm8k: "GSM8K", ifeval: "IFEval", mmlu: "MMLU", arc: "ARC", math500: "MATH-500" };
+  const qualityBars = (rows, models, engines) => {
+    const order = [base, ...engines];
+    const tasks = Object.keys(TASK_NAMES).filter((t) => rows.some((r) => r.task === t));
+    const body = models.map((model) => {
+      const mine = rows.filter((r) => r.model === model);
+      const groups = tasks.map((task) => {
+        const lines = order.map((engine) => ({ engine, r: mine.find((x) => x.engine === engine && x.task === task) })).filter((x) => x.r);
+        if (!lines.length) return "";
+        return `<div class="bars-group"><div class="bars-head">${esc(TASK_NAMES[task])}</div>${lines.map(({ engine, r }) => `
+          <div class="bars-line${engine === base ? " is-primary" : ""}" data-tip="${esc(`${names().model(model)} · ${TASK_NAMES[task]}\n${names().engine(engine)}: ${(r.score * 100).toFixed(1)}% (n=${r.n}${r.ci_low != null ? `, 95% ${(r.ci_low * 100).toFixed(0)}–${(r.ci_high * 100).toFixed(0)}%` : ""})`)}">
+            <span class="bars-name">${esc(names().engine(engine))}</span>
+            <span class="bars-track"><span class="bars-fill" style="width: ${(100 * r.score).toFixed(1)}%"></span></span>
+            <span class="bars-value">${Math.round(r.score * 100)}%</span>
+          </div>`).join("")}</div>`;
+      }).join("");
+      return `<div class="quality-row"><div class="bars-label">${esc(names().model(model))}</div><div class="quality-tasks">${groups}</div></div>`;
+    }).join("");
+    return `<div class="bars-table quality-bars">${body}</div>`;
+  };
+
+  const qualityTable = (release, view = "bars") => {
     const rows = Pie.store.qualitySnapshot(release).filter((r) => typeof r.score === "number");
     const pieRows = rows.filter(isPie);
     if (!pieRows.length) return "";
@@ -503,9 +525,13 @@ window.Pie = window.Pie || {};
       }).join("");
       return `<div class="heat-row" role="row"><div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>${cells}</div>`;
     }).join("");
-    return section("Quality against each engine", `Tasks where ${baseName()}’s answers score the same as the engine’s, model by model`, `
+    const switcher = viewToggle("qualityView", view);
+    if (view === "bars") {
+      return section("Quality", "Accuracy on standard benchmarks, engine by engine", qualityBars(rows, models, engines), switcher);
+    }
+    return section("Quality", "Accuracy on standard benchmarks, engine by engine", `
       <div class="heatmap"><div class="heat-table" role="table" aria-label="pie quality against each engine"
-        style="--engines: ${engines.length}">${head}${body}</div></div>`);
+        style="--engines: ${engines.length}">${head}${body}</div></div>`, switcher);
   };
 
   const figure = (model, rows) => {
@@ -767,7 +793,7 @@ window.Pie = window.Pie || {};
           ${decode.length
             ? standSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
             : `<div class="overview-none">${all.some((row) => row.workload === workload) ? `No ${esc(baseName())} runs on this Mac yet.` : `No results for ${esc(workloadLabel)} yet.`}</div>`}
-          ${qualityTable(state.release)}
+          ${qualityTable(state.release, state.overview.qualityView || "bars")}
           ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
         </div>`;
       return shown.length;
