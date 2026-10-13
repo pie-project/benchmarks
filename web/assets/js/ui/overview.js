@@ -334,11 +334,9 @@ window.Pie = window.Pie || {};
       const label = `<div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>`;
       const pieNeeds = misfit(model, base);
       if (pieNeeds && !(byModel[model] || []).some(isPie)) {
-        return `<div class="heat-row" role="row">${label}<div class="heat-cell heat-row-nofit" role="cell"
-            data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`)}">
-            <svg class="heat-cell-svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">${noFitMark(12, 12)}</svg>
-            <span class="nofit-text">Doesn't fit</span>
-          </div></div>`;
+        const tip = esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`);
+        const cells = METRICS.map((_, g) => g).map((g) => engines.map((_, j) => `<div class="heat-cell${g && !j ? " is-group-start" : ""}" role="cell" data-tip="${tip}">${cellSvg(noFitMark(CELL / 2, CELL / 2))}</div>`).join("")).join("");
+        return `<div class="heat-row" role="row">${label}${cells}</div>`;
       }
       const cells = METRICS.map((metric, g) =>
         engines.map((engine, j) => heatCell(byModel, model, engine, metric, lists[g], g && !j ? " is-group-start" : "")).join("")).join("");
@@ -357,11 +355,9 @@ window.Pie = window.Pie || {};
       // pie itself cannot load this model here: one quiet line across the row
       const pieNeeds = misfit(model, base);
       if (pieNeeds && !(byModel[model] || []).some(isPie)) {
-        return `<div class="heat-row" role="row">${label}<div class="heat-cell heat-row-nofit" role="cell"
-            data-tip="${esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`)}">
-            <svg class="heat-cell-svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">${noFitMark(12, 12)}</svg>
-            <span class="nofit-text">Doesn't fit</span>
-          </div></div>`;
+        const tip = esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`);
+        const cells = [0].map((g) => engines.map((_, j) => `<div class="heat-cell${g && !j ? " is-group-start" : ""}" role="cell" data-tip="${tip}">${cellSvg(noFitMark(CELL / 2, CELL / 2))}</div>`).join("")).join("");
+        return `<div class="heat-row" role="row">${label}${cells}</div>`;
       }
       const cells = engines.map((engine) => heatCell(byModel, model, engine, metric, list)).join("");
       return `<div class="heat-row" role="row">${label}${cells}</div>`;
@@ -810,10 +806,6 @@ window.Pie = window.Pie || {};
           "overview-heat-mac": onOpenHeatMac, "overview-model": onOpenModel, "overview-stand-mac": onOpenStandMac,
           "overview-history-mac": onOpenHistoryMac, "overview-history-model": onOpenHistoryModel })[button.id](button);
       });
-
-      element.addEventListener("toggle", (event) => {
-        if (event.target.id === "history-details") state.overview.historyOpen = event.target.open;
-      }, true);
 
       // one tooltip for every mark: what it compares, the values, and when they were measured
       element.addEventListener("pointermove", (event) => {
