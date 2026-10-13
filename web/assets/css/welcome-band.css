@@ -9,3 +9,4 @@
 
 .welcome-inner > * { width: 100%; }
 
+.welcome-intro.is-second { padding-top: 32px; border-top: .5px solid var(--color-separator); }
