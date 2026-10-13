@@ -20,13 +20,13 @@ window.Pie = window.Pie || {};
 
   const featured = [
     {
-      kind: "is-prefill", glyph: "type", kicker: "New way to chat", name: "Prefill as you type",
+      kind: "is-prefill", glyph: "type", id: "prefill-as-you-type", kicker: "New way to chat", name: "Prefill as you type",
       title: "The answer starts before you press Enter.",
       body: "Reads the prompt while it is still being typed, so the only work left at Enter is the last few words.",
       stat: "~0 ms", statLabel: "time to first token after Enter", preview: true, example: "",
     },
     {
-      kind: "is-prefix", glyph: "fork", kicker: "Built for agents", name: "Copy-on-write fork",
+      kind: "is-prefix", glyph: "fork", id: "copy-on-write-fork", kicker: "Built for agents", name: "Copy-on-write fork",
       title: "Branch a conversation without copying it.",
       body: "Every branch shares the cached context it came from and only stores what it adds, so an agent can try many paths at once.",
       stat: "8 branches", statLabel: "for the memory of about one", preview: true, example: "rs-fork-probe-py",
@@ -34,20 +34,38 @@ window.Pie = window.Pie || {};
   ];
 
   const shelf = [
-    { kind: "is-speculative", glyph: "draft", name: "Speculative decoding", workload: "Chat · long answers",
+    { id: "speculative-decoding", kind: "is-speculative", glyph: "draft", name: "Speculative decoding", workload: "Chat · long answers",
       benefit: "A drafter proposes tokens and the model checks them in one pass.", stat: "1.5× decode",
       note: "Measured: Qwen3.8-27B on M5 Max 128 GB, against plain decoding", preview: false, example: "dflash-speculative-bench" },
-    { kind: "is-prefix", glyph: "prefix", name: "Prefix cache", workload: "Shared system prompts · RAG",
+    { id: "prefix-cache", kind: "is-prefix", glyph: "prefix", name: "Prefix cache", workload: "Shared system prompts · RAG",
       benefit: "A prompt many requests share is read once.", stat: "10× prefill", preview: true, example: "prefix-tree-kv-cache" },
-    { kind: "is-tools", glyph: "json", name: "JSON schema decoding", workload: "Tool calls · structured output",
+    { id: "json-schema", kind: "is-tools", glyph: "json", name: "JSON schema decoding", workload: "Tool calls · structured output",
       benefit: "Only tokens the schema allows can be sampled.", stat: "100% valid", preview: true, example: "json-schema-constrained-decoding" },
-    { kind: "is-sink", glyph: "sink", name: "Attention sink", workload: "Very long chats",
+    { id: "attention-sink", kind: "is-sink", glyph: "sink", name: "Attention sink", workload: "Very long chats",
       benefit: "Keeps the first tokens and a recent window, so memory stays flat.", stat: "Flat memory", preview: true, example: "attention-sink" },
   ];
 
-  const get = (item) => item.example
-    ? `<a class="store-get" href="${REPO}${esc(item.example)}" target="_blank" rel="noopener">Get</a>`
-    : `<span class="store-get is-soon">Soon</span>`;
+  // the inferlets switched on, kept for this viewer: they are what the playground below can run
+  const KEY = "pieInferlets";
+  let added = new Set();
+  try {
+    added = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
+  } catch {
+    // storage refused: start with none
+  }
+  const save = () => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify([...added]));
+    } catch {
+      // private windows can refuse storage
+    }
+  };
+  const all = () => [...featured, ...shelf];
+  const toggle = (item, label = "") => `
+    <label class="store-toggle"${item.example ? "" : ' title="Not available yet"'}>${label ? `<span>${label}</span>` : ""}
+      <input type="checkbox" role="switch" data-inferlet="${esc(item.id)}"${added.has(item.id) ? " checked" : ""}${item.example ? "" : " disabled"}>
+      <span class="store-switch" aria-hidden="true"></span>
+    </label>`;
 
   const feature = (item) => `
     <article class="store-feature ${item.kind}">
@@ -55,7 +73,7 @@ window.Pie = window.Pie || {};
       <h2>${esc(item.title)}</h2>
       <p class="store-body">${esc(item.body)}</p>
       <div class="store-stat"><b>${esc(item.stat)}</b><span>${esc(item.statLabel)}</span></div>
-      <div class="store-app">${icon(item.kind, item.glyph)}<span class="store-app-name">${esc(item.name)}</span>${get(item)}</div>
+      <div class="store-feature-foot">${toggle(item, item.example ? "Add to Playground" : "Coming soon")}</div>
     </article>`;
 
   const row = (item) => `
@@ -68,7 +86,7 @@ window.Pie = window.Pie || {};
       </div>
       <div class="store-side">
         <span class="store-chip"${item.note ? ` title="${esc(item.note)}"` : ""}>${esc(item.stat)}</span>
-        ${get(item)}
+        ${toggle(item)}
       </div>
     </li>`;
 
@@ -81,7 +99,80 @@ window.Pie = window.Pie || {};
     <section class="store-shelf">
       <h2 class="store-shelf-title">More inferlets</h2>
       <ul class="store-list">${shelf.map(row).join("")}</ul>
+    </section>
+    <section class="store-shelf">
+      <h2 class="store-shelf-title">Playground</h2>
+      <div class="term" id="term">
+        <div class="term-bar"><span class="term-lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="term-title">pie — playground</span></div>
+        <div class="term-body" id="term-body"></div>
+        <label class="term-line"><span class="term-prompt">pie&gt;</span><input id="term-input" type="text" autocomplete="off" spellcheck="false" aria-label="Playground command"></label>
+      </div>
     </section>`;
+
+  // the playground: a terminal over the inferlets switched on. The site has no engine to run them on,
+  // so `run` writes the commands that run one on your own machine.
+  const playground = () => {
+    const body = element.querySelector("#term-body");
+    const input = element.querySelector("#term-input");
+    const print = (text, cls = "") => {
+      const line = document.createElement("div");
+      line.className = `term-out ${cls}`;
+      line.textContent = text;
+      body.append(line);
+      body.scrollTop = body.scrollHeight;
+    };
+    const byId = (id) => all().find((item) => item.id === id);
+    const help = () => print([
+      "help                      show these commands",
+      "ls                        inferlets added to the playground",
+      'run <inferlet> "prompt"   the commands that run it on your Mac',
+      "clear                     clear the window",
+    ].join("\n"), "is-dim");
+    const ls = () => {
+      const list = [...added].map(byId).filter(Boolean);
+      print(list.length ? list.map((item) => `${item.id.padEnd(26)}${item.name}`).join("\n") : "No inferlets yet. Switch one on above.", list.length ? "" : "is-dim");
+    };
+    const run = (args) => {
+      const match = /^(\S+)\s*(?:"([^"]*)"|(.*))?$/.exec(args.trim());
+      const item = match && byId(match[1]);
+      if (!item) return print(`Unknown inferlet: ${args.trim().split(/\s+/)[0] || "(none)"}. Try ls.`, "is-error");
+      if (!added.has(item.id)) return print(`${item.name} is not added. Switch it on above first.`, "is-error");
+      const prompt = (match[2] ?? match[3] ?? "").trim() || "The capital of France is";
+      print([
+        `# ${item.name}: run it on your Mac`,
+        "curl -fsSL https://pie-project.org/install.sh | bash",
+        "pie model import Qwen/Qwen3.5-0.8B",
+        "git clone https://github.com/pie-project/pie && cd pie",
+        `pie run examples/${item.example} -- --prompt ${JSON.stringify(prompt)}`,
+      ].join("\n"), "is-code");
+    };
+    print("Welcome to the pie playground. Type help to begin.", "is-dim");
+    input.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      const command = input.value.trim();
+      input.value = "";
+      if (!command) return;
+      print(`pie> ${command}`, "is-echo");
+      const [verb, ...rest] = command.split(/\s+/);
+      if (verb === "help") help();
+      else if (verb === "ls") ls();
+      else if (verb === "run") run(command.slice(3));
+      else if (verb === "clear") body.innerHTML = "";
+      else print(`Unknown command: ${verb}. Type help.`, "is-error");
+    });
+    element.querySelector("#term").addEventListener("click", (event) => {
+      if (!event.target.closest("input")) input.focus();
+    });
+    element.addEventListener("change", (event) => {
+      const box = event.target.closest("[data-inferlet]");
+      if (!box) return;
+      const item = byId(box.dataset.inferlet);
+      if (box.checked) added.add(item.id);
+      else added.delete(item.id);
+      save();
+      print(`${box.checked ? "Added" : "Removed"} ${item.name}.`, "is-dim");
+    });
+  };
 
   Pie.inferlets = {
     element,
@@ -90,6 +181,7 @@ window.Pie = window.Pie || {};
       if (!element.hidden && element.dataset.ready !== "1") {
         element.innerHTML = `<div class="method-inner">${content}</div>`;
         element.dataset.ready = "1";
+        playground();
       }
     },
   };
