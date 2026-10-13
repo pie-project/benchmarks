@@ -71,27 +71,24 @@ class HFReference:
         return int(self.model.get_output_embeddings().weight.shape[0])
 
     def greedy(self, prompt_ids: list[int], max_new_tokens: int) -> list[int]:
-        """Greedy continuation (new tokens only), no EOS early stop so the
-        length is deterministic and comparable to the engine's ``--max-tokens``."""
+        """Greedy continuation (new tokens only): the argmax at every step and
+        no stop, as the mlx reference reads it. The engine runs ignore_eos,
+        and the end of turn the model writes is where the gate cuts both
+        answers; `generate(min_new_tokens=...)`, which this once used for a
+        fixed length, masks the checkpoint's eos ids instead, so a model whose
+        turn ends on an eos id (gemma-4's `<turn|>`) could never end one."""
         torch = self.torch
-        ids = torch.tensor([list(prompt_ids)], dtype=torch.long, device=self.device)
+        gen: list[int] = []
+        step = torch.tensor([list(prompt_ids)], dtype=torch.long, device=self.device)
+        past = None
         with torch.no_grad():
-            out = self.model.generate(
-                ids,
-                max_new_tokens=max_new_tokens,
-                min_new_tokens=max_new_tokens,
-                do_sample=False,
-                num_beams=1,
-                # the generation config states the ids; a multimodal config
-                # (Gemma4Config) keeps none at its top level
-                pad_token_id=self._pad_token_id(),
-            )
-        return [int(t) for t in out[0, ids.shape[1]:].tolist()]
-
-    def _pad_token_id(self) -> int | None:
-        gen = self.model.generation_config
-        pad = gen.pad_token_id if gen.pad_token_id is not None else gen.eos_token_id
-        return pad[0] if isinstance(pad, list) else pad
+            for _ in range(max_new_tokens):
+                out = self.model(input_ids=step, past_key_values=past, use_cache=True)
+                past = out.past_key_values
+                nxt = int(out.logits[0, -1].argmax())
+                gen.append(nxt)
+                step = torch.tensor([[nxt]], dtype=torch.long, device=self.device)
+        return gen
 
     def teacher_forced_logits(self, ids: list[int]) -> np.ndarray:
         """``[len(ids), vocab]`` float32 logits; row ``i`` is the distribution
@@ -227,11 +224,12 @@ class ReferenceCache:
         return p
 
     def greedy(self, ref: Reference, revision: str, prompt_ids: list[int], max_new_tokens: int) -> list[int]:
-        hit = self.get(revision, "greedy", prompt_ids, max_new_tokens)
+        # "argmax", not "greedy": a reply the eos-masking generate wrote is not reused
+        hit = self.get(revision, "argmax", prompt_ids, max_new_tokens)
         if hit is not None:
             return [int(t) for t in hit.tolist()]
         out = ref.greedy(prompt_ids, max_new_tokens)
-        self.put(revision, "greedy", prompt_ids, max_new_tokens, np.asarray(out, dtype=np.int64))
+        self.put(revision, "argmax", prompt_ids, max_new_tokens, np.asarray(out, dtype=np.int64))
         return out
 
     def teacher_forced_logits(self, ref: Reference, revision: str, ids: list[int]) -> np.ndarray:
