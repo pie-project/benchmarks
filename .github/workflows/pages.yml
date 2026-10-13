@@ -24,7 +24,7 @@ jobs:
       - name: site at /
         run: |
           .venv/bin/python tools/webdb.py
-          mkdir -p site && cp -R web/. site/
+          mkdir -p site && cp -R web/. site/ && mkdir -p site/data
           # a new build gets new links, so browsers never keep an old stylesheet or script
           python3 - <<'PY'
           import re, os
@@ -33,6 +33,12 @@ jobs:
           s = re.sub(r'(href|src)="(assets/[^"]+|data/[^"]+)"', lambda m: f'{m.group(1)}="{m.group(2)}?v={v}"', s)
           open(p, "w").write(s)
           PY
+      - name: star count for the welcome banner
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          # read at build time, so visitors never call GitHub; a failed read leaves the button without a count
+          n=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/pie-project/pie | python3 -c 'import json,sys; print(json.load(sys.stdin)["stargazers_count"])' 2>/dev/null || true)
+          if [[ "$n" =~ ^[0-9]+$ ]]; then echo "window.PIE_STARS = $n;" > site/data/stars.js; else echo "window.PIE_STARS = null;" > site/data/stars.js; fi
       - uses: actions/upload-artifact@v4
         with: { name: site-files, path: site, retention-days: 3 }
   deploy:

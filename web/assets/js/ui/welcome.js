@@ -56,17 +56,12 @@ window.Pie = window.Pie || {};
           button.addEventListener("click", (event) =>
             document.querySelector(`.sidebar-item[data-table="${event.currentTarget.dataset.go}"]`)?.click()));
         element.dataset.ready = "1";
-        // the star count comes from GitHub; if the request fails the button simply shows none
+        // the star count is read at build time (data/stars.js); no request from the visitor's browser
         const stars = element.querySelector("[data-stars]");
-        fetch("https://api.github.com/repos/pie-project/pie", { headers: { Accept: "application/vnd.github+json" } })
-          .then((response) => (response.ok ? response.json() : null))
-          .then((repo) => {
-            if (repo && typeof repo.stargazers_count === "number") {
-              const n = repo.stargazers_count;
-              stars.textContent = `★ ${n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n}`;
-            }
-          })
-          .catch(() => {});
+        if (stars && typeof window.PIE_STARS === "number") {
+          const n = window.PIE_STARS;
+          stars.textContent = `★ ${n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n}`;
+        }
       }
     },
   };
