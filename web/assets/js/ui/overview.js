@@ -324,7 +324,9 @@ window.Pie = window.Pie || {};
   const fitNote = (gib, model) => {
     // MoE models say whether their experts stream from the SSD; dense ones carry "n/a"
     const streaming = ["Without", "With"].includes(Pie.store.index.models[model]?.ssd_streaming) ? Pie.store.index.models[model].ssd_streaming : "";
-    return `Needs about ${Math.round(gib)} GB${streaming ? ` ${streaming.toLowerCase()} SSD streaming` : ""}${macMemory ? `; this Mac has ${macMemory} GB` : ""}`;
+    // a Mac's GPU can use about two thirds of its memory up to 36 GB and three quarters above (the planner's rule)
+    const gpu = macMemory ? Math.round(macMemory * (macMemory <= 36 ? 2 / 3 : 0.75)) : null;
+    return `Needs about ${Math.round(gib)} GB${streaming ? ` ${streaming.toLowerCase()} SSD streaming` : ""}${gpu ? `; this Mac's GPU can use about ${gpu} GB` : ""}`;
   };
   // a small "no entry" mark: a hairline circle with a slash
   const noFitMark = (cx, cy) => `
