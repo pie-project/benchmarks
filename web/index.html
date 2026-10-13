@@ -82,15 +82,15 @@
 
     <dialog class="report-dialog" id="report-dialog" aria-labelledby="report-title">
       <form method="dialog" class="report-form">
-        <div class="report-head">
-          <span class="report-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg></span>
-          <div>
-            <h2 id="report-title">Report an Issue</h2>
-            <p class="report-hint">We review every report and follow up on GitHub.</p>
-          </div>
+        <header class="report-head">
+          <h2 id="report-title">Report an Issue</h2>
+          <p class="report-hint">We review every report and follow up on GitHub.</p>
+        </header>
+        <textarea id="report-text" rows="5" placeholder="What did you notice?" aria-label="Description"></textarea>
+        <div class="report-attach" id="report-shot" hidden>
+          <button type="button" class="report-thumb" id="report-thumb" aria-label="Show the screenshot full size"><img alt=""></button>
+          <label class="report-check"><input type="checkbox" id="report-include" checked> Include a screenshot of this page</label>
         </div>
-        <figure class="report-shot" id="report-shot" hidden><img alt="Screenshot of the page"></figure>
-        <textarea id="report-text" rows="4" placeholder="What did you notice?" aria-label="Description"></textarea>
         <p class="report-status" id="report-status" role="status"></p>
         <div class="report-actions">
           <button type="button" class="report-cancel" id="report-cancel">Cancel</button>
