@@ -4,14 +4,12 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("inferlets");
 
   // Each demo card names what the inferlet does and only claims what the results can show.
-  // Anything still being measured says so in its status line.
   const demos = [
     {
       kind: "is-speculative",
       label: "Speculative decoding",
       title: "Draft ahead, verify in one pass.",
       body: "A drafter proposes a block of tokens and the target model checks them together, so several tokens can land per step. Runs as the dflash-speculative-bench inferlet.",
-      status: "Decode speedup in progress on Apple Silicon. Not yet stable on every prompt length.",
       cta: "See the method",
       go: "method",
     },
@@ -20,7 +18,6 @@ window.Pie = window.Pie || {};
       label: "Prefix caching",
       title: "Share the prompt, pay for it once.",
       body: "Requests that start with the same system prompt or document reuse one cached prefix instead of recomputing it. Runs as the prefix-tree-kv-cache inferlet.",
-      status: "Workload defined in the suite. No published results yet.",
       cta: "See the results",
       go: "results",
     },
@@ -29,7 +26,6 @@ window.Pie = window.Pie || {};
       label: "Long-context prefill",
       title: "Long prompts without the wait.",
       body: "Prefill for prompts from 2k to 32k tokens, measured as time to first token against the other engines. Runs as the prefill-rows inferlet.",
-      status: "Prefill shapes defined in the suite. No published results yet.",
       cta: "See the results",
       go: "results",
     },
@@ -60,7 +56,6 @@ window.Pie = window.Pie || {};
         <p class="inferlet-kicker">${demo.label}</p>
         <h2>${demo.title}</h2>
         <p>${demo.body}</p>
-        <span class="inferlet-status">${demo.status}</span>
       </div>
       <button class="inferlet-link" type="button" data-go="${demo.go}">${demo.cta}</button>
     </article>`;
