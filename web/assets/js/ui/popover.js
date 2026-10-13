@@ -103,11 +103,15 @@ window.Pie = window.Pie || {};
     element.style.top = `${box.bottom + 6}px`;
   };
 
-  // keep an open menu attached to its button when the page scrolls or the window resizes
+  // keep an open menu attached to its button when the window resizes
   const follow = () => {
     if (anchor && !element.hidden) place(anchor);
   };
-  window.addEventListener("scroll", follow, { capture: true, passive: true });
+  // scrolling the page closes an open menu, as macOS menus do; scrolling inside the menu itself does not
+  window.addEventListener("scroll", (event) => {
+    if (element.hidden || element.contains(event.target)) return;
+    Pie.popover.close();
+  }, { capture: true, passive: true });
   window.addEventListener("resize", follow);
 
   Pie.popover = {
