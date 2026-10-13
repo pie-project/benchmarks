@@ -276,3 +276,6 @@
 .platform-group-row .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
 .platform-table tbody tr.platform-group-row:hover th { background: var(--color-chrome); }
 .platform-table tbody tr.platform-group-row th:first-child { position: static; }
+
+/* with the metric in the toolbar, the bar holds only Hide unavailable, at its end */
+.platform-bar { display: flex; justify-content: flex-end; }

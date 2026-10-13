@@ -4,6 +4,7 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("popover");
   const RELEASE = "release";
   const SUITE = "suite";
+  const METRIC = "metric";
   const MAC = "overview-mac";
   const WORKLOAD = "overview-workload";
   const ENGINE = "overview-engine";
@@ -41,6 +42,14 @@ window.Pie = window.Pie || {};
           .join(""))
       .join(`<div class="popover-separator"></div>`);
   };
+
+  // a platform page's metric: one pick, a checkmark on the current one
+  const metricMenu = (state) =>
+    Pie.platform.metrics()
+      .map((m) => option(m.id, m.id === state.platform.metric,
+        `<span class="popover-label">${Pie.format.escape(m.label)}</span>` +
+        `<span class="popover-detail">${Pie.format.escape(m.detail)}</span>`))
+      .join("");
 
   // the suite: one pick, a checkmark on the current one, like the release menu
   const suiteMenu = (state) =>
@@ -125,6 +134,7 @@ window.Pie = window.Pie || {};
   Pie.popover = {
     RELEASE,
     SUITE,
+    METRIC,
     MAC,
     WORKLOAD,
     ENGINE,
@@ -147,14 +157,14 @@ window.Pie = window.Pie || {};
       }
       owner = key;
       anchor = target;
-      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === SUITE ? suiteMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
+      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === SUITE ? suiteMenu(state) : key === METRIC ? metricMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
       element.scrollTop = 0;
       place(target);
     },
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
-      if (element.hidden || !owner || owner === RELEASE || owner === SUITE || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC || owner === HIST_MAC || owner === HIST_MODEL || owner === QUAL_ENGINE) return;
+      if (element.hidden || !owner || owner === RELEASE || owner === SUITE || owner === METRIC || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC || owner === HIST_MAC || owner === HIST_MODEL || owner === QUAL_ENGINE) return;
       const scroll = element.scrollTop;
       element.innerHTML = filterMenu(state, owner);
       element.scrollTop = scroll;
@@ -176,7 +186,7 @@ window.Pie = window.Pie || {};
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = owner;
-        if (key === RELEASE || key === SUITE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL || key === QUAL_ENGINE) this.close();
+        if (key === RELEASE || key === SUITE || key === METRIC || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL || key === QUAL_ENGINE) this.close();
         onPick(key, target.dataset.value);
       });
     },

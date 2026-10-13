@@ -39,12 +39,14 @@
     table.container.hidden = isOverview || isMethod || isPlatform;
     overview.element.hidden = !isOverview;
     Pie.platform.element.hidden = !isPlatform;
+    toolbar.elements.metricPicker.hidden = !isPlatform;
     Pie.welcome.render(state);
     Pie.method.render(state);
     Pie.inferlets.render(state);
     sidebar.render(state);
     if (isPlatform) {
       const shown = Pie.platform.render(state);
+      toolbar.elements.metricValue.textContent = shown.metric.label;
       toolbar.render(state, 0, 0);
       toolbar.elements.subtitle.textContent = shown.macs ? `${shown.macs} ${shown.macs === 1 ? "machine" : "machines"}, ${shown.models} ${shown.models === 1 ? "model" : "models"}` : "";
     } else if (isOverview) {
@@ -93,6 +95,11 @@
       popover.open(elements.releasePicker, popover.RELEASE, state);
     });
 
+    elements.metricPicker.addEventListener("click", (event) => {
+      event.stopPropagation();
+      popover.open(elements.metricPicker, popover.METRIC, state);
+    });
+
     elements.suitePicker.addEventListener("click", (event) => {
       event.stopPropagation();
       popover.open(elements.suitePicker, popover.SUITE, state);
@@ -117,6 +124,8 @@
     popover.onPick((key, value) => {
       if (key === popover.RELEASE) {
         state.release = value;
+      } else if (key === popover.METRIC) {
+        state.platform.metric = value;
       } else if (key === popover.SUITE) {
         state.suite = value;
         state.suitePicked = true;
