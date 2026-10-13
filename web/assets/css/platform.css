@@ -157,3 +157,10 @@
 .platform-key .platform-arrow { margin-right: 2px; }
 .platform-key.is-ahead .platform-arrow { color: var(--color-positive); }
 .platform-key.is-behind .platform-arrow { color: var(--color-negative); }
+
+/* a platform with no machines yet: a quiet centered note */
+.platform-empty { margin: auto; padding: 48px 24px; text-align: center; color: var(--color-label-secondary); }
+.platform-empty .sidebar-glyph svg { width: 40px; height: 40px; fill: none; stroke: var(--tint); stroke-width: 1.5; }
+.platform-empty .sidebar-glyph svg .is-filled { fill: var(--color-label); stroke: none; }
+.platform-empty h2 { margin: 14px 0 6px; font-size: 17px; font-weight: 600; color: var(--color-label); }
+.platform-empty p { margin: 0; font-size: 13px; }
