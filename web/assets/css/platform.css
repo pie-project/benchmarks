@@ -295,25 +295,18 @@
 .tip-sub + .tip-foot { border-top: 0; padding-top: 0; margin-top: 4px; }
 .platform-bar .filter-button { font-size: 13px; color: var(--color-label); }
 
-/* Overall reads like the Stocks app's change: a solid pill in the system green or red, a signed figure in white */
+/* Overall: a tinted capsule, the result's color at low opacity behind figures in that color, as Apple tags a value */
 .platform-table td.is-overall .platform-cell:not(.is-empty) {
   display: inline-block;
   float: right;
-  box-sizing: border-box;
-  width: 64px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  text-align: right;
-  color: #fff;
+  min-width: 0;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 16px;
   font-variant-numeric: tabular-nums;
 }
-.platform-table td.is-overall .platform-cell.is-ahead { background: #34c759; }
-.platform-table td.is-overall .platform-cell.is-behind { background: #ff3b30; }
-.platform-table td.is-overall .platform-cell.is-even { background: #8e8e93; }
-:root[data-theme="dark"] .platform-table td.is-overall .platform-cell.is-ahead { background: #30d158; }
-:root[data-theme="dark"] .platform-table td.is-overall .platform-cell.is-behind { background: #ff453a; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .platform-table td.is-overall .platform-cell.is-ahead { background: #30d158; }
-  :root:not([data-theme="light"]) .platform-table td.is-overall .platform-cell.is-behind { background: #ff453a; }
-}
+.platform-table td.is-overall .platform-cell.is-ahead { color: var(--color-positive); background: color-mix(in srgb, var(--color-positive) 14%, transparent); }
+.platform-table td.is-overall .platform-cell.is-behind { color: var(--color-negative); background: color-mix(in srgb, var(--color-negative) 14%, transparent); }
+.platform-table td.is-overall .platform-cell.is-even { color: var(--color-label-secondary); background: var(--color-fill); }
