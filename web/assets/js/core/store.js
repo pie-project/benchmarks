@@ -15,15 +15,32 @@ window.Pie = window.Pie || {};
   const isMeasured = (row) => !row.status || row.status === "pass" || row.status === "noisy";
   const newestTag = (tables.tags || []).find((tag) => snapshots[tag.id]?.length)?.id;
 
+  // the suites a run measures: Targeted (the release models) and Full (every model); the picked one
+  // narrows the measurement pages, the Models catalog keeps every model. An export without suites shows all.
+  const SUITES = [
+    { id: "targeted", label: "Targeted", title: "Targeted", detail: "Release models" },
+    { id: "full", label: "Full", title: "Full", detail: "Every model" },
+  ];
+  const suiteModels = () => {
+    const ids = (tables.suites || {})[Pie.state.suite];
+    return ids ? new Set(ids) : null;
+  };
+  const inSuite = (model) => {
+    const ids = suiteModels();
+    return !ids || ids.has(model);
+  };
+  const ofSuite = (rows) => (suiteModels() ? rows.filter((row) => inSuite(row.model)) : rows);
+
   // the rows shown for a tag: every combination, with a stale marker where that tag had no run
-  const snapshot = (tag) => snapshots[tag] || [];
+  const snapshot = (tag) => ofSuite(snapshots[tag] || []);
   // quality scores stack per tag the same way; an export without them falls back to the flat list
-  const qualitySnapshot = (tag) => (tables.quality_snapshots ? tables.quality_snapshots[tag] || [] : tables.quality || []);
+  const qualitySnapshot = (tag) => ofSuite(tables.quality_snapshots ? tables.quality_snapshots[tag] || [] : tables.quality || []);
 
   const countResults = () => {
     for (const [table, key] of Object.entries(resultKeys)) {
       const counts = {};
-      for (const row of snapshot(newestTag)) {
+      // the catalog counts every suite's runs
+      for (const row of snapshots[newestTag] || []) {
         if (!isMeasured(row)) continue;
         counts[row[key]] = (counts[row[key]] || 0) + 1;
       }
@@ -65,10 +82,16 @@ window.Pie = window.Pie || {};
     snapshot,
     isMeasured,
     qualitySnapshot,
+    inSuite,
+
+    suites() {
+      return tables.suites ? SUITES.filter((suite) => tables.suites[suite.id]) : [];
+    },
 
     rows(table) {
       if (Pie.schema[table]?.view) return [];
-      return table === "results" ? snapshot(newestTag) : tables[table];
+      if (table === "results") return snapshot(newestTag);
+      return table === "quality" ? ofSuite(tables.quality || []) : tables[table];
     },
 
     coverage(table, column) {

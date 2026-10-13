@@ -762,8 +762,10 @@ window.Pie = window.Pie || {};
       }
       const query = state.query.trim().toLowerCase();
       const byModel = groupByModel(all.filter((row) => row.hardware === hardware && row.workload === workload));
+      // the picked suite's models only
       const models = Pie.store.tables.models
         .map((model) => model.id)
+        .filter((id) => Pie.store.inSuite(id))
         .filter((id) => !query || names().model(id).toLowerCase().includes(query) || id.includes(query));
       tooBig = (Pie.store.tables.no_fit || {})[hardware] || {};
       macMemory = Pie.store.index.hardware[hardware]?.memory_gib || null;

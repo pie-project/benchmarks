@@ -7,6 +7,8 @@ window.Pie = window.Pie || {};
     search: document.getElementById("search"),
     releasePicker: document.getElementById("release-picker"),
     releaseValue: document.getElementById("release-value"),
+    suitePicker: document.getElementById("suite-picker"),
+    suiteValue: document.getElementById("suite-value"),
     themeToggle: document.getElementById("theme-toggle"),
     sidebarToggle: document.getElementById("sidebar-toggle"),
   };
@@ -19,6 +21,13 @@ window.Pie = window.Pie || {};
       elements.title.textContent = Pie.schema[state.table].label;
       elements.subtitle.textContent = Pie.format.count(shown, total);
       elements.releaseValue.textContent = options.find((option) => option.id === state.release)?.label || state.release || "No runs yet";
+    },
+
+    // on every page: an export without suites has nothing to pick between
+    renderSuite(state) {
+      const suites = Pie.store.suites();
+      elements.suitePicker.hidden = !suites.length;
+      elements.suiteValue.textContent = suites.find((suite) => suite.id === state.suite)?.label || "";
     },
 
     clearSearch() {

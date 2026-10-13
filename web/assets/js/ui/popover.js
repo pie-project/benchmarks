@@ -3,6 +3,7 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("popover");
   const RELEASE = "release";
+  const SUITE = "suite";
   const MAC = "overview-mac";
   const WORKLOAD = "overview-workload";
   const ENGINE = "overview-engine";
@@ -39,6 +40,14 @@ window.Pie = window.Pie || {};
           .join(""))
       .join(`<div class="popover-separator"></div>`);
   };
+
+  // the suite: one pick, a checkmark on the current one, like the release menu
+  const suiteMenu = (state) =>
+    Pie.store.suites()
+      .map((suite) => option(suite.id, suite.id === state.suite,
+        `<span class="popover-label">${Pie.format.escape(suite.title)}</span>` +
+        `<span class="popover-detail">${Pie.format.escape(suite.detail)}</span>`))
+      .join("");
 
   // the overview's Mac: one pick, a checkmark on the current one, like the release menu
   const macMenu = (state, current = state.overview.hardware) =>
@@ -103,6 +112,7 @@ window.Pie = window.Pie || {};
 
   Pie.popover = {
     RELEASE,
+    SUITE,
     MAC,
     WORKLOAD,
     ENGINE,
@@ -124,14 +134,14 @@ window.Pie = window.Pie || {};
       }
       owner = key;
       anchor = target;
-      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
+      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === SUITE ? suiteMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
       element.scrollTop = 0;
       place(target);
     },
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
-      if (element.hidden || !owner || owner === RELEASE || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC || owner === HIST_MAC || owner === HIST_MODEL) return;
+      if (element.hidden || !owner || owner === RELEASE || owner === SUITE || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC || owner === HIST_MAC || owner === HIST_MODEL) return;
       const scroll = element.scrollTop;
       element.innerHTML = filterMenu(state, owner);
       element.scrollTop = scroll;
@@ -153,7 +163,7 @@ window.Pie = window.Pie || {};
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = owner;
-        if (key === RELEASE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL) this.close();
+        if (key === RELEASE || key === SUITE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL) this.close();
         onPick(key, target.dataset.value);
       });
     },
