@@ -25,7 +25,7 @@
 
   const ensureSuite = () => {
     const suites = store.suites();
-    if (suites.length && !suites.some((suite) => suite.id === state.suite)) state.suite = suites[0].id;
+    if (suites.length && !suites.some((suite) => suite.id === state.suite)) state.suite = suites[suites.length - 1].id;
   };
 
   const render = () => {
@@ -113,6 +113,7 @@
         state.release = value;
       } else if (key === popover.SUITE) {
         state.suite = value;
+        state.suitePicked = true;
       } else if (key === popover.MAC) {
         state.overview.hardware = value;
       } else if (key === popover.WORKLOAD) {
@@ -192,7 +193,10 @@
       if (!saved) return;
       if (saved.table && Pie.schema[saved.table]) state.table = saved.table;
       if (saved.release) state.release = saved.release;
-      if (saved.suite) state.suite = saved.suite;
+      if (saved.suite && saved.suitePicked) {
+        state.suite = saved.suite;
+        state.suitePicked = true;
+      }
       if (saved.overview) Object.assign(state.overview, saved.overview);
       state.hideEmpty = Boolean(saved.hideEmpty);
     } catch {
@@ -202,7 +206,7 @@
   const saveView = () => {
     try {
       localStorage.setItem(VIEW_KEY, JSON.stringify({
-        table: state.table, release: state.release, suite: state.suite, overview: { ...state.overview }, hideEmpty: state.hideEmpty,
+        table: state.table, release: state.release, suite: state.suite, suitePicked: Boolean(state.suitePicked), overview: { ...state.overview }, hideEmpty: state.hideEmpty,
       }));
     } catch {
       // private windows can refuse storage
