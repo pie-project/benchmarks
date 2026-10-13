@@ -295,21 +295,25 @@
 .tip-sub + .tip-foot { border-top: 0; padding-top: 0; margin-top: 4px; }
 .platform-bar .filter-button { font-size: 13px; color: var(--color-label); }
 
-/* Overall reads like the Stocks app's change: a solid rounded pill in the result's color, white figures */
+/* Overall reads like the Stocks app's change: a solid pill in the system green or red, a signed figure in white */
 .platform-table td.is-overall .platform-cell:not(.is-empty) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
+  display: inline-block;
   float: right;
-  min-width: 64px;
-  padding: 3px 9px;
+  box-sizing: border-box;
+  width: 64px;
+  padding: 4px 8px;
   border-radius: 6px;
+  text-align: right;
   color: #fff;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.platform-table td.is-overall .platform-cell.is-ahead { background: var(--color-positive); }
-.platform-table td.is-overall .platform-cell.is-behind { background: var(--color-negative); }
-.platform-table td.is-overall .platform-cell.is-even { background: var(--color-label-tertiary); }
-.platform-table td.is-overall .platform-cell .platform-arrow { stroke: #fff; }
-.platform-table td.is-overall .platform-cell i { color: #fff; }
+.platform-table td.is-overall .platform-cell.is-ahead { background: #34c759; }
+.platform-table td.is-overall .platform-cell.is-behind { background: #ff3b30; }
+.platform-table td.is-overall .platform-cell.is-even { background: #8e8e93; }
+:root[data-theme="dark"] .platform-table td.is-overall .platform-cell.is-ahead { background: #30d158; }
+:root[data-theme="dark"] .platform-table td.is-overall .platform-cell.is-behind { background: #ff453a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .platform-table td.is-overall .platform-cell.is-ahead { background: #30d158; }
+  :root:not([data-theme="light"]) .platform-table td.is-overall .platform-cell.is-behind { background: #ff453a; }
+}
