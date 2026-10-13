@@ -180,20 +180,55 @@ window.Pie = window.Pie || {};
 
   // 5. Across releases: the last block, only once two tags have data
   // release history: folded away, for those who follow the trend; its own Mac and model
+  // release history: folded away, for those who follow the trend; a line per Mac for the picked model
+  const MAC_COLORS = ["#0a84ff", "#30d158", "#ff9f0a", "#bf5af2", "#ff375f", "#64d2ff", "#ffd60a", "#ac8e68"];
   const history = (state, models) => {
     const o = state.overview;
-    const mac = o.historyMac || o.hardware;
     const picked = models.includes(o.historyModel) ? [o.historyModel] : models;
-    const points = releasePoints(state, picked, mac);
     const modelLabel = picked.length === 1 ? names().model(picked[0]) : "All models";
-    const body = points.length >= 2 ? `<div class="trend-block">${trend(points)}</div>`
-      : `<div class="overview-none">Not enough releases measured on this Mac yet.</div>`;
+    const series = Pie.store.tables.hardware.map((hw) => ({ mac: hw.id, points: releasePoints(state, picked, hw.id) }))
+      .filter((line) => line.points.length)
+      .map((line, k) => ({ ...line, color: MAC_COLORS[k % MAC_COLORS.length] }));
+    const tags = (Pie.store.tables.tags || []).map((tag) => tag.id).reverse().filter((tag) => series.some((line) => line.points.some((p) => p.tag === tag)));
+    const body = tags.length >= 2 ? `<div class="trend-block">
+        <div class="trend-legend">${series.map((line) => `<span><i style="background: ${line.color}"></i>${esc(macName(line.mac))}</span>`).join("")}</div>
+        ${trendLines(series, tags)}</div>`
+      : `<div class="overview-none">Not enough releases measured yet.</div>`;
     return `
       <details class="history-details" id="history-details"${o.historyOpen ? " open" : ""}>
         <summary>Release history</summary>
         ${section("Across releases", `Decode speed of ${esc(baseName())}, median tokens per second`, body,
-          tools(popup("overview-history-mac", "Mac", macName(mac)), popup("overview-history-model", "Model", modelLabel)))}
+          tools(popup("overview-history-model", "Model", modelLabel)))}
       </details>`;
+  };
+
+  // one line per Mac over the releases, its latest value labelled at its end
+  const trendLines = (series, tags) => {
+    const height = 220, top = 20, bottom = 180;
+    const values = series.flatMap((line) => line.points.map((p) => p.v));
+    const lo = Math.min(...values), hi = Math.max(...values);
+    const pad = (hi - lo) * 0.08 || hi * 0.1 || 1;
+    const y = (v) => bottom - ((v - (lo - pad)) / (hi - lo + 2 * pad)) * (bottom - top);
+    const x = (tag) => `${6 + (tags.indexOf(tag) * 80) / (tags.length - 1)}%`;
+    const tps = (v) => `${v >= 100 ? Math.round(v) : v.toFixed(1)} tok/s`;
+    const lines = series.map(({ mac, color, points }) => {
+      const segments = points.slice(1).map((p, i) =>
+        `<line class="trend-line" style="stroke: ${color}" x1="${x(points[i].tag)}" y1="${y(points[i].v).toFixed(1)}" x2="${x(p.tag)}" y2="${y(p.v).toFixed(1)}"/>`).join("");
+      const dots = points.map((p) => {
+        const tip = `${macName(mac)} · ${p.tag}${p.date ? `, ${Pie.format.date(p.date)}` : ""}\nMedian decode ${tps(p.v)} over ${p.n} ${p.n === 1 ? "model" : "models"}`;
+        return `<g data-tip="${esc(tip)}"><circle class="trend-hit" cx="${x(p.tag)}" cy="${y(p.v).toFixed(1)}" r="12"/>
+          <circle class="trend-dot" style="fill: ${color}" cx="${x(p.tag)}" cy="${y(p.v).toFixed(1)}" r="5"/></g>`;
+      }).join("");
+      const last = points[points.length - 1];
+      const label = `<text class="trend-end" style="fill: ${color}" x="${x(last.tag)}" dx="12" y="${y(last.v).toFixed(1)}" dy="4">${tps(last.v)}</text>`;
+      return segments + dots + label;
+    }).join("");
+    const axis = tags.map((tag) => `<text class="trend-tag" x="${x(tag)}" y="${height - 4}" text-anchor="middle">${esc(tag)}</text>`).join("");
+    return `
+      <svg class="trend" width="100%" height="${height}" role="img" aria-label="${esc(baseName())}'s median decode speed by release, a line per Mac">
+        <line class="trend-parity" x1="0" x2="100%" y1="${bottom + 14}" y2="${bottom + 14}"/>
+        ${lines}${axis}
+      </svg>`;
   };
 
   // 1. Where we stand: Apple Fitness rings, one inside the other.
