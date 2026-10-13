@@ -163,9 +163,10 @@ window.Pie = window.Pie || {};
         return `<th class="platform-row" scope="row"><span>${esc(chipName(mac))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</th>`;
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
-      const groupRow = (g) => `<tr class="platform-group-row"><th colspan="${models.length + 2}" scope="rowgroup">
-        <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span></th></tr>`;
-      const body = shownGroups.map((g) => groupRow(g) + g.macs.map((mac, i) => {
+      const folded = (id) => Boolean(p.collapsed?.[id]);
+      const groupRow = (g) => `<tr class="platform-group-row${folded(g.platform.id) ? " is-collapsed" : ""}" data-group="${g.platform.id}" aria-expanded="${!folded(g.platform.id)}"><th colspan="${models.length + 2}" scope="rowgroup">
+        <span class="platform-group-name"><svg class="platform-disclosure" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 2l4 3-4 3"/></svg>${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span></th></tr>`;
+      const body = shownGroups.map((g) => groupRow(g) + (folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
           : (() => { const n = number(o); n.html = n.kind === "is-even" ? "0%" : signed(o); return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}">${n.html}</span></td>`; })();
@@ -237,6 +238,14 @@ window.Pie = window.Pie || {};
           } catch {
             // private windows can refuse storage
           }
+          onChange();
+          return;
+        }
+        // a platform's header row folds its machines away and back, as a Finder group does
+        const group = event.target.closest("[data-group]");
+        if (group) {
+          const id = group.dataset.group;
+          state.platform.collapsed = { ...(state.platform.collapsed || {}), [id]: !state.platform.collapsed?.[id] };
           onChange();
           return;
         }

@@ -310,3 +310,8 @@
 .platform-table td.is-overall .platform-cell.is-ahead { color: var(--color-positive); background: color-mix(in srgb, var(--color-positive) 14%, transparent); }
 .platform-table td.is-overall .platform-cell.is-behind { color: var(--color-negative); background: color-mix(in srgb, var(--color-negative) 14%, transparent); }
 .platform-table td.is-overall .platform-cell.is-even { color: var(--color-label-secondary); background: var(--color-fill); }
+
+/* a platform's header row folds its machines: a chevron that turns down when open */
+.platform-group-row { cursor: pointer; user-select: none; }
+.platform-disclosure { width: 10px; height: 10px; margin-right: -2px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transform: rotate(90deg); transition: transform .15s ease; }
+.platform-group-row.is-collapsed .platform-disclosure { transform: none; }
