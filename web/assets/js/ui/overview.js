@@ -521,7 +521,7 @@ window.Pie = window.Pie || {};
     const modelOrder = Pie.store.tables.models.map((m) => m.id);
     const models = [...new Set(rows.map((r) => r.model))].sort((a, b) => modelOrder.indexOf(a) - modelOrder.indexOf(b));
     if (!models.length) return "";
-    return section("Quality", "Average accuracy across standard benchmarks, best first", qualityRanking(rows, models));
+    return section("Quality", "Average accuracy", qualityRanking(rows, models));
   };
 
   const figure = (model, rows) => {
