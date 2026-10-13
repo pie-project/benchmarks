@@ -4,6 +4,8 @@ Pie.state = {
   table: "welcome",
   overview: { hardware: null, workload: "single", engine: "pie", heatMac: null, standMac: null, model: null, macsView: "rings", modelsView: "rings" },
   release: "main",
+  // the models the measurement pages show: the release models (targeted) or every one (full)
+  suite: "targeted",
   query: "",
   filters: {},
   sort: null,
