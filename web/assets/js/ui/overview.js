@@ -97,6 +97,7 @@ window.Pie = window.Pie || {};
   // each section's mark: a white glyph on a tinted rounded square, as Apple's settings show theirs
   const SECTION_ICONS = {
     "Where we stand": ["#0a84ff", '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/>'],
+    "Against the best": ["#ff9f0a", '<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/>'],
     "Across Macs": ["#5e5ce6", '<rect x="4" y="5" width="16" height="11" rx="1.6"/><path d="M9 20h6M12 16v4"/>'],
     "Across models": ["#bf5af2", '<path d="M12 4 4 8l8 4 8-4-8-4z"/><path d="m4 12 8 4 8-4"/><path d="m4 16 8 4 8-4"/>'],
     "By model": ["#30d158", '<path d="M5 19V9M10 19V5M15 19v-7M20 19v-4"/>'],
@@ -435,6 +436,78 @@ window.Pie = window.Pie || {};
       return `<div class="bars-row"><div class="bars-label">${esc(label)}</div>${groups}</div>`;
     }).join("");
     return `<div class="bars-table">${body}</div>`;
+  };
+
+  // against the best: models down, Macs across; each cell is the picked engine against the fastest other engine there
+  const bestOf = (rows, model, mac, key) => {
+    const here = rows.filter((row) => row.model === model && row.hardware === mac);
+    const pie = here.find((row) => isPie(row) && row[key]);
+    const others = here.filter((row) => !isPie(row) && row[key]);
+    if (!pie || !others.length) return null;
+    const best = others.reduce((a, b) => (b[key] > a[key] ? b : a));
+    return { pie, best, r: pie[key] / best[key] };
+  };
+  const bestMissing = (model, mac) => {
+    const needs = ((Pie.store.tables.no_fit || {})[mac] || {})[model]?.[base];
+    return needs ? `${baseName()} doesn't fit (needs about ${Math.round(needs)} GB)` : "no data";
+  };
+  const bestTip = (model, mac, metric, c) => `${names().model(model)} on ${macName(mac)}\n${metric.label}: ${baseName()} ${value(c.pie[metric.key])}, ` +
+    `fastest other ${names().engine(c.best.engine)} ${value(c.best[metric.key])} tok/s`;
+  const bestCell = (rows, model, mac, metric, extra = "") => {
+    const mid = CELL / 2;
+    const c = bestOf(rows, model, mac, metric.key);
+    if (!c) {
+      return `<div class="heat-cell${extra}" role="cell" data-tip="${esc(`${names().model(model)} on ${macName(mac)}\n${metric.label}: ${bestMissing(model, mac)}`)}">${cellSvg(noFitMark(mid, mid))}</div>`;
+    }
+    return `<div class="heat-cell${extra}" role="cell" data-tip="${esc(bestTip(model, mac, metric, c))}">${cellSvg(miniRing(mid, mid, c.r))}</div>`;
+  };
+  // "M5 Max" over "128GB": the column stays narrow enough for twelve of them
+  const macHead = (mac) => {
+    const name = macName(mac);
+    const at = name.lastIndexOf(" ");
+    return at > 0 ? `${esc(name.slice(0, at))}<br><span>${esc(name.slice(at + 1))}</span>` : esc(name);
+  };
+  const bestSection = (all, models, workload, view) => {
+    const rows = all.filter((row) => row.workload === workload);
+    const macs = Pie.store.tables.hardware.map((hw) => hw.id).filter((mac) => all.some((row) => row.hardware === mac));
+    if (!macs.length || !models.length) return "";
+    const head = tools(viewToggle("bestView", view));
+    const caption = `${esc(baseName())} against the fastest other engine, model by model on every Mac`;
+    const label = (model) => `<div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>`;
+    if (view === "bars") {
+      const body = models.map((model) => `<div class="bars-row"><div class="bars-label">${esc(names().model(model))}</div>${METRICS.map((metric) => {
+        const lines = macs.map((mac) => ({ mac, c: bestOf(rows, model, mac, metric.key) }));
+        return `<div class="bars-group"><div class="bars-head">${metric.label} <span>vs the fastest</span></div>${lines.map(({ mac, c }) => c ? `
+          <div class="bars-line best-line ${c.r >= 1 ? "is-ahead" : "is-behind"}" data-tip="${esc(bestTip(model, mac, metric, c))}">
+            <span class="bars-name">${esc(macName(mac))}</span>
+            <span class="bars-track"><span class="bars-fill" style="width: ${(50 * Math.min(c.r, 2)).toFixed(1)}%"></span></span>
+            <span class="bars-value">${delta(c.r)}</span>
+          </div>` : `
+          <div class="bars-line best-line" data-tip="${esc(`${names().model(model)} on ${macName(mac)}\n${metric.label}: ${bestMissing(model, mac)}`)}">
+            <span class="bars-name">${esc(macName(mac))}</span><span class="bars-track"></span><span class="bars-value">—</span>
+          </div>`).join("")}</div>`;
+      }).join("")}</div>`).join("");
+      return section("Against the best", caption, `<div class="bars-table best-bars">${body}</div>`, head);
+    }
+    const n = macs.length;
+    const groups = `<div class="heat-row heat-group-row" role="row"><div></div>${METRICS.map((metric, g) =>
+      `<div class="heat-group-head${g ? " is-group-start" : ""}" role="columnheader" style="grid-column: span ${n}">${metric.label}</div>`).join("")}</div>`;
+    const headRow = (g0) => `<div class="heat-row heat-head-row" role="row"><div role="columnheader"></div>${(g0 === null ? METRICS.map((_, g) => g) : [g0]).map((g) =>
+      macs.map((mac, j) => `<div class="heat-head best-head${g && !j && g0 === null ? " is-group-start" : ""}" role="columnheader">${macHead(mac)}</div>`).join("")).join("")}</div>`;
+    const wide = models.map((model) => `<div class="heat-row" role="row">${label(model)}${METRICS.map((metric, g) =>
+      macs.map((mac, j) => bestCell(rows, model, mac, metric, g && !j ? " is-group-start" : "")).join("")).join("")}</div>`).join("");
+    const stacked = METRICS.map((metric, g) => `
+      <div class="heat-group">
+        <div class="heat-group-title">${metric.label}</div>
+        <div class="heat-table" role="table" style="--engines: ${n}">${headRow(g)}${models.map((model) =>
+          `<div class="heat-row" role="row">${label(model)}${macs.map((mac) => bestCell(rows, model, mac, metric)).join("")}</div>`).join("")}</div>
+      </div>`).join("");
+    return section("Against the best", caption, `
+      <div class="heatmap">
+        <div class="heat-wide"><div class="heat-table is-wide" role="table" aria-label="${esc(baseName())} against the fastest other engine"
+          style="--engines: ${n * METRICS.length}">${groups}${headRow(null)}${wide}</div></div>
+        <div class="heat-stacked">${stacked}</div>
+      </div>`, head);
   };
 
   const heatmap = (byModel, models, mac, view, others) => {
@@ -863,7 +936,7 @@ window.Pie = window.Pie || {};
             ${updated()}
           </div>
           ${decode.length
-            ? standSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
+            ? standSection(state, all, models, workload) + bestSection(all, models, workload, state.overview.bestView || "rings") + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
             : `<div class="overview-none">${all.some((row) => row.workload === workload) ? `No ${esc(baseName())} runs on this Mac yet.` : `No results for ${esc(workloadLabel)} yet.`}</div>`}
           ${qualityTable(state)}
           ${decode.length ? history(state, models.filter((id) => all.some((row) => row.model === id))) : ""}
