@@ -1,8 +1,7 @@
 window.Pie = window.Pie || {};
 
 // Inferlets, laid out like an app store: two featured programs on the welcome banner's gradients,
-// then a shelf of the rest. Each names the work it is for and what it buys; a figure is either
-// measured (and says where) or a design preview, never both.
+// then a shelf of the rest. Each names the work it is for and what it buys.
 (() => {
   const element = document.getElementById("inferlets");
   const esc = (s) => Pie.format.escape(String(s ?? ""));
@@ -49,14 +48,13 @@ window.Pie = window.Pie || {};
   const get = (item) => item.example
     ? `<a class="store-get" href="${REPO}${esc(item.example)}" target="_blank" rel="noopener">Get</a>`
     : `<span class="store-get is-soon">Soon</span>`;
-  const tag = (item) => (item.preview ? '<span class="store-preview" title="A design preview, not a measurement">Preview</span>' : "");
 
   const feature = (item) => `
     <article class="store-feature ${item.kind}">
       <p class="store-kicker">${esc(item.kicker)}</p>
       <h2>${esc(item.title)}</h2>
       <p class="store-body">${esc(item.body)}</p>
-      <div class="store-stat"><b>${esc(item.stat)}</b><span>${esc(item.statLabel)}</span>${tag(item)}</div>
+      <div class="store-stat"><b>${esc(item.stat)}</b><span>${esc(item.statLabel)}</span></div>
       <div class="store-app">${icon(item.kind, item.glyph)}<span class="store-app-name">${esc(item.name)}</span>${get(item)}</div>
     </article>`;
 
@@ -69,7 +67,7 @@ window.Pie = window.Pie || {};
         <span class="store-benefit">${esc(item.benefit)}</span>
       </div>
       <div class="store-side">
-        <span class="store-chip"${item.note ? ` title="${esc(item.note)}"` : ""}>${esc(item.stat)}</span>${tag(item)}
+        <span class="store-chip"${item.note ? ` title="${esc(item.note)}"` : ""}>${esc(item.stat)}</span>
         ${get(item)}
       </div>
     </li>`;
@@ -83,8 +81,7 @@ window.Pie = window.Pie || {};
     <section class="store-shelf">
       <h2 class="store-shelf-title">More inferlets</h2>
       <ul class="store-list">${shelf.map(row).join("")}</ul>
-    </section>
-    <p class="store-footnote">Figures tagged Preview are placeholders for the design; a measured figure says where it was measured.</p>`;
+    </section>`;
 
   Pie.inferlets = {
     element,
