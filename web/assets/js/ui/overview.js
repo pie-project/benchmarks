@@ -472,7 +472,7 @@ window.Pie = window.Pie || {};
     const macs = Pie.store.tables.hardware.map((hw) => hw.id).filter((mac) => all.some((row) => row.hardware === mac));
     if (!macs.length || !models.length) return "";
     const head = tools(viewToggle("bestView", view));
-    const caption = `${esc(baseName())} against the fastest other engine, model by model on every Mac`;
+    const caption = `${esc(baseName())} against the fastest other engine`;
     const label = (model) => `<div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>`;
     if (view === "bars") {
       const body = models.map((model) => `<div class="bars-row"><div class="bars-label">${esc(names().model(model))}</div>${METRICS.map((metric) => {
