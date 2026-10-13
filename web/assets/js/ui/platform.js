@@ -121,7 +121,7 @@ window.Pie = window.Pie || {};
         }
       }
       // Hide unavailable drops the models and machines with nothing to compare, as the results table does
-      const hide = p.hide !== false;
+      const hide = state.hideEmpty;
       const models = hide ? allModels.filter((model) => macs.some((mac) => grid[mac][model].c)) : allModels;
       const overall = (mac) => {
         const gains = models.map((model) => grid[mac][model].c?.gain).filter((g) => g !== undefined).sort((a, b) => a - b);
@@ -213,7 +213,13 @@ window.Pie = window.Pie || {};
           return;
         }
         if (event.target.closest("[data-hide]")) {
-          state.platform.hide = state.platform.hide === false;
+          // the same Hide unavailable as the results and quality tables: one choice for every page
+          state.hideEmpty = !state.hideEmpty;
+          try {
+            localStorage.setItem("hideUnavailable", state.hideEmpty ? "1" : "0");
+          } catch {
+            // private windows can refuse storage
+          }
           onChange();
           return;
         }
