@@ -295,12 +295,12 @@ class PgStore(BaseStore):
                 "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (artifact, task, tag) DO UPDATE SET "
                 "tag_kind = EXCLUDED.tag_kind, model = EXCLUDED.model, engine = EXCLUDED.engine, score = EXCLUDED.score, n = EXCLUDED.n, "
                 "date = EXCLUDED.date, summary = EXCLUDED.summary, samples = EXCLUDED.samples, stored_at = now() "
-                # a tag keeps its good score: a stored score is only replaced when it is missing (the same rule as the records)
-                "WHERE quality.score IS NULL",
+                # the newer score replaces the stored one, as a newer good record does; a run that scored nothing replaces nothing
+                "WHERE EXCLUDED.score IS NOT NULL OR quality.score IS NULL",
                 (summary["artifact"], summary["task"], tag or "", tag_kind, summary.get("model"), summary.get("engine"),
                  summary.get("score"), summary.get("n"), summary.get("date"), Jsonb(head), Jsonb(summary.get("samples"))),
             )
-        kept = "" if cur.rowcount else " (kept: a score is stored under this tag)"
+        kept = "" if cur.rowcount else " (kept: this run scored nothing, the stored score stands)"
         return f"postgres quality {summary['artifact']}/{summary['task']} tag={tag or 'legacy'}{kept}"
 
     def table(self, tier: Tier | None = None) -> pa.Table:
