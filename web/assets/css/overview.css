@@ -1336,3 +1336,11 @@
   .mx-tr { grid-template-columns: 1fr; gap: 2px; }
   .mx-cell-demo { grid-template-columns: 1fr; }
 }
+
+/* the method table: engines down, how the first and the last token are timed across */
+.mx-formulas { display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 0 0 16px; font-size: 13px; }
+.mx-formulas span { display: inline-flex; align-items: center; gap: 8px; }
+.mx-formulas code, .mx-engines code { padding: 2px 7px; border-radius: 6px; font: 12px var(--font-mono); color: var(--color-label); background: var(--color-fill); }
+.mx-engines .mx-tr { grid-template-columns: 120px 1.6fr 1fr; align-items: start; }
+.mx-engines .mx-tr.is-head { font-size: 11px; font-weight: 600; color: var(--color-label-secondary); background: var(--color-fill); }
+.mx-engines .mx-why { line-height: 1.45; }
