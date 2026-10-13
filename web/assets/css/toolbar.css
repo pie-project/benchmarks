@@ -163,7 +163,7 @@
   border: .5px solid var(--color-panel-outline);
   border-radius: 12px;
   color: var(--color-label);
-  background: var(--color-menu);
+  background: var(--color-card);
 }
 
 .report-dialog::backdrop { background: rgba(0, 0, 0, .25); }
@@ -187,12 +187,6 @@
 .report-form h2 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .report-hint { margin: 2px 0 0; font-size: 13px; line-height: 1.4; color: var(--color-label-secondary); }
 
-.report-kinds { display: flex; height: 24px; padding: 2px; border-radius: 7px; background: var(--color-fill); }
-.report-kinds label { flex: 1; cursor: pointer; }
-.report-kinds input { position: absolute; opacity: 0; pointer-events: none; }
-.report-kinds span { display: block; text-align: center; line-height: 20px; border-radius: 5px; font-size: 13px; font-weight: 500; color: var(--color-label); }
-.report-kinds input:checked + span { background: var(--color-card); box-shadow: 0 0 0 .5px var(--color-panel-outline); }
-.report-kinds input:focus-visible + span { outline: 2px solid var(--color-accent); }
 
 .report-form textarea {
   resize: none;
@@ -209,10 +203,24 @@
 .report-form textarea::placeholder { color: var(--color-label-tertiary); }
 .report-form textarea:focus { outline: 3px solid color-mix(in srgb, var(--color-accent) 40%, transparent); outline-offset: 0; border-color: var(--color-accent); }
 
-.report-note { margin: -4px 0 0; font-size: 11px; color: var(--color-label-tertiary); }
 
 .report-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .report-actions button { min-width: 76px; height: 26px; padding: 0 14px; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; }
 .report-cancel { border: .5px solid var(--color-panel-outline); color: var(--color-label); background: var(--color-card); }
 .report-send { border: 0; color: #fff; background: var(--color-accent); font-weight: 500; }
 .report-send:hover { filter: brightness(1.06); }
+
+.report-shot {
+  margin: 0;
+  overflow: hidden;
+  border: .5px solid var(--color-panel-outline);
+  border-radius: 8px;
+  max-height: 180px;
+  background: var(--color-background);
+}
+
+.report-shot img { display: block; width: 100%; height: auto; }
+
+.report-status { margin: -4px 0 0; min-height: 16px; font-size: 12px; color: var(--color-label-secondary); }
+.report-status a { color: var(--color-accent); text-decoration: none; }
+.report-send:disabled { opacity: .6; cursor: default; }
