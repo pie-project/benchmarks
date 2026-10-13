@@ -771,10 +771,8 @@ window.Pie = window.Pie || {};
       macMemory = Pie.store.index.hardware[hardware]?.memory_gib || null;
       // measured models first, then the ones too big for this Mac
       const shown = [...models.filter((id) => byModel[id]), ...models.filter((id) => !byModel[id] && tooBig[id])];
-      const missing = models.filter((id) => !byModel[id] && !tooBig[id]);
 
       const decode = comparisons(byModel, shown, "decode_tok_s");
-      const missingNote = missing.length ? `No data yet: ${missing.map((id) => esc(names().model(id))).join(", ")}.` : "";
       const workloadLabel = WORKLOADS.find((w) => w.id === workload).label;
 
       element.innerHTML = `
@@ -790,7 +788,6 @@ window.Pie = window.Pie || {};
             : `<div class="overview-none">${all.some((row) => row.workload === workload) ? `No ${esc(baseName())} runs on this Mac yet.` : `No results for ${esc(workloadLabel)} yet.`}</div>`}
           ${qualityTable(state.release)}
           ${decode.length ? history(state, models.filter((id) => all.some((row) => row.model === id))) : ""}
-          ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
         </div>`;
       return shown.length;
     },
