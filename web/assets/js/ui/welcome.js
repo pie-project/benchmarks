@@ -22,9 +22,9 @@ window.Pie = window.Pie || {};
       <button class="welcome-cta" type="button" data-go="overview">Compare Engines<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
     <section class="apple-band">
-      <p class="apple-eyebrow">Measured in the open</p>
-      <h2 class="apple-title">Every result, with its noise and its method.</h2>
-      <p class="apple-sub">Each number is published with its baseline and its spread, including the cells where pie trails. Read the method, then judge the numbers yourself.</p>
+      <p class="apple-eyebrow">Built for frontier cloud models</p>
+      <h2 class="apple-title">Empower your frontier models. Break through their limits.</h2>
+      <p class="apple-sub">Pie runs the loops, retries and error recovery that agents depend on, so your models can reason further and reach higher accuracy, at up to 2x lower token cost.</p>
       <div class="apple-actions">
         <button class="apple-pill" type="button" data-go="method">Read the method</button>
         <button class="apple-pill is-ghost" type="button" data-go="inferlets">Explore inferlets</button>
