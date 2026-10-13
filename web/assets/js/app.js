@@ -23,8 +23,15 @@
     }
   };
 
+  const ensureSuite = () => {
+    const suites = store.suites();
+    if (suites.length && !suites.some((suite) => suite.id === state.suite)) state.suite = suites[0].id;
+  };
+
   const render = () => {
+    ensureSuite();
     ensureRelease();
+    toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isMethod = ["method", "welcome", "inferlets"].includes(state.table);
     filterBar.hidden = isOverview || isMethod;
@@ -79,6 +86,11 @@
       event.stopPropagation();
       popover.open(elements.releasePicker, popover.RELEASE, state);
     });
+
+    elements.suitePicker.addEventListener("click", (event) => {
+      event.stopPropagation();
+      popover.open(elements.suitePicker, popover.SUITE, state);
+    });
   };
 
   const bindFilters = () => {
@@ -99,6 +111,8 @@
     popover.onPick((key, value) => {
       if (key === popover.RELEASE) {
         state.release = value;
+      } else if (key === popover.SUITE) {
+        state.suite = value;
       } else if (key === popover.MAC) {
         state.overview.hardware = value;
       } else if (key === popover.WORKLOAD) {
@@ -167,7 +181,7 @@
     overview.onOpenHistoryModel((anchor) => popover.open(anchor, popover.HIST_MODEL, state));
   };
 
-  // the view a viewer left (page, release, Mac, workload, hide choice) is kept per browser; the address still wins
+  // the view a viewer left (page, release, suite, Mac, workload, hide choice) is kept per browser; the address still wins
   const VIEW_KEY = "pieView";
   const restoreView = () => {
     try {
@@ -175,6 +189,7 @@
       if (!saved) return;
       if (saved.table && Pie.schema[saved.table]) state.table = saved.table;
       if (saved.release) state.release = saved.release;
+      if (saved.suite) state.suite = saved.suite;
       if (saved.overview) Object.assign(state.overview, saved.overview);
       state.hideEmpty = Boolean(saved.hideEmpty);
     } catch {
@@ -184,7 +199,7 @@
   const saveView = () => {
     try {
       localStorage.setItem(VIEW_KEY, JSON.stringify({
-        table: state.table, release: state.release, overview: { ...state.overview }, hideEmpty: state.hideEmpty,
+        table: state.table, release: state.release, suite: state.suite, overview: { ...state.overview }, hideEmpty: state.hideEmpty,
       }));
     } catch {
       // private windows can refuse storage
