@@ -191,7 +191,7 @@ window.Pie = window.Pie || {};
     return `
       <details class="history-details" id="history-details"${o.historyOpen ? " open" : ""}>
         <summary>Release history</summary>
-        ${section("Across releases", `Median decode advantage of ${esc(baseName())}, release by release`, body,
+        ${section("Across releases", `Median decode advantage of ${esc(baseName())}`, body,
           tools(popup("overview-history-mac", "Mac", macName(mac)), popup("overview-history-model", "Model", modelLabel)))}
       </details>`;
   };
