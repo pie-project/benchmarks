@@ -144,8 +144,8 @@ window.Pie = window.Pie || {};
     for (const tag of tags.slice(Math.max(upto, 0)).reverse()) {
       const rows = Pie.store.snapshot(tag.id).filter((row) => Pie.store.isMeasured(row) && row.hardware === hardware && row.workload === workload);
       if (!rows.some((row) => !row.stale)) continue;
-      const list = comparisons(groupByModel(rows), models, "decode_tok_s");
-      if (list.length) points.push({ tag: tag.id, date: tag.date, r: median(list.map((c) => c.r)), n: list.length });
+      const speeds = rows.filter((row) => isPie(row) && models.includes(row.model) && row.decode_tok_s).map((row) => row.decode_tok_s);
+      if (speeds.length) points.push({ tag: tag.id, date: tag.date, v: median(speeds), n: speeds.length });
     }
     return points;
   };
@@ -153,27 +153,27 @@ window.Pie = window.Pie || {};
   // a line of those points, as tall as the ring: a dot per tag, its value above, the tag below
   const trend = (points) => {
     const height = 176, top = 36, bottom = 140;
-    const logs = points.map((p) => Math.log(p.r));
-    const lo = Math.min(0, ...logs), hi = Math.max(0, ...logs);
-    const pad = (hi - lo) * 0.1 || 0.05;
-    const y = (r) => bottom - ((Math.log(r) - (lo - pad)) / (hi - lo + 2 * pad)) * (bottom - top);
+    const values = points.map((p) => p.v);
+    const lo = Math.min(...values), hi = Math.max(...values);
+    const pad = (hi - lo) * 0.25 || hi * 0.1 || 1;
+    const y = (v) => bottom - ((v - (lo - pad)) / (hi - lo + 2 * pad)) * (bottom - top);
     const x = (i) => `${8 + (i * 84) / (points.length - 1)}%`;
-    const parity = y(1).toFixed(1);
+    const tps = (v) => `${v >= 100 ? Math.round(v) : v.toFixed(1)} tok/s`;
     const segments = points.slice(1).map((p, i) =>
-      `<line class="trend-line" x1="${x(i)}" y1="${y(points[i].r).toFixed(1)}" x2="${x(i + 1)}" y2="${y(p.r).toFixed(1)}"/>`).join("");
+      `<line class="trend-line" x1="${x(i)}" y1="${y(points[i].v).toFixed(1)}" x2="${x(i + 1)}" y2="${y(p.v).toFixed(1)}"/>`).join("");
     const marks = points.map((p, i) => {
-      const tip = `${p.tag}${p.date ? `, ${Pie.format.date(p.date)}` : ""}\nMedian decode ${delta(p.r)} over ${p.n} comparisons`;
-      const cy = y(p.r).toFixed(1);
+      const tip = `${p.tag}${p.date ? `, ${Pie.format.date(p.date)}` : ""}\nMedian decode ${tps(p.v)} over ${p.n} ${p.n === 1 ? "model" : "models"}`;
+      const cy = y(p.v).toFixed(1);
       return `<g data-tip="${esc(tip)}">
           <circle class="trend-hit" cx="${x(i)}" cy="${cy}" r="16"/>
           <circle class="trend-dot" cx="${x(i)}" cy="${cy}" r="6"/>
-          <text class="trend-value" x="${x(i)}" y="${(y(p.r) - 16).toFixed(1)}" text-anchor="middle">${delta(p.r)}</text>
+          <text class="trend-value" x="${x(i)}" y="${(y(p.v) - 16).toFixed(1)}" text-anchor="middle">${tps(p.v)}</text>
           <text class="trend-tag" x="${x(i)}" y="${height - 6}" text-anchor="middle">${esc(p.tag)}</text>
         </g>`;
     }).join("");
     return `
-      <svg class="trend" width="100%" height="${height}" role="img" aria-label="pie's median decode advantage by release">
-        <line class="trend-parity" x1="0" x2="100%" y1="${parity}" y2="${parity}"/>
+      <svg class="trend" width="100%" height="${height}" role="img" aria-label="pie's median decode speed by release">
+        <line class="trend-parity" x1="0" x2="100%" y1="${bottom + 12}" y2="${bottom + 12}"/>
         ${segments}${marks}
       </svg>`;
   };
@@ -191,7 +191,7 @@ window.Pie = window.Pie || {};
     return `
       <details class="history-details" id="history-details"${o.historyOpen ? " open" : ""}>
         <summary>Release history</summary>
-        ${section("Across releases", `Median decode advantage of ${esc(baseName())}`, body,
+        ${section("Across releases", `Decode speed of ${esc(baseName())}, median tokens per second`, body,
           tools(popup("overview-history-mac", "Mac", macName(mac)), popup("overview-history-model", "Model", modelLabel)))}
       </details>`;
   };
