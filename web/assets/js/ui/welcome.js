@@ -14,9 +14,12 @@ window.Pie = window.Pie || {};
       </div>
     </div>
     <header class="method-head welcome-intro">
-      <h1>LLM Inference Engine Benchmarks</h1>
-      <p class="welcome-tagline">Performance without compromise.</p>
-      <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware.</p>
+      <div>
+        <h1>LLM Inference Engine Benchmarks</h1>
+        <p class="welcome-tagline">Performance without compromise.</p>
+        <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware.</p>
+      </div>
+      <button class="welcome-cta" type="button" data-go="overview">See the results<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
     <!-- hidden for now
     <header class="method-head welcome-trust">
@@ -39,6 +42,9 @@ window.Pie = window.Pie || {};
       element.hidden = state.table !== "welcome";
       if (!element.hidden && element.dataset.ready !== "1") {
         element.innerHTML = `<div class="method-inner">${content}</div>`;
+        // the call to action opens the overview, as its sidebar item does
+        element.querySelector("[data-go]").addEventListener("click", (event) =>
+          document.querySelector(`.sidebar-item[data-table="${event.currentTarget.dataset.go}"]`)?.click());
         element.dataset.ready = "1";
       }
     },
