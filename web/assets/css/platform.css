@@ -103,3 +103,27 @@
 .platform-cell.is-behind { color: var(--color-negative); background: rgba(255, 69, 58, calc(var(--strength) * .5)); }
 .platform-cell.is-empty { color: var(--color-label-quaternary); text-align: center; font-weight: 400; }
 .platform-cell.is-nofit { font-size: 11px; color: var(--color-label-tertiary); }
+
+/* the machine column: Apple's mark, the chip, its memory in a quiet mono */
+.platform-row { display: table-cell; }
+.platform-row > * { vertical-align: middle; }
+.platform-logo { width: 13px; height: 13px; margin: -2px 8px 0 0; fill: currentColor; color: var(--color-label-secondary); vertical-align: middle; }
+.platform-mem { margin-left: 8px; font: 11px var(--font-mono); color: var(--color-label-tertiary); }
+
+/* All hardware: a platform column, its name once at the top of its machines */
+.platform-group {
+  min-width: 120px;
+  padding: 10px 16px 10px var(--edge) !important;
+  vertical-align: top;
+  text-align: left;
+  background: var(--color-row);
+  border-bottom: .5px solid var(--color-separator);
+}
+.platform-group-name { display: flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--color-label); }
+.platform-group-name .platform-logo { width: 15px; height: 15px; color: var(--color-label); }
+.platform-group-sub { display: block; margin: 2px 0 0 23px; font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); }
+
+/* grouped: the platform column is the sticky one; the machine column scrolls with the cells */
+.platform-table.is-grouped tbody th { position: static; }
+.platform-table.is-grouped tbody th.platform-row,
+.platform-table.is-grouped thead th.is-second { padding-left: 8px; }

@@ -20,10 +20,18 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
+    all_hardware: {
+      label: "All hardware",
+      section: "platforms",
+      view: "platform",  // every platform's machines, grouped by platform
+      filters: [],
+      columns: [],
+    },
     mac: {
       label: "Mac",
       section: "platforms",
-      view: "platform",  // not a table: pie against the fastest other engine, Mac by model
+      view: "platform",
+      platform: "mac",  // not a table: pie against the fastest other engine, Mac by model
       filters: [],
       columns: [],
     },
