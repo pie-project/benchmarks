@@ -44,6 +44,13 @@ unsupported:
     reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the kimi_k3 forward pass is hybrid"
   - when: {program_category: kv_policy, family: nemotron_h}
     reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the nemotron_h forward pass is hybrid"
+  # gemma-4's sliding layers read a windowed kv ring, which pie holds as the bounded half of a
+  # hybrid pass (pie #800): every kv_policy cell of E4B, 31B and 26B-A4B is refused at the gate
+  # (local 4090 nightly at pie fe81583, shards s00/s03/s04)
+  - when: {program_category: kv_policy, family: gemma4}
+    reason: "attention-only KV policies are not valid on a windowed kv ring (pie: use pie:inferlet/forward-hybrid); the gemma4 forward pass is hybrid"
+  - when: {program_category: kv_policy, family: gemma4_moe}
+    reason: "attention-only KV policies are not valid on a windowed kv ring (pie: use pie:inferlet/forward-hybrid); the gemma4_moe forward pass is hybrid"
   # SGLang 0.5.20 cannot run gemma-4: every cell dies in its own code with
   # "view size is not compatible with input tensor's size and stride" / "shape '[-1, 1024]' is invalid" (L40S, 4090, 5090, A100 x2)
   - when: {engine: sglang, family: gemma4}
