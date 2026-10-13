@@ -71,18 +71,15 @@
           <span class="report-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg></span>
           <div>
             <h2 id="report-title">Report an Issue</h2>
-            <p class="report-hint">Tell us about incorrect results or what we should measure next.</p>
+            <p class="report-hint">A screenshot of this page is included.</p>
           </div>
         </div>
-        <div class="report-kinds" role="radiogroup" aria-label="Report type">
-          <label><input type="radio" name="report-kind" value="Incorrect data" checked><span>Incorrect Data</span></label>
-          <label><input type="radio" name="report-kind" value="Suggestion"><span>Suggestion</span></label>
-        </div>
-        <textarea id="report-text" rows="5" placeholder="Describe what you found" aria-label="Description"></textarea>
-        <p class="report-note">Your report opens as an issue on GitHub.</p>
+        <figure class="report-shot" id="report-shot" hidden><img alt="Screenshot of the page"></figure>
+        <textarea id="report-text" rows="4" placeholder="What did you notice?" aria-label="Description"></textarea>
+        <p class="report-status" id="report-status" role="status"></p>
         <div class="report-actions">
-          <button type="submit" value="cancel" class="report-cancel">Cancel</button>
-          <button type="submit" value="send" class="report-send">Continue</button>
+          <button type="button" class="report-cancel" id="report-cancel">Cancel</button>
+          <button type="submit" value="send" class="report-send" id="report-send">Send</button>
         </div>
       </form>
     </dialog>
