@@ -50,7 +50,7 @@ window.Pie = window.Pie || {};
     render(state) {
       element.hidden = state.table !== "welcome";
       if (!element.hidden && element.dataset.ready !== "1") {
-        element.innerHTML = `<div class="method-inner">${content}</div>`;
+        element.innerHTML = `<div class="method-inner welcome-inner">${content}</div>`;
         // the call to action opens the overview, as its sidebar item does
         element.querySelectorAll("[data-go]").forEach((button) =>
           button.addEventListener("click", (event) =>
