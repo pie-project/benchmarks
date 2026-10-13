@@ -493,15 +493,29 @@ def main() -> None:
     # every arm the release compares, on every task, has a row like the results table: its score, or "not run"
     arms = quality_arms(config)
     tasks = [t["id"] for t in quality_tasks()]
+    # quality runs on the big Mac: a missing score is explained the way the results table explains a missing number
+    qmac = "m5-max-128g" if "m5-max-128g" in hardware_ids else hardware_ids[-1]
+
+    def why(eng: str, model: str, otherwise: str) -> tuple[str, str]:
+        gib = misfits.get(qmac, {}).get(model, {}).get(eng)
+        if gib:
+            return "no_fit", f"Needs about {round(gib)} GB; the quality Mac has {memory.get(qmac)} GB"
+        if (qmac, eng, model) in unsupported:
+            return "unsupported", unsupported[(qmac, eng, model)]
+        return otherwise, "Not run in this release" if otherwise == "not_run" else ""
+
+    def missing(model: str, eng: str, art: str, task: str, t: str, otherwise: str) -> dict:
+        status, note = why(eng, model, otherwise)
+        return {"model": model, "engine": eng, "artifact": art, "task": task, "score": None,
+                "release": t, "status": status, "note": note, "stale": None}
+
     for t in order:
         have = {(r["engine"], r["artifact"], r["task"]) for r in quality[t]}
-        quality[t] += [{"model": a2m.get(art, art), "engine": eng, "artifact": art, "task": task, "score": None,
-                        "release": t, "status": "not_run", "stale": None}
+        quality[t] += [missing(a2m.get(art, art), eng, art, task, t, "not_run")
                        for eng, art in arms for task in tasks if (eng, art, task) not in have]
-        # an engine with no arm for a model (it cannot run it here) still has its rows, marked no data
+        # an engine with no arm for a model still has its rows: too big, unsupported, or no data
         armed = {(eng, a2m.get(art, art)) for eng, art in arms}
-        quality[t] += [{"model": model, "engine": eng, "artifact": "", "task": task, "score": None,
-                        "release": t, "status": "no_data", "stale": None}
+        quality[t] += [missing(model, eng, "", task, t, "no_data")
                        for eng in engine_ids for model in model_ids if (eng, model) not in armed for task in tasks]
         for r in quality[t]:
             r.setdefault("status", "pass")
