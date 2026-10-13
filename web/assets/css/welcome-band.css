@@ -24,3 +24,6 @@
 .welcome-intro { align-items: flex-start; }
 .welcome-intro > .welcome-cta { margin-top: 62px; }
 @media (max-width: 760px) { .welcome-intro > .welcome-cta { margin-top: 0; } }
+.welcome-icon { margin-bottom: 20px; }
+.welcome-intro > .welcome-cta { margin-top: 68px; }
+@media (max-width: 760px) { .welcome-intro > .welcome-cta { margin-top: 0; } }
