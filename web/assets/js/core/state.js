@@ -2,6 +2,7 @@ window.Pie = window.Pie || {};
 
 Pie.state = {
   table: "welcome",
+  platform: { metric: "decode" },
   overview: { hardware: null, workload: "single", engine: "pie", heatMac: null, standMac: null, model: null, macsView: "rings", modelsView: "rings", bestView: "rings" },
   release: "main",
   // the models the measurement pages show: the release models (targeted) or every one (full)

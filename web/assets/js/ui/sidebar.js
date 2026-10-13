@@ -20,7 +20,7 @@ window.Pie = window.Pie || {};
       .filter(([, schema]) => schema.section === section.id)
       .map(([id, schema]) => item(id, schema, id === current, state))
       .join("");
-    return `<div class="sidebar-heading">${section.label}</div>${items}`;
+    return `${section.label ? `<div class="sidebar-heading">${section.label}</div>` : ""}${items}`;
   };
 
   Pie.sidebar = {
