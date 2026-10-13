@@ -42,6 +42,18 @@ def strip_bos(rendered: str, bos: str | None) -> str:
     return rendered[len(bos):] if bos and rendered.startswith(bos) else rendered
 
 
+def adds_bos(snapshot: Path) -> bool:
+    """Whether the checkpoint's tokenizer puts BOS in front of plain text, as mlx-lm's server encodes a prompt.
+    Gemma 4's does not (add_bos_token false): stripping the rendered BOS there sends the model none at all."""
+    try:
+        from transformers import AutoTokenizer
+
+        tok = AutoTokenizer.from_pretrained(str(snapshot))
+    except Exception:  # noqa: BLE001 — no tokenizer to ask: keep the old behaviour
+        return True
+    return tok.bos_token_id is not None and tok.encode("x")[:1] == [tok.bos_token_id]
+
+
 def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
@@ -111,9 +123,17 @@ def mlxlm_generate(snapshot: Path, rendered: list[str], max_tokens: int, bos: st
     cmd = [py, "-m", "mlx_lm", "server", "--model", str(snapshot), "--host", "127.0.0.1", "--port", str(port),
            "--decode-concurrency", str(PARALLEL), "--prompt-concurrency", str(PARALLEL), "--prompt-cache-size", "0", "--log-level", "ERROR"]
     proc, url = _serve(cmd, {}, port, "/v1/models", 1800)
+    keep_bos = not adds_bos(snapshot)
     try:
+        # mlx-lm loads the weights in its generation thread after /v1/models already answers; a model it cannot
+        # load leaves every request waiting (gemma4_unified on 0.31.3): one short request says so in minutes
+        try:
+            _post(f"{url}/v1/completions", {"model": str(snapshot), "prompt": "Hello", "max_tokens": 1}, timeout=900)
+        except OSError as e:
+            raise RuntimeError(f"mlx-lm loaded no model to answer with ({e})") from e
+
         def one(p: str) -> str:
-            body = {"model": str(snapshot), "prompt": strip_bos(p, bos), "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0}
+            body = {"model": str(snapshot), "prompt": p if keep_bos else strip_bos(p, bos), "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0}
             return _post(f"{url}/v1/completions", body)["choices"][0].get("text", "")
 
         texts = _map(one, rendered)
