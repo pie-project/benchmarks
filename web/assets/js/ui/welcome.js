@@ -16,6 +16,7 @@ window.Pie = window.Pie || {};
     </div>
     <header class="method-head welcome-intro">
       <div>
+        <span class="welcome-icon is-bench" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V11M10 19V6M15 19v-9M20 19V4"/></svg></span>
         <h1>LLM Inference Engine Benchmarks</h1>
         <p class="welcome-tagline">Performance without compromise.</p>
         <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware.</p>
@@ -24,6 +25,7 @@ window.Pie = window.Pie || {};
     </header>
     <header class="method-head welcome-intro is-second">
       <div>
+        <span class="welcome-icon is-inferlets" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg></span>
         <h1>Inferlets</h1>
         <p class="welcome-tagline">Think like a human.</p>
         <p class="method-lede">Precise control over memory and the inference loop. Let your model draft, branch and rethink, just like you do.</p>
