@@ -74,10 +74,9 @@ window.Pie = window.Pie || {};
       <ul class="store-list">${shelf.map(row).join("")}</ul>
     </section>
     <section class="store-shelf">
-      <h2 class="store-shelf-title">Playground</h2>
       <div class="term is-placeholder">
         <div class="term-bar"><span class="term-lights" aria-hidden="true"><i></i><i></i><i></i></span></div>
-        <div class="term-body"><div class="term-out is-dim">The playground is in development. Soon you can try the inferlets you switch on right here.</div></div>
+        <div class="term-body"><div class="term-out is-dim">The playground is in development.</div></div>
       </div>
     </section>`;
 
