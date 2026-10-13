@@ -103,7 +103,7 @@ window.Pie = window.Pie || {};
     <section class="store-shelf">
       <h2 class="store-shelf-title">Playground</h2>
       <div class="term" id="term">
-        <div class="term-bar"><span class="term-lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="term-title">pie — playground</span></div>
+        <div class="term-bar"><span class="term-lights" aria-hidden="true"><i></i><i></i><i></i></span></div>
         <div class="term-body" id="term-body"></div>
         <label class="term-line"><span class="term-prompt">pie&gt;</span><input id="term-input" type="text" autocomplete="off" spellcheck="false" aria-label="Playground command"></label>
       </div>
