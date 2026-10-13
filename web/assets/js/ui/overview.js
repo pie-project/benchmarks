@@ -21,6 +21,8 @@ window.Pie = window.Pie || {};
   let onOpenHeatMac = () => {};
   let onOpenModel = () => {};
   let onOpenStandMac = () => {};
+  let onOpenHistoryMac = () => {};
+  let onOpenHistoryModel = () => {};
 
   const esc = (value) => Pie.format.escape(value);
   const names = () => Pie.store.names;
@@ -135,10 +137,10 @@ window.Pie = window.Pie || {};
     </section>`;
 
   // pie's median decode advantage per tag, oldest to newest, up to the picked release
-  const releasePoints = (state, models) => {
+  const releasePoints = (state, models, hardware = state.overview.hardware) => {
     const tags = Pie.store.tables.tags || [];
     const upto = tags.findIndex((tag) => tag.id === state.release);
-    const { hardware, workload } = state.overview;
+    const { workload } = state.overview;
     const points = [];
     for (const tag of tags.slice(Math.max(upto, 0)).reverse()) {
       const rows = Pie.store.snapshot(tag.id).filter((row) => Pie.store.isMeasured(row) && row.hardware === hardware && row.workload === workload);
@@ -178,8 +180,22 @@ window.Pie = window.Pie || {};
   };
 
   // 5. Across releases: the last block, only once two tags have data
-  const releases = (points) =>
-    points.length >= 2 ? section("Across releases", "Median decode advantage", `<div class="trend-block">${trend(points)}</div>`) : "";
+  // release history: folded away, for those who follow the trend; its own Mac and model
+  const history = (state, models) => {
+    const o = state.overview;
+    const mac = o.historyMac || o.hardware;
+    const picked = models.includes(o.historyModel) ? [o.historyModel] : models;
+    const points = releasePoints(state, picked, mac);
+    const modelLabel = picked.length === 1 ? names().model(picked[0]) : "All models";
+    const body = points.length >= 2 ? `<div class="trend-block">${trend(points)}</div>`
+      : `<div class="overview-none">Not enough releases measured on this Mac yet.</div>`;
+    return `
+      <details class="history-details" id="history-details"${o.historyOpen ? " open" : ""}>
+        <summary>Release history</summary>
+        ${section("Across releases", `Median decode advantage of ${esc(baseName())}, release by release`, body,
+          tools(popup("overview-history-mac", "Mac", macName(mac)), popup("overview-history-model", "Model", modelLabel)))}
+      </details>`;
+  };
 
   // 1. Where we stand: Apple Fitness rings, one inside the other.
   // Outer, blue: the share of decode comparisons pie wins. Middle, green: median decode advantage.
@@ -684,6 +700,14 @@ window.Pie = window.Pie || {};
       onOpenStandMac = handler;
     },
 
+    onOpenHistoryMac(handler) {
+      onOpenHistoryMac = handler;
+    },
+
+    onOpenHistoryModel(handler) {
+      onOpenHistoryModel = handler;
+    },
+
     onOpenMac(handler) {
       onOpenMac = handler;
     },
@@ -763,6 +787,7 @@ window.Pie = window.Pie || {};
             ? standSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
             : `<div class="overview-none">${all.some((row) => row.workload === workload) ? `No ${esc(baseName())} runs on this Mac yet.` : `No results for ${esc(workloadLabel)} yet.`}</div>`}
           ${qualityTable(state.release)}
+          ${decode.length ? history(state, models.filter((id) => all.some((row) => row.model === id))) : ""}
           ${missingNote ? `<p class="overview-footnote">${missingNote}</p>` : ""}
         </div>`;
       return shown.length;
@@ -780,12 +805,17 @@ window.Pie = window.Pie || {};
           onChange();
           return;
         }
-        const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine, #overview-heat-mac, #overview-model, #overview-stand-mac");
+        const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine, #overview-heat-mac, #overview-model, #overview-stand-mac, #overview-history-mac, #overview-history-model");
         if (!button) return;
         event.stopPropagation();
         ({ "overview-mac": onOpenMac, "overview-workload": onOpenWorkload, "overview-engine": onOpenEngine,
-          "overview-heat-mac": onOpenHeatMac, "overview-model": onOpenModel, "overview-stand-mac": onOpenStandMac })[button.id](button);
+          "overview-heat-mac": onOpenHeatMac, "overview-model": onOpenModel, "overview-stand-mac": onOpenStandMac,
+          "overview-history-mac": onOpenHistoryMac, "overview-history-model": onOpenHistoryModel })[button.id](button);
       });
+
+      element.addEventListener("toggle", (event) => {
+        if (event.target.id === "history-details") state.overview.historyOpen = event.target.open;
+      }, true);
 
       // one tooltip for every mark: what it compares, the values, and when they were measured
       element.addEventListener("pointermove", (event) => {
