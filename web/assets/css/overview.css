@@ -1265,3 +1265,15 @@
 .trend-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .trend-legend i { width: 8px; height: 8px; border-radius: 50%; }
 .trend-end { font-size: 12px; font-weight: 600; }
+
+/* against the best: a bar per Mac, half the track is parity, green past it and red short of it */
+.best-bars .best-line .bars-track { position: relative; }
+.best-bars .best-line .bars-track::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--color-separator); }
+.best-bars .best-line.is-ahead .bars-fill { background: var(--color-ahead, #30d158); }
+.best-bars .best-line.is-behind .bars-fill { background: var(--color-behind, #ff453a); }
+.best-bars .best-line.is-ahead .bars-value { color: var(--color-ahead, #30d158); }
+.best-bars .best-line.is-behind .bars-value { color: var(--color-behind, #ff453a); }
+.best-head { line-height: 1.25; white-space: nowrap; }
+.best-head span { color: var(--color-label-tertiary, var(--color-label-secondary)); }
+.best-bars .best-line { grid-template-columns: 112px 1fr 48px; }
+.best-bars .best-line .bars-name { white-space: nowrap; }
