@@ -8,7 +8,6 @@ window.Pie = window.Pie || {};
   const WORKLOADS = [
     { id: "single", label: "Single request" },
     { id: "throughput", label: "Throughput" },
-    { id: "ram_overload", label: "RAM Overload" },
   ];
   const METRICS = [
     { id: "decode_tok_s", key: "decode_tok_s", label: "Decode" },
