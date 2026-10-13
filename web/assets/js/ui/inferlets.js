@@ -74,7 +74,7 @@ window.Pie = window.Pie || {};
 
   const content = `
     <header class="method-head store-head">
-      <h1>Inferlets</h1>
+      <h1>Inferlet Marketplace</h1>
       <p class="method-lede">Programs that run on pie, each made for one kind of work.</p>
     </header>
     <div class="store-features">${featured.map(feature).join("")}</div>
