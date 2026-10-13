@@ -66,10 +66,6 @@ window.Pie = window.Pie || {};
     </li>`;
 
   const content = `
-    <header class="method-head store-head">
-      <h1>Marketplace</h1>
-      <p class="welcome-tagline">Inferlets</p>
-    </header>
     <section class="store-shelf">
       <ul class="store-list">${shelf.map(row).join("")}</ul>
     </section>
