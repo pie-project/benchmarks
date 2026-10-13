@@ -78,6 +78,7 @@ window.Pie = window.Pie || {};
         number("n", "Questions", "Result", "", 0),
         number("minutes", "Minutes", "Run", "", 1),
         text("date", "Date", "Run", { code: true }),
+        text("note", "Note", "Run", { wide: true }),
       ],
     },
 
