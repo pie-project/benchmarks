@@ -1,9 +1,22 @@
 /* Welcome: a quiet band under the intro, in the banner's gradient, with two pill actions. */
+/* The welcome page fills the viewport height; the band takes what is left, down to the page's bottom edge. */
+.welcome-inner {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 0;
+}
+
+.welcome-inner > * { width: 100%; }
+
 .apple-band {
   position: relative;
-  margin: 72px 0 96px;
-  padding: 72px 40px;
-  border-radius: 28px;
+  flex: 1 0 auto;
+  margin: 72px 0 0;
+  padding: 72px 40px 96px;
+  min-height: 420px;
+  border-radius: 28px 28px 0 0;
   text-align: center;
   overflow: hidden;
   background: var(--color-chrome);
@@ -79,6 +92,6 @@
 }
 
 @media (max-width: 640px) {
-  .apple-band { margin: 48px 0 64px; padding: 48px 22px; border-radius: 22px; }
+  .apple-band { margin: 48px 0 0; padding: 48px 22px 64px; border-radius: 22px 22px 0 0; }
   .apple-sub { font-size: 17px; }
 }
