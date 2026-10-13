@@ -23,11 +23,10 @@
   overflow-x: auto;
 }
 
-.platform-key { display: inline-flex; align-items: center; gap: 6px; }
-.platform-key i { width: 14px; height: 10px; border-radius: 3px; background: var(--color-fill); font-style: normal; }
-.platform-key.is-ahead i { background: rgba(52, 199, 89, .45); }
-.platform-key.is-behind i { background: rgba(255, 69, 58, .45); }
-.platform-key i.is-dash { width: auto; height: auto; background: none; color: var(--color-label-tertiary); }
+.platform-key { display: inline-flex; align-items: center; gap: 4px; }
+.platform-key i { font-style: normal; font-size: 9px; }
+.platform-key.is-ahead i { color: var(--color-positive); }
+.platform-key.is-behind i { color: var(--color-negative); }
 .platform-summary { margin-left: auto; }
 .platform-summary b { font-weight: 600; color: var(--color-label); }
 
@@ -88,21 +87,28 @@
 .platform-table tbody tr:hover th,
 .platform-table tbody tr:hover td { background: var(--color-row-hover); }
 
-/* a cell: a soft pill, its tint as strong as pie's lead or lag; the number flush right */
+/* a cell: neutral, the number carries the meaning; a small arrow says which way so color is not the only cue */
 .platform-cell {
   display: block;
-  min-width: 96px;
+  min-width: 88px;
   padding: 4px 10px;
   border-radius: 6px;
   text-align: right;
   font-weight: 500;
+  color: var(--color-label);
   cursor: default;
+  transition: background .12s ease;
 }
 
-.platform-cell.is-ahead { color: var(--color-positive); background: rgba(52, 199, 89, calc(var(--strength) * .55)); }
-.platform-cell.is-behind { color: var(--color-negative); background: rgba(255, 69, 58, calc(var(--strength) * .5)); }
+.platform-cell i { margin-right: 4px; font-style: normal; font-size: 9px; vertical-align: 1px; }
+.platform-cell.is-ahead { color: var(--color-positive); }
+.platform-cell.is-behind { color: var(--color-negative); }
+.platform-cell.is-even { color: var(--color-label-secondary); }
 .platform-cell.is-empty { color: var(--color-label-quaternary); text-align: center; font-weight: 400; }
-.platform-cell.is-nofit { font-size: 11px; color: var(--color-label-tertiary); }
+.platform-cell:hover { background: var(--color-fill); }
+
+.platform-nofit { width: 13px; height: 13px; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.2; vertical-align: -2px; }
+.platform-key .platform-nofit { margin-right: 6px; }
 
 /* the machine column: Apple's mark, the chip, its memory in a quiet mono */
 .platform-row { display: table-cell; }
