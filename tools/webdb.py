@@ -388,6 +388,12 @@ def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, whe
     return snaps
 
 
+def gpu_note(memory) -> str:
+    from pie_evals.plan.matrix import gpu_gib
+
+    return f"{round(gpu_gib(memory))}" if memory else "?"
+
+
 def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: list[str], model_ids: list[str]) -> dict:
     """{hardware: {model: {engine: GiB needed}}} for every setup that cannot fit, by the planner's own fit rule
     (expected_gib × fit_factor > memory_gib). An engine's weights are its configured artifact; pie runs the MLX one."""
@@ -408,13 +414,15 @@ def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: l
             others = [gib for (m, _), gib in need.items() if m == model]
             if others:
                 need[(model, "pie")] = min(others)
+    from pie_evals.plan.matrix import gpu_gib
+
     out: dict[str, dict] = {}
     for hw in hw_rows:
         memory = hw.get("memory_gib")
         if not memory:
             continue
         for (model, engine), gib in need.items():
-            if gib > memory:
+            if gib > gpu_gib(memory):
                 out.setdefault(hw["id"], {}).setdefault(model, {})[engine] = round(gib, 1)
     return out
 
@@ -483,7 +491,7 @@ def main() -> None:
             gib = misfits.get(hw, {}).get(model, {}).get(engine)
             if gib:
                 streaming = f" {streams[model].lower()} SSD streaming" if streams.get(model) in ("With", "Without") else ""
-                filled.append(empty_row(key, t, "no_fit", f"Needs about {round(gib)} GB{streaming}; this Mac has {memory.get(hw)} GB"))
+                filled.append(empty_row(key, t, "no_fit", f"Needs about {round(gib)} GB{streaming}; this Mac's GPU can use about {gpu_note(memory.get(hw))} GB"))
             elif (hw, engine, model) in unsupported:
                 filled.append(empty_row(key, t, "unsupported", unsupported[(hw, engine, model)]))
             elif key in tried:
@@ -502,7 +510,7 @@ def main() -> None:
     def why(eng: str, model: str, otherwise: str) -> tuple[str, str]:
         gib = misfits.get(qmac, {}).get(model, {}).get(eng)
         if gib:
-            return "no_fit", f"Needs about {round(gib)} GB; the quality Mac has {memory.get(qmac)} GB"
+            return "no_fit", f"Needs about {round(gib)} GB; the quality Mac's GPU can use about {gpu_note(memory.get(qmac))} GB"
         if (qmac, eng, model) in unsupported:
             return "unsupported", unsupported[(qmac, eng, model)]
         return otherwise, "Not run in this release" if otherwise == "not_run" else ""

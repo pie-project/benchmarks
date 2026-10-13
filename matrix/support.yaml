@@ -159,7 +159,7 @@ unsupported:
   - when: {family: mini_dit, program_category: adapter}
     reason: "diffusion model"
 
-# Fit rule: artifact.expected_gib * fit_factor must be <= platform.memory_gib
+# Fit rule: artifact.expected_gib * fit_factor must be <= platform.memory_gib (on a Mac, the share its GPU can use: plan/matrix.gpu_gib)
 # (per TP group). Cells that do not fit are declared_unsupported with reason
 # "does not fit", never silently dropped.
 first_token_broken:
