@@ -19,7 +19,7 @@ window.Pie = window.Pie || {};
         <p class="welcome-tagline">Performance without compromise.</p>
         <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware.</p>
       </div>
-      <button class="welcome-cta" type="button" data-go="overview">See the results<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
+      <button class="welcome-cta" type="button" data-go="overview">Compare Engines<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
     <!-- hidden for now
     <header class="method-head welcome-trust">
