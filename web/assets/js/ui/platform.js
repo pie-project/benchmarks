@@ -28,15 +28,15 @@ window.Pie = window.Pie || {};
   // a platform's mark is the sidebar's: the same tinted squircle and glyph wherever it appears
   const badgeOf = (id) => `<span class="sidebar-glyph" style="--tint: ${Pie.schema[id]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(id)}</span>`;
 
-  // a model's maker as a small app-icon badge: a monogram on the maker's tint, no borrowed logos
+  // a model's maker as a small app icon: its logo on a white tile (logos from LobeHub's icon set, MIT)
   const MAKERS = [
-    { test: /^qwen/, name: "Alibaba", mark: "Q", tint: ["#7b61ff", "#5b3fe6"] },
-    { test: /^gemma/, name: "Google", mark: "G", tint: ["#4f8bff", "#2563eb"] },
-    { test: /^gpt_oss/, name: "OpenAI", mark: "O", tint: ["#636366", "#3a3a3c"] },
-    { test: /^muse/, name: "Meta", mark: "M", tint: ["#2f8cff", "#0866ff"] },
+    { test: /^qwen/, name: "Alibaba", logo: "qwen" },
+    { test: /^gemma/, name: "Google", logo: "gemma" },
+    { test: /^gpt_oss/, name: "OpenAI", logo: "openai" },
+    { test: /^muse/, name: "Meta", logo: "meta" },
   ];
-  const makerOf = (model) => MAKERS.find((m) => m.test.test(Pie.store.index.models[model]?.family || "")) || { name: "", mark: "•", tint: ["#8e8e93", "#636366"] };
-  const badge = (maker) => `<span class="model-badge" style="--from: ${maker.tint[0]}; --to: ${maker.tint[1]}" aria-hidden="true">${maker.mark}</span>`;
+  const makerOf = (model) => MAKERS.find((m) => m.test.test(Pie.store.index.models[model]?.family || "")) || { name: "", logo: "" };
+  const badge = (maker) => `<span class="model-badge" aria-hidden="true">${maker.logo ? `<img src="assets/img/models/${maker.logo}.svg" alt="">` : ""}</span>`;
 
   const chipName = (id) => String(Pie.store.index.hardware[id]?.name || id).replace(/^Apple\s+/, "");
   const macName = (id) => {
