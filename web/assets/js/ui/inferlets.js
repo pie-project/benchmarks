@@ -74,10 +74,8 @@ window.Pie = window.Pie || {};
   const content = `
     <header class="method-head store-head">
       <h1>Inferlet Marketplace</h1>
-      <p class="method-lede">Programs that run on pie, each made for one kind of work.</p>
     </header>
     <section class="store-shelf">
-      <h2 class="store-shelf-title">Inferlets</h2>
       <ul class="store-list">${shelf.map(row).join("")}</ul>
     </section>
     <section class="store-shelf">
