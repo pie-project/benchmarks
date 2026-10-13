@@ -1,0 +1,105 @@
+/* A platform page: one full-width table in the results table's style, its own bar above it. */
+.platform {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.platform[hidden] { display: none; }
+
+.platform-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  height: var(--filter-bar-height);
+  padding: 0 var(--edge);
+  font-size: 12px;
+  color: var(--color-label-secondary);
+  background: var(--color-chrome);
+  border-bottom: .5px solid var(--color-separator);
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.platform-key { display: inline-flex; align-items: center; gap: 6px; }
+.platform-key i { width: 14px; height: 10px; border-radius: 3px; background: var(--color-fill); font-style: normal; }
+.platform-key.is-ahead i { background: rgba(52, 199, 89, .45); }
+.platform-key.is-behind i { background: rgba(255, 69, 58, .45); }
+.platform-key i.is-dash { width: auto; height: auto; background: none; color: var(--color-label-tertiary); }
+.platform-summary { margin-left: auto; }
+.platform-summary b { font-weight: 600; color: var(--color-label); }
+
+.platform-scroll { flex: 1; overflow: auto; }
+
+.platform-table {
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.platform-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 6px;
+  text-align: left;
+  vertical-align: bottom;
+  font-weight: 600;
+  background: var(--color-table-header);
+  border-bottom: .5px solid var(--color-separator);
+  backdrop-filter: blur(20px) saturate(1.8);
+}
+
+.platform-model { display: block; font-size: 12px; color: var(--color-label); white-space: nowrap; }
+.platform-sub { display: block; margin-top: 2px; font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); white-space: nowrap; }
+
+.platform-table th:first-child,
+.platform-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-left: var(--edge);
+  background: var(--color-row);
+}
+
+.platform-table thead th:first-child { z-index: 3; background: var(--color-table-header); }
+.platform-corner { font-size: 11px; color: var(--color-label-secondary); }
+
+.platform-row {
+  min-width: 140px;
+  padding-right: 16px;
+  text-align: left;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.platform-table tbody th,
+.platform-table tbody td {
+  height: var(--row-height);
+  padding: 3px 3px;
+  background: var(--color-row);
+  border-bottom: .5px solid var(--color-separator-light);
+}
+
+.platform-table tbody tr:hover th,
+.platform-table tbody tr:hover td { background: var(--color-row-hover); }
+
+/* a cell: a soft pill, its tint as strong as pie's lead or lag; the number flush right */
+.platform-cell {
+  display: block;
+  min-width: 96px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-align: right;
+  font-weight: 500;
+  cursor: default;
+}
+
+.platform-cell.is-ahead { color: var(--color-positive); background: rgba(52, 199, 89, calc(var(--strength) * .55)); }
+.platform-cell.is-behind { color: var(--color-negative); background: rgba(255, 69, 58, calc(var(--strength) * .5)); }
+.platform-cell.is-empty { color: var(--color-label-quaternary); text-align: center; font-weight: 400; }
+.platform-cell.is-nofit { font-size: 11px; color: var(--color-label-tertiary); }

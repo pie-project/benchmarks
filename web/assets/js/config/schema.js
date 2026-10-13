@@ -6,6 +6,8 @@ window.Pie = window.Pie || {};
   const reference = (key, label, group, table, options = {}) => ({ key, label, group, type: "reference", table, ...options });
 
   Pie.sections = [
+    { id: "home", label: "" },
+    { id: "platforms", label: "Platforms" },
     { id: "measurements", label: "Measurements" },
     { id: "catalog", label: "Catalog" },
   ];
@@ -13,15 +15,15 @@ window.Pie = window.Pie || {};
   Pie.schema = {
     welcome: {
       label: "Welcome",
-      section: "measurements",
+      section: "home",
       view: "welcome",  // not a table: why the numbers can be trusted
       filters: [],
       columns: [],
     },
-    overview: {
-      label: "Overview",
-      section: "measurements",
-      view: "overview",  // not a table: pie against the other engines, model by model
+    mac: {
+      label: "Mac",
+      section: "platforms",
+      view: "platform",  // not a table: pie against the fastest other engine, Mac by model
       filters: [],
       columns: [],
     },

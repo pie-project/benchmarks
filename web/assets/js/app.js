@@ -5,8 +5,8 @@
   // the overview's Mac and workload live in the address, so a reload or a shared link keeps them
   const readHash = () => {
     const [view, hardware, workload] = decodeURIComponent(location.hash.slice(1)).split("/");
-    if (view === "overview") {
-      state.table = "overview";
+    if (view === "overview" || view === "mac") {
+      state.table = "mac";
       Object.assign(state.overview, { hardware: hardware || null, workload: workload || "single" });
     }
   };
@@ -33,15 +33,21 @@
     ensureRelease();
     toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
+    const isPlatform = Pie.schema[state.table]?.view === "platform";
     const isMethod = ["method", "welcome", "inferlets"].includes(state.table);
-    filterBar.hidden = isOverview || isMethod;
-    table.container.hidden = isOverview || isMethod;
+    filterBar.hidden = isOverview || isMethod || isPlatform;
+    table.container.hidden = isOverview || isMethod || isPlatform;
     overview.element.hidden = !isOverview;
+    Pie.platform.element.hidden = !isPlatform;
     Pie.welcome.render(state);
     Pie.method.render(state);
     Pie.inferlets.render(state);
     sidebar.render(state);
-    if (isOverview) {
+    if (isPlatform) {
+      const shown = Pie.platform.render(state);
+      toolbar.render(state, 0, 0);
+      toolbar.elements.subtitle.textContent = `pie vs the fastest other engine · ${shown.metric.label}, single request · ${shown.macs} Macs × ${shown.models} models`;
+    } else if (isOverview) {
       const models = overview.render(state);
       toolbar.render(state, 0, 0);
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
@@ -172,6 +178,8 @@
   };
 
   const bindOverview = () => {
+    Pie.platform.bind(state);
+    Pie.platform.onChange(render);
     overview.bind(state);
     overview.onChange(render);
     overview.onOpenMac((anchor) => popover.open(anchor, popover.MAC, state));
@@ -198,6 +206,7 @@
         state.suitePicked = true;
       }
       if (saved.overview) Object.assign(state.overview, saved.overview);
+      if (saved.platform) Object.assign(state.platform, saved.platform);
       state.hideEmpty = Boolean(saved.hideEmpty);
     } catch {
       // storage refused or damaged: start from the defaults
@@ -206,7 +215,7 @@
   const saveView = () => {
     try {
       localStorage.setItem(VIEW_KEY, JSON.stringify({
-        table: state.table, release: state.release, suite: state.suite, suitePicked: Boolean(state.suitePicked), overview: { ...state.overview }, hideEmpty: state.hideEmpty,
+        table: state.table, release: state.release, suite: state.suite, suitePicked: Boolean(state.suitePicked), overview: { ...state.overview }, platform: { ...state.platform }, hideEmpty: state.hideEmpty,
       }));
     } catch {
       // private windows can refuse storage
