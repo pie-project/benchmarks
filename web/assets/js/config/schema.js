@@ -138,9 +138,10 @@ window.Pie = window.Pie || {};
     models: {
       label: "Models",
       section: "catalog",
-      filters: ["family", "architecture"],
+      filters: ["suite", "family", "architecture"],
       columns: [
         text("name", "Name", "Identity"),
+        text("suite", "CI suite", "Identity", { hint: "Targeted models run in every release; Full adds the rest" }),
         text("family", "Family", "Identity", { code: true }),
         text("architecture", "Architecture", "Shape"),
         text("ssd_streaming", "SSD streaming", "Shape"),

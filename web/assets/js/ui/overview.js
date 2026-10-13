@@ -399,17 +399,19 @@ window.Pie = window.Pie || {};
     return `<div class="bars-table">${body}</div>`;
   };
 
-  const heatmap = (byModel, models, mac, view) => {
+  const heatmap = (byModel, models, mac, view, others) => {
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
     const engines = [...new Set(Object.values(byModel).flat().filter((row) => !isPie(row)).map((row) => row.engine))]
       .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
-    const rowsShown = models.filter((id) => (byModel[id] || []).some(isPie) || misfit(id, base));
+    if (!engines.length) engines.push(...others);
+    // every model of the suite has its row: measured, too big, or crossed out until it is measured
+    const rowsShown = models;
     if (!engines.length || !rowsShown.length) return "";
 
     const head = tools(viewToggle("modelsView", view), popup("overview-heat-mac", "Mac", macName(mac)));
     if (view === "bars") {
       const entries = rowsShown.map((id) => ({ label: names().model(id), rows: byModel[id] || [],
-        note: !(byModel[id] || []).some(isPie) && misfit(id, base) ? `Doesn't fit. ${fitNote(misfit(id, base), id)}` : "" }));
+        note: (byModel[id] || []).some(isPie) ? "" : misfit(id, base) ? `Doesn't fit. ${fitNote(misfit(id, base), id)}` : "No data yet" }));
       return section("Across models", `How ${baseName()}’s speed compares on one Mac, model by model`, barsBlock(entries, engines), head);
     }
     return section("Across models", `How ${baseName()}’s speed compares on one Mac, model by model`, `
@@ -438,14 +440,22 @@ window.Pie = window.Pie || {};
     return `<div class="heat-cell" role="cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, r))}</div>`;
   };
 
+  // the engines the release compares against, for a model with no numbers of its own
+  const competitors = (all) => {
+    const engineOrder = Pie.store.tables.engines.map((e) => e.id);
+    return [...new Set(all.filter((row) => !isPie(row)).map((row) => row.engine))].sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
+  };
+
   const acrossMacs = (all, workload, model, view) => {
     if (!model) return "";
     const rows = all.filter((row) => row.model === model && row.workload === workload);
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
     const engines = [...new Set(rows.filter((row) => !isPie(row)).map((row) => row.engine))]
       .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
-    const macs = Pie.store.tables.hardware.map((hw) => hw.id)
-      .filter((mac) => rows.some((row) => row.hardware === mac) || ((Pie.store.tables.no_fit || {})[mac] || {})[model]);
+    if (!engines.length) engines.push(...competitors(all));
+    const known = Pie.store.tables.hardware.map((hw) => hw.id);
+    const measured = known.filter((mac) => rows.some((row) => row.hardware === mac) || ((Pie.store.tables.no_fit || {})[mac] || {})[model]);
+    const macs = measured.length ? measured : known.filter((mac) => all.some((row) => row.hardware === mac));
     if (!engines.length || !macs.length) return "";
     const head = tools(viewToggle("macsView", view), popup("overview-model", "Model", names().model(model)));
     if (view === "bars") {
@@ -637,8 +647,7 @@ window.Pie = window.Pie || {};
     const keep = [tooBig, macMemory];
     tooBig = (Pie.store.tables.no_fit || {})[mac] || {};
     macMemory = Pie.store.index.hardware[mac]?.memory_gib || null;
-    const shown = [...models.filter((id) => byModel[id]), ...models.filter((id) => !byModel[id] && tooBig[id])];
-    const html = heatmap(byModel, shown, mac, state.overview.modelsView || "rings");
+    const html = heatmap(byModel, models, mac, state.overview.modelsView || "rings", competitors(all));
     [tooBig, macMemory] = keep;
     return html;
   };
@@ -728,10 +737,9 @@ window.Pie = window.Pie || {};
       if (!models.includes(state.overview.model)) state.overview.model = models[0] || null;
     },
 
-    // models with numbers in this release, in the catalog's order, for the Across Macs picker
+    // the suite's models, in the catalog's order, for the Across Macs picker
     models(state) {
-      const ran = new Set(Pie.store.snapshot(state.release).filter(Pie.store.isMeasured).map((r) => r.model));
-      return Pie.store.tables.models.filter((m) => ran.has(m.id)).map((m) => ({ id: m.id, label: names().model(m.id) }));
+      return Pie.store.tables.models.filter((m) => Pie.store.inSuite(m.id)).map((m) => ({ id: m.id, label: names().model(m.id) }));
     },
 
     // returns the number of models shown, for the toolbar subtitle
