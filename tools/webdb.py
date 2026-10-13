@@ -444,6 +444,9 @@ def main() -> None:
     # every model of every suite has its rows; the site's suite picker narrows them to one suite's
     suite_ids = suite_model_ids(config, a2m)
     model_ids = sorted({m for ids in suite_ids.values() for m in ids})
+    # the CI suite each model runs in: Targeted ones run in both, the rest only in Full
+    for m in models:
+        m["suite"] = "Targeted" if m["id"] in suite_ids.get("targeted", []) else "Full" if m["id"] in suite_ids.get("full", []) else ""
     engine_ids = [e["id"] for e in mac_engines]
     results, rmeta = results_by_tag(store, a2m, hardware_ids, engine_ids)
     scores, qmeta = quality_by_tag(store, a2m)
