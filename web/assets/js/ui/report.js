@@ -6,6 +6,13 @@ window.Pie = window.Pie || {};
   const form = dialog.querySelector("form");
   const text = document.getElementById("report-text");
   const shot = document.getElementById("report-shot");
+  const include = document.getElementById("report-include");
+  // the thumbnail opens the screenshot full size in a new tab
+  document.getElementById("report-thumb").addEventListener("click", () => {
+    if (!image) return;
+    const view = window.open();
+    if (view) view.document.write(`<title>Screenshot</title><img src="${image}" style="max-width:100%">`);
+  });
   const status = document.getElementById("report-status");
   const send = document.getElementById("report-send");
   // the report service files the issue with the screenshot attached; without it, a pre-filled issue opens instead
@@ -59,6 +66,7 @@ window.Pie = window.Pie || {};
     image = await capture();
     shot.hidden = !image;
     if (image) shot.querySelector("img").src = image;
+    include.checked = true;
     dialog.showModal();
     text.focus();
   });
@@ -84,7 +92,7 @@ window.Pie = window.Pie || {};
       const response = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: note, context: context(), image }),
+        body: JSON.stringify({ text: note, context: context(), image: include.checked ? image : "" }),
       });
       const result = await response.json();
       if (!response.ok || !result.url) throw new Error(result.error || response.status);

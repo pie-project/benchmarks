@@ -65,11 +65,19 @@ window.Pie = window.Pie || {};
     return { pie, best, gain, all: [pie, ...others] };
   };
 
+  // a hover card: the setup as a title, every engine on its own aligned row (fastest first, pie in blue), one closing line
+  const card = (title, sub, lines = [], foot = "") => `
+    <div class="tip-title">${esc(title)}</div>${sub ? `<div class="tip-sub">${esc(sub)}</div>` : ""}
+    ${lines.length ? `<div class="tip-rows">${lines.join("")}</div>` : ""}${foot ? `<div class="tip-foot">${esc(foot)}</div>` : ""}`;
   const tip = (mac, model, metric, c) => {
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
-    const gap = Math.abs(c.gain) < EVEN ? "Within 2%: even" : `${names().engine(c.pie.engine)} ${Math.abs(Math.round(c.gain * 100))}% ${c.gain > 0 ? "faster" : "slower"} than the fastest other engine`;
-    return [`${names().model(model)} on ${macName(mac)}`, `${metric.label}, single request · ${gap}`,
-      ...order.map((r) => `${names().engine(r.engine)}  ${value(r[metric.key], metric.unit)}${r === c.best ? "  (fastest other)" : ""}`)].join("\n");
+    const pieName = names().engine(c.pie.engine);
+    const foot = Math.abs(c.gain) < EVEN ? `${pieName} and ${names().engine(c.best.engine)} are even.`
+      : `${pieName} is ${Math.abs(Math.round(c.gain * 100))}% ${c.gain > 0 ? "faster" : "slower"} than ${names().engine(c.best.engine)}.`;
+    const lines = order.map((r, i) => `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
+      <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
+      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}</span></div>`);
+    return card(`${names().model(model)} on ${macName(mac)}`, `${metric.label} · single request`, lines, foot);
   };
 
   Pie.platform = {
@@ -160,7 +168,7 @@ window.Pie = window.Pie || {};
       const body = shownGroups.map((g) => groupRow(g) + g.macs.map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
-          : (() => { const n = number(o); return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(`${macName(mac)}\nMedian of ${models.filter((model) => grid[mac][model].c).length} models: ${signed(o)}`)}">${n.html}</span></td>`; })();
+          : (() => { const n = number(o); return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), `${metric.label} · median of ${models.filter((model) => grid[mac][model].c).length} models`, [], `${names().engine(base)} is ${Math.abs(o) < EVEN ? "even with" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster than" : "slower than"}`} the fastest other engine.`))}">${n.html}</span></td>`; })();
         return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
@@ -169,7 +177,7 @@ window.Pie = window.Pie || {};
             const n = number(c.gain);
             return `<td class="${sorted}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c))}">${n.html}</span></td>`;
           }
-          return `<td class="${sorted}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(`${names().model(model)} on ${macName(mac)}\n${why}`)}">${needs ? NOFIT : "–"}</span></td>`;
+          return `<td class="${sorted}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card(`${names().model(model)} on ${macName(mac)}`, `${metric.label} · single request`, [], why))}">${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}</tr>`;
       }).join("")).join("");
 
@@ -191,6 +199,11 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="platform-bar">
+          <button class="release-picker" id="platform-metric" type="button" aria-haspopup="menu">
+            <span class="release-picker-label">Metric</span>
+            <span class="release-picker-value">${esc(metric.label)}</span>
+            <svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
+          </button>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
@@ -210,6 +223,12 @@ window.Pie = window.Pie || {};
         if (button) {
           state.platform.metric = button.dataset.metric;
           onChange();
+          return;
+        }
+        const picker = event.target.closest("#platform-metric");
+        if (picker) {
+          event.stopPropagation();
+          Pie.popover.open(picker, Pie.popover.METRIC, state);
           return;
         }
         if (event.target.closest("[data-hide]")) {
@@ -237,14 +256,19 @@ window.Pie = window.Pie || {};
           tooltip.hidden = true;
           return;
         }
-        tooltip.textContent = mark.dataset.tip;
+        // the card is markup this page built, every value escaped
+        tooltip.innerHTML = mark.dataset.tip;
+        tooltip.classList.add("is-card");
         tooltip.hidden = false;
         const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
         const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8);
         tooltip.style.left = `${Math.max(8, x)}px`;
         tooltip.style.top = `${Math.max(8, y)}px`;
       });
-      element.addEventListener("pointerleave", () => (tooltip.hidden = true));
+      element.addEventListener("pointerleave", () => {
+        tooltip.hidden = true;
+        tooltip.classList.remove("is-card");
+      });
       element.addEventListener("scroll", () => (tooltip.hidden = true), true);
     },
   };
