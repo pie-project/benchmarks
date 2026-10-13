@@ -206,6 +206,13 @@
     }
   };
 
+  // the release history stays open or closed as the viewer left it
+  document.addEventListener("toggle", (event) => {
+    if (event.target.id !== "history-details") return;
+    state.overview.historyOpen = event.target.open;
+    saveView();
+  }, true);
+
   restoreView();
   readHash();
   bindToolbar();
