@@ -23,7 +23,8 @@ window.Pie = window.Pie || {};
     all_hardware: {
       label: "All hardware",
       section: "platforms",
-      view: "platform",  // every platform's machines, grouped by platform
+      view: "platform",
+      tint: "#0a84ff",  // every platform's machines, grouped by platform
       filters: [],
       columns: [],
     },
@@ -32,7 +33,7 @@ window.Pie = window.Pie || {};
       section: "platforms",
       view: "platform",
       platform: "mac",
-      tint: "#f5f5f7",
+      tint: "#636366",
       filters: [],
       columns: [],
     },

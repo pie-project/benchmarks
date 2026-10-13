@@ -102,44 +102,84 @@ window.Pie = window.Pie || {};
         return { macs: 0, models: 0, metric };
       }
       const query = state.query.trim().toLowerCase();
-      const models = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id))
-        .filter((id) => !query || names().model(id).toLowerCase().includes(query));
       const noFit = Pie.store.tables.no_fit || {};
+      const p = state.platform;
+
+      // every cell first: a comparison, or why there is none
+      const allModels = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id))
+        .filter((id) => !query || names().model(id).toLowerCase().includes(query));
+      const grid = {};
+      for (const mac of macs) {
+        grid[mac] = {};
+        for (const model of allModels) {
+          const c = cell(rows.filter((r) => r.hardware === mac && r.model === model), metric, base);
+          const needs = noFit[mac]?.[model]?.[base];
+          const own = snapshot.find((r) => r.hardware === mac && r.model === model && r.engine === base);
+          grid[mac][model] = { c, needs, why: needs ? `Doesn't fit: needs about ${Math.round(needs)} GB` : own?.note || "No data yet" };
+        }
+      }
+      // Hide unavailable drops the models and machines with nothing to compare, as the results table does
+      const hide = p.hide !== false;
+      const models = hide ? allModels.filter((model) => macs.some((mac) => grid[mac][model].c)) : allModels;
+      const overall = (mac) => {
+        const gains = models.map((model) => grid[mac][model].c?.gain).filter((g) => g !== undefined).sort((a, b) => a - b);
+        return gains.length ? gains[gains.length >> 1] : null;
+      };
+      const sortKey = p.sort?.key || "name";
+      const dir = p.sort?.dir || 1;
+      const order = (list) => {
+        const named = [...list];
+        if (sortKey === "name") return dir > 0 ? named : named.reverse();
+        const val = (mac) => (sortKey === "overall" ? overall(mac) : grid[mac][sortKey]?.c?.gain ?? null);
+        // empties sink to the bottom whichever way the column sorts
+        return named.sort((a, b) => (val(a) === null) - (val(b) === null) || dir * ((val(a) ?? 0) - (val(b) ?? 0)));
+      };
+      const shownGroups = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => grid[mac][model].c)) : g.macs) }))
+        .filter((g) => g.macs.length);
 
       const cells = [];
+      const number = (gain) => {
+        const kind = Math.abs(gain) < EVEN ? "is-even" : gain > 0 ? "is-ahead" : "is-behind";
+        const mark = kind === "is-even" ? "<i>≈</i>" : ARROW(kind === "is-ahead");
+        return { kind, html: `${mark}${kind === "is-even" ? "0%" : signed(gain).replace(/^[+−]/, "")}` };
+      };
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
         return `<th class="platform-row" scope="row">${platform.icon}<span>${esc(chipName(mac))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</th>`;
       };
       const groupCell = (g) => `<th class="platform-group" scope="rowgroup" rowspan="${g.macs.length}">
         <span class="platform-group-name">${g.platform.icon}${esc(g.platform.label)}</span><span class="platform-group-sub">${esc(g.platform.sub)}</span></th>`;
-      const body = groups.map((g) => g.macs.map((mac, i) => `<tr${i === 0 ? ' class="is-group-start"' : ""}>${grouped && i === 0 ? groupCell(g) : ""}${machine(mac, g.platform)}${models.map((model) => {
-        const here = rows.filter((r) => r.hardware === mac && r.model === model);
-        const c = cell(here, metric, base);
-        if (c) {
-          cells.push(c.gain);
-          const kind = Math.abs(c.gain) < EVEN ? "is-even" : c.gain > 0 ? "is-ahead" : "is-behind";
-          const mark = kind === "is-even" ? "<i>≈</i>" : ARROW(kind === "is-ahead");
-          const text = kind === "is-even" ? "0%" : signed(c.gain).replace(/^[+−]/, "");
-          return `<td><span class="platform-cell ${kind}" data-tip="${esc(tip(mac, model, metric, c))}">${mark}${text}</span></td>`;
-        }
-        const needs = noFit[mac]?.[model]?.[base];
-        // why there is nothing: too big, or the reason the results table gives for pie's row
-        const own = snapshot.find((r) => r.hardware === mac && r.model === model && r.engine === base);
-        const why = needs ? `Doesn't fit: needs about ${Math.round(needs)} GB` : own?.note || "No data yet";
-        return `<td><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(`${names().model(model)} on ${macName(mac)}\n${why}`)}">${needs ? NOFIT : "–"}</span></td>`;
-      }).join("")}</tr>`).join("")).join("");
+      const body = shownGroups.map((g) => g.macs.map((mac, i) => {
+        const o = overall(mac);
+        const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
+          : (() => { const n = number(o); return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(`${macName(mac)}\nMedian of ${models.filter((model) => grid[mac][model].c).length} models: ${signed(o)}`)}">${n.html}</span></td>`; })();
+        return `<tr${i === 0 ? ' class="is-group-start"' : ""}>${grouped && i === 0 ? groupCell(g) : ""}${machine(mac, g.platform)}${overallCell}${models.map((model) => {
+          const { c, needs, why } = grid[mac][model];
+          const sorted = sortKey === model ? " is-sorted" : "";
+          if (c) {
+            cells.push(c.gain);
+            const n = number(c.gain);
+            return `<td class="${sorted}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c))}">${n.html}</span></td>`;
+          }
+          return `<td class="${sorted}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(`${names().model(model)} on ${macName(mac)}\n${why}`)}">${needs ? NOFIT : "–"}</span></td>`;
+        }).join("")}</tr>`;
+      }).join("")).join("");
 
       const ahead = cells.filter((g) => g >= 0).length;
-      const sorted = [...cells].sort((a, b) => a - b);
-      const median = sorted.length ? sorted[sorted.length >> 1] : null;
-      const head = `<tr>${grouped ? '<th class="platform-corner platform-group-head" scope="col">Platform</th>' : ""}<th class="platform-corner${grouped ? " is-second" : ""}" scope="col">Hardware</th>${models.map((model) => {
+      const sortedGains = [...cells].sort((a, b) => a - b);
+      const median = sortedGains.length ? sortedGains[sortedGains.length >> 1] : null;
+      const arrow = (key) => (sortKey === key ? `<span class="column-sort">${dir > 0 ? "↑" : "↓"}</span>` : "");
+      const head = `<tr>${grouped ? '<th class="platform-corner platform-group-head" scope="col">Platform</th>' : ""}
+        <th class="platform-corner is-sortable${grouped ? " is-second" : ""}" scope="col" data-sort="name">Hardware${arrow("name")}</th>
+        <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
         const m = Pie.store.index.models[model] || {};
         const maker = makerOf(model);
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
         const sub = [maker.name, size].filter(Boolean).join(" · ");
-        return `<th scope="col"><span class="platform-col">${badge(maker)}<span><span class="platform-model">${esc(names().model(model))}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
+        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" title="Sort by ${esc(names().model(model))}">
+          <span class="platform-col">${badge(maker)}<span><span class="platform-model">${esc(names().model(model))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}</tr>`;
+      const cols = `<colgroup>${grouped ? '<col class="col-group">' : ""}<col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}</colgroup>`;
 
       element.innerHTML = `
         <div class="platform-bar">
@@ -151,18 +191,34 @@ window.Pie = window.Pie || {};
           <span class="platform-key"><i>≈</i>Within 2%</span>
           <span class="platform-key">${NOFIT}Doesn't fit</span>
           <span class="platform-summary">${cells.length ? `${esc(names().engine(base))} ahead in <b>${ahead}</b> of ${cells.length} · median <b>${signed(median)}</b>` : ""}</span>
+          <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
         </div>
         <div class="platform-scroll">
-          <table class="platform-table${grouped ? " is-grouped" : ""}"><thead>${head}</thead><tbody>${body}</tbody></table>
+          <table class="platform-table${grouped ? " is-grouped" : ""}">${cols}<thead>${head}</thead><tbody>${body}</tbody></table>
         </div>`;
-      return { macs: macs.length, models: models.length, metric };
+      const macsShown = shownGroups.reduce((n, g) => n + g.macs.length, 0);
+      return { macs: macsShown, models: models.length, metric };
     },
 
     bind(state) {
       element.addEventListener("click", (event) => {
         const button = event.target.closest("[data-metric]");
-        if (!button) return;
-        state.platform.metric = button.dataset.metric;
+        if (button) {
+          state.platform.metric = button.dataset.metric;
+          onChange();
+          return;
+        }
+        if (event.target.closest("[data-hide]")) {
+          state.platform.hide = state.platform.hide === false;
+          onChange();
+          return;
+        }
+        // a header sorts by its column: again to flip; a new model column starts with pie's best lead on top
+        const header = event.target.closest("[data-sort]");
+        if (!header) return;
+        const key = header.dataset.sort;
+        const now = state.platform.sort || { key: "name", dir: 1 };
+        state.platform.sort = now.key === key ? { key, dir: -now.dir } : { key, dir: key === "name" ? 1 : -1 };
         onChange();
       });
       element.addEventListener("pointermove", (event) => {
