@@ -16,16 +16,17 @@ window.Pie = window.Pie || {};
   let onChange = () => {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
-  const APPLE = '<svg class="platform-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
   const PLATFORMS = [
-    { id: "mac", label: "Apple", sub: "Mac", icon: APPLE, has: (hw) => hw.class === "mac" || hw.vendor === "Apple" },
-    { id: "tpu", label: "Google TPU", sub: "Per slice", icon: "", has: (hw) => hw.backend === "xla" },
-    { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", icon: "", has: (hw) => hw.vendor === "NVIDIA" },
-    { id: "amd", label: "AMD GPU", sub: "ROCm", icon: "", has: (hw) => hw.vendor === "AMD" },
-    { id: "android", label: "Android", sub: "Mobile GPU", icon: "", has: (hw) => hw.class === "android" },
-    { id: "web", label: "Web", sub: "In-browser", icon: "", has: (hw) => hw.class === "web" },
+    { id: "mac", label: "Apple", sub: "Mac", has: (hw) => hw.class === "mac" || hw.vendor === "Apple" },
+    { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => hw.backend === "xla" },
+    { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => hw.vendor === "NVIDIA" },
+    { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => hw.vendor === "AMD" },
+    { id: "android", label: "Android", sub: "Mobile GPU", has: (hw) => hw.class === "android" },
+    { id: "web", label: "Web", sub: "In-browser", has: (hw) => hw.class === "web" },
   ];
   const platformOf = (hw) => PLATFORMS.find((p) => p.has(hw));
+  // a platform's mark is the sidebar's: the same tinted squircle and glyph wherever it appears
+  const badgeOf = (id) => `<span class="sidebar-glyph" style="--tint: ${Pie.schema[id]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(id)}</span>`;
 
   // a model's maker as a small app-icon badge: a monogram on the maker's tint, no borrowed logos
   const MAKERS = [
@@ -145,10 +146,10 @@ window.Pie = window.Pie || {};
       };
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
-        return `<th class="platform-row" scope="row">${platform.icon}<span>${esc(chipName(mac))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</th>`;
+        return `<th class="platform-row" scope="row"><span>${esc(chipName(mac))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</th>`;
       };
       const groupCell = (g) => `<th class="platform-group" scope="rowgroup" rowspan="${g.macs.length}">
-        <span class="platform-group-name">${g.platform.icon}${esc(g.platform.label)}</span><span class="platform-group-sub">${esc(g.platform.sub)}</span></th>`;
+        <span class="platform-group-name">${badgeOf(g.platform.id)}${esc(g.platform.label)}</span><span class="platform-group-sub">${esc(g.platform.sub)}</span></th>`;
       const body = shownGroups.map((g) => g.macs.map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`

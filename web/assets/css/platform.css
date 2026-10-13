@@ -198,3 +198,10 @@
 .platform-table td.is-overall .platform-cell { font-weight: 600; }
 
 .platform-hide { margin-left: 8px; }
+
+/* the platform column carries the sidebar's badge; machine rows need no mark of their own */
+.platform-group-name { gap: 8px; }
+.platform-group .sidebar-glyph[style] { width: 20px; height: 20px; border-radius: 5px; }
+.platform-group .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; }
+.platform-group .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
+.platform-group-sub { margin-left: 28px; }
