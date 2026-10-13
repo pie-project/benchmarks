@@ -905,7 +905,35 @@
     linear-gradient(120deg, #3b5bfd, #a855f7);
 }
 
-.welcome-intro { margin-bottom: 40px; }
+.welcome-intro { margin-bottom: 40px; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+
+/* the intro's call to action: Apple's blue pill, a chevron after the words */
+.welcome-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 44px;
+  padding: 0 18px 0 22px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 500;
+  color: #fff;
+  background: #0071e3;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.welcome-cta:hover { background: #0077ed; }
+.welcome-cta:active { background: #006edb; }
+.welcome-cta:focus-visible { outline: 3px solid rgba(0, 113, 227, .4); outline-offset: 2px; }
+.welcome-cta svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (max-width: 760px) {
+  .welcome-intro { flex-direction: column; align-items: flex-start; gap: 20px; }
+}
 
 .welcome-tagline {
   margin: -4px 0 16px;
