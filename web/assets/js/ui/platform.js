@@ -9,9 +9,9 @@ window.Pie = window.Pie || {};
   const names = () => Pie.store.names;
 
   const METRICS = [
-    { id: "decode", label: "Decode", key: "decode_tok_s", unit: "tok/s", higher: true },
-    { id: "prefill", label: "Prefill", key: "prefill_tok_s", unit: "tok/s", higher: true },
-    { id: "ttft", label: "TTFT", key: "ttft_ms_p50", unit: "ms", higher: false },
+    { id: "decode", label: "Decode", detail: "Tokens per second while answering", key: "decode_tok_s", unit: "tok/s", higher: true },
+    { id: "prefill", label: "Prefill", detail: "Tokens per second reading the prompt", key: "prefill_tok_s", unit: "tok/s", higher: true },
+    { id: "ttft", label: "TTFT", detail: "Time to the first token", key: "ttft_ms_p50", unit: "ms", higher: false },
   ];
   let onChange = () => {};
 
@@ -78,6 +78,10 @@ window.Pie = window.Pie || {};
     // how many machines a platform has on the site (all platforms when none is named)
     machines(id) {
       return Pie.store.tables.hardware.filter((hw) => { const p = platformOf(hw); return p && (!id || p.id === id); }).length;
+    },
+
+    metrics() {
+      return METRICS;
     },
 
     onChange(handler) {
@@ -187,10 +191,6 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="platform-bar">
-          <span class="platform-bar-side"></span>
-          <div class="view-toggle platform-switch" role="group" aria-label="Metric">
-            ${METRICS.map((m) => `<button type="button" class="${m === metric ? "is-active" : ""}" data-metric="${m.id}" aria-pressed="${m === metric}">${m.label}</button>`).join("")}
-          </div>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
