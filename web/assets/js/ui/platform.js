@@ -99,7 +99,7 @@ window.Pie = window.Pie || {};
       if (!macs.length) {
         const label = Pie.schema[state.table]?.label || "this platform";
         element.innerHTML = `<div class="platform-empty"><span class="sidebar-glyph" style="--tint: ${Pie.schema[state.table]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(state.table)}</span>
-          <h2>No ${esc(label)} results yet</h2><p>Machines on this platform will appear here once they are measured.</p></div>`;
+          <h2>No ${esc(label)} results yet</h2></div>`;
         return { macs: 0, models: 0, metric };
       }
       const query = state.query.trim().toLowerCase();
