@@ -21,6 +21,7 @@ window.Pie = window.Pie || {};
   let onOpenModel = () => {};
   let onOpenStandMac = () => {};
   let onOpenHistoryMac = () => {};
+  let onOpenQualityEngine = () => {};
   let onOpenHistoryModel = () => {};
 
   const esc = (value) => Pie.format.escape(value);
@@ -532,31 +533,59 @@ window.Pie = window.Pie || {};
   const TASK_NAMES = { gsm8k: "GSM8K", ifeval: "IFEval", mmlu: "MMLU", arc: "ARC", math500: "MATH-500" };
 
   // where each model lands on the accuracy scale: its mean over the benchmarks, the picked engine's scores
-  const qualityRanking = (rows, models) => {
+  // each model: the engines' average accuracy as the bar, their spread as the whisker, the picked engine as the mark
+  const qualityRanking = (rows, models, pick) => {
     const ranked = models.map((model) => {
-      const mine = rows.filter((r) => r.model === model && isPie(r));
-      const pool = mine.length ? mine : rows.filter((r) => r.model === model);
-      const mean = pool.reduce((sum, r) => sum + r.score, 0) / pool.length;
-      return { model, mean, pool };
-    }).filter((x) => x.pool.length).sort((a, b) => b.mean - a.mean);
-    const columns = ranked.map(({ model, mean, pool }) => {
-      const tip = [names().model(model), `Mean accuracy ${(mean * 100).toFixed(1)}%`,
-        ...pool.map((r) => `${TASK_NAMES[r.task] || r.task}: ${(r.score * 100).toFixed(0)}%`)].join("\n");
+      const mine = rows.filter((r) => r.model === model);
+      const engines = [...new Set(mine.map((r) => r.engine))];
+      // the tasks every engine answered, so each engine's mean is over the same questions
+      const shared = Object.keys(TASK_NAMES).filter((task) => engines.every((e) => mine.some((r) => r.engine === e && r.task === task)));
+      const means = engines.map((engine) => {
+        const own = mine.filter((r) => r.engine === engine && (!shared.length || shared.includes(r.task)));
+        return { engine, mean: own.reduce((sum, r) => sum + r.score, 0) / own.length };
+      });
+      const avg = means.reduce((sum, m) => sum + m.mean, 0) / means.length;
+      return { model, avg, means, low: Math.min(...means.map((m) => m.mean)), high: Math.max(...means.map((m) => m.mean)),
+        mark: means.find((m) => m.engine === pick), tasks: shared.length ? shared : null };
+    }).filter((x) => x.means.length).sort((a, b) => b.avg - a.avg);
+    if (!ranked.length) return "";
+    // a zoomed scale, so a few points of difference show
+    const floor = Math.max(0, Math.floor((Math.min(...ranked.map((x) => x.low)) - 0.05) * 20) / 20);
+    const at = (v) => `${(((v - floor) / (1 - floor)) * 100).toFixed(1)}%`;
+    const pct = (v) => `${(v * 100).toFixed(1)}%`;
+    const columns = ranked.map(({ model, avg, means, low, high, mark, tasks }) => {
+      const tip = [names().model(model), `Average of ${means.length} ${means.length === 1 ? "engine" : "engines"}: ${pct(avg)}`,
+        ...means.map((m) => `${names().engine(m.engine)}: ${pct(m.mean)}`),
+        tasks ? `Over ${tasks.map((t) => TASK_NAMES[t]).join(", ")}` : ""].filter(Boolean).join("\n");
       return `<div class="rank-col" data-tip="${esc(tip)}">
-        <span class="rank-value">${Math.round(mean * 100)}%</span>
-        <span class="rank-bar"><span class="rank-fill" style="height: ${(mean * 100).toFixed(1)}%"></span></span>
+        <span class="rank-value${mark ? "" : " is-quiet"}">${mark ? `${Math.round(mark.mean * 100)}%` : "—"}</span>
+        <span class="rank-bar">
+          <span class="rank-fill" style="height: ${at(avg)}"></span>
+          ${means.length > 1 ? `<span class="rank-range" style="bottom: ${at(low)}; height: calc(${at(high)} - ${at(low)})"></span>` : ""}
+          ${mark ? `<span class="rank-mark" style="bottom: ${at(mark.mean)}"></span>` : ""}
+        </span>
         <span class="rank-name">${esc(names().model(model))}</span>
       </div>`;
     }).join("");
-    return `<div class="rank-chart" role="img" aria-label="Models ranked by mean accuracy">${columns}</div>`;
+    return `<div class="rank-chart" role="img" aria-label="Average accuracy per model across engines, with ${esc(names().engine(pick))} marked">
+        <span class="rank-axis rank-axis-top">100%</span><span class="rank-axis rank-axis-bottom">${Math.round(floor * 100)}%</span>
+        ${columns}
+      </div>
+      <div class="rank-legend">
+        <span><i class="is-bar"></i>Average of all engines</span>
+        <span><i class="is-range"></i>Range across engines</span>
+        <span><i class="is-mark"></i>${esc(names().engine(pick))}</span>
+      </div>`;
   };
 
-  const qualityTable = (release) => {
-    const rows = Pie.store.qualitySnapshot(release).filter((r) => typeof r.score === "number");
+  const qualityTable = (state) => {
+    const rows = Pie.store.qualitySnapshot(state.release).filter((r) => typeof r.score === "number");
     const modelOrder = Pie.store.tables.models.map((m) => m.id);
     const models = [...new Set(rows.map((r) => r.model))].sort((a, b) => modelOrder.indexOf(a) - modelOrder.indexOf(b));
     if (!models.length) return "";
-    return section("Quality", "Average accuracy", qualityRanking(rows, models));
+    const pick = state.overview.qualityEngine || base;
+    return section("Quality", "Average accuracy", qualityRanking(rows, models, pick),
+      tools(popup("overview-quality-engine", "Engine", names().engine(pick))));
   };
 
   const figure = (model, rows) => {
@@ -743,6 +772,16 @@ window.Pie = window.Pie || {};
       onOpenHistoryMac = handler;
     },
 
+    onOpenQualityEngine(handler) {
+      onOpenQualityEngine = handler;
+    },
+
+    // engines with quality scores in this release, for the Quality section's picker
+    qualityEngines(state) {
+      const scored = new Set(Pie.store.qualitySnapshot(state.release).filter((r) => typeof r.score === "number").map((r) => r.engine));
+      return Pie.store.tables.engines.filter((e) => scored.has(e.id)).map((e) => ({ id: e.id, label: names().engine(e.id) }));
+    },
+
     onOpenHistoryModel(handler) {
       onOpenHistoryModel = handler;
     },
@@ -824,7 +863,7 @@ window.Pie = window.Pie || {};
           ${decode.length
             ? standSection(state, all, models, workload) + acrossMacs(all, workload, state.overview.model, state.overview.macsView || "rings") + heatSection(state, all, models, workload)
             : `<div class="overview-none">${all.some((row) => row.workload === workload) ? `No ${esc(baseName())} runs on this Mac yet.` : `No results for ${esc(workloadLabel)} yet.`}</div>`}
-          ${qualityTable(state.release)}
+          ${qualityTable(state)}
           ${decode.length ? history(state, models.filter((id) => all.some((row) => row.model === id))) : ""}
         </div>`;
       return shown.length;
@@ -842,12 +881,13 @@ window.Pie = window.Pie || {};
           onChange();
           return;
         }
-        const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine, #overview-heat-mac, #overview-model, #overview-stand-mac, #overview-history-mac, #overview-history-model");
+        const button = event.target.closest("#overview-mac, #overview-workload, #overview-engine, #overview-heat-mac, #overview-model, #overview-stand-mac, #overview-history-mac, #overview-history-model, #overview-quality-engine");
         if (!button) return;
         event.stopPropagation();
         ({ "overview-mac": onOpenMac, "overview-workload": onOpenWorkload, "overview-engine": onOpenEngine,
           "overview-heat-mac": onOpenHeatMac, "overview-model": onOpenModel, "overview-stand-mac": onOpenStandMac,
-          "overview-history-mac": onOpenHistoryMac, "overview-history-model": onOpenHistoryModel })[button.id](button);
+          "overview-history-mac": onOpenHistoryMac, "overview-history-model": onOpenHistoryModel,
+          "overview-quality-engine": onOpenQualityEngine })[button.id](button);
       });
 
       // one tooltip for every mark: what it compares, the values, and when they were measured
