@@ -63,7 +63,6 @@ window.Pie = window.Pie || {};
       <div class="store-tile-top">${icon(item.kind, item.glyph)}${toggle(item)}</div>
       <span class="store-name">${esc(item.name)}</span>
       <span class="store-workload">${esc(item.workload)}</span>
-      <span class="store-figure">${esc(item.stat)}</span>
     </li>`;
 
   const content = `
