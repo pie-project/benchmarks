@@ -141,3 +141,9 @@
   }
 }
 
+
+/* a platform's glyph takes its own tint; the Apple mark is filled */
+.sidebar-glyph { display: inline-flex; }
+.sidebar-glyph[style] svg { stroke: var(--tint); }
+.sidebar-item svg .is-filled { fill: var(--color-label); stroke: none; }
+.sidebar-glyph[style*="#f5f5f7"] svg { stroke: var(--color-label); }
