@@ -83,14 +83,15 @@ window.Pie = window.Pie || {};
         ]),
       ].join(""))}`
   ];
+  // eslint-disable-next-line no-unused-vars
   const column = (side) => `<div class="method-col">${panes.filter((_, i) => i % 2 === side).join("")}</div>`;
 
   const content = `
     <header class="method-head">
       <h1>How we measure</h1>
-    </header>
-
-    <div class="method-cols">${column(0)}${column(1)}</div>`;
+    </header>`;
+  // the metric cards are hidden for now; this brings them back:
+  // content += `<div class="method-cols">${column(0)}${column(1)}</div>`;
 
   Pie.method = {
     element,
