@@ -71,13 +71,12 @@ window.Pie = window.Pie || {};
     <header class="method-head">
       <h1>Inferlets</h1>
       <p class="method-lede">Programs that run on pie. Each one is a demo you can try, measure and build on.</p>
-    </header>
-    <div class="inferlet-grid">${demos.map(card).join("")}</div>
-    <header class="enterprise-head">
-      <h2>For cloud and enterprise teams</h2>
-      <p>Pie is open source. We work with teams that want it in production: deployment, custom inferlets and support.</p>
-    </header>
-    <div class="enterprise-grid">${offers.map(offer).join("")}</div>`;
+    </header>`;
+  // the demo cards and the enterprise offers are hidden for now; these bring them back:
+  // content += `<div class="inferlet-grid">${demos.map(card).join("")}</div>`;
+  // content += `<header class="enterprise-head"><h2>For cloud and enterprise teams</h2>
+  //   <p>Pie is open source. We work with teams that want it in production: deployment, custom inferlets and support.</p></header>`;
+  // content += `<div class="enterprise-grid">${offers.map(offer).join("")}</div>`;
 
   Pie.inferlets = {
     element,
