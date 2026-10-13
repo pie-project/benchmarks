@@ -199,11 +199,9 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="platform-bar">
-          <button class="release-picker" id="platform-metric" type="button" aria-haspopup="menu">
-            <span class="release-picker-label">Metric</span>
-            <span class="release-picker-value">${esc(metric.label)}</span>
-            <svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
-          </button>
+          <span class="filter">
+            <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" title="Metric">${esc(metric.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+          </span>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
