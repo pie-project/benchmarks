@@ -240,3 +240,14 @@
 .store-tile .store-name { font-size: 15px; font-weight: 600; }
 .store-tile .store-workload { font-size: 13px; color: var(--color-label-secondary); }
 .store-figure { margin-top: 10px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--color-label); }
+
+/* one rhythm on an 8-point grid: 32 between sections, 16 between tiles, 20 inside a tile */
+#inferlets .store-head { margin-bottom: 32px; }
+#inferlets .store-head .welcome-tagline { margin: 4px 0 0; }
+#inferlets .store-shelf { margin: 0; }
+#inferlets .store-shelf + .store-shelf { margin-top: 32px; }
+#inferlets .store-list { gap: 16px; }
+#inferlets .store-tile { gap: 2px; padding: 20px; }
+#inferlets .store-tile-top { margin-bottom: 16px; }
+#inferlets .term { box-shadow: none; }
+#inferlets .term.is-placeholder .term-body { min-height: 0; padding: 14px 16px; }
