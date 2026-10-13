@@ -1214,3 +1214,9 @@
 
 .history-details[open] > summary::after { transform: rotate(45deg); }
 .history-details[open] > .overview-section { margin-top: 20px; }
+
+/* release history: a legend of Macs above their lines */
+.trend-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 12px; font-size: 12px; color: var(--color-label-secondary); }
+.trend-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.trend-legend i { width: 8px; height: 8px; border-radius: 50%; }
+.trend-end { font-size: 12px; font-weight: 600; }
