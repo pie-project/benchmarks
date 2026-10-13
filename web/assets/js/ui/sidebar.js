@@ -6,12 +6,14 @@ window.Pie = window.Pie || {};
 
   // results count the selected release's enumerated setups, measured or not
   const count = (id, state) => (id === "results" ? Pie.store.snapshot(state.release).length : (Pie.store.rows(id) || []).length);
+  // a platform counts its machines; an empty one shows none
+  const machines = (schema) => (Pie.platform?.machines ? Pie.platform.machines(schema.platform) : 0);
 
   const item = (id, schema, selected, state) => `
     <button class="sidebar-item${selected ? " is-selected" : ""}" type="button" data-table="${id}" aria-current="${selected}">
-      ${Pie.icon(id)}
+      <span class="sidebar-glyph"${schema.tint ? ` style="--tint: ${schema.tint}"` : ""}>${Pie.icon(id)}</span>
       <span>${schema.label}</span>
-      ${schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
+      ${schema.view === "platform" ? (machines(schema) ? `<span class="sidebar-count">${machines(schema)}</span>` : "") : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
     </button>`;
 
   const section = (section, state) => {
