@@ -1,7 +1,6 @@
 window.Pie = window.Pie || {};
 
-// Inferlets, laid out like an app store: two featured programs on the welcome banner's gradients,
-// then a shelf of the rest. Each names the work it is for and what it buys.
+// Inferlets, laid out like an app store: a shelf of programs. Each names the work it is for and what it buys.
 (() => {
   const element = document.getElementById("inferlets");
   const esc = (s) => Pie.format.escape(String(s ?? ""));
@@ -18,22 +17,12 @@ window.Pie = window.Pie || {};
   };
   const icon = (kind, glyph, size = "") => `<span class="store-icon ${kind}${size}" aria-hidden="true"><svg viewBox="0 0 24 24">${GLYPH[glyph]}</svg></span>`;
 
-  const featured = [
-    {
-      kind: "is-prefill", glyph: "type", id: "prefill-as-you-type", kicker: "New way to chat", name: "Prefill as you type",
-      title: "The answer starts before you press Enter.",
-      body: "Reads the prompt while it is still being typed, so the only work left at Enter is the last few words.",
-      stat: "~0 ms", statLabel: "time to first token after Enter", preview: true, example: "",
-    },
-    {
-      kind: "is-prefix", glyph: "fork", id: "copy-on-write-fork", kicker: "Built for agents", name: "Copy-on-write fork",
-      title: "Branch a conversation without copying it.",
-      body: "Every branch shares the cached context it came from and only stores what it adds, so an agent can try many paths at once.",
-      stat: "8 branches", statLabel: "for the memory of about one", preview: true, example: "rs-fork-probe-py",
-    },
-  ];
 
   const shelf = [
+    { id: "prefill-as-you-type", kind: "is-prefill", glyph: "type", name: "Prefill as you type", workload: "Chat",
+      benefit: "Reads the prompt while it is typed, so the answer starts at Enter.", stat: "~0 ms TTFT", example: "" },
+    { id: "copy-on-write-fork", kind: "is-prefix", glyph: "fork", name: "Copy-on-write fork", workload: "Agents",
+      benefit: "Branches share the context they came from and store only what they add.", stat: "8 branches", example: "rs-fork-probe-py" },
     { id: "speculative-decoding", kind: "is-speculative", glyph: "draft", name: "Speculative decoding", workload: "Chat · long answers",
       benefit: "A drafter proposes tokens and the model checks them in one pass.", stat: "1.5× decode",
       note: "Measured: Qwen3.8-27B on M5 Max 128 GB, against plain decoding", preview: false, example: "dflash-speculative-bench" },
@@ -60,21 +49,13 @@ window.Pie = window.Pie || {};
       // private windows can refuse storage
     }
   };
-  const all = () => [...featured, ...shelf];
+  const all = () => shelf;
   const toggle = (item, label = "") => `
     <label class="store-toggle"${item.example ? "" : ' title="Not available yet"'}>${label ? `<span>${label}</span>` : ""}
       <input type="checkbox" role="switch" data-inferlet="${esc(item.id)}"${added.has(item.id) ? " checked" : ""}${item.example ? "" : " disabled"}>
       <span class="store-switch" aria-hidden="true"></span>
     </label>`;
 
-  const feature = (item) => `
-    <article class="store-feature ${item.kind}">
-      <p class="store-kicker">${esc(item.kicker)}</p>
-      <h2>${esc(item.title)}</h2>
-      <p class="store-body">${esc(item.body)}</p>
-      <div class="store-stat"><b>${esc(item.stat)}</b><span>${esc(item.statLabel)}</span></div>
-      <div class="store-feature-foot">${toggle(item, item.example ? "Add to Playground" : "Coming soon")}</div>
-    </article>`;
 
   const row = (item) => `
     <li class="store-row">
@@ -95,9 +76,8 @@ window.Pie = window.Pie || {};
       <h1>Inferlet Marketplace</h1>
       <p class="method-lede">Programs that run on pie, each made for one kind of work.</p>
     </header>
-    <div class="store-features">${featured.map(feature).join("")}</div>
     <section class="store-shelf">
-      <h2 class="store-shelf-title">More inferlets</h2>
+      <h2 class="store-shelf-title">Inferlets</h2>
       <ul class="store-list">${shelf.map(row).join("")}</ul>
     </section>
     <section class="store-shelf">
