@@ -56,6 +56,18 @@ default:
                 48 GB Mac refuses the load; this is the cap its 27B sibling runs with.
             engine_option:
               value: {max_state_slots: 64}
+    qwen4_exp:
+      knobs: {}
+      backend:
+        metal:
+          knobs:
+            total_pages:
+              value: 1024
+              rationale: >
+                The cap its Qwen3.6 hybrid siblings run with on a Mac: Qwen3.8-Flash-Next's
+                weights leave little beside them for a default-sized KV pool.
+            engine_option:
+              value: {max_state_slots: 64}
   backend:
     xla:
       knobs:

@@ -292,6 +292,20 @@ def _field_matches(have: Any, want: Any) -> bool:
         return have == want
 
 
+_ARTIFACT_KEYS = {"engine", "artifact", "family", "scheme", "source_format"}
+
+
+def cannot_load(m: Matrix, engine: str, artifact: ArtifactSpec) -> str | None:
+    """The declared reason an engine cannot run an artifact anywhere: a support rule that names
+    nothing but the engine and the artifact (not a platform, a shape or a program), else None."""
+    have = {"engine": engine, "artifact": artifact.id, "family": artifact.family,
+            "scheme": str(artifact.scheme), "source_format": str(artifact.source_format)}
+    for rule in m.unsupported:
+        if rule.when and set(rule.when) <= _ARTIFACT_KEYS and all(_field_matches(have[k], v) for k, v in rule.when.items()):
+            return rule.reason
+    return None
+
+
 def summarize(cells: Iterable[Cell]) -> dict[str, int]:
     out: dict[str, int] = {"total": 0, "declared_unsupported": 0}
     for c in cells:

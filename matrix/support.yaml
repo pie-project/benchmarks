@@ -38,6 +38,8 @@ unsupported:
     reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the qwen3_6 forward pass is hybrid"
   - when: {program_category: kv_policy, family: qwen3_6_moe}
     reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the qwen3_6_moe forward pass is hybrid"
+  - when: {program_category: kv_policy, family: qwen4_exp}
+    reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the qwen4_exp forward pass is hybrid"
   - when: {program_category: kv_policy, family: glm5_next}
     reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the glm5_next forward pass is hybrid"
   - when: {program_category: kv_policy, family: kimi_k3}
@@ -110,6 +112,16 @@ unsupported:
     reason: "mlx-lm is single device"
   - when: {engine: mlxlm, family: muse_glimmer}
     reason: "mlx-lm 0.31.3 ships no muse_glimmer model, so it cannot load Muse Glimmer"
+  - when: {engine: mlxlm, family: qwen4_exp}
+    reason: "mlx-lm 0.31.3 ships no qwen4_exp model, so it cannot load Qwen3.8-Flash-Next"
+  # pie has no 4-bit deployment of these Gemma 4 sizes (models/gemma_4: gemma4-e4b ships at bf16 only,
+  # 12B and E2B not at all); their pie rows stand beside the llama.cpp and mlx-lm arms
+  - when: {engine: pie, artifact: gemma-4-12b-mlx4}
+    reason: "pie has no Gemma 4 12B deployment"
+  - when: {engine: pie, artifact: gemma-4-e2b-mlx4}
+    reason: "pie has no Gemma 4 E2B deployment"
+  - when: {engine: pie, artifact: gemma-4-e4b-mlx4}
+    reason: "pie serves Gemma 4 E4B only at bf16 (gemma4-e4b-bf16-kv-bf16), not at 4-bit"
   - when: {program_category: diffusion, engine: vllm}
     reason: "not an LLM serving workload"
   - when: {program_category: diffusion, engine: sglang}

@@ -172,14 +172,16 @@ artifacts:
     pie_drafter: dflash   # z-lab/Qwen3.6-35B-A3B-DFlash
     display_name: qwen3.6:35b-a3b
     expected_gib: 18.17
-    tiers: [nightly, weekly]
+    tiers: [nightly, weekly, targeted]
   - id: gemma-4-31b-mlx4
     base_model: mlx-community/gemma-4-31b-it-4bit
     family: gemma4
     scheme: affine_u4_g64
     source_format: mlx
+    pie_sku: gemma4-31b-u4g64-kv-bf16   # the plain row: the import otherwise lands the mtp drafter twin
+    display_name: gemma4:31b
     expected_gib: 16.08
-    tiers: [nightly, weekly]
+    tiers: [nightly, weekly, targeted]
   - id: gemma-4-26b-a4b-mlx4
     base_model: mlx-community/gemma-4-26b-a4b-it-4bit
     family: gemma4_moe
@@ -195,8 +197,10 @@ artifacts:
     family: gpt_oss
     scheme: mxfp4
     source_format: mlx
+    pie_sku: gptoss-20b-u4g64-mxfp4-kv-bf16   # the plain row: the import otherwise lands the dflash twin, which no boot loads
+    display_name: gpt-oss:20b
     expected_gib: 10.41
-    tiers: [nightly, weekly]
+    tiers: [nightly, weekly, targeted]
   - id: qwen3.6-27b-gguf-q4km
     base_model: unsloth/Qwen3.6-27B-GGUF
     family: qwen3_6
@@ -262,6 +266,62 @@ artifacts:
     expected_gib: 15.0
     tiers: [targeted]
 
+  - id: qwen3.8-flash-next-mlx4
+    base_model: mlx-community/Qwen3.8-Flash-Next-4bit
+    family: qwen4_exp     # pie's qwen_4 package: gated delta-net hybrid with routed experts
+    scheme: affine_u4_g64
+    source_format: mlx
+    pie_sku: qwen38-flash-next-u4g64-kv-bf16
+    display_name: qwen3.8:flash-next
+    expected_gib: 103.86
+    tiers: [targeted]
+  - id: qwen3.5-4b-mlx4
+    base_model: mlx-community/Qwen3.5-4B-4bit
+    family: qwen3_5
+    scheme: affine_u4_g64
+    source_format: mlx
+    pie_sku: qwen35-d4b-u4g64-kv-bf16
+    display_name: qwen3.5:4b
+    expected_gib: 2.83
+    tiers: [targeted]
+
+  # ---------------- full suite: pie's own checkpoints on the Macs ----------------
+  - id: qwen3.5-9b-mlx4
+    base_model: mlx-community/Qwen3.5-9B-4bit
+    family: qwen3_5
+    scheme: affine_u4_g64
+    source_format: mlx
+    pie_sku: qwen35-d9b-u4g64-kv-bf16
+    display_name: qwen3.5:9b
+    expected_gib: 5.54
+    tiers: [targeted]
+  # pie has no 4-bit deployment of these three (support.yaml declares them unsupported):
+  # the row exists so the llama.cpp and mlx-lm arms have a pie artifact to stand beside
+  - id: gemma-4-12b-mlx4
+    base_model: mlx-community/gemma-4-12B-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    display_name: gemma4:12b
+    expected_gib: 6.28
+    tiers: [targeted]
+  - id: gemma-4-e2b-mlx4
+    base_model: mlx-community/gemma-4-e2b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    display_name: gemma4:e2b
+    expected_gib: 3.31
+    tiers: [targeted]
+  - id: gemma-4-e4b-mlx4
+    base_model: mlx-community/gemma-4-e4b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    display_name: gemma4:e4b
+    expected_gib: 4.79
+    tiers: [targeted]
+
   # ---------------- targeted: Splash, on the upstream MLX checkpoint ----------------
   - id: qwen3.8-27b-splash
     base_model: mlx-community/Qwen3.8-27B-4bit
@@ -320,6 +380,79 @@ artifacts:
     expected_gib: 19.0
     tiers: [targeted]
 
+  - id: gemma-4-31b-mlxlm
+    base_model: mlx-community/gemma-4-31b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: gemma-4-31b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 16.08
+    tiers: [targeted]
+  - id: qwen3.8-flash-next-mlxlm
+    base_model: mlx-community/Qwen3.8-Flash-Next-4bit
+    family: qwen4_exp
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: qwen3.8-flash-next-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 103.86
+    tiers: [targeted]
+  - id: qwen3.5-4b-mlxlm
+    base_model: mlx-community/Qwen3.5-4B-4bit
+    family: qwen3_5
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: qwen3.5-4b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 2.83
+    tiers: [targeted]
+  - id: qwen3.5-9b-mlxlm
+    base_model: mlx-community/Qwen3.5-9B-4bit
+    family: qwen3_5
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: qwen3.5-9b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 5.54
+    tiers: [targeted]
+  - id: gemma-4-12b-mlxlm
+    base_model: mlx-community/gemma-4-12B-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: gemma-4-12b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 6.28
+    tiers: [targeted]
+  - id: gemma-4-e2b-mlxlm
+    base_model: mlx-community/gemma-4-e2b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: gemma-4-e2b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 3.31
+    tiers: [targeted]
+  - id: gemma-4-e4b-mlxlm
+    base_model: mlx-community/gemma-4-e4b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    baseline_of: gemma-4-e4b-mlx4
+    baseline_label: mlx-lm
+    expected_gib: 4.79
+    tiers: [targeted]
+  - id: gpt-oss-20b-mlxlm
+    base_model: mlx-community/gpt-oss-20b-MXFP4-Q4
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    baseline_of: gpt-oss-20b-mlx-mxfp4
+    baseline_label: mlx-lm
+    expected_gib: 10.41
+    tiers: [targeted]
+
   # ---------------- targeted: llama.cpp, on a Q4_K_M GGUF ----------------
   - id: gemma-4-26b-a4b-llamacpp
     base_model: unsloth/gemma-4-26B-A4B-it-GGUF
@@ -364,4 +497,92 @@ artifacts:
     baseline_of: qwen3.6-35b-a3b-mlx4
     baseline_label: llama.cpp
     expected_gib: 20.61
+    tiers: [targeted]
+  - id: gemma-4-31b-llamacpp
+    base_model: unsloth/gemma-4-31B-it-GGUF
+    family: gemma4
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: gemma-4-31B-it-Q4_K_M.gguf
+    tokenizer_from: mlx-community/gemma-4-31b-it-4bit
+    baseline_of: gemma-4-31b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 17.07
+    tiers: [targeted]
+  - id: qwen3.8-flash-next-llamacpp
+    base_model: unsloth/Qwen3.8-Flash-Next-GGUF
+    family: qwen4_exp
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf   # the repo has no Q4_K_M; its 4-bit K-quant is this four-way split (the download takes every shard)
+    tokenizer_from: mlx-community/Qwen3.8-Flash-Next-4bit
+    baseline_of: qwen3.8-flash-next-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 103.66
+    tiers: [targeted]
+  - id: qwen3.5-4b-llamacpp
+    base_model: unsloth/Qwen3.5-4B-GGUF
+    family: qwen3_5
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Qwen3.5-4B-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Qwen3.5-4B-4bit
+    baseline_of: qwen3.5-4b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 2.55
+    tiers: [targeted]
+  - id: qwen3.5-9b-llamacpp
+    base_model: unsloth/Qwen3.5-9B-GGUF
+    family: qwen3_5
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Qwen3.5-9B-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Qwen3.5-9B-4bit
+    baseline_of: qwen3.5-9b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 5.29
+    tiers: [targeted]
+  - id: gemma-4-12b-llamacpp
+    base_model: unsloth/gemma-4-12b-it-GGUF
+    family: gemma4
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: gemma-4-12b-it-Q4_K_M.gguf
+    tokenizer_from: mlx-community/gemma-4-12B-it-4bit
+    baseline_of: gemma-4-12b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 6.63
+    tiers: [targeted]
+  - id: gemma-4-e2b-llamacpp
+    base_model: unsloth/gemma-4-E2B-it-GGUF
+    family: gemma4
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: gemma-4-E2B-it-Q4_K_M.gguf
+    tokenizer_from: mlx-community/gemma-4-e2b-it-4bit
+    baseline_of: gemma-4-e2b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 2.89
+    tiers: [targeted]
+  - id: gemma-4-e4b-llamacpp
+    base_model: unsloth/gemma-4-E4B-it-GGUF
+    family: gemma4
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: gemma-4-E4B-it-Q4_K_M.gguf
+    tokenizer_from: mlx-community/gemma-4-e4b-it-4bit
+    baseline_of: gemma-4-e4b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 4.64
+    tiers: [targeted]
+  - id: gpt-oss-20b-llamacpp
+    base_model: unsloth/gpt-oss-20b-GGUF
+    family: gpt_oss
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: gpt-oss-20b-Q4_K_M.gguf
+    tokenizer_from: mlx-community/gpt-oss-20b-MXFP4-Q4
+    baseline_of: gpt-oss-20b-mlx-mxfp4
+    baseline_label: llama.cpp
+    expected_gib: 10.83
     tiers: [targeted]
