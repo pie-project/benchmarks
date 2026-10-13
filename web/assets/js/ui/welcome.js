@@ -21,6 +21,15 @@ window.Pie = window.Pie || {};
       </div>
       <button class="welcome-cta" type="button" data-go="overview">Compare Engines<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
+    <section class="apple-band">
+      <p class="apple-eyebrow">Measured in the open</p>
+      <h2 class="apple-title">Every result, with its noise and its method.</h2>
+      <p class="apple-sub">Each number is published with its baseline and its spread, including the cells where pie trails. Read the method, then judge the numbers yourself.</p>
+      <div class="apple-actions">
+        <button class="apple-pill" type="button" data-go="method">Read the method</button>
+        <button class="apple-pill is-ghost" type="button" data-go="inferlets">Explore inferlets</button>
+      </div>
+    </section>
     <!-- hidden for now
     <header class="method-head welcome-trust">
       <h2>Message to a Reader</h2>
@@ -43,8 +52,9 @@ window.Pie = window.Pie || {};
       if (!element.hidden && element.dataset.ready !== "1") {
         element.innerHTML = `<div class="method-inner">${content}</div>`;
         // the call to action opens the overview, as its sidebar item does
-        element.querySelector("[data-go]").addEventListener("click", (event) =>
-          document.querySelector(`.sidebar-item[data-table="${event.currentTarget.dataset.go}"]`)?.click());
+        element.querySelectorAll("[data-go]").forEach((button) =>
+          button.addEventListener("click", (event) =>
+            document.querySelector(`.sidebar-item[data-table="${event.currentTarget.dataset.go}"]`)?.click()));
         element.dataset.ready = "1";
       }
     },
