@@ -1158,16 +1158,6 @@
   white-space: nowrap;
 }
 
-/* quality bars: a model per row, its benchmarks side by side */
-.quality-row { display: grid; grid-template-columns: 170px 1fr; gap: 28px; padding: 16px 0; }
-.quality-row + .quality-row { border-top: .5px solid var(--color-separator); }
-.quality-tasks { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px 28px; }
-.quality-bars .bars-line { grid-template-columns: 56px 1fr 38px; }
-
-@media (max-width: 760px) {
-  .quality-row { grid-template-columns: 1fr; gap: 12px; }
-}
-
 /* quality ranking: one column per model, its mean accuracy, best first */
 .rank-chart {
   display: flex;
