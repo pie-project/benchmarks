@@ -59,8 +59,8 @@ window.Pie = window.Pie || {};
 
   // a tile in a full-width grid: icon and switch on top, then the name, the workload and the figure
   const row = (item) => `
-    <li class="store-tile" title="${esc(item.benefit)}">
-      <div class="store-tile-top">${icon(item.kind, item.glyph)}${toggle(item)}</div>
+    <li class="store-tile ${item.kind}" title="${esc(item.benefit)}">
+      <div class="store-tile-top"><svg class="store-glyph" viewBox="0 0 24 24" aria-hidden="true">${GLYPH[item.glyph]}</svg>${toggle(item)}</div>
       <span class="store-name">${esc(item.name)}</span>
       <span class="store-workload">${esc(item.workload)}</span>
     </li>`;
