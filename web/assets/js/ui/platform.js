@@ -168,7 +168,7 @@ window.Pie = window.Pie || {};
       const body = shownGroups.map((g) => groupRow(g) + g.macs.map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
-          : (() => { const n = number(o); return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), `${metric.label} · median of ${models.filter((model) => grid[mac][model].c).length} models`, [], `${names().engine(base)} is ${Math.abs(o) < EVEN ? "even with" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster than" : "slower than"}`} the fastest other engine.`))}">${n.html}</span></td>`; })();
+          : (() => { const n = number(o); n.html = n.kind === "is-even" ? "0%" : signed(o); return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), `${metric.label} · median of ${models.filter((model) => grid[mac][model].c).length} models`, [], `${names().engine(base)} is ${Math.abs(o) < EVEN ? "even with" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster than" : "slower than"}`} the fastest other engine.`))}">${n.html}</span></td>`; })();
         return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
