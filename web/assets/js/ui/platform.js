@@ -47,7 +47,7 @@ window.Pie = window.Pie || {};
     const v = n >= 100 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 });
     return `${v} ${unit}`;
   };
-  const EVEN = 0.02;  // within ±2% the engines are even: noise, not a result
+  const EVEN = 0.045;  // under 5%, as the cell rounds it, the engines are even: run-to-run spread, not a result
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/></svg>';
   const ARROW = (up) => `<svg class="platform-arrow" viewBox="0 0 10 12" aria-hidden="true"><path d="${up ? "M5 10.5V1.8M1.6 5.2 5 1.8l3.4 3.4" : "M5 1.5v8.7M1.6 6.8 5 10.2l3.4-3.4"}"/></svg>`;
   const signed = (p) => {
@@ -158,8 +158,9 @@ window.Pie = window.Pie || {};
       const cells = [];
       const number = (gain) => {
         const kind = Math.abs(gain) < EVEN ? "is-even" : gain > 0 ? "is-ahead" : "is-behind";
-        const mark = kind === "is-even" ? "<i>≈</i>" : ARROW(kind === "is-ahead");
-        return { kind, html: `${mark}${kind === "is-even" ? "0%" : signed(gain).replace(/^[+−]/, "")}` };
+        // an even cell still says its number, in grey: within the spread, but not hidden
+        if (kind === "is-even") return { kind, html: Math.round(gain * 100) ? signed(gain) : "0%" };
+        return { kind, html: `${ARROW(kind === "is-ahead")}${signed(gain).replace(/^[+−]/, "")}` };
       };
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
@@ -175,7 +176,7 @@ window.Pie = window.Pie || {};
       const body = shownGroups.map((g) => groupRow(g) + (folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
-          : (() => { const n = number(o); n.html = n.kind === "is-even" ? "0%" : signed(o); return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}">${n.html}</span></td>`; })();
+          : (() => { const n = number(o); n.html = Math.round(o * 100) ? signed(o) : "0%"; return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}">${n.html}</span></td>`; })();
         return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
