@@ -457,3 +457,7 @@
 .platform-table thead tr.platform-head-row th { top: 40px; }
 .platform-table thead tr.platform-maker-row th.platform-corner { border-bottom: 0; }
 .platform-bar-side.is-end { margin-left: auto; }
+
+/* columns keep their width on a wide window: the table ends where its models do, as a Numbers table does */
+.platform-table { min-width: 0; width: calc(190px + 156px * var(--cols)); }
+@media (max-width: 899px) { .platform-table { width: calc(116px + 96px * var(--cols)); } }
