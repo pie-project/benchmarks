@@ -145,3 +145,26 @@
   text-align: center;
   color: var(--color-label-secondary);
 }
+
+/* on a phone the table slides sideways inside its own frame, the row numbers and the header held in place */
+@media (max-width: 899px) {
+  .table-container {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .data-table {
+    font-size: 14px;
+  }
+
+  .data-table thead th {
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .data-table td.is-code,
+  .hardware-tag {
+    font-size: 13px;
+  }
+}

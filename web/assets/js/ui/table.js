@@ -76,6 +76,15 @@ window.Pie = window.Pie || {};
       table.innerHTML = head + body;
     },
 
+    // a finger cannot hover a cell's note: a tap on a noted cell or row shows it instead
+    bindTapNotes() {
+      table.addEventListener("click", (event) => {
+        if (!Pie.tapCard.isTouch() || event.target.closest("[data-result-key], thead")) return;
+        const noted = event.target.closest("td[title], tr[title]");
+        if (noted?.title) Pie.tapCard.toggle(noted, format.escape(noted.title));
+      });
+    },
+
     onShowResults(handler) {
       table.addEventListener("click", (event) => {
         const row = event.target.closest("[data-result-key]");

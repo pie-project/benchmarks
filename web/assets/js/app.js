@@ -185,6 +185,7 @@
       render();
     });
     table.onShowResults((key, value) => navigate("results", { [key]: [value] }));
+    table.bindTapNotes();
     table.container.addEventListener("scroll", () => popover.close());
   };
 

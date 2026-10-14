@@ -259,7 +259,13 @@ window.Pie = window.Pie || {};
         state.platform.sort = now?.key !== key ? { key, dir: 1 } : now.dir > 0 ? { key, dir: -1 } : null;
         onChange();
       });
+      // a tap on a cell shows its card, as hovering does with a pointer
+      element.addEventListener("click", (event) => {
+        const mark = Pie.tapCard.isTouch() && event.target.closest("[data-tip]");
+        if (mark) Pie.tapCard.toggle(mark, mark.dataset.tip, true);
+      });
       element.addEventListener("pointermove", (event) => {
+        if (event.pointerType !== "mouse") return;
         const mark = event.target.closest("[data-tip]");
         if (!mark) {
           tooltip.hidden = true;
@@ -278,7 +284,8 @@ window.Pie = window.Pie || {};
         const scroller = element.querySelector(".platform-scroll");
         if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       });
-      element.addEventListener("pointerleave", () => {
+      element.addEventListener("pointerleave", (event) => {
+        if (event.pointerType !== "mouse") return;
         tooltip.hidden = true;
         tooltip.classList.remove("is-card");
       });

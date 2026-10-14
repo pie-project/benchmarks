@@ -62,3 +62,38 @@
   padding-right: 10px;
 }
 
+
+/* on a phone the filters are a row of pop-up buttons that slides sideways under a finger, Hide unavailable last */
+@media (max-width: 899px) {
+  .filter-bar {
+    gap: 6px;
+    padding: 0 var(--edge);
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter,
+  .filter-button {
+    flex: none;
+    height: 34px;
+    border-radius: 999px;
+  }
+
+  .filter {
+    background: var(--color-fill);
+  }
+
+  .filter-button {
+    padding: 0 12px 0 14px;
+    font-size: 15px;
+  }
+
+  .filter-bar .plain-button {
+    flex: none;
+    white-space: nowrap;
+  }
+}
