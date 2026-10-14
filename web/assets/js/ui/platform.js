@@ -11,7 +11,6 @@ window.Pie = window.Pie || {};
   const METRICS = [
     { id: "decode", label: "Decode", detail: "Tokens per second while answering", key: "decode_tok_s", unit: "tok/s", higher: true },
     { id: "prefill", label: "Prefill", detail: "Tokens per second reading the prompt", key: "prefill_tok_s", unit: "tok/s", higher: true },
-    { id: "ttft", label: "TTFT", detail: "Time to the first token", key: "ttft_ms_p50", unit: "ms", higher: false },
   ];
   let onChange = () => {};
 
@@ -99,8 +98,7 @@ window.Pie = window.Pie || {};
 
     // returns the number of machines and models shown, for the toolbar subtitle
     render(state) {
-      // decode only: the page compares one thing, without a metric menu
-      const metric = METRICS[0];
+      const metric = METRICS.find((m) => m.id === state.platform.metric) || METRICS[0];
       const base = Pie.engines.primary;
       const snapshot = Pie.store.snapshot(state.release).filter((r) => r.workload === "single");
       const rows = snapshot.filter(Pie.store.isMeasured);
@@ -213,6 +211,9 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="platform-bar">
+          <span class="filter">
+            <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" title="Metric">${esc(metric.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+          </span>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
