@@ -91,6 +91,30 @@ window.Pie = window.Pie || {};
       return div;
     };
     const send = (msg) => proc.signal(JSON.stringify(msg));
+
+    // The answer is Markdown: draw its bold, italics, code, headings and lists the way a rich terminal does.
+    const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const inline = (t) => esc(t)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+      .replace(/__([^_]+)__/g, "<b>$1</b>")
+      .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\w)/g, "$1<i>$2</i>")
+      .replace(/(^|[^_\w])_([^_\s][^_]*?)_(?!\w)/g, "$1<i>$2</i>");
+    const markdown = (text) => {
+      let fenced = false;
+      return text.split("\n").map((row) => {
+        if (/^\s*```/.test(row)) { fenced = !fenced; return ""; }
+        if (fenced) return `<span class="md-code">${esc(row)}</span>`;
+        let m;
+        if ((m = row.match(/^\s{0,3}#{1,6}\s+(.*)$/))) return `<b class="md-h">${inline(m[1])}</b>`;
+        if ((m = row.match(/^(\s*)[*+-]\s+(.*)$/))) return `${m[1]}<span class="md-bullet">•</span> ${inline(m[2])}`;
+        if ((m = row.match(/^(\s*)(\d+[.)])\s+(.*)$/))) return `${m[1]}<span class="md-bullet">${m[2]}</span> ${inline(m[3])}`;
+        if (/^\s*([-*_])\s*\1\s*\1[\s\1]*$/.test(row)) return `<span class="md-rule">${"─".repeat(24)}</span>`;
+        return inline(row);
+      }).join("\n");
+    };
+    // a small model can loop: a paragraph that repeats the one before it is shown once
+    const unloop = (text) => text.split(/\n{2,}/).filter((block, i, all) => i === 0 || block.trim() !== all[i - 1].trim()).join("\n\n");
     const showBadge = (text, title) => { badge.textContent = text; badge.title = title || ""; badge.hidden = false; };
 
     async function boot() {
@@ -153,7 +177,7 @@ window.Pie = window.Pie || {};
             showBadge(`TTFT ${Math.round(firstAt - enterAt)} ms`);
           }
           shown = m.reset ? m.t : shown + m.t;
-          answer.textContent = shown.replace(/<\|[^|]*\|>/g, "").trimEnd();
+          answer.innerHTML = markdown(unloop(shown.replace(/<\|[^|]*\|>/g, "").trimEnd()));
           body.scrollTop = body.scrollHeight;
         } else if (m.ev === "done") {
           showBadge(
