@@ -264,6 +264,28 @@ def test_run_t0_compares_through_the_reference_stop_and_no_further():
     assert m.t0_max_logit_gap == pytest.approx(2.5)
 
 
+def test_run_t0_an_engine_that_stops_at_eos_leaves_the_stop_out():
+    # the engine stops where the reference writes its stop (6) and does not emit it
+    fn = _fake_tf(20, {})
+    m = run_t0([[1, 2]], [[1, 2, 6, 4, 5]], fn, [[7]], stops={6})
+    assert m.status == AccuracyStatus.PASS
+    assert m.t0_first_divergence == [None]
+    assert fn.calls == []
+
+
+def test_run_t0_an_engine_that_stops_early_is_judged_by_its_stop():
+    # the reference goes on with 3 where the engine stopped: stop 6 against 3 at row 2
+    fn = _fake_tf(20, {2: (3, 6, 0.06)})
+    m = run_t0([[1, 2]], [[1, 2, 3, 4]], fn, [[7]], stops={6, 8})
+    assert m.status == AccuracyStatus.PASS
+    assert m.t0_first_divergence == [2]
+    assert m.detail["t0"][0]["engine_tok"] == 6
+    fn = _fake_tf(20, {2: (3, 6, 2.5)})
+    m = run_t0([[1, 2]], [[1, 2, 3, 4]], fn, [[7]], stops={6, 8})
+    assert m.status == AccuracyStatus.FAIL
+    assert m.t0_max_logit_gap == pytest.approx(2.5)
+
+
 def test_stop_ids_read_generation_config_then_config(tmp_path):
     from pie_evals.node.accuracy.gate import stop_ids
 
