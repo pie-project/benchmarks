@@ -549,6 +549,8 @@ class NodeRunner:
         # a concurrent shape's round is minutes long (kv-oversub, mixed, c256: 2/3 of a nightly's cell time):
         # two rounds that agree within its bound are the record; a third comes only through confirmation
         need = min(policy.min_rounds, 2) if cell.workload.kind.value not in ("single_stream", "control_aa", "long_context") else policy.min_rounds
+        if cell.workload.kind.value == "single_stream" and policy.single_stream_rounds:
+            need = max(need, policy.single_stream_rounds)
         rounds: list[float] = []
         results = []
         try:
