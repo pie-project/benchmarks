@@ -168,7 +168,7 @@ window.Pie = window.Pie || {};
       const groupRow = (g) => `<tr class="platform-group-row${folded(g.platform.id) ? " is-collapsed" : ""}${g.macs.length ? "" : " is-empty"}"${g.macs.length ? ` data-group="${g.platform.id}"` : ""} aria-expanded="${!folded(g.platform.id)}"><th colspan="${models.length + 2}" scope="rowgroup">
         <span class="platform-group-bar">
           <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span>
-          <svg class="platform-disclosure" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 2l4 3-4 3"/></svg>
+          <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
         </span></th></tr>`;
       const body = shownGroups.map((g) => groupRow(g) + (folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         const o = overall(mac);
