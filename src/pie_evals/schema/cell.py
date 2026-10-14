@@ -170,6 +170,8 @@ class ArtifactSpec(BaseModel):
     chat_template: bool = False
     pie_sku: str | None = Field(default=None, description="pie SKU row name carrying the quantization (e.g. gptoss-20b-dflash-u4g64-mxfp4-kv-bf16)")
     pie_drafter: str | None = Field(default=None, description="the drafter pie publishes for this base_model (e.g. dflash): the import takes the base model by repository id with `--drafter`, which fetches the published head and lands the drafter row")
+    draft_model: str | None = Field(default=None, description="HF repo of a small same-family model (identical vocabulary) a baseline engine drafts with on the rows pie speculates (llama.cpp --model-draft, mlx-lm --draft-model); fetched with the artifact")
+    draft_gguf_file: str | None = Field(default=None, description="file name of the draft inside a GGUF ``draft_model`` repo (llama.cpp)")
     max_context: int | None = Field(default=None, description="tokens one sequence may hold on this artifact as pie ships it (the SKU's max_context), when smaller than the HF config's")
     gguf_file: str | None = Field(default=None, description="file name inside a GGUF repo (the arm must be named, never the quant tag)")
     gguf_config_from: str | None = Field(default=None, description="HF repo whose config.json is copied next to the GGUF (pie reads the encoding from config.json; GGUF repos ship none)")

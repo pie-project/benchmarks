@@ -48,6 +48,26 @@ class LlamacppEngine(ServedEngine):
             )
         return found
 
+    def draft_path(self) -> Path:
+        """The draft GGUF (the artifact's ``draft_model`` / ``draft_gguf_file``), fetched with the artifact."""
+        a = self.artifact
+        found = hf_snapshot_file(a.draft_model, a.draft_gguf_file, None) if a.draft_model and a.draft_gguf_file else None
+        if found is None:
+            raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"draft {a.draft_gguf_file} of {a.draft_model} not in cache for {a.id}; download it before benchmarking")
+        return found
+
+    def draft_args(self) -> list[str]:
+        """A separate draft model (``--spec-type draft-simple``), fully offloaded like the target.
+        ``draft_max``/``draft_min`` unset keep llama-server's own defaults (3 / 0)."""
+        r = self.recipe
+        args = ["--spec-type", "draft-simple", "--model-draft", str(self.draft_path()),
+                "--n-gpu-layers-draft", str(r.get("draft_gpu_layers", "all"))]
+        if r.get("draft_max") is not None:
+            args += ["--spec-draft-n-max", str(r["draft_max"])]
+        if r.get("draft_min") is not None:
+            args += ["--spec-draft-n-min", str(r["draft_min"])]
+        return args
+
     def model_arg(self) -> str:
         """Tokenizer source for ``--model``: recipe ``tokenizer_model``, else the
         GGUF repo's own snapshot when it ships a tokenizer, else the checkpoint

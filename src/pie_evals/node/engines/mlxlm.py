@@ -36,6 +36,17 @@ class MlxlmEngine(ServedEngine):
             )
         return str(snap)
 
+    def draft_args(self) -> list[str]:
+        """``--draft-model``: a separate draft checkpoint. mlx-lm then serves one request at a
+        time (a draft makes its server unbatchable), which a single-stream row is anyway."""
+        snap = hf_snapshot_dir(self.artifact.draft_model, None) if self.artifact.draft_model else None
+        if snap is None:
+            raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"no local snapshot of draft {self.artifact.draft_model!r} for {self.artifact.id}; download it before benchmarking")
+        args = ["--draft-model", str(snap)]
+        if self.recipe.get("num_draft_tokens") is not None:
+            args += ["--num-draft-tokens", str(int(self.recipe["num_draft_tokens"]))]
+        return args
+
     def api_model(self) -> str:
         # mlx-lm loads whatever a request names; naming the served path keeps it on the loaded model
         return self.model_arg()

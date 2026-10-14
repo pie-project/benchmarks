@@ -20,7 +20,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any
 
-from pie_evals.schema import ErrorClass, WorkloadSpec
+from pie_evals.schema import ErrorClass, WorkloadKind, WorkloadSpec
 
 from .base import Engine, EngineLaunchError
 from .shape import max_model_len_for, workload_concurrency
@@ -46,6 +46,8 @@ class ServedEngine(Engine):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.load_s: float | None = None
+        #: the running server drafts with the artifact's ``draft_model`` (set at boot)
+        self.drafting = False
         existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
         self.env["PYTHONPATH"] = ":".join([str(self.pie_root / "scripts" / "bench")] + ([existing] if existing else []))
 
@@ -54,6 +56,20 @@ class ServedEngine(Engine):
     def server_cmd(self, port: int, slots: int, context: int) -> list[str]:
         """The command that serves this artifact on ``port`` for ``slots``
         requests at once, each up to ``context`` tokens."""
+
+    def speculates(self, workload: WorkloadSpec) -> bool:
+        """Draft-and-verify decode for this row, on exactly the rows pie speculates
+        (PieEngine.speculates): ``speculation`` in the recipe forces it on or off;
+        ``auto`` (the default) drafts on single-stream rows only. Needs a ``draft_model``
+        on the artifact, and an engine that can draft (``draft_args``)."""
+        mode = str(self.recipe.get("speculation", "auto"))
+        if mode == "off" or not self.artifact.draft_model or type(self).draft_args is ServedEngine.draft_args:
+            return False
+        return mode == "on" or workload.kind == WorkloadKind.SINGLE_STREAM
+
+    def draft_args(self) -> list[str]:
+        """Server flags that make it draft with the artifact's ``draft_model``."""
+        return []
 
     def api_model(self) -> str:
         """The request's ``model`` field; empty when the server needs none."""
@@ -109,7 +125,10 @@ class ServedEngine(Engine):
             return
         port = int(self.recipe.get("port") or free_port())
         slots, context = workload_concurrency(workload), max_model_len_for(workload)
-        cmd = self.server_cmd(port, slots, context)
+        # one server serves a process's cells: it drafts only when they all speculate (the
+        # runner gives single-stream rows a process of their own, split_draft_processes)
+        self.drafting = self.speculates(workload)
+        cmd = self.server_cmd(port, slots, context) + (self.draft_args() if self.drafting else [])
         log_path = Path(log_path)
         log_path.parent.mkdir(parents=True, exist_ok=True)
         url = f"http://127.0.0.1:{port}"
@@ -143,5 +162,14 @@ class ServedEngine(Engine):
     def watch_pids(self) -> list[int]:
         return [self._server_proc.pid] if self._server_proc is not None else []
 
+    def run(self, workload: WorkloadSpec, common_args: list[str], out_dir: Path, timeout_s: int):
+        if self._server_proc is not None and self.drafting != self.speculates(workload):
+            # a drafting server must not measure a plain row, nor a plain one a drafting row
+            raise EngineLaunchError(ErrorClass.HARNESS_INVALID, f"{self.name} server {'drafts' if self.drafting else 'does not draft'} but {workload.id} {'does not speculate' if self.drafting else 'speculates'}")
+        return super().run(workload, common_args, out_dir, timeout_s)
+
     def counters_from_summary(self, summary: dict[str, Any]) -> dict[str, float]:
-        return {"server_load_s": float(self.load_s)} if self.load_s is not None else {}
+        out = {"server_load_s": float(self.load_s)} if self.load_s is not None else {}
+        if self.drafting:
+            out["speculative"] = 1.0  # the row decoded draft-and-verify with the artifact's draft_model
+        return out
