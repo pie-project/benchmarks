@@ -46,7 +46,10 @@ window.Pie = window.Pie || {};
       await loadCapture();
       const canvas = await window.html2canvas(document.body, {
         x: window.scrollX, y: window.scrollY, width: window.innerWidth, height: window.innerHeight,
-        backgroundColor: getComputedStyle(document.body).backgroundColor, scale: Math.min(window.devicePixelRatio || 1, 2), logging: false,
+        // the sheet opens at once and is left out of the picture; a phone captures at 1x, which is plenty for a report
+        backgroundColor: getComputedStyle(document.body).backgroundColor, logging: false,
+        scale: window.matchMedia("(max-width: 899px)").matches ? 1 : Math.min(window.devicePixelRatio || 1, 2),
+        ignoreElements: (node) => node === dialog,
       });
       return canvas.toDataURL("image/png");
     } catch {
@@ -61,14 +64,24 @@ window.Pie = window.Pie || {};
     send.textContent = "Send";
   };
 
-  button.addEventListener("click", async () => {
+  // the library loads once the page is idle, so a tap on the flag never waits for the network
+  const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 2000));
+  idle(() => loadCapture().catch(() => {}));
+
+  button.addEventListener("click", () => {
     reset();
-    image = await capture();
-    shot.hidden = !image;
-    if (image) shot.querySelector("img").src = image;
+    image = "";
+    shot.hidden = true;
     include.checked = true;
     dialog.showModal();
     text.focus();
+    // the screenshot is taken behind the open sheet and shown when it is ready
+    capture().then((taken) => {
+      if (!dialog.open) return;
+      image = taken;
+      shot.hidden = !image;
+      if (image) shot.querySelector("img").src = image;
+    });
   });
 
   document.getElementById("report-cancel").addEventListener("click", () => dialog.close());
