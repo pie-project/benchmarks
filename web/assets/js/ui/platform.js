@@ -106,9 +106,9 @@ window.Pie = window.Pie || {};
       const only = Pie.schema[state.table]?.platform;
       const groups = PLATFORMS.filter((p) => !only || p.id === only)
         .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p).map((hw) => hw.id) }))
-        .filter((g) => g.macs.length);
+        .filter((g) => !only || g.macs.length);
       const macs = groups.flatMap((g) => g.macs);
-      if (!macs.length) {
+      if (only && !macs.length) {
         const label = Pie.schema[state.table]?.label || "this platform";
         element.innerHTML = `<div class="platform-empty"><span class="sidebar-glyph" style="--tint: ${Pie.schema[state.table]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(state.table)}</span>
           <h2>No ${esc(label)} results yet</h2></div>`;
@@ -150,7 +150,7 @@ window.Pie = window.Pie || {};
         return named.sort((a, b) => (val(a) === null) - (val(b) === null) || dir * ((val(a) ?? 0) - (val(b) ?? 0)));
       };
       const shownGroups = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => grid[mac][model].c)) : g.macs) }))
-        .filter((g) => g.macs.length);
+        .filter((g) => !only || g.macs.length);
 
       const cells = [];
       const number = (gain) => {
@@ -164,7 +164,7 @@ window.Pie = window.Pie || {};
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
-      const groupRow = (g) => `<tr class="platform-group-row${folded(g.platform.id) ? " is-collapsed" : ""}" data-group="${g.platform.id}" aria-expanded="${!folded(g.platform.id)}"><th colspan="${models.length + 2}" scope="rowgroup">
+      const groupRow = (g) => `<tr class="platform-group-row${folded(g.platform.id) ? " is-collapsed" : ""}${g.macs.length ? "" : " is-empty"}"${g.macs.length ? ` data-group="${g.platform.id}"` : ""} aria-expanded="${!folded(g.platform.id)}"><th colspan="${models.length + 2}" scope="rowgroup">
         <span class="platform-group-bar">
           <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span>
           <svg class="platform-disclosure" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 2l4 3-4 3"/></svg>

@@ -330,3 +330,4 @@
 .platform-group-row .platform-group-name { position: static; padding: 0; }
 .platform-group-row .platform-disclosure { width: 12px; height: 12px; margin: 0; stroke: var(--color-label-tertiary); stroke-width: 1.8; }
 .platform-group-row:hover .platform-disclosure { stroke: var(--color-label-secondary); }
+.platform-group-row.is-empty { cursor: default; } .platform-group-row.is-empty .platform-disclosure { display: none; }
