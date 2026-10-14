@@ -349,3 +349,10 @@
   .term-gpu, .term-gpu.is-none { max-width: none; padding: 0 6px; gap: 0; font-size: 0; }
   .term.is-live .term-title { max-width: calc(100% - 176px); font-size: 11px; }
 }
+
+/* the title bar's right side: TTFT, then the GPU capsule; no title */
+.term-status { position: absolute; right: 12px; display: inline-flex; align-items: center; gap: 10px; max-width: calc(100% - 90px); }
+.term-status .term-ttft,
+.term-status .term-gpu { position: static; }
+.term-status .term-gpu { max-width: 260px; }
+@media (max-width: 899px) { .term-status .term-gpu { max-width: none; } }
