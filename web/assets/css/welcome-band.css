@@ -27,3 +27,19 @@
 .welcome-icon { margin-bottom: 20px; }
 .welcome-intro > .welcome-cta { margin-top: 68px; }
 @media (max-width: 760px) { .welcome-intro > .welcome-cta { margin-top: 0; } }
+
+/* on a phone the welcome reads as an iPhone page: a shorter banner, a 34-point large title, 16-point margins */
+@media (max-width: 899px) {
+  .method-inner,
+  .welcome-inner { padding: 16px var(--edge) calc(48px + env(safe-area-inset-bottom)); }
+  .method-head h1 { font-size: 34px; letter-spacing: -.02em; }
+  .welcome-banner { height: 240px; margin-bottom: 16px; }
+  .welcome-banner-copy { left: 22px; right: 22px; top: 22px; }
+  .welcome-banner-actions { left: 22px; bottom: 20px; }
+  .welcome-banner-link { height: 36px; font-size: 15px; }
+  .welcome-intro { flex-direction: column; align-items: flex-start; gap: 24px; margin-bottom: 8px; }
+  .welcome-intro > .welcome-cta,
+  .welcome-intro > .welcome-cta:last-child { margin-top: 0; }
+  .welcome-tagline { font-size: 20px; }
+  .welcome-icon { margin-bottom: 16px; }
+}
