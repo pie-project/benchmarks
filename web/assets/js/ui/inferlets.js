@@ -11,7 +11,7 @@ window.Pie = window.Pie || {};
   const INFERLET = PIE + "prefill_while_typing.wasm";
   // The weights are not in this repository; the tab fetches them once (by range) and keeps
   // them in the origin's private file system. `?model=` points at another artifact.
-  const MODEL = "https://huggingface.co/pie-project/qwen-3.5-0.8b-wgpu/resolve/main/qwen--qwen3-5-0-8b.qwen35-d0-8b-u4g64-kv-bf16.wgpu.zt";
+  const MODEL = "https://huggingface.co/antonmeln/qwen-3.5-0.8b-wgpu/resolve/main/qwen--qwen3-5-0-8b.qwen35-d0-8b-u4g64-kv-bf16.wgpu.zt";
   // `?mode=plain` prefills the whole message at Enter instead, for comparison.
   const MODE = new URLSearchParams(location.search).get("mode") === "plain" ? "plain" : "typeahead";
   const CONFIG = 'max_forward_tokens = 512\nmax_forward_requests = 4\nmax_state_slots = 4\nmax_model_len = 4608\ndevice_kv_budget = "256MiB"\n';
