@@ -36,7 +36,7 @@ window.Pie = window.Pie || {};
       columns: [],
     },
     mac: {
-      label: "Apple",
+      label: "Apple Silicon",
       section: "platforms",
       view: "platform",
       platform: "mac",
