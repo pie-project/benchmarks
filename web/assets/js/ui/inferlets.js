@@ -32,8 +32,7 @@ window.Pie = window.Pie || {};
           <div class="term-cover" id="tw-hint">
             <p class="term-cover-eyebrow">Inferlet Example</p>
             <p class="term-cover-title">Never wait for the first token!</p>
-            <span class="term-cover-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span>
-            <p class="term-cover-hint">Click to start</p>
+            <span class="term-cover-cta">Start the demo<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M10 8.5v7l6-3.5z"/></svg></span>
           </div>
           <div class="term-line" id="tw-line" hidden><span class="term-prompt">›</span><input id="tw-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Message"></div>
         </div>

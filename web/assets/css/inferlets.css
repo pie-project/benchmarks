@@ -392,3 +392,22 @@
   .term-cover-title { margin-bottom: 22px; font-size: 26px; }
   .term-cover-play { width: 56px; height: 56px; }
 }
+
+/* the cover, as an Apple product page opens a section: a tinted eyebrow, a large white headline, a blue pill */
+.term-cover { background: radial-gradient(60% 55% at 50% 45%, rgba(139, 92, 246, .16), transparent 70%), radial-gradient(40% 40% at 30% 60%, rgba(249, 115, 22, .08), transparent 70%); }
+.term-cover-eyebrow {
+  font-size: 21px; font-weight: 600; letter-spacing: .005em;
+  background: linear-gradient(90deg, #f97316, #ec4899 50%, #8b5cf6);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.term-cover-title { margin: 6px 0 30px; font-size: 56px; line-height: 1.07; letter-spacing: -.015em; background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #f5f5f7; }
+.term-cover-cta { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 22px; border-radius: 980px; font-size: 17px; font-weight: 400; color: #fff; background: #0071e3; transition: background .2s; }
+.term-cover-cta svg { width: 20px; height: 20px; }
+.term-cover-cta circle { fill: none; stroke: currentColor; stroke-width: 1.6; }
+.term-cover-cta path { fill: currentColor; }
+.term-cover:hover .term-cover-cta { background: #0077ed; }
+@media (max-width: 899px) {
+  .term-cover-eyebrow { font-size: 17px; }
+  .term-cover-title { margin-bottom: 24px; font-size: 32px; }
+  .term-cover-cta { height: 40px; padding: 0 18px; font-size: 15px; }
+}
