@@ -108,7 +108,7 @@ def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloa
     outp.mkdir(parents=True, exist_ok=True)
     plats = list(platforms) or None
     if skip_unavailable:
-        ok, skipped = available_platforms(m, repo or os.environ.get("GITHUB_REPOSITORY", "pie-project/pie-evals"))
+        ok, skipped = available_platforms(m, repo or os.environ.get("GITHUB_REPOSITORY", "pie-project/benchmarks"))
         if ok is None:
             plats = plats or [p.id for p in m.platforms.values() if p.runpod_gpu_type]
             click.echo(f"{skipped['*']}; scheduling only RunPod platforms and those asked for: {', '.join(plats) or 'none'}", err=True)
@@ -502,7 +502,7 @@ def reap_pods(max_age_hours, hard_max_age_hours, repo, dry_run):
 
     keep: set[str] = set()
     try:
-        keep = runpod.busy_pods(runpod.list_runners(repo or os.environ.get("GITHUB_REPOSITORY", "pie-project/pie-evals")))
+        keep = runpod.busy_pods(runpod.list_runners(repo or os.environ.get("GITHUB_REPOSITORY", "pie-project/benchmarks")))
     except Exception as e:  # no token: age alone decides, as before
         click.echo(f"runner list unavailable ({str(e)[:80]}); busy pods are not spared", err=True)
     click.echo(json.dumps(runpod.reap(int(max_age_hours * 3600), dry_run=dry_run, keep=keep, hard_max_age_s=int(hard_max_age_hours * 3600))))

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 TOKEN="${1:?usage: setup-runner.sh <registration-token>}"
-REPO="${REPO:-pie-project/pie-evals}"
+REPO="${REPO:-pie-project/benchmarks}"
 RUNNER_VERSION="${RUNNER_VERSION:-2.321.0}"
 DIR="${RUNNER_DIR:-$HOME/actions-runner}"
 
