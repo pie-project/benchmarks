@@ -400,3 +400,21 @@
   .platform-table thead th.platform-corner,
   .platform-table thead th.is-overall { position: sticky; top: 0; }
 }
+
+/* every number column, Overall included, has one width on desktop too; a long name ends in an ellipsis */
+@media (min-width: 900px) {
+  .platform-table col.col-model { width: 156px; }
+  .platform-table thead th:not(.platform-corner),
+  .platform-table thead th.is-overall { overflow: hidden; }
+  .platform-table thead th:not(.platform-corner) .platform-col { min-width: 0; }
+  .platform-table thead th:not(.platform-corner) .platform-col > span:last-child { min-width: 0; overflow: hidden; }
+  .platform-table thead .platform-model,
+  .platform-table thead .platform-sub { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+}
+/* the table is exactly as wide as its columns, so no header can stretch one */
+@media (min-width: 900px) {
+  .platform-table { width: max(100%, calc(190px + var(--cols, 1) * 156px)); }
+}
+@media (max-width: 899px) {
+  .platform-table { width: max(100%, calc(116px + var(--cols, 1) * 96px)); }
+}

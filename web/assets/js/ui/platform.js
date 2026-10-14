@@ -209,7 +209,7 @@ window.Pie = window.Pie || {};
           </span>
         </div>
         <div class="platform-scroll">
-          <table class="platform-table">${cols}<thead>${head}</thead><tbody>${body}</tbody></table>
+          <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${head}</thead><tbody>${body}</tbody></table>
         </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
