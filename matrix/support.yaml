@@ -86,6 +86,11 @@ unsupported:
     reason: "vLLM 0.30 Kimi-K3 mini leaves no KV or activation room on a 32 GB card"
   - when: {engine: vllm, artifact: kimi-k3-mini8, platform: rtx4090-x1}
     reason: "vLLM 0.30 Kimi-K3 mini does not fit a 24 GB card"
+  # pie's Qwen3.6-35B-A3B dflash row puts down 19.8 GB of weights and 2.5 GB of arena, scratch and
+  # scores, which leaves 0.5 GB of a 24 GB card at device_memory_share 0.9; one sequence beside the
+  # state slots needs 10.9 GB, so both shapes are refused at boot (local 4090 nightlies at pie 518b05d, af4aeb4)
+  - when: {engine: pie, artifact: qwen3.6-35b-a3b-mlx4, platform: rtx4090-x1}
+    reason: "pie's Qwen3.6-35B-A3B dflash row leaves no cache room on a 24 GB card"
   - when: {engine: pie, backend: cuda, spec_dec: dflash2}
     reason: "CUDA engine exposes no draft head (Metal only) — wiki speculative-decoding/"
   - when: {scheme: fp8, arch: apple7}
