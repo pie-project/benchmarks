@@ -329,3 +329,14 @@
 .sidebar-glyph[style] svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 2; }
 .sidebar-item .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
 .sidebar-item svg .is-filled { fill: var(--color-label); stroke: none; }
+
+/* the sidebar's foot: a quiet line that pie is open source, as macOS puts a footnote at the bottom of a source list */
+.sidebar-credit {
+  margin-top: auto;
+  padding: 12px 10px 0;
+  font-size: 11px;
+  color: var(--color-label-tertiary);
+  text-decoration: none;
+}
+.sidebar-credit span { color: #ff375f; }
+.sidebar-credit:hover { color: var(--color-label-secondary); }
