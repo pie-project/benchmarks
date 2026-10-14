@@ -341,6 +341,13 @@ class PieEngine(Engine):
         wall_s = summary.get("wall_s")
         out: dict[str, float] = {}
 
+        # launch to the ready banner, as a served engine's load is timed (pie_bench, pie#989);
+        # without it the runner's first-round surplus stands in, which on a CLI engine that
+        # boots per round is not the load at all
+        load = _num(cfg, "server load s")
+        if load is not None:
+            out["server_load_s"] = load
+
         batches = _num(cfg, "total batches", "default.total_batches")
         if batches is not None:
             out["batches"] = batches
