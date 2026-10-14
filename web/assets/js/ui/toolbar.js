@@ -8,6 +8,7 @@ window.Pie = window.Pie || {};
     searchCancel: document.getElementById("search-cancel"),
     releasePicker: document.getElementById("release-picker"),
     releaseValue: document.getElementById("release-value"),
+    releaseDate: document.getElementById("release-date"),
     suitePicker: document.getElementById("suite-picker"),
     metricPicker: document.getElementById("metric-picker"),
     metricValue: document.getElementById("metric-value"),
@@ -34,6 +35,9 @@ window.Pie = window.Pie || {};
       elements.title.textContent = Pie.schema[state.table].label;
       elements.subtitle.textContent = Pie.format.count(shown, total);
       elements.releaseValue.textContent = releaseLabel(state);
+      // when the run happened, beside its name: the day is what a reader checks first
+      const run = Pie.query.releaseOptions().find((option) => option.id === state.release);
+      elements.releaseDate.textContent = run?.date ? String(run.date).replace(/,?\s*\d{1,2}:\d{2}.*$/, "") : "";
     },
 
     // on every page: an export without suites has nothing to pick between
