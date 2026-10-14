@@ -71,6 +71,15 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
+    cerebras: {
+      label: "Cerebras",
+      section: "platforms",
+      view: "platform",
+      platform: "cerebras",
+      tint: "#f05a28",
+      filters: [],
+      columns: [],
+    },
     android: {
       label: "Android",
       section: "platforms",
