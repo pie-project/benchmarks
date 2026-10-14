@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_startup_script_matches_runner_image_layout():
-    s = runpod.startup_script(["self-hosted", "linux", "l40s-x1"], repo="pie-project/pie-evals", kill_minutes=90)
+    s = runpod.startup_script(["self-hosted", "linux", "l40s-x1"], repo="pie-project/benchmarks", kill_minutes=90)
     # three-layer kill: self-destruct timer, then terminate after the single job
     assert "+ 90 * 60 )) > /tmp/pie-evals-deadline" in s and s.count("terminate") >= 3 and "DELETE" in s
     # a resident runner (one pod hosts every shard of its configuration), labels carry the platforms
