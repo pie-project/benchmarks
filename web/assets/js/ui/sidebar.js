@@ -3,6 +3,8 @@ window.Pie = window.Pie || {};
 (() => {
   const nav = document.getElementById("sidebar-nav");
   const logo = document.querySelector(".sidebar-logo");
+  const aside = document.getElementById("sidebar");
+  const backdrop = document.getElementById("sidebar-backdrop");
 
   // results count the selected release's enumerated setups, measured or not
   const count = (id, state) => (id === "results" ? Pie.store.snapshot(state.release).length : (Pie.store.rows(id) || []).length);
@@ -42,6 +44,36 @@ window.Pie = window.Pie || {};
         if (!logo.classList.contains("is-spinning")) logo.classList.add("is-spinning");
       });
       this.spinLogo();
+    },
+
+    // the slide-over closes on its backdrop, and follows a finger swiping it back to the left
+    bindDrawer(close) {
+      backdrop.addEventListener("click", close);
+      let start = null;
+      let shift = 0;
+      aside.addEventListener("touchstart", (event) => {
+        start = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY, sideways: null } : null;
+        shift = 0;
+      }, { passive: true });
+      aside.addEventListener("touchmove", (event) => {
+        if (!start) return;
+        const dx = event.touches[0].clientX - start.x;
+        const dy = event.touches[0].clientY - start.y;
+        if (start.sideways === null && Math.abs(dx) + Math.abs(dy) > 8) start.sideways = Math.abs(dx) > Math.abs(dy);
+        if (!start.sideways) return;
+        shift = Math.min(0, dx);
+        aside.style.transition = "none";
+        aside.style.transform = `translateX(${shift}px)`;
+      }, { passive: true });
+      const settle = () => {
+        if (!start) return;
+        aside.style.transition = "";
+        aside.style.transform = "";
+        if (start.sideways && shift < -Math.min(80, aside.offsetWidth / 3)) close();
+        start = null;
+      };
+      aside.addEventListener("touchend", settle);
+      aside.addEventListener("touchcancel", settle);
     },
 
     onSelect(handler) {

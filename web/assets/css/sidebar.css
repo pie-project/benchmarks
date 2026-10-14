@@ -135,9 +135,181 @@
   color: var(--color-label-secondary);
 }
 
-@media (max-width: 760px) {
-  .sidebar {
-    display: none;
+.sidebar-backdrop,
+.sidebar-appearance {
+  display: none;
+}
+
+/* below the desktop width the sidebar slides over the page from the left, the page dimmed behind it, as in iPadOS */
+@media (max-width: 899px) {
+  .sidebar,
+  :root[data-sidebar="hidden"] .sidebar {
+    position: fixed;
+    z-index: 40;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(320px, 85vw);
+    padding: env(safe-area-inset-top) 10px max(var(--edge), env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    opacity: 1;
+    border-right: 0;
+    visibility: hidden;
+    pointer-events: auto;
+    transform: translateX(-100%);
+    transition: transform .35s cubic-bezier(.32, .72, 0, 1), visibility 0s .35s;
+  }
+
+  :root[data-drawer="open"] .sidebar {
+    visibility: visible;
+    transform: none;
+    box-shadow: 0 0 40px rgba(0, 0, 0, .22);
+    transition: transform .35s cubic-bezier(.32, .72, 0, 1);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    z-index: 39;
+    inset: 0;
+    background: rgba(0, 0, 0, .32);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .35s ease;
+  }
+
+  :root[data-drawer="open"] .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar-brand {
+    height: 56px;
+    padding: 0 10px;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .sidebar-logo {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sidebar-help {
+    width: 44px;
+    height: 44px;
+    margin-right: -10px;
+  }
+
+  .sidebar-help svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sidebar-heading {
+    padding: 20px 10px 6px;
+    font-size: 13px;
+  }
+
+  .sidebar-item {
+    gap: 12px;
+    height: 44px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: 17px;
+  }
+
+  .sidebar-item svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sidebar-glyph[style] {
+    width: 28px;
+    height: 28px;
+    margin-left: -4px;
+    border-radius: 7px;
+  }
+
+  .sidebar-glyph[style] svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .sidebar-count {
+    font-size: 15px;
+  }
+
+  .sidebar-item.is-selected {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .sidebar-item.is-selected svg {
+    stroke: currentColor;
+  }
+
+  /* the appearance switch at the foot of the slide-over, an iOS switch that follows the theme */
+  .sidebar-appearance {
+    display: flex;
+    flex: none;
+    margin-top: auto;
+    padding-top: 0;
+    border-top: .5px solid var(--color-separator);
+    border-radius: 0;
+    height: 56px;
+  }
+
+  .sidebar-nav {
+    padding-bottom: 16px;
+  }
+
+  .sidebar-switch {
+    position: relative;
+    flex: none;
+    width: 51px;
+    height: 31px;
+    margin-left: auto;
+    border-radius: 16px;
+    background: var(--color-fill);
+    transition: background .2s ease;
+  }
+
+  .sidebar-switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+    transition: transform .2s ease;
+  }
+
+  :root[data-theme="dark"] .sidebar-switch {
+    background: var(--color-status-pass);
+  }
+
+  :root[data-theme="dark"] .sidebar-switch::after {
+    transform: translateX(20px);
+  }
+
+  .sidebar-item.is-selected .sidebar-glyph[style] {
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .85);
+  }
+
+  .sidebar-item.is-selected .sidebar-count {
+    color: rgba(255, 255, 255, .8);
+  }
+}
+
+@media (max-width: 899px) and (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar-backdrop {
+    transition: none !important;
   }
 }
 

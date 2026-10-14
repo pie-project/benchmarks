@@ -75,6 +75,7 @@
     state.reset(tableName, initialFilters);
     toolbar.clearSearch();
     popover.close();
+    preferences.showDrawer(false);
     render();
   };
 
@@ -83,10 +84,32 @@
 
     elements.sidebarToggle.addEventListener("click", () => preferences.toggleSidebar());
     elements.themeToggle.addEventListener("click", () => preferences.toggleTheme());
+    // on a phone the appearance switch sits at the foot of the slide-over, as in Settings
+    document.getElementById("sidebar-theme").addEventListener("click", () => preferences.toggleTheme());
 
     elements.search.addEventListener("input", (event) => {
       state.query = event.target.value;
       render();
+    });
+
+    // the phone's search icon opens the field; an empty field closes again when it loses focus
+    elements.search.addEventListener("focus", () => {
+      if (preferences.compact.matches) toolbar.showSearch(true);
+    });
+    elements.search.addEventListener("blur", () => {
+      if (!elements.search.value) toolbar.showSearch(false);
+    });
+    elements.searchCancel.addEventListener("click", () => {
+      toolbar.clearSearch();
+      if (state.query) {
+        state.query = "";
+        render();
+      }
+    });
+
+    elements.viewPicker.addEventListener("click", (event) => {
+      event.stopPropagation();
+      popover.open(elements.viewPicker, popover.VIEW, state);
     });
 
     elements.releasePicker.addEventListener("click", (event) => {
@@ -168,12 +191,18 @@
   const bindGlobal = () => {
     sidebar.onSelect((tableName) => navigate(tableName));
     sidebar.bindLogo();
+    sidebar.bindDrawer(() => preferences.showDrawer(false));
+    // a slide-over left open closes when the window grows back to the desktop sidebar
+    preferences.compact.addEventListener("change", () => preferences.showDrawer(false));
 
     document.addEventListener("click", () => popover.close());
     window.addEventListener("resize", () => popover.close());
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") popover.close();
+      if (event.key === "Escape") {
+        popover.close();
+        preferences.showDrawer(false);
+      }
       if (event.ctrlKey && event.metaKey && event.key.toLowerCase() === "s") {
         event.preventDefault();
         preferences.toggleSidebar();
