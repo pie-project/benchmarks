@@ -30,8 +30,6 @@ window.Pie = window.Pie || {};
         </div>
         <div class="term-body" id="tw-body">
           <div class="term-cover" id="tw-hint">
-            <p class="term-cover-eyebrow">Inferlet Example</p>
-            <p class="term-cover-title">Never wait for the first token!</p>
             <span class="term-cover-cta">Start the demo<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M10 8.5v7l6-3.5z"/></svg></span>
           </div>
           <div class="term-line" id="tw-line" hidden><span class="term-prompt">›</span><input id="tw-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Message"></div>
@@ -130,7 +128,7 @@ window.Pie = window.Pie || {};
     async function boot() {
       phase = "booting";
       hint.remove();
-      say("Pie runs Qwen3.5 0.8B on your GPU, in this tab. Type a very long message, and watch the time to first token in the top-right corner!");
+      say("Pie runs Qwen3.5 0.8B on your GPU, in this tab.");
       if (!navigator.gpu || typeof WebAssembly.Suspending !== "function") {
         say("This demo needs a browser with WebGPU (a recent Chrome or Edge).");
         return;
