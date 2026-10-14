@@ -424,3 +424,6 @@
 @media (max-width: 899px) and (prefers-reduced-motion: reduce) {
   .report-dialog { animation: none; }
 }
+
+/* phones: no report flag in the top bar */
+@media (max-width: 899px) { #report-button { display: none; } }
