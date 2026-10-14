@@ -319,3 +319,33 @@
   .inf-label { font-size: 22px; }
   .inf-text { font-size: 17px; }
 }
+
+/* the live terminal: pie on WebGPU in the tab, a centered title, the answer's TTFT at the right */
+#inferlets .term.is-live { cursor: text; }
+#inferlets .term.is-live .term-body { min-height: 480px; max-height: 480px; padding: 14px 16px; }
+#inferlets .term.is-live .term-line { padding: 0; }
+#inferlets .term.is-live .term-line[hidden] { display: none; }
+.term-title { overflow: hidden; max-width: calc(100% - 220px); white-space: nowrap; text-overflow: ellipsis; }
+.term-ttft { position: absolute; right: 12px; font: 600 11.5px var(--font-mono); color: #9fe870; font-variant-numeric: tabular-nums; cursor: help; }
+.term-ttft[hidden] { display: none; }
+.term-out.is-answer { color: #f5f5f7; }
+.term-out.is-answer:empty::before { content: "▍"; color: #a1a1a6; animation: term-blink 1s steps(1) infinite; }
+.term-line input { caret-shape: block; }
+@keyframes term-blink { 50% { opacity: 0; } }
+@media (max-width: 899px) {
+  #inferlets .term.is-live .term-body { min-height: 280px; max-height: 360px; }
+  .term-title { max-width: calc(100% - 170px); }
+}
+
+/* the GPU capsule, right after the traffic lights: green when WebGPU found an adapter, grey when not */
+.term-gpu { position: absolute; left: 72px; display: inline-flex; align-items: center; gap: 6px; max-width: 220px; height: 18px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; color: #30d158; background: rgba(48, 209, 88, .14); }
+.term-gpu::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.term-gpu.is-none { color: #a1a1a6; background: rgba(255, 255, 255, .08); }
+.term-gpu[hidden] { display: none; }
+.term-gpu { overflow: hidden; text-overflow: ellipsis; }
+.term.is-live .term-title { max-width: calc(100% - 600px); }
+@media (max-width: 1100px) { .term.is-live .term-title { max-width: calc(100% - 420px); } .term-gpu { max-width: 120px; } }
+@media (max-width: 600px) {
+  .term-gpu, .term-gpu.is-none { max-width: none; padding: 0 6px; gap: 0; font-size: 0; }
+  .term.is-live .term-title { max-width: calc(100% - 176px); font-size: 11px; }
+}
