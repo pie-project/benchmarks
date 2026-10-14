@@ -336,6 +336,42 @@ def mac_machine_state() -> dict[str, Any]:
     return state
 
 
+def mac_thermal_state() -> str | None:
+    """macOS's own thermal pressure (``NSProcessInfo.thermalState``): nominal, fair, serious or critical."""
+    try:
+        import ctypes
+        import ctypes.util
+
+        objc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("objc"))
+        ctypes.cdll.LoadLibrary("/System/Library/Frameworks/Foundation.framework/Foundation")
+        objc.objc_getClass.restype = ctypes.c_void_p
+        objc.objc_getClass.argtypes = [ctypes.c_char_p]
+        objc.sel_registerName.restype = ctypes.c_void_p
+        objc.sel_registerName.argtypes = [ctypes.c_char_p]
+        obj = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)(("objc_msgSend", objc))
+        num = ctypes.CFUNCTYPE(ctypes.c_long, ctypes.c_void_p, ctypes.c_void_p)(("objc_msgSend", objc))
+        info = obj(objc.objc_getClass(b"NSProcessInfo"), objc.sel_registerName(b"processInfo"))
+        return ("nominal", "fair", "serious", "critical")[num(info, objc.sel_registerName(b"thermalState"))]
+    except Exception:
+        return None
+
+
+def settle_mac(idle_s: float = 60, nominal_timeout_s: float = 600, poll_s: float = 10) -> dict[str, Any]:
+    """Let a Mac cool before a single-stream cell: every engine starts its row from the
+    same idle state, not from whatever the previous process left (Qwen3.8-27B on the
+    M5 Max 128GB: pie at 68.4 tok/s first in its shard, 63.1 after 20 minutes of pie
+    cells, while Splash ran later in another order). Idles ``idle_s``, then waits for
+    a nominal thermal state."""
+    t0 = time.monotonic()
+    before = mac_thermal_state()
+    time.sleep(idle_s)
+    state = mac_thermal_state()
+    while state not in (None, "nominal") and time.monotonic() - t0 < nominal_timeout_s:
+        time.sleep(poll_s)
+        state = mac_thermal_state()
+    return {"thermal_state_before_settle": before, "thermal_state": state, "settle_s": round(time.monotonic() - t0)}
+
+
 def mac_thermal_changed(before: dict[str, Any], after: dict[str, Any]) -> bool:
     """A thermal warning appeared, or the CPU speed/scheduler limit moved."""
     if before.get("thermal_warning") != after.get("thermal_warning"):
@@ -381,6 +417,10 @@ class Preflight:
             except TimeoutError as e:
                 state["gpu_drain_error"] = str(e)
         return state
+
+    def settle(self, platform_os: str | None) -> dict[str, Any]:
+        """Before a single-stream cell: a Mac idles to a nominal thermal state (``settle_mac``)."""
+        return settle_mac() if _is_mac(platform_os) else {}
 
     def between_engines(self, platform_os: str | None, leftover_names: list[str]) -> dict[str, Any]:
         state: dict[str, Any] = {}
