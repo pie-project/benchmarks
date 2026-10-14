@@ -61,10 +61,14 @@ def run_t0(
     reference on ``prompt + shared prefix`` and adjudicate the two candidates
     at that position with the logit-gap rule.
 
-    Both sides are compared through the reference's first stop token in
-    ``stops`` and no further: what an ``ignore_eos`` run writes past the end
-    of the answer is the model reading a turn it was never trained to
-    continue, where a near-tie decides every token.
+    Each side is read as its answer: its tokens up to the first stop token in
+    ``stops``. What an ``ignore_eos`` run writes past the end of the answer is
+    the model reading a turn it was never trained to continue, where a
+    near-tie decides every token; an engine that stops at EOS leaves the stop
+    token out of its output, so an answer that ends before the other ended on
+    a stop. Where one answer ends and the other goes on, the stop (the
+    reference's own, or the likeliest of ``stops`` for the engine) is judged
+    against the other's token by the same logit-gap rule.
 
     ``teacher_forced_logits_fn(ids)`` returns ``[len(ids), vocab]`` where row
     ``i`` predicts the token after ``ids[i]`` — so the row for the divergent
@@ -80,14 +84,14 @@ def run_t0(
     benign: list[bool] = []
     detail: list[dict] = []
     for i, (eng, ref, prompt) in enumerate(zip(engine_output_ids, reference_ids, prompt_ids)):
-        end = next((at + 1 for at, t in enumerate(ref) if t in stops), len(ref))
-        eng, ref = list(eng)[:end], list(ref)[:end]
+        ref_stop = next((t for t in ref if t in stops), None)
+        eng, ref = _answer(eng, stops), _answer(ref, stops)
         d = first_divergence(eng, ref)
         divergences.append(d)
         if d is None:
             continue
-        if d >= len(eng) or d >= len(ref):
-            # one side stopped early: nothing to adjudicate, and not benign
+        if (d >= len(eng) or d >= len(ref)) and not stops:
+            # one side stopped early and no stop token says how: nothing to adjudicate, and not benign
             gaps.append(float("nan"))
             benign.append(False)
             detail.append({"prompt": i, "pos": d, "kind": "length_mismatch",
@@ -97,11 +101,14 @@ def run_t0(
         logits = np.asarray(teacher_forced_logits_fn(prefix))
         if logits.ndim != 2 or logits.shape[0] != len(prefix):
             raise ValueError(f"teacher-forced logits shape {logits.shape} for {len(prefix)} ids")
-        gap, ok = adjudicate_divergence(logits[-1], int(eng[d]), int(ref[d]), ulp=ulp)
+        stop = max(stops, key=lambda t: logits[-1][t]) if stops else None
+        eng_tok = int(eng[d]) if d < len(eng) else int(stop)
+        ref_tok = int(ref[d]) if d < len(ref) else int(ref_stop if ref_stop is not None else stop)
+        gap, ok = adjudicate_divergence(logits[-1], eng_tok, ref_tok, ulp=ulp)
         gaps.append(gap)
         benign.append(ok)
-        detail.append({"prompt": i, "pos": d, "engine_tok": int(eng[d]),
-                       "reference_tok": int(ref[d]), "gap": gap, "benign": ok})
+        detail.append({"prompt": i, "pos": d, "engine_tok": eng_tok,
+                       "reference_tok": ref_tok, "gap": gap, "benign": ok})
     status = t0_verdict(divergences, gaps, benign)
     finite = [g for g in gaps if not math.isnan(g)]
     return AccuracyMetrics(
@@ -112,6 +119,12 @@ def run_t0(
         t0_benign=(all(benign) if benign else None) if any(d is not None for d in divergences) else True,
         detail={"t0": detail, "ulp": ulp},
     )
+
+
+def _answer(ids: list[int], stops: Collection[int]) -> list[int]:
+    """The tokens before the first stop token in ``stops``."""
+    end = next((at for at, t in enumerate(ids) if t in stops), len(ids))
+    return list(ids)[:end]
 
 
 # ---------------------------------------------------------------------------
