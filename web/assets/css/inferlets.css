@@ -411,3 +411,13 @@
   .term-cover-title { margin-bottom: 24px; font-size: 32px; }
   .term-cover-cta { height: 40px; padding: 0 18px; font-size: 15px; }
 }
+
+/* dark mode: the window sits deeper than the page and carries a light hairline, as a macOS window does in Dark Mode */
+:root[data-theme="dark"] #inferlets .term { background: #0d0d10; border-color: rgba(255, 255, 255, .16); box-shadow: 0 0 0 .5px rgba(255, 255, 255, .06), 0 24px 60px rgba(0, 0, 0, .55); }
+:root[data-theme="dark"] #inferlets .term .term-body { background: #0d0d10; }
+:root[data-theme="dark"] .term-cover { background: radial-gradient(60% 60% at 50% 45%, rgba(139, 92, 246, .28), transparent 70%), radial-gradient(45% 45% at 28% 62%, rgba(249, 115, 22, .16), transparent 70%), radial-gradient(40% 40% at 74% 64%, rgba(59, 130, 246, .16), transparent 70%); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) #inferlets .term { background: #0d0d10; border-color: rgba(255, 255, 255, .16); box-shadow: 0 0 0 .5px rgba(255, 255, 255, .06), 0 24px 60px rgba(0, 0, 0, .55); }
+  :root:not([data-theme="light"]) #inferlets .term .term-body { background: #0d0d10; }
+  :root:not([data-theme="light"]) .term-cover { background: radial-gradient(60% 60% at 50% 45%, rgba(139, 92, 246, .28), transparent 70%), radial-gradient(45% 45% at 28% 62%, rgba(249, 115, 22, .16), transparent 70%), radial-gradient(40% 40% at 74% 64%, rgba(59, 130, 246, .16), transparent 70%); }
+}
