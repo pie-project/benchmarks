@@ -201,3 +201,14 @@ svg {
   .content .table-container,
   .content .platform-scroll { overflow-x: auto; }
 }
+/* phones: the same hard stop at the top and the bottom of every page and table, no bounce */
+@media (max-width: 899px) {
+  .content,
+  .content > *,
+  .method,
+  .platform,
+  .platform-scroll,
+  .table-container,
+  .sidebar,
+  .sidebar-nav { overscroll-behavior: none; }
+}
