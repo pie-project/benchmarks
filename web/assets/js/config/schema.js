@@ -90,7 +90,7 @@ window.Pie = window.Pie || {};
       columns: [],
     },
     web: {
-      label: "Web",
+      label: "WebGPU",
       section: "platforms",
       view: "platform",
       platform: "web",
