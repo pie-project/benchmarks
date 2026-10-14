@@ -99,7 +99,8 @@ window.Pie = window.Pie || {};
 
     // returns the number of machines and models shown, for the toolbar subtitle
     render(state) {
-      const metric = METRICS.find((m) => m.id === state.platform.metric) || METRICS[0];
+      // decode only: the page compares one thing, without a metric menu
+      const metric = METRICS[0];
       const base = Pie.engines.primary;
       const snapshot = Pie.store.snapshot(state.release).filter((r) => r.workload === "single");
       const rows = snapshot.filter(Pie.store.isMeasured);
@@ -120,8 +121,11 @@ window.Pie = window.Pie || {};
       const p = state.platform;
 
       // every cell first: a comparison, or why there is none
+      // grouped by maker, makers and models each in alphabetical order
+      const byName = (a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
       const allModels = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id))
-        .filter((id) => !query || names().model(id).toLowerCase().includes(query));
+        .filter((id) => !query || names().model(id).toLowerCase().includes(query))
+        .sort((a, b) => byName(makerOf(a).name || "~", makerOf(b).name || "~") || byName(names().model(a), names().model(b)));
       const grid = {};
       for (const mac of macs) {
         grid[mac] = {};
@@ -187,29 +191,34 @@ window.Pie = window.Pie || {};
       }).join("")).join("");
 
       const arrow = (key) => (sortKey === key ? `<span class="column-sort">${dir > 0 ? "↑" : "↓"}</span>` : "");
-      const head = `<tr>
+      // a maker heads its models with a band across them, as a platform heads its machines down the side
+      const makers = [];
+      for (const model of models) {
+        const maker = makerOf(model);
+        if (makers.length && makers[makers.length - 1].maker.name === maker.name) makers[makers.length - 1].n += 1;
+        else makers.push({ maker, n: 1 });
+      }
+      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner" aria-hidden="true"></th><th class="platform-corner is-overall" aria-hidden="true"></th>${makers.map(({ maker, n }) =>
+        `<th class="platform-maker" colspan="${n}" scope="colgroup"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Other")}</b><span>${n} ${n === 1 ? "model" : "models"}</span></span></th>`).join("")}</tr>`;
+      const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
         <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
         const m = Pie.store.index.models[model] || {};
-        const maker = makerOf(model);
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
-        const sub = [maker.name, size].filter(Boolean).join(" · ");
+        const sub = size;
         return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" title="Sort by ${esc(names().model(model))}">
-          <span class="platform-col">${badge(maker)}<span><span class="platform-model">${esc(names().model(model))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
+          <span class="platform-col"><span><span class="platform-model">${esc(names().model(model))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}</tr>`;
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}</colgroup>`;
 
       element.innerHTML = `
         <div class="platform-bar">
-          <span class="filter">
-            <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" title="Metric">${esc(metric.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
-          </span>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
         </div>
         <div class="platform-scroll">
-          <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${head}</thead><tbody>${body}</tbody></table>
+          <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>
         </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
