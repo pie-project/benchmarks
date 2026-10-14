@@ -68,7 +68,7 @@ window.Pie = window.Pie || {};
     } else {
       const name = gpuName(adapter.info);
       el.className = "term-gpu";
-      el.textContent = name ? `GPU detected · ${name}` : "GPU detected";
+      el.textContent = name || "GPU detected";
       el.title = el.textContent;
     }
     el.hidden = false;
