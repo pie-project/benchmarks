@@ -61,9 +61,7 @@ window.Pie = window.Pie || {};
   const KEY = "pieInferlets";
   let added = new Set();
   let category = "all";
-  let page = 0;
   let lastQuery = "";
-  const ROWS = 3;
   try {
     added = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
   } catch {
@@ -97,26 +95,31 @@ window.Pie = window.Pie || {};
 
   const draw = (state) => {
     const query = state.query.trim().toLowerCase();
-    if (query !== lastQuery) { lastQuery = query; page = 0; }
     const list = shown(query);
     const grid = element.querySelector("#gal-grid");
-    // three rows a page, as many columns as the grid lays out at this width
-    const columns = Math.max(1, getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length);
-    const per = columns * ROWS;
-    const pages = Math.max(1, Math.ceil(list.length / per));
-    page = Math.min(page, pages - 1);
     const chips = [["all", "All", CATALOG.length], ...Object.entries(CATEGORIES).map(([id, c]) => [id, c.label, CATALOG.filter((i) => i.cat === id).length])];
     element.querySelector("#gal-chips").innerHTML = chips.map(([id, label, n]) =>
       `<button type="button" class="gal-chip${category === id ? " is-active" : ""}" data-category="${id}" aria-pressed="${category === id}">${esc(label)}<span>${n}</span></button>`).join("");
-    grid.innerHTML = list.length ? list.slice(page * per, page * per + per).map(tile).join("")
+    grid.innerHTML = list.length ? list.map(tile).join("")
       : `<li class="gal-empty">No inferlets match${query ? ` “${esc(query)}”` : ""}.</li>`;
-    // a page control, as iOS and the App Store page: a chevron each side and a dot per page
-    const chevron = (dir, d) => `<button type="button" class="gal-step" data-step="${dir}" aria-label="${dir < 0 ? "Previous" : "Next"} page"${(dir < 0 ? page === 0 : page === pages - 1) ? " disabled" : ""}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg></button>`;
+    if (query !== lastQuery || grid.dataset.category !== category) grid.scrollLeft = 0;
+    lastQuery = query;
+    grid.dataset.category = category;
+    pager();
+  };
+
+  // one row that slides, as an App Store shelf: chevrons turn it a screen at a time, a dot per screen
+  const pager = () => {
+    const grid = element.querySelector("#gal-grid");
+    const pages = Math.max(1, Math.ceil((grid.scrollWidth - 2) / grid.clientWidth));
+    const page = Math.min(pages - 1, Math.round(grid.scrollLeft / grid.clientWidth));
+    const end = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 2;
+    const chevron = (dir, d, off) => `<button type="button" class="gal-step" data-step="${dir}" aria-label="${dir < 0 ? "Previous" : "Next"}"${off ? " disabled" : ""}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg></button>`;
     element.querySelector("#gal-pages").innerHTML = pages < 2 ? "" : `
-      ${chevron(-1, "M15 5 8 12l7 7")}
+      ${chevron(-1, "M15 5 8 12l7 7", grid.scrollLeft <= 2)}
       <span class="gal-dots">${Array.from({ length: pages }, (_, i) =>
-        `<button type="button" class="gal-dot${i === page ? " is-active" : ""}" data-page="${i}" aria-label="Page ${i + 1} of ${pages}"${i === page ? ' aria-current="page"' : ""}></button>`).join("")}</span>
-      ${chevron(1, "m9 5 7 7-7 7")}`;
+        `<button type="button" class="gal-dot${(end ? pages - 1 : page) === i ? " is-active" : ""}" data-page="${i}" aria-label="Screen ${i + 1} of ${pages}"></button>`).join("")}</span>
+      ${chevron(1, "m9 5 7 7-7 7", end)}`;
   };
 
   const content = `
@@ -151,28 +154,21 @@ window.Pie = window.Pie || {};
           const chip = event.target.closest("[data-category]");
           const step = event.target.closest("[data-step]");
           const dot = event.target.closest("[data-page]");
-          if (chip) { category = chip.dataset.category; page = 0; }
-          else if (step) page += Number(step.dataset.step);
-          else if (dot) page = Number(dot.dataset.page);
-          else return;
-          draw(state);
+          const grid = element.querySelector("#gal-grid");
+          if (chip) { category = chip.dataset.category; draw(state); }
+          else if (step) grid.scrollBy({ left: Number(step.dataset.step) * grid.clientWidth, behavior: "smooth" });
+          else if (dot) grid.scrollTo({ left: Number(dot.dataset.page) * grid.clientWidth, behavior: "smooth" });
         });
-        // a swipe across the grid turns the page on a phone
-        let x0 = null;
-        element.addEventListener("touchstart", (event) => { x0 = event.target.closest("#gal-grid") ? event.touches[0].clientX : null; }, { passive: true });
-        element.addEventListener("touchend", (event) => {
-          if (x0 === null) return;
-          const dx = event.changedTouches[0].clientX - x0;
-          x0 = null;
-          if (Math.abs(dx) < 50) return;
-          page = Math.max(0, page + (dx < 0 ? 1 : -1));
-          draw(state);
-        });
-        // a new width can change the columns, so a page holds a different count
+        let settle = null;
+        element.querySelector("#gal-grid").addEventListener("scroll", () => {
+          clearTimeout(settle);
+          settle = setTimeout(pager, 80);
+        }, { passive: true });
+        // a new width changes how many screens the row spans
         let wide = null;
         window.addEventListener("resize", () => {
           clearTimeout(wide);
-          wide = setTimeout(() => { if (!element.hidden) draw(state); }, 150);
+          wide = setTimeout(() => { if (!element.hidden) pager(); }, 150);
         });
       }
       draw(state);
