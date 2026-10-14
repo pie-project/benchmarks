@@ -356,3 +356,20 @@
 .term-status .term-gpu { position: static; }
 .term-status .term-gpu { max-width: 260px; }
 @media (max-width: 899px) { .term-status .term-gpu { max-width: none; } }
+
+/* the answer's Markdown, drawn as a rich terminal draws it */
+.term-out.is-answer b { font-weight: 700; color: #fff; }
+.term-out.is-answer i { font-style: italic; color: #e5e5ea; }
+.term-out.is-answer code,
+.term-out.is-answer .md-code { color: #9fe870; }
+.term-out.is-answer .md-h { color: #64d2ff; }
+.term-out.is-answer .md-bullet { color: #a1a1a6; }
+.term-out.is-answer .md-rule { color: #48484a; }
+
+/* the live terminal is a quarter taller */
+#inferlets .term.is-live .term-body { min-height: 600px; max-height: 600px; }
+#inferlets .term.is-placeholder .term-body { min-height: 600px; }
+@media (max-width: 899px) {
+  #inferlets .term.is-live .term-body { min-height: 350px; max-height: 450px; }
+  #inferlets .term.is-placeholder .term-body { min-height: 350px; }
+}
