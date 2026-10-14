@@ -418,3 +418,22 @@
 @media (max-width: 899px) {
   .platform-table { width: max(100%, calc(116px + var(--cols, 1) * 96px)); }
 }
+
+/* phones: the whole header row, Hardware included, stays on top while rows scroll under it, and it is solid,
+   so no row shows through it (Safari drops the blur on sticky table cells) */
+@media (max-width: 899px) {
+  .platform-table thead tr th,
+  .platform-table thead tr th.platform-corner,
+  .platform-table thead tr th.is-overall,
+  .platform-table thead tr th:first-child {
+    position: sticky;
+    top: 0;
+    left: auto;
+    z-index: 4;
+    background: var(--color-row);
+    backdrop-filter: none;
+  }
+  .platform-table tbody th,
+  .platform-table tbody td { position: static; }
+  .platform-group-row .platform-group-name { position: static; }
+}
