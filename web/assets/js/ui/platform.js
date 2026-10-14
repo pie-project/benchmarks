@@ -167,7 +167,7 @@ window.Pie = window.Pie || {};
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
-      const groupRow = (g) => `<tr class="platform-group-row${folded(g.platform.id) ? " is-collapsed" : ""}${g.macs.length ? "" : " is-empty"}"${g.macs.length ? ` data-group="${g.platform.id}"` : ""} aria-expanded="${!folded(g.platform.id)}"><th colspan="${models.length + 2}" scope="rowgroup">
+      const groupRow = (g) => `<tr class="platform-group-row${folded(g.platform.id) ? " is-collapsed" : ""}${g.macs.length ? "" : " is-empty"}"${g.macs.length ? ` data-group="${g.platform.id}"` : ""} aria-expanded="${!folded(g.platform.id)}"><th colspan="${models.length + 3}" scope="rowgroup">
         <span class="platform-group-bar">
           <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span>
           <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
@@ -185,7 +185,7 @@ window.Pie = window.Pie || {};
             return `<td class="${sorted}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c))}">${n.html}</span></td>`;
           }
           return `<td class="${sorted}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card(`${names().model(model)} on ${macName(mac)}`, `${metric.label} · single request`, [], why))}">${needs ? NOFIT : "–"}</span></td>`;
-        }).join("")}</tr>`;
+        }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
 
       const arrow = (key) => (sortKey === key ? `<span class="column-sort">${dir > 0 ? "↑" : "↓"}</span>` : "");
@@ -197,7 +197,7 @@ window.Pie = window.Pie || {};
         else makers.push({ maker, n: 1 });
       }
       const makerRow = `<tr class="platform-maker-row"><th class="platform-corner" aria-hidden="true"></th><th class="platform-corner is-overall" aria-hidden="true"></th>${makers.map(({ maker, n }) =>
-        `<th class="platform-maker" colspan="${n}" scope="colgroup"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Other")}</b><span>${n} ${n === 1 ? "model" : "models"}</span></span></th>`).join("")}</tr>`;
+        `<th class="platform-maker" colspan="${n}" scope="colgroup"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Other")}</b><span>${n} ${n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
         <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
@@ -206,8 +206,9 @@ window.Pie = window.Pie || {};
         const sub = size;
         return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" title="Sort by ${esc(names().model(model))}">
           <span class="platform-col"><span><span class="platform-model">${esc(names().model(model))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
-      }).join("")}</tr>`;
-      const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}</colgroup>`;
+      }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
+      // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
+      const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
 
       element.innerHTML = `
         <div class="platform-bar">
@@ -223,7 +224,7 @@ window.Pie = window.Pie || {};
         </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
-      if (scroller) element.style.setProperty("--platform-visible", `${Math.min(scroller.clientWidth, scroller.firstElementChild?.offsetWidth || Infinity)}px`);
+      if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       const macsShown = shownGroups.reduce((n, g) => n + g.macs.length, 0);
       return { macs: macsShown, models: models.length, metric };
     },
@@ -292,7 +293,7 @@ window.Pie = window.Pie || {};
       });
       window.addEventListener("resize", () => {
         const scroller = element.querySelector(".platform-scroll");
-        if (scroller) element.style.setProperty("--platform-visible", `${Math.min(scroller.clientWidth, scroller.firstElementChild?.offsetWidth || Infinity)}px`);
+        if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       });
       element.addEventListener("pointerleave", (event) => {
         if (event.pointerType !== "mouse") return;

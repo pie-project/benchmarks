@@ -403,7 +403,8 @@
 
 /* every number column, Overall included, has one width on desktop too; a long name ends in an ellipsis */
 @media (min-width: 900px) {
-  .platform-table col.col-model { width: 156px; }
+  /* columns share the window up to a cap; past it the rows run on to the edge with no column stretched thin */
+  .platform-table col.col-model { width: var(--col-w, 156px); }
   .platform-table thead th:not(.platform-corner),
   .platform-table thead th.is-overall { overflow: hidden; }
   .platform-table thead th:not(.platform-corner) .platform-col { min-width: 0; }
@@ -459,5 +460,7 @@
 .platform-bar-side.is-end { margin-left: auto; }
 
 /* columns keep their width on a wide window: the table ends where its models do, as a Numbers table does */
-.platform-table { min-width: 0; width: calc(190px + 156px * var(--cols)); }
-@media (max-width: 899px) { .platform-table { width: calc(116px + 96px * var(--cols)); } }
+.platform-table { --col-w: clamp(156px, (var(--platform-visible, 100vw) - 190px) / var(--cols), 240px); min-width: 0; width: max(100%, calc(190px + var(--col-w) * var(--cols))); }
+@media (max-width: 899px) { .platform-table { width: max(100%, calc(116px + 96px * var(--cols))); } }
+.platform-table col.col-fill { width: auto; }
+.platform-table .platform-fill { padding: 0; }
