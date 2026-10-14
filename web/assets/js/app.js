@@ -29,7 +29,7 @@
     ensurePhone();
     const options = query.releaseOptions();
     if (!options.some((option) => option.id === state.release)) {
-      state.release = (options.find((option) => option.group === "Releases") || options[0])?.id;
+      state.release = options[0]?.id;
     }
   };
 
@@ -241,14 +241,14 @@
     overview.onOpenQualityEngine((anchor) => popover.open(anchor, popover.QUAL_ENGINE, state));
   };
 
-  // the view a viewer left (page, release, suite, Mac, workload, hide choice) is kept per browser; the address still wins
+  // the view a viewer left (page, suite, Mac, workload, hide choice) is kept per browser; the address still wins.
+  // A reload always opens the newest run: a release picked in the menu lasts until the page reloads
   const VIEW_KEY = "pieView";
   const restoreView = () => {
     try {
       const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || "null");
       if (!saved) return;
       if (saved.table && Pie.schema[saved.table]) state.table = saved.table;
-      if (saved.release) state.release = saved.release;
       if (saved.suite && saved.suitePicked) {
         state.suite = saved.suite;
         state.suitePicked = true;
@@ -263,7 +263,7 @@
   const saveView = () => {
     try {
       localStorage.setItem(VIEW_KEY, JSON.stringify({
-        table: state.table, release: state.release, suite: state.suite, suitePicked: Boolean(state.suitePicked), overview: { ...state.overview }, platform: { ...state.platform }, hideEmpty: state.hideEmpty,
+        table: state.table, suite: state.suite, suitePicked: Boolean(state.suitePicked), overview: { ...state.overview }, platform: { ...state.platform }, hideEmpty: state.hideEmpty,
       }));
     } catch {
       // private windows can refuse storage
