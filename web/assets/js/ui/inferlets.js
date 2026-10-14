@@ -26,9 +26,7 @@ window.Pie = window.Pie || {};
       <div class="term is-live" id="tw">
         <div class="term-bar">
           <span class="term-lights" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="term-gpu" id="tw-gpu" hidden></span>
-          <span class="term-title">Never wait for your first token!</span>
-          <span class="term-ttft" id="tw-ttft" hidden></span>
+          <span class="term-status"><span class="term-ttft" id="tw-ttft" hidden></span><span class="term-gpu" id="tw-gpu" hidden></span></span>
         </div>
         <div class="term-body" id="tw-body">
           <div class="term-out is-dim" id="tw-hint">Click to start. Pie runs Qwen3.5 0.8B on your GPU, in this tab, and prefills your message while you type.</div>
