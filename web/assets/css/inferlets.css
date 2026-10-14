@@ -302,53 +302,20 @@
   #inferlets .store-tile .store-toggle input:checked + .store-switch::after { transform: translateX(15px); }
 }
 
-/* the gallery: category chips and a dense grid */
-.gal-chips { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior: none; }
-.gal-chips::-webkit-scrollbar { display: none; }
-.gal-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 500; color: var(--color-label); background: var(--color-fill); cursor: pointer; }
-.gal-chip span { font-size: 12px; color: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
-.gal-chip.is-active { color: #fff; background: var(--color-label); }
-.gal-chip.is-active span { color: inherit; opacity: .6; }
-:root[data-theme="dark"] .gal-chip.is-active { color: #000; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gal-chip.is-active { color: #000; } }
-#inferlets .gal-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-#inferlets .gal-grid .store-tile { padding: 16px; }
-#inferlets .gal-grid .store-tile-top { margin-bottom: 14px; }
-#inferlets .gal-grid .store-name { font-size: 14px; }
-#inferlets .gal-grid .store-workload { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.gal-empty { grid-column: 1 / -1; padding: 32px 0; text-align: center; color: var(--color-label-secondary); }
-
-
-/* phones: two tiles a row, chips scroll sideways */
+/* the headline, as Apple opens a product page: a large title, a tinted line under it, a short paragraph */
+.inf-hero { max-width: 760px; margin: 8px 0 40px; }
+.inf-title { margin: 0; font-size: 48px; line-height: 1.08; font-weight: 700; letter-spacing: -.02em; color: var(--color-label); }
+.inf-label {
+  display: inline-block;
+  margin: 10px 0 0;
+  font-size: 28px; line-height: 1.15; font-weight: 600; letter-spacing: -.01em;
+  background: linear-gradient(90deg, #f97316, #ec4899 40%, #8b5cf6 75%, #3b82f6);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.inf-text { margin: 14px 0 0; font-size: 19px; line-height: 1.45; color: var(--color-label-secondary); }
 @media (max-width: 899px) {
-  #inferlets .gal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  #inferlets .gal-grid .store-tile { padding: 14px; }
-  .gal-chips { margin: 0 -16px 14px; padding: 0 16px; }
+  .inf-hero { margin: 4px 0 28px; }
+  .inf-title { font-size: 34px; }
+  .inf-label { font-size: 22px; }
+  .inf-text { font-size: 17px; }
 }
-
-/* the page control under the gallery: chevrons and dots, as iOS pages */
-.gal-pages { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 20px; min-height: 28px; }
-.gal-pages:empty { display: none; }
-.gal-dots { display: inline-flex; align-items: center; gap: 9px; }
-.gal-dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: var(--color-label-tertiary); opacity: .45; cursor: pointer; transition: opacity .2s, transform .2s; }
-.gal-dot.is-active { background: var(--color-label); opacity: 1; }
-.gal-step { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: var(--color-fill); color: var(--color-label); cursor: pointer; }
-.gal-step svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.gal-step:disabled { opacity: .3; cursor: default; }
-
-/* one row that slides sideways and snaps to a tile, on every screen */
-#inferlets .gal-grid {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-columns: none;
-  grid-auto-columns: calc((100% - 3 * 12px) / 4);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  overscroll-behavior-x: none;
-}
-#inferlets .gal-grid::-webkit-scrollbar { display: none; }
-#inferlets .gal-grid > .store-tile { scroll-snap-align: start; }
-#inferlets .gal-grid > .gal-empty { grid-column: auto; }
-@media (max-width: 1100px) { #inferlets .gal-grid { grid-auto-columns: calc((100% - 2 * 12px) / 3); } }
-@media (max-width: 899px) { #inferlets .gal-grid { grid-auto-columns: calc((100% - 10px) / 2); gap: 10px; } }
