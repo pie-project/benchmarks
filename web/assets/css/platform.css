@@ -315,3 +315,18 @@
 .platform-group-row { cursor: pointer; user-select: none; }
 .platform-disclosure { width: 10px; height: 10px; margin-right: -2px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transform: rotate(90deg); transition: transform .15s ease; }
 .platform-group-row.is-collapsed .platform-disclosure { transform: none; }
+
+/* the group header, Apple style: name on the left, the collapse chevron at the right edge of what is visible */
+.platform-group-row .platform-group-bar {
+  position: sticky;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: var(--platform-visible, 100%);
+  padding: 0 var(--edge);
+}
+.platform-group-row .platform-group-name { position: static; padding: 0; }
+.platform-group-row .platform-disclosure { width: 12px; height: 12px; margin: 0; stroke: var(--color-label-tertiary); stroke-width: 1.8; }
+.platform-group-row:hover .platform-disclosure { stroke: var(--color-label-secondary); }
