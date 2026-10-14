@@ -1277,3 +1277,9 @@
 .best-head span { color: var(--color-label-tertiary, var(--color-label-secondary)); }
 .best-bars .best-line { grid-template-columns: 112px 1fr 48px; }
 .best-bars .best-line .bars-name { white-space: nowrap; }
+
+/* Welcome and Inferlets share pie-project.org's measure: 1080px of content inside 22px margins */
+@media (min-width: 900px) {
+  #welcome .method-inner,
+  #inferlets .method-inner { max-width: calc(1080px + 2 * 22px); padding-left: 22px; padding-right: 22px; }
+}
