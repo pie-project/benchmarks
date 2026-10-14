@@ -1,6 +1,6 @@
 window.Pie = window.Pie || {};
 
-// Inferlets as a gallery that scales to many: the ones you switched on first, category chips, search from the
+// Inferlets as a gallery that scales to many: category chips, search from the
 // toolbar, and a dense grid of tiles tinted by category (as Shortcuts' gallery and the App Store browse).
 (() => {
   const element = document.getElementById("inferlets");
@@ -87,7 +87,6 @@ window.Pie = window.Pie || {};
       <span class="store-name">${esc(item.name)}</span>
       <span class="store-workload">${esc(item.workload)}</span>
     </li>`;
-  const mine = (item) => `<li class="gal-mine-item" style="${tint(item)}">${glyph(item)}<span>${esc(item.name)}</span></li>`;
 
   const shown = (query) => CATALOG
     .filter((item) => category === "all" || item.cat === category)
@@ -96,10 +95,7 @@ window.Pie = window.Pie || {};
   const draw = (state) => {
     const query = state.query.trim().toLowerCase();
     const list = shown(query);
-    const chosen = CATALOG.filter((item) => added.has(item.id));
     const chips = [["all", "All", CATALOG.length], ...Object.entries(CATEGORIES).map(([id, c]) => [id, c.label, CATALOG.filter((i) => i.cat === id).length])];
-    element.querySelector("#gal-mine").innerHTML = chosen.length
-      ? `<h2 class="store-shelf-title">My Inferlets</h2><ul class="gal-mine">${chosen.map(mine).join("")}</ul>` : "";
     element.querySelector("#gal-chips").innerHTML = chips.map(([id, label, n]) =>
       `<button type="button" class="gal-chip${category === id ? " is-active" : ""}" data-category="${id}" aria-pressed="${category === id}">${esc(label)}<span>${n}</span></button>`).join("");
     element.querySelector("#gal-grid").innerHTML = list.length ? list.map(tile).join("")
@@ -107,7 +103,6 @@ window.Pie = window.Pie || {};
   };
 
   const content = `
-    <section class="store-shelf" id="gal-mine"></section>
     <section class="store-shelf">
       <div class="gal-chips" id="gal-chips" role="group" aria-label="Categories"></div>
       <ul class="store-list gal-grid" id="gal-grid"></ul>
@@ -133,7 +128,6 @@ window.Pie = window.Pie || {};
           if (box.checked) added.add(box.dataset.inferlet);
           else added.delete(box.dataset.inferlet);
           save();
-          draw(state);
         });
         element.addEventListener("click", (event) => {
           const chip = event.target.closest("[data-category]");
