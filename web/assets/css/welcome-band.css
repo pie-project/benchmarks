@@ -43,3 +43,14 @@
   .welcome-tagline { font-size: 20px; }
   .welcome-icon { margin-bottom: 16px; }
 }
+
+/* the secondary call to action, as Apple pairs them: the same pill, outlined in blue, so the filled one leads */
+.welcome-cta.is-secondary { color: #0071e3; background: transparent; box-shadow: inset 0 0 0 1px #0071e3; }
+.welcome-cta.is-secondary:hover { color: #fff; background: #0071e3; }
+.welcome-cta.is-secondary:active { color: #fff; background: #006edb; }
+:root[data-theme="dark"] .welcome-cta.is-secondary { color: #2997ff; box-shadow: inset 0 0 0 1px #2997ff; }
+:root[data-theme="dark"] .welcome-cta.is-secondary:hover { color: #fff; background: #0071e3; box-shadow: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .welcome-cta.is-secondary { color: #2997ff; box-shadow: inset 0 0 0 1px #2997ff; }
+  :root:not([data-theme="light"]) .welcome-cta.is-secondary:hover { color: #fff; background: #0071e3; box-shadow: none; }
+}
