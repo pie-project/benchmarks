@@ -325,3 +325,13 @@
   #inferlets .gal-grid .store-tile { padding: 14px; }
   .gal-chips { margin: 0 -16px 14px; padding: 0 16px; }
 }
+
+/* the page control under the gallery: chevrons and dots, as iOS pages */
+.gal-pages { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 20px; min-height: 28px; }
+.gal-pages:empty { display: none; }
+.gal-dots { display: inline-flex; align-items: center; gap: 9px; }
+.gal-dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: var(--color-label-tertiary); opacity: .45; cursor: pointer; transition: opacity .2s, transform .2s; }
+.gal-dot.is-active { background: var(--color-label); opacity: 1; }
+.gal-step { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: var(--color-fill); color: var(--color-label); cursor: pointer; }
+.gal-step svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.gal-step:disabled { opacity: .3; cursor: default; }
