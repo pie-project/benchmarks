@@ -23,7 +23,7 @@ window.Pie = window.Pie || {};
     { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => hw.vendor === "AMD" },
     { id: "cerebras", label: "Cerebras", sub: "Wafer-scale", has: (hw) => hw.vendor === "Cerebras" },
     { id: "android", label: "Android", sub: "Mobile GPU", has: (hw) => hw.class === "android" },
-    { id: "web", label: "Web", sub: "In-browser", has: (hw) => hw.class === "web" },
+    { id: "web", label: "WebGPU", sub: "In-browser", has: (hw) => hw.class === "web" },
   ];
   const platformOf = (hw) => PLATFORMS.find((p) => p.has(hw));
   // a platform's mark is the sidebar's: the same tinted squircle and glyph wherever it appears
