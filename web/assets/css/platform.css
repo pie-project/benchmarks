@@ -331,3 +331,5 @@
 .platform-group-row .platform-disclosure { width: 12px; height: 12px; margin: 0; stroke: var(--color-label-tertiary); stroke-width: 1.8; }
 .platform-group-row:hover .platform-disclosure { stroke: var(--color-label-secondary); }
 .platform-group-row.is-empty { cursor: default; } .platform-group-row.is-empty .platform-disclosure { display: none; }
+/* the disclosure as SF Symbols draws chevron.right: tall and narrow, a hairline-weight stroke, round ends */
+.platform-group-row .platform-disclosure { width: 7px; height: 12px; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transform-origin: 50% 50%; }
