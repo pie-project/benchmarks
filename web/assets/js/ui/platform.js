@@ -186,9 +186,6 @@ window.Pie = window.Pie || {};
         }).join("")}</tr>`;
       }).join("")).join("");
 
-      const ahead = cells.filter((g) => g >= EVEN).length;
-      const sortedGains = [...cells].sort((a, b) => a - b);
-      const median = sortedGains.length ? sortedGains[sortedGains.length >> 1] : null;
       const arrow = (key) => (sortKey === key ? `<span class="column-sort">${dir > 0 ? "↑" : "↓"}</span>` : "");
       const head = `<tr>
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
@@ -213,8 +210,6 @@ window.Pie = window.Pie || {};
         </div>
         <div class="platform-scroll">
           <table class="platform-table">${cols}<thead>${head}</thead><tbody>${body}</tbody></table>
-        </div>
-        <div class="platform-status">${cells.length ? `${esc(names().engine(base))} is faster in ${ahead} of ${cells.length} comparisons. Median ${Math.abs(median) < EVEN ? "even" : `${Math.abs(Math.round(median * 100))}% ${median > 0 ? "faster" : "slower"}`}.` : ""}
         </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
