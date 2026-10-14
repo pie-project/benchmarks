@@ -146,13 +146,152 @@
   }
 }
 
-@media (max-width: 760px) {
+.view-picker,
+.search-cancel {
+  display: none;
+}
+
+/* the phone toolbar, as an iPhone navigation bar: the sidebar button, the title, then icons a finger can hit */
+@media (max-width: 899px) {
   .toolbar {
-    padding-left: var(--edge);
+    gap: 2px;
+    height: auto;
+    min-height: calc(var(--bar-height) + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
   }
 
-  .sidebar-toggle {
+  .toolbar .tool-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    color: var(--color-accent);
+  }
+
+  .toolbar .tool-button svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.7;
+  }
+
+  .toolbar .sidebar-toggle svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .toolbar-titles {
+    flex: 1 1 0;
+    margin-left: 4px;
+  }
+
+  .toolbar-title {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .toolbar-title,
+  .toolbar-subtitle {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .toolbar-subtitle {
+    font-size: 12px;
+  }
+
+  .toolbar > .spacer {
     display: none;
+  }
+
+  /* the appearance lives in the slide-over; the release and suite share one capsule */
+  #release-picker,
+  #suite-picker,
+  .toolbar .theme-toggle {
+    display: none;
+  }
+
+  /* one picker for the release and the suite, as a small capsule */
+  .view-picker {
+    display: inline-flex;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 50%;
+    height: 32px;
+    margin: 0 4px;
+    padding: 0 10px 0 12px;
+    border-radius: 999px;
+    background: var(--color-fill);
+    font-size: 14px;
+  }
+
+  .view-picker .release-picker-value {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* closed, the search is a magnifying glass in the bar */
+  .search-field {
+    flex: none;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--color-accent);
+  }
+
+  .search-field svg {
+    width: 21px;
+    height: 21px;
+    stroke-width: 1.9;
+  }
+
+  .search-field input {
+    width: 0;
+    padding: 0;
+    font-size: 17px;
+  }
+
+  .search-field:focus-within {
+    box-shadow: none;
+  }
+
+  /* open, it fills the bar: a rounded field and Cancel, nothing else */
+  :root[data-search="open"] .toolbar > :not(.search-field):not(.search-cancel) {
+    display: none;
+  }
+
+  :root[data-search="open"] .search-field {
+    flex: 1;
+    justify-content: flex-start;
+    gap: 6px;
+    height: 36px;
+    margin-left: 10px;
+    padding: 0 8px;
+    background: var(--color-fill);
+    color: var(--color-label-secondary);
+  }
+
+  :root[data-search="open"] .search-field svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  :root[data-search="open"] .search-field input {
+    width: 100%;
+  }
+
+  :root[data-search="open"] .search-cancel {
+    display: inline-flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 10px;
+    border: 0;
+    background: none;
+    font-size: 17px;
+    color: var(--color-accent);
   }
 }
 
