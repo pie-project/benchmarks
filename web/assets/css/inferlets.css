@@ -449,3 +449,8 @@
 .term-ttft-value { font-weight: 600; color: #f5f5f7; font-variant-numeric: tabular-nums; }
 .term-status { gap: 16px; }
 @media (max-width: 899px) { .term-status .term-ttft { font-size: 11px; } .term-status { gap: 12px; } }
+
+/* no outline around the terminal in any mode */
+#inferlets .term,
+:root[data-theme="dark"] #inferlets .term { border: 0; box-shadow: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #inferlets .term { border: 0; box-shadow: none; } }
