@@ -319,3 +319,4 @@
   .inf-label { font-size: 22px; }
   .inf-text { font-size: 17px; }
 }
+.inf-title span { color: var(--color-label-tertiary); }

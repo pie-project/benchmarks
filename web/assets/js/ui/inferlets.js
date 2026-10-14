@@ -6,7 +6,7 @@ window.Pie = window.Pie || {};
 
   const content = `
     <header class="inf-hero">
-      <h1 class="inf-title">Absolute control over your hardware.</h1>
+      <h1 class="inf-title">Absolute control over your hardware. <span>Test it on your laptop!</span></h1>
       <p class="inf-label">The most humane intelligence ever.</p>
       <p class="inf-text">Inferlets are programmable OS processes that manage how a model thinks, as it runs. The most granular control over your tokens in the world.</p>
     </header>
