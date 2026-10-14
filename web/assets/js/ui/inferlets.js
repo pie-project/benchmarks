@@ -104,7 +104,6 @@ window.Pie = window.Pie || {};
 
   const content = `
     <section class="store-shelf">
-      <h2 class="store-shelf-title">My Inferlets</h2>
       <div class="term is-placeholder">
         <div class="term-bar"><span class="term-lights" aria-hidden="true"><i></i><i></i><i></i></span></div>
         <div class="term-body"><div class="term-out is-dim">The playground is in development.</div></div>
