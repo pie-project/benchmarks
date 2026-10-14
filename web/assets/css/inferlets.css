@@ -302,7 +302,7 @@
   #inferlets .store-tile .store-toggle input:checked + .store-switch::after { transform: translateX(15px); }
 }
 
-/* the gallery: category chips, a dense grid, and the ones you added in a strip on top */
+/* the gallery: category chips and a dense grid */
 .gal-chips { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior: none; }
 .gal-chips::-webkit-scrollbar { display: none; }
 .gal-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 500; color: var(--color-label); background: var(--color-fill); cursor: pointer; }
@@ -318,16 +318,10 @@
 #inferlets .gal-grid .store-workload { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .gal-empty { grid-column: 1 / -1; padding: 32px 0; text-align: center; color: var(--color-label-secondary); }
 
-.gal-mine { display: flex; gap: 10px; margin: 0 0 8px; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; overscroll-behavior: none; }
-.gal-mine::-webkit-scrollbar { display: none; }
-.gal-mine-item { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 10px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #fff; background: linear-gradient(145deg, var(--c1), var(--c2)); }
-.gal-mine-item .store-glyph { width: 18px; height: 18px; }
-#gal-mine:empty { display: none; }
 
-/* phones: two tiles a row, chips and the added strip scroll sideways */
+/* phones: two tiles a row, chips scroll sideways */
 @media (max-width: 899px) {
   #inferlets .gal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   #inferlets .gal-grid .store-tile { padding: 14px; }
   .gal-chips { margin: 0 -16px 14px; padding: 0 16px; }
-  .gal-mine { margin: 0 -16px 8px; padding: 0 16px; }
 }
