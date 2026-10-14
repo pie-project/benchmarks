@@ -376,3 +376,15 @@
   .platform-table tbody tr.platform-group-row th { height: 44px; }
   .platform-empty { padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
 }
+
+/* phones: every number column, Overall included, has one width, so the grid reads evenly; long names end in an ellipsis */
+@media (max-width: 899px) {
+  .platform-table col.col-model,
+  .platform-table col.col-model:nth-child(2) { width: 96px; }
+  .platform-table thead th:not(.platform-corner) .platform-col { min-width: 0; }
+  .platform-table thead th:not(.platform-corner) .platform-col > span:last-child { min-width: 0; overflow: hidden; }
+  .platform-table thead .platform-model,
+  .platform-table thead .platform-sub { overflow: hidden; text-overflow: ellipsis; }
+  .platform-table td.is-overall,
+  .platform-table th.is-overall { left: 116px; }
+}
