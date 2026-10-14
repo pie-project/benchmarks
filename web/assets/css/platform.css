@@ -437,3 +437,23 @@
   .platform-table tbody td { position: static; }
   .platform-group-row .platform-group-name { position: static; }
 }
+
+/* a maker's band over its models, as a platform's header row heads its machines: the logo tile, the name, a grey count */
+.platform-table thead tr.platform-maker-row th {
+  height: 40px;
+  padding: 0 8px 0 12px;
+  text-align: left;
+  vertical-align: middle;
+  background: var(--color-chrome);
+  border-bottom: .5px solid var(--color-separator);
+}
+.platform-table thead tr.platform-maker-row th.platform-maker { border-left: .5px solid var(--color-separator); }
+.platform-table thead tr.platform-maker-row th.is-overall { border-left: 0; }
+.platform-maker-name { position: sticky; left: 0; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 13px; }
+.platform-maker-name b { font-weight: 600; color: var(--color-label); }
+.platform-maker-name > span:last-child { font-size: 12px; font-weight: 400; color: var(--color-label-tertiary); }
+.platform-maker-name .model-badge { width: 20px; height: 20px; border-radius: 5px; }
+/* the model heads sit under the band, both pinned as the machines scroll */
+.platform-table thead tr.platform-head-row th { top: 40px; }
+.platform-table thead tr.platform-maker-row th.platform-corner { border-bottom: 0; }
+.platform-bar-side.is-end { margin-left: auto; }
