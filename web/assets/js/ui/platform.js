@@ -222,7 +222,7 @@ window.Pie = window.Pie || {};
         </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
-      if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
+      if (scroller) element.style.setProperty("--platform-visible", `${Math.min(scroller.clientWidth, scroller.firstElementChild?.offsetWidth || Infinity)}px`);
       const macsShown = shownGroups.reduce((n, g) => n + g.macs.length, 0);
       return { macs: macsShown, models: models.length, metric };
     },
@@ -291,7 +291,7 @@ window.Pie = window.Pie || {};
       });
       window.addEventListener("resize", () => {
         const scroller = element.querySelector(".platform-scroll");
-        if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
+        if (scroller) element.style.setProperty("--platform-visible", `${Math.min(scroller.clientWidth, scroller.firstElementChild?.offsetWidth || Infinity)}px`);
       });
       element.addEventListener("pointerleave", (event) => {
         if (event.pointerType !== "mouse") return;
