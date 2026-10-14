@@ -29,7 +29,9 @@ window.Pie = window.Pie || {};
 
   const releaseMenu = (state) => {
     const options = Pie.query.releaseOptions();
-    const groups = [...new Set(options.map((release) => release.group))];
+    // releases first, manual runs under them
+    const groups = [...new Set(options.map((release) => release.group))]
+      .sort((a, b) => (/manual/i.test(a) ? 1 : 0) - (/manual/i.test(b) ? 1 : 0));
     return groups
       .map((group) =>
         `<div class="popover-heading">${group}</div>` +
