@@ -49,6 +49,7 @@ def hub(tmp_path, monkeypatch):
 
 def _engine(cls, art: ArtifactSpec, workload: WorkloadSpec = SS, **recipe_over):
     recipe = load_recipe(str(cls.name), "competitive", MAC, workload, family=art.family)
+    recipe["speculation"] = "auto"  # the recipes ship plain; these tests exercise drafting
     recipe.update(recipe_over)
     return cls(pie_root=ROOT, artifact=art, platform=MAC, mode=Mode(), recipe=recipe, python="/usr/bin/python3")
 
@@ -160,3 +161,9 @@ def test_the_draft_is_fetched_with_the_artifact(tmp_path, monkeypatch):
     assert [r for r, _ in got] == ["unsloth/Qwen3.8-27B-GGUF", "unsloth/Qwen3.5-0.8B-GGUF"]
     assert "Qwen3.5-0.8B-Q4_K_M.gguf" in got[1][1]
     assert draft_artifact(_art("qwen3.8-27b-mlxlm")) is None
+
+
+def test_baselines_ship_plain():
+    for cls in (LlamacppEngine, MlxlmEngine):
+        recipe = load_recipe(str(cls.name), "competitive", MAC, SS, family="qwen3")
+        assert str(recipe["speculation"]) == "off"
