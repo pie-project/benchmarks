@@ -127,7 +127,10 @@ def make_jobs(
                     pie_build_features=[_feature_for(shard[0].platform.backend.value)],
                     baseline_versions=pins,
                     cells=shard,
-                    repetition=RepetitionPolicy(min_rounds=1 if tier in (Tier.SMOKE, Tier.TARGETED) else 3),
+                    # a release's single-stream rows decide pie against Splash within a few percent, and one round
+                    # of a drafting engine spreads more than that (Splash 1.3.1 Qwen3.8-27B: 70-84 tok/s): three, median
+                    repetition=RepetitionPolicy(min_rounds=1 if tier in (Tier.SMOKE, Tier.TARGETED) else 3,
+                                                single_stream_rounds=3 if tier == Tier.TARGETED else None),
                     history={c.cell_id: history.get(c.cell_id, []) for c in shard if c.cell_id in history},
                     per_cell_timeout_s=min(1800 if tier in (Tier.SMOKE, Tier.TARGETED) else 5400, kill_s),
                     # a Mac's first run spends much of its time downloading models: its soft budget is the hard limit

@@ -15,6 +15,7 @@ class RepetitionPolicy(BaseModel):
     ``confirm_rounds`` more and take the median."""
 
     min_rounds: int = 1
+    single_stream_rounds: int | None = None  # rounds for a single-stream shape when set (its median is the record)
     confirm_rounds: int = 2
     max_rounds: int = 5
     history_sigma: float = 3.0
