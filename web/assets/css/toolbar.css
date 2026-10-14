@@ -430,14 +430,11 @@
 @media (max-width: 899px) { #view-picker { display: none; } }
 
 /* the release is the page's most important choice: a bordered pop-up button, as macOS draws one in a toolbar,
-   its run date in grey beside the name */
+   naming the run by its date */
 .release-picker.is-prominent {
   padding: 0 8px 0 10px;
   background: var(--color-fill);
   box-shadow: inset 0 0 0 .5px var(--color-separator);
 }
 .release-picker.is-prominent:hover { background: var(--color-hover); }
-.release-picker.is-prominent .release-picker-value { font-weight: 600; color: var(--color-label); }
-.release-picker-date { color: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
-.release-picker-date:empty { display: none; }
-.release-picker-date::before { content: "· "; }
+.release-picker.is-prominent .release-picker-value { font-weight: 600; color: var(--color-label); font-variant-numeric: tabular-nums; }
