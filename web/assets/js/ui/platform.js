@@ -17,7 +17,7 @@ window.Pie = window.Pie || {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
   const PLATFORMS = [
-    { id: "mac", label: "Apple", sub: "Mac", has: (hw) => hw.class === "mac" || hw.vendor === "Apple" },
+    { id: "mac", label: "Apple Silicon", sub: "Metal", has: (hw) => hw.class === "mac" || hw.vendor === "Apple" },
     { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => hw.backend === "xla" },
     { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => hw.vendor === "NVIDIA" },
     { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => hw.vendor === "AMD" },
