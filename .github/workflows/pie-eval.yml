@@ -97,6 +97,8 @@ jobs:
       platforms: ${{ needs.start.outputs.macs }}
       workloads: ${{ needs.start.outputs.workloads }}
       engines: ${{ needs.start.outputs.engines }}
+      # a run of named models is a quick rerun: no cool-down before single-stream rows (the full suite keeps it)
+      pie_env: ${{ github.event.inputs.models != '' && 'PIE_EVALS_SETTLE=0' || '' }}
       # a tag is a fresh measurement of everything: pie at the tag, competitors at their releases today
       skip_recorded: false
       # a run started from a branch tries that branch's harness and saves nothing
