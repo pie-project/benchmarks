@@ -86,6 +86,27 @@ def split_heavy_processes(groups: dict[tuple, list]) -> dict[tuple, list]:
     return out
 
 
+def split_draft_processes(groups: dict[tuple, list]) -> dict[tuple, list]:
+    """A served baseline whose artifact names a ``draft_model`` drafts on the rows pie
+    speculates (single stream) and decodes plain on the rest. Its server is booted once
+    per process with or without the draft, so the single-stream cells get a process of
+    their own: drafting must not reach a throughput row, nor a plain server a drafting row."""
+    from .engines.served import ServedEngine
+
+    out: dict[tuple, list] = {}
+    for key, cells in groups.items():
+        engine, artifact, mode = key
+        cls = get_engine(cells[0].engine)
+        drafts = cells[0].artifact.draft_model and issubclass(cls, ServedEngine) and cls.draft_args is not ServedEngine.draft_args
+        spec = [c for c in cells if c.workload.kind.value == "single_stream"] if drafts else []
+        if not spec or len(spec) == len(cells):
+            out[key] = cells
+            continue
+        out[key] = [c for c in cells if c not in spec]
+        out[(engine, artifact, f"{mode}-draft")] = spec
+    return out
+
+
 def recipe_for_cell(recipe: dict, recipe_name: str, cell: Cell) -> dict:
     """The process's recipe resolved for ``cell``'s own shape. Until nightly
     36099862659 the recipe was resolved once, for the process's first cell:
@@ -332,7 +353,7 @@ class NodeRunner:
             self.log(f"disk reclaim skipped: {str(e)[:120]}")
         fingerprint = prov.hardware_fingerprint()
         records: list[Record] = []
-        groups = split_heavy_processes(job.cells_by_process())
+        groups = split_draft_processes(split_heavy_processes(job.cells_by_process()))
         # pie is what we measure: its processes go first, so a job that runs long never drops pie for a competitor
         groups = dict(sorted(groups.items(), key=lambda kv: str(kv[0][0]) != "pie"))
         self.log(f"{len(groups)} engine processes to run")

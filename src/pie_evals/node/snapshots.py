@@ -90,7 +90,24 @@ class SnapshotMissing(FileNotFoundError):
     pass
 
 
+def draft_artifact(artifact: ArtifactSpec) -> ArtifactSpec | None:
+    """The draft checkpoint a baseline arm speculates with, as an artifact of its own (fetched like one)."""
+    if not artifact.draft_model:
+        return None
+    return ArtifactSpec(id=f"{artifact.id}--draft", base_model=artifact.draft_model, family=artifact.family, scheme=artifact.scheme,
+                        source_format=artifact.source_format, gguf_file=artifact.draft_gguf_file, tiers=[])
+
+
 def ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path | None = None, python: str = "python3", download: bool = True, log=print) -> Path:
+    """Return the artifact's snapshot dir, with its draft checkpoint (``draft_model``) beside it in the cache."""
+    path = _ensure_snapshot(artifact, hf_cache, pie_root=pie_root, python=python, download=download, log=log)
+    draft = draft_artifact(artifact)
+    if draft is not None:
+        _ensure_snapshot(draft, hf_cache, download=download, log=log)
+    return path
+
+
+def _ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path | None = None, python: str = "python3", download: bool = True, log=print) -> Path:
     """Return the artifact's snapshot dir. Miniatures are built if absent
     (atomically, see miniature.py). Full checkpoints are downloaded only when
     ``download`` is set — the bench node runs with it off, because fetching

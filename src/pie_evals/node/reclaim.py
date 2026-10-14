@@ -45,7 +45,7 @@ def reclaim(job: JobSpec, hf_cache: Path, *, low_water_gib: float = LOW_WATER_GI
         return 0.0
     commit = (job.pie_commit or "")[:8]
     wanted_ids = {c.artifact.id for c in job.cells}
-    wanted_models = {c.artifact.base_model for c in job.cells}
+    wanted_models = {c.artifact.base_model for c in job.cells} | {c.artifact.draft_model for c in job.cells if c.artifact.draft_model}
     log(f"disk: {before:.0f} GiB free under {low_water_gib:.0f}; reclaiming what this job does not need")
     if root and root.exists():
         for d in sorted((root / "artifacts").glob("*")) if (root / "artifacts").exists() else []:
