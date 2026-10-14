@@ -165,7 +165,10 @@ window.Pie = window.Pie || {};
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
       const groupRow = (g) => `<tr class="platform-group-row${folded(g.platform.id) ? " is-collapsed" : ""}" data-group="${g.platform.id}" aria-expanded="${!folded(g.platform.id)}"><th colspan="${models.length + 2}" scope="rowgroup">
-        <span class="platform-group-name"><svg class="platform-disclosure" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 2l4 3-4 3"/></svg>${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span></th></tr>`;
+        <span class="platform-group-bar">
+          <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span>
+          <svg class="platform-disclosure" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 2l4 3-4 3"/></svg>
+        </span></th></tr>`;
       const body = shownGroups.map((g) => groupRow(g) + (folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
@@ -212,6 +215,9 @@ window.Pie = window.Pie || {};
         </div>
         <div class="platform-status">${cells.length ? `${esc(names().engine(base))} is faster in ${ahead} of ${cells.length} comparisons. Median ${Math.abs(median) < EVEN ? "even" : `${Math.abs(Math.round(median * 100))}% ${median > 0 ? "faster" : "slower"}`}.` : ""}
         </div>`;
+      // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
+      const scroller = element.querySelector(".platform-scroll");
+      if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       const macsShown = shownGroups.reduce((n, g) => n + g.macs.length, 0);
       return { macs: macsShown, models: models.length, metric };
     },
@@ -271,6 +277,10 @@ window.Pie = window.Pie || {};
         const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8);
         tooltip.style.left = `${Math.max(8, x)}px`;
         tooltip.style.top = `${Math.max(8, y)}px`;
+      });
+      window.addEventListener("resize", () => {
+        const scroller = element.querySelector(".platform-scroll");
+        if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       });
       element.addEventListener("pointerleave", () => {
         tooltip.hidden = true;
