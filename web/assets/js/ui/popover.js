@@ -127,6 +127,8 @@ window.Pie = window.Pie || {};
     element.hidden = false;
     element.style.left = `${Math.max(8, Math.min(box.left, window.innerWidth - element.offsetWidth - 8))}px`;
     element.style.top = `${box.bottom + 6}px`;
+    // on a phone the menu stops above the bottom of the screen and scrolls inside
+    element.style.maxHeight = Pie.preferences.compact.matches ? `min(480px, ${Math.max(160, window.innerHeight - box.bottom - 18)}px)` : "";
   };
 
   // keep an open menu attached to its button when the window resizes

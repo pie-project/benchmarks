@@ -75,3 +75,62 @@
   margin: 5px 6px;
   background: var(--color-separator);
 }
+
+/* on a phone a menu reads as an iOS context menu: wider, rows a finger can hit, the text at body size */
+@media (max-width: 899px) {
+  .popover {
+    min-width: 240px;
+    max-width: calc(100vw - 24px);
+    max-height: min(480px, 70vh);
+    padding: 6px;
+    border-radius: 14px;
+    overscroll-behavior: contain;
+  }
+
+  .popover-heading {
+    padding: 8px 12px 4px;
+    font-size: 13px;
+  }
+
+  .popover-option {
+    gap: 8px;
+    height: auto;
+    min-height: 44px;
+    padding: 0 14px 0 10px;
+    border-radius: 9px;
+    font-size: 16px;
+  }
+
+  /* a detail sits under its name, as iOS sets a menu item's subtitle */
+  .popover-option:has(.popover-detail) {
+    flex-wrap: wrap;
+    align-content: center;
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+
+  .popover-option:has(.popover-detail) .popover-label {
+    flex: 1 1 calc(100% - 26px);
+  }
+
+  .popover-detail {
+    flex: 1 1 calc(100% - 26px);
+    margin-left: 26px;
+    padding-left: 0;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .popover-check {
+    width: 18px;
+  }
+
+  .popover-check svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .popover-separator {
+    margin: 6px 8px;
+  }
+}
