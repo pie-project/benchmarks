@@ -30,7 +30,7 @@ window.Pie = window.Pie || {};
         <p class="welcome-tagline">Think like a human.</p>
         <p class="method-lede">Precise control over memory and the inference loop. Let your model draft, branch and rethink, just like you do.</p>
       </div>
-      <button class="welcome-cta" type="button" data-go="inferlets">Explore Inferlets<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
+      <button class="welcome-cta" type="button" data-go="inferlets">Try It Now<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
     <!-- hidden for now
     <header class="method-head welcome-trust">
