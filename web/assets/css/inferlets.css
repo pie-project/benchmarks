@@ -373,3 +373,22 @@
   #inferlets .term.is-live .term-body { min-height: 350px; max-height: 450px; }
   #inferlets .term.is-placeholder .term-body { min-height: 350px; }
 }
+
+/* before the first click: a centered cover, as a video waits with its play button */
+.term-cover { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 24px; text-align: center; font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif); cursor: pointer; }
+#inferlets .term.is-live .term-body:has(.term-cover) { position: relative; }
+.term-cover-eyebrow { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.01em; color: #f5f5f7; }
+.term-cover-title {
+  margin: 8px 0 28px; font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -.02em;
+  background: linear-gradient(90deg, #f97316, #ec4899 40%, #8b5cf6 75%, #3b82f6);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.term-cover-play { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(255, 255, 255, .14); backdrop-filter: blur(12px); transition: transform .2s, background .2s; }
+.term-cover-play svg { width: 26px; height: 26px; margin-left: 3px; fill: #fff; }
+.term-cover:hover .term-cover-play { transform: scale(1.06); background: rgba(255, 255, 255, .22); }
+.term-cover-hint { margin: 12px 0 0; font-size: 13px; color: #8e8e93; }
+@media (max-width: 899px) {
+  .term-cover-eyebrow { font-size: 18px; }
+  .term-cover-title { margin-bottom: 22px; font-size: 26px; }
+  .term-cover-play { width: 56px; height: 56px; }
+}
