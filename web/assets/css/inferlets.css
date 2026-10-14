@@ -432,3 +432,8 @@
 }
 .term-status .term-gpu.is-none { color: #6e6e73; }
 @media (max-width: 899px) { .term-status .term-gpu, .term-status .term-gpu.is-none { font-size: 11px; } }
+
+/* no shadow on the terminal in any mode; dark mode keeps its hairline */
+#inferlets .term,
+:root[data-theme="dark"] #inferlets .term { box-shadow: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #inferlets .term { box-shadow: none; } }
