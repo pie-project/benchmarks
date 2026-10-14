@@ -275,3 +275,10 @@
 #inferlets .store-tile .store-toggle input:checked + .store-switch { background: rgba(255, 255, 255, .95); }
 #inferlets .store-tile .store-toggle input:checked + .store-switch::after { background: var(--c2); box-shadow: none; }
 #inferlets .term.is-placeholder .term-body { min-height: 480px; }
+
+/* on a phone: one tile per row, the playground the width of the screen and a sensible height */
+@media (max-width: 899px) {
+  #inferlets .store-list { grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 12px; }
+  #inferlets .store-shelf + .store-shelf { margin-top: 24px; }
+  #inferlets .term.is-placeholder .term-body { min-height: 280px; }
+}

@@ -333,3 +333,46 @@
 .platform-group-row.is-empty { cursor: default; } .platform-group-row.is-empty .platform-disclosure { display: none; }
 /* the disclosure as SF Symbols draws chevron.right: tall and narrow, a hairline-weight stroke, round ends */
 .platform-group-row .platform-disclosure { width: 7px; height: 12px; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transform-origin: 50% 50%; }
+
+/* on a phone the pinned Hardware and Overall columns narrow, so the models have room to slide under them */
+@media (max-width: 899px) {
+  .platform-bar {
+    height: 48px;
+    padding: 0 var(--edge);
+  }
+
+  .platform-bar .filter-button {
+    height: 34px;
+    padding: 0 12px 0 14px;
+    border-radius: 999px;
+    font-size: 15px;
+    background: var(--color-fill);
+  }
+
+  .platform-bar .platform-hide {
+    margin-right: -12px;
+    font-size: 15px;
+  }
+
+  .platform-scroll {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .platform-table col.col-machine { width: 116px; }
+  .platform-table col.col-model { width: 112px; }
+  .platform-table col.col-model:nth-child(2) { width: 76px; }
+  .platform-table td.is-overall,
+  .platform-table th.is-overall { left: 116px; }
+  .platform-table thead th { padding: 8px 10px 8px 6px; }
+  .platform-table thead th.is-overall { padding-right: 8px; }
+  .platform-row { min-width: 0; padding-right: 4px; }
+  .platform-mem { margin-left: 5px; }
+  .platform-table tbody th,
+  .platform-table tbody td { height: 44px; }
+  .platform-col { gap: 6px; }
+  .platform-group-row .platform-group-name > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .platform-table tbody tr.platform-group-row th { height: 44px; }
+  .platform-empty { padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
+}
