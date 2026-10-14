@@ -176,3 +176,22 @@ svg {
     font-size: 15px;
   }
 }
+
+/* phones: a sideways swipe never moves the page. The page is locked to the screen's width, and a table that
+   reaches its end stops hard instead of bouncing or handing the swipe on to the page. */
+@media (max-width: 899px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+  }
+  .table-container,
+  .platform-scroll,
+  .filter-list,
+  .store-list,
+  .term-body {
+    overscroll-behavior: none;
+  }
+}
