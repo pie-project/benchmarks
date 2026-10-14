@@ -25,12 +25,12 @@ default:
       value: 600
       rationale: A 30B GGUF takes minutes to page in on a laptop-class Mac.
     speculation:
-      value: auto
+      value: "off"
       rationale: >
-        Mirrors pie's knob: on the rows pie speculates (single stream, artifacts whose pie
-        row has a drafter) llama.cpp drafts too, with the artifact's draft_model, a small
-        model of the same family and vocabulary (--spec-type draft-simple --model-draft);
-        throughput rows decode plain on a server of their own. "on"/"off" force it.
+        Plain decoding. Drafting with a separate small model made both llama.cpp and mlx-lm
+        slower on every speculating row (llama.cpp up to a third, mlx-lm about 60%), so each
+        engine runs at its fastest setting. "auto" drafts with the artifact's draft_model on
+        single-stream rows; "on" forces it.
     draft_gpu_layers:
       value: all
       rationale: The draft is fully offloaded like the target (--n-gpu-layers-draft all).
