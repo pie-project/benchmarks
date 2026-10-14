@@ -454,3 +454,8 @@
 #inferlets .term,
 :root[data-theme="dark"] #inferlets .term { border: 0; box-shadow: none; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #inferlets .term { border: 0; box-shadow: none; } }
+
+/* the cover is plain: no glow behind the button */
+.term-cover,
+:root[data-theme="dark"] .term-cover { background: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .term-cover { background: none; } }
