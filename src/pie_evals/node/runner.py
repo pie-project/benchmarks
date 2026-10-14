@@ -468,7 +468,13 @@ class NodeRunner:
                     engine.program_path = cell.program.path  # the cell's own inferlet, not the process's first
                 recipe = recipe_for_cell(engine.recipe, recipe_name, cell)
                 engine.recipe = recipe
-                rec = self._run_cell(cell, engine, snapshot, engine_version, recipe, recipe_name, fingerprint, machine_before)
+                state = machine_before
+                if cell.workload.kind.value == "single_stream" and hasattr(pre, "settle"):
+                    settled = pre.settle(self.platform.os if self.platform else None)
+                    if settled:
+                        self.log(f"{cell.workload.id}: settled {settled['settle_s']}s, thermal {settled['thermal_state_before_settle']} -> {settled['thermal_state']}")
+                        state = {**machine_before, **settled}
+                rec = self._run_cell(cell, engine, snapshot, engine_version, recipe, recipe_name, fingerprint, state)
                 if not control_ok and rec.status == CellStatus.PASS:
                     # a noisy machine still yields numbers: the row keeps them, marked noisy, as a competitor's noisy row is
                     rec = rec.model_copy(update={"status": CellStatus.NOISY, "invalid_reason": "control A/A failed on this process"})

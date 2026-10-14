@@ -3,6 +3,7 @@ back to a broad pkill -f (which once killed the interactive session because
 its cwd contained 'pie')."""
 
 import os
+import platform
 
 from pie_evals.node import preflight as pf
 
@@ -199,3 +200,14 @@ def test_the_runner_holding_the_gpu_is_no_other_process(monkeypatch):
     state = pf.linux_machine_state()
     assert state["gpu_process_count"] == "1"
     assert state["gpu_processes"] == ["/usr/bin/other"]
+
+
+def test_a_mac_reads_its_thermal_state_and_settles(monkeypatch):
+    if platform.system() != "Darwin":
+        return
+    assert pf.mac_thermal_state() in ("nominal", "fair", "serious", "critical")
+    settled = pf.settle_mac(idle_s=0, nominal_timeout_s=0)
+    assert settled["thermal_state"] in ("nominal", "fair", "serious", "critical") and "settle_s" in settled
+    monkeypatch.setattr(pf, "settle_mac", lambda: {"settle_s": 0})
+    assert pf.Preflight().settle("macos") == {"settle_s": 0}
+    assert pf.Preflight().settle("linux") == {}
