@@ -388,3 +388,15 @@
   .platform-table td.is-overall,
   .platform-table th.is-overall { left: 116px; }
 }
+
+/* phones: Hardware and Overall scroll with the models instead of staying pinned */
+@media (max-width: 899px) {
+  .platform-table th:first-child,
+  .platform-table td:first-child,
+  .platform-table tbody th.platform-row,
+  .platform-table thead th.platform-corner:not(.platform-group-head):not(.is-overall),
+  .platform-table td.is-overall,
+  .platform-table th.is-overall { position: static; left: auto; }
+  .platform-table thead th.platform-corner,
+  .platform-table thead th.is-overall { position: sticky; top: 0; }
+}
