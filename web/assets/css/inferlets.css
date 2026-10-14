@@ -437,3 +437,15 @@
 #inferlets .term,
 :root[data-theme="dark"] #inferlets .term { box-shadow: none; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #inferlets .term { box-shadow: none; } }
+
+/* TTFT, as macOS shows a reading in a title bar: a stopwatch symbol, a grey label, the figure in white */
+.term-status .term-ttft { display: inline-flex; align-items: center; gap: 5px; font: 500 12px var(--font-sans, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif); color: #98989d; }
+.term-status .term-ttft[hidden] { display: none; }
+.term-status .term-ttft::before {
+  content: ""; width: 13px; height: 13px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='13.5' r='7.5'/%3E%3Cpath d='M12 13.5V9.5M10 2.5h4M18.5 6.5l1.3-1.3'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='13.5' r='7.5'/%3E%3Cpath d='M12 13.5V9.5M10 2.5h4M18.5 6.5l1.3-1.3'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.term-ttft-value { font-weight: 600; color: #f5f5f7; font-variant-numeric: tabular-nums; }
+.term-status { gap: 16px; }
+@media (max-width: 899px) { .term-status .term-ttft { font-size: 11px; } .term-status { gap: 12px; } }

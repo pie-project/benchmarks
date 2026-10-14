@@ -119,7 +119,13 @@ window.Pie = window.Pie || {};
     };
     // a small model can loop: a paragraph that repeats the one before it is shown once
     const unloop = (text) => text.split(/\n{2,}/).filter((block, i, all) => i === 0 || block.trim() !== all[i - 1].trim()).join("\n\n");
-    const showBadge = (text, title) => { badge.textContent = text; badge.title = title || ""; badge.hidden = false; };
+    // "TTFT 44 ms" is drawn as a grey label and a white figure, as macOS shows a reading in a title bar
+    const showBadge = (text, title) => {
+      const m = text.match(/^TTFT\s+(.*)$/);
+      badge.innerHTML = m ? `<span class="term-ttft-label">TTFT</span><span class="term-ttft-value">${m[1]}</span>` : text;
+      badge.title = title || "";
+      badge.hidden = false;
+    };
 
     async function boot() {
       phase = "booting";
