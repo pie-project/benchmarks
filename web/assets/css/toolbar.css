@@ -427,3 +427,4 @@
 
 /* phones: no report flag in the top bar */
 @media (max-width: 899px) { #report-button { display: none; } }
+@media (max-width: 899px) { #view-picker { display: none; } }
