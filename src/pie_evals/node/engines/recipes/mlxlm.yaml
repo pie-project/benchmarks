@@ -27,14 +27,12 @@ default:
       value: true
       rationale: Single stream prefill must not be a prefix cache hit.
     speculation:
-      value: auto
+      value: "off"
       rationale: >
-        Mirrors pie's knob: on the rows pie speculates (single stream) mlx-lm drafts with
-        the artifact's draft_model (--draft-model), on a server of its own (a draft makes
-        mlx-lm's server unbatchable); throughput rows decode plain. mlx-lm 0.32.0 refuses to
-        speculate on a model whose cache cannot be trimmed ("Speculative decoding requires a
-        trimmable prompt cache (got {'ArraysCache'})"): the Qwen3.5/3.6/3.8 gated-delta-net
-        hybrids, so their mlx-lm arms carry no draft_model and decode plain.
+        Plain decoding. Drafting with a separate small model made both llama.cpp and mlx-lm
+        slower on every speculating row (llama.cpp up to a third, mlx-lm about 60%), so each
+        engine runs at its fastest setting. "auto" drafts with the artifact's draft_model on
+        single-stream rows; "on" forces it.
     num_draft_tokens:
       value: null
       rationale: null keeps mlx-lm's default draft length (--num-draft-tokens 3).
