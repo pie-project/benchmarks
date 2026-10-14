@@ -195,3 +195,9 @@ svg {
     overscroll-behavior: none;
   }
 }
+@media (max-width: 899px) {
+  .content,
+  .content > * { max-width: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
+  .content .table-container,
+  .content .platform-scroll { overflow-x: auto; }
+}
