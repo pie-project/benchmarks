@@ -16,7 +16,17 @@
     if (location.hash !== hash) history.replaceState(null, "", hash || location.pathname + location.search);
   };
 
+  // a phone shows the newest run in the Full suite, with no picker for either
+  const phone = window.matchMedia("(max-width: 899px)");
+  const ensurePhone = () => {
+    if (!phone.matches) return;
+    const newest = (store.tables.tags || [])[0]?.id;
+    if (newest) state.release = newest;
+    if (store.suites().some((suite) => suite.id === "full")) state.suite = "full";
+  };
+
   const ensureRelease = () => {
+    ensurePhone();
     const options = query.releaseOptions();
     if (!options.some((option) => option.id === state.release)) {
       state.release = (options.find((option) => option.group === "Releases") || options[0])?.id;
