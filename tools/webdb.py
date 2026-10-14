@@ -219,8 +219,17 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "accuracy": None,
         "commit": (r["pie_commit"] or "")[:9] if engine == "pie" else "",
         "measured": local(r["started_at"]),
-        "status": r["status"], "note": "",
+        "status": r["status"], "note": draft_note(r, engine),
     }
+
+
+def draft_note(r: dict, engine: str) -> str:
+    """A baseline that drafted with a separate small model on this row says so (pie's drafting shows as the model's Draft)."""
+    try:
+        counters = json.loads(r.get("counters_json") or "{}")
+    except ValueError:
+        return ""
+    return "Speculative: drafts with a small same-family model" if engine != "pie" and counters.get("speculative") else ""
 
 
 def empty_row(key: tuple, tag: str, status: str, note: str) -> dict:
@@ -320,7 +329,7 @@ def measured(r: dict) -> bool:
 
 def results_by_tag(store, a2m, hardware_ids, engine_ids):
     """The picked run per setup under each tag, and each tag's kind and newest time."""
-    cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind"]
+    cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind", "counters_json"]
             + METRICS)
     rows = [r for r in store.table().select(cols).to_pylist()
             if measured(r) and r["platform"] in hardware_ids and r["engine"] in engine_ids]
