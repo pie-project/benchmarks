@@ -140,7 +140,8 @@ async def run(args: argparse.Namespace):
     n = args.requests if latency else args.num_requests
     batch = 1 if latency else max(1, getattr(args, "concurrency", 0) or args.num_requests)
     raw = make_prompts(args, n + args.warmup)
-    if args.flush_cache:
+    # a cold prompts file is already unique per request and is what pie is sent: every engine gets it as written
+    if args.flush_cache and not getattr(args, "prompts_file", None):
         # a fresh word order per request, so no server finds a prefix it has seen
         salt = random.SystemRandom().getrandbits(32)
         raw = [shuffled(p, salt + i) for i, p in enumerate(raw)]
