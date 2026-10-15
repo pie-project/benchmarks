@@ -21,7 +21,9 @@ import subprocess
 import time
 from typing import Any
 
-ENGINE_PROCESSES = ("pie", "llama-server", "mlx_lm.server")
+ENGINE_PROCESSES = ("pie", "llama-server", "mlx_lm.server", "splash")
+# mlx-lm serves as `python -m mlx_lm server`: its process is named after the interpreter, so its arguments name it
+ENGINE_ARGS = ("mlx_lm server", "mlx_lm.server")
 
 
 def _run(argv: list[str], timeout: float = 20.0) -> str | None:
@@ -248,6 +250,7 @@ def linux_machine_state() -> dict[str, Any]:
 
 def engine_processes(exclude: set[int] | None = None) -> list[str]:
     out = _run(["ps", "-axo", "pid=,comm="]) or ""
+    args = {ln.strip().split(None, 1)[0]: ln.strip().split(None, 1)[1] for ln in (_run(["ps", "-axo", "pid=,args="]) or "").splitlines() if len(ln.strip().split(None, 1)) == 2}
     found = []
     skip = exclude or set()
     for line in out.splitlines():
@@ -256,6 +259,8 @@ def engine_processes(exclude: set[int] | None = None) -> list[str]:
             continue
         if os.path.basename(parts[1]) in ENGINE_PROCESSES:
             found.append(f"{os.path.basename(parts[1])}:{parts[0]}")
+        elif any(a in args.get(parts[0], "") for a in ENGINE_ARGS):
+            found.append(f"mlx_lm:{parts[0]}")
     return sorted(found)
 
 
