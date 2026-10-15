@@ -327,7 +327,19 @@ def measured(r: dict) -> bool:
     return r["status"] in ("pass", "noisy") and any(r.get(m) is not None for m in ("decode_tok_s", "prefill_tok_s", "output_tok_s"))
 
 
-def results_by_tag(store, a2m, hardware_ids, engine_ids):
+PREFILL = ("prefill_tok_s", "ttft_ms_p50", "ttft_ms_p99")
+
+
+def keep_decode(tag_rows: list[dict], picked: dict[tuple, tuple], a2m: dict[str, str], engine: str, since: datetime) -> None:
+    """A prefill-only rerun: its rows give the prefill numbers, every other number stays the earlier run's."""
+    earlier = pick([r for r in tag_rows if r["engine"] == engine and r["started_at"] < since], a2m)
+    for key, (rank, r) in picked.items():
+        if key[1] == engine and r["started_at"] >= since and key in earlier:
+            old = earlier[key][1]
+            picked[key] = (rank, {**old, **{m: r[m] for m in PREFILL}})
+
+
+def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
     """The picked run per setup under each tag, and each tag's kind and newest time."""
     cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind", "counters_json"]
             + METRICS)
@@ -338,6 +350,10 @@ def results_by_tag(store, a2m, hardware_ids, engine_ids):
         if r["tag"]:  # untagged runs are not shown: every release is a tag
             by_tag.setdefault(r["tag"], []).append(r)
     tagged = {t: pick(rs, a2m) for t, rs in by_tag.items()}
+    # config.json "prefill_only": {tag: {"engine": e, "since": ISO time}} reruns that may change only prefill
+    for t, p in (prefill_only or {}).items():
+        if t in tagged:
+            keep_decode(by_tag[t], tagged[t], a2m, p["engine"], datetime.fromisoformat(p["since"]))
     meta = {t: {"kind": rs[0]["tag_kind"] or "manual", "at": max(r["started_at"] for r in rs),
                 "commit": next((r["pie_commit"][:9] for r in rs if r["engine"] == "pie" and r["pie_commit"]), "")}
             for t, rs in by_tag.items()}
@@ -465,7 +481,7 @@ def main() -> None:
     for m in models:
         m["suite"] = "Targeted" if m["id"] in suite_ids.get("targeted", []) else "Full" if m["id"] in suite_ids.get("full", []) else ""
     engine_ids = [e["id"] for e in mac_engines]
-    results, rmeta = results_by_tag(store, a2m, hardware_ids, engine_ids)
+    results, rmeta = results_by_tag(store, a2m, hardware_ids, engine_ids, config.get("prefill_only"))
     scores, qmeta = quality_by_tag(store, a2m)
     # one list of tags for both tables: a tag with only quality scores still gets a results table, filled from earlier tags
     meta = dict(qmeta)
