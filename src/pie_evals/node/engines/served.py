@@ -151,7 +151,7 @@ class ServedEngine(Engine):
                 self.server_url, self.load_s = url, time.monotonic() - t0
                 return
             except OSError:
-                time.sleep(0.5)
+                time.sleep(0.05)  # a fine poll: load time reads at most 50 ms late, as pie's ready banner is read at once
         self.stop()
         raise EngineLaunchError(ErrorClass.HANG, f"{self.name} server did not answer {self.health_path} in time (see {log_path})")
 
