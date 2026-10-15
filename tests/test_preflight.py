@@ -211,3 +211,13 @@ def test_a_mac_reads_its_thermal_state_and_settles(monkeypatch):
     monkeypatch.setattr(pf, "settle_mac", lambda: {"settle_s": 0})
     assert pf.Preflight().settle("macos") == {"settle_s": 0}
     assert pf.Preflight().settle("linux") == {}
+
+
+def test_a_cell_waits_for_an_idle_gpu_and_gives_up_on_a_shared_one(monkeypatch):
+    seq = iter([80, 80, 3, 2, 1, 0, 0, 0])
+    monkeypatch.setattr(pf, "mac_gpu_utilization", lambda: next(seq, 0))
+    idle = pf.await_idle_mac_gpu(quiet_s=0.02, timeout_s=5, poll_s=0.01)
+    assert idle["gpu_util_before_cell"] == 80 and "gpu_busy_error" not in idle
+    monkeypatch.setattr(pf, "mac_gpu_utilization", lambda: 90)
+    busy = pf.await_idle_mac_gpu(quiet_s=0.02, timeout_s=0.05, poll_s=0.01)
+    assert "another workload shares it" in busy["gpu_busy_error"]
