@@ -3,25 +3,6 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("welcome");
 
-  // One pass of the strip; it is written twice so the scroll loops without a seam.
-  // Engines without a logo file here are set as quiet wordmarks.
-  const PIE_MARK = `<svg class="engine-mark" viewBox="0 0 67.89 67.89" aria-hidden="true"><path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="8"/></svg>`;
-  const ENGINE_ROW = [
-    ["pie", "Pie"],
-    ["img", "llamacpp.png", "llama.cpp"],
-    ["text", "vLLM"],
-    ["text", "MLX"],
-    ["text", "SGLang"],
-    ["img", "magnitude.png", "Magnitude", "is-light-art is-wordmark"],
-    ["text", "Splash"],
-    ["text", "Ollama"],
-    ["text", "LM Studio"],
-    ["text", "TensorRT-LLM"],
-    ["text", "TGI"],
-  ].map(([kind, a, alt, extra = ""]) => kind === "img"
-    ? `<li><img class="engine-logo ${extra}" src="assets/img/engines/${a}" alt="${alt}" loading="lazy" decoding="async"></li>`
-    : `<li><span class="engine-wordmark">${kind === "pie" ? PIE_MARK : ""}${a}</span></li>`).join("");
-
   const content = `
     <div class="welcome-banner">
       <div class="welcome-banner-copy">
@@ -33,17 +14,13 @@ window.Pie = window.Pie || {};
         <a class="welcome-banner-link" href="https://github.com/pie-project/pie" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .25l2.35 4.76 5.25.76-3.8 3.7.9 5.23L8 12.3l-4.7 2.4.9-5.23-3.8-3.7 5.25-.76L8 .25z"/></svg>Star</a>
       </div>
     </div>
-    <section class="engine-strip" aria-label="Inference engines">
-      <div class="engine-strip-viewport">
-        <ul class="engine-strip-track">${ENGINE_ROW}${ENGINE_ROW.replace(/<li>/g, '<li aria-hidden="true">')}</ul>
-      </div>
-    </section>
     <header class="method-head welcome-intro">
       <div>
         <span class="welcome-icon is-bench" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V11M10 19V6M15 19v-9M20 19V4"/></svg></span>
         <h1>LLM Inference Engine Benchmarks</h1>
         <p class="welcome-tagline">Performance without compromise.</p>
         <p class="method-lede">An independent benchmark platform for measuring inference performance across engines, models, and hardware.</p>
+        <p class="welcome-against">Measured against mlx-lm, llama.cpp and Splash on the same Macs.</p>
       </div>
       <button class="welcome-cta" type="button" data-go="all_hardware">Compare Engines<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
