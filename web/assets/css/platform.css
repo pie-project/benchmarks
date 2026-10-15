@@ -114,7 +114,8 @@
 .platform-row { display: table-cell; }
 .platform-row > * { vertical-align: middle; }
 .platform-logo { width: 13px; height: 13px; margin: -2px 8px 0 0; fill: currentColor; color: var(--color-label-secondary); vertical-align: middle; }
-.platform-mem { margin-left: 8px; font: 11px var(--font-mono); color: var(--color-label-tertiary); }
+.platform-chip { display: inline-flex; flex-direction: column; gap: 2px; line-height: 1.2; }
+.platform-mem { font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
 
 /* All hardware: a platform column, its name once at the top of its machines */
 .platform-group {
@@ -368,7 +369,6 @@
   .platform-table thead th { padding: 8px 10px 8px 6px; }
   .platform-table thead th.is-overall { padding-right: 8px; }
   .platform-row { min-width: 0; padding-right: 4px; }
-  .platform-mem { margin-left: 5px; }
   .platform-table tbody th,
   .platform-table tbody td { height: 44px; }
   .platform-col { gap: 6px; }
