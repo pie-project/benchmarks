@@ -1329,6 +1329,9 @@
   opacity: .55;
   transition: opacity .2s ease;
 }
+/* Pie's own mark beside its name, as the sidebar sets it */
+.engine-wordmark { display: inline-flex; align-items: center; gap: 7px; }
+.engine-mark { width: 21px; height: 21px; flex: none; }
 .engine-strip-track li:hover .engine-logo,
 .engine-strip-track li:hover .engine-wordmark { opacity: 1; }
 :root[data-theme="dark"] .engine-logo.is-light-art { filter: grayscale(1); }
