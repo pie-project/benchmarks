@@ -8,7 +8,7 @@ window.Pie = window.Pie || {};
   const ENGINE_ROW = [
     ["img", "llamacpp.png", "llama.cpp"],
     ["text", "vLLM"],
-    ["img", "mlx.png", "MLX", "is-dark-art"],
+    ["text", "MLX"],
     ["text", "SGLang"],
     ["img", "magnitude.png", "Magnitude", "is-light-art is-wordmark"],
     ["text", "Splash"],
@@ -32,7 +32,6 @@ window.Pie = window.Pie || {};
       </div>
     </div>
     <section class="engine-strip" aria-label="Inference engines">
-      <p class="engine-strip-label">Inference engines</p>
       <div class="engine-strip-viewport">
         <ul class="engine-strip-track">${ENGINE_ROW}${ENGINE_ROW.replace(/<li>/g, '<li aria-hidden="true">')}</ul>
       </div>
