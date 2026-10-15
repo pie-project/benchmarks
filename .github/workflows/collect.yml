@@ -15,7 +15,7 @@ on:
 
 jobs:
   collect:
-    runs-on: [self-hosted, macos]  # any free Mac: it only needs the tailnet, not a particular machine
+    runs-on: [self-hosted, site]  # the site laptop: always on the tailnet, never behind a benchmark
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
