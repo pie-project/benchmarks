@@ -50,6 +50,7 @@ class QuantScheme(StrEnumBase):
     MLX_2BIT = "mlx_2bit"
     W4A16_MARLIN = "w4a16_marlin"
     GGUF_Q4_K_M = "gguf_q4_k_m"
+    GGUF_Q2_K = "gguf_q2_k"  # unsloth UD-Q2_K_XL: 2-bit K-quant, the precise tensors a little wider
     GGUF_Q8_0 = "gguf_q8_0"
     AWQ = "awq"
     GPTQ = "gptq"

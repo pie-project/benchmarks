@@ -275,6 +275,18 @@ artifacts:
     display_name: qwen3.8:flash-next
     expected_gib: 103.86
     tiers: [targeted]
+  # the 2-bit Flash-Next: pie reads the same UD-Q2_K_XL bytes llama.cpp runs, so the 128 GB Mac holds it with room
+  - id: qwen3.8-flash-next-q2
+    base_model: unsloth/Qwen3.8-Flash-Next-GGUF
+    family: qwen4_exp
+    scheme: gguf_q2_k
+    source_format: gguf
+    gguf_file: UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf
+    gguf_config_from: Qwen/Qwen3.8-Flash-Next
+    tokenizer_from: Qwen/Qwen3.8-Flash-Next
+    display_name: qwen3.8:flash-next q2
+    expected_gib: 73.46
+    tiers: [targeted]
   - id: qwen3.5-4b-mlx4
     base_model: mlx-community/Qwen3.5-4B-4bit
     family: qwen3_5
@@ -526,6 +538,17 @@ artifacts:
     baseline_of: qwen3.8-flash-next-mlx4
     baseline_label: llama.cpp
     expected_gib: 103.66
+    tiers: [targeted]
+  - id: qwen3.8-flash-next-q2-llamacpp
+    base_model: unsloth/Qwen3.8-Flash-Next-GGUF
+    family: qwen4_exp
+    scheme: gguf_q2_k
+    source_format: gguf
+    gguf_file: UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf   # three-way split; the download takes every shard
+    tokenizer_from: Qwen/Qwen3.8-Flash-Next
+    baseline_of: qwen3.8-flash-next-q2
+    baseline_label: llama.cpp
+    expected_gib: 73.46
     tiers: [targeted]
   - id: qwen3.5-4b-llamacpp
     base_model: unsloth/Qwen3.5-4B-GGUF

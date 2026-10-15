@@ -3,7 +3,7 @@
     "targeted": [
       "qwen3.8-27b-splash",
       "qwen3.6-35b-a3b-splash",
-      "qwen3.8-flash-next-llamacpp",
+      "qwen3.8-flash-next-q2-llamacpp",
       "qwen3.8-27b-mlxlm",
       "qwen3.8-27b-llamacpp",
       "qwen3.6-35b-a3b-mlxlm",
@@ -19,7 +19,7 @@
     "full": [
       "qwen3.8-27b-splash",
       "qwen3.6-35b-a3b-splash",
-      "qwen3.8-flash-next-llamacpp",
+      "qwen3.8-flash-next-q2-llamacpp",
       "qwen3.8-27b-mlxlm",
       "qwen3.8-27b-llamacpp",
       "qwen3.6-35b-a3b-mlxlm",
