@@ -25,7 +25,12 @@ def needs_import(artifact: ArtifactSpec) -> bool:
     # pie serve reads safetensors and .zt only; mlx and gguf checkpoints go
     # through `pie model import` (nightly 35967154121: the GGUF snapshot dir
     # "holds no .safetensors and no .zt container")
-    return artifact.source_format in (SourceFormat.MLX, SourceFormat.GGUF) or (bool(artifact.pie_sku) and artifact.scheme == QuantScheme.AFFINE_U4_G64)
+    # a 2-bit pie row (u2g*) is cast from the source at import; serve never reads bf16 as 2 bits
+    return (
+        artifact.source_format in (SourceFormat.MLX, SourceFormat.GGUF)
+        or (bool(artifact.pie_sku) and artifact.scheme == QuantScheme.AFFINE_U4_G64)
+        or "-u2g" in (artifact.pie_sku or "")
+    )
 
 
 def artifact_root(root: Path | None = None) -> Path:

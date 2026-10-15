@@ -275,17 +275,17 @@ artifacts:
     display_name: qwen3.8:flash-next
     expected_gib: 103.86
     tiers: [targeted]
-  # the 2-bit Flash-Next: pie reads the same UD-Q2_K_XL bytes llama.cpp runs, so the 128 GB Mac holds it with room
+  # the 2-bit Flash-Next: pie's own 2-bit row (routed experts u2g128, the rest u4g64), cast from the bf16
+  # release at import; llama.cpp runs unsloth's UD-Q2_K_XL. Both 2-bit, not the same bytes: pie's qwen_4
+  # reads transformers and mlx_lm only, and mlx-community's 4-bit stores its experts u4g128, which no row reads
   - id: qwen3.8-flash-next-q2
-    base_model: unsloth/Qwen3.8-Flash-Next-GGUF
+    base_model: Qwen/Qwen3.8-Flash-Next
+    revision: de4b8e4d43b917e7706784d8bb445c9af86a3540
     family: qwen4_exp
-    scheme: gguf_q2_k
-    source_format: gguf
-    gguf_file: UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf
-    gguf_config_from: Qwen/Qwen3.8-Flash-Next
-    tokenizer_from: Qwen/Qwen3.8-Flash-Next
+    scheme: bf16
+    pie_sku: qwen38-flash-next-u4g64-u2g128-kv-bf16
     display_name: qwen3.8:flash-next q2
-    expected_gib: 73.46
+    expected_gib: 72.0
     tiers: [targeted]
   - id: qwen3.5-4b-mlx4
     base_model: mlx-community/Qwen3.5-4B-4bit
