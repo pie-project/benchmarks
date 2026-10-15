@@ -111,10 +111,13 @@ jobs:
           { echo "MLX_PY=$py/bin/python"; echo "LLAMA_SERVER_BIN=$bin/llama-server"; } >> "$GITHUB_ENV"
           splash=$(pin splash); sdir="$d/splash-$splash"
           if [ ! -x "$sdir/bin/splash" ]; then
-            rm -rf "$sdir" && mkdir -p "$sdir/bin"
-            curl -fsSL "https://github.com/incoai/splash/releases/download/$splash/splash-$splash-arm64-macos26.tar.gz" | tar xz -C "$sdir" --strip-components=1
-            printf '#!/bin/sh\nexport PYTHONDONTWRITEBYTECODE=1\nexec "%s/python/bin/python3" -u "%s/install/launcher.py" "$@"\n' "$sdir" "$sdir" > "$sdir/bin/splash"
-            chmod 0755 "$sdir/bin/splash"
+            # two runners on one Mac share this cache: unpack beside it, then move into place whole
+            tmp="$sdir.$$" && rm -rf "$tmp" && mkdir -p "$tmp/bin"
+            curl -fsSL "https://github.com/incoai/splash/releases/download/$splash/splash-$splash-arm64-macos26.tar.gz" | tar xz -C "$tmp" --strip-components=1
+            printf '#!/bin/sh\nexport PYTHONDONTWRITEBYTECODE=1\nexec "%s/python/bin/python3" -u "%s/install/launcher.py" "$@"\n' "$sdir" "$sdir" > "$tmp/bin/splash"
+            chmod 0755 "$tmp/bin/splash"
+            [ -x "$sdir/bin/splash" ] || { rm -rf "$sdir" && mv "$tmp" "$sdir"; } 2>/dev/null || [ -x "$sdir/bin/splash" ]
+            rm -rf "$tmp"
           fi
           if "$sdir/bin/splash" --version; then echo "SPLASH_BIN=$sdir/bin/splash" >> "$GITHUB_ENV"
           else echo "::warning::splash $splash does not run on this Mac; its arms will fail to load"; fi

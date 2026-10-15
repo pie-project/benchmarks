@@ -31,10 +31,13 @@ jobs:
           pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['splash']['pin'])")
           dir="$HOME/.cache/pie-evals/baselines/splash-$pin"
           if [ ! -x "$dir/bin/splash" ]; then
-            rm -rf "$dir" && mkdir -p "$dir/bin"
-            curl -fsSL "https://github.com/incoai/splash/releases/download/$pin/splash-$pin-arm64-macos26.tar.gz" | tar xz -C "$dir" --strip-components=1
-            printf '#!/bin/sh\nexport PYTHONDONTWRITEBYTECODE=1\nexec "%s/python/bin/python3" -u "%s/install/launcher.py" "$@"\n' "$dir" "$dir" > "$dir/bin/splash"
-            chmod 0755 "$dir/bin/splash"
+            # two runners on one Mac share this cache: unpack beside it, then move into place whole
+            tmp="$dir.$$" && rm -rf "$tmp" && mkdir -p "$tmp/bin"
+            curl -fsSL "https://github.com/incoai/splash/releases/download/$pin/splash-$pin-arm64-macos26.tar.gz" | tar xz -C "$tmp" --strip-components=1
+            printf '#!/bin/sh\nexport PYTHONDONTWRITEBYTECODE=1\nexec "%s/python/bin/python3" -u "%s/install/launcher.py" "$@"\n' "$dir" "$dir" > "$tmp/bin/splash"
+            chmod 0755 "$tmp/bin/splash"
+            [ -x "$dir/bin/splash" ] || { rm -rf "$dir" && mv "$tmp" "$dir"; } 2>/dev/null || [ -x "$dir/bin/splash" ]
+            rm -rf "$tmp"
           fi
           "$dir/bin/splash" --version
           echo "SPLASH_BIN=$dir/bin/splash" >> "$GITHUB_ENV"
