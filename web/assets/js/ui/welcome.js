@@ -3,6 +3,23 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("welcome");
 
+  // One pass of the strip; it is written twice so the scroll loops without a seam.
+  // Engines without a logo file here are set as quiet wordmarks.
+  const ENGINE_ROW = [
+    ["img", "llamacpp.png", "llama.cpp"],
+    ["text", "vLLM"],
+    ["img", "mlx.png", "MLX", "is-dark-art"],
+    ["text", "SGLang"],
+    ["img", "magnitude.png", "Magnitude", "is-light-art is-wordmark"],
+    ["text", "Splash"],
+    ["text", "Ollama"],
+    ["text", "LM Studio"],
+    ["text", "TensorRT-LLM"],
+    ["text", "TGI"],
+  ].map(([kind, a, alt, extra = ""]) => kind === "img"
+    ? `<li><img class="engine-logo ${extra}" src="assets/img/engines/${a}" alt="${alt}" loading="lazy" decoding="async"></li>`
+    : `<li><span class="engine-wordmark">${a}</span></li>`).join("");
+
   const content = `
     <div class="welcome-banner">
       <div class="welcome-banner-copy">
@@ -14,6 +31,12 @@ window.Pie = window.Pie || {};
         <a class="welcome-banner-link" href="https://github.com/pie-project/pie" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .25l2.35 4.76 5.25.76-3.8 3.7.9 5.23L8 12.3l-4.7 2.4.9-5.23-3.8-3.7 5.25-.76L8 .25z"/></svg>Star</a>
       </div>
     </div>
+    <section class="engine-strip" aria-label="Inference engines">
+      <p class="engine-strip-label">Inference engines</p>
+      <div class="engine-strip-viewport">
+        <ul class="engine-strip-track">${ENGINE_ROW}${ENGINE_ROW.replace(/<li>/g, '<li aria-hidden="true">')}</ul>
+      </div>
+    </section>
     <header class="method-head welcome-intro">
       <div>
         <span class="welcome-icon is-bench" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V11M10 19V6M15 19v-9M20 19V4"/></svg></span>
