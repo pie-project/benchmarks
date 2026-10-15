@@ -372,6 +372,35 @@ def settle_mac(idle_s: float = 60, nominal_timeout_s: float = 600, poll_s: float
     return {"thermal_state_before_settle": before, "thermal_state": state, "settle_s": round(time.monotonic() - t0)}
 
 
+def mac_gpu_utilization() -> int | None:
+    """The GPU's busy share in percent (IOAccelerator "Device Utilization %"), None when unreadable."""
+    out = _run(["ioreg", "-r", "-d", "1", "-c", "IOAccelerator"]) or ""
+    m = re.search(r'"Device Utilization %"=(\d+)', out)
+    return int(m.group(1)) if m else None
+
+
+def await_idle_mac_gpu(max_util: int = 5, quiet_s: float = 10, timeout_s: float = 1800, poll_s: float = 1) -> dict[str, Any]:
+    """Before a cell: the GPU must sit idle for ``quiet_s`` (nothing else drawing on it), or the cell
+    is not measured. Our own engine is idle between cells, so any load here is someone else's."""
+    t0 = time.monotonic()
+    first = mac_gpu_utilization()
+    if first is None:
+        return {}
+    quiet_since = None
+    while True:
+        util = mac_gpu_utilization()
+        now = time.monotonic()
+        if util is not None and util <= max_util:
+            quiet_since = quiet_since if quiet_since is not None else now
+            if now - quiet_since >= quiet_s:
+                return {"gpu_util_before_cell": first, "gpu_idle_wait_s": round(now - t0, 1)}
+        else:
+            quiet_since = None
+        if now - t0 > timeout_s:
+            return {"gpu_util_before_cell": first, "gpu_busy_error": f"GPU still {util}% busy after {timeout_s:.0f}s: another workload shares it"}
+        time.sleep(poll_s)
+
+
 def mac_thermal_changed(before: dict[str, Any], after: dict[str, Any]) -> bool:
     """A thermal warning appeared, or the CPU speed/scheduler limit moved."""
     if before.get("thermal_warning") != after.get("thermal_warning"):
@@ -417,6 +446,10 @@ class Preflight:
             except TimeoutError as e:
                 state["gpu_drain_error"] = str(e)
         return state
+
+    def before_cell(self, platform_os: str | None) -> dict[str, Any]:
+        """On a Mac: wait until nothing else uses the GPU (``await_idle_mac_gpu``)."""
+        return await_idle_mac_gpu() if _is_mac(platform_os) and os.environ.get("PIE_EVALS_GPU_IDLE", "1") != "0" else {}
 
     def settle(self, platform_os: str | None) -> dict[str, Any]:
         """Before a single-stream cell: a Mac idles to a nominal thermal state (``settle_mac``)."""
