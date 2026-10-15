@@ -172,6 +172,7 @@ window.Pie = window.Pie || {};
         number("count", "Devices", "Specs", "", 0),
         number("memory_gib", "Memory", "Specs", "GiB", 0),
         number("bandwidth_gbs", "Bandwidth", "Specs", "GB/s", 0),
+        number("cpu_cores", "CPU cores", "Specs", "", 0),
         number("gpu_cores", "GPU cores", "Specs", "", 0),
         text("interconnect", "Interconnect", "Specs"),
         number("_results", "Results", "Coverage", "", 0),
