@@ -259,9 +259,19 @@ class PgStore(BaseStore):
         return "postgres " + self.dsn.split("@")[-1]
 
     def connect(self):
+        import time
+
         import psycopg
 
-        conn = psycopg.connect(self.dsn, connect_timeout=15)
+        # the database sits across the tailnet: a blip there must not fail a run (run 38699571525)
+        for attempt in range(4):
+            try:
+                conn = psycopg.connect(self.dsn, connect_timeout=15)
+                break
+            except psycopg.OperationalError:
+                if attempt == 3:
+                    raise
+                time.sleep(10 * (attempt + 1))
         if not self._ready:
             with conn.transaction():
                 conn.execute(SCHEMA_SQL)
