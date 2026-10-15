@@ -117,7 +117,7 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
             "name": p["accelerator"].replace("NVIDIA ", "") + (f" ×{p['count']}" if p.get("count", 1) > 1 else ""),
             "class": "mac" if mac else "gpu", "location": "local" if mac else "cloud",
             "vendor": "Apple" if mac else "NVIDIA", "backend": p.get("backend"), "arch": p.get("arch"),
-            "count": p.get("count", 1), "memory_gib": p.get("memory_gib"), "bandwidth_gbs": None,
+            "count": p.get("count", 1), "memory_gib": p.get("memory_gib"), "bandwidth_gbs": p.get("bandwidth_gbs"),
             "cpu_cores": cores.get(p["id"], {}).get("cpu_cores"), "gpu_cores": cores.get(p["id"], {}).get("gpu_cores"),
             "interconnect": p.get("interconnect"), "power_w": None, "price_usd": None, "price_hr": None,
         })
