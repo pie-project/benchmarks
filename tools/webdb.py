@@ -93,7 +93,21 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
     return mapping, list(by_model.values())
 
 
-def hardware() -> list[dict]:
+def cores_by_platform(store) -> dict[str, dict]:
+    """Each machine's CPU and GPU core counts, read from the newest run that recorded them."""
+    rows = store.table().select(["platform", "started_at", "hardware_fingerprint_json"]).to_pylist()
+    out: dict[str, dict] = {}
+    for r in sorted((r for r in rows if r["started_at"] is not None), key=lambda r: r["started_at"]):
+        fp = json.loads(r["hardware_fingerprint_json"] or "{}")
+        cpu = re.match(r"\s*(\d+)", str(fp.get("cores") or ""))
+        gpu = re.match(r"\s*(\d+)", str(fp.get("gpu_cores") or ""))
+        if cpu or gpu:
+            out[r["platform"]] = {"cpu_cores": int(cpu.group(1)) if cpu else None, "gpu_cores": int(gpu.group(1)) if gpu else None}
+    return out
+
+
+def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
+    cores = cores or {}
     rows = []
     for p in load("platforms")["platforms"]:
         mac = p.get("os") == "macos"
@@ -103,7 +117,8 @@ def hardware() -> list[dict]:
             "name": p["accelerator"].replace("NVIDIA ", "") + (f" ×{p['count']}" if p.get("count", 1) > 1 else ""),
             "class": "mac" if mac else "gpu", "location": "local" if mac else "cloud",
             "vendor": "Apple" if mac else "NVIDIA", "backend": p.get("backend"), "arch": p.get("arch"),
-            "count": p.get("count", 1), "memory_gib": p.get("memory_gib"), "bandwidth_gbs": None, "gpu_cores": None,
+            "count": p.get("count", 1), "memory_gib": p.get("memory_gib"), "bandwidth_gbs": None,
+            "cpu_cores": cores.get(p["id"], {}).get("cpu_cores"), "gpu_cores": cores.get(p["id"], {}).get("gpu_cores"),
             "interconnect": p.get("interconnect"), "power_w": None, "price_usd": None, "price_hr": None,
         })
     return rows
@@ -493,7 +508,7 @@ def main() -> None:
     # the site's default order: engine, then model, then hardware, then workload
     grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c in ("single", "throughput")]
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
-    hw_rows = [h for h in hardware() if h["id"] in hardware_ids]
+    hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids]
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
     attempts = attempts_by_tag(store, a2m, hardware_ids, engine_ids)
     unsupported = unsupported_reasons(a2m, config, hardware_ids, engine_ids, model_ids)
