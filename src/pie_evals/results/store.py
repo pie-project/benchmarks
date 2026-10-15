@@ -133,6 +133,10 @@ class BaseStore:
         """Delete every result and quality score of an engine; returns (records, scores) deleted."""
         raise NotImplementedError
 
+    def drop_cells(self, tag: str, engine: str, platform: str, artifact: str) -> int:
+        """Delete a manual tag's records of one engine, platform and artifact; returns how many went."""
+        raise NotImplementedError
+
 
 class DirStore(BaseStore):
     def __init__(self, root: Path | str = "store"):
@@ -242,6 +246,17 @@ class PgStore(BaseStore):
             if "release" in kinds:
                 raise ValueError(f"{tag} is a release tag; releases are never dropped")
             cur.execute("DELETE FROM records WHERE tag = %s", (tag,))
+            return cur.rowcount
+
+    def drop_cells(self, tag: str, engine: str, platform: str, artifact: str) -> int:
+        with self.connect() as conn, conn.transaction(), conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT tag_kind FROM records WHERE tag = %s", (tag,))
+            if "release" in {k for (k,) in cur.fetchall()}:
+                raise ValueError(f"{tag} is a release tag; releases are never dropped")
+            cur.execute(
+                "DELETE FROM records WHERE tag = %s AND engine = %s AND platform = %s AND artifact = %s",
+                (tag, engine, platform, artifact),
+            )
             return cur.rowcount
 
     def drop_engine(self, engine: str) -> tuple[int, int]:

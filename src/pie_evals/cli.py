@@ -229,6 +229,17 @@ def drop_engine(obj, engine):
     click.echo(f"{engine}: {records} records and {scores} quality scores deleted")
 
 
+@main.command("drop-cells")
+@click.argument("tag")
+@click.argument("cells", nargs=-1, required=True)
+@click.pass_obj
+def drop_cells(obj, tag, cells):
+    """Delete a manual tag's records of engine/platform/artifact triples (a noisy measurement, rerun after)."""
+    for c in cells:
+        engine, platform, artifact = c.split("/")
+        click.echo(f"{tag} {c}: {obj['store'].drop_cells(tag, engine, platform, artifact)} records deleted")
+
+
 @main.command("import-store")
 @click.argument("src", type=click.Path(exists=True))
 @click.pass_obj

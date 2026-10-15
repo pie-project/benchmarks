@@ -11,6 +11,7 @@ on:
       tag: { description: "tag the rows belong to (0.5.3-b1); empty: untagged", required: false, default: "" }
       tag_kind: { description: "release or manual (empty: from the tag)", required: false, default: "" }
       drop_tags: { description: "comma-separated manual tags to delete from the database instead of importing", required: false, default: "" }
+      drop_cells: { description: "tag:engine/platform/artifact,... records to delete instead of importing", required: false, default: "" }
       drop_engines: { description: "comma-separated engines whose results and quality scores to delete instead of importing", required: false, default: "" }
 
 jobs:
@@ -27,13 +28,18 @@ jobs:
       - name: drop engines
         if: inputs.drop_engines != ''
         run: for e in $(echo "${{ inputs.drop_engines }}" | tr ',' ' '); do .venv/bin/pie-evals drop-engine "$e"; done
+      - name: drop cells
+        if: inputs.drop_cells != ''
+        run: |
+          spec="${{ inputs.drop_cells }}"; tag="${spec%%:*}"
+          .venv/bin/pie-evals drop-cells "$tag" $(echo "${spec#*:}" | tr ',' ' ')
       - uses: actions/download-artifact@v4
-        if: inputs.drop_tags == '' && inputs.drop_engines == ''
+        if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_cells == ''
         with: { pattern: "out-*", path: out, run-id: "${{ inputs.run_id || github.run_id }}", github-token: "${{ github.token }}" }
       - name: check the database
         run: .venv/bin/pie-evals store-status
       - name: import into the database
-        if: inputs.drop_tags == '' && inputs.drop_engines == ''
+        if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_cells == ''
         run: |
           shopt -s nullglob
           dirs=(out/out-*)
