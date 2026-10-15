@@ -475,6 +475,18 @@ class NodeRunner:
                     if settled:
                         self.log(f"{cell.workload.id}: settled {settled['settle_s']}s, thermal {settled['thermal_state_before_settle']} -> {settled['thermal_state']}")
                         state = {**machine_before, **settled}
+                # one workload per GPU: a cell starts only on an idle GPU, else it is not measured
+                if hasattr(pre, "before_cell"):
+                    idle = pre.before_cell(self.platform.os if self.platform else None)
+                    if idle.get("gpu_busy_error"):
+                        rec = self._invalid(cell, idle["gpu_busy_error"], fingerprint)
+                        records.append(rec)
+                        self._done.add(cell.cell_id)
+                        self.emit(rec)
+                        continue
+                    if idle:
+                        self.log(f"{cell.workload.id}: GPU idle after {idle['gpu_idle_wait_s']}s (was {idle['gpu_util_before_cell']}%)")
+                        state = {**state, **idle}
                 rec = self._run_cell(cell, engine, snapshot, engine_version, recipe, recipe_name, fingerprint, state)
                 if not control_ok and rec.status == CellStatus.PASS:
                     # a noisy machine still yields numbers: the row keeps them, marked noisy, as a competitor's noisy row is
