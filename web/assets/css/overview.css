@@ -1284,5 +1284,3 @@
   #inferlets .method-inner { max-width: calc(1080px + 2 * 22px); padding-left: 22px; padding-right: 22px; }
 }
 
-/* the engines we compare with: one quiet line of names under the benchmark's description */
-.welcome-against { margin: 14px 0 0; font-size: 14px; color: var(--color-label-tertiary); }
