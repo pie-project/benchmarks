@@ -331,10 +331,10 @@ PREFILL = ("prefill_tok_s", "ttft_ms_p50", "ttft_ms_p99")
 
 
 def keep_decode(tag_rows: list[dict], picked: dict[tuple, tuple], a2m: dict[str, str], engine: str, since: datetime) -> None:
-    """A prefill-only rerun: its rows give the prefill numbers, every other number stays the earlier run's."""
+    """A prefill-only rerun: its single-request rows give the prefill numbers, every other number stays the earlier run's."""
     earlier = pick([r for r in tag_rows if r["engine"] == engine and r["started_at"] < since], a2m)
     for key, (rank, r) in picked.items():
-        if key[1] == engine and r["started_at"] >= since and key in earlier:
+        if key[1] == engine and key[3] == "single" and r["started_at"] >= since and key in earlier:
             old = earlier[key][1]
             picked[key] = (rank, {**old, **{m: r[m] for m in PREFILL}})
 
