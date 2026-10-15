@@ -5,7 +5,9 @@ window.Pie = window.Pie || {};
 
   // One pass of the strip; it is written twice so the scroll loops without a seam.
   // Engines without a logo file here are set as quiet wordmarks.
+  const PIE_MARK = `<svg class="engine-mark" viewBox="0 0 67.89 67.89" aria-hidden="true"><path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="8"/></svg>`;
   const ENGINE_ROW = [
+    ["pie", "Pie"],
     ["img", "llamacpp.png", "llama.cpp"],
     ["text", "vLLM"],
     ["text", "MLX"],
@@ -18,7 +20,7 @@ window.Pie = window.Pie || {};
     ["text", "TGI"],
   ].map(([kind, a, alt, extra = ""]) => kind === "img"
     ? `<li><img class="engine-logo ${extra}" src="assets/img/engines/${a}" alt="${alt}" loading="lazy" decoding="async"></li>`
-    : `<li><span class="engine-wordmark">${a}</span></li>`).join("");
+    : `<li><span class="engine-wordmark">${kind === "pie" ? PIE_MARK : ""}${a}</span></li>`).join("");
 
   const content = `
     <div class="welcome-banner">
