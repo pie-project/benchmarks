@@ -180,6 +180,7 @@ platforms:
     accelerator: Apple M4 Pro
     arch: apple9
     memory_gib: 48
+    bandwidth_gbs: 273  # Apple tech specs
     interconnect: uma
     runner_labels: [self-hosted, macos, m4-pro-48g]
     tiers: [smoke, nightly, weekly]
@@ -198,6 +199,7 @@ platforms:
     accelerator: Apple M5 Max
     arch: apple10
     memory_gib: 128
+    bandwidth_gbs: 614  # Apple tech specs
     interconnect: uma
     runner_labels: [self-hosted, macos, m5-max-128g]
     tiers: [smoke, nightly, weekly]
@@ -207,6 +209,7 @@ platforms:
     accelerator: Apple M2
     arch: apple8
     memory_gib: 16
+    bandwidth_gbs: 100  # Apple tech specs
     interconnect: uma
     runner_labels: [self-hosted, macos, m2-16g]
     tiers: [smoke, nightly, weekly]
@@ -216,6 +219,7 @@ platforms:
     accelerator: Apple M3
     arch: apple9
     memory_gib: 16
+    bandwidth_gbs: 100  # Apple tech specs
     interconnect: uma
     runner_labels: [self-hosted, macos, m3-16g]
     tiers: [smoke, nightly, weekly]
@@ -225,6 +229,7 @@ platforms:
     accelerator: Apple M5
     arch: apple10
     memory_gib: 16
+    bandwidth_gbs: 153  # Apple tech specs
     interconnect: uma
     runner_labels: [self-hosted, macos, m5-16g]
     tiers: [smoke, nightly, weekly]
@@ -234,6 +239,7 @@ platforms:
     accelerator: Apple M5 Max
     arch: apple10
     memory_gib: 64
+    bandwidth_gbs: 614  # Apple tech specs
     interconnect: uma
     runner_labels: [self-hosted, macos, m5-max-64g]
     tiers: [smoke, nightly, weekly]
