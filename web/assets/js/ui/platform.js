@@ -43,10 +43,11 @@ window.Pie = window.Pie || {};
     const hw = Pie.store.index.hardware[id];
     return hw ? `${chipName(id)}${hw.memory_gib ? ` ${hw.memory_gib} GB` : ""}` : id;
   };
-  // "14C CPU · 20C GPU", in the grey the memory is in; nothing when no run has recorded them
-  const coresOf = (hw) => {
-    const parts = [hw?.cpu_cores && `${hw.cpu_cores}C CPU`, hw?.gpu_cores && `${hw.gpu_cores}C GPU`].filter(Boolean);
-    return parts.length ? `<span class="platform-mem">${parts.join(" · ")}</span>` : "";
+  // "48 GB · 20-core GPU" on a quiet second line under the chip, the two specs that set LLM speed; the CPU waits for the hover
+  const specOf = (hw) => {
+    const parts = [hw?.memory_gib && `${hw.memory_gib} GB`, hw?.gpu_cores && `${hw.gpu_cores}-core GPU`].filter(Boolean);
+    const full = [...parts, hw?.cpu_cores && `${hw.cpu_cores}-core CPU`].filter(Boolean).join(" · ");
+    return parts.length ? `<span class="platform-mem" title="${esc(full)}">${parts.join(" · ")}</span>` : "";
   };
   const value = (n, unit) => {
     const v = n >= 100 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 });
@@ -169,7 +170,7 @@ window.Pie = window.Pie || {};
       };
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
-        return `<th class="platform-row" scope="row"><span>${esc(chipName(mac))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}${coresOf(hw)}</th>`;
+        return `<th class="platform-row" scope="row"><span class="platform-chip"><span>${esc(chipName(mac))}</span>${specOf(hw)}</span></th>`;
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
