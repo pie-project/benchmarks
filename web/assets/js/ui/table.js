@@ -17,7 +17,11 @@ window.Pie = window.Pie || {};
     const sort = state.sort?.key === column.key ? `<span class="column-sort">${state.sort.direction > 0 ? "↑" : "↓"}</span>` : "";
     const hint = column.planned ? "Not collected yet" : `${Math.round(coverage * 100)}% of rows have a value`;
     const classes = column.type === "number" ? "is-numeric" : "";
-    return `<th class="${classes}" data-sort="${column.key}" title="${hint}">${column.label}${unit}${headerMeta(column, coverage)}${sort}</th>`;
+    // an (i) beside the label opens a note on how the column is measured, as macOS shows help for a setting
+    const info = column.info
+      ? `<span class="column-info" tabindex="0" role="button" aria-label="${format.escape(column.info)}"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="column-info-pop" role="tooltip">${format.escape(column.info)}</span></span>`
+      : "";
+    return `<th class="${classes}" data-sort="${column.key}" title="${column.info ? "" : hint}">${column.label}${unit}${info}${headerMeta(column, coverage)}${sort}</th>`;
   };
 
   const bodyCell = (column, row) => {
@@ -94,6 +98,7 @@ window.Pie = window.Pie || {};
 
     onSort(handler) {
       table.addEventListener("click", (event) => {
+        if (event.target.closest(".column-info")) return;
         const header = event.target.closest("[data-sort]");
         if (header) handler(header.dataset.sort);
       });

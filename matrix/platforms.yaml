@@ -181,6 +181,8 @@ platforms:
     arch: apple9
     memory_gib: 48
     bandwidth_gbs: 273  # Apple tech specs
+    tflops_fp16: 8.4  # estimate: 20 cores x 0.42
+    power_w: 40  # GPU power at full fp16 load
     interconnect: uma
     runner_labels: [self-hosted, macos, m4-pro-48g]
     tiers: [smoke, nightly, weekly]
@@ -190,6 +192,8 @@ platforms:
     accelerator: Apple M5 Max
     arch: apple10
     memory_gib: 48
+    tflops_fp16: 47  # measured on the M5 Max: fp16 matmul, GPU power at full load
+    power_w: 99  # GPU power at full fp16 load
     interconnect: uma
     runner_labels: [self-hosted, macos, m5-max-48g]
     tiers: [smoke, nightly, weekly]
@@ -200,6 +204,8 @@ platforms:
     arch: apple10
     memory_gib: 128
     bandwidth_gbs: 614  # Apple tech specs
+    tflops_fp16: 47  # measured on the M5 Max: fp16 matmul, GPU power at full load
+    power_w: 99  # GPU power at full fp16 load
     interconnect: uma
     runner_labels: [self-hosted, macos, m5-max-128g]
     tiers: [smoke, nightly, weekly]
@@ -210,6 +216,8 @@ platforms:
     arch: apple8
     memory_gib: 16
     bandwidth_gbs: 100  # Apple tech specs
+    tflops_fp16: 3.6  # estimate: 10 cores x 0.36
+    power_w: 15  # GPU power at full fp16 load
     interconnect: uma
     runner_labels: [self-hosted, macos, m2-16g]
     tiers: [smoke, nightly, weekly]
@@ -220,6 +228,8 @@ platforms:
     arch: apple9
     memory_gib: 16
     bandwidth_gbs: 100  # Apple tech specs
+    tflops_fp16: 4.2  # estimate: 10 cores x 0.42
+    power_w: 17  # GPU power at full fp16 load
     interconnect: uma
     runner_labels: [self-hosted, macos, m3-16g]
     tiers: [smoke, nightly, weekly]
@@ -230,6 +240,8 @@ platforms:
     arch: apple10
     memory_gib: 16
     bandwidth_gbs: 153  # Apple tech specs
+    tflops_fp16: 9.4  # estimate: 8 cores x 1.17, power scaled from the M5 Max
+    power_w: 20  # GPU power at full fp16 load
     interconnect: uma
     runner_labels: [self-hosted, macos, m5-16g]
     tiers: [smoke, nightly, weekly]
@@ -240,6 +252,8 @@ platforms:
     arch: apple10
     memory_gib: 64
     bandwidth_gbs: 614  # Apple tech specs
+    tflops_fp16: 47  # measured on the M5 Max: fp16 matmul, GPU power at full load
+    power_w: 99  # GPU power at full fp16 load
     interconnect: uma
     runner_labels: [self-hosted, macos, m5-max-64g]
     tiers: [smoke, nightly, weekly]
