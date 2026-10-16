@@ -22,7 +22,7 @@ window.Pie = window.Pie || {};
     },
     inferlets: {
       label: "Inferlets",
-      tag: "Dev",  // still under development
+      tag: "Beta",  // still under development
       section: "home",
       view: "inferlets",  // not a table yet: the page is under development
       filters: [],
@@ -157,7 +157,7 @@ window.Pie = window.Pie || {};
 
     methodology: {
       label: "Verify",
-      tag: "Dev",  // still under development
+      tag: "Beta",  // still under development
       section: "measurements",
       view: "methodology",  // not a table: a calculator of the theoretical maximum
       filters: [],
