@@ -185,3 +185,39 @@
   .methods-table { font-size: 14px; }
   .methods-table td:first-child { white-space: normal; }
 }
+
+/* the estimator wears the Welcome banner's gradient: white type on color, white pop-up buttons, as that banner's pills */
+.methods-calc {
+  border-radius: 18px;
+  color: #fff;
+  background:
+    radial-gradient(60% 90% at 12% 20%, rgba(64, 132, 255, .95), transparent 70%),
+    radial-gradient(45% 80% at 38% 85%, rgba(34, 211, 238, .85), transparent 70%),
+    radial-gradient(40% 70% at 58% 30%, rgba(110, 231, 183, .8), transparent 70%),
+    radial-gradient(45% 80% at 78% 75%, rgba(253, 186, 116, .85), transparent 70%),
+    radial-gradient(50% 90% at 95% 15%, rgba(232, 121, 249, .9), transparent 70%),
+    linear-gradient(120deg, #3b5bfd, #a855f7);
+}
+
+.methods-calc .calc-field > span,
+.methods-calc .calc-label,
+.methods-calc .calc-inputs label > span { color: rgba(255, 255, 255, .78); }
+
+.methods-calc .calc-specs,
+.methods-calc .calc-note,
+.methods-calc .calc-fit,
+.methods-calc .calc-inputs em { color: rgba(255, 255, 255, .85); }
+
+.methods-calc .calc-value small { color: rgba(255, 255, 255, .78); }
+.methods-calc .calc-results.is-over .calc-value { color: rgba(255, 255, 255, .45); }
+.methods-calc .calc-fit b { color: #fff; }
+.methods-calc .calc-result + .calc-result { border-color: rgba(255, 255, 255, .3); }
+.methods-calc .calc-footnote { color: rgba(255, 255, 255, .7); }
+.methods-calc .calc-more summary { color: #fff; font-weight: 500; }
+
+.methods-calc select,
+.methods-calc input { background-color: #fff; color: #1d1d1f; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+.methods-calc select:focus-visible,
+.methods-calc input:focus-visible { outline: 3px solid rgba(255, 255, 255, .55); box-shadow: none; }
+
+@media (max-width: 899px) { .methods-calc { border-radius: 18px; } }
