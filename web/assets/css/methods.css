@@ -1,73 +1,146 @@
-/* The Methods page reads as a paper: one serif column, numbered sections, formulas set off by a rule, ruled tables. No cards. */
+/* The Methods page, as an apple.com page reads: one column at the home page's width, large bold headlines,
+   generous space between sections, hairlines instead of boxes. The estimator sits on top like a configurator. */
 #methodology { flex: 1; overflow: auto; }
 #methodology[hidden] { display: none; }
 
-.methods {
-  --methods-serif: "New York", ui-serif, "Iowan Old Style", Georgia, serif;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 64px var(--edge) 120px;
-  font-family: var(--methods-serif);
-  font-size: 18px;
-  line-height: 1.6;
-  color: var(--color-label);
-}
+.methods { color: var(--color-label); font-family: var(--font-text); }
 
-.methods-eyebrow {
-  margin: 0 0 10px;
-  font-family: var(--font-text);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-}
+.methods-hero { margin: 0 0 36px; }
 
-.methods h1 {
+.methods-hero h1 {
   margin: 0;
-  font-size: 40px;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -.01em;
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -.025em;
+  line-height: 1.08;
 }
 
 .methods-lede {
+  max-width: 680px;
   margin: 14px 0 0;
   font-size: 21px;
-  font-style: italic;
-  line-height: 1.45;
+  line-height: 1.4;
+  letter-spacing: .005em;
   color: var(--color-label-secondary);
 }
 
-.methods h2 {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  margin: 56px 0 14px;
-  font-size: 26px;
+/* the estimator: pop-up buttons in a row, then three large figures */
+.methods-calc { padding: 0 0 40px; border-bottom: .5px solid var(--color-separator); }
+
+.calc-controls {
+  display: grid;
+  grid-template-columns: 1.6fr 1.6fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.calc-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.calc-field > span,
+.calc-label {
+  font-size: 12px;
   font-weight: 600;
-  line-height: 1.25;
+  letter-spacing: .02em;
+  color: var(--color-label-secondary);
 }
 
-.methods h2 span {
+.methods-calc select,
+.methods-calc input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-fill);
+  color: var(--color-label);
+  font: inherit;
+  font-size: 15px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.methods-calc select {
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'%3E%3Cpath d='M2 5l3-3 3 3M2 9l3 3 3-3' fill='none' stroke='%238e8e93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 9px 13px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.methods-calc select:focus-visible,
+.methods-calc input:focus-visible { outline: 3px solid var(--color-accent-tint); box-shadow: 0 0 0 1px var(--color-accent); }
+
+.calc-specs { margin: 14px 0 0; font-size: 13px; color: var(--color-label-secondary); min-height: 1.4em; }
+
+.calc-results {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 36px 0 0;
+}
+
+.calc-result { display: flex; flex-direction: column; gap: 4px; padding: 0 24px; }
+.calc-result:first-child { padding-left: 0; }
+.calc-result + .calc-result { border-left: .5px solid var(--color-separator); }
+
+.calc-value {
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -.03em;
+  line-height: 1.05;
   font-variant-numeric: tabular-nums;
-  color: var(--color-label-tertiary);
 }
 
-.methods p { margin: 0 0 16px; }
+.calc-value small { margin-left: 6px; font-size: 19px; font-weight: 600; letter-spacing: 0; color: var(--color-label-secondary); }
+.calc-note { font-size: 14px; color: var(--color-label-secondary); }
+.calc-results.is-over .calc-value { color: var(--color-label-tertiary); }
 
-.methods a {
-  color: var(--color-accent);
-  text-decoration: underline;
-  text-decoration-thickness: .5px;
-  text-underline-offset: 2px;
+.calc-fit { max-width: 760px; margin: 28px 0 0; font-size: 15px; line-height: 1.5; color: var(--color-label-secondary); }
+.calc-fit b { color: var(--color-negative); font-weight: 600; }
+
+.calc-more { margin: 20px 0 0; }
+.calc-more summary { display: inline-flex; font-size: 15px; color: var(--color-accent); cursor: pointer; list-style: none; }
+.calc-more summary::-webkit-details-marker { display: none; }
+.calc-more summary::after { content: "›"; margin-left: 5px; transition: transform .2s; }
+.calc-more[open] summary::after { transform: rotate(90deg); }
+
+.calc-inputs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px 12px;
+  margin: 18px 0 0;
 }
 
-/* a displayed equation: monospaced so the lines align, set off by a thin rule, scrolling sideways rather than breaking */
+.calc-inputs label { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 6px 8px; align-items: center; min-width: 0; }
+.calc-inputs label > span { grid-column: 1 / -1; font-size: 12px; font-weight: 600; color: var(--color-label-secondary); }
+.calc-inputs em { font-style: normal; font-size: 13px; color: var(--color-label-secondary); }
+
+.calc-footnote { max-width: 760px; margin: 16px 0 0; font-size: 12px; line-height: 1.5; color: var(--color-label-tertiary); }
+
+/* the explanation below: section headlines as apple.com sets them, body at 17 points */
+.methods-section { padding: 56px 0 0; }
+
+.methods-section h2 {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+
+.methods-section p { max-width: 720px; margin: 0 0 14px; font-size: 17px; line-height: 1.5; color: var(--color-label-secondary); }
+
+.methods a { color: var(--color-accent); text-decoration: none; }
+.methods a:hover { text-decoration: underline; }
+
+/* formulas as Apple's developer pages show code: SF Mono on a soft fill */
 .methods-eq {
-  margin: 20px 0 24px;
-  padding: 2px 0 2px 20px;
-  border-left: 2px solid var(--color-accent);
+  margin: 18px 0 22px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--color-fill);
   font-family: var(--font-mono);
   font-size: 14px;
   line-height: 1.7;
@@ -76,48 +149,37 @@
   color: var(--color-label);
 }
 
-/* tables as in a paper: rules above and below, a hairline between rows, no fills */
-.methods-table {
-  width: 100%;
-  margin: 20px 0 28px;
-  border-collapse: collapse;
-  border-top: 1px solid var(--color-label);
-  border-bottom: 1px solid var(--color-label);
-  font-size: 15px;
-  line-height: 1.45;
-}
+/* tables as Apple's compare pages draw them: hairlines between rows, no fills */
+.methods-table { width: 100%; margin: 18px 0 24px; border-collapse: collapse; font-size: 15px; line-height: 1.45; }
+.methods-table th { padding: 0 16px 10px 0; text-align: left; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--color-label-secondary); }
+.methods-table td { padding: 12px 16px 12px 0; vertical-align: top; border-top: .5px solid var(--color-separator); color: var(--color-label-secondary); }
+.methods-table td:first-child { color: var(--color-label); font-weight: 500; white-space: nowrap; }
 
-.methods-table th {
-  padding: 9px 12px 9px 0;
-  border-bottom: .5px solid var(--color-label-secondary);
-  text-align: left;
-  font-weight: 600;
-}
-
-.methods-table td {
-  padding: 9px 12px 9px 0;
-  vertical-align: top;
-  color: var(--color-label-secondary);
-}
-
-.methods-table td:first-child { color: var(--color-label); }
-.methods-table tr + tr td { border-top: .5px solid var(--color-separator); }
-
-.methods-figure { margin: 28px 0 32px; }
+.methods-figure { max-width: 720px; margin: 24px 0 28px; }
 .methods-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
-.methods-figure svg text { font-family: var(--methods-serif); font-size: 13px; fill: var(--color-label-secondary); }
-.methods-figure svg .label { font-style: italic; fill: var(--color-label-tertiary); }
+.methods-figure svg text { font-family: var(--font-text); font-size: 12px; fill: var(--color-label-secondary); }
+.methods-figure svg .label { fill: var(--color-label-tertiary); }
 .methods-figure svg circle { fill: var(--color-label); }
-.methods-figure .axis { fill: none; stroke: var(--color-label); stroke-width: 1.2; }
+.methods-figure .axis { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; }
 .methods-figure .ridge { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; stroke-dasharray: 4 4; }
-.methods-figure .roof { fill: none; stroke: var(--color-accent); stroke-width: 2.5; }
-.methods-figure figcaption { margin-top: 10px; font-size: 15px; color: var(--color-label-secondary); }
+.methods-figure .roof { fill: none; stroke: var(--color-accent); stroke-width: 2.5; stroke-linejoin: round; }
+.methods-figure figcaption { margin-top: 8px; font-size: 13px; color: var(--color-label-secondary); }
 
-@media (max-width: 760px) {
-  .methods { padding-top: 32px; font-size: 17px; }
-  .methods h1 { font-size: 32px; }
+@media (max-width: 899px) {
+  .methods-hero h1 { font-size: 34px; }
   .methods-lede { font-size: 19px; }
-  .methods h2 { margin-top: 44px; font-size: 23px; }
-  .methods-eq { font-size: 12.5px; padding-left: 14px; }
+  .calc-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .calc-field.is-wide { grid-column: 1 / -1; }
+  .calc-field:last-child { grid-column: 1 / -1; }
+  .calc-results { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .calc-result,
+  .calc-result:first-child { padding: 0; }
+  .calc-result + .calc-result { padding-top: 20px; border-left: 0; border-top: .5px solid var(--color-separator); }
+  .calc-value { font-size: 44px; }
+  .calc-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .methods-section { padding-top: 44px; }
+  .methods-section h2 { font-size: 26px; }
+  .methods-eq { font-size: 12px; padding: 14px 16px; }
   .methods-table { font-size: 14px; }
+  .methods-table td:first-child { white-space: normal; }
 }
