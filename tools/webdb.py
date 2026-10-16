@@ -125,24 +125,12 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
     return rows
 
 
-# what each engine can draft with, filled by hand from its docs and release notes
-SPECULATIVE = {
-    "pie": "Yes: DFlash, DFlash2, MTP drafters",
-    "splash": "Yes: DFlash2",
-    "llamacpp": "Yes: a separate draft model (--model-draft)",
-    "mlxlm": "Yes: a separate draft model (--draft-model)",
-    "vllm": "Yes: EAGLE, MTP, n-gram, draft model",
-    "sglang": "Yes: EAGLE, MTP, n-gram",
-}
-
-
 def engines() -> list[dict]:
     rows = []
     for e in load("engines")["engines"]:
         name, lic, repo = ENGINE_META.get(e["id"], (e["id"], None, None))
         rows.append({"id": e["id"], "name": name, "version": e.get("pin") or "main", "license": lic, "repo": repo,
-                     "os": ", ".join(e.get("os", [])), "formats": ", ".join(e.get("formats", [])),
-                     "speculative": SPECULATIVE.get(e["id"], "No")})
+                     "os": ", ".join(e.get("os", [])), "formats": ", ".join(e.get("formats", []))})
     return rows
 
 
