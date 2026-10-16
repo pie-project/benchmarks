@@ -201,7 +201,6 @@ window.Pie = window.Pie || {};
         text("repo", "Repo", "Identity", { code: true }),
         text("os", "OS", "Support"),
         text("formats", "Formats", "Support"),
-        text("speculative", "Speculative", "Features", { wide: true }),
         number("_results", "Results", "Coverage", "", 0),
       ],
     },
