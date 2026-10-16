@@ -181,6 +181,10 @@ window.Pie = window.Pie || {};
         number("bandwidth_gbs", "Bandwidth", "Specs", "GB/s", 0),
         number("cpu_cores", "CPU cores", "Specs", "", 0),
         number("gpu_cores", "GPU cores", "Specs", "", 0),
+        number("tflops_fp16", "Compute", "Specs", "TFLOPS", 1, {
+          info: "Peak fp16 matrix math. Depends on the unit: GPU, neural accelerators (MPP) or Neural Engine (ANE).",
+        }),
+        number("power_w", "Power", "Specs", "W", 0),
         text("interconnect", "Interconnect", "Specs"),
         number("_results", "Results", "Coverage", "", 0),
       ],

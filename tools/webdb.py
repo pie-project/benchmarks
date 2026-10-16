@@ -119,7 +119,8 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
             "vendor": "Apple" if mac else "NVIDIA", "backend": p.get("backend"), "arch": p.get("arch"),
             "count": p.get("count", 1), "memory_gib": p.get("memory_gib"), "bandwidth_gbs": p.get("bandwidth_gbs"),
             "cpu_cores": cores.get(p["id"], {}).get("cpu_cores"), "gpu_cores": cores.get(p["id"], {}).get("gpu_cores"),
-            "interconnect": p.get("interconnect"), "power_w": None, "price_usd": None, "price_hr": None,
+            "tflops_fp16": p.get("tflops_fp16"),
+            "interconnect": p.get("interconnect"), "power_w": p.get("power_w"), "price_usd": None, "price_hr": None,
         })
     return rows
 
