@@ -8,26 +8,23 @@ window.Pie = window.Pie || {};
   // the older ones are ALU count × clock. Estimates, editable in the specs.
   const TFLOPS_PER_CORE = { apple8: 0.36, apple9: 0.42, apple10: 1.17 };
   const BITS = { 4: 4.5, 8: 8.5, 16: 16 };  // bits per weight, with the quantization scales
-  const CONTEXTS = [1024, 4096, 16384, 32768, 131072];
-  const BATCHES = [1, 2, 4, 8, 16, 32, 64];
+  const CONTEXTS = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
+  const BATCHES = [1, 2, 4, 8, 16, 32, 64, 128, 256];
   const LINKS = { none: ["One device", 0, 0], tb5: ["Thunderbolt 5", 10, 30], pcie5: ["PCIe 5.0 ×16", 64, 10], nvlink: ["NVLink", 900, 3] };
   const USABLE = 0.75;  // the share of unified memory macOS lets the GPU wire by default
 
-  const eq = (...lines) => `<pre class="methods-eq">${lines.join("\n")}</pre>`;
-  const table = (head, body) => `<table class="methods-table">
-      <thead><tr>${head.map((cell) => `<th>${cell}</th>`).join("")}</tr></thead>
-      <tbody>${body.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}</tbody>
-    </table>`;
-  const cite = (href, name) => `<a href="${href}" target="_blank" rel="noopener">${name}</a>`;
   const kTok = (n) => (n >= 1024 ? `${Math.round(n / 1024)}K` : `${n}`);
 
   const machines = () => (Pie.store.rows("hardware") || []).map((h) => ({
     id: h.id,
     label: `${h.name} · ${h.memory_gib} GB`,
     bw: h.bandwidth_gbs || 0,
-    tflops: +(((TFLOPS_PER_CORE[h.arch] || 0.4) * (h.gpu_cores || 0)).toFixed(1)),
+    // the catalog's fp16 compute where it has one, else the per-core estimate
+    tflops: h.tflops_fp16 || +(((TFLOPS_PER_CORE[h.arch] || 0.4) * (h.gpu_cores || 0)).toFixed(1)),
     mem: h.memory_gib || 0,
     devices: h.count || 1,
+    // internal SSD read speed, estimated by chip class: the Max chips read about twice as fast as the Pro, the Pro twice the base
+    ssd: h.arch === "apple10" ? (h.gpu_cores >= 30 ? 14 : 7) : h.gpu_cores >= 16 ? 7 : 3,
     specs: [h.bandwidth_gbs && `${h.bandwidth_gbs} GB/s`, h.gpu_cores && `${h.gpu_cores}-core GPU`, h.cpu_cores && `${h.cpu_cores}-core CPU`, h.memory_gib && `${h.memory_gib} GB unified memory`].filter(Boolean).join(" · "),
   }));
 
@@ -44,149 +41,73 @@ window.Pie = window.Pie || {};
       layers,
       // 8 KV heads × 128 dims × K and V × 2 bytes per layer
       kvKB: Math.round(layers * 4 * (HYBRID.test(m.family || "") ? 0.25 : 1)),
+      // what the catalog says the model supports: a paired drafter, and SSD streaming of its experts
+      draft: String(m.draft) === "true",
+      ssd: Boolean(m.ssd_streaming) && m.ssd_streaming !== "n/a",
     };
   });
 
   const calculator = `
     <section class="methods-calc" aria-label="Theoretical ceiling estimator">
-      <div class="calc-controls">
-        <label class="calc-field is-wide"><span>Machine</span><select data-k="machine"></select></label>
-        <label class="calc-field is-wide"><span>Model</span><select data-k="model"></select></label>
-        <label class="calc-field"><span>Weights</span><select data-k="bits"><option value="4">4-bit</option><option value="8">8-bit</option><option value="16">16-bit</option></select></label>
-        <label class="calc-field"><span>Context</span><select data-k="context">${CONTEXTS.map((c) => `<option value="${c}"${c === 4096 ? " selected" : ""}>${kTok(c)} tokens</option>`).join("")}</select></label>
-        <label class="calc-field"><span>Requests</span><select data-k="batch">${BATCHES.map((b) => `<option value="${b}"${b === 8 ? " selected" : ""}>${b}</option>`).join("")}</select></label>
-      </div>
-      <p class="calc-specs" data-out="specs"></p>
-      <div class="calc-results">
-        <div class="calc-result"><span class="calc-label">Decode, one request</span><span class="calc-value" data-out="d1"></span><span class="calc-note" data-out="d1n"></span></div>
-        <div class="calc-result"><span class="calc-label" data-out="dbl"></span><span class="calc-value" data-out="db"></span><span class="calc-note" data-out="dbn"></span></div>
-        <div class="calc-result"><span class="calc-label">Prefill</span><span class="calc-value" data-out="pf"></span><span class="calc-note" data-out="pfn"></span></div>
-      </div>
-      <p class="calc-fit" data-out="fit"></p>
-      <details class="calc-more">
-        <summary>Specs used</summary>
-        <div class="calc-inputs">
-          <label><span>Memory bandwidth</span><input type="number" min="1" data-k="bw"><em>GB/s</em></label>
-          <label><span>GPU compute (fp16)</span><input type="number" min="0.1" step="0.1" data-k="tflops"><em>TFLOPS</em></label>
-          <label><span>Memory</span><input type="number" min="1" data-k="mem"><em>GB</em></label>
-          <label><span>Devices</span><input type="number" min="1" max="64" data-k="devices"><em></em></label>
-          <label><span>Interconnect</span><select data-k="link">${Object.entries(LINKS).map(([id, [name]]) => `<option value="${id}">${name}</option>`).join("")}</select><em></em></label>
-          <label><span>Total parameters</span><input type="number" min="0.1" step="0.1" data-k="total"><em>B</em></label>
-          <label><span>Active parameters</span><input type="number" min="0.1" step="0.1" data-k="active"><em>B</em></label>
-          <label><span>Cache per token</span><input type="number" min="1" data-k="kvKB"><em>KB</em></label>
+      <div class="calc-body">
+        <div class="calc-main">
+          <p class="calc-title" data-out="title"></p>
+          <div class="calc-results">
+            <div class="calc-result"><span class="calc-value" data-out="d1"></span><span class="calc-label">Decode, one request</span><span class="calc-note" data-out="d1n"></span></div>
+            <div class="calc-result" data-out-row="many"><span class="calc-value" data-out="db"></span><span class="calc-label" data-out="dbl"></span><span class="calc-note" data-out="dbn"></span></div>
+            <div class="calc-result"><span class="calc-value" data-out="pf"></span><span class="calc-label">Prefill</span><span class="calc-note" data-out="pfn"></span></div>
+          </div>
+          <div class="calc-foot">
+            <div class="calc-memory" data-out="fit" role="status"></div>
+          </div>
         </div>
-        <p class="calc-footnote">Compute is estimated from the GPU core count: about 1.17 TFLOPS per core on M5-generation GPUs, as measured on the M5 Max, and 0.36–0.42 on earlier ones. Cache per token assumes 8 KV heads of 128 dimensions, a quarter of that for hybrid models. Without speculative decoding or SSD streaming.</p>
-      </details>
+        <div class="calc-settings" aria-label="Settings">
+          <label class="calc-setting"><span>Model</span><select data-k="model"></select></label>
+          <label class="calc-setting"><span>Machine</span><select data-k="machine"></select></label>
+          <div class="calc-setting" role="radiogroup" aria-label="Weights"><span>Weights</span>
+            <div class="calc-segments">${[4, 8, 16].map((b) => `<label><input type="radio" name="calc-bits" value="${b}"${b === 4 ? " checked" : ""}><span>${b}-bit</span></label>`).join("")}</div>
+          </div>
+          <label class="calc-setting"><span>Context <b data-out="ctxv"></b></span><input type="range" min="0" max="${CONTEXTS.length - 1}" step="1" value="${CONTEXTS.indexOf(4096)}" data-k="contextIdx"></label>
+          <label class="calc-setting"><span>Requests at once <b data-out="batv"></b></span><input type="range" min="0" max="${BATCHES.length - 1}" step="1" value="${BATCHES.indexOf(8)}" data-k="batchIdx"></label>
+          <label class="calc-setting calc-switch-row" data-supports="draft"><span>Speculative decoding</span><span class="calc-switch"><input type="checkbox" role="switch" data-k="spec"><i aria-hidden="true"></i></span></label>
+          <div class="calc-spec" data-out-row="spec" hidden>
+            <label class="calc-setting"><span>Draft tokens per step <b data-out="speckv"></b></span><input type="range" min="1" max="8" step="1" value="4" data-k="specK"></label>
+            <label class="calc-setting"><span>Acceptance rate <b data-out="specav"></b></span><input type="range" min="50" max="95" step="5" value="70" data-k="specA"></label>
+          </div>
+          <label class="calc-setting calc-switch-row" data-supports="ssd"><span>SSD streaming</span><span class="calc-switch"><input type="checkbox" role="switch" data-k="ssd"><i aria-hidden="true"></i></span></label>
+          <div class="calc-spec" data-out-row="ssd" hidden>
+            <label class="calc-setting"><span>SSD read speed <b data-out="ssdv"></b></span><input type="range" min="1" max="20" step="1" value="7" data-k="ssdGBs"></label>
+          </div>
+        </div>
+      </div>
+      <div hidden>${["bw", "tflops", "mem", "devices", "link", "total", "active", "kvKB"].map((k) => `<input type="hidden" data-k="${k}">`).join("")}</div>
     </section>`;
 
-  // attainable FLOP/s against arithmetic intensity, log-log: the sloped memory roof meets the flat compute roof at the ridge
-  const plot = `
-    <figure class="methods-figure">
-      <svg viewBox="0 0 640 330" role="img" aria-label="Roofline: attainable compute rises with arithmetic intensity until the ridge, then stays flat at peak compute. Decode at one request sits on the sloped, memory-bound part; batched decode and prefill sit on the flat, compute-bound part.">
-        <path class="axis" d="M50 20V290H630"/>
-        <path class="ridge" d="M372 60V290"/>
-        <path class="roof" d="M142 290 372 60H625"/>
-        <circle cx="152" cy="280" r="5"/><circle cx="430" cy="60" r="5"/><circle cx="590" cy="60" r="5"/>
-        <text x="60" y="30">attainable FLOP/s (log)</text>
-        <text x="630" y="314" text-anchor="end">arithmetic intensity, FLOP per byte (log)</text>
-        <text x="170" y="284">decode, one request</text>
-        <text x="430" y="48" text-anchor="middle">batched decode</text>
-        <text x="590" y="48" text-anchor="middle">prefill</text>
-        <text x="380" y="270">ridge = FLOPS ÷ BW</text>
-        <text x="212" y="160" class="label" transform="rotate(-45 212 160)">memory-bound</text>
-        <text x="500" y="80" class="label">compute-bound</text>
-      </svg>
-      <figcaption>Left of the ridge a step is limited by bandwidth; right of it, by compute.</figcaption>
-    </figure>`;
 
   const content = `
     <div class="methods">
       <header class="methods-hero">
-        <h1>Methods</h1>
-        <p class="methods-lede">No magic. Trust, but check your provider.</p>
+        <h1>Theoretical maximum.</h1>
+        <p class="methods-lede">Trust, but check your provider.</p>
       </header>
       ${calculator}
 
-      <section class="methods-section">
-        <h2>The bound on one step.</h2>
-        <p>Each step of the model takes at least the slowest of three times:</p>
-        ${eq("step time ≥ max( bytes moved ÷ memory bandwidth,",
-             "                 arithmetic ÷ peak compute,",
-             "                 bytes exchanged ÷ interconnect )",
-             "tokens/s  = tokens produced per step ÷ step time")}
-        <p>The interconnect term applies only when a model spans several devices. The ratio of arithmetic to bytes is the step’s arithmetic intensity; where it equals peak compute ÷ bandwidth, the two roofs meet (${cite("https://doi.org/10.1145/1498765.1498785", "Williams et al., 2009")}).</p>
-        ${plot}
-      </section>
-
-      <section class="methods-section">
-        <h2>Decoding many requests.</h2>
-        <p>Decode B requests at once, each with C tokens of context. The weights are read once per step and shared by all B; each request reads its own cache.</p>
-        ${eq("bytes      ≈ W + B · C · k",
-             "arithmetic ≈ 2 · P · B",
-             "max tok/s  = B ÷ max( (W + B·C·k) ÷ BW,  2·P·B ÷ FLOPS )")}
-        ${table(["Symbol", "Meaning"], [
-          ["W", "Active weight bytes, read once per step"],
-          ["k", "Cache bytes per token of context"],
-          ["P", "Active parameters"],
-          ["BW, FLOPS", "Memory bandwidth and peak compute of the device"],
-        ])}
-      </section>
-
-      <section class="methods-section">
-        <h2>Three regimes.</h2>
-        <p>Which term dominates depends on the batch and the context length.</p>
-        ${table(["Workload", "Limited by", "Ceiling"], [
-          ["One request, short context", "Memory bandwidth (weights)", "BW ÷ W"],
-          ["Many requests, short context", "Compute", "FLOPS ÷ 2P"],
-          ["Long context, any batch", "Memory bandwidth (the cache)", "BW ÷ (C·k) per request, so batching stops helping"],
-        ])}
-      </section>
-
-      <section class="methods-section">
-        <h2>Prefill is compute-bound.</h2>
-        <p>Reading the prompt handles hundreds of tokens per weight read, so prefill sits far right of the ridge:</p>
-        ${eq("prefill tok/s ≈ FLOPS ÷ 2P")}
-        <p>The workload that reaches the ceiling is a dense model with short contexts, large batches (or prefill) and no idle time. That is the clean benchmark case, where engines get closest to the ceiling.</p>
-      </section>
-
-      <section class="methods-section">
-        <h2>What the number depends on.</h2>
-        <p>Seven layers lie between the hardware and a finished task. Layers 1–2 set the ceiling, layer 3 is efficiency within one step, and layers 4–7 decide how much of the ceiling a workload actually reaches.</p>
-        ${table(["Layer", "What it sets", "Further reading"], [
-          ["1 · Hardware", "Bandwidth, compute, memory capacity, interconnect", ""],
-          ["2 · Model shape", "Active parameters (P, W), cache bytes per token (k), MoE sparsity, linear-attention layers", cite("https://arxiv.org/abs/2412.06464", "Gated DeltaNet")],
-          ["3 · Forward pass", "The share of the ceiling each step achieves: the kernels", `${cite("https://arxiv.org/abs/2205.14135", "FlashAttention")}, ${cite("https://arxiv.org/abs/2408.11743", "Marlin")}`],
-          ["4 · Batch formation", "Tokens per step: concurrent requests, branches, speculative tokens; capped by memory and latency targets", `${cite("https://arxiv.org/abs/2309.06180", "PagedAttention")}, ${cite("https://arxiv.org/abs/2403.02310", "Sarathi-Serve")}, ${cite("https://arxiv.org/abs/2401.15077", "EAGLE")}`],
-          ["5 · Time utilization", "Idle gaps between steps and during tool calls", `${cite("https://arxiv.org/abs/2502.13965", "Autellix")}, ${cite("https://arxiv.org/abs/2402.01869", "InferCept")}`],
-          ["6 · Reuse", "Prefill avoided through caching", `${cite("https://arxiv.org/abs/2312.07104", "SGLang")}, ${cite("https://arxiv.org/abs/2411.19379", "Marconi")}`],
-          ["7 · Usefulness", "Tokens that actually help finish the task", cite("https://arxiv.org/abs/2412.20993", "Certaindex")],
-        ])}
-      </section>
-
-      <section class="methods-section">
-        <h2>Adjusting the bound for agents.</h2>
-        <p>The basic bound assumes an endless supply of short, independent requests. Agents break that in five ways, and each adds a term:</p>
-        ${table(["What agents change", "The term to add"], [
-          ["Long, growing contexts (30–100K tokens)", "Memory capacity caps the batch: B ≤ (memory − W) ÷ (C·k). Few long conversations fit, and the cache term C·k dominates the bytes, so the step is memory-bound again even with batching."],
-          [`Mostly prefill (about 21× a chatbot’s, per ${cite("https://arxiv.org/abs/2606.16824", "CacheWise")})`, "Time splits between compute-bound prefill and memory-bound decode, weighted by the workload’s mix."],
-          ["Tool waits", "Multiply by the duty cycle (1 − tool fraction), unless other work fills the gap."],
-          ["Repeated history", "Multiply prefill cost by (1 − reuse rate)."],
-          ["Sequential steps with latency targets", "One agent cannot batch with itself. The batch comes only from parallel agents or branches, and latency targets cap it."],
-        ])}
-        <p>For agents the useful ceiling is therefore roughly:</p>
-        ${eq("useful tok/s ≈ min( compute ceiling,",
-             "                    bandwidth ceiling with long-context cache,",
-             "                    memory-capacity ceiling )",
-             "               × (1 − idle share) × reuse factor × usefulness")}
-        <p>For hybrid models such as Qwen3.6 and Qwen3.8, k is small, because most layers keep a fixed-size state instead of a growing cache. That loosens the capacity limit for long agent contexts, and it is why state checkpointing in the manner of ${cite("https://arxiv.org/abs/2411.19379", "Marconi")} matters.</p>
-      </section>
     </div>`;
 
+  const cap = (text) => text[0].toUpperCase() + text.slice(1);
   const fmt = (n) => (n >= 100 ? Math.round(n).toLocaleString("en-US") : n >= 10 ? n.toFixed(0) : n.toFixed(1));
   const gb = (n) => (n >= 10 ? n.toFixed(0) : n.toFixed(1));
 
   // the roofline for one step of `batch` tokens: the slowest of bytes, arithmetic and interconnect
+  // a draft model of this size proposes the tokens; small enough that its own reads are the cost
+  const DRAFT_B = 0.5;
+  // expected tokens a verify step keeps when each of k drafts is accepted with probability a (Leviathan et al., 2023)
+  const kept = (k, a) => (1 - a ** (k + 1)) / (1 - a);
+
   const step = (s, batch) => {
+    // with speculation one verify pass checks k drafts plus one token per request, after k draft passes
+    const spec = s.spec ? { k: s.specK, a: s.specA / 100 } : null;
+    const tokensPerPass = spec ? spec.k + 1 : 1;
     const bytesPerParam = BITS[s.bits] / 8;
     // a MoE step touches more experts as the batch grows; a dense model reads all of its weights at any batch
     const share = s.active / s.total;
@@ -194,23 +115,36 @@ window.Pie = window.Pie || {};
     const cacheGB = batch * s.context * s.kvKB / 1e6;
     const bw = s.bw * s.devices;
     const flops = s.tflops * s.devices * 1e12;
-    const memory = (weightGB + cacheGB) / bw;
-    const compute = (2 * s.active * 1e9 * batch) / flops;
+    // SSD streaming: what does not fit stays on the SSD and is read again every step, beside the resident part
+    const totalGB = (s.total + (s.spec ? DRAFT_B : 0)) * bytesPerParam;
+    const resident = Math.max(0, Math.min(totalGB, s.mem * s.devices * USABLE - cacheGB));
+    const streamed = s.ssd && totalGB > resident ? 1 - resident / totalGB : 0;
+    const ssd = streamed ? (weightGB * streamed) / s.ssdGBs : 0;
+    const memory = (weightGB * (1 - streamed) + cacheGB) / bw;
+    const compute = (2 * s.active * 1e9 * batch * tokensPerPass) / flops;
     // tensor parallel: two all-reduces of the hidden state per layer, each paying the link's latency
     const [, linkGBs, latencyUs] = LINKS[s.link];
     const hidden = Math.sqrt((s.total * 1e9) / (12 * s.layers));
     const link = s.devices > 1 && linkGBs ? 2 * s.layers * (latencyUs * 1e-6 + (batch * hidden * 2 * (s.devices - 1) / s.devices) / (linkGBs * 1e9)) : 0;
-    const t = Math.max(memory, compute, link);
-    const bound = t === link && link ? "interconnect-bound" : t === compute ? "compute-bound" : "bandwidth-bound";
-    return { tps: batch / t, bound };
+    const verify = Math.max(memory, compute, link, ssd);
+    const bound = verify === ssd && ssd ? "SSD-bound" : verify === link && link ? "interconnect-bound" : verify === compute ? "compute-bound" : "bandwidth-bound";
+    if (!spec) return { tps: batch / verify, bound };
+    const draft = spec.k * Math.max((DRAFT_B * bytesPerParam + batch * s.context * s.kvKB / 1e6 * .05) / bw, (2 * DRAFT_B * 1e9 * batch) / flops);
+    const perStep = kept(spec.k, spec.a);
+    return { tps: (batch * perStep) / (verify + draft), bound, perStep };
   };
 
   const state = {};
   const read = () => {
     element.querySelectorAll("[data-k]").forEach((input) => {
       const k = input.dataset.k;
-      state[k] = ["machine", "model", "link"].includes(k) ? input.value : Number(input.value);
+      state[k] = input.type === "checkbox" ? input.checked : ["machine", "model", "link"].includes(k) ? input.value : Number(input.value);
+      // a slider's fill follows its knob
+      if (input.type === "range") input.style.setProperty("--fill", `${(100 * (input.value - input.min)) / (input.max - input.min)}%`);
     });
+    state.bits = Number(element.querySelector('input[name="calc-bits"]:checked').value);
+    state.context = CONTEXTS[state.contextIdx];
+    state.batch = BATCHES[state.batchIdx];
   };
   const fill = (values) => Object.entries(values).forEach(([k, v]) => {
     const input = element.querySelector(`[data-k="${k}"]`);
@@ -223,30 +157,64 @@ window.Pie = window.Pie || {};
     const machine = machines().find((m) => m.id === state.machine);
     const model = models().find((m) => m.id === state.model);
     state.layers = model ? model.layers : layersFor(state.total);
-    out("specs", machine ? machine.specs : "");
+    out("title", `${model ? model.label : "Custom model"}<span>on ${machine ? machine.label : "custom hardware"}</span>`);
+    out("ctxv", `${kTok(state.context)} tokens`);
+    out("batv", `${state.batch}`);
+    element.querySelector('[data-out-row="spec"]').hidden = !state.spec;
+    out("speckv", `${state.specK}`);
+    out("specav", `${state.specA}%`);
+    element.querySelector('[data-out-row="ssd"]').hidden = !state.ssd;
+    out("ssdv", `${state.ssdGBs} GB/s`);
+    element.querySelector('[data-out-row="many"]').hidden = state.batch === 1;
 
     const one = step(state, 1);
     const many = step(state, state.batch);
-    const prefill = (state.tflops * state.devices * 1e12) / (2 * state.active * 1e9);
-    out("d1", `${fmt(one.tps)}<small>tok/s</small>`);
-    out("d1n", one.bound);
-    out("dbl", `Decode, ${state.batch} requests`);
-    out("db", `${fmt(many.tps)}<small>tok/s</small>`);
-    out("dbn", `${many.bound} · ${fmt(many.tps / state.batch)} tok/s each`);
-    out("pf", `${fmt(prefill)}<small>tok/s</small>`);
-    out("pfn", "compute-bound");
+    // prefill reads the weights once per chunk of the prompt; streamed weights cost one SSD pass per chunk
+    const flopsAll = state.tflops * state.devices * 1e12;
+    const chunk = Math.min(state.context, 2048);
+    const usableGB = state.mem * state.devices * USABLE;
+    const allWeights = (state.total + (state.spec ? DRAFT_B : 0)) * BITS[state.bits] / 8;
+    const onSsd = state.ssd ? Math.max(0, allWeights - Math.max(0, usableGB - state.context * state.kvKB / 1e6)) : 0;
+    const pfCompute = (2 * state.active * 1e9 * chunk) / flopsAll;
+    const pfSsd = onSsd / state.ssdGBs;
+    const prefill = chunk / Math.max(pfCompute, pfSsd);
+    out("d1", `<span class="calc-num">${fmt(one.tps)}</span><small>tok/s</small>`);
+    const plain = state.spec ? { ...state, spec: false } : null;
+    const gain = (r, batch) => (plain ? ` · ${(r.tps / step(plain, batch).tps).toFixed(1)}× from drafts` : "");
+    out("d1n", `${cap(one.bound)}${gain(one, 1)}`);
+    out("dbl", `Decode, ${state.batch} ${state.batch === 1 ? "request" : "requests"}`);
+    out("db", `<span class="calc-num">${fmt(many.tps)}</span><small>tok/s</small>`);
+    out("dbn", `${cap(many.bound)} · ${fmt(many.tps / state.batch)} tok/s each${gain(many, state.batch)}`);
+    out("pf", `<span class="calc-num">${fmt(prefill)}</span><small>tok/s</small>`);
+    out("pfn", pfSsd > pfCompute ? "SSD-bound" : "Compute-bound");
 
     const usable = state.mem * state.devices * USABLE;
-    const weights = state.total * BITS[state.bits] / 8;
+    const weights = (state.total + (state.spec ? DRAFT_B : 0)) * BITS[state.bits] / 8;
     const cache = state.batch * state.context * state.kvKB / 1e6;
     const most = Math.max(0, Math.floor((usable - weights) / (state.context * state.kvKB / 1e6)));
-    const fits = weights + cache <= usable;
+    // with SSD streaming only the cache has to fit; the weights that do not are read from the SSD
+    const resident = state.ssd ? Math.max(0, Math.min(weights, usable - cache)) : weights;
+    const fromSsd = weights - resident;
+    const fits = state.ssd ? cache < usable : weights + cache <= usable;
     element.querySelector(".calc-results").classList.toggle("is-over", !fits);
-    out("fit", fits
-      ? `Weights ${gb(weights)} GB and cache ${gb(cache)} GB fit in about ${gb(usable)} GB the GPU can use. Up to ${most.toLocaleString("en-US")} requests fit at ${kTok(state.context)} tokens of context.`
-      : weights > usable
-        ? `<b>Does not fit.</b> The weights alone take ${gb(weights)} GB of about ${gb(usable)} GB the GPU can use.`
-        : `<b>Does not fit.</b> ${state.batch} requests need ${gb(weights + cache)} GB of about ${gb(usable)} GB the GPU can use; at most ${most.toLocaleString("en-US")} fit at ${kTok(state.context)} tokens.`);
+    // memory as macOS Storage shows it: one bar of what the GPU can use, filled by the weights and the cache
+    const pct = (gbs) => `${Math.min(100, (100 * gbs) / usable).toFixed(2)}%`;
+    element.querySelector(".calc-memory").classList.toggle("is-over", !fits);
+    const room = fits
+      ? fromSsd > 0 ? `${gb(fromSsd)} GB read from the SSD every step` : `Room for ${most.toLocaleString("en-US")} requests at ${kTok(state.context)}`
+      : weights > usable && !state.ssd ? "The weights alone don’t fit · try SSD streaming" : "The cache doesn’t fit";
+    out("fit", `
+      <div class="calc-memory-head">
+        <span>Memory</span>
+        <span>${fits ? `${gb(resident + cache)} GB of ${gb(usable)} GB` : `Needs ${gb(weights + cache)} GB of ${gb(usable)} GB`}</span>
+      </div>
+      <div class="calc-memory-bar"><i class="is-weights" style="width:${pct(resident)}"></i><i class="is-cache" style="width:${pct(cache)}"></i></div>
+      <div class="calc-memory-legend">
+        <span><i class="is-weights"></i>Weights ${gb(resident)} GB</span>
+        <span><i class="is-cache"></i>Cache ${gb(cache)} GB</span>
+        ${fromSsd > 0 ? `<span><i class="is-ssd"></i>On SSD ${gb(fromSsd)} GB</span>` : ""}
+        <span>${room}</span>
+      </div>`);
   };
 
   const bind = () => {
@@ -256,11 +224,18 @@ window.Pie = window.Pie || {};
     element.querySelector('[data-k="model"]').innerHTML = mods.map((m) => `<option value="${m.id}">${m.label}</option>`).join("");
     const pickMachine = (id) => {
       const m = list.find((x) => x.id === id);
-      if (m) fill({ bw: m.bw, tflops: m.tflops, mem: m.mem, devices: m.devices, link: m.devices > 1 ? "pcie5" : "none" });
+      if (m) fill({ bw: m.bw, tflops: m.tflops, mem: m.mem, devices: m.devices, link: m.devices > 1 ? "pcie5" : "none", ssdGBs: m.ssd });
     };
     const pickModel = (id) => {
       const m = mods.find((x) => x.id === id);
-      if (m) fill({ total: m.total, active: m.active, kvKB: m.kvKB });
+      if (!m) return;
+      fill({ total: m.total, active: m.active, kvKB: m.kvKB });
+      // an option the model does not support is hidden and switched off
+      element.querySelectorAll("[data-supports]").forEach((row) => {
+        const supported = m[row.dataset.supports];
+        row.hidden = !supported;
+        if (!supported) row.querySelector("input").checked = false;
+      });
     };
     fill({ machine: list.find((m) => m.id === "m5-max-128g")?.id || list[0]?.id, model: mods.find((m) => m.id === "qwen3.8-27b")?.id || mods[0]?.id });
     pickMachine(element.querySelector('[data-k="machine"]').value);
@@ -269,7 +244,7 @@ window.Pie = window.Pie || {};
       const k = event.target.dataset?.k;
       if (k === "machine") pickMachine(event.target.value);
       if (k === "model") pickModel(event.target.value);
-      if (k) update();
+      if (k || event.target.name === "calc-bits") update();
     });
     update();
   };

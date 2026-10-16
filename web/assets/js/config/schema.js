@@ -155,9 +155,9 @@ window.Pie = window.Pie || {};
     },
 
     methodology: {
-      label: "Methods",
+      label: "Maximum",
       section: "measurements",
-      view: "methodology",  // not a table: the roofline behind the numbers, written as one note
+      view: "methodology",  // not a table: a calculator of the theoretical maximum
       filters: [],
       columns: [],
     },
