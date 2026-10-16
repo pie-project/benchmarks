@@ -457,7 +457,7 @@ class Preflight:
         return await_idle_mac_gpu() if _is_mac(platform_os) and os.environ.get("PIE_EVALS_GPU_IDLE", "1") != "0" else {}
 
     def settle(self, platform_os: str | None) -> dict[str, Any]:
-        """Before a single-stream cell: a Mac idles to a nominal thermal state (``settle_mac``)."""
+        """Before every cell: a Mac idles to a nominal thermal state (``settle_mac``)."""
         return settle_mac() if _is_mac(platform_os) else {}
 
     def between_engines(self, platform_os: str | None, leftover_names: list[str]) -> dict[str, Any]:

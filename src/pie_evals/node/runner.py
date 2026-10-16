@@ -469,8 +469,9 @@ class NodeRunner:
                 recipe = recipe_for_cell(engine.recipe, recipe_name, cell)
                 engine.recipe = recipe
                 state = machine_before
-                # a full-suite run cools the Mac before each single-stream row; a targeted rerun of a few cells skips it (PIE_EVALS_SETTLE=0)
-                if cell.workload.kind.value == "single_stream" and hasattr(pre, "settle") and os.environ.get("PIE_EVALS_SETTLE", "1") != "0":
+                # every cell starts on a cooled Mac, reruns too: a hot chip from the cell before throttles the next
+                # (0.5.3-b2 prefill rerun: the M5 Max 64GB came out lower with the cool-down skipped)
+                if hasattr(pre, "settle") and os.environ.get("PIE_EVALS_SETTLE", "1") != "0":
                     settled = pre.settle(self.platform.os if self.platform else None)
                     if settled:
                         self.log(f"{cell.workload.id}: settled {settled['settle_s']}s, thermal {settled['thermal_state_before_settle']} -> {settled['thermal_state']}")
