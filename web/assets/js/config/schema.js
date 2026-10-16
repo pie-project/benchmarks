@@ -154,6 +154,14 @@ window.Pie = window.Pie || {};
       ],
     },
 
+    methodology: {
+      label: "Methodology",
+      section: "measurements",
+      view: "methodology",  // not a table: how the numbers are measured
+      filters: [],
+      columns: [],
+    },
+
 
     hardware: {
       label: "Hardware",

@@ -44,7 +44,7 @@
     toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isPlatform = Pie.schema[state.table]?.view === "platform";
-    const isMethod = ["welcome", "inferlets"].includes(state.table);
+    const isMethod = ["welcome", "inferlets", "methodology"].includes(state.table);
     filterBar.hidden = isOverview || isMethod || isPlatform;
     table.container.hidden = isOverview || isMethod || isPlatform;
     overview.element.hidden = !isOverview;
@@ -52,6 +52,7 @@
     toolbar.elements.metricPicker.hidden = true;  // the metric lives in the platform table's own bar
     Pie.welcome.render(state);
     Pie.inferlets.render(state);
+    Pie.methodology.render(state);
     sidebar.render(state);
     if (isPlatform) {
       const shown = Pie.platform.render(state);
