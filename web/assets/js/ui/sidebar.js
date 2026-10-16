@@ -15,6 +15,7 @@ window.Pie = window.Pie || {};
     <button class="sidebar-item${selected ? " is-selected" : ""}" type="button" data-table="${id}" aria-current="${selected}">
       <span class="sidebar-glyph"${schema.tint ? ` style="--tint: ${schema.tint}"` : ""}>${Pie.icon(id)}</span>
       <span>${schema.label}</span>
+      ${schema.tag ? `<span class="sidebar-tag" title="Under development">${schema.tag}</span>` : ""}
       ${schema.view === "platform" ? (machines(schema) ? `<span class="sidebar-count">${machines(schema)}</span>` : "") : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
     </button>`;
 

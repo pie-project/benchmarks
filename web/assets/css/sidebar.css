@@ -135,6 +135,25 @@
   color: var(--color-label-secondary);
 }
 
+/* capsule like the Beta tags in System Settings */
+.sidebar-tag {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-fill);
+  color: var(--color-label-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+.sidebar-item.is-selected .sidebar-tag {
+  background: var(--color-accent-tint);
+  color: var(--color-accent);
+}
+
 .sidebar-backdrop,
 .sidebar-appearance {
   display: none;
@@ -303,6 +322,11 @@
 
   .sidebar-item.is-selected .sidebar-count {
     color: rgba(255, 255, 255, .8);
+  }
+
+  .sidebar-item.is-selected .sidebar-tag {
+    background: rgba(255, 255, 255, .22);
+    color: var(--color-on-accent);
   }
 }
 
