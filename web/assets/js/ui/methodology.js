@@ -103,7 +103,7 @@ window.Pie = window.Pie || {};
     <div class="methods">
       <header class="methods-hero">
         <h1>Methods</h1>
-        <p class="methods-lede">How fast can a model run on a machine? Pick both and see the ceiling no engine can pass.</p>
+        <p class="methods-lede">No magic. Trust, but check your provider.</p>
       </header>
       ${calculator}
 
