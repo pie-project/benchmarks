@@ -26,7 +26,8 @@
 }
 
 /* the estimator: pop-up buttons in a row, then three large figures */
-.methods-calc { padding: 0 0 40px; border-bottom: .5px solid var(--color-separator); }
+/* the estimator is one filled tile, as apple.com sets a configurator or a feature tile apart: large radius, no border */
+.methods-calc { padding: 40px 44px 36px; border-radius: 28px; background: var(--color-card); }
 
 .calc-controls {
   display: grid;
@@ -49,8 +50,8 @@
   height: 36px;
   padding: 0 12px;
   border: 0;
-  border-radius: 10px;
-  background: var(--color-fill);
+  border-radius: 12px;
+  background-color: var(--color-background);
   color: var(--color-label);
   font: inherit;
   font-size: 15px;
@@ -119,7 +120,7 @@
 .calc-footnote { max-width: 760px; margin: 16px 0 0; font-size: 12px; line-height: 1.5; color: var(--color-label-tertiary); }
 
 /* the explanation below: section headlines as apple.com sets them, body at 17 points */
-.methods-section { padding: 56px 0 0; }
+.methods-section { padding: 64px 0 0; }
 
 .methods-section h2 {
   margin: 0 0 14px;
@@ -176,6 +177,7 @@
   .calc-result:first-child { padding: 0; }
   .calc-result + .calc-result { padding-top: 20px; border-left: 0; border-top: .5px solid var(--color-separator); }
   .calc-value { font-size: 44px; }
+  .methods-calc { margin: 0 calc(-1 * var(--edge) + 8px); padding: 28px 20px 24px; border-radius: 22px; }
   .calc-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .methods-section { padding-top: 44px; }
   .methods-section h2 { font-size: 26px; }
