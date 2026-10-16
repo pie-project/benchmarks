@@ -155,7 +155,7 @@ window.Pie = window.Pie || {};
     },
 
     methodology: {
-      label: "Maximum",
+      label: "Verify",
       section: "measurements",
       view: "methodology",  // not a table: a calculator of the theoretical maximum
       filters: [],
