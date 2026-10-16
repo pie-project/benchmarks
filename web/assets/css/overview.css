@@ -881,16 +881,8 @@
 
 .method-pane-body .method-footnote { font-size: 13px; }
 
-/* the methodology page's request timeline: TTFT, then the decode window, as one bar */
-.method-timeline { display: flex; height: 28px; border-radius: 7px; overflow: hidden; font-size: 12px; font-weight: 600; }
-.method-timeline span { display: flex; align-items: center; padding: 0 10px; white-space: nowrap; }
-.method-timeline .is-ttft { flex: 0 0 30%; color: #fff; background: #0a84ff; }
-.method-timeline .is-decode { flex: 1; color: var(--color-label); background: var(--color-fill); }
-.method-pane-body > .method-timeline-marks { position: relative; height: 16px; margin-top: 6px; font-size: 12px; color: var(--color-label-secondary); }
-.method-timeline-marks span { position: absolute; top: 0; white-space: nowrap; }
-.method-timeline-marks span:nth-child(1) { left: 0; }
-.method-timeline-marks span:nth-child(2) { left: 30%; }
-.method-timeline-marks span:nth-child(3) { right: 0; }
+/* a formula of several lines keeps its line breaks and alignment */
+.method-formula-text.is-lines { text-align: left; white-space: pre; overflow-x: auto; max-width: 100%; }
 
 @media (max-width: 760px) {
   .method-inner { padding: 32px var(--edge) 64px; }
