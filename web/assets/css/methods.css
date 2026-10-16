@@ -1,0 +1,123 @@
+/* The Methods page reads as a paper: one serif column, numbered sections, formulas set off by a rule, ruled tables. No cards. */
+#methodology { flex: 1; overflow: auto; }
+#methodology[hidden] { display: none; }
+
+.methods {
+  --methods-serif: "New York", ui-serif, "Iowan Old Style", Georgia, serif;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 64px var(--edge) 120px;
+  font-family: var(--methods-serif);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--color-label);
+}
+
+.methods-eyebrow {
+  margin: 0 0 10px;
+  font-family: var(--font-text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.methods h1 {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+}
+
+.methods-lede {
+  margin: 14px 0 0;
+  font-size: 21px;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--color-label-secondary);
+}
+
+.methods h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 56px 0 14px;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.methods h2 span {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-label-tertiary);
+}
+
+.methods p { margin: 0 0 16px; }
+
+.methods a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: .5px;
+  text-underline-offset: 2px;
+}
+
+/* a displayed equation: monospaced so the lines align, set off by a thin rule, scrolling sideways rather than breaking */
+.methods-eq {
+  margin: 20px 0 24px;
+  padding: 2px 0 2px 20px;
+  border-left: 2px solid var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--color-label);
+}
+
+/* tables as in a paper: rules above and below, a hairline between rows, no fills */
+.methods-table {
+  width: 100%;
+  margin: 20px 0 28px;
+  border-collapse: collapse;
+  border-top: 1px solid var(--color-label);
+  border-bottom: 1px solid var(--color-label);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.methods-table th {
+  padding: 9px 12px 9px 0;
+  border-bottom: .5px solid var(--color-label-secondary);
+  text-align: left;
+  font-weight: 600;
+}
+
+.methods-table td {
+  padding: 9px 12px 9px 0;
+  vertical-align: top;
+  color: var(--color-label-secondary);
+}
+
+.methods-table td:first-child { color: var(--color-label); }
+.methods-table tr + tr td { border-top: .5px solid var(--color-separator); }
+
+.methods-figure { margin: 28px 0 32px; }
+.methods-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+.methods-figure svg text { font-family: var(--methods-serif); font-size: 13px; fill: var(--color-label-secondary); }
+.methods-figure svg .label { font-style: italic; fill: var(--color-label-tertiary); }
+.methods-figure svg circle { fill: var(--color-label); }
+.methods-figure .axis { fill: none; stroke: var(--color-label); stroke-width: 1.2; }
+.methods-figure .ridge { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; stroke-dasharray: 4 4; }
+.methods-figure .roof { fill: none; stroke: var(--color-accent); stroke-width: 2.5; }
+.methods-figure figcaption { margin-top: 10px; font-size: 15px; color: var(--color-label-secondary); }
+
+@media (max-width: 760px) {
+  .methods { padding-top: 32px; font-size: 17px; }
+  .methods h1 { font-size: 32px; }
+  .methods-lede { font-size: 19px; }
+  .methods h2 { margin-top: 44px; font-size: 23px; }
+  .methods-eq { font-size: 12.5px; padding-left: 14px; }
+  .methods-table { font-size: 14px; }
+}

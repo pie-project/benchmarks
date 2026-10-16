@@ -881,8 +881,6 @@
 
 .method-pane-body .method-footnote { font-size: 13px; }
 
-/* a formula of several lines keeps its line breaks and alignment */
-.method-formula-text.is-lines { text-align: left; white-space: pre; overflow-x: auto; max-width: 100%; }
 
 @media (max-width: 760px) {
   .method-inner { padding: 32px var(--edge) 64px; }
@@ -1287,4 +1285,3 @@
   #inferlets .method-inner { max-width: calc(1080px + 2 * 22px); padding-left: 22px; padding-right: 22px; }
 }
 
-.method-pane-body > .method-formula + .method-formula { margin-top: 0; padding-top: 0; }

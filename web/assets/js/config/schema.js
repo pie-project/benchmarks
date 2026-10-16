@@ -155,9 +155,9 @@ window.Pie = window.Pie || {};
     },
 
     methodology: {
-      label: "Methodology",
+      label: "Methods",
       section: "measurements",
-      view: "methodology",  // not a table: how the numbers are measured
+      view: "methodology",  // not a table: the roofline behind the numbers, written as one note
       filters: [],
       columns: [],
     },
