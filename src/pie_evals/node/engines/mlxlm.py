@@ -20,6 +20,9 @@ from .shape import hf_snapshot_dir
 @register
 class MlxlmEngine(ServedEngine):
     name = EngineName.MLXLM
+    # mlx-lm has no ignore_eos, but from 0.32 its batched server applies logit_bias: blocking the special
+    # tokens makes every request write exactly max_tokens (0.31.3 dropped the bias on that path)
+    exact_length = "logit_bias"
 
     def server_python(self) -> str:
         """The interpreter that has the pinned mlx-lm (not the bench client's)."""

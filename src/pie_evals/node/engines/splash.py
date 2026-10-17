@@ -30,6 +30,8 @@ def splash_bin() -> str:
 class SplashEngine(ServedEngine):
     name = EngineName.SPLASH
     chat = True  # Splash 1.1 serves chat completions only
+    # Splash rejects logit_bias (400) but honours ignore_eos: every request writes exactly max_tokens (1.3.2)
+    exact_length = "ignore_eos"
 
     def extra_body(self) -> dict[str, Any]:
         # the shared client renders every other engine's prompt with thinking off
