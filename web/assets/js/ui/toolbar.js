@@ -36,11 +36,11 @@ window.Pie = window.Pie || {};
       this.renderRelease(state);
     },
 
-    // the button names the run by its tag and its day, on every page, the table-less ones too
+    // the button names the run by its day, on every page, the table-less ones too; the tag is in its tooltip and menu
     renderRelease(state) {
       const run = Pie.query.releaseOptions().find((option) => option.id === state.release);
       const day = run?.date ? String(run.date).replace(/,?\s*\d{1,2}:\d{2}.*$/, "") : "";
-      elements.releaseValue.textContent = [releaseLabel(state), day].filter(Boolean).join(" · ");
+      elements.releaseValue.textContent = day || releaseLabel(state);
       elements.releasePicker.title = releaseLabel(state);
     },
 
