@@ -261,3 +261,93 @@
 .filter-bar .filter-button:hover,
 .platform-bar .filter-button[aria-expanded="true"],
 .filter-bar .filter-button[aria-expanded="true"] { background: var(--color-fill-secondary); }
+
+/* phones: How we measure uses the select menus' sizes (popover.css), as an iOS list: a 44pt row, the rule on the left on one line,
+   its value right-aligned in grey. The menus' "detail under its name" layout is for options, not for these rows. */
+@media (max-width: 899px) {
+  .rules-popover { padding: 6px; border-radius: 14px; }
+  .rules-popover .popover-heading { padding: 8px 12px 4px; font-size: 13px; }
+  .rules-row {
+    gap: 10px;
+    height: auto;
+    min-height: 44px;
+    padding: 0 14px 0 10px;
+    border-radius: 9px;
+    font-size: 16px;
+  }
+  .rules-row svg { width: 17px; height: 17px; }
+  .rules-row .popover-label { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rules-row .popover-detail {
+    flex: none;
+    margin-left: auto;
+    padding-left: 16px;
+    font-size: 16px;
+    line-height: normal;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--color-label-secondary);
+  }
+}
+
+/* phones: the Limit estimator as an iOS settings screen. One grouped panel (no card around a card), 34pt pill selects
+   like the toolbar's, an iOS segmented control, 28pt slider thumbs and a 51x31 switch; labels at 15pt. */
+@media (max-width: 899px) {
+  .methods-calc { padding: 0; border-radius: 0; background: none; }
+  .calc-settings { gap: 16px; padding: 16px; border-radius: 14px; }
+  .calc-setting { gap: 10px; }
+  .calc-setting > span { font-size: 15px; }
+  .calc-setting > span b { font-size: 15px; }
+
+  .methods-calc .calc-setting select {
+    height: 34px;
+    padding: 0 34px 0 14px;
+    border-radius: 999px;
+    background-position: right 14px center;
+    background-size: 8px 11px;
+    font-size: 15px;
+  }
+
+  .calc-segments { padding: 2px; border-radius: 9px; }
+  .calc-segments span { padding: 6px 0; border-radius: 7px; font-size: 15px; }
+
+  .calc-setting input[type="range"] { height: 28px; }
+  .calc-setting input[type="range"]::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -12px; }
+  .calc-setting input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; }
+
+  .calc-switch { width: 51px; height: 31px; }
+  .calc-switch i { border-radius: 16px; }
+  .calc-switch i::after { width: 27px; height: 27px; }
+  .calc-switch input:checked + i::after { transform: translateX(20px); }
+
+  .calc-label { font-size: 15px; }
+  .calc-note { font-size: 13px; }
+}
+
+/* phones: the results read as iOS cards (Health's summary tiles): the label on top in grey, the figure large under it,
+   the note last; the model is a section header, and memory is its own card with a thicker bar */
+@media (max-width: 899px) {
+  .calc-title { margin: 8px 4px 0; font-size: 22px; }
+  .calc-title span { margin-top: 2px; font-size: 15px; }
+  .calc-results { gap: 12px; margin-top: 14px; }
+  .calc-result {
+    gap: 2px;
+    padding: 14px 16px 16px;
+    border-radius: 14px;
+    background: var(--color-background);
+  }
+  .calc-result .calc-label { order: -1; margin: 0 0 4px; font-size: 15px; font-weight: 600; color: var(--color-label-secondary); }
+  .calc-result .calc-value { font-size: 34px; }
+  .calc-result .calc-note { font-size: 13px; }
+
+  .calc-main .calc-foot { margin-top: 12px; padding-top: 0; }
+  .calc-memory { padding: 14px 16px 16px; border-radius: 14px; background: var(--color-background); }
+  .calc-memory-head { font-size: 15px; }
+  .calc-memory-bar { height: 8px; margin-top: 10px; border-radius: 4px; }
+  .calc-memory-legend { margin-top: 10px; font-size: 13px; }
+}
+:root[data-theme="dark"] .calc-result,
+:root[data-theme="dark"] .calc-memory { background: none; }
+@media (max-width: 899px) {
+  :root[data-theme="dark"] .calc-result,
+  :root[data-theme="dark"] .calc-memory { background: #323234; }
+}
