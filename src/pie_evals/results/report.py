@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
 from pie_evals.node.metrics.stats import regression_verdict
 from pie_evals.plan.matrix import Matrix
@@ -81,16 +82,21 @@ def coverage_markdown(views: list[CellView], tier: Tier) -> str:
     return "\n".join(lines) + "\n"
 
 
-def regressions(matrix: Matrix, store: Store, tier: Tier, *, sigma: float = 3.0) -> list[dict]:
-    """Compare each cell's latest PASS value against its history (noise-aware)."""
+def regressions(matrix: Matrix, store: Store, tier: Tier, *, sigma: float = 2.0, window_days: int = 7, peak_days: int = 30) -> list[dict]:
+    """Each cell's latest PASS value against its own last ``window_days`` (as vLLM's nightly gate does: the change must
+    pass ``sigma`` spreads of that window and the noise bound a single measurement is allowed), with the gap to the
+    best value of the last ``peak_days`` beside it, so a slow drift over many nights shows too."""
+    now = datetime.now(timezone.utc)
     latest = store.latest_by_cell(tier)
-    hist = store.history(tier, limit=20)
+    hist = store.history(tier, limit=500, since=now - timedelta(days=window_days))
+    peaks = store.history(tier, limit=2000, since=now - timedelta(days=peak_days))
     out = []
     for cid, row in latest.items():
         if row["status"] != str(CellStatus.PASS) or row["primary_value"] is None:
             continue
+        value = float(row["primary_value"])
         h = hist.get(cid, [])
-        prior = h[:-1] if h and abs(h[-1] - float(row["primary_value"])) < 1e-12 else h
+        prior = h[:-1] if h and abs(h[-1] - value) < 1e-12 else h
         if len(prior) < 3:
             continue
         # a change smaller than the spread a single measurement is allowed (the node's NOISY bound)
@@ -99,14 +105,17 @@ def regressions(matrix: Matrix, store: Store, tier: Tier, *, sigma: float = 3.0)
         steady = wl is not None and str(wl.kind) in ("single_stream", "control_aa", "long_context")
         policy = RepetitionPolicy()
         floor = policy.cov_noisy_threshold if steady else policy.cov_noisy_threshold_concurrent
-        v = regression_verdict(float(row["primary_value"]), prior, sigma=sigma, floor_rel=floor)
+        v = regression_verdict(value, prior, sigma=sigma, floor_rel=floor)
         if v.regressed or v.improved:
+            p = peaks.get(cid, [])
+            peak = max(p) if p else None
             out.append(
                 {
                     "cell_id": cid, "cell_key": row["cell_key"], "engine": row["engine"], "platform": row["platform"],
                     "artifact": row["artifact"], "workload": row["workload"], "program": row["program"], "mode": row["mode"],
-                    "metric": row["primary_metric"], "value": float(row["primary_value"]), "delta_rel": v.delta_rel,
+                    "metric": row["primary_metric"], "value": value, "delta_rel": v.delta_rel,
                     "threshold_rel": v.threshold_rel, "kind": "regression" if v.regressed else "improvement",
+                    "vs_peak_rel": (value - peak) / peak if peak else None, "window_runs": len(prior),
                     "pie_commit": row["pie_commit"], "engine_version": row["engine_version"], "family": row["family"],
                 }
             )
@@ -114,13 +123,59 @@ def regressions(matrix: Matrix, store: Store, tier: Tier, *, sigma: float = 3.0)
 
 
 def regressions_markdown(rows: list[dict]) -> str:
-    lines = ["# Regressions / improvements", "", "| kind | engine | platform | artifact | workload | program | mode | metric | value | Δ | threshold | commit/version |", "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    lines = ["# Regressions / improvements against the last 7 days", "", "| kind | engine | platform | artifact | workload | metric | value | Δ 7 days | threshold | vs 30-day best | commit/version |", "|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
+        peak = f"{r['vs_peak_rel']*100:+.1f}%" if r.get("vs_peak_rel") is not None else ""
         lines.append(
-            f"| {r['kind']} | {r['engine']} | {r['platform']} | {r['artifact']} | {r['workload']} | {r['program']} | {r['mode']} | {r['metric']} | {r['value']:.4g} | {r['delta_rel']*100:+.1f}% | ±{r['threshold_rel']*100:.1f}% | {r['pie_commit'] or r['engine_version'] or ''} |"
+            f"| {r['kind']} | {r['engine']} | {r['platform']} | {r['artifact']} | {r['workload']} | {r['metric']} | {r['value']:.4g} | {r['delta_rel']*100:+.1f}% | ±{r['threshold_rel']*100:.1f}% | {peak} | {r['pie_commit'] or r['engine_version'] or ''} |"
         )
     if len(lines) == 4:
-        lines.append("| (none) | | | | | | | | | | | |")
+        lines.append("| (none) | | | | | | | | | | |")
+    return "\n".join(lines) + "\n"
+
+
+def model_of(matrix: Matrix, artifact_id: str) -> str:
+    """One name per model across its artifacts (mlx, gguf, bf16 builds of one checkpoint), as the site groups them."""
+    art = matrix.artifacts.get(artifact_id)
+    base = (art.base_model if art else None) or artifact_id
+    drop = {"4bit", "bf16", "gguf", "mlx", "mxfp4", "q4", "q4km", "mtp", "instruct", "it", "base", "8k", "mini5", "mini8"}
+    return "-".join(p for p in base.split("/")[-1].split("-") if p.lower() not in drop).lower()
+
+
+def output_length_mismatches(matrix: Matrix, store: Store, tier: Tier | None = None, *, rel: float = 0.10) -> list[dict]:
+    """Engines stop where the model ends its answer, so two engines can decode different amounts for one prompt.
+    For each machine, model and workload, compare every engine's mean output tokens per request with pie's;
+    a gap past ``rel`` means their decode numbers do not describe the same work."""
+    groups: dict[tuple, dict[str, dict]] = defaultdict(dict)
+    for row in store.latest_by_cell(tier).values():
+        done = int(row.get("requests") or 0) - int(row.get("failed") or 0)
+        if row["status"] not in ("pass", "noisy") or not row.get("output_tokens") or done <= 0:
+            continue
+        key = (row["platform"], model_of(matrix, str(row["artifact"])), str(row["workload"]))
+        prev = groups[key].get(row["engine"])
+        if prev is None or row["started_at"] > prev["started_at"]:
+            groups[key][row["engine"]] = {**row, "per_request": row["output_tokens"] / done}
+    out = []
+    for (platform, model, workload), by_engine in groups.items():
+        pie = by_engine.get("pie")
+        if not pie:
+            continue
+        for engine, row in by_engine.items():
+            if engine == "pie":
+                continue
+            gap = row["per_request"] / pie["per_request"] - 1
+            if abs(gap) > rel:
+                out.append({"platform": platform, "model": model, "workload": workload, "engine": engine,
+                            "per_request": row["per_request"], "pie_per_request": pie["per_request"], "gap_rel": gap})
+    return sorted(out, key=lambda r: -abs(r["gap_rel"]))
+
+
+def output_length_markdown(rows: list[dict]) -> str:
+    lines = ["# Output length against pie", "", "| machine | model | workload | engine | tokens per request | pie | gap |", "|---|---|---|---|---|---|---|"]
+    for r in rows:
+        lines.append(f"| {r['platform']} | {r['model']} | {r['workload']} | {r['engine']} | {r['per_request']:.0f} | {r['pie_per_request']:.0f} | {r['gap_rel']*100:+.0f}% |")
+    if len(lines) == 4:
+        lines.append("| (none) | | | | | | |")
     return "\n".join(lines) + "\n"
 
 
