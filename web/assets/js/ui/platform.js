@@ -199,7 +199,7 @@ window.Pie = window.Pie || {};
       const byName = (a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
       const rank = (list, key) => { const i = (list || []).indexOf(key); return i < 0 ? Infinity : i; };
       const byRank = (list, a, b) => { const x = rank(list, a), y = rank(list, b); return x === y ? 0 : x < y ? -1 : 1; };
-      const allModels = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id))
+      const allModels = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id) && Pie.store.onMac(id))
         .filter((id) => !mode.has || mode.has(id))
         .filter((id) => !query || names().model(id).toLowerCase().includes(query))
         .sort((a, b) => byRank(p.makerOrder, makerOf(a).name, makerOf(b).name) || byName(makerOf(a).name || "~", makerOf(b).name || "~")
