@@ -27,7 +27,8 @@ _TOKENIZER_FILES = ("tokenizer.json", "tokenizer_config.json", "tokenizer.model"
 class LlamacppEngine(ServedEngine):
     name = EngineName.LLAMACPP
     health_path = "/health"  # 503 while the model loads
-    # no ignore_eos: like Splash and mlx-lm (which have no such field), llama.cpp stops at EOS
+    # llama-server honours ignore_eos: every request writes exactly max_tokens (checked on b11703)
+    exact_length = "ignore_eos"
 
     # ---- inputs ------------------------------------------------------------
     def server_bin(self) -> str:
