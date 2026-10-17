@@ -493,8 +493,8 @@ def test_llamacpp_args(tmp_path, hf_cache, monkeypatch):
     assert Path(argv[1]) == OPENAI_SCRIPT
     # the GGUF repo ships no tokenizer -> --model is the base checkpoint
     assert flag_value(argv, "--model") == "Qwen/Qwen3-8B"
-    assert json.loads(flag_value(argv, "--extra-body")) == {"cache_prompt": False}
-    assert "--no-ignore-eos" in argv and "--ignore-eos" not in argv  # stops at EOS, as every engine does
+    assert json.loads(flag_value(argv, "--extra-body")) == {"cache_prompt": False, "ignore_eos": True}
+    assert "--ignore-eos" in argv and "--no-ignore-eos" not in argv  # writes exactly the shape's length, as every engine does
     assert "--chat" not in argv and "--no-flush-cache" not in argv
     # prefix shape asks for cache reuse and keeps its prompts as written
     eng = make(LlamacppEngine, art=art, workload=WORKLOADS["prefix-1k-x64"], python="/usr/bin/python3")
@@ -551,7 +551,7 @@ def test_mlxlm_args(tmp_path, hf_cache, monkeypatch):
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
     assert argv[0] == "/usr/bin/python3" and Path(argv[1]) == OPENAI_SCRIPT
     assert flag_value(argv, "--model") == snap and flag_value(argv, "--api-model") == snap
-    assert "--no-ignore-eos" in argv and "--ignore-eos" not in argv and "--extra-body" not in argv
+    assert "--ignore-eos" in argv and "--no-ignore-eos" not in argv  # exact length, through logit_bias on the stop tokens
     eng = make(MlxlmEngine, art=art, plat=plat, workload=WORKLOADS["prefix-1k-x64"], python="/usr/bin/python3")
     assert flag_value(eng.server_cmd(8123, 16, 2048), "--prompt-cache-size") == "64"
     assert "--no-flush-cache" in argv_for(eng, WORKLOADS["prefix-1k-x64"], tmp_path)
@@ -576,7 +576,7 @@ def test_splash_args(tmp_path, hf_cache, monkeypatch):
     assert Path(argv[1]) == OPENAI_SCRIPT and "--chat" in argv  # Splash renders the chat template itself
     assert flag_value(argv, "--api-model") == "mlx-community/Qwen3.6-27B-4bit"
     assert flag_value(argv, "--model") == str(hf_cache / "models--mlx-community--Qwen3.6-27B-4bit/snapshots/def456")
-    assert json.loads(flag_value(argv, "--extra-body")) == {"reasoning_effort": "none"}
+    assert json.loads(flag_value(argv, "--extra-body")) == {"reasoning_effort": "none", "ignore_eos": True}
     default = make(SplashEngine, art=splash_artifact(), plat=plat, recipe_name="default", python="/usr/bin/python3")
     assert "--max-context" not in default.server_cmd(8123, 1, 2048)  # Splash as shipped sizes its own context
 
@@ -1114,3 +1114,16 @@ def test_a_dflash2_row_drafts_at_its_trained_block(tmp_path):
     assert "block=8" not in argv_for(eng, conc, tmp_path)
     v1 = mac_make(PieEngine, art=mac_artifact(pie_sku="qwen36-27b-dflash-u4g64-kv-bf16"))
     assert "block=8" not in argv_for(v1, single, tmp_path)
+
+
+def test_mlxlm_blocks_every_special_token(tmp_path, monkeypatch):
+    """mlx-lm has no ignore_eos: a -100 bias on each added token of the tokenizer makes it write the full length."""
+    from pie_evals.node.engines import served
+
+    snap = tmp_path / "snap"
+    snap.mkdir()
+    (snap / "tokenizer.json").write_text(json.dumps({"added_tokens": [{"id": 248046, "content": "<|im_end|>"}, {"id": 248069, "content": "</think>"}]}))
+    monkeypatch.setattr("pie_evals.node.engines.shape.hf_snapshot_dir", lambda *a, **k: snap)
+    from types import SimpleNamespace
+    eng = SimpleNamespace(artifact=SimpleNamespace(base_model="m", revision=None))
+    assert served.ServedEngine.stop_token_bias(eng) == {"248046": -100.0, "248069": -100.0}

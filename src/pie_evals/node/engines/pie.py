@@ -250,9 +250,8 @@ class PieEngine(Engine):
         inferlet = self.pie_root / "examples/dflash-speculative-bench" if spec else self.inferlet_dir
         self.env["PIE_BENCH_INFERLET_DIR"] = str(inferlet)
         args: list[str] = ["--engine", engine, "--inferlet-dir", str(inferlet)]
-        # every engine stops where the model ends its answer, capped at the shape's length: Splash and
-        # mlx-lm cannot be made to write past EOS, so pie does not either (it wrote the full length before)
-        args += ["--no-ignore-eos"]
+        # every engine writes exactly the shape's length: pie through ignore-EOS (the common flag), llama.cpp and
+        # Splash through ignore_eos, mlx-lm by blocking its stop tokens; so every decode number covers the same work
         if not spec:
             args += ["--no-system-speculation"]
         elif "dflash2" in (self.artifact.pie_sku or ""):

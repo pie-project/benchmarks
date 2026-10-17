@@ -40,6 +40,9 @@ class ServedEngine(Engine):
     health_path = "/v1/models"
     #: the request field that pins the output length, when the server has one
     ignore_eos_field: str | None = None
+    #: how this server writes exactly ``max_tokens``: "ignore_eos" (a request field it honours) or
+    #: "logit_bias" (every special token the model could stop on is blocked); None: it stops at EOS
+    exact_length: str | None = None
     #: send chat messages (the server renders its template) instead of a rendered prompt
     chat = False
 
@@ -103,6 +106,10 @@ class ServedEngine(Engine):
         body = {**self.extra_body(), **(r.get("extra_body") or {})}
         if self.ignore_eos_field:
             body[self.ignore_eos_field] = True
+        if self.exact_length == "ignore_eos":
+            body["ignore_eos"] = True
+        elif self.exact_length == "logit_bias" and (bias := self.stop_token_bias()):
+            body["logit_bias"] = bias
         if body:
             args += ["--extra-body", json.dumps(body, sort_keys=True)]
         if r.get("flush_cache") is False:
@@ -113,11 +120,24 @@ class ServedEngine(Engine):
             args += ["--seed", str(workload.params["seed"])]
         return args
 
+    def stop_token_bias(self) -> dict[str, float]:
+        """-100 on every added (special) token of the model's tokenizer: end-of-turn, end-of-text, the
+        thinking markers, tool and fill-in tags. Normal text never needs them, and a server that stops
+        on any of them (mlx-lm ends on a second </think>) then writes exactly max_tokens."""
+        from .shape import hf_snapshot_dir
+
+        snap = hf_snapshot_dir(self.artifact.base_model, self.artifact.revision)
+        path = Path(snap) / "tokenizer.json" if snap else None
+        if not path or not path.exists():
+            return {}
+        added = json.loads(path.read_text()).get("added_tokens") or []
+        return {str(t["id"]): -100.0 for t in added if "id" in t}
+
     def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
         # the output length is pinned through the request body where the server
         # can do it; the common flag would claim it for the ones that cannot
         argv = [a for a in super().build_argv(workload, common_args, json_out) if a != "--ignore-eos"]
-        return argv + ["--no-ignore-eos"]
+        return argv + (["--ignore-eos"] if self.exact_length else ["--no-ignore-eos"])
 
     # ---- the server ----------------------------------------------------------
     def server_env(self) -> dict[str, str]:

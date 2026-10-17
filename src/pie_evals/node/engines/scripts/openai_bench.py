@@ -182,7 +182,8 @@ async def run(args: argparse.Namespace):
         "raw_prompt": not args.chat,
         "flush_cache": bool(args.flush_cache),
         "prompt_shuffled": bool(args.flush_cache),
-        "ignore_eos": bool(json.loads(args.extra_body or "{}").get("ignore_eos", False)),
+        # exact length: the server honours ignore_eos, or every token it could stop on is blocked
+        "ignore_eos": bool(json.loads(args.extra_body or "{}").get("ignore_eos", False) or json.loads(args.extra_body or "{}").get("logit_bias")),
         "short_responses": sum(1 for s in server if s["output_tokens"] < s["max_tokens"]),
         "usage_reported": all(s["usage_reported"] for s in server),
         "cached_prompt_tokens": cached,

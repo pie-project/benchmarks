@@ -143,7 +143,7 @@ def model_of(matrix: Matrix, artifact_id: str) -> str:
 
 
 def output_length_mismatches(matrix: Matrix, store: Store, tier: Tier | None = None, *, rel: float = 0.10) -> list[dict]:
-    """Engines stop where the model ends its answer, so two engines can decode different amounts for one prompt.
+    """Every engine is asked to write exactly the shape's length; this catches one that still stops early.
     For each machine, model and workload, compare every engine's mean output tokens per request with pie's;
     a gap past ``rel`` means their decode numbers do not describe the same work."""
     groups: dict[tuple, dict[str, dict]] = defaultdict(dict)
