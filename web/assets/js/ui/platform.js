@@ -12,15 +12,15 @@ window.Pie = window.Pie || {};
     { id: "decode", label: "Decode", detail: "Tokens per second while answering", key: "decode_tok_s", unit: "tok/s", higher: true },
     { id: "prefill", label: "Prefill", detail: "Tokens per second reading the prompt", key: "prefill_tok_s", unit: "tok/s", higher: true },
   ];
-  // the tabs, one per setup, as a browser keeps its tabs. Decode and prefill are the raw rows (speculation off),
-  // held against the hardware limit; every feature after them shows what it adds over the same engine's raw row
+  // the setups, listed in a second sidebar as Mail lists its mailboxes. Raw is decode and prefill with speculation off,
+  // held against the hardware limit; every feature shows what it adds over the same engine's raw row
   const MODES = [
-    { id: "decode", label: "Decode", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
-    { id: "prefill", label: "Prefill", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
-    { id: "speculation", label: "Speculation", detail: "single request, speculation where the engine has a drafter", workload: "single", metric: METRICS[0],
+    { id: "decode", group: "Raw", label: "Decode", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
+    { id: "prefill", group: "Raw", label: "Prefill", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
+    { id: "speculation", group: "Features", icon: "M2 4l5 4-5 4zM8.5 4l5 4-5 4z", label: "Speculation", detail: "single request, speculation where the engine has a drafter", workload: "single", metric: METRICS[0],
       // only the models with a drafter: the rest decode plain and read the same as the Decode tab
       has: (model) => String(Pie.store.index.models[model]?.draft) === "true" },
-    { id: "batching", label: "Batching", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
+    { id: "batching", group: "Features", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", label: "Batching", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
   ];
   let onChange = () => {};
 
@@ -277,15 +277,20 @@ window.Pie = window.Pie || {};
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
 
       element.innerHTML = `
+        <div class="platform-split">
+        <nav class="platform-nav" aria-label="Setup">${[...new Set(MODES.map((m) => m.group))].map((group) =>
+          `<div class="platform-nav-heading">${group}</div>${MODES.filter((m) => m.group === group).map((m) =>
+            `<button type="button" class="platform-nav-item${m === mode ? " is-selected" : ""}" data-mode="${m.id}" aria-current="${m === mode}" title="${esc(`${m.metric.label}: ${m.detail}`)}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg><span>${m.label}</span></button>`).join("")}`).join("")}</nav>
+        <div class="platform-pane">
         <div class="platform-bar">
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
         </div>
-        <div class="platform-tabs" role="tablist" aria-label="Setup">${MODES.map((m) =>
-          `<button type="button" role="tab" class="platform-tab${m === mode ? " is-active" : ""}" data-mode="${m.id}" aria-selected="${m === mode}" title="${esc(`${m.metric.label}: ${m.detail}`)}">${m.label}</button>`).join("")}</div>
         <div class="platform-scroll">
           <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>
+        </div>
+        </div>
         </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
