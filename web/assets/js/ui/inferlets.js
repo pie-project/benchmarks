@@ -22,6 +22,7 @@ window.Pie = window.Pie || {};
       <p class="inf-label">The most humane intelligence ever.</p>
       <p class="inf-text">Inferlets are programmable OS processes that manage how a model thinks, as it runs. The most granular control over your tokens in the world.</p>
     </header>
+    <!-- the live demo window, hidden for now
     <section class="store-shelf">
       <div class="term is-live" id="tw">
         <div class="term-bar">
@@ -35,7 +36,8 @@ window.Pie = window.Pie || {};
           <div class="term-line" id="tw-line" hidden><span class="term-prompt">›</span><input id="tw-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Message"></div>
         </div>
       </div>
-    </section>`;
+    </section>
+    -->`;
 
   // The GPU, named on page load without the engine: WebGPU says whether there is one,
   // WebGL's unmasked renderer usually says which ("ANGLE (Apple, ANGLE Metal Renderer:
@@ -262,8 +264,12 @@ window.Pie = window.Pie || {};
       if (element.hidden || element.dataset.ready === "1") return;
       element.innerHTML = `<div class="method-inner">${content}</div>`;
       element.dataset.ready = "1";
-      demo(element.querySelector("#tw"));
-      detectGpu(element.querySelector("#tw-gpu"));
+      // the demo window is commented out above: start it only when it is on the page
+      const tw = element.querySelector("#tw");
+      if (tw) {
+        demo(tw);
+        detectGpu(element.querySelector("#tw-gpu"));
+      }
     },
   };
 })();
