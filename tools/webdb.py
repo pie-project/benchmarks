@@ -29,7 +29,7 @@ WEB = ROOT / "web"
 # Each site workload maps to measured workloads, best first.
 SINGLE = ["ss-512-256", "ob-512-200", "ss-128-64", "ob-short-100", "ob-story-200"]
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
-RAW = ["raw-512-200"]  # the single request with speculation off: what the hardware limit is measured against
+RAW = ["raw-512-256"]  # the single request with speculation off: what the hardware limit is measured against
 CATEGORIES = (("single", SINGLE, "Single request"), ("throughput", THROUGHPUT, "Throughput"), ("raw", RAW, "Raw"))
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 
