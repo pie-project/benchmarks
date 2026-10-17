@@ -1,8 +1,7 @@
 #!/bin/bash
 # Runs before every job on a benchmark Mac (ACTIONS_RUNNER_HOOK_JOB_STARTED).
 # 1. one job per Mac: wait for any other runner's job on this machine to end
-# 2. nothing left over: kill engines an earlier job left running
-# 3. an idle GPU: at most 5% busy for 10 s before the job may start
+# 2. a clean Mac (clean.sh): quit open apps, kill leftover engines, wait for an idle GPU
 set -u
 . "$(dirname "$0")/common.sh"
 
@@ -25,14 +24,5 @@ echo "$worker" > "$LOCK/pid"
 echo "${GITHUB_REPOSITORY:-?} run ${GITHUB_RUN_ID:-?} job ${GITHUB_JOB:-?}" > "$LOCK/job"
 echo "machine lock taken by worker $worker after $(( $(date +%s) - start ))s"
 
-kill_engines
-
-quiet=0; t0=$(date +%s)
-while :; do
-  u=$(gpu_util)
-  [ -z "$u" ] && { echo "GPU utilization unreadable: not waiting"; break; }
-  if [ "$u" -le 5 ]; then quiet=$((quiet + 1)); else quiet=0; fi
-  [ "$quiet" -ge 10 ] && { echo "GPU idle (${u}%) after $(( $(date +%s) - t0 ))s"; break; }
-  [ $(( $(date +%s) - t0 )) -gt 1800 ] && { echo "::error::GPU still ${u}% busy after 30 min: something outside CI uses it"; rm -rf "$LOCK"; exit 1; }
-  sleep 1
-done
+# a clean Mac: no app a person left open, no engine an earlier job left, an idle GPU
+if ! bash "$(dirname "$0")/clean.sh"; then rm -rf "$LOCK"; exit 1; fi

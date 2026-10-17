@@ -5,7 +5,7 @@
 set -eu
 src=${1:-$(cd "$(dirname "$0")" && pwd)}
 dst="$HOME/.pie-ci-hooks"
-mkdir -p "$dst" && cp "$src"/common.sh "$src"/job-started.sh "$src"/job-completed.sh "$dst"/ && chmod +x "$dst"/*.sh
+mkdir -p "$dst" && cp "$src"/common.sh "$src"/clean.sh "$src"/job-started.sh "$src"/job-completed.sh "$dst"/ && chmod +x "$dst"/*.sh
 for r in "$HOME"/workspace/pie-evals/runner "$HOME"/workspace/pie-evals/runner-2 "$HOME"/actions-runner*; do
   [ -f "$r/.runner" ] || continue
   touch "$r/.env"

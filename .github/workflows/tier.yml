@@ -138,6 +138,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with: { name: jobs, path: jobs }
+      - name: clean the Mac
+        # nothing from a previous test or a person's session shares the GPU: open apps quit, leftover engines killed, GPU idle
+        if: runner.os == 'macOS'
+        run: bash infra/ci/mac-hooks/clean.sh
       - name: install harness
         run: |
           # uv venvs carry no pip: install through uv when it exists, plain venv+pip otherwise (Macs)
