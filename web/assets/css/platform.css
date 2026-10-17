@@ -491,3 +491,67 @@
   .platform-table.is-grouped th.is-overall { left: 386px; }
   .platform-table { --col-w: clamp(156px, (var(--platform-visible, 100vw) - 328px) / max(var(--cols) - 1, 1), 240px); width: max(100%, calc(328px + var(--col-w) * (var(--cols) - 1))); }
 }
+
+/* the setups as browser tabs under the bar: the selected tab takes the table head's chrome and flows into it,
+   with the outward curves at its foot; the rest sit in a darker well, split by short hairlines */
+.platform-bar { border-bottom: 0; }
+.platform-tabs {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  height: 34px;
+  padding: 0 calc(var(--edge) + 4px);
+  background: var(--color-tab-well);
+  box-shadow: inset 0 .5px 0 var(--color-separator), inset 0 -.5px 0 var(--color-separator);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.platform-tab {
+  --r: 8px;
+  position: relative;
+  flex: none;
+  min-width: 96px;
+  height: 28px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--r) var(--r) 0 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-label-secondary);
+  cursor: pointer;
+}
+.platform-tab:hover:not(.is-active) { color: var(--color-label); }
+.platform-tab:not(.is-active):hover::before {
+  content: "";
+  position: absolute;
+  inset: 3px 4px 4px;
+  border-radius: 6px;
+  background: var(--color-hover);
+}
+/* a hairline between two tabs, gone beside the selected one */
+.platform-tab + .platform-tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--color-separator);
+}
+.platform-tab.is-active::after,
+.platform-tab.is-active + .platform-tab::after,
+.platform-tab:hover::after,
+.platform-tab:hover + .platform-tab::after { display: none; }
+.platform-tab.is-active {
+  z-index: 1;
+  color: var(--color-label);
+  background: var(--color-chrome);
+  box-shadow: 0 .5px 0 var(--color-chrome);
+}
+/* the outward curves where the selected tab meets the strip, as Chrome draws them */
+.tab-corner { position: absolute; bottom: 0; width: var(--r); height: var(--r); pointer-events: none; }
+.tab-corner.is-left { right: 100%; background: radial-gradient(circle at 0 0, transparent var(--r), var(--color-chrome) calc(var(--r) + .5px)); }
+.tab-corner.is-right { left: 100%; background: radial-gradient(circle at 100% 0, transparent var(--r), var(--color-chrome) calc(var(--r) + .5px)); }
+.platform-tab:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }

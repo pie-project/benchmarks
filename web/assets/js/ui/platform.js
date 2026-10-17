@@ -12,12 +12,13 @@ window.Pie = window.Pie || {};
     { id: "decode", label: "Decode", detail: "Tokens per second while answering", key: "decode_tok_s", unit: "tok/s", higher: true },
     { id: "prefill", label: "Prefill", detail: "Tokens per second reading the prompt", key: "prefill_tok_s", unit: "tok/s", higher: true },
   ];
-  // the tabs: each a setup of its own. Raw decodes plain and is held against the hardware limit; the others
-  // show what a feature adds, as a gain over the same engine's raw row
+  // the tabs, one per setup, as a browser keeps its tabs. Decode and prefill are the raw rows (speculation off),
+  // held against the hardware limit; every feature after them shows what it adds over the same engine's raw row
   const MODES = [
-    { id: "raw", label: "Raw", detail: "speculation off" },
-    { id: "single", label: "Speculation", detail: "speculation where the engine has a drafter" },
-    { id: "throughput", label: "Batching", detail: "32 requests at once", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
+    { id: "decode", label: "Decode", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
+    { id: "prefill", label: "Prefill", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
+    { id: "speculation", label: "Speculation", detail: "single request, speculation where the engine has a drafter", workload: "single", metric: METRICS[0] },
+    { id: "batching", label: "Batching", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
   ];
   let onChange = () => {};
 
@@ -94,7 +95,7 @@ window.Pie = window.Pie || {};
 
   // under the comparison, a quiet second line: the share of the hardware limit as a meter, or the gain over raw
   const subline = (c, metric, mode, raw) => {
-    if (mode.id === "raw") {
+    if (mode.limit) {
       const own = share(c.pie, metric);
       if (own === null) return "";
       const best = share(c.best, metric);
@@ -119,7 +120,7 @@ window.Pie = window.Pie || {};
     return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   };
   const tip = (mac, model, metric, c, mode, raw) => {
-    const limit = mode.id === "raw";
+    const limit = mode.limit;
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
     const lines = order.map((r, i) => {
@@ -155,11 +156,11 @@ window.Pie = window.Pie || {};
     render(state) {
       const all = Pie.store.snapshot(state.release);
       // Raw first once it has rows; until then the page opens on Speculation, the single request as measured so far
-      if (!MODES.some((m) => m.id === state.platform.mode)) state.platform.mode = all.some((r) => r.workload === "raw" && Pie.store.isMeasured(r)) ? "raw" : "single";
+      if (!MODES.some((m) => m.id === state.platform.mode)) state.platform.mode = all.some((r) => r.workload === "raw" && Pie.store.isMeasured(r)) ? "decode" : "speculation";
       const mode = MODES.find((m) => m.id === state.platform.mode);
-      const metric = mode.metric || METRICS.find((m) => m.id === state.platform.metric) || METRICS[0];
+      const metric = mode.metric;
       const base = Pie.engines.primary;
-      const snapshot = all.filter((r) => r.workload === mode.id);
+      const snapshot = all.filter((r) => r.workload === mode.workload);
       const raw = all.filter((r) => r.workload === "raw" && Pie.store.isMeasured(r));
       const rows = snapshot.filter(Pie.store.isMeasured);
       // a platform's own page lists its machines; All hardware lists every platform's, a header row each
@@ -191,7 +192,7 @@ window.Pie = window.Pie || {};
           const c = cell(rows.filter((r) => r.hardware === mac && r.model === model), metric, base);
           const needs = noFit[mac]?.[model]?.[base];
           const own = snapshot.find((r) => r.hardware === mac && r.model === model && r.engine === base);
-          grid[mac][model] = { c, needs, why: needs ? `Doesn't fit: needs about ${Math.round(needs)} GB` : own?.note || (mode.id === "raw" ? "No raw run yet" : "No data yet") };
+          grid[mac][model] = { c, needs, why: needs ? `Doesn't fit: needs about ${Math.round(needs)} GB` : own?.note || (mode.workload === "raw" ? "No raw run yet" : "No data yet") };
         }
       }
       // Hide unavailable drops the models and machines with nothing to compare, as the results table does
@@ -274,15 +275,12 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="platform-bar">
-          <span class="filter"${mode.metric ? ' style="visibility: hidden"' : ""}>
-            <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" title="Metric">${esc(metric.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
-          </span>
-          <span class="view-toggle" role="tablist" aria-label="Setup">${MODES.map((m) =>
-            `<button type="button" role="tab" data-mode="${m.id}" class="${m === mode ? "is-active" : ""}" aria-selected="${m === mode}" title="${esc(m.detail)}">${m.label}</button>`).join("")}</span>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
         </div>
+        <div class="platform-tabs" role="tablist" aria-label="Setup">${MODES.map((m) =>
+          `<button type="button" role="tab" class="platform-tab${m === mode ? " is-active" : ""}" data-mode="${m.id}" aria-selected="${m === mode}" title="${esc(`${m.metric.label}: ${m.detail}`)}">${m.label}${m === mode ? '<i class="tab-corner is-left"></i><i class="tab-corner is-right"></i>' : ""}</button>`).join("")}</div>
         <div class="platform-scroll">
           <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>
         </div>`;
