@@ -3,6 +3,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;  /* the wide table scrolls inside; the page itself never grows past the screen */
   min-height: 0;
 }
 
@@ -211,8 +212,8 @@
 .model-badge { background: #fff; box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .14); }
 .model-badge img { width: 15px; height: 15px; display: block; }
 
-/* the bar: the metric switch centered, as macOS centers a view switch; Hide unavailable at the end */
-.platform-bar { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; }
+/* the bar holds only Hide unavailable, at its end; the setups live in the second sidebar */
+.platform-bar { display: flex; justify-content: flex-end; gap: 12px; }
 .platform-bar-side.is-end { justify-self: end; }
 .platform-switch { height: 28px; }
 .platform-switch button { min-width: 84px; font-size: 13px; }
@@ -492,53 +493,44 @@
   .platform-table { --col-w: clamp(156px, (var(--platform-visible, 100vw) - 328px) / max(var(--cols) - 1, 1), 240px); width: max(100%, calc(328px + var(--col-w) * (var(--cols) - 1))); }
 }
 
-/* the setups as a macOS tab bar, as Finder and Safari draw one: the tabs share the width evenly up to a fixed widest, titles centered,
-   the selected tab a raised rounded plate on a recessed strip, the rest split by short hairlines */
-.platform-bar { border-bottom: 0; }
-.platform-tabs {
-  display: flex;
+/* the setups in a second sidebar beside the table, as Mail lists its mailboxes beside the messages */
+.platform-split { flex: 1; display: flex; min-width: 0; min-height: 0; }
+.platform-pane { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.platform-nav {
   flex: none;
-  gap: 2px;
-  height: 32px;
-  padding: 3px var(--edge) 4px;
-  background: var(--color-tab-well);
-  box-shadow: inset 0 .5px 0 var(--color-separator), inset 0 -.5px 0 var(--color-separator);
-  overflow-x: auto;
-  scrollbar-width: none;
+  width: 168px;
+  padding: 8px;
+  overflow-y: auto;
+  background: var(--color-sidebar);
+  border-right: .5px solid var(--color-separator);
 }
-.platform-tab {
-  position: relative;
-  flex: 1 1 0;
-  min-width: 96px;
-  max-width: 200px;  /* as a browser's tabs: they share the strip until each reaches its widest, then sit from the left */
+.platform-nav-heading { padding: 16px 8px 4px; font-size: 11px; font-weight: 600; color: var(--color-label-tertiary); }
+.platform-nav-heading:first-child { padding-top: 4px; }
+.platform-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 8px;
   border: 0;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: var(--radius-control);
+  background: none;
   font: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--color-label-secondary);
+  font-size: 13px;
+  color: var(--color-label);
+  text-align: left;
   cursor: pointer;
 }
-.platform-tab:hover:not(.is-active) { color: var(--color-label); background: var(--color-hover); }
-/* a hairline between two tabs, gone beside the selected or hovered one */
-.platform-tab + .platform-tab::before {
-  content: "";
-  position: absolute;
-  left: -1.5px;
-  top: 6px;
-  bottom: 6px;
-  width: 1px;
-  background: var(--color-separator);
+.platform-nav-item:hover { background: var(--color-hover); }
+.platform-nav-item.is-selected { background: var(--color-selection); }
+.platform-nav-item svg { flex: none; width: 16px; height: 16px; fill: none; stroke: var(--color-accent); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.platform-nav-item:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+/* a phone has no room for two sidebars: the setups run across the top as a scrolling row */
+@media (max-width: 899px) {
+  .platform-split { flex-direction: column; }
+  .platform-nav { display: flex; gap: 4px; width: auto; min-width: 0; padding: 6px var(--edge); overflow-x: auto; border-right: 0; border-bottom: .5px solid var(--color-separator); scrollbar-width: none; }
+  .platform-nav-heading { display: none; }
+  .platform-nav-item { width: auto; flex: none; }
 }
-.platform-tab.is-active::before,
-.platform-tab.is-active + .platform-tab::before,
-.platform-tab:hover::before,
-.platform-tab:hover + .platform-tab::before { display: none; }
-.platform-tab.is-active {
-  color: var(--color-label);
-  background: var(--color-chrome);
-  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .12);
-}
-:root[data-theme="dark"] .platform-tab.is-active { background: #464646; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .5), 0 1px 1px rgba(0, 0, 0, .3); }
-.platform-tab:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
