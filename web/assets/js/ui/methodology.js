@@ -249,6 +249,30 @@ window.Pie = window.Pie || {};
     update();
   };
 
+  // bits per weight a result's scheme stores, with its scales
+  const bitsOf = (scheme = "") => (/bf16|f16/.test(scheme) ? 16 : /8/.test(scheme) ? 8.5 : /q4_k/.test(scheme) ? 4.85 : 4.5);
+
+  // the hardware limit for one measured result, from the spec sheet: the slower of reading the bytes and doing the math.
+  // decode is one token at the middle of the answer; prefill is the whole prompt in one pass
+  Pie.ceiling = (row, metric) => {
+    const machine = machines().find((m) => m.id === row.hardware);
+    const model = models().find((m) => m.id === row.model);
+    const workload = Pie.store.index.workloads[row.workload];
+    if (!machine?.bw || !machine.tflops || !model || !workload) return null;
+    const bytes = bitsOf(row.scheme) / 8;
+    const flops = machine.tflops * 1e12;
+    const share = model.active / model.total;
+    const prompt = workload.prompt_tokens;
+    const tokens = metric === "prefill" ? prompt : 1;
+    const context = metric === "prefill" ? prompt : prompt + workload.output_tokens / 2;
+    // a MoE pass touches more experts the more tokens it carries
+    const weightGB = model.total * bytes * (share >= 1 ? 1 : 1 - (1 - share) ** tokens);
+    const memory = (weightGB + context * model.kvKB / 1e6) / machine.bw;
+    const compute = (2 * model.active * 1e9 * tokens) / flops;
+    const bound = memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced";
+    return { tps: tokens / Math.max(memory, compute), bound };
+  };
+
   Pie.methodology = {
     element,
     render(state) {

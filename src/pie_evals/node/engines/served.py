@@ -63,6 +63,9 @@ class ServedEngine(Engine):
         ``auto`` (the default) drafts on single-stream rows only. Needs a ``draft_model``
         on the artifact, and an engine that can draft (``draft_args``)."""
         mode = str(self.recipe.get("speculation", "auto"))
+        # a raw shape decodes plain on every engine, whatever the recipe says
+        if workload.params.get("speculation") is False:
+            return False
         if mode == "off" or not self.artifact.draft_model or type(self).draft_args is ServedEngine.draft_args:
             return False
         return mode == "on" or workload.kind == WorkloadKind.SINGLE_STREAM
