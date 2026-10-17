@@ -917,7 +917,7 @@ window.Pie = window.Pie || {};
       // the picked suite's models only
       const models = Pie.store.tables.models
         .map((model) => model.id)
-        .filter((id) => Pie.store.inSuite(id))
+        .filter((id) => Pie.store.inSuite(id) && Pie.store.onMac(id))
         .filter((id) => !query || names().model(id).toLowerCase().includes(query) || id.includes(query));
       tooBig = (Pie.store.tables.no_fit || {})[hardware] || {};
       macMemory = Pie.store.index.hardware[hardware]?.memory_gib || null;
