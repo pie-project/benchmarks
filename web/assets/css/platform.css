@@ -593,3 +593,49 @@
 
 /* Ceiling: the letter after each percentage names its bound: C compute, B bandwidth */
 .platform-cell .platform-bound { display: inline-block; margin-left: 3px; font-size: 10px; font-weight: 600; color: var(--color-label-tertiary); vertical-align: super; line-height: 1; }
+
+/* phones only: the setup dropdowns are one full pill; the wrapper around each button has no fill or corners of its own */
+@media (max-width: 899px) {
+  .platform-bar .filter { background: none; border-radius: 0; box-shadow: none; }
+  .platform-bar .filter .filter-button { border-radius: 999px; }
+}
+
+/* Hide unavailable copies the setup dropdown exactly (methods.css and filter-bar.css): same height, padding, corners and type.
+   On (the default), it takes the blue tint a filter in use takes (.filter.is-set); off, it has no fill. */
+.platform-bar .platform-hide,
+.filter-bar #hide-empty {
+  height: var(--control-height);
+  padding: 0 9px;
+  border-radius: var(--radius-control);
+  background: none;
+  font-size: 13px;
+  font-weight: inherit;
+  color: var(--color-label);
+  box-shadow: none;
+  margin: 0;
+}
+.platform-bar .platform-hide:hover,
+.filter-bar #hide-empty:hover { background: var(--color-fill-secondary); }
+.platform-bar .platform-hide.is-active,
+.filter-bar #hide-empty.is-active { background: var(--color-accent-tint); color: var(--color-accent); }
+.platform-bar .platform-hide.is-active:hover,
+.filter-bar #hide-empty.is-active:hover { background: var(--color-accent-tint); }
+
+/* phones: the dropdown is a 34px pill with 15px type, so Hide unavailable is too (no chevron, so even padding) */
+@media (max-width: 899px) {
+  .platform-bar .platform-hide,
+  .filter-bar #hide-empty {
+    flex: none;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 15px;
+    margin: 0;
+  }
+}
+
+/* phones: the same 8px gap between every button in the platform bar; Hide unavailable is not pushed to the end */
+@media (max-width: 899px) {
+  .platform-bar { gap: 8px; justify-content: flex-start; }
+  .platform-bar .platform-bar-side.is-end { margin-left: 0; }
+}

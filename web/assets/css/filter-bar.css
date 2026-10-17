@@ -100,3 +100,29 @@
 
 /* a table with no filters has an empty list: it takes no place, so the bar's first button starts where every page's does */
 .filter-list:empty { display: none; }
+
+/* phones: the Results and Quality selects follow the platform bar's dropdowns: one 34px pill with one fill, no wrapper box */
+@media (max-width: 899px) {
+  .filter-bar .filter,
+  .filter-bar .filter:hover,
+  .filter-bar .filter.is-set { background: none; border-radius: 0; box-shadow: none; }
+  .filter-bar .filter .filter-button {
+    height: 34px;
+    padding: 0 12px 0 14px;
+    border-radius: 999px;
+    font-size: 15px;
+    background: var(--color-fill);
+  }
+  .filter-bar .filter .filter-button:hover,
+  .filter-bar .filter .filter-button[aria-expanded="true"] { background: var(--color-fill-secondary); }
+  /* a filter in use keeps its tint, now on the pill itself */
+  .filter-bar .filter.is-set .filter-button { background: var(--color-accent-tint); color: var(--color-accent); }
+}
+
+/* phones: one 8px gap between every button, Status to How we measure to Hide unavailable included; no spacer pushes Hide away */
+@media (max-width: 899px) {
+  .filter-bar,
+  .filter-bar .filter-list { gap: 8px; }
+  .filter-bar .spacer { display: none; }
+  .filter-bar > * { margin-left: 0; margin-right: 0; }
+}
