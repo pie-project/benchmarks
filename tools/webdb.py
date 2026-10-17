@@ -497,6 +497,20 @@ def main() -> None:
     # the CI suite each model runs in: Targeted ones run in both, the rest only in Full
     for m in models:
         m["suite"] = "Targeted" if m["id"] in suite_ids.get("targeted", []) else "Full" if m["id"] in suite_ids.get("full", []) else ""
+    # the platforms each model is measured on, from the tiers its artifacts run in: targeted is the Macs, smoke/nightly/weekly the GPUs, xla the TPU
+    platforms: dict[str, set[str]] = {}
+    for a in load("models")["artifacts"]:
+        tiers = set(a.get("tiers") or [])
+        tags = set()
+        if "targeted" in tiers:
+            tags.add("Mac")
+        if tiers & {"smoke", "nightly", "weekly"}:
+            tags.add("TPU" if "xla" in a["id"] else "GPU")
+        if tags and a["id"] in a2m:
+            platforms.setdefault(a2m[a["id"]], set()).update(tags)
+    order = ["Mac", "GPU", "TPU"]
+    for m in models:
+        m["platforms"] = ", ".join(t for t in order if t in platforms.get(m["id"], set()))
     engine_ids = [e["id"] for e in mac_engines]
     results, rmeta = results_by_tag(store, a2m, hardware_ids, engine_ids, config.get("prefill_only"))
     scores, qmeta = quality_by_tag(store, a2m)
