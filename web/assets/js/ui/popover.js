@@ -53,8 +53,7 @@ window.Pie = window.Pie || {};
       // each name says its phase, so the phases need no headings: a separator between them, as a macOS menu groups items
       .map((group) => setups.filter((m) => m.group === group)
         .map((m) => option(m.id, m.id === state.platform.mode,
-          // as a macOS menu item: the setup's icon and its name
-          `<svg class="setup-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg>` +
+          // a plain name, like the other menus
           `<span class="popover-label">${Pie.format.escape(m.label)}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
         .join(""))
       .join(`<div class="popover-separator"></div>`);
