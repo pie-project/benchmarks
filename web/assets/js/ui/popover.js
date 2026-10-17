@@ -50,7 +50,7 @@ window.Pie = window.Pie || {};
   const metricMenu = (state) => {
     const setups = Pie.platform.metrics();
     return [...new Set(setups.map((m) => m.group))]
-      .map((group) => setups.filter((m) => m.group === group)
+      .map((group) => `<div class="popover-heading">${group}</div>` + setups.filter((m) => m.group === group)
         .map((m) => option(m.id, m.id === state.platform.mode,
           `<span class="popover-label">${Pie.format.escape(m.label)}</span>` +
           `<span class="popover-detail">${Pie.format.escape(m.detail)}</span>`))
