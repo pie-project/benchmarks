@@ -236,6 +236,9 @@ class PieEngine(Engine):
         it on or off; ``auto`` (the default) speculates single-stream rows only, since
         drafting costs throughput under concurrency. Needs the artifact's drafter row."""
         mode = str(self.recipe.get("speculation", "auto"))
+        # a raw shape decodes plain on every engine, whatever the recipe says
+        if workload.params.get("speculation") is False:
+            return False
         if mode == "off" or not (self.artifact.pie_sku and "dflash" in self.artifact.pie_sku):
             return False
         return mode == "on" or workload.kind == WorkloadKind.SINGLE_STREAM

@@ -29,9 +29,11 @@ WEB = ROOT / "web"
 # Each site workload maps to measured workloads, best first.
 SINGLE = ["ss-512-256", "ob-512-200", "ss-128-64", "ob-short-100", "ob-story-200"]
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
+RAW = ["raw-512-200"]  # the single request with speculation off: what the hardware limit is measured against
+CATEGORIES = (("single", SINGLE, "Single request"), ("throughput", THROUGHPUT, "Throughput"), ("raw", RAW, "Raw"))
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 
-WL_PRIORITY = {wl: (cat, i) for cat, ids in (("single", SINGLE), ("throughput", THROUGHPUT)) for i, wl in enumerate(ids)}
+WL_PRIORITY = {wl: (cat, i) for cat, ids, _ in CATEGORIES for i, wl in enumerate(ids)}
 
 ENGINE_META = {
     "pie":      ("pie", "Apache-2.0", "pie-project/pie"),
@@ -137,10 +139,10 @@ def engines() -> list[dict]:
 def workloads() -> list[dict]:
     params = {w["id"]: w.get("params", {}) for w in load("workloads")["workloads"]}
     out = []
-    for cat, ids, label in (("single", SINGLE, "Single request"), ("throughput", THROUGHPUT, "Throughput")):
+    for cat, ids, label in CATEGORIES:
         src = next((i for i in ids if i in params), None)
         p = params.get(src, {})
-        out.append({"id": cat, "label": label, "concurrency": p.get("concurrency") or (1 if cat == "single" else 32),
+        out.append({"id": cat, "label": label, "concurrency": p.get("concurrency") or (32 if cat == "throughput" else 1),
                     "prompt_tokens": p.get("prefill"), "output_tokens": p.get("decode"), "benchmark": ", ".join(ids)})
     return out
 
@@ -495,7 +497,7 @@ def main() -> None:
                   key=lambda x: x["date"] or "", reverse=True)  # the newest tag is the default on the site
     order = [x["id"] for x in tags]
     # the site's default order: engine, then model, then hardware, then workload
-    grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c in ("single", "throughput")]
+    grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c, _, _ in CATEGORIES]
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
     hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids]
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
