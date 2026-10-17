@@ -215,6 +215,7 @@ window.Pie = window.Pie || {};
       filters: ["family", "architecture"],
       columns: [
         text("name", "Name", "Identity"),
+        text("platforms", "Platforms", "Identity", { hint: "The platforms this model is measured on" }),
         text("family", "Family", "Identity", { code: true }),
         text("architecture", "Architecture", "Shape"),
         text("ssd_streaming", "SSD streaming", "Shape"),

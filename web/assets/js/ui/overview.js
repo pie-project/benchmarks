@@ -7,7 +7,7 @@ window.Pie = window.Pie || {};
   const tooltip = document.getElementById("chart-tooltip");
   const WORKLOADS = [
     { id: "single", label: "Single request" },
-    { id: "throughput", label: "Throughput" },
+    { id: "throughput", label: "Batching saturated" },
   ];
   const METRICS = [
     { id: "decode_tok_s", key: "decode_tok_s", label: "Decode" },
@@ -900,7 +900,7 @@ window.Pie = window.Pie || {};
       // the Mac and workload pickers stay on every path, so a Mac with no runs can still be left for another one
       const controls = () => `
         <div class="overview-controls">
-          ${popup("overview-workload", "Workload", WORKLOADS.find((w) => w.id === workload).label)}
+          ${popup("overview-workload", "Workload", (Pie.overview.workloads().find((w) => w.id === workload) || { label: workload }).label)}
           ${popup("overview-engine", "Engine", baseName())}
           ${updated()}
         </div>`;
@@ -925,7 +925,7 @@ window.Pie = window.Pie || {};
       const shown = [...models.filter((id) => byModel[id]), ...models.filter((id) => !byModel[id] && tooBig[id])];
 
       const decode = comparisons(byModel, shown, "decode_tok_s");
-      const workloadLabel = WORKLOADS.find((w) => w.id === workload).label;
+      const workloadLabel = (Pie.overview.workloads().find((w) => w.id === workload) || { label: workload }).label;
 
       element.innerHTML = `
         <div class="overview-inner">

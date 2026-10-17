@@ -11,6 +11,24 @@ window.Pie = window.Pie || {};
   };
 
   const snapshots = tables.snapshots || {};
+  // each model's platforms come from its recorded results, not from the catalog: a platform counts only where a run has a result
+  {
+    const measured = (row) => ["pass", "noisy"].includes(row.status);
+    // a hardware's class names its platform: mac, gpu or tpu
+    const names = { mac: "Mac", gpu: "GPU", tpu: "TPU" };
+    const platformOf = new Map((tables.hardware || []).map((h) => [h.id, names[h.class]]));
+    const seen = {};
+    for (const rows of Object.values(snapshots)) {
+      for (const row of rows) {
+        if (!measured(row)) continue;
+        const tag = platformOf.get(row.hardware);
+        if (tag) (seen[row.model] = seen[row.model] || new Set()).add(tag);
+      }
+    }
+    for (const model of tables.models || []) {
+      model.platforms = ["Mac", "GPU", "TPU"].filter((t) => seen[model.id]?.has(t)).join(", ");
+    }
+  }
   // every combination has a row; only pass and noisy ones carry numbers (older exports have no status: all measured)
   const isMeasured = (row) => !row.status || row.status === "pass" || row.status === "noisy";
   const newestTag = (tables.tags || []).find((tag) => snapshots[tag.id]?.length)?.id;

@@ -9,11 +9,9 @@ window.Pie = window.Pie || {};
       { tint: "#ff9f0a", icon: "M5 12h11M12 7l5 5-5 5M20 5v14", big: "200", unit: "tokens", label: "Answer", line: "Fixed length on every engine." },
       { tint: "#64d2ff", icon: "M12 3v18M5.6 6.6l12.8 10.8M18.4 6.6 5.6 17.4", big: "Cold", label: "Cache", line: "No prefix-cache hits." },
       { tint: "#ff453a", icon: "M12 3c2 3 5 4.5 5 9a5 5 0 0 1-10 0c0-2.5 1.5-3.5 2-5 1 1.5 2 2 3-4z", big: "Warm", label: "Engine", line: "Warmup runs aren't counted." },
-      { tint: "#bf5af2", icon: "M12 3l9 4.5-9 4.5-9-4.5zM3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5", big: "Peak", label: "Batching", line: "More requests until throughput levels off." },
     ]],
 
     ["Statistics", [
-      { tint: "#ff9f0a", icon: "M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", big: "TTFT", label: "Prefill", line: "Prompt tokens over time to first token." },
       { tint: "#30d158", icon: "M4 6h16M4 12h16M4 18h16", big: "3", label: "Rounds", line: "Middle one kept; up to 5 if they disagree." },
       { tint: "#64d2ff", icon: "M6 4v16M12 4v16M18 4v16", big: "6-8", label: "Requests per round", line: "Their median is the round." },
       { tint: "#ff453a", icon: "M12 4l9 16H3zM12 10v4M12 17v.5", big: "2%", label: "Noise", line: "Wider spread is flagged noisy." },
@@ -22,8 +20,11 @@ window.Pie = window.Pie || {};
     ]],
     ["Inference", [
       { tint: "#0a84ff", icon: "M4 12h16M12 4v16", big: "Greedy", label: "Decoding", line: "Temperature 0, top-p 1." },
+      { tint: "#0a84ff", icon: "M4 12h16M12 4v16", big: "Top-1", label: "Sampling", line: "Only the highest-probability token is taken." },
+      { tint: "#0a84ff", icon: "M4 12h16M12 4v16", big: "0", label: "Temperature", line: "No randomness in the choice of tokens." },
       { tint: "#bf5af2", icon: "M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3zM9.5 21h5", big: "Off", label: "Thinking", line: "No reasoning tokens." },
       { tint: "#0a84ff", icon: "M3 7l6 5-6 5zM11 7l6 5-6 5zM20 6v12", big: "Lossless", label: "Speculation", line: "Greedy verify. Off in Raw." },
+      { tint: "#0a84ff", icon: "M4 12h6M14 12h6M10 7l4 5-4 5", big: "Like for like", label: "Drafters", line: "The same model is compared across engines. Models with a shared architecture, such as linear attention, are compared only with each other." },
       { tint: "#ffd60a", icon: "M5 5h14v14H5zM5 12h14M12 5v14", big: "bf16", label: "KV cache", line: "On every engine." },
       { tint: "#5e5ce6", icon: "M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z", big: "Latest", label: "Releases", line: "Newest at run time, same on every Mac." },
     ]],

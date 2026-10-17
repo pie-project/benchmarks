@@ -115,7 +115,7 @@
 .platform-row { display: table-cell; }
 .platform-row > * { vertical-align: middle; }
 .platform-logo { width: 13px; height: 13px; margin: -2px 8px 0 0; fill: currentColor; color: var(--color-label-secondary); vertical-align: middle; }
-.platform-chip { display: inline-flex; flex-direction: column; gap: 2px; line-height: 1.2; }
+.platform-chip { display: inline-flex; flex-direction: row; align-items: baseline; gap: 6px; line-height: 1.2; white-space: nowrap; }
 .platform-mem { font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
 
 /* All hardware: a platform column, its name once at the top of its machines */
@@ -514,3 +514,82 @@
 .tip-row.is-limit .tip-tag { white-space: nowrap; }
 .tip-limit-mark { width: 10px; height: 10px; margin-left: -1px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.6; stroke-linecap: round; }  /* a gauge, for the limit */
 
+
+/* Engines | Ceiling: a segmented control, as on Apple's platforms */
+.platform-compare {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--color-fill);
+}
+.platform-compare .plain-button {
+  height: 24px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label-secondary);
+  background: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+.platform-compare .plain-button:hover { color: var(--color-label); background: none; }
+.platform-compare .plain-button.is-active {
+  color: var(--color-label);
+  background: var(--color-chrome);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18), 0 0 0 .5px rgba(0, 0, 0, .04);
+}
+@media (prefers-color-scheme: dark) {
+  .platform-compare .plain-button.is-active { background: rgba(255, 255, 255, .16); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+}
+
+/* Compare: one button that shows the current mode and swaps to the other */
+.platform-compare-toggle { display: inline-flex; align-items: center; gap: 6px; }
+.platform-compare-toggle svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Engines | Ceiling: plain tabs, the selected one underlined */
+.platform-tabs { display: inline-flex; align-items: stretch; gap: 14px; }
+.platform-tab {
+  position: relative;
+  height: 28px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label-secondary);
+  cursor: pointer;
+}
+.platform-tab:hover { color: var(--color-label); }
+.platform-tab.is-active { color: var(--color-label); }
+.platform-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-accent);
+}
+
+/* narrow columns: a maker's band and a model's head end their text in an ellipsis instead of spilling into the next column */
+.platform-table thead tr.platform-maker-row th.platform-maker { overflow: hidden; }
+.platform-table thead .platform-maker-name { display: flex; align-items: center; min-width: 0; max-width: 100%; overflow: hidden; }
+.platform-table thead .platform-maker-name b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.platform-table thead th:not(.platform-corner) .platform-col { min-width: 0; max-width: 100%; }
+.platform-table thead th:not(.platform-corner) .platform-col > span:last-child { min-width: 0; overflow: hidden; }
+.platform-table thead .platform-model,
+.platform-table thead .platform-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+
+/* Ceiling below 25%: the same green, muted toward the grey text */
+.platform-cell.is-mid { color: color-mix(in srgb, var(--color-positive) 45%, var(--color-label-tertiary)); }
+
+/* Ceiling: the bound that limits a Mac's row, one small grey label under its name */
+.platform-bound { display: block; font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); line-height: 1.2; }
+
+/* Ceiling: the letter after each percentage names its bound: C compute, B bandwidth */
+.platform-cell .platform-bound { display: inline-block; margin-left: 3px; font-size: 10px; font-weight: 600; color: var(--color-label-tertiary); vertical-align: super; line-height: 1; }
