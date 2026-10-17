@@ -229,9 +229,13 @@
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
   backdrop-filter: blur(24px) saturate(1.6);
 }
-.rules-row { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: 5px; font-size: 13px; cursor: default; }
+/* the select menus' row: an empty checkmark column first (6px edge, 14px column, 6px gap), then the icon where the
+   Status menu sets its dot, 6px from its name, as the status options space theirs */
+.rules-row { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 14px 0 26px; border-radius: 5px; font-size: 13px; cursor: default; }
 .rules-row svg { flex: none; width: 13px; height: 13px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .rules-row .popover-detail { color: var(--color-label-secondary); }
+/* the headings start where the icons do, as a macOS menu's section titles clear the checkmark column */
+.rules-popover .popover-heading { padding-left: 26px; }
 
 /* the button names what it opens: an info glyph, then the words */
 .rules-button { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--color-label); }
@@ -254,7 +258,7 @@
 /* a rule row takes a grey wash on hover: it follows the pointer like a menu row, but blue would promise a pick */
 .rules-row:hover { background: var(--color-hover); }
 
-/* the bar's pop-ups take the same light fill as How we measure: one control style across the row, as a macOS toolbar keeps */
+/* the bar's pop-ups take the same light fill as Configuration: one control style across the row, as a macOS toolbar keeps */
 .platform-bar .filter-button,
 .filter-bar .filter-button { background: var(--color-fill); border-radius: var(--radius-control); }
 .platform-bar .filter-button:hover,
@@ -262,16 +266,16 @@
 .platform-bar .filter-button[aria-expanded="true"],
 .filter-bar .filter-button[aria-expanded="true"] { background: var(--color-fill-secondary); }
 
-/* phones: How we measure uses the select menus' sizes (popover.css), as an iOS list: a 44pt row, the rule on the left on one line,
+/* phones: Configuration uses the select menus' sizes (popover.css), as an iOS list: a 44pt row, the rule on the left on one line,
    its value right-aligned in grey. The menus' "detail under its name" layout is for options, not for these rows. */
 @media (max-width: 899px) {
   .rules-popover { padding: 6px; border-radius: 14px; }
-  .rules-popover .popover-heading { padding: 8px 12px 4px; font-size: 13px; }
+  .rules-popover .popover-heading { padding: 8px 12px 4px 36px; font-size: 13px; }
   .rules-row {
-    gap: 10px;
+    gap: 8px;
     height: auto;
     min-height: 44px;
-    padding: 0 14px 0 10px;
+    padding: 0 14px 0 36px;  /* the phone menus' 10px edge, 18px checkmark column and 8px gap */
     border-radius: 9px;
     font-size: 16px;
   }

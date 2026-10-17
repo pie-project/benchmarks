@@ -155,15 +155,25 @@ window.Pie = window.Pie || {};
       ],
     },
 
-    methodology: {
-      label: "Limit",
-      title: "Theoretical Limit",  // the page title in the top bar; the sidebar keeps the short label
+    methods: {
+      label: "Methods",
       tag: "Beta",  // still under development
       section: "measurements",
-      view: "methodology",  // not a table: a calculator of the theoretical maximum
+      view: "methods",  // not a table: how the limit is worked out, a chapter per workload
       filters: [],
       columns: [],
     },
+
+    // the Limit calculator, hidden for now; its code stays (methodology.js), and Pie.ceiling there still feeds the grid
+    // methodology: {
+    //   label: "Limit",
+    //   title: "Theoretical Limit",  // the page title in the top bar; the sidebar keeps the short label
+    //   tag: "Beta",  // still under development
+    //   section: "measurements",
+    //   view: "methodology",  // not a table: a calculator of the theoretical maximum
+    //   filters: [],
+    //   columns: [],
+    // },
 
 
     hardware: {

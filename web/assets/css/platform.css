@@ -217,7 +217,7 @@
 .model-badge img { width: 15px; height: 15px; display: block; }
 
 /* the bar: the setup pop-up at its start, Hide unavailable at its end */
-.platform-bar { display: flex; justify-content: space-between; gap: 4px; }  /* as the results bar spaces its buttons */
+.platform-bar { display: flex; justify-content: space-between; gap: var(--control-gap); }  /* the toolbar's gap, as every bar spaces its buttons */
 .platform-bar-side.is-end { justify-self: end; }
 .platform-switch { height: 28px; }
 .platform-switch button { min-width: 84px; font-size: 13px; }
@@ -512,6 +512,8 @@
 /* the hardware limit as the hover card's last row: under a hairline, in the secondary colour, a gauge for its dot */
 .tip-row.is-limit { margin-top: 4px; padding-top: 5px; height: auto; border-top: .5px solid var(--color-separator); color: var(--color-label-secondary); }
 .tip-row.is-limit .tip-tag { white-space: nowrap; }
+.tip-row.is-limit + .tip-row.is-limit { margin-top: 0; padding-top: 0; border-top: 0; height: 20px; }  /* the second bound sits under the first, one group */
+.tip-row.is-slack { color: var(--color-label-tertiary); }  /* the bound that does not set the limit */
 .tip-limit-mark { width: 10px; height: 10px; margin-left: -1px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.6; stroke-linecap: round; }  /* a gauge, for the limit */
 
 
@@ -591,8 +593,10 @@
 /* Ceiling: the bound that limits a Mac's row, one small grey label under its name */
 .platform-bound { display: block; font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); line-height: 1.2; }
 
-/* Ceiling: the letter after each percentage names its bound: C compute, B bandwidth */
-.platform-cell .platform-bound { display: inline-block; margin-left: 3px; font-size: 10px; font-weight: 600; color: var(--color-label-tertiary); vertical-align: super; line-height: 1; }
+/* Ceiling: a cell bound by the other limit than the rest of the view carries one small grey glyph after its number,
+   hung outside the number so the percentages stay centred in their column */
+.platform-main { position: relative; }
+.platform-exception { position: absolute; top: 50%; width: 11px; height: 11px; margin: -6px 0 0 4px; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 
 /* phones only: the setup dropdowns are one full pill; the wrapper around each button has no fill or corners of its own */
 @media (max-width: 899px) {
