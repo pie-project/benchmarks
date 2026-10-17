@@ -1,6 +1,6 @@
 .popover {
   position: fixed;
-  z-index: 50;
+  z-index: 1000;  /* a menu sits above everything on the page: sticky headers, the sidebar, hover cards */
   min-width: 200px;
   max-width: calc(100vw - 16px);
   max-height: 360px;
@@ -134,3 +134,11 @@
     margin: 6px 8px;
   }
 }
+
+/* the setup menu: an icon and a name, as a macOS menu item */
+.popover-option.is-setup { gap: 8px; padding-right: 14px; }
+/* a menu's icons are monochrome in the label color, white on the highlighted row, as macOS draws them */
+.setup-icon { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.filter-button .setup-icon { margin-right: -1px; }  /* the button's own 6px gap, less a point: 5px, as How we measure spaces its glyph */
+/* a click leaves no ring on the button: only keyboard focus draws one, as on macOS */
+.filter-button:focus:not(:focus-visible) { outline: none; }

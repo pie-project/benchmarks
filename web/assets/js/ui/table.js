@@ -33,8 +33,11 @@ window.Pie = window.Pie || {};
       column.type === "number" ? "is-numeric" : "",
       column.code && !format.isEmpty(value) ? "is-code" : "",
       format.isEmpty(value) ? "is-empty" : "",
+      column.wide ? "is-wide" : "",
     ].filter(Boolean).join(" ");
-    return `<td class="${classes}">${format.value(column, value)}</td>`;
+    // a long note stops at an ellipsis; hovering the cell shows all of it in the site's hover card
+    const full = column.wide && !format.isEmpty(value) ? ` data-note="${format.escape(String(value))}"` : "";
+    return `<td class="${classes}"${full}>${format.value(column, value)}</td>`;
   };
 
   const bodyRow = (row, columns, state, index) => {
@@ -84,9 +87,29 @@ window.Pie = window.Pie || {};
     bindTapNotes() {
       table.addEventListener("click", (event) => {
         if (!Pie.tapCard.isTouch() || event.target.closest("[data-result-key], thead")) return;
-        const noted = event.target.closest("td[title], tr[title]");
-        if (noted?.title) Pie.tapCard.toggle(noted, format.escape(noted.title));
+        const noted = event.target.closest("td[data-note], td[title], tr[title]");
+        const note = noted?.dataset.note || noted?.title;
+        if (note) Pie.tapCard.toggle(noted, format.escape(note));
       });
+      // with a pointer, a note cut off at its ellipsis shows whole in the hover card as soon as the pointer is on it
+      const tooltip = document.getElementById("chart-tooltip");
+      table.addEventListener("pointermove", (event) => {
+        if (event.pointerType !== "mouse") return;
+        const cell = event.target.closest("td[data-note]");
+        if (!cell || cell.scrollWidth <= cell.clientWidth) {
+          tooltip.hidden = true;
+          return;
+        }
+        tooltip.textContent = cell.dataset.note;
+        tooltip.classList.remove("is-card");
+        tooltip.hidden = false;
+        const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
+        const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8);
+        tooltip.style.left = `${Math.max(8, x)}px`;
+        tooltip.style.top = `${Math.max(8, y)}px`;
+      });
+      table.addEventListener("pointerleave", () => (tooltip.hidden = true));
+      table.closest(".table-scroll, .table-wrap")?.addEventListener("scroll", () => (tooltip.hidden = true));
     },
 
     onShowResults(handler) {

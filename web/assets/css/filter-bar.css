@@ -97,3 +97,6 @@
     white-space: nowrap;
   }
 }
+
+/* a table with no filters has an empty list: it takes no place, so the bar's first button starts where every page's does */
+.filter-list:empty { display: none; }

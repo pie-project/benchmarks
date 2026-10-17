@@ -72,15 +72,19 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
                                         "base_model": base, "schemes": set(), "artifacts": 0})
         row["artifacts"] += 1
         row["draft"] = row.get("draft") or bool(a.get("pie_drafter"))
+        # sizes stated in the catalog win over the ones read from the name (gpt-oss-20b says neither its experts nor 21B)
+        for size in ("params_b", "active_b"):
+            if a.get(size) is not None:
+                row[size + "_stated"] = float(a[size])
         if a.get("scheme"):
             row["schemes"].add(a["scheme"])
     for row in by_model.values():
         name = row["name"]
         sizes = re.findall(r"(\d+(?:\.\d+)?)b", name, re.I)
         active = re.search(r"a(\d+(?:\.\d+)?)b", name, re.I)
-        row["params_b"] = float(sizes[0]) if sizes else None
-        row["active_b"] = float(active.group(1)) if active else row["params_b"]
-        row["architecture"] = "MoE" if active or "moe" in (row["family"] or "") or row["family"] in MOE_FAMILIES else "dense"
+        row["params_b"] = row.pop("params_b_stated", None) or (float(sizes[0]) if sizes else None)
+        row["active_b"] = row.pop("active_b_stated", None) or (float(active.group(1)) if active else row["params_b"])
+        row["architecture"] = "MoE" if active or row["active_b"] != row["params_b"] or "moe" in (row["family"] or "") or row["family"] in MOE_FAMILIES else "dense"
         # one definition per model today, every expert resident: no SSD streaming. A streaming twin would fit smaller Macs.
         row["ssd_streaming"] = "Without" if row["architecture"] == "MoE" else "n/a"
         row["schemes"] = ", ".join(sorted(row["schemes"]))
@@ -127,12 +131,19 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
     return rows
 
 
+# what each engine can decode with: plain (speculation off, the Raw rows) and speculative (with a drafter).
+# Splash pairs every model with its DFlash2 draft and has no flag to turn it off (support.yaml)
+DECODING = {"pie": (True, True), "llamacpp": (True, True), "mlxlm": (True, True), "splash": (False, True),
+            "vllm": (True, True), "sglang": (True, True)}
+
+
 def engines() -> list[dict]:
     rows = []
     for e in load("engines")["engines"]:
         name, lic, repo = ENGINE_META.get(e["id"], (e["id"], None, None))
         rows.append({"id": e["id"], "name": name, "version": e.get("pin") or "main", "license": lic, "repo": repo,
-                     "os": ", ".join(e.get("os", [])), "formats": ", ".join(e.get("formats", []))})
+                     "os": ", ".join(e.get("os", [])), "formats": ", ".join(e.get("formats", [])),
+                     **dict(zip(("raw", "speculation"), ("Yes" if ok else "No" for ok in DECODING.get(e["id"], (True, False)))))})
     return rows
 
 
@@ -507,6 +518,8 @@ def main() -> None:
     streams = {m["id"]: m.get("ssd_streaming") for m in models}
     # every combination of Mac, engine, model and workload has a row in every tag, on every Mac, run there or not:
     # its numbers, or why there are none (too big, unsupported, failed, not reached)
+    # a setup no release has measured, earlier or later, has simply not been run yet
+    ever = {(r["hardware"], r["engine"], r["model"], r["workload"]) for rows in snaps.values() for r in rows}
     for t in order:
         have = {(r["hardware"], r["engine"], r["model"], r["workload"]): r for r in snaps[t]}
         tried = attempts.get(t, {})
@@ -528,7 +541,7 @@ def main() -> None:
             elif key in tried:
                 filled.append(empty_row(key, t, "fail" if tried[key]["status"] == "fail" else "not_run", attempt_note(tried[key])))
             else:
-                filled.append(empty_row(key, t, "not_run", "Not run in this release"))
+                filled.append(empty_row(key, t, "not_run", "Not run in this release" if key in ever else "Not run yet"))
         snaps[t] = filled
     qkeys = sorted({k for rows in scores.values() for k in rows})
     quality = stack(order, scores, qkeys, lambda item, key, src: {k: v for k, v in item.items() if k != "_at"}, lambda item: item["date"])

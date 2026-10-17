@@ -72,6 +72,13 @@
   text-align: right;
 }
 
+/* a note column holds one line: the rest after an ellipsis, all of it on hover */
+.data-table td.is-wide {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .data-table td.is-empty {
   color: var(--color-label-quaternary);
 }

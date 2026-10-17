@@ -36,18 +36,20 @@ window.Pie = window.Pie || {};
       this.renderRelease(state);
     },
 
-    // the button names the run by its day, on every page, the table-less ones too; the tag is in its tooltip and menu
+    // the button names the run, Latest or its day, on every page, the table-less ones too; the tag is in its tooltip and menu
     renderRelease(state) {
-      const run = Pie.query.releaseOptions().find((option) => option.id === state.release);
+      const options = Pie.query.releaseOptions();
+      const run = options.find((option) => option.id === state.release);
       const day = run?.date ? String(run.date).replace(/,?\s*\d{1,2}:\d{2}.*$/, "") : "";
-      elements.releaseValue.textContent = day || releaseLabel(state);
+      // the newest run (the list is newest first) is simply Latest; an older one is named by its day
+      elements.releaseValue.textContent = run && run === options[0] ? "Latest" : day || releaseLabel(state);
       elements.releasePicker.title = releaseLabel(state);
     },
 
-    // on every page: an export without suites has nothing to pick between
+    // the suite picker stays hidden: the site shows the Full suite only
     renderSuite(state) {
       const suites = Pie.store.suites();
-      elements.suitePicker.hidden = !suites.length;
+      elements.suitePicker.hidden = true;  // no suite to pick: the site shows Full
       elements.suiteValue.textContent = suites.find((suite) => suite.id === state.suite)?.label || "";
       renderView(state);
     },
