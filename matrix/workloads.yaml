@@ -134,13 +134,13 @@ workloads:
       warmup: 1
     tiers: [targeted]
     est_minutes: 1
-  - id: raw-512-200
+  - id: raw-512-256
     kind: single_stream
     params:
       label: Raw 512
-      description: "512 token prompt, 200 tokens out, speculation off: the plain decode the hardware limit is measured against"
+      description: "512 token prompt, 256 tokens out, speculation off: the plain decode the hardware limit is measured against"
       prefill: 512
-      decode: 200
+      decode: 256
       requests: 6
       warmup: 1
       speculation: false
