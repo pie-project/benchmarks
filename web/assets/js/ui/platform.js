@@ -97,15 +97,24 @@ window.Pie = window.Pie || {};
   const boundOf = (mac, model, mode, metric, pie) => {
     if (mode.limit) return Pie.ceiling?.(pie, metric.id) || null;
     if (mode.workload !== "throughput") return null;
+    return batchedBound(mac, model);
+  };
+  // batched decode: the lower of two bounds, in output tokens per second. Compute: peak FLOPS over the active parameters,
+  // shared with the prompt tokens each request prefills at the same cost, so only output / (prompt + output) of it is output.
+  // Bandwidth: each step reads the weights once, so the batch's tokens per second are batch x bandwidth / weight bytes.
+  function batchedBound(mac, model) {
     const hwRow = Pie.store.index.hardware[mac];
     const mdRow = Pie.store.index.models[model];
+    const workload = Pie.store.index.workloads?.throughput;
     if (!hwRow || !mdRow) return null;
-    const batchN = Pie.store.index.workloads?.throughput?.concurrency || 1;
-    const compute = hwRow.tflops_fp16 && mdRow.active_b ? hwRow.tflops_fp16 * 1e12 / (2 * mdRow.active_b * 1e9) : null;
+    const batchN = workload?.concurrency || 1;
+    const out = workload?.output_tokens ? workload.output_tokens / ((workload.prompt_tokens || 0) + workload.output_tokens) : 1;
+    const compute = hwRow.tflops_fp16 && mdRow.active_b ? out * hwRow.tflops_fp16 * 1e12 / (2 * mdRow.active_b * 1e9) : null;
     const bandwidth = hwRow.bandwidth_gbs && mdRow.size_gib ? batchN * hwRow.bandwidth_gbs * 1e9 / (mdRow.size_gib * 2 ** 30) : null;
-    if (compute && bandwidth) return compute <= bandwidth ? { tps: compute, bound: "compute" } : { tps: bandwidth, bound: "bandwidth" };
-    return compute ? { tps: compute, bound: "compute" } : bandwidth ? { tps: bandwidth, bound: "bandwidth" } : null;
-  };
+    if (!compute && !bandwidth) return null;
+    const bound = compute && (!bandwidth || compute <= bandwidth) ? "compute" : "bandwidth";
+    return { tps: bound === "compute" ? compute : bandwidth, bound, compute, bandwidth };
+  }
   const cell = (rows, metric, base) => {
     const pie = rows.find((r) => r.engine === base && r[metric.key]);
     const others = rows.filter((r) => r.engine !== base && r[metric.key]);
@@ -151,18 +160,7 @@ window.Pie = window.Pie || {};
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
-    // batched decode: the lower of two bounds. Compute: peak FLOPS over the active parameters.
-    // Bandwidth: each step reads the weights once, so the batch's tokens per second are batch x bandwidth / weight bytes.
-    const hwRow = Pie.store.index.hardware[mac];
-    const mdRow = Pie.store.index.models[model];
-    const batchN = Pie.store.index.workloads?.[mode.workload === "throughput" ? "throughput" : ""]?.concurrency || 1;
-    let batchBound = null;
-    if (!limit && mode.workload === "throughput" && hwRow && mdRow) {
-      const compute = hwRow.tflops_fp16 && mdRow.active_b ? hwRow.tflops_fp16 * 1e12 / (2 * mdRow.active_b * 1e9) : null;
-      const bandwidth = hwRow.bandwidth_gbs && mdRow.size_gib ? batchN * hwRow.bandwidth_gbs * 1e9 / (mdRow.size_gib * 2 ** 30) : null;
-      if (compute && bandwidth) batchBound = compute <= bandwidth ? { tps: compute, bound: "compute" } : { tps: bandwidth, bound: "bandwidth" };
-      else batchBound = compute ? { tps: compute, bound: "compute" } : bandwidth ? { tps: bandwidth, bound: "bandwidth" } : null;
-    }
+    const batchBound = !limit && mode.workload === "throughput" ? batchedBound(mac, model) : null;
     const batchPeak = batchBound ? batchBound.tps : null;
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
     const lines = order.map((r, i) => {
@@ -176,22 +174,20 @@ window.Pie = window.Pie || {};
     // the cell's row and column already name the setup, and the bar above the metric: the card is only the engines
     // the hardware limit closes the list as one more row, aligned with the engines': its speed at 100%, and a tag for
     // what sets it (bandwidth, compute, or the interconnect between devices), as a table's summary row reads
-    const BOUND = { bandwidth: "Bandwidth", compute: "Compute", interconnect: "Interconnect", balanced: "Balanced" };
-    if (ceiling) {
-      lines.push(`<div class="tip-row is-limit">
-      <svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg><span class="tip-name" title="What sets the limit">Limit<span class="tip-tag">${esc(BOUND[ceiling.bound] || ceiling.bound)}</span></span>
-      <span class="tip-value">${esc(value(ceiling.tps, metric.unit))}<span class="tip-share">100%</span></span><span class="tip-when"></span></div>`);
-    }
-    if (batchPeak) {
-      lines.push(`<div class="tip-row is-limit">
-      <svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg><span class="tip-name" title="What sets the limit">Limit<span class="tip-tag">${batchBound.bound === "compute" ? "Compute" : "Bandwidth"}</span></span>
-      <span class="tip-value">${esc(value(batchPeak, metric.unit))}<span class="tip-share">100%</span></span><span class="tip-when"></span></div>`);
-    }
+    // both bounds are listed, lower first; the lower one is the limit, so only it carries the 100% the engines are measured against
+    // one group under one rule, as a summary reads: the gauge marks the binding row only, the other row is plain and dimmed
+    const limitRow = (name, tps, binds) => `<div class="tip-row is-limit${binds ? "" : " is-slack"}">
+      ${binds ? '<svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg>' : "<span></span>"}<span class="tip-name" title="${binds ? "What sets the limit" : "Not the limit: the other bound is lower"}">${name} bound</span>
+      <span class="tip-value">${esc(value(tps, metric.unit))}<span class="tip-share">${binds ? "100%" : ""}</span></span><span class="tip-when"></span></div>`;
+    const bounds = (b) => [["Bandwidth", b.bandwidth], ["Compute", b.compute]].filter(([, tps]) => tps).sort((x, y) => x[1] - y[1]);
+    const both = ceiling || batchBound;
+    if (both) bounds(both).forEach(([name, tps], i) => lines.push(limitRow(name, tps, i === 0)));
     return card("", "", lines);
   };
 
   Pie.platform = {
     element,
+    batchedBound,
 
     // the Compare choice, kept per browser: "engines" or "ceiling"
     compare: () => compare,
@@ -304,6 +300,21 @@ window.Pie = window.Pie || {};
           <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span>
           <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
         </span></th></tr>`;
+      // Ceiling: the bound most cells in this view share is said once, in the title bar; a cell whose bound differs
+      // carries a small mark of its own, so a mark always means an exception
+      const tally = { compute: 0, bandwidth: 0 };
+      if (compare === "ceiling") {
+        for (const g of shownGroups) for (const mac of g.macs) for (const model of models) {
+          const c = grid[mac][model].c;
+          const b = c && boundOf(mac, model, mode, metric, c.pie)?.bound;
+          if (b in tally) tally[b] += 1;
+        }
+      }
+      const usual = tally.compute > tally.bandwidth ? "compute" : tally.bandwidth ? "bandwidth" : null;
+      const EXCEPTION = {
+        compute: { title: "Compute-bound: the share of the compute bound", path: "M4.5 4.5h7v7h-7zM6.5 2v2.5M9.5 2v2.5M6.5 11.5V14M9.5 11.5V14M2 6.5h2.5M2 9.5h2.5M11.5 6.5H14M11.5 9.5H14" },
+        bandwidth: { title: "Bandwidth-bound: the share of the bandwidth bound", path: "M2 5.5h9M8.5 3l2.5 2.5L8.5 8M14 10.5H5M7.5 8 5 10.5 7.5 13" },
+      };
       const body = shownGroups.map((g) => groupRow(g) + (folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
@@ -320,9 +331,8 @@ window.Pie = window.Pie || {};
                   if (!ceil) return { kind: "is-even", html: "–" };
                   const share = c.pie[metric.key] / ceil.tps;
                   const kind = share >= 0.25 ? "is-ahead" : "is-mid";
-                  const letter = ceil.bound === "compute" ? "C" : "B";
-                  const title = ceil.bound === "compute" ? "Compute bound" : "Bandwidth bound";
-                  return { kind, html: `${Math.round(share * 100)}%<span class="platform-bound" title="${title}">${letter}</span>` };
+                  const odd = usual && ceil.bound !== usual && EXCEPTION[ceil.bound];
+                  return { kind, html: `${Math.round(share * 100)}%${odd ? `<svg class="platform-exception" viewBox="0 0 16 16" role="img" aria-label="${odd.title}"><title>${odd.title}</title><path d="${odd.path}"/></svg>` : ""}` };
                 })()
               : number(c.gain);
             return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c, mode, raw))}"><span class="platform-main">${n.html}</span>${subline(c, metric, mode, raw)}</span></td>`;
@@ -361,7 +371,7 @@ window.Pie = window.Pie || {};
           <span class="filter platform-compare-filter">
             <button class="filter-button" id="platform-compare" type="button" aria-haspopup="menu" aria-label="${esc(`Compare: ${compare === "ceiling" ? "Ceiling" : "Engines"}`)}">${compare === "ceiling" ? "Ceiling" : "Engines"}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
-          <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>How we measure</button>
+          <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>Configuration</button>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
@@ -373,7 +383,7 @@ window.Pie = window.Pie || {};
       const scroller = element.querySelector(".platform-scroll");
       if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       const macsShown = shownGroups.reduce((n, g) => n + g.macs.length, 0);
-      return { macs: macsShown, models: models.length, metric };
+      return { macs: macsShown, models: models.length, metric, limit: usual && `% of the ${usual} bound` };
     },
 
     bind(state) {

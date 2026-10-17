@@ -46,7 +46,7 @@
     toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isPlatform = Pie.schema[state.table]?.view === "platform";
-    const isMethod = ["welcome", "inferlets", "methodology"].includes(state.table);
+    const isMethod = ["welcome", "inferlets", "methodology", "methods"].includes(state.table);
     filterBar.hidden = isOverview || isMethod || isPlatform;
     table.container.hidden = isOverview || isMethod || isPlatform;
     overview.element.hidden = !isOverview;
@@ -55,12 +55,13 @@
     Pie.welcome.render(state);
     Pie.inferlets.render(state);
     Pie.methodology.render(state);
+    Pie.methods.render(state);
     sidebar.render(state);
     if (isPlatform) {
       const shown = Pie.platform.render(state);
       toolbar.elements.metricValue.textContent = shown.metric.label;
       toolbar.render(state, 0, 0);
-      toolbar.elements.subtitle.textContent = shown.macs ? `${shown.macs} ${shown.macs === 1 ? "machine" : "machines"}, ${shown.models} ${shown.models === 1 ? "model" : "models"}` : "";
+      toolbar.elements.subtitle.textContent = shown.macs ? `${shown.macs} ${shown.macs === 1 ? "machine" : "machines"}, ${shown.models} ${shown.models === 1 ? "model" : "models"}${shown.limit ? ` · ${shown.limit}` : ""}` : "";
     } else if (isOverview) {
       const models = overview.render(state);
       toolbar.render(state, 0, 0);

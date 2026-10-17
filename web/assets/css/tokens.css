@@ -9,6 +9,7 @@
   --bar-height: 52px;
   --filter-bar-height: 40px;
   --control-height: 28px;
+  --control-gap: 4px;  /* between two controls side by side in the bars under the toolbar */
   --row-height: 32px;
   --edge: 16px;
   --radius-control: 6px;
