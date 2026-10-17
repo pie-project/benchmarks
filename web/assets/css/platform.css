@@ -479,3 +479,15 @@
 .tip-share { display: inline-block; min-width: 34px; margin-left: 6px; color: var(--color-label-secondary); font-weight: 400; }
 .platform-bar { position: relative; }
 .platform-bar .view-toggle { position: absolute; left: 50%; transform: translateX(-50%); }
+
+/* desktop: the Overall column holds one short number, so it narrows to 92px and the machine column takes the room,
+   enough for "48 GB · 20-core GPU · 273 GB/s" under the chip name without clipping */
+@media (min-width: 900px) {
+  .platform-table col.col-machine { width: 236px; }
+  .platform-table col.col-model:nth-child(2) { width: 92px; }
+  .platform-table td.is-overall,
+  .platform-table th.is-overall { left: 236px; }
+  .platform-table.is-grouped td.is-overall,
+  .platform-table.is-grouped th.is-overall { left: 386px; }
+  .platform-table { --col-w: clamp(156px, (var(--platform-visible, 100vw) - 328px) / max(var(--cols) - 1, 1), 240px); width: max(100%, calc(328px + var(--col-w) * (var(--cols) - 1))); }
+}
