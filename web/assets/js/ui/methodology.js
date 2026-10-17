@@ -61,35 +61,37 @@ window.Pie = window.Pie || {};
             <div class="calc-memory" data-out="fit" role="status"></div>
           </div>
         </div>
-        <div class="calc-settings" aria-label="Settings">
-          <label class="calc-setting"><span>Model</span><select data-k="model"></select></label>
-          <label class="calc-setting"><span>Machine</span><select data-k="machine"></select></label>
-          <div class="calc-setting" role="radiogroup" aria-label="Weights"><span>Weights</span>
-            <div class="calc-segments">${[4, 8, 16].map((b) => `<label><input type="radio" name="calc-bits" value="${b}"${b === 4 ? " checked" : ""}><span>${b}-bit</span></label>`).join("")}</div>
-          </div>
-          <label class="calc-setting"><span>Context <b data-out="ctxv"></b></span><input type="range" min="0" max="${CONTEXTS.length - 1}" step="1" value="${CONTEXTS.indexOf(4096)}" data-k="contextIdx"></label>
-          <label class="calc-setting"><span>Requests at once <b data-out="batv"></b></span><input type="range" min="0" max="${BATCHES.length - 1}" step="1" value="${BATCHES.indexOf(8)}" data-k="batchIdx"></label>
-          <label class="calc-setting calc-switch-row" data-supports="draft"><span>Speculative decoding</span><span class="calc-switch"><input type="checkbox" role="switch" data-k="spec"><i aria-hidden="true"></i></span></label>
-          <div class="calc-spec" data-out-row="spec" hidden>
-            <label class="calc-setting"><span>Draft tokens per step <b data-out="speckv"></b></span><input type="range" min="1" max="8" step="1" value="4" data-k="specK"></label>
-            <label class="calc-setting"><span>Acceptance rate <b data-out="specav"></b></span><input type="range" min="50" max="95" step="5" value="70" data-k="specA"></label>
-          </div>
-          <label class="calc-setting calc-switch-row" data-supports="ssd"><span>SSD streaming</span><span class="calc-switch"><input type="checkbox" role="switch" data-k="ssd"><i aria-hidden="true"></i></span></label>
-          <div class="calc-spec" data-out-row="ssd" hidden>
-            <label class="calc-setting"><span>SSD read speed <b data-out="ssdv"></b></span><input type="range" min="1" max="20" step="1" value="7" data-k="ssdGBs"></label>
-          </div>
-        </div>
       </div>
       <div hidden>${["bw", "tflops", "mem", "devices", "link", "total", "active", "kvKB"].map((k) => `<input type="hidden" data-k="${k}">`).join("")}</div>
     </section>`;
 
 
+  // the settings as a toolbar above the page, as the platform pages set theirs: pill dropdowns, and toggles that turn blue when on.
+  // Each control keeps its data-k, so read() and the calculator are unchanged; the sliders' steps become the dropdowns' options.
+  const opts = (values, selected, label) => values.map((v, i) => `<option value="${i}"${v === selected ? " selected" : ""}>${label(v)}</option>`).join("");
+  const range = (from, to, by) => Array.from({ length: Math.floor((to - from) / by) + 1 }, (_, i) => from + i * by);
+  const settingsBar = `
+    <div class="platform-bar limit-bar" aria-label="Settings">
+      <button class="filter-button limit-pick" type="button" data-pick="model" aria-haspopup="menu" aria-label="Model"><span data-pick-label="model"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="model" hidden></select>
+      <button class="filter-button limit-pick" type="button" data-pick="machine" aria-haspopup="menu" aria-label="Machine"><span data-pick-label="machine"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="machine" hidden></select>
+      <button class="filter-button limit-pick" type="button" data-pick="bits" aria-haspopup="menu" aria-label="Weights"><span data-pick-label="bits"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="bits" hidden>${[4, 8, 16].map((b) => `<option value="${b}"${b === 4 ? " selected" : ""}>${b}-bit</option>`).join("")}</select>
+      <button class="filter-button limit-pick" type="button" data-pick="contextIdx" aria-haspopup="menu" aria-label="Context"><span data-pick-label="contextIdx"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="contextIdx" hidden>${opts(CONTEXTS, 4096, (c) => `${kTok(c)} context`)}</select>
+      <button class="filter-button limit-pick" type="button" data-pick="batchIdx" aria-haspopup="menu" aria-label="Requests at once"><span data-pick-label="batchIdx"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="batchIdx" hidden>${opts(BATCHES, 8, (b) => `${b} ${b === 1 ? "request" : "requests"}`)}</select>
+      <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>How we measure</button>
+      <label class="plain-button limit-toggle" data-supports="draft"><input type="checkbox" data-k="spec">Speculative decoding</label>
+      <span class="limit-sub" data-out-row="spec" hidden>
+        <button class="filter-button limit-pick" type="button" data-pick="specK" aria-haspopup="menu" aria-label="Draft tokens per step"><span data-pick-label="specK"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="specK" hidden>${range(1, 8, 1).map((v) => `<option value="${v}"${v === 4 ? " selected" : ""}>${v} ${v === 1 ? "draft" : "drafts"}</option>`).join("")}</select>
+        <button class="filter-button limit-pick" type="button" data-pick="specA" aria-haspopup="menu" aria-label="Acceptance rate"><span data-pick-label="specA"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="specA" hidden>${range(50, 95, 5).map((v) => `<option value="${v}"${v === 70 ? " selected" : ""}>${v}% accepted</option>`).join("")}</select>
+      </span>
+      <label class="plain-button limit-toggle" data-supports="ssd"><input type="checkbox" data-k="ssd">SSD streaming</label>
+      <span class="limit-sub" data-out-row="ssd" hidden>
+        <button class="filter-button limit-pick" type="button" data-pick="ssdGBs" aria-haspopup="menu" aria-label="SSD read speed"><span data-pick-label="ssdGBs"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="ssdGBs" hidden>${range(1, 20, 1).map((v) => `<option value="${v}"${v === 7 ? " selected" : ""}>${v} GB/s SSD</option>`).join("")}</select>
+      </span>
+      <span hidden><b data-out="ctxv"></b><b data-out="batv"></b><b data-out="speckv"></b><b data-out="specav"></b><b data-out="ssdv"></b></span>
+    </div>`;
+
   const content = `
     <div class="methods">
-      <header class="methods-hero">
-        <h1>Theoretical maximum.</h1>
-        <p class="methods-lede">Trust, but check your provider.</p>
-      </header>
       ${calculator}
 
     </div>`;
@@ -142,13 +144,22 @@ window.Pie = window.Pie || {};
       // a slider's fill follows its knob
       if (input.type === "range") input.style.setProperty("--fill", `${(100 * (input.value - input.min)) / (input.max - input.min)}%`);
     });
-    state.bits = Number(element.querySelector('input[name="calc-bits"]:checked').value);
+    const radio = element.querySelector('input[name="calc-bits"]:checked');
+    if (radio) state.bits = Number(radio.value);
     state.context = CONTEXTS[state.contextIdx];
+    element.querySelectorAll("[data-pick-label]").forEach((label) => {
+      const select = element.querySelector(`select[data-k="${label.dataset.pickLabel}"]`);
+      label.textContent = select?.options[select.selectedIndex]?.text || "";
+    });
     state.batch = BATCHES[state.batchIdx];
   };
   const fill = (values) => Object.entries(values).forEach(([k, v]) => {
     const input = element.querySelector(`[data-k="${k}"]`);
-    if (input) input.value = v;
+    if (!input) return;
+    if (input.tagName === "SELECT" && ![...input.options].some((o) => o.value === String(v))) {
+      const near = [...input.options].reduce((a, o) => (Math.abs(Number(o.value) - v) < Math.abs(Number(a.value) - v) ? o : a), input.options[0]);
+      input.value = near ? near.value : v;
+    } else input.value = v;
   });
 
   const update = () => {
@@ -240,6 +251,12 @@ window.Pie = window.Pie || {};
     fill({ machine: list.find((m) => m.id === "m5-max-128g")?.id || list[0]?.id, model: mods.find((m) => m.id === "qwen3.8-27b")?.id || mods[0]?.id });
     pickMachine(element.querySelector('[data-k="machine"]').value);
     pickModel(element.querySelector('[data-k="model"]').value);
+    element.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-pick]");
+      if (!button) return;
+      event.stopPropagation();
+      Pie.popover.open(button, `limit:${button.dataset.pick}`, null);
+    });
     element.addEventListener("input", (event) => {
       const k = event.target.dataset?.k;
       if (k === "machine") pickMachine(event.target.value);
@@ -274,11 +291,23 @@ window.Pie = window.Pie || {};
   };
 
   Pie.methodology = {
+    // the shared menu's rows for one setting, from its hidden select
+    menu(k) {
+      const select = element.querySelector(`select[data-k="${k}"]`);
+      return select ? [...select.options].map((o) => ({ value: o.value, label: o.text, selected: o.selected })) : [];
+    },
+    // a pick from that menu: set the select and let the page's input listener recompute
+    pick(k, value) {
+      const select = element.querySelector(`select[data-k="${k}"]`);
+      if (!select) return;
+      select.value = value;
+      select.dispatchEvent(new Event("input", { bubbles: true }));
+    },
     element,
     render(state) {
       element.hidden = state.table !== "methodology";
       if (!element.hidden && element.dataset.ready !== "1") {
-        element.innerHTML = `<div class="method-inner">${content}</div>`;
+        element.innerHTML = `${settingsBar}<div class="method-inner">${content}</div>`;
         bind();
         element.dataset.ready = "1";
       }
