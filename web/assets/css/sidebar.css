@@ -349,3 +349,13 @@
 .sidebar-item .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
 .sidebar-item svg .is-filled { fill: var(--color-label); stroke: none; }
 
+
+/* phones: the ALPHA and BETA tags scale with the 17pt rows, as iOS sets a small caps badge beside a list item */
+@media (max-width: 899px) {
+  .sidebar-tag {
+    padding: 0 6px;
+    border-radius: 5px;
+    font-size: 11px;
+    line-height: 18px;
+  }
+}
