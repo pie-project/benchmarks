@@ -128,6 +128,10 @@
   background: var(--color-hover);
 }
 
+/* no ring after a click, as a macOS pop-up button; the keyboard still sees where it is by the fill */
+.release-picker:focus { outline: none; }
+.release-picker:focus-visible { background: var(--color-hover); }
+
 .release-picker-label {
   color: var(--color-label-secondary);
 }
@@ -434,7 +438,6 @@
 .release-picker.is-prominent {
   padding: 0 8px 0 10px;
   background: var(--color-fill);
-  box-shadow: inset 0 0 0 .5px var(--color-separator);
 }
 .release-picker.is-prominent:hover { background: var(--color-hover); }
 .release-picker.is-prominent .release-picker-value { font-weight: 600; color: var(--color-label); font-variant-numeric: tabular-nums; }
