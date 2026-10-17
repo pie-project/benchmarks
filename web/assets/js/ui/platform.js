@@ -75,6 +75,13 @@ window.Pie = window.Pie || {};
   const card = (title, sub, lines = [], foot = "") => `
     <div class="tip-title">${esc(title)}</div>${sub ? `<div class="tip-sub">${esc(sub)}</div>` : ""}
     ${lines.length ? `<div class="tip-rows">${lines.join("")}</div>` : ""}${foot ? `<div class="tip-foot">${esc(foot)}</div>` : ""}`;
+  // the day each engine's number was taken, from a release or a manual run alike: "Oct 13"
+  const day = (r) => {
+    const when = r.measured || r.stale?.measured || "";
+    if (!when) return "";
+    const [y, m, d] = when.slice(0, 10).split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
   const tip = (mac, model, metric, c) => {
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
     const pieName = names().engine(c.pie.engine);
@@ -82,7 +89,7 @@ window.Pie = window.Pie || {};
       : `${pieName} is ${Math.abs(Math.round(c.gain * 100))}% ${c.gain > 0 ? "faster" : "slower"} than ${names().engine(c.best.engine)}.`;
     const lines = order.map((r, i) => `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
-      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}</span></div>`);
+      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`);
     return card(`${names().model(model)} on ${macName(mac)}`, `${metric.label} · single request`, lines, foot);
   };
 
