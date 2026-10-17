@@ -713,6 +713,7 @@
 .method {
   flex: 1;
   overflow: auto;
+  scrollbar-gutter: stable;  /* a page with a scrollbar and one without center their content at the same place */
 }
 
 .method[hidden] { display: none; }
@@ -1279,9 +1280,11 @@
 .best-bars .best-line { grid-template-columns: 112px 1fr 48px; }
 .best-bars .best-line .bars-name { white-space: nowrap; }
 
-/* Welcome and Inferlets share pie-project.org's measure: 1080px of content inside 22px margins */
+/* every page of prose shares pie-project.org's measure: 1080px of content inside 22px margins */
 @media (min-width: 900px) {
   #welcome .method-inner,
-  #inferlets .method-inner { max-width: calc(1080px + 2 * 22px); padding-left: 22px; padding-right: 22px; }
+  #inferlets .method-inner,
+  #fairness .method-inner,
+  #methodology .method-inner { max-width: calc(1080px + 2 * 22px); padding-left: 22px; padding-right: 22px; }
 }
 

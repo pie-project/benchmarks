@@ -10,12 +10,12 @@ Pie.state = {
   query: "",
   filters: {},
   sort: null,
-  // the Hide unavailable choice is kept per viewer, so it survives a reload
+  // Hide unavailable is on for a first visit; a viewer's own choice is kept, so it survives a reload
   hideEmpty: (() => {
     try {
-      return localStorage.getItem("hideUnavailable") === "1";
+      return localStorage.getItem("hideUnavailable") !== "0";
     } catch {
-      return false;
+      return true;
     }
   })(),
 

@@ -210,3 +210,54 @@
 .calc-spec[hidden] { display: none; }
 
 .calc-switch-row[hidden] { display: none; }
+
+/* Fairness, as apple.com's spec strips: no boxes, a rule over each item, a fine grey glyph, the value carries it */
+.welcome-icon.is-fair { background: linear-gradient(145deg, #34c759, #0a84ff); }
+/* the rules drop down as the site's other menus do: the same surface, headings, rows and separators */
+.rules-popover {
+  position: fixed;
+  z-index: 1000;
+  min-width: 240px;
+  max-width: calc(100vw - 16px);
+  padding: 5px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-menu);
+  color: var(--color-label);
+  background: var(--color-menu);
+  box-shadow: var(--shadow-menu);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+}
+.rules-row { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: 5px; font-size: 13px; cursor: default; }
+.rules-row svg { flex: none; width: 13px; height: 13px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.rules-row .popover-detail { color: var(--color-label-secondary); }
+
+/* the button names what it opens: an info glyph, then the words */
+.rules-button { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--color-label); }
+.rules-button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }  /* the text colour, as the setup pop-up's glyph */
+/* bordered buttons in Apple's system fills: tertiary at rest, secondary under the pointer and while open */
+.rules-button { background: var(--color-fill); box-shadow: none; }
+.rules-button:hover,
+.rules-button[aria-expanded="true"] { background: var(--color-fill-secondary); }
+/* Hide unavailable: no fill while off, the resting fill while on, one step deeper under the pointer */
+#hide-empty,
+.platform-hide { background: none; box-shadow: none; }
+#hide-empty:hover,
+.platform-hide:hover { background: var(--color-hover); }
+#hide-empty.is-active,
+.platform-hide.is-active { background: var(--color-fill); }
+#hide-empty.is-active:hover,
+.platform-hide.is-active:hover { background: var(--color-fill-secondary); }
+/* on a phone they are capsules, as the setup pop-up beside them */
+@media (max-width: 899px) { .rules-button { height: 34px; padding: 0 14px; border-radius: 999px; font-size: 15px; } }
+/* a rule row takes a grey wash on hover: it follows the pointer like a menu row, but blue would promise a pick */
+.rules-row:hover { background: var(--color-hover); }
+
+/* the bar's pop-ups take the same light fill as How we measure: one control style across the row, as a macOS toolbar keeps */
+.platform-bar .filter-button,
+.filter-bar .filter-button { background: var(--color-fill); border-radius: var(--radius-control); }
+.platform-bar .filter-button:hover,
+.filter-bar .filter-button:hover,
+.platform-bar .filter-button[aria-expanded="true"],
+.filter-bar .filter-button[aria-expanded="true"] { background: var(--color-fill-secondary); }

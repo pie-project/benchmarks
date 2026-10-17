@@ -33,9 +33,11 @@
     }
   };
 
+  // the site always shows the Full suite; CI still runs Targeted and Full, but only Full is published to read
   const ensureSuite = () => {
     const suites = store.suites();
-    if (suites.length && !suites.some((suite) => suite.id === state.suite)) state.suite = suites[suites.length - 1].id;
+    if (!suites.length) return;
+    state.suite = suites.some((suite) => suite.id === "full") ? "full" : suites[suites.length - 1].id;
   };
 
   const render = () => {
@@ -251,13 +253,9 @@
       const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || "null");
       if (!saved) return;
       if (saved.table && Pie.schema[saved.table]) state.table = saved.table;
-      if (saved.suite && saved.suitePicked) {
-        state.suite = saved.suite;
-        state.suitePicked = true;
-      }
       if (saved.overview) Object.assign(state.overview, saved.overview);
       if (saved.platform) Object.assign(state.platform, saved.platform);
-      state.hideEmpty = Boolean(saved.hideEmpty);
+      state.hideEmpty = saved.hideEmpty !== false;
     } catch {
       // storage refused or damaged: start from the defaults
     }

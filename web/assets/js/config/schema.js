@@ -156,7 +156,7 @@ window.Pie = window.Pie || {};
     },
 
     methodology: {
-      label: "Verify",
+      label: "Limit",
       tag: "Beta",  // still under development
       section: "measurements",
       view: "methodology",  // not a table: a calculator of the theoretical maximum
@@ -203,6 +203,8 @@ window.Pie = window.Pie || {};
         text("repo", "Repo", "Identity", { code: true }),
         text("os", "OS", "Support"),
         text("formats", "Formats", "Support"),
+        text("raw", "Raw", "Decoding", { info: "Decodes with speculation off: the Raw rows." }),
+        text("speculation", "Speculation", "Decoding", { info: "Drafts and verifies tokens: the Speculative rows." }),
         number("_results", "Results", "Coverage", "", 0),
       ],
     },
