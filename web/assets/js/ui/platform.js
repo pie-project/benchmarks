@@ -17,7 +17,9 @@ window.Pie = window.Pie || {};
   const MODES = [
     { id: "decode", label: "Decode", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
     { id: "prefill", label: "Prefill", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
-    { id: "speculation", label: "Speculation", detail: "single request, speculation where the engine has a drafter", workload: "single", metric: METRICS[0] },
+    { id: "speculation", label: "Speculation", detail: "single request, speculation where the engine has a drafter", workload: "single", metric: METRICS[0],
+      // only the models with a drafter: the rest decode plain and read the same as the Decode tab
+      has: (model) => String(Pie.store.index.models[model]?.draft) === "true" },
     { id: "batching", label: "Batching", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
   ];
   let onChange = () => {};
@@ -183,6 +185,7 @@ window.Pie = window.Pie || {};
       // grouped by maker, makers and models each in alphabetical order
       const byName = (a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
       const allModels = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id))
+        .filter((id) => !mode.has || mode.has(id))
         .filter((id) => !query || names().model(id).toLowerCase().includes(query))
         .sort((a, b) => byName(makerOf(a).name || "~", makerOf(b).name || "~") || byName(names().model(a), names().model(b)));
       const grid = {};
