@@ -66,6 +66,7 @@
     } else if (isMethod) {
       toolbar.elements.title.textContent = Pie.schema[state.table].label;
       toolbar.elements.subtitle.textContent = "";
+      toolbar.renderRelease(state);
     } else {
       const rows = query.visibleRows(state);
       if (state.table === "results") {
