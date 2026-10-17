@@ -1,6 +1,6 @@
 window.Pie = window.Pie || {};
 
-// The rules every engine is measured under, in a popover that drops down from "How we measure" beside the numbers.
+// The rules every engine is measured under, in a popover that drops down from "Configuration" beside the numbers.
 (() => {
   // as a macOS Get Info panel: a column per topic, a row per rule, the value on the right and a short note under it
   const GROUPS = [
@@ -42,7 +42,7 @@ window.Pie = window.Pie || {};
       <span class="popover-detail">${esc(t.big)}${t.unit ? ` ${esc(t.unit)}` : ""}</span>
     </div>`).join("")}`).join(`<div class="popover-separator"></div>`);
 
-  // the rules drop down under their "How we measure" button, as a macOS popover: a click outside,
+  // the rules drop down under their "Configuration" button, as a macOS popover: a click outside,
   // Escape or the button again closes it
   const panel = document.getElementById("rules-popover");
   panel.innerHTML = content;

@@ -2,7 +2,7 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 4px;
+  gap: var(--control-gap);
   height: var(--filter-bar-height);
   padding: 0 var(--edge) 0 8px;
   overflow-x: auto;
@@ -13,7 +13,7 @@
 .filter-list {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--control-gap);
 }
 
 .filter {
@@ -119,7 +119,7 @@
   .filter-bar .filter.is-set .filter-button { background: var(--color-accent-tint); color: var(--color-accent); }
 }
 
-/* phones: one 8px gap between every button, Status to How we measure to Hide unavailable included; no spacer pushes Hide away */
+/* phones: one 8px gap between every button, Status to Configuration to Hide unavailable included; no spacer pushes Hide away */
 @media (max-width: 899px) {
   .filter-bar,
   .filter-bar .filter-list { gap: 8px; }
