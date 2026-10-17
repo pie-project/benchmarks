@@ -26,7 +26,7 @@ window.Pie = window.Pie || {};
     <header class="method-head welcome-intro is-second">
       <div>
         <span class="welcome-icon is-inferlets" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg></span>
-        <h1>Inferlets</h1>
+        <h1>Inferlets<span class="welcome-beta">Beta</span></h1>
         <p class="welcome-tagline">Think like a human.</p>
         <p class="method-lede">Precise control over memory and the inference loop. Let your model draft, branch and rethink, just like you do.</p>
       </div>
