@@ -55,7 +55,7 @@
   :root:not([data-theme="light"]) .welcome-cta.is-secondary:hover { color: #fff; background: #0071e3; box-shadow: none; }
 }
 
-/* a feature still in beta: a small tinted capsule after its name, as Apple marks a beta feature */
+/* a feature not yet released (alpha): a small tinted capsule after its name, as Apple marks a prerelease feature */
 .welcome-beta {
   display: inline-block;
   margin-left: 12px;
