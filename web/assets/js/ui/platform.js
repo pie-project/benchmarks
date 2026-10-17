@@ -84,6 +84,28 @@ window.Pie = window.Pie || {};
   };
 
   // pie's advantage over the best other engine: a speed ratio, or the inverse for a time
+  // Compare: "engines" shows each engine against the best other engine; "ceiling" shows each engine's share of its theoretical bound
+  // the last choice is kept per browser, as Hide unavailable is
+  let compare = (() => {
+    try {
+      return localStorage.getItem("platformCompare") === "ceiling" ? "ceiling" : "engines";
+    } catch {
+      return "engines";
+    }
+  })();
+  // the theoretical bound for a cell: Raw's hardware limit, or for batched decode the lower of compute and bandwidth
+  const boundOf = (mac, model, mode, metric, pie) => {
+    if (mode.limit) return Pie.ceiling?.(pie, metric.id) || null;
+    if (mode.workload !== "throughput") return null;
+    const hwRow = Pie.store.index.hardware[mac];
+    const mdRow = Pie.store.index.models[model];
+    if (!hwRow || !mdRow) return null;
+    const batchN = Pie.store.index.workloads?.throughput?.concurrency || 1;
+    const compute = hwRow.tflops_fp16 && mdRow.active_b ? hwRow.tflops_fp16 * 1e12 / (2 * mdRow.active_b * 1e9) : null;
+    const bandwidth = hwRow.bandwidth_gbs && mdRow.size_gib ? batchN * hwRow.bandwidth_gbs * 1e9 / (mdRow.size_gib * 2 ** 30) : null;
+    if (compute && bandwidth) return compute <= bandwidth ? { tps: compute, bound: "compute" } : { tps: bandwidth, bound: "bandwidth" };
+    return compute ? { tps: compute, bound: "compute" } : bandwidth ? { tps: bandwidth, bound: "bandwidth" } : null;
+  };
   const cell = (rows, metric, base) => {
     const pie = rows.find((r) => r.engine === base && r[metric.key]);
     const others = rows.filter((r) => r.engine !== base && r[metric.key]);
@@ -112,7 +134,7 @@ window.Pie = window.Pie || {};
     if (mode.limit) return "";
     const gain = overRaw(c.pie, metric, raw);
     // a row that did not speculate reads its own raw speed: nothing to add
-    return gain === null || Math.abs(gain - 1) < EVEN ? "" : `<span class="platform-sub-line">${times(gain)} raw</span>`;
+    return "";  // the multiplier under the percentage is not shown
   };
 
   // a hover card: the setup as a title, every engine on its own aligned row (fastest first, pie in blue), one closing line
@@ -129,14 +151,27 @@ window.Pie = window.Pie || {};
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
+    // batched decode: the lower of two bounds. Compute: peak FLOPS over the active parameters.
+    // Bandwidth: each step reads the weights once, so the batch's tokens per second are batch x bandwidth / weight bytes.
+    const hwRow = Pie.store.index.hardware[mac];
+    const mdRow = Pie.store.index.models[model];
+    const batchN = Pie.store.index.workloads?.[mode.workload === "throughput" ? "throughput" : ""]?.concurrency || 1;
+    let batchBound = null;
+    if (!limit && mode.workload === "throughput" && hwRow && mdRow) {
+      const compute = hwRow.tflops_fp16 && mdRow.active_b ? hwRow.tflops_fp16 * 1e12 / (2 * mdRow.active_b * 1e9) : null;
+      const bandwidth = hwRow.bandwidth_gbs && mdRow.size_gib ? batchN * hwRow.bandwidth_gbs * 1e9 / (mdRow.size_gib * 2 ** 30) : null;
+      if (compute && bandwidth) batchBound = compute <= bandwidth ? { tps: compute, bound: "compute" } : { tps: bandwidth, bound: "bandwidth" };
+      else batchBound = compute ? { tps: compute, bound: "compute" } : bandwidth ? { tps: bandwidth, bound: "bandwidth" } : null;
+    }
+    const batchPeak = batchBound ? batchBound.tps : null;
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
     const lines = order.map((r, i) => {
       // Raw: each engine's share of the hardware limit; the others: what the feature adds over its raw row
-      const extra = limit ? share(r, metric) : overRaw(r, metric, raw);
-      const note = extra === null ? "" : limit ? `${Math.round(extra * 100)}%` : times(extra);
+      const extra = limit ? share(r, metric) : batchPeak ? r[metric.key] / batchPeak : overRaw(r, metric, raw);
+      const note = extra === null ? "" : limit || batchPeak ? `${Math.round(extra * 100)}%` : times(extra);
       return `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
-      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}${note ? `<span class="tip-share">${note}</span>` : ""}</span><span class="tip-when">${esc(day(r))}</span></div>`;
+      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}<span class="tip-share">${note}</span></span><span class="tip-when">${esc(day(r))}</span></div>`;
     });
     // the cell's row and column already name the setup, and the bar above the metric: the card is only the engines
     // the hardware limit closes the list as one more row, aligned with the engines': its speed at 100%, and a tag for
@@ -147,11 +182,27 @@ window.Pie = window.Pie || {};
       <svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg><span class="tip-name" title="What sets the limit">Limit<span class="tip-tag">${esc(BOUND[ceiling.bound] || ceiling.bound)}</span></span>
       <span class="tip-value">${esc(value(ceiling.tps, metric.unit))}<span class="tip-share">100%</span></span><span class="tip-when"></span></div>`);
     }
+    if (batchPeak) {
+      lines.push(`<div class="tip-row is-limit">
+      <svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg><span class="tip-name" title="What sets the limit">Limit<span class="tip-tag">${batchBound.bound === "compute" ? "Compute" : "Bandwidth"}</span></span>
+      <span class="tip-value">${esc(value(batchPeak, metric.unit))}<span class="tip-share">100%</span></span><span class="tip-when"></span></div>`);
+    }
     return card("", "", lines);
   };
 
   Pie.platform = {
     element,
+
+    // the Compare choice, kept per browser: "engines" or "ceiling"
+    compare: () => compare,
+    setCompare(value) {
+      compare = value === "ceiling" ? "ceiling" : "engines";
+      try {
+        localStorage.setItem("platformCompare", compare);
+      } catch {
+        // private windows can refuse storage
+      }
+    },
 
     // how many machines a platform has on the site (all platforms when none is named)
     machines(id) {
@@ -262,7 +313,18 @@ window.Pie = window.Pie || {};
           const sorted = sortKey === model ? " is-sorted" : "";
           if (c) {
             cells.push(c.gain);
-            const n = number(c.gain);
+            const ceil = compare === "ceiling" ? boundOf(mac, model, mode, metric, c.pie) : null;
+            const n = compare === "ceiling"
+              ? (() => {
+                  // one neutral colour: the closest to the bound is bold, the furthest dimmed
+                  if (!ceil) return { kind: "is-even", html: "–" };
+                  const share = c.pie[metric.key] / ceil.tps;
+                  const kind = share >= 0.25 ? "is-ahead" : "is-mid";
+                  const letter = ceil.bound === "compute" ? "C" : "B";
+                  const title = ceil.bound === "compute" ? "Compute bound" : "Bandwidth bound";
+                  return { kind, html: `${Math.round(share * 100)}%<span class="platform-bound" title="${title}">${letter}</span>` };
+                })()
+              : number(c.gain);
             return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c, mode, raw))}"><span class="platform-main">${n.html}</span>${subline(c, metric, mode, raw)}</span></td>`;
           }
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card("", "", [], why))}">${needs ? NOFIT : "–"}</span></td>`;
@@ -295,6 +357,9 @@ window.Pie = window.Pie || {};
         <div class="platform-bar">
           <span class="filter platform-setup">
             <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Setup: ${mode.label}`)}">${esc(mode.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+          </span>
+          <span class="filter platform-compare-filter">
+            <button class="filter-button" id="platform-compare" type="button" aria-haspopup="menu" aria-label="${esc(`Compare: ${compare === "ceiling" ? "Ceiling" : "Engines"}`)}">${compare === "ceiling" ? "Ceiling" : "Engines"}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>How we measure</button>
           <span class="platform-bar-side is-end">
@@ -411,6 +476,12 @@ window.Pie = window.Pie || {};
         if (tab) {
           state.platform.mode = tab.dataset.mode;
           onChange();
+          return;
+        }
+        const comparePicker = event.target.closest("#platform-compare");
+        if (comparePicker) {
+          event.stopPropagation();
+          Pie.popover.open(comparePicker, Pie.popover.COMPARE, state);
           return;
         }
         const picker = event.target.closest("#platform-metric");

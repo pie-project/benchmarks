@@ -165,6 +165,8 @@
       } else if (key === popover.SUITE) {
         state.suite = value;
         state.suitePicked = true;
+      } else if (key === popover.COMPARE) {
+        Pie.platform.setCompare(value);
       } else if (key === popover.MAC) {
         state.overview.hardware = value;
       } else if (key === popover.WORKLOAD) {
