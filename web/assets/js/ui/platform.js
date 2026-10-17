@@ -43,9 +43,10 @@ window.Pie = window.Pie || {};
     const hw = Pie.store.index.hardware[id];
     return hw ? `${chipName(id)}${hw.memory_gib ? ` ${hw.memory_gib} GB` : ""}` : id;
   };
-  // "48 GB · 20-core GPU" on a quiet second line under the chip, the two specs that set LLM speed; the CPU waits for the hover
+  // "48 GB · 20-core GPU · 273 GB/s" on a quiet second line under the chip, the specs that set LLM speed; the CPU waits for the hover
   const specOf = (hw) => {
-    const parts = [hw?.memory_gib && `${hw.memory_gib} GB`, hw?.gpu_cores && `${hw.gpu_cores}-core GPU`].filter(Boolean);
+    // bandwidth is the chip tier's, not something memory and cores give: the M4 Max ships at 410 or 546 GB/s by its bin
+    const parts = [hw?.memory_gib && `${hw.memory_gib} GB`, hw?.gpu_cores && `${hw.gpu_cores}-core GPU`, hw?.bandwidth_gbs && `${hw.bandwidth_gbs} GB/s`].filter(Boolean);
     const full = [...parts, hw?.cpu_cores && `${hw.cpu_cores}-core CPU`].filter(Boolean).join(" · ");
     return parts.length ? `<span class="platform-mem" title="${esc(full)}">${parts.join(" · ")}</span>` : "";
   };
