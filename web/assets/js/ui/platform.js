@@ -90,7 +90,8 @@ window.Pie = window.Pie || {};
     const lines = order.map((r, i) => `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
       <span class="tip-value">${esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`);
-    return card(`${names().model(model)} on ${macName(mac)}`, `${metric.label} · single request`, lines, foot);
+    // the metric and the workload are already chosen in the bar above: the card names only the setup
+    return card(`${names().model(model)} on ${macName(mac)}`, "", lines, foot);
   };
 
   Pie.platform = {
