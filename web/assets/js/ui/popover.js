@@ -6,6 +6,7 @@ window.Pie = window.Pie || {};
   const SUITE = "suite";
   const VIEW = "view";
   const METRIC = "metric";
+  const COMPARE = "platform-compare";
   const MAC = "overview-mac";
   const WORKLOAD = "overview-workload";
   const ENGINE = "overview-engine";
@@ -57,6 +58,12 @@ window.Pie = window.Pie || {};
           `<span class="popover-label">${Pie.format.escape(m.label)}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
         .join(""))
       .join(`<div class="popover-separator"></div>`);
+  };
+
+  // Engines or Ceiling: one pick, a checkmark on the current one, like the other menus
+  const compareMenu = () => {
+    const current = Pie.platform.compare();
+    return option("engines", current === "engines", "Engines") + option("ceiling", current === "ceiling", "Ceiling");
   };
 
   // the suite: one pick, a checkmark on the current one, like the release menu
@@ -151,6 +158,7 @@ window.Pie = window.Pie || {};
     SUITE,
     VIEW,
     METRIC,
+    COMPARE,
     MAC,
     WORKLOAD,
     ENGINE,
@@ -173,7 +181,7 @@ window.Pie = window.Pie || {};
       }
       owner = key;
       anchor = target;
-      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === VIEW ? viewMenu(state) : key === SUITE ? suiteMenu(state) : key === METRIC ? metricMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
+      element.innerHTML = key === RELEASE ? releaseMenu(state) : key === VIEW ? viewMenu(state) : key === SUITE ? suiteMenu(state) : key === COMPARE ? compareMenu() : key === METRIC ? metricMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
       element.scrollTop = 0;
       place(target);
     },
@@ -202,7 +210,7 @@ window.Pie = window.Pie || {};
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = target.closest("[data-key]")?.dataset.key || owner;
-        if (key === RELEASE || key === SUITE || key === METRIC || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL || key === QUAL_ENGINE) this.close();
+        if (key === RELEASE || key === SUITE || key === METRIC || key === COMPARE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL || key === QUAL_ENGINE) this.close();
         onPick(key, target.dataset.value);
       });
     },

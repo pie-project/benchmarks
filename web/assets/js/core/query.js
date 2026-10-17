@@ -62,7 +62,7 @@ window.Pie = window.Pie || {};
 
     const order = (a, b) => {
       if (key === "engine") return (a !== engines.primary) - (b !== engines.primary) || a.localeCompare(b);
-      if (key === "workload") return store.index.workloads[a].concurrency - store.index.workloads[b].concurrency;
+      if (key === "workload") return (store.index.workloads[a]?.concurrency ?? 0) - (store.index.workloads[b]?.concurrency ?? 0);
       return a.localeCompare(b);
     };
 
