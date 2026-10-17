@@ -691,7 +691,7 @@
 .chart-tooltip {
   position: fixed;
   z-index: 20;
-  max-width: 260px;
+  max-width: 320px;
   padding: 7px 10px;
   border-radius: 8px;
   background: var(--color-menu);
