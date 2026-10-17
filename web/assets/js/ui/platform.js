@@ -73,7 +73,7 @@ window.Pie = window.Pie || {};
 
   // a hover card: the setup as a title, every engine on its own aligned row (fastest first, pie in blue), one closing line
   const card = (title, sub, lines = [], foot = "") => `
-    <div class="tip-title">${esc(title)}</div>${sub ? `<div class="tip-sub">${esc(sub)}</div>` : ""}
+    ${title ? `<div class="tip-title">${esc(title)}</div>` : ""}${sub ? `<div class="tip-sub">${esc(sub)}</div>` : ""}
     ${lines.length ? `<div class="tip-rows">${lines.join("")}</div>` : ""}${foot ? `<div class="tip-foot">${esc(foot)}</div>` : ""}`;
   // the day each engine's number was taken, from a release or a manual run alike: "Oct 13"
   const day = (r) => {
@@ -87,8 +87,8 @@ window.Pie = window.Pie || {};
     const lines = order.map((r, i) => `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
       <span class="tip-value">${esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`);
-    // the metric and the workload are already chosen in the bar above: the card names only the setup
-    return card(`${names().model(model)} on ${macName(mac)}`, "", lines);
+    // the cell's row and column already name the setup, and the bar above the metric: the card is only the engines
+    return card("", "", lines);
   };
 
   Pie.platform = {
