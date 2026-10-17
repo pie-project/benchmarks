@@ -280,7 +280,7 @@ window.Pie = window.Pie || {};
           </span>
         </div>
         <div class="platform-tabs" role="tablist" aria-label="Setup">${MODES.map((m) =>
-          `<button type="button" role="tab" class="platform-tab${m === mode ? " is-active" : ""}" data-mode="${m.id}" aria-selected="${m === mode}" title="${esc(`${m.metric.label}: ${m.detail}`)}">${m.label}${m === mode ? '<i class="tab-corner is-left"></i><i class="tab-corner is-right"></i>' : ""}</button>`).join("")}</div>
+          `<button type="button" role="tab" class="platform-tab${m === mode ? " is-active" : ""}" data-mode="${m.id}" aria-selected="${m === mode}" title="${esc(`${m.metric.label}: ${m.detail}`)}">${m.label}</button>`).join("")}</div>
         <div class="platform-scroll">
           <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>
         </div>`;
