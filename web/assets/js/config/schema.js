@@ -22,7 +22,7 @@ window.Pie = window.Pie || {};
     },
     inferlets: {
       label: "Inferlets",
-      tag: "Beta",  // still under development
+      tag: "Alpha",  // not yet beta
       section: "home",
       view: "inferlets",  // not a table yet: the page is under development
       filters: [],
