@@ -84,14 +84,11 @@ window.Pie = window.Pie || {};
   };
   const tip = (mac, model, metric, c) => {
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
-    const pieName = names().engine(c.pie.engine);
-    const foot = Math.abs(c.gain) < EVEN ? `${pieName} and ${names().engine(c.best.engine)} are even.`
-      : `${pieName} is ${Math.abs(Math.round(c.gain * 100))}% ${c.gain > 0 ? "faster" : "slower"} than ${names().engine(c.best.engine)}.`;
     const lines = order.map((r, i) => `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
       <span class="tip-value">${esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`);
     // the metric and the workload are already chosen in the bar above: the card names only the setup
-    return card(`${names().model(model)} on ${macName(mac)}`, "", lines, foot);
+    return card(`${names().model(model)} on ${macName(mac)}`, "", lines);
   };
 
   Pie.platform = {
