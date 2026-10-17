@@ -4,6 +4,7 @@ failure classification and the records.jsonl output."""
 
 from pathlib import Path
 
+import os
 import pytest
 
 from pie_evals.node import runner as runner_mod
@@ -12,6 +13,10 @@ from pie_evals.plan.jobs import make_jobs
 from pie_evals.plan.matrix import Matrix
 from pie_evals.results.store import Store
 from pie_evals.schema import CellStatus, ErrorClass, PerfMetrics, Record, Tier, WorkloadSpec
+
+# the runner cools the Mac before every cell and round (60 s each): these tests run with fake engines, not hot chips
+os.environ.setdefault("PIE_EVALS_SETTLE", "0")
+os.environ.setdefault("PIE_EVALS_GPU_IDLE", "0")
 
 ROOT = Path(__file__).resolve().parents[1]
 REAL_ACCURACY = runner_mod.NodeRunner._accuracy

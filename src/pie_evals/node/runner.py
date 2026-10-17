@@ -338,6 +338,7 @@ class NodeRunner:
                     self.emit(self._failed(c, ErrorClass.LOAD_FAIL, f"pie build failed: {e}", None))
             job = job.model_copy(update={"cells": [c for c in job.cells if str(c.engine) != "pie"]})
         pre = pf.Preflight()
+        self._pre = pre
         machine_before = pre.before_job(self.platform.os if self.platform else None)
         self._last_state = machine_before  # failure records carry the state the card was in
         if machine_before.get("gpu_drain_error"):
@@ -562,6 +563,17 @@ class NodeRunner:
         tight = policy.cov_noisy_threshold if int(cell.mode.tp) <= 1 else policy.cov_noisy_threshold_concurrent
         return tight if cell.workload.kind.value in ("single_stream", "control_aa", "long_context") else policy.cov_noisy_threshold_concurrent
 
+    def _round(self, cell: Cell, engine, common: list[str], out_dir: Path, first: bool):
+        """One measured round. Every round after the first starts on a cooled Mac too: with exact output lengths a
+        round is long enough to heat the chip, and the rounds of one cell fell 20-40 % from first to last
+        (0.5.3-b3, M5 Max 64GB, Qwen3.8-27B single stream 68.9 -> 41.6 tok/s); the cell's cool-down alone did not hold."""
+        pre = getattr(self, "_pre", None)
+        if not first and pre is not None and hasattr(pre, "settle") and os.environ.get("PIE_EVALS_SETTLE", "1") != "0":
+            settled = pre.settle(self.platform.os if self.platform else None)
+            if settled:
+                self.log(f"{cell.workload.id}: cooled {settled['settle_s']}s before the next round ({settled['thermal_state_before_settle']} -> {settled['thermal_state']})")
+        return engine.run(cell.workload, common, out_dir, self.cell_timeout_s(cell))
+
     def _run_cell(self, cell: Cell, engine, snapshot: Path, engine_version: str, recipe: dict, recipe_name: str, fingerprint: dict, machine_state: dict) -> Record:
         t0 = time.monotonic()
         cell = cell.model_copy(update={"engine_version": engine_version})
@@ -577,7 +589,7 @@ class NodeRunner:
         results = []
         try:
             for i in range(need):
-                res = engine.run(cell.workload, common, cell_out / f"r{i}", self.cell_timeout_s(cell))
+                res = self._round(cell, engine, common, cell_out / f"r{i}", first=i == 0)
                 results.append(res)
                 rounds.append(self._primary(res.perf))
             hist = self.job.history.get(cell.cell_id, [])
@@ -587,14 +599,14 @@ class NodeRunner:
                 for _ in range(d.more_rounds):
                     if len(rounds) >= policy.max_rounds:
                         break
-                    res = engine.run(cell.workload, common, cell_out / f"r{len(rounds)}", self.cell_timeout_s(cell))
+                    res = self._round(cell, engine, common, cell_out / f"r{len(rounds)}", first=False)
                     results.append(res)
                     rounds.append(self._primary(res.perf))
             elif cov(rounds) > self._noise_bound(cell):
                 # the policy's confirmation rounds: a first round still warming (a fresh pod's
                 # autotune, H100 nightly 36212062773: 6344/6981/6903) settles in the next ones
                 for _ in range(min(policy.confirm_rounds, policy.max_rounds - len(rounds))):
-                    res = engine.run(cell.workload, common, cell_out / f"r{len(rounds)}", self.cell_timeout_s(cell))
+                    res = self._round(cell, engine, common, cell_out / f"r{len(rounds)}", first=False)
                     results.append(res)
                     rounds.append(self._primary(res.perf))
         except EngineLaunchError as e:
