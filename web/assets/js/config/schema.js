@@ -212,7 +212,7 @@ window.Pie = window.Pie || {};
     models: {
       label: "Models",
       section: "catalog",
-      filters: ["suite", "family", "architecture"],
+      filters: ["family", "architecture"],
       columns: [
         text("name", "Name", "Identity"),
         text("platforms", "Platforms", "Identity", { hint: "The platforms this model is measured on: Mac, GPU, TPU" }),
