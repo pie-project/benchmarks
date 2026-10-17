@@ -33,10 +33,14 @@ window.Pie = window.Pie || {};
     render(state, shown, total) {
       elements.title.textContent = Pie.schema[state.table].label;
       elements.subtitle.textContent = Pie.format.count(shown, total);
-      // the button names the run by its day; the menu still lists each run by its tag
+      this.renderRelease(state);
+    },
+
+    // the button names the run by its tag and its day, on every page, the table-less ones too
+    renderRelease(state) {
       const run = Pie.query.releaseOptions().find((option) => option.id === state.release);
       const day = run?.date ? String(run.date).replace(/,?\s*\d{1,2}:\d{2}.*$/, "") : "";
-      elements.releaseValue.textContent = day || releaseLabel(state);
+      elements.releaseValue.textContent = [releaseLabel(state), day].filter(Boolean).join(" · ");
       elements.releasePicker.title = releaseLabel(state);
     },
 
