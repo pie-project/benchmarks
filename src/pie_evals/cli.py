@@ -277,6 +277,29 @@ def report(obj, tier, out):
             f.write(f"regressions={n_reg}\npie_trails={trails}\n")
 
 
+@main.command("checks")
+@click.option("--tier", type=click.Choice([t.value for t in Tier]), required=True)
+@click.pass_obj
+def checks(obj, tier):
+    """After a collect: each cell against its last 7 days, and each engine's output length against pie's.
+    Writes both tables to the job summary and a warning per finding; never fails the run."""
+    m: Matrix = obj["matrix"]
+    st: Store = obj["store"]
+    t = Tier(tier)
+    regs = rp.regressions(m, st, t)
+    lengths = rp.output_length_mismatches(m, st, t)
+    text = rp.regressions_markdown(regs) + "\n" + rp.output_length_markdown(lengths)
+    click.echo(text)
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+            f.write(text)
+    for r in regs:
+        if r["kind"] == "regression":
+            click.echo(f"::warning::regression {r['engine']} {r['platform']} {r['artifact']} {r['workload']}: {r['delta_rel']*100:+.1f}% against the last 7 days")
+    for r in lengths:
+        click.echo(f"::warning::output length {r['engine']} {r['platform']} {r['model']} {r['workload']}: {r['gap_rel']*100:+.0f}% tokens per request against pie")
+
+
 @main.command("pins")
 @click.argument("action", type=click.Choice(["latest", "set"]))
 @click.argument("assignments", required=False, default="")
