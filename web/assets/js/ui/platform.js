@@ -196,7 +196,7 @@ window.Pie = window.Pie || {};
             const n = number(c.gain);
             return `<td class="${sorted}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c))}">${n.html}</span></td>`;
           }
-          return `<td class="${sorted}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card(`${names().model(model)} on ${macName(mac)}`, `${metric.label} · single request`, [], why))}">${needs ? NOFIT : "–"}</span></td>`;
+          return `<td class="${sorted}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card("", "", [], why))}">${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
 
