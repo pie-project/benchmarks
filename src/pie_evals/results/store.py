@@ -31,6 +31,11 @@ from pie_evals.schema.record import ARROW_SCHEMA, records_to_table
 DB_ENV = "PIE_EVALS_DB"
 
 
+def _aware(ts: datetime) -> datetime:
+    """A timestamp in UTC, whether the table stored it with a zone or without."""
+    return ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
+
+
 def default_store() -> str:
     return os.environ.get(DB_ENV) or "store"
 
@@ -83,8 +88,8 @@ class BaseStore:
         """Every quality summary; its per-question answers only with ``samples``."""
         raise NotImplementedError
 
-    def history(self, tier: Tier | None = None, *, limit: int = 20, engine: str | None = None) -> dict[str, list[float]]:
-        """cell_id -> primary metric values of PASS records, oldest→newest, last ``limit``."""
+    def history(self, tier: Tier | None = None, *, limit: int = 20, engine: str | None = None, since: datetime | None = None) -> dict[str, list[float]]:
+        """cell_id -> primary metric values of PASS records, oldest→newest, last ``limit``; from ``since`` on when given."""
         t = self.table(tier)
         if t.num_rows == 0:
             return {}
@@ -92,6 +97,8 @@ class BaseStore:
         rows = [r for r in rows if r["status"] == str(CellStatus.PASS) and r["primary_value"] is not None]
         if engine:
             rows = [r for r in rows if r["engine"] == engine]
+        if since is not None:
+            rows = [r for r in rows if r["started_at"] is not None and _aware(r["started_at"]) >= since]
         rows.sort(key=lambda r: r["started_at"])
         hist: dict[str, list[float]] = defaultdict(list)
         for r in rows:

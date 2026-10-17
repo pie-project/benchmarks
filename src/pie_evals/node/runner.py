@@ -49,9 +49,11 @@ from . import preflight as pf
 from . import profile
 from . import provenance as prov
 from .engines import EngineLaunchError, get_engine
+from .engines.base import workload_mode_args
 from .engines.recipes import load_recipe
 from .engines.shape import context_tokens_for, serve_envelope
 from .metrics.stats import cov, decide_repetition, median
+from .validate import expected_requests, round_problem
 from .workloads import common_args_for
 
 # the long-context shapes (lc-8k, lc-32k) size the server's arena and KV rows; when
@@ -618,8 +620,10 @@ class NodeRunner:
         # L40S x2: A/A spread 2.1 % against the 2 % bound, every cell withheld)
         tight = policy.cov_noisy_threshold if int(cell.mode.tp) <= 1 else policy.cov_noisy_threshold_concurrent
         thr = self._noise_bound(cell)
-        if perf.failed:
-            status, invalid = CellStatus.FAIL, f"{perf.failed} of {perf.requests} requests failed"
+        # every round must have finished the requests asked for, on the same prompts; else the median is not this workload
+        problem = round_problem(expected_requests(workload_mode_args(cell.workload)[1]), [r.perf for r in results])
+        if problem:
+            status, invalid = CellStatus.FAIL, problem
         elif len(rounds) >= 2 and perf.cov > thr:
             status, invalid = CellStatus.NOISY, f"cov {perf.cov:.3%} > {thr:.1%}"
         if cell.workload.kind.value == "control_aa" and len(rounds) >= 2:
