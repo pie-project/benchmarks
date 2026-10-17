@@ -157,6 +157,7 @@ window.Pie = window.Pie || {};
 
     methodology: {
       label: "Limit",
+      title: "Theoretical Limit",  // the page title in the top bar; the sidebar keeps the short label
       tag: "Beta",  // still under development
       section: "measurements",
       view: "methodology",  // not a table: a calculator of the theoretical maximum

@@ -66,7 +66,7 @@
       toolbar.render(state, 0, 0);
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
     } else if (isMethod) {
-      toolbar.elements.title.textContent = Pie.schema[state.table].label;
+      toolbar.elements.title.textContent = Pie.schema[state.table].title || Pie.schema[state.table].label;
       toolbar.elements.subtitle.textContent = "";
       toolbar.renderRelease(state);
     } else {
@@ -185,6 +185,8 @@
         state.overview.historyModel = value;
       } else if (key === popover.QUAL_ENGINE) {
         state.overview.qualityEngine = value;
+      } else if (String(key).startsWith("limit:")) {
+        Pie.methodology.pick(key.slice(6), value);
       } else if (value === popover.ALL) {
         state.setFilter(key, []);
       } else {

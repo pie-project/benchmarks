@@ -351,3 +351,52 @@
   :root[data-theme="dark"] .calc-result,
   :root[data-theme="dark"] .calc-memory { background: #323234; }
 }
+
+/* the Limit settings as a toolbar above the page, as the platform pages set theirs: it stays on top while the page scrolls */
+.limit-bar { position: sticky; top: 0; z-index: 5; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.limit-bar::-webkit-scrollbar { display: none; }
+.limit-bar > *, .limit-sub > * { flex: none; }
+.limit-sub { display: inline-flex; gap: inherit; }
+.limit-sub[hidden], .limit-toggle[hidden] { display: none; }
+
+/* a dropdown reads as the other pop-up buttons: its value, then the 8x12 chevron 7px after it, then the button's 9px edge (12px on phones) */
+.limit-bar select.limit-select {
+  padding-right: 24px;
+  border: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'%3E%3Cpath d='M2 5l3-3 3 3M2 9l3 3 3-3' fill='none' stroke='%238e8e93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 8px 12px;
+  color: var(--color-label);
+  font: inherit;
+  font-size: 13px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+/* a toggle is a button that turns blue when on, as Hide unavailable does */
+.limit-toggle { display: inline-flex; align-items: center; gap: 0; cursor: pointer; white-space: nowrap; }
+.limit-toggle input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.limit-toggle:has(input:checked) { background: var(--color-accent-tint); color: var(--color-accent); }
+.limit-toggle:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* with the settings on top, the results take the page's full width */
+.calc-body { grid-template-columns: minmax(0, 1fr); }
+
+@media (max-width: 899px) {
+  .limit-bar select.limit-select { padding-right: 27px; background-position: right 12px center; background-size: 8px 12px; font-size: 15px; }
+}
+
+/* phones: the Limit bar's dropdowns and toggles are 34pt pills, as the platform bar's are */
+@media (max-width: 899px) {
+  .limit-bar select.limit-select,
+  .limit-bar .limit-toggle { height: 34px; border-radius: 999px; }
+  .limit-bar .limit-toggle { padding: 0 14px; font-size: 15px; }
+  .limit-bar { gap: 8px; }
+}
+
+/* phones: the Limit pop-up buttons are 34pt pills, as the platform bar's are */
+@media (max-width: 899px) {
+  .limit-bar .limit-pick { height: 34px; padding: 0 12px 0 14px; border-radius: 999px; font-size: 15px; }
+}
