@@ -55,18 +55,13 @@
   :root:not([data-theme="light"]) .welcome-cta.is-secondary:hover { color: #fff; background: #0071e3; box-shadow: none; }
 }
 
-/* a feature not yet released (alpha): a small tinted capsule after its name, as Apple marks a prerelease feature */
-.welcome-beta {
-  display: inline-block;
-  margin-left: 12px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--color-accent-tint);
-  color: var(--color-accent);
+/* a feature not yet released (alpha): a short coloured word over its name, as apple.com marks a product "New" */
+.welcome-eyebrow {
+  margin: 0 0 2px;
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 600;
-  letter-spacing: .02em;
-  line-height: 1.3;
-  vertical-align: middle;
+  line-height: 1.25;
+  color: #b64400;
 }
+:root[data-theme="dark"] .welcome-eyebrow { color: #f56300; }

@@ -76,8 +76,9 @@ svg {
   background: var(--color-hover);
 }
 
+/* a toggle that is on is a filled button, as a toolbar toggle in Finder: not a coloured word that reads as a link */
 .plain-button.is-active {
-  color: var(--color-accent);
+  background: var(--color-selection);
 }
 
 .popup-chevron {

@@ -50,10 +50,12 @@ window.Pie = window.Pie || {};
   const metricMenu = (state) => {
     const setups = Pie.platform.metrics();
     return [...new Set(setups.map((m) => m.group))]
-      .map((group) => `<div class="popover-heading">${group}</div>` + setups.filter((m) => m.group === group)
+      // each name says its phase, so the phases need no headings: a separator between them, as a macOS menu groups items
+      .map((group) => setups.filter((m) => m.group === group)
         .map((m) => option(m.id, m.id === state.platform.mode,
-          `<span class="popover-label">${Pie.format.escape(m.label)}</span>` +
-          `<span class="popover-detail">${Pie.format.escape(m.detail)}</span>`))
+          // as a macOS menu item: the setup's icon and its name
+          `<svg class="setup-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg>` +
+          `<span class="popover-label">${Pie.format.escape(m.label)}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
         .join(""))
       .join(`<div class="popover-separator"></div>`);
   };
@@ -66,10 +68,9 @@ window.Pie = window.Pie || {};
         `<span class="popover-detail">${Pie.format.escape(suite.detail)}</span>`))
       .join("");
 
-  // the compact toolbar's one picker: the release menu, then the suite's; each part says which pick it makes
+  // the compact toolbar's one picker: the release menu (the site shows the Full suite only)
   const viewMenu = (state) => {
-    const suites = Pie.store.suites().length ? `<div class="popover-separator"></div><div data-key="${SUITE}"><div class="popover-heading">Suite</div>${suiteMenu(state)}</div>` : "";
-    return `<div data-key="${RELEASE}">${releaseMenu(state)}</div>${suites}`;
+    return `<div data-key="${RELEASE}">${releaseMenu(state)}</div>`;
   };
 
   // the overview's Mac: one pick, a checkmark on the current one, like the release menu

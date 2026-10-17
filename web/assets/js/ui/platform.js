@@ -12,16 +12,16 @@ window.Pie = window.Pie || {};
     { id: "decode", label: "Decode", detail: "Tokens per second while answering", key: "decode_tok_s", unit: "tok/s", higher: true },
     { id: "prefill", label: "Prefill", detail: "Tokens per second reading the prompt", key: "prefill_tok_s", unit: "tok/s", higher: true },
   ];
-  // the setups in a second sidebar, as Mail lists its mailboxes, grouped by the kernel they measure: decode and prefill
+  // the setups, picked from a pop-up in the bar and grouped by the kernel they measure: decode and prefill
   // run different kernels with different bottlenecks. Each group opens on its raw row (speculation off), held against
   // the hardware limit; the features under it are only those that change that phase, each shown as its gain over raw
   const MODES = [
-    { id: "decode", group: "Decode", label: "Raw", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
-    { id: "speculation", group: "Decode", icon: "M2 4l5 4-5 4zM8.5 4l5 4-5 4z", label: "Speculation", detail: "single request, speculation where the engine has a drafter", workload: "single", metric: METRICS[0],
+    { id: "decode", group: "Decode", label: "Raw Decode", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
+    { id: "speculation", group: "Decode", label: "Speculative Decode", icon: "M2 4l5 4-5 4zM8.5 4l5 4-5 4z", detail: "single request, speculation where the engine has a drafter", workload: "single", metric: METRICS[0],
       // only the models with a drafter: the rest decode plain and read the same as raw
       has: (model) => String(Pie.store.index.models[model]?.draft) === "true" },
-    { id: "batching", group: "Decode", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", label: "Batching", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
-    { id: "prefill", group: "Prefill", label: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
+    { id: "batching", group: "Decode", label: "Batched Decode", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
+    { id: "prefill", group: "Prefill", label: "Raw Prefill", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
   ];
   let onChange = () => {};
 
@@ -55,11 +55,22 @@ window.Pie = window.Pie || {};
     return hw ? `${chipName(id)}${hw.memory_gib ? ` ${hw.memory_gib} GB` : ""}` : id;
   };
   // "48 GB · 20-core GPU · 273 GB/s" on a quiet second line under the chip, the specs that set LLM speed; the CPU waits for the hover
-  const specOf = (hw) => {
-    // bandwidth is the chip tier's, not something memory and cores give: the M4 Max ships at 410 or 546 GB/s by its bin
-    const parts = [hw?.memory_gib && `${hw.memory_gib} GB`, hw?.gpu_cores && `${hw.gpu_cores}-core GPU`, hw?.bandwidth_gbs && `${hw.bandwidth_gbs} GB/s`].filter(Boolean);
-    const full = [...parts, hw?.cpu_cores && `${hw.cpu_cores}-core CPU`].filter(Boolean).join(" · ");
-    return parts.length ? `<span class="platform-mem" title="${esc(full)}">${parts.join(" · ")}</span>` : "";
+  // a machine's row says only what tells it from its namesakes, its memory, as Apple lists a Mac; the full spec sheet
+  // shows when the pointer rests on it, and grows as the catalog does (interconnect, power, more) without crowding the row
+  const specOf = (hw) => (hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : "");
+  const LINKS = { uma: "Unified memory", nvlink: "NVLink", pcie: "PCIe", tb5: "Thunderbolt 5" };
+  const specSheet = (hw) => {
+    const rows = [
+      ["Memory", hw.memory_gib && `${hw.memory_gib} GB`],
+      ["Bandwidth", hw.bandwidth_gbs && `${hw.bandwidth_gbs} GB/s`],
+      ["GPU", hw.gpu_cores && `${hw.gpu_cores} cores`],
+      ["CPU", hw.cpu_cores && `${hw.cpu_cores} cores`],
+      ["Compute", hw.tflops_fp16 && `${hw.tflops_fp16} TFLOPS fp16`],
+      ["Devices", hw.count > 1 && `${hw.count}`],
+      ["Interconnect", hw.interconnect && (LINKS[hw.interconnect] || hw.interconnect)],
+      ["Power", hw.power_w && `${hw.power_w} W at full load`],
+    ].filter(([, v]) => v);
+    return `<div class="tip-title">${esc(hw.name || hw.id)}</div><div class="spec-rows">${rows.map(([k, v]) => `<div class="spec-row"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("")}</div>`;
   };
   const value = (n, unit) => {
     const v = n >= 100 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 });
@@ -67,7 +78,6 @@ window.Pie = window.Pie || {};
   };
   const EVEN = 0.045;  // under 5%, as the cell rounds it, the engines are even: run-to-run spread, not a result
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/></svg>';
-  const ARROW = (up) => `<svg class="platform-arrow" viewBox="0 0 10 12" aria-hidden="true"><path d="${up ? "M5 10.5V1.8M1.6 5.2 5 1.8l3.4 3.4" : "M5 1.5v8.7M1.6 6.8 5 10.2l3.4-3.4"}"/></svg>`;
   const signed = (p) => {
     const pct = Math.round(p * 100);
     return pct > 0 ? `+${pct}%` : pct < 0 ? `−${Math.abs(pct)}%` : "0%";
@@ -96,16 +106,10 @@ window.Pie = window.Pie || {};
   };
   const times = (x) => `${x >= 10 ? Math.round(x) : x.toFixed(1)}×`;
 
-  // under the comparison, a quiet second line: the share of the hardware limit as a meter, or the gain over raw
+  // under the comparison, a quiet second line on the feature views: what the feature adds over raw
   const subline = (c, metric, mode, raw) => {
-    if (mode.limit) {
-      const own = share(c.pie, metric);
-      if (own === null) return "";
-      const best = share(c.best, metric);
-      const pct = (f) => Math.min(100, Math.round(f * 100));
-      const tick = best === null ? "" : `<b style="left: ${pct(best)}%"></b>`;
-      return `<span class="platform-sub-line"><span class="limit-meter" aria-hidden="true"><i style="width: ${pct(own)}%"></i>${tick}</span>${Math.round(own * 100)}%</span>`;
-    }
+    // Raw cells hold one number; how near the hardware limit each engine runs is in the hover card
+    if (mode.limit) return "";
     const gain = overRaw(c.pie, metric, raw);
     // a row that did not speculate reads its own raw speed: nothing to add
     return gain === null || Math.abs(gain - 1) < EVEN ? "" : `<span class="platform-sub-line">${times(gain)} raw</span>`;
@@ -135,8 +139,15 @@ window.Pie = window.Pie || {};
       <span class="tip-value">${esc(value(r[metric.key], metric.unit))}${note ? `<span class="tip-share">${note}</span>` : ""}</span><span class="tip-when">${esc(day(r))}</span></div>`;
     });
     // the cell's row and column already name the setup, and the bar above the metric: the card is only the engines
-    const foot = ceiling ? `Hardware limit ${value(ceiling.tps, metric.unit)}, ${ceiling.bound === "balanced" ? "bandwidth and compute balanced" : `${ceiling.bound}-bound`}, from the spec sheet.` : "";
-    return card("", "", lines, foot);
+    // the hardware limit closes the list as one more row, aligned with the engines': its speed at 100%, and a tag for
+    // what sets it (bandwidth, compute, or the interconnect between devices), as a table's summary row reads
+    const BOUND = { bandwidth: "Bandwidth", compute: "Compute", interconnect: "Interconnect", balanced: "Balanced" };
+    if (ceiling) {
+      lines.push(`<div class="tip-row is-limit">
+      <svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg><span class="tip-name" title="What sets the limit">Limit<span class="tip-tag">${esc(BOUND[ceiling.bound] || ceiling.bound)}</span></span>
+      <span class="tip-value">${esc(value(ceiling.tps, metric.unit))}<span class="tip-share">100%</span></span><span class="tip-when"></span></div>`);
+    }
+    return card("", "", lines);
   };
 
   Pie.platform = {
@@ -147,7 +158,7 @@ window.Pie = window.Pie || {};
       return Pie.store.tables.hardware.filter((hw) => { const p = platformOf(hw); return p && (!id || p.id === id); }).length;
     },
 
-    // the setups, for the pop-up that stands in for the second sidebar on a narrow window
+    // the setups, for the pop-up in the bar
     metrics() {
       return MODES;
     },
@@ -184,12 +195,15 @@ window.Pie = window.Pie || {};
       const p = state.platform;
 
       // every cell first: a comparison, or why there is none
-      // grouped by maker, makers and models each in alphabetical order
+      // grouped by maker; makers and models in the order the viewer dragged them, the rest alphabetical after
       const byName = (a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
+      const rank = (list, key) => { const i = (list || []).indexOf(key); return i < 0 ? Infinity : i; };
+      const byRank = (list, a, b) => { const x = rank(list, a), y = rank(list, b); return x === y ? 0 : x < y ? -1 : 1; };
       const allModels = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id))
         .filter((id) => !mode.has || mode.has(id))
         .filter((id) => !query || names().model(id).toLowerCase().includes(query))
-        .sort((a, b) => byName(makerOf(a).name || "~", makerOf(b).name || "~") || byName(names().model(a), names().model(b)));
+        .sort((a, b) => byRank(p.makerOrder, makerOf(a).name, makerOf(b).name) || byName(makerOf(a).name || "~", makerOf(b).name || "~")
+          || byRank(p.modelOrder, a, b) || byName(names().model(a), names().model(b)));
       const grid = {};
       for (const mac of macs) {
         grid[mac] = {};
@@ -225,13 +239,12 @@ window.Pie = window.Pie || {};
       const cells = [];
       const number = (gain) => {
         const kind = Math.abs(gain) < EVEN ? "is-even" : gain > 0 ? "is-ahead" : "is-behind";
-        // an even cell still says its number, in grey: within the spread, but not hidden
-        if (kind === "is-even") return { kind, html: Math.round(gain * 100) ? signed(gain) : "0%" };
-        return { kind, html: `${ARROW(kind === "is-ahead")}${signed(gain).replace(/^[+−]/, "")}` };
+        // the sign and the colour say ahead or behind, as Stocks shows a change; an even cell is the same number in grey
+        return { kind, html: Math.round(gain * 100) ? signed(gain) : "0%" };
       };
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
-        return `<th class="platform-row" scope="row"><span class="platform-chip"><span>${esc(chipName(mac))}</span>${specOf(hw)}</span></th>`;
+        return `<th class="platform-row" scope="row"><span class="platform-chip"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}><span>${esc(chipName(mac))}</span>${specOf(hw)}</span></th>`;
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
@@ -250,9 +263,9 @@ window.Pie = window.Pie || {};
           if (c) {
             cells.push(c.gain);
             const n = number(c.gain);
-            return `<td class="${sorted}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c, mode, raw))}"><span class="platform-main">${n.html}</span>${subline(c, metric, mode, raw)}</span></td>`;
+            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c, mode, raw))}"><span class="platform-main">${n.html}</span>${subline(c, metric, mode, raw)}</span></td>`;
           }
-          return `<td class="${sorted}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card("", "", [], why))}">${needs ? NOFIT : "–"}</span></td>`;
+          return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card("", "", [], why))}">${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
 
@@ -264,38 +277,32 @@ window.Pie = window.Pie || {};
         if (makers.length && makers[makers.length - 1].maker.name === maker.name) makers[makers.length - 1].n += 1;
         else makers.push({ maker, n: 1 });
       }
-      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner" aria-hidden="true"></th><th class="platform-corner is-overall" aria-hidden="true"></th>${makers.map(({ maker, n }) =>
-        `<th class="platform-maker" colspan="${n}" scope="colgroup"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Other")}</b><span>${n} ${n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
+      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner is-sortable" data-sort="name" aria-hidden="true"></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n }) =>
+        `<th class="platform-maker" colspan="${n}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Other")}</b><span>${n} ${n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
         <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
         const m = Pie.store.index.models[model] || {};
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
         const sub = size;
-        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" title="Sort by ${esc(names().model(model))}">
+        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(model))}">
           <span class="platform-col"><span><span class="platform-model">${esc(names().model(model))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
 
       element.innerHTML = `
-        <div class="platform-split">
-        <nav class="platform-nav" aria-label="Setup">${[...new Set(MODES.map((m) => m.group))].map((group) =>
-          `<div class="platform-nav-heading">${group}</div>${MODES.filter((m) => m.group === group).map((m) =>
-            `<button type="button" class="platform-nav-item${m === mode ? " is-selected" : ""}" data-mode="${m.id}" aria-current="${m === mode}" title="${esc(`${m.metric.label}: ${m.detail}`)}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg><span>${m.label}</span></button>`).join("")}`).join("")}</nav>
-        <div class="platform-pane">
         <div class="platform-bar">
           <span class="filter platform-setup">
-            <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" title="Setup">${esc(`${mode.group} · ${mode.label}`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+            <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Setup: ${mode.label}`)}"><svg class="setup-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="${mode.icon}"/></svg>${esc(mode.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
+          <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>How we measure</button>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
         </div>
         <div class="platform-scroll">
           <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>
-        </div>
-        </div>
         </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
@@ -305,7 +312,95 @@ window.Pie = window.Pie || {};
     },
 
     bind(state) {
+      // drag a maker's band among the makers, or a model's head among its maker's models, as a column moves in Finder's
+      // list view: the whole column (the head and every cell under it) slides sideways within its lane, and the columns
+      // it passes slide aside to open its place, so the order shows as it will be. Letting go settles it there.
+      // The head itself is the handle: a press that moves a few points drags, one that does not is a click and sorts.
+      // The order is the viewer's, kept with the page's other choices
+      const SETTLE = 180;
+      let press = null;
+      let drag = null;
+      let dragged = false;
+      // a unit that moves together: a model's column, or a maker's band with all of its models' columns
+      const unitOf = (th) => {
+        const cells = th.dataset.drop === "model"
+          ? [...element.querySelectorAll(`[data-col="${CSS.escape(th.dataset.id)}"]`)]
+          : [th, ...[...element.querySelectorAll(`[data-drop="model"][data-maker="${CSS.escape(th.dataset.id)}"]`)]
+              .flatMap((head) => [...element.querySelectorAll(`[data-col="${CSS.escape(head.dataset.id)}"]`)])];
+        const r = th.getBoundingClientRect();
+        return { id: th.dataset.id, cells, left: r.left, width: r.width };
+      };
+      const shift = (unit, x, animate) => unit.cells.forEach((cell) => {
+        cell.style.transition = animate ? `transform ${SETTLE}ms ease` : "none";
+        cell.style.transform = x ? `translateX(${x}px)` : "";
+      });
+      element.addEventListener("pointerdown", (event) => {
+        const th = event.target.closest("[data-drop]");
+        if (!th || event.button !== 0 || drag) return;
+        press = { th, x: event.clientX };
+      });
+      const lift = (event) => {
+        const { th } = press;
+        press = null;
+        const kind = th.dataset.drop;
+        const heads = [...element.querySelectorAll(`[data-drop="${kind}"]`)].filter((x) => kind === "maker" || x.dataset.maker === th.dataset.maker);
+        if (heads.length < 2) return;
+        const units = heads.map(unitOf);
+        const index = heads.indexOf(th);
+        const me = units[index];
+        me.cells.forEach((cell) => cell.classList.add("is-moving"));
+        th.setPointerCapture(event.pointerId);
+        dragged = true;
+        drag = { kind, units, index, me, x0: event.clientX, lane: [units[0].left, units.at(-1).left + units.at(-1).width], to: index };
+      };
+      element.addEventListener("pointermove", (event) => {
+        if (press && Math.abs(event.clientX - press.x) > 4) lift(event);
+        if (!drag) return;
+        const { units, index, me, lane } = drag;
+        // the column keeps to its lane: it cannot slide past the first or last of its peers
+        const dx = Math.max(lane[0] - me.left, Math.min(lane[1] - me.width - me.left, event.clientX - drag.x0));
+        shift(me, dx, false);
+        // where it would land: past every peer whose middle its middle has reached (held at the lane's end, past the last)
+        const middle = me.left + dx + me.width / 2;
+        let to = index;
+        units.forEach((u, i) => {
+          if (i > index && middle >= u.left + u.width / 2) to = Math.max(to, i);
+          if (i < index && middle <= u.left + u.width / 2) to = Math.min(to, i);
+        });
+        drag.to = to;
+        // the peers it has passed slide aside by its width to open its place
+        units.forEach((u, i) => {
+          if (u === me) return;
+          shift(u, i > index && i <= to ? -me.width : i < index && i >= to ? me.width : 0, true);
+        });
+      });
+      const finish = () => {
+        press = null;
+        if (!drag) return;
+        const { kind, units, index, me, to } = drag;
+        drag = null;
+        // settle into the opened place, then take the new order
+        const place = to > index ? units.slice(index + 1, to + 1).reduce((w, u) => w + u.width, 0)
+          : -units.slice(to, index).reduce((w, u) => w + u.width, 0);
+        shift(me, place, true);
+        setTimeout(() => {
+          units.forEach((u) => { shift(u, 0, false); u.cells.forEach((cell) => cell.classList.remove("is-moving")); });
+          if (to === index) return;
+          const order = units.map((u) => u.id);
+          order.splice(to, 0, order.splice(index, 1)[0]);
+          const key = kind === "maker" ? "makerOrder" : "modelOrder";
+          const rest = (state.platform[key] || []).filter((x) => !order.includes(x));
+          state.platform[key] = kind === "maker" ? order.concat(rest) : rest.concat(order);
+          onChange();
+        }, SETTLE);
+      };
+      element.addEventListener("pointerup", finish);
+      element.addEventListener("pointercancel", finish);
       element.addEventListener("click", (event) => {
+        if (dragged) {
+          dragged = false;  // the press lifted a head: it was a drag, not a click to sort
+          return;
+        }
         const button = event.target.closest("[data-metric]");
         if (button) {
           state.platform.metric = button.dataset.metric;

@@ -70,6 +70,8 @@ artifacts:
 
   - id: gpt-oss-20b-mxfp4-mini5
     base_model: openai/gpt-oss-20b
+    params_b: 21     # openai/gpt-oss-20b: 21B parameters, 3.6B active per token (mixture of experts)
+    active_b: 3.6
     family: gpt_oss
     scheme: mxfp4
     kind: miniature
@@ -147,6 +149,8 @@ artifacts:
   # ---------------- nightly: full mid-size, several schemes (dense qwen3 has no reader in pie and is not planned) ----------------
   - id: gpt-oss-20b-mxfp4
     base_model: openai/gpt-oss-20b
+    params_b: 21     # openai/gpt-oss-20b: 21B parameters, 3.6B active per token (mixture of experts)
+    active_b: 3.6
     family: gpt_oss
     scheme: mxfp4
     expected_gib: 10.4
