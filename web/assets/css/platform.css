@@ -468,3 +468,14 @@
 @media (max-width: 899px) { .platform-table { width: max(100%, calc(116px + 96px * var(--cols))); } }
 .platform-table col.col-fill { width: auto; }
 .platform-table .platform-fill { padding: 0; }
+
+/* a cell's quiet second line under the comparison: the share of the hardware limit over a thin meter (Raw),
+   or what the feature adds over raw. The meter's fill is pie, its tick the fastest other engine */
+.platform-main { display: block; line-height: 16px; }
+.platform-sub-line { display: flex; align-items: center; justify-content: flex-end; gap: 5px; margin-top: 1px; font-size: 10.5px; font-weight: 400; line-height: 13px; font-variant-numeric: tabular-nums; color: var(--color-label-tertiary); }
+.limit-meter { position: relative; display: block; flex: none; width: 36px; height: 3px; border-radius: 2px; background: var(--color-fill); }
+.limit-meter i { position: absolute; inset: 0 auto 0 0; border-radius: 2px; background: var(--color-engine-pie); }
+.limit-meter b { position: absolute; top: -2px; width: 1.5px; height: 7px; margin-left: -.75px; border-radius: 1px; background: var(--color-label-secondary); }
+.tip-share { display: inline-block; min-width: 34px; margin-left: 6px; color: var(--color-label-secondary); font-weight: 400; }
+.platform-bar { position: relative; }
+.platform-bar .view-toggle { position: absolute; left: 50%; transform: translateX(-50%); }

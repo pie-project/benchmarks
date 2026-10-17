@@ -12,6 +12,13 @@ window.Pie = window.Pie || {};
     { id: "decode", label: "Decode", detail: "Tokens per second while answering", key: "decode_tok_s", unit: "tok/s", higher: true },
     { id: "prefill", label: "Prefill", detail: "Tokens per second reading the prompt", key: "prefill_tok_s", unit: "tok/s", higher: true },
   ];
+  // the tabs: each a setup of its own. Raw decodes plain and is held against the hardware limit; the others
+  // show what a feature adds, as a gain over the same engine's raw row
+  const MODES = [
+    { id: "raw", label: "Raw", detail: "speculation off" },
+    { id: "single", label: "Speculation", detail: "speculation where the engine has a drafter" },
+    { id: "throughput", label: "Batching", detail: "32 requests at once", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
+  ];
   let onChange = () => {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
@@ -72,6 +79,34 @@ window.Pie = window.Pie || {};
     return { pie, best, gain, all: [pie, ...others] };
   };
 
+  // each engine's share of the hardware limit, against its own weights (Raw only: a drafter skips the passes the limit counts)
+  const share = (r, metric) => {
+    const own = Pie.ceiling?.(r, metric.id);
+    return own ? r[metric.key] / own.tps : null;
+  };
+  // what a feature adds: the engine's number over its raw row on the same machine and model
+  const overRaw = (r, metric, raw) => {
+    const plain = raw.find((x) => x.hardware === r.hardware && x.model === r.model && x.engine === r.engine);
+    const key = metric.id === "throughput" ? "output_tok_s" : metric.key;
+    return plain?.[key] ? r[metric.key] / plain[key] : null;
+  };
+  const times = (x) => `${x >= 10 ? Math.round(x) : x.toFixed(1)}×`;
+
+  // under the comparison, a quiet second line: the share of the hardware limit as a meter, or the gain over raw
+  const subline = (c, metric, mode, raw) => {
+    if (mode.id === "raw") {
+      const own = share(c.pie, metric);
+      if (own === null) return "";
+      const best = share(c.best, metric);
+      const pct = (f) => Math.min(100, Math.round(f * 100));
+      const tick = best === null ? "" : `<b style="left: ${pct(best)}%"></b>`;
+      return `<span class="platform-sub-line"><span class="limit-meter" aria-hidden="true"><i style="width: ${pct(own)}%"></i>${tick}</span>${Math.round(own * 100)}%</span>`;
+    }
+    const gain = overRaw(c.pie, metric, raw);
+    // a row that did not speculate reads its own raw speed: nothing to add
+    return gain === null || Math.abs(gain - 1) < EVEN ? "" : `<span class="platform-sub-line">${times(gain)} raw</span>`;
+  };
+
   // a hover card: the setup as a title, every engine on its own aligned row (fastest first, pie in blue), one closing line
   const card = (title, sub, lines = [], foot = "") => `
     ${title ? `<div class="tip-title">${esc(title)}</div>` : ""}${sub ? `<div class="tip-sub">${esc(sub)}</div>` : ""}
@@ -83,13 +118,21 @@ window.Pie = window.Pie || {};
     const [y, m, d] = when.slice(0, 10).split("-").map(Number);
     return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   };
-  const tip = (mac, model, metric, c) => {
+  const tip = (mac, model, metric, c, mode, raw) => {
+    const limit = mode.id === "raw";
+    const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
-    const lines = order.map((r, i) => `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
+    const lines = order.map((r, i) => {
+      // Raw: each engine's share of the hardware limit; the others: what the feature adds over its raw row
+      const extra = limit ? share(r, metric) : overRaw(r, metric, raw);
+      const note = extra === null ? "" : limit ? `${Math.round(extra * 100)}%` : times(extra);
+      return `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
-      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`);
+      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}${note ? `<span class="tip-share">${note}</span>` : ""}</span><span class="tip-when">${esc(day(r))}</span></div>`;
+    });
     // the cell's row and column already name the setup, and the bar above the metric: the card is only the engines
-    return card("", "", lines);
+    const foot = ceiling ? `Hardware limit ${value(ceiling.tps, metric.unit)}, ${ceiling.bound === "balanced" ? "bandwidth and compute balanced" : `${ceiling.bound}-bound`}, from the spec sheet.` : "";
+    return card("", "", lines, foot);
   };
 
   Pie.platform = {
@@ -110,9 +153,14 @@ window.Pie = window.Pie || {};
 
     // returns the number of machines and models shown, for the toolbar subtitle
     render(state) {
-      const metric = METRICS.find((m) => m.id === state.platform.metric) || METRICS[0];
+      const all = Pie.store.snapshot(state.release);
+      // Raw first once it has rows; until then the page opens on Speculation, the single request as measured so far
+      if (!MODES.some((m) => m.id === state.platform.mode)) state.platform.mode = all.some((r) => r.workload === "raw" && Pie.store.isMeasured(r)) ? "raw" : "single";
+      const mode = MODES.find((m) => m.id === state.platform.mode);
+      const metric = mode.metric || METRICS.find((m) => m.id === state.platform.metric) || METRICS[0];
       const base = Pie.engines.primary;
-      const snapshot = Pie.store.snapshot(state.release).filter((r) => r.workload === "single");
+      const snapshot = all.filter((r) => r.workload === mode.id);
+      const raw = all.filter((r) => r.workload === "raw" && Pie.store.isMeasured(r));
       const rows = snapshot.filter(Pie.store.isMeasured);
       // a platform's own page lists its machines; All hardware lists every platform's, a header row each
       const only = Pie.schema[state.table]?.platform;
@@ -143,16 +191,17 @@ window.Pie = window.Pie || {};
           const c = cell(rows.filter((r) => r.hardware === mac && r.model === model), metric, base);
           const needs = noFit[mac]?.[model]?.[base];
           const own = snapshot.find((r) => r.hardware === mac && r.model === model && r.engine === base);
-          grid[mac][model] = { c, needs, why: needs ? `Doesn't fit: needs about ${Math.round(needs)} GB` : own?.note || "No data yet" };
+          grid[mac][model] = { c, needs, why: needs ? `Doesn't fit: needs about ${Math.round(needs)} GB` : own?.note || (mode.id === "raw" ? "No raw run yet" : "No data yet") };
         }
       }
       // Hide unavailable drops the models and machines with nothing to compare, as the results table does
       const hide = state.hideEmpty;
       const models = hide ? allModels.filter((model) => macs.some((mac) => grid[mac][model].c)) : allModels;
-      const overall = (mac) => {
-        const gains = models.map((model) => grid[mac][model].c?.gain).filter((g) => g !== undefined).sort((a, b) => a - b);
-        return gains.length ? gains[gains.length >> 1] : null;
+      const median = (list) => {
+        const sorted = list.filter((g) => g !== undefined && g !== null).sort((a, b) => a - b);
+        return sorted.length ? sorted[sorted.length >> 1] : null;
       };
+      const overall = (mac) => median(models.map((model) => grid[mac][model].c?.gain));
       // no sort: the machines in the catalog's order, no arrow anywhere
       const sortKey = p.sort?.key || null;
       const dir = p.sort?.dir || 1;
@@ -195,7 +244,7 @@ window.Pie = window.Pie || {};
           if (c) {
             cells.push(c.gain);
             const n = number(c.gain);
-            return `<td class="${sorted}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c))}">${n.html}</span></td>`;
+            return `<td class="${sorted}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c, mode, raw))}"><span class="platform-main">${n.html}</span>${subline(c, metric, mode, raw)}</span></td>`;
           }
           return `<td class="${sorted}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card("", "", [], why))}">${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
@@ -225,9 +274,11 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="platform-bar">
-          <span class="filter">
+          <span class="filter"${mode.metric ? ' style="visibility: hidden"' : ""}>
             <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" title="Metric">${esc(metric.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
+          <span class="view-toggle" role="tablist" aria-label="Setup">${MODES.map((m) =>
+            `<button type="button" role="tab" data-mode="${m.id}" class="${m === mode ? "is-active" : ""}" aria-selected="${m === mode}" title="${esc(m.detail)}">${m.label}</button>`).join("")}</span>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
@@ -247,6 +298,12 @@ window.Pie = window.Pie || {};
         const button = event.target.closest("[data-metric]");
         if (button) {
           state.platform.metric = button.dataset.metric;
+          onChange();
+          return;
+        }
+        const tab = event.target.closest("[data-mode]");
+        if (tab) {
+          state.platform.mode = tab.dataset.mode;
           onChange();
           return;
         }
