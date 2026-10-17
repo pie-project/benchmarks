@@ -41,7 +41,8 @@ window.Pie = window.Pie || {};
 
     bindLogo() {
       logo.addEventListener("animationend", () => logo.classList.remove("is-spinning"));
-      logo.addEventListener("mouseenter", () => {
+      // the whole brand row spins it: the logo, the name and the (i) beside them
+      logo.closest(".sidebar-brand").addEventListener("mouseenter", () => {
         if (!logo.classList.contains("is-spinning")) logo.classList.add("is-spinning");
       });
       this.spinLogo();
