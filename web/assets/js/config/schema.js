@@ -215,7 +215,7 @@ window.Pie = window.Pie || {};
       filters: ["suite", "family", "architecture"],
       columns: [
         text("name", "Name", "Identity"),
-        text("suite", "CI suite", "Identity", { hint: "Targeted models run in every release; Full adds the rest" }),
+        text("platforms", "Platforms", "Identity", { hint: "The platforms this model is measured on: Mac, GPU, TPU" }),
         text("family", "Family", "Identity", { code: true }),
         text("architecture", "Architecture", "Shape"),
         text("ssd_streaming", "SSD streaming", "Shape"),
