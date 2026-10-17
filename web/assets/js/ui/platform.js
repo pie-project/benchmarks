@@ -16,12 +16,12 @@ window.Pie = window.Pie || {};
   // run different kernels with different bottlenecks. Each group opens on its raw row (speculation off), held against
   // the hardware limit; the features under it are only those that change that phase, each shown as its gain over raw
   const MODES = [
-    { id: "decode", group: "Decode", label: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
+    { id: "decode", group: "Decode", label: "Raw", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
     { id: "speculation", group: "Decode", icon: "M2 4l5 4-5 4zM8.5 4l5 4-5 4z", label: "Speculation", detail: "single request, speculation where the engine has a drafter", workload: "single", metric: METRICS[0],
       // only the models with a drafter: the rest decode plain and read the same as raw
       has: (model) => String(Pie.store.index.models[model]?.draft) === "true" },
     { id: "batching", group: "Decode", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", label: "Batching", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
-    { id: "prefill", group: "Prefill", label: "Raw", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
+    { id: "prefill", group: "Prefill", label: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
   ];
   let onChange = () => {};
 
