@@ -17,6 +17,13 @@ ROOT = Path(__file__).resolve().parents[1]
 REAL_ACCURACY = runner_mod.NodeRunner._accuracy
 
 
+
+def _asked(workload):
+    """A fake round finishes exactly the requests its workload asks for, as a real bench client does."""
+    from pie_evals.node.engines.base import workload_mode_args
+    from pie_evals.node.validate import expected_requests
+    return expected_requests(workload_mode_args(workload)[1]) or 1
+
 class FakeEngine(Engine):
     name = "pie"
     script = "scripts/bench/fake.py"
@@ -44,7 +51,7 @@ class FakeEngine(Engine):
             raise b
         values = b if isinstance(b, list) else [float(b or 100.0)]
         v = values[min(len([c for c in FakeEngine.calls if c == workload.id]) - 1, len(values) - 1)]
-        perf = PerfMetrics(primary="decode_tok_s", decode_tok_s=v, output_tok_s=v * 8, prompt_tokens=128, output_tokens=64, requests=1, failed=0)
+        perf = PerfMetrics(primary="decode_tok_s", decode_tok_s=v, output_tok_s=v * 8, prompt_tokens=128, output_tokens=64, requests=_asked(workload), failed=0)
         return BenchResult(perf=perf, summary={}, requests=[{"ok": True, "prompt_tokens": 128, "output_token_ids": [1, 2, 3]}], argv=[], output_token_ids=[[1, 2, 3]])
 
 

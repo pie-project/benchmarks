@@ -48,7 +48,8 @@ def test_regression_is_noise_aware(tmp_path, matrix):
     cells = matrix.runnable(Tier.SMOKE)
     cell = next(c for c in cells if c.workload.id == "ss-128-64" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.platform.id == "l40s-x1" and c.program.id == "text-completion-bench")
     st = Store(tmp_path / "store")
-    t0 = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    # the gate looks at the last 7 days: the runs fall inside that window
+    t0 = datetime.now(timezone.utc) - timedelta(days=6)
     vals = [430, 432, 431, 433, 430, 400]  # last one is a ~7% drop against <0.5% spread
     for i, v in enumerate(vals):
         st.write_run([_rec(cell, v, t0 + timedelta(days=i), run=f"r{i}")], tier=Tier.SMOKE, run_id=f"r{i}", when=t0 + timedelta(days=i))
