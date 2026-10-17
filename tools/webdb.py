@@ -71,6 +71,7 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
         row = by_model.setdefault(mid, {"id": mid, "name": model_name(base), "family": a.get("family"),
                                         "base_model": base, "schemes": set(), "artifacts": 0})
         row["artifacts"] += 1
+        row["expected_gib"] = row.get("expected_gib") or a.get("expected_gib")
         row["draft"] = row.get("draft") or bool(a.get("pie_drafter"))
         # sizes stated in the catalog win over the ones read from the name (gpt-oss-20b says neither its experts nor 21B)
         for size in ("params_b", "active_b"):
@@ -92,6 +93,8 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
         # weights only, from the parameter count and the bits each weight takes (4-bit affine with a 16-bit scale and
         # bias per 64 weights = 4.5 bits; NVFP4 4-bit with an 8-bit scale per 16 = 4.5 bits)
         row["size_gib"] = round(row["params_b"] * 1e9 * 4.5 / 8 / 2**30, 1) if row["params_b"] else None
+        # no parameter count: the 4-bit size the catalog states for its artifact
+        row["size_gib"] = row["size_gib"] or row.get("expected_gib")
         # what it takes to fit: the planner's own rule (weights x 1.25 must fit in the Mac's memory)
         row["needs_gib"] = round(row["size_gib"] * 1.25, 1) if row["size_gib"] else None
         row["context"] = None
