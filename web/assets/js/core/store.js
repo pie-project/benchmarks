@@ -29,11 +29,9 @@ window.Pie = window.Pie || {};
     const ids = suiteModels();
     return !ids || ids.has(model);
   };
-  // a model is on the Mac grids only when it is measured on a Mac (the catalog's platforms say so)
-  const onMac = (model) => {
-    const row = (tables.models || []).find((m) => m.id === model);
-    return !!row && String(row.platforms || "").includes("Mac");
-  };
+  // a model is on the Mac grids only when a Mac has actually measured it: a row with a result, not just a catalog entry
+  const onMac = (model) => Object.values(snapshots).some((rows) =>
+    rows.some((row) => row.model === model && ["pass", "noisy"].includes(row.status)));
   const ofSuite = (rows) => (suiteModels() ? rows.filter((row) => inSuite(row.model)) : rows);
 
   // the rows shown for a tag: every combination, with a stale marker where that tag had no run
