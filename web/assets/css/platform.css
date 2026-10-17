@@ -492,7 +492,7 @@
   .platform-table { --col-w: clamp(156px, (var(--platform-visible, 100vw) - 328px) / max(var(--cols) - 1, 1), 240px); width: max(100%, calc(328px + var(--col-w) * (var(--cols) - 1))); }
 }
 
-/* the setups as a macOS tab bar, as Finder and Safari draw one: the tabs split the width evenly, titles centered,
+/* the setups as a macOS tab bar, as Finder and Safari draw one: the tabs share the width evenly up to a fixed widest, titles centered,
    the selected tab a raised rounded plate on a recessed strip, the rest split by short hairlines */
 .platform-bar { border-bottom: 0; }
 .platform-tabs {
@@ -510,6 +510,7 @@
   position: relative;
   flex: 1 1 0;
   min-width: 96px;
+  max-width: 200px;  /* as a browser's tabs: they share the strip until each reaches its widest, then sit from the left */
   border: 0;
   border-radius: 6px;
   background: transparent;
