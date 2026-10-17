@@ -240,15 +240,15 @@
 .rules-button { background: var(--color-fill); box-shadow: none; }
 .rules-button:hover,
 .rules-button[aria-expanded="true"] { background: var(--color-fill-secondary); }
-/* Hide unavailable: no fill while off, the resting fill while on, one step deeper under the pointer */
+/* Hide unavailable: no background either way; on, its text turns the accent blue */
 #hide-empty,
 .platform-hide { background: none; box-shadow: none; }
 #hide-empty:hover,
 .platform-hide:hover { background: var(--color-hover); }
 #hide-empty.is-active,
-.platform-hide.is-active { background: var(--color-fill); }
+.platform-hide.is-active { background: none; color: var(--color-accent); }
 #hide-empty.is-active:hover,
-.platform-hide.is-active:hover { background: var(--color-fill-secondary); }
+.platform-hide.is-active:hover { background: var(--color-hover); }
 /* on a phone they are capsules, as the setup pop-up beside them */
 @media (max-width: 899px) { .rules-button { height: 34px; padding: 0 14px; border-radius: 999px; font-size: 15px; } }
 /* a rule row takes a grey wash on hover: it follows the pointer like a menu row, but blue would promise a pick */
