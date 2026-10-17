@@ -159,7 +159,7 @@
       if (key === popover.RELEASE) {
         state.release = value;
       } else if (key === popover.METRIC) {
-        state.platform.metric = value;
+        state.platform.mode = value;
       } else if (key === popover.SUITE) {
         state.suite = value;
         state.suitePicked = true;

@@ -146,8 +146,9 @@ window.Pie = window.Pie || {};
       return Pie.store.tables.hardware.filter((hw) => { const p = platformOf(hw); return p && (!id || p.id === id); }).length;
     },
 
+    // the setups, for the pop-up that stands in for the second sidebar on a narrow window
     metrics() {
-      return METRICS;
+      return MODES;
     },
 
     onChange(handler) {
@@ -283,6 +284,9 @@ window.Pie = window.Pie || {};
             `<button type="button" class="platform-nav-item${m === mode ? " is-selected" : ""}" data-mode="${m.id}" aria-current="${m === mode}" title="${esc(`${m.metric.label}: ${m.detail}`)}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg><span>${m.label}</span></button>`).join("")}`).join("")}</nav>
         <div class="platform-pane">
         <div class="platform-bar">
+          <span class="filter platform-setup">
+            <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" title="Setup">${esc(mode.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+          </span>
           <span class="platform-bar-side is-end">
             <button type="button" class="plain-button platform-hide${hide ? " is-active" : ""}" data-hide aria-pressed="${hide}">Hide unavailable</button>
           </span>
