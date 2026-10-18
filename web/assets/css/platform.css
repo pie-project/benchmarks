@@ -683,3 +683,7 @@
 .tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 6px), calc(-100% - 4px)); }
 /* zero, as Apple's charts mark their baseline: a hairline in the faintest grey */
 .tip-roof .rf-zero { stroke: var(--color-label-quaternary); stroke-width: .5; vector-effect: non-scaling-stroke; }
+
+/* Roofline: what limits a cell, as a leading symbol before its number, the way Apple sets a symbol before a value: the
+   number's own colour, softer, sized to the figures and centred on them; symbol and number centred together */
+.platform-bound-mark { display: inline-block; width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
