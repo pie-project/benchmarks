@@ -69,7 +69,9 @@ window.Pie = window.Pie || {};
   // Performance or Roofline: one pick, a checkmark on the current one, like the other menus
   const compareMenu = () => {
     const current = Pie.platform.compare();
-    return option("engines", current === "engines", "Performance") + option("ceiling", current === "ceiling", "Roofline");
+    // the key that switches them, beside each, as a macOS menu shows its shortcuts
+    const key = '<span class="popover-detail popover-key">R</span>';
+    return option("engines", current === "engines", `<span class="popover-label">Performance</span>${key}`) + option("ceiling", current === "ceiling", `<span class="popover-label">Roofline</span>${key}`);
   };
 
   // the suite: one pick, a checkmark on the current one, like the release menu
