@@ -10,7 +10,7 @@ window.Pie = window.Pie || {};
   const BITS = { 4: 4.5, 8: 8.5, 16: 16 };  // bits per weight, with the quantization scales
   const CONTEXTS = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
   const BATCHES = [1, 2, 4, 8, 16, 32, 64, 128, 256];
-  const LINKS = { none: ["One device", 0, 0], tb5: ["Thunderbolt 5", 10, 30], pcie5: ["PCIe 5.0 ×16", 64, 10], nvlink: ["NVLink", 900, 3] };
+  const LINKS = { none: ["One device", 0, 0], tb5: ["Thunderbolt 5", 10, 30], pcie5: ["PCIe 5.0 ×16", 64, 15], nvlink: ["NVLink", 900, 15] };
   const USABLE = 0.75;  // the share of unified memory macOS lets the GPU wire by default
 
   const kTok = (n) => (n >= 1024 ? `${Math.round(n / 1024)}K` : `${n}`);
@@ -304,14 +304,17 @@ window.Pie = window.Pie || {};
   // the link between the GPUs of a multi-GPU machine, per direction per GPU, and the latency of one exchange. The catalog
   // names only the kind of link, so its speed comes from the spec of that generation: PCIe 4.0 x16 is 32 GB/s each way,
   // PCIe 5.0 x16 64 (RTX PRO 6000, RTX 5090, H100 PCIe and later), NVLink 3 on A100 SXM 600 GB/s in all (300 each way),
-  // NVLink 4 on H100 SXM 900 (450 each way)
+  // NVLink 4 on H100 SXM 900 (450 each way). No spec sheet gives an all-reduce's latency: it is the kernel launch and the
+  // GPUs' sync, so it is software as much as link. 15 µs is what NCCL takes for a small message; custom one-shot kernels in
+  // CUDA graphs reach 3-5 µs, so an engine with them can beat this line
+  const ALL_REDUCE_US = 15;
   const linkOf = (id) => {
     const hw = Pie.store.index.hardware[id];
     if (!hw || (hw.count || 1) < 2) return null;
     const name = `${hw.name} ${hw.full_name || ""}`;
-    if (hw.interconnect === "nvlink") return /H100|H200|H800/.test(name) ? { gbs: 450, us: 3, name: "NVLink 4" } : { gbs: 300, us: 3, name: "NVLink 3" };
+    if (hw.interconnect === "nvlink") return /H100|H200|H800/.test(name) ? { gbs: 450, us: ALL_REDUCE_US, name: "NVLink 4" } : { gbs: 300, us: ALL_REDUCE_US, name: "NVLink 3" };
     const gen5 = /PRO 6000|PRO 4500|5090|H100|H200|B200|Blackwell/.test(name);
-    return gen5 ? { gbs: 64, us: 10, name: "PCIe 5.0" } : { gbs: 32, us: 10, name: "PCIe 4.0" };
+    return gen5 ? { gbs: 64, us: ALL_REDUCE_US, name: "PCIe 5.0" } : { gbs: 32, us: ALL_REDUCE_US, name: "PCIe 4.0" };
   };
   // the time a pass spends exchanging between n GPUs that split the model (tensor parallel): two all-reduces a layer of
   // the activations, tokens x hidden in 16 bits; a ring all-reduce sends 2(n - 1)/n of them from each GPU, and each
