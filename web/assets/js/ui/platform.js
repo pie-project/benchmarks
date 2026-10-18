@@ -165,7 +165,8 @@ window.Pie = window.Pie || {};
     const limitRow = (name, tps, binds) => `<div class="tip-row is-limit${binds ? "" : " is-slack"}">
       ${binds ? '<svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg>' : "<span></span>"}<span class="tip-name" title="${binds ? "What sets the limit" : "Not the limit: the other bound is lower"}">${name} bound</span>
       <span class="tip-value">${esc(value(tps, metric.unit))}</span><span class="tip-when"></span></div>`;
-    const bounds = (b) => [["Bandwidth", b.bandwidth], ["Compute", b.compute]].filter(([, tps]) => tps).sort((x, y) => x[1] - y[1]);
+    // every bound the machine has, lowest first: memory bandwidth, compute, and the link between GPUs when there are several
+    const bounds = (b) => [["Bandwidth", b.bandwidth], ["Compute", b.compute], ["Interconnect", b.interconnect]].filter(([, tps]) => tps).sort((x, y) => x[1] - y[1]);
     // Roofline complements Engines: no engine list, only the bounds and the chart, the engines as dots in their colours
     const both = roofline && (ceiling || batchBound);
     if (both) {
@@ -405,6 +406,7 @@ window.Pie = window.Pie || {};
       const MARK = {
         compute: { title: "Compute-bound: the share of the compute bound", path: "M4.5 4.5h7v7h-7zM6.5 2v2.5M9.5 2v2.5M6.5 11.5V14M9.5 11.5V14M2 6.5h2.5M2 9.5h2.5M11.5 6.5H14M11.5 9.5H14" },
         bandwidth: { title: "Bandwidth-bound: the share of the bandwidth bound", path: "M2 5.5h9M8.5 3l2.5 2.5L8.5 8M14 10.5H5M7.5 8 5 10.5 7.5 13" },
+        interconnect: { title: "Interconnect-bound: the share of the bound set by the link between the GPUs", path: "M6.5 9.5l3-3M7.2 4.6l1.4-1.4a2.6 2.6 0 0 1 3.7 3.7l-1.4 1.4M8.8 11.4l-1.4 1.4a2.6 2.6 0 0 1-3.7-3.7l1.4-1.4" },
       };
       const body = shownGroups.map((g) => groupRow(g) + (folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         const o = overall(mac);
