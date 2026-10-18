@@ -19,6 +19,7 @@
 .welcome-icon svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .welcome-icon.is-bench { background: linear-gradient(145deg, #4aa8ff, #0a6cff); }
 .welcome-icon.is-inferlets { background: linear-gradient(145deg, #3b5bfd, #a855f7); }
+.welcome-icon.is-profiler { background: linear-gradient(145deg, #34c759, #0a9396); }
 /* the glyph fills its tile as an app icon's does; the button lines up with the headline, not the whole block */
 .welcome-icon svg { width: 26px; height: 26px; stroke-width: 2.2; }
 .welcome-intro { align-items: flex-start; }

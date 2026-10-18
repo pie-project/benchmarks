@@ -46,7 +46,7 @@
     toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isPlatform = Pie.schema[state.table]?.view === "platform";
-    const isMethod = ["welcome", "inferlets", "methodology", "methods"].includes(state.table);
+    const isMethod = ["welcome", "inferlets", "profiler", "methodology", "methods"].includes(state.table);
     filterBar.hidden = isOverview || isMethod || isPlatform;
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
@@ -57,6 +57,7 @@
     toolbar.elements.metricPicker.hidden = true;  // the metric lives in the platform table's own bar
     Pie.welcome.render(state);
     Pie.inferlets.render(state);
+    Pie.profiler.render(state);
     Pie.methodology.render(state);
     Pie.methods.render(state);
     sidebar.render(state);
