@@ -427,7 +427,8 @@ window.Pie = window.Pie || {};
                   // one neutral colour: the closest to the bound is bold, the furthest dimmed
                   if (!ceil) return { kind: "is-even", html: "–" };
                   const share = c.pie[metric.key] / ceil.tps;
-                  const kind = share >= 0.25 ? "is-ahead" : "is-mid";
+                  // past the roof (shown above 100%) is red: a result cannot beat a true limit, so an input or the run is off
+                  const kind = Math.round(share * 100) > 100 ? "is-behind" : share >= 0.25 ? "is-ahead" : "is-mid";
                   // a balanced cell takes the lower of its two bounds
                   const which = MARK[ceil.bound] ? ceil.bound : (ceil.bandwidth || Infinity) <= (ceil.compute || Infinity) ? "bandwidth" : "compute";
                   const mark = MARK[which];
