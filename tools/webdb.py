@@ -120,9 +120,10 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
         rows.append({
             "id": p["id"],
             "resource": "Pie self-hosted",
-            "name": p["accelerator"].replace("NVIDIA ", "") + (f" ×{p['count']}" if p.get("count", 1) > 1 else ""),
+            "name": p["accelerator"].replace("NVIDIA ", "").replace("AMD ", "") + (f" ×{p['count']}" if p.get("count", 1) > 1 else ""),
             "class": "mac" if mac else "gpu", "location": "local" if mac else "cloud",
-            "vendor": "Apple" if mac else "NVIDIA", "backend": p.get("backend"), "arch": p.get("arch"),
+            "vendor": "Apple" if mac else ("AMD" if p["accelerator"].startswith("AMD") else "Google" if p.get("backend") == "xla" else "NVIDIA"),
+            "backend": p.get("backend"), "arch": p.get("arch"),
             "count": p.get("count", 1), "memory_gib": p.get("memory_gib"), "bandwidth_gbs": p.get("bandwidth_gbs"),
             "cpu_cores": cores.get(p["id"], {}).get("cpu_cores"), "gpu_cores": cores.get(p["id"], {}).get("gpu_cores"),
             "tflops_fp16": p.get("tflops_fp16"),
