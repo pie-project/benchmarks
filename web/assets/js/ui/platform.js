@@ -81,9 +81,9 @@ window.Pie = window.Pie || {};
   };
 
   // pie's advantage over the best other engine: a speed ratio, or the inverse for a time
-  // Compare: "engines" shows each engine against the best other engine; "ceiling", named Roofline, shows each engine's share
+  // Compare: "engines", named Performance, shows each engine against the best other engine; "ceiling", named Roofline, shows each engine's share
   // of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
-  const COMPARES = { engines: "Engines", ceiling: "Roofline" };
+  const COMPARES = { engines: "Performance", ceiling: "Roofline" };
   let compare = (() => {
     try {
       const saved = localStorage.getItem("platformCompare");
