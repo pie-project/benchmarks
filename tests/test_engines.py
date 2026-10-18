@@ -672,6 +672,8 @@ def test_tensor_parallel_baselines_disable_nccl_p2p_on_a_pod(monkeypatch):
     for cls in (VllmEngine, SglangEngine):
         assert make(cls, mode=Mode(id="tp2", tp=2)).env["NCCL_P2P_DISABLE"] == "1"
         assert "NCCL_P2P_DISABLE" not in make(cls).env  # a single card has no peers
+        nvlink = platform().model_copy(update={"interconnect": "nvlink"})
+        assert "NCCL_P2P_DISABLE" not in make(cls, plat=nvlink, mode=Mode(id="tp2", tp=2)).env  # SXM peers are real
     monkeypatch.delenv("RUNPOD_POD_ID")
     assert "NCCL_P2P_DISABLE" not in make(VllmEngine, mode=Mode(id="tp2", tp=2)).env  # a real host keeps its topology
 
