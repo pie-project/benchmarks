@@ -6,7 +6,7 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("overview");
   const tooltip = document.getElementById("chart-tooltip");
   const WORKLOADS = [
-    { id: "single", label: "Single request" },
+    { id: "raw", label: "Raw" },
     { id: "throughput", label: "Batching saturated" },
   ];
   const METRICS = [
@@ -877,7 +877,7 @@ window.Pie = window.Pie || {};
       if (!known.includes(state.overview.hardware)) {
         state.overview.hardware = macs.reduce((a, b) => (b.count > a.count ? b : a), macs[0] || { id: known[0] }).id;
       }
-      if (!WORKLOADS.some((w) => w.id === state.overview.workload)) state.overview.workload = "single";
+      if (!WORKLOADS.some((w) => w.id === state.overview.workload)) state.overview.workload = "raw";
       const ran = new Set(Pie.store.snapshot(state.release).filter(Pie.store.isMeasured).map((r) => r.engine));
       if (!state.overview.engine || !ran.has(state.overview.engine)) state.overview.engine = Pie.engines.primary;
       if (!macs.some((m) => m.id === state.overview.heatMac)) state.overview.heatMac = state.overview.hardware;

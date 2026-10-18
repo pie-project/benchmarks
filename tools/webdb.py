@@ -4,7 +4,7 @@
 
 The store holds one row per measured cell across every tier and platform. This keeps
 the newest passing run per platform, engine, model, release and workload-category,
-collapsing the many measured workloads into two the site shows: a single request and
+collapsing the many measured workloads into the two the site shows: the raw single request and
 a throughput (concurrency) run.
 """
 from __future__ import annotations
@@ -27,10 +27,9 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 
 # Each site workload maps to measured workloads, best first.
-SINGLE = ["ss-512-256", "ob-512-200", "ss-128-64", "ob-short-100", "ob-story-200"]
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
 RAW = ["raw-512-256"]  # the single request with speculation off: what the hardware limit is measured against
-CATEGORIES = (("single", SINGLE, "Single request"), ("throughput", THROUGHPUT, "Throughput"), ("raw", RAW, "Raw"))
+CATEGORIES = (("throughput", THROUGHPUT, "Throughput"), ("raw", RAW, "Raw"))
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 
 WL_PRIORITY = {wl: (cat, i) for cat, ids, _ in CATEGORIES for i, wl in enumerate(ids)}
@@ -389,7 +388,7 @@ def keep_decode(tag_rows: list[dict], picked: dict[tuple, tuple], a2m: dict[str,
     """A prefill-only rerun: its single-request rows give the prefill numbers, every other number stays the earlier run's."""
     earlier = pick([r for r in tag_rows if r["engine"] == engine and r["started_at"] < since], a2m)
     for key, (rank, r) in picked.items():
-        if key[1] == engine and key[3] == "single" and r["started_at"] >= since and key in earlier:
+        if key[1] == engine and key[3] == "raw" and r["started_at"] >= since and key in earlier:
             old = earlier[key][1]
             picked[key] = (rank, {**old, **{m: r[m] for m in PREFILL}})
 

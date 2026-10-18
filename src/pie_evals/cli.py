@@ -229,6 +229,14 @@ def drop_engine(obj, engine):
     click.echo(f"{engine}: {records} records and {scores} quality scores deleted")
 
 
+@main.command("drop-workload")
+@click.argument("workload")
+@click.pass_obj
+def drop_workload(obj, workload):
+    """Delete every record of a workload."""
+    click.echo(f"{workload}: {obj['store'].drop_workload(workload)} records deleted")
+
+
 @main.command("import-store")
 @click.argument("src", type=click.Path(exists=True))
 @click.pass_obj

@@ -12,6 +12,7 @@ on:
       tag_kind: { description: "release or manual (empty: from the tag)", required: false, default: "" }
       drop_tags: { description: "comma-separated manual tags to delete from the database instead of importing", required: false, default: "" }
       drop_engines: { description: "comma-separated engines whose results and quality scores to delete instead of importing", required: false, default: "" }
+      drop_workloads: { description: "comma-separated workloads whose results to delete instead of importing", required: false, default: "" }
 
 jobs:
   collect:
@@ -27,13 +28,16 @@ jobs:
       - name: drop engines
         if: inputs.drop_engines != ''
         run: for e in $(echo "${{ inputs.drop_engines }}" | tr ',' ' '); do .venv/bin/pie-evals drop-engine "$e"; done
+      - name: drop workloads
+        if: inputs.drop_workloads != ''
+        run: for w in $(echo "${{ inputs.drop_workloads }}" | tr ',' ' '); do .venv/bin/pie-evals drop-workload "$w"; done
       - uses: actions/download-artifact@v4
-        if: inputs.drop_tags == '' && inputs.drop_engines == ''
+        if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == ''
         with: { pattern: "out-*", path: out, run-id: "${{ inputs.run_id || github.run_id }}", github-token: "${{ github.token }}" }
       - name: check the database
         run: .venv/bin/pie-evals store-status
       - name: import into the database
-        if: inputs.drop_tags == '' && inputs.drop_engines == ''
+        if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == ''
         run: |
           shopt -s nullglob
           dirs=(out/out-*)
