@@ -281,6 +281,498 @@ platforms:
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition"
     tp_capable: true
     tiers: [smoke, nightly, weekly]
+  # ---- every other RunPod GPU type, one GPU each (list-gpu-types, 2026-10-17). In the catalog only:
+  # `tiers: []` keeps them out of every scheduled run until one is given a tier or named in a dispatch.
+  # bandwidth_gbs is the vendor spec sheet's; a MIG slice has none of its own.
+  - id: mi300x-x1
+    os: linux
+    backend: rocm
+    accelerator: AMD Instinct MI300X OAM
+    arch: cdna3
+    count: 1
+    memory_gib: 192
+    bandwidth_gbs: 5300
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, mi300x-x1]
+    runpod_gpu_type: "AMD Instinct MI300X OAM"
+    tiers: []
+  - id: mi350x-x1
+    os: linux
+    backend: rocm
+    accelerator: AMD Instinct MI350 OAM
+    arch: cdna4
+    count: 1
+    memory_gib: 288
+    bandwidth_gbs: 8000
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, mi350x-x1]
+    runpod_gpu_type: "AMD Instinct MI350 OAM"
+    tiers: []
+  - id: a100-sxm40-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA A100-SXM4-40GB
+    arch: ampere
+    count: 1
+    memory_gib: 40
+    bandwidth_gbs: 1555
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, a100-sxm40-x1]
+    runpod_gpu_type: "NVIDIA A100-SXM4-40GB"
+    tiers: []
+  - id: a100-sxm-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA A100-SXM4-80GB
+    arch: ampere
+    count: 1
+    memory_gib: 80
+    bandwidth_gbs: 2039
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, a100-sxm-x1]
+    runpod_gpu_type: "NVIDIA A100-SXM4-80GB"
+    tiers: []
+  - id: b200-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA B200
+    arch: blackwell
+    count: 1
+    memory_gib: 180
+    bandwidth_gbs: 8000
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, b200-x1]
+    runpod_gpu_type: "NVIDIA B200"
+    tiers: []
+  - id: b300-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA B300 SXM6 AC
+    arch: blackwell
+    count: 1
+    memory_gib: 288
+    bandwidth_gbs: 8000
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, b300-x1]
+    runpod_gpu_type: "NVIDIA B300 SXM6 AC"
+    tiers: []
+  - id: b300-mig34-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA B300 SXM6 AC MIG 1g.34gb
+    arch: blackwell
+    count: 1
+    memory_gib: 34
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, b300-mig34-x1]
+    runpod_gpu_type: "NVIDIA B300 SXM6 AC MIG 1g.34gb"
+    tiers: []
+  - id: rtx3070-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA GeForce RTX 3070
+    arch: ampere
+    count: 1
+    memory_gib: 8
+    bandwidth_gbs: 448
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx3070-x1]
+    runpod_gpu_type: "NVIDIA GeForce RTX 3070"
+    tiers: []
+  - id: rtx3080-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA GeForce RTX 3080
+    arch: ampere
+    count: 1
+    memory_gib: 10
+    bandwidth_gbs: 760
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx3080-x1]
+    runpod_gpu_type: "NVIDIA GeForce RTX 3080"
+    tiers: []
+  - id: rtx3080ti-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA GeForce RTX 3080 Ti
+    arch: ampere
+    count: 1
+    memory_gib: 12
+    bandwidth_gbs: 912
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx3080ti-x1]
+    runpod_gpu_type: "NVIDIA GeForce RTX 3080 Ti"
+    tiers: []
+  - id: rtx3090-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA GeForce RTX 3090
+    arch: ampere
+    count: 1
+    memory_gib: 24
+    bandwidth_gbs: 936
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx3090-x1]
+    runpod_gpu_type: "NVIDIA GeForce RTX 3090"
+    tiers: []
+  - id: rtx3090ti-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA GeForce RTX 3090 Ti
+    arch: ampere
+    count: 1
+    memory_gib: 24
+    bandwidth_gbs: 1008
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx3090ti-x1]
+    runpod_gpu_type: "NVIDIA GeForce RTX 3090 Ti"
+    tiers: []
+  - id: rtx4070ti-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA GeForce RTX 4070 Ti
+    arch: ada
+    count: 1
+    memory_gib: 12
+    bandwidth_gbs: 504
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx4070ti-x1]
+    runpod_gpu_type: "NVIDIA GeForce RTX 4070 Ti"
+    tiers: []
+  - id: rtx4080-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA GeForce RTX 4080
+    arch: ada
+    count: 1
+    memory_gib: 16
+    bandwidth_gbs: 717
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx4080-x1]
+    runpod_gpu_type: "NVIDIA GeForce RTX 4080"
+    tiers: []
+  - id: rtx4080s-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA GeForce RTX 4080 SUPER
+    arch: ada
+    count: 1
+    memory_gib: 16
+    bandwidth_gbs: 736
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx4080s-x1]
+    runpod_gpu_type: "NVIDIA GeForce RTX 4080 SUPER"
+    tiers: []
+  - id: rtx5080-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA GeForce RTX 5080
+    arch: blackwell
+    count: 1
+    memory_gib: 16
+    bandwidth_gbs: 960
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx5080-x1]
+    runpod_gpu_type: "NVIDIA GeForce RTX 5080"
+    tiers: []
+  - id: h100-sxm-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA H100 80GB HBM3
+    arch: hopper
+    count: 1
+    memory_gib: 80
+    bandwidth_gbs: 3350
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, h100-sxm-x1]
+    runpod_gpu_type: "NVIDIA H100 80GB HBM3"
+    tiers: []
+  - id: h100-nvl-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA H100 NVL
+    arch: hopper
+    count: 1
+    memory_gib: 94
+    bandwidth_gbs: 3900
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, h100-nvl-x1]
+    runpod_gpu_type: "NVIDIA H100 NVL"
+    tiers: []
+  - id: h200-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA H200
+    arch: hopper
+    count: 1
+    memory_gib: 141
+    bandwidth_gbs: 4800
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, h200-x1]
+    runpod_gpu_type: "NVIDIA H200"
+    tiers: []
+  - id: h200-nvl-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA H200 NVL
+    arch: hopper
+    count: 1
+    memory_gib: 143
+    bandwidth_gbs: 4800
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, h200-nvl-x1]
+    runpod_gpu_type: "NVIDIA H200 NVL"
+    tiers: []
+  - id: l40-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA L40
+    arch: ada
+    count: 1
+    memory_gib: 48
+    bandwidth_gbs: 864
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, l40-x1]
+    runpod_gpu_type: "NVIDIA L40"
+    tiers: []
+  - id: rtx2000ada-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX 2000 Ada Generation
+    arch: ada
+    count: 1
+    memory_gib: 16
+    bandwidth_gbs: 224
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx2000ada-x1]
+    runpod_gpu_type: "NVIDIA RTX 2000 Ada Generation"
+    tiers: []
+  - id: rtx4000ada-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX 4000 Ada Generation
+    arch: ada
+    count: 1
+    memory_gib: 20
+    bandwidth_gbs: 360
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx4000ada-x1]
+    runpod_gpu_type: "NVIDIA RTX 4000 Ada Generation"
+    tiers: []
+  - id: rtx4000ada-sff-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX 4000 SFF Ada Generation
+    arch: ada
+    count: 1
+    memory_gib: 20
+    bandwidth_gbs: 280
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx4000ada-sff-x1]
+    runpod_gpu_type: "NVIDIA RTX 4000 SFF Ada Generation"
+    tiers: []
+  - id: rtx5000ada-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX 5000 Ada Generation
+    arch: ada
+    count: 1
+    memory_gib: 32
+    bandwidth_gbs: 576
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx5000ada-x1]
+    runpod_gpu_type: "NVIDIA RTX 5000 Ada Generation"
+    tiers: []
+  - id: rtx6000ada-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX 6000 Ada Generation
+    arch: ada
+    count: 1
+    memory_gib: 48
+    bandwidth_gbs: 960
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtx6000ada-x1]
+    runpod_gpu_type: "NVIDIA RTX 6000 Ada Generation"
+    tiers: []
+  - id: rtxa2000-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX A2000
+    arch: ampere
+    count: 1
+    memory_gib: 6
+    bandwidth_gbs: 288
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtxa2000-x1]
+    runpod_gpu_type: "NVIDIA RTX A2000"
+    tiers: []
+  - id: rtxa4000-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX A4000
+    arch: ampere
+    count: 1
+    memory_gib: 16
+    bandwidth_gbs: 448
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtxa4000-x1]
+    runpod_gpu_type: "NVIDIA RTX A4000"
+    tiers: []
+  - id: rtxa4500-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX A4500
+    arch: ampere
+    count: 1
+    memory_gib: 20
+    bandwidth_gbs: 640
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtxa4500-x1]
+    runpod_gpu_type: "NVIDIA RTX A4500"
+    tiers: []
+  - id: rtxa5000-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX A5000
+    arch: ampere
+    count: 1
+    memory_gib: 24
+    bandwidth_gbs: 768
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtxa5000-x1]
+    runpod_gpu_type: "NVIDIA RTX A5000"
+    tiers: []
+  - id: rtxa6000-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX A6000
+    arch: ampere
+    count: 1
+    memory_gib: 48
+    bandwidth_gbs: 768
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, rtxa6000-x1]
+    runpod_gpu_type: "NVIDIA RTX A6000"
+    tiers: []
+  - id: pro4000-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX PRO 4000 Blackwell
+    arch: blackwell
+    count: 1
+    memory_gib: 24
+    bandwidth_gbs: 672
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, pro4000-x1]
+    runpod_gpu_type: "NVIDIA RTX PRO 4000 Blackwell"
+    tiers: []
+  - id: pro4500bw-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX PRO 4500 Blackwell
+    arch: blackwell
+    count: 1
+    memory_gib: 32
+    bandwidth_gbs: 896
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, pro4500bw-x1]
+    runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell"
+    tiers: []
+  - id: pro4500bw-se-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX PRO 4500 Blackwell Server Edition
+    arch: blackwell
+    count: 1
+    memory_gib: 32
+    bandwidth_gbs: 896
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, pro4500bw-se-x1]
+    runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell Server Edition"
+    tiers: []
+  - id: pro5000-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX PRO 5000 Blackwell
+    arch: blackwell
+    count: 1
+    memory_gib: 48
+    bandwidth_gbs: 1344
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, pro5000-x1]
+    runpod_gpu_type: "NVIDIA RTX PRO 5000 Blackwell"
+    tiers: []
+  - id: pro6000-maxq-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition
+    arch: blackwell
+    count: 1
+    memory_gib: 96
+    bandwidth_gbs: 1792
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, pro6000-maxq-x1]
+    runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition"
+    tiers: []
+  - id: pro6000-mig24-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 1g.24gb
+    arch: blackwell
+    count: 1
+    memory_gib: 24
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, pro6000-mig24-x1]
+    runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 1g.24gb"
+    tiers: []
+  - id: pro6000-mig48-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 2g.48gb
+    arch: blackwell
+    count: 1
+    memory_gib: 48
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, pro6000-mig48-x1]
+    runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 2g.48gb"
+    tiers: []
+  - id: pro6000-wk-x1
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA RTX PRO 6000 Blackwell Workstation Edition
+    arch: blackwell
+    count: 1
+    memory_gib: 96
+    bandwidth_gbs: 1792
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, pro6000-wk-x1]
+    runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Workstation Edition"
+    tiers: []
+  - id: v100-pcie-x1
+    os: linux
+    backend: cuda
+    accelerator: Tesla V100-PCIE-16GB
+    arch: volta
+    count: 1
+    memory_gib: 16
+    bandwidth_gbs: 900
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, v100-pcie-x1]
+    runpod_gpu_type: "Tesla V100-PCIE-16GB"
+    tiers: []
+  - id: v100-sxm2-x1
+    os: linux
+    backend: cuda
+    accelerator: Tesla V100-SXM2-16GB
+    arch: volta
+    count: 1
+    memory_gib: 16
+    bandwidth_gbs: 900
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, v100-sxm2-x1]
+    runpod_gpu_type: "Tesla V100-SXM2-16GB"
+    tiers: []
   # ---- Google Cloud TPU: a VM created per run by .github/workflows/tpu.yml and deleted after it
   # (no runner registers this label; the GPU nightly's --skip-unavailable drops it). pie only.
   - id: tpu-v6e-1
