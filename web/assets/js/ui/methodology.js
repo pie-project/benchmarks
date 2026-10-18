@@ -328,7 +328,7 @@ window.Pie = window.Pie || {};
     const bandwidth = requests / readS;
     const compute = requests / mathS;
     const bound = compute <= bandwidth ? "compute" : "bandwidth";
-    return { tps: Math.min(compute, bandwidth), bound, compute, bandwidth, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, requests } };
+    return { tps: Math.min(compute, bandwidth), bound, compute, bandwidth, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, requests, bw: machine.bw, tflops: machine.tflops } };
   };
 
   Pie.methodology = {
