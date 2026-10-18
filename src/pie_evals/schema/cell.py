@@ -40,6 +40,7 @@ class Backend(StrEnumBase):
     VULKAN = "vulkan"
     WGPU = "wgpu"
     XLA = "xla"  # pie's TPU engine (engine-xla over libtpu)
+    ROCM = "rocm"  # AMD Instinct (MI300X, MI350X): in the catalog; no engine declares it yet
 
 
 class QuantScheme(StrEnumBase):
