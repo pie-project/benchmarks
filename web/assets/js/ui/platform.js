@@ -24,13 +24,13 @@ window.Pie = window.Pie || {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
   const PLATFORMS = [
-    { id: "mac", label: "Apple Silicon", sub: "Metal", has: (hw) => hw.class === "mac" || hw.vendor === "Apple" },
-    { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => hw.backend === "xla" },
-    { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => hw.vendor === "NVIDIA" },
-    { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => hw.vendor === "AMD" },
-    { id: "cerebras", label: "Cerebras", sub: "Wafer-scale", has: (hw) => hw.vendor === "Cerebras" },
-    { id: "android", label: "Android", sub: "Mobile GPU", has: (hw) => hw.class === "android" },
-    { id: "web", label: "WebGPU", sub: "In-browser", has: (hw) => hw.class === "web" },
+    { id: "mac", label: "Apple Silicon", sub: "Metal", has: (hw) => Pie.platformOf(hw) === "mac" },
+    { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => Pie.platformOf(hw) === "tpu" },
+    { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => Pie.platformOf(hw) === "nvidia" },
+    { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => Pie.platformOf(hw) === "amd" },
+    { id: "cerebras", label: "Cerebras", sub: "Wafer-scale", has: (hw) => Pie.platformOf(hw) === "cerebras" },
+    { id: "android", label: "Android", sub: "Mobile GPU", has: (hw) => Pie.platformOf(hw) === "android" },
+    { id: "web", label: "WebGPU", sub: "In-browser", has: (hw) => Pie.platformOf(hw) === "web" },
   ];
   const platformOf = (hw) => PLATFORMS.find((p) => p.has(hw));
   // a platform's mark is the sidebar's: the same tinted squircle and glyph wherever it appears

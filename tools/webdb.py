@@ -29,7 +29,7 @@ WEB = ROOT / "web"
 # Each site workload maps to measured workloads, best first.
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
 RAW = ["raw-512-256"]  # the single request with speculation off: what the hardware limit is measured against
-CATEGORIES = (("throughput", THROUGHPUT, "Throughput"), ("raw", RAW, "Raw"))
+CATEGORIES = (("throughput", THROUGHPUT, "Batching"), ("raw", RAW, "Raw"))
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 
 WL_PRIORITY = {wl: (cat, i) for cat, ids, _ in CATEGORIES for i, wl in enumerate(ids)}
