@@ -177,9 +177,8 @@ window.Pie = window.Pie || {};
     if (both) {
       // both bounds side by side, as a pair of stats: a small label over each number, memory first as the chart reads
       // left to right; the lower one is the limit, bright, the other dimmed
-      const low = bounds(both)[0][0];
-      const stat = (name, label, tps) => tps ? `<div class="rf-stat${name === low ? " is-limit" : ""}"><span>${label}${name === low ? '<i class="rf-tag">Limit</i>' : ""}</span><b>${esc(value(tps, metric.unit))}</b></div>` : "";
-      const head = `<div class="rf-stats">${stat("Bandwidth", "Memory bound", both.bandwidth)}${stat("Compute", "Compute bound", both.compute)}</div>`;
+      // the two bounds as rows, the one that sets the limit first with the gauge, the other dimmed under it
+      const head = `<div class="tip-rows">${bounds(both).map(([name, tps], i) => limitRow(name, tps, i === 0)).join("")}</div>`;
       return `<div class="rf-card">${head}${roofCard(order.map((r) => roofPoint(r, mode, metric)).filter(Boolean))}</div>`;
     }
     return card("", "", lines);
@@ -226,7 +225,7 @@ window.Pie = window.Pie || {};
     // a dot's distance below the roof is its share of it: at 55% it sits about halfway between the floor and the roof
     const Y1 = Math.max(Math.min(bw * 1e9 * X1, peak * 1e12), ...points.map((p) => p.achieved)) * 1.06;
     const Y0 = 0;
-    const W = 260, H = 96, L = 2, R = 2, T = 16, B = 2;
+    const W = 196, H = 80, L = 2, R = 2, T = 14, B = 2;  // about the card's own width, so the dots and the name keep their size
     const x = (v) => L + ((v - X0) / (X1 - X0)) * (W - L - R);
     const y = (v) => T + (1 - (v - Y0) / (Y1 - Y0)) * (H - T - B);
     const roof = (v) => Math.min(bw * 1e9 * v, peak * 1e12);
@@ -235,24 +234,31 @@ window.Pie = window.Pie || {};
     // in the card's colour so dots stay apart; pie drawn last, and the only one named
     const at = (p) => `cx="${x(p.ai).toFixed(1)}" cy="${y(p.achieved).toFixed(1)}"`;
     const isPie = (p) => p.r.engine === Pie.engines.primary;
+    // the chart stretches with the card, but its marks keep their size on screen: the line keeps its weight
+    // (non-scaling stroke), each dot is a round cap of a zero-length line (so it stays 7px across, as the Engines card's
+    // dots), and the names are HTML laid over the chart at the right place, at the card's own type size
+    const point = (cx, cy, cls, color = "") => `<line class="${cls}" x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy}"${color ? ` stroke="${color}"` : ""}/>`;
     const dots = [...points.filter((p) => !isPie(p)), ...points.filter(isPie)]
-      .map((p) => `<circle class="rf-dot" ${at(p)} r="3.5" fill="${Pie.engines.colorOf(p.r.engine)}"/>`).join("");
+      .map((p) => point(x(p.ai).toFixed(1), y(p.achieved).toFixed(1), "rf-dot", Pie.engines.colorOf(p.r.engine))).join("");
+    const pct = (vx, vy) => `left: ${((vx / W) * 100).toFixed(2)}%; top: ${((vy / H) * 100).toFixed(2)}%`;
     // only pie is named, beside its dot in its colour: to the right, or to the left near the right edge
     const labels = points.filter(isPie).map((p) => {
       const cx = x(p.ai), left = cx > W - 40;
-      return `<text class="rf-name is-pie" x="${(cx + (left ? -8 : 8)).toFixed(1)}" y="${(y(p.achieved) + 3.5).toFixed(1)}" text-anchor="${left ? "end" : "start"}" fill="${Pie.engines.colorOf(p.r.engine)}">${esc(names().engine(p.r.engine))}</text>`;
+      return `<span class="rf-name is-pie${left ? " is-left" : ""}" style="${pct(cx, y(p.achieved))}; color: ${Pie.engines.colorOf(p.r.engine)}">${esc(names().engine(p.r.engine))}</span>`;
     }).join("");
     const shown = knee > X0 && knee < X1;  // the knee, only when it falls inside the window
     const roofPts = (shown ? [start, knee, X1] : [start, X1]).map((v) => `${x(v).toFixed(1)},${y(roof(v)).toFixed(1)}`);
-    const floor = (H - B).toFixed(1);
+    const kx = x(knee), ky = y(peak * 1e12);
     return `
       <div class="tip-roof">
         <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Roofline: knee at ${Math.round(knee)} FLOPs per byte`)}">
+          <line class="rf-zero" x1="${L}" x2="${W - R}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}"/>
           <polyline class="rf-roof" points="${roofPts.join(" ")}"/>
-          ${shown ? `<circle class="rf-knee" cx="${x(knee).toFixed(1)}" cy="${y(peak * 1e12).toFixed(1)}" r="3"/>` : ""}
-          ${shown ? `<text class="rf-tick" x="${(x(knee) + (x(knee) > W / 2 ? -7 : 7)).toFixed(1)}" y="${(y(peak * 1e12) - 6).toFixed(1)}" text-anchor="${x(knee) > W / 2 ? "end" : "start"}">Knee</text>` : ""}
-          ${dots}${labels}
+          ${shown ? point(kx.toFixed(1), ky.toFixed(1), "rf-knee") + point(kx.toFixed(1), ky.toFixed(1), "rf-knee-hole") : ""}
+          ${dots}
         </svg>
+        ${shown ? `<span class="rf-tick-name${kx > W / 2 ? " is-left" : ""} is-above" style="${pct(kx, ky)}">Knee</span>` : ""}
+        ${labels}
       </div>`;
   };
 
@@ -380,18 +386,9 @@ window.Pie = window.Pie || {};
           <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span>
           <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
         </span></th></tr>`;
-      // Ceiling: a cell bound by the other limit than most cells in this view carries a small mark, so a mark
-      // always means an exception; the hover card names every cell's bounds
-      const tally = { compute: 0, bandwidth: 0 };
-      if (compare === "ceiling") {
-        for (const g of shownGroups) for (const mac of g.macs) for (const model of models) {
-          const c = grid[mac][model].c;
-          const b = c && boundOf(mac, model, mode, metric, c.pie)?.bound;
-          if (b in tally) tally[b] += 1;
-        }
-      }
-      const usual = tally.compute > tally.bandwidth ? "compute" : tally.bandwidth ? "bandwidth" : null;
-      const EXCEPTION = {
+      // Roofline: every cell carries the mark of what limits it, after its number: two arrows for memory bandwidth,
+      // a chip for compute; the hover card gives both bounds
+      const MARK = {
         compute: { title: "Compute-bound: the share of the compute bound", path: "M4.5 4.5h7v7h-7zM6.5 2v2.5M9.5 2v2.5M6.5 11.5V14M9.5 11.5V14M2 6.5h2.5M2 9.5h2.5M11.5 6.5H14M11.5 9.5H14" },
         bandwidth: { title: "Bandwidth-bound: the share of the bandwidth bound", path: "M2 5.5h9M8.5 3l2.5 2.5L8.5 8M14 10.5H5M7.5 8 5 10.5 7.5 13" },
       };
@@ -411,8 +408,10 @@ window.Pie = window.Pie || {};
                   if (!ceil) return { kind: "is-even", html: "–" };
                   const share = c.pie[metric.key] / ceil.tps;
                   const kind = share >= 0.25 ? "is-ahead" : "is-mid";
-                  const odd = usual && ceil.bound !== usual && EXCEPTION[ceil.bound];
-                  return { kind, html: `${Math.round(share * 100)}%${odd ? `<svg class="platform-exception" viewBox="0 0 16 16" role="img" aria-label="${odd.title}"><title>${odd.title}</title><path d="${odd.path}"/></svg>` : ""}` };
+                  // a balanced cell takes the lower of its two bounds
+                  const which = MARK[ceil.bound] ? ceil.bound : (ceil.bandwidth || Infinity) <= (ceil.compute || Infinity) ? "bandwidth" : "compute";
+                  const mark = MARK[which];
+                  return { kind, html: `${Math.round(share * 100)}%<svg class="platform-exception" viewBox="0 0 16 16" role="img" aria-label="${mark.title}"><title>${mark.title}</title><path d="${mark.path}"/></svg>` };
                 })()
               : number(c.gain);
             return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c, mode, raw))}"><span class="platform-main">${n.html}</span>${subline(c, metric, mode, raw)}</span></td>`;
