@@ -6,7 +6,7 @@ window.Pie = window.Pie || {};
   const GROUPS = [
     ["Workload", [
       { tint: "#30d158", icon: "M4 6h16M4 12h16M4 18h10", big: "512", unit: "tokens", label: "Prompt", line: "Same seeded text everywhere." },
-      { tint: "#ff9f0a", icon: "M5 12h11M12 7l5 5-5 5M20 5v14", big: "200", unit: "tokens", label: "Answer", line: "Fixed length on every engine." },
+      { tint: "#ff9f0a", icon: "M5 12h11M12 7l5 5-5 5M20 5v14", big: "256", unit: "tokens", label: "Answer", line: "Fixed length on every engine." },
       { tint: "#64d2ff", icon: "M12 3v18M5.6 6.6l12.8 10.8M18.4 6.6 5.6 17.4", big: "Cold", label: "Cache", line: "No prefix-cache hits." },
       { tint: "#ff453a", icon: "M12 3c2 3 5 4.5 5 9a5 5 0 0 1-10 0c0-2.5 1.5-3.5 2-5 1 1.5 2 2 3-4z", big: "Warm", label: "Engine", line: "Warmup runs aren't counted." },
     ]],
@@ -19,9 +19,9 @@ window.Pie = window.Pie || {};
       { tint: "#30d158", icon: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.01", big: "Max throughput", label: "Goal", line: "Every engine is set up for its highest tokens per second." },
     ]],
     ["Inference", [
-      { tint: "#0a84ff", icon: "M4 12h16M12 4v16", big: "Greedy", label: "Decoding", line: "Temperature 0, top-p 1." },
-      { tint: "#0a84ff", icon: "M4 12h16M12 4v16", big: "Top-1", label: "Sampling", line: "Only the highest-probability token is taken." },
-      { tint: "#0a84ff", icon: "M4 12h16M12 4v16", big: "0", label: "Temperature", line: "No randomness in the choice of tokens." },
+      { tint: "#0a84ff", icon: "M4 12h15M15 8l4 4-4 4", big: "Greedy", label: "Decoding", line: "Temperature 0, top-p 1." },
+      { tint: "#0a84ff", icon: "M6 20V5M12 20v-8M18 20v-5", big: "Top-1", label: "Sampling", line: "Only the highest-probability token is taken." },
+      { tint: "#0a84ff", icon: "M10 13.5V5a2 2 0 0 1 4 0v8.5a4 4 0 1 1-4 0z", big: "0", label: "Temperature", line: "No randomness in the choice of tokens." },
       { tint: "#bf5af2", icon: "M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3zM9.5 21h5", big: "Off", label: "Thinking", line: "No reasoning tokens." },
       { tint: "#0a84ff", icon: "M3 7l6 5-6 5zM11 7l6 5-6 5zM20 6v12", big: "Lossless", label: "Speculation", line: "Greedy verify. Off in Raw." },
       { tint: "#0a84ff", icon: "M4 12h6M14 12h6M10 7l4 5-4 5", big: "Like for like", label: "Drafters", line: "The same model is compared across engines. Models with a shared architecture, such as linear attention, are compared only with each other." },
