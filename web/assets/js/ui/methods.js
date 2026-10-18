@@ -375,6 +375,13 @@ window.Pie = window.Pie || {};
         <h2>Assumptions</h2>
         <p class="book-plain">Every simplification, and which way it moves the limit. Those that raise it keep the limit a ceiling no engine can pass.</p>
         <ul class="assumptions">${assumptions}</ul>
+      </section>
+      <section class="book-section">
+        <h2>Agentic workloads</h2>
+        <div class="book-prose">
+          <p>Agents hold longer contexts and run many at once, so they need more memory and more I/O. They branch, call tools and wait, which makes the load hard to predict and hard to schedule, and widens the gap to the limit. Every idle moment of the hardware shows up in the cost.</p>
+          <p>Pie is built for these patterns. <a href="https://github.com/pie-project/pie" target="_blank" rel="noopener">Profile your multi-agent workloads with Pie.</a></p>
+        </div>
       </section>`;
 
     // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
