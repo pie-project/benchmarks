@@ -25,6 +25,18 @@ window.Pie = window.Pie || {};
   }
 
   const snapshots = tables.snapshots || {};
+  // runs whose first-token timing is known to be wrong, by engine, workload and run: there the client sent every request
+  // of a round at once to an engine serving one at a time, so each time to first token counted the queue ahead of it
+  // (pie PR #1011). Prefill, TTFT and whole-request latency are withheld; decode, timed between tokens, is kept
+  const QUEUED_TTFT = [{ engine: "vllm", workload: "raw", runs: ["0.5.3-b5"] }];
+  for (const rows of Object.values(snapshots)) {
+    for (const row of rows) {
+      const bad = QUEUED_TTFT.some((q) => q.engine === row.engine && q.workload === row.workload && q.runs.includes(row.release));
+      if (!bad) continue;
+      for (const key of ["prefill_tok_s", "ttft_ms_p50", "ttft_ms_p99", "latency_ms_p50", "latency_ms_p99"]) row[key] = null;
+      row.note = "Prefill and time to first token withheld: this run timed each request from a queue of the round's requests, not its own prefill";
+    }
+  }
   // each model's platforms come from its recorded results, not from the catalog: a platform counts only where a run has a result
   {
     const measured = (row) => ["pass", "noisy"].includes(row.status);
