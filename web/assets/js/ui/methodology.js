@@ -288,6 +288,18 @@ window.Pie = window.Pie || {};
     return { weightGB, cacheGB, flops, body: activeBody, head: a.emb };
   };
 
+  // a model's architecture: its own from config/architectures.js, or, for a model not there yet, one built from the
+  // catalog's counts so the limit is never missing: every parameter read and computed as the catalog states it (the
+  // active share for a mixture of experts), no embedding split, and the cache estimated from the size class
+  const archOf = (id) => {
+    const own = Pie.architectures?.[id];
+    if (own) return own;
+    const m = models().find((x) => x.id === id);
+    if (!m?.total) return null;
+    return { total: m.total, emb: 0, tied: true, ple: 0, routed: m.total, k: m.active / m.total, full: m.layers, sliding: 0, window: 0,
+      kvLayer: (m.kvKB / m.layers) * 1e3, linear: 0, state: 0, layers: m.layers, shared: 0 };
+  };
+
   // the hardware limit for one measured result, from the spec sheet: the slower of reading the bytes and doing the math.
   // Decode is one token at the middle of the answer, its logits included; prefill is the whole prompt in one pass,
   // with logits only for its last token, which is all a first token needs
@@ -295,7 +307,7 @@ window.Pie = window.Pie || {};
     const machine = machines().find((m) => m.id === row.hardware);
     const model = models().find((m) => m.id === row.model);
     const workload = Pie.store.index.workloads[row.workload];
-    const a = Pie.architectures?.[row.model];
+    const a = archOf(row.model);
     if (!machine?.bw || !machine.tflops || !model || !workload || !a) return null;
     const bits = bitsOf(row.scheme);
     const prompt = workload.prompt_tokens;
@@ -318,7 +330,7 @@ window.Pie = window.Pie || {};
   Pie.batchedCeiling = (hardware, modelId, scheme = "affine_u4_g64") => {
     const machine = machines().find((m) => m.id === hardware);
     const workload = Pie.store.index.workloads?.throughput;
-    const a = Pie.architectures?.[modelId];
+    const a = archOf(modelId);
     if (!machine?.bw || !machine.tflops || !workload || !a) return null;
     const requests = workload.concurrency || 1;
     const p = pass(a, { bits: bitsOf(scheme), tokens: requests, logits: requests, requests, context: workload.prompt_tokens + workload.output_tokens / 2 });
