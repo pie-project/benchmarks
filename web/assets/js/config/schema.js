@@ -208,7 +208,7 @@ window.Pie = window.Pie || {};
         number("cpu_cores", "CPU cores", "Specs", "", 0),
         number("gpu_cores", "GPU cores", "Specs", "", 0),
         number("tflops_fp16", "Compute", "Specs", "TFLOPS", 1, {
-          info: "Peak fp16 matrix math. Depends on the unit: GPU, neural accelerators (MPP) or Neural Engine (ANE).",
+          info: "Peak fp16 matrix math, GPU only. An estimate, not exact: other units, such as the neural accelerators or the Neural Engine, can add more.",
         }),
         number("power_w", "Power", "Specs", "W", 0),
         text("interconnect", "Interconnect", "Specs"),
