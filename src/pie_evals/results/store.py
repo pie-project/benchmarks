@@ -140,6 +140,10 @@ class BaseStore:
         """Delete every result and quality score of an engine; returns (records, scores) deleted."""
         raise NotImplementedError
 
+    def drop_workload(self, workload: str) -> int:
+        """Delete every record of a workload; returns how many went."""
+        raise NotImplementedError
+
 
 class DirStore(BaseStore):
     def __init__(self, root: Path | str = "store"):
@@ -257,6 +261,11 @@ class PgStore(BaseStore):
             records = cur.rowcount
             cur.execute("DELETE FROM quality WHERE engine = %s", (engine,))
             return records, cur.rowcount
+
+    def drop_workload(self, workload: str) -> int:
+        with self.connect() as conn, conn.transaction(), conn.cursor() as cur:
+            cur.execute("DELETE FROM records WHERE workload = %s", (workload,))
+            return cur.rowcount
 
     def __init__(self, dsn: str):
         self.dsn = dsn
