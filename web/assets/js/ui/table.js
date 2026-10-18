@@ -37,20 +37,16 @@ window.Pie = window.Pie || {};
     ].filter(Boolean).join(" ");
     // a long note stops at an ellipsis; hovering the cell shows all of it in the site's hover card
     const full = column.wide && !format.isEmpty(value) ? ` data-note="${format.escape(String(value))}"` : "";
-    // hardware classes use the same pills as the platform tags
+    // a category reads as Apple's tables write one: plain text, a small coloured dot before it (no filled pills)
+    const TINT = { mac: "#8e8e93", gpu: "#76b900", tpu: "#4285f4", wafer: "#ff9500" };
+    const LABEL = { mac: "Mac", gpu: "GPU", tpu: "TPU", wafer: "Wafer" };
+    const dotted = (key, text) => `<span class="cell-dot" style="--dot: ${TINT[key] || "#8e8e93"}">${format.escape(text)}</span>`;
     if (column.key === "class" && !format.isEmpty(value)) {
-      const tint = { mac: "#8e8e93", gpu: "#76b900", tpu: "#4285f4" };
-      const label = { mac: "Mac", gpu: "GPU", tpu: "TPU" };
       const key = String(value).toLowerCase();
-      const pill = `<span style="display: inline-block; padding: 1px 8px; border-radius: 999px; background: ${tint[key] || "#8e8e93"}; color: #fff; font-size: 11px; font-weight: 500; line-height: 16px">${format.escape(label[key] || String(value))}</span>`;
-      return `<td class="${classes}">${pill}</td>`;
+      return `<td class="${classes}">${dotted(key, LABEL[key] || String(value))}</td>`;
     }
-    // platform tags carry their sidebar icon's colour
     if (column.key === "platforms" && !format.isEmpty(value)) {
-      const tint = { Mac: "#8e8e93", GPU: "#76b900", TPU: "#4285f4" };
-      const pill = (t) => `<span style="display: inline-block; margin-right: 4px; padding: 1px 8px; border-radius: 999px; background: ${tint[t] || "#8e8e93"}; color: #fff; font-size: 11px; font-weight: 500; line-height: 16px">${format.escape(t)}</span>`;
-      const tags = String(value).split(", ").map(pill).join("");
-      return `<td class="${classes}">${tags}</td>`;
+      return `<td class="${classes}">${String(value).split(", ").map((t) => dotted(t.toLowerCase(), t)).join("")}</td>`;
     }
     return `<td class="${classes}"${full}>${format.value(column, value)}</td>`;
   };

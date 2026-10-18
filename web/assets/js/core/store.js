@@ -25,8 +25,11 @@ window.Pie = window.Pie || {};
         if (tag) (seen[row.model] = seen[row.model] || new Set()).add(tag);
       }
     }
+    // the export already lists where each model was measured across every stored result (GPU and TPU runs too,
+    // which the grids' rows do not carry); the rows here only add to it
     for (const model of tables.models || []) {
-      model.platforms = ["Mac", "GPU", "TPU"].filter((t) => seen[model.id]?.has(t)).join(", ");
+      const all = new Set([...(seen[model.id] || []), ...String(model.platforms || "").split(", ").filter(Boolean)]);
+      model.platforms = ["Mac", "GPU", "TPU"].filter((t) => all.has(t)).join(", ");
     }
   }
   // every combination has a row; only pass and noisy ones carry numbers (older exports have no status: all measured)
