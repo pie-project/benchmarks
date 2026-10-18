@@ -263,13 +263,32 @@ window.Pie = window.Pie || {};
       </div>`;
   };
 
+  // where the mouse last was over the grid, and how to redraw the card there after the grid redraws
+  let pointer = null;
+  let peeked = null;  // the chosen view while R is held, so it can come back
+  let refreshCard = () => {};
+
   Pie.platform = {
+    refreshCard: () => refreshCard(),
     element,
     batchedBound,
 
     // the Compare choice, kept per browser: "engines" or "ceiling"
     compare: () => compare,
+    // a peek: while R is held the grid shows the other view; letting go returns to the chosen one, which a peek
+    // never changes or saves
+    peek(on) {
+      if (on && !peeked) {
+        peeked = compare;
+        compare = compare === "ceiling" ? "engines" : "ceiling";
+      } else if (!on && peeked) {
+        compare = peeked;
+        peeked = null;
+      } else return false;
+      return true;
+    },
     setCompare(value) {
+      peeked = null;
       compare = COMPARES[value] ? value : "engines";
       try {
         localStorage.setItem("platformCompare", compare);
@@ -449,7 +468,7 @@ window.Pie = window.Pie || {};
             <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Setup: ${mode.label}`)}">${esc(mode.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
           <span class="filter platform-compare-filter">
-            <button class="filter-button" id="platform-compare" type="button" aria-haspopup="menu" aria-label="${esc(`Compare: ${COMPARES[compare]}`)}" title="Switch Performance and Roofline (R)">${COMPARES[compare]}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+            <button class="filter-button" id="platform-compare" type="button" aria-haspopup="menu" aria-label="${esc(`Compare: ${COMPARES[compare]}`)}" title="Hold R to see ${compare === "ceiling" ? "Performance" : "Roofline"}">${COMPARES[compare]}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>Configuration</button>
           <span class="platform-bar-side is-end">
@@ -612,9 +631,9 @@ window.Pie = window.Pie || {};
         const mark = Pie.tapCard.isTouch() && event.target.closest("[data-tip]");
         if (mark) Pie.tapCard.toggle(mark, mark.dataset.tip, true);
       });
-      element.addEventListener("pointermove", (event) => {
-        if (event.pointerType !== "mouse") return;
-        const mark = event.target.closest("[data-tip]");
+      // the card under the pointer: shown as the pointer moves, and again when the grid redraws beneath a still pointer
+      // (R switching Performance and Roofline), so the card always matches the cell
+      const showCard = (mark, cx, cy) => {
         if (!mark) {
           tooltip.hidden = true;
           return;
@@ -623,17 +642,28 @@ window.Pie = window.Pie || {};
         tooltip.innerHTML = mark.dataset.tip;
         tooltip.classList.add("is-card");
         tooltip.hidden = false;
-        const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
-        const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8);
+        const x = Math.min(cx + 14, window.innerWidth - tooltip.offsetWidth - 8);
+        const y = Math.min(cy + 14, window.innerHeight - tooltip.offsetHeight - 8);
         tooltip.style.left = `${Math.max(8, x)}px`;
         tooltip.style.top = `${Math.max(8, y)}px`;
+      };
+      element.addEventListener("pointermove", (event) => {
+        if (event.pointerType !== "mouse") return;
+        pointer = { x: event.clientX, y: event.clientY };
+        showCard(event.target.closest("[data-tip]"), event.clientX, event.clientY);
       });
+      refreshCard = () => {
+        if (!pointer || tooltip.hidden) return;
+        const under = document.elementFromPoint(pointer.x, pointer.y);
+        showCard(element.contains(under) ? under?.closest("[data-tip]") : null, pointer.x, pointer.y);
+      };
       window.addEventListener("resize", () => {
         const scroller = element.querySelector(".platform-scroll");
         if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       });
       element.addEventListener("pointerleave", (event) => {
         if (event.pointerType !== "mouse") return;
+        pointer = null;
         tooltip.hidden = true;
         tooltip.classList.remove("is-card");
       });
