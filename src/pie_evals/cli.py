@@ -371,7 +371,7 @@ def watch_baselines(obj, lock):
 @click.option("--image-version", default="latest")
 @click.option("--network-volume-id", envvar="RUNPOD_NETWORK_VOLUME_ID", default=None)
 @click.option("--kill-minutes", type=int, default=None, help="pod self-destruct; default = job budget × kill_factor")
-@click.option("--cuda", "cuda_versions", multiple=True, default=["13.0"], show_default=True, help="allowed host CUDA versions (pie pins cudarc cuda-13000)")
+@click.option("--cuda", "cuda_versions", multiple=True, default=["13.0", "13.1", "13.2"], show_default=True, help="allowed host CUDA versions (pie pins cudarc cuda-13000; a newer 13.x driver runs it, and the RTX PRO 6000 hosts offer only 13.2)")
 @click.option("--debug", is_flag=True, help="serve the start log on the pod's :8080 proxy and hold a failed pod 10 min")
 @click.option("--exec", "exec_script", default=None, help="run this bash script on the pod (same env as a job) instead of a runner, then terminate; volume maintenance")
 @click.option("--wait-runner", type=int, default=0, help="seconds to wait for the pod's runner to register (needs GH_RUNNER_PAT); a pod that never registers is terminated and the next platform tried")

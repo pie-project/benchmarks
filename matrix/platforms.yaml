@@ -78,16 +78,16 @@ platforms:
     tp_capable: true
     tiers: [nightly, weekly]
   - id: pro4500-x1
-    catalog: nvidia-rtx-pro-4500-blackwell-server
+    catalog: nvidia-rtx-pro-4500-blackwell
     os: linux
     backend: cuda
-    accelerator: NVIDIA RTX PRO 4500 Blackwell Server Edition
+    accelerator: NVIDIA RTX PRO 4500 Blackwell
     arch: blackwell
     count: 1
     memory_gib: 32
     interconnect: pcie
     runner_labels: [self-hosted, linux, pro4500-x1]
-    runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell Server Edition"
+    runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell"  # RunPod's pod API does not take the Server Edition
     tiers: [smoke, nightly, weekly]
   - id: a100-pcie-x1
     os: linux
@@ -651,7 +651,7 @@ platforms:
     memory_gib: 32
     interconnect: pcie
     runner_labels: [self-hosted, linux, pro4500bw-se-x1]
-    runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell Server Edition"
+    runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell"  # RunPod's pod API does not take the Server Edition
     tiers: []
   - id: pro5000-x1
     os: linux
