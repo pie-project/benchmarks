@@ -87,6 +87,7 @@ platforms:
     memory_gib: 32
     interconnect: pcie
     runner_labels: [self-hosted, linux, pro4500-x1]
+    runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell Server Edition"
     tiers: [smoke, nightly, weekly]
   - id: a100-pcie-x1
     os: linux
