@@ -301,6 +301,27 @@ window.Pie = window.Pie || {};
       kvLayer: (m.kvKB / m.layers) * 1e3, linear: 0, state: 0, layers: m.layers, shared: 0 };
   };
 
+  // the link between the GPUs of a multi-GPU machine, per direction per GPU, and the latency of one exchange. The catalog
+  // names only the kind of link, so its speed comes from the spec of that generation: PCIe 4.0 x16 is 32 GB/s each way,
+  // PCIe 5.0 x16 64 (RTX PRO 6000, RTX 5090, H100 PCIe and later), NVLink 3 on A100 SXM 600 GB/s in all (300 each way),
+  // NVLink 4 on H100 SXM 900 (450 each way)
+  const linkOf = (id) => {
+    const hw = Pie.store.index.hardware[id];
+    if (!hw || (hw.count || 1) < 2) return null;
+    const name = `${hw.name} ${hw.full_name || ""}`;
+    if (hw.interconnect === "nvlink") return /H100|H200|H800/.test(name) ? { gbs: 450, us: 3, name: "NVLink 4" } : { gbs: 300, us: 3, name: "NVLink 3" };
+    const gen5 = /PRO 6000|PRO 4500|5090|H100|H200|B200|Blackwell/.test(name);
+    return gen5 ? { gbs: 64, us: 10, name: "PCIe 5.0" } : { gbs: 32, us: 10, name: "PCIe 4.0" };
+  };
+  // the time a pass spends exchanging between n GPUs that split the model (tensor parallel): two all-reduces a layer of
+  // the activations, tokens x hidden in 16 bits; a ring all-reduce sends 2(n - 1)/n of them from each GPU, and each
+  // exchange pays the link's latency. The activations of tokens that only fill the cache are exchanged too
+  const linkTime = (a, link, devices, tokens) => {
+    if (!link) return 0;
+    const bytes = tokens * a.hidden * 2 * 2 * (devices - 1) / devices;
+    return 2 * a.layers * (link.us * 1e-6 + bytes / (link.gbs * 1e9));
+  };
+
   // the hardware limit for one measured result, from the spec sheet: the slower of reading the bytes and doing the math.
   // Decode is one token at the middle of the answer, its logits included; prefill is the whole prompt in one pass,
   // with logits only for its last token, which is all a first token needs
@@ -322,11 +343,15 @@ window.Pie = window.Pie || {};
     const memory = (p.weightGB + p.cacheGB) / bw;
     // a chip with no FLOPS figure has no compute bound: only the bandwidth one is drawn
     const compute = tflops ? p.flops / (tflops * 1e12) : 0;
-    const bound = memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced";
+    // several GPUs: the exchange between them is a third bound
+    const link = linkOf(row.hardware);
+    const linkS = linkTime(a, link, machine.devices, tokens);
+    const slowest = Math.max(memory, compute, linkS);
+    const bound = linkS === slowest && linkS ? "interconnect" : memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced";
     // the parts too, for the Methods page's worked examples
-    const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, bw, tflops, devices: machine.devices,
+    const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, linkS, link, bw, tflops, devices: machine.devices,
       body: p.body, head: p.head, bits, bytes: bits / 8, tokens, context, flopsPerToken: 2e9 * (p.body + p.head) };
-    return { tps: tokens / Math.max(memory, compute), bound, bandwidth: tokens / memory, compute: compute ? tokens / compute : null, parts };
+    return { tps: tokens / slowest, bound, bandwidth: tokens / memory, compute: compute ? tokens / compute : null, interconnect: linkS ? tokens / linkS : null, parts };
   };
 
   // batched decode on a machine: `requests` decode together, each one token a step with its logits, each with its
@@ -344,10 +369,15 @@ window.Pie = window.Pie || {};
     const prefillFlops = requests * 2e9 * p.body * workload.prompt_tokens / workload.output_tokens;
     const readS = (p.weightGB + p.cacheGB) / bw;
     const mathS = tflops ? (p.flops + prefillFlops) / (tflops * 1e12) : 0;
+    // several GPUs: each step exchanges the batch's activations, and each prompt's once, spread over its answer
+    const link = linkOf(hardware);
+    const linkS = link ? linkTime(a, link, machine.devices, requests) + linkTime(a, link, machine.devices, requests * workload.prompt_tokens / workload.output_tokens) - 2 * a.layers * link.us * 1e-6 * (1 - 1 / workload.output_tokens) : 0;
     const bandwidth = requests / readS;
     const compute = mathS ? requests / mathS : null;
-    const bound = compute && compute <= bandwidth ? "compute" : "bandwidth";
-    return { tps: compute ? Math.min(compute, bandwidth) : bandwidth, bound, compute, bandwidth, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, requests, bw, tflops, devices: machine.devices } };
+    const interconnect = linkS ? requests / linkS : null;
+    const tps = Math.min(bandwidth, compute || Infinity, interconnect || Infinity);
+    const bound = tps === interconnect ? "interconnect" : tps === compute ? "compute" : "bandwidth";
+    return { tps, bound, compute, bandwidth, interconnect, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, linkS, link, requests, bw, tflops, devices: machine.devices } };
   };
 
   Pie.methodology = {
