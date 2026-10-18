@@ -10,6 +10,20 @@ window.Pie = window.Pie || {};
     workloads: "workload",
   };
 
+  // the platform a machine belongs to, as the sidebar groups them; the platform pages and the hardware table share it
+  Pie.platformOf = (hw) => (hw.class === "mac" || hw.vendor === "Apple" ? "mac"
+    : hw.backend === "xla" ? "tpu"
+    : hw.vendor === "NVIDIA" ? "nvidia"
+    : hw.vendor === "AMD" ? "amd"
+    : hw.vendor === "Cerebras" ? "cerebras"
+    : hw.class === "android" ? "android"
+    : hw.class === "web" ? "web" : null);
+  // each machine names its platform as the sidebar does, for the hardware table's Platform column and filter
+  for (const hw of tables.hardware || []) {
+    const id = Pie.platformOf(hw);
+    if (id) hw.platform = Pie.schema[id]?.label || id;
+  }
+
   const snapshots = tables.snapshots || {};
   // each model's platforms come from its recorded results, not from the catalog: a platform counts only where a run has a result
   {
