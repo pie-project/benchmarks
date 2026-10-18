@@ -130,6 +130,9 @@ def _ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path |
         kw["allow_patterns"] = ["*.json", *gguf_shards(artifact.gguf_file)]
     else:
         kw["allow_patterns"] = WEIGHT_PATTERNS
+        # gpt-oss repos also carry original/ and metal/ copies of the weights (gpt-oss-120b: ~3x 65 GB),
+        # which no engine here loads; they filled a 400 GB pod in 0.5.3-b5
+        kw["ignore_patterns"] = ["original/*", "metal/*"]
     os.environ.setdefault("HF_XET_HIGH_PERFORMANCE", "1")  # more parallel Xet transfers: a cold pod's downloads bound the run
     path = snapshot_download(artifact.base_model, cache_dir=str(hf_cache), token=os.environ.get("HF_TOKEN") or None, max_workers=16, **kw)  # an empty secret must not become "Bearer "
     return _with_gguf_config(artifact, Path(path), log)
