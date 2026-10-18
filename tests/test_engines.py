@@ -1129,3 +1129,11 @@ def test_mlxlm_blocks_every_special_token(tmp_path, monkeypatch):
     from types import SimpleNamespace
     eng = SimpleNamespace(artifact=SimpleNamespace(base_model="m", revision=None))
     assert served.ServedEngine.stop_token_bias(eng) == {"248046": -100.0, "248069": -100.0}
+
+
+def test_vllm_single_stream_streams_one_request_at_a_time(tmp_path):
+    # the offline `latency` mode stamps no first token: 0.5.3-b5 had no vLLM decode or prefill number
+    argv = make(VllmEngine).build_argv(WORKLOADS["ss-128-64"], [], tmp_path / "o.json")
+    assert argv[2] == "tput" and "--report-timing" in argv
+    assert argv[argv.index("--concurrency") + 1] == "1" and "--requests" not in argv
+    assert make(VllmEngine).build_argv(WORKLOADS["c32"], [], tmp_path / "o.json")[2] == "tput"
