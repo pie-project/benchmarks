@@ -188,7 +188,9 @@ window.Pie = window.Pie || {};
       if (!c?.parts.tflops) return null;  // a machine without a FLOPS figure has no intensity to place it at
       const flops = c.parts.mathS * c.parts.tflops * 1e12;
       const bytes = (c.parts.weightGB + c.parts.cacheGB) * 1e9;
-      return { r, ai: flops / bytes, achieved: (r[metric.key] / c.parts.tokens) * flops, bw: c.parts.bw, peak: c.parts.tflops };
+      // several GPUs: the link between them caps the FLOPs a second this pass can reach, whatever its intensity
+      return { r, ai: flops / bytes, achieved: (r[metric.key] / c.parts.tokens) * flops, bw: c.parts.bw, peak: c.parts.tflops,
+        link: c.parts.linkS ? flops / c.parts.linkS : null };
     }
     // the machine's numbers as the bound used them: the catalog's, or its estimate where the catalog has none
     const b = Pie.batchedCeiling?.(r.hardware, r.model, r.scheme);
@@ -196,7 +198,8 @@ window.Pie = window.Pie || {};
     const { bw, tflops } = b.parts;
     const flops = b.parts.mathS * tflops * 1e12;
     const bytes = b.parts.readS * bw * 1e9;
-    return { r, ai: flops / bytes, achieved: (r[metric.key] / b.parts.requests) * flops, bw, peak: tflops };
+    return { r, ai: flops / bytes, achieved: (r[metric.key] / b.parts.requests) * flops, bw, peak: tflops,
+      link: b.parts.linkS ? flops / b.parts.linkS : null };
   };
 
   // the card's roofline, a picture rather than a plot: the roof one line over a soft fade, the knee a ring named
@@ -210,8 +213,10 @@ window.Pie = window.Pie || {};
     // none); a dot's height is its share of its own bound, so it matches the percentage the grid shows for it
     const own = points.find((p) => p.r.engine === Pie.engines.primary) || points[0];
     const ai = own.ai;
-    const shareOf = (p) => p.achieved / Math.min(p.bw * 1e9 * p.ai, p.peak * 1e12);
-    points = points.map((p) => ({ ...p, ai, achieved: shareOf(p) * Math.min(bw * 1e9 * ai, peak * 1e12) }));
+    // the interconnect, when it binds, is a flat line under the roof: a dot is measured against the lowest bound
+    const link = own.link && own.link < Math.min(bw * 1e9 * ai, peak * 1e12) ? own.link : null;
+    const shareOf = (p) => p.achieved / Math.min(p.bw * 1e9 * p.ai, p.peak * 1e12, p.link || Infinity);
+    points = points.map((p) => ({ ...p, ai, achieved: shareOf(p) * Math.min(bw * 1e9 * ai, peak * 1e12, link || Infinity) }));
     const ais = [ai];
     // both axes linear. Across, a window around the dots; up, always from zero to just over the roof, so a dot's height
     // is its share of the bound. The knee and the compute roof show only when the window reaches them
@@ -250,10 +255,12 @@ window.Pie = window.Pie || {};
         <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Roofline: knee at ${Math.round(knee)} FLOPs per byte`)}">
           <line class="rf-zero" x1="${L}" x2="${W - R}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}"/>
           <polyline class="rf-roof" points="${roofPts.join(" ")}"/>
+          ${link ? `<line class="rf-link" x1="${L}" x2="${W - R}" y1="${y(link).toFixed(1)}" y2="${y(link).toFixed(1)}"/>` : ""}
           ${shown ? point(kx.toFixed(1), ky.toFixed(1), "rf-knee") + point(kx.toFixed(1), ky.toFixed(1), "rf-knee-hole") : ""}
           ${dots}
         </svg>
         ${shown ? `<span class="rf-tick-name${kx > W / 2 ? " is-left" : ""} is-above" style="${pct(kx, ky)}">Knee</span>` : ""}
+        ${link ? `<span class="rf-tick-name rf-link-name" style="${pct(W - R, y(link))}">Interconnect</span>` : ""}
         ${labels}
       </div>`;
   };
