@@ -648,7 +648,15 @@
 /* the Roofline card, as Apple's Health and Fitness charts read: the pair of bounds on top, the limit tagged; under
    them the roof as one luminous line, and
    crisp dots, each ringed in the card's colour so they separate from the line and from each other; pie's name in bold. The roof is white-grey, never a hue, so every colour on the chart is an engine's */
-.rf-card { display: flex; flex-direction: column; gap: 12px; min-width: 248px; padding: 2px 0; }
+/* the card is as narrow as its two rows: each name, a small gap, its number; the chart takes that width and
+   adds none of its own (width 0, at least the full width) */
+.rf-card { display: flex; flex-direction: column; gap: 10px; width: max-content; }
+.chart-tooltip.is-card:has(.rf-card) { min-width: 0; }
+.rf-card .tip-roof { width: 0; min-width: 100%; }
+.rf-card .tip-row.is-limit { margin-top: 0; padding-top: 0; border-top: 0; }  /* the bounds open the card: no rule above them */
+.rf-card .tip-row { grid-template-columns: 8px 1fr auto; column-gap: 7px; }  /* no date column here: the values reach the right edge */
+.rf-card .tip-row .tip-value { padding-left: 14px; }  /* the small gap between a name and its number */
+.rf-card .tip-when { display: none; }
 .rf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .rf-stat { display: flex; flex-direction: column; gap: 2px; }
 .rf-stat span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: var(--color-label-tertiary); }
@@ -658,9 +666,17 @@
 .rf-tag { padding: 0 6px; border-radius: 6px; background: var(--color-fill); font-size: 10px; font-style: normal; font-weight: 600; line-height: 16px; color: var(--color-label-secondary); }
 .tip-roof { padding: 4px 0 0; }
 .tip-roof svg { display: block; width: 100%; height: auto; overflow: visible; }
-.tip-roof .rf-tick { fill: var(--color-label-tertiary); font-size: 10px; font-weight: 500; }
-.tip-roof .rf-roof { fill: none; stroke: var(--color-label); stroke-width: 2.2; opacity: .9; stroke-linejoin: round; stroke-linecap: round; }
-.tip-roof .rf-knee { fill: var(--color-menu); stroke: var(--color-label); stroke-width: 1.8; }
-.tip-roof .rf-dot { stroke: var(--color-menu); stroke-width: 1; }
-.tip-roof .rf-name { font-size: 11px; font-weight: 500; }  /* each dot's engine, in its colour */
+
+/* the card's chart scales with the card, its marks do not: a line of one weight, 7px dots, names at the card's type */
+.tip-roof { position: relative; padding: 0 !important; margin-top: 4px; }  /* no padding, so the names' percentages land on the chart's own box */
+.tip-roof .rf-roof { fill: none; stroke: var(--color-label); stroke-width: 2.2; opacity: .9; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.tip-roof .rf-dot { stroke-width: 7; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.tip-roof .rf-knee { stroke: var(--color-label); stroke-width: 7; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.tip-roof .rf-knee-hole { stroke: var(--color-menu); stroke-width: 3.6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.tip-roof .rf-name, .tip-roof .rf-tick-name { position: absolute; transform: translate(8px, -50%); white-space: nowrap; font-size: 11px; line-height: 1; pointer-events: none; }
 .tip-roof .rf-name.is-pie { font-weight: 700; }
+.tip-roof .rf-name.is-left, .tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 8px), -50%); }
+.tip-roof .rf-tick-name { font-weight: 500; color: var(--color-label-tertiary); transform: translate(6px, calc(-100% - 4px)); }
+.tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 6px), calc(-100% - 4px)); }
+/* zero, as Apple's charts mark their baseline: a hairline in the faintest grey */
+.tip-roof .rf-zero { stroke: var(--color-label-quaternary); stroke-width: .5; vector-effect: non-scaling-stroke; }
