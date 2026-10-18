@@ -50,8 +50,9 @@ window.Pie = window.Pie || {};
     const query = state.query.trim().toLowerCase();
 
     // "Hide unavailable" drops the setups that cannot run (too big for the Mac, or unsupported by the engine);
-    // in the Hardware catalog, the accelerators no CI run uses
+    // in the Hardware catalog, the accelerators no CI run uses; in the other catalogs, the entries with no result
     const unavailable = state.table === "hardware" ? (row) => !row.runs
+      : Pie.schema[state.table]?.section === "catalog" ? (row) => "_results" in row && !row._results
       : (row) => row.status === "no_fit" || row.status === "unsupported" || row.status === "no_data";
     const rows = source.filter((row) => matchesFilters(row, state.filters) && matchesSearch(row, schema.columns, query)
       && !(state.hideEmpty && unavailable(row)));
