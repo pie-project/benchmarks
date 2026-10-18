@@ -81,6 +81,8 @@
 .book-section h2 + :not(.book-plain) { margin-top: 14px; }
 .book-prose p { margin: 0; font-size: 17px; line-height: 1.6; }
 .book-prose p + p { margin-top: 14px; }
+.book-prose a { color: var(--color-accent); text-decoration: none; }
+.book-prose a:hover { text-decoration: underline; }
 
 /* a citation: its number in the accent colour, as a link to the reference below */
 .cite { display: inline; margin: 0 0 0 3px; padding: 0; border: 0; background: none; color: var(--color-accent); font: inherit; font-size: .82em; font-variant-numeric: tabular-nums; cursor: pointer; }
