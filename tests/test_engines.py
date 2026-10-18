@@ -1149,3 +1149,18 @@ def test_a_queued_single_stream_request_starts_when_the_one_before_it_ends():
     assert abs(fixed[1]["ttft_s"] - 0.1) < 1e-9 and abs(fixed[1]["latency_s"] - 9.9) < 1e-9
     sequential = [{**rows[0]}, {**rows[1], "client_send_s": 9.95, "ttft_s": 0.1, "latency_s": 9.85}]
     assert serial_clock(sequential) == sequential  # a client that sends one at a time is left alone
+
+
+def test_each_round_gets_its_own_cold_prompts(tmp_path):
+    # a server kept between rounds served rounds 2 and 3 from its prefix cache (0.5.3-b5, pie on a PRO 6000)
+    import json as _json
+
+    eng = make(VllmEngine)
+    wl = WORKLOADS["ss-128-64"].model_copy(update={"params": {**WORKLOADS["ss-128-64"].params, "cold_cache": True}})
+    lists = []
+    for r in ("r0", "r1", "r2"):
+        (tmp_path / r).mkdir()
+        eng.cold_common_args(wl, [], tmp_path / r)
+        lists.append(_json.loads((tmp_path / r / "cold_prompts.json").read_text()))
+    tags = [{p.split("]")[0] for p in ps} for ps in lists]
+    assert not (tags[0] & tags[1]) and not (tags[1] & tags[2]) and not (tags[0] & tags[2])

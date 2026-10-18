@@ -349,13 +349,20 @@ class Engine(ABC):
     supports_prompts_file: bool = True
 
     def cold_common_args(self, workload: WorkloadSpec, common_args: list[str], out_dir: Path) -> list[str]:
-        """Swap the shape's prompts for the cold prompt list, one per request, same for every engine."""
+        """Swap the shape's prompts for the cold prompt list, one per request, same for every engine.
+
+        Each round gets its own list: an engine that keeps its server between rounds (pie, the
+        Mac servers) would otherwise see round 1's prompts again in rounds 2 and 3 and serve them
+        from its prefix cache (0.5.3-b5: pie gpt-oss-120b on a PRO 6000, TTFT 64 ms cold, 16 ms
+        in the later rounds, so the median row was a cached one)."""
         from pie_evals.node.workloads.synthetic import prompt_words_for_tokens
 
         if not self.supports_prompts_file:
             raise EngineLaunchError(ErrorClass.INCOMPATIBLE, f"{self.name.value}: cold-cache runs need --prompts-file in the bench script")
         body = prompt_words_for_tokens(int(workload.params.get("prefill", 128)), salt=workload.id)
-        prompts = cold_prompts(body, workload_id=workload.id, seed=COLD_SEED, count=cold_request_count(workload.params))
+        m = re.fullmatch(r"r(\d+)", out_dir.name)
+        seed = COLD_SEED if not m or m.group(1) == "0" else f"{COLD_SEED}|round{m.group(1)}"
+        prompts = cold_prompts(body, workload_id=workload.id, seed=seed, count=cold_request_count(workload.params))
         path = out_dir / "cold_prompts.json"
         path.write_text(json.dumps(prompts, ensure_ascii=False))
         return [*common_args, "--prompts-file", str(path.resolve())]
