@@ -10,6 +10,10 @@ on:
   workflow_dispatch:
     inputs:
       pie_commit: { description: "pie commit (default: main)", required: false, default: "" }
+      tier: { description: "matrix tier the job is planned from (nightly, or weekly for a release's Raw rows)", required: false, default: "nightly" }
+      workloads: { description: "comma-separated workload ids (empty: every workload of the tier)", required: false, default: "" }
+      artifacts: { description: "comma-separated artifact ids (empty: every one that runs on the TPU)", required: false, default: "" }
+      tag: { description: "a tag for the site (0.5.3-b5); empty: main-<sha>", required: false, default: "" }
 concurrency: { group: tpu, cancel-in-progress: false }  # one TPU VM at a time
 env:
   GCP_PROJECT: pie-project-510103
@@ -72,7 +76,10 @@ jobs:
       - name: job spec
         id: jobs
         run: |
-          .venv/bin/pie-evals jobs --tier nightly --pie-commit "$C" --platform tpu-v6e-1 --out jobs
+          args=()
+          for w in $(echo "${{ github.event.inputs.workloads }}" | tr ',' ' '); do args+=(--workload "$w"); done
+          for a in $(echo "${{ github.event.inputs.artifacts }}" | tr ',' ' '); do args+=(--artifact "$a"); done
+          .venv/bin/pie-evals jobs --tier "${{ github.event.inputs.tier || 'nightly' }}" --pie-commit "$C" --platform tpu-v6e-1 --out jobs "${args[@]}"
           n=$(jq '.include | length' jobs/gh-matrix.json)
           [ "$n" = 1 ] || { echo "::error::expected one tpu-v6e-1 job, the plan has $n"; exit 1; }
           echo "job_id=$(jq -r '.include[0].job_id' jobs/gh-matrix.json)" >> "$GITHUB_OUTPUT"
@@ -162,7 +169,8 @@ jobs:
           dirs=(out/out-*)
           n=0; for d in "${dirs[@]}"; do [ -s "$d/records.jsonl" ] && n=$((n + 1)); done
           [ "$n" -gt 0 ] || { echo "::error::no records from the TPU"; exit 1; }
-          .venv/bin/pie-evals collect --tier nightly --tag "main-${C:0:9}" --tag-kind manual "${dirs[@]}"
+          T="${{ github.event.inputs.tag }}"
+          .venv/bin/pie-evals collect --tier "${{ github.event.inputs.tier || 'nightly' }}" --tag "${T:-main-${C:0:9}}" --tag-kind manual "${dirs[@]}"
           mkdir -p last && echo "$C" > last/commit.txt
       # what the next scheduled run compares against
       - uses: actions/upload-artifact@v4
