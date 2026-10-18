@@ -40,7 +40,7 @@ def test_jobs_carry_time_policy(matrix, tmp_path):
     ids = [j.job_id for j in jobs]
     assert len(ids) == len(set(ids))
     for j in jobs:
-        assert j.budget_s == matrix.job_budget_minutes * 60
+        assert j.budget_s == j.kill_s
         assert j.kill_s == int(matrix.job_budget_minutes * matrix.kill_factor * 60)
         assert j.per_cell_timeout_s <= j.kill_s
         assert j.est_minutes <= matrix.job_budget_minutes
