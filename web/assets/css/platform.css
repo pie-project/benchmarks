@@ -689,3 +689,19 @@
 /* Roofline: what limits a cell, as a leading symbol before its number, the way Apple sets a symbol before a value: the
    number's own colour, softer, sized to the figures and centred on them; symbol and number centred together */
 .platform-bound-mark { display: inline-block; width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
+
+/* the setup pop-up names what the page measures, so it reads as the page's title menu, as iOS and macOS title a view
+   whose content it switches: semibold, no fill, a small chevron in a grey disc. The other pop-ups stay filled buttons */
+.platform-bar .filter.platform-setup:hover { background: none; }
+.platform-bar .filter.platform-setup .filter-button,
+.platform-bar .filter.platform-setup .filter-button:hover,
+.platform-bar .filter.platform-setup .filter-button[aria-expanded="true"] {
+  gap: 6px; padding: 0 4px 0 2px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); background: none;
+}
+.setup-chevron { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--color-fill); transition: background .15s; }
+.setup-chevron svg { width: 10px; height: 10px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.platform-setup .filter-button:hover .setup-chevron,
+.platform-setup .filter-button[aria-expanded="true"] .setup-chevron { background: var(--color-fill-secondary); }
+@media (max-width: 899px) {
+  .platform-bar .filter.platform-setup .filter-button { padding: 0 4px 0 0; font-size: 17px; background: none; }
+}
