@@ -25,7 +25,7 @@ artifacts:
     expected_gib: 1.6
     pie_sku: qwen35-d0.8b-bf16-kv-bf16   # import picks the u4g64 twin otherwise
     platforms: [tpu-v6e-1]
-    tiers: [nightly]
+    tiers: [nightly, weekly]  # weekly: a release's Raw rows on the TPU (tpu.yml tier=weekly)
 
   - id: qwen3.5-0.8b-mlx-bf16
     base_model: mlx-community/Qwen3.5-0.8B-bf16

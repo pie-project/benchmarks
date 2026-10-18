@@ -28,11 +28,11 @@ global_exclude:
   - {platform: pro6000-x4, tp: 2}
   - {platform: h100-sxm-x4, tp: 2}
   # the TPU runs pie alone, on its own artifact (models.yaml keeps that artifact off every other
-  # platform), on a single request and a throughput shape
+  # platform), on a single request, a throughput shape and a release's Raw row (tpu.yml tier=weekly)
   - {platform: tpu-v6e-1, not_engine: pie}
   - {platform: tpu-v6e-1, not_artifact: qwen3.5-0.8b-xla}
   - {platform: tpu-v6e-1, not_program: text-completion-bench}
-  - {platform: tpu-v6e-1, not_workload: [ss-512-256, c32]}
+  - {platform: tpu-v6e-1, not_workload: [ss-512-256, c32, raw-512-256, control-aa]}
 
 suites:
   smoke:
