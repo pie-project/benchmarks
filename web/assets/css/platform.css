@@ -690,18 +690,15 @@
    number's own colour, softer, sized to the figures and centred on them; symbol and number centred together */
 .platform-bound-mark { display: inline-block; width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
 
-/* the setup pop-up names what the page measures, so it reads as the page's title menu, as iOS and macOS title a view
-   whose content it switches: semibold, no fill, a small chevron in a grey disc. The other pop-ups stay filled buttons */
+/* the setup pop-up picks what the whole page measures, so it is the one tinted control in the bar, as macOS tints the
+   control that matters most in a toolbar: accent text and arrows on a light accent fill, the same size as its neighbours */
 .platform-bar .filter.platform-setup:hover { background: none; }
-.platform-bar .filter.platform-setup .filter-button,
+.platform-bar .filter.platform-setup .filter-button { font-weight: 500; color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
 .platform-bar .filter.platform-setup .filter-button:hover,
-.platform-bar .filter.platform-setup .filter-button[aria-expanded="true"] {
-  gap: 6px; padding: 0 4px 0 2px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); background: none;
-}
-.setup-chevron { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--color-fill); transition: background .15s; }
-.setup-chevron svg { width: 10px; height: 10px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.platform-setup .filter-button:hover .setup-chevron,
-.platform-setup .filter-button[aria-expanded="true"] .setup-chevron { background: var(--color-fill-secondary); }
-@media (max-width: 899px) {
-  .platform-bar .filter.platform-setup .filter-button { padding: 0 4px 0 0; font-size: 17px; background: none; }
-}
+.platform-bar .filter.platform-setup .filter-button[aria-expanded="true"] { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.platform-bar .filter.platform-setup .popup-chevron { stroke: currentColor; }
+/* a click opens the menu without a focus ring; the keyboard still gets one */
+.platform-bar .filter.platform-setup .filter-button:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+
+/* the view pop-up sits 4px from Hide unavailable, the bar's gap, as Finder keeps its View button with the toolbar's others */
+.platform-bar-side.is-end { display: inline-flex; align-items: center; gap: 4px; }

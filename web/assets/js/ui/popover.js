@@ -66,12 +66,14 @@ window.Pie = window.Pie || {};
     .map((o) => option(o.value, o.selected, `<span class="popover-label">${Pie.format.escape(o.label)}</span>`))
     .join("");
 
-  // Performance or Roofline: one pick, a checkmark on the current one, like the other menus
-  const compareMenu = () => {
+  // the view menu: Performance or Roofline, one pick with a checkmark; under a separator Hide Unavailable, checked while on,
+  // as Finder's View menu keeps its show and hide items under the views
+  const compareMenu = (state) => {
     const current = Pie.platform.compare();
     // holding R shows the other one: the key beside it, as a macOS menu shows a shortcut
     const key = '<span class="popover-detail popover-key">Hold R</span>';
-    return option("engines", current === "engines", `<span class="popover-label">Performance</span>${current === "engines" ? "" : key}`) + option("ceiling", current === "ceiling", `<span class="popover-label">Roofline</span>${current === "ceiling" ? "" : key}`);
+    return option("engines", current === "engines", `<span class="popover-label">Performance</span>${current === "engines" ? "" : key}`) + option("ceiling", current === "ceiling", `<span class="popover-label">Roofline</span>${current === "ceiling" ? "" : key}`) +
+      `<div class="popover-separator"></div>` + option("hide", state.hideEmpty, `<span class="popover-label">Hide Unavailable</span>`, "menuitemcheckbox");
   };
 
   // the suite: one pick, a checkmark on the current one, like the release menu
@@ -189,7 +191,7 @@ window.Pie = window.Pie || {};
       }
       owner = key;
       anchor = target;
-      element.innerHTML = isLimit(key) ? limitMenu(key) : key === RELEASE ? releaseMenu(state) : key === VIEW ? viewMenu(state) : key === SUITE ? suiteMenu(state) : key === COMPARE ? compareMenu() : key === METRIC ? metricMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
+      element.innerHTML = isLimit(key) ? limitMenu(key) : key === RELEASE ? releaseMenu(state) : key === VIEW ? viewMenu(state) : key === SUITE ? suiteMenu(state) : key === COMPARE ? compareMenu(state) : key === METRIC ? metricMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
       element.scrollTop = 0;
       place(target);
     },

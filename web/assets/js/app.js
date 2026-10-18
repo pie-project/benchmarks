@@ -170,6 +170,14 @@
       } else if (key === popover.SUITE) {
         state.suite = value;
         state.suitePicked = true;
+      } else if (key === popover.COMPARE && value === "hide") {
+        // the same Hide unavailable as the results and quality tables: one choice for every page
+        state.hideEmpty = !state.hideEmpty;
+        try {
+          localStorage.setItem("hideUnavailable", state.hideEmpty ? "1" : "0");
+        } catch {
+          // private windows can refuse storage
+        }
       } else if (key === popover.COMPARE) {
         Pie.platform.setCompare(value);
       } else if (key === popover.MAC) {

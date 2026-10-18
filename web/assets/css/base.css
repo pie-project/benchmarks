@@ -214,3 +214,6 @@ svg {
   .sidebar-nav { overscroll-behavior: none; }
 }
 
+
+/* a click opens a button's menu without a focus ring, as on macOS; the keyboard still gets one */
+button:focus:not(:focus-visible) { outline: none; }
