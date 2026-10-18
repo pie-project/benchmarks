@@ -133,8 +133,9 @@ def make_jobs(
                                                 single_stream_rounds=3 if tier == Tier.TARGETED else None),
                     history={c.cell_id: history.get(c.cell_id, []) for c in shard if c.cell_id in history},
                     per_cell_timeout_s=min(1800 if tier in (Tier.SMOKE, Tier.TARGETED) else 5400, kill_s),
-                    # a Mac's first run spends much of its time downloading models: its soft budget is the hard limit
-                    budget_s=kill_s if tier == Tier.TARGETED else int(budget * 60),
+                    # a first run spends much of its time downloading models (a fresh pod pulls ~12 MB/s from the Hub:
+                    # 0.5.3-b5 lost most vLLM/SGLang cells to a 60-min soft budget): the soft budget is the hard limit
+                    budget_s=kill_s,
                     kill_s=kill_s,
                     # a Mac release run reports every row: a noisy laptop marks its rows noisy rather than empty
                     control_marks_noisy=tier == Tier.TARGETED,

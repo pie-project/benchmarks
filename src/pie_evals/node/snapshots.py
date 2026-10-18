@@ -130,7 +130,8 @@ def _ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path |
         kw["allow_patterns"] = ["*.json", *gguf_shards(artifact.gguf_file)]
     else:
         kw["allow_patterns"] = WEIGHT_PATTERNS
-    path = snapshot_download(artifact.base_model, cache_dir=str(hf_cache), token=os.environ.get("HF_TOKEN") or None, **kw)  # an empty secret must not become "Bearer "
+    os.environ.setdefault("HF_XET_HIGH_PERFORMANCE", "1")  # more parallel Xet transfers: a cold pod's downloads bound the run
+    path = snapshot_download(artifact.base_model, cache_dir=str(hf_cache), token=os.environ.get("HF_TOKEN") or None, max_workers=16, **kw)  # an empty secret must not become "Bearer "
     return _with_gguf_config(artifact, Path(path), log)
 
 
