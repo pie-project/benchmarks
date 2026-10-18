@@ -19,8 +19,9 @@ window.Pie = window.Pie || {};
     id: h.id,
     label: `${h.name} · ${h.memory_gib} GB`,
     bw: h.bandwidth_gbs || 0,
-    // the catalog's fp16 compute where it has one, else the per-core estimate
-    tflops: h.tflops_fp16 || +(((TFLOPS_PER_CORE[h.arch] || 0.4) * (h.gpu_cores || 0)).toFixed(1)),
+    // the catalog's fp16 compute where it has one, else, for an Apple GPU only, the per-core estimate; any other chip
+    // without a figure has none (its CUDA or stream cores are not Apple GPU cores, and would give a nonsense number)
+    tflops: h.tflops_fp16 || (h.vendor === "Apple" || h.class === "mac" ? +(((TFLOPS_PER_CORE[h.arch] || 0.4) * (h.gpu_cores || 0)).toFixed(1)) : 0),
     mem: h.memory_gib || 0,
     devices: h.count || 1,
     // internal SSD read speed, estimated by chip class: the Max chips read about twice as fast as the Pro, the Pro twice the base
@@ -308,20 +309,24 @@ window.Pie = window.Pie || {};
     const model = models().find((m) => m.id === row.model);
     const workload = Pie.store.index.workloads[row.workload];
     const a = archOf(row.model);
-    if (!machine?.bw || !machine.tflops || !model || !workload || !a) return null;
+    if (!machine?.bw || !model || !workload || !a) return null;
+    // the whole machine: the catalog gives one device's bandwidth and FLOPS, and a run splits the model across all of them
+    const bw = machine.bw * machine.devices;
+    const tflops = machine.tflops * machine.devices;
     const bits = bitsOf(row.scheme);
     const prompt = workload.prompt_tokens;
     const prefill = metric === "prefill";
     const tokens = prefill ? prompt : 1;
     const context = prefill ? prompt : prompt + workload.output_tokens / 2;
     const p = pass(a, { bits, tokens, logits: 1, requests: 1, context });
-    const memory = (p.weightGB + p.cacheGB) / machine.bw;
-    const compute = p.flops / (machine.tflops * 1e12);
+    const memory = (p.weightGB + p.cacheGB) / bw;
+    // a chip with no FLOPS figure has no compute bound: only the bandwidth one is drawn
+    const compute = tflops ? p.flops / (tflops * 1e12) : 0;
     const bound = memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced";
     // the parts too, for the Methods page's worked examples
-    const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, bw: machine.bw, tflops: machine.tflops,
+    const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, bw, tflops, devices: machine.devices,
       body: p.body, head: p.head, bits, bytes: bits / 8, tokens, context, flopsPerToken: 2e9 * (p.body + p.head) };
-    return { tps: tokens / Math.max(memory, compute), bound, bandwidth: tokens / memory, compute: tokens / compute, parts };
+    return { tps: tokens / Math.max(memory, compute), bound, bandwidth: tokens / memory, compute: compute ? tokens / compute : null, parts };
   };
 
   // batched decode on a machine: `requests` decode together, each one token a step with its logits, each with its
@@ -331,16 +336,18 @@ window.Pie = window.Pie || {};
     const machine = machines().find((m) => m.id === hardware);
     const workload = Pie.store.index.workloads?.throughput;
     const a = archOf(modelId);
-    if (!machine?.bw || !machine.tflops || !workload || !a) return null;
+    if (!machine?.bw || !workload || !a) return null;
+    const bw = machine.bw * machine.devices;
+    const tflops = machine.tflops * machine.devices;
     const requests = workload.concurrency || 1;
     const p = pass(a, { bits: bitsOf(scheme), tokens: requests, logits: requests, requests, context: workload.prompt_tokens + workload.output_tokens / 2 });
     const prefillFlops = requests * 2e9 * p.body * workload.prompt_tokens / workload.output_tokens;
-    const readS = (p.weightGB + p.cacheGB) / machine.bw;
-    const mathS = (p.flops + prefillFlops) / (machine.tflops * 1e12);
+    const readS = (p.weightGB + p.cacheGB) / bw;
+    const mathS = tflops ? (p.flops + prefillFlops) / (tflops * 1e12) : 0;
     const bandwidth = requests / readS;
-    const compute = requests / mathS;
-    const bound = compute <= bandwidth ? "compute" : "bandwidth";
-    return { tps: Math.min(compute, bandwidth), bound, compute, bandwidth, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, requests, bw: machine.bw, tflops: machine.tflops } };
+    const compute = mathS ? requests / mathS : null;
+    const bound = compute && compute <= bandwidth ? "compute" : "bandwidth";
+    return { tps: compute ? Math.min(compute, bandwidth) : bandwidth, bound, compute, bandwidth, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, requests, bw, tflops, devices: machine.devices } };
   };
 
   Pie.methodology = {

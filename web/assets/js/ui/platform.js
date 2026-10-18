@@ -84,14 +84,8 @@ window.Pie = window.Pie || {};
   // Compare: "engines", named Performance, shows each engine against the best other engine; "ceiling", named Roofline, shows each engine's share
   // of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
   const COMPARES = { engines: "Performance", ceiling: "Roofline" };
-  let compare = (() => {
-    try {
-      const saved = localStorage.getItem("platformCompare");
-      return saved === "roofline" ? "ceiling" : COMPARES[saved] ? saved : "engines";
-    } catch {
-      return "engines";
-    }
-  })();
+  // the grid opens in Performance; holding R shows Roofline (there is no button to choose, so no choice is kept)
+  let compare = "engines";
   // the theoretical bound for a cell: Raw's hardware limit, or for batched decode the lower of compute and bandwidth
   const boundOf = (mac, model, mode, metric, pie) => {
     if (mode.limit) return Pie.ceiling?.(pie, metric.id) || null;
@@ -190,14 +184,14 @@ window.Pie = window.Pie || {};
     if (!r?.[metric.key]) return null;
     if (mode.limit) {
       const c = Pie.ceiling?.(r, metric.id);
-      if (!c) return null;
+      if (!c?.parts.tflops) return null;  // a machine without a FLOPS figure has no intensity to place it at
       const flops = c.parts.mathS * c.parts.tflops * 1e12;
       const bytes = (c.parts.weightGB + c.parts.cacheGB) * 1e9;
       return { r, ai: flops / bytes, achieved: (r[metric.key] / c.parts.tokens) * flops, bw: c.parts.bw, peak: c.parts.tflops };
     }
     // the machine's numbers as the bound used them: the catalog's, or its estimate where the catalog has none
     const b = Pie.batchedCeiling?.(r.hardware, r.model, r.scheme);
-    if (!b) return null;
+    if (!b?.parts.tflops) return null;
     const { bw, tflops } = b.parts;
     const flops = b.parts.mathS * tflops * 1e12;
     const bytes = b.parts.readS * bw * 1e9;
@@ -467,9 +461,6 @@ window.Pie = window.Pie || {};
         <div class="platform-bar">
           <span class="filter platform-setup">
             <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Setup: ${mode.label}`)}">${esc(mode.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
-          </span>
-          <span class="filter platform-compare-filter">
-            <button class="filter-button" id="platform-compare" type="button" aria-haspopup="menu" aria-label="${esc(`Compare: ${COMPARES[compare]}`)}" title="Hold R to see ${compare === "ceiling" ? "Performance" : "Roofline"}">${COMPARES[compare]}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>Configuration</button>
           <span class="platform-bar-side is-end">
