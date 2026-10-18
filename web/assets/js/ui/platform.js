@@ -195,12 +195,13 @@ window.Pie = window.Pie || {};
       const bytes = (c.parts.weightGB + c.parts.cacheGB) * 1e9;
       return { r, ai: flops / bytes, achieved: (r[metric.key] / c.parts.tokens) * flops, bw: c.parts.bw, peak: c.parts.tflops };
     }
+    // the machine's numbers as the bound used them: the catalog's, or its estimate where the catalog has none
     const b = Pie.batchedCeiling?.(r.hardware, r.model, r.scheme);
-    const hw = Pie.store.index.hardware[r.hardware];
-    if (!b || !hw) return null;
-    const flops = b.parts.mathS * hw.tflops_fp16 * 1e12;
-    const bytes = b.parts.readS * hw.bandwidth_gbs * 1e9;
-    return { r, ai: flops / bytes, achieved: (r[metric.key] / b.parts.requests) * flops, bw: hw.bandwidth_gbs, peak: hw.tflops_fp16 };
+    if (!b) return null;
+    const { bw, tflops } = b.parts;
+    const flops = b.parts.mathS * tflops * 1e12;
+    const bytes = b.parts.readS * bw * 1e9;
+    return { r, ai: flops / bytes, achieved: (r[metric.key] / b.parts.requests) * flops, bw, peak: tflops };
   };
 
   // the card's roofline, a picture rather than a plot: the roof one line over a soft fade, the knee a ring named
