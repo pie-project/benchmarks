@@ -147,7 +147,7 @@ workloads:
       # cold prompts (a unique leading tag per request), as ss-512-256 had: without them pie's prefix cache
       # reuses the identical prompt and its prefill cannot be read (0.5.3-b3: no pie prefill on any Mac)
       cold_cache: true
-    tiers: [targeted]
+    tiers: [targeted, weekly]  # Macs in the targeted tier, the RunPod GPUs in weekly (0.5.3-b5: Raw only)
     est_minutes: 1
   - id: ob-short-100
     kind: single_stream
