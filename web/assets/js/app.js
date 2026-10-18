@@ -48,6 +48,9 @@
     const isPlatform = Pie.schema[state.table]?.view === "platform";
     const isMethod = ["welcome", "inferlets", "methodology", "methods"].includes(state.table);
     filterBar.hidden = isOverview || isMethod || isPlatform;
+    // the catalog lists what was measured on, not how: no Configuration there
+    const rules = filterBar.querySelector("[data-rules]");
+    if (rules) rules.hidden = Pie.schema[state.table]?.section === "catalog";
     table.container.hidden = isOverview || isMethod || isPlatform;
     overview.element.hidden = !isOverview;
     Pie.platform.element.hidden = !isPlatform;
