@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from pathlib import Path
 from typing import Any
 
 from pie_evals.schema import EngineName, WorkloadSpec
@@ -60,6 +61,20 @@ class VllmEngine(Engine):
         # dir with no refs/main, so an HF id would not find it) and passes the
         # path through the recipe; a bare HF id is the fallback.
         return str(self.recipe.get("snapshot_dir") or self.artifact.base_model)
+
+    def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
+        # vllm_bench.py's `latency` mode is offline LLM.generate: it times whole requests and
+        # stamps no first token, so a single-stream row had no decode or prefill number
+        # (0.5.3-b5: every vLLM Raw row empty). Its streaming client at concurrency 1 runs the
+        # same requests one at a time and stamps each token as it arrives, the vantage pie and
+        # SGLang report from.
+        argv = super().build_argv(workload, common_args, json_out)
+        i = argv.index("latency") if "latency" in argv[:4] else -1
+        if i >= 0 and "--requests" in argv and self.recipe.get("report_timing", True):
+            argv[i] = "tput"
+            j = argv.index("--requests")
+            argv[j:j + 2] = ["--num-requests", argv[j + 1], "--concurrency", "1"]
+        return argv
 
     def engine_args(self, workload: WorkloadSpec) -> list[str]:
         r = self.recipe
