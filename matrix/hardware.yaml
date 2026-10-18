@@ -17,6 +17,7 @@ hardware:
   - 16
   ane_tops: 11
   year: 2020
+  tflops_fp16: 2.3  # 7 cores x 128 ALUs x 2 (FMA) x 1.278 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111883
 - id: apple-m1-8c
   name: Apple M1 (8-core CPU, 8-core GPU)
@@ -31,6 +32,7 @@ hardware:
   - 16
   ane_tops: 11
   year: 2020
+  tflops_fp16: 2.6  # 8 cores x 128 ALUs x 2 (FMA) x 1.278 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   tflops_fp32: 2.6
   source: https://www.apple.com/newsroom/2020/11/apple-unleashes-m1/
 - id: apple-m1-pro-8c-14c
@@ -46,6 +48,7 @@ hardware:
   - 16
   - 32
   year: 2021
+  tflops_fp16: 4.6  # 14 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111902
 - id: apple-m1-pro-10c-14c
   name: Apple M1 Pro (10-core CPU, 14-core GPU)
@@ -60,6 +63,7 @@ hardware:
   - 16
   - 32
   year: 2021
+  tflops_fp16: 4.6  # 14 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111902
 - id: apple-m1-pro-16c
   name: Apple M1 Pro (10-core CPU, 16-core GPU)
@@ -74,6 +78,7 @@ hardware:
   - 16
   - 32
   year: 2021
+  tflops_fp16: 5.3  # 16 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111901
 - id: apple-m1-max-24c
   name: Apple M1 Max (10-core CPU, 24-core GPU)
@@ -88,6 +93,7 @@ hardware:
   - 32
   - 64
   year: 2021
+  tflops_fp16: 8.0  # 24 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111900
 - id: apple-m1-max-32c
   name: Apple M1 Max (10-core CPU, 32-core GPU)
@@ -102,6 +108,7 @@ hardware:
   - 32
   - 64
   year: 2021
+  tflops_fp16: 10.6  # 32 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111901
 - id: apple-m1-ultra-48c
   name: Apple M1 Ultra (20-core CPU, 48-core GPU)
@@ -117,6 +124,7 @@ hardware:
   - 128
   ane_tops: 22
   year: 2022
+  tflops_fp16: 15.9  # 48 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111900
 - id: apple-m1-ultra-64c
   name: Apple M1 Ultra (20-core CPU, 64-core GPU)
@@ -132,6 +140,7 @@ hardware:
   - 128
   ane_tops: 22
   year: 2022
+  tflops_fp16: 21.2  # 64 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://www.apple.com/newsroom/2022/03/apple-unveils-m1-ultra-the-worlds-most-powerful-chip-for-a-personal-computer/
 - id: apple-m2-8c
   name: Apple M2 (8-core CPU, 8-core GPU)
@@ -148,6 +157,7 @@ hardware:
   - 24
   ane_tops: 15.8
   year: 2022
+  tflops_fp16: 2.9  # 8 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111867
 - id: apple-m2-10c
   name: Apple M2 (8-core CPU, 10-core GPU)
@@ -164,6 +174,7 @@ hardware:
   - 24
   ane_tops: 15.8
   year: 2022
+  tflops_fp16: 3.6  # 10 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111869
 - id: apple-m2-pro-16c
   name: Apple M2 Pro (10-core CPU, 16-core GPU)
@@ -179,6 +190,7 @@ hardware:
   - 32
   ane_tops: 15.8
   year: 2023
+  tflops_fp16: 5.7  # 16 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111340
 - id: apple-m2-pro-19c
   name: Apple M2 Pro (12-core CPU, 19-core GPU)
@@ -194,6 +206,7 @@ hardware:
   - 32
   ane_tops: 15.8
   year: 2023
+  tflops_fp16: 6.8  # 19 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111838
 - id: apple-m2-max-30c
   name: Apple M2 Max (12-core CPU, 30-core GPU)
@@ -209,6 +222,7 @@ hardware:
   - 64
   ane_tops: 15.8
   year: 2023
+  tflops_fp16: 10.7  # 30 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111835
 - id: apple-m2-max-38c
   name: Apple M2 Max (12-core CPU, 38-core GPU)
@@ -225,6 +239,7 @@ hardware:
   - 96
   ane_tops: 15.8
   year: 2023
+  tflops_fp16: 13.6  # 38 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111838
 - id: apple-m2-ultra-60c
   name: Apple M2 Ultra (24-core CPU, 60-core GPU)
@@ -241,6 +256,7 @@ hardware:
   - 192
   ane_tops: 31.6
   year: 2023
+  tflops_fp16: 21.5  # 60 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111835
 - id: apple-m2-ultra-76c
   name: Apple M2 Ultra (24-core CPU, 76-core GPU)
@@ -257,6 +273,7 @@ hardware:
   - 192
   ane_tops: 31.6
   year: 2023
+  tflops_fp16: 27.2  # 76 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://www.apple.com/newsroom/2023/06/apple-introduces-m2-ultra/
 - id: apple-m3-8c
   name: Apple M3 (8-core CPU, 8-core GPU)
