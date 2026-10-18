@@ -179,9 +179,10 @@ window.Pie = window.Pie || {};
     hardware: {
       label: "Hardware",
       section: "catalog",
-      filters: ["location", "class", "backend"],
+      filters: ["platform", "location", "class", "backend"],
       columns: [
         text("name", "Name", "Identity"),
+        text("platform", "Platform", "Identity"),
         text("resource", "Resource", "Identity"),
         text("full_name", "Full name", "Identity"),
         text("id", "ID", "Identity", { code: true }),
