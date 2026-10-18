@@ -544,7 +544,17 @@ def main() -> None:
     for m in models:
         m["platforms"] = ", ".join(t for t in order if t in platforms.get(m["id"], set()))
     engine_ids = [e["id"] for e in mac_engines]
-    results, rmeta = results_by_tag(store, a2m, hardware_ids, engine_ids, config.get("prefill_only"))
+    # the RunPod GPUs join the grids with every engine that ran there (pie, vLLM, SGLang): one row per setup a tag measured or tried
+    gpu_ids = [p["id"] for p in load("platforms")["platforms"] if p.get("os") != "macos"]
+    all_engines = [e["id"] for e in engines()]
+    results, rmeta = results_by_tag(store, a2m, hardware_ids + gpu_ids, all_engines, config.get("prefill_only"))
+    gpu_attempts = attempts_by_tag(store, a2m, gpu_ids, all_engines)
+    gpu_keys = {k for rs in [*results.values(), *gpu_attempts.values()] for k in rs if k[0] in gpu_ids}
+    gpu_models = sorted({k[2] for k in gpu_keys} - set(model_ids))
+    model_ids += gpu_models
+    if "full" in suite_ids:  # Full is every model: the GPU-only ones too
+        suite_ids["full"] = suite_ids["full"] + gpu_models
+    engine_ids += [e for e in all_engines if e not in engine_ids and any(k[1] == e for k in gpu_keys)]
     scores, qmeta = quality_by_tag(store, a2m)
     # one list of tags for both tables: a tag with only quality scores still gets a results table, filled from earlier tags
     meta = dict(qmeta)
@@ -554,13 +564,16 @@ def main() -> None:
                   key=lambda x: x["date"] or "", reverse=True)  # the newest tag is the default on the site
     order = [x["id"] for x in tags]
     # the site's default order: engine, then model, then hardware, then workload
-    grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c, _, _ in CATEGORIES]
+    grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c, _, _ in CATEGORIES if e in {x["id"] for x in mac_engines}]
+    grid += [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in gpu_ids for c, _, _ in CATEGORIES if (hw, e, m, c) in gpu_keys]
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
     # the Macs the site's grids measure, and every GPU or TPU setup a scheduled CI run launches (tagged with its runs)
     # the Macs the grids measure, every CI GPU and TPU, and every catalog accelerator; a CI Mac without a runner stays out
     hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids or h["class"] != "mac" or not h.get("runs")]
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
     attempts = attempts_by_tag(store, a2m, hardware_ids, engine_ids)
+    for t, rs in gpu_attempts.items():
+        attempts.setdefault(t, {}).update(rs)
     unsupported = unsupported_reasons(a2m, config, hardware_ids, engine_ids, model_ids)
     memory = {h["id"]: h.get("memory_gib") for h in hw_rows}
     streams = {m["id"]: m.get("ssd_streaming") for m in models}
@@ -635,7 +648,8 @@ def main() -> None:
     db = {"updated_at": updated_at, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
           "no_fit": misfits, "suites": suite_ids,
           "hardware": hw_rows,
-          "engines": mac_engines, "models": [m for m in models if m["id"] in model_ids],
+          # the Engines table lists every engine CI runs, the GPU-only ones (vLLM, SGLang) too; the grids keep to the Mac engines
+          "engines": engines(), "models": [m for m in models if m["id"] in model_ids],
           "workloads": workloads(), "quality_tasks": quality_tasks(), "quality": quality.get(order[0], []) if order else []}
     (WEB / "data").mkdir(parents=True, exist_ok=True)
     (WEB / "data" / "db.js").write_text("const DB = " + json.dumps(db, indent=2, default=str) + ";\n")
