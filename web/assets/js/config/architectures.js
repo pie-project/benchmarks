@@ -25,4 +25,7 @@ Pie.architectures = {
   "qwen3.8-flash-next": { total: 180.0, emb: 0.636, tied: false, ple: 0, routed: 120.796, k: 0.01953, full: 12, sliding: 0, window: 0, kvLayer: 2048, linear: 36, state: 3145728, layers: 48, shared: 0 },
   "gpt-oss-20b": { total: 20.915, emb: 0.579, tied: false, ple: 0, routed: 19.11, k: 0.125, full: 12, sliding: 12, window: 128, kvLayer: 2048, linear: 0, state: 0, layers: 24, shared: 0 },
   "muse-glimmer-30b": { total: 29.777, emb: 1.345, tied: false, ple: 0, routed: 0, k: 1, full: 13, sliding: 39, window: 2048, kvLayer: 1024, linear: 0, state: 0, layers: 52, shared: 0 },
+  "qwen3.5-0.8b": { total: 0.873, emb: 0.254, tied: true, ple: 0, routed: 0, k: 1, full: 6, sliding: 0, window: 0, kvLayer: 2048, linear: 18, state: 1048576, layers: 24, shared: 0 },
+  "qwen3.6-27b": { total: 27.781, emb: 1.271, tied: false, ple: 0, routed: 0, k: 1, full: 16, sliding: 0, window: 0, kvLayer: 4096, linear: 48, state: 3145728, layers: 64, shared: 0 },
+  "gpt-oss-120b": { total: 116.829, emb: 0.579, tied: false, ple: 0, routed: 114.662, k: 0.03125, full: 18, sliding: 18, window: 128, kvLayer: 2048, linear: 0, state: 0, layers: 36, shared: 0 },
 };
