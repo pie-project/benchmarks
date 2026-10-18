@@ -306,8 +306,8 @@ window.Pie = window.Pie || {};
           <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span>
           <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
         </span></th></tr>`;
-      // Ceiling: the bound most cells in this view share is said once, in the title bar; a cell whose bound differs
-      // carries a small mark of its own, so a mark always means an exception
+      // Ceiling: a cell bound by the other limit than most cells in this view carries a small mark, so a mark
+      // always means an exception; the hover card names every cell's bounds
       const tally = { compute: 0, bandwidth: 0 };
       if (compare === "ceiling") {
         for (const g of shownGroups) for (const mac of g.macs) for (const model of models) {
@@ -389,7 +389,7 @@ window.Pie = window.Pie || {};
       const scroller = element.querySelector(".platform-scroll");
       if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       const macsShown = shownGroups.reduce((n, g) => n + g.macs.length, 0);
-      return { macs: macsShown, models: models.length, metric, limit: usual && `% of the ${usual} bound` };
+      return { macs: macsShown, models: models.length, metric };
     },
 
     bind(state) {

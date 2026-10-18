@@ -61,7 +61,7 @@
       const shown = Pie.platform.render(state);
       toolbar.elements.metricValue.textContent = shown.metric.label;
       toolbar.render(state, 0, 0);
-      toolbar.elements.subtitle.textContent = shown.macs ? `${shown.macs} ${shown.macs === 1 ? "machine" : "machines"}, ${shown.models} ${shown.models === 1 ? "model" : "models"}${shown.limit ? ` · ${shown.limit}` : ""}` : "";
+      toolbar.elements.subtitle.textContent = shown.macs ? `${shown.macs} ${shown.macs === 1 ? "machine" : "machines"}, ${shown.models} ${shown.models === 1 ? "model" : "models"}` : "";
     } else if (isOverview) {
       const models = overview.render(state);
       toolbar.render(state, 0, 0);
