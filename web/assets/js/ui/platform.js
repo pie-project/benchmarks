@@ -246,9 +246,19 @@ window.Pie = window.Pie || {};
       const byName = (a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
       const rank = (list, key) => { const i = (list || []).indexOf(key); return i < 0 ? Infinity : i; };
       const byRank = (list, a, b) => { const x = rank(list, a), y = rank(list, b); return x === y ? 0 : x < y ? -1 : 1; };
-      const allModels = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id))
-        .filter((id) => !mode.has || mode.has(id))
-        .filter((id) => !query || names().model(id).toLowerCase().includes(query))
+      // the search narrows both ways: machines whose name, chip, vendor or platform holds it, models whose name does;
+      // a query that names only machines keeps every model, one that names only models keeps every machine
+      const machineText = (mac) => {
+        const hw = Pie.store.index.hardware[mac] || {};
+        return [chipName(mac), hw.name, hw.full_name, hw.vendor, hw.id, platformOf(hw)?.label].filter(Boolean).join(" ").toLowerCase();
+      };
+      const suiteModels = Pie.store.tables.models.map((m) => m.id).filter((id) => Pie.store.inSuite(id)).filter((id) => !mode.has || mode.has(id));
+      const modelHits = query ? suiteModels.filter((id) => names().model(id).toLowerCase().includes(query)) : suiteModels;
+      const macHits = query ? macs.filter((mac) => machineText(mac).includes(query)) : macs;
+      const narrowModels = query && (modelHits.length || !macHits.length);
+      const narrowMacs = query && macHits.length > 0;
+      if (narrowMacs) for (const g of groups) g.macs = g.macs.filter((mac) => macHits.includes(mac));
+      const allModels = (narrowModels ? modelHits : suiteModels)
         .sort((a, b) => byRank(p.makerOrder, makerOf(a).name, makerOf(b).name) || byName(makerOf(a).name || "~", makerOf(b).name || "~")
           || byRank(p.modelOrder, a, b) || byName(names().model(a), names().model(b)));
       const grid = {};
@@ -281,7 +291,7 @@ window.Pie = window.Pie || {};
         return named.sort((a, b) => (val(a) === null) - (val(b) === null) || dir * ((val(a) ?? 0) - (val(b) ?? 0)));
       };
       const shownGroups = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => grid[mac][model].c)) : g.macs) }))
-        .filter((g) => !only || g.macs.length);
+        .filter((g) => (!only && !narrowMacs) || g.macs.length);  // a search hides the platforms it leaves empty
 
       const cells = [];
       const number = (gain) => {
