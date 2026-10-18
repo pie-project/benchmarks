@@ -66,10 +66,10 @@ window.Pie = window.Pie || {};
     .map((o) => option(o.value, o.selected, `<span class="popover-label">${Pie.format.escape(o.label)}</span>`))
     .join("");
 
-  // Engines or Roofline: one pick, a checkmark on the current one, like the other menus
+  // Performance or Roofline: one pick, a checkmark on the current one, like the other menus
   const compareMenu = () => {
     const current = Pie.platform.compare();
-    return option("engines", current === "engines", "Engines") + option("ceiling", current === "ceiling", "Roofline");
+    return option("engines", current === "engines", "Performance") + option("ceiling", current === "ceiling", "Roofline");
   };
 
   // the suite: one pick, a checkmark on the current one, like the release menu
