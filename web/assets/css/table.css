@@ -204,3 +204,7 @@
 }
 .column-info:hover .column-info-pop,
 .column-info:focus-visible .column-info-pop { opacity: 1; transform: none; }
+
+/* a category label: the text in the row's colour, a 7px dot before it; several sit side by side */
+.cell-dot { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; }
+.cell-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--dot); }

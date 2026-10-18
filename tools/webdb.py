@@ -112,23 +112,60 @@ def cores_by_platform(store) -> dict[str, dict]:
     return out
 
 
+RESOURCE = {"mac": "Pie self-hosted", "tpu": "Google Cloud", "wafer": "Cerebras"}
+
+
 def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
+    """The CI's machines (tagged with the runs that use them) first, then every other catalog accelerator.
+    Specs come from matrix/hardware.yaml (datasheet values only); a CI machine links to its entry by
+    `catalog:` (Macs, TPU) or by its RunPod GPU type, and keeps its own memory and device count."""
     cores = cores or {}
-    rows = []
+    catalog = load("hardware")["hardware"]
+    by_id = {c["id"]: c for c in catalog}
+    by_runpod = {c["runpod_gpu_type"]: c for c in catalog if c.get("runpod_gpu_type")}
+    spec_keys = ("bandwidth_gbs", "tflops_fp16", "power_w", "cpu_cores", "gpu_cores", "year", "memory_type")
+
+    def row(c: dict, **over) -> dict:
+        resource = RESOURCE.get(c["class"], "RunPod cloud" if c.get("runpod_gpu_type") else "")
+        return {
+            # a short name everywhere a machine is named (grids, menus, the table); the full one beside it in the catalog
+            "id": c["id"], "resource": resource, "name": c.get("short") or c["name"], "full_name": c["name"],
+            "class": c["class"], "location": "local" if c["class"] == "mac" else "cloud",
+            "vendor": c["vendor"], "backend": c.get("backend"), "arch": c.get("arch"), "count": 1,
+            "memory_gib": c.get("memory_gib") or max(c.get("memory_options_gb") or [0]) or None,
+            "memory_type": c.get("memory_type"), "bandwidth_gbs": c.get("bandwidth_gbs"),
+            "cpu_cores": c.get("cpu_cores"), "gpu_cores": c.get("gpu_cores"), "tflops_fp16": c.get("tflops_fp16"),
+            "interconnect": None, "power_w": c.get("power_w"), "year": str(c["year"]) if c.get("year") else None,
+            "runs": None, "price_usd": None, "price_hr": None, **over,
+        }
+
+    rows, used = [], set()
     for p in load("platforms")["platforms"]:
+        # a platform no CI run uses is only known through its catalog entry below
+        if not p.get("tiers"):
+            continue
         mac = p.get("os") == "macos"
+        c = by_id.get(p.get("catalog")) or by_runpod.get(p.get("runpod_gpu_type")) or {}
+        used.add(c.get("id"))
+        base = row(c) if c else {}
         rows.append({
+            **base,
             "id": p["id"],
-            "resource": "Pie self-hosted",
-            "name": p["accelerator"].replace("NVIDIA ", "").replace("AMD ", "") + (f" ×{p['count']}" if p.get("count", 1) > 1 else ""),
-            "class": "mac" if mac else "gpu", "location": "local" if mac else "cloud",
-            "vendor": "Apple" if mac else ("AMD" if p["accelerator"].startswith("AMD") else "Google" if p.get("backend") == "xla" else "NVIDIA"),
-            "backend": p.get("backend"), "arch": p.get("arch"),
-            "count": p.get("count", 1), "memory_gib": p.get("memory_gib"), "bandwidth_gbs": p.get("bandwidth_gbs"),
-            "cpu_cores": cores.get(p["id"], {}).get("cpu_cores"), "gpu_cores": cores.get(p["id"], {}).get("gpu_cores"),
-            "tflops_fp16": p.get("tflops_fp16"),
-            "interconnect": p.get("interconnect"), "power_w": p.get("power_w"), "price_usd": None, "price_hr": None,
+            "resource": "Pie self-hosted" if mac else ("Google Cloud" if p.get("backend") == "xla" else "RunPod cloud"),
+            # grids show short names: the chip for a Mac, RunPod's short name for a GPU; the catalog keeps the full one
+            "name": (p["accelerator"] if mac else c.get("short") or p["accelerator"].replace("NVIDIA ", ""))
+                    + (f" ×{p['count']}" if p.get("count", 1) > 1 else ""),
+            "class": "mac" if mac else ("tpu" if p.get("backend") == "xla" else "gpu"), "location": "local" if mac else "cloud",
+            "vendor": c.get("vendor") or ("Apple" if mac else "NVIDIA"),
+            "backend": p.get("backend"), "arch": p.get("arch") or c.get("arch"),
+            "count": p.get("count", 1), "memory_gib": p.get("memory_gib"),
+            "bandwidth_gbs": p.get("bandwidth_gbs") or c.get("bandwidth_gbs"),
+            "cpu_cores": cores.get(p["id"], {}).get("cpu_cores") or c.get("cpu_cores"),
+            "gpu_cores": cores.get(p["id"], {}).get("gpu_cores") or c.get("gpu_cores"),
+            "interconnect": p.get("interconnect"),
+            "runs": ", ".join(t.capitalize() for t in p["tiers"]),
         })
+    rows += [row(c) for c in catalog if c["id"] not in used]
     return rows
 
 
@@ -498,17 +535,12 @@ def main() -> None:
     # the CI suite each model runs in: Targeted ones run in both, the rest only in Full
     for m in models:
         m["suite"] = "Targeted" if m["id"] in suite_ids.get("targeted", []) else "Full" if m["id"] in suite_ids.get("full", []) else ""
-    # the platforms each model is measured on, from the tiers its artifacts run in: targeted is the Macs, smoke/nightly/weekly the GPUs, xla the TPU
+    # the platforms each model has actually been measured on: any CI result with a number, on a Mac, a GPU or a TPU
+    kind = {p["id"]: ("Mac" if p.get("os") == "macos" else "TPU" if p.get("backend") == "xla" else "GPU") for p in load("platforms")["platforms"]}
     platforms: dict[str, set[str]] = {}
-    for a in load("models")["artifacts"]:
-        tiers = set(a.get("tiers") or [])
-        tags = set()
-        if "targeted" in tiers:
-            tags.add("Mac")
-        if tiers & {"smoke", "nightly", "weekly"}:
-            tags.add("TPU" if "xla" in a["id"] else "GPU")
-        if tags and a["id"] in a2m:
-            platforms.setdefault(a2m[a["id"]], set()).update(tags)
+    for r in store.table().select(["artifact", "platform", "status"]).to_pylist():
+        if r["status"] in ("pass", "noisy") and r["artifact"] in a2m and r["platform"] in kind:
+            platforms.setdefault(a2m[r["artifact"]], set()).add(kind[r["platform"]])
     order = ["Mac", "GPU", "TPU"]
     for m in models:
         m["platforms"] = ", ".join(t for t in order if t in platforms.get(m["id"], set()))
@@ -525,7 +557,9 @@ def main() -> None:
     # the site's default order: engine, then model, then hardware, then workload
     grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c, _, _ in CATEGORIES]
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
-    hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids]
+    # the Macs the site's grids measure, and every GPU or TPU setup a scheduled CI run launches (tagged with its runs)
+    # the Macs the grids measure, every CI GPU and TPU, and every catalog accelerator; a CI Mac without a runner stays out
+    hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids or h["class"] != "mac" or not h.get("runs")]
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
     attempts = attempts_by_tag(store, a2m, hardware_ids, engine_ids)
     unsupported = unsupported_reasons(a2m, config, hardware_ids, engine_ids, model_ids)
