@@ -656,6 +656,9 @@
 .rf-card .tip-row.is-limit { margin-top: 0; padding-top: 0; border-top: 0; }  /* the bounds open the card: no rule above them */
 .rf-card .tip-row { grid-template-columns: 8px 1fr auto; column-gap: 7px; }  /* no date column here: the values reach the right edge */
 .rf-card .tip-row .tip-value { padding-left: 14px; }  /* the small gap between a name and its number */
+/* the bound that limits reads as an engine row does: the label colour, regular weight, its gauge too; the other stays grey */
+.rf-card .tip-row.is-limit:not(.is-slack) { color: var(--color-label); font-weight: 400; }
+.rf-card .tip-row.is-limit:not(.is-slack) .tip-limit-mark { stroke: var(--color-label); }
 .rf-card .tip-when { display: none; }
 .rf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .rf-stat { display: flex; flex-direction: column; gap: 2px; }
