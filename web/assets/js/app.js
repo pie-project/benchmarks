@@ -227,6 +227,14 @@
         event.preventDefault();
         preferences.toggleSidebar();
       }
+      // R on a platform page switches Performance and Roofline: a plain key, never while typing or with a modifier held
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) || document.activeElement.isContentEditable;
+      if (event.key.toLowerCase() === "r" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing && Pie.schema[state.table]?.view === "platform") {
+        event.preventDefault();
+        Pie.platform.setCompare(Pie.platform.compare() === "ceiling" ? "engines" : "ceiling");
+        popover.close();
+        render();
+      }
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();
         toolbar.focusSearch();
