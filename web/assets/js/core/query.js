@@ -5,9 +5,13 @@ window.Pie = window.Pie || {};
   const GROUPS = { release: "Releases", manual: "Manual runs" };
 
   // one option per tag that has rows, newest first, grouped for the picker
+  // the menu offers the published releases and the newest run only; older manual runs, probes and main builds stay
+  // in the data but are not offered (tags are listed newest first)
+  const newestRun = () => store.tables.tags.find((tag) => tag.kind !== "release" && store.snapshot(tag.id).length)?.id;
   const releaseOptions = () =>
     store.tables.tags
       .filter((tag) => store.snapshot(tag.id).length)
+      .filter((tag) => tag.kind === "release" || tag.id === newestRun())
       .map((tag) => ({
         id: tag.id,
         label: tag.id,
