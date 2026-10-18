@@ -236,11 +236,11 @@ window.Pie = window.Pie || {};
     const at = (p) => `cx="${x(p.ai).toFixed(1)}" cy="${y(p.achieved).toFixed(1)}"`;
     const isPie = (p) => p.r.engine === Pie.engines.primary;
     const dots = [...points.filter((p) => !isPie(p)), ...points.filter(isPie)]
-      .map((p) => `<circle class="rf-dot" ${at(p)} r="2.5" fill="${Pie.engines.colorOf(p.r.engine)}"/>`).join("");
+      .map((p) => `<circle class="rf-dot" ${at(p)} r="3.5" fill="${Pie.engines.colorOf(p.r.engine)}"/>`).join("");
     // only pie is named, beside its dot in its colour: to the right, or to the left near the right edge
     const labels = points.filter(isPie).map((p) => {
       const cx = x(p.ai), left = cx > W - 40;
-      return `<text class="rf-name is-pie" x="${(cx + (left ? -6 : 6)).toFixed(1)}" y="${(y(p.achieved) + 3.5).toFixed(1)}" text-anchor="${left ? "end" : "start"}" fill="${Pie.engines.colorOf(p.r.engine)}">${esc(names().engine(p.r.engine))}</text>`;
+      return `<text class="rf-name is-pie" x="${(cx + (left ? -8 : 8)).toFixed(1)}" y="${(y(p.achieved) + 3.5).toFixed(1)}" text-anchor="${left ? "end" : "start"}" fill="${Pie.engines.colorOf(p.r.engine)}">${esc(names().engine(p.r.engine))}</text>`;
     }).join("");
     const shown = knee > X0 && knee < X1;  // the knee, only when it falls inside the window
     const roofPts = (shown ? [start, knee, X1] : [start, X1]).map((v) => `${x(v).toFixed(1)},${y(roof(v)).toFixed(1)}`);
