@@ -308,13 +308,15 @@ window.Pie = window.Pie || {};
   // GPUs' sync, so it is software as much as link. 15 µs is what NCCL takes for a small message; custom one-shot kernels in
   // CUDA graphs reach 3-5 µs, so an engine with them can beat this line
   const ALL_REDUCE_US = 15;
+  const A100_ALL_REDUCE_US = 35;  // A100 machines (SXM and PCIe): a slower small all-reduce than the newer GPUs'
   const linkOf = (id) => {
     const hw = Pie.store.index.hardware[id];
     if (!hw || (hw.count || 1) < 2) return null;
     const name = `${hw.name} ${hw.full_name || ""}`;
-    if (hw.interconnect === "nvlink") return /H100|H200|H800/.test(name) ? { gbs: 450, us: ALL_REDUCE_US, name: "NVLink 4" } : { gbs: 300, us: ALL_REDUCE_US, name: "NVLink 3" };
+    const us = /A100/.test(name) ? A100_ALL_REDUCE_US : ALL_REDUCE_US;
+    if (hw.interconnect === "nvlink") return /H100|H200|H800/.test(name) ? { gbs: 450, us, name: "NVLink 4" } : { gbs: 300, us, name: "NVLink 3" };
     const gen5 = /PRO 6000|PRO 4500|5090|H100|H200|B200|Blackwell/.test(name);
-    return gen5 ? { gbs: 64, us: ALL_REDUCE_US, name: "PCIe 5.0" } : { gbs: 32, us: ALL_REDUCE_US, name: "PCIe 4.0" };
+    return gen5 ? { gbs: 64, us, name: "PCIe 5.0" } : { gbs: 32, us, name: "PCIe 4.0" };
   };
   // the time a pass spends exchanging between n GPUs that split the model (tensor parallel): two all-reduces a layer of
   // the activations, tokens x hidden in 16 bits; a ring all-reduce sends 2(n - 1)/n of them from each GPU, and each
