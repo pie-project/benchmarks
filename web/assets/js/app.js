@@ -218,6 +218,19 @@
     document.addEventListener("click", () => popover.close());
     window.addEventListener("resize", () => popover.close());
 
+    // the peek: the grid and the card under a still pointer redraw in the other view, and come back on release
+    const peek = (on) => {
+      if (!Pie.platform.peek(on)) return;
+      popover.close();
+      render();
+      Pie.platform.refreshCard();
+    };
+    document.addEventListener("keyup", (event) => {
+      if (event.key.toLowerCase() === "r") peek(false);
+    });
+    // leaving the window while R is held lets go too
+    window.addEventListener("blur", () => peek(false));
+
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         popover.close();
@@ -227,13 +240,12 @@
         event.preventDefault();
         preferences.toggleSidebar();
       }
-      // R on a platform page switches Performance and Roofline: a plain key, never while typing or with a modifier held
+      // holding R on a platform page shows the other view, Performance or Roofline, until it is let go: a plain key,
+      // never while typing or with a modifier held; the key's repeats while held change nothing
       const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) || document.activeElement.isContentEditable;
       if (event.key.toLowerCase() === "r" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing && Pie.schema[state.table]?.view === "platform") {
         event.preventDefault();
-        Pie.platform.setCompare(Pie.platform.compare() === "ceiling" ? "engines" : "ceiling");
-        popover.close();
-        render();
+        if (!event.repeat) peek(true);
       }
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();
