@@ -16,7 +16,10 @@ window.Pie = window.Pie || {};
       <span class="sidebar-glyph"${schema.tint ? ` style="--tint: ${schema.tint}"` : ""}>${Pie.icon(id)}</span>
       <span>${schema.label}</span>
       ${schema.tag ? `<span class="sidebar-tag" title="Under development">${schema.tag}</span>` : ""}
-      ${schema.view === "platform" ? (machines(schema) ? `<span class="sidebar-count">${machines(schema)}</span>` : "") : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
+      ${schema.view === "platform"
+        // a platform with no machine in CI yet is Alpha; it shows its machine count once one runs
+        ? (machines(schema) ? `<span class="sidebar-count">${machines(schema)}</span>` : `<span class="sidebar-tag" title="No machine runs here yet">Alpha</span>`)
+        : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
     </button>`;
 
   const section = (section, state) => {
