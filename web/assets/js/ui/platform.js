@@ -386,7 +386,7 @@ window.Pie = window.Pie || {};
           <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}</span></span>
           <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
         </span></th></tr>`;
-      // Roofline: every cell carries the mark of what limits it, after its number: two arrows for memory bandwidth,
+      // Roofline: every cell carries the mark of what limits it, before its number as a leading symbol: two arrows for memory bandwidth,
       // a chip for compute; the hover card gives both bounds
       const MARK = {
         compute: { title: "Compute-bound: the share of the compute bound", path: "M4.5 4.5h7v7h-7zM6.5 2v2.5M9.5 2v2.5M6.5 11.5V14M9.5 11.5V14M2 6.5h2.5M2 9.5h2.5M11.5 6.5H14M11.5 9.5H14" },
@@ -411,7 +411,7 @@ window.Pie = window.Pie || {};
                   // a balanced cell takes the lower of its two bounds
                   const which = MARK[ceil.bound] ? ceil.bound : (ceil.bandwidth || Infinity) <= (ceil.compute || Infinity) ? "bandwidth" : "compute";
                   const mark = MARK[which];
-                  return { kind, html: `${Math.round(share * 100)}%<svg class="platform-exception" viewBox="0 0 16 16" role="img" aria-label="${mark.title}"><title>${mark.title}</title><path d="${mark.path}"/></svg>` };
+                  return { kind, html: `<svg class="platform-bound-mark" viewBox="0 0 16 16" role="img" aria-label="${mark.title}"><title>${mark.title}</title><path d="${mark.path}"/></svg>${Math.round(share * 100)}%` };
                 })()
               : number(c.gain);
             return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c, mode, raw))}"><span class="platform-main">${n.html}</span>${subline(c, metric, mode, raw)}</span></td>`;
