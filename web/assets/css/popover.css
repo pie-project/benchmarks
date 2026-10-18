@@ -142,3 +142,6 @@
 .filter-button .setup-icon { margin-right: -1px; }  /* the button's own 6px gap, less a point: 5px, as Configuration spaces its glyph */
 /* a click leaves no ring on the button: only keyboard focus draws one, as on macOS */
 .filter-button:focus:not(:focus-visible) { outline: none; }
+
+/* a shortcut in a menu row, as macOS sets one: the key in the secondary grey at the row's end */
+.popover-key { font-variant-numeric: normal; letter-spacing: .02em; }
