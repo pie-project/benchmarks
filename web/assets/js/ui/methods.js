@@ -42,8 +42,8 @@ window.Pie = window.Pie || {};
       id: "decode",
       lede: "One request decodes one token at a time. Each token reads the model's active weights and its context from memory and does two operations per active weight. The limit is whichever of the two takes longer.",
       equations: [
-        eq("Memory time", ["(", "Active weights", "+", "Context cache", ")", "÷", "Memory bandwidth"], ["roofline", "shazeer"]),
-        eq("Math time", ["2", "×", "Active parameters", "÷", "Peak FLOPS"], ["kaplan"]),
+        eq("Memory time", ["(", "Weights read", "+", "Cache read", ")", "÷", "Memory bandwidth"], ["roofline", "shazeer"]),
+        eq("Math time", ["2", "×", "(", "Active body", "+", "Output head", ")", "÷", "Peak FLOPS"], ["kaplan"]),
         eq("Limit", ["1 token", "÷", "max(", "Memory time", ",", "Math time", ")"], ["roofline"]),
       ],
       why: [
@@ -57,7 +57,9 @@ window.Pie = window.Pie || {};
         ["Attention arithmetic, activations, sampling and kernel launches cost nothing.", "up"],
         ["4-bit weights are 4.5 bits each: 4 bits plus a 16-bit scale and bias per group of 64. 8-bit is 8.5 bits, bf16 16.", null],
         ["The context is the prompt plus half the answer, the average over the answer's tokens.", null],
-        ["The context cache per token is estimated from the model's size class, not read from its config. At 640 tokens it is about 1% of the bytes read.", "small"],
+        ["Parameter counts, embedding sizes and cache shapes are each model's own, from its config.json and safetensors on Hugging Face.", null],
+        ["The input embedding is only looked up, one row a token, so it is not counted as read; the output head is a full matmul and is. Gemma's per-layer embedding tables are lookups too.", null],
+        ["The cache read is the model's real one: full-attention layers read every cached token, sliding-window layers their window, and linear-attention layers read and write their fixed state.", null],
       ],
       check: { workload: "raw", metric: "decode", key: "decode_tok_s" },
       example: () => {
@@ -66,12 +68,12 @@ window.Pie = window.Pie || {};
         const p = c.parts;
         return {
           inputs: [
-            ["Active weights", gb(p.weightGB), `${p.active} B parameters × 4.5 bits`],
-            ["Context cache", gb(p.cacheGB), `${p.context} tokens, estimated`],
+            ["Weights read", gb(p.weightGB), `${p.body.toFixed(2)} B body + ${p.head.toFixed(2)} B output head, ${p.bits} bits`],
+            ["Cache read", gb(p.cacheGB), `${p.context} tokens, from the model's config`],
             ["Memory bandwidth", `${p.bw} GB/s`, "Spec sheet"],
             ["Peak FLOPS", `${p.tflops} TFLOPS`, "Spec sheet"],
           ],
-          values: [ms((p.weightGB + p.cacheGB) / p.bw), ms((2 * p.active * 1e9) / (p.tflops * 1e12)), `${num(c.tps)} tok/s`],
+          values: [ms(p.readS), ms(p.mathS), `${num(c.tps)} tok/s`],
         };
       },
     },
@@ -102,7 +104,7 @@ window.Pie = window.Pie || {};
         if (!c) return null;
         const p = c.parts;
         const kept = (1 - SPEC.a ** (SPEC.k + 1)) / (1 - SPEC.a);
-        const verify = Math.max((p.weightGB + p.cacheGB) / p.bw, (2 * p.active * 1e9 * (SPEC.k + 1)) / (p.tflops * 1e12));
+        const verify = Math.max(p.readS, (p.flopsPerToken * (SPEC.k + 1)) / (p.tflops * 1e12));
         const draft = Math.max((SPEC.drafter * p.bytes) / p.bw, (2 * SPEC.drafter * 1e9) / (p.tflops * 1e12));
         return {
           inputs: [
@@ -119,20 +121,20 @@ window.Pie = window.Pie || {};
       id: "batching",
       lede: "Many requests decode together and share each read of the weights. Adding requests raises the speed until the arithmetic runs out; from there it stays flat.",
       equations: [
-        eq("Bandwidth bound", ["Requests", "×", "Memory bandwidth", "÷", "Weights"], ["roofline", "pope"]),
-        eq("Compute bound", ["Output share", "×", "Peak FLOPS", "÷", "(", "2", "×", "Active parameters", ")"], ["kaplan"]),
+        eq("Bandwidth bound", ["Requests", "×", "Memory bandwidth", "÷", "(", "Weights read", "+", "Caches read", ")"], ["roofline", "pope"]),
+        eq("Compute bound", ["Peak FLOPS", "÷", "Arithmetic per output token"], ["kaplan"]),
         eq("Limit", ["min(", "Bandwidth bound", ",", "Compute bound", ")"], ["roofline"]),
       ],
-      symbols: "The output share is output tokens over all tokens of a request: its prompt costs the same arithmetic per token but does not count as output.",
+      symbols: "The arithmetic per output token is 2 × (active body + output head), plus each request's prompt, 2 × active body per prompt token, spread over its answer: the prompt uses the same FLOPS but does not count as output.",
       why: [
         "One step of a batch reads the weights once for every request in it, so the bytes per token fall as the batch grows {pope} {kwon}. The arithmetic per token does not fall: it stays at two operations per active parameter {kaplan}.",
         "So speed grows with the batch until it meets the compute roof, then stays flat. Where the two lines meet is the batch at which the machine turns compute-bound {roofline} {yuan}.",
       ],
       assumptions: [
-        ["Each request's context cache is read every step but not counted. It matters at long contexts and large batches; here each request is 256 tokens.", "up"],
+        ["Each request's cache is read every step, at the middle of its answer, from the model's real cache shape.", null],
         ["All requests stay in flight for the whole run, so every step carries the full batch.", "up"],
         ["Attention arithmetic is not counted.", "up"],
-        ["With many requests a mixture-of-experts model touches nearly all its experts each step, so the whole model is read.", null],
+        ["A mixture of experts touches more experts the more tokens a step carries, assuming each token picks its experts independently.", "up"],
         ["Peak FLOPS is the spec sheet's. On Apple M5 chips it includes the GPU's neural accelerators, which an engine may not use.", "up"],
       ],
       check: { workload: "throughput", metric: "throughput", key: "output_tok_s", batched: true },
@@ -145,8 +147,9 @@ window.Pie = window.Pie || {};
         return {
           inputs: [
             ["Requests", `${w.concurrency}`, "Workload"],
-            ["Output share", `${w.output_tokens} of ${w.prompt_tokens + w.output_tokens} tokens`, "Workload"],
-            ["Weights", gb((md?.size_gib || 0) * 2 ** 30 / 1e9), "Catalog"],
+            ["Each request", `${w.prompt_tokens} in, ${w.output_tokens} out`, "Workload"],
+            ["Weights read a step", gb(bound.parts.weightGB), "Body touched + output head, 4.5 bits"],
+            ["Caches read a step", gb(bound.parts.cacheGB), `${w.concurrency} requests, from the model's config`],
             ["Memory bandwidth", `${hw.bandwidth_gbs} GB/s`, "Spec sheet"],
             ["Peak FLOPS", `${hw.tflops_fp16} TFLOPS`, "Spec sheet"],
           ],
@@ -164,7 +167,7 @@ window.Pie = window.Pie || {};
       lede: "The whole prompt goes through in one pass. The weights are read once for all of its tokens, so arithmetic, not memory, sets the speed.",
       equations: [
         eq("Memory time", ["(", "Weights touched", "+", "Prompt cache", ")", "÷", "Memory bandwidth"], ["roofline"]),
-        eq("Math time", ["2", "×", "Active parameters", "×", "Prompt tokens", "÷", "Peak FLOPS"], ["kaplan"]),
+        eq("Math time", ["2", "×", "(", "Active body", "×", "Prompt tokens", "+", "Output head", ")", "÷", "Peak FLOPS"], ["kaplan"]),
         eq("Limit", ["Prompt tokens", "÷", "max(", "Memory time", ",", "Math time", ")"], ["roofline"]),
       ],
       why: [
@@ -174,11 +177,13 @@ window.Pie = window.Pie || {};
       assumptions: [
         ["In a mixture-of-experts model, the weights touched assume each token picks its experts independently and uniformly. Real routing is uneven. This only changes memory time, which is not the limit here.", "small"],
         ["Attention arithmetic, which grows with the square of the prompt, is not counted. At 512 tokens it is a few percent.", "up"],
-        ["FLOPS is the spec sheet's peak.", "up"],
+        ["Only the last prompt token needs the output head: the first answer token is all prefill has to produce.", null],
+        ["Gemma's KV sharing: layers that reuse an earlier layer's K and V run only for the last prompt token, since the others only fill the cache.", null],
+        ["FLOPS is the spec sheet's peak. Apple publishes no FP16 figure, so the catalog's are estimates.", "up"],
       ],
       check: { workload: "raw", metric: "prefill", key: "prefill_tok_s" },
       // shown only while results run above the limit: what is known about why, and what is not
-      open: "Every result above the limit is MLX; llama.cpp runs at about half the limit on the same machines and models. Two explanations are open and neither is confirmed. The Apple M5 chips' GPU neural accelerators may give MLX more arithmetic than the spec-sheet FLOPS used here. Or MLX's prefill timing may not be cold: a prompt-cache hit would skip work the limit counts. MLX's Gemma 4 E2B also beats the limit on the M3, which has no neural accelerators, which points at the measurement.",
+      open: "The result above the limit is on the Apple M5, whose FLOPS figure is the weakest input here: Apple publishes none, and per GPU core the catalog's M5 figure is a fifth below its M5 Max figure (0.94 against 1.18 TFLOPS), so it is probably too low. A prompt-cache hit in the engine, which the timing would not see, is the other open explanation.",
       example: () => {
         const c = ceilingOf("prefill");
         if (!c) return null;
@@ -186,11 +191,11 @@ window.Pie = window.Pie || {};
         return {
           inputs: [
             ["Prompt tokens", `${p.tokens}`, "Workload"],
-            ["Weights touched", gb(p.weightGB), `${p.active} B parameters × 4.5 bits`],
+            ["Weights read", gb(p.weightGB), `${p.body.toFixed(2)} B body + ${p.head.toFixed(2)} B output head, ${p.bits} bits`],
             ["Memory bandwidth", `${p.bw} GB/s`, "Spec sheet"],
             ["Peak FLOPS", `${p.tflops} TFLOPS`, "Spec sheet"],
           ],
-          values: [ms((p.weightGB + p.cacheGB) / p.bw), ms((2 * p.active * 1e9 * p.tokens) / (p.tflops * 1e12)), `${num(c.tps)} tok/s`],
+          values: [ms(p.readS), ms(p.mathS), `${num(c.tps)} tok/s`],
         };
       },
     },
@@ -206,11 +211,11 @@ window.Pie = window.Pie || {};
     if (id === "decode" || id === "speculation") {
       if (!decode) return null;
       const p = decode.parts;
-      const read = (p.weightGB + p.cacheGB) / p.bw;
-      const compute = (2 * p.active * 1e9) / (p.tflops * 1e12);
+      const read = p.readS;
+      const compute = p.mathS;
       // speculation: the drafter's k passes first, then one verify pass of k + 1 tokens, as the worked example counts them
       const draft = SPEC.k * Math.max((SPEC.drafter * p.bytes) / p.bw, (2 * SPEC.drafter * 1e9) / (p.tflops * 1e12));
-      const computeK = (2 * p.active * 1e9 * (SPEC.k + 1)) / (p.tflops * 1e12);
+      const computeK = (p.flopsPerToken * (SPEC.k + 1)) / (p.tflops * 1e12);
       return { machine, weightsGB: p.weightGB.toFixed(2), bw: p.bw, read, compute, tps: decode.tps, k: SPEC.k, a: SPEC.a, drafter: SPEC.drafter, draft, computeK, kept: (1 - SPEC.a ** (SPEC.k + 1)) / (1 - SPEC.a) };
     }
     if (id === "batching") {
@@ -223,7 +228,7 @@ window.Pie = window.Pie || {};
       const c = ceilingOf("prefill");
       if (!c) return null;
       const p = c.parts;
-      return { machine, weightsGB: p.weightGB.toFixed(2), tokens: p.tokens, read: (p.weightGB + p.cacheGB) / p.bw, compute: (2 * p.active * 1e9 * p.tokens) / (p.tflops * 1e12), tps: c.tps };
+      return { machine, weightsGB: p.weightGB.toFixed(2), tokens: p.tokens, read: p.readS, compute: p.mathS, tps: c.tps };
     }
     return null;
   };
@@ -240,7 +245,7 @@ window.Pie = window.Pie || {};
     if (!spec || !release) return null;
     const rows = (Pie.store.snapshot(release) || []).filter((r) => r.workload === spec.workload && r[spec.key] && Pie.store.isMeasured(r));
     const shares = rows.map((r) => {
-      const limit = spec.batched ? Pie.platform?.batchedBound?.(r.hardware, r.model)?.tps : Pie.ceiling?.(r, spec.metric)?.tps;
+      const limit = spec.batched ? Pie.platform?.batchedBound?.(r.hardware, r.model, r.scheme)?.tps : Pie.ceiling?.(r, spec.metric)?.tps;
       return limit ? { r, share: r[spec.key] / limit } : null;
     }).filter(Boolean);
     if (!shares.length) return null;

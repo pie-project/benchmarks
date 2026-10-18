@@ -81,11 +81,13 @@ window.Pie = window.Pie || {};
   };
 
   // pie's advantage over the best other engine: a speed ratio, or the inverse for a time
-  // Compare: "engines" shows each engine against the best other engine; "ceiling" shows each engine's share of its theoretical bound
-  // the last choice is kept per browser, as Hide unavailable is
+  // Compare: "engines" shows each engine against the best other engine; "ceiling", named Roofline, shows each engine's share
+  // of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
+  const COMPARES = { engines: "Engines", ceiling: "Roofline" };
   let compare = (() => {
     try {
-      return localStorage.getItem("platformCompare") === "ceiling" ? "ceiling" : "engines";
+      const saved = localStorage.getItem("platformCompare");
+      return saved === "roofline" ? "ceiling" : COMPARES[saved] ? saved : "engines";
     } catch {
       return "engines";
     }
@@ -94,23 +96,14 @@ window.Pie = window.Pie || {};
   const boundOf = (mac, model, mode, metric, pie) => {
     if (mode.limit) return Pie.ceiling?.(pie, metric.id) || null;
     if (mode.workload !== "throughput") return null;
-    return batchedBound(mac, model);
+    return batchedBound(mac, model, pie?.scheme);
   };
   // batched decode: the lower of two bounds, in output tokens per second. Compute: peak FLOPS over the active parameters,
   // shared with the prompt tokens each request prefills at the same cost, so only output / (prompt + output) of it is output.
   // Bandwidth: each step reads the weights once, so the batch's tokens per second are batch x bandwidth / weight bytes.
-  function batchedBound(mac, model) {
-    const hwRow = Pie.store.index.hardware[mac];
-    const mdRow = Pie.store.index.models[model];
-    const workload = Pie.store.index.workloads?.throughput;
-    if (!hwRow || !mdRow) return null;
-    const batchN = workload?.concurrency || 1;
-    const out = workload?.output_tokens ? workload.output_tokens / ((workload.prompt_tokens || 0) + workload.output_tokens) : 1;
-    const compute = hwRow.tflops_fp16 && mdRow.active_b ? out * hwRow.tflops_fp16 * 1e12 / (2 * mdRow.active_b * 1e9) : null;
-    const bandwidth = hwRow.bandwidth_gbs && mdRow.size_gib ? batchN * hwRow.bandwidth_gbs * 1e9 / (mdRow.size_gib * 2 ** 30) : null;
-    if (!compute && !bandwidth) return null;
-    const bound = compute && (!bandwidth || compute <= bandwidth) ? "compute" : "bandwidth";
-    return { tps: bound === "compute" ? compute : bandwidth, bound, compute, bandwidth };
+  function batchedBound(mac, model, scheme) {
+    // the architecture-based bound (methodology.js), the same one the Methods page explains
+    return Pie.batchedCeiling?.(mac, model, scheme) || null;
   }
   const cell = (rows, metric, base) => {
     const pie = rows.find((r) => r.engine === base && r[metric.key]);
@@ -157,16 +150,18 @@ window.Pie = window.Pie || {};
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
-    const batchBound = !limit && mode.workload === "throughput" ? batchedBound(mac, model) : null;
+    const batchBound = !limit && mode.workload === "throughput" ? batchedBound(mac, model, c.pie.scheme) : null;
     const batchPeak = batchBound ? batchBound.tps : null;
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
+    // Engines compares the engines only; Roofline adds each one's share of the bound, the bounds and the chart
+    const roofline = compare === "ceiling";
     const lines = order.map((r, i) => {
       // Raw: each engine's share of the hardware limit; the others: what the feature adds over its raw row
-      const extra = limit ? share(r, metric) : batchPeak ? r[metric.key] / batchPeak : overRaw(r, metric, raw);
+      const extra = !roofline ? null : limit ? share(r, metric) : batchPeak ? r[metric.key] / batchPeak : overRaw(r, metric, raw);
       const note = extra === null ? "" : limit || batchPeak ? `${Math.round(extra * 100)}%` : times(extra);
       return `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
-      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}<span class="tip-share">${note}</span></span><span class="tip-when">${esc(day(r))}</span></div>`;
+      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}${roofline ? `<span class="tip-share">${note}</span>` : ""}</span><span class="tip-when">${esc(day(r))}</span></div>`;
     });
     // the cell's row and column already name the setup, and the bar above the metric: the card is only the engines
     // the hardware limit closes the list as one more row, aligned with the engines': its speed at 100%, and a tag for
@@ -175,11 +170,90 @@ window.Pie = window.Pie || {};
     // one group under one rule, as a summary reads: the gauge marks the binding row only, the other row is plain and dimmed
     const limitRow = (name, tps, binds) => `<div class="tip-row is-limit${binds ? "" : " is-slack"}">
       ${binds ? '<svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg>' : "<span></span>"}<span class="tip-name" title="${binds ? "What sets the limit" : "Not the limit: the other bound is lower"}">${name} bound</span>
-      <span class="tip-value">${esc(value(tps, metric.unit))}<span class="tip-share">${binds ? "100%" : ""}</span></span><span class="tip-when"></span></div>`;
+      <span class="tip-value">${esc(value(tps, metric.unit))}</span><span class="tip-when"></span></div>`;
     const bounds = (b) => [["Bandwidth", b.bandwidth], ["Compute", b.compute]].filter(([, tps]) => tps).sort((x, y) => x[1] - y[1]);
-    const both = ceiling || batchBound;
-    if (both) bounds(both).forEach(([name, tps], i) => lines.push(limitRow(name, tps, i === 0)));
+    // Roofline complements Engines: no engine list, only the bounds and the chart, the engines as dots in their colours
+    const both = roofline && (ceiling || batchBound);
+    if (both) {
+      // both bounds side by side, as a pair of stats: a small label over each number, memory first as the chart reads
+      // left to right; the lower one is the limit, bright, the other dimmed
+      const low = bounds(both)[0][0];
+      const stat = (name, label, tps) => tps ? `<div class="rf-stat${name === low ? " is-limit" : ""}"><span>${label}${name === low ? '<i class="rf-tag">Limit</i>' : ""}</span><b>${esc(value(tps, metric.unit))}</b></div>` : "";
+      const head = `<div class="rf-stats">${stat("Bandwidth", "Memory bound", both.bandwidth)}${stat("Compute", "Compute bound", both.compute)}</div>`;
+      return `<div class="rf-card">${head}${roofCard(order.map((r) => roofPoint(r, mode, metric)).filter(Boolean))}</div>`;
+    }
     return card("", "", lines);
+  };
+
+  // a result on the roofline model (Williams et al., 2009): its pass's arithmetic intensity, the FLOPs it does per byte
+  // it reads, and the FLOPs a second it achieved; and its machine's roof, memory bandwidth and peak FLOPS
+  const roofPoint = (r, mode, metric) => {
+    if (!r?.[metric.key]) return null;
+    if (mode.limit) {
+      const c = Pie.ceiling?.(r, metric.id);
+      if (!c) return null;
+      const flops = c.parts.mathS * c.parts.tflops * 1e12;
+      const bytes = (c.parts.weightGB + c.parts.cacheGB) * 1e9;
+      return { r, ai: flops / bytes, achieved: (r[metric.key] / c.parts.tokens) * flops, bw: c.parts.bw, peak: c.parts.tflops };
+    }
+    const b = Pie.batchedCeiling?.(r.hardware, r.model, r.scheme);
+    const hw = Pie.store.index.hardware[r.hardware];
+    if (!b || !hw) return null;
+    const flops = b.parts.mathS * hw.tflops_fp16 * 1e12;
+    const bytes = b.parts.readS * hw.bandwidth_gbs * 1e9;
+    return { r, ai: flops / bytes, achieved: (r[metric.key] / b.parts.requests) * flops, bw: hw.bandwidth_gbs, peak: hw.tflops_fp16 };
+  };
+
+  // the card's roofline, a picture rather than a plot: the roof one line over a soft fade, the knee a ring named
+  // beside it, each engine a dot in its own colour, pie on top; no axes, since the shape is the point
+  const roofCard = (found) => {
+    let points = found;
+    if (!points.length) return "";
+    const { bw, peak } = points[0];
+    const knee = (peak * 1e12) / (bw * 1e9);
+    // one model, one workload: every engine stands at the same place across, pie's (the first engine's when pie has
+    // none); a dot's height is its share of its own bound, so it matches the percentage the grid shows for it
+    const own = points.find((p) => p.r.engine === Pie.engines.primary) || points[0];
+    const ai = own.ai;
+    const shareOf = (p) => p.achieved / Math.min(p.bw * 1e9 * p.ai, p.peak * 1e12);
+    points = points.map((p) => ({ ...p, ai, achieved: shareOf(p) * Math.min(bw * 1e9 * ai, peak * 1e12) }));
+    const ais = [ai];
+    // both axes linear. Across, a window around the dots; up, always from zero to just over the roof, so a dot's height
+    // is its share of the bound. The knee and the compute roof show only when the window reaches them
+    const aiLo = Math.min(...ais), aiHi = Math.max(...ais);
+    const X0 = aiLo * 0.6;
+    const X1 = aiHi * 1.4;
+    // a dot's distance below the roof is its share of it: at 55% it sits about halfway between the floor and the roof
+    const Y1 = Math.max(Math.min(bw * 1e9 * X1, peak * 1e12), ...points.map((p) => p.achieved)) * 1.06;
+    const Y0 = 0;
+    const W = 260, H = 96, L = 2, R = 2, T = 16, B = 2;
+    const x = (v) => L + ((v - X0) / (X1 - X0)) * (W - L - R);
+    const y = (v) => T + (1 - (v - Y0) / (Y1 - Y0)) * (H - T - B);
+    const roof = (v) => Math.min(bw * 1e9 * v, peak * 1e12);
+    const start = X0;
+    // every dot exactly where its result is, never nudged: each engine the same small solid dot in its colour, ringed
+    // in the card's colour so dots stay apart; pie drawn last, and the only one named
+    const at = (p) => `cx="${x(p.ai).toFixed(1)}" cy="${y(p.achieved).toFixed(1)}"`;
+    const isPie = (p) => p.r.engine === Pie.engines.primary;
+    const dots = [...points.filter((p) => !isPie(p)), ...points.filter(isPie)]
+      .map((p) => `<circle class="rf-dot" ${at(p)} r="2.5" fill="${Pie.engines.colorOf(p.r.engine)}"/>`).join("");
+    // only pie is named, beside its dot in its colour: to the right, or to the left near the right edge
+    const labels = points.filter(isPie).map((p) => {
+      const cx = x(p.ai), left = cx > W - 40;
+      return `<text class="rf-name is-pie" x="${(cx + (left ? -6 : 6)).toFixed(1)}" y="${(y(p.achieved) + 3.5).toFixed(1)}" text-anchor="${left ? "end" : "start"}" fill="${Pie.engines.colorOf(p.r.engine)}">${esc(names().engine(p.r.engine))}</text>`;
+    }).join("");
+    const shown = knee > X0 && knee < X1;  // the knee, only when it falls inside the window
+    const roofPts = (shown ? [start, knee, X1] : [start, X1]).map((v) => `${x(v).toFixed(1)},${y(roof(v)).toFixed(1)}`);
+    const floor = (H - B).toFixed(1);
+    return `
+      <div class="tip-roof">
+        <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Roofline: knee at ${Math.round(knee)} FLOPs per byte`)}">
+          <polyline class="rf-roof" points="${roofPts.join(" ")}"/>
+          ${shown ? `<circle class="rf-knee" cx="${x(knee).toFixed(1)}" cy="${y(peak * 1e12).toFixed(1)}" r="3"/>` : ""}
+          ${shown ? `<text class="rf-tick" x="${(x(knee) + (x(knee) > W / 2 ? -7 : 7)).toFixed(1)}" y="${(y(peak * 1e12) - 6).toFixed(1)}" text-anchor="${x(knee) > W / 2 ? "end" : "start"}">Knee</text>` : ""}
+          ${dots}${labels}
+        </svg>
+      </div>`;
   };
 
   Pie.platform = {
@@ -189,7 +263,7 @@ window.Pie = window.Pie || {};
     // the Compare choice, kept per browser: "engines" or "ceiling"
     compare: () => compare,
     setCompare(value) {
-      compare = value === "ceiling" ? "ceiling" : "engines";
+      compare = COMPARES[value] ? value : "engines";
       try {
         localStorage.setItem("platformCompare", compare);
       } catch {
@@ -375,7 +449,7 @@ window.Pie = window.Pie || {};
             <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Setup: ${mode.label}`)}">${esc(mode.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
           <span class="filter platform-compare-filter">
-            <button class="filter-button" id="platform-compare" type="button" aria-haspopup="menu" aria-label="${esc(`Compare: ${compare === "ceiling" ? "Ceiling" : "Engines"}`)}">${compare === "ceiling" ? "Ceiling" : "Engines"}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+            <button class="filter-button" id="platform-compare" type="button" aria-haspopup="menu" aria-label="${esc(`Compare: ${COMPARES[compare]}`)}">${COMPARES[compare]}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>Configuration</button>
           <span class="platform-bar-side is-end">

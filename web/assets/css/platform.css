@@ -644,3 +644,23 @@
   .platform-bar { gap: 8px; justify-content: flex-start; }
   .platform-bar .platform-bar-side.is-end { margin-left: 0; }
 }
+
+/* the Roofline card, as Apple's Health and Fitness charts read: the pair of bounds on top, the limit tagged; under
+   them the roof as one luminous line, and
+   crisp dots, each ringed in the card's colour so they separate from the line and from each other; pie's name in bold. The roof is white-grey, never a hue, so every colour on the chart is an engine's */
+.rf-card { display: flex; flex-direction: column; gap: 12px; min-width: 248px; padding: 2px 0; }
+.rf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rf-stat { display: flex; flex-direction: column; gap: 2px; }
+.rf-stat span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: var(--color-label-tertiary); }
+.rf-stat b { font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
+.rf-stat.is-limit span { color: var(--color-label-secondary); }
+.rf-stat.is-limit b { color: var(--color-label); }
+.rf-tag { padding: 0 6px; border-radius: 6px; background: var(--color-fill); font-size: 10px; font-style: normal; font-weight: 600; line-height: 16px; color: var(--color-label-secondary); }
+.tip-roof { padding: 4px 0 0; }
+.tip-roof svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tip-roof .rf-tick { fill: var(--color-label-tertiary); font-size: 10px; font-weight: 500; }
+.tip-roof .rf-roof { fill: none; stroke: var(--color-label); stroke-width: 2.2; opacity: .9; stroke-linejoin: round; stroke-linecap: round; }
+.tip-roof .rf-knee { fill: var(--color-menu); stroke: var(--color-label); stroke-width: 1.8; }
+.tip-roof .rf-dot { stroke: var(--color-menu); stroke-width: 1; }
+.tip-roof .rf-name { font-size: 11px; font-weight: 500; }  /* each dot's engine, in its colour */
+.tip-roof .rf-name.is-pie { font-weight: 700; }

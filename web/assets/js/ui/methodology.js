@@ -266,30 +266,69 @@ window.Pie = window.Pie || {};
     update();
   };
 
-  // bits per weight a result's scheme stores, with its scales
-  const bitsOf = (scheme = "") => (/bf16|f16/.test(scheme) ? 16 : /8/.test(scheme) ? 8.5 : /q4_k/.test(scheme) ? 4.85 : 4.5);
+  // bits per weight a result's scheme stores, with its scales: 4-bit affine keeps a 16-bit scale and bias per 64
+  // weights (4.5), Q4_K_M mixes 4- and 6-bit blocks (about 4.85), MXFP4 an 8-bit scale per 32 (4.25)
+  const bitsOf = (scheme = "") => (/bf16|f16/.test(scheme) ? 16 : /mxfp4/.test(scheme) ? 4.25 : /8/.test(scheme) ? 8.5 : /q4_k/.test(scheme) ? 4.85 : 4.5);
+
+  // one forward pass, from the model's architecture (config/architectures.js): the bytes it reads and the arithmetic
+  // it does. `tokens` go through the pass together, `logits` of them need the output head, and `requests` caches of
+  // `context` tokens are read. The input embedding and Gemma's per-layer tables are only looked up, never read whole;
+  // a mixture of experts touches more experts the more tokens the pass carries
+  const pass = (a, { bits, tokens, logits, requests, context }) => {
+    const body = a.total - a.emb * (a.tied ? 1 : 2) - a.ple;
+    const activeBody = body - a.routed * (1 - a.k);
+    const touchedBody = body - a.routed + a.routed * (a.k >= 1 ? 1 : 1 - (1 - a.k) ** tokens);
+    const weightGB = ((touchedBody + a.emb) * bits) / 8;
+    // full attention reads every cached token, sliding attention its window; linear attention reads and writes its state
+    const cacheGB = (requests * ((a.full * context + a.sliding * Math.min(context, a.window)) * a.kvLayer + a.linear * a.state * 2)) / 1e9;
+    // with KV sharing, the layers that reuse another layer's K and V run only for the tokens that need logits: a prompt
+    // token's only job is to fill the cache, and those layers add nothing to it
+    const skip = a.shared && tokens > logits ? (a.shared / a.layers) * (tokens - logits) : 0;
+    const flops = 2e9 * (activeBody * (tokens - skip) + a.emb * logits);
+    return { weightGB, cacheGB, flops, body: activeBody, head: a.emb };
+  };
 
   // the hardware limit for one measured result, from the spec sheet: the slower of reading the bytes and doing the math.
-  // decode is one token at the middle of the answer; prefill is the whole prompt in one pass
+  // Decode is one token at the middle of the answer, its logits included; prefill is the whole prompt in one pass,
+  // with logits only for its last token, which is all a first token needs
   Pie.ceiling = (row, metric) => {
     const machine = machines().find((m) => m.id === row.hardware);
     const model = models().find((m) => m.id === row.model);
     const workload = Pie.store.index.workloads[row.workload];
-    if (!machine?.bw || !machine.tflops || !model || !workload) return null;
-    const bytes = bitsOf(row.scheme) / 8;
-    const flops = machine.tflops * 1e12;
-    const share = model.active / model.total;
+    const a = Pie.architectures?.[row.model];
+    if (!machine?.bw || !machine.tflops || !model || !workload || !a) return null;
+    const bits = bitsOf(row.scheme);
     const prompt = workload.prompt_tokens;
-    const tokens = metric === "prefill" ? prompt : 1;
-    const context = metric === "prefill" ? prompt : prompt + workload.output_tokens / 2;
-    // a MoE pass touches more experts the more tokens it carries
-    const weightGB = model.total * bytes * (share >= 1 ? 1 : 1 - (1 - share) ** tokens);
-    const memory = (weightGB + context * model.kvKB / 1e6) / machine.bw;
-    const compute = (2 * model.active * 1e9 * tokens) / flops;
+    const prefill = metric === "prefill";
+    const tokens = prefill ? prompt : 1;
+    const context = prefill ? prompt : prompt + workload.output_tokens / 2;
+    const p = pass(a, { bits, tokens, logits: 1, requests: 1, context });
+    const memory = (p.weightGB + p.cacheGB) / machine.bw;
+    const compute = p.flops / (machine.tflops * 1e12);
     const bound = memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced";
     // the parts too, for the Methods page's worked examples
-    const parts = { weightGB, cacheGB: context * model.kvKB / 1e6, bw: machine.bw, tflops: machine.tflops, active: model.active, total: model.total, bytes, tokens, context };
+    const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, bw: machine.bw, tflops: machine.tflops,
+      body: p.body, head: p.head, bits, bytes: bits / 8, tokens, context, flopsPerToken: 2e9 * (p.body + p.head) };
     return { tps: tokens / Math.max(memory, compute), bound, bandwidth: tokens / memory, compute: tokens / compute, parts };
+  };
+
+  // batched decode on a machine: `requests` decode together, each one token a step with its logits, each with its
+  // cache at the middle of its answer; each request's prompt is prefilled once, and its arithmetic is spread over the
+  // steps of its answer, since it counts against the same FLOPS but not as output
+  Pie.batchedCeiling = (hardware, modelId, scheme = "affine_u4_g64") => {
+    const machine = machines().find((m) => m.id === hardware);
+    const workload = Pie.store.index.workloads?.throughput;
+    const a = Pie.architectures?.[modelId];
+    if (!machine?.bw || !machine.tflops || !workload || !a) return null;
+    const requests = workload.concurrency || 1;
+    const p = pass(a, { bits: bitsOf(scheme), tokens: requests, logits: requests, requests, context: workload.prompt_tokens + workload.output_tokens / 2 });
+    const prefillFlops = requests * 2e9 * p.body * workload.prompt_tokens / workload.output_tokens;
+    const readS = (p.weightGB + p.cacheGB) / machine.bw;
+    const mathS = (p.flops + prefillFlops) / (machine.tflops * 1e12);
+    const bandwidth = requests / readS;
+    const compute = requests / mathS;
+    const bound = compute <= bandwidth ? "compute" : "bandwidth";
+    return { tps: Math.min(compute, bandwidth), bound, compute, bandwidth, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, requests } };
   };
 
   Pie.methodology = {
