@@ -16,6 +16,7 @@ on:
       max_jobs_per_platform: { description: "cap per platform", required: false, default: "" }
       artifacts: { description: "comma-separated artifact ids", required: false, default: "" }
       workloads: { description: "comma-separated workload ids (empty: every weekly workload)", required: false, default: "" }
+      skip_recorded: { description: "skip cells already recorded at this pie commit (a retry)", required: false, default: "false" }
       tag: { description: "a tag for the site (0.5.3-b5): the results join that run beside the Macs'", required: false, default: "" }
       pie_env: { description: "KEY=VALUE pairs set for the node run (A/B diagnostics)", required: false, default: "" }
 jobs:
@@ -45,6 +46,7 @@ jobs:
       max_jobs_per_platform: ${{ github.event.inputs.max_jobs_per_platform || '' }}
       artifacts: ${{ github.event.inputs.artifacts || '' }}
       workloads: ${{ github.event.inputs.workloads || '' }}
+      skip_recorded: ${{ github.event.inputs.skip_recorded == 'true' }}
       tag: ${{ github.event.inputs.tag || '' }}
       tag_kind: ${{ github.event.inputs.tag && 'manual' || '' }}
       pie_env: ${{ github.event.inputs.pie_env || '' }}
