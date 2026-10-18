@@ -121,9 +121,33 @@ def _pct(values: list[float], q: float) -> float | None:
 COLD_OPENING_TOKENS = 32
 
 
+def serial_clock(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One request at a time: a request's clock starts when the engine could take it.
+
+    vLLM's streaming client hands every request to the engine at t=0 and the engine seats
+    one, so each TTFT counted the requests queued before it (0.5.3-b5, L4: 0.11 s, 10 s,
+    20 s, ...). A request starts at its send or at the previous request's last token,
+    whichever is later; a client that already sends one at a time is left as it was."""
+    timed = [r for r in rows if r.get("client_send_s") is not None and r.get("client_return_s") is not None]
+    if len(timed) != len(rows) or len(rows) < 2:
+        return rows
+    out, prev_return = [], None
+    for r in sorted(rows, key=lambda r: r["client_send_s"]):
+        start = r["client_send_s"] if prev_return is None else max(r["client_send_s"], prev_return)
+        shift = start - r["client_send_s"]
+        if shift > 0:
+            r = {**r, "ttft_s": r["ttft_s"] - shift if r.get("ttft_s") is not None else None,
+                 "latency_s": r["latency_s"] - shift if r.get("latency_s") is not None else None}
+        out.append(r)
+        prev_return = r["client_return_s"]
+    return out
+
+
 def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]], num_layers: int | None, concurrency: int | None = None, *, cold_tags: bool = False) -> PerfMetrics:
     """Lift ``scripts/bench/common.py``'s BenchSummary + RequestResult rows."""
     completed = [r for r in requests if r.get("ok")]
+    if concurrency == 1:
+        completed = serial_clock(completed)
     out_tok = int(summary.get("output_tokens") or sum(r.get("output_tokens", 0) for r in completed))
     prompt_tok = int(summary.get("prompt_tokens") or sum(r.get("prompt_tokens", 0) for r in completed))
     wall = float(summary.get("wall_s") or 0.0)

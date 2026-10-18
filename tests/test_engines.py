@@ -1137,3 +1137,15 @@ def test_vllm_single_stream_streams_one_request_at_a_time(tmp_path):
     assert argv[2] == "tput" and "--report-timing" in argv
     assert argv[argv.index("--concurrency") + 1] == "1" and "--requests" not in argv
     assert make(VllmEngine).build_argv(WORKLOADS["c32"], [], tmp_path / "o.json")[2] == "tput"
+
+
+def test_a_queued_single_stream_request_starts_when_the_one_before_it_ends():
+    # vLLM's streaming client sends every request at t=0 and the engine seats one (0.5.3-b5, L4)
+    from pie_evals.node.engines.base import serial_clock
+
+    rows = [{"ok": True, "client_send_s": 0.0, "client_return_s": 9.9, "ttft_s": 0.1, "latency_s": 9.9},
+            {"ok": True, "client_send_s": 0.0, "client_return_s": 19.8, "ttft_s": 10.0, "latency_s": 19.8}]
+    fixed = serial_clock(rows)
+    assert abs(fixed[1]["ttft_s"] - 0.1) < 1e-9 and abs(fixed[1]["latency_s"] - 9.9) < 1e-9
+    sequential = [{**rows[0]}, {**rows[1], "client_send_s": 9.95, "ttft_s": 0.1, "latency_s": 9.85}]
+    assert serial_clock(sequential) == sequential  # a client that sends one at a time is left alone
