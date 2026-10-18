@@ -18,11 +18,12 @@ on:
       workloads: { description: "comma-separated workload ids (empty: every weekly workload)", required: false, default: "" }
       skip_recorded: { description: "skip cells already recorded at this pie commit (a retry)", required: false, default: "false" }
       tag: { description: "a tag for the site (0.5.3-b5): the results join that run beside the Macs'", required: false, default: "" }
+      pins: { description: "competitor releases id=version,... (empty with a tag: the newest vLLM and SGLang on PyPI)", required: false, default: "" }
       pie_env: { description: "KEY=VALUE pairs set for the node run (A/B diagnostics)", required: false, default: "" }
 jobs:
   resolve:
     runs-on: ubuntu-latest
-    outputs: { pie_commit: "${{ steps.c.outputs.commit }}" }
+    outputs: { pie_commit: "${{ steps.c.outputs.commit }}", pins: "${{ steps.c.outputs.pins }}" }
     steps:
       - id: c
         env: { GH_TOKEN: "${{ github.token }}" }
@@ -32,6 +33,13 @@ jobs:
           # a short SHA or a branch name cannot be shallow-fetched on the pod; resolve it to the full SHA here
           if ! [[ "$C" =~ ^[0-9a-f]{40}$ ]]; then C=$(gh api "repos/pie-project/pie/commits/$C" --jq .sha); fi
           echo "commit=$C" >> "$GITHUB_OUTPUT"
+          # a tagged run compares against the competitors' newest releases, as the Mac release run does
+          P="${{ github.event.inputs.pins }}"
+          if [ -z "$P" ] && [ -n "${{ github.event.inputs.tag }}" ]; then
+            P="vllm=$(curl -fsS https://pypi.org/pypi/vllm/json | jq -r .info.version),sglang=$(curl -fsS https://pypi.org/pypi/sglang/json | jq -r .info.version)"
+          fi
+          echo "competitors: ${P:-matrix pins}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "pins=$P" >> "$GITHUB_OUTPUT"
   run:
     needs: resolve
     uses: ./.github/workflows/tier.yml
@@ -49,5 +57,6 @@ jobs:
       skip_recorded: ${{ github.event.inputs.skip_recorded == 'true' }}
       tag: ${{ github.event.inputs.tag || '' }}
       tag_kind: ${{ github.event.inputs.tag && 'manual' || '' }}
+      pins: ${{ needs.resolve.outputs.pins }}
       pie_env: ${{ github.event.inputs.pie_env || '' }}
     secrets: inherit
