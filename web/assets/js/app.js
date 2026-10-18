@@ -7,7 +7,7 @@
     const [view, hardware, workload] = decodeURIComponent(location.hash.slice(1)).split("/");
     if (view === "overview" || view === "mac") {
       state.table = "mac";
-      Object.assign(state.overview, { hardware: hardware || null, workload: workload || "single" });
+      Object.assign(state.overview, { hardware: hardware || null, workload: workload || "raw" });
     }
   };
 
