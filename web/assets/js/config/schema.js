@@ -28,14 +28,15 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    all_hardware: {
-      label: "All hardware",
-      section: "platforms",
-      view: "platform",
-      tint: "#0a84ff",  // every platform's machines, grouped by platform
-      filters: [],
-      columns: [],
-    },
+    // All hardware, hidden for now: the platform pages list their own machines
+    // all_hardware: {
+    //   label: "All hardware",
+    //   section: "platforms",
+    //   view: "platform",
+    //   tint: "#0a84ff",  // every platform's machines, grouped by platform
+    //   filters: [],
+    //   columns: [],
+    // },
     mac: {
       label: "Apple Silicon",
       section: "platforms",
