@@ -742,4 +742,4 @@ platforms:
     memory_gib: 32
     interconnect: ici
     runner_labels: [tpu-v6e-1]
-    tiers: [nightly]
+    tiers: [nightly, weekly]  # weekly: a release's Raw rows (tpu.yml tier=weekly); the GPU weekly's --skip-unavailable drops it
