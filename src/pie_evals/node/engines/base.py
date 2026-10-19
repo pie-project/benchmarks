@@ -262,7 +262,8 @@ class Engine(ABC):
         using nccl==2.29.7" and nothing more for 30 minutes (nightly
         36081628995 s05); SGLang tp2 hung the same way (s10). Peer-to-peer and
         InfiniBand off makes NCCL fall back to host-staged copies, which is
-        what the pod's PCIe topology delivers anyway. pie does not use NCCL.
+        what the pod's PCIe topology delivers anyway. pie falls back to NCCL when its own peer
+        collectives cannot run, so it takes the same settings.
         An NVLink pod (A100 SXM, H100 SXM) keeps peer access: turning it off there
         would slow vLLM and SGLang below what the hardware gives them."""
         if int(self.mode.tp) > 1 and os.environ.get("RUNPOD_POD_ID") and str(getattr(self.platform, "interconnect", "pcie")) != "nvlink":
