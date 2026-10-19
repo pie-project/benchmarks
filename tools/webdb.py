@@ -506,6 +506,23 @@ def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: l
     return out
 
 
+def gpu_unsupported(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[str], benches: list[str]) -> dict[tuple, str]:
+    """{(gpu, engine, model): reason} for GPU setups a support rule declares unsupported (not the fit rule)."""
+    from pie_evals.plan.matrix import Matrix
+
+    m = Matrix.load(ROOT / "matrix")
+    out: dict[tuple, str] = {}
+    for c in m.expand():
+        if c.platform.id not in gpu_ids or str(c.engine) not in engine_ids or (benches and c.workload.id not in benches):
+            continue
+        if c.artifact.source_format.value != "hf_safetensors" or c.artifact.kind.value != "full" or c.program.id != "text-completion-bench":
+            continue
+        reason = c.declared_unsupported_reason
+        if reason and not reason.startswith("does not fit") and c.artifact.id in a2m:
+            out.setdefault((c.platform.id, str(c.engine), a2m[c.artifact.id]), reason)
+    return out
+
+
 def gpu_no_fit(store, a2m: dict[str, str], hw_rows: list[dict], gpu_ids: list[str]) -> dict:
     """{gpu: {model: {engine: GiB needed}}}: the planner's fit rule over the weights the GPU runs used."""
     from pie_evals.plan.matrix import gpu_gib
@@ -591,7 +608,12 @@ def main() -> None:
     order = [x["id"] for x in tags]
     # the site's default order: engine, then model, then hardware, then workload
     grid = [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in hardware_ids for c, _, _ in CATEGORIES if e in {x["id"] for x in mac_engines}]
+    # a GPU setup the matrix declares unsupported (an engine's own bug or gap) reads unsupported with its reason,
+    # even where an older engine release once measured it: one release of each engine per tag
+    gpu_unsup = gpu_unsupported(a2m, gpu_ids, all_engines, config.get("benchmarks", []))
     grid += [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in gpu_ids for c, _, _ in CATEGORIES if (hw, e, m, c) in gpu_keys]
+    grid += [(hw, e, m, "raw") for hw, e, m in gpu_unsup
+             if m in model_ids and (hw, e, m, "raw") not in gpu_keys and any(k[0] == hw for k in gpu_keys)]
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
     # the Macs the site's grids measure, and every GPU or TPU setup a scheduled CI run launches (tagged with its runs)
     # the Macs the grids measure, every CI GPU and TPU, and every catalog accelerator; a CI Mac without a runner stays out
@@ -604,6 +626,7 @@ def main() -> None:
     for t, rs in gpu_attempts.items():
         attempts.setdefault(t, {}).update(rs)
     unsupported = unsupported_reasons(a2m, config, hardware_ids, engine_ids, model_ids)
+    unsupported.update(gpu_unsup)
     memory = {h["id"]: h.get("memory_gib") for h in hw_rows}
     streams = {m["id"]: m.get("ssd_streaming") for m in models}
     # every combination of Mac, engine, model and workload has a row in every tag, on every Mac, run there or not:
@@ -617,6 +640,8 @@ def main() -> None:
         for key in grid:
             hw, engine, model, cat = key
             row = have.get(key)
+            if row is not None and (hw, engine, model) in gpu_unsup:
+                row = None  # an engine that cannot run this setup in this release: no older number stands in
             if row is not None:
                 if row["stale"] and key in tried:  # the older numbers stand in; say what happened this time
                     row["note"] = f"In {t}: {attempt_note(tried[key])[:1].lower()}{attempt_note(tried[key])[1:]}"
