@@ -14,10 +14,11 @@ on:
       workloads: { description: "comma-separated workload ids (empty: every workload of the tier)", required: false, default: "" }
       artifacts: { description: "comma-separated artifact ids (empty: every one that runs on the TPU)", required: false, default: "" }
       tag: { description: "a tag for the site (0.5.3-b5); empty: main-<sha>", required: false, default: "" }
+      zone: { description: "Cloud TPU zone with v6e (us-east5-b, us-east1-d, europe-west4-a, ...)", required: false, default: "us-east5-b" }
 concurrency: { group: tpu, cancel-in-progress: false }  # one TPU VM at a time
 env:
   GCP_PROJECT: pie-project-510103
-  TPU_ZONE: us-east5-b
+  TPU_ZONE: ${{ github.event.inputs.zone || 'us-east5-b' }}  # a full zone answers "no more capacity": a manual run can pick another
   TPU_TYPE: v6e-1
   TPU_RUNTIME: v2-alpha-tpuv6e
   TPU_NAME: pie-evals-tpu-${{ github.run_id }}-${{ github.run_attempt }}
