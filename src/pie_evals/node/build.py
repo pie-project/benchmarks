@@ -159,6 +159,10 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
     # in-tree because bench_inferlet_paths walks up to examples/target; all .wasm are cached
     log("build: every inferlet in examples/ (wasm32-wasip2)")
     genv = {k: v for k, v in env.items() if k != "CARGO_TARGET_DIR"}
+    # pie's rust-toolchain.toml stopped listing wasm32-wasip2 (pie main, 2026-10-19), so the pinned toolchain
+    # comes without it: every inferlet failed with "can't find crate for `core`"
+    if shutil.which("rustup"):
+        subprocess.run(["rustup", "target", "add", "wasm32-wasip2"], cwd=pie_root / "examples", env=genv, check=False, timeout=timeout_s)
     subprocess.run(["cargo", "build", "--release", "--target", "wasm32-wasip2", "--workspace"], cwd=pie_root / "examples", env=genv, check=True, timeout=timeout_s)
     (out / "wasm").mkdir(exist_ok=True)
     n = 0
