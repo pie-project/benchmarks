@@ -202,7 +202,7 @@ svg {
   .content .table-container,
   .content .platform-scroll { overflow-x: auto; }
 }
-/* phones: the same hard stop at the top and the bottom of every page and table, no bounce */
+/* phones: a page still stops hard sideways, but bounces at its top and bottom, as iOS scrolls; the bounce stays in its own scroller */
 @media (max-width: 899px) {
   .content,
   .content > *,
@@ -211,7 +211,7 @@ svg {
   .platform-scroll,
   .table-container,
   .sidebar,
-  .sidebar-nav { overscroll-behavior: none; }
+  .sidebar-nav { overscroll-behavior-x: none; overscroll-behavior-y: contain; }
 }
 
 
