@@ -506,6 +506,32 @@ def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: l
     return out
 
 
+def gpu_no_fit(store, a2m: dict[str, str], hw_rows: list[dict], gpu_ids: list[str]) -> dict:
+    """{gpu: {model: {engine: GiB needed}}}: the planner's fit rule over the weights the GPU runs used."""
+    from pie_evals.plan.matrix import gpu_gib
+
+    factor = float(load("support").get("fit_factor", 1.25))
+    arts = {a["id"]: a for a in load("models")["artifacts"]}
+    used: dict[str, set[str]] = {}
+    engines: set[str] = set()
+    for r in store.table().select(["platform", "engine", "artifact"]).to_pylist():
+        a = arts.get(r["artifact"])
+        if r["platform"] in gpu_ids and a and a.get("source_format", "hf_safetensors") == "hf_safetensors" and a.get("kind", "full") == "full" and r["artifact"] in a2m:
+            used.setdefault(a2m[r["artifact"]], set()).add(r["artifact"])
+            engines.add(r["engine"])
+    need = {m: min(arts[i]["expected_gib"] for i in ids if arts[i].get("expected_gib")) * factor
+            for m, ids in used.items() if any(arts[i].get("expected_gib") for i in ids)}
+    out: dict[str, dict] = {}
+    for hw in hw_rows:
+        if hw["id"] not in gpu_ids or not hw.get("memory_gib"):
+            continue
+        cap = gpu_gib(hw["memory_gib"], hw.get("interconnect") or "pcie")
+        for model, gib in need.items():
+            if gib > cap:
+                out.setdefault(hw["id"], {})[model] = {e: round(gib, 1) for e in engines}
+    return out
+
+
 def tag_date(tag: str, meta: dict) -> str | None:
     """A release is dated by its pie publish date; a manual run by when it ran."""
     if meta["kind"] == "release":
@@ -571,6 +597,9 @@ def main() -> None:
     # the Macs the grids measure, every CI GPU and TPU, and every catalog accelerator; a CI Mac without a runner stays out
     hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids or h["class"] != "mac" or not h.get("runs")]
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
+    # a GPU runs every engine on the same Hugging Face weights (bf16, MXFP4), not the Mac's 4-bit ones: its fit is
+    # sized by the artifact the GPU runs actually loaded, so a 54 GB bf16 model reads "doesn't fit" on a 48 GB card
+    misfits.update(gpu_no_fit(store, a2m, hw_rows, gpu_ids))
     attempts = attempts_by_tag(store, a2m, hardware_ids, engine_ids)
     for t, rs in gpu_attempts.items():
         attempts.setdefault(t, {}).update(rs)
