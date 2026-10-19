@@ -157,22 +157,31 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
         subprocess.run([*maturin, "build", "--release", "-o", str(out), "--features", feats, "-i", str(py)], cwd=python_dir(pie_root) / "server", env=env, check=True, timeout=timeout_s)
     # guest programs: the whole examples/ workspace (every inferlet the matrix can name), built
     # in-tree because bench_inferlet_paths walks up to examples/target; all .wasm are cached
-    log("build: every inferlet in examples/ (wasm32-wasip2)")
+    target = wasm_target(pie_root)
+    log(f"build: every inferlet in examples/ ({target})")
     genv = {k: v for k, v in env.items() if k != "CARGO_TARGET_DIR"}
-    # pie's rust-toolchain.toml stopped listing wasm32-wasip2 (pie main, 2026-10-19), so the pinned toolchain
-    # comes without it: every inferlet failed with "can't find crate for `core`"
+    # the target comes with the toolchain examples/ pins (pie #1010 moved the inferlets to WASI 0.3 on a nightly);
+    # added explicitly, since a toolchain file that does not list it leaves cargo with "can't find crate for `core`"
     if shutil.which("rustup"):
-        subprocess.run(["rustup", "target", "add", "wasm32-wasip2"], cwd=pie_root / "examples", env=genv, check=False, timeout=timeout_s)
-    subprocess.run(["cargo", "build", "--release", "--target", "wasm32-wasip2", "--workspace"], cwd=pie_root / "examples", env=genv, check=True, timeout=timeout_s)
+        # `rustup toolchain install` with no name installs what the directory's toolchain file pins
+        subprocess.run(["rustup", "toolchain", "install"], cwd=pie_root / "examples", env=genv, check=False, timeout=timeout_s)
+        subprocess.run(["rustup", "target", "add", target], cwd=pie_root / "examples", env=genv, check=False, timeout=timeout_s)
+    subprocess.run(["cargo", "build", "--release", "--target", target, "--workspace"], cwd=pie_root / "examples", env=genv, check=True, timeout=timeout_s)
     (out / "wasm").mkdir(exist_ok=True)
     n = 0
-    for w in (pie_root / "examples/target/wasm32-wasip2/release").glob("*.wasm"):
+    for w in (pie_root / f"examples/target/{target}/release").glob("*.wasm"):
         shutil.copy2(w, out / "wasm" / w.name)
         n += 1
     log(f"build: {n} guest programs cached")
     (out / "COMMIT").write_text(commit + "\n")
     log(f"build: cached at {out}")
     return out
+
+
+def wasm_target(pie_root: Path) -> str:
+    """The wasm target pie's inferlets build for: WASI 0.3 since pie #1010 (examples/rust-toolchain.toml), 0.2 before."""
+    pinned = pie_root / "examples" / "rust-toolchain.toml"
+    return "wasm32-wasip3" if pinned.exists() and "wasm32-wasip3" in pinned.read_text() else "wasm32-wasip2"
 
 
 def restore(pie_root: Path, commit: str, features: list[str], *, cache_root: Path | None = None, python: str = "python3", set_env: bool = True, log=print) -> bool:
@@ -183,7 +192,7 @@ def restore(pie_root: Path, commit: str, features: list[str], *, cache_root: Pat
     binary = pie_root / "target/release/pie"
     binary.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(d / "pie", binary)
-    wdir = pie_root / "examples/target/wasm32-wasip2/release"
+    wdir = pie_root / f"examples/target/{wasm_target(pie_root)}/release"
     wdir.mkdir(parents=True, exist_ok=True)
     for w in (d / "wasm").glob("*.wasm"):
         shutil.copy(w, wdir / w.name)

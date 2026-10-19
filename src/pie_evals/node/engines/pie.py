@@ -167,7 +167,7 @@ class PieEngine(Engine):
     script = "scripts/bench/pie_bench.py"
 
     #: path under the pie tree of the bench inferlet project (a built
-    #: ``Pie.toml`` + ``target/wasm32-wasip2/release/*.wasm``).
+    #: ``Pie.toml`` + ``target/wasm32-wasip{2,3}/release/*.wasm``).
     DEFAULT_PROGRAM_PATH = "examples/text-completion-bench"
 
     def __init__(self, *args: Any, program_path: str | None = None, **kwargs: Any):
