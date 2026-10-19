@@ -214,7 +214,9 @@
 .lim-caption, .lim-section h2.lim-caption { margin: 0 0 8px; font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--color-label-secondary); }
 .lim-over div { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; font-size: 13px; border-bottom: .5px solid var(--color-separator); }
 .lim-over div:last-child { border-bottom: 0; }
-.lim-over b { font-weight: 400; color: var(--color-negative); font-variant-numeric: tabular-nums; }
+.lim-over div { align-items: center; }
+/* over the limit: a tinted capsule, as the Overall column tags a value */
+.lim-over .lim-pill { padding: 2px 7px; border-radius: 5px; font-size: 12px; font-weight: 600; line-height: 16px; color: var(--color-negative); background: color-mix(in srgb, var(--color-negative) 14%, transparent); font-variant-numeric: tabular-nums; }
 .lim-refs { margin-top: 40px; }
 .lim-banner + .lim-refs { margin-top: 0; }
 .lim-refs .refs { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
@@ -227,3 +229,6 @@
 .lim-refs .refs li { margin: 0 -8px; padding: 4px 8px; border-radius: 8px; }
 .lim-refs .refs li.is-flash { animation: lim-flash 1.4s ease; }
 @keyframes lim-flash { 0% { background: transparent; } 20%, 50% { background: var(--color-fill); } 100% { background: transparent; } }
+/* Limits carries the workload bar inside its scroller: a reserved scrollbar gutter would leave a strip at the right of
+   the bar when there is nothing to scroll, so this page takes the gutter only when it scrolls */
+#methods.method { scrollbar-gutter: auto; }
