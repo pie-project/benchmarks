@@ -502,12 +502,17 @@ def runpod_volume(action, data_center, size_gb):
 
 
 @main.command("validate-platforms")
+@click.option("--platforms", default="", help="comma-separated platform ids to check (default: every platform)")
 @click.pass_obj
-def validate_platforms(obj):
-    """Check every runpod_gpu_type in platforms.yaml against the live GPU type list. Exit 1 on unknown ids."""
+def validate_platforms(obj, platforms):
+    """Check runpod_gpu_type in platforms.yaml against the live GPU type list. Exit 1 on unknown ids.
+
+    A run checks only its own platforms, so a type RunPod drops does not stop runs on the others."""
     from pie_evals.pods import runpod
 
-    problems = runpod.validate_platforms(obj["matrix"].platforms)
+    chosen = {p for p in platforms.split(",") if p}
+    specs = {k: v for k, v in obj["matrix"].platforms.items() if not chosen or k in chosen}
+    problems = runpod.validate_platforms(specs)
     for p in problems:
         click.echo(p, err=True)
     click.echo("ok" if not problems else f"{len(problems)} problem(s)")
