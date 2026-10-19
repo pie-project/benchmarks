@@ -290,6 +290,17 @@ window.Pie = window.Pie || {};
     // a formula breaks only before an operator, as maths is typeset: each operator travels with
     // the term after it, and the citations with the last one
     const units = (e) => {
+      // a function of several arguments (max, min) after the last operator: on a phone its arguments stack in a
+      // column that starts after its bracket, one a line; on a wider screen they read inline
+      const f = e.terms.findIndex((t) => /^[a-z]+\($/.test(t));
+      if (f > 1 && e.terms.at(-1) === ")" && e.terms.includes(",")) {
+        const args = [[]];
+        e.terms.slice(f + 1, -1).forEach((t) => (t === "," ? args.push([]) : args.at(-1).push(t)));
+        const head = e.terms.slice(0, f - 1).map((t, n) => (n ? " " : "") + term(t)).join("");
+        const cites = `<span class="eqn-cites">${e.cites.map(cite).join("")}</span>`;
+        const col = args.map((a, n) => `<span class="lim-arg">${a.map(term).join(" ")}${n < args.length - 1 ? term(",") : `${term(")")}${cites}`}</span>`).join(" ");
+        return `<span class="lim-unit">${head}</span> <br class="lim-turn"><span class="lim-unit">${term(e.terms[f - 1])} ${term(e.terms[f])}</span><span class="lim-args">${col}</span>`;
+      }
       const out = [];
       // on a phone every formula turns its line at the same place: before its last operator outside brackets
       let depth = 0, last = 0;
@@ -297,13 +308,17 @@ window.Pie = window.Pie || {};
         const piece = (n === 0 || /^[),]$/.test(t) || /\($/.test(e.terms[n - 1]) ? "" : " ") + term(t);
         if (/\($/.test(t)) depth++;
         else if (t === ")") depth--;
-        if (n === 0 || (/^[×÷+−]$/.test(t))) {
+        if (n === 0 || /^[×÷+−]$/.test(t)) {
           if (depth === 0 && n > 0) last = out.length;
           out.push(piece.trimStart());
         } else out[out.length - 1] += piece;
       });
       out[out.length - 1] += `<span class="eqn-cites">${e.cites.map(cite).join("")}</span>`;
-      return out.map((u, n) => `${n && n === last ? '<br class="lim-turn">' : ""}<span class="lim-unit">${u}</span>`).join(" ");
+      // when that last operator opens a bracket, its + and ÷ inside turn too, so the bracket reads one term a line
+      const turns = new Set(last ? [last] : []);
+      if (last && /<span class="eqn-op">\(<\/span>/.test(out[last]))
+        out.forEach((u, n) => { if (n > last && /^<span class="eqn-op">[+÷]<\/span>/.test(u)) turns.add(n); });
+      return out.map((u, n) => `${turns.has(n) ? '<br class="lim-turn">' : ""}<span class="lim-unit">${u}</span>`).join(" ");
     };
     const formulas = c.equations.map((e) => `
       <div><span class="lim-name">${esc(e.result)}</span><span class="lim-formula">${units(e)}</span></div>`).join("");
