@@ -28,15 +28,14 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    // the Profiler, hidden for now
-    // profiler: {
-    //   label: "Profiler",
-    //   tag: "Alpha",
-    //   section: "home",
-    //   view: "profiler",  // not a table: uploaded traces of long workloads, empty until uploads open
-    //   filters: [],
-    //   columns: [],
-    // },
+    profiler: {
+      label: "Profiler",
+      tag: "Alpha",
+      section: "home",
+      view: "profiler",  // not a table: a trace of a long workload, opened in the browser and never uploaded
+      filters: [],
+      columns: [],
+    },
     // All hardware, hidden for now: the platform pages list their own machines
     // all_hardware: {
     //   label: "All hardware",
