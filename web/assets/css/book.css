@@ -308,3 +308,6 @@
 @media (max-width: 899px) {
   .lim-formulas .lim-args { display: inline-flex; flex-direction: column; vertical-align: top; text-indent: 0; }
 }
+/* the results above the limit at the formulas' 17px; the tag a step under, as before */
+.lim-over:not(.lim-formulas) > div { font-size: 17px; }
+.lim-over .lim-pill { padding: 1px 6px; font-size: 15px; line-height: 20px; border-radius: 5px; }
