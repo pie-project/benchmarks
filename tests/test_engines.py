@@ -669,7 +669,7 @@ def test_argparse_flag_extraction_sees_loop_registered_and_boolean_optional_flag
 def test_tensor_parallel_baselines_disable_nccl_p2p_on_a_pod(monkeypatch):
     # vLLM tp2 on the L40S x2 pod hung at NCCL init for 30 min (nightly 36081628995 s05); SGLang tp2 the same
     monkeypatch.setenv("RUNPOD_POD_ID", "abc")
-    for cls in (VllmEngine, SglangEngine):
+    for cls in (VllmEngine, SglangEngine, PieEngine):
         assert make(cls, mode=Mode(id="tp2", tp=2)).env["NCCL_P2P_DISABLE"] == "1"
         assert "NCCL_P2P_DISABLE" not in make(cls).env  # a single card has no peers
         nvlink = platform().model_copy(update={"interconnect": "nvlink"})

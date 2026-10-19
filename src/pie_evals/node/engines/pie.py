@@ -183,6 +183,11 @@ class PieEngine(Engine):
         ]
         existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
         self.env["PYTHONPATH"] = ":".join(sdk_paths + ([existing] if existing else []))
+        # where its own peer collectives fail ("peer collectives are off, NCCL carries them"), pie's
+        # tensor-parallel ranks talk through NCCL, which hangs on a RunPod PCIe pod as the baselines'
+        # did: the L40S x2 sat 20 min at boot on Qwen3.6-27B and gpt-oss-120b (0.5.3-b5)
+        for k, v in self.nccl_env().items():
+            self.env.setdefault(k, v)
         shim = nccl_shim_dir()
         if shim:
             ld = self.env.get("LD_LIBRARY_PATH") or os.environ.get("LD_LIBRARY_PATH")
