@@ -17,58 +17,9 @@
 
 .book-lede { margin: 0; font-size: 17px; line-height: 1.55; color: var(--color-label-secondary); }
 
-/* a chapter's animation: a timeline, as Apple explains a chip with one moving picture and one caption. Each lane is one
-   thing the chip does, to scale on one axis; the words and the result keep their place from the start, the result
-   dimmed until it is reached. Every colour is the page's own, so it follows the theme. */
-.scene { margin: 40px 0 0; }
-.sc-card { display: flex; flex-direction: column; gap: 18px; padding: 24px; border-radius: 18px; background: var(--color-card); }
-.sc-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.sc-head { margin: 0; font-family: var(--font-display); font-size: 19px; font-weight: 600; letter-spacing: -.01em; line-height: 1.25; }
-.sc-replay { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: var(--color-fill); color: var(--color-label-secondary); transition: opacity .2s; cursor: pointer; }
-.sc-replay:hover { background: var(--color-fill-secondary); color: var(--color-label); }
-.sc-replay svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.scene.is-playing .sc-replay { opacity: 0; pointer-events: none; }
-
-/* the timeline: a label, the track on the shared axis, the lane's own time */
-.sc-timeline { display: flex; flex-direction: column; gap: 10px; }
-.sc-axis, .sc-lane { display: grid; grid-template-columns: 76px minmax(0, 1fr) 64px; align-items: center; gap: 12px; }
-.sc-axis-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
-.sc-lane-label { font-size: 13px; color: var(--color-label-secondary); }
-.sc-lane-value { text-align: right; font-size: 13px; color: var(--color-label); font-variant-numeric: tabular-nums; }
-.sc-track { position: relative; height: 10px; border-radius: 5px; background: var(--color-fill); }
-.sc-seg { position: absolute; top: 0; bottom: 0; border-radius: 5px; overflow: hidden; }
-.sc-seg i { position: absolute; inset: 0; border-radius: 5px; transform: scaleX(0); transform-origin: left; }
-.sc-seg.is-on i { transform: scaleX(1); transition: transform calc(var(--dur) * var(--pace, 1)) linear calc(var(--delay) * var(--pace, 1)); }
-.sc-seg.is-reset i { transition: none; }
-.sc-seg.is-read i { background: var(--color-accent); }
-.sc-seg.is-compute i { background: var(--color-positive); }
-.sc-seg.is-draft i { background: var(--color-label-tertiary); }
-
-/* the words written: chips that keep one line's height from the start, so nothing below them moves */
-.sc-words { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: center; gap: 4px; min-height: 26px; }
-.sc-word { padding: 3px 8px; border-radius: 6px; background: var(--color-background); box-shadow: inset 0 0 0 .5px var(--color-separator); font-size: 13px; line-height: 18px; opacity: 0; transform: translateY(4px); transition: opacity .3s, transform .3s, background .3s, color .3s; }
-.sc-word.is-in { opacity: 1; transform: none; }
-.sc-word.is-ghost { background: none; box-shadow: inset 0 0 0 1px var(--color-label-quaternary); color: var(--color-label-secondary); }
-.sc-word.is-kept { background: color-mix(in srgb, var(--color-positive) 14%, transparent); box-shadow: none; color: var(--color-positive); }
-.sc-word.is-wrong { box-shadow: none; color: var(--color-label-tertiary); text-decoration: line-through; }
-.sc-word.is-bonus { font-weight: 600; }
-.sc-word.is-dot { width: 8px; height: 8px; padding: 0; border-radius: 50%; background: var(--color-positive); box-shadow: none; }
-.sc-word.is-dot.is-prompt { width: 6px; height: 6px; border-radius: 1.5px; background: var(--color-accent); }
-.sc-words.is-batch { gap: 4px; }
-
-/* the caption: one sentence, changing as the picture does */
-.sc-caption { min-height: 40px; margin: 0; font-size: 15px; line-height: 20px; color: var(--color-label); opacity: 0; transition: opacity .3s; }
-.sc-caption.is-in { opacity: 1; }
-
-/* the result: always there, dimmed until the animation reaches it */
-.sc-result { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; padding-top: 16px; border-top: .5px solid var(--color-separator); opacity: .3; transition: opacity .5s; }
-.sc-result.is-in { opacity: 1; }
-.sc-result b { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -.015em; }
-.sc-result span { font-size: 13px; color: var(--color-label-secondary); }
-.scene figcaption { margin-top: 10px; font-size: 13px; line-height: 1.5; color: var(--color-label-secondary); }
-
 /* a section: a plain heading over a hairline, the body at reading size */
 .book-section { margin-top: 56px; }
+.book-page > .book-section:first-child { margin-top: 0; }  /* the page opens on its first section: no title above it */
 .book-section h2 {
   margin: 0 0 6px;
   font-family: var(--font-display);
@@ -179,8 +130,4 @@
   .assumptions .effect { justify-self: start; }
   .example-row { grid-template-columns: minmax(0, 1fr) auto; }
   .example-source { display: none; }
-  .sc-card { padding: 18px; gap: 16px; }
-  .sc-head { font-size: 17px; }
-  .sc-axis, .sc-lane { grid-template-columns: 70px minmax(0, 1fr) 56px; gap: 8px; }
-  .sc-caption { min-height: 60px; }
 }

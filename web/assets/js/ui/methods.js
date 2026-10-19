@@ -203,37 +203,6 @@ window.Pie = window.Pie || {};
 
   // a chapter per workload in the grid's pop-up: the same names, in the same order (decode, then prefill), taken from
   // its list so the two cannot drift apart. A workload without a chapter written for it has none
-  // each chapter's animation (scenes.js), fed the worked example's numbers so the two always agree
-  const sceneData = (id) => {
-    const hw = Pie.store.index.hardware[EXAMPLE.hardware];
-    const machine = hw?.name || EXAMPLE.hardware;
-    const decode = ceilingOf("decode");
-    if (id === "decode" || id === "speculation") {
-      if (!decode) return null;
-      const p = decode.parts;
-      const read = p.readS;
-      const compute = p.mathS;
-      // speculation: the drafter's k passes first, then one verify pass of k + 1 tokens, as the worked example counts them
-      const draft = SPEC.k * Math.max((SPEC.drafter * p.bytes) / p.bw, (2 * SPEC.drafter * 1e9) / (p.tflops * 1e12));
-      const computeK = (p.flopsPerToken * (SPEC.k + 1)) / (p.tflops * 1e12);
-      return { machine, weightsGB: p.weightGB.toFixed(2), bw: p.bw, read, compute, tps: decode.tps, k: SPEC.k, a: SPEC.a, drafter: SPEC.drafter, draft, computeK, kept: (1 - SPEC.a ** (SPEC.k + 1)) / (1 - SPEC.a) };
-    }
-    if (id === "batching") {
-      const bound = Pie.platform?.batchedBound?.(EXAMPLE.hardware, EXAMPLE.model);
-      const w = Pie.store.index.workloads?.throughput;
-      if (!bound || !w || !decode) return null;
-      return { machine, weightsGB: decode.parts.weightGB.toFixed(2), batch: w.concurrency, read: w.concurrency / bound.bandwidth, compute: w.concurrency / bound.compute, tps: bound.tps, bound: bound.bound };
-    }
-    if (id === "prefill") {
-      const c = ceilingOf("prefill");
-      if (!c) return null;
-      const p = c.parts;
-      return { machine, weightsGB: p.weightGB.toFixed(2), tokens: p.tokens, read: p.readS, compute: p.mathS, tps: c.tps };
-    }
-    return null;
-  };
-  let stopAnimation = () => {};
-
   const CHAPTERS = (Pie.platform?.metrics() || []).map((m) => {
     const text = CONTENT.find((t) => t.id === m.id);
     return text && { ...text, title: m.label };
@@ -329,8 +298,6 @@ window.Pie = window.Pie || {};
       </div>` : "";
 
     const why = c.why.map((p) => `<p>${prose(p)}</p>`).join("");
-    const assumptions = c.assumptions.map(([text, effect]) => `
-      <li><span>${esc(text)}</span><span class="effect is-${effect || "choice"}">${EFFECT[effect || "choice"]}</span></li>`).join("");
 
     const check = checkOf(c, release);
     const checkHtml = !c.check
@@ -352,9 +319,6 @@ window.Pie = window.Pie || {};
     const machine = `${Pie.store.names.model(EXAMPLE.model)} on ${Pie.store.index.hardware[EXAMPLE.hardware]?.name || EXAMPLE.hardware}`;
     // the sections first, so the citations number the references in reading order
     const body = `
-      <h1 class="book-title">${esc(c.title)}</h1>
-      <p class="book-lede">${esc(c.lede)}</p>
-      ${Pie.scenes?.html(c.id, sceneData(c.id)) || ""}
       <section class="book-section">
         <h2>How it is calculated</h2>
         <p class="book-plain">Each line in words, with its value for ${esc(machine)} at 4-bit.</p>
@@ -370,18 +334,6 @@ window.Pie = window.Pie || {};
       <section class="book-section">
         <h2>Why it holds</h2>
         <div class="book-prose">${why}</div>
-      </section>
-      <section class="book-section">
-        <h2>Assumptions</h2>
-        <p class="book-plain">Every simplification, and which way it moves the limit. Those that raise it keep the limit a ceiling no engine can pass.</p>
-        <ul class="assumptions">${assumptions}</ul>
-      </section>
-      <section class="book-section">
-        <h2>Agentic workloads</h2>
-        <div class="book-prose">
-          <p>Agents hold longer contexts and run many at once, so they need more memory and more I/O. They branch, call tools and wait, which makes the load hard to predict and hard to schedule, and widens the gap to the limit. Every idle moment of the hardware shows up in the cost.</p>
-          <p>Pie is built for these patterns. <a href="https://github.com/pie-project/pie" target="_blank" rel="noopener">Profile your multi-agent workloads with Pie.</a></p>
-        </div>
       </section>`;
 
     // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
@@ -437,10 +389,7 @@ window.Pie = window.Pie || {};
       const key = `${current}@${state.release}`;
       if (!element.hidden && element.dataset.key !== key) {
         release = state.release;
-        stopAnimation();
         element.innerHTML = page();
-        const scene = element.querySelector("[data-scene]");
-        stopAnimation = scene ? Pie.scenes.start(scene, sceneData(current)) : () => {};
         element.dataset.key = key;
         element.scrollTop = 0;
       }
