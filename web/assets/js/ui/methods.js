@@ -17,6 +17,7 @@ window.Pie = window.Pie || {};
     yuan: { authors: "Z. Yuan et al.", title: "LLM Inference Unveiled: Survey and Roofline Model Insights", venue: "arXiv:2402.16363", year: 2024, url: "https://arxiv.org/abs/2402.16363" },
     leviathan: { authors: "Y. Leviathan, M. Kalman, Y. Matias", title: "Fast Inference from Transformers via Speculative Decoding", venue: "ICML 2023, arXiv:2211.17192", year: 2022, url: "https://arxiv.org/abs/2211.17192" },
     chen: { authors: "C. Chen et al.", title: "Accelerating Large Language Model Decoding with Speculative Sampling", venue: "arXiv:2302.01318", year: 2023, url: "https://arxiv.org/abs/2302.01318" },
+    megatron: { authors: "M. Shoeybi et al.", title: "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism", venue: "arXiv:1909.08053", year: 2019, url: "https://arxiv.org/abs/1909.08053" },
     kwon: { authors: "W. Kwon et al.", title: "Efficient Memory Management for Large Language Model Serving with PagedAttention", venue: "SOSP 2023, arXiv:2309.06180", year: 2023, url: "https://arxiv.org/abs/2309.06180" },
   };
 
@@ -44,7 +45,8 @@ window.Pie = window.Pie || {};
       equations: [
         eq("Memory time", ["(", "Weights read", "+", "Cache read", ")", "÷", "Memory bandwidth"], ["roofline", "shazeer"]),
         eq("Math time", ["2", "×", "(", "Active body", "+", "Output head", ")", "÷", "Peak FLOPS"], ["kaplan"]),
-        eq("Limit", ["1 token", "÷", "max(", "Memory time", ",", "Math time", ")"], ["roofline"]),
+        eq("Interconnect time", ["2", "×", "Layers", "×", "(", "Link latency", "+", "Activations exchanged", "÷", "Link bandwidth", ")"], ["megatron"]),
+        eq("Limit", ["1 token", "÷", "max(", "Memory time", ",", "Math time", ",", "Interconnect time", ")"], ["roofline"]),
       ],
       why: [
         "Decode reads every active weight once per token, so memory bandwidth, not arithmetic, sets the limit {roofline} {pope}.",
@@ -119,7 +121,8 @@ window.Pie = window.Pie || {};
       equations: [
         eq("Bandwidth bound", ["Requests", "×", "Memory bandwidth", "÷", "(", "Weights read", "+", "Caches read", ")"], ["roofline", "pope"]),
         eq("Compute bound", ["Peak FLOPS", "÷", "Arithmetic per output token"], ["kaplan"]),
-        eq("Limit", ["min(", "Bandwidth bound", ",", "Compute bound", ")"], ["roofline"]),
+        eq("Interconnect bound", ["Requests", "÷", "Interconnect time"], ["megatron"]),
+        eq("Limit", ["min(", "Bandwidth bound", ",", "Compute bound", ",", "Interconnect bound", ")"], ["roofline"]),
       ],
       symbols: "The arithmetic per output token is 2 × (active body + output head), plus each request's prompt, 2 × active body per prompt token, spread over its answer: the prompt uses the same FLOPS but does not count as output.",
       why: [
@@ -163,7 +166,8 @@ window.Pie = window.Pie || {};
       equations: [
         eq("Memory time", ["(", "Weights touched", "+", "Prompt cache", ")", "÷", "Memory bandwidth"], ["roofline"]),
         eq("Math time", ["2", "×", "(", "Active body", "×", "Prompt tokens", "+", "Output head", ")", "÷", "Peak FLOPS"], ["kaplan"]),
-        eq("Limit", ["Prompt tokens", "÷", "max(", "Memory time", ",", "Math time", ")"], ["roofline"]),
+        eq("Interconnect time", ["2", "×", "Layers", "×", "(", "Link latency", "+", "Activations exchanged", "÷", "Link bandwidth", ")"], ["megatron"]),
+        eq("Limit", ["Prompt tokens", "÷", "max(", "Memory time", ",", "Math time", ",", "Interconnect time", ")"], ["roofline"]),
       ],
       why: [
         "The whole prompt goes through one pass that reads the weights once, so prefill is compute-bound {roofline} {kaplan}.",
