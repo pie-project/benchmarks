@@ -162,7 +162,7 @@
 /* Limits, in the welcome page's language: its gradient banner carries the headline, each formula is a tile under an
    app-icon glyph, and the check is one ring and three figures */
 .book-page:has(.lim-banner) { padding-top: 56px; }  /* the welcome page's 56px above its banner */
-.lim-banner { display: grid; height: auto; min-height: 0; margin: 0 0 40px; padding: 28px 32px; }  /* the card fits its formulas, an even inset all round, as Apple sizes a card to what it holds */
+.lim-banner { display: grid; height: auto; min-height: 0; margin: 0 0 32px; padding: 28px 32px; }  /* the card fits its formulas, an even inset all round, as Apple sizes a card to what it holds */
 .lim-banner.is-decode { background: radial-gradient(60% 90% at 12% 20%, rgba(64, 132, 255, .95), transparent 70%), radial-gradient(45% 80% at 40% 90%, rgba(34, 211, 238, .85), transparent 70%), radial-gradient(50% 90% at 92% 20%, rgba(110, 231, 183, .75), transparent 70%), linear-gradient(120deg, #2563eb, #0ea5e9); }
 .lim-banner.is-batching { background: radial-gradient(60% 90% at 12% 20%, rgba(52, 199, 89, .9), transparent 70%), radial-gradient(45% 80% at 45% 90%, rgba(34, 211, 238, .8), transparent 70%), radial-gradient(50% 90% at 92% 20%, rgba(64, 132, 255, .85), transparent 70%), linear-gradient(120deg, #059669, #2563eb); }
 .lim-banner.is-prefill { background: radial-gradient(60% 90% at 12% 20%, rgba(168, 85, 247, .95), transparent 70%), radial-gradient(45% 80% at 45% 90%, rgba(236, 72, 153, .85), transparent 70%), radial-gradient(50% 90% at 92% 20%, rgba(253, 186, 116, .85), transparent 70%), linear-gradient(120deg, #7c3aed, #ec4899); }
@@ -212,12 +212,14 @@
 
 /* under the banner, two small groups as Apple sets a list under a caption: the results above the limit, then the
    references; the same 40px above each, rows flush with the banner's edges, hairlines only between rows */
-.lim-banner + .lim-section, .lim-section { margin-top: 40px; padding-top: 0; border-top: 0; }
+.lim-section { margin-top: 40px; padding-top: 0; border-top: 0; }
+.lim-banner + .lim-section { margin-top: 0; }  /* the banner's own 32px is the gap, as under the welcome banner */
 .lim-caption, .lim-section h2.lim-caption { margin: 0 0 8px; font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--color-label-secondary); }
 .lim-over div { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; font-size: 13px; border-bottom: .5px solid var(--color-separator); }
 .lim-over div:last-child { border-bottom: 0; }
 .lim-over b { font-weight: 400; color: var(--color-negative); font-variant-numeric: tabular-nums; }
 .lim-refs { margin-top: 40px; }
+.lim-banner + .lim-refs { margin-top: 0; }
 .lim-refs .refs { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
 .lim-refs .refs li { padding: 3px 0 3px 4px; margin-left: 0; }
 /* a citation clicked with the pointer leaves no focus ring, as on Apple's pages; the keyboard still gets one. The
