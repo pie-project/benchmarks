@@ -33,6 +33,7 @@ window.Pie = window.Pie || {};
       </div>
       <button class="welcome-cta is-secondary" type="button" data-go="inferlets">Try It Now<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
+    <!-- Liszt Services, hidden for now
     <header class="method-head welcome-intro is-second">
       <div>
         <span class="welcome-icon is-services" aria-hidden="true"><svg viewBox="0 0 24 24">${Pie.icons.services}</svg></span>
@@ -43,6 +44,7 @@ window.Pie = window.Pie || {};
       </div>
       <button class="welcome-cta is-secondary" type="button" data-go="services">Learn More<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
+    -->
     <!-- the Profiler, hidden for now
     <header class="method-head welcome-intro is-second">
       <div>
