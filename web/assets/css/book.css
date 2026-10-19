@@ -293,3 +293,18 @@
   #methods .lim-section, #methods .lim-refs { margin-top: 32px; }
   #methods .lim-hero + .lim-section { margin-top: 0; }
 }
+/* try: the formulas at the welcome lede's 17px */
+.lim-formulas div, .lim-formulas .lim-formula { font-size: 17px; }
+.lim-formulas .cite { font-size: 11px; }
+.lim-note-link { font-size: 17px; }
+.lim-go svg { width: 13px; height: 13px; }
+.lim-formulas .lim-name { font-size: 17px; }
+/* the label column fits its longest label, then 24px before the value, as Apple sets a spec row */
+.lim-formulas { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 24px; }
+.lim-formulas > div { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; column-gap: 24px; }
+@media (max-width: 599px) { .lim-formulas { grid-template-columns: minmax(0, 1fr); } .lim-formulas > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+/* a function's arguments: inline on a wide screen, a column after its bracket on a phone */
+.lim-args, .lim-arg { white-space: nowrap; }
+@media (max-width: 899px) {
+  .lim-formulas .lim-args { display: inline-flex; flex-direction: column; vertical-align: top; text-indent: 0; }
+}
