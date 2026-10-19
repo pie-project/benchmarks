@@ -278,5 +278,5 @@
 @media (max-width: 899px) {
   .method > .method-inner { padding-top: 32px; }
   #methods .book-page { padding-top: 56px; }
-  .method-inner > .inf-hero:first-child { margin-top: 0; }  /* every page starts the same 32px down */
 }
+.method-inner > .inf-hero:first-child { margin-top: 0; }  /* every page starts the same distance under its bar: 56px on a desktop, 32px on a phone */
