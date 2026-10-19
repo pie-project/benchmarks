@@ -286,3 +286,10 @@
 /* the turn before a formula's last operator: taken on a phone only */
 .lim-turn { display: none; }
 @media (max-width: 899px) { .lim-turn { display: inline; } }
+/* phones: one rhythm on Limits, 32px under the bar and between every block, as on the other pages */
+@media (max-width: 899px) {
+  #methods .book-page { padding-top: 32px; }
+  #methods .lim-hero { margin-bottom: 32px; }
+  #methods .lim-section, #methods .lim-refs { margin-top: 32px; }
+  #methods .lim-hero + .lim-section { margin-top: 0; }
+}
