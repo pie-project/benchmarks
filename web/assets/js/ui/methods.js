@@ -288,9 +288,9 @@ window.Pie = window.Pie || {};
     // as rows, and the check as four figures
     const kindOf = (e, n) => (n === c.equations.length - 1 ? "limit" : /memory|read|draft/i.test(e.result) ? "read" : /math|verify/i.test(e.result) ? "math" : "other");
     // set as prose: no space inside brackets or before a comma
-    const spaced = (terms) => terms.map((t, n) => (n === 0 || /^[),]$/.test(t) || /\($/.test(terms[n - 1]) ? "" : " ") + term(t)).join("");
+    const spaced = (terms) => terms.map((t, n) => (n === 0 || /^[),]$/.test(t) || /\($/.test(terms[n - 1]) ? "" : " ") + term(t));
     const formulas = c.equations.map((e) => `
-      <div><span class="lim-name">${esc(e.result)}</span><span class="lim-formula">${spaced(e.terms)}<span class="eqn-cites">${e.cites.map(cite).join("")}</span></span></div>`).join("");
+      <div><span class="lim-name">${esc(e.result)}</span><span class="lim-formula">${spaced(e.terms).slice(0, -1).join("")}<span class="lim-tail">${spaced(e.terms).at(-1)}<span class="eqn-cites">${e.cites.map(cite).join("")}</span></span></span></div>`).join("");
 
     const check = checkOf(c, release);
     // only the results that run faster than their limit: each one means an input or the measurement is wrong
