@@ -33,6 +33,16 @@ window.Pie = window.Pie || {};
       </div>
       <button class="welcome-cta is-secondary" type="button" data-go="inferlets">Try It Now<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
+    <header class="method-head welcome-intro is-second">
+      <div>
+        <span class="welcome-icon is-services" aria-hidden="true"><svg viewBox="0 0 24 24">${Pie.icons.services}</svg></span>
+        <p class="welcome-eyebrow">Alpha</p>
+        <h1>Liszt Services</h1>
+        <p class="welcome-tagline">Your hardware, at its limit.</p>
+        <p class="method-lede">Liszt manages both the hardware and the thinking in agentic workloads, on an efficient runtime from a single Mac to a GPU cluster.</p>
+      </div>
+      <button class="welcome-cta is-secondary" type="button" data-go="services">Learn More<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
+    </header>
     <!-- the Profiler, hidden for now
     <header class="method-head welcome-intro is-second">
       <div>
