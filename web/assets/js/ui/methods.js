@@ -47,9 +47,7 @@ window.Pie = window.Pie || {};
         eq("Limit", ["1 token", "÷", "max(", "Memory time", ",", "Math time", ")"], ["roofline"]),
       ],
       why: [
-        "A chip can run no faster than its slowest resource: the time to move the bytes or the time to do the arithmetic, whichever is longer. This is the roofline model {roofline}.",
-        "A forward pass costs about two floating-point operations per parameter per token, one multiply and one add {kaplan}. In a mixture-of-experts model only the active parameters count.",
-        "Decoding one token at a time must read every active weight for every token, so decode is limited by memory bandwidth long before arithmetic {shazeer} {pope}. On the machines here, math time is under a tenth of memory time.",
+        "Decode reads every active weight once per token, so memory bandwidth, not arithmetic, sets the limit {roofline} {pope}.",
       ],
       assumptions: [
         ["Bandwidth and FLOPS are the spec sheet's peaks. Real kernels reach less, so results should stay below 100%.", "up"],
@@ -87,9 +85,7 @@ window.Pie = window.Pie || {};
       ],
       symbols: "k is the number of drafted tokens per step and a the chance that each is accepted. The verify time is Raw Decode's memory and math time with k + 1 tokens in the pass; the draft time is the same for the drafter.",
       why: [
-        "With k drafted tokens, each accepted independently with probability a, the expected number of tokens a step produces is (1 − aᵏ⁺¹) ÷ (1 − a) {leviathan}. It counts the token the model always adds after the last accepted draft.",
-        "Verifying k + 1 tokens in one pass reads the weights once, as decode does, so while decode is memory-bound the verify pass costs about the same as one decode step {chen}.",
-        "With greedy verification the model keeps exactly the tokens it would have produced alone, so the output is unchanged {leviathan}.",
+        "One pass checks k + 1 drafted tokens for the cost of one read of the weights, and greedy verification keeps the output unchanged {leviathan} {chen}.",
       ],
       assumptions: [
         ["Each draft is accepted independently with the same chance a. Real acceptance falls along the draft.", "up"],
@@ -127,8 +123,7 @@ window.Pie = window.Pie || {};
       ],
       symbols: "The arithmetic per output token is 2 × (active body + output head), plus each request's prompt, 2 × active body per prompt token, spread over its answer: the prompt uses the same FLOPS but does not count as output.",
       why: [
-        "One step of a batch reads the weights once for every request in it, so the bytes per token fall as the batch grows {pope} {kwon}. The arithmetic per token does not fall: it stays at two operations per active parameter {kaplan}.",
-        "So speed grows with the batch until it meets the compute roof, then stays flat. Where the two lines meet is the batch at which the machine turns compute-bound {roofline} {yuan}.",
+        "A batch reads the weights once for all its requests, so speed grows with the batch until it meets the compute roof {pope} {roofline}.",
       ],
       assumptions: [
         ["Each request's cache is read every step, at the middle of its answer, from the model's real cache shape.", null],
@@ -171,8 +166,7 @@ window.Pie = window.Pie || {};
         eq("Limit", ["Prompt tokens", "÷", "max(", "Memory time", ",", "Math time", ")"], ["roofline"]),
       ],
       why: [
-        "The arithmetic grows with the prompt but the weights are read once, so a pass of hundreds of tokens is compute-bound on every machine here {roofline} {pope}.",
-        "Each prompt token costs two operations per active parameter, as in decode {kaplan}.",
+        "The whole prompt goes through one pass that reads the weights once, so prefill is compute-bound {roofline} {kaplan}.",
       ],
       assumptions: [
         ["In a mixture-of-experts model, the weights touched assume each token picks its experts independently and uniformly. Real routing is uneven. This only changes memory time, which is not the limit here.", "small"],
@@ -283,58 +277,35 @@ window.Pie = window.Pie || {};
     const OPS = /^([×÷+−(),]|max\(|min\()$/;
     const term = (t) => (OPS.test(t) ? `<span class="eqn-op">${esc(t)}</span>` : `<span>${esc(t).replace(/\^\((.+)\)$/, "<sup>$1</sup>")}</span>`);
 
-    // the formula and the worked example in one box: each equation ends in its value for the example
-    const example = c.example();
-    const equations = c.equations.map((e, n) => `
-      <div class="eqn${n === c.equations.length - 1 ? " is-total" : ""}">
-        <span class="eqn-result">${esc(e.result)}</span>
-        <span class="eqn-sign">=</span>
-        <span class="eqn-terms">${e.terms.slice(0, -1).map(term).join(" ")} <span class="eqn-tail">${term(e.terms[e.terms.length - 1])}<span class="eqn-cites">${e.cites.map(cite).join("")}</span></span></span>
-        <span class="eqn-value">${example ? esc(example.values[n]) : ""}</span>
-      </div>`).join("");
-    const inputs = example ? `
-      <div class="inputs">${example.inputs.map(([label, value, source]) => `
-        <div class="input"><span class="input-label">${esc(label)}</span><span class="input-value">${esc(value)}</span><span class="input-source">${esc(source)}</span></div>`).join("")}
-      </div>` : "";
+    // the page as apple.com sets a feature: the workload's name on its banner, the formulas
+    // as rows, and the check as four figures
+    const kindOf = (e, n) => (n === c.equations.length - 1 ? "limit" : /memory|read|draft/i.test(e.result) ? "read" : /math|verify/i.test(e.result) ? "math" : "other");
+    const tiles = c.equations.map((e, n) => {
+      const kind = kindOf(e, n);
+      return `
+      <div class="lim-row is-${kind}">
+        <span class="lim-name">${esc(e.result)}</span>
+        <span class="lim-eq">=</span>
+        <span class="lim-formula">${e.terms.map(term).join(" ")}<span class="eqn-cites">${e.cites.map(cite).join("")}</span></span>
+      </div>`;
+    }).join("");
 
-    const why = c.why.map((p) => `<p>${prose(p)}</p>`).join("");
 
     const check = checkOf(c, release);
-    const checkHtml = !c.check
-      ? `<p class="book-plain">${esc(c.noCheck)}</p>`
-      : !check
-        ? `<p class="book-plain">No measured results in this release.</p>`
-        : `<div class="check-figures">
-            <div><span class="check-value">${check.n}</span><span class="check-label">Measured results</span></div>
-            <div><span class="check-value">${check.median}%</span><span class="check-label">Median share</span></div>
-            <div><span class="check-value">${check.top}%</span><span class="check-label">Highest share</span></div>
-            <div class="${check.over.length ? "is-fail" : "is-pass"}"><span class="check-value">${check.over.length}</span><span class="check-label">Above the limit</span></div>
-          </div>
-          ${check.over.length
-            ? `<p class="book-plain">${check.over.length} ${check.over.length === 1 ? "result runs" : "results run"} faster than the limit allows. A result cannot beat a true limit, so for ${check.over.length === 1 ? "it" : "these"} either an input above is wrong or the measurement is.</p>
-              <div class="example-rows check-over">${check.over.map((o) => `<div class="example-row"><span>${esc(o.label)}</span><span></span><span class="example-value">${o.share}%</span></div>`).join("")}</div>
-              ${c.open ? `<div class="open-question"><h3>Under investigation</h3><p>${esc(c.open)}</p></div>` : ""}`
-            : `<p class="book-plain">Every result in this release, against its own limit. None runs faster than the limit allows; the closest is ${esc(check.topLabel)}, at ${check.top}%.</p>`}`;
+    // only the results that run faster than their limit: each one means an input or the measurement is wrong
+    const over = c.check && check ? check.over : [];
+    const checkHtml = over.length
+      ? `<h2 class="lim-caption">Above the limit</h2>
+         <div class="lim-over">${over.map((o) => `<div><span>${esc(o.label)}</span><b>${o.share}%</b></div>`).join("")}</div>`
+      : "";
 
-    const machine = `${Pie.store.names.model(EXAMPLE.model)} on ${Pie.store.index.hardware[EXAMPLE.hardware]?.name || EXAMPLE.hardware}`;
     // the sections first, so the citations number the references in reading order
     const body = `
-      <section class="book-section">
-        <h2>How it is calculated</h2>
-        <p class="book-plain">Each line in words, with its value for ${esc(machine)} at 4-bit.</p>
-        <div class="eqns">${equations}</div>
-        ${c.symbols ? `<p class="book-plain">${esc(c.symbols)}</p>` : ""}
-        ${inputs}
-        ${c.figure ? c.figure() : ""}
-      </section>
-      <section class="book-section">
-        <h2>Checked against the measurements</h2>
-        ${checkHtml}
-      </section>
-      <section class="book-section">
-        <h2>Why it holds</h2>
-        <div class="book-prose">${why}</div>
-      </section>`;
+      <h1 class="lim-title">${esc(c.title)}</h1>
+      <header class="welcome-banner lim-banner is-${c.id}">
+        <div class="lim-tiles" aria-label="${esc(`How the ${c.title} limit is worked out`)}">${tiles}</div>
+      </header>
+      ${checkHtml ? `<section class="lim-section">${checkHtml}</section>` : ""}`;
 
     // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
     const bar = `
@@ -348,8 +319,8 @@ window.Pie = window.Pie || {};
     return `${bar}
       <article class="book-page">
         ${body}
-        <section class="book-section">
-          <h2>References</h2>
+        <section class="lim-refs">
+          <h2 class="lim-caption">References</h2>
           <ol class="refs">${order.map((key) => {
             const r = REFS[key];
             return `<li id="ref-${key}"><span>${esc(r.authors.replace(/\.$/, ""))}.</span> <a href="${r.url}" target="_blank" rel="noopener">${esc(r.title)}</a>. <span class="ref-venue">${esc(r.venue)}, ${r.year}.</span></li>`;

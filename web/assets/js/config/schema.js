@@ -166,8 +166,7 @@ window.Pie = window.Pie || {};
     },
 
     methods: {
-      label: "Methods",
-      tag: "Beta",  // still under development
+      label: "Limits",
       section: "measurements",
       view: "methods",  // not a table: how the limit is worked out, a chapter per workload
       filters: [],

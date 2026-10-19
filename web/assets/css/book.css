@@ -41,7 +41,7 @@
 
 /* the calculation: one tile, a row per equation in words, the equals signs aligned, each ending in its value for the
    worked example; the last row is the limit, its value in the accent colour */
-.eqns { display: grid; grid-template-columns: max-content max-content minmax(0, 1fr) max-content; align-items: baseline; gap: 14px 12px; padding: 22px 24px; border-radius: 18px; background: var(--color-card); }
+.eqns { display: grid; grid-template-columns: max-content max-content minmax(0, 1fr); align-items: baseline; gap: 14px 12px; padding: 22px 24px; border-radius: 18px; background: var(--color-card); }
 .eqn { display: contents; }
 .eqn-result { font-size: 15px; font-weight: 600; white-space: nowrap; }
 .eqn-sign, .eqn-op { color: var(--color-label-tertiary); }
@@ -49,8 +49,6 @@
 .eqn-terms sup { font-size: .7em; line-height: 0; }
 .eqn-tail { white-space: nowrap; }  /* the last term keeps its citations on its line */
 .eqn-cites { margin-left: 2px; }
-.eqn-value { text-align: right; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.eqn.is-total .eqn-value { font-weight: 600; color: var(--color-accent); }
 
 /* the inputs of the example: two columns of quiet rows, each with where its number comes from */
 .inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; margin-top: 16px; }
@@ -118,10 +116,9 @@
   .book-title { font-size: 32px; }
   .book-lede { font-size: 17px; }
   .book-section { margin-top: 40px; }
-  .eqns { grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 18px; }
+  .eqns { grid-template-columns: minmax(0, 1fr); gap: 2px 12px; padding: 18px; }
   .eqn-sign { display: none; }
   .eqn-result { grid-column: 1; }
-  .eqn-value { grid-column: 2; grid-row: span 2; align-self: center; }
   .eqn-terms { grid-column: 1; margin-bottom: 12px; color: var(--color-label-secondary); }
   .eqn:last-child .eqn-terms { margin-bottom: 0; }
   .inputs { grid-template-columns: minmax(0, 1fr); }
@@ -131,3 +128,100 @@
   .example-row { grid-template-columns: minmax(0, 1fr) auto; }
   .example-source { display: none; }
 }
+
+/* Methods at the site's measure: the welcome and inferlets pages' 1080px, set as Apple sets a feature page. Big plain
+   headings, the formulas in one large tile, the check as four spec tiles, and the reason as a single display line. */
+@media (min-width: 900px) {
+  .book-page { max-width: calc(1080px + 2 * 22px); padding: 56px 22px 96px; }
+}
+.book-section { margin-top: 72px; }
+.book-section h2 { margin: 0 0 20px; font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+.book-section h2 + :not(.book-plain) { margin-top: 0; }
+.eqns { gap: 22px 16px; padding: 34px 40px; border-radius: 22px; }
+.eqn-result, .eqn-terms { font-size: 19px; }
+.eqn.is-total .eqn-result { color: var(--color-accent); }
+.check-figures > div { gap: 6px; padding: 24px 26px; border-radius: 22px; background: var(--color-card); }
+.check-value { font-size: 44px; font-weight: 700; letter-spacing: -.025em; line-height: 1.05; }
+.check-label { font-size: 14px; }
+.book-plain { font-size: 15px; }
+.book-prose p { max-width: 900px; font-family: var(--font-display); font-size: 28px; font-weight: 600; letter-spacing: -.015em; line-height: 1.28; }
+.book-prose .cite { font-family: var(--font-text, inherit); font-size: .5em; font-weight: 500; vertical-align: super; }
+.refs { font-size: 13px; }
+@media (max-width: 899px) {
+  .book-section { margin-top: 48px; }
+  .book-section h2 { font-size: 24px; margin-bottom: 14px; }
+  .eqns { padding: 20px; }
+  .eqn-result, .eqn-terms { font-size: 16px; }
+  .check-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .check-value { font-size: 34px; }
+  .book-prose p { font-size: 22px; }
+}
+/* the references close the page quietly: a small heading, not a chapter */
+.book-page > .book-section:last-child h2 { font-size: 15px; font-weight: 600; letter-spacing: 0; color: var(--color-label-secondary); }
+
+/* Limits, in the welcome page's language: its gradient banner carries the headline, each formula is a tile under an
+   app-icon glyph, and the check is one ring and three figures */
+.book-page:has(.lim-banner) { padding-top: 56px; }  /* the welcome page's 56px above its banner */
+.lim-banner { display: grid; height: auto; min-height: 220px; margin: 0 0 56px; padding: 32px; }  /* the formulas are the banner: centred on its artwork */
+.lim-banner.is-decode { background: radial-gradient(60% 90% at 12% 20%, rgba(64, 132, 255, .95), transparent 70%), radial-gradient(45% 80% at 40% 90%, rgba(34, 211, 238, .85), transparent 70%), radial-gradient(50% 90% at 92% 20%, rgba(110, 231, 183, .75), transparent 70%), linear-gradient(120deg, #2563eb, #0ea5e9); }
+.lim-banner.is-batching { background: radial-gradient(60% 90% at 12% 20%, rgba(52, 199, 89, .9), transparent 70%), radial-gradient(45% 80% at 45% 90%, rgba(34, 211, 238, .8), transparent 70%), radial-gradient(50% 90% at 92% 20%, rgba(64, 132, 255, .85), transparent 70%), linear-gradient(120deg, #059669, #2563eb); }
+.lim-banner.is-prefill { background: radial-gradient(60% 90% at 12% 20%, rgba(168, 85, 247, .95), transparent 70%), radial-gradient(45% 80% at 45% 90%, rgba(236, 72, 153, .85), transparent 70%), radial-gradient(50% 90% at 92% 20%, rgba(253, 186, 116, .85), transparent 70%), linear-gradient(120deg, #7c3aed, #ec4899); }
+.lim-banner-copy { position: static; padding: 28px 30px; }
+.lim-banner .welcome-banner-title { margin: 0; font-family: inherit; font-size: 17px; font-weight: 600; letter-spacing: 0; text-shadow: none; color: rgba(255, 255, 255, .9); }  /* the workload named small, as a feature is named above apple.com's artwork */
+
+.lim-section { margin-top: 48px; padding-top: 40px; border-top: .5px solid var(--color-separator); }  /* unboxed, a hairline between, as the welcome page separates its sections */
+.lim-section h2 { margin: 0 0 20px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
+
+/* the formulas: a row each, the equals signs aligned, every formula on one line, as a textbook sets them */
+.lim-tiles { display: grid; justify-content: center; align-content: center; grid-template-columns: max-content max-content max-content; align-items: center; column-gap: 16px; }
+.lim-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; padding: 14px 0; border-bottom: .5px solid var(--color-separator); }  /* one unbroken hairline a row */
+.lim-row:last-child { border-bottom: 0; }
+.lim-name { font-size: 17px; font-weight: 400; white-space: nowrap; }
+.lim-row.is-limit .lim-name { font-size: 17px; font-weight: 400; white-space: nowrap; }
+.lim-eq { font-size: 17px; color: var(--color-label-tertiary); }
+.lim-formula { font-size: 17px; line-height: 1.4; color: var(--color-label); white-space: nowrap; }
+.lim-formula .eqn-op { color: var(--color-label-tertiary); }
+
+.lim-figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.lim-figures div { display: flex; flex-direction: column; gap: 4px; }
+.lim-figures b { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.lim-figures span { font-size: 14px; color: var(--color-label-secondary); }
+.lim-figures .is-fail b { color: var(--color-negative); }
+.lim-note { margin: 0; font-size: 15px; color: var(--color-label-secondary); }
+
+
+@media (max-width: 899px) {
+  .lim-tiles { grid-template-columns: minmax(0, 1fr); }
+  .lim-eq { display: none; }
+  .lim-formula { font-size: 17px; line-height: 1.4; color: var(--color-label); white-space: nowrap; }
+  .lim-name { font-size: 17px; font-weight: 400; white-space: nowrap; }
+  .lim-banner-copy { padding: 22px; }
+    .lim-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lim-figures b { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+}
+.lim-banner + .lim-section { margin-top: 0; padding-top: 0; border-top: 0; }  /* the banner already closes the head: no rule under it */
+
+/* the formulas on the banner: white on its artwork, the operators and hairlines in white at lower opacity */
+.lim-banner .lim-name, .lim-banner .lim-formula { color: #fff; }
+.lim-banner .lim-row.is-limit .lim-name { color: #fff; }
+.lim-banner .lim-eq, .lim-banner .lim-formula .eqn-op { color: rgba(255, 255, 255, .6); }
+.lim-banner .lim-row { border-bottom-color: rgba(255, 255, 255, .25); }
+.lim-banner .lim-row:last-child { border-bottom: 0; }
+.lim-banner .cite { color: rgba(255, 255, 255, .75); }
+/* a dark veil over the artwork so the white formulas read clearly on every colour of it */
+.lim-banner { position: relative; isolation: isolate; }
+.lim-banner::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: rgba(0, 0, 0, .32); }
+/* the workload's name as the page title, above the block, as the welcome page sets its section titles */
+.lim-title { margin: 0 0 28px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; color: var(--color-label); }
+@media (max-width: 899px) { .lim-title { font-size: 24px; } }
+
+/* under the banner, two small groups as Apple sets a list under a caption: the results above the limit, then the
+   references; the same 40px above each, rows flush with the banner's edges, hairlines only between rows */
+.lim-banner + .lim-section, .lim-section { margin-top: 40px; padding-top: 0; border-top: 0; }
+.lim-caption, .lim-section h2.lim-caption { margin: 0 0 8px; font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--color-label-secondary); }
+.lim-over div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; font-size: 15px; border-bottom: .5px solid var(--color-separator); }
+.lim-over div:last-child { border-bottom: 0; }
+.lim-over b { font-weight: 400; color: var(--color-negative); font-variant-numeric: tabular-nums; }
+.lim-refs { margin-top: 40px; }
+.lim-refs .refs { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+.lim-refs .refs li { padding: 3px 0 3px 4px; margin-left: 0; }
