@@ -280,3 +280,6 @@
   #methods .book-page { padding-top: 56px; }
 }
 .method-inner > .inf-hero:first-child { margin-top: 0; }  /* every page starts the same distance under its bar: 56px on a desktop, 32px on a phone */
+/* a long formula wraps before an operator and hangs the rest under its first term */
+.lim-formulas span.lim-unit, .lim-formulas .lim-unit span { white-space: nowrap; }
+.lim-formulas .lim-formula { padding-left: 1.2em; text-indent: -1.2em; }
