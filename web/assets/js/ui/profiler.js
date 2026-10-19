@@ -257,7 +257,8 @@ window.Pie = window.Pie || {};
     if (a < 1e6) return `${(us / 1000).toFixed(a < 1e4 ? 1 : 0)} ms`;
     if (a < 6e7) return `${(us / 1e6).toFixed(a < 1e7 ? 2 : 1)} s`;
     const s = Math.round(us / 1e6);
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    const mmss = `${String(Math.floor(s / 60) % 60).padStart(s >= 3600 ? 2 : 1, "0")}:${String(s % 60).padStart(2, "0")}`;
+    return s >= 3600 ? `${Math.floor(s / 3600)}:${mmss}` : mmss;
   };
 
   // a moment on the time axis: decimals enough to tell this tick from its neighbour
