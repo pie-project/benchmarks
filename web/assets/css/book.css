@@ -220,10 +220,3 @@
 .lim-refs { margin-top: 40px; }
 .lim-refs .refs { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
 .lim-refs .refs li { padding: 3px 0 3px 4px; margin-left: 0; }
-/* a row lights up under the pointer as a macOS list row does: a soft rounded fill, inset past the text, its hairlines
-   hidden while it is lit; the references the same, quieter */
-.lim-over div { margin: 0 -10px; padding-left: 10px; padding-right: 10px; border-radius: 8px; transition: background-color .15s ease; }
-.lim-over div:hover { background: var(--color-fill); border-bottom-color: transparent; }
-.lim-over div:has(+ div:hover) { border-bottom-color: transparent; }
-.lim-refs .refs li { border-radius: 6px; transition: background-color .15s ease; }
-.lim-refs .refs li:hover { background: var(--color-fill); }
