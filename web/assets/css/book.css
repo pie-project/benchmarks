@@ -274,3 +274,9 @@
   .lim-formulas .cite { position: relative; }
   .lim-formulas .cite::after { content: ""; position: absolute; inset: -14px -8px; }
 }
+/* phones: twice the air under the toolbar before a page's banner or title */
+@media (max-width: 899px) {
+  .method > .method-inner { padding-top: 32px; }
+  #methods .book-page { padding-top: 56px; }
+  .method-inner > .inf-hero:first-child { margin-top: 0; }  /* every page starts the same 32px down */
+}
