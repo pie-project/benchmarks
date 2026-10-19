@@ -28,6 +28,7 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
+    services: { label: "Services", section: "home", view: "services", filters: [], columns: [] },
     // the Profiler, hidden for now
     // profiler: {
     //   label: "Profiler",

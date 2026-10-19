@@ -300,7 +300,7 @@ window.Pie = window.Pie || {};
     const over = c.check && check ? check.over : [];
     const checkHtml = over.length
       ? `<h2 class="lim-caption">Above the limit</h2>
-         <div class="lim-over">${over.map((o) => `<div><span>${esc(o.label)}</span><b>${o.share}%</b></div>`).join("")}</div>`
+         <div class="lim-over">${over.map((o) => `<div><span>${esc(o.label)}</span><b class="lim-pill">${o.share}%</b></div>`).join("")}</div>`
       : "";
 
     // the sections first, so the citations number the references in reading order
