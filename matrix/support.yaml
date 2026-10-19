@@ -67,6 +67,10 @@ unsupported:
     reason: "SGLang 0.5.20 gpt-oss mxfp4 falls back to dequant on Ampere: 5-12 tok/s, not a baseline"
   - when: {engine: sglang, family: gpt_oss, arch: ada}
     reason: "SGLang 0.5.20 gpt-oss mxfp4 falls back to dequant on Ada: ~25 tok/s single-stream, not a baseline"
+  # SGLang 0.5.22's flashinfer cannot build its gpt-oss mxfp8 kernels for Blackwell (sm120: RTX 5090, PRO 4500,
+  # PRO 6000): "Ninja build failed ... mxfp8_quantization_sm100" (0.5.3-b5, run 39104203014)
+  - when: {engine: sglang, family: gpt_oss, arch: blackwell}
+    reason: "SGLang 0.5.22 cannot build its gpt-oss kernels for Blackwell (flashinfer compile fails)"
   # SGLang tp2 on L40S x2 hangs at load (NCCL never settles): nightly 36081628995 s10, four Kimi-K3 mini
   # cells each ran to the cell timeout and the workers kept 2 GB on both cards after the job
   - when: {engine: sglang, platform: l40s-x2, tp: ">1"}
