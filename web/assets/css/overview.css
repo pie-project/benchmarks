@@ -1284,6 +1284,7 @@
 @media (min-width: 900px) {
   #welcome .method-inner,
   #inferlets .method-inner,
+  #services .method-inner,
   #profiler .method-inner,
   #fairness .method-inner,
   #methodology .method-inner { max-width: calc(1080px + 2 * 22px); padding-left: 22px; padding-right: 22px; }
