@@ -3,7 +3,7 @@ window.Pie = window.Pie || {};
 Pie.icons = {
   profiler: '<path d="M3 12h4l2.5-6 5 12 2.5-6h4"/>',
   inferlets: '<path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
-  services: '<path d="M9.23 16.75H3.18Q2 16.75 2 15.56V8.44Q2 7.25 3.18 7.25H8.2C10.56 7.25 12.01 9.1 12.01 11.83v.59c0 2.58 1.65 4.33 4.01 4.33h4.8Q22 16.75 22 15.56V8.44Q22 7.25 20.82 7.25h-6.13"/>',  // the Liszt AI mark, drawn as a line
+  services: '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18M10.5 12.5v1.5h3v-1.5"/>',  // a briefcase: work done for a company
   welcome: '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
   all_hardware: '<rect x="3" y="4" width="7" height="7" rx="1.4"/><rect x="14" y="4" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>',
   tpu: '<path d="M7 18h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 9.1 4.5 4.5 0 0 0 7 18z"/>',

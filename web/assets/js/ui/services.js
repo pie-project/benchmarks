@@ -1,13 +1,14 @@
 window.Pie = window.Pie || {};
 
-// Services: what Liszt AI offers around pie.
+// Services: what Liszt offers around pie.
 (() => {
   const element = document.getElementById("services");
 
   const content = `
     <header class="inf-hero">
-      <h1 class="inf-title">Services</h1>
-      <p class="inf-text">Liszt AI helps teams run pie on their own hardware.</p>
+      <h1 class="inf-title">Your hardware, at its limit.</h1>
+      <p class="inf-label">Agents at the speed of thought.</p>
+      <p class="inf-text">Liszt manages both the hardware and the thinking in agentic workloads, on an efficient runtime from a single Mac to a GPU cluster.</p>
     </header>`;
 
   Pie.services = {
