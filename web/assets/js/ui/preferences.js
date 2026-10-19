@@ -44,6 +44,8 @@ window.Pie = window.Pie || {};
     showDrawer(open) {
       if (open) {
         root.dataset.drawer = "open";
+        // the logo spins as the slide-over comes in, as it does when the sidebar shows on a wider screen
+        Pie.sidebar.spinLogo();
       } else {
         delete root.dataset.drawer;
       }
