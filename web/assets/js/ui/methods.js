@@ -291,13 +291,19 @@ window.Pie = window.Pie || {};
     // the term after it, and the citations with the last one
     const units = (e) => {
       const out = [];
+      // on a phone every formula turns its line at the same place: before its last operator outside brackets
+      let depth = 0, last = 0;
       e.terms.forEach((t, n) => {
         const piece = (n === 0 || /^[),]$/.test(t) || /\($/.test(e.terms[n - 1]) ? "" : " ") + term(t);
-        if (n === 0 || (/^[×÷+−]$/.test(t))) out.push(piece.trimStart());
-        else out[out.length - 1] += piece;
+        if (/\($/.test(t)) depth++;
+        else if (t === ")") depth--;
+        if (n === 0 || (/^[×÷+−]$/.test(t))) {
+          if (depth === 0 && n > 0) last = out.length;
+          out.push(piece.trimStart());
+        } else out[out.length - 1] += piece;
       });
       out[out.length - 1] += `<span class="eqn-cites">${e.cites.map(cite).join("")}</span>`;
-      return out.map((u) => `<span class="lim-unit">${u}</span>`).join(" ");
+      return out.map((u, n) => `${n && n === last ? '<br class="lim-turn">' : ""}<span class="lim-unit">${u}</span>`).join(" ");
     };
     const formulas = c.equations.map((e) => `
       <div><span class="lim-name">${esc(e.result)}</span><span class="lim-formula">${units(e)}</span></div>`).join("");
