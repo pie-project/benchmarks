@@ -262,6 +262,9 @@ window.Pie = window.Pie || {};
       </figure>`;
   };
 
+  // one line under each workload's title, as the Inferlets page sets its own
+  const TAGLINES = { decode: "As fast as memory can read.", prefill: "As fast as the math can run.", batching: "Every request, all at once." };
+
   // the chapter is the grid's workload: one choice for both pages, kept with the rest of the view
   let current = CHAPTERS[0].id;
   let release = null;
@@ -284,16 +287,10 @@ window.Pie = window.Pie || {};
     // the page as apple.com sets a feature: the workload's name on its banner, the formulas
     // as rows, and the check as four figures
     const kindOf = (e, n) => (n === c.equations.length - 1 ? "limit" : /memory|read|draft/i.test(e.result) ? "read" : /math|verify/i.test(e.result) ? "math" : "other");
-    const tiles = c.equations.map((e, n) => {
-      const kind = kindOf(e, n);
-      return `
-      <div class="lim-row is-${kind}">
-        <span class="lim-name">${esc(e.result)}</span>
-        <span class="lim-eq">=</span>
-        <span class="lim-formula">${e.terms.map(term).join(" ")}<span class="eqn-cites">${e.cites.map(cite).join("")}</span></span>
-      </div>`;
-    }).join("");
-
+    // set as prose: no space inside brackets or before a comma
+    const spaced = (terms) => terms.map((t, n) => (n === 0 || /^[),]$/.test(t) || /\($/.test(terms[n - 1]) ? "" : " ") + term(t)).join("");
+    const formulas = c.equations.map((e) => `
+      <div><span class="lim-name">${esc(e.result)}</span><span class="lim-formula">${spaced(e.terms)}<span class="eqn-cites">${e.cites.map(cite).join("")}</span></span></div>`).join("");
 
     const check = checkOf(c, release);
     // only the results that run faster than their limit: each one means an input or the measurement is wrong
@@ -305,9 +302,12 @@ window.Pie = window.Pie || {};
 
     // the sections first, so the citations number the references in reading order
     const body = `
-      <header class="welcome-banner lim-banner is-${c.id}">
-        <div class="lim-tiles" aria-label="${esc(`How the ${c.title} limit is worked out`)}">${tiles}</div>
+      <header class="inf-hero lim-hero">
+        <h1 class="inf-title">${esc(c.title)}</h1>
+        <p class="inf-label">${esc(TAGLINES[c.id] || "")}</p>
       </header>
+      <section class="lim-section"><h2 class="lim-caption">Formulas</h2><div class="lim-over lim-formulas">${formulas}</div>
+        <p class="lim-note-link"><button type="button" class="lim-go" data-go="hardware">Hardware<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5 8.5 3.5M4.5 3.5h4v4"/></svg></button><button type="button" class="lim-go" data-go="models">Models<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5 8.5 3.5M4.5 3.5h4v4"/></svg></button></p></section>
       ${checkHtml ? `<section class="lim-section">${checkHtml}</section>` : ""}`;
 
     // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
@@ -334,15 +334,18 @@ window.Pie = window.Pie || {};
 
 
   element.addEventListener("click", (event) => {
-    // a citation scrolls to its reference and marks it for a moment, as a footnote link does
+    // a citation scrolls to its reference, as a footnote link does
+    // a catalog link opens that page, as the sidebar would
+    const go = event.target.closest("[data-go]");
+    if (go) {
+      document.querySelector(`.sidebar-item[data-table="${go.dataset.go}"]`)?.click();
+      return;
+    }
     const ref = event.target.closest("[data-ref]");
     if (ref) {
       const target = element.querySelector(`#ref-${ref.dataset.ref}`);
       if (!target) return;
       target.scrollIntoView({ behavior: "smooth", block: "center" });
-      target.classList.remove("is-flash");
-      void target.offsetWidth;
-      target.classList.add("is-flash");
       return;
     }
     // the workload pop-up: the grid's own menu, so a pick changes both pages
