@@ -4,9 +4,9 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("methodology");
 
-  // GPU fp16 matmul TFLOPS per core. Apple10 is measured on the M5 Max (47 TFLOPS on 40 cores, with its neural accelerators);
+  // GPU fp16 matmul TFLOPS per core. Apple10 is measured on the M5 Max (61 TFLOPS on 40 cores with MLX 0.32.2, with its neural accelerators);
   // the older ones are ALU count × clock. Estimates, editable in the specs.
-  const TFLOPS_PER_CORE = { apple8: 0.36, apple9: 0.42, apple10: 1.17 };
+  const TFLOPS_PER_CORE = { apple8: 0.36, apple9: 0.42, apple10: 1.53 };
   const BITS = { 4: 4.5, 8: 8.5, 16: 16 };  // bits per weight, with the quantization scales
   const CONTEXTS = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
   const BATCHES = [1, 2, 4, 8, 16, 32, 64, 128, 256];

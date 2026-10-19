@@ -584,7 +584,7 @@ hardware:
   - 128
   year: 2026
   source: https://www.apple.com/macbook-pro/specs/
-  tflops_fp16: 47
+  tflops_fp16: 61  # measured: an 8192 fp16/bf16 matmul in MLX 0.32.2 on both CI M5 Max machines (61.0 and 61.4, 2026-10-19)
   power_w: 99
   note: 'compute and power measured by us: fp16 matmul, GPU power at full load'
 - id: apple-m5-ultra-64c
