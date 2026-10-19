@@ -220,3 +220,11 @@
 .lim-refs { margin-top: 40px; }
 .lim-refs .refs { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
 .lim-refs .refs li { padding: 3px 0 3px 4px; margin-left: 0; }
+/* a citation clicked with the pointer leaves no focus ring, as on Apple's pages; the keyboard still gets one. The
+   reference it leads to fades in and out once, the whole line with its number */
+.cite:focus { outline: none; }
+.cite:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+.lim-refs .refs { padding-left: 0; list-style-position: inside; }
+.lim-refs .refs li { margin: 0 -8px; padding: 4px 8px; border-radius: 8px; }
+.lim-refs .refs li.is-flash { animation: lim-flash 1.4s ease; }
+@keyframes lim-flash { 0% { background: transparent; } 20%, 50% { background: var(--color-fill); } 100% { background: transparent; } }
