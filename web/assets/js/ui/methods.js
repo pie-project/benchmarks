@@ -305,7 +305,6 @@ window.Pie = window.Pie || {};
 
     // the sections first, so the citations number the references in reading order
     const body = `
-      <h1 class="lim-title">${esc(c.title)}</h1>
       <header class="welcome-banner lim-banner is-${c.id}">
         <div class="lim-tiles" aria-label="${esc(`How the ${c.title} limit is worked out`)}">${tiles}</div>
       </header>

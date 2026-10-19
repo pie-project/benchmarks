@@ -206,9 +206,6 @@
 /* a dark veil over the artwork so the white formulas read clearly on every colour of it */
 .lim-banner { position: relative; isolation: isolate; }
 .lim-banner::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: rgba(0, 0, 0, .2); }
-/* the workload's name as the page title, above the block, as the welcome page sets its section titles */
-.lim-title { margin: 0 0 28px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; color: var(--color-label); }
-@media (max-width: 899px) { .lim-title { font-size: 24px; } }
 
 /* under the banner, two small groups as Apple sets a list under a caption: the results above the limit, then the
    references; the same 40px above each, rows flush with the banner's edges, hairlines only between rows */
