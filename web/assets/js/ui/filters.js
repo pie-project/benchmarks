@@ -2,7 +2,6 @@ window.Pie = window.Pie || {};
 
 (() => {
   const list = document.getElementById("filter-list");
-  const hideEmpty = document.getElementById("hide-empty");
   const chevron = '<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>';
 
   const plural = (column) => {
@@ -33,7 +32,6 @@ window.Pie = window.Pie || {};
   };
 
   Pie.filters = {
-    hideEmpty,
     plural,
 
     render(state) {
@@ -41,7 +39,6 @@ window.Pie = window.Pie || {};
       list.innerHTML = schema.filters
         .map((key) => filter(schema.columns.find((column) => column.key === key), state.selected(key)))
         .join("");
-      hideEmpty.classList.toggle("is-active", state.hideEmpty);
     },
 
     onOpen(handler) {

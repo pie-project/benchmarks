@@ -10,14 +10,8 @@ Pie.state = {
   query: "",
   filters: {},
   sort: null,
-  // Hide unavailable is on for a first visit; a viewer's own choice is kept, so it survives a reload
-  hideEmpty: (() => {
-    try {
-      return localStorage.getItem("hideUnavailable") !== "0";
-    } catch {
-      return true;
-    }
-  })(),
+  // unavailable rows are hidden; U shows them for a moment's look, and every visit starts hidden again
+  hideEmpty: true,
 
   reset(table, filters = {}) {
     this.table = table;

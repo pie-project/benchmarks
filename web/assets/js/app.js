@@ -152,15 +152,6 @@
     filters.onOpen((anchor, key) => popover.open(anchor, key, state));
 
 
-    filters.hideEmpty.addEventListener("click", () => {
-      state.hideEmpty = !state.hideEmpty;
-      try {
-        localStorage.setItem("hideUnavailable", state.hideEmpty ? "1" : "0");
-      } catch {
-        // private windows can refuse storage; the choice then lasts for this page only
-      }
-      render();
-    });
 
     popover.bind();
     popover.onPick((key, value) => {
@@ -238,11 +229,21 @@
       render();
       Pie.platform.refreshCard();
     };
+    const showUnavailable = (on) => {
+      if (state.hideEmpty === !on) return;
+      state.hideEmpty = !on;
+      popover.close();
+      render();
+    };
     document.addEventListener("keyup", (event) => {
       if (event.key.toLowerCase() === "r") peek(false);
+      if (event.key.toLowerCase() === "u") showUnavailable(false);
     });
-    // leaving the window while R is held lets go too
-    window.addEventListener("blur", () => peek(false));
+    // leaving the window while R or U is held lets go too
+    window.addEventListener("blur", () => {
+      peek(false);
+      showUnavailable(false);
+    });
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
@@ -253,12 +254,17 @@
         event.preventDefault();
         preferences.toggleSidebar();
       }
-      // holding R on a platform page shows the other view, Performance or Roofline, until it is let go: a plain key,
+      // holding R on a platform page shows the other view, Speedup or Efficiency, until it is let go: a plain key,
       // never while typing or with a modifier held; the key's repeats while held change nothing
       const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName) || document.activeElement.isContentEditable;
       if (event.key.toLowerCase() === "r" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing && Pie.schema[state.table]?.view === "platform") {
         event.preventDefault();
         if (!event.repeat) peek(true);
+      }
+      // holding U shows the unavailable rows and cells until it is let go, as R peeks at the other view
+      if (event.key.toLowerCase() === "u" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing) {
+        event.preventDefault();
+        if (!event.repeat) showUnavailable(true);
       }
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();
@@ -293,7 +299,6 @@
       if (saved.table && Pie.schema[saved.table]) state.table = saved.table;
       if (saved.overview) Object.assign(state.overview, saved.overview);
       if (saved.platform) Object.assign(state.platform, saved.platform);
-      state.hideEmpty = saved.hideEmpty !== false;
     } catch {
       // storage refused or damaged: start from the defaults
     }
