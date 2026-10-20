@@ -96,6 +96,8 @@ window.Pie = window.Pie || {};
   // the theoretical bound for a cell: Raw's hardware limit, or for batched decode the lower of compute and bandwidth
   const boundOf = (mac, model, mode, metric, pie) => {
     if (mode.limit) return Pie.ceiling?.(pie, metric.id) || null;
+    // Spec Decode: the best draft width at the Roofline page's acceptance
+    if (mode.id === "spec") return (pie && Pie.specCeiling?.(pie)) || null;
     if (mode.workload !== "throughput") return null;
     return batchedBound(mac, model, pie?.scheme);
   };
@@ -191,7 +193,7 @@ window.Pie = window.Pie || {};
   // a result on the roofline model (Williams et al., 2009): its pass's arithmetic intensity, the FLOPs it does per byte
   // it reads, and the FLOPs a second it achieved; and its machine's roof, memory bandwidth and peak FLOPS
   const roofPoint = (r, mode, metric) => {
-    if (!r?.[metric.key]) return null;
+    if (!r?.[metric.key] || mode.id === "spec") return null;
     if (mode.limit) {
       const c = Pie.ceiling?.(r, metric.id);
       if (!c?.parts.tflops) return null;  // a machine without a FLOPS figure has no intensity to place it at

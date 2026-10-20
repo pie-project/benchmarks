@@ -436,3 +436,23 @@
   .lim-table .lim-formula .lim-unit { white-space: nowrap; }
   .lim-tables { overflow-x: auto; overscroll-behavior-x: contain; }  /* only the table slides; the bar stays */
 }
+
+/* Spec Decode's acceptance: a macOS text field with its stepper beside it, then the width it suggests, read-only */
+.spec-field { display: inline-flex; align-items: center; gap: 6px; height: var(--control-height); margin-left: 8px; color: var(--color-label-secondary); white-space: nowrap; }
+.spec-input { display: inline-flex; align-items: center; height: 22px; padding: 0 6px 0 7px; border-radius: 5px; background: var(--color-chrome); box-shadow: inset 0 0 0 .5px var(--color-separator), 0 .5px 1px rgba(0, 0, 0, .06); color: var(--color-label); }
+.spec-input:focus-within { box-shadow: 0 0 0 3px var(--color-accent-tint), 0 0 0 1px var(--color-accent); }
+.spec-input input { width: 2.2ch; padding: 0; border: 0; outline: none; background: none; color: inherit; font: inherit; font-variant-numeric: tabular-nums; text-align: right; -webkit-appearance: none; appearance: none; }
+.spec-unit { color: var(--color-label-secondary); }
+.spec-stepper { display: inline-flex; flex-direction: column; width: 13px; height: 22px; border-radius: 4px; background: var(--color-chrome); box-shadow: inset 0 0 0 .5px var(--color-separator), 0 .5px 1px rgba(0, 0, 0, .06); overflow: hidden; }
+.spec-stepper button { display: grid; flex: 1; place-items: center; padding: 0; border: 0; background: none; color: var(--color-label-secondary); }
+.spec-stepper button:active { background: var(--color-fill); color: var(--color-label); }
+.spec-stepper svg { width: 7px; height: 4px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.spec-field.is-output { margin-left: 14px; }
+.spec-value { color: var(--color-label); font-variant-numeric: tabular-nums; }
+.spec-gain { margin-left: 6px; color: var(--color-label-secondary); }
+:root[data-theme="dark"] .spec-input, :root[data-theme="dark"] .spec-stepper { background: var(--color-fill-secondary); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .spec-input, :root:not([data-theme="light"]) .spec-stepper { background: var(--color-fill-secondary); } }
+@media (max-width: 899px) {
+  .spec-field { height: 34px; font-size: 15px; }
+  .spec-input, .spec-stepper { height: 26px; }
+}

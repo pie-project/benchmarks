@@ -376,6 +376,30 @@ window.Pie = window.Pie || {};
     return { tps: tokens / slowest, bound, bandwidth: tokens / memory, compute: compute ? tokens / compute : null, interconnect: linkS ? tokens / linkS : null, parts };
   };
 
+  // Spec Decode's limit for one measured result: the decode limit's pass with k + 1 tokens in it, checked after one pass
+  // of a block drafter, keeping (1 - a^(k+1)) / (1 - a) tokens, at the fastest k from 1 to 16, never below plain decode.
+  // a is the acceptance per draft, shared with the Roofline page's field (Pie.specAlpha, percent)
+  Pie.specAlpha = 70;
+  Pie.specCeiling = (row, percent = Pie.specAlpha) => {
+    const plain = Pie.ceiling(row, "decode");
+    if (!plain) return null;
+    const a = archOf(row.model);
+    const workload = Pie.store.index.workloads[row.workload];
+    const { bw, tflops, bits, context } = plain.parts;
+    const alpha = Math.min(percent, 99) / 100;
+    const draftS = Math.max((DRAFT_B * bits / 8) / bw, tflops ? (2 * DRAFT_B * 1e9) / (tflops * 1e12) : 0);
+    let best = { tps: plain.tps, k: 0, kept: 1, bound: plain.bound };
+    for (let k = 1; k <= WIDEST; k++) {
+      const p = pass(a, { bits, tokens: k + 1, logits: k + 1, requests: 1, context });
+      const memory = (p.weightGB + p.cacheGB) / bw;
+      const compute = tflops ? p.flops / (tflops * 1e12) : 0;
+      const kept = (1 - alpha ** (k + 1)) / (1 - alpha);
+      const tps = kept / (Math.max(memory, compute) + draftS);
+      if (tps > best.tps) best = { tps, k, kept, bound: memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced" };
+    }
+    return { ...best, gain: best.tps / plain.tps, plain: plain.tps, workload: workload?.id };
+  };
+
   // batched decode on a machine: `requests` decode together, each one token a step with its logits, each with its
   // cache at the middle of its answer; each request's prompt is prefilled once, and its arithmetic is spread over the
   // steps of its answer, since it counts against the same FLOPS but not as output
