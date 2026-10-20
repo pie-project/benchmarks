@@ -2,6 +2,7 @@ window.Pie = window.Pie || {};
 
 (() => {
   const button = document.getElementById("report-button");
+  if (!button) return;  // the toolbar's report button is hidden for now
   const dialog = document.getElementById("report-dialog");
   const form = dialog.querySelector("form");
   const text = document.getElementById("report-text");
