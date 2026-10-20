@@ -528,6 +528,10 @@ def gpu_unsupported(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[st
     for c in m.expand():
         if c.platform.id not in gpu_ids or str(c.engine) not in engine_ids or (benches and c.workload.id not in benches):
             continue
+        # the key has no workload, so only the Raw request decides it: speculation's own gaps (no drafter) must not
+        # blank a model's Raw and Batching numbers
+        if c.workload.id not in RAW:
+            continue
         # a setup no tier ever schedules (the TPU runs pie and vLLM only) is not an engine gap
         if any(selector_matches(sel, c) for sel in m.global_exclude):
             continue
