@@ -308,6 +308,7 @@ artifacts:
     source_format: mlx
     display_name: gemma4:12b
     expected_gib: 6.28
+    pie_sku: gemma4-12b-u4g64-kv-bf16
     tiers: [targeted]
   - id: gemma-4-e2b-mlx4
     base_model: mlx-community/gemma-4-e2b-it-4bit
@@ -316,6 +317,7 @@ artifacts:
     source_format: mlx
     display_name: gemma4:e2b
     expected_gib: 3.31
+    pie_sku: gemma4-e2b-u4g64-kv-bf16
     tiers: [targeted]
   - id: gemma-4-e4b-mlx4
     base_model: mlx-community/gemma-4-e4b-it-4bit
@@ -324,6 +326,7 @@ artifacts:
     source_format: mlx
     display_name: gemma4:e4b
     expected_gib: 4.79
+    pie_sku: gemma4-e4b-u4g64-kv-bf16
     tiers: [targeted]
 
   # ---------------- targeted: Splash, on the upstream MLX checkpoint ----------------
