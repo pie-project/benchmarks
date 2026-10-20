@@ -1,6 +1,6 @@
 window.Pie = window.Pie || {};
 
-// The rules every engine is measured under, in a popover that drops down from "Configuration" beside the numbers.
+// The rules every engine is measured under, in a popover that drops down from "Test Conditions" beside the numbers.
 (() => {
   // as a macOS Get Info panel: a column per topic, a row per rule, the value on the right and a short note under it
   const GROUPS = [
@@ -42,7 +42,7 @@ window.Pie = window.Pie || {};
       <span class="popover-detail">${esc(t.big)}${t.unit ? ` ${esc(t.unit)}` : ""}</span>
     </div>`).join("")}`).join(`<div class="popover-separator"></div>`);
 
-  // the rules drop down under their "Configuration" button, as a macOS popover: a click outside,
+  // the rules drop down under their "Test Conditions" button, as a macOS popover: a click outside,
   // Escape or the button again closes it
   const panel = document.getElementById("rules-popover");
   panel.innerHTML = content;
@@ -59,7 +59,11 @@ window.Pie = window.Pie || {};
     panel.hidden = false;
     panel.scrollTop = 0;
     const r = button.getBoundingClientRect();
-    panel.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - panel.offsetWidth - 8))}px`;
+    // anchored to the button's leading edge, or its trailing edge when it sits on the right, and never closer than 8px
+    // to the window's edge (its width without a scrollbar)
+    const width = document.documentElement.clientWidth;
+    const left = r.left + r.width / 2 > width / 2 ? r.right - panel.offsetWidth : r.left;
+    panel.style.left = `${Math.max(8, Math.min(left, width - panel.offsetWidth - 8))}px`;
     panel.style.top = `${r.bottom + 6}px`;
     // the whole list shows; it scrolls only when the window is too short to hold it
     panel.style.maxHeight = `${window.innerHeight - r.bottom - 16}px`;

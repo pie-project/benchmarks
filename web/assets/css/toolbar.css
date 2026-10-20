@@ -299,18 +299,22 @@
   }
 }
 
-/* the report sheet, as Apple's Report a Problem: a centered title, the message first, a small optional screenshot */
+/* the report sheet, on the same surface as the site's menus and Test Conditions: frosted, a hairline edge, the menu
+   corner; the title and its line at the leading edge, an outlined field, the toolbar's buttons */
 .report-dialog {
   width: min(420px, calc(100vw - 32px));
   padding: 0;
-  border: .5px solid var(--color-panel-outline);
-  border-radius: 12px;
+  border: 0;
+  border-radius: var(--radius-menu);
   color: var(--color-label);
-  background: var(--color-card);
+  background: var(--color-menu);
+  box-shadow: var(--shadow-menu);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
 }
 .report-dialog::backdrop { background: rgba(0, 0, 0, .25); }
-.report-form { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
-.report-head { text-align: center; }
+.report-form { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+.report-head { text-align: left; }
 .report-form h2 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .report-hint { margin: 3px 0 0; font-size: 12px; line-height: 1.4; color: var(--color-label-secondary); }
 
@@ -319,8 +323,8 @@
   width: 100%;
   min-height: 104px;
   padding: 8px 10px;
-  border: .5px solid var(--color-panel-outline);
-  border-radius: 7px;
+  border: 1px solid var(--color-panel-outline);
+  border-radius: var(--radius-field);
   font: inherit;
   font-size: 13px;
   color: var(--color-label);
@@ -328,28 +332,12 @@
   resize: vertical;
 }
 .report-form textarea::placeholder { color: var(--color-label-tertiary); }
-.report-form textarea:focus { outline: 3px solid color-mix(in srgb, var(--color-accent) 40%, transparent); outline-offset: 0; border-color: var(--color-accent); }
-
-.report-attach { display: flex; align-items: center; gap: 12px; }
-.report-attach[hidden] { display: none; }
-.report-thumb {
-  flex: none;
-  width: 64px;
-  height: 40px;
-  padding: 0;
-  overflow: hidden;
-  border: .5px solid var(--color-panel-outline);
-  border-radius: 5px;
-  background: var(--color-background);
-  cursor: zoom-in;
-}
-.report-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
-.report-check { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--color-label); cursor: pointer; }
-.report-check input { width: 14px; height: 14px; margin: 0; accent-color: var(--color-accent); }
+.report-form textarea:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-tint); }  /* the search field's focus */
 
 .report-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
-.report-actions button { min-width: 76px; height: 26px; padding: 0 14px; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; }
-.report-cancel { border: .5px solid var(--color-panel-outline); color: var(--color-label); background: var(--color-background); }
+.report-actions button { min-width: 76px; height: var(--control-height); padding: 0 14px; border-radius: var(--radius-control); font: inherit; font-size: 13px; cursor: pointer; }
+.report-cancel { border: 0; color: var(--color-label); background: var(--color-fill); }
+.report-cancel:hover { background: var(--color-fill-secondary); }
 .report-send { border: 0; color: #fff; background: var(--color-accent); font-weight: 500; }
 .report-send:hover { filter: brightness(1.06); }
 
@@ -380,7 +368,7 @@
     padding: 12px var(--edge) calc(16px + env(safe-area-inset-bottom));
   }
 
-  .report-head { display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 0 76px; }
+  .report-head { display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 0 76px; text-align: center; }  /* an iOS sheet centres its title between Cancel and Send */
   .report-form h2 { font-size: 17px; }
   .report-hint { margin: 16px -76px 0; font-size: 13px; }
 
@@ -392,9 +380,6 @@
     resize: none;
   }
 
-  .report-check { font-size: 15px; }
-  .report-check input { width: 20px; height: 20px; }
-  .report-thumb { width: 80px; height: 50px; border-radius: 6px; }
 
   .report-actions {
     position: absolute;

@@ -231,11 +231,11 @@
 }
 /* the select menus' row: an empty checkmark column first (6px edge, 14px column, 6px gap), then the icon where the
    Status menu sets its dot, 6px from its name, as the status options space theirs */
-.rules-row { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 14px 0 26px; border-radius: 5px; font-size: 13px; cursor: default; }
+.rules-row { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 14px; border-radius: 5px; font-size: 13px; cursor: default; }
 .rules-row svg { flex: none; width: 13px; height: 13px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .rules-row .popover-detail { color: var(--color-label-secondary); }
-/* the headings start where the icons do, as a macOS menu's section titles clear the checkmark column */
-.rules-popover .popover-heading { padding-left: 26px; }
+/* facts, not choices, as Get Info lists them: no checkmark column, so the headings start where the icons do */
+.rules-popover .popover-heading { padding-left: 14px; }
 
 /* the button names what it opens: an info glyph, then the words */
 .rules-button { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--color-label); }
@@ -256,7 +256,6 @@
 /* on a phone they are capsules, as the setup pop-up beside them */
 @media (max-width: 899px) { .rules-button { height: 34px; padding: 0 14px; border-radius: 999px; font-size: 15px; } }
 /* a rule row takes a grey wash on hover: it follows the pointer like a menu row, but blue would promise a pick */
-.rules-row:hover { background: var(--color-hover); }
 
 /* the bar's pop-ups take the same light fill as Configuration: one control style across the row, as a macOS toolbar keeps */
 .platform-bar .filter-button,
@@ -270,12 +269,12 @@
    its value right-aligned in grey. The menus' "detail under its name" layout is for options, not for these rows. */
 @media (max-width: 899px) {
   .rules-popover { padding: 6px; border-radius: 14px; }
-  .rules-popover .popover-heading { padding: 8px 12px 4px 36px; font-size: 13px; }
+  .rules-popover .popover-heading { padding: 8px 14px 4px; font-size: 13px; }
   .rules-row {
     gap: 8px;
     height: auto;
     min-height: 44px;
-    padding: 0 14px 0 36px;  /* the phone menus' 10px edge, 18px checkmark column and 8px gap */
+    padding: 0 14px;
     border-radius: 9px;
     font-size: 16px;
   }
@@ -404,3 +403,26 @@
 @media (max-width: 899px) {
   .limit-bar .limit-pick { height: 34px; padding: 0 12px 0 14px; border-radius: 999px; font-size: 15px; }
 }
+
+/* Configuration informs, it does not filter: it stands apart at the bar's trailing end, as a macOS toolbar keeps its info button */
+.filter-bar > .rules-button,
+.platform-bar > .rules-button { order: 99; flex: none; margin-left: auto; }
+.platform-bar > .platform-bar-side.is-end { margin-left: auto; }
+.platform-bar:has(> .platform-bar-side.is-end) > .rules-button { margin-left: 0; }
+
+/* Limits as the site's other pages: data tables under the bar, the results' rows and header, the cited works as rows */
+.lim-tables { display: flex; flex-direction: column; gap: 24px; padding-bottom: 48px; }
+.lim-table { width: 100%; font-size: 13px; }
+.lim-table .lim-fill { width: 100%; padding: 0; }
+.lim-table .lim-term { color: var(--color-label-secondary); }
+.lim-table .lim-formula .lim-unit { white-space: nowrap; }
+.lim-table .lim-formula .lim-turn { display: none; }
+.lim-table .eqn-op { color: var(--color-label-tertiary); }
+.lim-table .lim-source .cite { margin-right: 4px; }
+.lim-table .lim-authors, .lim-table .lim-venue { color: var(--color-label-secondary); }
+.lim-table a { color: var(--color-label); text-decoration: none; }
+.lim-table a:hover { color: var(--color-accent); }
+.lim-table .lim-source .cite { margin: 0; font-size: 13px; text-decoration: none; color: var(--color-accent); }
+.lim-table .lim-source .cite:hover { text-decoration: underline; }
+/* a click opens Test Conditions without a focus ring, as the pop-ups do; the keyboard still gets one */
+.rules-button:focus:not(:focus-visible) { outline: none; box-shadow: none; }

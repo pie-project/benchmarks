@@ -6,7 +6,7 @@ window.Pie = window.Pie || {};
   const reference = (key, label, group, table, options = {}) => ({ key, label, group, type: "reference", table, ...options });
 
   Pie.sections = [
-    { id: "home", label: "General" },
+    { id: "home", label: "Benchmarks" },
     { id: "platforms", label: "Platforms" },
     { id: "measurements", label: "Measurements" },
     { id: "catalog", label: "Catalog" },
@@ -14,7 +14,7 @@ window.Pie = window.Pie || {};
 
   Pie.schema = {
     welcome: {
-      label: "Welcome",
+      label: "All Platforms",
       section: "home",
       view: "welcome",  // not a table: why the numbers can be trusted
       filters: [],
@@ -114,7 +114,7 @@ window.Pie = window.Pie || {};
     results: {
       label: "Results",
       section: "measurements",
-      filters: ["hardware", "engine", "model", "workload", "status"],
+      filters: ["engine", "model", "hardware", "workload", "status"],  // in the order of the columns they filter
       numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
@@ -147,7 +147,7 @@ window.Pie = window.Pie || {};
     quality: {
       label: "Quality",
       section: "measurements",
-      filters: ["model", "engine", "task", "status"],
+      filters: ["engine", "status", "model", "task"],  // in the order of the columns they filter
       numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
@@ -167,10 +167,11 @@ window.Pie = window.Pie || {};
       ],
     },
 
+
     methods: {
-      label: "Limits",
+      label: "Roofline",
       section: "measurements",
-      view: "methods",  // not a table: how the limit is worked out, a chapter per workload
+      view: "methods",  // how each theoretical limit is worked out, a table of formulas per workload
       filters: [],
       columns: [],
     },
