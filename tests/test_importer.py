@@ -73,3 +73,31 @@ def test_a_failed_import_is_recorded_by_the_line_that_says_why():
     e = RuntimeError("pie model import failed for q (exit 1):\n✗ --deployment r: `r` does not read this checkpoint: no `aux.fc.weight`\n"
                      "This import converts for the deployment named and for no other")
     assert "aux.fc.weight" in import_reason(e)
+
+
+def test_a_drafter_row_imports_its_plain_deployment_from_the_snapshot(tmp_path, monkeypatch):
+    calls = []
+
+    def fake_run(argv, **kw):
+        if "--help" in argv:
+            return type("R", (), {"returncode": 0, "stderr": "", "stdout": "      --deployment <NAME>"})()
+        calls.append(argv)
+        out = Path(argv[argv.index("--out") + 1])
+        (out / "g.zt").write_bytes(b"zt")
+        return type("R", (), {"returncode": 0, "stderr": "", "stdout": ""})()
+
+    monkeypatch.setattr(im.subprocess, "run", fake_run)
+    art = ArtifactSpec(id="g26", base_model="mlx-community/gemma-4-26b-a4b-it-4bit", family="gemma4_moe", scheme=QuantScheme.AFFINE_U4_G64,
+                       source_format=SourceFormat.MLX, pie_sku="gemma4-26b-a4b-dflash-u4g64-kv-bf16", pie_drafter="dflash")
+    assert im.plain_sku(art) == "gemma4-26b-a4b-u4g64-kv-bf16"
+    assert im.plain_sku(art.model_copy(update={"pie_sku": "qwen38-27b-dflash2-u4g64-kv-bf16"})) == "qwen38-27b-u4g64-kv-bf16"
+    assert im.plain_sku(_art(sku="qwen36-27b-u4g64-kv-bf16")) is None
+    root = tmp_path / "cache"
+    assert not im.have_artifacts(art, "e06ff359377b", root)
+    im.ensure_artifact(art, tmp_path / "snap", Path("/pie"), "e06ff359377b", root=root, log=lambda *_: None)
+    assert not im.have_artifacts(art, "e06ff359377b", root), "the raw rows still need the plain import's snapshot"
+    zt = im.ensure_artifact(art, tmp_path / "snap", Path("/pie"), "e06ff359377b", root=root, plain=True, log=lambda *_: None)
+    argv = calls[1]
+    assert argv[3] == str(tmp_path / "snap") and "--drafter" not in argv
+    assert argv[argv.index("--deployment") + 1] == "gemma4-26b-a4b-u4g64-kv-bf16"
+    assert zt.parent.name == "g26-e06ff359-plain" and im.have_artifacts(art, "e06ff359377b", root)
