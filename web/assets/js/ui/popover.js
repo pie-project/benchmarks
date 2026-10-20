@@ -56,7 +56,8 @@ window.Pie = window.Pie || {};
       // each phase under its heading, as the release menu groups its runs; the items then need only their own word
       .map((group) => `<div class="popover-heading">${Pie.format.escape(group)}</div>` + setups.filter((m) => m.group === group)
         .map((m) => option(m.id, m.id === state.platform.mode,
-          `<span class="popover-label">${Pie.format.escape(m.item || m.label)}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
+          // its symbol before its name, as a macOS menu sets an item's icon, and its key at the end where shortcuts sit
+          `<svg class="popover-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg><span class="popover-label">${Pie.format.escape(m.item || m.label)}</span><span class="popover-detail popover-key">${setups.indexOf(m) + 1}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
         .join(""))
       .join(`<div class="popover-separator"></div>`);
   };
