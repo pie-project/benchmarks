@@ -31,6 +31,9 @@
   letter-spacing: -.01em;
 }
 
+/* the brand opens pie-project.org, and reads as the name it is, not as a link */
+a.sidebar-brand { color: var(--color-label); text-decoration: none; }
+
 .sidebar-logo {
   width: 16px;
   height: 16px;
