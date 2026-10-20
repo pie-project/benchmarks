@@ -58,7 +58,8 @@
     "m5-max-128g"
   ],
   "benchmarks": [
-    "raw-512-256"
+    "raw-512-256",
+    "spec-512-256"
   ],
   "prefill_only": {
     "0.5.3-b2": {

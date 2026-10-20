@@ -7,6 +7,7 @@ window.Pie = window.Pie || {};
   const tooltip = document.getElementById("chart-tooltip");
   const WORKLOADS = [
     { id: "raw", label: "Raw" },
+    { id: "spec", label: "Speculative" },
     { id: "throughput", label: "Batching saturated" },
   ];
   const METRICS = [
