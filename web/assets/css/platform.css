@@ -169,7 +169,7 @@
 .platform-empty p { margin: 0; font-size: 13px; }
 
 /* the table, settled: even fixed columns, numbers right-aligned under right-aligned heads, a little more air */
-.platform-table { table-layout: fixed; width: max-content; min-width: 100%; font-size: 13px; }
+.platform-table { table-layout: fixed; width: max-content; min-width: calc(100% - 1px); font-size: 13px; }  /* a pixel of slack: rounded column widths never tip it into a sideways scroll bar */
 .platform-table col.col-group { width: 150px; }
 .platform-table col.col-machine { width: 190px; }
 .platform-table col.col-model { width: 132px; }
