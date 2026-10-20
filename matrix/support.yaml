@@ -126,14 +126,6 @@ unsupported:
     reason: "mlx-lm 0.31.3 ships no muse_glimmer model, so it cannot load Muse Glimmer"
   - when: {engine: mlxlm, family: qwen4_exp}
     reason: "mlx-lm 0.31.3 ships no qwen4_exp model, so it cannot load Qwen3.8-Flash-Next"
-  # pie has no 4-bit deployment of these Gemma 4 sizes (models/gemma_4: gemma4-e4b ships at bf16 only,
-  # 12B and E2B not at all); their pie rows stand beside the llama.cpp and mlx-lm arms
-  - when: {engine: pie, artifact: gemma-4-12b-mlx4}
-    reason: "pie has no Gemma 4 12B deployment"
-  - when: {engine: pie, artifact: gemma-4-e2b-mlx4}
-    reason: "pie has no Gemma 4 E2B deployment"
-  - when: {engine: pie, artifact: gemma-4-e4b-mlx4}
-    reason: "pie serves Gemma 4 E4B only at bf16 (gemma4-e4b-bf16-kv-bf16), not at 4-bit"
   # llama.cpp boots one server for the 1- and 32-stream rows; Gemma 4's per-token KV is large (sliding window and all)
   - when: {engine: llamacpp, artifact: gemma-4-12b-llamacpp, platform: m2-16g}
     reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 12B's weights that passes the ~10.7 GB a 16 GB Mac's GPU can use (Metal out of memory, targeted 38340671574)"
