@@ -280,7 +280,10 @@ def t0_judge(
     from .reference import LazyReference, ReferenceCache, reference_for
 
     kind = reference_for(platform_os, str(cell.artifact.source_format))
-    ref = LazyReference(kind, snapshot_dir, **({"device": reference_device} if reference_device else {}))
+    kw = {"device": reference_device} if reference_device else {}
+    if kind == "llamacpp":
+        kw["gguf_file"] = cell.artifact.gguf_file  # the arm the engine loaded, not whichever GGUF sorts first
+    ref = LazyReference(kind, snapshot_dir, **kw)
     cache = ReferenceCache(cache_dir)
     revision = Path(snapshot_dir).name
 
