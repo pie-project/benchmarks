@@ -246,16 +246,24 @@ def local(ts) -> str:
 
 
 def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
-    """The row to show for each (hardware, engine, model, workload category): the best-matching workload, then the newest."""
+    """The row to show for each (hardware, engine, model, workload category): the best-matching workload, then on a Mac
+    the MLX weights every Mac engine shares, then the newest. A miniature (a few layers of the real shape, a CI fixture)
+    is never the model's number."""
+    arts = {a["id"]: a for a in load("models")["artifacts"]}
+    macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
     best: dict[tuple, tuple] = {}
     for r in rows:
         cat_pri = WL_PRIORITY.get(r["workload"])
         if not cat_pri:
             continue
+        art = arts.get(r["artifact"], {})
+        if art.get("kind") == "miniature":
+            continue
         cat, pri = cat_pri
         model = a2m.get(r["artifact"], r["artifact"])
         key = (r["platform"], r["engine"], model, cat)
-        rank = (-pri, r["started_at"])
+        shared = r["platform"] in macs and art.get("source_format") == "mlx"
+        rank = (-pri, shared, r["started_at"])
         if key not in best or rank > best[key][0]:
             best[key] = (rank, r)
     return best
