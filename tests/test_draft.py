@@ -64,7 +64,7 @@ def test_competitors_of_every_speculating_pie_row_name_a_draft_or_say_why_not():
         pie = m.artifacts.get(arm.baseline_of or "")
         if pie is None or not (pie.pie_sku and "dflash" in pie.pie_sku) or arm.source_format == "splash":
             continue  # Splash drafts on its own
-        if arm.id in ("qwen3.8-27b-mlxlm", "qwen3.6-35b-a3b-mlxlm"):
+        if arm.id in ("qwen3.8-27b-mlxlm", "qwen3.6-35b-a3b-mlxlm", "qwen3.6-27b-mlxlm"):
             assert arm.draft_model is None  # mlx-lm cannot speculate on a hybrid's untrimmable cache
             continue
         assert arm.draft_model, arm.id
@@ -96,6 +96,19 @@ def test_speculation_knob_forces_it(hub):
     assert _engine(LlamacppEngine, art, speculation="on").speculates(C32)
     # an engine that cannot draft never speculates, whatever the artifact says
     assert not _engine(SplashEngine, art.model_copy(update={"source_format": "splash"})).speculates(SS)
+
+
+def test_a_speculative_shape_drafts_wherever_the_engine_can(hub):
+    spec = WorkloadSpec(id="spec-512-256", kind="single_stream", params={"prefill": 512, "decode": 256, "speculation": True})
+    # on, whatever the recipe says; plain where the arm has nothing to draft with
+    assert _engine(LlamacppEngine, _art("qwen3.8-27b-llamacpp"), speculation="off").speculates(spec)
+    assert not _engine(MlxlmEngine, _art("qwen3.8-27b-mlxlm")).speculates(spec)
+    # and the matrix runs it only where something drafts: Splash always, pie with its drafter row
+    cells = [c for c in Matrix.load(ROOT / "matrix").expand() if c.workload.id == "spec-512-256" and c.platform.id == "m5-max-128g"]
+    why = {(str(c.engine), c.artifact.id): c.declared_unsupported_reason for c in cells}
+    assert why[("splash", "qwen3.8-27b-splash")] is None and why[("pie", "qwen3.8-27b-mlx4")] is None
+    assert why[("llamacpp", "qwen3.8-27b-llamacpp")] is None
+    assert why[("mlxlm", "qwen3.8-27b-mlxlm")] == "mlxlm has no drafter for this model"
 
 
 def test_the_server_drafts_only_for_the_rows_that_speculate(hub, tmp_path, monkeypatch):

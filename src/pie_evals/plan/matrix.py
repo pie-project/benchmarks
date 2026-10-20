@@ -191,6 +191,9 @@ class Matrix:
         # beside the target: an artifact that publishes none has nothing to draft with
         if str(cell.mode.spec_dec or "").startswith("dflash") and not cell.artifact.pie_drafter:
             return "the artifact ships no draft head for a dflash program to draft with"
+        # a speculative shape measures drafting: an engine with nothing to draft with has no such row
+        if cell.workload.params.get("speculation") is True and not drafts(cell):
+            return f"{cell.engine} has no drafter for this model"
         # fit rule: weights per TP group must fit with headroom
         if cell.artifact.expected_gib is not None:
             per_device = cell.artifact.expected_gib * self.fit_factor / max(1, cell.mode.tp)
@@ -324,3 +327,16 @@ def summarize(cells: Iterable[Cell]) -> dict[str, int]:
         for t in c.tiers:
             out[f"tier:{t}"] = out.get(f"tier:{t}", 0) + 1
     return out
+
+
+def drafts(cell: Cell) -> bool:
+    """Whether ``cell``'s engine can draft on its artifact: Splash always does (DFlash2),
+    pie with a drafter deployment, llama.cpp and mlx-lm with the artifact's draft model."""
+    engine = str(cell.engine)
+    if engine == "splash":
+        return True
+    if engine == "pie":
+        return "dflash" in (cell.artifact.pie_sku or "")
+    if engine in ("llamacpp", "mlxlm"):
+        return bool(cell.artifact.draft_model)
+    return False

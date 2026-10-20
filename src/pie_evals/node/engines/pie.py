@@ -255,9 +255,12 @@ class PieEngine(Engine):
         # a raw shape decodes plain on every engine, whatever the recipe says
         if workload.params.get("speculation") is False:
             return False
-        if mode == "off" or not (self.artifact.pie_sku and "dflash" in self.artifact.pie_sku):
+        if not (self.artifact.pie_sku and "dflash" in self.artifact.pie_sku):
             return False
-        return mode == "on" or workload.kind == WorkloadKind.SINGLE_STREAM
+        # a speculative shape drafts on every engine that can, whatever the recipe says
+        if workload.params.get("speculation") is True:
+            return True
+        return mode == "on" or (mode != "off" and workload.kind == WorkloadKind.SINGLE_STREAM)
 
     def engine_args(self, workload: WorkloadSpec) -> list[str]:
         r = self.recipe
