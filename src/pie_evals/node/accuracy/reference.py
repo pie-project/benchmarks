@@ -6,6 +6,10 @@
   ``mlx-community`` conversions, mirroring how pie's own
   ``scripts/gemma4_parity_ref.py`` reads them (``mlx_lm.load`` +
   ``make_prompt_cache``, greedy argmax step by step, float32 logits).
+* :class:`LlamaCppReference` — ``llama-server`` on one GGUF file. The
+  reference for GGUF checkpoints: transformers cannot read every GGUF family
+  (qwen3_5 and qwen3_6 among them), and llama.cpp is the implementation the
+  conversion was made for.
 
 Nothing here is imported at package import time; ``torch``/``mlx`` are
 resolved inside the constructors, so a node without them can still run the
@@ -21,6 +25,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -38,9 +43,12 @@ class Reference(Protocol):
 def reference_for(platform_os: str, source_format: str) -> str:
     """Which reference implementation to read a checkpoint against.
 
-    ``"mlx"`` for MLX checkpoints on macOS (mlx_lm is the implementation the
-    conversion was made for); ``"hf"`` everywhere else.
+    ``"llamacpp"`` for GGUF checkpoints on any platform, ``"mlx"`` for MLX
+    checkpoints on macOS (each is the implementation its conversion was made
+    for); ``"hf"`` everywhere else.
     """
+    if str(source_format) == "gguf":
+        return "llamacpp"
     if str(platform_os).lower() in ("macos", "darwin", "mac") and str(source_format) == "mlx":
         return "mlx"
     return "hf"
@@ -148,11 +156,84 @@ class MlxReference:
         return np.asarray(tf).astype(np.float32)
 
 
-def load_reference(kind: str, snapshot_dir: str | Path, **kw: Any) -> HFReference | MlxReference:
+# ---- llama.cpp ------------------------------------------------------------------
+
+
+class LlamaCppReference:
+    """``llama-server`` (``$LLAMA_SERVER_BIN``) on the GGUF in ``snapshot_dir``,
+    booted the way the llama.cpp adapter and the quality runs boot it.
+
+    ``greedy`` asks ``/completion`` for the continuation of the prompt's token
+    ids at ``top_k 1``, no stop. ``teacher_forced_logits`` asks for one token
+    with the top ``n_probs`` log-probabilities: the gate reads only the last
+    row, at two token ids, and a log-probability difference is a logit
+    difference, so that row (every other id ``-inf``) adjudicates the same way;
+    a token outside the top ``n_probs`` is not benign."""
+
+    name = "llamacpp"
+
+    def __init__(self, snapshot_dir: str | Path, gguf_file: str | None = None, device: str = "gpu", n_probs: int = 256):
+        from pie_evals.node.snapshots import gguf_shards
+        from pie_evals.quality.engines import _free_port, _get, _post, _serve
+
+        self._post = _post
+        self.snapshot_dir = Path(snapshot_dir)
+        self.n_probs = n_probs
+        if gguf_file:
+            gguf = self.snapshot_dir / gguf_shards(gguf_file)[0]
+        else:  # the snapshot holds one GGUF (or its shards): llama.cpp is handed the first
+            found = sorted(self.snapshot_dir.glob("*.gguf"))
+            if not found:
+                raise FileNotFoundError(f"no .gguf file in {self.snapshot_dir}")
+            gguf = found[0]
+        server = os.environ.get("LLAMA_SERVER_BIN") or "llama-server"
+        port = _free_port()
+        cmd = [server, "--model", str(gguf), "--host", "127.0.0.1", "--port", str(port), "--ctx-size", "8192",
+               "--parallel", "1", "--n-gpu-layers", "0" if device == "cpu" else "all", "--no-warmup"]
+        self._proc, self.url = _serve(cmd, {}, port, "/health", 1800)
+        meta = json.loads(_get(self.url + "/v1/models"))["data"][0].get("meta", {})
+        self.vocab_size = int(meta["n_vocab"])
+
+    def _complete(self, ids: list[int], n_predict: int, **extra: Any) -> dict:
+        body = {"prompt": [int(i) for i in ids], "n_predict": n_predict, "temperature": 0.0, "top_k": 1, "top_p": 1.0,
+                "ignore_eos": True, "cache_prompt": False, "seed": 0, **extra}
+        return self._post(f"{self.url}/completion", body)
+
+    def greedy(self, prompt_ids: list[int], max_new_tokens: int) -> list[int]:
+        out = self._complete(prompt_ids, max_new_tokens, return_tokens=True)
+        return [int(t) for t in out["tokens"]][:max_new_tokens]
+
+    def teacher_forced_logits(self, ids: list[int]) -> np.ndarray:
+        """``[len(ids), vocab]`` float32; only the last row is filled (the top
+        ``n_probs`` log-probabilities of the token after ``ids``), the rest and
+        every id outside the top ``n_probs`` is ``-inf``."""
+        out = self._complete(ids, 1, n_probs=self.n_probs, post_sampling_probs=False)
+        first = out["completion_probabilities"][0]
+        rows = np.full((len(ids), self.vocab_size), -np.inf, dtype=np.float32)
+        if "top_logprobs" in first:
+            for p in first["top_logprobs"]:
+                rows[-1, int(p["id"])] = float(p["logprob"])
+        else:  # builds before the logprob fields report probabilities
+            for p in first["probs"]:
+                rows[-1, int(p["id"])] = float(np.log(p["prob"])) if p["prob"] > 0 else -np.inf
+        return rows
+
+    def close(self) -> None:
+        """Stops the server, handing the device back to the next engine."""
+        from pie_evals.quality.engines import _stop
+
+        proc, self._proc = self._proc, None
+        if proc is not None:
+            _stop(proc)
+
+
+def load_reference(kind: str, snapshot_dir: str | Path, **kw: Any) -> HFReference | MlxReference | LlamaCppReference:
     if kind == "mlx":
         return MlxReference(snapshot_dir, **kw)
     if kind == "hf":
         return HFReference(snapshot_dir, **kw)
+    if kind == "llamacpp":
+        return LlamaCppReference(snapshot_dir, **kw)
     raise ValueError(f"unknown reference kind {kind!r}")
 
 
