@@ -51,7 +51,9 @@ class VllmEngine(Engine):
         from pie_evals.node.baselines import baseline_python
 
         pin = self.recipe.get("pin")
-        py = baseline_python("vllm", pin) if pin else None
+        # on the TPU the pin's vllm-tpu build (baselines.BACKEND_SPECS), in its own venv
+        backend = str(self.platform.backend) if self.platform is not None else None
+        py = baseline_python("vllm", pin, backend=backend) if pin else None
         return str(py) if py else "/root/.venv/vllm/bin/python"
 
     def model_arg(self) -> str:

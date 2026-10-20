@@ -15,7 +15,7 @@ engines:
     formats: [hf_safetensors]
     tiers: [nightly, weekly]
     recipe: competitive
-    pin: "0.30.0"
+    pin: "0.30.0"   # on the TPU (backend xla) the same release's vllm-tpu build, pypi:vllm-tpu==0.30.0 (tpu-inference 0.30.0)
     release_source: pypi:vllm
   - id: sglang
     os: [linux]

@@ -84,6 +84,19 @@ competitive:
                 H100). Unset leaves vLLM's own MLA pick.
     apple9:
       knobs: {}
+  backend:
+    xla:
+      knobs:
+        attention_backend:
+          value: null
+          rationale: >
+            vLLM's TPU build (vllm-tpu, the tpu-inference backend) brings its own
+            Pallas attention and takes no CUDA backend name; unset leaves its pick.
+        cpu_affinity:
+          value: none
+          rationale: >
+            The auto pin reads the GPU's NUMA node from nvidia-smi; a TPU VM has
+            none, so the process stays unpinned, as pie's does there.
   workload_kind:
     prefix_shared:
       knobs:
