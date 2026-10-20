@@ -3,6 +3,8 @@ name: tpu
 # is created for the run and deleted after it, whatever happens. The schedule measures pie main
 # only when a commit since the last measured one touched the XLA crates; a manual run always runs.
 # Results go to the database as nightly rows on tpu-v6e-1, tagged main-<first 9 of the sha>.
+# A weekly plan (a release's Raw row) also holds vLLM's TPU build on the same checkpoint: the VM
+# installs vllm-tpu at the engines.yaml pin into its own venv and runs it after pie, on the same chip.
 permissions: { contents: read, actions: read }
 on:
   schedule:
@@ -111,7 +113,7 @@ jobs:
           done
           gcloud compute tpus tpu-vm ssh "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet \
             --command 'rm -rf ~/pie-evals && mkdir ~/pie-evals && tar xzf ~/pie-evals.tgz -C ~/pie-evals'
-      - name: build pie and run the job
+      - name: build pie, set up vllm-tpu (when the plan has vLLM cells) and run the job
         env: { JOB_ID: "${{ steps.jobs.outputs.job_id }}" }
         run: |
           vm() { gcloud compute tpus tpu-vm ssh "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet --command "$1"; }

@@ -19,18 +19,36 @@ SPECS = {
     "sglang": lambda v: [f"sglang[all]=={v}"],
 }
 
+#: a baseline's build for another backend, at the same pin (engines.yaml): vLLM's TPU build is the
+#: ``vllm-tpu`` wheel (vLLM on the tpu-inference JAX backend), released in step with vllm
+BACKEND_SPECS = {
+    ("vllm", "xla"): lambda v: [f"vllm-tpu=={v}"],
+}
+
+#: extra ``uv pip install`` flags per backend build: the TPU build runs torch on the host only
+#: (torchax lowers it to JAX), so the CPU wheel stands in for the 3 GB CUDA one
+BACKEND_UV_FLAGS = {
+    ("vllm", "xla"): ["--torch-backend", "cpu"],
+}
+
 
 def cache_root(root: Path | None = None) -> Path:
     return root or Path(os.environ.get("PIE_EVALS_CACHE", Path.home() / ".cache/pie-evals"))
 
 
-def venv_dir(engine: str, version: str, root: Path | None = None) -> Path:
-    return cache_root(root) / f"venv-{engine}-{version}"
+def _backend_key(engine: str, backend: str | None) -> tuple[str, str] | None:
+    key = (engine, str(backend or ""))
+    return key if key in BACKEND_SPECS else None
 
 
-def baseline_python(engine: str, version: str, root: Path | None = None) -> Path | None:
+def venv_dir(engine: str, version: str, root: Path | None = None, backend: str | None = None) -> Path:
+    tag = ("-tpu" if backend == "xla" else f"-{backend}") if _backend_key(engine, backend) else ""
+    return cache_root(root) / f"venv-{engine}{tag}-{version}"
+
+
+def baseline_python(engine: str, version: str, root: Path | None = None, backend: str | None = None) -> Path | None:
     """The interpreter for a baseline pin if it is installed, else None."""
-    d = venv_dir(engine, version, root)
+    d = venv_dir(engine, version, root, backend)
     return d / "bin" / "python" if (d / ".ok").exists() else None
 
 
@@ -185,29 +203,35 @@ def ensure_flashinfer_aot(py: Path, marker: Path, log=print) -> bool:
     return ok
 
 
-def ensure_baseline(engine: str, version: str, root: Path | None = None, *, timeout_s: int = 3600, log=print) -> Path:
-    """Install the baseline into its venv if needed; return its python."""
+def ensure_baseline(engine: str, version: str, root: Path | None = None, *, backend: str | None = None, timeout_s: int = 3600, log=print) -> Path:
+    """Install the baseline into its venv if needed; return its python. ``backend`` picks the
+    engine's build for that platform backend (``xla``: vllm-tpu) where it has one."""
     if engine not in SPECS:
         raise ValueError(f"no installer for baseline {engine}")
-    d = venv_dir(engine, version, root)
+    bkey = _backend_key(engine, backend)
+    spec = (BACKEND_SPECS[bkey] if bkey else SPECS[engine])(version)
+    uv_flags = BACKEND_UV_FLAGS.get(bkey, []) if bkey else []
+    # the CUDA toolkit and FlashInfer kernels are for the CUDA build only
+    cuda = engine in ("vllm", "sglang") and str(backend or "cuda") == "cuda"
+    d = venv_dir(engine, version, root, backend)
     py = d / "bin" / "python"
     if (d / ".ok").exists():
         ensure_python_headers(py, log=log)
-        if engine in ("vllm", "sglang"):
+        if cuda:
             ensure_nvcc(py, log=log)
             ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
         return py
     if d.exists():
         shutil.rmtree(d, ignore_errors=True)  # a half-finished install
-    log(f"baseline: installing {engine}=={version} into {d} (once per volume)")
+    log(f"baseline: installing {' '.join(spec)} into {d} (once per volume)")
     if shutil.which("uv"):
         subprocess.run(["uv", "venv", "--quiet", "--python", "3.12", str(d)], check=True)
-        subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), *SPECS[engine](version)], check=True, timeout=timeout_s)
+        subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), *uv_flags, *spec], check=True, timeout=timeout_s)
     else:
         subprocess.run(["python3", "-m", "venv", str(d)], check=True)
-        subprocess.run([str(py), "-m", "pip", "install", "-q", *SPECS[engine](version)], check=True, timeout=timeout_s)
+        subprocess.run([str(py), "-m", "pip", "install", "-q", *spec], check=True, timeout=timeout_s)
     ensure_python_headers(py, log=log)
-    if engine in ("vllm", "sglang"):
+    if cuda:
         ensure_nvcc(py, log=log)
         ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
     (d / ".ok").write_text(version + "\n")

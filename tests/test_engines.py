@@ -1147,6 +1147,39 @@ def test_vllm_single_stream_streams_one_request_at_a_time(tmp_path):
     assert make(VllmEngine).build_argv(WORKLOADS["c32"], [], tmp_path / "o.json")[2] == "tput"
 
 
+def test_vllm_on_the_tpu_runs_its_tpu_build(tmp_path, monkeypatch):
+    from pie_evals.node import baselines
+
+    monkeypatch.setenv("PIE_EVALS_CACHE", str(tmp_path))
+    monkeypatch.delenv("VLLM_PY", raising=False)
+    tpu = platform(Backend.XLA, "trillium", count=1)
+    venv = baselines.venv_dir("vllm", "0.30.0", backend="xla")
+    assert venv.name == "venv-vllm-tpu-0.30.0" and baselines.venv_dir("vllm", "0.30.0").name == "venv-vllm-0.30.0"
+    assert baselines.BACKEND_SPECS[("vllm", "xla")]("0.30.0") == ["vllm-tpu==0.30.0"]
+    (venv / "bin").mkdir(parents=True)
+    (venv / ".ok").write_text("0.30.0\n")
+    raw = WorkloadSpec(id="raw-512-256", kind="single_stream", params={"prefill": 512, "decode": 256, "requests": 6})
+    recipe = load_recipe("vllm", "competitive", tpu, raw, family="qwen3_5")
+    eng = VllmEngine(pie_root=PIE_ROOT, artifact=artifact(), platform=tpu, mode=Mode(), recipe={**recipe, "pin": "0.30.0"})
+    assert eng.python == str(venv / "bin" / "python")
+    argv = eng.build_argv(raw, [], tmp_path / "o.json")
+    # no CUDA attention backend, no nvidia-smi affinity; the same context and one stream at a time as pie
+    assert "--attention-backend" not in argv and argv[argv.index("--cpu-affinity") + 1] == "none"
+    assert argv[argv.index("--max-model-len") + 1] == str(max_model_len_for(raw))
+    assert argv[2] == "tput" and argv[argv.index("--concurrency") + 1] == "1"
+
+
+def test_the_tpu_runs_pie_and_vllm_raw_only():
+    from pie_evals.plan.matrix import Matrix
+    from pie_evals.schema import Tier
+
+    m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
+    tpu = {(str(c.engine), c.artifact.id, c.workload.id) for c in m.runnable(Tier.WEEKLY) if c.platform.id == "tpu-v6e-1"}
+    assert ("vllm", "qwen3.5-0.8b-bf16", "raw-512-256") in tpu and ("pie", "qwen3.5-0.8b-xla", "raw-512-256") in tpu
+    assert {e for e, _, _ in tpu} == {"pie", "vllm"}
+    assert {(a, w) for e, a, w in tpu if e == "vllm"} == {("qwen3.5-0.8b-bf16", "raw-512-256")}
+
+
 def test_a_queued_single_stream_request_starts_when_the_one_before_it_ends():
     # vLLM's streaming client sends every request at t=0 and the engine seats one (0.5.3-b5, L4)
     from pie_evals.node.engines.base import serial_clock

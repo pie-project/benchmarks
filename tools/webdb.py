@@ -521,12 +521,15 @@ def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: l
 
 def gpu_unsupported(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[str], benches: list[str]) -> dict[tuple, str]:
     """{(gpu, engine, model): reason} for GPU setups a support rule declares unsupported (not the fit rule)."""
-    from pie_evals.plan.matrix import Matrix
+    from pie_evals.plan.matrix import Matrix, selector_matches
 
     m = Matrix.load(ROOT / "matrix")
     out: dict[tuple, str] = {}
     for c in m.expand():
         if c.platform.id not in gpu_ids or str(c.engine) not in engine_ids or (benches and c.workload.id not in benches):
+            continue
+        # a setup no tier ever schedules (the TPU runs pie and vLLM only) is not an engine gap
+        if any(selector_matches(sel, c) for sel in m.global_exclude):
             continue
         if c.artifact.source_format.value != "hf_safetensors" or c.artifact.kind.value != "full" or c.program.id != "text-completion-bench":
             continue
