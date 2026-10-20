@@ -149,6 +149,19 @@ workloads:
       cold_cache: true
     tiers: [targeted, weekly]  # Macs in the targeted tier, the RunPod GPUs in weekly (0.5.3-b5: Raw only)
     est_minutes: 1
+  - id: spec-512-256
+    kind: single_stream
+    params:
+      label: Spec 512
+      description: "512 token prompt, 256 tokens out, speculation on: each engine drafts with its own drafter (pie and Splash DFlash2, llama.cpp and mlx-lm a small draft model)"
+      prefill: 512
+      decode: 256
+      requests: 6
+      warmup: 1
+      speculation: true
+      cold_cache: true
+    tiers: [targeted]
+    est_minutes: 1
   - id: ob-short-100
     kind: single_stream
     params:

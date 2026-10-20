@@ -521,6 +521,8 @@ artifacts:
     source_format: gguf
     gguf_file: Qwen3.6-27B-Q4_K_M.gguf
     tokenizer_from: mlx-community/Qwen3.6-27B-4bit
+    draft_model: unsloth/Qwen3.5-0.8B-GGUF   # drafts the rows pie speculates; same vocabulary (248320, ids, merges, specials)
+    draft_gguf_file: Qwen3.5-0.8B-Q4_K_M.gguf
     baseline_of: qwen3.6-27b-mlx4
     baseline_label: llama.cpp
     expected_gib: 15.6
