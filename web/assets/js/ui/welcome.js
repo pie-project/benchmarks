@@ -23,6 +23,7 @@ window.Pie = window.Pie || {};
       </div>
       <button class="welcome-cta" type="button" data-go="mac">Compare Engines<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
+    <!-- Inferlets, hidden for now
     <header class="method-head welcome-intro is-second">
       <div>
         <span class="welcome-icon is-inferlets" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg></span>
@@ -33,6 +34,7 @@ window.Pie = window.Pie || {};
       </div>
       <button class="welcome-cta is-secondary" type="button" data-go="inferlets">Try It Now<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
+    -->
     <!-- Liszt Services, hidden for now
     <header class="method-head welcome-intro is-second">
       <div>
