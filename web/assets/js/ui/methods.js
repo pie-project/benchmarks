@@ -21,6 +21,7 @@ window.Pie = window.Pie || {};
     kwon: { authors: "W. Kwon et al.", title: "Efficient Memory Management for Large Language Model Serving with PagedAttention", venue: "SOSP 2023, arXiv:2309.06180", year: 2023, url: "https://arxiv.org/abs/2309.06180" },
   };
 
+
   // the worked examples: one machine and one model from the catalog, at the 4-bit weights the runs use
   const EXAMPLE = { hardware: "m5-max-128g", model: "qwen3.5-4b", scheme: "affine_u4_g64" };
   // the Limit page's speculation defaults: four drafts, 70% accepted, a half-billion-parameter drafter
@@ -206,31 +207,6 @@ window.Pie = window.Pie || {};
     return text && { ...text, title: m.label };
   }).filter(Boolean);
 
-  // every measured result against its limit: if one ran faster than its limit, a formula or an assumption is wrong
-  const checkOf = (chapter, release) => {
-    const spec = chapter.check;
-    if (!spec || !release) return null;
-    const rows = (Pie.store.snapshot(release) || []).filter((r) => r.workload === spec.workload && r[spec.key] && Pie.store.isMeasured(r));
-    const shares = rows.map((r) => {
-      const limit = spec.batched ? Pie.platform?.batchedBound?.(r.hardware, r.model, r.scheme)?.tps : Pie.ceiling?.(r, spec.metric)?.tps;
-      return limit ? { r, share: r[spec.key] / limit } : null;
-    }).filter(Boolean);
-    if (!shares.length) return null;
-    const names = Pie.store.names;
-    // the machine with its memory, so two machines of one chip are told apart
-    const machine = (id) => { const h = Pie.store.index.hardware[id]; return h ? `${h.name} ${h.memory_gib} GB` : id; };
-    const label = (s) => `${names.engine(s.r.engine)}, ${names.model(s.r.model)} on ${machine(s.r.hardware)}`;
-    const sorted = shares.map((s) => s.share).sort((x, y) => x - y);
-    const top = shares.reduce((x, y) => (y.share > x.share ? y : x));
-    return {
-      n: shares.length,
-      median: Math.round(sorted[Math.floor(sorted.length / 2)] * 100),
-      top: Math.round(top.share * 100),
-      topLabel: label(top),
-      over: shares.filter((s) => s.share > 1).sort((x, y) => y.share - x.share).map((s) => ({ label: label(s), share: Math.round(s.share * 100) })),
-    };
-  };
-
   // batched decode drawn as a roofline: tokens per second against requests at once, both axes doubling;
   // the bandwidth line climbs with the batch until it meets the flat compute ceiling, and the lower of the two is the limit
   const roofline = (bound, at) => {
@@ -262,23 +238,19 @@ window.Pie = window.Pie || {};
       </figure>`;
   };
 
-  // one line under each workload's title, as the Inferlets page sets its own
-  const TAGLINES = { decode: "As fast as memory can read.", prefill: "As fast as the math can run.", batching: "Every request, all at once." };
-
   // the chapter is the grid's workload: one choice for both pages, kept with the rest of the view
   let current = CHAPTERS[0].id;
-  let release = null;
   let state = null;
 
   const page = () => {
     const i = CHAPTERS.findIndex((c) => c.id === current);
     const c = CHAPTERS[i];
 
-    // the chapter's references, numbered in the order the page first cites them
-    const order = [];
+    // a citation is the work's first author and year, a link straight to the paper
     const cite = (key) => {
-      if (!order.includes(key)) order.push(key);
-      return `<button type="button" class="cite" data-ref="${key}" title="${esc(REFS[key].title)}">[${order.indexOf(key) + 1}]</button>`;
+      const r = REFS[key];
+      const author = r.authors.split(",")[0].replace(/ et al\.?$/, "").split(" ").pop();
+      return `<a class="cite" href="${r.url}" target="_blank" rel="noopener" title="${esc(`${r.authors} ${r.title}. ${r.venue}, ${r.year}`)}">${esc(author)} ${r.year}</a>`;
     };
     const prose = (text) => esc(text).replace(/\s?\{(\w+)\}/g, (_, key) => (REFS[key] ? cite(key) : ""));
     const OPS = /^([×÷+−(),]|max\(|min\()$/;
@@ -297,7 +269,7 @@ window.Pie = window.Pie || {};
         const args = [[]];
         e.terms.slice(f + 1, -1).forEach((t) => (t === "," ? args.push([]) : args.at(-1).push(t)));
         const head = e.terms.slice(0, f - 1).map((t, n) => (n ? " " : "") + term(t)).join("");
-        const cites = `<span class="eqn-cites">${e.cites.map(cite).join("")}</span>`;
+        const cites = asTable ? "" : `<span class="eqn-cites">${e.cites.map(cite).join("")}</span>`;
         const col = args.map((a, n) => `<span class="lim-arg">${a.map(term).join(" ")}${n < args.length - 1 ? term(",") : `${term(")")}${cites}`}</span>`).join(" ");
         return `<span class="lim-unit">${head}</span> <br class="lim-turn"><span class="lim-unit">${term(e.terms[f - 1])} ${term(e.terms[f])}</span><span class="lim-args">${col}</span>`;
       }
@@ -313,33 +285,18 @@ window.Pie = window.Pie || {};
           out.push(piece.trimStart());
         } else out[out.length - 1] += piece;
       });
-      out[out.length - 1] += `<span class="eqn-cites">${e.cites.map(cite).join("")}</span>`;
+      if (!asTable) out[out.length - 1] += `<span class="eqn-cites">${e.cites.map(cite).join("")}</span>`;
       // when that last operator opens a bracket, its + and ÷ inside turn too, so the bracket reads one term a line
       const turns = new Set(last ? [last] : []);
       if (last && /<span class="eqn-op">\(<\/span>/.test(out[last]))
         out.forEach((u, n) => { if (n > last && /^<span class="eqn-op">[+÷]<\/span>/.test(u)) turns.add(n); });
       return out.map((u, n) => `${turns.has(n) ? '<br class="lim-turn">' : ""}<span class="lim-unit">${u}</span>`).join(" ");
     };
-    const formulas = c.equations.map((e) => `
-      <div><span class="lim-name">${esc(e.result)}</span><span class="lim-formula">${units(e)}</span></div>`).join("");
-
-    const check = checkOf(c, release);
-    // only the results that run faster than their limit: each one means an input or the measurement is wrong
-    const over = c.check && check ? check.over : [];
-    const checkHtml = over.length
-      ? `<h2 class="lim-caption">Above the limit</h2>
-         <div class="lim-over">${over.map((o) => `<div><span>${esc(o.label)}</span><b class="lim-pill">${o.share}%</b></div>`).join("")}</div>`
-      : "";
-
-    // the sections first, so the citations number the references in reading order
-    const body = `
-      <header class="inf-hero lim-hero">
-        <h1 class="inf-title">${esc(c.title)}</h1>
-        <p class="inf-label">${esc(TAGLINES[c.id] || "")}</p>
-      </header>
-      <section class="lim-section"><h2 class="lim-caption">Formulas</h2><div class="lim-over lim-formulas">${formulas}</div>
-        <p class="lim-note-link"><button type="button" class="lim-go" data-go="hardware">Hardware<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5 8.5 3.5M4.5 3.5h4v4"/></svg></button><button type="button" class="lim-go" data-go="models">Models<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5 8.5 3.5M4.5 3.5h4v4"/></svg></button></p></section>
-      ${checkHtml ? `<section class="lim-section">${checkHtml}</section>` : ""}`;
+    // the formulas as rows of the site's data table: the term, the formula, and the works it rests on in its own column
+    const asTable = true;
+    // the last formula is the limit itself: its row is tinted, as the results table marks pie's rows
+    const formulaRows = c.equations.map((e, n) => `
+      <tr${n === c.equations.length - 1 ? ' class="is-highlighted"' : ""}><td class="lim-term">${esc(e.result)}</td><td class="lim-formula">${units(e)}</td><td class="lim-source">${e.cites.map(cite).join(", ")}</td></tr>`).join("");
 
     // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
     const bar = `
@@ -347,20 +304,18 @@ window.Pie = window.Pie || {};
         <span class="filter platform-setup">
           <button class="filter-button" id="methods-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Workload: ${c.title}`)}">${esc(c.title)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
         </span>
-        <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>Configuration</button>
+        <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>Test Conditions</button>
       </div>`;
 
+    // the chapter as the site's other pages: the formulas as a data table under the bar, each citing its works by
+    // name, linked
     return `${bar}
-      <article class="book-page">
-        ${body}
-        <section class="lim-refs">
-          <h2 class="lim-caption">References</h2>
-          <ol class="refs">${order.map((key) => {
-            const r = REFS[key];
-            return `<li id="ref-${key}"><span>${esc(r.authors.replace(/\.$/, ""))}.</span> <a href="${r.url}" target="_blank" rel="noopener">${esc(r.title)}</a>. <span class="ref-venue">${esc(r.venue)}, ${r.year}.</span></li>`;
-          }).join("")}</ol>
-        </section>
-      </article>`;
+      <div class="lim-tables">
+        <table class="data-table lim-table">
+          <thead><tr><th>Term</th><th>Formula</th><th>Source</th><th class="lim-fill"></th></tr></thead>
+          <tbody>${formulaRows.replace(/<\/tr>/g, '<td class="lim-fill"></td></tr>')}</tbody>
+        </table>
+      </div>`;
   };
 
 
@@ -370,13 +325,6 @@ window.Pie = window.Pie || {};
     const go = event.target.closest("[data-go]");
     if (go) {
       document.querySelector(`.sidebar-item[data-table="${go.dataset.go}"]`)?.click();
-      return;
-    }
-    const ref = event.target.closest("[data-ref]");
-    if (ref) {
-      const target = element.querySelector(`#ref-${ref.dataset.ref}`);
-      if (!target) return;
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     // the workload pop-up: the grid's own menu, so a pick changes both pages
@@ -396,7 +344,6 @@ window.Pie = window.Pie || {};
       current = CHAPTERS.some((c) => c.id === state.platform.mode) ? state.platform.mode : CHAPTERS[0].id;
       const key = `${current}@${state.release}`;
       if (!element.hidden && element.dataset.key !== key) {
-        release = state.release;
         element.innerHTML = page();
         element.dataset.key = key;
         element.scrollTop = 0;

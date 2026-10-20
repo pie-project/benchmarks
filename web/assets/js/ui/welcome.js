@@ -3,15 +3,11 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("welcome");
 
-  // every platform in the sidebar, in its order: what it is in one line, as apple.com's lineup sets each product
-  const LINES = {
-    mac: "Unified memory, every byte put to work.",
-    nvidia: "CUDA, from one card to the whole rack.",
-    tpu: "The same engine, on Google's silicon.",
-    amd: "ROCm, on Instinct and Radeon.",
-    cerebras: "Wafer-scale, on the largest chip ever built.",
-    android: "Mobile GPUs, in your pocket.",
-    web: "WebGPU, in any browser tab.",
+  // each row's second line says what is measured there: the stack, then how many machines the data holds
+  const STACK = { mac: "Metal", nvidia: "CUDA", tpu: "XLA", amd: "ROCm", cerebras: "Wafer-scale", android: "Vulkan", web: "In the browser" };
+  const detailOf = (id, platform) => {
+    const n = SOON.has(id) || !Pie.platform?.machines ? 0 : Pie.platform.machines(platform);
+    return [STACK[id], n ? `${n} ${n === 1 ? "machine" : "machines"}` : ""].filter(Boolean).join(" · ");
   };
   const platforms = () => Object.entries(Pie.schema).filter(([, s]) => s.view === "platform" && s.platform);
   // the platforms not yet running in CI; every other one has numbers, though a local checkout may not hold them
@@ -25,18 +21,55 @@ window.Pie = window.Pie || {};
         <span class="sidebar-glyph welcome-tile-icon" style="--tint: ${s.tint}">${Pie.icon(id)}</span>
         <span class="welcome-tile-copy">
           <span class="welcome-tile-name">${s.label}</span>
-          <span class="welcome-tile-line">${LINES[id] || ""}</span>
+          <span class="welcome-tile-line">${detailOf(id, s.platform)}</span>
+          
         </span>
-        ${ready ? `<span class="welcome-tile-status" aria-label="Compare engines">${CHEVRON}</span>` : ""}
+        ${ready ? `<span class="welcome-tile-status">${CHEVRON}</span>` : '<span class="welcome-tile-status is-soon">Coming Soon</span>'}
       </${ready ? "button" : "div"}>`;
   };
-  const group = (title, list) => (list.length ? `
-    <section class="welcome-group" aria-label="${title}">
-      <h2 class="welcome-group-title">${title}</h2>
-      <div class="welcome-platforms">${list.map(tile).join("")}</div>
-    </section>` : "");
+  // one list, the live platforms first; the rest say so at their end, as a Settings row shows its value there
+  const list = () => `
+    <section class="welcome-group" aria-label="Platforms">
+      <div class="welcome-platforms">${[...platforms().filter(([id]) => !SOON.has(id)), ...platforms().filter(([id]) => SOON.has(id))].map(tile).join("")}</div>
+    </section>`;
 
-  const content = `
+  // every platform as a row of the site's data table, as Results and Quality list theirs: the platform with its mark,
+  // its stack, how many machines ran there and so whether it is measured (any machine in the data); every row opens its platform's page
+  // a header sorts its column, a second click reverses it and a third clears it, back to the sidebar's order
+  let sort = null;
+  const COLUMNS = [
+    { key: "label", label: "Platform" },
+    { key: "stack", label: "Stack" },
+    { key: "machines", label: "Machines", numeric: true },
+    { key: "status", label: "Status" },
+  ];
+  const table = () => {
+    let list = platforms().map(([id, s], order) => {
+      const machines = Pie.platform?.machines ? Pie.platform.machines(s.platform) : 0;
+      return { id, s, order, label: s.label, stack: STACK[id] || "", machines, status: machines ? "Measured" : "Not measured" };
+    });
+    if (sort) {
+      list = [...list].sort((a, b) => {
+        const x = a[sort.key], y = b[sort.key];
+        return (typeof x === "number" ? x - y : String(x).localeCompare(String(y))) * sort.direction || a.order - b.order;
+      });
+    }
+    const rows = list.map(({ id, s, stack, machines: n, status }) => `<tr class="is-link" data-go="${id}">
+        <td><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${s.label}</span></td>
+        <td class="welcome-stack">${stack}</td>
+        <td class="is-numeric${n ? "" : " is-empty"}">${n || "–"}</td>
+        <td${n ? "" : ' class="is-empty"'}>${status}</td>
+        <td class="welcome-go">${CHEVRON}</td>
+      </tr>`).join("");
+    const head = COLUMNS.map((c) => `<th${c.numeric ? ' class="is-numeric"' : ""} data-sort="${c.key}">${c.label}${sort?.key === c.key ? `<span class="column-sort">${sort.direction > 0 ? "↑" : "↓"}</span>` : ""}</th>`).join("");
+    return `<table class="data-table welcome-table">
+      <thead><tr>${head}<th class="welcome-go"></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  };
+
+  // the welcome before the table: a banner over a grouped list, kept for when the page grows an introduction again
+  const content = () => `
     <div class="welcome-banner">
       <div class="welcome-banner-copy">
         <h2 class="welcome-banner-title">AI that runs everywhere.</h2>
@@ -49,8 +82,7 @@ window.Pie = window.Pie || {};
       </div>
       -->
     </div>
-    ${group("Available now", platforms().filter(([id]) => !SOON.has(id)))}
-    ${group("Coming soon", platforms().filter(([id]) => SOON.has(id)))}
+    ${list()}
     <!-- the benchmarks header, hidden for now: the platform tiles lead to the numbers
     <header class="method-head welcome-intro">
       <div>
@@ -118,11 +150,21 @@ window.Pie = window.Pie || {};
     render(state) {
       element.hidden = state.table !== "welcome";
       if (!element.hidden && element.dataset.ready !== "1") {
-        element.innerHTML = `<div class="method-inner welcome-inner">${content}</div>`;
-        // the call to action opens the overview, as its sidebar item does
-        element.querySelectorAll("[data-go]").forEach((button) =>
-          button.addEventListener("click", (event) =>
-            document.querySelector(`.sidebar-item[data-table="${event.currentTarget.dataset.go}"]`)?.click()));
+        element.innerHTML = table();
+        element.addEventListener("click", (event) => {
+          const header = event.target.closest("[data-sort]");
+          if (header) {
+            const key = header.dataset.sort;
+            // a third click clears the sort, back to the sidebar's order
+            const first = key === "machines" ? -1 : 1;
+            sort = sort?.key !== key ? { key, direction: first } : sort.direction === first ? { key, direction: -first } : null;
+            element.innerHTML = table();
+            return;
+          }
+          // a row opens its platform, as its sidebar item does
+          const row = event.target.closest("[data-go]");
+          if (row) document.querySelector(`.sidebar-item[data-table="${row.dataset.go}"]`)?.click();
+        });
         element.dataset.ready = "1";
       }
     },

@@ -16,11 +16,11 @@ window.Pie = window.Pie || {};
   // run different kernels with different bottlenecks. Each group opens on its raw row (speculation off), held against
   // the hardware limit; the features under it are only those that change that phase, each shown as its gain over raw
   const MODES = [
-    { id: "decode", group: "Decode", label: "Raw Decode", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
-    { id: "spec", group: "Decode", label: "Spec Decode", icon: "M2 8h5M5 5l3 3-3 3M9 8h5M12 5l3 3-3 3", detail: "single request, speculation on", workload: "spec", metric: METRICS[0] },
+    { id: "decode", group: "Decode", label: "Raw Decode", item: "Raw", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
+    { id: "spec", group: "Decode", label: "Spec Decode", item: "Speculative", icon: "M2 8h5M5 5l3 3-3 3M9 8h5M12 5l3 3-3 3", detail: "single request, speculation on", workload: "spec", metric: METRICS[0] },
     // Batched Decode, hidden for now (to be fixed):
     // { id: "batching", group: "Decode", label: "Batched Decode", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
-    { id: "prefill", group: "Prefill", label: "Raw Prefill", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
+    { id: "prefill", group: "Prefill", label: "Raw Prefill", item: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
   ];
   let onChange = () => {};
 
@@ -83,9 +83,14 @@ window.Pie = window.Pie || {};
   };
 
   // pie's advantage over the best other engine: a speed ratio, or the inverse for a time
-  // Compare: "engines", named Performance, shows each engine against the best other engine; "ceiling", named Roofline, shows each engine's share
-  // of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
-  const COMPARES = { engines: "Performance", ceiling: "Roofline" };
+  // Compare: "engines", named Speedup, shows each engine against the best other engine; "ceiling", named Efficiency, shows each engine's
+  // share of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
+  const COMPARES = { engines: "Speedup", ceiling: "Efficiency" };
+  // what the numbers in each view mean, in the status line under the table, as Finder says what a window holds
+  const CAPTIONS = {
+    engines: "Speedup over the fastest other engine",
+    ceiling: "Share of the hardware's theoretical peak",
+  };
   // the grid opens in Performance; holding R shows Roofline (there is no button to choose, so no choice is kept)
   let compare = "engines";
   // the theoretical bound for a cell: Raw's hardware limit, or for batched decode the lower of compute and bandwidth
@@ -475,16 +480,17 @@ window.Pie = window.Pie || {};
           <span class="filter platform-setup">
             <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Setup: ${mode.label}`)}">${esc(mode.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </span>
-          <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>Configuration</button>
+          <button type="button" class="plain-button rules-button" data-rules aria-expanded="false"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>Test Conditions</button>
           <span class="platform-bar-side is-end">
-            <span class="filter platform-view">
-              <button class="filter-button" id="platform-compare" type="button" aria-haspopup="menu" aria-label="${esc(`View: ${COMPARES[compare]}`)}" title="${esc(`${COMPARES[compare === "engines" ? "ceiling" : "engines"]} (Hold R)`)}">${esc(COMPARES[compare])}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
-            </span>
+            <span class="platform-compare" role="group" aria-label="View">${Object.entries(COMPARES).map(([id, name]) =>
+              // the two views as a segmented control, as Finder switches its views; holding R peeks at the other
+              `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}"${id === compare ? "" : ` title="${esc(`${name} (Hold R)`)}"`}>${esc(name)}</button>`).join("")}</span>
           </span>
         </div>
         <div class="platform-scroll">
           <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>
-        </div>`;
+        </div>
+        <div class="platform-status">${esc(CAPTIONS[compare])}</div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
       if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
@@ -493,6 +499,16 @@ window.Pie = window.Pie || {};
     },
 
     bind(state) {
+      // a mouse wheel over the model heads scrolls the models sideways, as a timeline's ruler does; a trackpad's own
+      // sideways swipe, or the wheel anywhere else, scrolls as it always does
+      element.addEventListener("wheel", (event) => {
+        if (!event.target.closest(".platform-table thead") || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+        const scroller = element.querySelector(".platform-scroll");
+        if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
+        event.preventDefault();
+        scroller.scrollLeft += event.deltaY;
+      }, { passive: false });
+
       // drag a maker's band among the makers, or a model's head among its maker's models, as a column moves in Finder's
       // list view: the whole column (the head and every cell under it) slides sideways within its lane, and the columns
       // it passes slide aside to open its place, so the order shows as it will be. Letting go settles it there.
@@ -594,10 +610,10 @@ window.Pie = window.Pie || {};
           onChange();
           return;
         }
-        const comparePicker = event.target.closest("#platform-compare");
-        if (comparePicker) {
-          event.stopPropagation();
-          Pie.popover.open(comparePicker, Pie.popover.COMPARE, state);
+        const view = event.target.closest("[data-compare]");
+        if (view) {
+          Pie.platform.setCompare(view.dataset.compare);
+          onChange();
           return;
         }
         const picker = event.target.closest("#platform-metric");

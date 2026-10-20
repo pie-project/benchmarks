@@ -44,18 +44,19 @@ window.Pie = window.Pie || {};
             `<span class="popover-label">${Pie.format.escape(release.title)}</span>` +
             (release.date ? `<span class="popover-detail">${Pie.format.escape(release.date)}</span>` : "")))
           .join(""))
-      .join(`<div class="popover-separator"></div>`);
+      .join(`<div class="popover-separator"></div>`) +
+      // what the list leaves out, in a grey footnote under a separator, as a macOS menu explains itself
+      `<div class="popover-separator"></div><p class="popover-note">Updated with each release.</p>`;
   };
 
   // a platform page's setup, when the window is too narrow for its sidebar: the sidebar's groups, a checkmark on the current one
   const metricMenu = (state) => {
     const setups = Pie.platform.metrics();
     return [...new Set(setups.map((m) => m.group))]
-      // each name says its phase, so the phases need no headings: a separator between them, as a macOS menu groups items
-      .map((group) => setups.filter((m) => m.group === group)
+      // each phase under its heading, as the release menu groups its runs; the items then need only their own word
+      .map((group) => `<div class="popover-heading">${Pie.format.escape(group)}</div>` + setups.filter((m) => m.group === group)
         .map((m) => option(m.id, m.id === state.platform.mode,
-          // a plain name, like the other menus
-          `<span class="popover-label">${Pie.format.escape(m.label)}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
+          `<span class="popover-label">${Pie.format.escape(m.item || m.label)}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
         .join(""))
       .join(`<div class="popover-separator"></div>`);
   };

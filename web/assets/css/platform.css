@@ -182,7 +182,7 @@
 .platform-sub { font-size: 11px; }
 
 .platform-table tbody th,
-.platform-table tbody td { height: 36px; padding: 0 8px; }
+.platform-table tbody td { height: var(--row-height); padding: 0 8px; }  /* the results' row height */
 .platform-cell { min-width: 0; padding: 4px 8px; font-size: 13px; }
 .platform-cell.is-empty { text-align: right; padding-right: 12px; }
 
@@ -380,7 +380,7 @@
   .platform-table thead th.is-overall { padding-right: 8px; }
   .platform-row { min-width: 0; padding-right: 4px; }
   .platform-table tbody th,
-  .platform-table tbody td { height: 44px; }
+  .platform-table tbody td { height: var(--row-height); }
   .platform-col { gap: 6px; }
   .platform-group-row .platform-group-name > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .platform-table tbody tr.platform-group-row th { height: 44px; }
@@ -460,6 +460,8 @@
 }
 .platform-table thead tr.platform-maker-row th.platform-maker { border-left: .5px solid var(--color-separator); }
 .platform-table thead tr.platform-maker-row th.is-overall { border-left: 0; }
+/* the first maker meets Overall's own right edge: one line there, not two */
+.platform-table thead tr.platform-maker-row th.is-overall + th.platform-maker { border-left: 0; }
 .platform-maker-name { position: sticky; left: 0; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 13px; }
 .platform-maker-name b { font-weight: 600; color: var(--color-label); }
 .platform-maker-name > span:last-child { font-size: 12px; font-weight: 400; color: var(--color-label-tertiary); }
@@ -543,8 +545,9 @@
   background: var(--color-chrome);
   box-shadow: 0 1px 2px rgba(0, 0, 0, .18), 0 0 0 .5px rgba(0, 0, 0, .04);
 }
+:root[data-theme="dark"] .platform-compare .plain-button.is-active { background: rgba(255, 255, 255, .16); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 @media (prefers-color-scheme: dark) {
-  .platform-compare .plain-button.is-active { background: rgba(255, 255, 255, .16); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+  :root:not([data-theme="light"]) .platform-compare .plain-button.is-active { background: rgba(255, 255, 255, .16); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 }
 
 /* Compare: one button that shows the current mode and swaps to the other */
@@ -690,13 +693,9 @@
    number's own colour, softer, sized to the figures and centred on them; symbol and number centred together */
 .platform-bound-mark { display: inline-block; width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
 
-/* the setup pop-up picks what the whole page measures, so it is the one tinted control in the bar, as macOS tints the
-   control that matters most in a toolbar: accent text and arrows on a light accent fill, the same size as its neighbours */
+/* the setup pop-up is a plain pop-up, grey as the Results filters are: in this bar blue means only a filter that is on,
+   as a macOS toolbar keeps one neutral style and lets state alone take the accent */
 .platform-bar .filter.platform-setup:hover { background: none; }
-.platform-bar .filter.platform-setup .filter-button { font-weight: 500; color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
-.platform-bar .filter.platform-setup .filter-button:hover,
-.platform-bar .filter.platform-setup .filter-button[aria-expanded="true"] { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
-.platform-bar .filter.platform-setup .popup-chevron { stroke: currentColor; }
 /* a click opens the menu without a focus ring; the keyboard still gets one */
 .platform-bar .filter.platform-setup .filter-button:focus:not(:focus-visible) { outline: none; box-shadow: none; }
 
