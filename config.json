@@ -14,7 +14,10 @@
       "gemma-4-26b-a4b-llamacpp",
       "gemma-4-31b-mlxlm",
       "gemma-4-31b-llamacpp",
-      "muse-glimmer-30b-llamacpp"
+      "muse-glimmer-30b-llamacpp",
+      "qwen3.6-27b-splash",
+      "qwen3.6-27b-mlxlm",
+      "qwen3.6-27b-llamacpp"
     ],
     "full": [
       "qwen3.8-27b-splash",
@@ -40,7 +43,10 @@
       "gpt-oss-20b-mlxlm",
       "gpt-oss-20b-llamacpp",
       "qwen3.5-9b-mlxlm",
-      "qwen3.5-9b-llamacpp"
+      "qwen3.5-9b-llamacpp",
+      "qwen3.6-27b-splash",
+      "qwen3.6-27b-mlxlm",
+      "qwen3.6-27b-llamacpp"
     ]
   },
   "machines": [
