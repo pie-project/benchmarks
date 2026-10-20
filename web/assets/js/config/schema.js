@@ -10,6 +10,7 @@ window.Pie = window.Pie || {};
     { id: "platforms", label: "Platforms" },
     { id: "measurements", label: "Measurements" },
     { id: "catalog", label: "Catalog" },
+    { id: "resources", label: "Resources" },  // how the numbers are worked out, after the data itself
   ];
 
   Pie.schema = {
@@ -170,7 +171,7 @@ window.Pie = window.Pie || {};
 
     methods: {
       label: "Roofline",
-      section: "measurements",
+      section: "resources",
       view: "methods",  // how each theoretical limit is worked out, a table of formulas per workload
       filters: [],
       columns: [],
