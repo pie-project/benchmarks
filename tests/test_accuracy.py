@@ -361,6 +361,43 @@ def test_reference_for():
     assert reference_for("darwin", "mlx") == "mlx"
     assert reference_for("macos", "hf_safetensors") == "hf"
     assert reference_for("linux", "mlx") == "hf"
+    # a GGUF reads against llama.cpp wherever it runs (issue #256)
+    assert reference_for("linux", "gguf") == "llamacpp"
+    assert reference_for("macos", "gguf") == "llamacpp"
+
+
+def _llamacpp_ref(reply):
+    from pie_evals.node.accuracy.reference import LlamaCppReference
+
+    sent = []
+    ref = object.__new__(LlamaCppReference)
+    ref.url, ref.vocab_size, ref.n_probs, ref._proc = "http://stub", 8, 4, None
+    ref._post = lambda url, body: (sent.append((url, body)), reply)[1]
+    return ref, sent
+
+
+def test_llamacpp_greedy_continues_the_prompt_ids():
+    ref, sent = _llamacpp_ref({"tokens": [5, 2, 7, 1]})
+    assert ref.greedy([3, 4], 3) == [5, 2, 7]
+    url, body = sent[0]
+    assert url == "http://stub/completion"
+    assert body["prompt"] == [3, 4] and body["n_predict"] == 3 and body["top_k"] == 1
+    assert body["ignore_eos"] and body["return_tokens"] and not body["cache_prompt"]
+
+
+def test_llamacpp_teacher_forced_logits_fills_the_last_row_with_top_logprobs():
+    ref, sent = _llamacpp_ref({"completion_probabilities": [{"top_logprobs": [{"id": 6, "logprob": -0.1}, {"id": 2, "logprob": -2.5}]}]})
+    rows = ref.teacher_forced_logits([1, 2, 3])
+    assert rows.shape == (3, 8) and rows.dtype == np.float32
+    assert rows[-1, 6] == pytest.approx(-0.1) and rows[-1, 2] == pytest.approx(-2.5)
+    # outside the top n_probs, and every earlier row, is -inf: such a token is never benign
+    assert np.isneginf(rows[-1, 0]) and np.isneginf(rows[0]).all()
+    assert sent[0][1]["n_predict"] == 1 and sent[0][1]["n_probs"] == 4
+
+
+def test_llamacpp_teacher_forced_logits_reads_older_probs():
+    ref, _ = _llamacpp_ref({"completion_probabilities": [{"probs": [{"id": 3, "prob": 0.5}]}]})
+    assert ref.teacher_forced_logits([1])[-1, 3] == pytest.approx(math.log(0.5))
 
 
 class _StubRef:
