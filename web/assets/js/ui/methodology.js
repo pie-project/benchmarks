@@ -81,7 +81,8 @@ window.Pie = window.Pie || {};
       <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
       <label class="plain-button limit-toggle" data-supports="draft"><input type="checkbox" data-k="spec">Speculative decoding</label>
       <span class="limit-sub" data-out-row="spec" hidden>
-        <button class="filter-button limit-pick" type="button" data-pick="specK" aria-haspopup="menu" aria-label="Draft tokens per step"><span data-pick-label="specK"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="specK" hidden>${range(1, 8, 1).map((v) => `<option value="${v}"${v === 4 ? " selected" : ""}>${v} ${v === 1 ? "draft" : "drafts"}</option>`).join("")}</select>
+        <button class="filter-button limit-pick" type="button" data-pick="specK" aria-haspopup="menu" aria-label="Draft tokens per step"><span data-pick-label="specK"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="specK" hidden><option value="0" selected>Best width</option>${range(1, 16, 1).map((v) => `<option value="${v}">${v} ${v === 1 ? "draft" : "drafts"}</option>`).join("")}</select>
+        <button class="filter-button limit-pick" type="button" data-pick="specBlock" aria-haspopup="menu" aria-label="Drafter"><span data-pick-label="specBlock"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="specBlock" hidden><option value="1" selected>Block drafter</option><option value="0">Token drafter</option></select>
         <button class="filter-button limit-pick" type="button" data-pick="specA" aria-haspopup="menu" aria-label="Acceptance rate"><span data-pick-label="specA"></span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><select class="limit-select" data-k="specA" hidden>${range(50, 95, 5).map((v) => `<option value="${v}"${v === 70 ? " selected" : ""}>${v}% accepted</option>`).join("")}</select>
       </span>
       <label class="plain-button limit-toggle" data-supports="ssd"><input type="checkbox" data-k="ssd">SSD streaming</label>
@@ -106,10 +107,23 @@ window.Pie = window.Pie || {};
   const DRAFT_B = 0.5;
   // expected tokens a verify step keeps when each of k drafts is accepted with probability a (Leviathan et al., 2023)
   const kept = (k, a) => (1 - a ** (k + 1)) / (1 - a);
+  // "Best width" tries every draft width up to this and keeps the fastest
+  const WIDEST = 16;
 
+  // with speculation: the width that gives the most tokens per second, or plain decode when no width pays,
+  // as an engine that measures its steps turns drafting off
   const step = (s, batch) => {
-    // with speculation one verify pass checks k drafts plus one token per request, after k draft passes
-    const spec = s.spec ? { k: s.specK, a: s.specA / 100 } : null;
+    const plain = width(s, batch, 0);
+    if (!s.spec) return plain;
+    const widths = s.specK ? [s.specK] : range(1, WIDEST, 1);
+    const best = widths.map((k) => width(s, batch, k)).reduce((x, y) => (y.tps > x.tps ? y : x));
+    return s.specK || best.tps > plain.tps ? best : { ...plain, k: 0 };
+  };
+
+  const width = (s, batch, k) => {
+    // with speculation one verify pass checks k drafts plus one token per request, after the drafter proposes them:
+    // in one pass for a block drafter (DFlash), in k for one that drafts a token at a time
+    const spec = k ? { k, a: s.specA / 100 } : null;
     const tokensPerPass = spec ? spec.k + 1 : 1;
     const bytesPerParam = BITS[s.bits] / 8;
     // a MoE step touches more experts as the batch grows; a dense model reads all of its weights at any batch
@@ -132,9 +146,12 @@ window.Pie = window.Pie || {};
     const verify = Math.max(memory, compute, link, ssd);
     const bound = verify === ssd && ssd ? "SSD-bound" : verify === link && link ? "interconnect-bound" : verify === compute ? "compute-bound" : "bandwidth-bound";
     if (!spec) return { tps: batch / verify, bound };
-    const draft = spec.k * Math.max((DRAFT_B * bytesPerParam + batch * s.context * s.kvKB / 1e6 * .05) / bw, (2 * DRAFT_B * 1e9 * batch) / flops);
+    const draftRead = (DRAFT_B * bytesPerParam + batch * s.context * s.kvKB / 1e6 * .05) / bw;
+    const draft = s.specBlock
+      ? Math.max(draftRead, (2 * DRAFT_B * 1e9 * batch * tokensPerPass) / flops)
+      : spec.k * Math.max(draftRead, (2 * DRAFT_B * 1e9 * batch) / flops);
     const perStep = kept(spec.k, spec.a);
-    return { tps: (batch * perStep) / (verify + draft), bound, perStep };
+    return { tps: (batch * perStep) / (verify + draft), bound, perStep, k };
   };
 
   const state = {};
@@ -192,7 +209,7 @@ window.Pie = window.Pie || {};
     const prefill = chunk / Math.max(pfCompute, pfSsd);
     out("d1", `<span class="calc-num">${fmt(one.tps)}</span><small>tok/s</small>`);
     const plain = state.spec ? { ...state, spec: false } : null;
-    const gain = (r, batch) => (plain ? ` · ${(r.tps / step(plain, batch).tps).toFixed(1)}× from drafts` : "");
+    const gain = (r, batch) => (!plain ? "" : r.k ? ` · ${(r.tps / step(plain, batch).tps).toFixed(1)}× from ${r.k} ${r.k === 1 ? "draft" : "drafts"}` : " · drafts don’t pay here");
     out("d1n", `${cap(one.bound)}${gain(one, 1)}`);
     out("dbl", `Decode, ${state.batch} ${state.batch === 1 ? "request" : "requests"}`);
     out("db", `<span class="calc-num">${fmt(many.tps)}</span><small>tok/s</small>`);

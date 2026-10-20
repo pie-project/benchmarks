@@ -24,8 +24,9 @@ window.Pie = window.Pie || {};
 
   // the worked examples: one machine and one model from the catalog, at the 4-bit weights the runs use
   const EXAMPLE = { hardware: "m5-max-128g", model: "qwen3.5-4b", scheme: "affine_u4_g64" };
-  // the Limit page's speculation defaults: four drafts, 70% accepted, a half-billion-parameter drafter
-  const SPEC = { k: 4, a: 0.7, drafter: 0.5 };
+  // the Limit page's speculation defaults: 70% accepted, a half-billion-parameter drafter that proposes its whole block
+  // in one pass (DFlash), and draft widths up to 16 to pick the best from
+  const SPEC = { a: 0.7, drafter: 0.5, widest: 16 };
 
   const num = (n) => (n >= 100 ? Math.round(n).toLocaleString("en-US") : n >= 10 ? n.toFixed(0) : n.toFixed(1));
   const ms = (s) => `${(s * 1e3).toFixed(s * 1e3 >= 10 ? 0 : 2)} ms`;
@@ -80,19 +81,24 @@ window.Pie = window.Pie || {};
     },
     {
       id: "spec",  // the setup pop-up's id for Spec Decode, so picking it opens this chapter
-      lede: "A small drafter proposes the next few tokens and the model checks all of them in one pass, keeping each one it agrees with. Each kept token costs a fraction of a read of the weights.",
+      lede: "A small drafter proposes the next few tokens and the model checks all of them in one pass, keeping each one it agrees with. More drafts cost more and add less, so the limit is the draft width that gives the most tokens per second.",
       equations: [
         eq("Tokens per step", ["(", "1", "−", "a^(k+1)", ")", "÷", "(", "1", "−", "a", ")"], ["leviathan"]),
-        eq("Step time", ["Verify time", "+", "k", "×", "Draft time"], ["leviathan", "chen"]),
-        eq("Limit", ["Tokens per step", "÷", "Step time"], ["leviathan"]),
+        eq("Verify time", ["max(", "Memory time", ",", "(", "k", "+", "1", ")", "×", "Math time", ")"], ["roofline"]),
+        eq("Draft time", ["Drafter weights read", "÷", "Memory bandwidth"], ["roofline"]),
+        eq("Step time", ["Verify time", "+", "Draft time"], ["leviathan", "chen"]),
+        eq("Limit", ["max(", "Raw Decode", ",", "max over k(", "Tokens per step", "÷", "Step time", ")", ")"], ["leviathan"]),
       ],
-      symbols: "k is the number of drafted tokens per step and a the chance that each is accepted. The verify time is Raw Decode's memory and math time with k + 1 tokens in the pass; the draft time is the same for the drafter.",
+      symbols: "k is the number of drafted tokens per step and a the chance that each is accepted. Memory time and Math time are Raw Decode's. A block drafter proposes all k drafts in one pass, so its Draft time is one read of its weights; a drafter that proposes one token at a time pays k of them. The limit tries every k from 1 to 16 and keeps the fastest, and falls back to Raw Decode when no k pays.",
       why: [
-        "One pass checks k + 1 drafted tokens for the cost of one read of the weights, and greedy verification keeps the output unchanged {leviathan} {chen}.",
+        "One pass checks k + 1 tokens for one read of the weights, and greedy verification keeps the output unchanged {leviathan} {chen}.",
+        "Draft k only counts if every draft before it was accepted, so each extra draft adds a^k tokens: at 70%, four drafts keep 2.8 tokens, eight 3.2 and sixteen 3.3, the most any k can give being 1 ÷ (1 − a).",
+        "Decode is memory-bound, so the first extra rows of a verify are nearly free. Once (k + 1) × Math time passes Memory time, every row costs its arithmetic and wider drafts lose. Many requests at once reach that point at a smaller k, which is why engines draft less, or not at all, under load.",
+        "a is measured, not given: over a run, a = accepted drafts ÷ (accepted drafts + rejections), counting one rejection for each step that stopped before its last draft. The drafter's authors report it for their benchmarks, but it changes with the prompt, so an engine reads it from its own steps.",
       ],
       assumptions: [
         ["Each draft is accepted independently with the same chance a. Real acceptance falls along the draft.", "up"],
-        ["The drafter proposes its k tokens one at a time. Drafters that propose a whole block in one pass are cheaper.", "down"],
+        ["The drafter proposes its whole block in one pass, as DFlash does. A drafter that proposes one token at a time pays k passes.", "up"],
         ["The drafter has 0.5 B parameters and 70% acceptance, the Limit page's defaults. Neither is measured per run.", null],
         ["Everything Raw Decode assumes.", "up"],
       ],
@@ -102,17 +108,22 @@ window.Pie = window.Pie || {};
         const c = ceilingOf("decode");
         if (!c) return null;
         const p = c.parts;
-        const kept = (1 - SPEC.a ** (SPEC.k + 1)) / (1 - SPEC.a);
-        const verify = Math.max(p.readS, (p.flopsPerToken * (SPEC.k + 1)) / (p.tflops * 1e12));
         const draft = Math.max((SPEC.drafter * p.bytes) / p.bw, (2 * SPEC.drafter * 1e9) / (p.tflops * 1e12));
+        const at = (k) => {
+          const kept = (1 - SPEC.a ** (k + 1)) / (1 - SPEC.a);
+          const verify = Math.max(p.readS, (p.flopsPerToken * (k + 1)) / (p.tflops * 1e12));
+          return { k, kept, verify, tps: kept / (verify + draft) };
+        };
+        const best = Array.from({ length: SPEC.widest }, (_, i) => at(i + 1)).reduce((x, y) => (y.tps > x.tps ? y : x));
+        const plain = 1 / Math.max(p.readS, p.flopsPerToken / (p.tflops * 1e12));
         return {
           inputs: [
-            ["Drafts per step, k", `${SPEC.k}`, "Assumed"],
             ["Acceptance, a", `${Math.round(SPEC.a * 100)}%`, "Assumed"],
-            ["Verify time", ms(verify), "Raw Decode with k + 1 tokens"],
-            ["Draft time", ms(draft), `${SPEC.drafter} B drafter, assumed`],
+            ["Best k", `${best.k}`, `the fastest of 1 to ${SPEC.widest}`],
+            ["Verify time", ms(best.verify), `Raw Decode with ${best.k + 1} tokens`],
+            ["Draft time", ms(draft), `one pass of a ${SPEC.drafter} B block drafter, assumed`],
           ],
-          values: [kept.toFixed(2), ms(verify + SPEC.k * draft), `${num(kept / (verify + SPEC.k * draft))} tok/s`],
+          values: [best.kept.toFixed(2), ms(best.verify), ms(best.verify + draft), `${num(Math.max(plain, best.tps))} tok/s`],
         };
       },
     },
@@ -253,7 +264,7 @@ window.Pie = window.Pie || {};
       return `<a class="cite" href="${r.url}" target="_blank" rel="noopener" title="${esc(`${r.authors} ${r.title}. ${r.venue}, ${r.year}`)}">${esc(author)} ${r.year}</a>`;
     };
     const prose = (text) => esc(text).replace(/\s?\{(\w+)\}/g, (_, key) => (REFS[key] ? cite(key) : ""));
-    const OPS = /^([×÷+−(),]|max\(|min\()$/;
+    const OPS = /^([×÷+−(),]|max\(|min\(|max over k\()$/;
     const term = (t) => (OPS.test(t) ? `<span class="eqn-op">${esc(t)}</span>` : `<span>${esc(t).replace(/\^\((.+)\)$/, "<sup>$1</sup>")}</span>`);
 
     // the page as apple.com sets a feature: the workload's name on its banner, the formulas
