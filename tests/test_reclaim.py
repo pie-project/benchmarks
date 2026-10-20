@@ -34,7 +34,7 @@ def test_reclaim_on_a_mac_drops_hf_repos_only_when_asked(tmp_path: Path, monkeyp
     m = Matrix.load(ROOT / "matrix")
     job = make_jobs(m, Tier.TARGETED, pie_commit="c" * 40, platforms=["m4-pro-48g"], engines=["pie"], cells=[c for c in m.expand() if c.artifact.id == "gemma-4-26b-a4b-mlx4"])[0]
     root = tmp_path / "cache"
-    for d in ("artifacts/gemma-4-26b-a4b-mlx4-cccccccc", "artifacts/gemma-4-26b-a4b-mlx4-01234567", "builds/cccccccccccc-metal", "builds/012345678901-metal"):
+    for d in ("artifacts/gemma-4-26b-a4b-mlx4-cccccccc", "artifacts/gemma-4-26b-a4b-mlx4-cccccccc-plain", "artifacts/gemma-4-26b-a4b-mlx4-01234567-plain", "artifacts/gemma-4-26b-a4b-mlx4-01234567", "builds/cccccccccccc-metal", "builds/012345678901-metal"):
         (root / d).mkdir(parents=True)
         (root / d / "f").write_bytes(b"x" * 10)
     monkeypatch.setenv("PIE_EVALS_CACHE", str(root))
@@ -45,8 +45,9 @@ def test_reclaim_on_a_mac_drops_hf_repos_only_when_asked(tmp_path: Path, monkeyp
     monkeypatch.setattr(reclaim, "free_gib", lambda p: 10.0)
     reclaim.reclaim(job, tmp_path / "hf", log=lambda *_: None)
     assert (root / "artifacts/gemma-4-26b-a4b-mlx4-cccccccc").exists()
+    assert (root / "artifacts/gemma-4-26b-a4b-mlx4-cccccccc-plain").exists(), "the raw rows' plain deployment is this job's too"
     assert (root / "builds/cccccccccccc-metal").exists()
-    for gone in ("artifacts/gemma-4-26b-a4b-mlx4-01234567", "builds/012345678901-metal"):
+    for gone in ("artifacts/gemma-4-26b-a4b-mlx4-01234567", "artifacts/gemma-4-26b-a4b-mlx4-01234567-plain", "builds/012345678901-metal"):
         assert not (root / gone).exists(), gone
     assert dropped == []
     monkeypatch.setenv("PIE_EVALS_RECLAIM_HF", "1")

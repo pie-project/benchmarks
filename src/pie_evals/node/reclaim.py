@@ -49,7 +49,7 @@ def reclaim(job: JobSpec, hf_cache: Path, *, low_water_gib: float = LOW_WATER_GI
     log(f"disk: {before:.0f} GiB free under {low_water_gib:.0f}; reclaiming what this job does not need")
     if root and root.exists():
         for d in sorted((root / "artifacts").glob("*")) if (root / "artifacts").exists() else []:
-            aid, _, tail = d.name.rpartition("-")
+            aid, _, tail = d.name.removesuffix("-plain").rpartition("-")  # importer.artifact_dir(plain=True)
             if d.name.startswith(".tmp-") or aid not in wanted_ids or (commit and tail != commit):
                 _rm(d, log)
         for d in sorted((root / "builds").glob("*")) if (root / "builds").exists() else []:

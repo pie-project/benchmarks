@@ -1092,6 +1092,14 @@ def test_pie_speculates_single_stream_and_the_recipe_can_force_it(tmp_path):
     assert not eng.speculates(single)
 
 
+def test_pie_rows_that_do_not_speculate_serve_the_plain_deployment(tmp_path):
+    single, conc = MAC_WORKLOADS["ss-128-64"], MAC_WORKLOADS["c32"]
+    eng = mac_make(PieEngine, art=mac_artifact(pie_sku="gemma4-26b-a4b-dflash-u4g64-kv-bf16"))
+    eng.recipe["snapshot_dir"], eng.recipe["plain_snapshot_dir"] = "/a/dflash.zt", "/a-plain/plain.zt"
+    assert flag_value(argv_for(eng, single, tmp_path), "--model") == "/a/dflash.zt"
+    assert flag_value(argv_for(eng, conc, tmp_path), "--model") == "/a-plain/plain.zt"
+
+
 def test_pie_in_served_mode_has_its_server_watched(tmp_path):
     import subprocess
     import sys
