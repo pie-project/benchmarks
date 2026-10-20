@@ -86,7 +86,7 @@ window.Pie = window.Pie || {};
   // Compare: "engines", named Speedup, shows each engine against the best other engine; "ceiling", named Efficiency, shows each engine's
   // share of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
   const COMPARES = { engines: "Speedup", ceiling: "Efficiency" };
-  // what the numbers in each view mean, in the status line under the table, as Finder says what a window holds
+  // what the numbers in each view mean, as the help tag on its segment: a Mac explains a control where it is
   const CAPTIONS = {
     engines: "Speedup over the fastest other engine",
     ceiling: "Share of the hardware's theoretical peak",
@@ -484,13 +484,12 @@ window.Pie = window.Pie || {};
           <span class="platform-bar-side is-end">
             <span class="platform-compare" role="group" aria-label="View">${Object.entries(COMPARES).map(([id, name]) =>
               // the two views as a segmented control, as Finder switches its views; holding R peeks at the other
-              `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}"${id === compare ? "" : ` title="${esc(`${name} (Hold R)`)}"`}>${esc(name)}</button>`).join("")}</span>
+              `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}" title="${esc(id === compare ? CAPTIONS[id] : `${CAPTIONS[id]} (Hold R)`)}">${esc(name)}</button>`).join("")}</span>
           </span>
         </div>
         <div class="platform-scroll">
           <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>
-        </div>
-        <div class="platform-status">${esc(CAPTIONS[compare])}</div>`;
+        </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
       if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
