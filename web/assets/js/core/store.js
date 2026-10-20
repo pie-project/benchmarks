@@ -54,6 +54,8 @@ window.Pie = window.Pie || {};
     // the export already lists where each model was measured across every stored result (GPU and TPU runs too,
     // which the grids' rows do not carry); the rows here only add to it
     for (const model of tables.models || []) {
+      // its layer count, from its config.json as the bounds read it
+      model.layers = Pie.architectures?.[model.id]?.layers ?? null;
       const all = new Set([...(seen[model.id] || []), ...String(model.platforms || "").split(", ").filter(Boolean)]);
       model.platforms = ["Mac", "GPU", "TPU"].filter((t) => all.has(t)).join(", ");
     }
