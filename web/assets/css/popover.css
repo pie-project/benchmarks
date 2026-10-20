@@ -157,3 +157,9 @@
 
 /* a shortcut in a menu row, as macOS sets one: the key in the secondary grey at the row's end */
 .popover-key { font-variant-numeric: normal; letter-spacing: .02em; }
+
+/* a menu item's symbol, before its name: the label's colour, white with it on the highlighted row */
+.popover-icon { flex: none; width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; color: var(--color-label); }
+.popover-option:hover .popover-icon,
+.popover-option:focus-visible .popover-icon { color: var(--color-on-accent); }
+@media (max-width: 899px) { .popover-icon { width: 18px; height: 18px; } }

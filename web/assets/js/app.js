@@ -266,6 +266,24 @@
         event.preventDefault();
         if (!event.repeat) showUnavailable(true);
       }
+      // 1, 2, 3 pick the setup in the order of its menu, on a platform page and on Roofline: plain keys, as R and U are
+      const setup = Pie.platform.metrics()[Number(event.key) - 1];
+      if (setup && /^[1-9]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey && !typing
+          && (Pie.schema[state.table]?.view === "platform" || state.table === "methods")) {
+        event.preventDefault();
+        state.platform.mode = setup.id;
+        popover.close();
+        render();
+      }
+      // Tab on a platform page opens the next platform in the sidebar's order, after the last the first again;
+      // Shift-Tab the one before
+      if (event.key === "Tab" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing && Pie.schema[state.table]?.view === "platform") {
+        const ids = Object.keys(Pie.schema).filter((id) => Pie.schema[id].view === "platform");
+        const next = ids[(ids.indexOf(state.table) + (event.shiftKey ? ids.length - 1 : 1)) % ids.length];
+        event.preventDefault();
+        popover.close();
+        document.querySelector(`.sidebar-item[data-table="${next}"]`)?.click();
+      }
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();
         toolbar.focusSearch();
