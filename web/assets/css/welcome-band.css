@@ -154,3 +154,8 @@
 #welcome.method { scrollbar-gutter: auto; }  /* a table reaches the edge; no gutter is kept for a scrollbar it rarely needs */
 .welcome-table thead th[data-sort] { cursor: pointer; }
 .welcome-table tbody td { height: 40px; }  /* the platform header row's height on a platform page */
+/* iPhone: the platform, its machines and its status fit the width; the stack is on the platform's own page */
+@media (max-width: 899px) {
+  .welcome-table th:nth-child(2), .welcome-table td:nth-child(2) { display: none; }
+  .welcome-table tbody td { height: 44px; }
+}
