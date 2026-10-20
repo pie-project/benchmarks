@@ -3,6 +3,39 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("welcome");
 
+  // every platform in the sidebar, in its order: what it is in one line, as apple.com's lineup sets each product
+  const LINES = {
+    mac: "Unified memory, every byte put to work.",
+    nvidia: "CUDA, from one card to the whole rack.",
+    tpu: "The same engine, on Google's silicon.",
+    amd: "ROCm, on Instinct and Radeon.",
+    cerebras: "Wafer-scale, on the largest chip ever built.",
+    android: "Mobile GPUs, in your pocket.",
+    web: "WebGPU, in any browser tab.",
+  };
+  const platforms = () => Object.entries(Pie.schema).filter(([, s]) => s.view === "platform" && s.platform);
+  // the platforms not yet running in CI; every other one has numbers, though a local checkout may not hold them
+  const SOON = new Set(["android", "web"]);
+  const CHEVRON = '<svg class="welcome-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
+  // a platform as a row of a grouped list, as macOS Settings sets them: its sidebar mark, its name, one line, and where it leads
+  const tile = ([id, s]) => {
+    const ready = !SOON.has(id);
+    return `
+      <button class="welcome-tile${ready ? "" : " is-soon"}" type="button" data-go="${id}">
+        <span class="sidebar-glyph welcome-tile-icon" style="--tint: ${s.tint}">${Pie.icon(id)}</span>
+        <span class="welcome-tile-copy">
+          <span class="welcome-tile-name">${s.label}</span>
+          <span class="welcome-tile-line">${LINES[id] || ""}</span>
+        </span>
+        ${ready ? `<span class="welcome-tile-status" aria-label="Compare engines">${CHEVRON}</span>` : ""}
+      </button>`;
+  };
+  const group = (title, list) => (list.length ? `
+    <section class="welcome-group" aria-label="${title}">
+      <h2 class="welcome-group-title">${title}</h2>
+      <div class="welcome-platforms">${list.map(tile).join("")}</div>
+    </section>` : "");
+
   const content = `
     <div class="welcome-banner">
       <div class="welcome-banner-copy">
@@ -14,6 +47,9 @@ window.Pie = window.Pie || {};
         <a class="welcome-banner-link" href="https://github.com/pie-project/pie" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .25l2.35 4.76 5.25.76-3.8 3.7.9 5.23L8 12.3l-4.7 2.4.9-5.23-3.8-3.7 5.25-.76L8 .25z"/></svg>Star</a>
       </div>
     </div>
+    ${group("Available now", platforms().filter(([id]) => !SOON.has(id)))}
+    ${group("Coming soon", platforms().filter(([id]) => SOON.has(id)))}
+    <!-- the benchmarks header, hidden for now: the platform tiles lead to the numbers
     <header class="method-head welcome-intro">
       <div>
         <span class="welcome-icon is-bench" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V11M10 19V6M15 19v-9M20 19V4"/></svg></span>
@@ -23,6 +59,7 @@ window.Pie = window.Pie || {};
       </div>
       <button class="welcome-cta" type="button" data-go="mac">Compare Engines<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
     </header>
+    -->
     <!-- Inferlets, hidden for now
     <header class="method-head welcome-intro is-second">
       <div>
