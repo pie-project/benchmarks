@@ -70,6 +70,9 @@ jobs:
             [ -n "$IN_MODELS" ] && models=$IN_MODELS; [ -n "$IN_MACS" ] && macs=$IN_MACS; [ -n "$IN_WORKLOADS" ] && workloads=$IN_WORKLOADS; engines=${IN_ENGINES:-pie,llamacpp,mlxlm,splash}
           fi
           [[ "$models$macs$workloads$engines" =~ ^[a-z0-9.,-]*$ ]] || { echo "::error::bad input"; exit 1; }
+          # an unknown workload id would silently leave only the control: refuse it instead
+          unknown=$(.venv/bin/python -c "import sys,yaml; known={w['id'] for w in yaml.safe_load(open('matrix/workloads.yaml'))['workloads']}; print(','.join(w for w in sys.argv[1].split(',') if w and w not in known))" "$workloads")
+          [ -z "$unknown" ] || { echo "::error::unknown workload id(s): $unknown"; exit 1; }
           artifacts=$(.venv/bin/python -c "import sys,yaml; want=set(filter(None,sys.argv[1].split(','))); arts=yaml.safe_load(open('matrix/models.yaml'))['artifacts']; pie={a.get('baseline_of') for a in arts if a['id'] in want}; print(','.join(a['id'] for a in arts if a['id'] in want or a['id'] in pie or (a['id'] not in pie and a.get('baseline_of') in want)))" "$models")
           skip=false; [ -n "$TAG" ] || skip=true; [ -n "$artifacts" ] && [ -n "$workloads" ] || skip=true
           # a pie commit that only touches docs or CI files cannot move a number; a manual run measures it anyway
