@@ -89,12 +89,18 @@
   text-align: left;
   color: var(--color-label);
   cursor: pointer;
-  transition: background-color .15s ease;
 }
 /* the hairline starts under the text, not the icon, as in a native list */
 .welcome-tile + .welcome-tile::before { content: ""; position: absolute; top: 0; left: 76px; right: 0; border-top: 1px solid var(--color-separator-light, var(--color-panel-outline)); }
-.welcome-tile:hover { background: var(--color-fill); }
-.welcome-tile:active { background: var(--color-fill-secondary); }
+/* under the pointer a row lifts as a macOS list row does: a rounded highlight inset from the pane, the hairlines either side gone */
+.welcome-tile::after { content: ""; position: absolute; inset: 4px 6px; border-radius: 10px; background: transparent; transition: background-color .15s ease; pointer-events: none; }
+.welcome-tile > * { position: relative; z-index: 1; }
+.welcome-tile::before { transition: opacity .15s ease; }
+.welcome-tile:hover::after { background: var(--color-fill); }
+.welcome-tile:not(.is-soon):active::after { background: var(--color-fill-secondary); }
+.welcome-tile:hover::before,
+.welcome-tile:hover + .welcome-tile::before { opacity: 0; }
+.welcome-tile:not(.is-soon):hover .welcome-tile-status { color: var(--color-label-secondary); }
 .welcome-tile:focus-visible { outline: 3px solid rgba(0, 113, 227, .4); outline-offset: -3px; }
 .welcome-tile .welcome-tile-icon[style] { flex: none; width: 40px; height: 40px; margin: 0; border-radius: 10px; }
 .welcome-tile .welcome-tile-icon[style] svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
@@ -104,9 +110,6 @@
 .welcome-tile-line { margin-top: 2px; font-size: 15px; line-height: 1.4; color: var(--color-label-secondary); }
 .welcome-tile-status { display: inline-flex; flex: none; margin-left: auto; color: var(--color-label-tertiary); }
 .welcome-chevron { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.welcome-tile.is-soon { cursor: default; }
-.welcome-tile.is-soon:hover,
-.welcome-tile.is-soon:active { background: none; }
 
 @media (max-width: 899px) {
   .welcome-tile { padding: 14px 16px; gap: 14px; }
