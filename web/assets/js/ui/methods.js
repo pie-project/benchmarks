@@ -79,7 +79,7 @@ window.Pie = window.Pie || {};
       },
     },
     {
-      id: "speculation",
+      id: "spec",  // the setup pop-up's id for Spec Decode, so picking it opens this chapter
       lede: "A small drafter proposes the next few tokens and the model checks all of them in one pass, keeping each one it agrees with. Each kept token costs a fraction of a read of the weights.",
       equations: [
         eq("Tokens per step", ["(", "1", "−", "a^(k+1)", ")", "÷", "(", "1", "−", "a", ")"], ["leviathan"]),
