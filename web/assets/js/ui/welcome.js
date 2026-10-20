@@ -34,7 +34,8 @@ window.Pie = window.Pie || {};
     </section>`;
 
   // every platform as a row of the site's data table, as Results and Quality list theirs: the platform with its mark,
-  // its stack, how many machines ran there and so whether it is measured (any machine in the data); every row opens its platform's page
+  // its stack, how many machines ran there and so whether it is measured (any machine in the data); every row opens its
+  // platform's page, as a table row does, with no chevron
   // a header sorts its column, a second click reverses it and a third clears it, back to the sidebar's order
   let sort = null;
   const COLUMNS = [
@@ -59,7 +60,7 @@ window.Pie = window.Pie || {};
         <td class="welcome-stack">${stack}</td>
         <td class="is-numeric${n ? "" : " is-empty"}">${n || "–"}</td>
         <td${n ? "" : ' class="is-empty"'}>${status}</td>
-        <td class="welcome-go">${CHEVRON}</td>
+        <td class="welcome-go"></td>
       </tr>`).join("");
     const head = COLUMNS.map((c) => `<th${c.numeric ? ' class="is-numeric"' : ""} data-sort="${c.key}">${c.label}${sort?.key === c.key ? `<span class="column-sort">${sort.direction > 0 ? "↑" : "↓"}</span>` : ""}</th>`).join("");
     return `<table class="data-table welcome-table">
