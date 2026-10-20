@@ -227,6 +227,17 @@ class PieEngine(Engine):
         # path through the recipe; a bare HF id is the fallback.
         return str(self.recipe.get("snapshot_dir") or self.artifact.base_model)
 
+    def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
+        argv = super().build_argv(workload, common_args, json_out)
+        # a row that does not speculate serves the drafter row's target without its head
+        # (importer.plain_sku): the drafter deployment taps the trunk and fills the head's kv on
+        # every prompt row, a cost no engine without a drafter pays. A CLI engine boots per run,
+        # so the model can follow the row; cuda_native serves one boot for every row (serve()).
+        plain = self.recipe.get("plain_snapshot_dir")
+        if plain and self.pie_engine_name() != "cuda_native" and not self.speculates(workload):
+            argv[argv.index("--model") + 1] = str(plain)
+        return argv
+
     def pie_engine_name(self) -> str:
         return _BACKEND_TO_ENGINE[self.platform.backend]
 

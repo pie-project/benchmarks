@@ -261,7 +261,7 @@ class NodeRunner:
         self.log(f"pie interpreter for the bench: {os.environ.get('PIE_PY', 'python3')}")
 
     def snapshot_dir(self, cell: Cell) -> Path:
-        from .importer import artifact_dir, find_zt, needs_import
+        from .importer import have_artifacts, needs_import
         from .snapshots import ensure_snapshot, snapshot_dir_if_present
 
         try:
@@ -274,7 +274,7 @@ class NodeRunner:
             from .reclaim import LOW_WATER_GIB, reclaim
 
             reclaim(self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * 1.2 + 10), log=self.log)
-            if str(cell.engine) == "pie" and self.job.pie_commit and needs_import(cell.artifact) and find_zt(artifact_dir(cell.artifact, self.job.pie_commit)):
+            if str(cell.engine) == "pie" and self.job.pie_commit and needs_import(cell.artifact) and have_artifacts(cell.artifact, self.job.pie_commit):
                 snap = snapshot_dir_if_present(cell.artifact, self.hf_cache, weights=False)
                 if snap:
                     return snap
@@ -296,7 +296,7 @@ class NodeRunner:
             return
         from concurrent.futures import ThreadPoolExecutor
 
-        from .importer import artifact_dir, find_zt, needs_import
+        from .importer import have_artifacts, needs_import
         from .snapshots import ensure_snapshot
 
         pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="prefetch")
@@ -304,7 +304,7 @@ class NodeRunner:
         for art in {a.id: a for a in artifacts}.values():
             if art.kind == ArtifactKind.MINIATURE:
                 continue
-            if self.job.pie_commit and needs_import(art) and find_zt(artifact_dir(art, self.job.pie_commit)):
+            if self.job.pie_commit and needs_import(art) and have_artifacts(art, self.job.pie_commit):
                 continue
             def fetch(a=art):
                 ensure_snapshot(a, self.hf_cache, download=True, log=lambda m: self.log(f"prefetch: {m}"))
@@ -410,6 +410,7 @@ class NodeRunner:
                     if str(first.engine) in SPECS and not os.environ.get({"vllm": "VLLM_PY", "sglang": "SGLANG_PY"}.get(str(first.engine), "")):
                         ensure_baseline(str(first.engine), recipe["pin"], log=self.log)
                 engine = cls(pie_root=self.pie_root, artifact=first.artifact, platform=first.platform, mode=first.mode, recipe=recipe, num_layers=num_layers)
+                self._plain_deployment(engine, cells, snapshot, model_path, recipe)
                 engine_version = engine.version()
                 # one boot per model: the bench then attaches to this server for every
                 # cell and round instead of reloading the weights each time (gemma-4 E4B
@@ -535,6 +536,23 @@ class NodeRunner:
         self.log(f"done in {self.elapsed_s():.0f}s (budget {job.budget_s}s, kill {job.kill_s}s)")
         self._log.close()
         return records
+
+    def _plain_deployment(self, engine, cells, snapshot: Path, model_path: Path, recipe: dict) -> None:
+        """A drafter row's process serves the rows that do not speculate from the plain
+        deployment (importer.plain_sku): the drafter one taps the trunk and fills the head's
+        kv on every prompt row, which the engines without a drafter never pay. A failed
+        import leaves those rows on the drafter deployment, as before."""
+        from .importer import ensure_artifact, plain_sku
+
+        first = cells[0]
+        if str(first.engine) != "pie" or not self.job.pie_commit or model_path == snapshot or not plain_sku(first.artifact):
+            return
+        if not hasattr(engine, "speculates") or all(engine.speculates(c.workload) for c in cells):
+            return
+        try:
+            recipe["plain_snapshot_dir"] = str(ensure_artifact(first.artifact, snapshot, self.pie_root / "target/release/pie", self.job.pie_commit, plain=True, log=self.log))
+        except Exception as e:
+            self.log(f"plain deployment import failed; rows that do not speculate serve the drafter deployment: {import_reason(e)[:600]}")
 
     def _boot(self, engine, shape, serve_log: Path, *, cls, first: Cell, recipe: dict, num_layers, snapshot: Path, model_path: Path):
         """Serve ``shape``; a pie checkpoint it refuses to read directly is
