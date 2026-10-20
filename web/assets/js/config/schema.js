@@ -250,6 +250,7 @@ window.Pie = window.Pie || {};
         text("draft", "Draft", "Shape", { hint: "pie decodes single-stream rows with a drafter (speculative decoding)" }),
         number("params_b", "Params", "Shape", "B", 1),
         number("active_b", "Active", "Shape", "B", 1),
+        number("layers", "Layers", "Shape", "", 0, { hint: "Transformer layers, from the model's config.json" }),
         number("size_gib", "4-bit size", "Shape", "GiB", 1),
         number("needs_gib", "Needs", "Shape", "GiB", 1),
         text("schemes", "Quantizations", "Weights", { code: true }),
