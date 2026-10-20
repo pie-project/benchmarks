@@ -102,7 +102,9 @@ window.Pie = window.Pie || {};
   const cell = (rows, metric, base) => {
     const pie = rows.find((r) => r.engine === base && r[metric.key]);
     const others = rows.filter((r) => r.engine !== base && r[metric.key]);
-    if (!pie || !others.length) return null;
+    if (!pie) return null;
+    // a machine where only pie runs (a TPU today) still shows pie's own number, with nothing to compare it to
+    if (!others.length) return { pie, best: null, gain: null, all: [pie] };
     const best = others.reduce((a, b) => ((metric.higher ? b[metric.key] > a[metric.key] : b[metric.key] < a[metric.key]) ? b : a));
     const gain = metric.higher ? pie[metric.key] / best[metric.key] - 1 : best[metric.key] / pie[metric.key] - 1;
     return { pie, best, gain, all: [pie, ...others] };
@@ -437,7 +439,7 @@ window.Pie = window.Pie || {};
                   const mark = MARK[which];
                   return { kind, html: `<svg class="platform-bound-mark" viewBox="0 0 16 16" role="img" aria-label="${mark.title}"><title>${mark.title}</title><path d="${mark.path}"/></svg>${Math.round(share * 100)}%` };
                 })()
-              : number(c.gain);
+              : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
             return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c, mode, raw))}"><span class="platform-main">${n.html}</span>${subline(c, metric, mode, raw)}</span></td>`;
           }
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card("", "", [], why))}">${needs ? NOFIT : "–"}</span></td>`;
