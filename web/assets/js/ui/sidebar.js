@@ -17,8 +17,8 @@ window.Pie = window.Pie || {};
       <span>${schema.label}</span>
       ${schema.tag ? `<span class="sidebar-tag" title="Under development">${schema.tag}</span>` : ""}
       ${schema.view === "platform"
-        // a platform with no machine in CI yet is Alpha; it shows its machine count once one runs
-        ? (machines(schema) ? `<span class="sidebar-count">${machines(schema)}</span>` : `<span class="sidebar-tag" title="No machine runs here yet">Alpha</span>`)
+        // a platform counts the machines measured on it; none yet reads 0
+        ? `<span class="sidebar-count"${machines(schema) ? "" : ' title="No measurements yet"'}>${machines(schema)}</span>`
         : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
     </button>`;
 

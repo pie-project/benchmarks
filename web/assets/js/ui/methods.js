@@ -294,9 +294,8 @@ window.Pie = window.Pie || {};
     };
     // the formulas as rows of the site's data table: the term, the formula, and the works it rests on in its own column
     const asTable = true;
-    // the last formula is the limit itself: its row is tinted, as the results table marks pie's rows
-    const formulaRows = c.equations.map((e, n) => `
-      <tr${n === c.equations.length - 1 ? ' class="is-highlighted"' : ""}><td class="lim-term">${esc(e.result)}</td><td class="lim-formula">${units(e)}</td><td class="lim-source">${e.cites.map(cite).join(", ")}</td></tr>`).join("");
+    const formulaRows = c.equations.map((e) => `
+      <tr><td class="lim-term">${esc(e.result)}</td><td class="lim-formula">${units(e)}</td></tr>`).join("");
 
     // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
     const bar = `
@@ -312,7 +311,7 @@ window.Pie = window.Pie || {};
     return `${bar}
       <div class="lim-tables">
         <table class="data-table lim-table">
-          <thead><tr><th>Term</th><th>Formula</th><th>Source</th><th class="lim-fill"></th></tr></thead>
+          <thead><tr><th>Term</th><th>Formula</th><th class="lim-fill"></th></tr></thead>
           <tbody>${formulaRows.replace(/<\/tr>/g, '<td class="lim-fill"></td></tr>')}</tbody>
         </table>
       </div>`;
