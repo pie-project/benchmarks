@@ -259,6 +259,10 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
         art = arts.get(r["artifact"], {})
         if art.get("kind") == "miniature":
             continue
+        # on a Mac every engine runs the same 4-bit MLX weights; a pie run of another precision (a bf16 import) is not
+        # the comparison, so it never stands in for the model's number
+        if r["platform"] in macs and r["engine"] == "pie" and art and art.get("source_format") != "mlx":
+            continue
         cat, pri = cat_pri
         model = a2m.get(r["artifact"], r["artifact"])
         key = (r["platform"], r["engine"], model, cat)
