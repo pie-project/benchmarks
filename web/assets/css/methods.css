@@ -426,3 +426,21 @@
 .lim-table .lim-source .cite:hover { text-decoration: underline; }
 /* a click opens Test Conditions without a focus ring, as the pop-ups do; the keyboard still gets one */
 .rules-button:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+
+/* iPhone: Test Conditions is its info symbol alone, as iOS sets an ⓘ in a toolbar; the formulas read as a list,
+   the term over its formula and its sources, so nothing runs off the screen */
+@media (max-width: 899px) {
+  .rules-label { display: none; }
+  .rules-button { width: 34px; padding: 0; justify-content: center; }
+  .rules-button svg { width: 20px; height: 20px; }
+  .lim-table thead { display: none; }
+  .lim-table, .lim-table tbody { display: block; }
+  .lim-table tr { display: flex; flex-direction: column; gap: 4px; padding: 12px var(--edge); border-bottom: .5px solid var(--color-separator-light); }
+  .lim-table tr.is-highlighted { background: var(--color-row-highlight); }
+  .lim-table td { display: block; height: auto; padding: 0 !important; border: 0; background: none !important; white-space: normal; position: static; }
+  .lim-table td.lim-fill { display: none; }
+  .lim-table .lim-term { font-size: 13px; }
+  .lim-table .lim-formula { font-size: 16px; line-height: 1.45; }
+  .lim-table .lim-formula .lim-unit { white-space: normal; }
+  .lim-table .lim-source .cite { font-size: 13px; }
+}
