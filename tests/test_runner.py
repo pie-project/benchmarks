@@ -2,9 +2,9 @@
 Exercises grouping, control A/A gating, adaptive repetition, NOISY marking,
 failure classification and the records.jsonl output."""
 
+import os
 from pathlib import Path
 
-import os
 import pytest
 
 from pie_evals.node import runner as runner_mod
