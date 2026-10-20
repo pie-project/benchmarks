@@ -21,14 +21,14 @@ window.Pie = window.Pie || {};
   const tile = ([id, s]) => {
     const ready = !SOON.has(id);
     return `
-      <button class="welcome-tile${ready ? "" : " is-soon"}" type="button" data-go="${id}">
+      <${ready ? `button type="button" data-go="${id}"` : "div"} class="welcome-tile${ready ? "" : " is-soon"}">
         <span class="sidebar-glyph welcome-tile-icon" style="--tint: ${s.tint}">${Pie.icon(id)}</span>
         <span class="welcome-tile-copy">
           <span class="welcome-tile-name">${s.label}</span>
           <span class="welcome-tile-line">${LINES[id] || ""}</span>
         </span>
         ${ready ? `<span class="welcome-tile-status" aria-label="Compare engines">${CHEVRON}</span>` : ""}
-      </button>`;
+      </${ready ? "button" : "div"}>`;
   };
   const group = (title, list) => (list.length ? `
     <section class="welcome-group" aria-label="${title}">
