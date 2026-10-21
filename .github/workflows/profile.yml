@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       machine: { description: "Mac platform id, a runner label (e.g. m5-max-64g)", required: true, default: "m5-max-64g" }
-      engine: { description: "pie, splash, mlxlm or llamacpp; or cargo-test, which runs the engine-metal microbenchmark named in artifact at pie_commit", required: true, default: "splash" }
+      engine: { description: "pie, splash, mlxlm or llamacpp; cargo-test, which runs the engine-metal microbenchmark named in artifact at pie_commit; or splash-profile, Splash's own per-kernel decode-profile of the model artifact names (an HF id)", required: true, default: "splash" }
       artifact: { description: "artifact id from matrix/models.yaml", required: true, default: "qwen3.8-27b-splash" }
       workload: { description: "workload id", required: false, default: "ss-512-256" }
       pie_commit: { description: "pie commit", required: false, default: "424758165ecb6a78a72d0344c0f7abec7fec1aab" }
@@ -27,7 +27,7 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
       - name: splash
-        if: inputs.engine == 'splash'
+        if: inputs.engine == 'splash' || inputs.engine == 'splash-profile'
         run: |
           # same pinned release and wrapper as tier.yml, cached beside the other baselines
           pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['splash']['pin'])")
@@ -51,15 +51,30 @@ jobs:
           mkdir -p out/profile
           (cd "$dir" && CARGO_TARGET_DIR="$HOME/.cache/pie-microbench-target" cargo test --release -p engine-metal --test engine_metal \
             "${{ inputs.artifact }}" -- --ignored --nocapture --test-threads=1) 2>&1 | tee out/profile/microbench.txt
+      - name: splash decode-profile
+        if: inputs.engine == 'splash-profile'
+        run: |
+          # Splash's per-kernel attribution of real DFlash cycles (dev/benchmarks/decode_profile.mm), built at the
+          # pinned tag against the release's own metallib (no Metal compiler needed), over the model as Splash
+          # prepared it for the benchmark
+          pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['splash']['pin'])")
+          rel="$HOME/.cache/pie-evals/baselines/splash-$pin"; src="$RUNNER_TEMP/splash-src"
+          rm -rf "$src" && git clone -q --depth 1 --branch "$pin" https://github.com/incoai/splash.git "$src"
+          mkdir -p "$src/build" && cp "$rel/engine/splash.metallib" "$src/build/splash.metallib"
+          make -C "$src" -j8 -o build/splash.metallib build/engine-tests/decode-profile
+          root=$(cd "$rel" && python/bin/python3 -P -c "import sys; sys.path.insert(0, '.'); from install import models, paths; print(models.Selection.of(paths.MODELS, sys.argv[1]).link.resolve())" "${{ inputs.artifact }}")
+          echo "model root: $root"; ls "$root" | head
+          mkdir -p out/profile
+          "$src/build/engine-tests/decode-profile" "$src/build/splash.metallib" "$root" --prompt-tokens 512 --cycles 20 2>&1 | tee out/profile/splash_decode_profile.txt
       - name: job spec
-        if: inputs.engine != 'cargo-test'
+        if: inputs.engine != 'cargo-test' && inputs.engine != 'splash-profile'
         run: |
           .venv/bin/pie-evals jobs --tier targeted --pie-commit "${{ inputs.pie_commit }}" \
             --platform "${{ inputs.machine }}" --engine "${{ inputs.engine }}" \
             --artifact "${{ inputs.artifact }}" --workload "${{ inputs.workload }}" --out jobs
           ls jobs
       - name: profile
-        if: inputs.engine != 'cargo-test'
+        if: inputs.engine != 'cargo-test' && inputs.engine != 'splash-profile'
         run: |
           job="jobs/$(jq -r '.include[0].job_id' jobs/gh-matrix.json).json"  # beside it, gh-matrix, pods and policy
           out="out/profile"
