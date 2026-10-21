@@ -80,6 +80,10 @@ _BACKEND_TO_ENGINE: dict[Backend, str] = {
 #: the ``pie`` stand-in for the XLA engine (see scripts/pie_xla.py)
 XLA_SHIM = Path(__file__).resolve().parent / "scripts" / "pie_xla.py"
 
+#: a Mac this small gets a smaller forward budget than pie_bench's 10240 (still a whole raw prompt per forward)
+SMALL_MAC_GIB = 16
+SMALL_MAC_FORWARD_TOKENS = 2048
+
 #: recipe knob -> flag, value passed through as ``str(value)``.
 _DIRECT_FLAGS: tuple[tuple[str, str], ...] = (
     ("total_pages", "--total-pages"),
@@ -317,6 +321,10 @@ class PieEngine(Engine):
                 v = None
             elif knob == "total_pages" and self.platform.backend == Backend.METAL:
                 v = metal_total_pages(v, max_model_len_for(workload))
+            elif knob == "max_forward_tokens" and v is None and self.platform.backend == Backend.METAL and 0 < float(self.platform.memory_gib or 0) <= SMALL_MAC_GIB:
+                # pie_bench writes 10240, and the scratch those axes reserve is wired: Qwen3.5-9B's took
+                # 5.2 GB on the 16 GB M3 and left no byte for the kv pool (0.5.3-b5, every rerun doesnt_fit)
+                v = SMALL_MAC_FORWARD_TOKENS
             if v is not None:
                 args += [flag, str(v)]
         for knob, flag in _BOOL_OPTIONAL_FLAGS:
