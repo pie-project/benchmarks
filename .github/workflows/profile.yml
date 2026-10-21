@@ -46,7 +46,7 @@ jobs:
           ls jobs
       - name: profile
         run: |
-          job=$(ls jobs/*.json | grep -v /matrix.json | head -1)  # matrix.json lists the jobs; the job is its own file
+          job="jobs/$(jq -r '.include[0].job_id' jobs/gh-matrix.json).json"  # beside it, gh-matrix, pods and policy
           out="out/profile"
           PIE_EVALS_SAMPLE_SECS="${{ inputs.sample_secs }}" .venv/bin/pie-evals-node run --job "$job" --pie-root "${PIE_ROOT:-$HOME/pie}" --out "$out" --download
       - uses: actions/upload-artifact@v4
