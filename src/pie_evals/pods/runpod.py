@@ -443,12 +443,15 @@ def to_json(x) -> str:
 # ---- runners ---------------------------------------------------------------------
 
 def list_runners(repo: str, token: str | None = None) -> list[dict]:
-    """The repo's self-hosted runners (needs a token with actions:read / administration)."""
+    """The repo's self-hosted runners (needs a token with actions:read / administration),
+    every page: past 100 registrations the live pod sat on page 2 and a run rented a twin
+    instead of queueing on it (a100-pcie-x2, weekly 39545570330)."""
     import subprocess
 
     env = {**os.environ, **({"GH_TOKEN": token} if token else {})}
-    out = subprocess.run(["gh", "api", f"repos/{repo}/actions/runners?per_page=100"], capture_output=True, text=True, env=env, check=True).stdout
-    return list(json.loads(out).get("runners", []))
+    out = subprocess.run(["gh", "api", "--paginate", f"repos/{repo}/actions/runners?per_page=100", "-q", ".runners[] | tojson"],
+                         capture_output=True, text=True, env=env, check=True).stdout
+    return [json.loads(line) for line in out.splitlines() if line.strip()]
 
 
 def runner_pod_id(runner: dict) -> str | None:
