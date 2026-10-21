@@ -52,7 +52,7 @@ EOF
             && { echo "zone=$zone"; exit 0; }
         fi
         echo "$out" >&2
-        errs+="$zone ${spot:-on-demand}: $(echo "$out" | grep -m1 -iE 'error|quota|capacity|denied|not (found|supported)' || echo "$out" | tail -n 1)"$'\n'
+        errs+="$zone ${spot:-on-demand}: $(echo "$out" | grep -m1 -iE 'quota|capacity|denied|LOCATION_POLICY|not (found|supported)|unavailable' || echo "$out" | grep -m1 ERROR || echo "$out" | tail -n 1)"$'\n'
         # a VM half-created by a failed call must not linger
         TPU_ZONES=$zone bash "$0" delete >/dev/null 2>&1 || true
       done

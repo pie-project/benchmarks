@@ -637,8 +637,10 @@ def main() -> None:
     # even where an older engine release once measured it: one release of each engine per tag
     gpu_unsup = gpu_unsupported(a2m, gpu_ids, all_engines, config.get("benchmarks", []))
     grid += [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in gpu_ids for c, _, _ in CATEGORIES if (hw, e, m, c) in gpu_keys]
+    # a TPU the project cannot get at all (support.yaml: no access, no quota) has no runs, only its reasons
+    tpus = {p["id"] for p in load("platforms")["platforms"] if p.get("backend") == "xla"}
     grid += [(hw, e, m, "raw") for hw, e, m in gpu_unsup
-             if m in model_ids and (hw, e, m, "raw") not in gpu_keys and any(k[0] == hw for k in gpu_keys)]
+             if m in model_ids and (hw, e, m, "raw") not in gpu_keys and (hw in tpus or any(k[0] == hw for k in gpu_keys))]
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
     # the Macs the site's grids measure, and every GPU or TPU setup a scheduled CI run launches (tagged with its runs)
     # the Macs the grids measure, every CI GPU and TPU, and every catalog accelerator; a CI Mac without a runner stays out

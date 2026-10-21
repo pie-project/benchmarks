@@ -85,6 +85,7 @@ jobs:
     env: { C: "${{ needs.decide.outputs.commit }}" }
     outputs:
       job_id: ${{ steps.jobs.outputs.job_id }}
+      created: ${{ steps.create.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v4
       - name: VM settings
@@ -171,7 +172,7 @@ jobs:
   # the Mac reaches the database on liszt over the tailnet; GitHub's runners do not
   collect:
     needs: [decide, bench]
-    if: always() && needs.decide.outputs.run == 'true' && needs.bench.outputs.job_id != ''
+    if: always() && needs.decide.outputs.run == 'true' && needs.bench.outputs.job_id != '' && needs.bench.outputs.created == 'true'  # no VM: nothing to import
     runs-on: [self-hosted, macos, m5-max-64g]
     concurrency: { group: tpu-collect, cancel-in-progress: false }  # the TPU platforms' imports one at a time
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}", C: "${{ needs.decide.outputs.commit }}" }
