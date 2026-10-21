@@ -27,6 +27,16 @@ unsupported:
   # Splash 1.3.2 pairs every model with its DFlash2 draft and has no flag to serve without it
   - when: {engine: splash, workload: raw-512-256}
     reason: "Splash always drafts: no flag turns speculation off, so it has no raw row"
+  - when: {engine: splash, workload: c32}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: c64}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: c256}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: c8}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: c4}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}
