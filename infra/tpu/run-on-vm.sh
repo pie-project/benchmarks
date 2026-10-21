@@ -73,7 +73,7 @@ done
 # only, so pie, vLLM (tp1) and SGLang-JAX (whose default mesh must equal the device count) all run on one chip
 chips=$(ls -d /dev/accel* 2>/dev/null | wc -l || true)
 [ "$chips" -gt 0 ] || chips=$(ls /dev/vfio 2>/dev/null | grep -cv '^vfio$' || true)
-if [ "${chips:-0}" -gt 1 ]; then
+if [ "${chips:-0}" -gt 1 ] && [ -z "${TPU_ALL_CHIPS:-}" ]; then  # tpu.all_chips: a tp>1 platform uses them all
   echo "$chips TPU chips on this host: the engines see chip 0 only"
   export TPU_VISIBLE_CHIPS=0 TPU_CHIPS_PER_PROCESS_BOUNDS=1,1,1 TPU_PROCESS_BOUNDS=1,1,1
 fi
