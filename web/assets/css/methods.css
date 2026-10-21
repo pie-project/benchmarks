@@ -461,9 +461,6 @@
 .spec-stepper button:hover { color: var(--color-label); }
 .spec-stepper button:active { color: var(--color-accent); }
 .spec-stepper svg { width: 8px; height: 5px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.spec-field.is-output { margin-left: 14px; padding: 0; background: none; }
-.spec-value { color: var(--color-label-secondary); }
-.spec-gain { margin-left: 6px; color: var(--color-label-tertiary); }
 @media (max-width: 899px) {
   .spec-field { height: 34px; padding: 0 8px 0 14px; border-radius: 999px; font-size: 15px; }
   .spec-stepper { width: 24px; }
