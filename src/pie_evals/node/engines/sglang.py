@@ -189,6 +189,8 @@ class SglangTpuEngine(ServedEngine):
             "--context-length", str(context), "--max-running-requests", str(slots),
             # a cold prompt every request, as on every other engine
             "--disable-radix-cache", "--log-level", "warning",
+            # a checkpoint with custom code (MiMo-V2.6-Flash) is refused at config load without it, as vLLM is given it
+            "--trust-remote-code",
         ]
         if r.get("gpu_mem_util") is not None:
             cmd += ["--mem-fraction-static", str(r["gpu_mem_util"])]
