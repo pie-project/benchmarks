@@ -734,7 +734,7 @@ platforms:
     runpod_gpu_type: "Tesla V100-SXM2-16GB"
     tiers: []
   # ---- Google Cloud TPU: a VM created per run by .github/workflows/tpu.yml and deleted after it
-  # (no runner registers this label; the GPU nightly's --skip-unavailable drops it). pie only.
+  # (no runner registers these labels; the GPU nightly's --skip-unavailable drops them): pie, vLLM-TPU, SGLang-JAX.
   - id: tpu-v6e-1
     catalog: google-cloud-tpu-v6e-trillium
     os: linux
@@ -746,3 +746,58 @@ platforms:
     interconnect: ici
     runner_labels: [tpu-v6e-1]
     tiers: [nightly, weekly]  # weekly: a release's Raw rows (tpu.yml tier=weekly); the GPU weekly's --skip-unavailable drops it
+    tpu: {type: v6e-1, runtime: v2-alpha-tpuv6e, zones: [us-east5-b, us-east1-d, europe-west4-a]}
+  # the other Cloud TPU generations: a release's Raw rows only (tpu.yml platform=<id>, tier=weekly), on
+  # the smallest single-host slice Google offers. Every engine runs on one chip (tp1); a slice with more
+  # chips (v4-8, v5p-8, TPU7x 2x2x1: 4 chips each) is reported per chip, memory_gib is that chip's HBM.
+  # tpu: how tpu.yml gets the VM: the Cloud TPU API (type, runtime) or, for TPU7x, which that API does
+  # not serve, a Compute Engine instance (machine_type, an ubuntu-os-accelerator-images family matching image)
+  - id: tpu-v5e-1
+    catalog: google-cloud-tpu-v5e
+    os: linux
+    backend: xla
+    accelerator: TPU v5e
+    arch: tpu-v5e
+    count: 1
+    memory_gib: 16
+    interconnect: ici
+    runner_labels: [tpu-v5e-1]
+    tiers: [weekly]
+    fit_factor: 1.0  # 16 GB: gemma-4-E4B's 14 GiB of weights is tried (the run says whether it holds), 12B's 22 GiB is not
+    tpu: {type: v5litepod-1, runtime: v2-alpha-tpuv5-lite, zones: [us-west4-a, us-east5-a, europe-west4-b, us-central1-a, us-east1-c, us-south1-a]}
+  - id: tpu-v5p-8
+    catalog: google-cloud-tpu-v5p
+    os: linux
+    backend: xla
+    accelerator: TPU v5p (1 chip of a v5p-8 slice)
+    arch: tpu-v5p
+    count: 1
+    memory_gib: 95
+    interconnect: ici
+    runner_labels: [tpu-v5p-8]
+    tiers: [weekly]
+    tpu: {type: v5p-8, runtime: v2-alpha-tpuv5, zones: [us-east5-a, us-central1-a, europe-west4-b]}
+  - id: tpu-v4-8
+    catalog: google-cloud-tpu-v4
+    os: linux
+    backend: xla
+    accelerator: TPU v4 (1 chip of a v4-8 slice)
+    arch: tpu-v4
+    count: 1
+    memory_gib: 32
+    interconnect: ici
+    runner_labels: [tpu-v4-8]
+    tiers: [weekly]
+    tpu: {type: v4-8, runtime: tpu-ubuntu2204-base, zones: [us-central2-b]}
+  - id: tpu7x-4
+    catalog: google-cloud-tpu7x-ironwood
+    os: linux
+    backend: xla
+    accelerator: TPU7x Ironwood (1 chip of a 2x2x1 slice)
+    arch: ironwood
+    count: 1
+    memory_gib: 192
+    interconnect: ici
+    runner_labels: [tpu7x-4]
+    tiers: [weekly]
+    tpu: {machine_type: tpu7x-standard-4t, image: "tpu7x|ironwood|tpu-7", zones: [us-central1-c, us-central1-ai1a]}

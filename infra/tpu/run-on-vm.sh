@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# On a fresh Cloud TPU VM (runtime v2-alpha-tpuv6e): install the toolchains, check out pie at a
+# On a fresh Cloud TPU VM (any generation: platforms.yaml tpu:): install the toolchains, check out pie at a
 # commit, and run one pie-evals job on the XLA engine. Started by .github/workflows/tpu.yml from
 # the unpacked pie-evals tree; the node builds pie with --features xla, imports the model as a
 # .xla.zt and writes out/<job_id>/records.jsonl. A job with vLLM or SGLang cells also gets their TPU builds

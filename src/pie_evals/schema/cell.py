@@ -221,6 +221,7 @@ class PlatformSpec(BaseModel):
     runpod_gpu_type: str | None = None
     tp_capable: bool = False
     tiers: list[Tier] = Field(default_factory=lambda: [Tier.NIGHTLY, Tier.WEEKLY])
+    fit_factor: float | None = Field(default=None, description="headroom the fit rule asks of this platform's memory (default: support.yaml fit_factor)")
     pod: str | None = Field(default=None, description="platform whose pod hosts this one's jobs (an x1 on the x2 pod of the same GPU, one GPU masked); default: its own")
 
 
