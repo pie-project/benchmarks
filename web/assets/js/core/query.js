@@ -8,10 +8,13 @@ window.Pie = window.Pie || {};
   // the menu offers the published releases and the newest run only; older manual runs, probes and main builds stay
   // in the data but are not offered (tags are listed newest first)
   const newestRun = () => store.tables.tags.find((tag) => tag.kind !== "release" && store.snapshot(tag.id).length)?.id;
+  // the newest pre-release (0.5.3-b5) stays on offer even when a later manual run or main build is newer
+  const BETA = /^\d+\.\d+\.\d+-b\d+$/;
+  const newestBeta = () => store.tables.tags.find((tag) => BETA.test(tag.id) && store.snapshot(tag.id).length)?.id;
   const releaseOptions = () =>
     store.tables.tags
       .filter((tag) => store.snapshot(tag.id).length)
-      .filter((tag) => tag.kind === "release" || tag.id === newestRun())
+      .filter((tag) => tag.kind === "release" || tag.id === newestRun() || tag.id === newestBeta())
       .map((tag) => ({
         id: tag.id,
         label: tag.id,
