@@ -776,7 +776,7 @@ platforms:
     interconnect: ici
     runner_labels: [tpu-v5p-8]
     tiers: [weekly]
-    tpu: {type: v5p-8, runtime: v2-alpha-tpuv5, zones: [us-east5-a, us-central1-a, europe-west4-b]}
+    tpu: {type: v5p-8, runtime: v2-alpha-tpuv5, zones: [us-east5-a, us-central1-a, europe-west4-b], data_disk_gb: 400}
   - id: tpu-v4-8
     catalog: google-cloud-tpu-v4
     os: linux
@@ -800,4 +800,4 @@ platforms:
     interconnect: ici
     runner_labels: [tpu7x-4]
     tiers: [weekly]
-    tpu: {machine_type: tpu7x-standard-4t, image: "tpu7x|ironwood|tpu-7", zones: [us-central1-c, us-central1-ai1a]}
+    tpu: {machine_type: tpu7x-standard-4t, image: "tpu7x|ironwood|tpu-7", data_disk_gb: 400, zones: [us-central1-c, us-central1-ai1a]}

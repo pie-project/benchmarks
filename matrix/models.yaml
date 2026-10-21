@@ -61,6 +61,33 @@ artifacts:
     pie_sku: gemma4-12b-bf16-kv-bf16
     platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
     tiers: [weekly]
+  # the GPU page's models on every TPU, at the precision the GPUs run them (pie's XLA engine is one device:
+  # a model larger than one chip's HBM does not fit). qwen3.6-27b: XLA has no plain bf16 row, the MTP one
+  # serves it (Raw does not draft)
+  - id: qwen3.6-27b-tpu
+    base_model: Qwen/Qwen3.6-27B
+    family: qwen3_6
+    scheme: bf16
+    expected_gib: 54.0
+    pie_sku: qwen36-27b-mtp-bf16-kv-bf16
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
+    tiers: [weekly]
+  - id: gpt-oss-20b-tpu
+    base_model: openai/gpt-oss-20b
+    family: gpt_oss
+    scheme: mxfp4
+    expected_gib: 12.9
+    pie_sku: gptoss-20b-bf16-mxfp4-kv-bf16
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
+    tiers: [weekly]
+  - id: gpt-oss-120b-tpu
+    base_model: openai/gpt-oss-120b
+    family: gpt_oss
+    scheme: mxfp4
+    expected_gib: 61.0
+    pie_sku: gptoss-120b-bf16-mxfp4-kv-bf16
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
+    tiers: [weekly]
 
   - id: qwen3.5-0.8b-mlx-bf16
     base_model: mlx-community/Qwen3.5-0.8B-bf16
