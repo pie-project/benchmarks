@@ -6,6 +6,8 @@ window.Pie = window.Pie || {};
   const GROUPS = [
     ["Workload", [
       { tint: "#30d158", icon: "M4 6h16M4 12h16M4 18h10", big: "512", unit: "tokens", label: "Prompt", line: "Same seeded text everywhere." },
+      { tint: "#30d158", icon: "M5 5h14v10H9l-4 4zM8 9h8M8 12h5", big: "Random words", label: "Prompt text", line: "Common English words in a seeded random order, not a real question. Speed of raw decode does not depend on it; speculation's acceptance does, so Spec numbers sit below what real chat or code reach." },
+      { tint: "#30d158", icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0", big: "Fixed", label: "System prompt", line: "“You are a helpful benchmarking assistant.” on every engine, the words as the user's message." },
       { tint: "#ff9f0a", icon: "M5 12h11M12 7l5 5-5 5M20 5v14", big: "256", unit: "tokens", label: "Answer", line: "Fixed length on every engine." },
       { tint: "#64d2ff", icon: "M12 3v18M5.6 6.6l12.8 10.8M18.4 6.6 5.6 17.4", big: "Cold", label: "Cache", line: "No prefix-cache hits." },
       { tint: "#ff453a", icon: "M12 3c2 3 5 4.5 5 9a5 5 0 0 1-10 0c0-2.5 1.5-3.5 2-5 1 1.5 2 2 3-4z", big: "Warm", label: "Engine", line: "Warmup runs aren't counted." },
