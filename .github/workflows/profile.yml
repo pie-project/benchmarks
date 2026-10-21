@@ -48,7 +48,7 @@ jobs:
           rm -rf "$dir" && git clone -q --reference "$src" https://github.com/pie-project/pie.git "$dir"
           git -C "$dir" checkout -q "${{ inputs.pie_commit }}"
           mkdir -p out/profile
-          (cd "$dir" && CARGO_TARGET_DIR="$src/target" cargo test --release -p engine-metal --test engine_metal \
+          (cd "$dir" && CARGO_TARGET_DIR="$HOME/.cache/pie-microbench-target" cargo test --release -p engine-metal --test engine_metal \
             "${{ inputs.artifact }}" -- --ignored --nocapture) 2>&1 | tee out/profile/microbench.txt
       - name: job spec
         if: inputs.engine != 'cargo-test'
