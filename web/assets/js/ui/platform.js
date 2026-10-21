@@ -329,9 +329,16 @@ window.Pie = window.Pie || {};
       return Pie.store.tables.hardware.filter((hw) => { const p = platformOf(hw); return p && (!id || p.id === id); }).length;
     },
 
-    // the setups, for the pop-up in the bar
-    metrics() {
-      return MODES;
+    // the setups, for the pop-up in the bar. Raw Decode and Raw Prefill always; on a platform page, a feature beyond
+    // raw (Speculative, Batched) only where this release measured it on one of the platform's machines. Roofline, with
+    // no platform, keeps every chapter
+    metrics(state) {
+      if (!state || Pie.schema[state.table]?.view !== "platform") return MODES;
+      const only = Pie.schema[state.table]?.platform;
+      const ran = new Set(Pie.store.snapshot(state.release)
+        .filter((r) => Pie.store.isMeasured(r) && (!only || platformOf(Pie.store.index.hardware[r.hardware] || {})?.id === only))
+        .map((r) => r.workload));
+      return MODES.filter((m) => m.limit || ran.has(m.workload));
     },
 
     onChange(handler) {
@@ -341,8 +348,9 @@ window.Pie = window.Pie || {};
     // returns the number of machines and models shown, for the toolbar subtitle
     render(state) {
       const all = Pie.store.snapshot(state.release);
-      if (!MODES.some((m) => m.id === state.platform.mode)) state.platform.mode = "decode";
-      const mode = MODES.find((m) => m.id === state.platform.mode);
+      const modes = Pie.platform.metrics(state);
+      if (!modes.some((m) => m.id === state.platform.mode)) state.platform.mode = "decode";
+      const mode = modes.find((m) => m.id === state.platform.mode);
       const metric = mode.metric;
       const base = Pie.engines.primary;
       const snapshot = all.filter((r) => r.workload === mode.workload);

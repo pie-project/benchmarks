@@ -51,7 +51,7 @@ window.Pie = window.Pie || {};
 
   // a platform page's setup, when the window is too narrow for its sidebar: the sidebar's groups, a checkmark on the current one
   const metricMenu = (state) => {
-    const setups = Pie.platform.metrics();
+    const setups = Pie.platform.metrics(state);
     return [...new Set(setups.map((m) => m.group))]
       // each phase under its heading, as the release menu groups its runs; the items then need only their own word
       .map((group) => `<div class="popover-heading">${Pie.format.escape(group)}</div>` + setups.filter((m) => m.group === group)
