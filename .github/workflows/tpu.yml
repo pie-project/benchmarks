@@ -15,6 +15,7 @@ on:
       tier: { description: "matrix tier the job is planned from (nightly, or weekly for a release's Raw rows)", required: false, default: "nightly" }
       workloads: { description: "comma-separated workload ids (empty: every workload of the tier)", required: false, default: "" }
       artifacts: { description: "comma-separated artifact ids (empty: every one that runs on the TPU)", required: false, default: "" }
+      engines: { description: "comma-separated engines (empty: pie, vllm and sglang)", required: false, default: "" }
       tag: { description: "a tag for the site (0.5.3-b5); empty: main-<sha>", required: false, default: "" }
       zone: { description: "Cloud TPU zone with v6e (us-east5-b, us-east1-d, europe-west4-a, ...)", required: false, default: "us-east5-b" }
 concurrency: { group: tpu, cancel-in-progress: false }  # one TPU VM at a time
@@ -82,6 +83,7 @@ jobs:
           args=()
           for w in $(echo "${{ github.event.inputs.workloads }}" | tr ',' ' '); do args+=(--workload "$w"); done
           for a in $(echo "${{ github.event.inputs.artifacts }}" | tr ',' ' '); do args+=(--artifact "$a"); done
+          for e in $(echo "${{ github.event.inputs.engines }}" | tr ',' ' '); do args+=(--engine "$e"); done
           .venv/bin/pie-evals jobs --tier "${{ github.event.inputs.tier || 'nightly' }}" --pie-commit "$C" --platform tpu-v6e-1 --out jobs "${args[@]}"
           n=$(jq '.include | length' jobs/gh-matrix.json)
           [ "$n" = 1 ] || { echo "::error::expected one tpu-v6e-1 job, the plan has $n"; exit 1; }

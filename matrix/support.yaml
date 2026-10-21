@@ -60,6 +60,10 @@ unsupported:
   # "view size is not compatible with input tensor's size and stride" / "shape '[-1, 1024]' is invalid" (L40S, 4090, 5090, A100 x2)
   - when: {engine: sglang, family: gemma4, not_backend: xla}  # the TPU runs sglang-jax, its own codebase
     reason: "SGLang 0.5.20 gemma-4 crashes in its attention/view path on every card tried; revisit at the next pin"
+  # sglang-jax 0.1.0rc0 loads only the gemma-4 layout it was written for: E2B/E4B die at startup on
+  # "'>=' not supported between 'int' and 'NoneType'" (no global KV heads), 12B on model type gemma4_unified (b5 39575054600)
+  - when: {engine: sglang, family: gemma4, backend: xla}
+    reason: "sglang-jax 0.1.0rc0 cannot load the gemma-4 E2B/E4B/12B checkpoints; revisit at the next pin"
   # SGLang 0.5.20 has no mxfp4 MoE kernel before Hopper: gpt-oss-20b decodes through a dequant fallback —
   # A100 ss-512-256 12 tok/s and lc-8k 5 tok/s (nightly 36082960398 s05, two cells ate the shard's hour),
   # 4090 ss 25 tok/s; the H100 (1189 tok/s at c64) and Blackwell cards keep the baseline
