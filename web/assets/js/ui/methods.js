@@ -32,8 +32,37 @@ window.Pie = window.Pie || {};
   const ms = (s) => `${(s * 1e3).toFixed(s * 1e3 >= 10 ? 0 : 2)} ms`;
   const gb = (n) => `${n.toFixed(2)} GB`;
 
-  // a formula in words, numbered as a paper numbers its equations: the result, its terms, and the works it rests on
-  const eq = (result, terms, cites = []) => ({ result, terms, cites });
+  // a formula as a paper typesets it: the result's name, the equation in symbols, and the works it rests on
+  const eq = (result, math, cites = []) => ({ result, math, cites });
+
+  // each quantity's symbol, as a paper's notation table states them: a letter, italic, with an upright subscript; the
+  // symbol names its quantity on hover
+  const SYM = {
+    "Memory time": ["T", "mem"], "Math time": ["T", "math"], "Interconnect time": ["T", "link"],
+    "Weights read": ["W"], "Weights touched": ["W"], "Cache read": ["C"], "Caches read": ["C"], "Prompt cache": ["C"],
+    "Memory bandwidth": ["B", "mem"], "Active body": ["N", "act"], "Output head": ["N", "head"], "Peak FLOPS": ["F"],
+    "Layers": ["L"], "Link latency": ["τ"], "Activations exchanged": ["A"], "Link bandwidth": ["B", "link"],
+    "Limit": ["R"], "Raw Decode": ["R", "raw"], "Prompt tokens": ["P"],
+    "Tokens per step": ["E"], "Acceptance": ["α"], "Drafts": ["k"], "Verify time": ["T", "verify"],
+    "Draft time": ["T", "draft"], "Drafter weights read": ["W", "draft"], "Step time": ["T", "step"],
+    "Requests": ["b"], "Bandwidth bound": ["R", "mem"], "Compute bound": ["R", "math"], "Interconnect bound": ["R", "link"],
+    "Arithmetic per output token": ["Q", "tok"],
+  };
+  const v = (name) => {
+    const [base, sub] = SYM[name];
+    return `<span class="m-var" title="${name}"><i>${base}</i>${sub ? `<sub>${sub}</sub>` : ""}</span>`;
+  };
+  const o = (x) => `<span class="m-op">${x}</span>`;
+  const fr = (num, den) => `<span class="m-frac"><span class="m-num">${num}</span><span class="m-den">${den}</span></span>`;
+  // brackets grow to the height of a fraction they hold, as typeset brackets do
+  const par = (x) => {
+    const big = x.includes("m-frac") ? " is-big" : "";
+    return `<span class="m-paren${big}">(</span>${x}<span class="m-paren${big}">)</span>`;
+  };
+  const fn = (name, ...args) => `<span class="m-fn">${name}</span>${par(args.join(`<span class="m-comma">,</span>`))}`;
+  const sum = (...xs) => xs.join(o("+"));
+  const times = (...xs) => xs.join(o("·"));
+  const link = `2${v("Layers")}${par(sum(v("Link latency"), fr(v("Activations exchanged"), v("Link bandwidth"))))}`;
 
   // the effect of a simplification on the limit, as one quiet tag on its row
   const EFFECT = { up: "Raises the limit", down: "Lowers the limit", small: "Under 1%", choice: "Choice" };
@@ -45,10 +74,10 @@ window.Pie = window.Pie || {};
       id: "decode",
       lede: "One request decodes one token at a time. Each token reads the model's active weights and its context from memory and does two operations per active weight. The limit is whichever of the two takes longer.",
       equations: [
-        eq("Memory time", ["(", "Weights read", "+", "Cache read", ")", "÷", "Memory bandwidth"], ["roofline", "shazeer"]),
-        eq("Math time", ["2", "×", "(", "Active body", "+", "Output head", ")", "÷", "Peak FLOPS"], ["kaplan"]),
-        eq("Interconnect time", ["2", "×", "Layers", "×", "(", "Link latency", "+", "Activations exchanged", "÷", "Link bandwidth", ")"], ["megatron"]),
-        eq("Limit", ["1 token", "÷", "max(", "Memory time", ",", "Math time", ",", "Interconnect time", ")"], ["roofline"]),
+        eq("Memory time", fr(sum(v("Weights read"), v("Cache read")), v("Memory bandwidth")), ["roofline", "shazeer"]),
+        eq("Math time", fr(`2${par(sum(v("Active body"), v("Output head")))}`, v("Peak FLOPS")), ["kaplan"]),
+        eq("Interconnect time", link, ["megatron"]),
+        eq("Limit", fr("1", fn("max", v("Memory time"), v("Math time"), v("Interconnect time"))), ["roofline"]),
       ],
       why: [
         "Decode reads every active weight once per token, so memory bandwidth, not arithmetic, sets the limit {roofline} {pope}.",
@@ -83,16 +112,16 @@ window.Pie = window.Pie || {};
       id: "spec",  // the setup pop-up's id for Spec Decode, so picking it opens this chapter
       lede: "A small drafter proposes the next few tokens and the model checks all of them in one pass, keeping each one it agrees with. More drafts cost more and add less, so the limit is the draft width that gives the most tokens per second.",
       equations: [
-        eq("Tokens per step", ["(", "1", "−", "a^(k+1)", ")", "÷", "(", "1", "−", "a", ")"], ["leviathan"]),
-        eq("Verify time", ["max(", "Memory time", ",", "(", "k", "+", "1", ")", "×", "Math time", ")"], ["roofline"]),
-        eq("Draft time", ["Drafter weights read", "÷", "Memory bandwidth"], ["roofline"]),
-        eq("Step time", ["Verify time", "+", "Draft time"], ["leviathan", "chen"]),
-        eq("Limit", ["max(", "Raw Decode", ",", "max over k(", "Tokens per step", "÷", "Step time", ")", ")"], ["leviathan"]),
+        eq("Tokens per step", fr(`1${o("−")}${v("Acceptance")}<sup>${v("Drafts")}+1</sup>`, `1${o("−")}${v("Acceptance")}`), ["leviathan"]),
+        eq("Verify time", fn("max", v("Memory time"), `${par(sum(v("Drafts"), "1"))}${v("Math time")}`), ["roofline"]),
+        eq("Draft time", fr(v("Drafter weights read"), v("Memory bandwidth")), ["roofline"]),
+        eq("Step time", sum(v("Verify time"), v("Draft time")), ["leviathan", "chen"]),
+        eq("Limit", fn("max", v("Raw Decode"), `<span class="m-limit"><span class="m-fn">max</span><span class="m-under">${v("Drafts")}</span></span>${fr(v("Tokens per step"), v("Step time"))}`), ["leviathan"]),
       ],
-      symbols: "k is the number of drafted tokens per step and a the chance that each is accepted. Memory time and Math time are Raw Decode's. A block drafter proposes all k drafts in one pass, so its Draft time is one read of its weights; a drafter that proposes one token at a time pays k of them. The limit tries every k from 1 to 16 and keeps the fastest, and falls back to Raw Decode when no k pays.",
+      symbols: "k is the number of drafted tokens per step and α the chance that each is accepted. Memory time and Math time are Raw Decode's. A block drafter proposes all k drafts in one pass, so its Draft time is one read of its weights; a drafter that proposes one token at a time pays k of them. The limit tries every k from 1 to 16 and keeps the fastest, and falls back to Raw Decode when no k pays.",
       why: [
         "One pass checks k + 1 tokens for one read of the weights, and greedy verification keeps the output unchanged {leviathan} {chen}.",
-        "Draft k only counts if every draft before it was accepted, so each extra draft adds a^k tokens: at 70%, four drafts keep 2.8 tokens, eight 3.2 and sixteen 3.3, the most any k can give being 1 ÷ (1 − a).",
+        "Draft k only counts if every draft before it was accepted, so each extra draft adds α^k tokens: at 70%, four drafts keep 2.8 tokens, eight 3.2 and sixteen 3.3, the most any k can give being 1 ÷ (1 − α).",
         "Decode is memory-bound, so the first extra rows of a verify are nearly free. Once (k + 1) × Math time passes Memory time, every row costs its arithmetic and wider drafts lose. Many requests at once reach that point at a smaller k, which is why engines draft less, or not at all, under load.",
         "a is measured, not given: over a run, a = accepted drafts ÷ (accepted drafts + rejections), counting one rejection for each step that stopped before its last draft. The drafter's authors report it for their benchmarks, but it changes with the prompt, so an engine reads it from its own steps.",
       ],
@@ -131,10 +160,10 @@ window.Pie = window.Pie || {};
       id: "batching",
       lede: "Many requests decode together and share each read of the weights. Adding requests raises the speed until the arithmetic runs out; from there it stays flat.",
       equations: [
-        eq("Bandwidth bound", ["Requests", "×", "Memory bandwidth", "÷", "(", "Weights read", "+", "Caches read", ")"], ["roofline", "pope"]),
-        eq("Compute bound", ["Peak FLOPS", "÷", "Arithmetic per output token"], ["kaplan"]),
-        eq("Interconnect bound", ["Requests", "÷", "Interconnect time"], ["megatron"]),
-        eq("Limit", ["min(", "Bandwidth bound", ",", "Compute bound", ",", "Interconnect bound", ")"], ["roofline"]),
+        eq("Bandwidth bound", fr(times(v("Requests"), v("Memory bandwidth")), sum(v("Weights read"), v("Caches read"))), ["roofline", "pope"]),
+        eq("Compute bound", fr(v("Peak FLOPS"), v("Arithmetic per output token")), ["kaplan"]),
+        eq("Interconnect bound", fr(v("Requests"), v("Interconnect time")), ["megatron"]),
+        eq("Limit", fn("min", v("Bandwidth bound"), v("Compute bound"), v("Interconnect bound")), ["roofline"]),
       ],
       symbols: "The arithmetic per output token is 2 × (active body + output head), plus each request's prompt, 2 × active body per prompt token, spread over its answer: the prompt uses the same FLOPS but does not count as output.",
       why: [
@@ -176,10 +205,10 @@ window.Pie = window.Pie || {};
       id: "prefill",
       lede: "The whole prompt goes through in one pass. The weights are read once for all of its tokens, so arithmetic, not memory, sets the speed.",
       equations: [
-        eq("Memory time", ["(", "Weights touched", "+", "Prompt cache", ")", "÷", "Memory bandwidth"], ["roofline"]),
-        eq("Math time", ["2", "×", "(", "Active body", "×", "Prompt tokens", "+", "Output head", ")", "÷", "Peak FLOPS"], ["kaplan"]),
-        eq("Interconnect time", ["2", "×", "Layers", "×", "(", "Link latency", "+", "Activations exchanged", "÷", "Link bandwidth", ")"], ["megatron"]),
-        eq("Limit", ["Prompt tokens", "÷", "max(", "Memory time", ",", "Math time", ",", "Interconnect time", ")"], ["roofline"]),
+        eq("Memory time", fr(sum(v("Weights touched"), v("Prompt cache")), v("Memory bandwidth")), ["roofline"]),
+        eq("Math time", fr(`2${par(sum(times(v("Active body"), v("Prompt tokens")), v("Output head")))}`, v("Peak FLOPS")), ["kaplan"]),
+        eq("Interconnect time", link, ["megatron"]),
+        eq("Limit", fr(v("Prompt tokens"), fn("max", v("Memory time"), v("Math time"), v("Interconnect time"))), ["roofline"]),
       ],
       why: [
         "The whole prompt goes through one pass that reads the weights once, so prefill is compute-bound {roofline} {kaplan}.",
@@ -264,49 +293,9 @@ window.Pie = window.Pie || {};
       return `<a class="cite" href="${r.url}" target="_blank" rel="noopener" title="${esc(`${r.authors} ${r.title}. ${r.venue}, ${r.year}`)}">${esc(author)} ${r.year}</a>`;
     };
     const prose = (text) => esc(text).replace(/\s?\{(\w+)\}/g, (_, key) => (REFS[key] ? cite(key) : ""));
-    const OPS = /^([×÷+−(),]|max\(|min\(|max over k\()$/;
-    const term = (t) => (OPS.test(t) ? `<span class="eqn-op">${esc(t)}</span>` : `<span>${esc(t).replace(/\^\((.+)\)$/, "<sup>$1</sup>")}</span>`);
-
-    // the page as apple.com sets a feature: the workload's name on its banner, the formulas
-    // as rows, and the check as four figures
-    const kindOf = (e, n) => (n === c.equations.length - 1 ? "limit" : /memory|read|draft/i.test(e.result) ? "read" : /math|verify/i.test(e.result) ? "math" : "other");
-    // a formula breaks only before an operator, as maths is typeset: each operator travels with
-    // the term after it, and the citations with the last one
-    const units = (e) => {
-      // a function of several arguments (max, min) after the last operator: on a phone its arguments stack in a
-      // column that starts after its bracket, one a line; on a wider screen they read inline
-      const f = e.terms.findIndex((t) => /^[a-z]+\($/.test(t));
-      if (f > 1 && e.terms.at(-1) === ")" && e.terms.includes(",")) {
-        const args = [[]];
-        e.terms.slice(f + 1, -1).forEach((t) => (t === "," ? args.push([]) : args.at(-1).push(t)));
-        const head = e.terms.slice(0, f - 1).map((t, n) => (n ? " " : "") + term(t)).join("");
-        const cites = asTable ? "" : `<span class="eqn-cites">${e.cites.map(cite).join("")}</span>`;
-        const col = args.map((a, n) => `<span class="lim-arg">${a.map(term).join(" ")}${n < args.length - 1 ? term(",") : `${term(")")}${cites}`}</span>`).join(" ");
-        return `<span class="lim-unit">${head}</span> <br class="lim-turn"><span class="lim-unit">${term(e.terms[f - 1])} ${term(e.terms[f])}</span><span class="lim-args">${col}</span>`;
-      }
-      const out = [];
-      // on a phone every formula turns its line at the same place: before its last operator outside brackets
-      let depth = 0, last = 0;
-      e.terms.forEach((t, n) => {
-        const piece = (n === 0 || /^[),]$/.test(t) || /\($/.test(e.terms[n - 1]) ? "" : " ") + term(t);
-        if (/\($/.test(t)) depth++;
-        else if (t === ")") depth--;
-        if (n === 0 || /^[×÷+−]$/.test(t)) {
-          if (depth === 0 && n > 0) last = out.length;
-          out.push(piece.trimStart());
-        } else out[out.length - 1] += piece;
-      });
-      if (!asTable) out[out.length - 1] += `<span class="eqn-cites">${e.cites.map(cite).join("")}</span>`;
-      // when that last operator opens a bracket, its + and ÷ inside turn too, so the bracket reads one term a line
-      const turns = new Set(last ? [last] : []);
-      if (last && /<span class="eqn-op">\(<\/span>/.test(out[last]))
-        out.forEach((u, n) => { if (n > last && /^<span class="eqn-op">[+÷]<\/span>/.test(u)) turns.add(n); });
-      return out.map((u, n) => `${turns.has(n) ? '<br class="lim-turn">' : ""}<span class="lim-unit">${u}</span>`).join(" ");
-    };
-    // the formulas as rows of the site's data table: the term, the formula, and the works it rests on in its own column
-    const asTable = true;
+    // the formulas as rows of the site's data table: the result's name, then its equation in symbols
     const formulaRows = c.equations.map((e) => `
-      <tr><td class="lim-term">${esc(e.result)}</td><td class="lim-formula">${units(e)}</td></tr>`).join("");
+      <tr><td class="lim-term">${esc(e.result)}</td><td class="lim-formula"><span class="m-eq">${v(e.result)}<span class="m-rel">=</span>${e.math}</span></td></tr>`).join("");
 
     // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
     const bar = `
