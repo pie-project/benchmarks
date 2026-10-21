@@ -32,7 +32,7 @@ from pie_evals.schema import PlatformSpec
 
 REST = "https://rest.runpod.io/v1"
 #: the v2 API: its pod create takes GPU types the v1 schema's enum does not list yet (AMD Instinct MI350 OAM)
-REST_V2 = "https://rest.runpod.io/v2"
+REST_V2 = "https://api.runpod.io/v2"
 DEFAULT_IMAGE = "pieproject/runpod-ci-runner:latest"
 #: the actions runner the startup script installs on an image that has none (runpod-ci-runner's pin)
 RUNNER_VERSION = "2.337.0"
