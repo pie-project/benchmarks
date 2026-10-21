@@ -21,8 +21,8 @@ if [ -n "$data" ] && [ -z "$(lsblk -no MOUNTPOINT "$data" | tr -d '[:space:]')" 
   df -h "$HOME/.cache"
 fi
 
-sudo apt-get update -q
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
+sudo apt-get -o DPkg::Lock::Timeout=900 update -q  # a fresh VM's unattended-upgrades holds the lock for minutes
+sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=900 install -y -q --no-install-recommends \
   build-essential cmake ninja-build pkg-config libssl-dev git curl ca-certificates python3-yaml jq
 command -v rustup >/dev/null || curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none
 command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
