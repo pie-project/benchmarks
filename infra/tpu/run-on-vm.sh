@@ -71,7 +71,7 @@ for p in "${pids[@]}"; do
 done
 # a slice with more than one chip on the host (v4-8, v5p-8, TPU7x 2x2x1: 4 each): every engine sees chip 0
 # only, so pie, vLLM (tp1) and SGLang-JAX (whose default mesh must equal the device count) all run on one chip
-chips=$(ls -d /dev/accel* 2>/dev/null | wc -l)
+chips=$(ls -d /dev/accel* 2>/dev/null | wc -l || true)
 [ "$chips" -gt 0 ] || chips=$(ls /dev/vfio 2>/dev/null | grep -cv '^vfio$' || true)
 if [ "${chips:-0}" -gt 1 ]; then
   echo "$chips TPU chips on this host: the engines see chip 0 only"
