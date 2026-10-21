@@ -435,12 +435,6 @@
 .toolbar > .search-field { order: 2; }
 .toolbar > .search-cancel { order: 3; }
 .toolbar > .release-picker, .toolbar > .view-picker { order: 4; }  /* the run last, at the trailing edge */
-/* the release is a choice, not the window's main action: a plain pop-up button in the bar's grey, as Raw Decode is */
-.release-picker.is-prominent { padding: 0 8px 0 10px; background: var(--color-fill); }
-.release-picker.is-prominent:hover,
-.release-picker.is-prominent[aria-expanded="true"] { background: var(--color-fill-secondary); }
-.release-picker.is-prominent .release-picker-value { color: var(--color-label); }
-.release-picker.is-prominent .popup-chevron { stroke: var(--color-label-secondary); }
 /* the theme button sits in the bar's grey, as Latest and Search do, and darkens under the pointer as they do */
 .toolbar > .theme-toggle { background: var(--color-fill); }
 .toolbar > .theme-toggle:hover { background: var(--color-fill-secondary); }
