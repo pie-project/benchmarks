@@ -48,6 +48,7 @@ def main() -> None:
         import subprocess, time
         run = os.path.join(debug, time.strftime("%H%M%S") + "-" + str(os.getpid()))
         os.makedirs(run, exist_ok=True)
+        os.makedirs(debug, exist_ok=True)
         env = dict(os.environ, PIE_XLA_DUMP=os.path.join(run, "dump"), PIE_XLA_CAPTURE=os.path.join(run, "steps"))
         os.makedirs(env["PIE_XLA_CAPTURE"], exist_ok=True)
         if "--config" in argv:
