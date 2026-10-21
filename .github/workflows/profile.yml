@@ -22,6 +22,8 @@ jobs:
       HF_TOKEN: "${{ secrets.HF_TOKEN }}"
     steps:
       - uses: actions/checkout@v4
+      # the runner's service PATH may lack ~/.local/bin (uv), ~/.cargo/bin (cargo, to build pie) and Homebrew, as tier.yml says
+      - run: printf '%s\n' "$HOME/.local/bin" "$HOME/.cargo/bin" /opt/homebrew/bin >> "$GITHUB_PATH"
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
       - name: splash
