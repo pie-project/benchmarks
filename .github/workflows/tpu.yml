@@ -104,7 +104,7 @@ jobs:
         env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}" }
         run: |
           tar czf /tmp/pie-evals.tgz --exclude=.git --exclude=.venv .  # no .git: provenance reads PIE_EVALS_HARNESS_COMMIT
-          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true )
+          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; echo "export PIE_XLA_TIMING=1 PIE_XLA_DEBUG_DIR=\$HOME/xla-debug RUST_LOG=info,engine_xla=debug" >> /tmp/vm.env; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true )
           # the first ssh pushes the key; retried while the VM's sshd and the key settle
           for i in 1 2 3 4 5; do
             gcloud compute tpus tpu-vm scp /tmp/pie-evals.tgz /tmp/vm.env "$TPU_NAME": --project "$GCP_PROJECT" --zone "$TPU_ZONE" \
@@ -128,6 +128,8 @@ jobs:
           mkdir -p out
           gcloud compute tpus tpu-vm scp --recurse "$TPU_NAME:pie-evals/out/${{ steps.jobs.outputs.job_id }}" out/ \
             --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet || echo "::warning::no node output on the VM"
+          gcloud compute tpus tpu-vm ssh "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet --command 'tar czf ~/xla-debug.tgz -C ~ xla-debug' || true
+          gcloud compute tpus tpu-vm scp "$TPU_NAME:xla-debug.tgz" out/ --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet || true
           gcloud compute tpus tpu-vm scp "$TPU_NAME:run.log" out/ --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet || true
       - uses: actions/upload-artifact@v4
         if: always() && steps.jobs.outputs.job_id != ''
@@ -135,6 +137,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: tpu-run-log, path: out/run.log, retention-days: 30, if-no-files-found: ignore }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: xla-debug, path: out/xla-debug.tgz, retention-days: 7, if-no-files-found: ignore }
 
   # its own job, so the VM is deleted even when the bench job's runner is lost or the job times out
   teardown:
@@ -152,30 +157,3 @@ jobs:
           else
             echo "no VM $TPU_NAME"
           fi
-
-  # the Mac reaches the database on liszt over the tailnet; GitHub's runners do not
-  collect:
-    needs: [decide, bench]
-    if: always() && needs.decide.outputs.run == 'true' && needs.bench.outputs.job_id != ''
-    runs-on: [self-hosted, macos, m5-max-64g]
-    env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}", C: "${{ needs.decide.outputs.commit }}" }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
-      - run: uv venv && uv pip install -e ".[orchestrate]"
-      - uses: actions/download-artifact@v4
-        with: { pattern: "out-*", path: out }
-      - name: import into the database
-        id: import
-        run: |
-          shopt -s nullglob
-          dirs=(out/out-*)
-          n=0; for d in "${dirs[@]}"; do [ -s "$d/records.jsonl" ] && n=$((n + 1)); done
-          [ "$n" -gt 0 ] || { echo "::error::no records from the TPU"; exit 1; }
-          T="${{ github.event.inputs.tag }}"
-          .venv/bin/pie-evals collect --tier "${{ github.event.inputs.tier || 'nightly' }}" --tag "${T:-main-${C:0:9}}" --tag-kind manual "${dirs[@]}"
-          mkdir -p last && echo "$C" > last/commit.txt
-      # what the next scheduled run compares against
-      - uses: actions/upload-artifact@v4
-        if: steps.import.outcome == 'success'
-        with: { name: tpu-last-commit, path: last/commit.txt, retention-days: 90 }
