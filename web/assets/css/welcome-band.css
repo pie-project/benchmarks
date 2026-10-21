@@ -156,7 +156,7 @@
 .welcome-table tbody td { height: 40px; }  /* the platform header row's height on a platform page */
 /* iPhone: the platform, its machines and its status fit the width; the stack is on the platform's own page */
 @media (max-width: 899px) {
-  .welcome-table tbody td { height: 44px; }
+  .welcome-table tbody td { height: var(--row-height); }  /* 40px, as every table on a phone */
 }
 /* the list: the platform takes the row, its machine count a grey label against the right edge, on every width */
 .welcome-table .welcome-name { width: 100%; }

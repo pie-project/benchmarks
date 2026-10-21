@@ -383,7 +383,7 @@
   .platform-table tbody td { height: var(--row-height); }
   .platform-col { gap: 6px; }
   .platform-group-row .platform-group-name > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .platform-table tbody tr.platform-group-row th { height: 44px; }
+  .platform-table tbody tr.platform-group-row th { height: var(--row-height); }
   .platform-empty { padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
 }
 
@@ -409,6 +409,9 @@
   .platform-table th.is-overall { position: static; left: auto; }
   .platform-table thead th.platform-corner,
   .platform-table thead th.is-overall { position: sticky; top: 0; }
+  /* Hardware's head stays pinned to the top with the rest of the header, as Overall's does; it only scrolls sideways */
+  .platform-table thead th.platform-corner:not(.platform-group-head):not(.is-overall) { position: sticky; left: auto; }
+  .platform-table thead tr.platform-head-row th.platform-corner { top: var(--maker-row, 40px); }
 }
 
 /* every number column, Overall included, has one width on desktop too; a long name ends in an ellipsis */
