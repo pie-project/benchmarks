@@ -218,6 +218,15 @@ def drop_tag(obj, tag):
     click.echo(f"{tag}: {obj['store'].drop_tag(tag)} records deleted")
 
 
+@main.command("move-tag")
+@click.argument("src")
+@click.argument("dst")
+@click.pass_obj
+def move_tag(obj, src, dst):
+    """Move SRC's good rows into DST for the cells DST has no good row for."""
+    click.echo(f"{src} -> {dst}: {obj['store'].move_tag(src, dst)} records moved")
+
+
 @main.command("drop-engine")
 @click.argument("engine")
 @click.pass_obj
