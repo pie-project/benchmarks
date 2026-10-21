@@ -160,13 +160,13 @@ window.Pie = window.Pie || {};
     const batchPeak = batchBound ? batchBound.tps : null;
     // Spec Decode: the limit at the best draft width for this machine and model, at the bar's acceptance
     const specBound = mode.id === "spec" ? Pie.specCeiling?.(c.pie) : null;
-    // Spec Decode in Efficiency: each engine's own Raw speed, then with speculation, and what drafting added or cost
+    // Spec Decode in Efficiency: what drafting added to each engine's own Raw speed, or cost it
     const specGain = (r) => {
       const plain = raw.find((x) => x.hardware === r.hardware && x.model === r.model && x.engine === r.engine)?.[metric.key];
       if (!plain) return esc(value(r[metric.key], metric.unit));
       const delta = r[metric.key] - plain;
       const sign = delta >= 0 ? "+" : "−";
-      return `${esc(fmtNum(plain))} → ${esc(value(r[metric.key], metric.unit))}<span class="tip-share ${delta >= 0 ? "is-up" : "is-down"}">${sign}${esc(fmtNum(Math.abs(delta)))}</span>`;
+      return `<span class="tip-delta ${delta >= 0 ? "is-up" : "is-down"}">${sign}${esc(value(Math.abs(delta), metric.unit))}</span>`;
     };
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
     // Engines compares the engines only; Roofline adds each one's share of the bound, the bounds and the chart
