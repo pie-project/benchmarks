@@ -15,6 +15,7 @@ import subprocess
 from pie_evals.schema import EngineName, WorkloadSpec
 
 from .base import Engine, register
+from .served import ServedEngine
 from .shape import max_model_len_for, workload_concurrency
 
 
@@ -26,6 +27,13 @@ class SglangEngine(Engine):
     #: Blackwell, nightly 35921789513) would abort every cell; the FlashInfer
     #: kernels come precompiled (baselines.ensure_flashinfer_aot).
     env_defaults = {"SGL_ENABLE_JIT_DEEPGEMM": "0", "SGLANG_ENABLE_JIT_DEEPGEMM": "0"}  # 0.5.20 reads the second, warns on the first
+
+    def __new__(cls, *args, **kwargs):
+        # the TPU build (sglang-jax) has no offline engine sglang_bench.py can drive: it is served
+        platform = kwargs.get("platform")
+        if cls is SglangEngine and platform is not None and str(platform.backend) == "xla":
+            return SglangTpuEngine(*args, **kwargs)  # not an SglangEngine: Python skips __init__ on the return
+        return super().__new__(cls)
 
     def default_env(self) -> dict[str, str]:
         # sgl_kernel_jit builds land on the volume instead of the pod's
@@ -139,3 +147,54 @@ class SglangEngine(Engine):
 
     def leftover_process_names(self) -> list[str]:
         return ["sglang::scheduler", "sglang::detokenizer", "sglang::scheduler_TP0"]
+
+
+class SglangTpuEngine(ServedEngine):
+    """SGLang's TPU build: ``python -m sgl_jax.launch_server`` (sgl-project/sglang-jax, at the
+    engines.yaml backend pin) on the bf16 checkpoint, streamed through ``openai_bench.py`` the way
+    llama.cpp and mlx-lm are. Its warmup and JIT precompile run before the server answers."""
+
+    name = EngineName.SGLANG
+    health_path = "/health"
+    exact_length = "ignore_eos"
+
+    def server_python(self) -> str:
+        if os.environ.get("SGLANG_PY"):
+            return os.environ["SGLANG_PY"]
+        from pie_evals.node.baselines import baseline_python
+
+        pin = self.recipe.get("pin")
+        py = baseline_python("sglang", pin, backend="xla") if pin else None
+        return str(py) if py else "python3"
+
+    def model_arg(self) -> str:
+        return str(self.recipe.get("snapshot_dir") or self.artifact.base_model)
+
+    def server_cmd(self, port: int, slots: int, context: int) -> list[str]:
+        r = self.recipe
+        cmd = [
+            self.server_python(), "-m", "sgl_jax.launch_server", "--model-path", self.model_arg(),
+            "--host", "127.0.0.1", "--port", str(port), "--device", "tpu", "--tp-size", str(max(1, int(self.mode.tp))),
+            "--context-length", str(context), "--max-running-requests", str(slots),
+            # a cold prompt every request, as on every other engine
+            "--disable-radix-cache", "--log-level", "warning",
+        ]
+        if r.get("gpu_mem_util") is not None:
+            cmd += ["--mem-fraction-static", str(r["gpu_mem_util"])]
+        if r.get("page_size"):
+            cmd += ["--page-size", str(int(r["page_size"]))]
+        return cmd
+
+    def version(self) -> str:
+        try:
+            out = subprocess.run(
+                [self.server_python(), "-c", "import sgl_jax; print(sgl_jax.__version__)"],
+                capture_output=True, text=True, timeout=120, check=False,
+            )
+            v = out.stdout.strip().splitlines()
+            return v[-1] if out.returncode == 0 and v else "unknown"
+        except Exception:
+            return "unknown"
+
+    def leftover_process_names(self) -> list[str]:
+        return ["sglang::scheduler", "sglang::detokenizer", "sgl_jax"]

@@ -1169,15 +1169,46 @@ def test_vllm_on_the_tpu_runs_its_tpu_build(tmp_path, monkeypatch):
     assert argv[2] == "tput" and argv[argv.index("--concurrency") + 1] == "1"
 
 
-def test_the_tpu_runs_pie_and_vllm_raw_only():
+def test_the_tpu_runs_pie_vllm_and_sglang_raw_only():
     from pie_evals.plan.matrix import Matrix
     from pie_evals.schema import Tier
 
     m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
-    tpu = {(str(c.engine), c.artifact.id, c.workload.id) for c in m.runnable(Tier.WEEKLY) if c.platform.id == "tpu-v6e-1"}
+    cells = [c for c in m.runnable(Tier.WEEKLY) if c.platform.id == "tpu-v6e-1"]
+    tpu = {(str(c.engine), c.artifact.id, c.workload.id) for c in cells}
     assert ("vllm", "qwen3.5-0.8b-bf16", "raw-512-256") in tpu and ("pie", "qwen3.5-0.8b-xla", "raw-512-256") in tpu
-    assert {e for e, _, _ in tpu} == {"pie", "vllm"}
-    assert {(a, w) for e, a, w in tpu if e == "vllm"} == {("qwen3.5-0.8b-bf16", "raw-512-256")}
+    assert {e for e, _, _ in tpu} == {"pie", "vllm", "sglang"}
+    more = {"qwen3-0.6b-tpu", "gemma-4-e2b-tpu", "gemma-4-e4b-tpu", "gemma-4-12b-tpu"}
+    for engine in ("vllm", "sglang"):
+        assert {(a, w) for e, a, w in tpu if e == engine} == {(a, "raw-512-256") for a in more | {"qwen3.5-0.8b-bf16"}}
+    # the other models are Raw rows, on pie too
+    assert {(a, w) for e, a, w in tpu if e == "pie" and a in more} == {(a, "raw-512-256") for a in more}
+    # sglang-jax is versioned apart from sglang
+    assert {c.engine_version for c in cells if str(c.engine) == "sglang"} == {m.engines["sglang"].backend_pins["xla"]}
+
+
+def test_sglang_on_the_tpu_serves_its_jax_build(tmp_path, monkeypatch):
+    from pie_evals.node import baselines
+    from pie_evals.node.engines.sglang import SglangTpuEngine
+
+    monkeypatch.setenv("PIE_EVALS_CACHE", str(tmp_path))
+    monkeypatch.delenv("SGLANG_PY", raising=False)
+    tpu = platform(Backend.XLA, "trillium", count=1)
+    assert baselines.BACKEND_SPECS[("sglang", "xla")]("0.1.0rc0") == ["sglang-jax[tpu]==0.1.0rc0"]
+    venv = baselines.venv_dir("sglang", "0.1.0rc0", backend="xla")
+    assert venv.name == "venv-sglang-tpu-0.1.0rc0"
+    (venv / "bin").mkdir(parents=True)
+    (venv / ".ok").write_text("0.1.0rc0\n")
+    raw = WorkloadSpec(id="raw-512-256", kind="single_stream", params={"prefill": 512, "decode": 256, "requests": 6})
+    recipe = load_recipe("sglang", "competitive", tpu, raw, family="qwen3_5")
+    eng = SglangEngine(pie_root=PIE_ROOT, artifact=artifact(), platform=tpu, mode=Mode(), recipe={**recipe, "pin": "0.1.0rc0"})
+    assert isinstance(eng, SglangTpuEngine) and eng.recipe["pin"] == "0.1.0rc0"
+    cmd = eng.server_cmd(8000, 1, max_model_len_for(raw))
+    assert cmd[:3] == [str(venv / "bin" / "python"), "-m", "sgl_jax.launch_server"]
+    assert cmd[cmd.index("--device") + 1] == "tpu" and "--disable-radix-cache" in cmd
+    assert cmd[cmd.index("--context-length") + 1] == str(max_model_len_for(raw))
+    # the CUDA build stays the offline sglang_bench.py engine
+    assert type(SglangEngine(pie_root=PIE_ROOT, artifact=artifact(), platform=platform(), mode=Mode(), recipe=recipe)) is SglangEngine
 
 
 def test_a_queued_single_stream_request_starts_when_the_one_before_it_ends():

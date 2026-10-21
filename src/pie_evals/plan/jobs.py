@@ -113,7 +113,8 @@ def make_jobs(
         for idx, shard in enumerate(shard_groups(plat_cells, budget, measured)):
             # one model per process: order by (engine, artifact, mode) so the node loads each model once
             shard.sort(key=lambda c: (str(c.engine), c.artifact.id, c.mode.key, c.program.id, c.workload.id))
-            pins = {e.id: e.pin for e in matrix.engines.values() if e.pin and any(str(c.engine) == e.id for c in shard)}
+            backend = shard[0].platform.backend.value
+            pins = {e.id: e.pin_for(backend) for e in matrix.engines.values() if e.pin_for(backend) and any(str(c.engine) == e.id for c in shard)}
             seed = f"{tier}|{plat}|{idx}|{pie_commit}|{stamp}|{label or ''}"
             job_id = f"{tier}-{plat}-s{idx:02d}-{stamp}-" + hashlib.sha256(seed.encode()).hexdigest()[:6]
             est = sum(cell_minutes(c, measured) for c in shard)

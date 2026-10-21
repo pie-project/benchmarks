@@ -149,7 +149,7 @@ def prepare_cmd(tier, matrix_dir, platforms, engines_f, programs_f, pie_root, pi
 
     engines = {(str(c.engine), str(c.platform.backend)) for c in cells}
     for e, backend in sorted(x for x in engines if x[0] in SPECS):
-        pin = m.engines[e].pin
+        pin = m.engines[e].pin_for(backend)
         try:
             ensure_baseline(e, pin, backend=backend, log=lambda m_: click.echo(m_, err=True))
             click.echo(f"ok    baseline {e}=={pin}")
