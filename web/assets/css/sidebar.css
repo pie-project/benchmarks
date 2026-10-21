@@ -27,7 +27,7 @@
   gap: 8px;
   height: var(--bar-height);
   padding: 0 8px;
-  font: 600 15px var(--font-display);
+  font: 400 15px var(--font-display);  /* the name in the regular weight, as a sidebar row reads */
   letter-spacing: -.01em;
 }
 
@@ -205,7 +205,7 @@
     height: 56px;
     padding: 0 10px;
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 400;
   }
 
   .sidebar-logo {
