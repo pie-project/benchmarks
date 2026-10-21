@@ -75,6 +75,7 @@ window.Pie = window.Pie || {};
     const v = n >= 100 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 });
     return `${v} ${unit}`;
   };
+  const fmtNum = (n) => (n >= 100 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 }));
   const EVEN = 0.045;  // under 5%, as the cell rounds it, the engines are even: run-to-run spread, not a result
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/></svg>';
   const signed = (p) => {
@@ -159,6 +160,14 @@ window.Pie = window.Pie || {};
     const batchPeak = batchBound ? batchBound.tps : null;
     // Spec Decode: the limit at the best draft width for this machine and model, at the bar's acceptance
     const specBound = mode.id === "spec" ? Pie.specCeiling?.(c.pie) : null;
+    // Spec Decode in Efficiency: each engine's own Raw speed, then with speculation, and what drafting added or cost
+    const specGain = (r) => {
+      const plain = raw.find((x) => x.hardware === r.hardware && x.model === r.model && x.engine === r.engine)?.[metric.key];
+      if (!plain) return esc(value(r[metric.key], metric.unit));
+      const delta = r[metric.key] - plain;
+      const sign = delta >= 0 ? "+" : "−";
+      return `${esc(fmtNum(plain))} → ${esc(value(r[metric.key], metric.unit))}<span class="tip-share ${delta >= 0 ? "is-up" : "is-down"}">${sign}${esc(fmtNum(Math.abs(delta)))}</span>`;
+    };
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
     // Engines compares the engines only; Roofline adds each one's share of the bound, the bounds and the chart
     const roofline = compare === "ceiling";
@@ -168,7 +177,7 @@ window.Pie = window.Pie || {};
       const note = extra === null ? "" : limit || batchPeak || specBound ? `${Math.round(extra * 100)}%` : times(extra);
       return `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
-      <span class="tip-value">${esc(value(r[metric.key], metric.unit))}${roofline ? `<span class="tip-share">${note}</span>` : ""}</span><span class="tip-when">${esc(day(r))}</span></div>`;
+      <span class="tip-value">${specBound && roofline ? specGain(r) : `${esc(value(r[metric.key], metric.unit))}${roofline ? `<span class="tip-share">${note}</span>` : ""}`}</span><span class="tip-when">${esc(day(r))}</span></div>`;
     });
     // the cell's row and column already name the setup, and the bar above the metric: the card is only the engines
     // the hardware limit closes the list as one more row, aligned with the engines': its speed at 100%, and a tag for
