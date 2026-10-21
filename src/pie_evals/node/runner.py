@@ -184,7 +184,9 @@ class NodeRunner:
         ten minutes), under the job-wide cap and the kill deadline. Nightly
         35959142812 lost a whole 60-minute shard to one hung 30-second cell
         (pie #649): the flat 5400 s cap let it run to the client's timeout."""
-        scaled = max(600.0, float(cell.workload.est_minutes) * 60.0 * 10.0, float(cell.workload.params.get("round_timeout_s") or 0))
+        # an XLA round includes the compile: vLLM's TPU build spent the whole 600 s on gemma-4-12B (b5 39575054600)
+        floor = 1800.0 if self.platform is not None and str(getattr(self.platform.backend, "value", self.platform.backend)) == "xla" else 600.0
+        scaled = max(floor, float(cell.workload.est_minutes) * 60.0 * 10.0, float(cell.workload.params.get("round_timeout_s") or 0))
         cap = max(self.job.per_cell_timeout_s, int(cell.workload.params.get("round_timeout_s") or 0))
         return int(min(cap, scaled, self.remaining_to_kill_s()))
 

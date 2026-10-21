@@ -170,6 +170,10 @@ class SglangTpuEngine(ServedEngine):
     def model_arg(self) -> str:
         return str(self.recipe.get("snapshot_dir") or self.artifact.base_model)
 
+    def api_model(self) -> str:
+        # sgl_jax's CompletionRequest requires ``model`` (tpu b5 39575054600: 400 on every request)
+        return self.model_arg()
+
     def server_cmd(self, port: int, slots: int, context: int) -> list[str]:
         r = self.recipe
         cmd = [
