@@ -400,6 +400,46 @@ window.Pie = window.Pie || {};
     return { ...best, gain: best.tps / plain.tps, plain: plain.tps, workload: workload?.id };
   };
 
+  // the acceptance field both Spec Decode bars carry, a macOS text field with its stepper, and what it predicts beside
+  // it: the tokens a step keeps at the widest draft, the number a run's mean acceptance length reads against
+  Pie.specField = () => {
+    const a = Math.min(Pie.specAlpha, 99) / 100;
+    return `
+        <label class="spec-field">
+          <span class="spec-field-label">Acceptance</span>
+          <span class="spec-input"><input type="text" inputmode="numeric" value="${Pie.specAlpha}" data-alpha aria-label="Acceptance per draft, percent"><span class="spec-unit">%</span></span>
+          <span class="spec-stepper" role="group" aria-label="Acceptance"><button type="button" data-alpha-step="1" aria-label="More"><svg viewBox="0 0 8 5" aria-hidden="true"><path d="M1 4l3-3 3 3"/></svg></button><button type="button" data-alpha-step="-1" aria-label="Less"><svg viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button></span>
+        </label>`;
+  };
+  // the acceptance a field holds, kept in range: typed, stepped a point at a time, or ten with Shift and an arrow key
+  Pie.setSpecAlpha = (value) => {
+    Pie.specAlpha = Math.min(99, Math.max(1, Math.round(Number.isFinite(value) ? value : Pie.specAlpha)));
+    return Pie.specAlpha;
+  };
+  // a field's events on a page: `changed` redraws what the acceptance feeds
+  Pie.bindSpecField = (root, changed) => {
+    root.addEventListener("input", (event) => {
+      if (!event.target.matches("[data-alpha]")) return;
+      const typed = parseFloat(event.target.value);
+      if (Number.isFinite(typed)) { Pie.setSpecAlpha(typed); changed(); }
+    });
+    root.addEventListener("change", (event) => {
+      if (event.target.matches("[data-alpha]")) event.target.value = Pie.specAlpha;
+    });
+    root.addEventListener("keydown", (event) => {
+      if (!event.target.matches("[data-alpha]") || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+      event.preventDefault();
+      Pie.setSpecAlpha(Pie.specAlpha + (event.key === "ArrowUp" ? 1 : -1) * (event.shiftKey ? 10 : 1));
+      changed();
+    });
+    root.addEventListener("click", (event) => {
+      const step = event.target.closest("[data-alpha-step]");
+      if (!step) return;
+      Pie.setSpecAlpha(Pie.specAlpha + Number(step.dataset.alphaStep));
+      changed();
+    });
+  };
+
   // batched decode on a machine: `requests` decode together, each one token a step with its logits, each with its
   // cache at the middle of its answer; each request's prompt is prefilled once, and its arithmetic is spread over the
   // steps of its answer, since it counts against the same FLOPS but not as output

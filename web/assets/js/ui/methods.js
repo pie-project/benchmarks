@@ -329,11 +329,7 @@ window.Pie = window.Pie || {};
           <button class="filter-button" id="methods-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Workload: ${c.title}`)}">${esc(c.title)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
         </span>
         ${c.id === "spec" ? `
-        <label class="spec-field">
-          <span class="spec-field-label">Acceptance</span>
-          <span class="spec-input"><input type="text" inputmode="numeric" value="${Pie.specAlpha}" data-alpha aria-label="Acceptance per draft, percent"><span class="spec-unit">%</span></span>
-          <span class="spec-stepper" role="group" aria-label="Acceptance"><button type="button" data-alpha-step="1" aria-label="More"><svg viewBox="0 0 8 5" aria-hidden="true"><path d="M1 4l3-3 3 3"/></svg></button><button type="button" data-alpha-step="-1" aria-label="Less"><svg viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button></span>
-        </label>
+        ${Pie.specField()}
         <span class="spec-field is-output" title="At the fastest draft width, for ${esc(EXAMPLE_LABEL())} with a 0.5 B block drafter. A run's mean acceptance length and its Spec over Raw speed read against these">
           <span class="spec-field-label">Expect</span>
           <output class="spec-value" data-suggest aria-live="polite">${suggestion()}</output>
@@ -370,32 +366,12 @@ window.Pie = window.Pie || {};
     }
   });
 
-  // the acceptance field: typed, or stepped a point at a time; the suggestion follows it at once
-  const setAlpha = (value) => {
-    Pie.specAlpha = Math.min(99, Math.max(1, Math.round(Number.isFinite(value) ? value : Pie.specAlpha)));
+  // the acceptance field: the suggestion follows it at once
+  Pie.bindSpecField(element, () => {
     const input = element.querySelector("[data-alpha]");
     if (input && document.activeElement !== input) input.value = Pie.specAlpha;
     const out = element.querySelector("[data-suggest]");
     if (out) out.innerHTML = suggestion();
-  };
-  element.addEventListener("input", (event) => {
-    if (event.target.matches("[data-alpha]")) {
-      const typed = parseFloat(event.target.value);
-      if (Number.isFinite(typed)) setAlpha(typed);
-    }
-  });
-  element.addEventListener("change", (event) => {
-    if (event.target.matches("[data-alpha]")) { event.target.value = Pie.specAlpha; }
-  });
-  element.addEventListener("keydown", (event) => {
-    if (!event.target.matches("[data-alpha]") || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
-    event.preventDefault();
-    setAlpha(Pie.specAlpha + (event.key === "ArrowUp" ? 1 : -1) * (event.shiftKey ? 10 : 1));
-    event.target.value = Pie.specAlpha;
-  });
-  element.addEventListener("click", (event) => {
-    const step = event.target.closest("[data-alpha-step]");
-    if (step) setAlpha(Pie.specAlpha + Number(step.dataset.alphaStep));
   });
 
   Pie.methods = {
