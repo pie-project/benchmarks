@@ -862,6 +862,20 @@ platforms:
     runner_labels: [tpu-v5p-8]
     tiers: [weekly]
     tpu: {type: v5p-8, runtime: v2-alpha-tpuv5, zones: [us-east5-a, us-central1-a, europe-west4-b], data_disk_gb: 400}
+  # the same v5p-8 slice whole: its 4 chips (380 GiB) at tp4 for the datacenter models (vLLM-TPU, SGLang-JAX)
+  - id: tpu-v5p-8-x4
+    catalog: google-cloud-tpu-v5p
+    os: linux
+    backend: xla
+    accelerator: TPU v5p (v5p-8 slice, 4 chips)
+    arch: tpu-v5p
+    count: 4
+    memory_gib: 380
+    interconnect: ici
+    tp_capable: true
+    runner_labels: [tpu-v5p-8-x4]
+    tiers: [weekly]
+    tpu: {type: v5p-8, runtime: v2-alpha-tpuv5, zones: [us-east5-a, us-central1-a, europe-west4-b], data_disk_gb: 600, all_chips: true}
   - id: tpu-v4-8
     catalog: google-cloud-tpu-v4
     os: linux

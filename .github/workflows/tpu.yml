@@ -119,7 +119,7 @@ jobs:
         env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}" }
         run: |
           tar czf /tmp/pie-evals.tgz --exclude=.git --exclude=.venv .  # no .git: provenance reads PIE_EVALS_HARNESS_COMMIT
-          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true )
+          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true; [ -n "${TPU_ALL_CHIPS:-}" ] && echo "export TPU_ALL_CHIPS=1" >> /tmp/vm.env || true )
           # the first ssh pushes the key; retried while the VM's sshd and the key settle
           for i in 1 2 3 4 5; do
             bash infra/tpu/vm.sh put /tmp/pie-evals.tgz /tmp/vm.env && break

@@ -26,7 +26,7 @@ import sys, yaml
 p = {x["id"]: x for x in yaml.safe_load(open("matrix/platforms.yaml"))["platforms"]}[sys.argv[1]]
 t = p.get("tpu") or sys.exit(f"{sys.argv[1]} has no tpu: settings")
 print("TPU_KIND=" + ("compute" if t.get("machine_type") else "tpu"))
-for k in ("type", "runtime", "machine_type", "image", "data_disk_gb"):
+for k in ("type", "runtime", "machine_type", "image", "data_disk_gb", "all_chips"):
     print(f"TPU_{k.upper()}={t.get(k, '')}")
 print("TPU_ZONES=" + " ".join(t["zones"]))
 EOF
