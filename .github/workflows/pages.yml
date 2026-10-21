@@ -4,10 +4,10 @@ on:
     branches: [main]
     paths-ignore: ["docs/**", "**/*.md"]
   workflow_run:
-    workflows: [pie eval, quality, smoke, nightly, weekly]
+    workflows: [pie eval, quality, smoke, nightly, weekly, tpu, collect]
     types: [completed]
   schedule:
-    - cron: "*/15 * * * *"   # results land in the database during a run; the site picks them up within 15 minutes
+    - cron: "*/5 * * * *"   # results land in the database during a run; the site picks them up within 5 minutes
   workflow_dispatch:
 permissions: { contents: read }
 jobs:
