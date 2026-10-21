@@ -273,7 +273,7 @@ class NodeRunner:
             # a download mid-shard can outgrow what the job-start reclaim left (l40s nightly 36329832366: ENOSPC)
             from .reclaim import LOW_WATER_GIB, reclaim
 
-            reclaim(self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * 1.2 + 10), log=self.log)
+            reclaim(getattr(self, "_ahead", None) or self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * 1.2 + 10), log=self.log)
             if str(cell.engine) == "pie" and self.job.pie_commit and needs_import(cell.artifact) and have_artifacts(cell.artifact, self.job.pie_commit):
                 snap = snapshot_dir_if_present(cell.artifact, self.hf_cache, weights=False)
                 if snap:
@@ -359,9 +359,25 @@ class NodeRunner:
         groups = split_draft_processes(split_heavy_processes(job.cells_by_process()))
         # pie is what we measure: its processes go first, so a job that runs long never drops pie for a competitor
         groups = dict(sorted(groups.items(), key=lambda kv: str(kv[0][0]) != "pie"))
-        self.log(f"{len(groups)} engine processes to run")
-        self._start_prefetch([cells[0].artifact for cells in groups.values()])
-        for gkey, cells in groups.items():
+        from .reclaim import cache_root, free_gib
+
+        models = {}
+        for cells in groups.values():
+            models.setdefault(cells[0].artifact.base_model, float(cells[0].artifact.expected_gib or 0))
+        tight = free_gib(cache_root() or self.hf_cache) < sum(models.values()) * 2.5 + 20
+        if tight:
+            # every checkpoint plus its import outgrows the disk (a 100 GB TPU VM, b5 39547584473: ENOSPC): one
+            # model at a time, pie first within it, and what is done is dropped before the next downloads
+            order = list(models)
+            groups = dict(sorted(groups.items(), key=lambda kv: order.index(kv[1][0].artifact.base_model)))
+            self.log(f"{len(groups)} engine processes to run, one model at a time (the disk holds fewer than all {len(models)})")
+        else:
+            self.log(f"{len(groups)} engine processes to run")
+            self._start_prefetch([cells[0].artifact for cells in groups.values()])
+        keys = list(groups)
+        for gi, (gkey, cells) in enumerate(groups.items()):
+            if tight:
+                self._ahead = job.model_copy(update={"cells": [c for k in keys[gi:] for c in groups[k]]})
             engine_name, artifact_key, mode_key = gkey
             if self.over_budget():
                 self.log(f"soft budget {job.budget_s}s exhausted after {self.elapsed_s():.0f}s; not starting {engine_name} {artifact_key}")
