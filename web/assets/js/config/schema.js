@@ -6,7 +6,7 @@ window.Pie = window.Pie || {};
   const reference = (key, label, group, table, options = {}) => ({ key, label, group, type: "reference", table, ...options });
 
   Pie.sections = [
-    { id: "home", label: "Benchmarks" },
+    { id: "home", label: "Overview" },
     { id: "platforms", label: "Platforms" },
     { id: "measurements", label: "Measurements" },
     { id: "catalog", label: "Catalog" },
