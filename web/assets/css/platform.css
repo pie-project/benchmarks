@@ -705,3 +705,15 @@
 /* a model head or maker band drags: the open hand over it, the closed one while it moves, as Finder's columns */
 .platform-table thead th[data-drop] { cursor: grab; }  /* already sticky, so it holds its grip */
 :root.is-dragging-column, :root.is-dragging-column * { cursor: grabbing !important; }
+
+/* iPhone: Speedup | Efficiency as an iOS segmented control, a capsule the height of the setup pop-up beside it (34pt),
+   its 15pt labels; the chosen segment a raised capsule, semibold */
+@media (max-width: 899px) {
+  .platform-compare { flex: none; height: 34px; padding: 2px; gap: 0; border-radius: 999px; background: var(--color-fill); box-sizing: border-box; }
+  .platform-compare .plain-button { height: 30px; padding: 0 14px; border-radius: 999px; font-size: 15px; font-weight: 500; }
+  .platform-compare .plain-button.is-active { font-weight: 600; background: #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 3px 1px rgba(0, 0, 0, .04); }
+  :root[data-theme="dark"] .platform-compare .plain-button.is-active { background: #636366; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
+}
+@media (max-width: 899px) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .platform-compare .plain-button.is-active { background: #636366; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
+}
