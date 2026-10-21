@@ -144,6 +144,10 @@ class BaseStore:
         """Delete every record of a manual tag; returns how many went."""
         raise NotImplementedError
 
+    def move_tag(self, src: str, dst: str) -> int:
+        """Move ``src``'s good rows into ``dst`` where ``dst`` has no good row for that cell; returns how many moved."""
+        raise NotImplementedError
+
     def drop_engine(self, engine: str) -> tuple[int, int]:
         """Delete every result and quality score of an engine; returns (records, scores) deleted."""
         raise NotImplementedError
@@ -261,6 +265,27 @@ class PgStore(BaseStore):
             if "release" in kinds:
                 raise ValueError(f"{tag} is a release tag; releases are never dropped")
             cur.execute("DELETE FROM records WHERE tag = %s", (tag,))
+            return cur.rowcount
+
+    def move_tag(self, src: str, dst: str) -> int:
+        with self.connect() as conn, conn.transaction(), conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT tag_kind FROM records WHERE tag = %s", (dst,))
+            kinds = [k for (k,) in cur.fetchall()]
+            if not kinds:
+                raise ValueError(f"{dst} has no rows to move into")
+            cur.execute("SELECT cell_key, status, decode_tok_s, prefill_tok_s FROM records WHERE tag = %s", (dst,))
+            have = {key for key, status, dec, pre in cur.fetchall() if _good(status, dec, pre)}
+            cur.execute("SELECT DISTINCT cell_key, status, decode_tok_s, prefill_tok_s FROM records WHERE tag = %s", (src,))
+            keys = sorted({key for key, status, dec, pre in cur.fetchall() if key and _good(status, dec, pre)} - have)
+            if not keys:
+                return 0
+            # the destination's broken rows for those cells give way, as a collect into it would replace them
+            cur.execute("DELETE FROM records WHERE tag = %s AND cell_key = ANY(%s)", (dst, keys))
+            cur.execute(
+                "UPDATE records SET tag = %s, tag_kind = %s WHERE tag = %s AND cell_key = ANY(%s)"
+                " AND status IN ('pass', 'noisy') AND (decode_tok_s IS NOT NULL OR prefill_tok_s IS NOT NULL)",
+                (dst, kinds[0], src, keys),
+            )
             return cur.rowcount
 
     def drop_engine(self, engine: str) -> tuple[int, int]:
