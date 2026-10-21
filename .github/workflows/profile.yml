@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       machine: { description: "Mac platform id, a runner label (e.g. m5-max-64g)", required: true, default: "m5-max-64g" }
-      engine: { description: "pie, splash, mlxlm or llamacpp", required: true, default: "splash" }
+      engine: { description: "pie, splash, mlxlm or llamacpp; or cargo-test, which runs the engine-metal microbenchmark named in artifact at pie_commit", required: true, default: "splash" }
       artifact: { description: "artifact id from matrix/models.yaml", required: true, default: "qwen3.8-27b-splash" }
       workload: { description: "workload id", required: false, default: "ss-512-256" }
       pie_commit: { description: "pie commit", required: false, default: "424758165ecb6a78a72d0344c0f7abec7fec1aab" }
@@ -40,13 +40,25 @@ jobs:
           fi
           "$dir/bin/splash" --version
           echo "SPLASH_BIN=$dir/bin/splash" >> "$GITHUB_ENV"
+      - name: cargo test
+        if: inputs.engine == 'cargo-test'
+        run: |
+          # a throwaway clone at the commit, beside the runner's pie checkout, so neither disturbs the other
+          src="${PIE_ROOT:-$HOME/pie}"; dir="$RUNNER_TEMP/pie-microbench"
+          rm -rf "$dir" && git clone -q --reference "$src" https://github.com/pie-project/pie.git "$dir"
+          git -C "$dir" checkout -q "${{ inputs.pie_commit }}"
+          mkdir -p out/profile
+          (cd "$dir" && CARGO_TARGET_DIR="$src/target" cargo test --release -p engine-metal --test engine_metal \
+            "${{ inputs.artifact }}" -- --ignored --nocapture) 2>&1 | tee out/profile/microbench.txt
       - name: job spec
+        if: inputs.engine != 'cargo-test'
         run: |
           .venv/bin/pie-evals jobs --tier targeted --pie-commit "${{ inputs.pie_commit }}" \
             --platform "${{ inputs.machine }}" --engine "${{ inputs.engine }}" \
             --artifact "${{ inputs.artifact }}" --workload "${{ inputs.workload }}" --out jobs
           ls jobs
       - name: profile
+        if: inputs.engine != 'cargo-test'
         run: |
           job="jobs/$(jq -r '.include[0].job_id' jobs/gh-matrix.json).json"  # beside it, gh-matrix, pods and policy
           out="out/profile"
