@@ -217,3 +217,10 @@ svg {
 
 /* a click opens a button's menu without a focus ring, as on macOS; the keyboard still gets one */
 button:focus:not(:focus-visible) { outline: none; }
+
+/* iPhone: no scroll bars anywhere, as iOS shows none at rest; the content scrolls by touch, and no gutter is kept */
+@media (max-width: 899px) {
+  * { scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
+  .method { scrollbar-gutter: auto; }
+}
