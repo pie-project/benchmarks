@@ -281,37 +281,8 @@
     padding-bottom: 0;  /* Settings follows with its heading's own gap */
   }
 
-  .sidebar-switch {
-    position: relative;
-    flex: none;
-    width: 42px;
-    height: 26px;
-    margin-left: auto;
-    border-radius: 13px;
-    background: var(--color-fill);
-    transition: background .2s ease;
-  }
 
-  .sidebar-switch::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
-    transition: transform .2s ease;
-  }
 
-  :root[data-theme="dark"] .sidebar-switch {
-    background: var(--color-status-pass);
-  }
-
-  :root[data-theme="dark"] .sidebar-switch::after {
-    transform: translateX(16px);
-  }
 
   .sidebar-item.is-selected .sidebar-glyph[style] {
     box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .85);

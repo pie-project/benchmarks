@@ -720,3 +720,8 @@
 @media (max-width: 899px) and (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .platform-compare .plain-button.is-active { background: #636366; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
 }
+
+/* Speedup | Efficiency flat, as macOS draws a segmented control now: the chosen segment a lighter fill, no shadow */
+.platform-compare .plain-button.is-active,
+:root[data-theme="dark"] .platform-compare .plain-button.is-active { box-shadow: none !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .platform-compare .plain-button.is-active { box-shadow: none !important; } }
