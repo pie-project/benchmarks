@@ -430,11 +430,11 @@
 .release-picker.is-prominent .release-picker-value { font-weight: 500; color: #fff; font-variant-numeric: tabular-nums; }
 .release-picker.is-prominent .popup-chevron { stroke: rgba(255, 255, 255, .85); }
 
-/* the toolbar as a Mac app's: its controls, then the search field last at the trailing edge (Finder, Mail, Music) */
+/* the toolbar: the theme button, the search field, then the run picker at the trailing edge */
 .toolbar > .theme-toggle { order: 1; }
-.toolbar > .release-picker, .toolbar > .view-picker { order: 2; }
-.toolbar > .search-field { order: 3; }
-.toolbar > .search-cancel { order: 4; }
+.toolbar > .search-field { order: 2; }
+.toolbar > .search-cancel { order: 3; }
+.toolbar > .release-picker, .toolbar > .view-picker { order: 4; }  /* the run last, at the trailing edge */
 /* the release is a choice, not the window's main action: a plain pop-up button in the bar's grey, as Raw Decode is */
 .release-picker.is-prominent { padding: 0 8px 0 10px; background: var(--color-fill); }
 .release-picker.is-prominent:hover,
