@@ -201,7 +201,7 @@ class Matrix:
             return f"{cell.engine} has no drafter for this model"
         # fit rule: weights per TP group must fit with headroom
         if cell.artifact.expected_gib is not None:
-            per_device = cell.artifact.expected_gib * self.fit_factor / max(1, cell.mode.tp)
+            per_device = cell.artifact.expected_gib * (cell.platform.fit_factor or self.fit_factor) / max(1, cell.mode.tp)
             available = cell.platform.memory_gib / max(1, cell.platform.count) if cell.platform.interconnect != "uma" else gpu_gib(cell.platform.memory_gib)
             if per_device > available:
                 return f"does not fit: {per_device:.1f} GiB per device > {available:.1f} GiB"

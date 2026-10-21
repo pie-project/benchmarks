@@ -1,5 +1,6 @@
 name: tpu
-# pie's TPU engine (crates/engine-xla, crates/kernels-xla) on one Trillium chip. A Cloud TPU VM
+# pie's TPU engine (crates/engine-xla, crates/kernels-xla) on one Trillium chip (or, by hand, on another TPU platform:
+# platforms.yaml's tpu: settings say how infra/tpu/vm.sh gets that generation's smallest single-host VM). A Cloud TPU VM
 # is created for the run and deleted after it, whatever happens. The schedule measures pie main
 # only when a commit since the last measured one touched the XLA crates; a manual run always runs.
 # Results go to the database as nightly rows on tpu-v6e-1, tagged main-<first 9 of the sha>.
@@ -17,13 +18,12 @@ on:
       artifacts: { description: "comma-separated artifact ids (empty: every one that runs on the TPU)", required: false, default: "" }
       engines: { description: "comma-separated engines (empty: pie, vllm and sglang)", required: false, default: "" }
       tag: { description: "a tag for the site (0.5.3-b5); empty: main-<sha>", required: false, default: "" }
-      zone: { description: "Cloud TPU zone with v6e (us-east5-b, us-east1-d, europe-west4-a, ...)", required: false, default: "us-east5-b" }
-concurrency: { group: tpu, cancel-in-progress: false }  # one TPU VM at a time
+      zone: { description: "comma-separated zones to try in order (empty: the platform's tpu.zones; v6e: us-east5-b first)", required: false, default: "" }
+      platform: { description: "TPU platform (platforms.yaml): tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4", required: false, default: "tpu-v6e-1" }
+concurrency: { group: "tpu-${{ github.event.inputs.platform || 'tpu-v6e-1' }}", cancel-in-progress: false }  # one VM per TPU platform at a time
 env:
   GCP_PROJECT: pie-project-510103
-  TPU_ZONE: ${{ github.event.inputs.zone || 'us-east5-b' }}  # a full zone answers "no more capacity": a manual run can pick another
-  TPU_TYPE: v6e-1
-  TPU_RUNTIME: v2-alpha-tpuv6e
+  PLATFORM: ${{ github.event.inputs.platform || 'tpu-v6e-1' }}
   TPU_NAME: pie-evals-tpu-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
@@ -32,7 +32,19 @@ jobs:
     outputs:
       commit: ${{ steps.c.outputs.commit }}
       run: ${{ steps.d.outputs.run }}
+      vm: ${{ steps.vm.outputs.vm }}
     steps:
+      - uses: actions/checkout@v4
+      - id: vm
+        name: the platform's TPU VM settings
+        run: |
+          python3 -c 'import yaml' 2>/dev/null || pip install -q --break-system-packages pyyaml
+          s=$(bash infra/tpu/vm.sh resolve "$PLATFORM")
+          Z="${{ github.event.inputs.zone }}"
+          # a full zone answers "no more capacity": a manual run can name others to try first
+          [ -n "$Z" ] && s=$(echo "$s" | grep -v '^TPU_ZONES='; echo "TPU_ZONES=$(echo "$Z" | tr ',' ' ')")
+          echo "$s"
+          echo "vm=$(echo "$s" | jq -Rn '[inputs | capture("^(?<key>[^=]+)=(?<value>.*)$")] | from_entries' -c)" >> "$GITHUB_OUTPUT"
       - id: c
         name: pie commit
         env: { GH_TOKEN: "${{ github.token }}" }
@@ -75,6 +87,9 @@ jobs:
       job_id: ${{ steps.jobs.outputs.job_id }}
     steps:
       - uses: actions/checkout@v4
+      - name: VM settings
+        env: { VM: "${{ needs.decide.outputs.vm }}" }
+        run: echo "$VM" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e .
       - name: job spec
@@ -84,24 +99,20 @@ jobs:
           for w in $(echo "${{ github.event.inputs.workloads }}" | tr ',' ' '); do args+=(--workload "$w"); done
           for a in $(echo "${{ github.event.inputs.artifacts }}" | tr ',' ' '); do args+=(--artifact "$a"); done
           for e in $(echo "${{ github.event.inputs.engines }}" | tr ',' ' '); do args+=(--engine "$e"); done
-          .venv/bin/pie-evals jobs --tier "${{ github.event.inputs.tier || 'nightly' }}" --pie-commit "$C" --platform tpu-v6e-1 --out jobs "${args[@]}"
+          .venv/bin/pie-evals jobs --tier "${{ github.event.inputs.tier || 'nightly' }}" --pie-commit "$C" --platform "$PLATFORM" --out jobs "${args[@]}"
           n=$(jq '.include | length' jobs/gh-matrix.json)
-          [ "$n" = 1 ] || { echo "::error::expected one tpu-v6e-1 job, the plan has $n"; exit 1; }
+          [ "$n" = 1 ] || { echo "::error::expected one $PLATFORM job, the plan has $n"; exit 1; }
           echo "job_id=$(jq -r '.include[0].job_id' jobs/gh-matrix.json)" >> "$GITHUB_OUTPUT"
       - uses: google-github-actions/auth@v2
         with: { credentials_json: "${{ secrets.GCP_TPU_SA_KEY }}" }
       - uses: google-github-actions/setup-gcloud@v2
       - name: create the TPU VM
+        id: create
         run: |
-          gcloud compute tpus tpu-vm create "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" \
-            --accelerator-type "$TPU_TYPE" --version "$TPU_RUNTIME" --labels "owner=pie-evals,run=${{ github.run_id }}" --quiet
-      - name: wait for READY
-        run: |
-          for _ in $(seq 1 60); do
-            s=$(gcloud compute tpus tpu-vm describe "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --format 'value(state)')
-            echo "state: $s"; [ "$s" = READY ] && exit 0; sleep 10
-          done
-          echo "::error::the TPU VM is not READY after 10 minutes"; exit 1
+          z=$(bash infra/tpu/vm.sh create)
+          echo "TPU_ZONE=${z#zone=}" >> "$GITHUB_ENV"; echo "created in ${z#zone=}"
+      - name: wait for the VM
+        run: bash infra/tpu/vm.sh wait
       - name: copy the harness and the job
         env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}" }
         run: |
@@ -109,16 +120,14 @@ jobs:
           ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true )
           # the first ssh pushes the key; retried while the VM's sshd and the key settle
           for i in 1 2 3 4 5; do
-            gcloud compute tpus tpu-vm scp /tmp/pie-evals.tgz /tmp/vm.env "$TPU_NAME": --project "$GCP_PROJECT" --zone "$TPU_ZONE" \
-              --strict-host-key-checking=no --quiet && break
+            bash infra/tpu/vm.sh put /tmp/pie-evals.tgz /tmp/vm.env && break
             [ "$i" = 5 ] && exit 1; sleep 20
           done
-          gcloud compute tpus tpu-vm ssh "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet \
-            --command 'rm -rf ~/pie-evals && mkdir ~/pie-evals && tar xzf ~/pie-evals.tgz -C ~/pie-evals'
+          bash infra/tpu/vm.sh ssh 'rm -rf ~/pie-evals && mkdir ~/pie-evals && tar xzf ~/pie-evals.tgz -C ~/pie-evals'
       - name: build pie, set up vllm-tpu and sglang-jax (when the plan has their cells) and run the job
         env: { JOB_ID: "${{ steps.jobs.outputs.job_id }}" }
         run: |
-          vm() { gcloud compute tpus tpu-vm ssh "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet --command "$1"; }
+          vm() { bash infra/tpu/vm.sh ssh "$1"; }
           # detached on the VM, so a dropped ssh session does not stop the build or the bench
           vm "cd ~/pie-evals && setsid nohup bash -c 'set -a; . ~/vm.env; set +a; bash infra/tpu/run-on-vm.sh $C jobs/$JOB_ID.json; echo \$? > ~/run.done' > ~/run.log 2>&1 < /dev/null &"
           while ! rc=$(vm 'cat ~/run.done 2>/dev/null' 2>/dev/null) || [ -z "$rc" ]; do sleep 60; done
@@ -128,9 +137,9 @@ jobs:
         if: always() && steps.jobs.outputs.job_id != ''
         run: |
           mkdir -p out
-          gcloud compute tpus tpu-vm scp --recurse "$TPU_NAME:pie-evals/out/${{ steps.jobs.outputs.job_id }}" out/ \
-            --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet || echo "::warning::no node output on the VM"
-          gcloud compute tpus tpu-vm scp "$TPU_NAME:run.log" out/ --project "$GCP_PROJECT" --zone "$TPU_ZONE" --strict-host-key-checking=no --quiet || true
+          [ -n "${TPU_ZONE:-}" ] || exit 0  # no VM was created
+          bash infra/tpu/vm.sh get --recurse "pie-evals/out/${{ steps.jobs.outputs.job_id }}" out/ || echo "::warning::no node output on the VM"
+          bash infra/tpu/vm.sh get run.log out/ || true
       - uses: actions/upload-artifact@v4
         if: always() && steps.jobs.outputs.job_id != ''
         with: { name: "out-${{ steps.jobs.outputs.job_id }}", path: "out/${{ steps.jobs.outputs.job_id }}", retention-days: 30, if-no-files-found: warn }
@@ -144,22 +153,27 @@ jobs:
     if: always() && needs.decide.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v2
         with: { credentials_json: "${{ secrets.GCP_TPU_SA_KEY }}" }
       - uses: google-github-actions/setup-gcloud@v2
-      - name: delete the TPU VM
+      - name: delete the TPU VM (in every zone the run may have created it in)
+        env: { VM: "${{ needs.decide.outputs.vm }}" }
         run: |
-          if gcloud compute tpus tpu-vm describe "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" >/dev/null 2>&1; then
-            gcloud compute tpus tpu-vm delete "$TPU_NAME" --project "$GCP_PROJECT" --zone "$TPU_ZONE" --quiet
-          else
-            echo "no VM $TPU_NAME"
-          fi
+          eval "$(echo "$VM" | jq -r 'to_entries[] | "export \(.key)=\(.value | @sh)"')"
+          bash infra/tpu/vm.sh delete
+          # every pie-evals VM still up in these zones: a run's own is gone; any other is another run's (or a leak)
+          for z in $TPU_ZONES; do
+            if [ "$TPU_KIND" = tpu ]; then gcloud compute tpus tpu-vm list --project "$GCP_PROJECT" --zone "$z" --format 'value(name,state)' 2>/dev/null
+            else gcloud compute instances list --project "$GCP_PROJECT" --zones "$z" --filter 'labels.owner=pie-evals' --format 'value(name,status)' 2>/dev/null; fi | sed "s|^|$z: |"
+          done
 
   # the Mac reaches the database on liszt over the tailnet; GitHub's runners do not
   collect:
     needs: [decide, bench]
     if: always() && needs.decide.outputs.run == 'true' && needs.bench.outputs.job_id != ''
     runs-on: [self-hosted, macos, m5-max-64g]
+    concurrency: { group: tpu-collect, cancel-in-progress: false }  # the TPU platforms' imports one at a time
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}", C: "${{ needs.decide.outputs.commit }}" }
     steps:
       - uses: actions/checkout@v4
@@ -179,5 +193,5 @@ jobs:
           mkdir -p last && echo "$C" > last/commit.txt
       # what the next scheduled run compares against
       - uses: actions/upload-artifact@v4
-        if: steps.import.outcome == 'success'
+        if: steps.import.outcome == 'success' && env.PLATFORM == 'tpu-v6e-1'  # the schedule measures the v6e only
         with: { name: tpu-last-commit, path: last/commit.txt, retention-days: 90 }

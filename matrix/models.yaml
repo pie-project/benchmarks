@@ -17,14 +17,14 @@ artifacts:
     pie_sku: qwen35-d0.8b-bf16-kv-bf16   # the tp>1 artifact is imported as this row (import picks the first fitting row otherwise: the u4g64 twin, which has no tp2)
 
   # the same checkpoint for pie's XLA engine (TPU): imported as a .xla.zt and served only on
-  # tpu-v6e-1, which runs nothing else (suites.yaml global_exclude)
+  # the TPUs, which run nothing else (suites.yaml global_exclude)
   - id: qwen3.5-0.8b-xla
     base_model: Qwen/Qwen3.5-0.8B
     family: qwen3_5
     scheme: bf16
     expected_gib: 1.6
     pie_sku: qwen35-d0.8b-bf16-kv-bf16   # import picks the u4g64 twin otherwise
-    platforms: [tpu-v6e-1]
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
     tiers: [nightly, weekly]  # weekly: a release's Raw rows on the TPU (tpu.yml tier=weekly)
 
   # every other bf16 model pie's XLA engine plans (engine-xla's coverage example) that fits one
@@ -35,7 +35,7 @@ artifacts:
     scheme: bf16
     expected_gib: 1.2
     pie_sku: qwen3-0.6b-bf16-kv-bf16
-    platforms: [tpu-v6e-1]
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
     tiers: [weekly]
   - id: gemma-4-e2b-tpu
     base_model: google/gemma-4-E2B-it
@@ -43,7 +43,7 @@ artifacts:
     scheme: bf16
     expected_gib: 8.7
     pie_sku: gemma4-e2b-bf16-kv-bf16
-    platforms: [tpu-v6e-1]
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
     tiers: [weekly]
   - id: gemma-4-e4b-tpu
     base_model: google/gemma-4-E4B-it
@@ -51,7 +51,7 @@ artifacts:
     scheme: bf16
     expected_gib: 14.0
     pie_sku: gemma4-e4b-bf16-kv-bf16
-    platforms: [tpu-v6e-1]
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
     tiers: [weekly]
   - id: gemma-4-12b-tpu
     base_model: google/gemma-4-12B-it
@@ -59,7 +59,7 @@ artifacts:
     scheme: bf16
     expected_gib: 22.3
     pie_sku: gemma4-12b-bf16-kv-bf16
-    platforms: [tpu-v6e-1]
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
     tiers: [weekly]
 
   - id: qwen3.5-0.8b-mlx-bf16
