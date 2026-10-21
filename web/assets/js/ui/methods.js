@@ -305,7 +305,7 @@ window.Pie = window.Pie || {};
         </span>
         ${c.id === "spec" ? `
         ${Pie.specField()}` : ""}
-        <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
+        <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
       </div>`;
 
     // the chapter as the site's other pages: the formulas as a data table under the bar, each citing its works by

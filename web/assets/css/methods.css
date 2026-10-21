@@ -229,13 +229,11 @@
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
   backdrop-filter: blur(24px) saturate(1.6);
 }
-/* the select menus' row: an empty checkmark column first (6px edge, 14px column, 6px gap), then the icon where the
-   Status menu sets its dot, 6px from its name, as the status options space theirs */
-.rules-row { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 14px; border-radius: 5px; font-size: 13px; cursor: default; }
-.rules-row svg { flex: none; width: 13px; height: 13px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+/* facts as Get Info lists them, on the site's menu surface and in its menus' measures: 24px rows, the label at the
+   heading's 10px inset, the value right-aligned in grey; no icons and no checkmark column, as nothing here is picked */
+.rules-row { display: flex; align-items: center; gap: 16px; height: 24px; padding: 0 10px; border-radius: 5px; font-size: 13px; cursor: default; }
 .rules-row .popover-detail { color: var(--color-label-secondary); }
-/* facts, not choices, as Get Info lists them: no checkmark column, so the headings start where the icons do */
-.rules-popover .popover-heading { padding-left: 14px; }
+.rules-popover .popover-heading { padding: 5px 10px 3px; }  /* the menus' heading, at the rows' inset */
 
 /* the button names what it opens: an info glyph, then the words */
 .rules-button { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--color-label); }
@@ -269,16 +267,15 @@
    its value right-aligned in grey. The menus' "detail under its name" layout is for options, not for these rows. */
 @media (max-width: 899px) {
   .rules-popover { padding: 6px; border-radius: 14px; }
-  .rules-popover .popover-heading { padding: 8px 14px 4px; font-size: 13px; }
+  .rules-popover .popover-heading { padding: 8px 12px 4px; font-size: 13px; }  /* the phone menus' heading */
   .rules-row {
     gap: 8px;
     height: auto;
     min-height: 44px;
-    padding: 0 14px;
+    padding: 0 12px;
     border-radius: 9px;
     font-size: 16px;
   }
-  .rules-row svg { width: 17px; height: 17px; }
   .rules-row .popover-label { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .rules-row .popover-detail {
     flex: none;
@@ -483,3 +480,9 @@
 }
 /* every formula one line in a row as tall as the site's others */
 .lim-table tbody td { height: var(--row-height); padding-top: 0; padding-bottom: 0; }
+
+/* Test Conditions as a Mac toolbar's info button: the ⓘ symbol alone, square as the bar's controls are tall, named in its tooltip */
+.rules-label { display: none; }
+.rules-button { width: var(--control-height); height: var(--control-height); padding: 0; justify-content: center; border-radius: var(--radius-control); }
+.rules-button svg { width: 16px; height: 16px; }
+@media (max-width: 899px) { .rules-button { width: 34px; height: 34px; border-radius: 999px; } .rules-button svg { width: 20px; height: 20px; } }
