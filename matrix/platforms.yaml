@@ -362,6 +362,7 @@ platforms:
   # `tiers: []` keeps them out of every scheduled run until one is given a tier or named in a dispatch.
   # Their specs are in hardware.yaml.
   - id: mi300x-x1
+    catalog: amd-instinct-mi300x
     os: linux
     backend: rocm
     accelerator: AMD Instinct MI300X OAM
@@ -371,8 +372,12 @@ platforms:
     interconnect: pcie
     runner_labels: [self-hosted, linux, mi300x-x1]
     runpod_gpu_type: "AMD Instinct MI300X OAM"
-    tiers: []
+    # ROCm pods run the AMD SGLang image at the run's SGLang pin (its ROCm SDK serves pie's HIP build and
+    # vLLM's ROCm wheel too); the startup script adds the actions runner the image lacks
+    runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi30x"
+    tiers: [weekly]
   - id: mi350x-x1
+    catalog: amd-instinct-mi350x
     os: linux
     backend: rocm
     accelerator: AMD Instinct MI350 OAM
@@ -382,7 +387,8 @@ platforms:
     interconnect: pcie
     runner_labels: [self-hosted, linux, mi350x-x1]
     runpod_gpu_type: "AMD Instinct MI350 OAM"
-    tiers: []
+    runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi35x"
+    tiers: [weekly]
   - id: a100-sxm40-x1
     os: linux
     backend: cuda

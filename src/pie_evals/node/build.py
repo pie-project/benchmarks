@@ -9,7 +9,9 @@ pods never touch the same work tree or cargo target dir.
 
 pie compiles its CUDA kernels with NVRTC at runtime (cudarc ``nvrtc``), so a
 CUDA build is GPU-generation independent and one cache entry serves every
-NVIDIA platform.
+NVIDIA platform. The ROCm build (``--features rocm``) is the same engine over
+HIP: hiprtc compiles its kernels at runtime for the card's gfx target, so one
+entry serves every AMD Instinct platform too.
 """
 
 from __future__ import annotations
@@ -76,7 +78,7 @@ def cache_dir(commit: str, features: list[str], root: Path | None = None) -> Pat
 
 def is_cached(commit: str, features: list[str], root: Path | None = None) -> bool:
     d = cache_dir(commit, features, root)
-    wheel = any(d.glob("pie_server-*.whl")) or "cuda" not in features
+    wheel = any(d.glob("pie_server-*.whl")) or not ({"cuda", "rocm"} & set(features))
     return (d / "pie").exists() and (d / "wasm").is_dir() and any((d / "wasm").glob("*.wasm")) and wheel
 
 
@@ -145,8 +147,9 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
     subprocess.run(["cargo", "build", "--release", "-p", "pie", "--bin", "pie", "--features", feats], cwd=pie_root, env=env, check=True, timeout=timeout_s)
     tdir = Path(env.get("CARGO_TARGET_DIR", pie_root / "target"))
     shutil.copy2(tdir / "release" / "pie", out / "pie")
-    # embedded engine wheel (the python bench path on CUDA), built against the bench venv's interpreter
-    if "cuda" in features:
+    # embedded engine wheel (the python bench path on CUDA, and on ROCm: the same engine over HIP),
+    # built against the bench venv's interpreter
+    if {"cuda", "rocm"} & set(features):
         py = bench_python(cache_root, log=log)
         log("build: embedded engine wheel (maturin)")
         if shutil.which("uv"):
@@ -154,7 +157,9 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
         else:
             _pip_install(py, ["maturin"])
             maturin = [str(py), "-m", "maturin"]
-        subprocess.run([*maturin, "build", "--release", "-o", str(out), "--features", feats, "-i", str(py)], cwd=python_dir(pie_root) / "server", env=env, check=True, timeout=timeout_s)
+        # the server crate defaults to `cuda`, and `cuda` beside `rocm` is a compile error ("a build carries one")
+        nodef = [] if "cuda" in features else ["--no-default-features"]
+        subprocess.run([*maturin, "build", "--release", "-o", str(out), *nodef, "--features", feats, "-i", str(py)], cwd=python_dir(pie_root) / "server", env=env, check=True, timeout=timeout_s)
     # guest programs: the whole examples/ workspace (every inferlet the matrix can name), built
     # in-tree because bench_inferlet_paths walks up to examples/target; all .wasm are cached
     target = wasm_target(pie_root)

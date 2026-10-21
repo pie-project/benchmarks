@@ -59,7 +59,9 @@ class SglangEngine(Engine):
         from pie_evals.node.baselines import baseline_python
 
         pin = self.recipe.get("pin")
-        py = baseline_python("sglang", pin) if pin else None
+        # on ROCm the AMD image's own SGLang (baselines.BACKEND_SPECS)
+        backend = str(self.platform.backend) if self.platform is not None else None
+        py = baseline_python("sglang", pin, backend=backend) if pin else None
         return str(py) if py else "/root/.venv/sglang/bin/python"
 
     def model_arg(self) -> str:

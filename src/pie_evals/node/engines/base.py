@@ -253,6 +253,17 @@ class Engine(ABC):
         self.server_url: str | None = None
         self._server_proc: subprocess.Popen | None = None
 
+    def drop_env(self) -> set[str]:
+        """Variables of the node's own environment the engine process must not inherit."""
+        return set()
+
+    def process_env(self, *extra: dict[str, str]) -> dict[str, str]:
+        drop = self.drop_env()
+        env = {k: v for k, v in os.environ.items() if k not in drop}
+        for e in (self.env, *extra):
+            env.update(e)
+        return env
+
     def default_env(self) -> dict[str, str]:
         """Runtime-computed environment defaults (paths under the cache root);
         static ones go in ``env_defaults``. The caller's env wins over both."""
@@ -397,7 +408,7 @@ class Engine(ABC):
             cold_sha = hashlib.sha256((out_dir / "cold_prompts.json").read_bytes()).hexdigest()
             (out_dir / "cold_prompts.sha256").write_text(cold_sha + "\n")
         argv = self.build_argv(workload, common_args, json_out)
-        env = {**os.environ, **self.env}
+        env = self.process_env()
         if self.server_url:
             env["PIE_BENCH_SERVER_URL"] = self.server_url
         (out_dir / "argv.txt").write_text(shlex.join(argv) + "\n")

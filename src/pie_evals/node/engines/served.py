@@ -163,7 +163,7 @@ class ServedEngine(Engine):
             log.write(" ".join(cmd) + "\n")
             log.flush()
             proc = subprocess.Popen([sys.executable, "-m", "pie_evals.node.engines.lifeline", *cmd],
-                                    env={**os.environ, **self.env, **self.server_env()}, stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT)
+                                    env=self.process_env(self.server_env()), stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT)
         self._server_proc = proc
         deadline = t0 + min(timeout_s, int(self.recipe.get("startup_timeout") or timeout_s))
         while time.monotonic() < deadline:

@@ -91,6 +91,10 @@ unsupported:
     reason: "SGLang 0.5.22 runs out of memory loading gpt-oss-120b on one 80 GB H100 (its mxfp4 unpack)"
   - when: {engine: sglang, family: gpt_oss, arch: blackwell}
     reason: "SGLang 0.5.22 cannot build its gpt-oss kernels for Blackwell (flashinfer compile fails)"
+  # SGLang 0.5.22's ROCm build registers the mxfp4 quantization only on gfx95x (MI350/MI355): on the
+  # MI300X (gfx942) gpt-oss dies at load on "Unknown quantization method: mxfp4" (its quantization/__init__.py)
+  - when: {engine: sglang, family: gpt_oss, arch: cdna3}
+    reason: "SGLang 0.5.22 on ROCm serves mxfp4 (gpt-oss) only on gfx95x (MI350/MI355); the MI300X (gfx942) has no mxfp4 path"
   # SGLang's static pool for Kimi-K3 mini (weights + the KDA state pool) needs more than 0.935 of a 32 GB
   # card, and at 0.95 the process sits at 31.2 GiB before the first c8 batch (nightly 36103831529 s10:
   # ss serves, c8 / lc-1k / lc-2k OOM on 200-400 MiB); a 24 GB card does not load it at all
