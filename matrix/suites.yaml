@@ -27,6 +27,9 @@ global_exclude:
   # a 4-GPU platform exists for tp4 (tp2 is the 2-GPU platform's job)
   - {platform: pro6000-x4, tp: 2}
   - {platform: h100-sxm-x4, tp: 2}
+  # the datacenter pods run tp = every GPU they hold
+  - {platform: h200-x2, tp: 1}
+  - {platform: [a100-sxm-x8, h100-sxm-x8, h200-x8, b200-x8, b300-x8], tp: [1, 2, 4]}
   # every TPU (backend xla) runs pie on its own Qwen3.5-0.8B artifact (models.yaml keeps that artifact off every other
   # platform) on a single request, a throughput shape and a release's Raw row (tpu.yml tier=weekly), and
   # the TPU builds of vLLM (vllm-tpu) and SGLang (sglang-jax) on the same bf16 checkpoint for the Raw row.
