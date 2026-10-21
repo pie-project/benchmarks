@@ -559,14 +559,16 @@ def gpu_no_fit(store, a2m: dict[str, str], hw_rows: list[dict], gpu_ids: list[st
         if r["platform"] in gpu_ids and a and a.get("source_format", "hf_safetensors") == "hf_safetensors" and a.get("kind", "full") == "full" and r["artifact"] in a2m:
             used.setdefault(a2m[r["artifact"]], set()).add(r["artifact"])
             engines.add(r["engine"])
-    need = {m: min(arts[i]["expected_gib"] for i in ids if arts[i].get("expected_gib")) * factor
-            for m, ids in used.items() if any(arts[i].get("expected_gib") for i in ids)}
+    weights = {m: min(arts[i]["expected_gib"] for i in ids if arts[i].get("expected_gib"))
+               for m, ids in used.items() if any(arts[i].get("expected_gib") for i in ids)}
+    factors = {p["id"]: p.get("fit_factor") or factor for p in load("platforms")["platforms"]}
     out: dict[str, dict] = {}
     for hw in hw_rows:
         if hw["id"] not in gpu_ids or not hw.get("memory_gib"):
             continue
         cap = gpu_gib(hw["memory_gib"], hw.get("interconnect") or "pcie")
-        for model, gib in need.items():
+        for model, w in weights.items():
+            gib = w * factors.get(hw["id"], factor)
             if gib > cap:
                 out.setdefault(hw["id"], {})[model] = {e: round(gib, 1) for e in engines}
     return out
@@ -635,8 +637,10 @@ def main() -> None:
     # even where an older engine release once measured it: one release of each engine per tag
     gpu_unsup = gpu_unsupported(a2m, gpu_ids, all_engines, config.get("benchmarks", []))
     grid += [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in gpu_ids for c, _, _ in CATEGORIES if (hw, e, m, c) in gpu_keys]
+    # a TPU the project cannot get at all (support.yaml: no access, no quota) has no runs, only its reasons
+    tpus = {p["id"] for p in load("platforms")["platforms"] if p.get("backend") == "xla"}
     grid += [(hw, e, m, "raw") for hw, e, m in gpu_unsup
-             if m in model_ids and (hw, e, m, "raw") not in gpu_keys and any(k[0] == hw for k in gpu_keys)]
+             if m in model_ids and (hw, e, m, "raw") not in gpu_keys and (hw in tpus or any(k[0] == hw for k in gpu_keys))]
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
     # the Macs the site's grids measure, and every GPU or TPU setup a scheduled CI run launches (tagged with its runs)
     # the Macs the grids measure, every CI GPU and TPU, and every catalog accelerator; a CI Mac without a runner stays out
