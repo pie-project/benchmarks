@@ -69,6 +69,10 @@ unsupported:
     reason: "SGLang 0.5.20 gpt-oss mxfp4 falls back to dequant on Ada: ~25 tok/s single-stream, not a baseline"
   # SGLang 0.5.22's flashinfer cannot build its gpt-oss mxfp8 kernels for Blackwell (sm120: RTX 5090, PRO 4500,
   # PRO 6000): "Ninja build failed ... mxfp8_quantization_sm100" (0.5.3-b5, run 39104203014)
+  # SGLang 0.5.22 unpacks gpt-oss-120b's mxfp4 experts at load and runs one 80 GB card out of memory
+  # ("Tried to allocate 1.03 GiB ... 719 MiB is free", weekly 39545243163); vLLM and pie load it there
+  - when: {engine: sglang, artifact: gpt-oss-120b-mxfp4, platform: h100-pcie-x1}
+    reason: "SGLang 0.5.22 runs out of memory loading gpt-oss-120b on one 80 GB H100 (its mxfp4 unpack)"
   - when: {engine: sglang, family: gpt_oss, arch: blackwell}
     reason: "SGLang 0.5.22 cannot build its gpt-oss kernels for Blackwell (flashinfer compile fails)"
   # SGLang tp2 on L40S x2: 0.5.20 hung at load (nightly 36081628995 s10); 0.5.22 hangs on Qwen3.5-0.8B and
