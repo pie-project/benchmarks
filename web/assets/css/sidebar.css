@@ -31,11 +31,9 @@
   letter-spacing: -.01em;
 }
 
-/* the brand reads "Pie Benchmarks" as one name: the mark and "Pie" in the brand's weight open pie-project.org,
-   "Benchmarks" beside them in the regular weight opens this site's home; neither looks like a link */
+/* the mark and "Pie" open pie-project.org, and read as the name they are, not as a link */
 .sidebar-home { display: inline-flex; align-items: center; gap: 8px; color: var(--color-label); text-decoration: none; }
-.sidebar-site { padding: 0; border: 0; background: none; font: inherit; font-weight: 400; color: var(--color-label); cursor: pointer; }
-.sidebar-brand { gap: 5px; }
+
 
 .sidebar-logo {
   width: 16px;
