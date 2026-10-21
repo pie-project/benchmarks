@@ -379,6 +379,9 @@ def unsupported_reasons(a2m: dict[str, str], config: dict, hardware_ids: list[st
         if reason is None and c.declared_unsupported_reason and not c.declared_unsupported_reason.startswith("does not fit"):
             reason = c.declared_unsupported_reason
         seen.setdefault((c.platform.id, str(c.engine), model), []).append(reason)
+        # a rule on one workload (Splash has no Raw row) speaks for that tab alone
+        if c.workload.id in WL_PRIORITY:
+            seen.setdefault((c.platform.id, str(c.engine), model, WL_PRIORITY[c.workload.id][0]), []).append(reason)
     out = {k: next(r for r in rs if r) for k, rs in seen.items() if rs and all(rs)}
     names = {e: ENGINE_META.get(e, (e,))[0] for e in engine_ids}
     for hw in hardware_ids:
@@ -671,8 +674,8 @@ def main() -> None:
             if gib:
                 streaming = f" {streams[model].lower()} SSD streaming" if streams.get(model) in ("With", "Without") else ""
                 filled.append(empty_row(key, t, "no_fit", f"Needs about {round(gib)} GB{streaming}; this Mac's GPU can use about {gpu_note(memory.get(hw))} GB"))
-            elif (hw, engine, model) in unsupported:
-                filled.append(empty_row(key, t, "unsupported", unsupported[(hw, engine, model)]))
+            elif (hw, engine, model) in unsupported or key in unsupported:
+                filled.append(empty_row(key, t, "unsupported", unsupported.get((hw, engine, model)) or unsupported[key]))
             elif key in tried:
                 filled.append(empty_row(key, t, "fail" if tried[key]["status"] == "fail" else "not_run", attempt_note(tried[key])))
             else:
