@@ -274,9 +274,10 @@ artifacts:
 
   # ---------------- targeted: pie's own checkpoints on the Macs ----------------
   - id: muse-glimmer-30b-mlx4
-    base_model: meta-models/Muse-Glimmer-30B
+    base_model: mlx-community/Muse-Glimmer-30B-4bit   # the 4-bit MLX weights every Mac engine shares
     family: muse_glimmer
     scheme: affine_u4_g64
+    source_format: mlx
     pie_sku: muse-glimmer-30b-u4g64-kv-bf16
     display_name: muse-glimmer:30b
     expected_gib: 18.08
