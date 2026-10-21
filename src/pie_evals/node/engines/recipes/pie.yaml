@@ -68,6 +68,15 @@ default:
                 weights leave little beside them for a default-sized KV pool.
             engine_option:
               value: {max_state_slots: 64}
+  arch:
+    tpu-v5e:
+      knobs:
+        gpu_mem_util:
+          value: 0.97
+          rationale: >
+            A v5e chip has 15.75 GiB: at 0.90 neither pie (0 MiB left for KV) nor vLLM-TPU
+            (14.32 GiB used > 14.17 cap) boots gemma-4-E4B's 14.3 GiB of weights (b5 39658500805);
+            every engine gets the same higher share there.
   backend:
     xla:
       knobs:
