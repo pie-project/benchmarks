@@ -32,6 +32,8 @@ from pie_evals.schema import PlatformSpec
 
 REST = "https://rest.runpod.io/v1"
 DEFAULT_IMAGE = "pieproject/runpod-ci-runner:latest"
+#: the actions runner the startup script installs on an image that has none (runpod-ci-runner's pin)
+RUNNER_VERSION = "2.337.0"
 VOLUME = "/workspace"
 NO_VOLUME_DISK_GB = 250
 
@@ -154,6 +156,21 @@ if [ -n "$DRVCUDA" ] && [ "$DRVCUDA" -lt 13 ]; then echo "== host driver is CUDA
     if pgrep -f Runner.Worker >/dev/null 2>&1; then last=$(date +%s); grace=0
     elif [ $(( $(date +%s) - last )) -ge $(( {idle_minutes} * 60 + grace )) ]; then echo "== idle {idle_minutes} min: no job"; pkill -INT -f Runner.Listener; sleep 30; terminate; fi
   done ) &
+# an image other than the runner image (the AMD SGLang image on ROCm platforms) lacks the runner and
+# some of the tools it bakes in: install what is missing (a no-op on the runner image)
+NEED=""; for t in curl git jq unzip pkg-config cc; do command -v $t >/dev/null 2>&1 || NEED="$NEED $t"; done
+[ -f /usr/include/openssl/ssl.h ] || NEED="$NEED ssl"
+if [ -n "$NEED" ]; then
+  echo "== installing tools:$NEED"
+  (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends ca-certificates curl git jq unzip xz-utils build-essential pkg-config libssl-dev python3-venv) >/dev/null 2>&1 || echo "== tool install failed (non-fatal)"
+fi
+command -v uv >/dev/null 2>&1 || {{ echo "== installing uv"; curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh >/dev/null 2>&1 || echo "== uv install failed (non-fatal)"; }}
+if [ ! -x /opt/actions-runner/config.sh ]; then
+  echo "== installing the actions runner {RUNNER_VERSION}"
+  mkdir -p /opt/actions-runner && (cd /opt/actions-runner \
+    && curl -fsSL -o runner.tar.gz "https://github.com/actions/runner/releases/download/v{RUNNER_VERSION}/actions-runner-linux-x64-{RUNNER_VERSION}.tar.gz" \
+    && tar xzf runner.tar.gz && rm runner.tar.gz && ./bin/installdependencies.sh >/dev/null 2>&1) || echo "== runner install failed"
+fi
 if [ ! -x "$V/.cargo/bin/rustup" ]; then
   echo "== installing rustup on $V"; mkdir -p "$V"
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | RUSTUP_HOME=$V/.rustup CARGO_HOME=$V/.cargo sh -s -- -y --profile minimal --default-toolchain none --no-modify-path || echo "== rustup install failed (non-fatal)"
@@ -164,6 +181,8 @@ if ! ls /usr/include/python3*/Python.h >/dev/null 2>&1; then
   echo "== installing python3-dev"; (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3-dev) >/dev/null 2>&1 || echo "== python3-dev install failed (non-fatal)"
 fi
 VOL=$(mount | grep -q " $V " && echo 1 || echo "")
+# ROCm: the image's SDK (the AMD SGLang image keeps it in its venv and says so in ROCM_PATH), else /opt/rocm
+ROCMP="${{ROCM_PATH:-}}"; [ -z "$ROCMP" ] && [ -d /opt/rocm ] && ROCMP=/opt/rocm
 cat > /opt/actions-runner/.env <<ENV
 PIE_EVALS_VOLUME=$VOL
 RUSTUP_HOME=$V/.rustup
@@ -179,7 +198,8 @@ UV_CACHE_DIR=$V/.uv
 npm_config_cache=$V/.npm
 PIE_EVALS_CACHE=$V/pie-evals-cache
 PIE_EVALS_PLATFORM=${{PIE_EVALS_PLATFORM:-}}
-PATH=$V/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH=$V/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin$([ -n "$ROCMP" ] && echo ":$ROCMP/bin")
+$([ -n "$ROCMP" ] && echo "ROCM_PATH=$ROCMP")
 ENV
 echo "== env written; volume: $(df -h $V 2>/dev/null | tail -1)"
 # a pre-minted registration token (1 h, can only register a runner) is preferred over a PAT in the pod

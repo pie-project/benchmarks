@@ -40,7 +40,7 @@ class Backend(StrEnumBase):
     VULKAN = "vulkan"
     WGPU = "wgpu"
     XLA = "xla"  # pie's TPU engine (engine-xla over libtpu)
-    ROCM = "rocm"  # AMD Instinct (MI300X, MI350X): in the catalog; no engine declares it yet
+    ROCM = "rocm"  # AMD Instinct (MI300X, MI350X): pie's CUDA engine over HIP (--features rocm), vLLM's ROCm wheel, the AMD SGLang image
 
 
 class QuantScheme(StrEnumBase):
@@ -219,6 +219,8 @@ class PlatformSpec(BaseModel):
     peer_access: bool = Field(default=True, description="false where the pod advertises GPU peer access it cannot deliver: tp>1 baselines then keep their all-reduce on NCCL, as pie does there")
     runner_labels: list[str] = Field(default_factory=list, description="GitHub self-hosted runner labels")
     runpod_gpu_type: str | None = None
+    runpod_image: str | None = Field(default=None, description="pod image for this platform in place of the CUDA runner image; {sglang} and {vllm} take the run's pins")
+    catalog: str | None = Field(default=None, description="hardware.yaml id, where the RunPod GPU type does not name it")
     tp_capable: bool = False
     tiers: list[Tier] = Field(default_factory=lambda: [Tier.NIGHTLY, Tier.WEEKLY])
     fit_factor: float | None = Field(default=None, description="headroom the fit rule asks of this platform's memory (default: support.yaml fit_factor)")
