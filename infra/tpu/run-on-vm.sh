@@ -61,3 +61,5 @@ for p in "${pids[@]}"; do
   tail -n 20 "$HOME/$engine-tpu-install.log" || true
 done
 .venv/bin/pie-evals-node run --job "$job" --pie-root "$PIE_ROOT" --out "out/$job_id" --download
+# debug: engine-xla's device tests on the chip, after the bench
+( cd "$PIE_ROOT" && unset LIBTPU_INIT_ARGS && timeout 2400 cargo test -p engine-xla --release --test engine_xla -- kernels_ssm a_recurrent kernels_attn > "$HOME/xla-debug/tests.log" 2>&1; echo "tests exit $?" >> "$HOME/xla-debug/tests.log" ) || true

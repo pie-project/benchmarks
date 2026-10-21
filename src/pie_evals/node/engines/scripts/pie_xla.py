@@ -49,7 +49,8 @@ def main() -> None:
         run = os.path.join(debug, time.strftime("%H%M%S") + "-" + str(os.getpid()))
         os.makedirs(run, exist_ok=True)
         os.makedirs(debug, exist_ok=True)
-        env = dict(os.environ, PIE_XLA_DUMP=os.path.join(run, "dump"), PIE_XLA_CAPTURE=os.path.join(run, "steps"))
+        env = dict(os.environ, PIE_XLA_DUMP=os.path.join(run, "dump"), PIE_XLA_CAPTURE=os.path.join(run, "steps"),
+                   LIBTPU_INIT_ARGS="--xla_dump_to=" + os.path.join(run, "hlo") + " --xla_dump_hlo_as_text")
         os.makedirs(env["PIE_XLA_CAPTURE"], exist_ok=True)
         if "--config" in argv:
             with open(argv[argv.index("--config") + 1]) as f, open(os.path.join(run, "config.toml"), "w") as g:
