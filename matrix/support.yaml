@@ -79,14 +79,6 @@ unsupported:
     reason: "SGLang 0.5.22 runs out of memory loading gpt-oss-120b on one 80 GB H100 (its mxfp4 unpack)"
   - when: {engine: sglang, family: gpt_oss, arch: blackwell}
     reason: "SGLang 0.5.22 cannot build its gpt-oss kernels for Blackwell (flashinfer compile fails)"
-  # SGLang tp2 on L40S x2: 0.5.20 hung at load (nightly 36081628995 s10); 0.5.22 hangs on Qwen3.5-0.8B and
-  # dies with "CUDA error: unspecified launch failure" on Qwen3.6-27B (weekly 39545360541)
-  - when: {engine: sglang, platform: l40s-x2, tp: ">1"}
-    reason: "SGLang 0.5.22 tp2 does not run on the L40S x2 pod (hangs or an unspecified launch failure); no NVLink"
-  # vLLM tp2 on L40S x2: 0.30 hung after the JIT warmup (nightly 36091390105 s07); 0.31.0's tp2 worker dies
-  # in initialization on every model (weekly 39545360541); the PRO 6000 x2 pod serves vLLM tp2 with the same image
-  - when: {engine: vllm, platform: l40s-x2, tp: ">1"}
-    reason: "vLLM 0.31.0 tp2 worker fails to initialize on the L40S x2 pod, every model"
   # SGLang's static pool for Kimi-K3 mini (weights + the KDA state pool) needs more than 0.935 of a 32 GB
   # card, and at 0.95 the process sits at 31.2 GiB before the first c8 batch (nightly 36103831529 s10:
   # ss serves, c8 / lc-1k / lc-2k OOM on 200-400 MiB); a 24 GB card does not load it at all

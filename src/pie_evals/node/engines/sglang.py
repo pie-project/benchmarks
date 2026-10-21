@@ -11,12 +11,16 @@ from __future__ import annotations
 
 import os
 import subprocess
+from pathlib import Path
 
 from pie_evals.schema import EngineName, WorkloadSpec
 
 from .base import Engine, register
 from .served import ServedEngine
 from .shape import max_model_len_for, workload_concurrency
+
+#: holds the sitecustomize that turns SGLang's custom all-reduce off (see default_env)
+SGLANG_SITE = Path(__file__).resolve().parent / "scripts" / "sglang_site"
 
 
 @register
@@ -41,12 +45,22 @@ class SglangEngine(Engine):
         from pie_evals.node.baselines import cache_root
 
         jit = cache_root() / "jit"
-        return {
+        env = {
             "SGLANG_JIT_CACHE_DIR": str(jit / "sglang"),
             "TRITON_CACHE_DIR": str(jit / "triton"),
             "TORCHINDUCTOR_CACHE_DIR": str(jit / "inductor"),
             **self.nccl_env(),
         }
+        if self.no_peer_all_reduce():
+            # sglang_bench.py has no flag for disable_custom_all_reduce and SGLang reads no env
+            # for it; the sitecustomize on this path makes SGLang's P2P probe answer "no", which
+            # turns its custom all-reduce off and leaves NCCL to carry it (every spawned
+            # scheduler imports it too). On the L40S x2 pod the custom kernel hung Qwen3.5-0.8B
+            # and died with "unspecified launch failure" on Qwen3.6-27B (weekly 39545360541)
+            existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
+            env["PYTHONPATH"] = ":".join([str(SGLANG_SITE)] + ([existing] if existing else []))
+            env["SGLANG_PIE_EVALS_NO_CUSTOM_AR"] = "1"
+        return env
 
     def default_python(self) -> str:
         if os.environ.get("SGLANG_PY"):

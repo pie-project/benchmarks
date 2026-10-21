@@ -270,6 +270,13 @@ class Engine(ABC):
             return {"NCCL_P2P_DISABLE": "1", "NCCL_IB_DISABLE": "1"}
         return {}
 
+    def no_peer_all_reduce(self) -> bool:
+        """True for a tp>1 run on a platform whose GPU peer access is advertised but broken
+        (``peer_access: false``): an engine's custom all-reduce reads the peer's memory directly
+        and there hangs or faults, so it is turned off and NCCL carries the all-reduce, the path
+        pie takes on the same pod when its own peer collectives cannot run."""
+        return int(self.mode.tp) > 1 and self.platform is not None and not getattr(self.platform, "peer_access", True)
+
     # ---- to implement per engine ---------------------------------------------
     @abstractmethod
     def default_python(self) -> str: ...
