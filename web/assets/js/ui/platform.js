@@ -96,6 +96,8 @@ window.Pie = window.Pie || {};
   // the theoretical bound for a cell: Raw's hardware limit, or for batched decode the lower of compute and bandwidth
   const boundOf = (mac, model, mode, metric, pie) => {
     if (mode.limit) return Pie.ceiling?.(pie, metric.id) || null;
+    // Spec Decode: the best draft width at the Roofline page's acceptance
+    if (mode.id === "spec") return (pie && Pie.specCeiling?.(pie)) || null;
     if (mode.workload !== "throughput") return null;
     return batchedBound(mac, model, pie?.scheme);
   };
@@ -155,13 +157,15 @@ window.Pie = window.Pie || {};
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
     const batchBound = !limit && mode.workload === "throughput" ? batchedBound(mac, model, c.pie.scheme) : null;
     const batchPeak = batchBound ? batchBound.tps : null;
+    // Spec Decode: the limit at the best draft width for this machine and model, at the bar's acceptance
+    const specBound = mode.id === "spec" ? Pie.specCeiling?.(c.pie) : null;
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
     // Engines compares the engines only; Roofline adds each one's share of the bound, the bounds and the chart
     const roofline = compare === "ceiling";
     const lines = order.map((r, i) => {
       // Raw: each engine's share of the hardware limit; the others: what the feature adds over its raw row
-      const extra = !roofline ? null : limit ? share(r, metric) : batchPeak ? r[metric.key] / batchPeak : overRaw(r, metric, raw);
-      const note = extra === null ? "" : limit || batchPeak ? `${Math.round(extra * 100)}%` : times(extra);
+      const extra = !roofline ? null : limit ? share(r, metric) : specBound ? r[metric.key] / specBound.tps : batchPeak ? r[metric.key] / batchPeak : overRaw(r, metric, raw);
+      const note = extra === null ? "" : limit || batchPeak || specBound ? `${Math.round(extra * 100)}%` : times(extra);
       return `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
       <span class="tip-value">${esc(value(r[metric.key], metric.unit))}${roofline ? `<span class="tip-share">${note}</span>` : ""}</span><span class="tip-when">${esc(day(r))}</span></div>`;
@@ -185,13 +189,16 @@ window.Pie = window.Pie || {};
       const head = `<div class="tip-rows">${bounds(both).map(([name, tps], i) => limitRow(name, tps, i === 0)).join("")}</div>`;
       return `<div class="rf-card">${head}${roofCard(order.map((r) => roofPoint(r, mode, metric)).filter(Boolean))}</div>`;
     }
+    if (specBound) lines.push(`<div class="tip-row is-limit">
+      <svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg><span class="tip-name" title="The limit at the best draft width, at ${Pie.specAlpha}% acceptance">Limit · ${specBound.k ? `${specBound.k} drafts` : "no drafts"}</span>
+      <span class="tip-value">${esc(value(specBound.tps, metric.unit))}</span><span class="tip-when">${Pie.specAlpha}%</span></div>`);
     return card("", "", lines);
   };
 
   // a result on the roofline model (Williams et al., 2009): its pass's arithmetic intensity, the FLOPs it does per byte
   // it reads, and the FLOPs a second it achieved; and its machine's roof, memory bandwidth and peak FLOPS
   const roofPoint = (r, mode, metric) => {
-    if (!r?.[metric.key]) return null;
+    if (!r?.[metric.key] || mode.id === "spec") return null;
     if (mode.limit) {
       const c = Pie.ceiling?.(r, metric.id);
       if (!c?.parts.tflops) return null;  // a machine without a FLOPS figure has no intensity to place it at
@@ -479,7 +486,7 @@ window.Pie = window.Pie || {};
         <div class="platform-bar">
           <span class="filter platform-setup">
             <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Setup: ${mode.label}`)}">${esc(mode.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
-          </span>
+          </span>${mode.id === "spec" ? `${Pie.specField?.() || ""}` : ""}
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             <span class="platform-compare" role="group" aria-label="View">${Object.entries(COMPARES).map(([id, name]) =>
@@ -638,6 +645,13 @@ window.Pie = window.Pie || {};
         const now = state.platform.sort;
         state.platform.sort = now?.key !== key ? { key, dir: 1 } : now.dir > 0 ? { key, dir: -1 } : null;
         onChange();
+      });
+      // Spec Decode's acceptance: the grid redraws at once, the field keeping its focus while it is typed in
+      Pie.bindSpecField?.(element, () => {
+        const typing = document.activeElement?.matches?.("[data-alpha]");
+        onChange();
+        const input = element.querySelector("[data-alpha]");
+        if (input && typing) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
       });
       // a tap on a cell shows its card, as hovering does with a pointer
       element.addEventListener("click", (event) => {
