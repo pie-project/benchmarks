@@ -16,7 +16,9 @@ jobs:
         run: |
           set -euo pipefail
           cutoff=$(date -u -d '-4 hours' +%s)
-          gcloud compute tpus tpu-vm list --zone=- --project pie-project-510103 --format='value(name,zone,createTime)' |
+          # name is projects/<p>/locations/<zone>/nodes/<name>: the list has no zone column of its own
+          gcloud compute tpus tpu-vm list --zone=- --project pie-project-510103 --format=json |
+          jq -r '.[] | (.name | split("/")) as $n | "\($n[-1]) \($n[3]) \(.createTime)"' |
           while read -r name zone created; do
             [ -n "$name" ] || continue
             t=$(date -u -d "$created" +%s)
