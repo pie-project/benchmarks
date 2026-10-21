@@ -37,8 +37,11 @@ global_exclude:
   # the TPU builds of vLLM (vllm-tpu) and SGLang (sglang-jax) on the same bf16 checkpoint for the Raw row.
   # The other TPU models (the *-tpu artifacts) run the Raw row only, on all three.
   - {backend: xla, not_engine: [pie, vllm, sglang]}
-  - {backend: xla, engine: pie, not_artifact: [qwen3.5-0.8b-xla, qwen3-0.6b-tpu, gemma-4-e2b-tpu, gemma-4-e4b-tpu, gemma-4-12b-tpu, qwen3.6-27b-tpu, gpt-oss-20b-tpu, gpt-oss-120b-tpu]}
-  - {backend: xla, engine: [vllm, sglang], not_artifact: [qwen3.5-0.8b-bf16, qwen3-0.6b-tpu, gemma-4-e2b-tpu, gemma-4-e4b-tpu, gemma-4-12b-tpu, qwen3.6-27b-tpu, gpt-oss-20b-tpu, gpt-oss-120b-tpu]}
+  # the whole v5p-8 (4 chips, tp4) is for the datacenter models one chip cannot hold, nothing else
+  - {platform: tpu-v5p-8-x4, tp: [1, 2]}
+  - {platform: tpu-v5p-8-x4, not_artifact: [deepseek-v4.1-flash, glm-5.3-flash, glm-5.3, hy4-preview, mimo-v2.6-flash, kimi-k3, qwen3.8-flash-next-bf16, muse-spark-open, nemotron-3-ultra]}
+  - {backend: xla, not_platform: tpu-v5p-8-x4, engine: pie, not_artifact: [qwen3.5-0.8b-xla, qwen3-0.6b-tpu, gemma-4-e2b-tpu, gemma-4-e4b-tpu, gemma-4-12b-tpu, qwen3.6-27b-tpu, gpt-oss-20b-tpu, gpt-oss-120b-tpu]}
+  - {backend: xla, not_platform: tpu-v5p-8-x4, engine: [vllm, sglang], not_artifact: [qwen3.5-0.8b-bf16, qwen3-0.6b-tpu, gemma-4-e2b-tpu, gemma-4-e4b-tpu, gemma-4-12b-tpu, qwen3.6-27b-tpu, gpt-oss-20b-tpu, gpt-oss-120b-tpu]}
   - {backend: xla, engine: [vllm, sglang], not_workload: raw-512-256}
   - {backend: xla, not_artifact: qwen3.5-0.8b-xla, not_workload: raw-512-256}
   - {backend: xla, not_program: text-completion-bench}

@@ -11,6 +11,9 @@ unsupported:
   # TPUs the project cannot get (tpu.yml, release 0.5.3-b5): v4 lives only in us-central2-b, which the
   # organization's resource-location policy blocks (LOCATION_POLICY_VIOLATED, on demand and spot); TPU7x only
   # in us-central1, where the project's Compute Engine TPU7X quota is 0 (TPUS_PER_TPU_FAMILY, both zones)
+  # engine-xla plans one device (its coverage example traces tp1 deployments only)
+  - when: {engine: pie, backend: xla, tp: ">1"}
+    reason: "pie's XLA engine serves a model on one TPU device; this model needs more HBM than one chip has"
   - when: {platform: tpu-v4-8}
     reason: "no access: TPU v4 is only offered in us-central2-b, which the GCP organization's location policy blocks for this project"
   - when: {platform: tpu7x-4}
