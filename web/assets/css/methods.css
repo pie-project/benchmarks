@@ -416,8 +416,8 @@
 .lim-table .lim-fill { width: 100%; padding: 0; }
 .lim-table .lim-term { color: var(--color-label-secondary); }
 /* the formulas typeset as a paper sets them: italic symbols with upright subscripts, stacked fractions, a math face */
-.lim-table td.lim-formula { padding-top: 8px; padding-bottom: 8px; white-space: nowrap; }
-.lim-table .m-eq { display: inline-flex; align-items: center; font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", "Times New Roman", serif; font-size: 16px; line-height: 1.2; color: var(--color-label); }
+.lim-table td.lim-formula { padding-top: 0; padding-bottom: 0; white-space: nowrap; }
+.lim-table .m-eq { display: inline-block; vertical-align: middle; font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", "Times New Roman", serif; font-size: 16px; line-height: 20px; color: var(--color-label); }
 .lim-table .m-var { white-space: nowrap; }
 .lim-table .m-var i { font-style: italic; }
 .lim-table .m-var sub { font-style: normal; font-size: .68em; vertical-align: -.3em; line-height: 0; margin-left: .05em; }
@@ -430,10 +430,6 @@
 .lim-table .m-comma { margin-right: .35em; }
 .lim-table .m-fn { font-style: normal; }
 .lim-table .m-paren { color: var(--color-label-secondary); }
-.lim-table .m-paren.is-big { font-size: 1.7em; font-weight: 200; line-height: 1; transform: scaleX(.8); }
-.lim-table .m-frac { display: inline-flex; flex-direction: column; align-items: stretch; text-align: center; vertical-align: middle; margin: 0 .12em; }
-.lim-table .m-num { padding: 0 .25em .12em; border-bottom: 1px solid currentColor; }
-.lim-table .m-den { padding: .12em .25em 0; }
 .lim-table .lim-source .cite { margin-right: 4px; }
 .lim-table .lim-authors, .lim-table .lim-venue { color: var(--color-label-secondary); }
 .lim-table a { color: var(--color-label); text-decoration: none; }
@@ -485,3 +481,5 @@
 }
   .spec-input, .spec-stepper { height: 26px; }
 }
+/* every formula one line in a row as tall as the site's others */
+.lim-table tbody td { height: var(--row-height); padding-top: 0; padding-bottom: 0; }
