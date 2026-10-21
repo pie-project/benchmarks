@@ -30,6 +30,8 @@ global_exclude:
   # the datacenter pods run tp = every GPU they hold
   - {platform: h200-x2, tp: 1}
   - {platform: [a100-sxm-x8, h100-sxm-x8, h200-x8, b200-x8, b300-x8], tp: [1, 2, 4]}
+  # the datacenter models (hundreds of GiB to 1.5 TiB each) run a release's Raw row only
+  - {artifact: [deepseek-v4.1-flash, glm-5.3-flash, glm-5.3, hy4-preview, mimo-v2.6-flash, kimi-k3, qwen3.8-flash-next-bf16, muse-spark-open, nemotron-3-ultra], not_workload: raw-512-256}
   # every TPU (backend xla) runs pie on its own Qwen3.5-0.8B artifact (models.yaml keeps that artifact off every other
   # platform) on a single request, a throughput shape and a release's Raw row (tpu.yml tier=weekly), and
   # the TPU builds of vLLM (vllm-tpu) and SGLang (sglang-jax) on the same bf16 checkpoint for the Raw row.
