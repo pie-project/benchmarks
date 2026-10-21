@@ -429,7 +429,7 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
         # a fallback pod seats only the hosted platforms that fit on it
         lab = [x for x in want if x not in m.platforms or m.platforms[x].count <= plat.count] if want else None
         gone = False
-        for _attempt in range(3):  # a pod on a host below CUDA 13.0 drops itself before registering: rent another
+        for _attempt in range(3):  # a pod that ends itself (host below CUDA 13.0) or never registers (pull stuck: pro6000-x4, weekly 39547027079): rent another
             try:
                 h = runpod.create_pod(plat, repo=repo, runner_pat=runner_pat, runner_token=runner_token, kill_minutes=kill_minutes or m.kill_minutes,
                                       image=image or runpod.DEFAULT_IMAGE, image_version=image_version, network_volume_id=network_volume_id,
@@ -456,9 +456,7 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
             except RuntimeError as e:
                 click.echo(f"terminate {h.id}: {str(e)[:120]}", err=True)
             errors.append(f"{pid}: runner not registered ({'pod ended' if gone else f'{wait_runner}s'})")
-            h = None
-            if not gone:
-                break
+            h = None  # a pod whose image pull never finishes (runtime never up) is a host problem: rent another
         if h is not None:
             break
     if h is None or plat is None:
