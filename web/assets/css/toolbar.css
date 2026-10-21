@@ -441,3 +441,6 @@
 .release-picker.is-prominent[aria-expanded="true"] { background: var(--color-fill-secondary); }
 .release-picker.is-prominent .release-picker-value { color: var(--color-label); }
 .release-picker.is-prominent .popup-chevron { stroke: var(--color-label-secondary); }
+/* the theme button sits in the bar's grey, as Latest and Search do, and darkens under the pointer as they do */
+.toolbar > .theme-toggle { background: var(--color-fill); }
+.toolbar > .theme-toggle:hover { background: var(--color-fill-secondary); }
