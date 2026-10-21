@@ -57,7 +57,12 @@ class EngineDecl:
     tiers: list[Tier]
     recipe: str = "default"
     pin: str | None = None
+    #: a backend whose build of the engine is versioned apart from it (xla: sglang-jax)
+    backend_pins: dict[str, str] = field(default_factory=dict)
     release_source: str | None = None
+
+    def pin_for(self, backend: str | None) -> str | None:
+        return self.backend_pins.get(str(backend or ""), self.pin)
 
 
 @dataclass
@@ -153,7 +158,7 @@ class Matrix:
                                     continue
                                 cell_mode = mode.model_copy(update={"spec_dec": prog.spec_dec}) if prog.spec_dec else mode
                                 cell = Cell(
-                                    engine=EngineName(eng.id), engine_version=eng.pin, platform=plat,
+                                    engine=EngineName(eng.id), engine_version=eng.pin_for(plat.backend.value), platform=plat,
                                     artifact=art, workload=wl, program=prog, mode=cell_mode,
                                 )
                                 cell.tiers = self._tiers_for(eng, plat, art, wl, prog, mode)
