@@ -53,12 +53,12 @@ window.Pie = window.Pie || {};
     return `<span class="m-var" title="${name}"><i>${base}</i>${sub ? `<sub>${sub}</sub>` : ""}</span>`;
   };
   const o = (x) => `<span class="m-op">${x}</span>`;
-  const fr = (num, den) => `<span class="m-frac"><span class="m-num">${num}</span><span class="m-den">${den}</span></span>`;
-  // brackets grow to the height of a fraction they hold, as typeset brackets do
-  const par = (x) => {
-    const big = x.includes("m-frac") ? " is-big" : "";
-    return `<span class="m-paren${big}">(</span>${x}<span class="m-paren${big}">)</span>`;
-  };
+  const par = (x) => `<span class="m-paren">(</span>${x}<span class="m-paren">)</span>`;
+  // a fraction in one line, as Math Notes and Numbers write one: a slash, and brackets round a side that holds an
+  // operator outside its own brackets, so every formula stays a single row
+  const bare = (x) => x.replace(/<span class="m-paren[^"]*">\(<\/span>.*<span class="m-paren[^"]*">\)<\/span>/s, "");
+  const side = (x) => (bare(x).includes('class="m-op"') ? par(x) : x);
+  const fr = (num, den) => `${side(num)}${o("/")}${side(den)}`;
   const fn = (name, ...args) => `<span class="m-fn">${name}</span>${par(args.join(`<span class="m-comma">,</span>`))}`;
   const sum = (...xs) => xs.join(o("+"));
   const times = (...xs) => xs.join(o("·"));
