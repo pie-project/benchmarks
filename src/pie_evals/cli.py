@@ -371,7 +371,7 @@ def watch_baselines(obj, lock):
 @click.option("--image-version", default="latest")
 @click.option("--network-volume-id", envvar="RUNPOD_NETWORK_VOLUME_ID", default=None)
 @click.option("--kill-minutes", type=int, default=None, help="pod self-destruct; default = job budget × kill_factor")
-@click.option("--cuda", "cuda_versions", multiple=True, default=["13.0"], show_default=True, help="allowed host CUDA versions (pie pins cudarc cuda-13000; RunPod's pod API takes nothing above 13.0)")
+@click.option("--cuda", "cuda_versions", multiple=True, default=[], show_default=True, help="allowed host CUDA versions; default: any host, and the pod drops itself below CUDA 13.0 (RunPod's v1 pod API takes nothing above 13.0 and the fleet moved to 13.2 hosts: a 13.0 pin found no instance anywhere, weekly 39399397655)")
 @click.option("--debug", is_flag=True, help="serve the start log on the pod's :8080 proxy and hold a failed pod 10 min")
 @click.option("--exec", "exec_script", default=None, help="run this bash script on the pod (same env as a job) instead of a runner, then terminate; volume maintenance")
 @click.option("--wait-runner", type=int, default=0, help="seconds to wait for the pod's runner to register (needs GH_RUNNER_PAT); a pod that never registers is terminated and the next platform tried")
@@ -428,29 +428,39 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
         plat = m.platforms[pid]
         # a fallback pod seats only the hosted platforms that fit on it
         lab = [x for x in want if x not in m.platforms or m.platforms[x].count <= plat.count] if want else None
-        try:
-            h = runpod.create_pod(plat, repo=repo, runner_pat=runner_pat, runner_token=runner_token, kill_minutes=kill_minutes or m.kill_minutes,
-                                  image=image or runpod.DEFAULT_IMAGE, image_version=image_version, network_volume_id=network_volume_id,
-                                  volumes=rp.get("volumes") or None, preferred_data_centers=rp.get("preferred_data_centers"),
-                                  container_disk_gb=int(rp.get("container_disk_gb", 40)), cloud_type=str(rp.get("cloud_type", "SECURE")),
-                                  allowed_cuda_versions=list(cuda_versions) or None, debug=debug, exec_script=exec_script,
-                                  community_fallback=bool(rp.get("community_fallback", True)), log=lambda m_: click.echo(m_, err=True),
-                                  labels=lab, idle_minutes=idle_minutes)
+        gone = False
+        for _attempt in range(3):  # a pod on a host below CUDA 13.0 drops itself before registering: rent another
+            try:
+                h = runpod.create_pod(plat, repo=repo, runner_pat=runner_pat, runner_token=runner_token, kill_minutes=kill_minutes or m.kill_minutes,
+                                      image=image or runpod.DEFAULT_IMAGE, image_version=image_version, network_volume_id=network_volume_id,
+                                      volumes=rp.get("volumes") or None, preferred_data_centers=rp.get("preferred_data_centers"),
+                                      container_disk_gb=int(rp.get("container_disk_gb", 40)), cloud_type=str(rp.get("cloud_type", "SECURE")),
+                                      allowed_cuda_versions=list(cuda_versions) or None, debug=debug, exec_script=exec_script,
+                                      community_fallback=bool(rp.get("community_fallback", True)), log=lambda m_: click.echo(m_, err=True),
+                                      labels=lab, idle_minutes=idle_minutes)
+            except RuntimeError as e:
+                errors.append(f"{pid}: {str(e)[:120]}")
+                click.echo(f"no pod for {pid}: {str(e)[:600]}", err=True)
+                h = None
+                break
             click.echo(f"launched on {pid}", err=True)
-            if wait_runner and runner_pat and not exec_script:
-                if not runpod.wait_for_runner(h.id, repo, runner_pat, wait_runner, log=lambda m_: click.echo(m_, err=True)):
-                    click.echo(f"pod {h.id} on {pid} never registered a runner within {wait_runner}s; terminating it", err=True)
-                    try:
-                        runpod.terminate_pod(h.id)
-                    except RuntimeError as e:
-                        click.echo(f"terminate {h.id}: {str(e)[:120]}", err=True)
-                    errors.append(f"{pid}: runner not registered within {wait_runner}s")
-                    h = None
-                    continue
+            if not (wait_runner and runner_pat and not exec_script):
+                break
+            status = runpod.wait_for_runner(h.id, repo, runner_pat, wait_runner, log=lambda m_: click.echo(m_, err=True))
+            if status is True:
+                break
+            gone = status == "gone"
+            click.echo(f"pod {h.id} on {pid} {'ended before registering a runner' if gone else f'never registered a runner within {wait_runner}s'}; terminating it", err=True)
+            try:
+                runpod.terminate_pod(h.id)
+            except RuntimeError as e:
+                click.echo(f"terminate {h.id}: {str(e)[:120]}", err=True)
+            errors.append(f"{pid}: runner not registered ({'pod ended' if gone else f'{wait_runner}s'})")
+            h = None
+            if not gone:
+                break
+        if h is not None:
             break
-        except RuntimeError as e:
-            errors.append(f"{pid}: {str(e)[:120]}")
-            click.echo(f"no pod for {pid}: {str(e)[:600]}", err=True)
     if h is None or plat is None:
         raise click.ClickException("no instance on any platform: " + "; ".join(errors))
     click.echo(h.id)
@@ -459,6 +469,34 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a") as f:
             f.write(f"pod_id={h.id}\nplatform={plat.id}\nlabels={','.join(lab or plat.runner_labels)}\n")
+
+
+@main.command("release-pods")
+@click.argument("pod_ids", nargs=-1)
+@click.option("--repo", required=True)
+@click.option("--runner-pat", envvar="GH_RUNNER_PAT", default=None)
+def release_pods(pod_ids, repo, runner_pat):
+    """Terminate the given pods at the end of a run unless their runner is busy
+    (another run's job on a shared pod): a finished run leaves no pod billing
+    until the 20-minute idle watchdog."""
+    from pie_evals.pods import runpod
+
+    busy: set[str] = set()
+    if runner_pat:
+        try:
+            busy = runpod.busy_pods(runpod.list_runners(repo, runner_pat))
+        except Exception as e:  # noqa: BLE001 — unknown: leave every pod to its idle watchdog
+            click.echo(f"runner list unavailable ({str(e)[:80]}); leaving pods to their idle watchdog", err=True)
+            return
+    for pid in {p.strip() for p in pod_ids if p.strip()}:
+        if pid in busy:
+            click.echo(f"{pid}: runner busy with another job; left to its idle watchdog")
+            continue
+        try:
+            runpod.terminate_pod(pid)
+            click.echo(f"{pid}: terminated")
+        except RuntimeError as e:
+            click.echo(f"{pid}: {str(e)[:120]}")
 
 
 @main.command("runpod-gpus")

@@ -142,6 +142,9 @@ echo $(( $(date +%s) + {kill_minutes} * 60 )) > /tmp/pie-evals-deadline
 USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | sort -n | tail -1)
 CUINIT=$(python3 -c "import ctypes; print(ctypes.CDLL('libcuda.so.1').cuInit(0))" 2>/dev/null || echo none)
 if [ "${{USED:-0}}" -gt 1500 ] || {{ [ "$CUINIT" != 0 ] && [ "$CUINIT" != none ]; }}; then echo "== GPU unusable at boot: ${{USED}} MiB in use, cuInit $CUINIT"; sleep {hold}; terminate; exit 1; fi
+# pods take any host (the v1 API's CUDA pin stops at 13.0 and the fleet runs 13.2); pie needs a CUDA 13 driver
+DRVCUDA=$(nvidia-smi 2>/dev/null | grep -o 'CUDA Version: [0-9]*' | grep -o '[0-9]*$')
+if [ -n "$DRVCUDA" ] && [ "$DRVCUDA" -lt 13 ]; then echo "== host driver is CUDA $DRVCUDA.x, pie needs 13"; terminate; exit 1; fi
 # idle watchdog: a job is running while Runner.Worker exists; {idle_minutes} min without one stops the
 # listener (our own process on this pod), run.sh returns, and the tail of this script removes the
 # registration and terminates the pod
@@ -371,7 +374,16 @@ def runner_registered(pod_id: str, repo: str, pat: str) -> bool:
     return any(x.get("name") == f"runpod-{pod_id}" for x in runners)
 
 
-def wait_for_runner(pod_id: str, repo: str, pat: str, timeout_s: float, *, log=print) -> bool:
+def pod_gone(pod_id: str, api_key: str | None = None) -> bool:
+    """Whether the pod has ended (terminated itself or was removed)."""
+    try:
+        p = _req("GET", f"/pods/{pod_id}", api_key=api_key)
+    except RuntimeError as e:
+        return " 404 " in str(e)[:40]
+    return not p or (isinstance(p, dict) and p.get("desiredStatus") in ("TERMINATED", "EXITED"))
+
+
+def wait_for_runner(pod_id: str, repo: str, pat: str, timeout_s: float, *, log=print) -> bool | str:
     """Poll until the pod's runner registers or ``timeout_s`` passes. A pod
     that shows RUNNING but never registers (image pull stalled, host trouble)
     would otherwise leave its bench job queued for a runner that never comes
@@ -385,6 +397,12 @@ def wait_for_runner(pod_id: str, repo: str, pat: str, timeout_s: float, *, log=p
                 return True
         except Exception as e:  # noqa: BLE001 — a flaky listing is not a verdict
             log(f"runner listing failed ({str(e)[:100]}); retrying")
+        try:
+            if pod_gone(pod_id):  # the pod refused its host (startup_script) and ended itself
+                log(f"pod {pod_id} ended before its runner registered")
+                return "gone"
+        except Exception:  # noqa: BLE001
+            pass
         if time.monotonic() >= deadline:
             return False
         time.sleep(20)
