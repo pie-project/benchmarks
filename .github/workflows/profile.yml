@@ -86,6 +86,14 @@ jobs:
           job="jobs/$(jq -r '.include[0].job_id' jobs/gh-matrix.json).json"  # beside it, gh-matrix, pods and policy
           out="out/profile"
           PIE_EVALS_SAMPLE_SECS="${{ inputs.sample_secs }}" .venv/bin/pie-evals-node run --job "$job" --pie-root "${PIE_ROOT:-$HOME/pie}" --out "$out" --download
+      - name: summary
+        if: always() && inputs.engine == 'pie'
+        run: |
+          # the results in the log, so reading a run needs no artifact download (the account's egress is metered)
+          python3 .github/profile/summary.py out/profile || true
+          for f in $(find out/profile -name stderr.txt | sort); do
+            if grep -q "kernels: fire" "$f"; then echo "== $f"; python3 .github/profile/kprof.py "$f" | head -60; fi
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: "profile-${{ inputs.engine }}-${{ github.run_id }}", path: "out/profile", retention-days: 30 }
