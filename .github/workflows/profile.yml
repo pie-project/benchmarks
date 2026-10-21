@@ -57,8 +57,15 @@ jobs:
           # Splash's per-kernel attribution of real DFlash cycles (dev/benchmarks/decode_profile.mm), built at the
           # pinned tag against the release's own metallib (no Metal compiler needed), over the model as Splash
           # prepared it for the benchmark
-          pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['splash']['pin'])")
+          # pie_commit names the Splash release here (empty: the pinned one)
+          pin="${{ inputs.pie_commit }}"
+          [[ "$pin" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['splash']['pin'])")
           rel="$HOME/.cache/pie-evals/baselines/splash-$pin"; src="$RUNNER_TEMP/splash-src"
+          if [ ! -f "$rel/engine/splash.metallib" ]; then
+            rm -rf "$rel" && mkdir -p "$rel"
+            curl -fsSL "https://github.com/incoai/splash/releases/download/$pin/splash-$pin-arm64-macos26.tar.gz" | tar xz -C "$rel" --strip-components=1
+          fi
+          echo "splash $pin"
           rm -rf "$src" && git clone -q --depth 1 --branch "$pin" https://github.com/incoai/splash.git "$src"
           mkdir -p "$src/build" && cp "$rel/engine/splash.metallib" "$src/build/splash.metallib"
           make -C "$src" -j8 -o build/splash.metallib build/engine-tests/decode-profile
@@ -81,4 +88,4 @@ jobs:
           PIE_EVALS_SAMPLE_SECS="${{ inputs.sample_secs }}" .venv/bin/pie-evals-node run --job "$job" --pie-root "${PIE_ROOT:-$HOME/pie}" --out "$out" --download
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: "profile-${{ inputs.engine }}-${{ inputs.artifact }}", path: "out/profile", retention-days: 30 }
+        with: { name: "profile-${{ inputs.engine }}-${{ github.run_id }}", path: "out/profile", retention-days: 30 }
