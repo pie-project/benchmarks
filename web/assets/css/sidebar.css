@@ -361,12 +361,3 @@
     line-height: 18px;
   }
 }
-
-/* the Pie website at the sidebar's foot: a row like the others under a hairline, a trailing arrow saying it leaves */
-.sidebar-site-link { flex: none; margin-top: auto; position: relative; color: var(--color-label); text-decoration: none; }
-.sidebar-site-link::before { content: ""; position: absolute; left: 8px; right: 8px; top: -8px; border-top: .5px solid var(--color-separator); }
-.sidebar-site-link .sidebar-out { width: 10px; height: 10px; margin-left: auto; stroke: var(--color-label-tertiary); stroke-width: 1.4; fill: none; }
-@media (max-width: 899px) {
-  .sidebar-appearance + .sidebar-site-link { margin-top: 0; }
-  .sidebar-appearance + .sidebar-site-link::before { display: none; }
-}
