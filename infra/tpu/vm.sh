@@ -47,12 +47,17 @@ EOF
         if [ "$TPU_KIND" = tpu ]; then
           disk=()
           if [ -n "${TPU_DATA_DISK_GB:-}" ]; then
-            for t in pd-balanced hyperdisk-balanced; do
+            # the project's SSD and hyperdisk quotas are 500 GB a region: a standard disk when those are spent
+            for t in pd-balanced hyperdisk-balanced pd-standard; do
               gcloud compute disks describe "$TPU_NAME-data" "${P[@]}" --zone "$zone" >/dev/null 2>&1 && break
               gcloud compute disks create "$TPU_NAME-data" "${P[@]}" --zone "$zone" --size "${TPU_DATA_DISK_GB}GB" --type "$t" \
                 --labels "owner=pie-evals" --quiet >&2 && break
             done
-            disk=(--data-disk "source=projects/$GCP_PROJECT/zones/$zone/disks/$TPU_NAME-data,mode=read-write")
+            if gcloud compute disks describe "$TPU_NAME-data" "${P[@]}" --zone "$zone" >/dev/null 2>&1; then
+              disk=(--data-disk "source=projects/$GCP_PROJECT/zones/$zone/disks/$TPU_NAME-data,mode=read-write")
+            else
+              echo "::warning::no data disk in $zone: the boot disk only" >&2
+            fi
           fi
           out=$(gcloud compute tpus tpu-vm create "$TPU_NAME" "${P[@]}" --zone "$zone" --accelerator-type "$TPU_TYPE" \
                   --version "$TPU_RUNTIME" "${disk[@]}" ${spot:+--spot} --labels "owner=pie-evals" --quiet 2>&1) && { echo "zone=$zone"; exit 0; }
