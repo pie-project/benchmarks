@@ -26,6 +26,9 @@ platforms:
     count: 2
     memory_gib: 92
     interconnect: pcie
+    # the L40S x2 pod's peer DMA is broken: pie's peer collectives fall back to NCCL there, and
+    # vLLM/SGLang's custom all-reduce (built on it) hung or died with "unspecified launch failure" (weekly 39545360541)
+    peer_access: false
     runner_labels: [self-hosted, linux, l40s-x2]
     runpod_gpu_type: "NVIDIA L40S"
     tp_capable: true
