@@ -49,7 +49,11 @@ class VllmEngine(Engine):
             # died on "Cannot re-initialize CUDA in forked subprocess" (L40S x2, weekly 39545360541)
             env["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
         if self.no_peer_all_reduce():
-            env["VLLM_DISABLE_CUSTOM_AR"] = "1"  # vllm_bench.py -> disable_custom_all_reduce=True
+            # vllm_bench.py honours VLLM_DISABLE_CUSTOM_AR only on its offline path; the streaming
+            # `tput` path every cell runs builds AsyncEngineArgs without it, and 0.31.0 kept
+            # ['CUSTOM', 'PYNCCL'] and died with "unspecified launch failure" (weekly 39652187264)
+            env["VLLM_DISABLE_CUSTOM_AR"] = "1"
+            env.update(self.no_peer_env())
         return env
 
     def default_python(self) -> str:
