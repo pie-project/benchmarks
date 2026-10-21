@@ -71,15 +71,8 @@ unsupported:
   # PRO 6000): "Ninja build failed ... mxfp8_quantization_sm100" (0.5.3-b5, run 39104203014)
   - when: {engine: sglang, family: gpt_oss, arch: blackwell}
     reason: "SGLang 0.5.22 cannot build its gpt-oss kernels for Blackwell (flashinfer compile fails)"
-  # SGLang tp2 on L40S x2 hangs at load (NCCL never settles): nightly 36081628995 s10, four Kimi-K3 mini
-  # cells each ran to the cell timeout and the workers kept 2 GB on both cards after the job
-  - when: {engine: sglang, platform: l40s-x2, tp: ">1"}
-    reason: "SGLang 0.5.20 tp2 hangs on L40S x2 (the pod's cards see no NVLink); every cell is a timeout"
-  # vLLM tp2 hangs the same way, with NCCL P2P/IB already off (nightly 36091390105 s07: gemma-E4B
-  # stalls after the JIT warmup, "No available shared memory broadcast block"); the PRO 6000 x2
-  # pod serves vLLM tp2 with the same image, and pie tp2 serves on this pod (gemma-E4B 111 tok/s)
-  - when: {engine: vllm, platform: l40s-x2, tp: ">1"}
-    reason: "vLLM 0.30 tp2 hangs at load on the L40S x2 pod; every cell is a timeout"
+  # SGLang 0.5.20 tp2 hung on L40S x2 at load (nightly 36081628995 s10); retried at 0.5.22 (0.5.3-b5)
+  # vLLM 0.30 tp2 hung on L40S x2 after the JIT warmup (nightly 36091390105 s07); retried at 0.31.0 (0.5.3-b5)
   # SGLang's static pool for Kimi-K3 mini (weights + the KDA state pool) needs more than 0.935 of a 32 GB
   # card, and at 0.95 the process sits at 31.2 GiB before the first c8 batch (nightly 36103831529 s10:
   # ss serves, c8 / lc-1k / lc-2k OOM on 200-400 MiB); a 24 GB card does not load it at all
