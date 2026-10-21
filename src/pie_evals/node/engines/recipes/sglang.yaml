@@ -26,6 +26,16 @@ default:
         SGLang's default page is 1 token; 16 matches pie's page and vLLM's
         block so KV fragmentation is comparable across the three.
 
+  arch:
+    tpu-v5e:
+      knobs:
+        gpu_mem_util:
+          value: 0.97
+          rationale: >
+            A v5e chip has 15.75 GiB: at 0.90 neither pie (0 MiB left for KV) nor vLLM-TPU
+            (14.32 GiB used > 14.17 cap) boots gemma-4-E4B's 14.3 GiB of weights (b5 39658500805);
+            every engine gets the same higher share there.
+
 competitive:
   extends: default
   knobs:
