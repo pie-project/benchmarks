@@ -148,9 +148,11 @@ if [ -n "$DRVCUDA" ] && [ "$DRVCUDA" -lt 13 ]; then echo "== host driver is CUDA
 # idle watchdog: a job is running while Runner.Worker exists; {idle_minutes} min without one stops the
 # listener (our own process on this pod), run.sh returns, and the tail of this script removes the
 # registration and terminates the pod
-( last=$(date +%s); while sleep 60; do
-    if pgrep -f Runner.Worker >/dev/null 2>&1; then last=$(date +%s)
-    elif [ $(( $(date +%s) - last )) -ge $(( {idle_minutes} * 60 )) ]; then echo "== idle {idle_minutes} min: no job"; pkill -INT -f Runner.Listener; sleep 30; terminate; fi
+# before its first job a pod waits out its run's other launches (the gate needs them all, and one
+# that misses a runner takes up to 15 min a try): it gets 45 min more (weekly 39544869457 lost idle pods)
+( last=$(date +%s); grace=$(( 45 * 60 )); while sleep 60; do
+    if pgrep -f Runner.Worker >/dev/null 2>&1; then last=$(date +%s); grace=0
+    elif [ $(( $(date +%s) - last )) -ge $(( {idle_minutes} * 60 + grace )) ]; then echo "== idle {idle_minutes} min: no job"; pkill -INT -f Runner.Listener; sleep 30; terminate; fi
   done ) &
 if [ ! -x "$V/.cargo/bin/rustup" ]; then
   echo "== installing rustup on $V"; mkdir -p "$V"
