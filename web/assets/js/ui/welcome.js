@@ -33,38 +33,15 @@ window.Pie = window.Pie || {};
       <div class="welcome-platforms">${[...platforms().filter(([id]) => !SOON.has(id)), ...platforms().filter(([id]) => SOON.has(id))].map(tile).join("")}</div>
     </section>`;
 
-  // every platform as a row of the site's data table, as Results and Quality list theirs: the platform with its mark,
-  // its stack, how many machines ran there and so whether it is measured (any machine in the data); every row opens its
-  // platform's page, as a table row does, with no chevron
-  // a header sorts its column, a second click reverses it and a third clears it, back to the sidebar's order
-  let sort = null;
-  const COLUMNS = [
-    { key: "label", label: "Platform" },
-    { key: "stack", label: "Stack" },
-    { key: "machines", label: "Machines", numeric: true },
-    { key: "status", label: "Status" },
-  ];
+  // every platform as a row of the site's list, in the sidebar's order: its mark and name, and how many machines ran
+  // there as a grey number at the row's far end, as the sidebar counts them; a row opens its platform's page, as its sidebar item does
   const table = () => {
-    let list = platforms().map(([id, s], order) => {
-      const machines = Pie.platform?.machines ? Pie.platform.machines(s.platform) : 0;
-      return { id, s, order, label: s.label, stack: STACK[id] || "", machines, status: machines ? "Measured" : "Not measured" };
-    });
-    if (sort) {
-      list = [...list].sort((a, b) => {
-        const x = a[sort.key], y = b[sort.key];
-        return (typeof x === "number" ? x - y : String(x).localeCompare(String(y))) * sort.direction || a.order - b.order;
-      });
-    }
-    const rows = list.map(({ id, s, stack, machines: n, status }) => `<tr class="is-link" data-go="${id}">
-        <td><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${s.label}</span></td>
-        <td class="welcome-stack">${stack}</td>
-        <td class="is-numeric${n ? "" : " is-empty"}">${n || "–"}</td>
-        <td${n ? "" : ' class="is-empty"'}>${status}</td>
-        <td class="welcome-go"></td>
+    const list = platforms().map(([id, s]) => ({ id, s, machines: Pie.platform?.machines ? Pie.platform.machines(s.platform) : 0 }));
+    const rows = list.map(({ id, s, machines: n }) => `<tr class="is-link" data-go="${id}">
+        <td class="welcome-name"><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${s.label}</span></td>
+        <td class="welcome-count" title="${n} ${n === 1 ? "machine" : "machines"}">${n}</td>
       </tr>`).join("");
-    const head = COLUMNS.map((c) => `<th${c.numeric ? ' class="is-numeric"' : ""} data-sort="${c.key}">${c.label}${sort?.key === c.key ? `<span class="column-sort">${sort.direction > 0 ? "↑" : "↓"}</span>` : ""}</th>`).join("");
     return `<table class="data-table welcome-table">
-      <thead><tr>${head}<th class="welcome-go"></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
   };
@@ -153,15 +130,6 @@ window.Pie = window.Pie || {};
       if (!element.hidden && element.dataset.ready !== "1") {
         element.innerHTML = table();
         element.addEventListener("click", (event) => {
-          const header = event.target.closest("[data-sort]");
-          if (header) {
-            const key = header.dataset.sort;
-            // a third click clears the sort, back to the sidebar's order
-            const first = key === "machines" ? -1 : 1;
-            sort = sort?.key !== key ? { key, direction: first } : sort.direction === first ? { key, direction: -first } : null;
-            element.innerHTML = table();
-            return;
-          }
           // a row opens its platform, as its sidebar item does
           const row = event.target.closest("[data-go]");
           if (row) document.querySelector(`.sidebar-item[data-table="${row.dataset.go}"]`)?.click();

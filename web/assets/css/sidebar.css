@@ -31,8 +31,11 @@
   letter-spacing: -.01em;
 }
 
-/* the brand opens pie-project.org, and reads as the name it is, not as a link */
-a.sidebar-brand { color: var(--color-label); text-decoration: none; }
+/* the brand reads "Pie Benchmarks" as one name: the mark and "Pie" in the brand's weight open pie-project.org,
+   "Benchmarks" beside them in the regular weight opens this site's home; neither looks like a link */
+.sidebar-home { display: inline-flex; align-items: center; gap: 8px; color: var(--color-label); text-decoration: none; }
+.sidebar-site { padding: 0; border: 0; background: none; font: inherit; font-weight: 400; color: var(--color-label); cursor: pointer; }
+.sidebar-brand { gap: 5px; }
 
 .sidebar-logo {
   width: 16px;
@@ -359,4 +362,13 @@ a.sidebar-brand { color: var(--color-label); text-decoration: none; }
     font-size: 11px;
     line-height: 18px;
   }
+}
+
+/* the Pie website at the sidebar's foot: a row like the others under a hairline, a trailing arrow saying it leaves */
+.sidebar-site-link { flex: none; margin-top: auto; position: relative; color: var(--color-label); text-decoration: none; }
+.sidebar-site-link::before { content: ""; position: absolute; left: 8px; right: 8px; top: -8px; border-top: .5px solid var(--color-separator); }
+.sidebar-site-link .sidebar-out { width: 10px; height: 10px; margin-left: auto; stroke: var(--color-label-tertiary); stroke-width: 1.4; fill: none; }
+@media (max-width: 899px) {
+  .sidebar-appearance + .sidebar-site-link { margin-top: 0; }
+  .sidebar-appearance + .sidebar-site-link::before { display: none; }
 }
