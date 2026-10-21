@@ -25,13 +25,46 @@ SPECS = {
 BACKEND_SPECS = {
     ("vllm", "xla"): lambda v: [f"vllm-tpu=={v}"],
     ("sglang", "xla"): lambda v: [f"sglang-jax[tpu]=={v}"],
+    # vLLM's ROCm build: the release's wheel from vLLM's own ROCm index (torch, triton and aiter for
+    # the same ROCm beside it), local version `+rocmNNN` (rocm_vllm_spec reads which ROCm it is)
+    ("vllm", "rocm"): lambda v: [f"vllm=={rocm_vllm_version(v)}"],
+    # SGLang's ROCm build ships only as the AMD image the pod runs (lmsysorg/sglang:v<pin>-rocm*):
+    # its venv sees the image's site-packages, nothing is installed (ensure_baseline checks the version)
+    ("sglang", "rocm"): lambda v: [],
 }
+
+#: vLLM's ROCm wheel index: <base>/<version>/ lists one rocmNNN/ directory, the index for that release
+VLLM_ROCM_INDEX = "https://wheels.vllm.ai/rocm"
+
+
+def rocm_vllm_variant(version: str) -> str:
+    """The ``rocmNNN`` directory vLLM published ``version``'s ROCm wheels under (0.31.0: rocm723)."""
+    import re
+    import urllib.request
+
+    with urllib.request.urlopen(f"{VLLM_ROCM_INDEX}/{version}/", timeout=60) as r:
+        found = re.findall(r'href="(rocm\d+)/"', r.read().decode())
+    if not found:
+        raise RuntimeError(f"vLLM {version} has no ROCm wheel index at {VLLM_ROCM_INDEX}/{version}/")
+    return sorted(found)[-1]
+
+
+def rocm_vllm_version(version: str) -> str:
+    return f"{version}+{rocm_vllm_variant(version)}"
 
 #: extra ``uv pip install`` flags per backend build: the TPU build runs torch on the host only
 #: (torchax lowers it to JAX), so the CPU wheel stands in for the 3 GB CUDA one
 BACKEND_UV_FLAGS = {
     ("vllm", "xla"): ["--torch-backend", "cpu"],
 }
+
+
+def _uv_flags(engine: str, backend: str | None, version: str) -> list[str]:
+    key = _backend_key(engine, backend)
+    if key == ("vllm", "rocm"):
+        # the ROCm torch/triton/aiter pins come from vLLM's index, not PyPI's CUDA builds
+        return ["--extra-index-url", f"{VLLM_ROCM_INDEX}/{version}/{rocm_vllm_variant(version)}", "--index-strategy", "unsafe-best-match"]
+    return BACKEND_UV_FLAGS.get(key, []) if key else []
 
 
 def cache_root(root: Path | None = None) -> Path:
@@ -205,6 +238,30 @@ def ensure_flashinfer_aot(py: Path, marker: Path, log=print) -> bool:
     return ok
 
 
+def image_python() -> str:
+    """The AMD SGLang image's interpreter (the one its sglang is installed into)."""
+    for c in ("/opt/venv/bin/python3", "/usr/bin/python3"):
+        if Path(c).exists() and subprocess.run([c, "-c", "import sglang"], capture_output=True, timeout=300).returncode == 0:
+            return c
+    return shutil.which("python3") or "python3"
+
+
+def _image_sglang(d: Path, version: str, log=print) -> Path:
+    """SGLang on ROCm is the AMD image's own install, used as it is: ``bin/python`` here is a
+    wrapper that execs the image's interpreter (a venv over it would lose the image's own venv)."""
+    base = image_python()
+    have = subprocess.run([base, "-c", "import sglang; print(sglang.__version__)"], capture_output=True, text=True, timeout=300).stdout.strip()
+    if have.lstrip("v") != version.lstrip("v"):
+        raise RuntimeError(f"the pod image carries sglang {have or 'none'}, the run pins {version}: launch the pod on lmsysorg/sglang:v{version}-rocm*")
+    log(f"baseline: sglang {have} from the pod image ({base})")
+    (d / "bin").mkdir(parents=True, exist_ok=True)
+    py = d / "bin" / "python"
+    py.write_text(f'#!/bin/sh\nexec {base} "$@"\n')
+    py.chmod(0o755)
+    (d / ".ok").write_text(version + "\n")
+    return py
+
+
 def ensure_baseline(engine: str, version: str, root: Path | None = None, *, backend: str | None = None, timeout_s: int = 3600, log=print) -> Path:
     """Install the baseline into its venv if needed; return its python. ``backend`` picks the
     engine's build for that platform backend (``xla``: vllm-tpu) where it has one."""
@@ -212,7 +269,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
         raise ValueError(f"no installer for baseline {engine}")
     bkey = _backend_key(engine, backend)
     spec = (BACKEND_SPECS[bkey] if bkey else SPECS[engine])(version)
-    uv_flags = BACKEND_UV_FLAGS.get(bkey, []) if bkey else []
+    uv_flags = _uv_flags(engine, backend, version)
     # the CUDA toolkit and FlashInfer kernels are for the CUDA build only
     cuda = engine in ("vllm", "sglang") and str(backend or "cuda") == "cuda"
     d = venv_dir(engine, version, root, backend)
@@ -225,10 +282,14 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
         return py
     if d.exists():
         shutil.rmtree(d, ignore_errors=True)  # a half-finished install
+    if bkey == ("sglang", "rocm"):
+        return _image_sglang(d, version, log=log)
     log(f"baseline: installing {' '.join(spec)} into {d} (once per volume)")
+    # the AMD SGLang image pins its own torch through PIP_CONSTRAINT and points VIRTUAL_ENV at its venv
+    ienv = {k: v for k, v in os.environ.items() if k not in ("PIP_CONSTRAINT", "UV_CONSTRAINT", "VIRTUAL_ENV")}
     if shutil.which("uv"):
-        subprocess.run(["uv", "venv", "--quiet", "--python", "3.12", str(d)], check=True)
-        subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), *uv_flags, *spec], check=True, timeout=timeout_s)
+        subprocess.run(["uv", "venv", "--quiet", "--python", "3.12", str(d)], check=True, env=ienv)
+        subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), *uv_flags, *spec], check=True, timeout=timeout_s, env=ienv)
     else:
         subprocess.run(["python3", "-m", "venv", str(d)], check=True)
         subprocess.run([str(py), "-m", "pip", "install", "-q", *spec], check=True, timeout=timeout_s)

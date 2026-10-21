@@ -44,6 +44,10 @@ class VllmEngine(Engine):
             "VLLM_CACHE_ROOT": str(jit / "vllm"),
             **self.nccl_env(),
         }
+        if self.platform is not None and str(self.platform.backend) == "rocm":
+            # AMD's own kernels (AITER) are vLLM's recommended Instinct path and off unless asked for:
+            # Qwen3.5-0.8B raw-512-256 on the MI300X decoded 512 tok/s with them, 478 without
+            env["VLLM_ROCM_USE_AITER"] = "1"
         if int(self.mode.tp) > 1:
             # 0.31.0 forked its tp workers after CUDA was up in the engine core, and every worker
             # died on "Cannot re-initialize CUDA in forked subprocess" (L40S x2, weekly 39545360541)
@@ -55,6 +59,18 @@ class VllmEngine(Engine):
             env["VLLM_DISABLE_CUSTOM_AR"] = "1"
             env.update(self.no_peer_env())
         return env
+
+    #: the AMD SGLang image's ROCm SDK (its venv) in the pod's environment: vLLM's ROCm wheel brings its own
+    #: torch/ROCm, and with the image's libraries first on the loader path torch died importing amdsmi
+    #: ("libamd_smi.so: undefined symbol amdsmi_set_gpu_clk_range"); the image's max-autotune inductor
+    #: defaults are SGLang's, not vLLM's
+    ROCM_IMAGE_ENV = ("LD_LIBRARY_PATH", "LIBRARY_PATH", "CPATH", "ROCM_PATH", "ROCM_HOME", "VIRTUAL_ENV",
+                      "PIP_CONSTRAINT", "TORCHINDUCTOR_MAX_AUTOTUNE", "TORCHINDUCTOR_MAX_AUTOTUNE_POINTWISE")
+
+    def drop_env(self) -> set[str]:
+        if self.platform is not None and str(self.platform.backend) == "rocm":
+            return set(self.ROCM_IMAGE_ENV)
+        return set()
 
     def default_python(self) -> str:
         if os.environ.get("VLLM_PY"):

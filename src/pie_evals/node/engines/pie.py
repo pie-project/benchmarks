@@ -69,6 +69,8 @@ def nccl_shim_dir(root: Path | None = None) -> Path | None:
 #: TODO(pie/benches): add vulkan / wgpu to pie_bench.py's --engine choices.
 _BACKEND_TO_ENGINE: dict[Backend, str] = {
     Backend.CUDA: "cuda_native",
+    # the ROCm build is the same engine over HIP (pie's `rocm` feature): same config, `cuda:N` devices
+    Backend.ROCM: "cuda_native",
     Backend.METAL: "metal",
     Backend.VULKAN: "vulkan",
     Backend.WGPU: "wgpu",
@@ -284,7 +286,7 @@ class PieEngine(Engine):
             args += ["--extra-input", "block=8", "--extra-input", "no_mask=true",
                      "--extra-input", "verify_rows=8", "--extra-input", "priced=false"]
 
-        if self.platform.backend == Backend.CUDA:
+        if self.platform.backend in (Backend.CUDA, Backend.ROCM):
             tp = max(1, int(self.mode.tp))
             # One device per TP rank. pie_bench's --device is ONE flag holding
             # a comma-separated list (build_config splits on ","); repeating

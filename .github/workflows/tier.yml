@@ -82,6 +82,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
+      - name: competitor releases for this run
+        # a ROCm pod's image is the AMD SGLang image at the run's SGLang pin (platforms.yaml runpod_image)
+        if: inputs.pins != ''
+        run: .venv/bin/pie-evals pins set "${{ inputs.pins }}"
       - name: launch pod
         id: pod
         run: .venv/bin/pie-evals launch-pod --platform "${{ join(matrix.fallback, ',') }}" --labels "${{ join(matrix.labels, ',') }}" --repo "${{ github.repository }}" --image "${{ vars.RUNPOD_IMAGE || 'pieproject/runpod-ci-runner:latest' }}" --kill-minutes 1440 --reuse --wait-runner 600 --debug

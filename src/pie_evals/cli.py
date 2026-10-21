@@ -438,10 +438,17 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
         # a fallback pod seats only the hosted platforms that fit on it
         lab = [x for x in want if x not in m.platforms or m.platforms[x].count <= plat.count] if want else None
         gone = False
+        # a platform with its own image (ROCm: the AMD SGLang image at the run's SGLang pin) takes it over
+        # the runner image; a 15-25 GB image takes far longer to pull than the runner's 2.5 GB
+        pod_image, wait = image or runpod.DEFAULT_IMAGE, wait_runner
+        if plat.runpod_image:
+            pins = {e.id: (e.pin_for(plat.backend) or "") for e in m.engines.values()}
+            pod_image, wait = plat.runpod_image.format(**pins), max(wait_runner, 2700) if wait_runner else 0
+            click.echo(f"{pid}: image {pod_image}", err=True)
         for _attempt in range(3):  # a pod that ends itself (host below CUDA 13.0) or never registers (pull stuck: pro6000-x4, weekly 39547027079): rent another
             try:
                 h = runpod.create_pod(plat, repo=repo, runner_pat=runner_pat, runner_token=runner_token, kill_minutes=kill_minutes or m.kill_minutes,
-                                      image=image or runpod.DEFAULT_IMAGE, image_version=image_version, network_volume_id=network_volume_id,
+                                      image=pod_image, image_version=image_version, network_volume_id=network_volume_id,
                                       volumes=rp.get("volumes") or None, preferred_data_centers=rp.get("preferred_data_centers"),
                                       container_disk_gb=max(int(rp.get("container_disk_gb", 40)), plat.container_disk_gb or 0), cloud_type=str(rp.get("cloud_type", "SECURE")),
                                       allowed_cuda_versions=list(cuda_versions) or None, debug=debug, exec_script=exec_script,
@@ -455,16 +462,16 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
             click.echo(f"launched on {pid}", err=True)
             if not (wait_runner and runner_pat and not exec_script):
                 break
-            status = runpod.wait_for_runner(h.id, repo, runner_pat, wait_runner, log=lambda m_: click.echo(m_, err=True))
+            status = runpod.wait_for_runner(h.id, repo, runner_pat, wait, log=lambda m_: click.echo(m_, err=True))
             if status is True:
                 break
             gone = status == "gone"
-            click.echo(f"pod {h.id} on {pid} {'ended before registering a runner' if gone else f'never registered a runner within {wait_runner}s'}; terminating it", err=True)
+            click.echo(f"pod {h.id} on {pid} {'ended before registering a runner' if gone else f'never registered a runner within {wait}s'}; terminating it", err=True)
             try:
                 runpod.terminate_pod(h.id)
             except RuntimeError as e:
                 click.echo(f"terminate {h.id}: {str(e)[:120]}", err=True)
-            errors.append(f"{pid}: runner not registered ({'pod ended' if gone else f'{wait_runner}s'})")
+            errors.append(f"{pid}: runner not registered ({'pod ended' if gone else f'{wait}s'})")
             h = None  # a pod whose image pull never finishes (runtime never up) is a host problem: rent another
         if h is not None:
             break
