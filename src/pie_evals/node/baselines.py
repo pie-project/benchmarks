@@ -19,10 +19,12 @@ SPECS = {
     "sglang": lambda v: [f"sglang[all]=={v}"],
 }
 
-#: a baseline's build for another backend, at the same pin (engines.yaml): vLLM's TPU build is the
-#: ``vllm-tpu`` wheel (vLLM on the tpu-inference JAX backend), released in step with vllm
+#: a baseline's build for another backend: vLLM's TPU build is the ``vllm-tpu`` wheel (vLLM on the
+#: tpu-inference JAX backend), released in step with vllm; SGLang's is ``sglang-jax``, its own
+#: project at its own pin (engines.yaml backend_pins)
 BACKEND_SPECS = {
     ("vllm", "xla"): lambda v: [f"vllm-tpu=={v}"],
+    ("sglang", "xla"): lambda v: [f"sglang-jax[tpu]=={v}"],
 }
 
 #: extra ``uv pip install`` flags per backend build: the TPU build runs torch on the host only

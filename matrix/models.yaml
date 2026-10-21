@@ -27,6 +27,41 @@ artifacts:
     platforms: [tpu-v6e-1]
     tiers: [nightly, weekly]  # weekly: a release's Raw rows on the TPU (tpu.yml tier=weekly)
 
+  # every other bf16 model pie's XLA engine plans (engine-xla's coverage example) that fits one
+  # Trillium chip's 32 GB: a release's Raw row on the TPU for pie, vLLM (vllm-tpu) and SGLang (sglang-jax)
+  - id: qwen3-0.6b-tpu
+    base_model: Qwen/Qwen3-0.6B
+    family: qwen3
+    scheme: bf16
+    expected_gib: 1.2
+    pie_sku: qwen3-0.6b-bf16-kv-bf16
+    platforms: [tpu-v6e-1]
+    tiers: [weekly]
+  - id: gemma-4-e2b-tpu
+    base_model: google/gemma-4-E2B-it
+    family: gemma4
+    scheme: bf16
+    expected_gib: 8.7
+    pie_sku: gemma4-e2b-bf16-kv-bf16
+    platforms: [tpu-v6e-1]
+    tiers: [weekly]
+  - id: gemma-4-e4b-tpu
+    base_model: google/gemma-4-E4B-it
+    family: gemma4
+    scheme: bf16
+    expected_gib: 14.0
+    pie_sku: gemma4-e4b-bf16-kv-bf16
+    platforms: [tpu-v6e-1]
+    tiers: [weekly]
+  - id: gemma-4-12b-tpu
+    base_model: google/gemma-4-12B-it
+    family: gemma4
+    scheme: bf16
+    expected_gib: 22.3
+    pie_sku: gemma4-12b-bf16-kv-bf16
+    platforms: [tpu-v6e-1]
+    tiers: [weekly]
+
   - id: qwen3.5-0.8b-mlx-bf16
     base_model: mlx-community/Qwen3.5-0.8B-bf16
     family: qwen3_5
