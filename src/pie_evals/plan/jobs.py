@@ -38,6 +38,17 @@ def cell_minutes(c: Cell, measured: dict[str, float] | None = None) -> float:
         return measured[c.cell_id]
     return float(c.workload.est_minutes) + ENGINE_CELL_MINUTES.get(str(c.engine), 0.0)
 
+def load_minutes(c: Cell) -> float:
+    """Minutes a process group spends before its first cell on a checkpoint of hundreds of GiB (the datacenter
+    models): its share of the download and the engine's load across every GPU. Smaller ones are in the noise."""
+    gib = float(c.artifact.expected_gib or 0)
+    return gib / 30.0 if gib >= 200 else 0.0  # Kimi-K3 (1454 GiB): 48 min
+
+
+def group_minutes(g: list[Cell], measured: dict[str, float] | None = None) -> float:
+    return sum(cell_minutes(c, measured) for c in g) + (load_minutes(g[0]) if g else 0.0)
+
+
 def shard_groups(cells: list[Cell], budget_minutes: float, measured: dict[str, float] | None = None) -> list[list[Cell]]:
     """Bin-pack cells into jobs of ~budget_minutes. A process group (same
     engine, artifact, mode = one loaded model) is never split; groups are
@@ -51,25 +62,25 @@ def shard_groups(cells: list[Cell], budget_minutes: float, measured: dict[str, f
     # cell, so they run without the A/A gate — recorded in the job's notes)
     pieces: list[list[Cell]] = []
     for g in groups.values():
-        if sum(cell_minutes(c, measured) for c in g) <= budget_minutes:
+        if group_minutes(g, measured) <= budget_minutes:
             pieces.append(g)
             continue
         g = sorted(g, key=lambda c: (0 if c.workload.kind.value == "control_aa" else 1, -cell_minutes(c, measured)))
         cur: list[Cell] = []
-        load = 0.0
+        load = load_minutes(g[0])
         for c in g:
             if cur and load + cell_minutes(c, measured) > budget_minutes:
                 pieces.append(cur)
-                cur, load = [], 0.0
+                cur, load = [], load_minutes(g[0])
             cur.append(c)
             load += cell_minutes(c, measured)
         if cur:
             pieces.append(cur)
-    ordered = sorted(pieces, key=lambda g: -sum(cell_minutes(c, measured) for c in g))
+    ordered = sorted(pieces, key=lambda g: -group_minutes(g, measured))
     shards: list[list[Cell]] = []
     loads: list[float] = []
     for g in ordered:
-        need = sum(cell_minutes(c, measured) for c in g)
+        need = group_minutes(g, measured)
         for i, load in enumerate(loads):
             if load + need <= budget_minutes:
                 shards[i].extend(g)
@@ -79,6 +90,13 @@ def shard_groups(cells: list[Cell], budget_minutes: float, measured: dict[str, f
             shards.append(list(g))
             loads.append(need)
     return shards
+
+
+def _groups(cells: list[Cell]) -> list[list[Cell]]:
+    out: dict[tuple, list[Cell]] = {}
+    for c in cells:
+        out.setdefault(process_key(c), []).append(c)
+    return list(out.values())
 
 
 def make_jobs(
@@ -117,7 +135,9 @@ def make_jobs(
             pins = {e.id: e.pin_for(backend) for e in matrix.engines.values() if e.pin_for(backend) and any(str(c.engine) == e.id for c in shard)}
             seed = f"{tier}|{plat}|{idx}|{pie_commit}|{stamp}|{label or ''}"
             job_id = f"{tier}-{plat}-s{idx:02d}-{stamp}-" + hashlib.sha256(seed.encode()).hexdigest()[:6]
-            est = sum(cell_minutes(c, measured) for c in shard)
+            est = sum(cell_minutes(c, measured) for c in shard) + sum(load_minutes(g[0]) for g in _groups(shard))
+            # a shard of a terabyte checkpoint outlives the tier's kill: it gets its own estimate times the kill factor
+            job_kill_s = max(kill_s, int(est * matrix.kill_factor * 60))
             jobs.append(
                 JobSpec(
                     job_id=job_id,
@@ -133,11 +153,11 @@ def make_jobs(
                     repetition=RepetitionPolicy(min_rounds=1 if tier in (Tier.SMOKE, Tier.TARGETED) else 3,
                                                 single_stream_rounds=3 if tier == Tier.TARGETED else None),
                     history={c.cell_id: history.get(c.cell_id, []) for c in shard if c.cell_id in history},
-                    per_cell_timeout_s=min(1800 if tier in (Tier.SMOKE, Tier.TARGETED) else 5400, kill_s),
+                    per_cell_timeout_s=min(max(1800 if tier in (Tier.SMOKE, Tier.TARGETED) else 5400, int(max(load_minutes(c) for c in shard) * 2 * 60)), job_kill_s),
                     # a first run spends much of its time downloading models (a fresh pod pulls ~12 MB/s from the Hub:
                     # 0.5.3-b5 lost most vLLM/SGLang cells to a 60-min soft budget): the soft budget is the hard limit
-                    budget_s=kill_s,
-                    kill_s=kill_s,
+                    budget_s=job_kill_s,
+                    kill_s=job_kill_s,
                     # a Mac release run reports every row: a noisy laptop marks its rows noisy rather than empty
                     control_marks_noisy=tier == Tier.TARGETED,
                     est_minutes=est,
