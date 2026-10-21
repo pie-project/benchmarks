@@ -64,6 +64,11 @@ def main(path):
         print("   top kernels:")
         for k, v in ker.most_common(12):
             print(f"   {v:7.2f} ms  {k[:110]}")
+        watched = [(k, v) for k, v in ker.items() if any(w in k for w in ("rs_copy", "gated_delta", "conv1d", "split_rows"))]
+        if watched:
+            print("   recurrent-state kernels:")
+            for k, v in sorted(watched, key=lambda kv: -kv[1]):
+                print(f"   {v:7.3f} ms  {k[:110]}")
 
 
 if __name__ == "__main__":
