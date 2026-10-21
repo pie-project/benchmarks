@@ -25,18 +25,28 @@
 </head>
 <body>
   <aside class="sidebar" id="sidebar">
-    <a class="sidebar-brand" href="https://pie-project.org" target="_blank" rel="noopener" aria-label="Pie website">
-      <svg class="sidebar-logo" viewBox="0 0 67.89 67.89" aria-hidden="true">
-        <path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="8"/>
-      </svg>
-      <span class="sidebar-name">Pie</span>
-    </a>
+    <!-- the brand as Apple's subdomains set theirs: the mark and "Pie" go to pie-project.org, "Benchmarks" to this site's home -->
+    <div class="sidebar-brand">
+      <a class="sidebar-home" href="https://pie-project.org" aria-label="Pie website">
+        <svg class="sidebar-logo" viewBox="0 0 67.89 67.89" aria-hidden="true">
+          <path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="8"/>
+        </svg>
+        <span class="sidebar-name">Pie</span>
+      </a>
+      <button class="sidebar-site" type="button" data-home>Benchmarks</button>
+    </div>
     <nav class="sidebar-nav" id="sidebar-nav" aria-label="Tables"></nav>
     <button class="sidebar-item sidebar-appearance" id="sidebar-theme" type="button" role="switch" aria-label="Dark mode">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       <span>Dark Mode</span>
       <span class="sidebar-switch" aria-hidden="true"></span>
     </button>
+    <!-- the way back to the main site, at the sidebar's foot where a macOS sidebar keeps its secondary items -->
+    <a class="sidebar-item sidebar-site-link" href="https://pie-project.org" title="pie-project.org">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/></svg>
+      <span>Pie Website</span>
+      <svg class="sidebar-out" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 8.5 8.5 3.5M4.5 3.5h4v4"/></svg>
+    </a>
   </aside>
   <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
 

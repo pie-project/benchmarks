@@ -49,6 +49,9 @@ window.Pie = window.Pie || {};
         if (!logo.classList.contains("is-spinning")) logo.classList.add("is-spinning");
       });
       this.spinLogo();
+      // "Benchmarks" opens the site's home, as its sidebar item does
+      document.querySelector("[data-home]")?.addEventListener("click", () =>
+        document.querySelector('.sidebar-item[data-table="welcome"]')?.click());
     },
 
     // the slide-over closes on its backdrop, and follows a finger swiping it back to the left
