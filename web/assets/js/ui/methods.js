@@ -28,16 +28,6 @@ window.Pie = window.Pie || {};
   // in one pass (DFlash), and draft widths up to 16 to pick the best from
   const SPEC = { a: 0.7, drafter: 0.5, widest: 16 };
 
-  // the Spec Decode bar's acceptance, in percent, shared with the platform grid's Spec Decode efficiency, and what it
-  // predicts in numbers a run measures: the tokens each step keeps (an engine's mean acceptance length) and the speedup
-  // over Raw Decode (a Spec Decode result over its Raw one), at the best width on the worked example's machine and model
-  const suggestion = () => {
-    const r = { hardware: EXAMPLE.hardware, model: EXAMPLE.model, scheme: EXAMPLE.scheme, workload: "raw" };
-    const s = Pie.specCeiling?.(r);
-    if (!s) return "";
-    return s.k ? `${s.kept.toFixed(1)} tokens a step<span class="spec-gain">${s.gain.toFixed(1)}× over raw</span>` : "No gain";
-  };
-
   const num = (n) => (n >= 100 ? Math.round(n).toLocaleString("en-US") : n >= 10 ? n.toFixed(0) : n.toFixed(1));
   const ms = (s) => `${(s * 1e3).toFixed(s * 1e3 >= 10 ? 0 : 2)} ms`;
   const gb = (n) => `${n.toFixed(2)} GB`;
@@ -48,10 +38,6 @@ window.Pie = window.Pie || {};
   // the effect of a simplification on the limit, as one quiet tag on its row
   const EFFECT = { up: "Raises the limit", down: "Lowers the limit", small: "Under 1%", choice: "Choice" };
 
-  const EXAMPLE_LABEL = () => {
-    const hw = Pie.store.index.hardware?.[EXAMPLE.hardware], md = Pie.store.index.models?.[EXAMPLE.model];
-    return `${md?.name || EXAMPLE.model} on ${hw ? `${hw.name} ${hw.memory_gib} GB` : EXAMPLE.hardware}`;
-  };
   const ceilingOf = (metric) => Pie.ceiling?.({ hardware: EXAMPLE.hardware, model: EXAMPLE.model, scheme: EXAMPLE.scheme, workload: "raw" }, metric);
 
   const CONTENT = [
@@ -329,11 +315,7 @@ window.Pie = window.Pie || {};
           <button class="filter-button" id="methods-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Workload: ${c.title}`)}">${esc(c.title)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
         </span>
         ${c.id === "spec" ? `
-        ${Pie.specField()}
-        <span class="spec-field is-output" title="At the fastest draft width, for ${esc(EXAMPLE_LABEL())} with a 0.5 B block drafter. A run's mean acceptance length and its Spec over Raw speed read against these">
-          <span class="spec-field-label">Expect</span>
-          <output class="spec-value" data-suggest aria-live="polite">${suggestion()}</output>
-        </span>` : ""}
+        ${Pie.specField()}` : ""}
         <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
       </div>`;
 
@@ -366,12 +348,10 @@ window.Pie = window.Pie || {};
     }
   });
 
-  // the acceptance field: the suggestion follows it at once
+  // the acceptance field: the input follows the shared value when it changes elsewhere
   Pie.bindSpecField(element, () => {
     const input = element.querySelector("[data-alpha]");
     if (input && document.activeElement !== input) input.value = Pie.specAlpha;
-    const out = element.querySelector("[data-suggest]");
-    if (out) out.innerHTML = suggestion();
   });
 
   Pie.methods = {
