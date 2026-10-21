@@ -57,7 +57,7 @@ window.Pie = window.Pie || {};
       .map((group) => `<div class="popover-heading">${Pie.format.escape(group)}</div>` + setups.filter((m) => m.group === group)
         .map((m) => option(m.id, m.id === state.platform.mode,
           // its symbol before its name, as a macOS menu sets an item's icon, and its key at the end where shortcuts sit
-          `<svg class="popover-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg><span class="popover-label">${Pie.format.escape(m.item || m.label)}</span><span class="popover-detail popover-key">${setups.indexOf(m) + 1}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
+          `<svg class="popover-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg><span class="popover-label">${Pie.format.escape(m.item || m.label)}</span><span class="popover-detail popover-key">${Pie.platform.metrics().indexOf(m) + 1}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
         .join(""))
       .join(`<div class="popover-separator"></div>`);
   };

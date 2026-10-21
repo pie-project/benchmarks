@@ -276,9 +276,10 @@
         event.preventDefault();
         if (!event.repeat) showUnavailable(true);
       }
-      // 1, 2, 3 pick the setup in the order of its menu, on a platform page and on Roofline: plain keys, as R and U are
-      const setup = Pie.platform.metrics(state)[Number(event.key) - 1];
-      if (setup && /^[1-9]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey && !typing
+      // 1 to 4 pick a setup by its fixed number, whatever a platform measured: a number keeps its setup on every
+      // platform, and one the page does not list does nothing; plain keys, as R and U are
+      const setup = Pie.platform.metrics()[Number(event.key) - 1];
+      if (setup && Pie.platform.metrics(state).includes(setup) && /^[1-9]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey && !typing
           && (Pie.schema[state.table]?.view === "platform" || state.table === "methods")) {
         event.preventDefault();
         state.platform.mode = setup.id;
