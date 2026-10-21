@@ -33,12 +33,12 @@ window.Pie = window.Pie || {};
   ];
   const esc = (text) => Pie.format.escape(text);
 
-  // the same rows as the site's other menus: a grey heading per topic, one line per rule with its value at the end,
+  // facts as Get Info lists them: a grey heading per topic, one plain label-value row per rule, no icons (those mark
+  // what a menu can pick),
   // a separator between topics; the rule's note shows when the pointer rests on its row
   const content = GROUPS.map(([title, items]) => `
     <div class="popover-heading">${esc(title)}</div>${items.map((t) => `
     <div class="rules-row" title="${esc(t.line)}">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="${t.icon}"/></svg>
       <span class="popover-label">${esc(t.label)}</span>
       <span class="popover-detail">${esc(t.big)}${t.unit ? ` ${esc(t.unit)}` : ""}</span>
     </div>`).join("")}`).join(`<div class="popover-separator"></div>`);
