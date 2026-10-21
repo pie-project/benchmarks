@@ -260,6 +260,9 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
         art = arts.get(r["artifact"], {})
         if art.get("kind") == "miniature":
             continue
+        # Splash always drafts; its Raw and Batched rows (older runs among them) were never plain decoding
+        if r["engine"] == "splash" and WL_PRIORITY[r["workload"]][0] in ("raw", "throughput"):
+            continue
         # on a Mac every engine runs the same 4-bit MLX weights; a pie run of another precision (a bf16 import) is not
         # the comparison, so it never stands in for the model's number
         if r["platform"] in macs and r["engine"] == "pie" and art and art.get("source_format") != "mlx":
