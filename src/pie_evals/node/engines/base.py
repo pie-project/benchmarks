@@ -53,6 +53,9 @@ from pie_evals.schema import (
     WorkloadSpec,
 )
 
+#: holds the sitecustomize that turns vLLM's and SGLang's custom all-reduce off (Engine.no_peer_env)
+NO_PEER_SITE = Path(__file__).resolve().parent / "scripts" / "no_peer_site"
+
 
 class EngineLaunchError(RuntimeError):
     def __init__(self, error_class: ErrorClass, message: str):
@@ -276,6 +279,16 @@ class Engine(ABC):
         and there hangs or faults, so it is turned off and NCCL carries the all-reduce, the path
         pie takes on the same pod when its own peer collectives cannot run."""
         return int(self.mode.tp) > 1 and self.platform is not None and not getattr(self.platform, "peer_access", True)
+
+    def no_peer_env(self) -> dict[str, str]:
+        """The env that turns vLLM's and SGLang's custom all-reduce off from outside their bench
+        scripts: ``scripts/no_peer_site/sitecustomize.py`` goes first on PYTHONPATH (every spawned
+        worker inherits it) and makes the engine's P2P check answer "no", exactly the
+        ``disable_custom_all_reduce=True`` outcome. Empty unless ``no_peer_all_reduce()``."""
+        if not self.no_peer_all_reduce():
+            return {}
+        existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
+        return {"PYTHONPATH": ":".join([str(NO_PEER_SITE)] + ([existing] if existing else [])), "PIE_EVALS_NO_CUSTOM_AR": "1"}
 
     # ---- to implement per engine ---------------------------------------------
     @abstractmethod

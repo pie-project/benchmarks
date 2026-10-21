@@ -683,15 +683,39 @@ def test_baselines_keep_all_reduce_on_nccl_without_peer_access():
     nopeer = platform().model_copy(update={"peer_access": False})
     tp2 = Mode(id="tp2", tp=2)
     assert make(VllmEngine, plat=nopeer, mode=tp2).env["VLLM_DISABLE_CUSTOM_AR"] == "1"
-    env = make(SglangEngine, plat=nopeer, mode=tp2).env
-    assert env["SGLANG_PIE_EVALS_NO_CUSTOM_AR"] == "1" and env["PYTHONPATH"].split(":")[0].endswith("sglang_site")
+    for cls in (VllmEngine, SglangEngine):  # vllm_bench.py's tput path ignores VLLM_DISABLE_CUSTOM_AR (weekly 39652187264)
+        env = make(cls, plat=nopeer, mode=tp2).env
+        assert env["PIE_EVALS_NO_CUSTOM_AR"] == "1" and env["PYTHONPATH"].split(":")[0].endswith("no_peer_site")
     for cls in (VllmEngine, SglangEngine):
         for plat, mode in ((platform(), tp2), (nopeer, Mode())):
             env = make(cls, plat=plat, mode=mode).env
-            assert "VLLM_DISABLE_CUSTOM_AR" not in env and "SGLANG_PIE_EVALS_NO_CUSTOM_AR" not in env
+            assert "VLLM_DISABLE_CUSTOM_AR" not in env and "PIE_EVALS_NO_CUSTOM_AR" not in env
     # 0.31.0 forked its tp workers after CUDA init and every one died
     assert make(VllmEngine, mode=tp2).env["VLLM_WORKER_MULTIPROC_METHOD"] == "spawn"
     assert "VLLM_WORKER_MULTIPROC_METHOD" not in make(VllmEngine).env
+
+
+def test_no_peer_sitecustomize_turns_the_p2p_checks_off(tmp_path):
+    import subprocess
+    import sys
+
+    from pie_evals.node.engines.base import NO_PEER_SITE
+
+    mods = {"vllm/distributed/device_communicators/custom_all_reduce.py": "_can_p2p",
+            "sglang/srt/distributed/device_communicators/custom_all_reduce_utils.py": "can_p2p"}
+    for rel, attr in mods.items():
+        f = tmp_path / rel
+        f.parent.mkdir(parents=True, exist_ok=True)
+        for d in [f.parent, *f.parent.parents]:
+            if d == tmp_path:
+                break
+            (d / "__init__.py").touch()
+        f.write_text(f"def {attr}(rank, world_size):\n    return True\n")
+    code = ";".join(f"import {r[:-3].replace('/', '.')} as m{i}; print(m{i}.{a}(0, 2))" for i, (r, a) in enumerate(mods.items()))
+    for flag, want in (("1", "False"), ("0", "True")):
+        env = {"PYTHONPATH": f"{NO_PEER_SITE}:{tmp_path}", "PIE_EVALS_NO_CUSTOM_AR": flag, "PATH": "/usr/bin:/bin"}
+        out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True, cwd=tmp_path).stdout.split()
+        assert out == [want, want], (flag, out)
 
 
 def test_baseline_jit_caches_live_on_the_volume():
