@@ -381,10 +381,12 @@ window.Pie = window.Pie || {};
   // a is the acceptance per draft, shared with the Roofline page's field (Pie.specAlpha, percent)
   // the last acceptance picked, kept per browser; 50% until one is
   const ALPHA_KEY = "pie.specAlpha";
+  // the range the field takes: below half, drafting rarely pays; above 95%, no drafter holds it on real text
+  const ALPHA_MIN = 50, ALPHA_MAX = 95;
   Pie.specAlpha = (() => {
     try {
       const kept = Number(localStorage.getItem(ALPHA_KEY));
-      return kept >= 1 && kept <= 99 ? kept : 50;
+      return kept >= ALPHA_MIN && kept <= ALPHA_MAX ? kept : 50;
     } catch { return 50; }
   })();
   Pie.specCeiling = (row, percent = Pie.specAlpha) => {
@@ -417,7 +419,7 @@ window.Pie = window.Pie || {};
         </span>`;
   // the acceptance a field holds, kept in range: typed, stepped a point at a time, or ten with Shift and an arrow key
   Pie.setSpecAlpha = (value) => {
-    Pie.specAlpha = Math.min(99, Math.max(1, Math.round(Number.isFinite(value) ? value : Pie.specAlpha)));
+    Pie.specAlpha = Math.min(ALPHA_MAX, Math.max(ALPHA_MIN, Math.round(Number.isFinite(value) ? value : Pie.specAlpha)));
     try { localStorage.setItem(ALPHA_KEY, String(Pie.specAlpha)); } catch { /* a private window keeps none */ }
     return Pie.specAlpha;
   };
@@ -425,11 +427,16 @@ window.Pie = window.Pie || {};
   Pie.bindSpecField = (root, changed) => {
     root.addEventListener("input", (event) => {
       if (!event.target.matches("[data-alpha]")) return;
+      // while typing, only a value in range applies, so the first digit of 75 is not taken as 7
       const typed = parseFloat(event.target.value);
-      if (Number.isFinite(typed)) { Pie.setSpecAlpha(typed); changed(); }
+      if (typed >= ALPHA_MIN && typed <= ALPHA_MAX) { Pie.setSpecAlpha(typed); changed(); }
     });
     root.addEventListener("change", (event) => {
-      if (event.target.matches("[data-alpha]")) event.target.value = Pie.specAlpha;
+      if (!event.target.matches("[data-alpha]")) return;
+      const before = Pie.specAlpha;
+      Pie.setSpecAlpha(parseFloat(event.target.value));
+      event.target.value = Pie.specAlpha;
+      if (Pie.specAlpha !== before) changed();
     });
     root.addEventListener("keydown", (event) => {
       if (!event.target.matches("[data-alpha]") || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
