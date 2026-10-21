@@ -182,6 +182,10 @@ window.Pie = window.Pie || {};
     QUAL_ENGINE,
     ALL,
 
+    isOpen() {
+      return !element.hidden;
+    },
+
     isOpenFor(key) {
       return owner === key && !element.hidden;
     },
