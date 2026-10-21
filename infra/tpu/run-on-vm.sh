@@ -12,6 +12,15 @@ job=$2
 job_id=$(basename "$job" .json)
 here=$(pwd)
 
+# a data disk (platforms.yaml tpu.data_disk_gb) holds ~/.cache: the checkpoints, their imports, the venvs
+root=$(lsblk -no PKNAME "$(findmnt -no SOURCE /)" 2>/dev/null | head -n 1 || true)
+data=$(lsblk -dpno NAME,TYPE | awk -v r="/dev/$root" '$2 == "disk" && $1 != r {print $1; exit}' || true)
+if [ -n "$data" ] && [ -z "$(lsblk -no MOUNTPOINT "$data" | tr -d '[:space:]')" ] && ! mountpoint -q "$HOME/.cache"; then
+  sudo blkid "$data" >/dev/null 2>&1 || sudo mkfs.ext4 -q -F "$data"
+  mkdir -p "$HOME/.cache" && sudo mount "$data" "$HOME/.cache" && sudo chown "$(id -u):$(id -g)" "$HOME/.cache"
+  df -h "$HOME/.cache"
+fi
+
 sudo apt-get update -q
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends \
   build-essential cmake ninja-build pkg-config libssl-dev git curl ca-certificates python3-yaml jq
