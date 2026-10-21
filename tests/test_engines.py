@@ -1236,3 +1236,16 @@ def test_each_round_gets_its_own_cold_prompts(tmp_path):
         lists.append(_json.loads((tmp_path / r / "cold_prompts.json").read_text()))
     tags = [{p.split("]")[0] for p in ps} for ps in lists]
     assert not (tags[0] & tags[1]) and not (tags[1] & tags[2]) and not (tags[0] & tags[2])
+
+
+def test_a_16_gb_mac_gets_a_smaller_forward_budget(tmp_path):
+    raw = WorkloadSpec(id="raw-512-256", kind="single_stream", params={"prefill": 512, "decode": 256, "requests": 6})
+
+    def args(memory, recipe=None):
+        mac = platform(Backend.METAL, "apple9", count=1).model_copy(update={"memory_gib": memory})
+        eng = PieEngine(pie_root=PIE_ROOT, artifact=artifact(), platform=mac, mode=Mode(), recipe=recipe or {})
+        a = eng.engine_args(raw)
+        return a[a.index("--max-forward-tokens") + 1] if "--max-forward-tokens" in a else None
+
+    assert args(16.0) == "2048" and args(48.0) is None
+    assert args(16.0, {"max_forward_tokens": 4096}) == "4096"
