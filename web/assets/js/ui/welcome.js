@@ -34,12 +34,12 @@ window.Pie = window.Pie || {};
     </section>`;
 
   // every platform as a row of the site's list, in the sidebar's order: its mark and name, and how many machines ran
-  // there as a grey number at the row's far end, as the sidebar counts them; a row opens its platform's page, as its sidebar item does
+  // there as "42 items" in grey at the row's far end, as Finder states a folder's contents; a row opens its platform's page, as its sidebar item does
   const table = () => {
     const list = platforms().map(([id, s]) => ({ id, s, machines: Pie.platform?.machines ? Pie.platform.machines(s.platform) : 0 }));
     const rows = list.map(({ id, s, machines: n }) => `<tr class="is-link" data-go="${id}">
         <td class="welcome-name"><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${s.label}</span></td>
-        <td class="welcome-count" title="${n} ${n === 1 ? "machine" : "machines"}">${n}</td>
+        <td class="welcome-count" title="${n} ${n === 1 ? "machine" : "machines"}">${n} ${n === 1 ? "item" : "items"}</td>
       </tr>`).join("");
     return `<table class="data-table welcome-table">
       <tbody>${rows}</tbody>
