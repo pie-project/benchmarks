@@ -277,7 +277,7 @@
         if (!event.repeat) showUnavailable(true);
       }
       // 1, 2, 3 pick the setup in the order of its menu, on a platform page and on Roofline: plain keys, as R and U are
-      const setup = Pie.platform.metrics()[Number(event.key) - 1];
+      const setup = Pie.platform.metrics(state)[Number(event.key) - 1];
       if (setup && /^[1-9]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey && !typing
           && (Pie.schema[state.table]?.view === "platform" || state.table === "methods")) {
         event.preventDefault();
