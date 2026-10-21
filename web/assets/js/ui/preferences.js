@@ -19,8 +19,15 @@ window.Pie = window.Pie || {};
     save(storageKey, next);
   };
 
-  // the slide-over's Dark Mode switch reads as on in the dark theme
-  const syncSwitch = () => document.getElementById("sidebar-theme")?.setAttribute("aria-checked", String(root.dataset.theme === "dark"));
+  // the slide-over's appearance row names the theme it switches to: Light Mode in the dark, Dark Mode in the light
+  const MOON = '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
+  const SUN = '<circle cx="12" cy="12" r="4.2"/><path d="M12 1.75v3M12 19.25v3M1.75 12h3M19.25 12h3M4.75 4.75l2.1 2.1M17.15 17.15l2.1 2.1M4.75 19.25l2.1-2.1M17.15 6.85l2.1-2.1"/>';
+  const syncSwitch = () => {
+    const row = document.getElementById("sidebar-theme");
+    if (!row) return;
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    row.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${dark ? SUN : MOON}</svg><span>${dark ? "Light Mode" : "Dark Mode"}</span>`;
+  };
   syncSwitch();
 
   Pie.preferences = {
