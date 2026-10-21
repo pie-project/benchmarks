@@ -186,6 +186,11 @@ class NodeRunner:
         (pie #649): the flat 5400 s cap let it run to the client's timeout."""
         # an XLA round includes the compile: vLLM's TPU build spent the whole 600 s on gemma-4-12B (b5 39575054600)
         floor = 1800.0 if self.platform is not None and str(getattr(self.platform.backend, "value", self.platform.backend)) == "xla" else 600.0
+        # a baseline boots its server inside the cell: a checkpoint of hundreds of GiB loads, compiles and captures
+        # for longer than ten minutes (vLLM on MiMo-V2.6-Flash, 166 GiB on two H200s: still loading at 600 s)
+        gib = float(cell.artifact.expected_gib or 0)
+        if gib >= 100:
+            floor = max(floor, 600.0 + gib * 6.0)
         scaled = max(floor, float(cell.workload.est_minutes) * 60.0 * 10.0, float(cell.workload.params.get("round_timeout_s") or 0))
         cap = max(self.job.per_cell_timeout_s, int(cell.workload.params.get("round_timeout_s") or 0))
         return int(min(cap, scaled, self.remaining_to_kill_s()))
