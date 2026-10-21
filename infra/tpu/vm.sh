@@ -11,7 +11,9 @@
 #   vm.sh delete                    delete the VM in every zone of TPU_ZONES it exists in
 #
 # Environment: GCP_PROJECT, TPU_NAME, TPU_KIND (tpu|compute), TPU_ZONES (space separated), TPU_ZONE (after create),
-# TPU_TYPE + TPU_RUNTIME (tpu), TPU_MACHINE_TYPE + TPU_IMAGE (compute: a regex over the accelerator image families).
+# TPU_TYPE + TPU_RUNTIME (tpu), TPU_MACHINE_TYPE + TPU_IMAGE (compute: a regex over the accelerator image families),
+# TPU_DATA_DISK_GB (optional: a disk of that size, <name>-data, for ~/.cache where the checkpoints and imports land;
+# a TPU VM's boot disk is 100 GB, too small for gpt-oss-120b's download beside its import).
 set -euo pipefail
 cmd=$1; shift
 P=(--project "$GCP_PROJECT")
@@ -24,7 +26,7 @@ import sys, yaml
 p = {x["id"]: x for x in yaml.safe_load(open("matrix/platforms.yaml"))["platforms"]}[sys.argv[1]]
 t = p.get("tpu") or sys.exit(f"{sys.argv[1]} has no tpu: settings")
 print("TPU_KIND=" + ("compute" if t.get("machine_type") else "tpu"))
-for k in ("type", "runtime", "machine_type", "image"):
+for k in ("type", "runtime", "machine_type", "image", "data_disk_gb"):
     print(f"TPU_{k.upper()}={t.get(k, '')}")
 print("TPU_ZONES=" + " ".join(t["zones"]))
 EOF
@@ -43,11 +45,20 @@ EOF
       for spot in "" spot; do
         echo "trying $zone ${spot:-on-demand}" >&2
         if [ "$TPU_KIND" = tpu ]; then
+          disk=()
+          if [ -n "${TPU_DATA_DISK_GB:-}" ]; then
+            for t in pd-balanced hyperdisk-balanced; do
+              gcloud compute disks describe "$TPU_NAME-data" "${P[@]}" --zone "$zone" >/dev/null 2>&1 && break
+              gcloud compute disks create "$TPU_NAME-data" "${P[@]}" --zone "$zone" --size "${TPU_DATA_DISK_GB}GB" --type "$t" \
+                --labels "owner=pie-evals" --quiet >&2 && break
+            done
+            disk=(--data-disk "source=projects/$GCP_PROJECT/zones/$zone/disks/$TPU_NAME-data,mode=read-write")
+          fi
           out=$(gcloud compute tpus tpu-vm create "$TPU_NAME" "${P[@]}" --zone "$zone" --accelerator-type "$TPU_TYPE" \
-                  --version "$TPU_RUNTIME" ${spot:+--spot} --labels "owner=pie-evals" --quiet 2>&1) && { echo "zone=$zone"; exit 0; }
+                  --version "$TPU_RUNTIME" "${disk[@]}" ${spot:+--spot} --labels "owner=pie-evals" --quiet 2>&1) && { echo "zone=$zone"; exit 0; }
         else
           out=$(gcloud compute instances create "$TPU_NAME" "${P[@]}" --zone "$zone" --machine-type "$TPU_MACHINE_TYPE" \
-                  "${image[@]}" --boot-disk-size 200GB --maintenance-policy TERMINATE \
+                  "${image[@]}" --boot-disk-size "${TPU_DATA_DISK_GB:-200}GB" --maintenance-policy TERMINATE \
                   ${spot:+--provisioning-model SPOT --instance-termination-action DELETE} --labels "owner=pie-evals" --quiet 2>&1) \
             && { echo "zone=$zone"; exit 0; }
         fi
@@ -98,6 +109,10 @@ EOF
         fi
       elif gcloud compute instances describe "$TPU_NAME" "${P[@]}" --zone "$zone" >/dev/null 2>&1; then
         gcloud compute instances delete "$TPU_NAME" "${P[@]}" --zone "$zone" --quiet && echo "deleted $TPU_NAME in $zone"
+      fi
+      # the data disk outlives its VM unless deleted after it
+      if gcloud compute disks describe "$TPU_NAME-data" "${P[@]}" --zone "$zone" >/dev/null 2>&1; then
+        gcloud compute disks delete "$TPU_NAME-data" "${P[@]}" --zone "$zone" --quiet && echo "deleted disk $TPU_NAME-data in $zone"
       fi
     done
     ;;
