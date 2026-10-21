@@ -437,50 +437,37 @@
   .lim-tables { overflow-x: auto; overscroll-behavior-x: contain; }  /* only the table slides; the bar stays */
 }
 
-/* Spec Decode's acceptance as AppKit draws a number field and its stepper: a square-cornered bezel with a
-   hairline border and an inner shadow at the top, and beside it a 15x22 stepper, two raised halves split by a hairline.
-   Each half answers to a press across the full height of its half, and a little beyond, so a pointer finds it */
-.spec-field { display: inline-flex; align-items: center; gap: 6px; height: var(--control-height); margin-left: 10px; color: var(--color-label-secondary); white-space: nowrap; }
-.spec-input {
-  display: inline-flex; align-items: center; height: 22px; padding: 0 5px 0 6px; border-radius: 4px;
-  background: #fff; color: var(--color-label);
-  box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(0, 0, 0, .05);
+/* Spec Decode's acceptance: one control in the bar's own style, the light fill the pop-ups beside it take, holding its
+   name, the number typed in place, and the pop-up's chevron pair, whose upper half steps up and lower half down */
+.spec-field {
+  display: inline-flex; align-items: center; height: var(--control-height); margin-left: 4px; padding: 0 4px 0 9px;
+  border-radius: var(--radius-control); background: var(--color-fill); color: var(--color-label); white-space: nowrap; font-size: 13px;
 }
-.spec-input:focus-within { box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .22), 0 0 0 3.5px color-mix(in srgb, var(--color-accent) 45%, transparent); }
-.spec-input input { width: 2.2ch; padding: 0; border: 0; outline: none; background: none; color: inherit; font: inherit; font-variant-numeric: tabular-nums; text-align: right; -webkit-appearance: none; appearance: none; }
-.spec-unit { margin-left: 1px; color: var(--color-label-secondary); }
-.spec-stepper {
-  position: relative; display: inline-flex; flex-direction: column; width: 15px; height: 22px; margin-left: -2px; border-radius: 5px;
-  background: linear-gradient(#fff, #f4f4f4);
-  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 .5px 1.5px rgba(0, 0, 0, .12);
+.spec-field:hover { background: var(--color-fill-secondary); }
+.spec-field:focus-within { box-shadow: 0 0 0 3px var(--color-accent-tint), 0 0 0 1px var(--color-accent); }
+.spec-field-label { margin-right: 6px; color: var(--color-label-secondary); }
+.spec-field input {
+  width: 2.1ch; padding: 0; border: 0; outline: none; background: none; color: inherit; font: inherit;
+  font-variant-numeric: tabular-nums; text-align: right; caret-color: var(--color-accent); -webkit-appearance: none; appearance: none;
 }
-.spec-stepper::after { content: ""; position: absolute; left: 2px; right: 2px; top: 50%; height: .5px; background: rgba(0, 0, 0, .14); }
-.spec-stepper button { position: relative; display: grid; flex: 1; place-items: center; padding: 0; border: 0; background: none; color: rgba(0, 0, 0, .7); cursor: default; }
-.spec-stepper button::before { content: ""; position: absolute; inset: -3px -5px; }
-.spec-stepper button:first-child::before { bottom: 0; }
-.spec-stepper button:last-child::before { top: 0; }
-.spec-stepper button:active { color: #000; background: rgba(0, 0, 0, .08); }
-.spec-stepper button:first-child:active { border-radius: 5px 5px 0 0; }
-.spec-stepper button:last-child:active { border-radius: 0 0 5px 5px; }
-.spec-stepper svg { width: 7px; height: 4.5px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.spec-field.is-output { margin-left: 14px; }
+.spec-unit { margin-right: 2px; }
+.spec-stepper { display: inline-flex; flex-direction: column; align-self: stretch; justify-content: center; width: 18px; }
+.spec-stepper button {
+  display: grid; flex: 0 0 50%; place-items: center; padding: 0; border: 0; background: none; border-radius: 4px;
+  color: var(--color-label-secondary); cursor: default;
+}
+.spec-stepper button:first-child { place-items: end center; padding-bottom: 1px; }
+.spec-stepper button:last-child { place-items: start center; padding-top: 1px; }
+.spec-stepper button:hover { color: var(--color-label); }
+.spec-stepper button:active { color: var(--color-accent); }
+.spec-stepper svg { width: 8px; height: 5px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.spec-field.is-output { margin-left: 14px; padding: 0; background: none; }
 .spec-value { color: var(--color-label-secondary); }
 .spec-gain { margin-left: 6px; color: var(--color-label-tertiary); }
-/* dark: the field sinks below the bar, the stepper rises above it, as AppKit's dark controls do */
-:root[data-theme="dark"] .spec-input { background: rgba(0, 0, 0, .25); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .14), inset 0 1px 0 rgba(0, 0, 0, .2); }
-:root[data-theme="dark"] .spec-stepper { background: linear-gradient(#6a6a6a, #5c5c5c); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .5), inset 0 .5px 0 rgba(255, 255, 255, .18); }
-:root[data-theme="dark"] .spec-stepper::after { background: rgba(0, 0, 0, .35); }
-:root[data-theme="dark"] .spec-stepper button { color: rgba(255, 255, 255, .85); }
-:root[data-theme="dark"] .spec-stepper button:active { color: #fff; background: rgba(255, 255, 255, .12); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .spec-input { background: rgba(0, 0, 0, .25); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .14), inset 0 1px 0 rgba(0, 0, 0, .2); }
-  :root:not([data-theme="light"]) .spec-stepper { background: linear-gradient(#6a6a6a, #5c5c5c); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .5), inset 0 .5px 0 rgba(255, 255, 255, .18); }
-  :root:not([data-theme="light"]) .spec-stepper::after { background: rgba(0, 0, 0, .35); }
-  :root:not([data-theme="light"]) .spec-stepper button { color: rgba(255, 255, 255, .85); }
-  :root:not([data-theme="light"]) .spec-stepper button:active { color: #fff; background: rgba(255, 255, 255, .12); }
-}
 @media (max-width: 899px) {
-  .spec-field { height: 34px; font-size: 15px; }
+  .spec-field { height: 34px; padding: 0 8px 0 14px; border-radius: 999px; font-size: 15px; }
+  .spec-stepper { width: 24px; }
+}
   .spec-input, .spec-stepper { height: 28px; }
   .spec-stepper { width: 20px; }
 }

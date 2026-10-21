@@ -379,7 +379,14 @@ window.Pie = window.Pie || {};
   // Spec Decode's limit for one measured result: the decode limit's pass with k + 1 tokens in it, checked after one pass
   // of a block drafter, keeping (1 - a^(k+1)) / (1 - a) tokens, at the fastest k from 1 to 16, never below plain decode.
   // a is the acceptance per draft, shared with the Roofline page's field (Pie.specAlpha, percent)
-  Pie.specAlpha = 70;
+  // the last acceptance picked, kept per browser; 70% until one is
+  const ALPHA_KEY = "pie.specAlpha";
+  Pie.specAlpha = (() => {
+    try {
+      const kept = Number(localStorage.getItem(ALPHA_KEY));
+      return kept >= 1 && kept <= 99 ? kept : 70;
+    } catch { return 70; }
+  })();
   Pie.specCeiling = (row, percent = Pie.specAlpha) => {
     const plain = Pie.ceiling(row, "decode");
     if (!plain) return null;
@@ -402,18 +409,16 @@ window.Pie = window.Pie || {};
 
   // the acceptance field both Spec Decode bars carry, a macOS text field with its stepper, and what it predicts beside
   // it: the tokens a step keeps at the widest draft, the number a run's mean acceptance length reads against
-  Pie.specField = () => {
-    const a = Math.min(Pie.specAlpha, 99) / 100;
-    return `
-        <label class="spec-field">
+  Pie.specField = () => `
+        <span class="spec-field" role="group" aria-label="Acceptance per draft">
           <span class="spec-field-label">Acceptance</span>
-          <span class="spec-input"><input type="text" inputmode="numeric" value="${Pie.specAlpha}" data-alpha aria-label="Acceptance per draft, percent"><span class="spec-unit">%</span></span>
-          <span class="spec-stepper" role="group" aria-label="Acceptance"><button type="button" data-alpha-step="1" aria-label="More"><svg viewBox="0 0 8 5" aria-hidden="true"><path d="M1 4l3-3 3 3"/></svg></button><button type="button" data-alpha-step="-1" aria-label="Less"><svg viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button></span>
-        </label>`;
-  };
+          <input type="text" inputmode="numeric" value="${Pie.specAlpha}" data-alpha aria-label="Acceptance per draft, percent"><span class="spec-unit">%</span>
+          <span class="spec-stepper"><button type="button" data-alpha-step="1" aria-label="More" tabindex="-1"><svg viewBox="0 0 8 5" aria-hidden="true"><path d="M1 4l3-3 3 3"/></svg></button><button type="button" data-alpha-step="-1" aria-label="Less" tabindex="-1"><svg viewBox="0 0 8 5" aria-hidden="true"><path d="M1 1l3 3 3-3"/></svg></button></span>
+        </span>`;
   // the acceptance a field holds, kept in range: typed, stepped a point at a time, or ten with Shift and an arrow key
   Pie.setSpecAlpha = (value) => {
     Pie.specAlpha = Math.min(99, Math.max(1, Math.round(Number.isFinite(value) ? value : Pie.specAlpha)));
+    try { localStorage.setItem(ALPHA_KEY, String(Pie.specAlpha)); } catch { /* a private window keeps none */ }
     return Pie.specAlpha;
   };
   // a field's events on a page: `changed` redraws what the acceptance feeds
