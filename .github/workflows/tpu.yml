@@ -20,7 +20,8 @@ on:
       tag: { description: "a tag for the site (0.5.3-b5); empty: main-<sha>", required: false, default: "" }
       zone: { description: "comma-separated zones to try in order (empty: the platform's tpu.zones; v6e: us-east5-b first)", required: false, default: "" }
       platform: { description: "TPU platform (platforms.yaml): tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4", required: false, default: "tpu-v6e-1" }
-concurrency: { group: "tpu-${{ github.event.inputs.platform || 'tpu-v6e-1' }}", cancel-in-progress: false }  # one VM per TPU platform at a time
+# the schedule one at a time; every manual run its own VM, in parallel with the others (each deletes its own)
+concurrency: { group: "tpu-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'schedule' }}", cancel-in-progress: false }
 env:
   GCP_PROJECT: pie-project-510103
   PLATFORM: ${{ github.event.inputs.platform || 'tpu-v6e-1' }}
