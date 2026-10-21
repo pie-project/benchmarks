@@ -31,6 +31,8 @@ from dataclasses import dataclass
 from pie_evals.schema import PlatformSpec
 
 REST = "https://rest.runpod.io/v1"
+#: the v2 API: its pod create takes GPU types the v1 schema's enum does not list yet (AMD Instinct MI350 OAM)
+REST_V2 = "https://rest.runpod.io/v2"
 DEFAULT_IMAGE = "pieproject/runpod-ci-runner:latest"
 #: the actions runner the startup script installs on an image that has none (runpod-ci-runner's pin)
 RUNNER_VERSION = "2.337.0"
@@ -45,11 +47,11 @@ class PodHandle:
     data_center: str | None = None
 
 
-def _req(method: str, path: str, body: dict | None = None, api_key: str | None = None, params: dict | None = None) -> dict | list:
+def _req(method: str, path: str, body: dict | None = None, api_key: str | None = None, params: dict | None = None, base: str = REST) -> dict | list:
     import requests
 
     key = api_key or os.environ["RUNPOD_API_KEY"]
-    r = requests.request(method, f"{REST}{path}", json=body, params=params, timeout=60,
+    r = requests.request(method, f"{base}{path}", json=body, params=params, timeout=60,
                          headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
     if r.status_code >= 400:
         raise RuntimeError(f"runpod {method} {path}: {r.status_code} {r.text[:500]}")
@@ -328,16 +330,22 @@ def create_pod(
             body["networkVolumeId"] = pl.volume_id
             body["volumeMountPath"] = VOLUME
     data = None
+    v2 = False
     for attempt in range(1, 6):  # RunPod answers 500 "Something went wrong" transiently
         if not body.get("networkVolumeId"):
             # no volume: checkpoints, the pie build and the baseline venvs all land on the
             # container disk (an H100 pod filled 40 GB and every shard died at job setup)
             body["containerDiskInGb"] = max(int(body["containerDiskInGb"]), NO_VOLUME_DISK_GB)
         try:
-            data = _req("POST", "/pods", body, key)
+            data = _req("POST", "/pods", _v2_body(body), key, base=REST_V2) if v2 else _req("POST", "/pods", body, key)
             break
         except RuntimeError as e:
             msg = str(e)
+            if not v2 and "gpuTypeIds/items/enum" in msg:
+                # the v1 schema's GPU enum lags the catalog (MI350 OAM, 2026-10-21): the same pod through v2
+                log(f"the v1 pod API does not list {platform.runpod_gpu_type}; creating through v2")
+                v2 = True
+                continue
             if "dataCenterIds" in msg and body.get("dataCenterIds") and " 400 " in msg[:40]:
                 # the stock query names data centers the REST schema's enum does not
                 # (US-MO-2 on 2026-09-24); an unpinned request still lands there
@@ -370,6 +378,22 @@ def create_pod(
     if data is None:
         raise RuntimeError(f"no RunPod instance for {platform.runpod_gpu_type} x{platform.count} (secure or community)")
     return PodHandle(id=data["id"], labels=platform.runner_labels, data_center=data_center)
+
+
+def _v2_body(body: dict) -> dict:
+    """A v1 pod-create body in the v2 shape (``POST /v2/pods``)."""
+    gpu: dict = {"id": body["gpuTypeIds"][0], "count": int(body.get("gpuCount", 1))}
+    if body.get("allowedCudaVersions"):
+        gpu["allowedCudaVersions"] = body["allowedCudaVersions"]
+    out: dict = {"name": body["name"], "image": body["imageName"], "gpu": gpu, "cloud": body.get("cloudType", "SECURE"),
+                 "disk": int(body.get("containerDiskInGb", 40)), "ports": list(body.get("ports") or []), "env": dict(body.get("env") or {})}
+    if body.get("dockerStartCmd"):
+        out["cmd"] = list(body["dockerStartCmd"])
+    if body.get("dataCenterIds"):
+        out["dataCenterIds"] = list(body["dataCenterIds"])
+    if body.get("networkVolumeId"):
+        out["mounts"] = {"network": [{"volumeId": body["networkVolumeId"], "path": body.get("volumeMountPath", VOLUME)}]}
+    return out
 
 
 def terminate_pod(pod_id: str, api_key: str | None = None) -> None:

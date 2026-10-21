@@ -99,3 +99,12 @@ def test_matrix_loads_runpod_layout():
     # volumes is a DC -> volume id map (empty while 6v0l13yth9 waits to be grown past its quota)
     assert isinstance(m.runpod["volumes"], dict) and all(len(v) == 10 for v in m.runpod["volumes"].values())
     assert "EUR-IS-1" in m.runpod["preferred_data_centers"] and m.runpod["cloud_type"] == "SECURE"
+
+
+def test_a_v1_body_maps_onto_the_v2_pod_create():
+    from pie_evals.pods.runpod import _v2_body
+
+    b = _v2_body({"name": "p", "imageName": "img", "gpuTypeIds": ["AMD Instinct MI350 OAM"], "gpuCount": 1, "cloudType": "SECURE",
+                  "containerDiskInGb": 400, "ports": [], "dockerStartCmd": ["bash", "-lc", "x"], "env": {"A": "1"}, "dataCenterIds": ["EU-RO-1"]})
+    assert b == {"name": "p", "image": "img", "gpu": {"id": "AMD Instinct MI350 OAM", "count": 1}, "cloud": "SECURE", "disk": 400,
+                 "ports": [], "env": {"A": "1"}, "cmd": ["bash", "-lc", "x"], "dataCenterIds": ["EU-RO-1"]}
