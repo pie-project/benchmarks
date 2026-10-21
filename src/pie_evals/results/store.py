@@ -66,7 +66,15 @@ class BaseStore:
         f = node_out / "records.jsonl"
         if not f.exists():
             return None
-        recs = [Record.model_validate_json(line) for line in f.read_text().splitlines() if line.strip()]
+        lines = [line for line in f.read_text().splitlines() if line.strip()]
+        recs = []
+        for i, line in enumerate(lines):
+            try:
+                recs.append(Record.model_validate_json(line))
+            except ValueError:
+                if i != len(lines) - 1:
+                    raise
+                # a node that died mid-write (tpu b5 39547584473: ENOSPC) truncates only its last line
         if not recs:
             return None
         return self.write_run(recs, tier=tier, run_id=run_id, tag=tag, tag_kind=tag_kind)
