@@ -37,13 +37,20 @@ class VllmEngine(Engine):
         # first round at each batch shape autotuned inside the measurement (H100 gpt-oss mini
         # c256 14.5k then 20.4k and 20.3k tok/s, nightly 36103844715 s05) and was read as noise
         jit = cache_root() / "jit"
-        return {
+        env = {
             "FLASHINFER_WORKSPACE_BASE": str(jit / "flashinfer"),
             "TRITON_CACHE_DIR": str(jit / "triton"),
             "TORCHINDUCTOR_CACHE_DIR": str(jit / "inductor"),
             "VLLM_CACHE_ROOT": str(jit / "vllm"),
             **self.nccl_env(),
         }
+        if int(self.mode.tp) > 1:
+            # 0.31.0 forked its tp workers after CUDA was up in the engine core, and every worker
+            # died on "Cannot re-initialize CUDA in forked subprocess" (L40S x2, weekly 39545360541)
+            env["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
+        if self.no_peer_all_reduce():
+            env["VLLM_DISABLE_CUSTOM_AR"] = "1"  # vllm_bench.py -> disable_custom_all_reduce=True
+        return env
 
     def default_python(self) -> str:
         if os.environ.get("VLLM_PY"):

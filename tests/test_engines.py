@@ -678,6 +678,22 @@ def test_tensor_parallel_baselines_disable_nccl_p2p_on_a_pod(monkeypatch):
     assert "NCCL_P2P_DISABLE" not in make(VllmEngine, mode=Mode(id="tp2", tp=2)).env  # a real host keeps its topology
 
 
+def test_baselines_keep_all_reduce_on_nccl_without_peer_access():
+    # L40S x2 pod: vLLM/SGLang custom all-reduce over its broken peer DMA hung or faulted (weekly 39545360541)
+    nopeer = platform().model_copy(update={"peer_access": False})
+    tp2 = Mode(id="tp2", tp=2)
+    assert make(VllmEngine, plat=nopeer, mode=tp2).env["VLLM_DISABLE_CUSTOM_AR"] == "1"
+    env = make(SglangEngine, plat=nopeer, mode=tp2).env
+    assert env["SGLANG_PIE_EVALS_NO_CUSTOM_AR"] == "1" and env["PYTHONPATH"].split(":")[0].endswith("sglang_site")
+    for cls in (VllmEngine, SglangEngine):
+        for plat, mode in ((platform(), tp2), (nopeer, Mode())):
+            env = make(cls, plat=plat, mode=mode).env
+            assert "VLLM_DISABLE_CUSTOM_AR" not in env and "SGLANG_PIE_EVALS_NO_CUSTOM_AR" not in env
+    # 0.31.0 forked its tp workers after CUDA init and every one died
+    assert make(VllmEngine, mode=tp2).env["VLLM_WORKER_MULTIPROC_METHOD"] == "spawn"
+    assert "VLLM_WORKER_MULTIPROC_METHOD" not in make(VllmEngine).env
+
+
 def test_baseline_jit_caches_live_on_the_volume():
     # a fresh pod otherwise autotunes each batch shape inside its first measured round (H100, nightly 36103844715 s05)
     for cls in (VllmEngine, SglangEngine):
