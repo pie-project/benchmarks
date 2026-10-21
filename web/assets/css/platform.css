@@ -701,3 +701,7 @@
 
 /* the view pop-up sits 4px from Hide unavailable, the bar's gap, as Finder keeps its View button with the toolbar's others */
 .platform-bar-side.is-end { display: inline-flex; align-items: center; gap: 4px; }
+
+/* a model head or maker band drags: the open hand over it, the closed one while it moves, as Finder's columns */
+.platform-table thead th[data-drop] { cursor: grab; }  /* already sticky, so it holds its grip */
+:root.is-dragging-column, :root.is-dragging-column * { cursor: grabbing !important; }

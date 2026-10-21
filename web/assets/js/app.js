@@ -249,6 +249,16 @@
       if (event.key === "Escape") {
         popover.close();
         preferences.showDrawer(false);
+        // Escape in the search field clears it and leaves it, as a Mac search field does; the filter clears with it
+        if (document.activeElement === toolbar.elements.search) {
+          event.preventDefault();
+          toolbar.clearSearch();
+          toolbar.elements.search.blur();
+          if (state.query) {
+            state.query = "";
+            render();
+          }
+        }
       }
       if (event.ctrlKey && event.metaKey && event.key.toLowerCase() === "s") {
         event.preventDefault();
@@ -275,14 +285,48 @@
         popover.close();
         render();
       }
-      // Tab on a platform page opens the next platform in the sidebar's order, after the last the first again;
-      // Shift-Tab the one before
-      if (event.key === "Tab" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing && Pie.schema[state.table]?.view === "platform") {
+      const plain = !event.metaKey && !event.ctrlKey && !event.altKey && !typing;
+      const onPlatform = Pie.schema[state.table]?.view === "platform";
+      // ] and [ open the next and the previous platform in the sidebar's order, round from the last to the first,
+      // as macOS steps through tabs; Tab keeps moving the focus
+      if ((event.key === "]" || event.key === "[") && plain && onPlatform) {
         const ids = Object.keys(Pie.schema).filter((id) => Pie.schema[id].view === "platform");
-        const next = ids[(ids.indexOf(state.table) + (event.shiftKey ? ids.length - 1 : 1)) % ids.length];
+        const next = ids[(ids.indexOf(state.table) + (event.key === "[" ? ids.length - 1 : 1)) % ids.length];
         event.preventDefault();
         popover.close();
         document.querySelector(`.sidebar-item[data-table="${next}"]`)?.click();
+      }
+      // ← and → scroll a platform's grid three model columns at a time, not the browser's few points
+      if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && plain && !event.shiftKey && onPlatform && !popover.isOpen()) {
+        const scroller = document.querySelector("#platform .platform-scroll");
+        const col = [...(scroller?.querySelectorAll("col.col-model") || [])].pop();  // a model's column, not Overall's
+        if (scroller && col) {
+          event.preventDefault();
+          scroller.scrollBy({ left: (event.key === "ArrowLeft" ? -3 : 3) * col.offsetWidth, behavior: "smooth" });
+        }
+      }
+      // V switches Speedup and Efficiency for good; holding R still only peeks
+      if (event.key.toLowerCase() === "v" && plain && onPlatform && !event.repeat) {
+        event.preventDefault();
+        Pie.platform.setCompare(Pie.platform.compare() === "engines" ? "ceiling" : "engines");
+        popover.close();
+        render();
+      }
+      // , and . open the older and the newer run of the release menu
+      if ((event.key === "," || event.key === ".") && plain) {
+        const runs = query.releaseOptions();  // newest first
+        const next = runs[runs.findIndex((run) => run.id === state.release) + (event.key === "," ? 1 : -1)];
+        if (next) {
+          event.preventDefault();
+          state.release = next.id;
+          popover.close();
+          render();
+        }
+      }
+      // S shows or hides the sidebar, one key for what ⌃⌘S also does
+      if (event.key.toLowerCase() === "s" && plain && !event.shiftKey && !event.repeat) {
+        event.preventDefault();
+        preferences.toggleSidebar();
       }
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();

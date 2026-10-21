@@ -469,7 +469,7 @@ window.Pie = window.Pie || {};
         const m = Pie.store.index.models[model] || {};
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
         const sub = size;
-        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(model))}">
+        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(model))}, or drag to move">
           <span class="platform-col"><span><span class="platform-model">${esc(names().model(model))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
@@ -484,7 +484,7 @@ window.Pie = window.Pie || {};
           <span class="platform-bar-side is-end">
             <span class="platform-compare" role="group" aria-label="View">${Object.entries(COMPARES).map(([id, name]) =>
               // the two views as a segmented control, as Finder switches its views; holding R peeks at the other
-              `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}" title="${esc(id === compare ? CAPTIONS[id] : `${CAPTIONS[id]} (Hold R)`)}">${esc(name)}</button>`).join("")}</span>
+              `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}" title="${esc(id === compare ? CAPTIONS[id] : `${CAPTIONS[id]} (V, or hold R)`)}">${esc(name)}</button>`).join("")}</span>
           </span>
         </div>
         <div class="platform-scroll">
@@ -545,6 +545,7 @@ window.Pie = window.Pie || {};
         const index = heads.indexOf(th);
         const me = units[index];
         me.cells.forEach((cell) => cell.classList.add("is-moving"));
+        document.documentElement.classList.add("is-dragging-column");  // the closed hand, wherever the pointer goes
         th.setPointerCapture(event.pointerId);
         dragged = true;
         drag = { kind, units, index, me, x0: event.clientX, lane: [units[0].left, units.at(-1).left + units.at(-1).width], to: index };
@@ -581,6 +582,7 @@ window.Pie = window.Pie || {};
         shift(me, place, true);
         setTimeout(() => {
           units.forEach((u) => { shift(u, 0, false); u.cells.forEach((cell) => cell.classList.remove("is-moving")); });
+          document.documentElement.classList.remove("is-dragging-column");
           if (to === index) return;
           const order = units.map((u) => u.id);
           order.splice(to, 0, order.splice(index, 1)[0]);
