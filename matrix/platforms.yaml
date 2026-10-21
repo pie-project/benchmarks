@@ -875,7 +875,7 @@ platforms:
     tp_capable: true
     runner_labels: [tpu-v5p-8-x4]
     tiers: [weekly]
-    tpu: {type: v5p-8, runtime: v2-alpha-tpuv5, zones: [us-east5-a, us-central1-a, europe-west4-b], data_disk_gb: 600, all_chips: true}
+    tpu: {type: v5p-8, runtime: v2-alpha-tpuv5, zones: [us-central1-a, europe-west4-b, us-east5-a], data_disk_gb: 300, all_chips: true}
   - id: tpu-v4-8
     catalog: google-cloud-tpu-v4
     os: linux
