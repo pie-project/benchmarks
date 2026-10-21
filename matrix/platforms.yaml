@@ -388,6 +388,7 @@ platforms:
     runner_labels: [self-hosted, linux, mi350x-x1]
     runpod_gpu_type: "AMD Instinct MI350 OAM"
     runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi35x"
+    container_disk_gb: 500   # MiMo-V2.6-Flash: 178 GB of weights, the one datacenter model a single MI350X holds
     tiers: [weekly]
   - id: a100-sxm40-x1
     os: linux
