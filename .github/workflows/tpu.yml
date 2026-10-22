@@ -131,8 +131,14 @@ jobs:
         run: |
           vm() { bash infra/tpu/vm.sh ssh "$1"; }
           # detached on the VM, so a dropped ssh session does not stop the build or the bench
-          vm "cd ~/pie-evals && setsid nohup bash -c 'set -a; . ~/vm.env; set +a; bash infra/tpu/run-on-vm.sh $C jobs/$JOB_ID.json; echo \$? > ~/run.done' > ~/run.log 2>&1 < /dev/null &"
-          while ! rc=$(vm 'cat ~/run.done 2>/dev/null' 2>/dev/null) || [ -z "$rc" ]; do sleep 60; done
+          # the launch returns at once; capped, as an ssh that never returns would otherwise hold the job
+          timeout 300 bash infra/tpu/vm.sh ssh "cd ~/pie-evals && setsid nohup bash -c 'set -a; . ~/vm.env; set +a; bash infra/tpu/run-on-vm.sh $C jobs/$JOB_ID.json; echo \$? > ~/run.done' > ~/run.log 2>&1 < /dev/null &" || true
+          while ! rc=$(timeout 300 bash infra/tpu/vm.sh ssh 'cat ~/run.done 2>/dev/null' 2>/dev/null) || [ -z "$rc" ]; do
+            # a spot VM taken back mid-run never writes run.done
+            st=$(bash infra/tpu/vm.sh state 2>/dev/null || echo unknown)
+            case "$st" in READY|RUNNING) ;; *) echo "::error::the VM is $st"; exit 1 ;; esac
+            sleep 60
+          done
           vm 'tail -n 200 ~/run.log'
           echo "exit $rc"; [ "$rc" = 0 ]
       - name: fetch the records
