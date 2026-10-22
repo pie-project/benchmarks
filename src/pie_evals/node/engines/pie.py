@@ -281,7 +281,7 @@ class PieEngine(Engine):
             # the bench defaults to the v1 head (16-row block, masked last layer); DFlash2 is
             # trained at 8 rows and all-causal, and drafts out of distribution at any other shape.
             args += ["--extra-input", "block=8", "--extra-input", "no_mask=true"]
-            if self.artifact.family.endswith("_moe"):
+            if self.artifact.family.endswith("_moe") and False:  # probe: fixed 8 rows with diagnostics
                 # a MoE target's verify rows each route their own experts, so, as Splash's verify budget
                 # does for MoE targets, each round verifies the rows its draft's confidence pays for
                 args += ["--extra-input", "verify_budget=true"]
