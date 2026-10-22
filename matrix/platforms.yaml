@@ -55,6 +55,7 @@ platforms:
     runner_labels: [self-hosted, linux, h100-sxm-x4]
     runpod_gpu_type: "NVIDIA H100 80GB HBM3"
     tp_capable: true
+    container_disk_gb: 500   # MiMo-V2.6-Flash: 166 GiB downloaded plus pie's import of it (weekly 39688741081 ran out)
     tiers: [weekly]
   - id: pro6000-x1
     os: linux
