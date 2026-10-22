@@ -87,7 +87,7 @@ jobs:
           out="out/profile"
           PIE_EVALS_SAMPLE_SECS="${{ inputs.sample_secs }}" .venv/bin/pie-evals-node run --job "$job" --pie-root "${PIE_ROOT:-$HOME/pie}" --out "$out" --download
       - name: summary
-        if: always() && inputs.engine == 'pie'
+        if: always() && (inputs.engine == 'pie' || inputs.engine == 'splash')
         run: |
           # the results in the log, so reading a run needs no artifact download (the account's egress is metered)
           python3 .github/profile/summary.py out/profile || true
