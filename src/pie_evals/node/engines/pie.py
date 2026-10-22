@@ -284,7 +284,7 @@ class PieEngine(Engine):
             # Splash 1.4.0 sizes each verify to its drafts (VerifyBudget), as pie's priced rounds do; both draft
             # 8-row blocks
             args += ["--extra-input", "block=8", "--extra-input", "no_mask=true",
-                     "--extra-input", "priced=true"]
+                     "--extra-input", "verify_rows=4", "--extra-input", "priced=false"]
 
         if self.platform.backend == Backend.CUDA:
             tp = max(1, int(self.mode.tp))
