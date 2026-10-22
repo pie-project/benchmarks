@@ -31,6 +31,8 @@ jobs:
         run: |
           # same pinned release and wrapper as tier.yml, cached beside the other baselines
           pin=$(.venv/bin/python -c "import yaml; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}['splash']['pin'])")
+          # engine=splash: a release in pie_commit serves that Splash instead of the pinned one
+          [[ "${{ inputs.engine }}" == splash && "${{ inputs.pie_commit }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && pin="${{ inputs.pie_commit }}"
           dir="$HOME/.cache/pie-evals/baselines/splash-$pin"
           if [ ! -x "$dir/bin/splash" ]; then
             rm -rf "$dir" && mkdir -p "$dir/bin"
@@ -76,7 +78,9 @@ jobs:
       - name: job spec
         if: inputs.engine != 'cargo-test' && inputs.engine != 'splash-profile'
         run: |
-          .venv/bin/pie-evals jobs --tier targeted --pie-commit "${{ inputs.pie_commit }}" \
+          # a Splash release in pie_commit (engine=splash) leaves pie at the input's default commit
+          pc="${{ inputs.pie_commit }}"; [[ "$pc" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && pc=424758165ecb6a78a72d0344c0f7abec7fec1aab
+          .venv/bin/pie-evals jobs --tier targeted --pie-commit "$pc" \
             --platform "${{ inputs.machine }}" --engine "${{ inputs.engine }}" \
             --artifact "${{ inputs.artifact }}" --workload "${{ inputs.workload }}" --out jobs
           ls jobs
