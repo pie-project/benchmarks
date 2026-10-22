@@ -91,7 +91,7 @@ jobs:
         run: |
           # the results in the log, so reading a run needs no artifact download (the account's egress is metered)
           python3 .github/profile/summary.py out/profile || true
-          for f in $(find out/profile -name stderr.txt | sort); do
+          for f in $(grep -rl "kernels: fire" out/profile | sort); do
             if grep -q "kernels: fire" "$f"; then echo "== $f"; python3 .github/profile/kprof.py "$f" | head -60; fi
           done
       - uses: actions/upload-artifact@v4
