@@ -281,8 +281,10 @@ class PieEngine(Engine):
             # the bench defaults to the v1 head (16-row block, masked last layer); DFlash2 is
             # trained at 8 rows and all-causal, and drafts out of distribution at any other shape.
             # Splash verifies all 8 rows every round; pie does the same rather than pricing shorter rounds
+            # Splash 1.4.0 sizes each verify to its drafts (VerifyBudget), as pie's priced rounds do; both draft
+            # 8-row blocks
             args += ["--extra-input", "block=8", "--extra-input", "no_mask=true",
-                     "--extra-input", "verify_rows=8", "--extra-input", "priced=false"]
+                     "--extra-input", "priced=true"]
 
         if self.platform.backend == Backend.CUDA:
             tp = max(1, int(self.mode.tp))
