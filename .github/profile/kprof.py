@@ -62,7 +62,7 @@ def main(path):
         for k, v in fam.most_common():
             print(f"   {v:7.2f} ms {v / listed:6.1%}  {k}")
         print("   top kernels:")
-        for k, v in ker.most_common(12):
+        for k, v in ker.most_common(40):
             print(f"   {v:7.2f} ms  {k[:110]}")
         watched = [(k, v) for k, v in ker.items() if any(w in k for w in ("rs_copy", "gated_delta", "conv1d", "split_rows"))]
         if watched:
