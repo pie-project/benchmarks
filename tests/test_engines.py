@@ -1220,9 +1220,10 @@ def test_the_tpu_runs_pie_vllm_and_sglang_raw_only():
     assert {e for e, _, _ in tpu} == {"pie", "vllm", "sglang"}
     # the GPU page's models too, where one 32 GB chip holds them (Qwen3.6-27B and gpt-oss-120b do not)
     more = {"qwen3-0.6b-tpu", "gemma-4-e2b-tpu", "gemma-4-e4b-tpu", "gemma-4-12b-tpu", "gpt-oss-20b-tpu"}
-    assert {(a, w) for e, a, w in tpu if e == "vllm"} == {(a, "raw-512-256") for a in more | {"qwen3.5-0.8b-bf16"}}
-    # sglang-jax 0.1.0rc0 loads none of these gemma-4 checkpoints (support.yaml)
-    assert {(a, w) for e, a, w in tpu if e == "sglang"} == {(a, "raw-512-256") for a in {"qwen3-0.6b-tpu", "qwen3.5-0.8b-bf16", "gpt-oss-20b-tpu"}}
+    # vLLM-TPU's gpt-oss MoE kernel does not compile before TPU7x (support.yaml)
+    assert {(a, w) for e, a, w in tpu if e == "vllm"} == {(a, "raw-512-256") for a in (more - {"gpt-oss-20b-tpu"}) | {"qwen3.5-0.8b-bf16"}}
+    # sglang-jax 0.1.0rc0 loads none of these gemma-4 checkpoints and has no mxfp4 (support.yaml)
+    assert {(a, w) for e, a, w in tpu if e == "sglang"} == {(a, "raw-512-256") for a in {"qwen3-0.6b-tpu", "qwen3.5-0.8b-bf16"}}
     # the other models are Raw rows, on pie too
     assert {(a, w) for e, a, w in tpu if e == "pie" and a in more} == {(a, "raw-512-256") for a in more}
     # sglang-jax is versioned apart from sglang
