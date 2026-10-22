@@ -405,6 +405,38 @@ platforms:
     runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi35x"
     container_disk_gb: 500   # MiMo-V2.6-Flash: 178 GB of weights, the one datacenter model a single MI350X holds
     tiers: [weekly]
+  # the AMD pods for the datacenter models one MI350X cannot hold, tp = every GPU (Infinity Fabric):
+  # RunPod offers no MI325X/MI355X and no Radeon; 2x MI350X and 8x MI300X are its multi-GPU AMD shapes
+  - id: mi350x-x2
+    catalog: amd-instinct-mi350x
+    os: linux
+    backend: rocm
+    accelerator: AMD Instinct MI350 OAM
+    arch: cdna4
+    count: 2
+    memory_gib: 576
+    interconnect: xgmi
+    runner_labels: [self-hosted, linux, mi350x-x2]
+    runpod_gpu_type: "AMD Instinct MI350 OAM"
+    runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi35x"
+    tp_capable: true
+    container_disk_gb: 800   # Qwen3.8-Flash-Next: 335 GB of weights
+    tiers: [weekly]
+  - id: mi300x-x8
+    catalog: amd-instinct-mi300x
+    os: linux
+    backend: rocm
+    accelerator: AMD Instinct MI300X OAM
+    arch: cdna3
+    count: 8
+    memory_gib: 1536
+    interconnect: xgmi
+    runner_labels: [self-hosted, linux, mi300x-x8]
+    runpod_gpu_type: "AMD Instinct MI300X OAM"
+    runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi30x"
+    tp_capable: true
+    container_disk_gb: 1500   # Nemotron 3 Ultra: 1044 GB of weights
+    tiers: [weekly]
   - id: a100-sxm40-x1
     os: linux
     backend: cuda

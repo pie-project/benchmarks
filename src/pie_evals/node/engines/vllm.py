@@ -184,7 +184,8 @@ class VllmEngine(Engine):
         try:
             out = subprocess.run(
                 [self.python, "-c", "import vllm; print(vllm.__version__)"],
-                capture_output=True, text=True, timeout=120, check=False,
+                # the engine's own env: on ROCm the image's loader path breaks the wheel's torch import
+                capture_output=True, text=True, timeout=120, check=False, env=self.process_env(),
             )
             v = out.stdout.strip().splitlines()
             return v[-1] if out.returncode == 0 and v else "unknown"

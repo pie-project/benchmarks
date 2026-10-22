@@ -31,6 +31,11 @@ global_exclude:
   - {platform: h200-x2, tp: 1}
   - {platform: h200-x4, tp: [1, 2]}
   - {platform: [a100-sxm-x8, h100-sxm-x8, h200-x8, b200-x8, b300-x8], tp: [1, 2, 4]}
+  # the multi-GPU AMD pods: the datacenter models only, at tp = every GPU (MiMo-V2.6-Flash fits one MI350X)
+  - {platform: mi350x-x2, tp: 1}
+  - {platform: mi300x-x8, tp: [1, 2, 4]}
+  - {platform: [mi350x-x2, mi300x-x8], not_artifact: [deepseek-v4.1-flash, glm-5.3-flash, glm-5.3, hy4-preview, mimo-v2.6-flash, kimi-k3, qwen3.8-flash-next-bf16, muse-spark-open, nemotron-3-ultra]}
+  - {platform: mi350x-x2, artifact: mimo-v2.6-flash}
   # the datacenter models (hundreds of GiB to 1.5 TiB each) run a release's Raw row only
   - {artifact: [deepseek-v4.1-flash, glm-5.3-flash, glm-5.3, hy4-preview, mimo-v2.6-flash, kimi-k3, qwen3.8-flash-next-bf16, muse-spark-open, nemotron-3-ultra], not_workload: raw-512-256}
   # every TPU (backend xla) runs pie on its own Qwen3.5-0.8B artifact (models.yaml keeps that artifact off every other
