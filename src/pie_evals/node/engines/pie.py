@@ -280,9 +280,15 @@ class PieEngine(Engine):
         elif "dflash2" in (self.artifact.pie_sku or ""):
             # the bench defaults to the v1 head (16-row block, masked last layer); DFlash2 is
             # trained at 8 rows and all-causal, and drafts out of distribution at any other shape.
-            # Splash verifies all 8 rows every round; pie does the same rather than pricing shorter rounds
-            args += ["--extra-input", "block=8", "--extra-input", "no_mask=true",
-                     "--extra-input", "verify_rows=8", "--extra-input", "priced=false"]
+            args += ["--extra-input", "block=8", "--extra-input", "no_mask=true"]
+            if self.artifact.family.endswith("_moe"):
+                # a MoE target's verify rows each route their own experts, so, as Splash's verify budget
+                # does for MoE targets, each round verifies the rows its draft's confidence pays for
+                args += ["--extra-input", "verify_budget=true"]
+            else:
+                # a dense target's rows share one read of the weights: Splash verifies all 8 rows every
+                # round, and pie does the same rather than pricing shorter rounds
+                args += ["--extra-input", "verify_rows=8", "--extra-input", "priced=false"]
 
         if self.platform.backend == Backend.CUDA:
             tp = max(1, int(self.mode.tp))

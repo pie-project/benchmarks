@@ -15,3 +15,18 @@ for path in sorted(glob.glob(os.path.join(root, "**/bench.json"), recursive=True
               f"round {dec / max(rounds - n, 1) * 1e3:.2f} ms, decode {toks / dec:.1f} tok/s, idle "
               f"{d['summary']['config'].get('device idle us', '-')} us")
         print("   hashes " + " ".join(hashes))
+        # a speculative program's own counts (pie_bench keeps them per request): rows verified, fire prices
+        specs = [r["speculation"] for r in d.get("requests", []) if r.get("speculation")]
+        if specs:
+            widths = {}
+            for s in specs:
+                for w in s.get("verify") or []:
+                    widths[w] = widths.get(w, 0) + 1
+            rounds = sum(s.get("rounds") or 0 for s in specs)
+            kept = sum(s.get("accepted") or 0 for s in specs)
+            drafted = sum(s.get("drafted") or 0 for s in specs)
+            plain = sum(s.get("plain_fires") or 0 for s in specs)
+            print(f"   spec: {rounds} drafting rounds, {plain} plain fires, {(kept + rounds) / max(rounds, 1):.2f} "
+                  f"tok/drafting round, accepted {kept}/{drafted}, rows " +
+                  " ".join(f"{w}:{n}" for w, n in sorted(widths.items())))
+            print("   last request's prices ms " + " ".join(f"{w}:{p:.2f}" for w, p in (specs[-1].get("prices_ms") or [])))
