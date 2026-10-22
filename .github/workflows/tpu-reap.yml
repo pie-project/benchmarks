@@ -33,3 +33,5 @@ jobs:
               echo "keeping $name (created $created)"
             fi
           done
+      - name: the pie-evals data disks left (each belongs to a VM above, or was left behind)
+        run: gcloud compute disks list --project pie-project-510103 --filter 'labels.owner=pie-evals' --format 'value(name,zone.basename(),users.len())'
