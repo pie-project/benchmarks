@@ -29,4 +29,8 @@ for path in sorted(glob.glob(os.path.join(root, "**/bench.json"), recursive=True
             print(f"   spec: {rounds} drafting rounds, {plain} plain fires, {(kept + rounds) / max(rounds, 1):.2f} "
                   f"tok/drafting round, accepted {kept}/{drafted}, rows " +
                   " ".join(f"{w}:{n}" for w, n in sorted(widths.items())))
+            expected = sum(s.get("budget_expected") or 0 for s in specs)
+            if expected:
+                print(f"   budget: expected {expected / max(rounds, 1):.2f} tok/round, emitted {(kept + rounds) / max(rounds, 1):.2f}; "
+                      "last model " + " ".join(f"{t:.2f}" for t in (specs[-1].get("budget_model") or [])))
             print("   last request's prices ms " + " ".join(f"{w}:{p:.2f}" for w, p in (specs[-1].get("prices_ms") or [])))
