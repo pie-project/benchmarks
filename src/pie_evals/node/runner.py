@@ -417,6 +417,11 @@ class NodeRunner:
                 # tp>1: the ranks band a stamped artifact at load (pie #633); the XLA engine boots from an imported .xla.zt
                 if needs_import(first.artifact) or int(first.mode.tp) > 1 or first.platform.backend == Backend.XLA:
                     try:
+                        if first.artifact.family == "deepseek_v41" and first.artifact.kind != ArtifactKind.MINIATURE and not (Path(snapshot) / "engram_token_map.safetensors").exists():
+                            # pie reads Engram's tokenizer-compressed id map from beside the weights, which the release does not
+                            # ship ("this checkpoint carries no `engram.token_map`", h200-x4 weekly 40014471810)
+                            self.log(f"engram: writing the token map beside {snapshot}")
+                            subprocess.run([os.environ.get("PIE_PY", "python3"), str(self.pie_root / "scripts/bench/engram_token_map.py"), str(snapshot)], check=True, timeout=1800)
                         model_path = ensure_artifact(first.artifact, snapshot, self.pie_root / "target/release/pie", self.job.pie_commit, log=self.log)
                     except Exception as e:
                         for c in cells:
