@@ -145,7 +145,19 @@ def _ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path |
         # which no engine here loads; they filled a 400 GB pod in 0.5.3-b5
         kw["ignore_patterns"] = ["original/*", "metal/*"]
     os.environ.setdefault("HF_XET_HIGH_PERFORMANCE", "1")  # more parallel Xet transfers: a cold pod's downloads bound the run
-    path = snapshot_download(artifact.base_model, cache_dir=str(hf_cache), token=os.environ.get("HF_TOKEN") or None, max_workers=16, **kw)  # an empty secret must not become "Bearer "
+    try:
+        path = snapshot_download(artifact.base_model, cache_dir=str(hf_cache), token=os.environ.get("HF_TOKEN") or None, max_workers=16, **kw)  # an empty secret must not become "Bearer "
+    except Exception as e:  # noqa: BLE001
+        # the pod disables Xet (runpod.py's HF_HUB_DISABLE_XET), and some repos serve their shards only through it
+        # (DeepSeek-V4.1-Flash: "The file is too large to be downloaded using the regular download method")
+        if "hf_xet" not in str(e):
+            raise
+        from huggingface_hub import constants
+
+        log(f"download: {artifact.base_model} needs Xet; retrying with it on")
+        os.environ.pop("HF_HUB_DISABLE_XET", None)
+        constants.HF_HUB_DISABLE_XET = False
+        path = snapshot_download(artifact.base_model, cache_dir=str(hf_cache), token=os.environ.get("HF_TOKEN") or None, max_workers=16, **kw)
     return _with_gguf_config(artifact, Path(path), log)
 
 
