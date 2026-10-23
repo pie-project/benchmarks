@@ -107,6 +107,13 @@ class SglangEngine(Engine):
             args += ["--report-timing"]
         if r.get("attention_backend"):
             args += ["--sglang-attention-backend", str(r["attention_backend"])]
+        dsa = r.get("dsa_backend")
+        if dsa is None and self.artifact.family == "glm5_next" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+            # 0.5.22 picks trtllm-gen MLA for a bf16 KV cache on SM120, an SM100-only kernel ("TllmGenFmhaRunner:
+            # Unsupported architecture", GLM-5.3-Flash on pro6000-x4, weekly 39901346624); TileLang runs on SM120
+            dsa = "tilelang"
+        if dsa:
+            args += ["--sglang-dsa-backend", str(dsa)]
         if r.get("sampling_backend"):
             args += ["--sglang-sampling-backend", str(r["sampling_backend"])]
         if r.get("page_size"):
