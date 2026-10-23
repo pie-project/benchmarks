@@ -10,6 +10,7 @@ everything on the shared volume.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from pathlib import Path
@@ -67,6 +68,16 @@ def has_weights(snapshot: Path, artifact: ArtifactSpec) -> bool:
     "Cannot find any model weights". ``exists`` follows the symlink."""
     if artifact.gguf_file:
         return all((snapshot / f).exists() for f in gguf_shards(artifact.gguf_file))
+    index = snapshot / "model.safetensors.index.json"
+    if index.exists():
+        # a download the watchdog killed leaves the config and some shards (GLM-5.3-Flash on h200-x4,
+        # weekly 39881122333: the next shard's pie found no deployment, SGLang no tokenizer)
+        try:
+            files = set(json.loads(index.read_text()).get("weight_map", {}).values())
+        except (OSError, ValueError):
+            files = set()
+        if files:
+            return all((snapshot / f).exists() for f in files)
     return any(f.exists() for f in snapshot.glob("*.safetensors"))
 
 
