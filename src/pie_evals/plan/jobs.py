@@ -161,6 +161,8 @@ def make_jobs(
                     # a Mac release run reports every row: a noisy laptop marks its rows noisy rather than empty
                     control_marks_noisy=tier == Tier.TARGETED,
                     est_minutes=est,
+                    # pie's boot reads every weight across the GPUs before it announces: scale its deadline with the checkpoint
+                    load_timeout_s=max(1200, int(600 + max(float(c.artifact.expected_gib or 0) for c in shard) * 6)),
                 )
             )
     # baseline comparisons first: a capped dispatch (--max-jobs) must not end up pie-only

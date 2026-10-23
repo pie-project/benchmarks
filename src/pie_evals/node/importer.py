@@ -72,6 +72,8 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
     drafter row's target without its head (``plain_sku``), imported from the local snapshot.
     Concurrent pods: import into a private temp dir, then rename into place."""
     sku = plain_sku(artifact) if plain else artifact.pie_sku
+    # a checkpoint of hundreds of GiB imports for longer than an hour (MiMo-V2.6-Flash's 166 GiB took 20 min on an H200 pod)
+    timeout_s = max(timeout_s, int(float(artifact.expected_gib or 0) * 8))
     if plain and not sku:
         raise ValueError(f"{artifact.id} has no drafter row, so no plain deployment of its own")
     d = artifact_dir(artifact, commit, root, plain=plain)

@@ -77,6 +77,62 @@ competitive:
             answers "head_size not supported, MLA not supported" (every
             Kimi-K3 cell of nightly 35921789513 on the A100). Unset leaves
             vLLM's own MLA pick.
+    deepseek_v41:
+      knobs:
+        attention_backend:
+          value: null
+          rationale: >
+            The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
+            FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
+            on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
+    glm5_next:
+      knobs:
+        attention_backend:
+          value: null
+          rationale: >
+            The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
+            FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
+            on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
+    glm_moe_dsa:
+      knobs:
+        attention_backend:
+          value: null
+          rationale: >
+            The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
+            FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
+            on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
+    hy_v4:
+      knobs:
+        attention_backend:
+          value: null
+          rationale: >
+            The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
+            FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
+            on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
+    mimo_v2:
+      knobs:
+        attention_backend:
+          value: null
+          rationale: >
+            The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
+            FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
+            on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
+    qwen4_exp:
+      knobs:
+        attention_backend:
+          value: null
+          rationale: >
+            The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
+            FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
+            on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
+    nemotron_h:
+      knobs:
+        attention_backend:
+          value: null
+          rationale: >
+            The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
+            FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
+            on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
   arch:
     hopper:
       knobs:
@@ -92,6 +148,55 @@ competitive:
                 FA3 has no MLA path either ("head_size not supported, MLA not
                 supported": every Kimi-K3 cell of nightly 36081635037 on the
                 H100). Unset leaves vLLM's own MLA pick.
+        deepseek_v41:
+          knobs:
+            attention_backend:
+              value: null
+              rationale: >
+                FA3 has no MLA or sparse-MLA path; unset leaves vLLM's own pick for the
+                datacenter models, as it deploys them.
+        glm5_next:
+          knobs:
+            attention_backend:
+              value: null
+              rationale: >
+                FA3 has no MLA or sparse-MLA path; unset leaves vLLM's own pick for the
+                datacenter models, as it deploys them.
+        glm_moe_dsa:
+          knobs:
+            attention_backend:
+              value: null
+              rationale: >
+                FA3 has no MLA or sparse-MLA path; unset leaves vLLM's own pick for the
+                datacenter models, as it deploys them.
+        hy_v4:
+          knobs:
+            attention_backend:
+              value: null
+              rationale: >
+                FA3 has no MLA or sparse-MLA path; unset leaves vLLM's own pick for the
+                datacenter models, as it deploys them.
+        mimo_v2:
+          knobs:
+            attention_backend:
+              value: null
+              rationale: >
+                FA3 has no MLA or sparse-MLA path; unset leaves vLLM's own pick for the
+                datacenter models, as it deploys them.
+        qwen4_exp:
+          knobs:
+            attention_backend:
+              value: null
+              rationale: >
+                FA3 has no MLA or sparse-MLA path; unset leaves vLLM's own pick for the
+                datacenter models, as it deploys them.
+        nemotron_h:
+          knobs:
+            attention_backend:
+              value: null
+              rationale: >
+                FA3 has no MLA or sparse-MLA path; unset leaves vLLM's own pick for the
+                datacenter models, as it deploys them.
     apple9:
       knobs: {}
   backend:

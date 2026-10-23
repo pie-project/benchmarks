@@ -55,6 +55,7 @@ platforms:
     runner_labels: [self-hosted, linux, h100-sxm-x4]
     runpod_gpu_type: "NVIDIA H100 80GB HBM3"
     tp_capable: true
+    container_disk_gb: 500   # MiMo-V2.6-Flash: 166 GiB downloaded plus pie's import of it (weekly 39688741081 ran out)
     tiers: [weekly]
   - id: pro6000-x1
     os: linux
@@ -79,6 +80,7 @@ platforms:
     runner_labels: [self-hosted, linux, pro6000-x4]
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition"
     tp_capable: true
+    container_disk_gb: 900   # GLM-5.3-Flash: 306 GiB downloaded plus pie's import of it (weekly 39680748696 ran out at 40 GB)
     tiers: [nightly, weekly]
   - id: pro4500-x1
     catalog: nvidia-rtx-pro-4500-blackwell
@@ -292,6 +294,19 @@ platforms:
     runpod_gpu_type: "NVIDIA H200"
     tp_capable: true
     container_disk_gb: 500   # MiMo-V2.6-Flash: 178 GB of weights, x1.2 for the download
+    tiers: [weekly]
+  - id: h200-x4
+    os: linux
+    backend: cuda
+    accelerator: NVIDIA H200
+    arch: hopper
+    count: 4
+    memory_gib: 564
+    interconnect: nvlink
+    runner_labels: [self-hosted, linux, h200-x4]
+    runpod_gpu_type: "NVIDIA H200"
+    tp_capable: true
+    container_disk_gb: 1000   # DeepSeek-V4.1-Flash: 510 GB of weights
     tiers: [weekly]
   - id: a100-sxm-x8
     os: linux
