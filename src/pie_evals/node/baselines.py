@@ -197,6 +197,27 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
 ensure_nvcc = ensure_cuda_devkit  # the old name
 
 
+def ensure_pip_nvcc_matches_cudart(py: Path, log=print) -> None:
+    """sglang[all] 0.5.22 resolves pip nvcc 13.4 beside torch's cudart 13.0, and CCCL refuses a
+    compiler and headers of different minors: every tilelang JIT kernel died with "CUDA compiler
+    and CUDA toolkit headers are incompatible" (GLM-5.3-Flash on pro6000-x4, weekly 39867658406)."""
+    probe = "from importlib.metadata import version as v\nfor p in ('nvidia-cuda-runtime', 'nvidia-cuda-nvcc'):\n    try: print(v(p))\n    except Exception: print('')"
+    try:
+        rt, cc = subprocess.run([str(py), "-c", probe], capture_output=True, text=True, timeout=60).stdout.split("\n")[:2]
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return
+    mm = lambda s: ".".join(s.split(".")[:2])  # noqa: E731
+    if not rt or not cc or mm(rt) == mm(cc):
+        return
+    pins = [f"{p}=={mm(rt)}.*" for p in ("nvidia-cuda-nvcc", "nvidia-cuda-crt", "nvidia-nvvm")]
+    log(f"baseline: pip nvcc {cc} beside cudart {rt}; installing {' '.join(pins)}")
+    try:
+        cmd = ["uv", "pip", "install", "--quiet", "--python", str(py)] if shutil.which("uv") else [str(py), "-m", "pip", "install", "-q"]
+        subprocess.run([*cmd, *pins], check=True, timeout=900)
+    except (OSError, subprocess.SubprocessError) as e:
+        log(f"baseline: nvcc pin failed ({e})")
+
+
 def ensure_flashinfer_aot(py: Path, marker: Path, log=print) -> bool:
     """vLLM's FlashInfer backend JIT-compiles its attention kernels with nvcc,
     and the runner image ships only the CUDA runtime (nightly 35908055874 lost
@@ -279,6 +300,8 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
         if cuda:
             ensure_nvcc(py, log=log)
             ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
+            if engine == "sglang":
+                ensure_pip_nvcc_matches_cudart(py, log=log)
         return py
     if d.exists():
         shutil.rmtree(d, ignore_errors=True)  # a half-finished install
@@ -297,5 +320,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     if cuda:
         ensure_nvcc(py, log=log)
         ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
+        if engine == "sglang":
+            ensure_pip_nvcc_matches_cudart(py, log=log)
     (d / ".ok").write_text(version + "\n")
     return py
