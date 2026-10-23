@@ -21,6 +21,7 @@ Every failure is classified into ``ErrorClass``; a hang is a timeout.
 from __future__ import annotations
 
 import os
+import subprocess
 import random
 import re
 import signal
