@@ -298,7 +298,7 @@ class NodeRunner:
             from huggingface_hub.errors import LocalEntryNotFoundError
 
             # the hub unreachable from this pod, or a full disk, says nothing of the model: a re-dispatch measures it
-            unreachable = isinstance(e, (LocalEntryNotFoundError, ConnectionError, TimeoutError)) or type(e).__module__.split(".")[0] in ("requests", "httpx", "urllib3") or (isinstance(e, OSError) and e.errno == 28)
+            unreachable = isinstance(e, (LocalEntryNotFoundError, ConnectionError, TimeoutError)) or type(e).__module__.split(".")[0] in ("requests", "httpx", "urllib3") or (isinstance(e, OSError) and e.errno == 28) or "hf_xet" in str(e)
             raise EngineLaunchError(ErrorClass.HARNESS_INVALID if unreachable else ErrorClass.LOAD_FAIL, f"checkpoint unavailable for {cell.artifact.id}: {str(e).strip().splitlines()[-1][:300] if str(e).strip() else e!r}") from e
 
     def _start_prefetch(self, artifacts) -> None:
