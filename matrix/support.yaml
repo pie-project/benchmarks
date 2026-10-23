@@ -58,6 +58,9 @@ unsupported:
   # weekly 39867658406: on sm_120 SGLang runs MiMo's MXFP4 experts through its FP8 triton MoE, which asserts on the packed width
   - when: {engine: sglang, artifact: mimo-v2.6-flash, platform: pro6000-x4}
     reason: "SGLang 0.5.22 sends MiMo-V2.6-Flash's MXFP4 experts to its FP8 triton MoE on sm_120 (fused_experts: Hidden size mismatch)"
+  # weekly 40014471810: past the MoE runner, SGLang's hyper-connection kernel refuses DeepSeek-V4.1-Flash's width
+  - when: {engine: sglang, artifact: deepseek-v4.1-flash, platform: [h200-x4, h100-sxm-x4, h100-sxm-x8]}
+    reason: "SGLang 0.5.22's mhc_pre splitk kernel takes hc_hidden_size 16384 or 28672 only; DeepSeek-V4.1-Flash's is 20480"
   # weekly 39999127297 (h200-x4): MiniMax-M3.1-Flash ships MXFP8 projections beside NVFP4 experts
   - when: {engine: vllm, artifact: minimax-m3.1-flash}
     reason: "vLLM 0.31.0 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 (expert load: size of tensor a (192) must match b (384))"
