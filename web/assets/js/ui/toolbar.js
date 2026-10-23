@@ -16,6 +16,9 @@ window.Pie = window.Pie || {};
     viewValue: document.getElementById("view-value"),
     themeToggle: document.getElementById("theme-toggle"),
     sidebarToggle: document.getElementById("sidebar-toggle"),
+    nav: document.getElementById("nav-buttons"),
+    back: document.getElementById("back-button"),
+    forward: document.getElementById("forward-button"),
   };
 
   const root = document.documentElement;

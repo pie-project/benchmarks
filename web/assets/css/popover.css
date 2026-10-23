@@ -163,3 +163,10 @@
 .popover-option:hover .popover-icon,
 .popover-option:focus-visible .popover-icon { color: var(--color-on-accent); }
 @media (max-width: 899px) { .popover-icon { width: 18px; height: 18px; } }
+/* a phone's setup menu is an iOS menu: one line each, the checkmark, the name, its symbol at the trailing edge; no keys to press */
+@media (max-width: 899px) {
+  .popover-option.is-setup { flex-wrap: nowrap; padding-top: 0; padding-bottom: 0; }
+  .popover-option.is-setup .popover-label { flex: 1 1 auto; }
+  .popover-option.is-setup .popover-icon { order: 1; }
+  .popover-option.is-setup .popover-key { display: none; }
+}

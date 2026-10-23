@@ -54,6 +54,10 @@
     table.container.hidden = isOverview || isMethod || isPlatform;
     overview.element.hidden = !isOverview;
     Pie.platform.element.hidden = !isPlatform;
+    // a platform is a folder: back returns to All Platforms and forward reopens the platform just left, as in Finder
+    toolbar.elements.nav.hidden = !isPlatform && state.table !== "welcome";
+    toolbar.elements.back.disabled = !isPlatform;
+    toolbar.elements.forward.disabled = state.table !== "welcome" || !forwardTo;
     toolbar.elements.metricPicker.hidden = true;  // the metric lives in the platform table's own bar
     Pie.welcome.render(state);
     Pie.inferlets.render(state);
@@ -91,7 +95,9 @@
     saveView();
   };
 
+  let forwardTo = null;  // the platform the back chevron left, for the forward one
   const navigate = (tableName, initialFilters = {}) => {
+    forwardTo = null;
     state.reset(tableName, initialFilters);
     toolbar.clearSearch();
     popover.close();
@@ -103,6 +109,23 @@
     const { elements } = toolbar;
 
     elements.sidebarToggle.addEventListener("click", () => preferences.toggleSidebar());
+    const back = () => {
+      const from = state.table;
+      navigate("welcome");
+      forwardTo = from;
+      render();
+    };
+    const forward = () => navigate(forwardTo);
+    elements.back.addEventListener("click", back);
+    elements.forward.addEventListener("click", forward);
+    // ⌘[ and ⌘] go back and forward, as in Finder and Safari
+    document.addEventListener("keydown", (event) => {
+      if (!event.metaKey || elements.nav.hidden) return;
+      const button = event.key === "[" ? elements.back : event.key === "]" ? elements.forward : null;
+      if (!button || button.disabled) return;
+      event.preventDefault();
+      button === elements.back ? back() : forward();
+    });
     elements.themeToggle.addEventListener("click", () => preferences.toggleTheme());
     // on a phone the appearance switch sits at the foot of the slide-over, as in Settings
     document.getElementById("sidebar-theme").addEventListener("click", () => preferences.toggleTheme());
