@@ -5,6 +5,7 @@
 #   vm.sh resolve <platform>        print the platform's tpu settings as KEY=value lines (for $GITHUB_ENV)
 #   vm.sh create                    try each zone of TPU_ZONES, on demand then spot; print zone=<zone>
 #   vm.sh wait                      until the VM is up
+#   vm.sh state                     the VM's state (READY/RUNNING when up)
 #   vm.sh ssh <command>             run a command on the VM
 #   vm.sh put <local>...            copy files to the VM's home
 #   vm.sh get [--recurse] <remote> <local>
@@ -87,6 +88,13 @@ EOF
       echo "state: $s"; [ "$s" = "$want" ] && exit 0; sleep 10
     done
     echo "::error::the VM is not up after 10 minutes"; exit 1
+    ;;
+  state)  # READY / RUNNING when up; PREEMPTED, TERMINATED, ... when a spot VM was taken back
+    if [ "$TPU_KIND" = tpu ]; then
+      gcloud compute tpus tpu-vm describe "$TPU_NAME" "${P[@]}" --zone "$TPU_ZONE" --format 'value(state)'
+    else
+      gcloud compute instances describe "$TPU_NAME" "${P[@]}" --zone "$TPU_ZONE" --format 'value(status)'
+    fi
     ;;
   ssh)
     if [ "$TPU_KIND" = tpu ]; then
