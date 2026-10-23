@@ -1166,6 +1166,16 @@ def test_a_dflash2_row_drafts_at_its_trained_block(tmp_path):
     assert "block=8" not in argv_for(v1, single, tmp_path)
 
 
+def test_a_dflash2_row_of_a_moe_target_verifies_what_its_draft_pays_for(tmp_path):
+    single = MAC_WORKLOADS["ss-128-64"]
+    moe = mac_make(PieEngine, art=mac_artifact(family="qwen3_6_moe", pie_sku="qwen36-35b-a3b-dflash2-u4g64-kv-bf16"))
+    argv = argv_for(moe, single, tmp_path)
+    assert "verify_budget=true" in argv and "verify_rows=8" not in argv
+    dense = mac_make(PieEngine, art=mac_artifact(pie_sku="qwen38-27b-dflash2-u4g64-kv-bf16"))
+    argv = argv_for(dense, single, tmp_path)
+    assert "verify_rows=8" in argv and "priced=false" in argv and "verify_budget=true" not in argv
+
+
 def test_mlxlm_blocks_every_special_token(tmp_path, monkeypatch):
     """mlx-lm has no ignore_eos: a -100 bias on each added token of the tokenizer makes it write the full length."""
     from pie_evals.node.engines import served
