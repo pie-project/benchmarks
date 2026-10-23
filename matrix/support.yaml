@@ -89,6 +89,23 @@ unsupported:
   # "'>=' not supported between 'int' and 'NoneType'" (no global KV heads), 12B on model type gemma4_unified (b5 39575054600)
   - when: {engine: sglang, family: gemma4, backend: xla}
     reason: "sglang-jax 0.1.0rc0 cannot load the gemma-4 E2B/E4B/12B checkpoints; revisit at the next pin"
+  # sglang-jax 0.1.0rc0 has no mxfp4: it logs "quantization method 'mxfp4' is not yet supported", drops it, and its
+  # GptOss loader then imports PyTorch, which a JAX install does not carry (b5 39671403474 v6e, 39671408848 v5e)
+  - when: {engine: sglang, family: gpt_oss, backend: xla}
+    reason: "sglang-jax 0.1.0rc0 has no mxfp4 support: gpt-oss loads without its quantization and then needs PyTorch"
+  # MiMo-V2.6-Flash's MXFP4 experts: sglang-jax looks for FP8 block scales (b5 39692024492, v5p-8 tp4)
+  - when: {engine: sglang, family: mimo_v2, backend: xla}
+    reason: "sglang-jax 0.1.0rc0 cannot load MiMo-V2.6-Flash's MXFP4 experts (it looks for FP8 weight_scale_inv)"
+  # vLLM-TPU 0.30.0 sizes MiMo-V2.6's two attention kinds into pages it cannot unify (b5 39688097848, v5p-8 tp4)
+  - when: {engine: vllm, family: mimo_v2, backend: xla}
+    reason: "vLLM-TPU 0.30.0 cannot build MiMo-V2.6-Flash's KV cache: AssertionError in unify_kv_cache_spec_page_size"
+  # pie's XLA forward for gpt-oss-20b needs 17.32 GiB of HLO temporaries; a v5e chip has 15.75 GiB (b5 39699079812)
+  - when: {engine: pie, backend: xla, family: gpt_oss, platform: tpu-v5e-1}
+    reason: "doesn't fit: pie's XLA forward needs 17.3 GiB of HLO temporaries for gpt-oss-20b; a v5e chip has 15.75 GiB of HBM"
+  # vLLM-TPU 0.30.0's gpt-oss MoE kernel (gmm_v2) holds fp4 vectors Mosaic cannot compile before TPU7x:
+  # v6e 39671403474, v5e 39699082874, v5p 39697698286 (gpt-oss-20b and -120b alike)
+  - when: {engine: vllm, family: gpt_oss, backend: xla}
+    reason: "vLLM-TPU 0.30.0's gpt-oss MoE kernel does not compile on v5e/v5p/v6e: Mosaic has no f4E2M1FN (mxfp4) vectors before TPU7x"
   # SGLang 0.5.20 has no mxfp4 MoE kernel before Hopper: gpt-oss-20b decodes through a dequant fallback —
   # A100 ss-512-256 12 tok/s and lc-8k 5 tok/s (nightly 36082960398 s05, two cells ate the shard's hour),
   # 4090 ss 25 tok/s; the H100 (1189 tok/s at c64) and Blackwell cards keep the baseline
