@@ -339,7 +339,9 @@ window.Pie = window.Pie || {};
       const ran = new Set(Pie.store.snapshot(state.release)
         .filter((r) => Pie.store.isMeasured(r) && (!only || platformOf(Pie.store.index.hardware[r.hardware] || {})?.id === only))
         .map((r) => r.workload));
-      return MODES.filter((m) => m.limit || ran.has(m.workload));
+      // the TPU shows Raw Decode and Raw Prefill only
+      const HIDDEN = { tpu: ["spec", "batching"] };
+      return MODES.filter((m) => (m.limit || ran.has(m.workload)) && !(HIDDEN[only] || []).includes(m.id));
     },
 
     onChange(handler) {
