@@ -172,14 +172,16 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
     nvcc = Path("/usr/local/cuda/bin/nvcc")
     header = Path("/usr/local/cuda/include/cuda_runtime.h")
     devrt = Path("/usr/local/cuda/lib64/libcudadevrt.a")
-    if nvcc.exists() and header.exists() and devrt.exists():
+    # FlashInfer's trtllm-gen FMHA JIT includes cublasLt.h (SGLang GLM-5.3-Flash on pro6000-x4, weekly 39890605647)
+    blas = Path("/usr/local/cuda/include/cublasLt.h")
+    if nvcc.exists() and header.exists() and devrt.exists() and blas.exists():
         return True
     ver = cuda_toolkit_version(py)
     if ver is None:
         log("baseline: cannot tell the image's CUDA version; not installing the toolkit")
         return False
     major, minor = ver
-    pkgs = [p for p, missing in ((f"cuda-nvcc-{major}-{minor}", not nvcc.exists()), (f"cuda-cudart-dev-{major}-{minor}", not (header.exists() and devrt.exists()))) if missing]
+    pkgs = [p for p, missing in ((f"cuda-nvcc-{major}-{minor}", not nvcc.exists()), (f"cuda-cudart-dev-{major}-{minor}", not (header.exists() and devrt.exists())), (f"libcublas-dev-{major}-{minor}", not blas.exists())) if missing]
     log(f"baseline: {nvcc.name}/{header.name}/{devrt.name} missing; installing {' '.join(pkgs)}")
     apt = ["apt-get"] if os.geteuid() == 0 else ["sudo", "-n", "apt-get"]
     env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
