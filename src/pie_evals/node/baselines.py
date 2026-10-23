@@ -181,16 +181,21 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
         log("baseline: cannot tell the image's CUDA version; not installing the toolkit")
         return False
     major, minor = ver
-    pkgs = [p for p, missing in ((f"cuda-nvcc-{major}-{minor}", not nvcc.exists()), (f"cuda-cudart-dev-{major}-{minor}", not (header.exists() and devrt.exists())), (f"libcublas-dev-{major}-{minor}", not blas.exists())) if missing]
+    pkgs = [p for p, missing in ((f"cuda-nvcc-{major}-{minor}", not nvcc.exists()), (f"cuda-cudart-dev-{major}-{minor}", not (header.exists() and devrt.exists()))) if missing]
     log(f"baseline: {nvcc.name}/{header.name}/{devrt.name} missing; installing {' '.join(pkgs)}")
     apt = ["apt-get"] if os.geteuid() == 0 else ["sudo", "-n", "apt-get"]
     env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
     try:
         subprocess.run(apt + ["update", "-qq"], env=env, check=False, timeout=600, capture_output=True)
-        subprocess.run(apt + ["install", "-y", "-qq", "--no-install-recommends", *pkgs], env=env, check=True, timeout=1200, capture_output=True)
+        if pkgs:
+            subprocess.run(apt + ["install", "-y", "-qq", "--no-install-recommends", *pkgs], env=env, check=True, timeout=1200, capture_output=True)
     except (OSError, subprocess.SubprocessError) as e:
         log(f"baseline: CUDA toolkit install failed ({e}); engines that JIT CUDA kernels will crash")
         return False
+    if not blas.exists():
+        # its own step: the runtime image holds libcublas at its version, and a refused dev package must not cost nvcc
+        r = subprocess.run(apt + ["install", "-y", "-qq", "--no-install-recommends", "--allow-change-held-packages", f"libcublas-dev-{major}-{minor}"], env=env, check=False, timeout=1200, capture_output=True, text=True)
+        log(f"baseline: cublasLt.h {blas.exists()}" + ("" if r.returncode == 0 else f" (apt: {(r.stderr or r.stdout).strip().splitlines()[-1:]})"))
     ok = nvcc.exists() and header.exists() and devrt.exists()
     log(f"baseline: nvcc {nvcc.exists()}, cuda_runtime.h {header.exists()}, libcudadevrt.a {devrt.exists()}")
     return ok
