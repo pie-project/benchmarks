@@ -118,6 +118,14 @@ class SglangEngine(Engine):
             dsa = "tilelang"
         if dsa:
             args += ["--sglang-dsa-backend", str(dsa)]
+        moe = r.get("moe_runner_backend")
+        if moe is None and self.artifact.family == "deepseek_v41" and int(self.mode.tp) == 4:
+            # its auto pick, flashinfer_mxfp4, refuses a tp4 share of the experts ("hidden_size and
+            # intermediate_size_per_partition to be multiples of 128 (got hidden=5120, intermediate=576)",
+            # h200-x4 weekly 39999127297); Marlin is SGLang's other MXFP4 MoE runner
+            moe = "marlin"
+        if moe:
+            args += ["--sglang-moe-runner-backend", str(moe)]
         if r.get("sampling_backend"):
             args += ["--sglang-sampling-backend", str(r["sampling_backend"])]
         if r.get("page_size"):
