@@ -201,6 +201,12 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
                 for h in inc.glob("cublas*.h"):
                     if not (blas.parent / h.name).exists():
                         (blas.parent / h.name).symlink_to(h)
+            # and the unversioned names a `-lcublasLt` link wants, which only the dev package carries
+            lib = devrt.parent
+            for name in ("libcublas.so", "libcublasLt.so"):
+                found = sorted(lib.glob(name + ".*"))
+                if not (lib / name).exists() and found:
+                    (lib / name).symlink_to(found[0].name)
         log(f"baseline: cublasLt.h {blas.exists()}" + ("" if r.returncode == 0 else f" (apt: {(r.stderr or r.stdout).strip().splitlines()[-1:]})"))
     ok = nvcc.exists() and header.exists() and devrt.exists()
     log(f"baseline: nvcc {nvcc.exists()}, cuda_runtime.h {header.exists()}, libcudadevrt.a {devrt.exists()}")
