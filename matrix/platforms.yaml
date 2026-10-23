@@ -334,7 +334,7 @@ platforms:
     runner_labels: [self-hosted, linux, h100-sxm-x8]
     runpod_gpu_type: "NVIDIA H100 80GB HBM3"
     tp_capable: true
-    container_disk_gb: 1000   # DeepSeek-V4.1-Flash: 510 GB of weights
+    container_disk_gb: 1200   # DeepSeek-V4.1-Flash: 510 GB of weights, and pie's import of them beside it
     tiers: [weekly]
   - id: h200-x8
     os: linux
