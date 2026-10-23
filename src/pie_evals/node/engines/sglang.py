@@ -89,6 +89,10 @@ class SglangEngine(Engine):
                 # has no KV left beside a 256-wide graph (36212036845) and at 0.82 kv-oversub OOMs in prefill (36264810212)
                 wide = card < 80 and workload_concurrency(workload) >= 128
                 gmu = min(float(gmu), 0.79 if wide else 0.75)
+            if self.artifact.family == "glm5_next" and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+                # the TileLang DSA kernels (below) want more than 0.95 leaves past the static pool: GLM-5.3-Flash
+                # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV
+                gmu = 0.88
             args += ["--gpu-mem-util", str(gmu)]  # -> mem_fraction_static
         graph_bs = r.get("cuda_graph_max_bs")
         if graph_bs is None:
