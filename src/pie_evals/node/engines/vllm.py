@@ -48,6 +48,10 @@ class VllmEngine(Engine):
             # AMD's own kernels (AITER) are vLLM's recommended Instinct path and off unless asked for:
             # Qwen3.5-0.8B raw-512-256 on the MI300X decoded 512 tok/s with them, 478 without
             env["VLLM_ROCM_USE_AITER"] = "1"
+        if self.artifact.family == "mimo_v2" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+            # 0.31.0's CUTLASS block-FP8 GEMM aborts on sm_120 for MiMo's FP8 projections ("cutlass_gemm_caller:
+            # Invalid status", weekly 39680748696); vLLM then takes the next kernel it ranks for block FP8
+            env["VLLM_DISABLED_KERNELS"] = "CutlassFp8BlockScaledMMKernel"
         if int(self.mode.tp) > 1:
             # 0.31.0 forked its tp workers after CUDA was up in the engine core, and every worker
             # died on "Cannot re-initialize CUDA in forked subprocess" (L40S x2, weekly 39545360541)
