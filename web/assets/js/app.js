@@ -78,6 +78,12 @@
     } else if (isMethod) {
       toolbar.elements.title.textContent = Pie.schema[state.table].title || Pie.schema[state.table].label;
       toolbar.elements.subtitle.textContent = "";
+      // All Platforms counts its folders and what they hold, as a platform page counts its machines
+      if (state.table === "welcome") {
+        const platforms = Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length;
+        const machines = Pie.platform.machines();
+        toolbar.elements.subtitle.textContent = `${platforms} ${platforms === 1 ? "platform" : "platforms"}, ${machines} ${machines === 1 ? "machine" : "machines"}`;
+      }
       toolbar.renderRelease(state);
     } else {
       const rows = query.visibleRows(state);
