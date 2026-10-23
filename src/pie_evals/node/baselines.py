@@ -197,7 +197,7 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
         r = subprocess.run(apt + ["install", "-y", "-qq", "--no-install-recommends", "--allow-change-held-packages", f"libcublas-dev-{major}-{minor}"], env=env, check=False, timeout=1200, capture_output=True, text=True)
         if not blas.exists() and py is not None:
             # the held runtime refuses the dev package ("held broken packages"): the venv's pip cuBLAS carries the headers
-            for inc in Path(py).resolve().parent.parent.glob("lib/python3*/site-packages/nvidia/cu*/include"):
+            for inc in Path(py).absolute().parent.parent.glob("lib/python3*/site-packages/nvidia/cu*/include"):
                 for h in inc.glob("cublas*.h"):
                     if not (blas.parent / h.name).exists():
                         (blas.parent / h.name).symlink_to(h)
