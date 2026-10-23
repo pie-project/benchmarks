@@ -278,9 +278,9 @@ class Engine(ABC):
         InfiniBand off makes NCCL fall back to host-staged copies, which is
         what the pod's PCIe topology delivers anyway. pie falls back to NCCL when its own peer
         collectives cannot run, so it takes the same settings.
-        An NVLink pod (A100 SXM, H100 SXM) keeps peer access: turning it off there
+        An NVLink pod (A100 SXM, H100 SXM) or an Infinity Fabric one (MI300X, MI350X OAM) keeps peer access: turning it off there
         would slow vLLM and SGLang below what the hardware gives them."""
-        if int(self.mode.tp) > 1 and os.environ.get("RUNPOD_POD_ID") and str(getattr(self.platform, "interconnect", "pcie")) != "nvlink":
+        if int(self.mode.tp) > 1 and os.environ.get("RUNPOD_POD_ID") and str(getattr(self.platform, "interconnect", "pcie")) not in ("nvlink", "xgmi"):
             return {"NCCL_P2P_DISABLE": "1", "NCCL_IB_DISABLE": "1"}
         return {}
 
