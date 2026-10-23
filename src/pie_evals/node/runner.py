@@ -281,8 +281,9 @@ class NodeRunner:
             from .reclaim import LOW_WATER_GIB, reclaim
 
             importing = str(cell.engine) == "pie" and self.job.pie_commit and needs_import(cell.artifact)
-            # a pie import writes its artifact beside the checkpoint (pro6000-x4 weekly 39867658406: MiMo ENOSPC mid-import)
-            reclaim(getattr(self, "_ahead", None) or self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * (2.2 if importing and not have_artifacts(cell.artifact, self.job.pie_commit) else 1.2) + 10), log=self.log)
+            # a pie import (also every tp>1 one, run()) writes its artifact beside the checkpoint (pro6000-x4 weekly 39867658406: MiMo ENOSPC mid-import)
+            stamps = str(cell.engine) == "pie" and self.job.pie_commit and (importing or int(cell.mode.tp) > 1 or cell.platform.backend == Backend.XLA)
+            reclaim(getattr(self, "_ahead", None) or self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * (2.2 if stamps and not have_artifacts(cell.artifact, self.job.pie_commit) else 1.2) + 10), log=self.log)
             if importing and have_artifacts(cell.artifact, self.job.pie_commit):
                 snap = snapshot_dir_if_present(cell.artifact, self.hf_cache, weights=False)
                 if snap:
