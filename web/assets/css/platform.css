@@ -729,3 +729,4 @@
 .platform-compare .plain-button.is-active,
 :root[data-theme="dark"] .platform-compare .plain-button.is-active { box-shadow: none !important; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .platform-compare .plain-button.is-active { box-shadow: none !important; } }
+.model-badge .model-cloud { width: 14px; height: 14px; display: block; fill: none; stroke: #636366; stroke-width: 1.4; stroke-linejoin: round; }

@@ -45,7 +45,9 @@ window.Pie = window.Pie || {};
     { test: /^muse/, name: "Meta", logo: "meta" },
   ];
   const makerOf = (model) => MAKERS.find((m) => m.test.test(Pie.store.index.models[model]?.family || "")) || { name: "", logo: "" };
-  const badge = (maker) => `<span class="model-badge" aria-hidden="true">${maker.logo ? `<img src="assets/img/models/${maker.logo}.svg" alt="">` : ""}</span>`;
+  // a model with no maker logo in the set runs in the cloud: a cloud glyph on its tile
+  const CLOUD = '<svg class="model-cloud" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 12.5a3 3 0 0 1-.4-6A4 4 0 0 1 11.8 6a3.25 3.25 0 0 1 .2 6.5z"/></svg>';
+  const badge = (maker) => `<span class="model-badge" aria-hidden="true">${maker.logo ? `<img src="assets/img/models/${maker.logo}.svg" alt="">` : CLOUD}</span>`;
 
   const chipName = (id) => String(Pie.store.index.hardware[id]?.name || id).replace(/^Apple\s+/, "");
   const macName = (id) => {
@@ -485,7 +487,7 @@ window.Pie = window.Pie || {};
         else makers.push({ maker, n: 1 });
       }
       const makerRow = `<tr class="platform-maker-row"><th class="platform-corner is-sortable" data-sort="name" aria-hidden="true"></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n }) =>
-        `<th class="platform-maker" colspan="${n}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Other")}</b><span>${n} ${n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
+        `<th class="platform-maker" colspan="${n}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${n} ${n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
         <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
