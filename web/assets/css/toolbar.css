@@ -63,6 +63,25 @@
   stroke-width: 1.5;
 }
 
+.nav-buttons {
+  display: flex;
+  flex: none;
+}
+
+.nav-buttons[hidden] {
+  display: none;
+}
+
+.nav-button svg {
+  stroke-width: 1.8;
+}
+
+/* nowhere to go: the chevron dims and takes no hover, as Finder's does */
+.nav-button:disabled {
+  opacity: .3;
+  pointer-events: none;
+}
+
 :root[data-theme="dark"] .theme-icon-sun,
 :root:not([data-theme="dark"]) .theme-icon-moon {
   display: none;
