@@ -16,8 +16,6 @@ unsupported:
     reason: "pie's XLA engine serves a model on one TPU device; this model needs more HBM than one chip has"
   - when: {platform: tpu-v4-8}
     reason: "no access: TPU v4 is only offered in us-central2-b, which the GCP organization's location policy blocks for this project"
-  - when: {platform: tpu7x-4}
-    reason: "no quota: the project's TPU7x (Ironwood) quota is 0 in us-central1, its only region (TPUS_PER_TPU_FAMILY)"
   # SGLang 0.5.20 cannot serve kimi-k3's widest shapes on a 48 GB L40S at any static fraction: at 0.75
   # no KV fits beside the 256-wide graph, from 0.79 the MoE prefill OOMs by 768 MiB (nightlies 36212036845, 36264810212, 36295501246)
   - when: {engine: sglang, family: kimi_k3, platform: l40s-x1, workload: kv-oversub}
