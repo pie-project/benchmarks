@@ -38,14 +38,25 @@ def prompts(log=print) -> list[str]:
     return out
 
 
-def device_idle(backend: str) -> str | None:
-    """Why the device is not idle, or None. One test per device: nothing else may hold it."""
+def device_idle(backend: str, grace_s: float = 60.0) -> str | None:
+    """Why the device is not idle, or None. One test per device: nothing else may hold it. nvidia-smi's utilization
+    is averaged over its last sample period and reads 100% for a while after a process exits, so a busy reading must
+    hold for ``grace_s`` with memory in use before it counts."""
+    deadline = time.monotonic() + grace_s
+    while True:
+        why = _busy(backend)
+        if why is None or time.monotonic() > deadline:
+            return why
+        time.sleep(5)
+
+
+def _busy(backend: str) -> str | None:
     try:
         if backend == "cuda":
             q = subprocess.run(["nvidia-smi", "--query-gpu=utilization.gpu,memory.used", "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=30).stdout
             for ln in q.strip().splitlines():
                 util, mem = (int(x.strip()) for x in ln.split(","))
-                if util > 5 or mem > 1500:
+                if mem > 1500 or (util > 5 and mem > 100):
                     return f"GPU busy: {util}% util, {mem} MiB used"
         elif backend == "rocm":
             q = subprocess.run(["rocm-smi", "--showuse", "--json"], capture_output=True, text=True, timeout=30).stdout
@@ -168,7 +179,7 @@ def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, back
         from pie_evals.node.baselines import ensure_baseline
 
         recipe = load_recipe("vllm", "competitive", plat, workload, family=art.family)
-        pin = vllm_pin or m.engines["vllm"].pin
+        pin = vllm_pin or os.environ.get("PARITY_VLLM_PIN") or m.engines["vllm"].pin
         if pin:
             recipe["pin"] = pin
             if not os.environ.get("VLLM_PY"):
@@ -310,7 +321,7 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
     versions = {}
 
     recipe = load_recipe("vllm", "competitive", plat, workload, family=art.family)
-    recipe["pin"] = vllm_pin or m.engines["vllm"].pin
+    recipe["pin"] = vllm_pin or os.environ.get("PARITY_VLLM_PIN") or m.engines["vllm"].pin
     if not os.environ.get("VLLM_PY"):
         ensure_baseline("vllm", recipe["pin"], backend=backend, log=log)
     ref = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
