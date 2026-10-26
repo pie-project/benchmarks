@@ -162,10 +162,11 @@
 
 /* a platform with no machines yet: a quiet centered note */
 .platform-empty { margin: auto; padding: 48px 24px; text-align: center; color: var(--color-label-secondary); }
-.platform-empty .sidebar-glyph[style] { width: 56px; height: 56px; border-radius: 13px; }
-.platform-empty .sidebar-glyph[style] svg { width: 30px; height: 30px; fill: none; stroke: #fff; stroke-width: 1.8; }
-.platform-empty .sidebar-glyph svg .is-filled { fill: var(--color-label); stroke: none; }
-.platform-empty h2 { margin: 14px 0 6px; font-size: 17px; font-weight: 600; color: var(--color-label); }
+.platform-empty .sidebar-glyph[style] { width: 48px; height: 48px; border-radius: 11px; }  /* scaled with the 15px title under it */
+.platform-empty .sidebar-glyph[style] svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.8; }
+.platform-empty .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }  /* white on the platform's tile, as the sidebar's */
+.platform-empty h2 { margin: 14px 0 6px; font: 700 15px/1.2 var(--font-display); letter-spacing: -.01em; color: var(--color-label); }  /* the toolbar title's type */
+@media (max-width: 899px) { .platform-empty h2 { font-size: 17px; font-weight: 600; } }  /* as the toolbar title on a phone */
 .platform-empty p { margin: 0; font-size: 13px; }
 
 /* the table, settled: even fixed columns, numbers right-aligned under right-aligned heads, a little more air */
@@ -663,6 +664,10 @@
 .rf-card { display: flex; flex-direction: column; gap: 10px; width: max-content; }
 .chart-tooltip.is-card:has(.rf-card) { min-width: 0; }
 .rf-card .tip-roof { width: 0; min-width: 100%; }
+/* Spec Decode's card: the roofline over the usual list, which keeps its dates and its Spec Limit rule; the chart's floor
+   line already parts the two, so the list drops its own rule */
+.rf-move-card .tip-roof { width: 0; min-width: 100%; }
+.rf-move-card > .tip-rows { margin-top: 10px; padding-top: 0; border-top: 0; }
 .rf-card .tip-row.is-limit { margin-top: 0; padding-top: 0; border-top: 0; }  /* the bounds open the card: no rule above them */
 .rf-card .tip-row { grid-template-columns: 8px 1fr auto; column-gap: 7px; }  /* no date column here: the values reach the right edge */
 .rf-card .tip-row .tip-value { padding-left: 14px; }  /* the small gap between a name and its number */
@@ -691,6 +696,8 @@
 .tip-roof .rf-knee-hole { stroke: var(--color-menu); stroke-width: 3.6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .tip-roof .rf-name, .tip-roof .rf-tick-name { position: absolute; transform: translate(8px, -50%); white-space: nowrap; font-size: 11px; line-height: 1; pointer-events: none; }
 .tip-roof .rf-name.is-pie { font-weight: 700; }
+.tip-roof .rf-move { fill: none; stroke-width: 1.5; vector-effect: non-scaling-stroke; }  /* Raw to Spec, the roof's own weight family */
+.tip-roof .rf-move-head { stroke: none; }
 .tip-roof .rf-name.is-left, .tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 8px), -50%); }
 .tip-roof .rf-tick-name { font-weight: 500; color: var(--color-label-tertiary); transform: translate(6px, calc(-100% - 4px)); }
 .tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 6px), calc(-100% - 4px)); }
@@ -749,3 +756,29 @@
   .platform-row .platform-chip .platform-mem { flex: none; }
   .platform-row .platform-chip .sidebar-glyph[style] { display: none; }
 }
+
+/* the view button: the current view's sidebar icon in the accent, as the sidebar draws it; a click moves to the next */
+.view-cycle { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--color-label); background: none; }
+.view-cycle:hover { background: var(--color-fill); }
+.view-cycle:active { background: color-mix(in srgb, var(--color-label) 16%, transparent); }  /* darker while pressed, as a toolbar button is held */
+.view-cycle svg { width: 16px; height: 16px; fill: none; stroke: var(--color-accent); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }  /* the icon in the sidebar's blue, the name in the label colour */
+
+/* the setups' segments each lead with their symbol, as Xcode and Finder pair one with a word: decode an arrow out,
+   prefill lines read in, Peak FLOPs requests stacked; the chosen one's symbol in the accent, the rest in the label grey */
+.platform-compare .plain-button:has(.mode-icon) { display: inline-flex; align-items: center; gap: 5px; padding: 0 7px; }
+.platform-compare[aria-label="Setup"] { gap: 0; }  /* with no fill behind the pick, 14px between one label and the next symbol reads as one group */
+.mode-icon { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }  /* the label's colour */
+.mode-icon rect { fill: currentColor; stroke: none; }  /* the degree marks are solid cells */
+/* the chosen setup marked by colour alone, as a toolbar's selected item is: its symbol and word in blue, no fill
+   behind it; a pick switches at once, with no fade or slide */
+.platform-compare[aria-label="Setup"] .plain-button.is-active { color: var(--color-accent); }  /* the same weight as the rest, so no segment changes width as the pick moves */
+.platform-compare[aria-label="Setup"] .plain-button.is-active { background: transparent !important; }
+.platform-compare[aria-label="Setup"] .plain-button { transition: none; }
+
+/* the engine pop-up wears the picked engine's colour, as its dot in the menu does: a pale wash of it behind the name,
+   the name and the chevron in the colour itself */
+.platform-bar .filter-button.is-engine { color: var(--tint); background: color-mix(in srgb, var(--tint) 22%, transparent); }
+.platform-bar .filter-button.is-engine:hover,
+.platform-bar .filter-button.is-engine[aria-expanded="true"] { background: color-mix(in srgb, var(--tint) 30%, transparent); }
+.platform-bar .filter-button.is-engine .popup-chevron { stroke: var(--tint); }
+.view-cycle svg .is-filled { fill: var(--color-accent); stroke: none; }  /* a solid icon in the view button, in the sidebar's blue */

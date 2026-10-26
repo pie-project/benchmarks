@@ -185,7 +185,7 @@
 .calc-memory-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 0 0; font-size: 12px; color: var(--color-label-secondary); }
 .calc-memory-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .calc-memory-legend span:last-child { margin-left: auto; }
-.calc-memory-legend i { width: 7px; height: 7px; border-radius: 50%; }
+.calc-memory-legend i { width: 8px; height: 8px; border-radius: 2px; }  /* square chips, as the Rankings key */
 
 @media (max-width: 899px) {
   .methods-calc { padding: 20px 18px; }
@@ -419,7 +419,7 @@
 .lim-table .m-var { white-space: nowrap; }
 .lim-table .m-var { display: inline-block; padding: 0 6px; border-radius: 5px; font-size: 12px; font-weight: 500; line-height: 18px; color: color-mix(in srgb, var(--pill, var(--color-accent)) 75%, var(--color-label)); background: color-mix(in srgb, var(--pill, var(--color-accent)) 18%, transparent); }  /* a Numbers token: its colour as text on a tint of it */
 .lim-table .m-tag { display: inline-flex; align-items: center; gap: 7px; }
-.lim-table .m-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--pill); }  /* a Finder tag */
+.lim-table .m-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--pill); }  /* a square chip, as the Rankings key */
 .lim-table .m-var sub { font-style: normal; font-size: .68em; vertical-align: -.3em; line-height: 0; margin-left: .05em; }
 /* an operator over a range, as max over k: the range under its name, centred */
 .lim-table .m-limit { display: inline-flex; flex-direction: column; align-items: center; margin-right: .15em; line-height: 1; }
@@ -453,7 +453,7 @@
 /* Spec Decode's acceptance: one control in the bar's own style, the light fill the pop-ups beside it take, holding its
    name, the number typed in place, and the pop-up's chevron pair, whose upper half steps up and lower half down */
 .spec-field {
-  display: inline-flex; align-items: center; height: var(--control-height); margin-left: 4px; padding: 0 4px 0 9px;
+  display: inline-flex; align-items: center; height: var(--control-height); padding: 0 4px 0 9px;  /* the bar's own 4px gap from the control before it, as every bar spaces its controls */
   border-radius: var(--radius-control); background: var(--color-fill); color: var(--color-label); white-space: nowrap; font-size: 13px;
 }
 .spec-field:hover { background: var(--color-fill-secondary); }
@@ -464,8 +464,8 @@
   font-variant-numeric: tabular-nums; text-align: right; caret-color: var(--color-accent); -webkit-appearance: none; appearance: none;
 }
 .spec-unit { margin-right: 2px; }
-/* the same corners as the setup toggle beside it */
-.platform-bar .spec-field { border-radius: 8px; }
+/* the same corners as the pop-up buttons in the bar (Engine, Platforms, Makers) */
+.platform-bar .spec-field { border-radius: var(--radius-control); }
 
 .spec-stepper { display: inline-flex; flex-direction: column; align-self: stretch; justify-content: center; width: 18px; }
 .spec-stepper button {

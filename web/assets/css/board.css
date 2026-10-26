@@ -1,41 +1,61 @@
 /* the engine leaderboard, laid out as Artificial Analysis sets its models and drawn as a Mac app would: an outline down
    the left, large section titles, roomy cards, wide bars carrying their numbers */
-#board.method { scrollbar-gutter: auto; }  /* the cards reach the edge; no gutter is kept for a scrollbar */
+#board.method { display: flex; flex-direction: column; overflow: hidden; scrollbar-gutter: auto; }  /* the bar above, fixed; the content scrolls under it */
+#board.method[hidden] { display: none; }
+.board-scroll { flex: 1; min-height: 0; overflow: auto; }  /* the cards reach the edge; no gutter is kept for a scrollbar */
 
 .board-bar { justify-content: flex-start; gap: 16px; }
-.board-inner { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 24px; max-width: 1180px; margin: 0 auto; padding: 16px var(--edge) 40px; }  /* centred, as Artificial Analysis sets its column */
+.board-inner { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 24px; max-width: 1080px; margin: 0 auto; padding: 48px var(--edge) 48px; }  /* centred, as Artificial Analysis sets its column; the first title a little further under the bar than each later one below its section */
 .board-main { min-width: 0; }
 
 /* the outline: a small square before each section, the one in view filled and in the label colour */
-.board-outline { position: sticky; top: 16px; align-self: start; display: flex; flex-direction: column; gap: 2px; }
-.board-outline-head { margin: 14px 0 6px 8px; font-size: 11px; font-weight: 600; color: var(--color-label-tertiary); }
-.board-outline-head:first-child { margin-top: 0; }
-.board-outline-item { display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 8px; border: 0; border-radius: 6px; background: none; font: inherit; font-size: 13px; text-align: left; color: var(--color-label-secondary); cursor: pointer; }
-.board-outline-item:hover { color: var(--color-label); background: var(--color-fill); }
-.board-outline-item.is-current { color: var(--color-accent); font-weight: 500; }  /* the section in view, in the accent, as a Mac sidebar marks its selection */
+.board-outline { position: sticky; top: 48px; align-self: start; display: flex; flex-direction: column; gap: 0; }  /* the rows touch, so their highlights meet as a sidebar's do */
+.board-outline-head { padding: 16px 8px 4px; font-size: 11px; font-weight: 600; color: var(--color-label-tertiary); }  /* the sidebar's heading */
+.board-outline-head:first-child { padding-top: 4px; }
+.board-outline-item { display: flex; align-items: center; gap: 8px; height: var(--control-height); padding: 0 8px; border: 0; border-radius: var(--radius-control); background: none; font: inherit; font-size: 13px; text-align: left; color: var(--color-label); cursor: pointer; }  /* the sidebar's row: its card's colour, then its name */
+
+.board-outline-item:focus:not(:focus-visible) { outline: none; }  /* a click leaves no ring; the keyboard still gets one */
+.board-outline-item.is-current { background: var(--color-selection); }  /* the section in view, filled as the sidebar fills its selection; no fill under the pointer, as there */
+.board-outline-dot { width: 8px; height: 8px; flex: none; margin: 0 2px; border-radius: 2px; transition: width .22s cubic-bezier(.2, .8, .2, 1), height .22s cubic-bezier(.2, .8, .2, 1), margin .22s cubic-bezier(.2, .8, .2, 1), border-radius .22s ease; }  /* the card's colour as a small square, as the engines' key marks theirs */
+.board-outline-item.is-current .board-outline-dot { width: 12px; height: 12px; margin: 0; border-radius: 3px; }  /* the section in view: its square grows, the name keeps its place */
+.board-outline-item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* a section: a large title after a square, as the outline marks it */
 .board-title { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; color: var(--color-label); }
-.board-title:not(:first-child) { margin-top: 24px; }
-.board-lede { margin: 0 0 12px; font-size: 12px; color: var(--color-label-secondary); }
-.board-legend { display: inline-flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--color-label-secondary); }
+.board-title:not(:first-child) { margin-top: 32px; }  /* a section's room above its title */
+/* the model, picked after its section's title in the site's own pop-up button: the maker's tile, the name, the chevrons,
+   as the bar's Engine and Makers buttons read, centred on the title */
+.board-title-pick { display: inline-flex; align-items: center; gap: 5px; height: 24px; margin-left: auto; padding: 0 8px 0 4px; border: 0; border-radius: var(--radius-control); font: 400 12px/1 var(--font-text); letter-spacing: 0; color: var(--color-label); background: var(--color-fill); cursor: pointer; vertical-align: middle; }  /* a card's pick, its size and colours, with the maker's tile at its start */
+.board-title-pick:hover, .board-title-pick[aria-expanded="true"] { background: var(--color-fill-secondary); }
+.board-title-pick .model-badge { width: 16px; height: 16px; border-radius: 4px; flex: none; }  /* 4px from the button's edge on three sides */
+.board-title-pick .model-badge img { width: 11px; height: 11px; }
+.board-title-pick .popup-chevron { width: 8px; height: 12px; margin-left: 2px; }
+.board-title-pick:focus:not(:focus-visible) { outline: none; }
+.board-lede { margin: 0 0 24px; font-size: 12px; color: var(--color-label-secondary); }
+.board-legend { display: inline-flex; flex-wrap: wrap; gap: 16px; padding-left: 14px; font-size: 12px; color: var(--color-label-secondary); }  /* the key starts where the other pages' first label does, inside its control's 2px rim and 12px of padding */
 .board-key { display: inline-flex; align-items: center; gap: 6px; }
 .board-dot { width: 8px; height: 8px; border-radius: 2px; }
 
-.board-grid-cards.is-three { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-.board-stack { display: flex; flex-direction: column; gap: 12px; }
-.board-card { scroll-margin-top: 16px; padding: 14px 16px 10px; border-radius: 12px; background: none; box-shadow: inset 0 0 0 1px var(--color-separator); }  /* a card is an outline on the page, no fill */
-.board-card h2 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
-.board-sub { margin: 2px 0 8px; font-size: 11px; line-height: 1.4; color: var(--color-label-secondary); }
+.board-grid-cards.is-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 12px; }  /* rows twice as far apart as columns */
+.board-stack { display: flex; flex-direction: column; gap: 24px; }
+.board-card { scroll-margin-top: 48px; padding: 14px 16px 10px; border-radius: 12px; background: none; box-shadow: inset 0 0 0 1px var(--color-separator); }  /* a card is an outline on the page, no fill */
+.board-card h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
+.board-badge { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .18); }  /* the sidebar's tile, at its size */
+.board-badge svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }  /* 3px in from each side of the 20px tile, on whole pixels, so the symbol sits sharp and dead centre */
+.board-sub { margin: 2px 0 8px 20px; font-size: 11px; line-height: 1.4; color: var(--color-label-secondary); }  /* under the title's words, past its badge */
 .board-empty { margin: 48px 0; font-size: 13px; text-align: center; color: var(--color-label-tertiary); }
 .board-note { margin: 4px 0 6px; font-size: 11px; text-align: center; color: var(--color-label-tertiary); }
 
 .board-chart { display: block; width: 100%; height: auto; font-family: inherit; overflow: visible; }
-.board-grid { stroke: var(--color-separator); stroke-width: 1; opacity: .6; }
+.board-grid { stroke: var(--color-separator); stroke-width: 1; stroke-dasharray: 3 3; }  /* dashed, so the bars stand in front of them; at full strength, since a dash carries half the ink */
 .board-axis { stroke: var(--color-separator); stroke-width: 1; }
 .board-value { font-size: 11px; font-weight: 500; text-anchor: middle; fill: var(--color-label-secondary); font-variant-numeric: tabular-nums; }
-.board-value.is-inside { fill: #fff; }
+.board-value.is-inside { dominant-baseline: central; font-size: 12px; font-weight: 600; letter-spacing: -.01em; fill: #fff; }  /* centred in its bar in SF's semibold, as Swift Charts sets an overlay annotation */
 .board-group { font-size: 11px; font-weight: 600; text-anchor: middle; fill: var(--color-label); }
+.board-group.is-turned { text-anchor: end; }  /* an engine's name runs down to the left from under its logo */
+.board-glyph { overflow: visible; fill: var(--color-label); }
+.board-glyph .is-stroked { fill: none; stroke: var(--color-label); stroke-linecap: round; stroke-linejoin: round; }
+.board-glyph .is-faint { fill: var(--color-label-tertiary); }
 .board-machine { font-size: 10px; text-anchor: middle; fill: var(--color-label-secondary); }
 .board-hit { fill: transparent; }
 .board-tick { font-size: 10px; text-anchor: middle; fill: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
@@ -50,11 +70,16 @@
 .board-row-platform { font-weight: 600; }
 .board-end { font-size: 11px; font-weight: 600; fill: var(--color-label); }
 .board-series { transition: opacity .15s ease; }
-.board-chart:hover .board-series { opacity: .35; }
-.board-chart:hover .board-series:hover { opacity: 1; }
-.board-bar path { transition: opacity .15s ease; }
-.board-chart:hover .board-bar path { opacity: .5; }
-.board-chart:hover .board-bar:hover path { opacity: 1; }
+.board-chart.has-near .board-series:not(.is-near) { opacity: .35; }  /* the line nearest the pointer stays lit; board.js picks it */
+.board-band { fill: transparent; }
+.board-sheen { fill: url(#board-sheen); pointer-events: none; }
+.board-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.board-bar:hover .board-band { fill: var(--color-fill); }  /* the hovered bar's slot greys behind it; the other bars keep their colour */
+.chart-tooltip.is-board { min-width: 0; padding: 6px 10px; white-space: nowrap; }  /* a compact card, as Artificial Analysis sets its chart's */
+.board-tip-head { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: var(--color-label); }
+.board-tip-logo { width: 14px; height: 14px; flex: none; overflow: visible; }
+.board-tip-value { margin-top: 1px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-label); }
+.board-tip-note { margin-top: 1px; font-size: 11px; color: var(--color-label-secondary); }
 
 /* narrow windows: the outline gives its column to the charts */
 @media (max-width: 1100px) {
@@ -67,3 +92,112 @@
   .board-bar .board-legend { flex-wrap: nowrap; white-space: nowrap; }
   .board-inner { padding: 12px var(--edge) 32px; }
 }
+
+/* under the rankings: the banner across two thirds, the changelog beside it at the same height */
+.board-hero { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 12px; height: 280px; margin-top: 32px; }  /* the cards' columns and gaps, so its edges meet theirs; as far below the cards as the next title sits below it */
+.board-hero .board-banner { grid-column: span 1; }  /* the banner, the recommender and the changelog, a third each, on the cards' columns */
+.board-hero .board-banner { height: auto; margin: 0; border-radius: 12px; }  /* the cards' corner */
+/* the banner in the site's own type and controls: a small "New" tag, as the cards' tags read, over the headline at
+   the banner's 28pt, both at the foot; the arrow a frosted toolbar button in the corner */
+.board-banner { display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; color: #fff; }  /* the tag and headline at the foot */
+.board-banner-foot { position: relative; pointer-events: none; }  /* the card's link takes every click */
+.board-banner-foot { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.board-banner-badge { padding: 2px 8px; border-radius: var(--radius-control); font-size: 11px; font-weight: 600; color: #fff; background: rgba(255, 255, 255, .22); backdrop-filter: blur(12px); }  /* the cards' tag, frosted */
+.board-banner-title { margin: 0; font: 700 28px/1.1 var(--font-display); letter-spacing: -.02em; text-shadow: 0 1px 12px rgba(30, 20, 90, .25); }
+/* the whole banner opens pie-project.org, as a card opens its page: a layer over the gradient takes the click; a frosted
+   toolbar button in the corner says so, brighter when the banner is hovered */
+.board-banner-link { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.board-banner-go { position: absolute; top: 20px; right: 20px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-field); background: rgba(255, 255, 255, .2); backdrop-filter: blur(12px); transition: background .15s ease; }
+.board-banner-go svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.board-banner-link:hover .board-banner-go { background: rgba(255, 255, 255, .34); }
+.board-banner-link:focus-visible { outline: 3px solid rgba(255, 255, 255, .7); outline-offset: -3px; }
+/* the changelog as an outlined card, its runs on a timeline that scrolls inside it, as Artificial Analysis lists its own */
+.board-log { display: flex; flex-direction: column; min-height: 0; padding: 14px 0 0 16px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--color-separator); }
+.board-log-title { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
+.board-log-list { flex: 1; min-height: 0; margin: 0; padding: 0 16px 14px 0; list-style: none; overflow-y: auto; scrollbar-width: thin; }
+.board-log-item { position: relative; padding: 0 0 14px 20px; }
+.board-log-item::before { content: ""; position: absolute; left: 0; top: 3px; width: 9px; height: 9px; border-radius: 50%; background: var(--color-accent); }  /* the run's dot */
+.board-log-item:not(:last-child)::after { content: ""; position: absolute; left: 4px; top: 12px; bottom: -3px; width: 1px; background: var(--color-separator); }  /* the line to the next */
+.board-log-kind { font-size: 11px; color: var(--color-label-secondary); }
+.board-log-text { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 13px; color: var(--color-label); }
+.board-log-text > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-log-text .sidebar-glyph[style] { width: 16px; height: 16px; flex: none; border-radius: 4px; }
+.board-log-text .sidebar-glyph[style] svg { width: 11px; height: 11px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.board-log-text .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
+.board-log-text .model-badge { flex: none; }
+.board-log-glyph { display: inline-flex; flex: none; }
+.board-log-glyph svg { width: 16px; height: 16px; fill: none; stroke: var(--color-accent); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 899px) {
+  .board-hero { grid-template-columns: 1fr; height: auto; }
+  .board-hero .board-banner { grid-column: auto; }
+  .board-grid-cards.is-three { grid-template-columns: 1fr; }
+  .board-hero .board-banner { height: 240px; }
+  .board-log { height: 300px; }
+}
+
+/* a card's own pick, at the far end of its title: a small pop-up button, as the bar's are */
+.board-card-pick { height: 24px; padding: 0 8px 0 8px; border: 0; border-radius: var(--radius-control); font: inherit; font-size: 12px; color: var(--color-label); background: var(--color-fill); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.board-card-pick:hover, .board-card-pick[aria-expanded="true"] { background: var(--color-fill-secondary); }
+.board-card-pick .mode-icon { width: 12px; height: 12px; margin-right: 2px; }
+.board-card-tool { --tool-ink: #000; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--radius-control); color: var(--tool-ink); background: none; cursor: pointer; }
+:root[data-theme="dark"] .board-card-tool { --tool-ink: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .board-card-tool { --tool-ink: #fff; } }
+.board-card-tool:hover { background: var(--color-fill); }
+.board-card-tool:hover svg { opacity: .85; }
+.board-card-tool svg { width: 16px; height: 16px; opacity: .5; fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }  /* SF Symbols' regular weight; drawn in a solid ink and faded as one, so where two lines cross they are no darker than either */
+.board-card-tool:focus:not(:focus-visible) { outline: none; }
+/* a card's head: its title and description on the left; on the right its tools, a small borderless button each as a
+   toolbar's, and under them the pick of what it shows */
+.board-card-head { display: flex; align-items: flex-start; gap: 12px; }
+.board-card-titles { flex: 1; min-width: 0; }
+.board-card-side { display: flex; flex: none; flex-direction: column; align-items: flex-end; gap: 6px; }
+.board-card-tools { display: inline-flex; gap: 2px; margin-top: -2px; }  /* their right edge on the pick's under them */
+/* the Hardware Recommender: the banner's card in a deep plum, as Artificial Analysis sets its recommender beside its
+   product card; its name at the top, what it does at the foot */
+.board-banner.is-recommender { justify-content: space-between; background: radial-gradient(70% 60% at 85% 10%, rgba(191, 90, 242, .45), transparent 70%), radial-gradient(60% 60% at 10% 100%, rgba(94, 92, 230, .5), transparent 70%), linear-gradient(150deg, #2b1452, #4a1a5e); }
+.board-banner-title.is-top { position: relative; max-width: calc(100% - 48px); pointer-events: none; }  /* clear of the arrow beside it */
+.board-banner.is-recommender .board-banner-sub { position: relative; margin: 0; font-size: 11px; font-weight: 400; line-height: 1.4; text-wrap: balance; color: rgba(255, 255, 255, .8); pointer-events: none; }  /* the cards' description type, in white; two lines, never a word alone on a third */
+.board-title-pick .mode-icon { width: 12px; height: 12px; margin-left: 4px; }  /* a degree mark sits where a maker's tile would, inset to its middle */
+.board-logo { clip-path: inset(0 round 22%); }  /* a logo drawn on its own tile (Splash's) gets an app icon's corners */
+/* the rankings' Speculation, a small toggle as a Mac toolbar sets one: grey while off, the accent's tint with its word and
+   its double chevron in the accent while on; a size under the section pickers', so it reads as a setting, not a menu */
+.board-toggle { display: inline-flex; align-items: center; gap: 4px; height: 24px; margin-left: auto; padding: 0 8px; border: 0; border-radius: var(--radius-control); font: 400 12px var(--font-text); letter-spacing: 0; color: var(--color-label); background: var(--color-fill); cursor: pointer; }  /* a card's pick, its size and colours */
+.board-toggle:hover { background: var(--color-fill-secondary); }
+.board-toggle svg { width: 12px; height: 12px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.board-toggle.is-on { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 14%, transparent); }
+.board-toggle.is-on:hover { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.board-toggle:focus:not(:focus-visible) { outline: none; }
+/* a section's head with a control: its title and description on the left, the control at the right end on the
+   description's line, centred on it, so the title reads alone */
+.board-section-head { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
+.board-section-head:not(:first-child) { margin-top: 32px; }
+.board-section-text { flex: 1; min-width: 0; }
+.board-section-text .board-title { margin-top: 0; }
+.board-section-text .board-lede { margin-bottom: 0; }
+.board-section-head > .board-title-pick { margin: 0 0 -4px auto; }  /* a 24px button centred on the 16px line */
+.board-section-head > .board-toggle { margin: 0 0 -4px auto; }  /* a 24px one the same */
+.board-title-dot { width: 12px; height: 12px; flex: none; border-radius: 3px; }  /* the card's colour as a plain square before its title, as Artificial Analysis marks its charts */
+/* the page's foot: a quiet band under a hairline, its links small and grey, as a Mac site closes a page */
+.board-footer { margin-top: 0; border-top: .5px solid var(--color-separator); background: color-mix(in srgb, var(--color-fill) 45%, transparent); font-size: 11px; line-height: 1.4; color: var(--color-label-secondary); }  /* the cards' description type */
+.board-footer-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; max-width: 1080px; margin: 0 auto; padding: 40px var(--edge) 32px; }
+.board-footer-brand { display: grid; grid-template-columns: 16px auto; column-gap: 8px; align-items: center; align-content: start; }  /* the sidebar's mark and name, the line under the name */
+.board-footer-brand > div { display: contents; }
+.board-footer-brand svg { width: 16px; height: 16px; fill: none; stroke: var(--color-label); stroke-width: 8; }
+.board-footer-name { font: 700 15px/20px var(--font-display); letter-spacing: -.01em; color: var(--color-label); }
+.board-footer-line { grid-column: 2; margin-top: 2px; }
+.board-footer-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.board-footer-cols h3 { margin: 0 0 8px; font-size: 11px; font-weight: 600; color: var(--color-label); }
+.board-footer-cols ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.board-footer a { color: var(--color-label-secondary); text-decoration: none; }
+.board-footer a:hover { color: var(--color-label); }
+.board-footer-base { display: flex; justify-content: space-between; gap: 16px; width: calc(100% - 2 * var(--edge)); max-width: calc(1080px - 2 * var(--edge)); margin: 0 auto; padding: 16px 0 28px; border-top: .5px solid color-mix(in srgb, var(--color-separator) 45%, transparent); font-size: 11px; line-height: 1.4; color: var(--color-label-tertiary); }  /* the cards' description size, a shade lighter: the page's last word, quieter than the links above */
+.board-footer-base a { color: inherit; }
+.board-footer-base a:hover { color: var(--color-label-secondary); }
+.board-footer-sep { margin: 0 6px; }
+@media (max-width: 899px) {
+  .board-footer-inner { grid-template-columns: 1fr; }
+  .board-footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.board-pick-logo { width: 13px; height: 13px; flex: none; overflow: visible; }  /* an engine's logo before its name in a pick */
+.popover .board-pick-logo { margin-right: 6px; }
+.board-log-glyph svg .is-filled { fill: var(--color-accent); stroke: none; }  /* the changelog's bars, solid as the sidebar's */

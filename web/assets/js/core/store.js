@@ -81,9 +81,9 @@ window.Pie = window.Pie || {};
   // each model's platforms come from its recorded results, not from the catalog: a platform counts only where a run has a result
   {
     const measured = (row) => ["pass", "noisy"].includes(row.status);
-    // a hardware's class names its platform: mac, gpu or tpu
-    const names = { mac: "Mac", gpu: "GPU", tpu: "TPU" };
-    const platformOf = new Map((tables.hardware || []).map((h) => [h.id, names[h.class]]));
+    // a hardware's class names its platform: mac, gpu or tpu, and a GPU on ROCm is AMD's, apart from NVIDIA's ("GPU")
+    const names = { mac: "Mac", gpu: "GPU", tpu: "TPU", wafer: "Wafer" };
+    const platformOf = new Map((tables.hardware || []).map((h) => [h.id, h.class === "gpu" && h.backend === "rocm" ? "AMD" : names[h.class]]));
     const seen = {};
     for (const rows of Object.values(snapshots)) {
       for (const row of rows) {
@@ -98,7 +98,7 @@ window.Pie = window.Pie || {};
       // its layer count, from its config.json as the bounds read it
       model.layers = Pie.architectures?.[model.id]?.layers ?? null;
       const all = new Set([...(seen[model.id] || []), ...String(model.platforms || "").split(", ").filter(Boolean)]);
-      model.platforms = ["Mac", "GPU", "TPU"].filter((t) => all.has(t)).join(", ");
+      model.platforms = ["Mac", "GPU", "TPU", "AMD", "Wafer"].filter((t) => all.has(t)).join(", ");
     }
   }
   // every combination has a row; only pass and noisy ones carry numbers (older exports have no status: all measured)
