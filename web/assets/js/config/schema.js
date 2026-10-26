@@ -219,6 +219,15 @@ window.Pie = window.Pie || {};
         text("note", "Note", "Run", { wide: true }),
       ],
     },
+    // pie against a reference engine: token distributions, kernel tests and benchmark scores side by side
+    checks: {
+      label: "Quality Checks",
+      title: "Quality",
+      section: "measurements",
+      view: "checks",
+      filters: [],
+      columns: [],
+    },
 
 
     methods: {

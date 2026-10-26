@@ -521,6 +521,47 @@ def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
     return tagged, meta
 
 
+#: tasks that are not accuracy scores: distribution parity (``parity@<platform>``) and kernel tests (``kernels@<platform>``)
+CHECKS = ("parity@", "kernels@")
+
+
+def is_check(q: dict) -> bool:
+    return str(q.get("task") or "").startswith(CHECKS)
+
+
+def model_of(a2m: dict[str, str], model: str) -> str:
+    """The site's model id of a quality row; a vLLM arm's artifact ends in ``@vllm``."""
+    return a2m.get(model, a2m.get(model.removesuffix("@vllm"), model.removesuffix("@vllm")))
+
+
+def quality_checks(store, a2m) -> dict[str, list[dict]]:
+    """The newest parity and kernel row per (artifact, platform), across tags: {"parity": [...], "kernels": [...]}."""
+    newest: dict[tuple, dict] = {}
+    for q in store.quality():
+        if not is_check(q):
+            continue
+        key = (q["artifact"], q["task"])
+        if key not in newest or (q.get("date") or "") > (newest[key].get("date") or ""):
+            newest[key] = q
+    out: dict[str, list[dict]] = {"parity": [], "kernels": []}
+    for (art, task), q in sorted(newest.items()):
+        kind, platform = task.split("@", 1)
+        row = {k: v for k, v in q.items() if k not in ("samples", "ci95", "tag_kind")}
+        row.update(platform=q.get("platform") or platform, release=q.get("tag"))
+        if kind == "parity":
+            row["model"] = model_of(a2m, q.get("model") or art)
+        else:
+            errors = q.get("errors") or {}
+            worst = q.get("worst") or q.get("worst_error")
+            if not isinstance(worst, dict) and errors:
+                name = max(errors, key=lambda n: (errors[n] or {}).get("max_abs") or 0)
+                worst = {"name": name, **(errors[name] or {})}
+            row["worst"] = worst if isinstance(worst, dict) else ({"max_abs": worst} if worst is not None else None)
+            row.pop("errors", None)
+        out[kind].append(row)
+    return out
+
+
 def quality_by_tag(store, a2m):
     """The newest score per (engine, model, weights, task) under each tag, and each tag's kind and newest time."""
     from datetime import datetime
@@ -529,10 +570,10 @@ def quality_by_tag(store, a2m):
     meta: dict[str, dict] = {}
     for q in store.quality():
         t = q.get("tag")
-        if not t:
+        if not t or is_check(q):
             continue
         at = datetime.fromisoformat(q["date"].replace("Z", "+00:00"))
-        row = {"model": a2m.get(q["model"], q["model"]), "engine": q["engine"], "artifact": q["artifact"],
+        row = {"model": model_of(a2m, q["model"]), "engine": q["engine"], "artifact": q["artifact"],
                "task": q["task"], "score": round(q["score"], 3), "ci_low": round(q["ci95"][0], 3),
                "ci_high": round(q["ci95"][1], 3), "n": q["n"], "version": q.get("version"),
                "minutes": q.get("minutes"), "date": local(at)[:10], "release": t, "_at": at}
@@ -550,10 +591,10 @@ def parity_by_tag(store, a2m) -> dict[str, list[dict]]:
     by_tag: dict[str, list[dict]] = {}
     for q in store.quality(samples=True):
         t = q.get("tag")
-        if not t:
+        if not t or is_check(q):
             continue
         art = arts.get(q["artifact"], {})  # older summaries carry no scheme or checkpoint: the matrix has them
-        row = {**q, "model": a2m.get(q["model"], q["model"]), "tag": t,
+        row = {**q, "model": model_of(a2m, q["model"]), "tag": t,
                "scheme": q.get("scheme") or art.get("scheme"), "checkpoint": q.get("checkpoint") or art.get("base_model")}
         by_tag.setdefault(t, []).append(row)
     return {t: parity_rows(rs) for t, rs in by_tag.items()}
@@ -814,12 +855,14 @@ def main() -> None:
         quality[t].sort(key=lambda r: (rank(engine_ids, r["engine"]), rank(model_ids, r["model"]), r["model"], rank(tasks, r["task"])))
     # parity is per tag and never stacked: a release's table holds only the scores that release measured
     parity = parity_by_tag(store, a2m)
+    checks = quality_checks(store, a2m)
     # when the newest measurement or score was taken: the site's "Updated" line
     stamps = [r["started_at"] for r in store.table().select(["started_at"]).to_pylist() if r["started_at"] is not None]
     stamps += [datetime.fromisoformat(q["date"].replace("Z", "+00:00")) for q in store.quality() if q.get("date")]
     stamps = [t if t.tzinfo else t.replace(tzinfo=ZoneInfo("UTC")) for t in stamps]
     updated_at = max(stamps).isoformat() if stamps else None
     db = {"updated_at": updated_at, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
+          "quality_parity": checks["parity"], "quality_kernels": checks["kernels"],
           "no_fit": misfits, "suites": suite_ids,
           "hardware": hw_rows,
           # the Engines table lists every engine CI runs, the GPU-only ones (vLLM, SGLang) too; the grids keep to the Mac engines

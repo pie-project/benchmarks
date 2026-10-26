@@ -136,6 +136,17 @@ def test_parity_compares_answers_only_on_the_same_weights():
     assert splash["arms"][1]["agree_flag"] == "n/a"
 
 
+def test_parity_compares_a_vllm_arm_with_the_pie_arm_on_its_weights():
+    from pie_evals.quality.parity import rows
+
+    a = [{"id": str(i), "text": "#### 1"} for i in range(10)]
+    vllm = {**_arm("x-bf16@vllm", "vllm", 0.8, samples=a, scheme="bf16", checkpoint="org/x"), "model": "x-mlx4@vllm", "label": None}
+    out = rows([_arm("x-mlx4", "pie", 0.5), _arm("x-bf16", "pie", 0.8, samples=a, scheme="bf16", checkpoint="org/x"), vllm])
+    assert len(out) == 1 and [c["engine"] for c in out[0]["arms"]] == ["pie", "pie", "vllm"]
+    cell = out[0]["arms"][2]
+    assert cell["label"] == "vLLM" and cell["vs"] == "x-bf16" and cell["score_flag"] == "ok" and cell["agree"] == 1.0
+
+
 def test_a_quality_write_keeps_a_stored_score(tmp_path):
     base = {"artifact": "x-mlx4", "task": "gsm8k", "model": "x-mlx4", "engine": "pie", "n": 100, "ci95": [0.7, 0.9], "date": "2026-10-08T00:00:00Z"}
     store = Store(tmp_path)
