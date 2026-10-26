@@ -150,6 +150,44 @@ def mlx_side(snapshot: Path, rendered: list[str], greedy: bool, log_path: Path) 
     return d["texts"], [[{int(k): v for k, v in pos.items()} for pos in t] for t in d["scored"]]
 
 
+
+def _reason(e: Exception, out_dir: Path, art_id: str, ref_name: str) -> str:
+    """The line that says why the reference engine could not run the model: its log's last error line, else the exception."""
+    for log_path in sorted(out_dir.glob(f"{art_id}-{'vllm' if ref_name == 'vllm' else 'mlx'}*.log"), key=lambda p: p.stat().st_mtime, reverse=True):
+        lines = [ln.strip() for ln in log_path.read_text(errors="replace").splitlines() if re.search(r"(Error|not supported|unsupported)", ln)]
+        if lines:
+            return lines[-1][:400]
+    return f"{type(e).__name__}: {str(e).strip().splitlines()[-1][:400] if str(e).strip() else ''}"
+
+
+def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log):
+    from pie_evals.node.engines import get_engine
+    from pie_evals.node.engines.recipes import load_recipe
+
+    if ref_name == "vllm":
+        from pie_evals.node.baselines import ensure_baseline
+
+        recipe = load_recipe("vllm", "competitive", plat, workload, family=art.family)
+        pin = vllm_pin or m.engines["vllm"].pin
+        if pin:
+            recipe["pin"] = pin
+            if not os.environ.get("VLLM_PY"):
+                ensure_baseline("vllm", pin, backend=backend, log=log)
+        ref_engine = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
+        summary["ref_version"] = ref_engine.version()
+        srv = vllm_server(ref_engine, snapshot, tp, out_dir / f"{art.id}-vllm.log")
+        try:
+            model = srv.wait(3600)
+            ref_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1)
+            ref_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1)
+        finally:
+            srv.stop()
+        return ref_texts, ref_scored
+    summary["ref_version"] = subprocess.run([os.environ.get("MLX_PY", sys.executable), "-c", "import mlx_lm; print(mlx_lm.__version__)"], capture_output=True, text=True).stdout.strip()
+    ref_texts, _ = mlx_side(snapshot, rendered, True, out_dir / f"{art.id}-mlx-greedy.log")
+    _, ref_scored = mlx_side(snapshot, [r + t for r, t in zip(rendered, ref_texts, strict=True)], False, out_dir / f"{art.id}-mlx-score.log")
+    return ref_texts, ref_scored
+
 def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir: str = "matrix", store_dir: str | None = None,
                tag: str | None = None, tag_kind: str | None = None, out_dir: Path = Path("parity-out"), vllm_pin: str | None = None, log=print) -> dict:
     from pie_evals.node.engines import get_engine
@@ -180,36 +218,21 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
                      "miniature": str(art.kind) == "miniature", "layers": getattr(art.miniature, "layers", None) if art.miniature else None,
                      "prompts": len(rendered), "answer_tokens": ANSWER_TOKENS}
 
-    # 1. the reference: greedy answers, then the teacher-forced distributions over prompt + answer
-    if ref_name == "vllm":
-        from pie_evals.node.baselines import ensure_baseline
-
-        recipe = load_recipe("vllm", "competitive", plat, workload, family=art.family)
-        pin = vllm_pin or m.engines["vllm"].pin
-        if pin:
-            recipe["pin"] = pin
-            if not os.environ.get("VLLM_PY"):
-                ensure_baseline("vllm", pin, backend=backend, log=log)
-        ref_engine = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
-        summary["ref_version"] = ref_engine.version()
-        srv = vllm_server(ref_engine, snapshot, tp, out_dir / f"{art.id}-vllm.log")
-        try:
-            model = srv.wait(3600)
-            ref_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1)
-            ref_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1)
-        finally:
-            srv.stop()
-    else:
-        ref_texts, _ = mlx_side(snapshot, rendered, True, out_dir / f"{art.id}-mlx-greedy.log")
-        _, ref_scored = mlx_side(snapshot, [r + t for r, t in zip(rendered, ref_texts, strict=True)], False, out_dir / f"{art.id}-mlx-score.log")
-        summary["ref_version"] = subprocess.run([os.environ.get("MLX_PY", sys.executable), "-c", "import mlx_lm; print(mlx_lm.__version__)"], capture_output=True, text=True).stdout.strip()
+    # 1. the reference: greedy answers, then the teacher-forced distributions over prompt + answer.
+    # A reference that cannot run the model is a cell of its own (the site's crossed-out circle); pie still runs.
+    ref_texts = ref_scored = None
+    try:
+        ref_texts, ref_scored = _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log)
+    except Exception as e:  # noqa: BLE001
+        summary["ref_unsupported"] = _reason(e, out_dir, art.id, ref_name)
+        log(f"parity {art.id}@{platform_id}: {ref_name} cannot run it: {summary['ref_unsupported']}")
     log(f"parity {art.id}@{platform_id}: reference {ref_name} done in {(time.monotonic() - t0) / 60:.1f} min")
 
     busy = device_idle(backend)
     if busy:
         raise RuntimeError(f"device not idle between engines: {busy}")
 
-    # 2. pie on the same device, same weights, same text
+    # 2. pie on the same device, same weights, same text: pie must run every model, a failure here is a pie bug
     commit = subprocess.run(["git", "-C", str(pie_root), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     model_path = snapshot
     if needs_import(art) or tp > 1 or backend == "xla":
@@ -221,17 +244,24 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     try:
         model = srv.wait(3600)
         pie_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1)
-        pie_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1)
+        pie_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1) if ref_texts is not None else None
     finally:
         srv.stop()
     summary["version"] = commit[:12]
+    summary["minutes"] = round((time.monotonic() - t0) / 60, 1)
+    summary["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    if ref_texts is None:
+        summary.update(score=None, n=0, correct=0, ci95=[0, 0], pie_ok=sum(1 for t in pie_texts if t) == len(pie_texts))
+        summary["samples"] = [{"id": i, "pie": b} for i, b in enumerate(pie_texts)]
+        (out_dir / f"{art.id}-{platform_id}.json").write_text(json.dumps(summary, indent=1))
+        where = Store(store_dir).write_quality(summary, tag=tag, tag_kind=tag_kind)
+        log(f"parity {art.id}@{platform_id}: {ref_name} unsupported, pie answered {sum(1 for t in pie_texts if t)}/{len(pie_texts)} -> {where}")
+        return summary
 
     # 3. compare over the answer positions
     starts = [max(0, len(s) - len(tok.encode(t, add_special_tokens=False))) for s, t in zip(ref_scored, ref_texts, strict=True)]
     summary.update(kl.compare(ref_scored, pie_scored, starts))
     summary["exact_match"] = kl.exact_match(ref_texts, pie_texts)
-    summary["minutes"] = round((time.monotonic() - t0) / 60, 1)
-    summary["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     # the site's quality table reads score/n/ci95: score is top-1 agreement over every answer position
     summary["score"], summary["n"] = summary["top1_agree"], summary["positions"]
     summary["correct"] = round((summary["top1_agree"] or 0) * summary["positions"])
