@@ -25,7 +25,7 @@ window.Pie = window.Pie || {};
   const syncSwitch = () => {
     const row = document.getElementById("sidebar-theme");
     if (!row) return;
-    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    const dark = root.dataset.theme === "dark";
     row.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${dark ? SUN : MOON}</svg><span>${dark ? "Light Mode" : "Dark Mode"}</span>`;
   };
   syncSwitch();
