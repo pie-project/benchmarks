@@ -57,15 +57,16 @@ window.Pie = window.Pie || {};
       .map((group) => `<div class="popover-heading">${Pie.format.escape(group)}</div>` + setups.filter((m) => m.group === group)
         .map((m) => option(m.id, m.id === state.platform.mode,
           // its symbol before its name, as a macOS menu sets an item's icon, and its key at the end where shortcuts sit
-          `<svg class="popover-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg><span class="popover-label">${Pie.format.escape(m.item || m.label)}</span><span class="popover-detail popover-key">${Pie.platform.metrics().indexOf(m) + 1}</span>`).replace('class="popover-option"', 'class="popover-option is-setup"'))
+          `<svg class="popover-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="${m.icon}"/></svg><span class="popover-label">${Pie.format.escape(m.item || m.label)}</span>${m.id === "spec" ? "" : `<span class="popover-detail popover-key">${Pie.platform.metrics().filter((x) => x.id !== "spec").indexOf(m) + 1}</span>`}`).replace('class="popover-option"', 'class="popover-option is-setup"'))
         .join(""))
       .join(`<div class="popover-separator"></div>`);
   };
 
   // a Limit setting: its options, a checkmark on the current one, like the other menus
-  const isLimit = (key) => String(key).startsWith("limit:");
-  const limitMenu = (key) => (Pie.methodology?.menu(String(key).slice(6)) || [])
-    .map((o) => option(o.value, o.selected, `<span class="popover-label">${Pie.format.escape(o.label)}</span>`))
+  // a page's own menus by prefix: limit: for the Limit page, board: for the Leaderboard
+  const isLimit = (key) => /^(limit|board|grid):/.test(String(key));
+  const limitMenu = (key) => ((String(key).startsWith("board:") ? Pie.board : String(key).startsWith("grid:") ? Pie.platform : Pie.methodology)?.menu(String(key).slice(String(key).indexOf(":") + 1)) || [])
+    .map((o) => (o.separator ? `<div class="popover-separator"></div>` : option(o.value, o.selected, `<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>`, o.check ? "menuitemcheckbox" : undefined)))
     .join("");
 
   // the view menu: Performance or Roofline, one pick with a checkmark; under a separator Hide Unavailable, checked while on,
@@ -204,6 +205,10 @@ window.Pie = window.Pie || {};
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
+      if (!element.hidden && (owner === "grid:maker" || owner === "grid:platform")) {
+        element.innerHTML = limitMenu(owner);
+        return;
+      }
       if (element.hidden || !owner || isLimit(owner) || owner === RELEASE || owner === SUITE || owner === VIEW || owner === METRIC || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC || owner === HIST_MAC || owner === HIST_MODEL || owner === QUAL_ENGINE) return;
       const scroll = element.scrollTop;
       element.innerHTML = filterMenu(state, owner);
@@ -226,7 +231,9 @@ window.Pie = window.Pie || {};
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = target.closest("[data-key]")?.dataset.key || owner;
-        if (isLimit(key) || key === RELEASE || key === SUITE || key === METRIC || key === COMPARE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL || key === QUAL_ENGINE) this.close();
+        // a menu that checks several (the makers) stays open between picks, as a filter menu does
+        const several = key === "grid:maker" || key === "grid:platform";
+        if (!several && (isLimit(key) || key === RELEASE || key === SUITE || key === METRIC || key === COMPARE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL || key === QUAL_ENGINE)) this.close();
         onPick(key, target.dataset.value);
       });
     },

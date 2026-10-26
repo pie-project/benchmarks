@@ -37,11 +37,15 @@ window.Pie = window.Pie || {};
   // there as "42 items" in grey at the row's far end, as Finder states a folder's contents; a row opens its platform's page, as its sidebar item does
   const table = () => {
     const list = platforms().map(([id, s]) => ({ id, s, machines: Pie.platform?.machines ? Pie.platform.machines(s.platform) : 0 }));
-    const rows = list.map(({ id, s, machines: n }) => `<tr class="is-link" data-go="${id}">
-        <td class="welcome-name"><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${s.label}</span></td>
-        <td class="welcome-count" title="${n} ${n === 1 ? "machine" : "machines"}">${n} ${n === 1 ? "item" : "items"}</td>
+    const rows = list.map(({ id, s, machines: n }, i) => `<tr class="is-link" data-go="${id}">
+        <td class="row-number">${i + 1}</td>
+        <td><span class="welcome-cell" title="${s.label}"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${s.short}</span></td>
+        <td class="welcome-stack">${STACK[id] || ""}</td>
+        <td class="welcome-fill"></td>
+        <td class="welcome-count is-numeric">${n}</td>
       </tr>`).join("");
     return `<table class="data-table welcome-table">
+      <thead><tr><th class="row-number" aria-label="Row"></th><th>Platform</th><th>Stack</th><th class="welcome-fill"></th><th class="is-numeric">Machines</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
   };
@@ -123,16 +127,21 @@ window.Pie = window.Pie || {};
     </header>
     -->`;
 
+  let open = null;
   Pie.welcome = {
     element,
+    onOpen(handler) {
+      open = handler;
+    },
     render(state) {
       element.hidden = state.table !== "welcome";
       if (!element.hidden && element.dataset.ready !== "1") {
-        element.innerHTML = table();
+        // the catalog's empty bar over the table, as Engines and Workloads have one
+        element.innerHTML = `<div class="filter-bar" aria-hidden="true"></div>${table()}`;
         element.addEventListener("click", (event) => {
-          // a row opens its platform, as its sidebar item does
+          // a row opens Results with the Platform filter set to it, as a folder opens what it holds
           const row = event.target.closest("[data-go]");
-          if (row) document.querySelector(`.sidebar-item[data-table="${row.dataset.go}"]`)?.click();
+          if (row) open?.(Pie.schema[row.dataset.go].short);
         });
         element.dataset.ready = "1";
       }
