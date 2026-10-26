@@ -91,7 +91,7 @@
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
     } else if (isMethod) {
       toolbar.elements.title.textContent = Pie.schema[state.table].title || Pie.schema[state.table].label;
-      toolbar.elements.subtitle.textContent = "";
+      toolbar.elements.subtitle.textContent = state.table === "board" ? "Engine Analysis" : "";
       // All Platforms counts its folders and what they hold, as a platform page counts its machines
       if (state.table === "welcome") {
         const platforms = Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length;
