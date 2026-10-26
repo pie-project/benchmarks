@@ -12,22 +12,19 @@
 .board-outline-head:first-child { margin-top: 0; }
 .board-outline-item { display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 8px; border: 0; border-radius: 6px; background: none; font: inherit; font-size: 13px; text-align: left; color: var(--color-label-secondary); cursor: pointer; }
 .board-outline-item:hover { color: var(--color-label); background: var(--color-fill); }
-.board-outline-mark { flex: none; width: 8px; height: 8px; border-radius: 1.5px; background: var(--color-label-tertiary); }
-.board-outline-item.is-current { color: var(--color-label); font-weight: 500; }
-.board-outline-item.is-current .board-outline-mark { background: var(--color-label); }
+.board-outline-item.is-current { color: var(--color-accent); font-weight: 500; }  /* the section in view, in the accent, as a Mac sidebar marks its selection */
 
 /* a section: a large title after a square, as the outline marks it */
-.board-title { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
+.board-title { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; color: var(--color-label); }
 .board-title:not(:first-child) { margin-top: 24px; }
-.board-title-mark { width: 10px; height: 10px; border-radius: 2px; background: var(--color-label); }
-.board-lede { margin: 0 0 10px 18px; font-size: 12px; color: var(--color-label-secondary); }
+.board-lede { margin: 0 0 12px; font-size: 12px; color: var(--color-label-secondary); }
 .board-legend { display: inline-flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--color-label-secondary); }
 .board-key { display: inline-flex; align-items: center; gap: 6px; }
 .board-dot { width: 8px; height: 8px; border-radius: 2px; }
 
 .board-grid-cards.is-three { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .board-stack { display: flex; flex-direction: column; gap: 12px; }
-.board-card { scroll-margin-top: 16px; padding: 12px 14px 8px; border-radius: 10px; background: var(--color-row); box-shadow: inset 0 0 0 .5px var(--color-separator); }
+.board-card { scroll-margin-top: 16px; padding: 14px 16px 10px; border-radius: 12px; background: color-mix(in srgb, var(--color-label) 4%, transparent); }  /* a grouped box as System Settings draws one: a fill, no outline */
 .board-card h2 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
 .board-sub { margin: 2px 0 8px; font-size: 11px; line-height: 1.4; color: var(--color-label-secondary); }
 .board-empty { margin: 48px 0; font-size: 13px; text-align: center; color: var(--color-label-tertiary); }
@@ -36,7 +33,7 @@
 .board-chart { display: block; width: 100%; height: auto; font-family: inherit; overflow: visible; }
 .board-grid { stroke: var(--color-separator); stroke-width: 1; opacity: .6; }
 .board-axis { stroke: var(--color-separator); stroke-width: 1; }
-.board-value { font-size: 11px; font-weight: 600; text-anchor: middle; fill: var(--color-label); font-variant-numeric: tabular-nums; }
+.board-value { font-size: 11px; font-weight: 500; text-anchor: middle; fill: var(--color-label-secondary); font-variant-numeric: tabular-nums; }
 .board-value.is-inside { fill: #fff; }
 .board-group { font-size: 11px; font-weight: 600; text-anchor: middle; fill: var(--color-label); }
 .board-machine { font-size: 10px; text-anchor: middle; fill: var(--color-label-secondary); }
@@ -63,4 +60,10 @@
 @media (max-width: 1100px) {
   .board-inner { grid-template-columns: minmax(0, 1fr); }
   .board-outline { display: none; }
+}
+/* phones: the engines' key stays one line and scrolls sideways under the model picker, as the grid's bar does */
+@media (max-width: 899px) {
+  .board-bar { overflow-x: auto; scrollbar-width: none; }
+  .board-bar .board-legend { flex-wrap: nowrap; white-space: nowrap; }
+  .board-inner { padding: 12px var(--edge) 32px; }
 }

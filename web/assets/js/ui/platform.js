@@ -16,10 +16,10 @@ window.Pie = window.Pie || {};
   // run different kernels with different bottlenecks. Each group opens on its raw row (speculation off), held against
   // the hardware limit; the features under it are only those that change that phase, each shown as its gain over raw
   const MODES = [
-    { id: "decode", group: "Decode", label: "Raw Decode", item: "Raw", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
+    { id: "decode", group: "Decode", label: "Decode", item: "Raw", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
     { id: "spec", group: "Decode", label: "Spec Decode", item: "Speculative", icon: "M2 8h5M5 5l3 3-3 3M9 8h5M12 5l3 3-3 3", detail: "single request, speculation on", workload: "spec", metric: METRICS[0] },
-    { id: "batching", group: "Decode", label: "Batched Decode", item: "Batched", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
-    { id: "prefill", group: "Prefill", label: "Raw Prefill", item: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
+    { id: "prefill", group: "Prefill", label: "Prefill", item: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
+    { id: "batching", group: "Decode", label: "Peak FLOPs", item: "Batched", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
   ];
   let onChange = () => {};
 
@@ -47,7 +47,9 @@ window.Pie = window.Pie || {};
     { test: /^mimo/, name: "Xiaomi", logo: "xiaomi" },
     { test: /^deepseek/, name: "DeepSeek", logo: "deepseek" },
   ];
-  const makerOf = (model) => MAKERS.find((m) => m.test.test(Pie.store.index.models[model]?.family || "")) || { name: "", logo: "" };
+  const makerOf = (model) => MAKERS.find((m) => m.test.test(Pie.store.index.models[model.split("~")[0]]?.family || "")) || { name: "", logo: "" };
+  // each maker's colour, taken from its logo, for the dot before its name in the makers menu; a black logo reads grey
+  const MAKER_TINT = { Alibaba: "#615ced", DeepSeek: "#4d6bfe", Google: "#4285f4", Meta: "#0866ff", OpenAI: "#10a37f", Xiaomi: "#ff6900", "Z.ai": "#8e8e93" };
   // a model with no maker logo in the set runs in the cloud: a cloud glyph on its tile
   const CLOUD = '<svg class="model-cloud" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 12.5a3 3 0 0 1-.4-6A4 4 0 0 1 11.8 6a3.25 3.25 0 0 1 .2 6.5z"/></svg>';
   const badge = (maker) => `<span class="model-badge" aria-hidden="true">${maker.logo ? `<img src="assets/img/models/${maker.logo}.svg" alt="">` : CLOUD}</span>`;
@@ -90,11 +92,12 @@ window.Pie = window.Pie || {};
   // pie's advantage over the best other engine: a speed ratio, or the inverse for a time
   // Compare: "engines", named Speedup, shows each engine against the best other engine; "ceiling", named Efficiency, shows each engine's
   // share of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
-  const COMPARES = { engines: "Speedup", ceiling: "Efficiency" };
+  const COMPARES = { engines: "Relative Speed", ceiling: "FP Efficiency", tps: "Best TPS" };
   // what the numbers in each view mean, as the help tag on its segment: a Mac explains a control where it is
   const CAPTIONS = {
     engines: "Speedup over the fastest other engine",
     ceiling: "Share of the hardware's theoretical peak",
+    tps: "The engine's own speed",
   };
   // the grid opens in Performance; holding R shows Roofline (there is no button to choose, so no choice is kept)
   let compare = "engines";
@@ -126,7 +129,7 @@ window.Pie = window.Pie || {};
 
   // each engine's share of the hardware limit, against its own weights (Raw only: a drafter skips the passes the limit counts)
   const share = (r, metric) => {
-    const own = Pie.ceiling?.(r, metric.id);
+    const own = r.workload === "spec" ? Pie.specCeiling?.(r) : Pie.ceiling?.(r, metric.id);
     return own ? r[metric.key] / own.tps : null;
   };
   // what a feature adds: the engine's number over its raw row on the same machine and model
@@ -179,7 +182,7 @@ window.Pie = window.Pie || {};
       // Raw: each engine's share of the hardware limit; the others: what the feature adds over its raw row
       const extra = !roofline ? null : limit ? share(r, metric) : specBound ? r[metric.key] / specBound.tps : batchPeak ? r[metric.key] / batchPeak : overRaw(r, metric, raw);
       const note = extra === null ? "" : limit || batchPeak || specBound ? `${Math.round(extra * 100)}%` : times(extra);
-      return `<div class="tip-row${r === c.pie ? " is-pie" : ""}">
+      return `<div class="tip-row${r === c.pie ? " is-pie" : ""}"${r === c.pie ? ` style="color: ${Pie.engines.colorOf(r.engine)}"` : ""}>
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
       <span class="tip-value">${specBound && roofline ? specGain(r) : `${esc(value(r[metric.key], metric.unit))}${roofline ? `<span class="tip-share">${note}</span>` : ""}`}</span><span class="tip-when">${esc(day(r))}</span></div>`;
     });
@@ -240,7 +243,8 @@ window.Pie = window.Pie || {};
     const knee = (peak * 1e12) / (bw * 1e9);
     // one model, one workload: every engine stands at the same place across, pie's (the first engine's when pie has
     // none); a dot's height is its share of its own bound, so it matches the percentage the grid shows for it
-    const own = points.find((p) => p.r.engine === Pie.engines.primary) || points[0];
+    const focus = viewState?.platform.engine || Pie.engines.primary;  // the engine picked in the bar
+    const own = points.find((p) => p.r.engine === focus) || points[0];
     const ai = own.ai;
     // the interconnect, when it binds, is a flat line under the roof: a dot is measured against the lowest bound
     const link = own.link && own.link < Math.min(bw * 1e9 * ai, peak * 1e12) ? own.link : null;
@@ -261,17 +265,18 @@ window.Pie = window.Pie || {};
     const roof = (v) => Math.min(bw * 1e9 * v, peak * 1e12);
     const start = X0;
     // every dot exactly where its result is, never nudged: each engine the same small solid dot in its colour, ringed
-    // in the card's colour so dots stay apart; pie drawn last, and the only one named
+    // in the card's colour so dots stay apart; the picked engine in its colour, drawn last and the only one named, the
+    // others grey, as Stocks greys the series not in focus
     const at = (p) => `cx="${x(p.ai).toFixed(1)}" cy="${y(p.achieved).toFixed(1)}"`;
-    const isPie = (p) => p.r.engine === Pie.engines.primary;
+    const isPie = (p) => p.r.engine === focus;
     // the chart stretches with the card, but its marks keep their size on screen: the line keeps its weight
     // (non-scaling stroke), each dot is a round cap of a zero-length line (so it stays 7px across, as the Engines card's
     // dots), and the names are HTML laid over the chart at the right place, at the card's own type size
     const point = (cx, cy, cls, color = "") => `<line class="${cls}" x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy}"${color ? ` stroke="${color}"` : ""}/>`;
     const dots = [...points.filter((p) => !isPie(p)), ...points.filter(isPie)]
-      .map((p) => point(x(p.ai).toFixed(1), y(p.achieved).toFixed(1), "rf-dot", Pie.engines.colorOf(p.r.engine))).join("");
+      .map((p) => point(x(p.ai).toFixed(1), y(p.achieved).toFixed(1), isPie(p) ? "rf-dot" : "rf-dot is-other", isPie(p) ? Pie.engines.colorOf(p.r.engine) : "")).join("");
     const pct = (vx, vy) => `left: ${((vx / W) * 100).toFixed(2)}%; top: ${((vy / H) * 100).toFixed(2)}%`;
-    // only pie is named, beside its dot in its colour: to the right, or to the left near the right edge
+    // only the picked engine is named, beside its dot in its colour: to the right, or to the left near the right edge
     const labels = points.filter(isPie).map((p) => {
       const cx = x(p.ai), left = cx > W - 40;
       return `<span class="rf-name is-pie${left ? " is-left" : ""}" style="${pct(cx, y(p.achieved))}; color: ${Pie.engines.colorOf(p.r.engine)}">${esc(names().engine(p.r.engine))}</span>`;
@@ -289,7 +294,6 @@ window.Pie = window.Pie || {};
           ${dots}
         </svg>
         ${shown ? `<span class="rf-tick-name${kx > W / 2 ? " is-left" : ""} is-above" style="${pct(kx, ky)}">Knee</span>` : ""}
-        ${link ? `<span class="rf-tick-name rf-link-name" style="${pct(W - R, y(link))}">Interconnect</span>` : ""}
         ${labels}
       </div>`;
   };
@@ -298,6 +302,9 @@ window.Pie = window.Pie || {};
   let pointer = null;
   let peeked = null;  // the chosen view while R is held, so it can come back
   let refreshCard = () => {};
+  let viewState = null;  // the state the grid last drew, for the engine menu
+  let pageMakers = [];  // the makers with a result on the page the grid last drew
+  let pagePlatforms = [];  // the platforms with a result in the setup the grid last drew
 
   Pie.platform = {
     refreshCard: () => refreshCard(),
@@ -344,15 +351,50 @@ window.Pie = window.Pie || {};
         .map((r) => r.workload));
       // the TPU shows Raw Decode and Raw Prefill only
       const HIDDEN = { tpu: ["spec", "batching"] };
-      return MODES.filter((m) => (m.limit || ran.has(m.workload)) && !(HIDDEN[only] || []).includes(m.id));
+      // Spec Decode lives in Raw Decode, a column beside each model it ran: no button of its own
+      return MODES.filter((m) => m.id !== "spec" && (m.limit || ran.has(m.workload)) && !(HIDDEN[only] || []).includes(m.id));
     },
 
     onChange(handler) {
       onChange = handler;
     },
+    // the engine menu: every engine, the picked one checked
+    menu(k) {
+      if (k === "platform" && viewState) {
+        // All Platforms, then each platform with a result here, several at once
+        const current = viewState.platform.platforms || [];
+        const ids = PLATFORMS.map((pl) => pl.id).filter((id) => pagePlatforms.includes(id) || current.includes(id));
+        return [{ value: "", label: "All Platforms", selected: !current.length }, { separator: true },
+          ...ids.map((id) => ({ value: id, label: Pie.schema[id]?.short || id, selected: current.includes(id), check: true, dot: Pie.schema[id]?.tint }))];
+      }
+      if (k === "maker" && viewState) {
+        // All Makers, then under a separator every maker with a result on the page, each checked while shown; several
+        // can be checked at once, as a Finder tag menu checks several tags
+        const current = viewState.platform.makers || [];
+        const makers = [...new Set([...pageMakers, ...current])].sort();
+        return [{ value: "", label: "All Makers", selected: !current.length }, { separator: true },
+          ...makers.map((name) => ({ value: name, label: name, selected: current.includes(name), check: true, dot: MAKER_TINT[name] || "#8e8e93" }))];
+      }
+      if (k !== "engine" || !viewState) return [];
+      const current = viewState.platform.engine || Pie.engines.primary;
+      // each engine with its dot, as the catalog marks it
+      return Pie.store.tables.engines.map((e) => ({ value: e.id, label: Pie.store.names.engine(e.id), selected: e.id === current, dot: Pie.engines.colorOf(e.id) }));
+    },
+    pick(k, value) {
+      if (k === "engine" && viewState) viewState.platform.engine = value;
+      if (k === "platform" && viewState) {
+        const now = viewState.platform.platforms || [];
+        viewState.platform.platforms = !value ? [] : now.includes(value) ? now.filter((id) => id !== value) : [...now, value];
+      }
+      if (k === "maker" && viewState) {
+        const now = viewState.platform.makers || [];
+        viewState.platform.makers = !value ? [] : now.includes(value) ? now.filter((m) => m !== value) : [...now, value];
+      }
+    },
 
     // returns the number of machines and models shown, for the toolbar subtitle
     render(state) {
+      viewState = state;
       // Speedup and Efficiency are one grid each: the page sets the comparison, and no switch is shown
       const fixed = Pie.schema[state.table]?.compare;
       if (fixed) { peeked = null; compare = fixed; }
@@ -361,17 +403,22 @@ window.Pie = window.Pie || {};
       if (!modes.some((m) => m.id === state.platform.mode)) state.platform.mode = "decode";
       const mode = modes.find((m) => m.id === state.platform.mode);
       const metric = mode.metric;
-      const base = Pie.engines.primary;
+      // the engine every cell is about, picked in the bar; pie unless another is picked
+      const base = state.platform.engine || Pie.engines.primary;
       const snapshot = all.filter((r) => r.workload === mode.workload);
       const raw = all.filter((r) => r.workload === "raw" && Pie.store.isMeasured(r));
       const rows = snapshot.filter(Pie.store.isMeasured);
       // a platform's own page lists its machines; All hardware lists every platform's, a header row each
       const only = Pie.schema[state.table]?.platform;
-      const groups = PLATFORMS.filter((p) => !only || p.id === only)
+      // the Overview pages offer the platforms with a result in this setup, and any picked narrow the machines to theirs
+      pagePlatforms = only ? [] : PLATFORMS.filter((pl) => rows.some((r) => platformOf(Pie.store.index.hardware[r.hardware] || {}) === pl)).map((pl) => pl.id);
+      const picked = only ? [] : (state.platform.platforms || []);
+      const groups = PLATFORMS.filter((p) => (!only || p.id === only) && (!picked.length || picked.includes(p.id)))
         .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p).map((hw) => hw.id) }))
         .filter((g) => !only || g.macs.length);
       const macs = groups.flatMap((g) => g.macs);
-      if (only && !macs.length) {
+      // a platform with no measured result yet, machines or not, shows the empty screen rather than an empty table
+      if (only && !all.some((r) => Pie.store.isMeasured(r) && macs.includes(r.hardware))) {
         const label = Pie.schema[state.table]?.label || "this platform";
         element.innerHTML = `<div class="platform-empty"><span class="sidebar-glyph" style="--tint: ${Pie.schema[state.table]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(state.table)}</span>
           <h2>No ${esc(label)} results yet</h2></div>`;
@@ -398,27 +445,65 @@ window.Pie = window.Pie || {};
       const narrowModels = query && (modelHits.length || !macHits.length);
       const narrowMacs = query && macHits.length > 0;
       if (narrowMacs) for (const g of groups) g.macs = g.macs.filter((mac) => macHits.includes(mac));
-      const allModels = (narrowModels ? modelHits : suiteModels)
-        .sort((a, b) => byRank(p.makerOrder, makerOf(a).name, makerOf(b).name) || byName(makerOf(a).name || "~", makerOf(b).name || "~")
-          || byRank(p.modelOrder, a, b) || byName(names().model(a), names().model(b)));
+      // by default the fullest first: the makers whose models ran on, or are known not to fit, the most machines here, then within each the model
+      // that ran on the most; an order the viewer dragged still wins, and names break ties
+      const fill = {};
+      for (const r of rows) if (r.engine === base && r[metric.key] && macs.includes(r.hardware)) (fill[r.model] ||= new Set()).add(r.hardware);
+      // a model that does not fit a machine fills that cell too: the answer is known
+      for (const mac of macs) for (const id of suiteModels) if (noFit[mac]?.[id]?.[base]) (fill[id] ||= new Set()).add(mac);
+      const fillOf = (id) => fill[id]?.size || 0;
+      // the makers menu offers only makers with a result on this page
+      pageMakers = [...new Set(rows.filter((r) => r[metric.key] && macs.includes(r.hardware) && suiteModels.includes(r.model)).map((r) => makerOf(r.model).name || "Cloud"))].sort();
+      // a maker's fullness is its models' average, so one full model outranks eight half-empty ones
+      const makerFill = {}, makerCount = {};
+      for (const id of suiteModels) {
+        const name = makerOf(id).name;
+        makerFill[name] = (makerFill[name] || 0) + fillOf(id);
+        makerCount[name] = (makerCount[name] || 0) + 1;
+      }
+      for (const name of Object.keys(makerFill)) makerFill[name] /= makerCount[name];
+      // the maker picked in the bar narrows the columns to its models
+      const sortedModels = (narrowModels ? modelHits : suiteModels).filter((id) => !p.makers?.length || p.makers.includes(makerOf(id).name || "Cloud"))
+        .sort((a, b) => byRank(p.makerOrder, makerOf(a).name, makerOf(b).name)
+          || makerFill[makerOf(b).name] - makerFill[makerOf(a).name] || byName(makerOf(a).name || "~", makerOf(b).name || "~")
+          || byRank(p.modelOrder, a, b) || fillOf(b) - fillOf(a) || byName(names().model(a), names().model(b)));
+      // Raw Decode: a model a machine here speculated on gets a second column beside it, "model~spec", with those runs
+      const SPEC = MODES.find((m) => m.id === "spec");
+      const specRows = mode.id === "decode" ? all.filter((r) => r.workload === "spec" && Pie.store.isMeasured(r) && macs.includes(r.hardware)) : [];
+      const specced = new Set(specRows.filter((r) => r[metric.key]).map((r) => r.model));
+      const allModels = sortedModels.flatMap((id) => (specced.has(id) ? [id, `${id}~spec`] : [id]));
+      const realOf = (id) => id.split("~")[0];
+      const isSpec = (id) => id.endsWith("~spec");
+      const modeOf = (id) => (isSpec(id) ? SPEC : mode);
       const grid = {};
       for (const mac of macs) {
         grid[mac] = {};
         for (const model of allModels) {
-          const c = cell(rows.filter((r) => r.hardware === mac && r.model === model), metric, base);
-          const needs = noFit[mac]?.[model]?.[base];
-          const own = snapshot.find((r) => r.hardware === mac && r.model === model && r.engine === base);
-          grid[mac][model] = { c, needs, why: needs ? `Doesn't fit: needs about ${Math.round(needs)} GB` : own?.note || (mode.workload === "raw" ? "No raw run yet" : "No data yet") };
+          const id = realOf(model);
+          const from = isSpec(model) ? specRows : rows;
+          const c = cell(from.filter((r) => r.hardware === mac && r.model === id), metric, base);
+          const needs = noFit[mac]?.[id]?.[base];
+          const own = (isSpec(model) ? all.filter((r) => r.workload === "spec") : snapshot).find((r) => r.hardware === mac && r.model === id && r.engine === base);
+          // an empty cell explains itself only when there is something to say: it does not fit, or its run failed
+          grid[mac][model] = { c, needs, why: needs ? `Needs about ${Math.round(needs)} GB` : own?.note || "" };
         }
       }
       // Hide unavailable drops the models and machines with nothing to compare, as the results table does
-      const hide = state.hideEmpty;
+      // picked platforms drop the models and machines with nothing to show, as a platform's own page reads
+      const hide = state.hideEmpty || picked.length > 0;
       const models = hide ? allModels.filter((model) => macs.some((mac) => grid[mac][model].c)) : allModels;
       const median = (list) => {
         const sorted = list.filter((g) => g !== undefined && g !== null).sort((a, b) => a - b);
         return sorted.length ? sorted[sorted.length >> 1] : null;
       };
-      const overall = (mac) => median(models.map((model) => grid[mac][model].c?.gain));
+      // Speed TPS: the fastest machine on each model wears a blue capsule, as the Overall column marks its numbers; the
+      // rest stay plain, so the eye finds the best hardware for a model without a heat map
+      const top = {};
+      for (const model of models) {
+        const vs = macs.map((mac) => grid[mac][model].c?.pie[metric.key]).filter((v) => v > 0);
+        if (vs.length > 1) top[model] = Math.max(...vs);
+      }
+      const overall = (mac) => median(models.map((model) => (compare === "tps" ? grid[mac][model].c?.pie[metric.key] : grid[mac][model].c?.gain)));
       // no sort: the machines in the catalog's order, no arrow anywhere
       const sortKey = p.sort?.key || null;
       const dir = p.sort?.dir || 1;
@@ -430,8 +515,10 @@ window.Pie = window.Pie || {};
         // empties sink to the bottom whichever way the column sorts
         return named.sort((a, b) => (val(a) === null) - (val(b) === null) || dir * ((val(a) ?? 0) - (val(b) ?? 0)));
       };
-      const shownGroups = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => grid[mac][model].c)) : g.macs) }))
+      const grouped = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => grid[mac][model].c)) : g.macs) }))
         .filter((g) => (!only && !narrowMacs) || g.macs.length);  // a search hides the platforms it leaves empty
+      // one list of machines, no platform rows; on All Platforms each machine wears its platform's mark
+      const shownGroups = [{ platform: null, macs: order(grouped.flatMap((g) => g.macs)) }];
 
       const cells = [];
       const number = (gain) => {
@@ -441,7 +528,7 @@ window.Pie = window.Pie || {};
       };
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
-        return `<th class="platform-row" scope="row"><span class="platform-chip"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}><span>${esc(chipName(mac))}</span>${specOf(hw)}</span></th>`;
+        return `<th class="platform-row" scope="row"><span class="platform-chip"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}>${only ? "" : badgeOf(platformOf(hw || {})?.id)}<span>${esc(chipName(mac))}</span>${specOf(hw)}</span></th>`;
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
@@ -457,16 +544,17 @@ window.Pie = window.Pie || {};
         bandwidth: { title: "Bandwidth-bound: the share of the bandwidth bound", path: "M2 5.5h9M8.5 3l2.5 2.5L8.5 8M14 10.5H5M7.5 8 5 10.5 7.5 13" },
         interconnect: { title: "Interconnect-bound: the share of the bound set by the link between the GPUs", path: "M6.5 9.5l3-3M7.2 4.6l1.4-1.4a2.6 2.6 0 0 1 3.7 3.7l-1.4 1.4M8.8 11.4l-1.4 1.4a2.6 2.6 0 0 1-3.7-3.7l1.4-1.4" },
       };
-      const body = shownGroups.map((g) => groupRow(g) + (folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
+      const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
+          : compare === "tps" ? `<td class="is-overall"><span class="platform-cell is-even">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span></td>`
           : (() => { const n = number(o); n.html = Math.round(o * 100) ? signed(o) : "0%"; return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}">${n.html}</span></td>`; })();
         return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
           if (c) {
             cells.push(c.gain);
-            const ceil = compare === "ceiling" ? boundOf(mac, model, mode, metric, c.pie) : null;
+            const ceil = compare === "ceiling" ? boundOf(mac, realOf(model), modeOf(model), metric, c.pie) : null;
             const n = compare === "ceiling"
               ? (() => {
                   // one neutral colour: the closest to the bound is bold, the furthest dimmed
@@ -479,10 +567,11 @@ window.Pie = window.Pie || {};
                   const mark = MARK[which];
                   return { kind, html: `<svg class="platform-bound-mark" viewBox="0 0 16 16" role="img" aria-label="${mark.title}"><title>${mark.title}</title><path d="${mark.path}"/></svg>${Math.round(share * 100)}%` };
                 })()
+              : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}" data-tip="${esc(tip(mac, model, metric, c, mode, raw))}"><span class="platform-main">${n.html}</span>${subline(c, metric, mode, raw)}</span></td>`;
+            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(model), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(model), raw)}</span></td>`;
           }
-          return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(card("", "", [], why))}">${needs ? NOFIT : "–"}</span></td>`;
+          return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${why ? ` data-tip="${esc(card("", "", [], why))}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
 
@@ -491,19 +580,21 @@ window.Pie = window.Pie || {};
       const makers = [];
       for (const model of models) {
         const maker = makerOf(model);
-        if (makers.length && makers[makers.length - 1].maker.name === maker.name) makers[makers.length - 1].n += 1;
-        else makers.push({ maker, n: 1 });
+        // a speculation column widens the band but is not another model
+        if (makers.length && makers[makers.length - 1].maker.name === maker.name) { makers[makers.length - 1].n += 1; makers[makers.length - 1].count += isSpec(model) ? 0 : 1; }
+        else makers.push({ maker, n: 1, count: 1 });
       }
-      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner is-sortable" data-sort="name" aria-hidden="true"></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n }) =>
-        `<th class="platform-maker" colspan="${n}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${n} ${n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
+      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner is-sortable" data-sort="name" aria-hidden="true"></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }) =>
+        `<th class="platform-maker" colspan="${n}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${count} ${count === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
         <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
-        const m = Pie.store.index.models[model] || {};
+        const m = Pie.store.index.models[realOf(model)] || {};
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
-        const sub = size;
-        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(model))}, or drag to move">
-          <span class="platform-col"><span><span class="platform-model">${esc(names().model(model))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
+        // the speculative column says so under the model's name, where the other columns give its size
+        const sub = isSpec(model) ? "Speculation" : size;
+        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(realOf(model)))}, or drag to move">
+          <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
@@ -513,6 +604,9 @@ window.Pie = window.Pie || {};
           <span class="platform-compare" role="group" aria-label="Setup">${modes.map((m) =>
             // the setups as a segmented control, as the view switch beside it
             `<button type="button" class="plain-button${m.id === mode.id ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === mode.id}">${esc(m.label)}</button>`).join("")}</span>${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
+          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+          ${only ? "" : `<span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="platform" aria-haspopup="menu" aria-label="Platforms">${esc(!picked.length ? "All Platforms" : picked.length <= 2 ? picked.map((id) => Pie.schema[id]?.short || id).join(", ") : `${picked.length} Platforms`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`}
+          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="maker" aria-haspopup="menu" aria-label="Makers">${esc(!p.makers?.length ? "All Makers" : p.makers.length <= 2 ? p.makers.join(", ") : `${p.makers.length} Makers`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             <span class="platform-compare" role="group" aria-label="View"${fixed ? " hidden" : ""}>${Object.entries(COMPARES).map(([id, name]) =>
@@ -527,7 +621,7 @@ window.Pie = window.Pie || {};
       const scroller = element.querySelector(".platform-scroll");
       if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       const macsShown = shownGroups.reduce((n, g) => n + g.macs.length, 0);
-      return { macs: macsShown, models: models.length, metric };
+      return { macs: macsShown, models: new Set(models.map(realOf)).size, metric };
     },
 
     bind(state) {
@@ -642,6 +736,12 @@ window.Pie = window.Pie || {};
         if (tab) {
           state.platform.mode = tab.dataset.mode;
           onChange();
+          return;
+        }
+        const pick = event.target.closest("[data-grid-pick]");
+        if (pick) {
+          event.stopPropagation();
+          Pie.popover.open(pick, `grid:${pick.dataset.gridPick}`, null);
           return;
         }
         const view = event.target.closest("[data-compare]");

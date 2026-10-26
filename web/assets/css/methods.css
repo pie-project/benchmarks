@@ -494,3 +494,6 @@
 .rules-button { width: var(--control-height); height: var(--control-height); padding: 0; justify-content: center; border-radius: var(--radius-control); }
 .rules-button svg { width: 16px; height: 16px; }
 @media (max-width: 899px) { .rules-button { width: 34px; height: 34px; border-radius: 999px; } .rules-button svg { width: 20px; height: 20px; } }
+/* the Roofline table numbers its rows as the catalog tables do */
+.lim-table { counter-reset: lim-row; }
+.lim-table td.row-number::before { counter-increment: lim-row; content: counter(lim-row); }

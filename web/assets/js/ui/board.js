@@ -65,13 +65,13 @@ window.Pie = window.Pie || {};
 
   // a column with a rounded top and a square foot on the baseline
   const column = (x, y, w, h) => {
-    const r = Math.min(5, h, w / 2);
+    const r = Math.min(4, h, w / 2);
     return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
   };
-  // one bar as Artificial Analysis sets them: wide, its value in white inside the top where it fits, above it where not
+  // one bar as Health draws them: slim, a rounded top, its value above it in the label colour
   const bar = (x, top, w, base, color, value, tip) => `<g class="board-bar"><title>${esc(tip)}</title>
       <path d="${column(x, top, w, Math.max(base - top, 1))}" style="fill: ${color}"/>
-      ${base - top >= 26 ? `<text class="board-value is-inside" x="${x + w / 2}" y="${top + 17}">${value}</text>` : `<text class="board-value" x="${x + w / 2}" y="${top - 6}">${value}</text>`}
+      <text class="board-value" x="${x + w / 2}" y="${top - 6}">${value}</text>
       <rect class="board-hit" x="${x}" y="0" width="${w}" height="${base}"/></g>`;
   // quiet hairlines at a half and the top; every bar carries its number, so the axis needs none
   const lines = (L, R, y, top) => [top / 2, top].map((t) => `<line class="board-grid" x1="${L}" x2="${R}" y1="${y(t)}" y2="${y(t)}"/>`).join("");
@@ -95,7 +95,7 @@ window.Pie = window.Pie || {};
     const y = (v) => T + (base - T) * (1 - v / top);
     const slot = (W - L - R) / cells.length;
     const most = Math.max(...cells.map((c) => c.bars.length));
-    const BW = Math.min(40, (slot * 0.78 - (most - 1) * 2) / most);
+    const BW = Math.min(28, (slot * 0.6 - (most - 1) * 2) / most);
     const marks = cells.map((c, i) => {
       const width = c.bars.length * BW + (c.bars.length - 1) * 2;
       const left = L + slot * i + (slot - width) / 2;
@@ -155,7 +155,7 @@ window.Pie = window.Pie || {};
     const base = H - B;
     const y = (v) => T + (base - T) * (1 - v / top);
     const slot = (W - L - R) / list.length;
-    const BW = Math.min(40, slot * 0.62);
+    const BW = Math.min(28, slot * 0.5);
     const marks = list.map((e, i) => {
       const x = L + slot * i + (slot - BW) / 2;
       const cx = x + BW / 2;
@@ -322,7 +322,7 @@ window.Pie = window.Pie || {};
       ["Across model sizes", SIZES.map((m) => [m.id, m.title.replace(" by model size", "")])],
       ["On one model", [...METRICS.map((m) => [m.id, m.title]), [SCALING.id, "Chip scaling"], [USE.id, "Share of the limit"]]],
     ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
-      `<button type="button" class="board-outline-item" data-board-go="${id}"><span class="board-outline-mark"></span>${esc(title)}</button>`).join("")}`).join("");
+      `<button type="button" class="board-outline-item" data-board-go="${id}">${esc(title)}</button>`).join("")}`).join("");
     // the bar under the toolbar, as every page has one: the model picker and the engines' key
     return `
       <div class="platform-bar board-bar">
@@ -334,13 +334,13 @@ window.Pie = window.Pie || {};
       <div class="board-inner">
         <nav class="board-outline" aria-label="On this page">${outline}</nav>
         <div class="board-main">
-          <h1 class="board-title"><span class="board-title-mark"></span>Across every model</h1>
+          <h1 class="board-title">Across every model</h1>
           <p class="board-lede">Each engine against the others on every machine and model they share.</p>
           <div class="board-grid-cards is-three">${SUMMARY.map((m) => card(m.id, m.title, m.sub, ranking(m, rows))).join("")}</div>
-          <h1 class="board-title"><span class="board-title-mark"></span>Across model sizes</h1>
+          <h1 class="board-title">Across model sizes</h1>
           <p class="board-lede">Dense models on each platform's fastest machine and engine for that size.</p>
           <div class="board-stack">${SIZES.map((m) => card(m.id, m.title, m.sub, scatter(m, rows))).join("")}</div>
-          <h1 class="board-title"><span class="board-title-mark"></span>On ${esc(names().model(model))}</h1>
+          <h1 class="board-title">On ${esc(names().model(model))}</h1>
           <p class="board-lede">The machine on each platform where the most engines ran it.</p>
           <div class="board-stack">${METRICS.map((m) => card(m.id, m.title, m.sub, chart(m, rows, groups))).join("")}
             ${card(SCALING.id, SCALING.title, SCALING.sub, scaling(rows))}

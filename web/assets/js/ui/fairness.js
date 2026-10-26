@@ -29,6 +29,15 @@ window.Pie = window.Pie || {};
       { tint: "#ffd60a", icon: "M5 5h14v14H5zM5 12h14M12 5v14", big: "bf16", label: "KV cache", line: "On every engine." },
       { tint: "#5e5ce6", icon: "M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z", big: "Latest", label: "Releases", line: "Newest at run time, same on every Mac." },
     ]],
+    // the keys, as a menu shows each command's shortcut at its right
+    ["Shortcuts", [
+      { big: "1 2 3", label: "Decode, Prefill, Peak FLOPs", line: "Pick the setup on a grid page." },
+      { big: "V", label: "Switch view", line: "Relative Speed and FP Efficiency, on a platform's page." },
+      { big: "Hold R", label: "Peek at the other view", line: "Shows the other view until the key is let go." },
+      { big: "Hold U", label: "Show unavailable", line: "Shows the empty rows and columns until the key is let go." },
+      { big: "[  ]", label: "Previous, next page", line: "Steps through the grid pages in the sidebar's order." },
+      { big: "⌃⌘S", label: "Sidebar", line: "Show or hide the sidebar." },
+    ]],
 
   ];
   const esc = (text) => Pie.format.escape(text);

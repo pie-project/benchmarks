@@ -31,6 +31,33 @@ window.Pie = window.Pie || {};
     throughput: "Fill the compute limit by sharing each weight read across requests.",
   };
   for (const w of tables.workloads || []) w.goal = GOALS[w.id] || null;
+  // whether a model can speculate: it has a drafter
+  for (const m of tables.models || []) m.speculation = m.draft === "true" ? "Yes" : "No";
+
+  // what does not fit, worked out for every machine and model, run or not: the weights times 1.25 against the
+  // machine's memory. A Mac runs the MLX build (the model's own needs figure); a GPU runs the weights a recorded misfit
+  // names, else the model's own release
+  const noFit = (tables.no_fit ||= {});
+  const engines = (tables.engines || []).map((e) => e.id);
+  const known = {};
+  for (const hw of tables.hardware || []) {
+    if (Pie.platformOf(hw) === "mac") continue;
+    // only a misfit the GPU engines recorded names the weights a GPU runs; the catalog's other cards carry the Mac builds'
+    for (const [model, by] of Object.entries(noFit[hw.id] || {})) if (by.vllm || by.sglang) known[model] ??= by.vllm || by.sglang;
+  }
+  for (const hw of tables.hardware || []) {
+    const memory = hw.memory_gib;
+    if (!memory) continue;
+    const mac = Pie.platformOf(hw) === "mac";
+    const holds = memory;
+    for (const m of tables.models || []) {
+      if (noFit[hw.id]?.[m.id]) continue;
+      // the GPU runs the model's own release: MXFP4 at the 4-bit size, FP8 at a byte a weight, else 16 bits
+      const bytes = /mxfp4/.test(m.schemes) ? null : /fp8/.test(m.schemes) ? 1 : 2;
+      const needs = mac ? m.needs_gib : known[m.id] ?? (bytes ? m.params_b && m.params_b * bytes * 1e9 / 2 ** 30 * 1.25 : m.needs_gib);
+      if (needs && needs > holds) (noFit[hw.id] ||= {})[m.id] = Object.fromEntries(engines.map((e) => [e, Math.round(needs * 10) / 10]));
+    }
+  }
 
   const snapshots = tables.snapshots || {};
   // each result names its machine's platform, for the Results table's Platform filter

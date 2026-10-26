@@ -136,7 +136,8 @@ window.Pie = window.Pie || {};
     render(state) {
       element.hidden = state.table !== "welcome";
       if (!element.hidden && element.dataset.ready !== "1") {
-        element.innerHTML = table();
+        // the catalog's empty bar over the table, as Engines and Workloads have one
+        element.innerHTML = `<div class="filter-bar" aria-hidden="true"></div>${table()}`;
         element.addEventListener("click", (event) => {
           // a row opens Results with the Platform filter set to it, as a folder opens what it holds
           const row = event.target.closest("[data-go]");

@@ -7,6 +7,7 @@ window.Pie = window.Pie || {};
 
   Pie.sections = [
     { id: "home", label: "Overview" },
+    { id: "platforms", label: "Platforms" },
     { id: "measurements", label: "Measurements" },
     { id: "catalog", label: "Catalog" },
     { id: "resources", label: "Resources" },  // how the numbers are worked out, after the data itself
@@ -42,27 +43,36 @@ window.Pie = window.Pie || {};
     // every platform's machines in one grid, a header row per platform, every model a column
     // every engine side by side on one model, as Artificial Analysis ranks models
     board: {
-      label: "Leaderboard",
+      label: "Rankings",
       section: "home",
       view: "board",
       filters: [],
       columns: [],
     },
-    // pie against the other engines, every machine and model
+    // every machine in one table: each engine against the hardware's theoretical limit
+    all_hardware: {
+      label: "FP Efficiency",
+      section: "home",
+      view: "platform",
+      compare: "ceiling",
+      filters: [],
+      columns: [],
+    },
+    // every machine in one table: pie against the other engines
     speedups: {
-      label: "Speedup",
+      label: "Relative Speed",
       section: "home",
       view: "platform",
       compare: "engines",
       filters: [],
       columns: [],
     },
-    // each engine against the hardware's theoretical limit
-    all_hardware: {
-      label: "Efficiency",
+    // every machine in one table: the engine's own tokens per second
+    tps: {
+      label: "Best TPS",
       section: "home",
       view: "platform",
-      compare: "ceiling",
+      compare: "tps",
       filters: [],
       columns: [],
     },
@@ -119,7 +129,7 @@ window.Pie = window.Pie || {};
     android: {
       label: "Android",
       short: "Android",  // as the tables name it
-      section: "platforms",
+      section: null,  // no page until a machine is measured; still a row in the Platforms list
       view: "platform",
       platform: "android",
       tint: "#3ddc84",
@@ -129,7 +139,7 @@ window.Pie = window.Pie || {};
     web: {
       label: "WebGPU",
       short: "WebGPU",  // as the tables name it
-      section: "platforms",
+      section: null,  // no page until a machine is measured; still a row in the Platforms list
       view: "platform",
       platform: "web",
       tint: "#5b8def",
@@ -201,6 +211,14 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
+    // how a model is judged to fit a machine, the same table as Roofline
+    fit: {
+      label: "Memory",
+      section: "resources",
+      view: "methods",
+      filters: [],
+      columns: [],
+    },
 
     // the Limit calculator, hidden for now; its code stays (methodology.js), and Pie.ceiling there still feeds the grid
     // methodology: {
@@ -218,7 +236,7 @@ window.Pie = window.Pie || {};
       label: "Hardware",
       section: "catalog",
       numbered: true,
-      filters: ["platform"],
+      filters: [],
       columns: [
         text("name", "Name", "Identity"),
         text("platform", "Platform", "Identity"),
@@ -268,14 +286,14 @@ window.Pie = window.Pie || {};
       label: "Models",
       section: "catalog",
       numbered: true,
-      filters: ["family", "architecture"],
+      filters: [],
       columns: [
         text("name", "Name", "Identity"),
         text("platforms", "Platforms", "Identity", { hint: "The platforms this model is measured on" }),
         text("family", "Family", "Identity", { code: true }),
         text("architecture", "Architecture", "Shape"),
         text("ssd_streaming", "SSD streaming", "Shape"),
-        text("draft", "Draft", "Shape", { hint: "pie decodes single-stream rows with a drafter (speculative decoding)" }),
+        text("speculation", "Speculation", "Shape", { hint: "Whether the model has a drafter, so it runs with speculative decoding" }),
         number("params_b", "Params", "Shape", "B", 1),
         number("active_b", "Active", "Shape", "B", 1),
         number("layers", "Layers", "Shape", "", 0, { hint: "Transformer layers, from the model's config.json" }),

@@ -18,6 +18,7 @@ window.Pie = window.Pie || {};
     leviathan: { authors: "Y. Leviathan, M. Kalman, Y. Matias", title: "Fast Inference from Transformers via Speculative Decoding", venue: "ICML 2023, arXiv:2211.17192", year: 2022, url: "https://arxiv.org/abs/2211.17192" },
     chen: { authors: "C. Chen et al.", title: "Accelerating Large Language Model Decoding with Speculative Sampling", venue: "arXiv:2302.01318", year: 2023, url: "https://arxiv.org/abs/2302.01318" },
     megatron: { authors: "M. Shoeybi et al.", title: "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism", venue: "arXiv:1909.08053", year: 2019, url: "https://arxiv.org/abs/1909.08053" },
+    metal: { authors: "Apple", title: "MTLDevice.recommendedMaxWorkingSetSize", venue: "Metal documentation", year: 2016, url: "https://developer.apple.com/documentation/metal/mtldevice/recommendedmaxworkingsetsize" },
     kwon: { authors: "W. Kwon et al.", title: "Efficient Memory Management for Large Language Model Serving with PagedAttention", venue: "SOSP 2023, arXiv:2309.06180", year: 2023, url: "https://arxiv.org/abs/2309.06180" },
   };
 
@@ -47,6 +48,8 @@ window.Pie = window.Pie || {};
     "Draft time": ["T", "draft"], "Drafter weights read": ["W", "draft"], "Step time": ["T", "step"],
     "Requests": ["b"], "Bandwidth bound": ["R", "mem"], "Compute bound": ["R", "math"], "Interconnect bound": ["R", "link"],
     "Arithmetic per output token": ["Q", "tok"],
+    "Weights size": ["S"], "Needs": ["M", "need"], "Usable memory": ["M", "gpu"], "Fits": ["fit"],
+    "Parameters": ["N"], "Bits per weight": ["b"], "Headroom": ["h"], "Memory": ["M"], "Usable share": ["u"],
   };
   const v = (name) => {
     const [base, sub] = SYM[name];
@@ -78,12 +81,16 @@ window.Pie = window.Pie || {};
     "Math time": ["Raw Decode's.", null],
     "Interconnect time": ["Raw Decode's.", null],
     "Raw Decode": ["The Raw Decode limit, without drafting.", null],
+    "Parameters": ["Every parameter, not only the active ones: all of them sit in memory.", "models"],
+    "Bits per weight": ["The build the engine runs: 4.5 for a Mac's 4-bit MLX build, 4.25 for MXFP4, 8 for FP8, 16 for bf16.", "models"],
+    "Memory": ["The machine's memory, every GPU's together.", "hardware"],
+    "Headroom": ["1.25: a quarter more for the KV cache, activations and the runtime.", null],
   };
   // a quantity's colour says where it comes from, the same on every workload, as Numbers colours each table's
   // references: the machine blue, the model green, the workload orange, an assumption grey, a worked-out term purple
   const KIND = { hardware: "#0a84ff", models: "#30d158", workloads: "#ff9f0a" };
   const GROUPS = ["workloads", "models", "hardware", null];
-  const ASSUMED = new Set(["Acceptance", "Drafts", "Drafter weights read"]);
+  const ASSUMED = new Set(["Acceptance", "Drafts", "Drafter weights read", "Headroom", "Usable share"]);
   const colorOf = (name) => KIND[SOURCES[name]?.[1]] || (ASSUMED.has(name) ? "#8e8e93" : "#bf5af2");
   const tint = (html) => html.replace(/class="m-(?:var|tag)" data-name="([^"]+)"/g, (m, name) => `${m} style="--pill: ${colorOf(name)}"`);
   // a term as Finder lists a tagged file: its colour as a dot before the name
@@ -276,6 +283,17 @@ window.Pie = window.Pie || {};
     },
   ];
 
+  // Memory Fit: whether a model fits a machine, worked out for every pair whether it ran or not; a crossed circle in
+  // the grid where it does not
+  const FIT = {
+    id: "fit",
+    equations: [
+      eq("Weights size", fr(times(v("Parameters"), v("Bits per weight")), "8"), ["kaplan"]),
+      eq("Needs", times(v("Weights size"), v("Headroom")), ["kwon"]),
+      eq("Fits", `${v("Needs")}${o("≤")}${v("Memory")}`, []),
+    ],
+  };
+
   // a chapter per workload in the grid's pop-up: the same names, in the same order (decode, then prefill), taken from
   // its list so the two cannot drift apart. A workload without a chapter written for it has none
   const CHAPTERS = (Pie.platform?.metrics() || []).map((m) => {
@@ -319,8 +337,7 @@ window.Pie = window.Pie || {};
   let state = null;
 
   const page = () => {
-    const i = CHAPTERS.findIndex((c) => c.id === current);
-    const c = CHAPTERS[i];
+    const c = state.table === "fit" ? FIT : CHAPTERS.find((ch) => ch.id === current);
 
     // a citation is the work's first author and year, a link straight to the paper
     const cite = (key) => {
@@ -331,7 +348,7 @@ window.Pie = window.Pie || {};
     const prose = (text) => esc(text).replace(/\s?\{(\w+)\}/g, (_, key) => (REFS[key] ? cite(key) : ""));
     // the formulas as rows of the site's data table: the result's name, then its equation in symbols
     const formulaRows = c.equations.map((e) => `
-      <tr><td class="lim-term">${tag(e.result)}</td><td class="lim-formula"><span class="m-eq">${e.math}</span></td><td class="lim-fill"></td><td class="lim-source">${e.cites.map(cite).join(", ")}</td></tr>`).join("");
+      <tr><td class="row-number"></td><td class="lim-term">${tag(e.result)}</td><td class="lim-formula"><span class="m-eq">${e.math}</span></td><td class="lim-fill"></td><td class="lim-source">${e.cites.map(cite).join(", ")}</td></tr>`).join("");
 
     // every quantity the formulas use and none of them works out, in order of first use: how it is found and where
     const made = new Set(c.equations.map((e) => e.result));
@@ -343,7 +360,7 @@ window.Pie = window.Pie || {};
       const [text, from] = SOURCES[name];
       const how = typeof text === "function" ? text() : text;  // a workload's number, read from the catalog
       const source = from ? `<a class="cite" role="link" tabindex="0" data-go="${from}">${esc(Pie.schema[from].label)}</a>` : "";
-      return `<tr><td class="lim-term">${tag(name)}</td><td class="lim-how" title="${esc(how)}">${esc(how)}</td><td class="lim-fill"></td><td class="lim-source">${source}</td></tr>`;
+      return `<tr><td class="row-number"></td><td class="lim-term">${tag(name)}</td><td class="lim-how" title="${esc(how)}">${esc(how)}</td><td class="lim-fill"></td><td class="lim-source">${source}</td></tr>`;
     }).join("");
 
     // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
@@ -359,10 +376,10 @@ window.Pie = window.Pie || {};
 
     // the chapter as the site's other pages: the formulas as a data table under the bar, each citing its works by
     // name, linked
-    return `${bar}
+    return `${c === FIT ? "" : bar}
       <div class="lim-tables">
         <table class="data-table lim-table">
-          <thead><tr><th>Term</th><th>Definition</th><th class="lim-fill"></th><th class="lim-source">Reference</th></tr></thead>
+          <thead><tr><th class="row-number" aria-label="Row"></th><th>Term</th><th>Definition</th><th class="lim-fill"></th><th class="lim-source">Reference</th></tr></thead>
           <tbody>${tint(formulaRows + inputRows)}</tbody>
         </table>
       </div>`;
@@ -398,10 +415,10 @@ window.Pie = window.Pie || {};
   Pie.methods = {
     render(viewState) {
       state = viewState;
-      element.hidden = state.table !== "methods";
+      element.hidden = state.table !== "methods" && state.table !== "fit";
       // the grid's workload, or the first chapter when that workload has none written yet
       current = CHAPTERS.some((c) => c.id === state.platform.mode) ? state.platform.mode : CHAPTERS[0].id;
-      const key = `${current}@${state.release}`;
+      const key = `${state.table === "fit" ? "fit" : current}@${state.release}`;
       if (!element.hidden && element.dataset.key !== key) {
         element.innerHTML = page();
         element.dataset.key = key;
