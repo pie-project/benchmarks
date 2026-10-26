@@ -33,7 +33,7 @@ export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 
 cd "$here"
 uv venv -q --python 3.12 .venv
-uv pip install -q --python .venv/bin/python -e .
+uv pip install -q --python .venv/bin/python --torch-backend cpu -e ".${PARITY_ARTIFACTS:+[quality]}"
 
 # the TPU builds of vLLM and SGLang, in the background while the toolchains install: the node then finds
 # the venvs ready (baselines.ensure_baseline, the same call it makes itself when a venv is missing)
