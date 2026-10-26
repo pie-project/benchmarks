@@ -19,6 +19,7 @@ on:
       engines: { description: "comma-separated engines (empty: pie, vllm and sglang)", required: false, default: "" }
       tag: { description: "a tag for the site (0.5.3-b5); empty: main-<sha>", required: false, default: "" }
       zone: { description: "comma-separated zones to try in order (empty: the platform's tpu.zones; v6e: us-east5-b first)", required: false, default: "" }
+      parity: { description: "comma-separated artifact ids: pie vs vLLM-TPU quality parity instead of the benchmark (empty: the benchmark)", required: false, default: "" }
       platform: { description: "TPU platform (platforms.yaml): tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4", required: false, default: "tpu-v6e-1" }
 # the schedule one at a time; every manual run its own VM, in parallel with the others (each deletes its own)
 concurrency: { group: "tpu-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'schedule' }}", cancel-in-progress: false }
@@ -96,6 +97,7 @@ jobs:
       - run: uv venv && uv pip install -e .
       - name: job spec
         id: jobs
+        if: github.event.inputs.parity == ''
         run: |
           args=()
           for w in $(echo "${{ github.event.inputs.workloads }}" | tr ',' ' '); do args+=(--workload "$w"); done
@@ -117,10 +119,10 @@ jobs:
       - name: wait for the VM
         run: bash infra/tpu/vm.sh wait
       - name: copy the harness and the job
-        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}" }
+        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", PARITY: "${{ github.event.inputs.parity }}", TAG: "${{ github.event.inputs.tag }}" }
         run: |
           tar czf /tmp/pie-evals.tgz --exclude=.git --exclude=.venv .  # no .git: provenance reads PIE_EVALS_HARNESS_COMMIT
-          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true; [ -n "${TPU_ALL_CHIPS:-}" ] && echo "export TPU_ALL_CHIPS=1" >> /tmp/vm.env || true )
+          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; [ -n "$PARITY" ] && printf 'export PARITY_ARTIFACTS=%q PARITY_PLATFORM=%q PARITY_TAG=%q\n' "$PARITY" "$PLATFORM" "${TAG:-main-${C:0:9}}" >> /tmp/vm.env || true; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true; [ -n "${TPU_ALL_CHIPS:-}" ] && echo "export TPU_ALL_CHIPS=1" >> /tmp/vm.env || true )
           # the first ssh pushes the key; retried while the VM's sshd and the key settle
           for i in 1 2 3 4 5; do
             bash infra/tpu/vm.sh put /tmp/pie-evals.tgz /tmp/vm.env && break
@@ -133,7 +135,7 @@ jobs:
           vm() { bash infra/tpu/vm.sh ssh "$1"; }
           # detached on the VM, so a dropped ssh session does not stop the build or the bench
           # the launch returns at once; capped, as an ssh that never returns would otherwise hold the job
-          timeout 300 bash infra/tpu/vm.sh ssh "cd ~/pie-evals && setsid nohup bash -c 'set -a; . ~/vm.env; set +a; bash infra/tpu/run-on-vm.sh $C $(printf 'jobs/%s.json ' $JOB_ID); echo \$? > ~/run.done' > ~/run.log 2>&1 < /dev/null &" || true
+          timeout 300 bash infra/tpu/vm.sh ssh "cd ~/pie-evals && setsid nohup bash -c 'set -a; . ~/vm.env; set +a; bash infra/tpu/run-on-vm.sh $C $([ -z "$JOB_ID" ] || printf 'jobs/%s.json ' $JOB_ID); echo \$? > ~/run.done' > ~/run.log 2>&1 < /dev/null &" || true
           while ! rc=$(timeout 300 bash infra/tpu/vm.sh ssh 'cat ~/run.done 2>/dev/null' 2>/dev/null) || [ -z "$rc" ]; do
             # a spot VM taken back mid-run never writes run.done
             st=$(bash infra/tpu/vm.sh state 2>/dev/null || echo unknown)
@@ -143,14 +145,15 @@ jobs:
           vm 'tail -n 200 ~/run.log'
           echo "exit $rc"; [ "$rc" = 0 ]
       - name: fetch the records
-        if: always() && steps.jobs.outputs.job_id != ''
+        if: always() && (steps.jobs.outputs.job_id != '' || github.event.inputs.parity != '')
         run: |
           mkdir -p out
           [ -n "${TPU_ZONE:-}" ] || exit 0  # no VM was created
+          [ -z "${{ github.event.inputs.parity }}" ] || bash infra/tpu/vm.sh get --recurse pie-evals/out/parity out/ || echo "::warning::no parity output on the VM"
           for j in ${{ steps.jobs.outputs.job_id }}; do bash infra/tpu/vm.sh get --recurse "pie-evals/out/$j" out/ || echo "::warning::no node output for $j on the VM"; done
           bash infra/tpu/vm.sh get run.log out/ || true
       - uses: actions/upload-artifact@v4
-        if: always() && steps.jobs.outputs.job_id != ''
+        if: always() && (steps.jobs.outputs.job_id != '' || github.event.inputs.parity != '')
         with: { name: "out-${{ github.run_id }}", path: "out/", retention-days: 30, if-no-files-found: warn }
       - uses: actions/upload-artifact@v4
         if: always()
@@ -180,7 +183,7 @@ jobs:
   # the Mac reaches the database on liszt over the tailnet; GitHub's runners do not
   collect:
     needs: [decide, bench]
-    if: always() && needs.decide.outputs.run == 'true' && needs.bench.outputs.job_id != '' && needs.bench.outputs.created == 'true'  # no VM: nothing to import
+    if: always() && needs.decide.outputs.run == 'true' && (needs.bench.outputs.job_id != '' || github.event.inputs.parity != '') && needs.bench.outputs.created == 'true'  # no VM: nothing to import
     runs-on: [self-hosted, macos, m5-max-64g]
     # no concurrency group: a group keeps one pending job and cancels the one before it; the one runner with
     # this label already runs the TPU platforms' imports one at a time
@@ -195,6 +198,12 @@ jobs:
         id: import
         run: |
           shopt -s nullglob
+          if [ -n "${{ github.event.inputs.parity }}" ]; then
+            d=(out/out-*/parity/store)
+            [ -n "${d[*]}" ] || { echo "::error::no parity store from the TPU"; exit 1; }
+            .venv/bin/pie-evals import-store "${d[0]}"
+            exit 0
+          fi
           dirs=(out/out-*/*/)  # one directory a shard
           n=0; for d in "${dirs[@]}"; do [ -s "$d/records.jsonl" ] && n=$((n + 1)); done
           [ "$n" -gt 0 ] || { echo "::error::no records from the TPU"; exit 1; }
@@ -203,5 +212,5 @@ jobs:
           mkdir -p last && echo "$C" > last/commit.txt
       # what the next scheduled run compares against
       - uses: actions/upload-artifact@v4
-        if: steps.import.outcome == 'success' && env.PLATFORM == 'tpu-v6e-1'  # the schedule measures the v6e only
+        if: steps.import.outcome == 'success' && env.PLATFORM == 'tpu-v6e-1' && github.event.inputs.parity == ''  # the schedule measures the v6e only
         with: { name: tpu-last-commit, path: last/commit.txt, retention-days: 90 }
