@@ -198,3 +198,5 @@
   .board-footer-inner { grid-template-columns: 1fr; }
   .board-footer-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.board-pick-logo { width: 13px; height: 13px; flex: none; overflow: visible; }  /* an engine's logo before its name in a pick */
+.popover .board-pick-logo { margin-right: 6px; }

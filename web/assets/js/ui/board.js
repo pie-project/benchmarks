@@ -202,6 +202,14 @@ window.Pie = window.Pie || {};
     { id: "size-decode", label: "Decode", setup: "decode", title: "Decode speed by model size", sub: "Output tokens per second, one request, against parameters · Higher is better", key: "decode_tok_s", unit: "tok/s" },
     { id: "size-prefill", label: "Prefill", setup: "prefill", title: "Prefill speed by model size", sub: "Prompt tokens per second, one request, against parameters · Higher is better", key: "prefill_tok_s", unit: "tok/s" },
   ];
+  // a card's engine, picked in its corner as a card's measure is: the fastest engine on each machine, or one engine alone,
+  // each with its logo; kept per browser, each card its own
+  const ENGINE_KEYS = { "use-engine": "pieUseEngine", "scale-engine": "pieScaleEngine" };
+  const keptEngine = (k) => { try { const e = localStorage.getItem(ENGINE_KEYS[k]); return Pie.store.tables.engines.some((x) => x.id === e) ? e : null; } catch { return null; } };
+  let useEngine = keptEngine("use-engine"), scaleEngine = keptEngine("scale-engine");
+  const engineMark = (engine) => engine ? `<svg class="board-pick-logo" viewBox="0 0 16 16" aria-hidden="true">${logo(engine, 0, 0, 16)}</svg>` : "";
+  const enginePick = (k, engine) => `<button class="filter-button board-card-pick" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="Engine">${engineMark(engine)}${esc(engine ? names().engine(engine) : "Fastest engine")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
+  const engineSub = (sub, engine) => (engine ? sub.replace("fastest engine", names().engine(engine)).replace("Decode speed against", `${names().engine(engine)}'s decode speed against`) : sub);
   // the model's speeds as one card, Decode, Prefill or Throughput picked in its corner and kept per browser, each wearing
   // the setup control's degree mark; time to first token, a latency rather than a speed, keeps a card of its own
   const SPEEDS = METRICS.filter((m) => m.setup);
@@ -299,7 +307,8 @@ window.Pie = window.Pie || {};
   const SCALE_KEY = "pieScaleModel";
   let scaleModel = (() => { try { return localStorage.getItem(SCALE_KEY); } catch { return null; } })();
   const scaleModelOf = (rows) => { const list = scaleModels(rows); return list.includes(scaleModel) ? scaleModel : list[0] || model; };
-  const scaling = (rows, which = scaleModelOf(rows)) => {
+  const scaling = (all, which = scaleModelOf(all)) => {
+    const rows = scaleEngine ? all.filter((r) => r.engine === scaleEngine) : all;
     const W = 1040, H = 219, L = 44, R = 230, T = 10, B = 30;
     const families = {};
     for (const r of rows) {
@@ -342,7 +351,8 @@ window.Pie = window.Pie || {};
   // size and any number of chips sit on one scale; decode is held by memory bandwidth, prefill mostly by compute
   const USE = { id: "use", title: "Share of the limit", sub: "Measured speed against each machine's roofline limit, fastest engine, one request · Higher uses more of the hardware" };
   const BOUND = { bandwidth: "memory bound", compute: "compute bound", balanced: "balanced", interconnect: "interconnect bound" };
-  const use = (rows) => {
+  const use = (all) => {
+    const rows = useEngine ? all.filter((r) => r.engine === useEngine) : all;  // one engine, or the fastest on each machine
     const best = {};
     for (const key of ["decode_tok_s", "prefill_tok_s"])
       for (const r of rows) if (r.workload === "raw" && r.model === model && r[key] && (!(best[r.hardware] ||= {})[key] || r[key] > best[r.hardware][key][key])) best[r.hardware][key] = r;
@@ -522,13 +532,13 @@ window.Pie = window.Pie || {};
             <button class="filter-button board-title-pick" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(model)}${esc(names().model(model))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
           <div class="board-stack">${metricCard(rows, groups)}${card(TTFT.id, TTFT.title, TTFT.sub, chart(TTFT, rows, groups))}
-            ${card(USE.id, USE.title, USE.sub, use(rows))}</div>
+            ${card(USE.id, USE.title, engineSub(USE.sub, useEngine), use(rows), enginePick("use-engine", useEngine))}</div>
           <div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">At datacenter scale</h1>
             <p class="board-lede">A model split across several GPUs, at each chip count, against a perfect split.</p></div>
             <button class="filter-button board-title-pick" type="button" data-board-pick="scale" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(scaleModelOf(rows))}${esc(names().model(scaleModelOf(rows)))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
-          <div class="board-stack">${card(SCALING.id, SCALING.title, SCALING.sub, scaling(rows))}</div>
+          <div class="board-stack">${card(SCALING.id, SCALING.title, engineSub(SCALING.sub, scaleEngine), scaling(rows), enginePick("scale-engine", scaleEngine))}</div>
         </div>
       </div>${footer()}</div>`;
   };
@@ -790,6 +800,12 @@ window.Pie = window.Pie || {};
     element,
     // the model menu: every model this release measured, the widest coverage first
     menu(k) {
+      if (k === "use-engine" || k === "scale-engine") {
+        const current = k === "use-engine" ? useEngine : scaleEngine;
+        const ran = new Set(measured().filter((r) => r.workload === "raw" && r.decode_tok_s).map((r) => r.engine));
+        return [{ value: "", label: "Fastest engine", selected: !current },
+          ...engineIds().filter((e) => ran.has(e)).map((e) => ({ value: e, label: names().engine(e), selected: e === current, icon: engineMark(e) }))];
+      }
       if (k === "scale") {
         const current = scaleModelOf(measured());
         return scaleModels(measured()).map((id) => ({ value: id, label: names().model(id), selected: id === current, icon: Pie.platform.makerBadge(id) }));
@@ -808,6 +824,11 @@ window.Pie = window.Pie || {};
       if (k === "summary" && SUMMARY_WORKLOADS.some((w) => w.id === value)) {
         summaryWorkload = value;
         try { localStorage.setItem(SUMMARY_KEY, value); } catch { /* private windows can refuse storage */ }
+      }
+      if (k === "use-engine" || k === "scale-engine") {
+        const engine = value || null;
+        if (k === "use-engine") useEngine = engine; else scaleEngine = engine;
+        try { engine ? localStorage.setItem(ENGINE_KEYS[k], engine) : localStorage.removeItem(ENGINE_KEYS[k]); } catch { /* private windows can refuse storage */ }
       }
       if (k === "scale") {
         scaleModel = value;
