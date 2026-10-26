@@ -201,6 +201,7 @@ window.Pie = window.Pie || {};
       }
       owner = key;
       anchor = target;
+      element.classList.toggle("is-fit", String(key).startsWith("board:"));  // the Rankings' picks: as wide as their longest item
       element.innerHTML = isLimit(key) ? limitMenu(key) : key === RELEASE ? releaseMenu(state) : key === VIEW ? viewMenu(state) : key === SUITE ? suiteMenu(state) : key === COMPARE ? compareMenu(state) : key === METRIC ? metricMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
       // a short menu of a few words (a card's Decode or Prefill) fits its words, not the menus' usual width
       element.classList.toggle("is-compact", COMPACT.has(key));

@@ -37,7 +37,7 @@
 .board-dot { width: 8px; height: 8px; border-radius: 2px; }
 
 .board-grid-cards.is-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 12px; }  /* rows twice as far apart as columns */
-.board-grid-cards.is-matrices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px; }  /* two by two */
+.board-grid-cards.is-matrices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }  /* two by two */
 .board-grid-cards.is-matrices .board-card { padding-left: 11px; padding-right: 11px; }  /* a little more room for the grids */
 .board-grid-cards.is-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px; }
 .board-stack { display: flex; flex-direction: column; gap: 24px; }
@@ -79,10 +79,10 @@
 .board-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .board-bar:hover .board-band { fill: var(--color-fill); }  /* the hovered bar's slot greys behind it; the other bars keep their colour */
 .chart-tooltip.is-board { min-width: 0; padding: 6px 10px; white-space: nowrap; }  /* a compact card, as Artificial Analysis sets its chart's */
-.board-tip-head { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: var(--color-label); }
-.board-tip-logo { width: 14px; height: 14px; flex: none; overflow: visible; }
-.board-tip-value { margin-top: 1px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-label); }
-.board-tip-note { margin-top: 1px; font-size: 11px; color: var(--color-label-secondary); }
+.board-tip-head { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; color: var(--color-label); }  /* the bars' own figure size, small and quiet */
+.board-tip-logo { width: 11px; height: 11px; flex: none; overflow: visible; }
+.board-tip-value { margin-top: 1px; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-label); }
+.board-tip-note { margin-top: 1px; font-size: 10px; color: var(--color-label-secondary); }
 /* a head-to-head battle's card: the two engines, then a row per figure, its name in grey and its value to the right */
 .board-tip-vs { color: var(--color-label-tertiary); font-weight: 400; }
 .board-tip-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 3px; font-size: 11px; color: var(--color-label-secondary); }
@@ -104,7 +104,7 @@
 }
 
 /* under the rankings: the banner across two thirds, the changelog beside it at the same height */
-.board-hero { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px 12px; height: 280px; margin-top: 32px; }  /* the cards' columns and gaps, so its edges meet theirs; as far below the cards as the next title sits below it */
+.board-hero { display: grid; grid-template-columns: minmax(0, 1fr) max-content; gap: 24px 12px; height: 200px; margin-top: 32px; }  /* the cards' columns and gaps, so its edges meet theirs; as far below the cards as the next title sits below it */
 .board-hero .board-banner { grid-column: span 1; }  /* the banner, the recommender and the changelog, a third each, on the cards' columns */
 .board-hero .board-banner { height: auto; margin: 0; border-radius: 12px; }  /* the cards' corner */
 /* the banner in the site's own type and controls: a small "New" tag, as the cards' tags read, over the headline at
@@ -112,8 +112,8 @@
 .board-banner { display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; color: #fff; }  /* the tag and headline at the foot */
 .board-banner-foot { position: relative; pointer-events: none; }  /* the card's link takes every click */
 .board-banner-foot { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-.board-banner-badge { padding: 2px 8px; border-radius: var(--radius-control); font-size: 11px; font-weight: 600; color: #fff; background: rgba(255, 255, 255, .22); backdrop-filter: blur(12px); }  /* the cards' tag, frosted */
-.board-banner-title { margin: 0; font: 700 28px/1.1 var(--font-display); letter-spacing: -.02em; text-shadow: 0 1px 12px rgba(30, 20, 90, .25); }
+.board-banner-badge { padding: 1px 6px; border-radius: 5px; font-size: 10px; font-weight: 600; color: #fff; background: rgba(255, 255, 255, .22); backdrop-filter: blur(12px); }  /* the cards' tag, frosted */
+.board-banner-title { margin: 0; font: 700 20px/1.1 var(--font-display); letter-spacing: -.01em; text-shadow: 0 1px 12px rgba(30, 20, 90, .25); }
 /* the whole banner opens pie-project.org, as a card opens its page: a layer over the gradient takes the click; a frosted
    toolbar button in the corner says so, brighter when the banner is hovered */
 .board-banner-link { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
@@ -123,12 +123,31 @@
 .board-banner-link:focus-visible { outline: 3px solid rgba(255, 255, 255, .7); outline-offset: -3px; }
 /* the changelog as an outlined card, its runs on a timeline that scrolls inside it, as Artificial Analysis lists its own */
 .board-log { display: flex; flex-direction: column; min-height: 0; padding: 14px 0 0 16px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--color-separator); }
-.board-log-title { margin: 0 0 10px; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
-.board-log-list { flex: 1; min-height: 0; margin: 0; padding: 0 16px 14px 0; list-style: none; overflow-y: auto; scrollbar-width: thin; }
+.board-log-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 22px; margin: 0 16px 10px 0; }  /* one height, the bell's, open or closed, so the list never moves */
+.board-log-title { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
+/* the bell beside the title, a toolbar button's size and hover, the accent while its form is open */
+.board-log-bell { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--color-label-secondary); cursor: pointer; }
+.board-log-title { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.board-log-check { width: 13px; height: 13px; fill: none; stroke: var(--color-accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }  /* "Subscribed" in the title's own type, after an accent checkmark */
+.board-log-bell.is-subscribed { color: var(--color-accent); }
+.board-log-bell.is-subscribed svg { fill: currentColor; }  /* bell.fill: on */
+.board-log-bell:hover { background: var(--color-fill); color: var(--color-label); }
+.board-log-bell.is-on { color: var(--color-accent); }
+.board-log-bell svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+/* its form: a field and a button on the title's line */
+.board-subscribe { flex: 1; display: flex; gap: 6px; margin: 0; contain: inline-size; }
+.board-log-head.is-open .board-log-title, .board-log-head.is-open .board-log-bell { display: none; }  /* the field in the title's and the bell's place; a click elsewhere closes it */  /* takes the width the list sets, never widens the card */
+.board-subscribe[hidden] { display: none; }
+.board-subscribe input { flex: 1; min-width: 0; height: 22px; padding: 0 8px; border: 0; border-radius: var(--radius-control, 6px); font: inherit; font-size: 12px; color: var(--color-label); background: var(--color-fill); outline: none; }
+.board-subscribe button { display: grid; place-items: center; flex: none; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 6px; color: #fff; background: var(--color-accent); cursor: pointer; }
+.board-subscribe button svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.board-subscribe button:disabled { opacity: .5; }
+.board-log-list { flex: 1; min-height: 0; margin: 0; padding: 0 16px 14px 0; list-style: none; overflow-y: auto; scrollbar-width: none; mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); }  /* scrolls with no bar showing, as the sidebar does; the last line fades out to say there is more */
+.board-log-list::-webkit-scrollbar { display: none; }
 .board-log-item { position: relative; padding: 0 0 14px 20px; }
 .board-log-item::before { content: ""; position: absolute; left: 0; top: 3px; width: 9px; height: 9px; border-radius: 2px; background: var(--color-accent); }  /* the run's dot */
 .board-log-item:not(:last-child)::after { content: ""; position: absolute; left: 4px; top: 12px; bottom: -3px; width: 1px; background: var(--color-separator); }  /* the line to the next */
-.board-log-kind { font-size: 11px; color: var(--color-label-secondary); }
+.board-log-kind { font-size: 11px; white-space: nowrap; color: var(--color-label-secondary); }
 .board-log-text { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 11px; color: var(--color-label); }
 .board-log-text > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .board-log-text .sidebar-glyph[style] { width: 16px; height: 16px; flex: none; border-radius: 4px; }
@@ -283,3 +302,17 @@
 .board-matrix-bar { display: inline-flex; flex-direction: column; gap: 2px; }
 .board-matrix-bar i { width: 8px; height: 8px; border-radius: 2px; background: var(--color-fill); }  /* rounded squares, as the page's keys and outline mark their colours */
 .board-matrix-tick { font-size: 9px; color: var(--color-label-secondary); font-variant-numeric: tabular-nums; }
+
+/* a platform card's view switch in its corner: the platform pages' setup control, its symbols alone, the picked one in
+   the accent with nothing behind it */
+.board-view { gap: 0; }
+.board-view .plain-button { display: grid; place-items: center; height: 20px; padding: 0 6px; transition: none; }
+.board-view .plain-button.is-active, :root[data-theme="dark"] .board-view .plain-button.is-active { color: var(--color-accent); background: transparent; box-shadow: none; }
+.board-view svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.board-matrix, .is-matrices .board-chart { cursor: grab; user-select: none; }
+@media (pointer: fine) { .board-matrix { touch-action: none; } .is-matrices .board-chart { touch-action: pan-y; } }  /* a finger still scrolls the page past it */
+.board-matrix.is-tugged, .board-chart.is-tugged { cursor: grabbing; }
+.board-matrix.is-tugged td, .board-chart.is-tugged .board-bar { pointer-events: none; }  /* no hover card while it is held */
+/* a platform card is one height whichever view it shows: the bars sit in the grid's 200px, scaled to fit */
+.is-matrices .board-card-body > .board-chart { height: 200px; }
+.board-card-pick:focus:not(:focus-visible) { outline: none; }  /* no ring after a click, only for the keyboard */
