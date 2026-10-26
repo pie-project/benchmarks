@@ -1,0 +1,243 @@
+"""Run distribution parity (``kl.py``) for one model on one device: the reference
+engine (vLLM, or mlx-lm on a Mac) and pie, one after the other, each alone on the
+device, on the same checkpoint, cut, dtype and tp. One quality row per (model,
+platform), task ``parity@<platform>``."""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+from . import kl
+from .run import _render, _tokenizer
+from .tasks import TASKS
+
+#: prompts per task, from the catalog's question sets (gsm8k, mmlu, arc, math500, ifeval)
+PER_TASK = 8
+ANSWER_TOKENS = 256
+PARITY_TASKS = ("gsm8k", "mmlu", "arc", "math500", "ifeval")
+#: the shape whose engine config pie_bench boots with: concurrency 1, a 4k context
+WORKLOAD = "lc-2k-128"
+
+
+def prompts(log=print) -> list[str]:
+    out = []
+    for t in PARITY_TASKS:
+        try:
+            out += [i.prompt for i in TASKS[t][0](PER_TASK)]
+        except Exception as e:  # noqa: BLE001 — a gated set is skipped, the rest still score
+            log(f"parity: {t} questions unavailable ({type(e).__name__}); skipped")
+    return out
+
+
+def device_idle(backend: str) -> str | None:
+    """Why the device is not idle, or None. One test per device: nothing else may hold it."""
+    try:
+        if backend == "cuda":
+            q = subprocess.run(["nvidia-smi", "--query-gpu=utilization.gpu,memory.used", "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=30).stdout
+            for ln in q.strip().splitlines():
+                util, mem = (int(x.strip()) for x in ln.split(","))
+                if util > 5 or mem > 1500:
+                    return f"GPU busy: {util}% util, {mem} MiB used"
+        elif backend == "rocm":
+            q = subprocess.run(["rocm-smi", "--showuse", "--json"], capture_output=True, text=True, timeout=30).stdout
+            for card in (json.loads(q or "{}") or {}).values():
+                if isinstance(card, dict) and int(str(card.get("GPU use (%)", "0")).strip() or 0) > 5:
+                    return f"GPU busy: {card.get('GPU use (%)')}%"
+    except Exception:  # noqa: BLE001 — no tool to ask: assume idle, the clean-check of the pod already ran
+        return None
+    return None
+
+
+class Server:
+    """A server process that announces its base URL on stdout (``PARITY_URL=``) or listens on a known port."""
+
+    def __init__(self, argv: list[str], env: dict, cwd: str | None, log_path: Path, url: str | None = None):
+        self.log_path = log_path
+        self.fh = log_path.open("w")
+        self.proc = subprocess.Popen(argv, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        self.url = url
+        self.ready = threading.Event()
+        threading.Thread(target=self._pump, daemon=True).start()
+
+    def _pump(self) -> None:
+        for line in self.proc.stdout:
+            self.fh.write(line)
+            self.fh.flush()
+            m = re.search(r"PARITY_URL=(\S+)", line)
+            if m:
+                self.url = m.group(1)
+                self.ready.set()
+
+    def wait(self, timeout_s: float) -> str:
+        deadline = time.monotonic() + timeout_s
+        while self.url is None:
+            if self.proc.poll() is not None or time.monotonic() > deadline:
+                raise RuntimeError(f"server did not come up: {self.tail()}")
+            time.sleep(2)
+        while True:
+            if self.proc.poll() is not None:
+                raise RuntimeError(f"server exited: {self.tail()}")
+            try:
+                return kl.wait_ready(self.url, timeout_s=10)
+            except Exception:  # noqa: BLE001
+                if time.monotonic() > deadline:
+                    raise RuntimeError(f"server never answered /v1/models: {self.tail()}") from None
+
+    def tail(self, n: int = 40) -> str:
+        try:
+            return "".join(self.log_path.read_text().splitlines(True)[-n:])
+        except OSError:
+            return ""
+
+    def stop(self) -> None:
+        self.proc.terminate()
+        try:
+            self.proc.wait(timeout=60)
+        except subprocess.TimeoutExpired:
+            self.proc.kill()
+        self.fh.close()
+
+
+def _free_port() -> int:
+    from pie_evals.node.engines.served import free_port
+
+    return free_port()
+
+
+def vllm_server(engine, snapshot: Path, tp: int, log_path: Path) -> Server:
+    port = _free_port()
+    gmu = engine.recipe.get("gpu_mem_util", 0.90) or 0.90
+    argv = [engine.python, "-m", "vllm.entrypoints.openai.api_server", "--model", str(snapshot), "--port", str(port), "--host", "127.0.0.1",
+            "--tensor-parallel-size", str(tp), "--max-model-len", "4096", "--max-logprobs", str(kl.TOPK), "--gpu-memory-utilization", str(gmu),
+            "--no-enable-prefix-caching", "--trust-remote-code", "--max-num-seqs", "1"]
+    if engine.artifact.kv_dtype and str(engine.artifact.kv_dtype) not in ("bf16", "auto", "fp16"):
+        argv += ["--kv-cache-dtype", str(engine.artifact.kv_dtype)]
+    if engine.recipe.get("attention_backend"):
+        argv += ["--attention-backend", str(engine.recipe["attention_backend"])]
+    return Server(argv, engine.process_env(), None, log_path, url=f"http://127.0.0.1:{port}")
+
+
+def pie_server(engine, workload, log_path: Path) -> Server:
+    from pie_evals.node.workloads import common_args_for
+
+    argv = engine.build_argv(workload, common_args_for(workload), log_path.with_suffix(".json"))
+    script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "parity_pie_serve.py"
+    i = next(k for k, a in enumerate(argv) if a.endswith("pie_bench.py"))
+    argv = [argv[0], str(script), *argv[i + 1:]]
+    env = engine.process_env()
+    env["PYTHONPATH"] = ":".join([str(engine.pie_root / "scripts/bench"), env.get("PYTHONPATH", "")])
+    return Server(argv, env, str(engine.pie_root / "scripts/bench"), log_path)
+
+
+def mlx_side(snapshot: Path, rendered: list[str], greedy: bool, log_path: Path) -> tuple[list[str], list[list[dict[int, float]]]]:
+    """mlx-lm in its own interpreter: greedy answers and teacher-forced top-20 over prompt+answer."""
+    script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "parity_mlx.py"
+    with tempfile.TemporaryDirectory() as tmp:
+        inp, out = Path(tmp) / "in.json", Path(tmp) / "out.json"
+        inp.write_text(json.dumps({"prompts": rendered, "max_tokens": ANSWER_TOKENS, "topk": kl.TOPK, "greedy": greedy}))
+        with log_path.open("w") as fh:
+            subprocess.run([os.environ.get("MLX_PY", sys.executable), str(script), str(snapshot), str(inp), str(out)], stdout=fh, stderr=subprocess.STDOUT, check=True, timeout=6 * 3600)
+        d = json.loads(out.read_text())
+    return d["texts"], [[{int(k): v for k, v in pos.items()} for pos in t] for t in d["scored"]]
+
+
+def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir: str = "matrix", store_dir: str | None = None,
+               tag: str | None = None, tag_kind: str | None = None, out_dir: Path = Path("parity-out"), vllm_pin: str | None = None, log=print) -> dict:
+    from pie_evals.node.engines import get_engine
+    from pie_evals.node.engines.recipes import load_recipe
+    from pie_evals.node.importer import ensure_artifact, needs_import
+    from pie_evals.node.snapshots import ensure_snapshot, hf_cache_dir
+    from pie_evals.plan.matrix import Matrix
+    from pie_evals.results.store import Store
+
+    m = Matrix.load(matrix_dir)
+    art, plat = m.artifacts[artifact_id], m.platforms[platform_id]
+    backend = str(plat.backend)
+    tp = max(1, int(plat.count))
+    mode = next((md for md in m.modes.values() if int(md.tp) == tp and not md.spec_dec and not md.extra), None)
+    workload = m.workloads[WORKLOAD]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    busy = device_idle(backend)
+    if busy:
+        raise RuntimeError(f"device not idle before the run: {busy}")
+    snapshot = ensure_snapshot(art, hf_cache_dir(), pie_root=pie_root, python=os.environ.get("PIE_PY", "python3"), download=True, log=log)
+    tok = _tokenizer(snapshot)
+    qs = prompts(log)
+    rendered = _render(snapshot, qs)
+    t0 = time.monotonic()
+    ref_name = "mlxlm" if backend == "metal" else "vllm"
+    summary: dict = {"artifact": art.id, "model": art.id, "engine": "pie", "ref_engine": ref_name, "platform": platform_id,
+                     "task": f"parity@{platform_id}", "checkpoint": art.base_model, "scheme": str(art.scheme), "tp": tp,
+                     "miniature": str(art.kind) == "miniature", "layers": getattr(art.miniature, "layers", None) if art.miniature else None,
+                     "prompts": len(rendered), "answer_tokens": ANSWER_TOKENS}
+
+    # 1. the reference: greedy answers, then the teacher-forced distributions over prompt + answer
+    if ref_name == "vllm":
+        from pie_evals.node.baselines import ensure_baseline
+
+        recipe = load_recipe("vllm", "competitive", plat, workload, family=art.family)
+        pin = vllm_pin or m.engines["vllm"].pin
+        if pin:
+            recipe["pin"] = pin
+            if not os.environ.get("VLLM_PY"):
+                ensure_baseline("vllm", pin, backend=backend, log=log)
+        ref_engine = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
+        summary["ref_version"] = ref_engine.version()
+        srv = vllm_server(ref_engine, snapshot, tp, out_dir / f"{art.id}-vllm.log")
+        try:
+            model = srv.wait(3600)
+            ref_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1)
+            ref_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1)
+        finally:
+            srv.stop()
+    else:
+        ref_texts, _ = mlx_side(snapshot, rendered, True, out_dir / f"{art.id}-mlx-greedy.log")
+        _, ref_scored = mlx_side(snapshot, [r + t for r, t in zip(rendered, ref_texts, strict=True)], False, out_dir / f"{art.id}-mlx-score.log")
+        summary["ref_version"] = subprocess.run([os.environ.get("MLX_PY", sys.executable), "-c", "import mlx_lm; print(mlx_lm.__version__)"], capture_output=True, text=True).stdout.strip()
+    log(f"parity {art.id}@{platform_id}: reference {ref_name} done in {(time.monotonic() - t0) / 60:.1f} min")
+
+    busy = device_idle(backend)
+    if busy:
+        raise RuntimeError(f"device not idle between engines: {busy}")
+
+    # 2. pie on the same device, same weights, same text
+    commit = subprocess.run(["git", "-C", str(pie_root), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    model_path = snapshot
+    if needs_import(art) or tp > 1 or backend == "xla":
+        model_path = ensure_artifact(art, snapshot, pie_root / "target/release/pie", commit, log=log)
+    precipe = load_recipe("pie", "default", plat, workload, family=art.family)
+    precipe["snapshot_dir"] = str(model_path)
+    pie_engine = get_engine("pie")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=precipe)
+    srv = pie_server(pie_engine, workload, out_dir / f"{art.id}-pie.log")
+    try:
+        model = srv.wait(3600)
+        pie_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1)
+        pie_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1)
+    finally:
+        srv.stop()
+    summary["version"] = commit[:12]
+
+    # 3. compare over the answer positions
+    starts = [max(0, len(s) - len(tok.encode(t, add_special_tokens=False))) for s, t in zip(ref_scored, ref_texts, strict=True)]
+    summary.update(kl.compare(ref_scored, pie_scored, starts))
+    summary["exact_match"] = kl.exact_match(ref_texts, pie_texts)
+    summary["minutes"] = round((time.monotonic() - t0) / 60, 1)
+    summary["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # the site's quality table reads score/n/ci95: score is top-1 agreement over every answer position
+    summary["score"], summary["n"] = summary["top1_agree"], summary["positions"]
+    summary["correct"] = round((summary["top1_agree"] or 0) * summary["positions"])
+    summary["ci95"] = [summary["score"] or 0, summary["score"] or 0]
+    summary["samples"] = [{"id": i, "ref": a, "pie": b} for i, (a, b) in enumerate(zip(ref_texts, pie_texts, strict=True))]
+    (out_dir / f"{art.id}-{platform_id}.json").write_text(json.dumps(summary, indent=1))
+    where = Store(store_dir).write_quality(summary, tag=tag, tag_kind=tag_kind)
+    log(f"parity {art.id}@{platform_id}: KL mean {summary['kl_mean']}, top-1 {summary['top1_agree']}, exact {summary['exact_match']:.2f} -> {where}")
+    return summary

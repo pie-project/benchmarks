@@ -194,6 +194,31 @@ def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_k
         sys.exit(1)
 
 
+@main.command("parity", help="pie against the reference engine (vLLM, mlx-lm on a Mac) on the same weights and device: teacher-forced KL, top-1 agreement, greedy exact match.")
+@click.option("--artifact", "artifacts", multiple=True, required=True)
+@click.option("--platform", "platform_id", required=True)
+@click.option("--matrix", "matrix_dir", default="matrix")
+@click.option("--store", "store_dir", default=None, help="postgresql://... or a directory (default: $PIE_EVALS_DB, else ./store)")
+@click.option("--pie-root", type=click.Path(), default=os.environ.get("PIE_ROOT", str(DEFAULT_PIE_ROOT)))
+@click.option("--tag", default=None)
+@click.option("--tag-kind", type=click.Choice(["release", "manual"]), default=None)
+@click.option("--out", "out_dir", type=click.Path(), default="parity-out")
+def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag_kind, out_dir):
+    from pie_evals.quality.dist_run import run_parity
+
+    failed = []
+    for a in artifacts:
+        try:
+            run_parity(a, platform_id, pie_root=Path(pie_root), matrix_dir=matrix_dir, store_dir=store_dir, tag=tag, tag_kind=tag_kind,
+                       out_dir=Path(out_dir), log=lambda m_: click.echo(m_, err=True))
+        except Exception as e:  # noqa: BLE001 — one model that fails must not drop the others
+            failed.append(f"{a}: {type(e).__name__}: {str(e).strip()[-600:]}")
+            click.echo(f"FAIL  {failed[-1]}", err=True)
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    (Path(out_dir) / "failed.json").write_text(json.dumps(failed, indent=1))
+    sys.exit(1 if failed else 0)
+
+
 @main.command("rescore", help="Grade saved quality answers again with the current scorers.")
 @click.argument("files", nargs=-1, type=click.Path(exists=True))
 def rescore_cmd(files):
