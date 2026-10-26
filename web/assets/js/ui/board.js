@@ -802,7 +802,9 @@ window.Pie = window.Pie || {};
     menu(k) {
       if (k === "use-engine" || k === "scale-engine") {
         const current = k === "use-engine" ? useEngine : scaleEngine;
-        const ran = new Set(measured().filter((r) => r.workload === "raw" && r.decode_tok_s).map((r) => r.engine));
+        // the datacenter card offers the engines that ran on more than one chip; a Mac's engines (llama.cpp, MLX) never do
+        const multi = (r) => k !== "scale-engine" || (Pie.store.index.hardware[r.hardware]?.count || 1) > 1;
+        const ran = new Set(measured().filter((r) => r.workload === "raw" && r.decode_tok_s && multi(r)).map((r) => r.engine));
         return [{ value: "", label: "Fastest engine", selected: !current },
           ...engineIds().filter((e) => ran.has(e)).map((e) => ({ value: e, label: names().engine(e), selected: e === current, icon: engineMark(e) }))];
       }
