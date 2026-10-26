@@ -263,7 +263,8 @@ def import_store(obj, src):
         if i % 100 == 0 or i == len(files):
             click.echo(f"{i}/{len(files)} runs", err=True)
     for f in sorted((d.root / "quality").glob("*.json")):
-        st.write_quality(json.loads(f.read_text()))
+        q = json.loads(f.read_text())
+        st.write_quality(q, tag=q.get("tag"), tag_kind=q.get("tag_kind"))
     click.echo(f"{len(files)} runs, {len(list((d.root / 'quality').glob('*.json')))} quality summaries")
 
 

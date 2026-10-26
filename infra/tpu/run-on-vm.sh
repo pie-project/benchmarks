@@ -6,11 +6,13 @@
 # (vllm-tpu, sglang-jax at the engines.yaml pins) in their own venvs, installed beside the toolchains.
 #
 #   bash infra/tpu/run-on-vm.sh <pie_commit> jobs/<job_id>.json [jobs/<job_id>.json ...]
+# With PARITY_ARTIFACTS (comma-separated ids) set, no job: pie-evals-node parity against vllm-tpu at the
+# engines.yaml pin on PARITY_PLATFORM, tagged PARITY_TAG, into out/parity (its store: out/parity/store).
 set -euo pipefail
 commit=$1
 # one or more job files: a plan the budget split into shards runs them one after another on this VM
 jobs=("${@:2}")
-job=${jobs[0]}
+job=${jobs[0]:-}
 here=$(pwd)
 
 # a data disk (platforms.yaml tpu.data_disk_gb) holds ~/.cache: the checkpoints, their imports, the venvs
@@ -37,7 +39,12 @@ uv pip install -q --python .venv/bin/python -e .
 # the venvs ready (baselines.ensure_baseline, the same call it makes itself when a venv is missing)
 pids=()
 for engine in vllm sglang; do
-  pin=$(jq -rs "map(.baseline_versions.$engine // empty) | first // empty" "${jobs[@]}" 2>/dev/null || true)
+  if [ -n "${PARITY_ARTIFACTS:-}" ]; then
+    [ "$engine" = vllm ] || continue
+    pin=$(.venv/bin/python -c "from pie_evals.plan.matrix import Matrix; print(Matrix.load('matrix').engines['vllm'].pin)")
+  else
+    pin=$(jq -rs "map(.baseline_versions.$engine // empty) | first // empty" "${jobs[@]}" 2>/dev/null || true)
+  fi
   [ -n "$pin" ] || continue
   echo "$engine (TPU build) $pin: installing in the background"
   .venv/bin/python -c "import sys; from pie_evals.node.baselines import ensure_baseline; print(ensure_baseline(sys.argv[1], sys.argv[2], backend='xla'))" "$engine" "$pin" \
@@ -77,6 +84,15 @@ chips=$(ls -d /dev/accel* 2>/dev/null | wc -l || true)
 if [ "${chips:-0}" -gt 1 ] && [ -z "${TPU_ALL_CHIPS:-}" ]; then  # tpu.all_chips: a tp>1 platform uses them all
   echo "$chips TPU chips on this host: the engines see chip 0 only"
   export TPU_VISIBLE_CHIPS=0 TPU_CHIPS_PER_PROCESS_BOUNDS=1,1,1 TPU_PROCESS_BOUNDS=1,1,1
+fi
+if [ -n "${PARITY_ARTIFACTS:-}" ]; then
+  .venv/bin/pie-evals-node build --pie-commit "$commit" --features xla --pie-root "$PIE_ROOT"
+  PIE_PY=$(.venv/bin/python -c "from pie_evals.node.build import bench_python; print(bench_python())" | tail -n 1)
+  export PIE_PY
+  args=()
+  for a in $(echo "$PARITY_ARTIFACTS" | tr ',' ' '); do args+=(--artifact "$a"); done
+  exec .venv/bin/pie-evals-node parity "${args[@]}" --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" \
+    --store out/parity/store --tag "$PARITY_TAG" --tag-kind manual --out out/parity
 fi
 rc=0
 for job in "${jobs[@]}"; do
