@@ -72,6 +72,8 @@
 }
 
 .data-table .cell-glyphs { display: inline-flex; gap: 14px; }
+.data-table .cell-glyphs.is-slotted { gap: 6px; vertical-align: middle; }
+.data-table .cell-slot { width: 20px; height: 20px; flex: none; }  /* a platform the model was not measured on keeps its place */
 
 .data-table .col-fill { width: 100%; padding: 0; }
 
@@ -214,4 +216,7 @@
 
 /* a category label: the text in the row's colour, a 7px dot before it; several sit side by side */
 .cell-dot { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; }
-.cell-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--dot); }
+.cell-dot::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--dot); }  /* a square chip, as the Rankings key draws its engines */
+.data-table .cell-glyphs.is-slotted .sidebar-glyph[style] { margin-left: 0; }  /* the tiles on one grid with the empty slots */
+.data-table .cell-glyphs.is-slotted .sidebar-glyph svg { fill: none; }
+.data-table .cell-glyphs.is-slotted .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }  /* Apple's mark is a filled glyph */

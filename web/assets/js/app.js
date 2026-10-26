@@ -3,8 +3,14 @@
   const filterBar = document.querySelector(".filter-bar");
 
   // the overview's Mac and workload live in the address, so a reload or a shared link keeps them
+  // a link to one chart, #board/<card>: Rankings opens on it, scrolled to that card once the page is drawn
+  let linkedCard = null;
   const readHash = () => {
     const [view, hardware, workload] = decodeURIComponent(location.hash.slice(1)).split("/");
+    if (view === "board" && hardware) {
+      state.table = "board";
+      linkedCard = hardware;
+    }
     if (view === "overview" || view === "mac") {
       state.table = "mac";
       Object.assign(state.overview, { hardware: hardware || null, workload: workload || "raw" });
@@ -38,7 +44,12 @@
     state.suite = suites.some((suite) => suite.id === "full") ? "full" : suites[suites.length - 1].id;
   };
 
+  let shownTable = null;  // the page the last render drew, so a switch to another page restores where that one was left
   const render = () => {
+    // a page only an account opens (Measurements, Catalog, Resources), kept from an earlier visit or linked to, opens Rankings
+    if (!Pie.isOpen(state.table) || Pie.schema[state.table]?.href) state.table = "board";  // a link (Quality) is not a page
+    Pie.palette?.refresh();
+    if (state.table !== shownTable) { shownTable = state.table; restoreScroll(); }
     ensureSuite();
     ensureRelease();
     toolbar.renderSuite(state);
@@ -226,6 +237,7 @@
         Pie.methodology.pick(key.slice(6), value);
       } else if (String(key).startsWith("board:")) {
         Pie.board.pick(key.slice(6), value);
+
       } else if (String(key).startsWith("grid:")) {
         Pie.platform.pick(key.slice(5), value);
       } else if (value === popover.ALL) {
@@ -297,7 +309,9 @@
           }
         }
       }
-      if (event.ctrlKey && event.metaKey && event.key.toLowerCase() === "s") {
+      // ⌘S shows or hides the sidebar (Ctrl+S off a Mac, where the browser gets no Windows key), and ⌃⌘S as Finder has it;
+      // the browser's Save Page waits, as a web app takes the keys it uses
+      if (event.key.toLowerCase() === "s" && (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && !event.repeat) {
         event.preventDefault();
         preferences.toggleSidebar();
       }
@@ -326,11 +340,13 @@
       }
       const plain = !event.metaKey && !event.ctrlKey && !event.altKey && !typing;
       const onPlatform = Pie.schema[state.table]?.view === "platform";
-      // ] and [ open the next and the previous platform in the sidebar's order, round from the last to the first,
-      // as macOS steps through tabs; Tab keeps moving the focus
-      if ((event.key === "]" || event.key === "[") && plain && onPlatform) {
-        const ids = Object.keys(Pie.schema).filter((id) => Pie.schema[id].view === "platform");
-        const next = ids[(ids.indexOf(state.table) + (event.key === "[" ? ids.length - 1 : 1)) % ids.length];
+      // ] and [ open the next and the previous page in the sidebar's order (Rankings, the overviews, the platforms, and
+      // the account's sections when they show), round from the last to the first, as macOS steps through tabs; a link
+      // out of the site (Quality) is passed over; Tab keeps moving the focus
+      const pages = [...document.querySelectorAll("#sidebar-nav .sidebar-item[data-table]")].map((b) => b.dataset.table);
+      if ((event.key === "]" || event.key === "[") && plain && pages.length) {
+        const here = Math.max(0, pages.indexOf(state.table));
+        const next = pages[(here + (event.key === "[" ? pages.length - 1 : 1)) % pages.length];
         event.preventDefault();
         popover.close();
         document.querySelector(`.sidebar-item[data-table="${next}"]`)?.click();
@@ -344,10 +360,20 @@
           scroller.scrollBy({ left: (event.key === "ArrowLeft" ? -3 : 3) * col.offsetWidth, behavior: "smooth" });
         }
       }
-      // V switches Speedup and Efficiency for good; holding R still only peeks
+      // ↑ and ↓ scroll the page's data the same distance ← and → move a grid across: three model columns' worth,
+      // on every page with something to scroll (the grid, Rankings, the tables, the method pages)
+      if ((event.key === "ArrowUp" || event.key === "ArrowDown") && plain && !event.shiftKey && !popover.isOpen()) {
+        const scroller = pageScroller();
+        const col = [...document.querySelectorAll("#platform col.col-model")].pop();
+        if (scroller) {
+          event.preventDefault();
+          scroller.scrollBy({ top: (event.key === "ArrowUp" ? -3 : 3) * (col?.offsetWidth || 132), behavior: "smooth" });
+        }
+      }
+      // V moves on to the next view for good, as a click on the view button does; holding R still only peeks
       if (event.key.toLowerCase() === "v" && plain && onPlatform && !event.repeat) {
         event.preventDefault();
-        Pie.platform.setCompare(Pie.platform.compare() === "engines" ? "ceiling" : "engines");
+        Pie.platform.setCompare(Pie.platform.next());
         popover.close();
         render();
       }
@@ -362,14 +388,9 @@
           render();
         }
       }
-      // S shows or hides the sidebar, one key for what ⌃⌘S also does
-      if (event.key.toLowerCase() === "s" && plain && !event.shiftKey && !event.repeat) {
-        event.preventDefault();
-        preferences.toggleSidebar();
-      }
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();
-        toolbar.focusSearch();
+        Pie.palette.open();
       }
     });
   };
@@ -421,6 +442,42 @@
     saveView();
   }, true);
 
+  // the page's own scroller: the one the page's data scrolls in (the grid, Rankings, the tables, the method pages)
+  const SCROLLERS = ["#platform .platform-scroll", "#board .board-scroll", "#table-container", "#methodology", ".method:not([hidden])", "#overview"];
+  const pageScroller = () => SCROLLERS.map((selector) => document.querySelector(selector))
+    .find((el) => el && el.offsetParent !== null && (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth));
+
+  // how far down and across each page was scrolled is kept per browser, so a reload, or a return to the page, opens it
+  // where the viewer left it: down its rows and across a grid's model columns
+  const SCROLL_KEY = "pieScroll";
+  const scrolls = (() => { try { return JSON.parse(localStorage.getItem(SCROLL_KEY) || "{}"); } catch { return {}; } })();
+  let keepTimer = 0;
+  let restoring = false;  // while a page is being put back, its scroller's own moves (a shared one clamping) are not kept
+  document.addEventListener("scroll", (event) => {
+    if (restoring || event.target !== pageScroller()) return;
+    scrolls[state.table] = { top: Math.round(event.target.scrollTop), left: Math.round(event.target.scrollLeft) };
+    clearTimeout(keepTimer);
+    keepTimer = setTimeout(() => { try { localStorage.setItem(SCROLL_KEY, JSON.stringify(scrolls)); } catch { /* private windows can refuse storage */ } }, 150);
+  }, { capture: true, passive: true });
+  const restoreScroll = () => {
+    restoring = true;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const at = scrolls[state.table] || 0;  // a page never scrolled opens at its top left
+      const scroller = pageScroller();
+      if (scroller) {
+        // an older save kept the height alone, as a number
+        scroller.scrollTop = typeof at === "number" ? at : at.top || 0;
+        scroller.scrollLeft = typeof at === "number" ? 0 : at.left || 0;
+      }
+      // a chart linked to opens in view, over where the page was last left
+      if (linkedCard) {
+        document.getElementById(`board-${linkedCard}`)?.scrollIntoView({ block: "start" });
+        linkedCard = null;
+      }
+      requestAnimationFrame(() => { restoring = false; });
+    }));
+  };
+
   restoreView();
   readHash();
   bindToolbar();
@@ -428,5 +485,13 @@
   bindFilters();
   bindTable();
   bindGlobal();
+  // logging in or out shows or hides the sections only an account opens, and leaves a page that closes with them
+  document.addEventListener("pie:account", () => render());
+  // the ⌘K palette opens pages and filters the ones that filter: a platform grid, the overview, a table
+  Pie.palette.bind({
+    state,
+    render,
+    filters: () => { const s = Pie.schema[state.table]; return s?.view === "platform" || state.table === "overview" || (!s?.view && Boolean(s?.columns?.length)); },
+  });
   render();
 })();

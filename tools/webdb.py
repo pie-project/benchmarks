@@ -605,13 +605,15 @@ def main() -> None:
     # the CI suite each model runs in: Targeted ones run in both, the rest only in Full
     for m in models:
         m["suite"] = "Targeted" if m["id"] in suite_ids.get("targeted", []) else "Full" if m["id"] in suite_ids.get("full", []) else ""
-    # the platforms each model has actually been measured on: any CI result with a number, on a Mac, a GPU or a TPU
-    kind = {p["id"]: ("Mac" if p.get("os") == "macos" else "TPU" if p.get("backend") == "xla" else "GPU") for p in load("platforms")["platforms"]}
+    # the platforms each model has actually been measured on: any CI result with a number, on a Mac, an NVIDIA GPU
+    # ("GPU"), an AMD GPU or a TPU
+    kind = {p["id"]: ("Mac" if p.get("os") == "macos" else "TPU" if p.get("backend") == "xla" else "AMD" if p.get("backend") == "rocm" else "GPU")
+            for p in load("platforms")["platforms"]}
     platforms: dict[str, set[str]] = {}
     for r in store.table().select(["artifact", "platform", "status"]).to_pylist():
         if r["status"] in ("pass", "noisy") and r["artifact"] in a2m and r["platform"] in kind:
             platforms.setdefault(a2m[r["artifact"]], set()).add(kind[r["platform"]])
-    order = ["Mac", "GPU", "TPU"]
+    order = ["Mac", "GPU", "TPU", "AMD"]
     for m in models:
         m["platforms"] = ", ".join(t for t in order if t in platforms.get(m["id"], set()))
     engine_ids = [e["id"] for e in mac_engines]

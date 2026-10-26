@@ -52,20 +52,26 @@ window.Pie = window.Pie || {};
       return `<td class="${classes}"><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${format.escape(value)}</span></td>`;
     }
     if (column.key === "platforms" && !format.isEmpty(value)) {
-      // each platform as the rest of the site shows one: its sidebar mark, then its name
+      // each platform as its sidebar tile alone, its name on hover, as Finder's Tags column shows colour, not words;
+      // every platform keeps its own slot down the column, empty where a model was not measured there, so a platform's
+      // tiles stand in one line and the eye runs down it
       const ID = { mac: "mac", gpu: "nvidia", tpu: "tpu", amd: "amd", wafer: "cerebras" };
-      const glyph = (t) => {
-        const id = ID[t.toLowerCase()];
-        const s = id && Pie.schema[id];
-        return s ? `<span class="welcome-cell" title="${format.escape(s.label)}"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${format.escape(s.short)}</span>` : dotted(t.toLowerCase(), t);
-      };
-      // packed to the left as Finder lists tags, always in the same order: Mac, NVIDIA, TPU, then the rest
-      const has = String(value).split(", ");
-      const cells = Object.keys(ID).map((t) => has.find((h) => h.toLowerCase() === t)).filter(Boolean).map(glyph);
-      return `<td class="${classes}"><span class="cell-glyphs">${cells.join("")}</span></td>`;
+      const has = String(value).toLowerCase().split(", ");
+      const slots = platformSlots().map((t) => {
+        const s = Pie.schema[ID[t]];
+        return has.includes(t) && s
+          ? `<span class="sidebar-glyph" style="--tint: ${s.tint}" title="${format.escape(s.label)}" aria-label="${format.escape(s.label)}">${Pie.icon(ID[t])}</span>`
+          : `<span class="cell-slot" aria-hidden="true"></span>`;
+      });
+      return `<td class="${classes}"><span class="cell-glyphs is-slotted">${slots.join("")}</span></td>`;
     }
     return `<td class="${classes}"${full}>${format.value(column, value)}</td>`;
   };
+
+  // the platform slots of the Platforms column: every platform any model was measured on, Mac, NVIDIA, TPU, AMD, Cerebras
+  let slotsOf = null;
+  const platformSlots = () => slotsOf ||= ["mac", "gpu", "tpu", "amd", "wafer"]
+    .filter((t) => (Pie.store.tables.models || []).some((m) => String(m.platforms || "").toLowerCase().split(", ").includes(t)));
 
   const bodyRow = (row, columns, state, index) => {
     const resultKey = store.resultKeys[state.table];

@@ -170,3 +170,20 @@
   .popover-option.is-setup .popover-icon { order: 1; }
   .popover-option.is-setup .popover-key { display: none; }
 }
+
+/* a short menu fits its words: a card's Decode or Prefill */
+.popover.is-compact { min-width: 0; }
+.popover .mode-icon { width: 12px; height: 12px; flex: none; margin-right: 6px; }  /* a setup's degree mark before its name */
+
+/* a long menu's search field, over its list: the glass, then the words, on the field's fill */
+.popover-search { flex: none; display: flex; align-items: center; gap: 6px; height: 28px; margin: 0 0 4px; padding: 0 8px; border-radius: var(--radius-field); background: var(--color-fill); }
+.popover-search svg { width: 13px; height: 13px; flex: none; fill: none; stroke: var(--color-label-secondary); stroke-width: 2; stroke-linecap: round; }
+.popover-search input { flex: 1; min-width: 0; border: 0; outline: none; background: none; font: inherit; font-size: 13px; color: var(--color-label); }
+.popover-option[hidden] { display: none; }
+/* a model's maker before its name, as the grid's tile, sized to the menu's line */
+.popover .model-badge { width: 18px; height: 18px; margin-right: 8px; border-radius: 4px; flex: none; }
+.popover .model-badge img { width: 12px; height: 12px; }
+/* a searchable menu: the field fixed at its top, the options scrolling in the space under it */
+.popover.is-searchable { display: flex; flex-direction: column; overflow: hidden; }
+.popover.is-searchable[hidden] { display: none; }
+.popover-scroll { flex: 1; min-height: 0; overflow-y: auto; }

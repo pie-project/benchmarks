@@ -1,7 +1,7 @@
 window.Pie = window.Pie || {};
 
 Pie.state = {
-  table: "welcome",
+  table: "board",
   platform: { metric: "decode", mode: null },
   overview: { hardware: null, workload: "raw", engine: "pie", heatMac: null, standMac: null, model: null, macsView: "rings", modelsView: "rings", bestView: "rings" },
   release: "main",

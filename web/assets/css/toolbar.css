@@ -449,8 +449,29 @@
 .release-picker.is-prominent .release-picker-value { font-weight: 500; color: #fff; font-variant-numeric: tabular-nums; }
 .release-picker.is-prominent .popup-chevron { stroke: rgba(255, 255, 255, .85); }
 
-/* the toolbar: the theme button, the search field, then the run picker at the trailing edge */
+/* the toolbar's trailing group: the theme button first, then search (the ⌘K button) and Log In, then the run picker */
 .toolbar > .theme-toggle { order: 1; }
 .toolbar > .search-field { order: 2; }
 .toolbar > .search-cancel { order: 3; }
+.toolbar > .toolbar-search { order: 3; }
+.toolbar > .toolbar-login { order: 3; }
 .toolbar > .release-picker, .toolbar > .view-picker { order: 4; }  /* the run last, at the trailing edge */
+
+/* Log in after the search: the toolbar's one prominent button, filled solid black in light mode and white in dark, so it
+   stands out in both, its word in the other */
+.toolbar-login { flex: none; height: 28px; padding: 0 12px; border: 0; border-radius: var(--radius-field); font: inherit; font-size: 13px; font-weight: 500; color: #fff; background: #1d1d1f; cursor: pointer; }
+:root[data-theme="dark"] .toolbar-login { color: #1d1d1f; background: #f5f5f7; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .toolbar-login { color: #1d1d1f; background: #f5f5f7; } }
+.toolbar-login:hover { opacity: .85; }
+.toolbar-login:active { opacity: .7; }
+.toolbar-login:focus:not(:focus-visible) { outline: none; }
+/* search is the ⌘K palette: the field stays hidden, holding the words a page is filtered for */
+.search-field[hidden], .search-cancel[hidden] { display: none !important; }
+/* the palette's button, as a toolbar's search item reads when collapsed: the glass and the shortcut, or the filter */
+.toolbar-search { display: inline-flex; flex: none; align-items: center; gap: 6px; height: 28px; max-width: 200px; padding: 0 10px; border: 0; border-radius: var(--radius-field); font: inherit; font-size: 13px; color: var(--color-label-secondary); background: var(--color-fill); cursor: pointer; }
+.toolbar-search:hover { background: var(--color-fill-secondary); }
+.toolbar-search svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.toolbar-search kbd { font: inherit; letter-spacing: .02em; }
+.toolbar-search-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toolbar-search.is-filtered { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 14%, transparent); }  /* a page filtered: its words in the accent */
+.toolbar-search:focus:not(:focus-visible) { outline: none; }

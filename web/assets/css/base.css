@@ -103,7 +103,7 @@ svg {
   content: "";
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 2px;  /* square chips, as the Rankings key */
   background: var(--engine-color, var(--color-engine-default));
 }
 
@@ -121,9 +121,9 @@ svg {
 
 .status-tag::before {
   content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
   background: var(--color-label-quaternary);
 }
 
@@ -224,3 +224,12 @@ button:focus:not(:focus-visible) { outline: none; }
   *::-webkit-scrollbar { display: none; }
   .method { scrollbar-gutter: auto; }
 }
+
+/* a segmented control's selection as one thumb that glides between segments, as iOS moves it (ui/segmented.js):
+   the thumb wears the chosen segment's fill and sits under the labels, and the chosen segment gives its own fill up */
+.has-thumb { position: relative; isolation: isolate; }
+.seg-thumb { position: absolute; top: 2px; bottom: 2px; left: 0; z-index: -1; pointer-events: none; }
+.has-thumb > .is-active { background: none !important; box-shadow: none !important; }
+/* the hand-off is instant: a segment that faded its own fill out would show under the thumb for a moment, the two fills
+   stacked one shade brighter; only the label's colour still eases */
+.has-thumb > button { transition-property: color !important; }

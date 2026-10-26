@@ -36,7 +36,7 @@ window.Pie = window.Pie || {};
       { big: "Hold R", label: "Peek at the other view", line: "Shows the other view until the key is let go." },
       { big: "Hold U", label: "Show unavailable", line: "Shows the empty rows and columns until the key is let go." },
       { big: "[  ]", label: "Previous, next page", line: "Steps through the grid pages in the sidebar's order." },
-      { big: "⌃⌘S", label: "Sidebar", line: "Show or hide the sidebar." },
+      { big: "⌘S", label: "Sidebar", line: "Show or hide the sidebar." },
     ]],
 
   ];

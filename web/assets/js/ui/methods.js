@@ -363,20 +363,19 @@ window.Pie = window.Pie || {};
       return `<tr><td class="row-number"></td><td class="lim-term">${tag(name)}</td><td class="lim-how" title="${esc(how)}">${esc(how)}</td><td class="lim-fill"></td><td class="lim-source">${source}</td></tr>`;
     }).join("");
 
-    // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
+    // the bar: the grid's setup control, with Spec Decode as a segment of its own since this page has a chapter for it
     const bar = `
       <div class="platform-bar limit-bar methods-bar">
-        <span class="filter platform-setup">
-          <button class="filter-button" id="methods-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Workload: ${c.title}`)}">${esc(c.title)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
-        </span>
+        ${Pie.platform.setupControl(c.id, ["decode", "spec", "prefill", "batching"])}
         ${c.id === "spec" ? `
         ${Pie.specField()}` : ""}
-        <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
       </div>`;
 
     // the chapter as the site's other pages: the formulas as a data table under the bar, each citing its works by
     // name, linked
-    return `${c === FIT ? "" : bar}
+    // Memory has no workload to pick, but keeps the bar, empty, so the page sits under the toolbar as the rest do and
+    // filters have a place when it grows them
+    return `${c === FIT ? `<div class="platform-bar limit-bar methods-bar" aria-hidden="true"></div>` : bar}
       <div class="lim-tables">
         <table class="data-table lim-table">
           <thead><tr><th class="row-number" aria-label="Row"></th><th>Term</th><th>Definition</th><th class="lim-fill"></th><th class="lim-source">Reference</th></tr></thead>
@@ -394,11 +393,11 @@ window.Pie = window.Pie || {};
       document.querySelector(`.sidebar-item[data-table="${go.dataset.go}"]`)?.click();
       return;
     }
-    // the workload pop-up: the grid's own menu, so a pick changes both pages
-    const picker = event.target.closest("#methods-metric");
-    if (picker && state) {
-      event.stopPropagation();
-      Pie.popover.open(picker, Pie.popover.METRIC, state);
+    // a setup segment: the grid's own setup, so a pick changes both pages
+    const tab = event.target.closest("[data-mode]");
+    if (tab && state) {
+      state.platform.mode = tab.dataset.mode;
+      Pie.platform.changed();
       return;
     }
   });

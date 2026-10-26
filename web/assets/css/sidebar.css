@@ -27,12 +27,13 @@
   gap: 8px;
   height: var(--bar-height);
   padding: 0 8px;
-  font: 400 15px var(--font-display);  /* the name in the regular weight, as a sidebar row reads */
+  font: 700 15px var(--font-display);  /* the name in bold, as heavy as its mark beside it */
   letter-spacing: -.01em;
 }
 
-/* the mark and "Pie" open pie-project.org, and read as the name they are, not as a link */
-.sidebar-home { display: inline-flex; align-items: center; gap: 8px; color: var(--color-label); text-decoration: none; }
+/* the mark and "Pie" open pie-project.org, and read as the name they are, not as a link; the whole row is the link,
+   edge to edge and the bar's full height, so a click anywhere across the brand opens it */
+.sidebar-home { display: flex; flex: 1; align-self: stretch; align-items: center; gap: 8px; margin: 0 -8px; padding: 0 8px; color: var(--color-label); text-decoration: none; }
 
 
 .sidebar-logo {
@@ -332,3 +333,6 @@
     line-height: 18px;
   }
 }
+/* a sidebar row that opens another site: an arrow at its end, as a Mac sidebar marks a link out of the app */
+.sidebar-item.is-link { text-decoration: none; color: inherit; }
+.sidebar-item .sidebar-out { width: 12px; height: 12px; margin-left: auto; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
