@@ -31,6 +31,7 @@ window.Pie = window.Pie || {};
       </span>`;
   };
 
+  let shown = null;  // the state the bar was last drawn for
   Pie.filters = {
     plural,
 
@@ -38,12 +39,17 @@ window.Pie = window.Pie || {};
       const schema = Pie.schema[state.table];
       list.innerHTML = schema.filters
         .map((key) => filter(schema.columns.find((column) => column.key === key), state.selected(key)))
-        .join("");
+        .join("")
+        // the Results page's dates: a calendar of the days it has results for
+        + (["results", "quality"].includes(state.table) && Pie.dates ? Pie.dates.button() : "");
+      shown = state;
     },
 
     onOpen(handler) {
       list.addEventListener("click", (event) => {
         event.stopPropagation();
+        const dates = event.target.closest("[data-dates]");
+        if (dates) { Pie.popover?.close(); Pie.dates.open(dates, shown); return; }
         const button = event.target.closest("[data-filter]");
         if (button) handler(button, button.dataset.filter);
       });

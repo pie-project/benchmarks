@@ -471,23 +471,29 @@ window.Pie = window.Pie || {};
     const page = (id) => Pie.schema[id] ? `<li><a href="#" data-board-open="${id}">${esc(Pie.schema[id].label)}</a></li>` : "";
     const out = (href, text) => `<li><a href="${href}" target="_blank" rel="noopener">${esc(text)}</a></li>`;
     const at = Pie.store.tables.updated_at ? new Date(Pie.store.tables.updated_at) : null;
-    const when = at ? at.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : "";
+    const when = at ? at.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
+    const newest = changelog()[0]?.run?.id || "";
     return `
       <footer class="board-footer">
-        <div class="board-footer-inner">
-          <div class="board-footer-brand">
-            <svg viewBox="0 0 67.89 67.89" aria-hidden="true"><path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z"/></svg>
-            <div><div class="board-footer-name">Pie</div><div class="board-footer-line">AI that runs everywhere.</div></div>
+        <div class="board-footer-band">
+          <div class="board-footer-about">
+            <p class="board-footer-lead">Measured in CI on real hardware: every engine on the same model and the same machine.</p>
+            <p class="board-footer-meta">${newest ? `Release ${esc(newest)}` : ""}${newest && when ? " · " : ""}${when ? `Data updated ${esc(when)}` : ""}</p>
           </div>
-          <nav class="board-footer-cols" aria-label="Site">
-            <div><h3>Benchmarks</h3><ul>${["board", "all_hardware", "speedups", "tps"].map(page).join("")}</ul></div>
-            <div><h3>Platforms</h3><ul>${["mac", "nvidia", "tpu", "amd", "cerebras"].map(page).join("")}</ul></div>
-            <div><h3>Pie</h3><ul>${out("https://pie-project.org", "Website")}${out("https://github.com/pie-project/pie", "GitHub")}</ul></div>
-          </nav>
+          <ul class="board-footer-trust">
+            ${Pie.schema.methods?.section && Pie.isOpen("methods") ? `<li><a href="#" data-board-open="methods">How we measure</a></li>` : ""}
+            <li><a href="#" data-board-open="results">All results</a></li>
+            <li><a href="#" data-board-cite>Cite this data</a></li>
+            <li><a href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">Benchmark code</a></li>
+          </ul>
+          <form class="board-footer-mail">
+            <label for="board-footer-email">Get new results by email</label>
+            <span><input id="board-footer-email" type="email" required placeholder="Email" value="${esc(Pie.account?.user()?.email || "")}"><button type="submit" aria-label="Subscribe"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M9 4.5 12.5 8 9 11.5"/></svg></button></span>
+          </form>
         </div>
         <div class="board-footer-base">
-          <span>© ${new Date().getFullYear()} Pie Project<span class="board-footer-sep">·</span><a href="https://github.com/pie-project/pie/blob/main/LICENSE" target="_blank" rel="noopener">Open source · Apache 2.0</a></span>
-          ${when ? `<span>updated ${esc(when)}</span>` : ""}
+          <span class="board-footer-links"><span class="board-footer-mark"><svg viewBox="0 0 67.89 67.89" aria-hidden="true"><path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z"/></svg>Pie Project © ${new Date().getFullYear()}</span><a href="https://github.com/pie-project/pie/blob/main/LICENSE" target="_blank" rel="noopener">Apache 2.0 license</a><a href="https://github.com/pie-project/pie" target="_blank" rel="noopener">GitHub</a></span>
+          <a class="board-footer-icon" href="https://github.com/pie-project/pie" target="_blank" rel="noopener" aria-label="Pie on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
         </div>
       </footer>`;
   };
@@ -525,6 +531,7 @@ window.Pie = window.Pie || {};
     "index-gpu":    ["#76b900"],
     "index-amd":    ["#ed1c24"],
     "index-tpu":    ["#4285f4"],
+    accuracy:       ["#34c759"],  // green: the answers agree
     wins:           ["#FF9F0A", '<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v6M8.5 19h7"/>'],  // orange, a trophy: its stem runs down into its base
     coverage:       ["#30B0C7", Pie.icons.welcome],  // teal, a grid of squares
     moe:            ["#5AC8FA", '<path d="M4 4v16h16"/><circle cx="9" cy="15" r="1.9" fill="#fff" stroke="none"/><circle cx="13" cy="11" r="1.9" fill="#fff" stroke="none"/><circle cx="17.5" cy="6.5" r="1.9" fill="#fff" stroke="none"/>'],  // a lighter cyan, the same scatter
@@ -565,6 +572,7 @@ window.Pie = window.Pie || {};
       ["Head to head", SUMMARY.map((m) => [m.id, m.title])],
       ...(Pie.signedIn() ? [["Speed by model size", [["size", "Dense models"], ["moe", "MoE models"]]]] : []),  // for an account only
       ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"], ...(Pie.signedIn() ? [[USE.id, "Share of the limit"]] : [])]],
+      ["Accuracy", [["accuracy", "Score gap"]]],
       ...(Pie.signedIn() ? [["At datacenter scale", [[SCALING.id, "Chip scaling"]]]] : []),  // the datacenter section for an account only
     ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${BADGES[id]?.[0] || "var(--color-label-tertiary)"}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
@@ -603,6 +611,15 @@ window.Pie = window.Pie || {};
             <button class="filter-button board-title-pick" type="button" data-board-pick="scale" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(scaleModelOf(rows))}${esc(names().model(scaleModelOf(rows)))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
           <div class="board-stack">${card(SCALING.id, SCALING.title, engineSub(SCALING.sub, scaleEngine), scaling(rows), enginePick("scale-engine", scaleEngine))}</div>` : ""}
+          ${(() => {
+            // the last section: one card as the others, its engine picked in its corner with the engine's logo
+            const acc = Pie.checks?.accuracyChart(state);
+            if (!acc?.chart) return "";
+            const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="accuracy-engine" aria-haspopup="menu" aria-label="Engine">${engineMark(acc.engine)}${esc(acc.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
+            return `<div class="board-section-head"><div class="board-section-text"><h1 class="board-title">Accuracy</h1>
+            <p class="board-lede">pie’s benchmark score gap to another engine, same model.</p></div></div>
+            <div class="board-stack">${card("accuracy", "Score gap", `${acc.label} minus pie, in points, with its 95% range · Right of zero, pie scores lower`, acc.chart, pick)}</div>`;
+          })()}
         </div>
       </div>${footer()}</div>`;
   };
@@ -625,25 +642,20 @@ window.Pie = window.Pie || {};
     // card in sight is marked as it comes up, not only once it has reached the top
     const box = view.getBoundingClientRect();
     const line = box.top + box.height / 3;
-    const passed = sections.filter((s) => s.getBoundingClientRect().top <= line);
-    const last = passed.length ? Math.max(...passed.map((s) => s.getBoundingClientRect().top)) : null;
+    // each card's turn: the scroll at which its top meets the line, in reading order (left to right along a row); a
+    // card whose turn comes too soon after the one before (a row's second card, or cards already in view when the page
+    // opens, as on a tall window) waits a step behind it, so every card is marked in turn as the page scrolls
+    const STEP = 40;
+    const turns = [];
+    for (const s of sections) {
+      const at = Math.max(0, s.getBoundingClientRect().top + view.scrollTop - line);
+      turns.push(turns.length ? Math.max(at, turns[turns.length - 1] + STEP) : at);
+    }
     // at the bottom of the page the last section is marked, though its top may never reach the line
     const bottom = view.scrollTop + view.clientHeight >= view.scrollHeight - 2;
-    // cards side by side in a row share a top: the line's way down through the row hands the mark from the first to the
-    // last, left to right, as the row is read, and the last keeps it until the next section comes up
-    const row = passed.filter((s) => Math.abs(s.getBoundingClientRect().top - last) < 2);
-    let current = bottom ? sections[sections.length - 1] : row[0] || sections[0];
-    if (!bottom && row.length > 1) {
-      // how far the row has moved up past the line since it could first reach it (at once, for a row the page opens on)
-      const r = row[0].getBoundingClientRect();
-      const start = Math.max(0, line - (r.top + view.scrollTop));
-      // the hand-off runs over the scroll left before the next section reaches the line, so every card in the row gets
-      // its turn even when the next row follows close behind (a tall window)
-      const next = sections.find((x) => x.getBoundingClientRect().top > r.top + 2);
-      const span = Math.max(1, Math.min(r.height, (next ? next.getBoundingClientRect().top - r.top : r.height) - start));
-      const through = Math.min(0.999, Math.max(0, (line - r.top - start) / span));
-      current = row[Math.floor(through * row.length)];
-    }
+    let index = 0;
+    for (let k = 0; k < turns.length; k++) if (turns[k] <= view.scrollTop) index = k;
+    const current = bottom ? sections[sections.length - 1] : sections[index];
     const id = pinned || current?.id.slice(6);
     for (const item of element.querySelectorAll("[data-board-go]")) item.classList.toggle("is-current", item.dataset.boardGo === id);
   };
@@ -704,14 +716,14 @@ window.Pie = window.Pie || {};
   let tipFor = null;
   element.addEventListener("pointermove", (event) => {
     if (Pie.tapCard.isTouch()) return;
-    const g = event.target.closest?.(".board-bar[data-tip-head], .board-matrix td[data-tip-head]");  // a bar, or a battle in a head-to-head grid
+    const g = event.target.closest?.(".board-bar[data-tip-head], .board-matrix td[data-tip-head], .qc-mark[data-tip-html]");  // a bar, a battle in a head-to-head grid, or an accuracy gap
     if (!g) {
       if (tipFor) { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board"); }
       return;
     }
     if (g !== tipFor) {
       tipFor = g;
-      tooltip.innerHTML = tipHtml(g);
+      tooltip.innerHTML = g.dataset.tipHtml || tipHtml(g);
       tooltip.classList.add("is-board");
       tooltip.hidden = false;
     }
@@ -742,10 +754,10 @@ window.Pie = window.Pie || {};
   // card when let go, as a Mac view bounces at its edge
   let tug = null;
   element.addEventListener("pointerdown", (event) => {
-    // the platform cards' bars the same, but only sideways
-    const grid = event.target.closest?.(".board-matrix, .is-matrices .board-chart");
-    if (!grid || event.button !== 0) return;
-    tug = { grid, x: event.clientX, y: event.clientY, id: event.pointerId, flat: grid.classList.contains("board-chart") };
+    // every card's chart the same, but only sideways, and the engine legend too
+    const grid = event.target.closest?.(".board-matrix, .board-chart, .board-legend");
+    if (!grid || event.button !== 0 || event.target.closest("button, a, input, select")) return;
+    tug = { grid, x: event.clientX, y: event.clientY, id: event.pointerId, flat: !grid.classList.contains("board-matrix") };
     grid.setPointerCapture(event.pointerId);
     grid.style.transition = "none";
     grid.classList.add("is-tugged");
@@ -776,6 +788,27 @@ window.Pie = window.Pie || {};
   };
   document.addEventListener("pointerdown", (event) => {
     if (!event.target.closest?.(".board-log-head")) setSubscribe(false);
+  });
+  // the footer's email: sent the same way as the Changelog's bell, the field then says so in place
+  element.addEventListener("submit", (event) => {
+    const form = event.target.closest(".board-footer-mail");
+    if (!form) return;
+    event.preventDefault();
+    const input = form.querySelector("input");
+    subscribe(input.value.trim());
+    try { localStorage.setItem(SUBSCRIBED_KEY, "1"); } catch { /* private windows */ }
+    form.querySelector("label").textContent = "Subscribed. Thank you";
+    input.value = "";
+  });
+  // Cite this data: a plain citation copied, the link says so a moment
+  element.addEventListener("click", (event) => {
+    const cite = event.target.closest("[data-board-cite]");
+    if (!cite) return;
+    event.preventDefault();
+    const at = Pie.store.tables.updated_at ? new Date(Pie.store.tables.updated_at).toISOString().slice(0, 10) : "";
+    navigator.clipboard?.writeText(`Pie Project. Pie inference engine benchmarks${at ? `, data of ${at}` : ""}. https://benchmarks.pie-project.org`).catch(() => {});
+    cite.textContent = "Copied";
+    setTimeout(() => { cite.textContent = "Cite this data"; }, 1500);
   });
   element.addEventListener("submit", (event) => {
     const form = event.target.closest(".board-subscribe");
@@ -972,6 +1005,10 @@ window.Pie = window.Pie || {};
         const current = scaleModelOf(measured());
         return scaleModels(measured()).map((id) => ({ value: id, label: names().model(id), selected: id === current, icon: Pie.platform.makerBadge(id) }));
       }
+      if (k === "accuracy-engine") {
+        const acc = Pie.checks?.accuracyChart(state);
+        return (acc?.engines || []).map((e) => ({ value: e, label: names().engine(e), selected: e === acc.engine, icon: engineMark(e) }));
+      }
       if (k === "size" || k === "moe") return SIZES.map((m) => ({ value: m.id, label: m.label, selected: m.id === (k === "moe" ? moeMetric : sizeMetric), icon: Pie.platform.degree(m.setup) }));
       if (k === "metric") return SPEEDS.map((m) => ({ value: m.id, label: m.label, selected: m.id === modelMetric, icon: metricIcon(m) }));
       if (k !== "model" || !state) return [];
@@ -979,6 +1016,7 @@ window.Pie = window.Pie || {};
     },
     pick(k, value) {
       if (k === "model") model = value;
+      if (k === "accuracy-engine") Pie.checks?.pick(value);
       if (k === "metric" && SPEEDS.some((m) => m.id === value)) {
         modelMetric = value;
         try { localStorage.setItem(METRIC_KEY, value); } catch { /* private windows can refuse storage */ }

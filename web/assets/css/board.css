@@ -2,7 +2,9 @@
    the left, large section titles, roomy cards, wide bars carrying their numbers */
 #board.method { display: flex; flex-direction: column; overflow: hidden; scrollbar-gutter: auto; }  /* the bar above, fixed; the content scrolls under it */
 #board.method[hidden] { display: none; }
-.board-scroll { flex: 1; min-height: 0; overflow: auto; }  /* the cards reach the edge; no gutter is kept for a scrollbar */
+.board-scroll { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }  /* a short page still sets its footer at the bottom */
+.board-scroll > .board-inner { flex: none; width: 100%; }
+.board-scroll > .board-footer { margin-top: auto; }
 
 .board-bar { justify-content: flex-start; gap: 16px; }
 .board-inner { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 24px; max-width: 1080px; margin: 0 auto; padding: 48px var(--edge) 48px; }  /* centred, as Artificial Analysis sets its column; the first title a little further under the bar than each later one below its section */
@@ -207,7 +209,7 @@
 .board-section-head > .board-toggle { margin: 0 0 -4px auto; }  /* a 24px one the same */
 .board-title-dot { width: 12px; height: 12px; flex: none; border-radius: 3px; }  /* the card's colour as a plain square before its title, as Artificial Analysis marks its charts */
 /* the page's foot: a quiet band under a hairline, its links small and grey, as a Mac site closes a page */
-.board-footer { margin-top: 0; border-top: .5px solid var(--color-separator); background: color-mix(in srgb, var(--color-fill) 45%, transparent); font-size: 11px; line-height: 1.4; color: var(--color-label-secondary); }  /* the cards' description type */
+.board-footer { margin-top: 0; border-top: .5px solid var(--color-separator); background: none; font-size: 11px; line-height: 1.4; color: var(--color-label-secondary); }  /* the cards' description type */
 .board-footer-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; max-width: 1080px; margin: 0 auto; padding: 40px var(--edge) 32px; }
 .board-footer-brand { display: grid; grid-template-columns: 16px auto; column-gap: 8px; align-items: center; align-content: start; }  /* the sidebar's mark and name, the line under the name */
 .board-footer-brand > div { display: contents; }
@@ -311,8 +313,53 @@
 .board-view svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .board-matrix, .is-matrices .board-chart { cursor: grab; user-select: none; }
 @media (pointer: fine) { .board-matrix { touch-action: none; } .is-matrices .board-chart { touch-action: pan-y; } }  /* a finger still scrolls the page past it */
-.board-matrix.is-tugged, .board-chart.is-tugged { cursor: grabbing; }
+.board-matrix.is-tugged, .board-chart.is-tugged, .board-legend.is-tugged { cursor: grabbing; user-select: none; }
 .board-matrix.is-tugged td, .board-chart.is-tugged .board-bar { pointer-events: none; }  /* no hover card while it is held */
 /* a platform card is one height whichever view it shows: the bars sit in the grid's 200px, scaled to fit */
 .is-matrices .board-card-body > .board-chart { height: 200px; }
 .board-card-pick:focus:not(:focus-visible) { outline: none; }  /* no ring after a click, only for the keyboard */
+/* the footer's last line, as OpenAI sets its own: the name and year, then a few links spaced apart with no dots, an icon at
+   the right; the data's date sits under the brand */
+.board-footer-links { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+.board-footer-links a { color: inherit; text-decoration: none; }
+.board-footer-links a:hover { color: var(--color-label); }
+.board-footer-icon { display: inline-flex; color: var(--color-label-tertiary); }
+.board-footer-icon:hover { color: var(--color-label); }
+.board-footer-icon svg { width: 16px; height: 16px; fill: currentColor; }
+.board-footer-line.is-date { margin-top: 10px; color: var(--color-label-tertiary); }
+/* no brand block: the link columns take the row, the mark leads the last line */
+.board-footer-inner { display: block; }
+.board-footer-mark { display: inline-flex; align-items: center; gap: 6px; }
+.board-footer-mark svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 4.5; transform: translateY(-1px); }  /* the triangle's weight sits high: nudged onto the text's middle */
+.board-footer-date { margin: -4px 0 8px; color: var(--color-label-tertiary); }
+/* the footer band: what the data is and when, the links that back it, a way to hear of the next release */
+.board-footer-band { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px; max-width: 1080px; margin: 0 auto; padding: 32px var(--edge) 24px; }
+.board-footer-lead { margin: 0 0 6px; font-size: 13px; line-height: 1.45; color: var(--color-label); }
+.board-footer-meta { margin: 0; color: var(--color-label-tertiary); }
+.board-footer-trust { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.board-footer-trust a { color: var(--color-label-secondary); text-decoration: none; }
+.board-footer-trust a:hover { color: var(--color-label); }
+.board-footer-mail label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 500; color: var(--color-label); }
+.board-footer-mail span { display: flex; gap: 6px; }
+.board-footer-mail input { flex: 1; min-width: 0; height: 28px; padding: 0 10px; border: 0; border-radius: 12px; font: inherit; font-size: 12px; color: var(--color-label); background: var(--color-fill); outline: none; }
+.board-footer-mail button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 12px; color: #fff; background: #1d1d1f; cursor: pointer; }
+:root[data-theme="dark"] .board-footer-mail button { color: #1d1d1f; background: #f5f5f7; }
+.board-footer-mail button svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 899px) { .board-footer-band { grid-template-columns: 1fr; gap: 20px; } }
+
+/* the Accuracy card's chart in the Overview's own hand: its ticks, gridlines and labels as the bar charts draw theirs,
+   the key as the engines' key reads, rounded squares before grey words */
+.board-card .qc-chart .qc-grid { stroke: var(--color-separator); stroke-dasharray: none; opacity: .6; }
+.board-card .qc-chart .qc-grid.is-zero { stroke: var(--color-label-tertiary); opacity: 1; }
+.board-card .qc-chart .qc-tick { font-size: 10px; fill: var(--color-label-tertiary); }
+.board-card .qc-chart .qc-row { font-size: 11px; fill: var(--color-label); }
+.board-card .qc-chart .qc-mark.is-off .qc-row { font-weight: 600; fill: var(--color-negative); }
+.board-card .qc-chart .qc-band { fill: var(--color-fill); }
+.board-card .qc-chart .qc-err { stroke: var(--color-label-tertiary); stroke-width: 2; }
+.board-card .qc-chart .qc-dot { fill: var(--color-label-secondary); stroke: var(--color-row); stroke-width: 2; }
+.board-card .qc-chart .qc-mark.is-off .qc-dot { fill: var(--color-negative); }
+.board-card .qc-chart .qc-mark { transition: opacity .15s ease; }
+.board-card .qc-chart:hover .qc-mark { opacity: .45; }
+.board-card .qc-chart:hover .qc-mark:hover { opacity: 1; }  /* the row under the pointer stays, the rest fade, as the bars do */
+.board-card .qc-chart-key { gap: 16px; margin: 6px 0 4px; font-size: 12px; color: var(--color-label-secondary); }
+.board-card .qc-key-band, .board-card .qc-key-dot { width: 8px; height: 8px; border-radius: 2px; }

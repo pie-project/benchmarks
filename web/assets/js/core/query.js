@@ -55,10 +55,11 @@ window.Pie = window.Pie || {};
     // "Hide unavailable" drops the setups that cannot run (too big for the Mac, or unsupported by the engine);
     // in the Hardware catalog, the accelerators no CI run uses; in the other catalogs, the entries with no result
     const unavailable = state.table === "hardware" ? (row) => !row.runs
-      : Pie.schema[state.table]?.section === "catalog" ? (row) => "_results" in row && !row._results
+      : Pie.schema[state.table]?.section === "catalog" ? (row) => "_results" in row && !row._results && !row.catalog  // a model on the catalog list stays, measured or not
       : (row) => row.status === "no_fit" || row.status === "unsupported" || row.status === "no_data";
     const rows = source.filter((row) => matchesFilters(row, state.filters) && matchesSearch(row, schema.columns, query)
-      && !(state.hideEmpty && unavailable(row)));
+      && !(state.hideEmpty && unavailable(row))
+      && !(["results", "quality"].includes(state.table) && Pie.dates && !Pie.dates.keeps(row)));  // the dates picked in the bar
     return state.sort ? [...rows].sort(compare(state.sort.key, state.sort.direction)) : rows;
   };
 

@@ -199,6 +199,7 @@ window.Pie = window.Pie || {};
         this.close();
         return;
       }
+      Pie.dates?.close();  // one menu open at a time: the Results page's calendar shuts
       owner = key;
       anchor = target;
       element.classList.toggle("is-fit", String(key).startsWith("board:"));  // the Rankings' picks: as wide as their longest item
