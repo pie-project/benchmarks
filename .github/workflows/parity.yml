@@ -16,6 +16,7 @@ on:
       kernels: { description: "also run the kernel test suite, one pod per platform", type: boolean, required: false, default: true }
       accuracy: { description: "comma-separated question sets (gsm8k,mmlu,arc,math500,ifeval): score the full models on them, pie and vLLM, instead of parity; use with an 8-GPU platform", required: false, default: "" }
       n: { description: "questions per set in an accuracy run", required: false, default: "100" }
+      vllm: { description: "vLLM release (latest: the newest on PyPI)", required: false, default: "latest" }
       mac: { description: "a Mac platform id (pie on Metal against mlx-lm, on that runner); empty: none", required: false, default: "" }
 concurrency: { group: "parity-${{ github.run_id }}", cancel-in-progress: false }
 
@@ -28,6 +29,7 @@ jobs:
       pods: "${{ steps.p.outputs.pods }}"
       commit: "${{ steps.p.outputs.commit }}"
       kcommit: "${{ steps.p.outputs.kcommit }}"
+      vllm: "${{ steps.p.outputs.vllm }}"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
@@ -47,6 +49,9 @@ jobs:
           sha() { local c="${1:-main}"; [[ "$c" =~ ^[0-9a-f]{40}$ ]] && echo "$c" || gh api "repos/pie-project/pie/commits/$c" --jq .sha; }
           echo "commit=$(sha "$C")" >> "$GITHUB_OUTPUT"
           echo "kcommit=$(sha "$KC")" >> "$GITHUB_OUTPUT"
+          V="${{ inputs.vllm }}"; [ "$V" = latest ] && V=$(curl -fsSL https://pypi.org/pypi/vllm/json | jq -r .info.version)
+          [[ "$V" =~ ^[0-9][0-9a-z.+-]*$ ]] || { echo "::error::bad vllm '$V'"; exit 1; }
+          echo "vllm=$V" >> "$GITHUB_OUTPUT"
           uv run --no-project --with pyyaml python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json, os, yaml
           plats = {p["id"]: p for p in yaml.safe_load(open("matrix/platforms.yaml"))["platforms"]}
@@ -120,7 +125,7 @@ jobs:
     strategy: { fail-fast: false, matrix: "${{ fromJson(needs.gate.outputs.shards) }}" }
     runs-on: ["${{ matrix.label }}"]
     timeout-minutes: 400
-    env: { C: "${{ needs.plan.outputs.commit }}", F: "${{ matrix.backend }}" }
+    env: { C: "${{ needs.plan.outputs.commit }}", F: "${{ matrix.backend }}", PARITY_VLLM_PIN: "${{ needs.plan.outputs.vllm }}" }
     steps:
       - uses: actions/checkout@v4
       - name: install harness
