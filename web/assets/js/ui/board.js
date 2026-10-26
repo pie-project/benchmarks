@@ -138,8 +138,8 @@ window.Pie = window.Pie || {};
     label: (v) => `${Math.round(v)}%`,
   }));
   // each platform's card shows its bars or, picked in its corner, the grid of head-to-heads they are fitted from
-  const GRID_KEY = "pieGridCards";  // kept per browser, as the cards' other picks are
-  const gridCards = new Set((() => { try { return JSON.parse(localStorage.getItem(GRID_KEY)) || []; } catch { return []; } })());
+  const GRID_KEY = "pieGridCards2";  // kept per browser, as the cards' other picks are
+  const gridCards = new Set((() => { try { return JSON.parse(localStorage.getItem(GRID_KEY)) ?? ["index-gpu"]; } catch { return []; } })());
   const BARS_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V8M8 13V3.5M12 13V6.5"/></svg>';
   const GRID_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg>';
   // the platform pages' setup control in small: symbols on a grey capsule, the picked one in the accent, no thumb
