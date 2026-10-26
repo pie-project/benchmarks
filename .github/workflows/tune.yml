@@ -42,9 +42,9 @@ jobs:
           GH_RUNNER_PAT: ${{ secrets.GH_RUNNER_PAT }}
           RUNPOD_NETWORK_VOLUME_ID: ${{ vars.RUNPOD_NETWORK_VOLUME_ID }}
 
+  # not after launch: each tune waits only for its own pod's runner (its label), not for every other GPU's stock
   tune:
-    needs: [plan, launch]
-    if: always() && needs.plan.result == 'success'
+    needs: plan
     strategy: { fail-fast: false, matrix: { platform: "${{ fromJson(needs.plan.outputs.platforms) }}" } }
     runs-on: ["tune-${{ github.run_id }}-${{ matrix.platform }}"]
     timeout-minutes: 100
