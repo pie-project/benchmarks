@@ -200,3 +200,4 @@
 }
 .board-pick-logo { width: 13px; height: 13px; flex: none; overflow: visible; }  /* an engine's logo before its name in a pick */
 .popover .board-pick-logo { margin-right: 6px; }
+.board-log-glyph svg .is-filled { fill: var(--color-accent); stroke: none; }  /* the changelog's bars, solid as the sidebar's */

@@ -164,7 +164,7 @@
 .platform-empty { margin: auto; padding: 48px 24px; text-align: center; color: var(--color-label-secondary); }
 .platform-empty .sidebar-glyph[style] { width: 48px; height: 48px; border-radius: 11px; }  /* scaled with the 15px title under it */
 .platform-empty .sidebar-glyph[style] svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.8; }
-.platform-empty .sidebar-glyph svg .is-filled { fill: var(--color-label); stroke: none; }
+.platform-empty .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }  /* white on the platform's tile, as the sidebar's */
 .platform-empty h2 { margin: 14px 0 6px; font: 700 15px/1.2 var(--font-display); letter-spacing: -.01em; color: var(--color-label); }  /* the toolbar title's type */
 @media (max-width: 899px) { .platform-empty h2 { font-size: 17px; font-weight: 600; } }  /* as the toolbar title on a phone */
 .platform-empty p { margin: 0; font-size: 13px; }
@@ -781,3 +781,4 @@
 .platform-bar .filter-button.is-engine:hover,
 .platform-bar .filter-button.is-engine[aria-expanded="true"] { background: color-mix(in srgb, var(--tint) 30%, transparent); }
 .platform-bar .filter-button.is-engine .popup-chevron { stroke: var(--tint); }
+.view-cycle svg .is-filled { fill: var(--color-accent); stroke: none; }  /* a solid icon in the view button, in the sidebar's blue */
