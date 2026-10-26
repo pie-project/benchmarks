@@ -480,3 +480,4 @@
   .toolbar-search:not(.is-filtered) .toolbar-search-text { display: none; }
   .toolbar-search { padding: 0 9px; }
 }
+.tool-button:focus:not(:focus-visible) { outline: none; }  /* no ring after a click, only for the keyboard */

@@ -17,7 +17,7 @@ window.Pie = window.Pie || {};
       <span>${schema.label}</span>
       <svg class="sidebar-out" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg>
     </a>` : `
-    <button class="sidebar-item${selected ? " is-selected" : ""}" type="button" data-table="${id}" aria-current="${selected}">
+    <button class="sidebar-item${selected ? " is-selected" : ""}${schema.platform ? " is-platform" : ""}" type="button" data-table="${id}" aria-current="${selected}">
       <span class="sidebar-glyph"${schema.tint ? ` style="--tint: ${schema.tint}"` : ""}>${Pie.icon(id)}</span>
       <span>${schema.label}</span>
       ${schema.tag ? `<span class="sidebar-tag" title="Under development">${schema.tag}</span>` : ""}

@@ -47,7 +47,7 @@ window.Pie = window.Pie || {};
       out.push({ kind: "Machine", text: name, sub: s.short || s.label, icon: Pie.icon(platform), tint: s.tint, run: () => { go(platform); filter(name); } });
     }
     for (const m of Pie.board?.menu("model") || []) {
-      out.push({ kind: "Model", text: m.label, sub: "Rankings", icon: Pie.icon("models"), run: () => { Pie.board.pick("model", m.value); go("board"); } });
+      out.push({ kind: "Model", text: m.label, sub: "Overview", icon: Pie.icon("models"), run: () => { Pie.board.pick("model", m.value); go("board"); } });
     }
     return out;
   };
