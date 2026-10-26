@@ -16,10 +16,10 @@ window.Pie = window.Pie || {};
   // run different kernels with different bottlenecks. Each group opens on its raw row (speculation off), held against
   // the hardware limit; the features under it are only those that change that phase, each shown as its gain over raw
   const MODES = [
-    { id: "decode", group: "Decode", label: "Decode", item: "Raw", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
+    { id: "decode", group: "Decode", label: "Generation", title: "Generation Speed", item: "Raw", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
     { id: "spec", group: "Decode", label: "Spec Decode", item: "Speculative", icon: "M2 8h5M5 5l3 3-3 3M9 8h5M12 5l3 3-3 3", detail: "single request, speculation on", workload: "spec", metric: METRICS[0] },
-    { id: "prefill", group: "Prefill", label: "Prefill", item: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
-    { id: "batching", group: "Decode", label: "Peak FLOPs", item: "Batched", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
+    { id: "prefill", group: "Prefill", label: "Prefill", title: "Prefill Speed", item: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
+    { id: "batching", group: "Decode", label: "Max Throughput", title: "Maximum Throughput", item: "Batched", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
   ];
   // the setups' segments show how much of the chip each pass fills, as a level fills: Decode one token at a time (a dot,
   // waiting on memory), Prefill the prompt's tokens in one row (a line, toward the compute roof but on some machines
@@ -33,8 +33,10 @@ window.Pie = window.Pie || {};
     batching: AT.flatMap((y) => AT.map((x) => mark(x, y))).join(""),
   };
   // the setups as one segmented control, the grid's and the Roofline page's alike: each segment its degree and its name
-  const setupControl = (active, modes) => `<span class="platform-compare" role="group" aria-label="Setup">${modes.map((m) =>
-    `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.label)}</button>`).join("")}</span>`;
+  // the setups in two groups, each named in grey before it: one request at a time, then many at once
+  const setupControl = (active, modes) => `<span class="platform-compare" role="group" aria-label="Setup">${modes.map((m, i) =>
+    (m.id === "batching" ? `<span class="setup-group is-second">Batched</span>` : i === 0 ? `<span class="setup-group">1 request</span>` : "") +
+    `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}" title="${esc(`${m.title || m.label}, ${m.id === "batching" ? "as many requests at once as the hardware needs to stay busy" : "one request"}`)}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.label)}</button>`).join("")}</span>`;
   let onChange = () => {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
@@ -320,24 +322,6 @@ window.Pie = window.Pie || {};
       .map((p) => point(x(p.ai).toFixed(1), y(p.achieved).toFixed(1), isPie(p) ? "rf-dot" : "rf-dot is-other", isPie(p) ? Pie.engines.colorOf(p.r.engine) : "")).join("");
     const pct = (vx, vy) => `left: ${((vx / W) * 100).toFixed(2)}%; top: ${((vy / H) * 100).toFixed(2)}%`;
     // no engine is named on the chart: the picked one is the dot in its colour, and the list under it names them all
-    // the move from the Raw pass to the speculative one: the Raw pass a grey dot, as the cards grey every pass not in
-    // focus, the speculative the engine's dot; a straight line in the engine's colour from the edge of the one to the
-    // edge of the other, its small arrowhead's tip on the second dot
-    const arrow = (() => {
-      const a = points.find((p) => p.ghost), b = points.find(isPie);
-      if (!move || !a || !b) return "";
-      const [x1, y1, x2, y2] = [x(a.ai), y(a.achieved), x(b.ai), y(b.achieved)];
-      const len = Math.hypot(x2 - x1, y2 - y1);
-      const R = 3.5, H = 6.5, Wd = 3.8;  // a dot's radius (7px across), the arrowhead's length and half its width
-      if (len < 2 * R + H + 2) return "";
-      const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
-      const tip = [x2 - ux * R, y2 - uy * R], base = [tip[0] - ux * H, tip[1] - uy * H];
-      const head = [tip, [base[0] - uy * Wd, base[1] + ux * Wd], [base[0] + uy * Wd, base[1] - ux * Wd]]
-        .map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ");
-      const color = Pie.engines.colorOf(b.r.engine);
-      return `<line class="rf-move" x1="${(x1 + ux * R).toFixed(1)}" y1="${(y1 + uy * R).toFixed(1)}" x2="${base[0].toFixed(1)}" y2="${base[1].toFixed(1)}" stroke="${color}"/>
-          <polygon class="rf-move-head" points="${head}" fill="${color}"/>`;
-    })();
     const shown = knee > X0 && knee < X1;  // the knee, only when it falls inside the window
     const roofPts = (shown ? [start, knee, X1] : [start, X1]).map((v) => `${x(v).toFixed(1)},${y(roof(v)).toFixed(1)}`);
     const kx = x(knee), ky = y(peak * 1e12);
@@ -348,7 +332,7 @@ window.Pie = window.Pie || {};
           <polyline class="rf-roof" points="${roofPts.join(" ")}"/>
           ${link ? `<line class="rf-link" x1="${L}" x2="${W - R}" y1="${y(link).toFixed(1)}" y2="${y(link).toFixed(1)}"/>` : ""}
           ${shown ? point(kx.toFixed(1), ky.toFixed(1), "rf-knee") + point(kx.toFixed(1), ky.toFixed(1), "rf-knee-hole") : ""}
-          ${arrow}${dots}
+          ${dots}
         </svg>
         ${shown ? `<span class="rf-tick-name${kx > W / 2 ? " is-left" : ""} is-above" style="${pct(kx, ky)}">Knee</span>` : ""}
       </div>`;
@@ -533,23 +517,27 @@ window.Pie = window.Pie || {};
         .sort((a, b) => byRank(p.makerOrder, makerOf(a).name, makerOf(b).name)
           || makerFill[makerOf(b).name] - makerFill[makerOf(a).name] || byName(makerOf(a).name || "~", makerOf(b).name || "~")
           || byRank(p.modelOrder, a, b) || fillOf(b) - fillOf(a) || byName(names().model(a), names().model(b)));
-      // Raw Decode: a model a machine here speculated on gets a second column beside it, "model~spec", with those runs
+      // Decode: each engine at its best, speculating or not, in one column per model; a cell won by a speculative run
+      // reads as one (its hover card and its roofline limit)
       const SPEC = MODES.find((m) => m.id === "spec");
       const specRows = mode.id === "decode" ? all.filter((r) => r.workload === "spec" && Pie.store.isMeasured(r) && macs.includes(r.hardware)) : [];
-      const specced = new Set(specRows.filter((r) => r[metric.key]).map((r) => r.model));
-      const allModels = sortedModels.flatMap((id) => (specced.has(id) ? [id, `${id}~spec`] : [id]));
-      const realOf = (id) => id.split("~")[0];
-      const isSpec = (id) => id.endsWith("~spec");
-      const modeOf = (id) => (isSpec(id) ? SPEC : mode);
+      const bestOf = (list) => {
+        const by = {};
+        for (const r of list) if (r[metric.key] && (!by[r.engine] || r[metric.key] > by[r.engine][metric.key])) by[r.engine] = r;
+        return Object.values(by);
+      };
+      const allModels = sortedModels;
+      const realOf = (id) => id;
+      const modeOf = (c) => (c?.pie?.workload === "spec" ? SPEC : mode);
       const grid = {};
       for (const mac of macs) {
         grid[mac] = {};
         for (const model of allModels) {
           const id = realOf(model);
-          const from = isSpec(model) ? specRows : rows;
-          const c = cell(from.filter((r) => r.hardware === mac && r.model === id), metric, base);
+          const here = (r) => r.hardware === mac && r.model === id;
+          const c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base);
           const needs = noFit[mac]?.[id]?.[base];
-          const own = (isSpec(model) ? all.filter((r) => r.workload === "spec") : snapshot).find((r) => r.hardware === mac && r.model === id && r.engine === base);
+          const own = snapshot.find((r) => here(r) && r.engine === base);
           // an empty cell explains itself only when there is something to say: it does not fit, or its run failed
           grid[mac][model] = { c, needs, why: needs ? `Needs about ${Math.round(needs)} GB` : own?.note || "" };
         }
@@ -620,7 +608,7 @@ window.Pie = window.Pie || {};
           const sorted = sortKey === model ? " is-sorted" : "";
           if (c) {
             cells.push(c.gain);
-            const ceil = compare === "ceiling" ? boundOf(mac, realOf(model), modeOf(model), metric, c.pie) : null;
+            const ceil = compare === "ceiling" ? boundOf(mac, realOf(model), modeOf(c), metric, c.pie) : null;
             const n = compare === "ceiling"
               ? (() => {
                   // one neutral colour: the closest to the bound is bold, the furthest dimmed
@@ -635,7 +623,7 @@ window.Pie = window.Pie || {};
                 })()
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(model), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(model), raw)}</span></td>`;
+            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${why ? ` data-tip="${esc(card("", "", [], why))}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
@@ -647,7 +635,7 @@ window.Pie = window.Pie || {};
       for (const model of models) {
         const maker = makerOf(model);
         // a speculation column widens the band but is not another model
-        if (makers.length && makers[makers.length - 1].maker.name === maker.name) { makers[makers.length - 1].n += 1; makers[makers.length - 1].count += isSpec(model) ? 0 : 1; }
+        if (makers.length && makers[makers.length - 1].maker.name === maker.name) { makers[makers.length - 1].n += 1; makers[makers.length - 1].count += 1; }
         else makers.push({ maker, n: 1, count: 1 });
       }
       const makerRow = `<tr class="platform-maker-row"><th class="platform-corner is-sortable" data-sort="name" aria-hidden="true"></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }) =>
@@ -658,7 +646,7 @@ window.Pie = window.Pie || {};
         const m = Pie.store.index.models[realOf(model)] || {};
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
         // the speculative column says so under the model's name, where the other columns give its size
-        const sub = isSpec(model) ? "Speculation" : size;
+        const sub = size;
         return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(realOf(model)))}, or drag to move">
           <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
