@@ -297,6 +297,34 @@ def _miniature_labels() -> dict[str, str]:
 
 
 MINIATURE = _miniature_labels()
+
+
+def _miniature_shapes() -> dict[str, dict]:
+    """A miniature's own size, for its roofline: the embedding and LM head whole, the kept share of the body's layers,
+    and of the routed experts the kept share (a token still runs through top-k of them). An estimate from the
+    full model's stated sizes: the body is taken as even across layers."""
+    arts = load("models")["artifacts"]
+    full = {a["base_model"]: a for a in arts if a.get("kind", "full") == "full" and a.get("layers") and a.get("vocab")}
+    out = {}
+    for a in arts:
+        f = full.get(a.get("base_model"))
+        if a.get("kind") != "miniature" or not a.get("miniature") or not f or not f.get("params_b"):
+            continue
+        r = a["miniature"]
+        kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(r["layers"]).split(","))
+        share = kept / f["layers"]
+        emb = 2 * f["vocab"] * f["hidden_size"] / 1e9
+        body, active_body = f["params_b"] - emb, (f.get("active_b") or f["params_b"]) - emb
+        experts = min(1.0, (r.get("experts") or f["experts"]) / f["experts"]) if f.get("experts") else 1.0
+        out[a["id"]] = {"mini_active_b": round(emb + active_body * share, 3),
+                        "mini_params_b": round(emb + (active_body + (body - active_body) * experts) * share, 3),
+                        "mini_emb_b": round(emb, 3), "mini_layers": kept,
+                        # the share of its kept experts a token runs through
+                        "mini_k": round(min(1.0, f["top_k"] / (r.get("experts") or f["experts"])), 3) if f.get("top_k") and f.get("experts") else 1.0}
+    return out
+
+
+MINI_SHAPE = _miniature_shapes()
 # the miniatures of a datacenter model (over 100 GiB as released): those stand in for it, the CI fixtures never do
 _FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("kind", "full") == "full" and (a.get("expected_gib") or 0) > 100}
 SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and a["base_model"] in _FULL_BASES}
@@ -349,6 +377,7 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "measured": local(r["started_at"]),
         "status": r["status"], "note": draft_note(r, engine),
         "miniature": MINIATURE.get(r["artifact"], ""),
+        **MINI_SHAPE.get(r["artifact"], {}),
     }
 
 
