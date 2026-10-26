@@ -20,6 +20,7 @@ on:
       tag: { description: "a tag for the site (0.5.3-b5): the results join that run beside the Macs'", required: false, default: "" }
       pins: { description: "competitor releases id=version,... (empty with a tag: the newest vLLM and SGLang on PyPI)", required: false, default: "" }
       pie_env: { description: "KEY=VALUE pairs set for the node run (A/B diagnostics)", required: false, default: "" }
+      own_pods: { description: "rent this run's own pods, so runs go side by side", type: boolean, required: false, default: false }
 jobs:
   resolve:
     runs-on: ubuntu-latest
@@ -58,5 +59,6 @@ jobs:
       tag: ${{ github.event.inputs.tag || '' }}
       tag_kind: ${{ github.event.inputs.tag && 'manual' || '' }}
       pins: ${{ needs.resolve.outputs.pins }}
+      own_pods: ${{ github.event.inputs.own_pods == 'true' }}
       pie_env: ${{ github.event.inputs.pie_env || '' }}
     secrets: inherit

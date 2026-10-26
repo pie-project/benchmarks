@@ -49,6 +49,10 @@ METRICS = ["decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "ttft
 
 # families whose name does not say they route experts
 MOE_FAMILIES = {"gpt_oss", "qwen4_exp"}
+# a catalog-only model's fit: bytes per weight at its release precision, and the largest node CI rents on each platform
+# (RunPod: 8 x B300 288 GB, 8 x MI300X 192 GB; Google Cloud: a v5p-8, 4 chips x 95 GB; TPU7x has no quota)
+BYTES_PER_WEIGHT = {"bf16": 2, "fp8": 1, "mxfp8": 1, "mxfp4": 0.53, "int4": 0.5625, "nvfp4": 0.5625}
+NODE_GB = {"GPU": 8 * 288, "AMD": 8 * 192, "TPU": 4 * 95}
 
 
 def load(name: str) -> dict:
@@ -76,6 +80,10 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
         for size in ("params_b", "active_b"):
             if a.get(size) is not None:
                 row[size + "_stated"] = float(a[size])
+        # the shape as the model's config.json states it (a full checkpoint's, never a miniature's)
+        for k in ("layers", "hidden_size", "experts", "top_k", "context"):
+            if a.get(k) is not None and a.get("kind", "full") == "full":
+                row[k] = a[k]
         if a.get("scheme"):
             row["schemes"].add(a["scheme"])
     for row in by_model.values():
@@ -94,8 +102,37 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
         row["size_gib"] = round(row["params_b"] * 1e9 * 4.5 / 8 / 2**30, 1) if row["params_b"] else None
         # what it takes to fit: the planner's own rule (weights x 1.25 must fit in the Mac's memory)
         row["needs_gib"] = round(row["size_gib"] * 1.25, 1) if row["size_gib"] else None
-        row["context"] = None
+        row.setdefault("context", None)
         row["license"] = None
+    # the catalog's models (matrix/models.yaml `catalog:`): every model the site lists, run or not. A model CI runs takes
+    # the stated sizes and layer count it lacks; one it does not run becomes a catalog-only row (no results, no grid)
+    for c in load("models").get("catalog") or []:
+        mid = c["name"].lower()
+        row = by_model.get(mid)
+        if row is None:
+            row = by_model[mid] = {"id": mid, "name": c["name"], "family": c.get("family"), "base_model": c.get("base_model"),
+                                   "schemes": c.get("precision") or "", "artifacts": 0, "draft": "true" if c.get("mtp") else "false",
+                                   "catalog_only": True}
+        row["catalog"] = True
+        if c.get("mtp"):
+            row["draft"] = "true"  # ships its own draft head: speculative decoding works out of the box
+        # the card's sizes win over the ones read from a name; the rest only fill what is missing
+        for key in ("params_b", "active_b"):
+            if c.get(key) is not None:
+                row[key] = float(c[key])
+        for key in ("layers", "hidden_size", "experts", "top_k", "context", "license"):
+            if c.get(key) is not None and row.get(key) is None:
+                row[key] = c[key]
+        row["architecture"] = "MoE" if (row.get("active_b") or 0) < (row.get("params_b") or 0) else row.get("architecture") or "dense"
+        row["ssd_streaming"] = "Without" if row["architecture"] == "MoE" else "n/a"
+        if row.get("params_b"):
+            row["size_gib"] = round(row["params_b"] * 1e9 * 4.5 / 8 / 2**30, 1)
+            row["needs_gib"] = round(row["size_gib"] * 1.25, 1)
+        if row.get("params_b"):
+            # where it would fit (shown faded wherever it is not yet measured): its weights at the precision it is released in, x1.25, against the
+            # largest node CI can rent on each platform
+            need = row["params_b"] * BYTES_PER_WEIGHT.get(str(c.get("precision") or "bf16"), 2) * 1.25
+            row["fits"] = ", ".join(t for t, gb in NODE_GB.items() if need <= gb)
     return mapping, list(by_model.values())
 
 
@@ -246,10 +283,29 @@ def local(ts) -> str:
     return ts.astimezone(SITE_TZ).strftime("%Y-%m-%d %H:%M") if ts is not None else ""
 
 
+# a miniature row's label: how much of the model it keeps ("8 of 78 layers")
+def _miniature_labels() -> dict[str, str]:
+    arts = load("models")["artifacts"]
+    full = {a["base_model"]: a["layers"] for a in arts if a.get("layers") and a.get("kind", "full") == "full"}
+    out = {}
+    for a in arts:
+        if a.get("kind") != "miniature" or not a.get("miniature"):
+            continue
+        kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(a["miniature"]["layers"]).split(","))
+        out[a["id"]] = f"{kept} of {full[a['base_model']]} layers" if a["base_model"] in full else f"{kept} layers"
+    return out
+
+
+MINIATURE = _miniature_labels()
+# the miniatures of a datacenter model (over 100 GiB as released): those stand in for it, the CI fixtures never do
+_FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("kind", "full") == "full" and (a.get("expected_gib") or 0) > 100}
+SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and a["base_model"] in _FULL_BASES}
+
+
 def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
     """The row to show for each (hardware, engine, model, workload category): the best-matching workload, then on a Mac
-    the MLX weights every Mac engine shares, then the newest. A miniature (a few layers of the real shape, a CI fixture)
-    is never the model's number."""
+    the MLX weights every Mac engine shares, then the newest. A miniature (a few layers of the real shape) stands in only
+    where the model has no full-checkpoint row, and its row says so (``miniature``)."""
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
     best: dict[tuple, tuple] = {}
@@ -258,7 +314,9 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
         if not cat_pri:
             continue
         art = arts.get(r["artifact"], {})
-        if art.get("kind") == "miniature":
+        mini = art.get("kind") == "miniature"
+        # a CI fixture is never a model's number; a datacenter model cut to fit one device is, marked as such
+        if mini and r["artifact"] not in SHOWN_MINIATURES:
             continue
         # Splash always drafts; its Raw and Batched rows (older runs among them) were never plain decoding
         if r["engine"] == "splash" and WL_PRIORITY[r["workload"]][0] in ("raw", "throughput"):
@@ -271,7 +329,7 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
         model = a2m.get(r["artifact"], r["artifact"])
         key = (r["platform"], r["engine"], model, cat)
         shared = r["platform"] in macs and art.get("source_format") == "mlx"
-        rank = (-pri, shared, r["started_at"])
+        rank = (not mini, -pri, shared, r["started_at"])
         if key not in best or rank > best[key][0]:
             best[key] = (rank, r)
     return best
@@ -290,6 +348,7 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "commit": (r["pie_commit"] or "")[:9] if engine == "pie" else "",
         "measured": local(r["started_at"]),
         "status": r["status"], "note": draft_note(r, engine),
+        "miniature": MINIATURE.get(r["artifact"], ""),
     }
 
 
@@ -735,7 +794,7 @@ def main() -> None:
           "no_fit": misfits, "suites": suite_ids,
           "hardware": hw_rows,
           # the Engines table lists every engine CI runs, the GPU-only ones (vLLM, SGLang) too; the grids keep to the Mac engines
-          "engines": engines(), "models": [m for m in models if m["id"] in model_ids],
+          "engines": engines(), "models": [m for m in models if m["id"] in model_ids or m.get("catalog")],
           "workloads": workloads(), "quality_tasks": quality_tasks(), "quality": quality.get(order[0], []) if order else []}
     (WEB / "data").mkdir(parents=True, exist_ok=True)
     (WEB / "data" / "db.js").write_text("const DB = " + json.dumps(db, indent=2, default=str) + ";\n")
