@@ -123,43 +123,54 @@ window.Pie = window.Pie || {};
   let summaryWorkload = (() => { try { const k = localStorage.getItem(SUMMARY_KEY); return SUMMARY_WORKLOADS.some((w) => w.id === k) ? k : "raw"; } catch { return "raw"; } })();
   const setups = (rows, key) => {
     const by = {};
-    for (const r of rows) if (r.workload === summaryWorkload && r[key]) ((by[`${r.hardware}|${r.model}`] ||= {})[r.engine] = r[key]);
+    // an engine's best decode on the setup: with speculation where it has run it, plain decode otherwise
+    for (const r of rows) if ((r.workload === "raw" || r.workload === "spec") && r[key]) {
+      const s = (by[`${r.hardware}|${r.model}`] ||= {});
+      s[r.engine] = Math.max(s[r.engine] || 0, r[key]);
+    }
     return Object.values(by).filter((s) => Object.keys(s).length > 1);
   };
-  const SUMMARY = [
-    {
-      id: "index", title: "Speed index", sub: "Decode speed against the fastest · 100 = always fastest",
-      value: (rows, engine) => {
-        const own = setups(rows, "decode_tok_s").filter((s) => s[engine]);
-        if (!own.length) return null;
-        const logs = own.map((s) => Math.log(s[engine] / Math.max(...Object.values(s))));
-        return { v: 100 * Math.exp(logs.reduce((a, b) => a + b, 0) / logs.length), n: own.length };
-      },
-      label: (v) => Math.round(v),
-    },
-    {
-      id: "wins", title: "Win rate", sub: "Decodes fastest · Higher is better",
-      value: (rows, engine) => {
-        const own = setups(rows, "decode_tok_s").filter((s) => s[engine]);
-        if (!own.length) return null;
-        return { v: (100 * own.filter((s) => s[engine] === Math.max(...Object.values(s))).length) / own.length, n: own.length };
-      },
-      label: (v) => `${Math.round(v)}%`,
-    },
-    {
-      id: "coverage", title: "Coverage", sub: "Machine and model pairs · Higher is broader",
-      value: (rows, engine) => {
-        const own = rows.filter((r) => r.workload === summaryWorkload && r.engine === engine && r.decode_tok_s);
-        const n = new Set(own.map((r) => `${r.hardware}|${r.model}`)).size;
-        if (!n) return null;
-        // how many platforms the pairs are on, for the bar's card
-        const k = new Set(own.map((r) => Pie.platformOf(Pie.store.index.hardware[r.hardware] || {}))).size;
-        const detail = `${k} ${k === 1 ? "platform" : "platforms"}`;
-        return { v: n, n, detail };
-      },
-      label: (v) => Math.round(v),
-    },
-  ];
+  // the win rate on each platform apart: an engine is held only against the others on that platform's machines
+  const onPlatform = (rows, ids) => rows.filter((r) => ids.includes(Pie.platformOf(Pie.store.index.hardware[r.hardware] || {})));
+  const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]]].map(([id, title, ids]) => ({
+    id, title, ids, sub: "Head-to-head decode win rate · Speculation included",
+  }));
+  // head to head on one platform: each cell counts the setups the row's engine decoded faster than the column's, a setup
+  // counting only where both ran it; an engine never meets itself, so the diagonal stays empty; the rows by wins
+  const matrix = (summary, rows) => {
+    const all = setups(onPlatform(rows, summary.ids), "decode_tok_s");
+    const won = (a, b) => all.filter((s) => s[a] && s[b] && s[a] > s[b]).length;
+    const played = (a, b) => all.filter((s) => s[a] && s[b]).length;
+    const ids = engineIds().filter((e) => all.some((s) => s[e]));
+    if (ids.length < 2) return `<p class="board-empty">No runs yet</p>`;
+    const total = (a) => ids.reduce((n, b) => n + (a === b ? 0 : won(a, b)), 0);
+    const order = [...ids].sort((a, b) => total(b) - total(a));
+    // MLX's mark is its wordmark, wider than the square the others fill, so its box widens to hold it
+    // Splash's mark alone, in its tile's coral with no tile behind it, as the other logos stand on the page
+    const mark = (e) => `<svg class="board-matrix-logo${e === "mlxlm" ? " is-wide" : ""}" viewBox="${e === "mlxlm" ? "-6 0 28 16" : "0 0 16 16"}" aria-hidden="true">${e === "splash" ? '<image href="assets/img/engines/splash-glyph.png" width="16" height="16"/>' : logo(e, 0, 0, 16)}</svg>`;
+    // the rows by logo and name; the columns by the name standing upright over the logo, as LMArena labels its battles
+    const name = (e) => `<span class="board-matrix-name">${esc(SHORT[e] || names().engine(e))}</span>`;
+    const head = (e, row) => `<span class="board-matrix-engine${row ? "" : " is-col"}">${name(e)}<span class="board-matrix-slot">${mark(e)}</span></span>`;  // each logo in a square of one size, so they line up down the rows
+    const cell = (a, b) => {
+      if (a === b) return `<td class="is-self"></td>`;
+      const w = won(a, b), n = played(a, b);
+      if (!n) return `<td class="is-none">–</td>`;
+      // the share won, as LMArena shades its battles: green where the row leads, blue where it trails, a step deeper
+      // for every tenth past even; within a twentieth of even stays neutral
+      const share = w / n, step = Math.min(4, Math.floor(Math.abs(share - .5) * 20 + .5) >> 1);
+      return `<td class="${step ? (share > .5 ? "is-win" : "is-loss") : ""}" data-step="${step}" data-tip-engine="${esc(a)}" data-tip-vs="${esc(b)}" data-tip-head="${esc(`${names().engine(a)} vs ${names().engine(b)}`)}" data-tip-value="${share.toFixed(2)}" data-tip-note="${w} of ${n}">${share.toFixed(2)}</td>`;
+    };
+    // the two sides named along their axes, each centred on the tiles: the row's engine beside the rows but pinned to
+    // the card's left edge, the column's under the columns; the grid and its scale centred in the card
+    // the colour scale, pinned to the card's right edge across from the middle, its two ends marked above and below
+    const key = `<span class="board-matrix-key" aria-hidden="true"><span class="board-matrix-tick">1</span><span class="board-matrix-bar">${[4, 3, 2, 1].map((k) => `<i class="is-win" data-step="${k}"></i>`).join("")}<i data-step="0"></i>${[1, 2, 3, 4].map((k) => `<i class="is-loss" data-step="${k}"></i>`).join("")}</span><span class="board-matrix-tick">0</span></span>`;
+    // the two sides named along the card's edges, the same on every card: Engine A at the left edge across from the
+    // middle, Engine B along the foot; the grid centred in the room between them
+    return `<div class="board-matrix-frame"><span class="board-matrix-axis is-a"><span>Engine A</span></span><span class="board-matrix-axis is-b">Engine B</span>${key}<table class="board-matrix">
+      <thead><tr><th></th>${order.map((e) => `<th scope="col">${head(e, false)}</th>`).join("")}</tr></thead>
+      <tbody>${order.map((a) => `<tr><th scope="row">${head(a, true)}</th>${order.map((b) => cell(a, b)).join("")}</tr>`).join("")}</tbody>
+    </table></div>`;
+  };
 
   // every model: one bar per engine, best first, its name under it; how many setups it rests on is in its hover
   // an engine's logo with no tile behind it; the ones drawn in a single ink take the label colour, so they read in either theme
@@ -443,13 +454,13 @@ window.Pie = window.Pie || {};
             <h2 class="board-banner-title">Programmable Inference Engine</h2>
           </div>
         </div>
-        <div class="welcome-banner board-banner is-recommender">
+        <!-- <div class="welcome-banner board-banner is-recommender">
           <a class="board-banner-link" href="#" data-board-open="tps" aria-label="Hardware Recommender">
             <span class="board-banner-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span>
           </a>
           <h2 class="board-banner-title is-top">Hardware Recommender</h2>
           <p class="board-banner-sub">Compare cost, hardware and models<br>for the throughput you need to serve</p>
-        </div>
+        </div> -->
         <section class="board-log" aria-label="Changelog">
           <h2 class="board-log-title">Changelog</h2>
           <ol class="board-log-list">${changelog().map(logItem).join("")}</ol>
@@ -460,6 +471,10 @@ window.Pie = window.Pie || {};
   // in one of Apple's system colours, so the charts are told apart at a glance as Artificial Analysis marks them with squares
   const BADGES = {
     index:          ["#5E5CE6", '<circle cx="12" cy="12" r="9"/><path d="m12 12 2.6-5.2"/><circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/><path d="M7 15.5h.01M6.5 11h.01M9 7h.01M17.5 11h.01M17 15.5h.01"/>'],  // indigo, a speedometer as SF Symbols draws gauge.with.needle: a dial, its needle just right of upright
+    "index-mac":    ["#636366"],  // each platform's speed index in its sidebar tile's colour
+    "index-gpu":    ["#76b900"],
+    "index-amd":    ["#ed1c24"],
+    "index-tpu":    ["#4285f4"],
     wins:           ["#FF9F0A", '<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v6M8.5 19h7"/>'],  // orange, a trophy: its stem runs down into its base
     coverage:       ["#30B0C7", Pie.icons.welcome],  // teal, a grid of squares
     moe:            ["#5AC8FA", '<path d="M4 4v16h16"/><circle cx="9" cy="15" r="1.9" fill="#fff" stroke="none"/><circle cx="13" cy="11" r="1.9" fill="#fff" stroke="none"/><circle cx="17.5" cy="6.5" r="1.9" fill="#fff" stroke="none"/>'],  // a lighter cyan, the same scatter
@@ -499,8 +514,8 @@ window.Pie = window.Pie || {};
     const outline = [
       ["Across every model", SUMMARY.map((m) => [m.id, m.title])],
       ["Across model sizes", [["size", "Dense models"], ["moe", "MoE models"]]],
-      ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"], [USE.id, "Share of the limit"]]],
-      ["At datacenter scale", [[SCALING.id, "Chip scaling"]]],
+      ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"], ...(Pie.signedIn() ? [[USE.id, "Share of the limit"]] : [])]],
+      ...(Pie.signedIn() ? [["At datacenter scale", [[SCALING.id, "Chip scaling"]]]] : []),  // the datacenter section for an account only
     ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${BADGES[id]?.[0] || "var(--color-label-tertiary)"}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
@@ -520,9 +535,8 @@ window.Pie = window.Pie || {};
           <div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">Across every model</h1>
             <p class="board-lede">Every engine compared with the others on each machine and model they share.</p></div>
-            <button class="board-toggle${summaryWorkload === "spec" ? " is-on" : ""}" type="button" data-board-toggle="spec" aria-pressed="${summaryWorkload === "spec"}" title="Rank on speculative decoding: each engine drafting with its own drafter"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m3 4 4 4-4 4M8.5 4l4 4-4 4"/></svg>Speculation</button>
           </div>
-          <div class="board-grid-cards is-three">${SUMMARY.map((m) => card(m.id, m.title, summaryWorkload === "spec" ? m.sub.replace("Decode speed", "Spec decode speed").replace("Decodes fastest", "Spec decodes fastest") : m.sub, ranking(m, rows), "", false)).join("")}</div>${hero()}
+          <div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, m.sub, matrix(m, rows), "", false)).join("")}</div>${hero()}
           <h1 class="board-title">Across model sizes</h1>
           <p class="board-lede">Dense models by their size, mixtures of experts by the parameters each token reads, on each platform's fastest machine and engine.</p>
           <div class="board-stack">${sizeCard(rows)}${moeCard(rows)}</div>
@@ -532,13 +546,13 @@ window.Pie = window.Pie || {};
             <button class="filter-button board-title-pick" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(model)}${esc(names().model(model))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
           <div class="board-stack">${metricCard(rows, groups)}${card(TTFT.id, TTFT.title, TTFT.sub, chart(TTFT, rows, groups))}
-            ${card(USE.id, USE.title, engineSub(USE.sub, useEngine), use(rows), enginePick("use-engine", useEngine))}</div>
-          <div class="board-section-head">
+            ${Pie.signedIn() ? card(USE.id, USE.title, engineSub(USE.sub, useEngine), use(rows), enginePick("use-engine", useEngine)) : ""}</div>
+          ${Pie.signedIn() ? `          <div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">At datacenter scale</h1>
             <p class="board-lede">A model split across several GPUs, at each chip count, against a perfect split.</p></div>
             <button class="filter-button board-title-pick" type="button" data-board-pick="scale" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(scaleModelOf(rows))}${esc(names().model(scaleModelOf(rows)))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
-          <div class="board-stack">${card(SCALING.id, SCALING.title, engineSub(SCALING.sub, scaleEngine), scaling(rows), enginePick("scale-engine", scaleEngine))}</div>
+          <div class="board-stack">${card(SCALING.id, SCALING.title, engineSub(SCALING.sub, scaleEngine), scaling(rows), enginePick("scale-engine", scaleEngine))}</div>` : ""}
         </div>
       </div>${footer()}</div>`;
   };
@@ -617,7 +631,16 @@ window.Pie = window.Pie || {};
   // a hovered bar's card: its engine's logo and name, the value large, what it rests on in grey, beside the pointer
   const tooltip = document.getElementById("chart-tooltip");
   // a wordmark already spells the engine's name, so its card drops the name after it: MLX's reads "MLX on M4 Max", not "MLX MLX"
+  // a battle's card, as Artificial Analysis sets a heat map's: the two engines by name, then its figures as
+  // rows, a grey name to the left and the value to the right
+  const battleHtml = (g) => {
+    const side = (e) => `<span>${esc(names().engine(e))}</span>`;  // the names alone, as the card's figures are words
+    return `<div class="board-tip-battle"><div class="board-tip-head">${side(g.dataset.tipEngine)}<span class="board-tip-vs">vs</span>${side(g.dataset.tipVs)}</div>
+    <div class="board-tip-row"><span>Win rate</span><b>${esc(g.dataset.tipValue)}</b></div>
+    <div class="board-tip-row"><span>Setups won</span><b>${esc(g.dataset.tipNote)}</b></div></div>`;
+  };
   const tipHtml = (g) => {
+    if (g.dataset.tipVs) return battleHtml(g);
     const engine = g.dataset.tipEngine;
     const wide = engine === "mlxlm";
     const head = wide ? g.dataset.tipHead.slice(names().engine(engine).length).trim() : g.dataset.tipHead;
@@ -627,7 +650,7 @@ window.Pie = window.Pie || {};
   let tipFor = null;
   element.addEventListener("pointermove", (event) => {
     if (Pie.tapCard.isTouch()) return;
-    const g = event.target.closest?.(".board-bar[data-tip-head]");
+    const g = event.target.closest?.(".board-bar[data-tip-head], .board-matrix td[data-tip-head]");  // a bar, or a battle in a head-to-head grid
     if (!g) {
       if (tipFor) { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board"); }
       return;
