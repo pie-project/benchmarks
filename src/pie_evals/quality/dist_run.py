@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import kl
-from .run import SYSTEM, _render, _tokenizer
+from .run import _render, _tokenizer
 from .tasks import TASKS
 
 #: prompts per task, from the catalog's question sets (gsm8k, mmlu, arc, math500, ifeval)
