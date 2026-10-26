@@ -347,11 +347,23 @@ window.Pie = window.Pie || {};
   // the hardware limit for one measured result, from the spec sheet: the slower of reading the bytes and doing the math.
   // Decode is one token at the middle of the answer, its logits included; prefill is the whole prompt in one pass,
   // with logits only for its last token, which is all a first token needs
+  // a miniature's own architecture: the full model's attention kinds in the kept share of its layers, and the size
+  // webdb estimates for the cut (the embedding and head whole, the kept layers and experts)
+  const miniArch = (row) => {
+    const base = archOf(row.model);
+    if (!base || !row.mini_params_b) return null;
+    const s = row.mini_layers / base.layers;
+    const k = row.mini_k < 1 ? row.mini_k : 0;
+    return { ...base, total: row.mini_params_b, emb: row.mini_emb_b / 2, tied: false, ple: 0,
+      routed: (row.mini_params_b - row.mini_active_b) / (1 - k), k, layers: row.mini_layers, shared: 0,
+      full: Math.round(base.full * s), sliding: Math.round(base.sliding * s), linear: Math.round(base.linear * s) };
+  };
+
   Pie.ceiling = (row, metric) => {
     const machine = machines().find((m) => m.id === row.hardware);
     const model = models().find((m) => m.id === row.model);
     const workload = Pie.store.index.workloads[row.workload];
-    const a = archOf(row.model);
+    const a = row.miniature ? miniArch(row) : archOf(row.model);
     if (!machine?.bw || !model || !workload || !a) return null;
     // the whole machine: the catalog gives one device's bandwidth and FLOPS, and a run splits the model across all of them
     const bw = machine.bw * machine.devices;

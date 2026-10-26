@@ -96,13 +96,17 @@ window.Pie = window.Pie || {};
     // which the grids' rows do not carry); the rows here only add to it
     for (const model of tables.models || []) {
       // its layer count, from its config.json as the bounds read it
-      model.layers = Pie.architectures?.[model.id]?.layers ?? null;
+      model.layers = Pie.architectures?.[model.id]?.layers ?? model.layers ?? null;  // or the catalog's stated count
       const all = new Set([...(seen[model.id] || []), ...String(model.platforms || "").split(", ").filter(Boolean)]);
       model.platforms = ["Mac", "GPU", "TPU", "AMD", "Wafer"].filter((t) => all.has(t)).join(", ");
     }
   }
   // every combination has a row; only pass and noisy ones carry numbers (older exports have no status: all measured)
   const isMeasured = (row) => !row.status || row.status === "pass" || row.status === "noisy";
+  // on a local preview only: a result measured today or later, so new CI data stands out while it lands
+  const local = ["localhost", "127.0.0.1"].includes(location.hostname);
+  const today = new Date().toLocaleDateString("sv-SE");  // YYYY-MM-DD, as "measured" begins
+  Pie.isNew = (row) => local && Boolean(row?.measured) && String(row.measured).slice(0, 10) >= today;
   const newestTag = (tables.tags || []).find((tag) => snapshots[tag.id]?.length)?.id;
 
   // the suites a run measures: Targeted (the release models) and Full (every model); the picked one
@@ -164,6 +168,8 @@ window.Pie = window.Pie || {};
   };
 
   Pie.store = {
+    // whether any result is a miniature (a datacenter model cut to fit one device): the pages showing them carry a banner
+    miniatures: Object.values(snapshots).some((rows) => rows.some((row) => row.miniature)),
     tables,
     index,
     names,
