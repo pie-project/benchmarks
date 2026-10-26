@@ -118,8 +118,9 @@ def run_kernels(platform_id: str, *, pie_root: Path, matrix_dir: str = "matrix",
     rc = None
     if log_file is None:
         log_file = out_dir / f"kernels-{platform_id}.log"
-        cmd = ["cargo", "test", "--release", "-p", f"kernels-{backend}", "--features", backend, "--tests", "--no-fail-fast",
-               "--", "--test-threads=1", "--show-output"]
+        # cuda/rocm gate their tests behind the backend feature; Metal's and XLA's kernels are tested in their engine crates too
+        crates = ["-p", f"kernels-{backend}", "--features", backend] if backend in ("cuda", "rocm") else ["-p", f"kernels-{backend}", "-p", f"engine-{backend}"]
+        cmd = ["cargo", "test", "--release", *crates, "--tests", "--no-fail-fast", "--", "--test-threads=1", "--show-output"]
         if shutil.which("rustup"):  # the toolchain pie's rust-toolchain.toml pins
             subprocess.run(["rustup", "toolchain", "install"], cwd=pie_root, check=False)
         log(" ".join(cmd))
