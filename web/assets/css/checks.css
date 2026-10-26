@@ -63,3 +63,5 @@
 .qc-pop li { padding: 6px 14px; font-size: 12px; line-height: 1.4; border-top: .5px solid var(--color-separator-light); }
 .qc-pop li code { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--color-label); word-break: break-all; }
 .qc-pop li span { display: block; margin-top: 2px; color: var(--color-label-secondary); white-space: pre-wrap; word-break: break-word; }
+
+.qc-unsupported svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; color: var(--color-label-tertiary); vertical-align: middle; }
