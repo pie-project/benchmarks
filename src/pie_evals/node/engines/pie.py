@@ -274,7 +274,9 @@ class PieEngine(Engine):
         spec = self.speculates(workload)
         inferlet = self.pie_root / "examples/dflash-speculative-bench" if spec else self.inferlet_dir
         self.env["PIE_BENCH_INFERLET_DIR"] = str(inferlet)
-        args: list[str] = ["--engine", engine, "--inferlet-dir", str(inferlet)]
+        # pie #1099 renamed pie_bench's cuda_native engine to cuda: a newer checkout takes the new name
+        cli = "cuda" if engine == "cuda_native" and '"cuda_native"' not in self.script_path().read_text() else engine
+        args: list[str] = ["--engine", cli, "--inferlet-dir", str(inferlet)]
         # every engine writes exactly the shape's length: pie through ignore-EOS (the common flag), llama.cpp and
         # Splash through ignore_eos, mlx-lm by blocking its stop tokens; so every decode number covers the same work
         if not spec:
