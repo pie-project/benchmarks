@@ -82,7 +82,7 @@ jobs:
     needs: decide
     if: needs.decide.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 210
+    timeout-minutes: 340  # a plan of several shards runs them one after another
     env: { C: "${{ needs.decide.outputs.commit }}" }
     outputs:
       job_id: ${{ steps.jobs.outputs.job_id }}
@@ -103,8 +103,9 @@ jobs:
           for e in $(echo "${{ github.event.inputs.engines }}" | tr ',' ' '); do args+=(--engine "$e"); done
           .venv/bin/pie-evals jobs --tier "${{ github.event.inputs.tier || 'nightly' }}" --pie-commit "$C" --platform "$PLATFORM" --out jobs "${args[@]}"
           n=$(jq '.include | length' jobs/gh-matrix.json)
-          [ "$n" = 1 ] || { echo "::error::expected one $PLATFORM job, the plan has $n"; exit 1; }
-          echo "job_id=$(jq -r '.include[0].job_id' jobs/gh-matrix.json)" >> "$GITHUB_OUTPUT"
+          [ "$n" -ge 1 ] || { echo "::error::the plan has no $PLATFORM job"; exit 1; }
+          # a plan the budget split into shards: every shard on this one VM, one after another
+          echo "job_id=$(jq -r '[.include[].job_id] | join(" ")' jobs/gh-matrix.json)" >> "$GITHUB_OUTPUT"
       - uses: google-github-actions/auth@v2
         with: { credentials_json: "${{ secrets.GCP_TPU_SA_KEY }}" }
       - uses: google-github-actions/setup-gcloud@v2
@@ -132,7 +133,7 @@ jobs:
           vm() { bash infra/tpu/vm.sh ssh "$1"; }
           # detached on the VM, so a dropped ssh session does not stop the build or the bench
           # the launch returns at once; capped, as an ssh that never returns would otherwise hold the job
-          timeout 300 bash infra/tpu/vm.sh ssh "cd ~/pie-evals && setsid nohup bash -c 'set -a; . ~/vm.env; set +a; bash infra/tpu/run-on-vm.sh $C jobs/$JOB_ID.json; echo \$? > ~/run.done' > ~/run.log 2>&1 < /dev/null &" || true
+          timeout 300 bash infra/tpu/vm.sh ssh "cd ~/pie-evals && setsid nohup bash -c 'set -a; . ~/vm.env; set +a; bash infra/tpu/run-on-vm.sh $C $(printf 'jobs/%s.json ' $JOB_ID); echo \$? > ~/run.done' > ~/run.log 2>&1 < /dev/null &" || true
           while ! rc=$(timeout 300 bash infra/tpu/vm.sh ssh 'cat ~/run.done 2>/dev/null' 2>/dev/null) || [ -z "$rc" ]; do
             # a spot VM taken back mid-run never writes run.done
             st=$(bash infra/tpu/vm.sh state 2>/dev/null || echo unknown)
@@ -146,11 +147,11 @@ jobs:
         run: |
           mkdir -p out
           [ -n "${TPU_ZONE:-}" ] || exit 0  # no VM was created
-          bash infra/tpu/vm.sh get --recurse "pie-evals/out/${{ steps.jobs.outputs.job_id }}" out/ || echo "::warning::no node output on the VM"
+          for j in ${{ steps.jobs.outputs.job_id }}; do bash infra/tpu/vm.sh get --recurse "pie-evals/out/$j" out/ || echo "::warning::no node output for $j on the VM"; done
           bash infra/tpu/vm.sh get run.log out/ || true
       - uses: actions/upload-artifact@v4
         if: always() && steps.jobs.outputs.job_id != ''
-        with: { name: "out-${{ steps.jobs.outputs.job_id }}", path: "out/${{ steps.jobs.outputs.job_id }}", retention-days: 30, if-no-files-found: warn }
+        with: { name: "out-${{ github.run_id }}", path: "out/", retention-days: 30, if-no-files-found: warn }
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: tpu-run-log, path: out/run.log, retention-days: 30, if-no-files-found: ignore }
@@ -194,7 +195,7 @@ jobs:
         id: import
         run: |
           shopt -s nullglob
-          dirs=(out/out-*)
+          dirs=(out/out-*/*/)  # one directory a shard
           n=0; for d in "${dirs[@]}"; do [ -s "$d/records.jsonl" ] && n=$((n + 1)); done
           [ "$n" -gt 0 ] || { echo "::error::no records from the TPU"; exit 1; }
           T="${{ github.event.inputs.tag }}"
