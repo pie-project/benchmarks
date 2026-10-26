@@ -21,6 +21,7 @@ Every failure is classified into ``ErrorClass``; a hang is a timeout.
 from __future__ import annotations
 
 import os
+import subprocess
 import random
 import re
 import signal
@@ -280,8 +281,11 @@ class NodeRunner:
             # a download mid-shard can outgrow what the job-start reclaim left (l40s nightly 36329832366: ENOSPC)
             from .reclaim import LOW_WATER_GIB, reclaim
 
-            reclaim(getattr(self, "_ahead", None) or self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * 1.2 + 10), log=self.log)
-            if str(cell.engine) == "pie" and self.job.pie_commit and needs_import(cell.artifact) and have_artifacts(cell.artifact, self.job.pie_commit):
+            importing = str(cell.engine) == "pie" and self.job.pie_commit and needs_import(cell.artifact)
+            # a pie import (also every tp>1 one, run()) writes its artifact beside the checkpoint (pro6000-x4 weekly 39867658406: MiMo ENOSPC mid-import)
+            stamps = str(cell.engine) == "pie" and self.job.pie_commit and (importing or int(cell.mode.tp) > 1 or cell.platform.backend == Backend.XLA)
+            reclaim(getattr(self, "_ahead", None) or self.job, self.hf_cache, low_water_gib=max(LOW_WATER_GIB, float(cell.artifact.expected_gib or 0) * (2.2 if stamps and not have_artifacts(cell.artifact, self.job.pie_commit) else 1.2) + 10), log=self.log)
+            if importing and have_artifacts(cell.artifact, self.job.pie_commit):
                 snap = snapshot_dir_if_present(cell.artifact, self.hf_cache, weights=False)
                 if snap:
                     return snap
@@ -295,7 +299,7 @@ class NodeRunner:
             from huggingface_hub.errors import LocalEntryNotFoundError
 
             # the hub unreachable from this pod, or a full disk, says nothing of the model: a re-dispatch measures it
-            unreachable = isinstance(e, (LocalEntryNotFoundError, ConnectionError, TimeoutError)) or type(e).__module__.split(".")[0] in ("requests", "httpx", "urllib3") or (isinstance(e, OSError) and e.errno == 28)
+            unreachable = isinstance(e, (LocalEntryNotFoundError, ConnectionError, TimeoutError)) or type(e).__module__.split(".")[0] in ("requests", "httpx", "urllib3") or (isinstance(e, OSError) and e.errno == 28) or "hf_xet" in str(e)
             raise EngineLaunchError(ErrorClass.HARNESS_INVALID if unreachable else ErrorClass.LOAD_FAIL, f"checkpoint unavailable for {cell.artifact.id}: {str(e).strip().splitlines()[-1][:300] if str(e).strip() else e!r}") from e
 
     def _start_prefetch(self, artifacts) -> None:
@@ -414,6 +418,11 @@ class NodeRunner:
                 # tp>1: the ranks band a stamped artifact at load (pie #633); the XLA engine boots from an imported .xla.zt
                 if needs_import(first.artifact) or int(first.mode.tp) > 1 or first.platform.backend == Backend.XLA:
                     try:
+                        if first.artifact.family == "deepseek_v41" and first.artifact.kind != ArtifactKind.MINIATURE and not (Path(snapshot) / "engram_token_map.safetensors").exists():
+                            # pie reads Engram's tokenizer-compressed id map from beside the weights, which the release does not
+                            # ship ("this checkpoint carries no `engram.token_map`", h200-x4 weekly 40014471810)
+                            self.log(f"engram: writing the token map beside {snapshot}")
+                            subprocess.run([os.environ.get("PIE_PY", "python3"), str(self.pie_root / "scripts/bench/engram_token_map.py"), str(snapshot)], check=True, timeout=1800)
                         model_path = ensure_artifact(first.artifact, snapshot, self.pie_root / "target/release/pie", self.job.pie_commit, log=self.log)
                     except Exception as e:
                         for c in cells:

@@ -385,6 +385,14 @@ artifacts:
     scheme: bf16     # nvidia/...-NVFP4 is the quantized copy
     expected_gib: 1044.1
     tiers: [weekly]
+  - id: minimax-m3.1-flash
+    base_model: MiniMaxAI/MiniMax-M3.1-Flash
+    display_name: minimax-m3.1:flash
+    params_b: 220
+    family: minimax_m3
+    scheme: fp8      # MXFP8 as released: e4m3 under one e8m0 exponent a 1x32 block
+    expected_gib: 234.7
+    tiers: [weekly]
 
   # ---------------- targeted: pie's own checkpoints on the Macs ----------------
   - id: muse-glimmer-30b-mlx4
