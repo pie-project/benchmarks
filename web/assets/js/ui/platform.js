@@ -43,6 +43,9 @@ window.Pie = window.Pie || {};
     { test: /^gemma/, name: "Google", logo: "gemma" },
     { test: /^gpt_oss/, name: "OpenAI", logo: "openai" },
     { test: /^muse/, name: "Meta", logo: "meta" },
+    { test: /^glm/, name: "Z.ai", logo: "zai" },
+    { test: /^mimo/, name: "Xiaomi", logo: "xiaomi" },
+    { test: /^deepseek/, name: "DeepSeek", logo: "deepseek" },
   ];
   const makerOf = (model) => MAKERS.find((m) => m.test.test(Pie.store.index.models[model]?.family || "")) || { name: "", logo: "" };
   // a model with no maker logo in the set runs in the cloud: a cloud glyph on its tile
@@ -350,6 +353,9 @@ window.Pie = window.Pie || {};
 
     // returns the number of machines and models shown, for the toolbar subtitle
     render(state) {
+      // Speedup and Efficiency are one grid each: the page sets the comparison, and no switch is shown
+      const fixed = Pie.schema[state.table]?.compare;
+      if (fixed) { peeked = null; compare = fixed; }
       const all = Pie.store.snapshot(state.release);
       const modes = Pie.platform.metrics(state);
       if (!modes.some((m) => m.id === state.platform.mode)) state.platform.mode = "decode";
@@ -504,12 +510,12 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="platform-bar">
-          <span class="filter platform-setup">
-            <button class="filter-button" id="platform-metric" type="button" aria-haspopup="menu" aria-label="${esc(`Setup: ${mode.label}`)}">${esc(mode.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
-          </span>${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
+          <span class="platform-compare" role="group" aria-label="Setup">${modes.map((m) =>
+            // the setups as a segmented control, as the view switch beside it
+            `<button type="button" class="plain-button${m.id === mode.id ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === mode.id}">${esc(m.label)}</button>`).join("")}</span>${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
-            <span class="platform-compare" role="group" aria-label="View">${Object.entries(COMPARES).map(([id, name]) =>
+            <span class="platform-compare" role="group" aria-label="View"${fixed ? " hidden" : ""}>${Object.entries(COMPARES).map(([id, name]) =>
               // the two views as a segmented control, as Finder switches its views; holding R peeks at the other
               `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}" title="${esc(id === compare ? CAPTIONS[id] : `${CAPTIONS[id]} (V, or hold R)`)}">${esc(name)}</button>`).join("")}</span>
           </span>

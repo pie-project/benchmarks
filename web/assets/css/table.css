@@ -52,6 +52,9 @@
   color: var(--color-label);
 }
 
+/* room for three digits on every table, so the first column starts where Results' does */
+.data-table td.row-number::after { content: "888"; display: block; height: 0; overflow: hidden; visibility: hidden; }
+
 /* row numbers: small and grey, starting at the same edge as any table's first column */
 .data-table .row-number {
   width: 1%;
@@ -67,6 +70,10 @@
   background: var(--color-row);
   border-bottom: .5px solid var(--color-separator-light);
 }
+
+.data-table .cell-glyphs { display: inline-flex; gap: 14px; }
+
+.data-table .col-fill { width: 100%; padding: 0; }
 
 .data-table .is-numeric {
   text-align: right;

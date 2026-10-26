@@ -63,8 +63,9 @@ window.Pie = window.Pie || {};
   };
 
   // a Limit setting: its options, a checkmark on the current one, like the other menus
-  const isLimit = (key) => String(key).startsWith("limit:");
-  const limitMenu = (key) => (Pie.methodology?.menu(String(key).slice(6)) || [])
+  // a page's own menus by prefix: limit: for the Limit page, board: for the Leaderboard
+  const isLimit = (key) => /^(limit|board):/.test(String(key));
+  const limitMenu = (key) => ((String(key).startsWith("board:") ? Pie.board : Pie.methodology)?.menu(String(key).slice(6)) || [])
     .map((o) => option(o.value, o.selected, `<span class="popover-label">${Pie.format.escape(o.label)}</span>`))
     .join("");
 

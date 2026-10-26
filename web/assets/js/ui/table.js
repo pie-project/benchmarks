@@ -45,8 +45,24 @@ window.Pie = window.Pie || {};
       const key = String(value).toLowerCase();
       return `<td class="${classes}">${dotted(key, LABEL[key] || String(value))}</td>`;
     }
+    // a machine's platform as the Platforms table shows it: the platform's sidebar mark before its name
+    const platform = column.key === "platform" && Object.entries(Pie.schema).find(([, s]) => s.view === "platform" && s.short === value);
+    if (platform) {
+      const [id, s] = platform;
+      return `<td class="${classes}"><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${format.escape(value)}</span></td>`;
+    }
     if (column.key === "platforms" && !format.isEmpty(value)) {
-      return `<td class="${classes}">${String(value).split(", ").map((t) => dotted(t.toLowerCase(), t)).join("")}</td>`;
+      // each platform as the rest of the site shows one: its sidebar mark, then its name
+      const ID = { mac: "mac", gpu: "nvidia", tpu: "tpu", amd: "amd", wafer: "cerebras" };
+      const glyph = (t) => {
+        const id = ID[t.toLowerCase()];
+        const s = id && Pie.schema[id];
+        return s ? `<span class="welcome-cell" title="${format.escape(s.label)}"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${format.escape(s.short)}</span>` : dotted(t.toLowerCase(), t);
+      };
+      // packed to the left as Finder lists tags, always in the same order: Mac, NVIDIA, TPU, then the rest
+      const has = String(value).split(", ");
+      const cells = Object.keys(ID).map((t) => has.find((h) => h.toLowerCase() === t)).filter(Boolean).map(glyph);
+      return `<td class="${classes}"><span class="cell-glyphs">${cells.join("")}</span></td>`;
     }
     return `<td class="${classes}"${full}>${format.value(column, value)}</td>`;
   };
@@ -72,25 +88,36 @@ window.Pie = window.Pie || {};
     }
 
     const cells = columns.map((column) => bodyCell(column, row)).join("");
+    const filled = Pie.table.fill(cells, columns, state, "td");
     const number = Pie.schema[state.table].numbered ? `<td class="row-number">${index + 1}</td>` : "";
-    return `<tr class="${classes.join(" ")}"${link || stale}>${number}${cells}</tr>`;
+    return `<tr class="${classes.join(" ")}"${link || stale}>${number}${filled}</tr>`;
   };
 
   Pie.table = {
     container,
 
+    // a catalog table keeps its columns at their width on the left; an empty column takes the rest, before Results
+    // so that count stays at the right edge
+    fill(cells, columns, state, tag) {
+      if (Pie.schema[state.table].section !== "catalog") return cells;
+      const blank = `<${tag} class="col-fill"></${tag}>`;
+      if (columns[columns.length - 1]?.key !== "_results") return cells + blank;
+      const at = cells.lastIndexOf(`<${tag}`);
+      return cells.slice(0, at) + blank + cells.slice(at);
+    },
+
     visibleColumns(state) {
-      return Pie.schema[state.table].columns;
+      return Pie.schema[state.table].columns.filter((column) => !column.hidden);
     },
 
     render(state, rows) {
       const columns = this.visibleColumns(state);
       const numbered = Pie.schema[state.table].numbered;
       const corner = numbered ? `<th class="row-number" aria-label="Row"></th>` : "";
-      const head = `<thead><tr>${corner}${columns.map((column) => headerCell(column, state)).join("")}</tr></thead>`;
+      const head = `<thead><tr>${corner}${this.fill(columns.map((column) => headerCell(column, state)).join(""), columns, state, "th")}</tr></thead>`;
       const body = rows.length
         ? `<tbody>${rows.map((row, index) => bodyRow(row, columns, state, index)).join("")}</tbody>`
-        : `<tbody><tr><td class="table-empty" colspan="${columns.length + (numbered ? 1 : 0)}">Nothing matches these filters</td></tr></tbody>`;
+        : `<tbody><tr><td class="table-empty" colspan="${columns.length + 1 + (numbered ? 1 : 0)}">Nothing matches these filters</td></tr></tbody>`;
       table.innerHTML = head + body;
     },
 

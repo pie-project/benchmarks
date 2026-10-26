@@ -21,10 +21,21 @@ window.Pie = window.Pie || {};
   // each machine names its platform as the sidebar does, for the hardware table's Platform column and filter
   for (const hw of tables.hardware || []) {
     const id = Pie.platformOf(hw);
-    if (id) hw.platform = Pie.schema[id]?.label || id;
+    if (id) hw.platform = Pie.schema[id]?.short || id;
   }
 
+  // what each workload is for: the limit it pushes against
+  const GOALS = {
+    raw: "Single-request speed against the memory and compute limits.",
+    spec: "Pass the memory limit by checking several drafted tokens per weight read.",
+    throughput: "Fill the compute limit by sharing each weight read across requests.",
+  };
+  for (const w of tables.workloads || []) w.goal = GOALS[w.id] || null;
+
   const snapshots = tables.snapshots || {};
+  // each result names its machine's platform, for the Results table's Platform filter
+  const platformByHardware = Object.fromEntries((tables.hardware || []).map((hw) => [hw.id, hw.platform]));
+  for (const rows of Object.values(snapshots)) for (const row of rows) row.platform = platformByHardware[row.hardware] || null;
   // runs whose first-token timing is known to be wrong, by engine, workload and run: there the client sent every request
   // of a round at once to an engine serving one at a time, so each time to first token counted the queue ahead of it
   // (pie PR #1011). Prefill, TTFT and whole-request latency are withheld; decode, timed between tokens, is kept

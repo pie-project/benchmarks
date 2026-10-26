@@ -7,7 +7,6 @@ window.Pie = window.Pie || {};
 
   Pie.sections = [
     { id: "home", label: "Overview" },
-    { id: "platforms", label: "Platforms" },
     { id: "measurements", label: "Measurements" },
     { id: "catalog", label: "Catalog" },
     { id: "resources", label: "Resources" },  // how the numbers are worked out, after the data itself
@@ -15,8 +14,8 @@ window.Pie = window.Pie || {};
 
   Pie.schema = {
     welcome: {
-      label: "All Platforms",
-      section: "home",
+      label: "Platforms",
+      section: "catalog",
       view: "welcome",  // not a table: why the numbers can be trusted
       filters: [],
       columns: [],
@@ -40,17 +39,36 @@ window.Pie = window.Pie || {};
     //   filters: [],
     //   columns: [],
     // },
-    // All hardware, hidden for now: the platform pages list their own machines
-    // all_hardware: {
-    //   label: "All hardware",
-    //   section: "platforms",
-    //   view: "platform",
-    //   tint: "#0a84ff",  // every platform's machines, grouped by platform
-    //   filters: [],
-    //   columns: [],
-    // },
+    // every platform's machines in one grid, a header row per platform, every model a column
+    // every engine side by side on one model, as Artificial Analysis ranks models
+    board: {
+      label: "Leaderboard",
+      section: "home",
+      view: "board",
+      filters: [],
+      columns: [],
+    },
+    // pie against the other engines, every machine and model
+    speedups: {
+      label: "Speedup",
+      section: "home",
+      view: "platform",
+      compare: "engines",
+      filters: [],
+      columns: [],
+    },
+    // each engine against the hardware's theoretical limit
+    all_hardware: {
+      label: "Efficiency",
+      section: "home",
+      view: "platform",
+      compare: "ceiling",
+      filters: [],
+      columns: [],
+    },
     mac: {
       label: "Apple Silicon",
+      short: "Mac",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "mac",
@@ -60,6 +78,7 @@ window.Pie = window.Pie || {};
     },
     nvidia: {
       label: "NVIDIA GPU",
+      short: "NVIDIA",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "nvidia",
@@ -69,6 +88,7 @@ window.Pie = window.Pie || {};
     },
     tpu: {
       label: "Google TPU",
+      short: "TPU",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "tpu",
@@ -78,6 +98,7 @@ window.Pie = window.Pie || {};
     },
     amd: {
       label: "AMD GPU",
+      short: "AMD",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "amd",
@@ -87,6 +108,7 @@ window.Pie = window.Pie || {};
     },
     cerebras: {
       label: "Cerebras",
+      short: "Cerebras",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "cerebras",
@@ -96,6 +118,7 @@ window.Pie = window.Pie || {};
     },
     android: {
       label: "Android",
+      short: "Android",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "android",
@@ -105,6 +128,7 @@ window.Pie = window.Pie || {};
     },
     web: {
       label: "WebGPU",
+      short: "WebGPU",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "web",
@@ -115,11 +139,12 @@ window.Pie = window.Pie || {};
     results: {
       label: "Results",
       section: "measurements",
-      filters: ["engine", "model", "hardware", "workload", "status"],  // in the order of the columns they filter
+      filters: ["engine", "model", "platform", "hardware", "workload", "status"],  // in the order of the columns they filter
       numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
         reference("model", "Model", "Setup", "models"),
+        text("platform", "Platform", "Setup", { hidden: true }),  // only a filter: the hardware already names it
         reference("hardware", "Hardware", "Setup", "hardware"),
         reference("workload", "Workload", "Setup", "workloads"),
         text("status", "Status", "Setup", { status: true }),
@@ -192,6 +217,7 @@ window.Pie = window.Pie || {};
     hardware: {
       label: "Hardware",
       section: "catalog",
+      numbered: true,
       filters: ["platform"],
       columns: [
         text("name", "Name", "Identity"),
@@ -199,7 +225,6 @@ window.Pie = window.Pie || {};
         text("resource", "Resource", "Identity"),
         text("full_name", "Full name", "Identity"),
         text("id", "ID", "Identity", { code: true }),
-        text("class", "Class", "Identity"),
         text("location", "Location", "Identity"),
         text("runs", "CI runs", "Identity", { tags: true }),
         text("vendor", "Vendor", "Identity"),
@@ -224,6 +249,7 @@ window.Pie = window.Pie || {};
     engines: {
       label: "Engines",
       section: "catalog",
+      numbered: true,
       filters: [],
       columns: [
         reference("id", "Engine", "Identity", "engines"),
@@ -241,6 +267,7 @@ window.Pie = window.Pie || {};
     models: {
       label: "Models",
       section: "catalog",
+      numbered: true,
       filters: ["family", "architecture"],
       columns: [
         text("name", "Name", "Identity"),
@@ -264,9 +291,11 @@ window.Pie = window.Pie || {};
     workloads: {
       label: "Workloads",
       section: "catalog",
+      numbered: true,
       filters: [],
       columns: [
         text("label", "Workload", "Identity"),
+        text("goal", "Goal", "Identity"),
         number("concurrency", "Parallel requests", "Shape", "", 0),
         number("prompt_tokens", "Prompt", "Shape", "tok", 0),
         number("output_tokens", "Output", "Shape", "tok", 0),
@@ -278,6 +307,7 @@ window.Pie = window.Pie || {};
     quality_tasks: {
       label: "Benchmarks",
       section: "catalog",
+      numbered: true,
       filters: [],
       columns: [
         text("task", "Task", "Identity", { code: true }),

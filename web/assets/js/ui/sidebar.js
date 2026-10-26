@@ -16,9 +16,12 @@ window.Pie = window.Pie || {};
       <span class="sidebar-glyph"${schema.tint ? ` style="--tint: ${schema.tint}"` : ""}>${Pie.icon(id)}</span>
       <span>${schema.label}</span>
       ${schema.tag ? `<span class="sidebar-tag" title="Under development">${schema.tag}</span>` : ""}
-      ${schema.view === "platform"
+      ${schema.view === "platform" && !schema.platform ? ""  // Speedup and Efficiency: views, not lists, so no count
+        : schema.view === "platform"
         // a platform counts the machines measured on it; none yet reads 0
         ? `<span class="sidebar-count"${machines(schema) ? "" : ' title="No measurements yet"'}>${machines(schema)}</span>`
+        // the Platforms list counts its rows, one a platform
+        : schema.view === "welcome" ? `<span class="sidebar-count">${Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length}</span>`
         : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
     </button>`;
 

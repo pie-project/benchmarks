@@ -46,7 +46,7 @@
     toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isPlatform = Pie.schema[state.table]?.view === "platform";
-    const isMethod = ["welcome", "inferlets", "services", "profiler", "methodology", "methods"].includes(state.table);
+    const isMethod = ["welcome", "inferlets", "services", "profiler", "methodology", "methods", "board"].includes(state.table);
     filterBar.hidden = isOverview || isMethod || isPlatform;
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
@@ -55,8 +55,10 @@
     overview.element.hidden = !isOverview;
     Pie.platform.element.hidden = !isPlatform;
     // a platform is a folder: back returns to All Platforms and forward reopens the platform just left, as in Finder
-    toolbar.elements.nav.hidden = !isPlatform && state.table !== "welcome";
-    toolbar.elements.back.disabled = !isPlatform;
+    // Efficiency is a page of its own, not a folder in the list: no back or forward there
+    const inFolder = isPlatform && Pie.schema[state.table]?.platform;
+    toolbar.elements.nav.hidden = !inFolder;
+    toolbar.elements.back.disabled = !inFolder;
     toolbar.elements.forward.disabled = state.table !== "welcome" || !forwardTo;
     toolbar.elements.metricPicker.hidden = true;  // the metric lives in the platform table's own bar
     Pie.welcome.render(state);
@@ -65,6 +67,7 @@
     Pie.profiler.render(state);
     Pie.methodology.render(state);
     Pie.methods.render(state);
+    Pie.board.render(state);
     sidebar.render(state);
     if (isPlatform) {
       const shown = Pie.platform.render(state);
@@ -221,6 +224,8 @@
         state.overview.qualityEngine = value;
       } else if (String(key).startsWith("limit:")) {
         Pie.methodology.pick(key.slice(6), value);
+      } else if (String(key).startsWith("board:")) {
+        Pie.board.pick(key.slice(6), value);
       } else if (value === popover.ALL) {
         state.setFilter(key, []);
       } else {
@@ -243,6 +248,7 @@
 
   const bindGlobal = () => {
     sidebar.onSelect((tableName) => navigate(tableName));
+    Pie.welcome.onOpen((platform) => navigate("results", { platform: [platform] }));
     sidebar.bindLogo();
     sidebar.bindDrawer(() => preferences.showDrawer(false));
     // a slide-over left open closes when the window grows back to the desktop sidebar

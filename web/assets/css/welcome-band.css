@@ -142,10 +142,10 @@
 
 /* All Platforms as a data table: the results' rows, the platform's sidebar mark before its name, a chevron at the end */
 .welcome-table { width: 100%; font-size: 13px; }
-.welcome-table .welcome-cell { display: inline-flex; align-items: center; gap: 8px; }
+.welcome-table .welcome-cell, .data-table .welcome-cell { display: inline-flex; align-items: center; gap: 8px; }
 .welcome-table .sidebar-glyph[style] { width: 20px; height: 20px; border-radius: 5px; }
-.welcome-table .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.welcome-table .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
+.welcome-table .sidebar-glyph[style] svg, .data-table .welcome-cell .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.welcome-table .sidebar-glyph svg .is-filled, .data-table .welcome-cell .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
 .welcome-table th.is-numeric, .welcome-table td.is-numeric { width: 1%; }
 .welcome-table .welcome-go { width: 100%; text-align: right; color: var(--color-label-tertiary); }
 .welcome-table tr.is-link { cursor: pointer; }
@@ -153,11 +153,14 @@
 .welcome-table .welcome-stack { color: var(--color-label-secondary); }
 #welcome.method { scrollbar-gutter: auto; }  /* a table reaches the edge; no gutter is kept for a scrollbar it rarely needs */
 .welcome-table thead th[data-sort] { cursor: pointer; }
-.welcome-table tbody td { height: 40px; }  /* the platform header row's height on a platform page */
+.welcome-table tbody td { height: var(--row-height); }  /* as tall as a Results or Quality row */
 /* iPhone: the platform, its machines and its status fit the width; the stack is on the platform's own page */
 @media (max-width: 899px) {
   .welcome-table tbody td { height: var(--row-height); }  /* 40px, as every table on a phone */
 }
 /* the list: the platform takes the row, its machine count a grey label against the right edge, on every width */
-.welcome-table .welcome-name { width: 100%; }
-.welcome-table .welcome-count { text-align: right; color: var(--color-label-secondary); white-space: nowrap; }
+.welcome-table .welcome-fill { width: 100%; padding: 0; }  /* as the results: columns at their width, the rest empty */
+.welcome-table .welcome-count { text-align: right; white-space: nowrap; }
+.welcome-table thead th.is-numeric { text-align: right; }
+.welcome-table .sidebar-glyph[style], .data-table .welcome-cell .sidebar-glyph[style] { width: 16px; height: 16px; border-radius: 4px; }
+.welcome-table .sidebar-glyph[style] svg, .data-table .welcome-cell .sidebar-glyph[style] svg { width: 11px; height: 11px; }
