@@ -3,7 +3,8 @@
   flex-direction: column;
   min-width: 0;
   padding: 0 8px var(--edge);
-  overflow: hidden;
+  overflow: hidden auto;  /* a short laptop screen scrolls the list, as a Mac sidebar does, with no bar showing */
+  scrollbar-width: none;
   white-space: nowrap;
   background: var(--color-sidebar);
   border-right: .5px solid var(--color-separator);
@@ -336,3 +337,5 @@
 /* a sidebar row that opens another site: an arrow at its end, as a Mac sidebar marks a link out of the app */
 .sidebar-item.is-link { text-decoration: none; color: inherit; }
 .sidebar-item .sidebar-out { width: 12px; height: 12px; margin-left: auto; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.sidebar::-webkit-scrollbar { display: none; }
