@@ -140,6 +140,8 @@ jobs:
             # a spot VM taken back mid-run never writes run.done
             st=$(bash infra/tpu/vm.sh state 2>/dev/null || echo unknown)
             case "$st" in READY|RUNNING) ;; *) echo "::error::the VM is $st"; exit 1 ;; esac
+            # parity: the models done so far, so a spot VM taken back keeps them
+            [ -z "${{ github.event.inputs.parity }}" ] || { mkdir -p out; timeout 300 bash infra/tpu/vm.sh get --recurse pie-evals/out/parity out/ >/dev/null 2>&1 || true; }
             sleep 60
           done
           vm 'tail -n 200 ~/run.log'
