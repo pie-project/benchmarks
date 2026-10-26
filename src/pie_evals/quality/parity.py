@@ -18,7 +18,9 @@ from __future__ import annotations
 import math
 
 AGREE_FLOOR = 0.95
-ENGINE_RANK = {"pie": 0, "mlxlm": 1, "splash": 2, "llamacpp": 3}
+ENGINE_RANK = {"pie": 0, "vllm": 1, "mlxlm": 1, "splash": 2, "llamacpp": 3}
+#: an arm's name when its summary carries none: a vLLM arm (artifact ``<id>@vllm``) is compared with pie as mlx-lm is
+LABELS = {"pie": "pie", "vllm": "vLLM", "mlxlm": "mlx-lm", "splash": "Splash", "llamacpp": "llama.cpp"}
 #: engines whose answers come from their own chat template: not comparable exactly
 OWN_TEMPLATE = {"splash"}
 
@@ -39,7 +41,7 @@ def _answers(a: dict, b: dict) -> float | None:
 
 def _cell(row: dict) -> dict:
     return {
-        "artifact": row["artifact"], "engine": row["engine"], "label": row.get("label") or row["engine"],
+        "artifact": row["artifact"], "engine": row["engine"], "label": row.get("label") or LABELS.get(row["engine"], row["engine"]),
         "scheme": row.get("scheme"), "checkpoint": row.get("checkpoint"), "score": round(row["score"], 3),
         "ci_low": round(row["ci95"][0], 3), "ci_high": round(row["ci95"][1], 3), "n": row["n"],
         "version": row.get("version"), "diff": None, "tolerance": None, "score_flag": None,
@@ -71,19 +73,23 @@ def rows(summaries: list[dict]) -> list[dict]:
     """One row per (model, task) with every engine's cell: ``summaries`` are the quality rows of one tag, samples included."""
     grouped: dict[tuple[str, str], dict[str, dict]] = {}
     for s in summaries:
-        grouped.setdefault((s["model"], s["task"]), {})[s["artifact"]] = s
+        grouped.setdefault((s["model"].removesuffix("@vllm"), s["task"]), {})[s["artifact"]] = s
     out = []
     for (model, task), arms in sorted(grouped.items()):
-        pie = next((r for r in arms.values() if r["engine"] == "pie"), None)
+        pies = [r for r in arms.values() if r["engine"] == "pie"]
+        pie = pies[0] if pies else None
         cells = []
         for art, r in sorted(arms.items(), key=lambda kv: (ENGINE_RANK.get(kv[1]["engine"], 9), kv[0])):
             cell = _cell(r)
             if pie is None:
                 cell["score_flag"] = cell["agree_flag"] = "n/a"
-            elif art == pie["artifact"]:
+            elif r["engine"] == "pie":
                 cell["score_flag"] = cell["agree_flag"] = "reference"
             else:
-                compare(pie, r, cell)
+                # the pie arm on the same weights when there is one (a GPU's vLLM arm against the GPU's pie arm)
+                same = next((p for p in pies if (p.get("scheme"), p.get("checkpoint")) == (r.get("scheme"), r.get("checkpoint"))), pie)
+                compare(same, r, cell)
+                cell["vs"] = same["artifact"]
             cells.append(cell)
         flags = [c[k] for c in cells for k in ("score_flag", "agree_flag")]
         if pie is None:
