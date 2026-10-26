@@ -8,10 +8,13 @@ window.Pie = window.Pie || {};
   Pie.sections = [
     { id: "home", label: "Overview" },
     { id: "platforms", label: "Platforms" },
-    { id: "measurements", label: "Measurements" },
-    { id: "catalog", label: "Catalog" },
-    { id: "resources", label: "Resources" },  // how the numbers are worked out, after the data itself
+    { id: "measurements", label: "Measurements", login: true },
+    { id: "catalog", label: "Catalog", login: true },
+    { id: "resources", label: "Resources", login: true },  // how the numbers are worked out, after the data itself
   ];
+  // the sections an account opens: hidden, and their pages closed, until the viewer logs in (ui/account.js)
+  Pie.signedIn = () => Boolean(Pie.account?.user());
+  Pie.isOpen = (table) => Pie.signedIn() || !Pie.sections.find((s) => s.id === Pie.schema[table]?.section)?.login;
 
   Pie.schema = {
     welcome: {
@@ -45,6 +48,7 @@ window.Pie = window.Pie || {};
     board: {
       label: "Rankings",
       section: "home",
+      tint: "#0A84FF",  // a tile in System Settings' blue, as the platforms below wear theirs
       view: "board",
       filters: [],
       columns: [],
@@ -53,6 +57,7 @@ window.Pie = window.Pie || {};
     all_hardware: {
       label: "FP Efficiency",
       section: "home",
+      tint: "#30B0C7",  // teal
       view: "platform",
       compare: "ceiling",
       filters: [],
@@ -62,6 +67,7 @@ window.Pie = window.Pie || {};
     speedups: {
       label: "Relative Speed",
       section: "home",
+      tint: "#FF2D55",  // pink
       view: "platform",
       compare: "engines",
       filters: [],
@@ -71,8 +77,18 @@ window.Pie = window.Pie || {};
     tps: {
       label: "Best TPS",
       section: "home",
+      tint: "#FF9F0A",  // orange
       view: "platform",
       compare: "tps",
+      filters: [],
+      columns: [],
+    },
+    // how well models answer: Artificial Analysis measures it, so the sidebar links there rather than to a page of ours
+    scores: {
+      label: "Quality",
+      section: "home",
+      href: "https://artificialanalysis.ai/",
+      tint: "#7a4cf5",  // Artificial Analysis's purple, as the platforms' tiles wear theirs
       filters: [],
       columns: [],
     },

@@ -11,7 +11,12 @@ window.Pie = window.Pie || {};
   // a platform counts its machines; an empty one shows none
   const machines = (schema) => (Pie.platform?.machines ? Pie.platform.machines(schema.platform) : 0);
 
-  const item = (id, schema, selected, state) => `
+  const item = (id, schema, selected, state) => schema.href ? `
+    <a class="sidebar-item is-link" href="${schema.href}" target="_blank" rel="noopener">
+      <span class="sidebar-glyph"${schema.tint ? ` style="--tint: ${schema.tint}"` : ""}>${Pie.icon(id)}</span>
+      <span>${schema.label}</span>
+      <svg class="sidebar-out" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg>
+    </a>` : `
     <button class="sidebar-item${selected ? " is-selected" : ""}" type="button" data-table="${id}" aria-current="${selected}">
       <span class="sidebar-glyph"${schema.tint ? ` style="--tint: ${schema.tint}"` : ""}>${Pie.icon(id)}</span>
       <span>${schema.label}</span>
@@ -36,7 +41,7 @@ window.Pie = window.Pie || {};
 
   Pie.sidebar = {
     render(state) {
-      nav.innerHTML = Pie.sections.map((entry) => section(entry, state)).join("");
+      nav.innerHTML = Pie.sections.filter((entry) => !entry.login || Pie.signedIn()).map((entry) => section(entry, state)).join("");
     },
 
     spinLogo() {

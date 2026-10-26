@@ -64,9 +64,12 @@ window.Pie = window.Pie || {};
 
   // a Limit setting: its options, a checkmark on the current one, like the other menus
   // a page's own menus by prefix: limit: for the Limit page, board: for the Leaderboard
+  const COMPACT = new Set(["board:size", "board:moe", "board:metric"]);
+  // a long list opens with a field over it that narrows it as one types, as Artificial Analysis sets its model menus
+  const SEARCHABLE = new Set(["board:model", "board:scale"]);
   const isLimit = (key) => /^(limit|board|grid):/.test(String(key));
   const limitMenu = (key) => ((String(key).startsWith("board:") ? Pie.board : String(key).startsWith("grid:") ? Pie.platform : Pie.methodology)?.menu(String(key).slice(String(key).indexOf(":") + 1)) || [])
-    .map((o) => (o.separator ? `<div class="popover-separator"></div>` : option(o.value, o.selected, `<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>`, o.check ? "menuitemcheckbox" : undefined)))
+    .map((o) => (o.separator ? `<div class="popover-separator"></div>` : option(o.value, o.selected, `${o.icon || ""}<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>`, o.check ? "menuitemcheckbox" : undefined)))
     .join("");
 
   // the view menu: Performance or Roofline, one pick with a checkmark; under a separator Hide Unavailable, checked while on,
@@ -199,8 +202,14 @@ window.Pie = window.Pie || {};
       owner = key;
       anchor = target;
       element.innerHTML = isLimit(key) ? limitMenu(key) : key === RELEASE ? releaseMenu(state) : key === VIEW ? viewMenu(state) : key === SUITE ? suiteMenu(state) : key === COMPARE ? compareMenu(state) : key === METRIC ? metricMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === HIST_MAC ? macMenu(state, state.overview.historyMac) : key === HIST_MODEL ? historyModelMenu(state) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
+      // a short menu of a few words (a card's Decode or Prefill) fits its words, not the menus' usual width
+      element.classList.toggle("is-compact", COMPACT.has(key));
+      // the field stays put over the list, and only the list scrolls under it
+      element.classList.toggle("is-searchable", SEARCHABLE.has(key));
+      if (SEARCHABLE.has(key)) element.innerHTML = `<label class="popover-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Search…" autocomplete="off" spellcheck="false" aria-label="Search the list"></label><div class="popover-scroll">${element.innerHTML}</div>`;
       element.scrollTop = 0;
       place(target);
+      element.querySelector(".popover-search input")?.focus();
     },
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
@@ -226,6 +235,17 @@ window.Pie = window.Pie || {};
     },
 
     bind() {
+      // the field narrows the list to the options whose name holds every word typed; Return picks the first one left
+      element.addEventListener("input", (event) => {
+        if (!event.target.matches(".popover-search input")) return;
+        const words = event.target.value.toLowerCase().split(/\s+/).filter(Boolean);
+        for (const o of element.querySelectorAll(".popover-option")) o.hidden = !words.every((w) => o.textContent.toLowerCase().includes(w));
+      });
+      element.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" || !event.target.matches(".popover-search input")) return;
+        event.preventDefault();
+        element.querySelector(".popover-option:not([hidden])")?.click();
+      });
       element.addEventListener("click", (event) => {
         event.stopPropagation();
         const target = event.target.closest("[data-value]");

@@ -379,15 +379,17 @@ window.Pie = window.Pie || {};
   // Spec Decode's limit for one measured result: the decode limit's pass with k + 1 tokens in it, checked after one pass
   // of a block drafter, keeping (1 - a^(k+1)) / (1 - a) tokens, at the fastest k from 1 to 16, never below plain decode.
   // a is the acceptance per draft, shared with the Roofline page's field (Pie.specAlpha, percent)
-  // the last acceptance picked, kept per browser; 50% until one is
+  // the last acceptance picked, kept per browser; 70% until one is
   const ALPHA_KEY = "pie.specAlpha";
   // the range the field takes: below half, drafting rarely pays; above 95%, no drafter holds it on real text
   const ALPHA_MIN = 50, ALPHA_MAX = 95;
+  // 70% until the viewer sets their own: a typical drafter's acceptance per token on real text
+  const ALPHA_DEFAULT = 70;
   Pie.specAlpha = (() => {
     try {
       const kept = Number(localStorage.getItem(ALPHA_KEY));
-      return kept >= ALPHA_MIN && kept <= ALPHA_MAX ? kept : 50;
-    } catch { return 50; }
+      return kept >= ALPHA_MIN && kept <= ALPHA_MAX ? kept : ALPHA_DEFAULT;
+    } catch { return ALPHA_DEFAULT; }
   })();
   Pie.specCeiling = (row, percent = Pie.specAlpha) => {
     const plain = Pie.ceiling(row, "decode");

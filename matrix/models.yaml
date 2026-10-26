@@ -281,6 +281,8 @@ artifacts:
   # ---------------- weekly: big ------------------------------------------
   - id: gpt-oss-120b-mxfp4
     base_model: openai/gpt-oss-120b
+    params_b: 117    # openai/gpt-oss-120b: 117B parameters, 5.1B active per token (mixture of experts); its name says neither
+    active_b: 5.1
     family: gpt_oss
     scheme: mxfp4
     expected_gib: 61.0

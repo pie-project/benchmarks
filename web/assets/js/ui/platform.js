@@ -21,6 +21,20 @@ window.Pie = window.Pie || {};
     { id: "prefill", group: "Prefill", label: "Prefill", item: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
     { id: "batching", group: "Decode", label: "Peak FLOPs", item: "Batched", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
   ];
+  // the setups' segments show how much of the chip each pass fills, as a level fills: Decode one token at a time (a dot,
+  // waiting on memory), Prefill the prompt's tokens in one row (a line, toward the compute roof but on some machines
+  // still bound by memory), Peak FLOPs 32 requests' rows together (a block: the compute saturated)
+  const mark = (x, y) => `<rect x="${x}" y="${y}" width="4.2" height="4.2" rx="1"/>`;
+  const AT = [1, 5.9, 10.8];  // three places across, or down, 16 wide: cells large enough to read at 14px
+  const DEGREE = {
+    decode: mark(5.9, 5.9),
+    spec: mark(3.45, 5.9) + mark(8.35, 5.9),  // the token and the draft checked with it
+    prefill: AT.map((x) => mark(x, 5.9)).join(""),
+    batching: AT.flatMap((y) => AT.map((x) => mark(x, y))).join(""),
+  };
+  // the setups as one segmented control, the grid's and the Roofline page's alike: each segment its degree and its name
+  const setupControl = (active, modes) => `<span class="platform-compare" role="group" aria-label="Setup">${modes.map((m) =>
+    `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.label)}</button>`).join("")}</span>`;
   let onChange = () => {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
@@ -93,14 +107,20 @@ window.Pie = window.Pie || {};
   // Compare: "engines", named Speedup, shows each engine against the best other engine; "ceiling", named Efficiency, shows each engine's
   // share of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
   const COMPARES = { engines: "Relative Speed", ceiling: "FP Efficiency", tps: "Best TPS" };
+  // each view wears the icon of the sidebar page that shows it for every machine
+  const COMPARE_ICONS = { engines: "speedups", ceiling: "all_hardware", tps: "tps" };
+  const nextCompare = (id) => { const ids = Object.keys(COMPARES); return ids[(ids.indexOf(id) + 1) % ids.length]; };
   // what the numbers in each view mean, as the help tag on its segment: a Mac explains a control where it is
   const CAPTIONS = {
     engines: "Speedup over the fastest other engine",
     ceiling: "Share of the hardware's theoretical peak",
     tps: "The engine's own speed",
   };
-  // the grid opens in Performance; holding R shows Roofline (there is no button to choose, so no choice is kept)
-  let compare = "engines";
+  // the view the viewer picked with the view button or V, kept across pages and reloads; Relative Speed until they pick.
+  // The FP Efficiency, Relative Speed and Best TPS pages each show their own view without touching the pick
+  const saved = (() => { try { return localStorage.getItem("platformCompare"); } catch { return null; } })();
+  let chosen = COMPARES[saved] ? saved : "engines";
+  let compare = chosen;
   // the theoretical bound for a cell: Raw's hardware limit, or for batched decode the lower of compute and bandwidth
   const boundOf = (mac, model, mode, metric, pie) => {
     if (mode.limit) return Pie.ceiling?.(pie, metric.id) || null;
@@ -208,6 +228,13 @@ window.Pie = window.Pie || {};
     if (specBound && roofline) lines.push(`<div class="tip-row is-limit">
       <svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg><span class="tip-name" title="The limit at the best draft width, at ${Pie.specAlpha}% acceptance">Spec Limit</span>
       <span class="tip-value">${esc(value(specBound.tps, metric.unit))}</span><span class="tip-when"></span></div>`);
+    // Spec Decode in FP Efficiency: the roofline over the list, the picked engine's Raw run and its speculative one as
+    // two dots, an arrow from the first to the second: drafting reads the weights once for several tokens, so the pass
+    // moves right along the roof, and up by what it kept
+    if (specBound && roofline) {
+      const moved = specMove(order, raw, specBound);
+      if (moved) return `<div class="rf-move-card">${roofCard(moved, { move: true })}${card("", "", lines)}</div>`;
+    }
     return card("", "", lines);
   };
 
@@ -234,9 +261,24 @@ window.Pie = window.Pie || {};
       link: b.parts.linkS ? flops / b.parts.linkS : null };
   };
 
+  // Spec Decode's two points for the picked engine (pie unless another is picked): its Raw pass where the grid places it,
+  // and its speculative pass at the intensity of the best draft width (k drafted tokens and the one after them checked
+  // in one read of the weights), each at its own share of its own limit, so the dots' heights match the grid's numbers
+  const specMove = (order, raw, specBound) => {
+    const focus = viewState?.platform.engine || Pie.engines.primary;
+    const spec = order.find((r) => r.engine === focus) || order[0];
+    const plain = raw.find((x) => x.hardware === spec.hardware && x.model === spec.model && x.engine === spec.engine);
+    const from = plain && roofPoint(plain, MODES[0], METRICS[0]);
+    if (!from || !specBound.k) return null;
+    const ai = from.ai * (specBound.k + 1);
+    const roofAt = (v) => Math.min(from.bw * 1e9 * v, from.peak * 1e12, from.link || Infinity);
+    const share = spec[METRICS[0].key] / specBound.tps;
+    return [{ ...from, ghost: true }, { ...from, r: spec, ai, achieved: share * roofAt(ai) }];
+  };
+
   // the card's roofline, a picture rather than a plot: the roof one line over a soft fade, the knee a ring named
   // beside it, each engine a dot in its own colour, pie on top; no axes, since the shape is the point
-  const roofCard = (found) => {
+  const roofCard = (found, { move = false } = {}) => {
     let points = found;
     if (!points.length) return "";
     const { bw, peak } = points[0];
@@ -249,8 +291,9 @@ window.Pie = window.Pie || {};
     // the interconnect, when it binds, is a flat line under the roof: a dot is measured against the lowest bound
     const link = own.link && own.link < Math.min(bw * 1e9 * ai, peak * 1e12) ? own.link : null;
     const shareOf = (p) => p.achieved / Math.min(p.bw * 1e9 * p.ai, p.peak * 1e12, p.link || Infinity);
-    points = points.map((p) => ({ ...p, ai, achieved: shareOf(p) * Math.min(bw * 1e9 * ai, peak * 1e12, link || Infinity) }));
-    const ais = [ai];
+    // a move keeps each pass at its own intensity; otherwise every engine stands at the picked one's
+    points = points.map((p) => ({ ...p, ai: move ? p.ai : ai, achieved: shareOf(p) * Math.min(bw * 1e9 * (move ? p.ai : ai), peak * 1e12, link || Infinity) }));
+    const ais = move ? points.map((p) => p.ai) : [ai];
     // both axes linear. Across, a window around the dots; up, always from zero to just over the roof, so a dot's height
     // is its share of the bound. The knee and the compute roof show only when the window reaches them
     const aiLo = Math.min(...ais), aiHi = Math.max(...ais);
@@ -268,7 +311,7 @@ window.Pie = window.Pie || {};
     // in the card's colour so dots stay apart; the picked engine in its colour, drawn last and the only one named, the
     // others grey, as Stocks greys the series not in focus
     const at = (p) => `cx="${x(p.ai).toFixed(1)}" cy="${y(p.achieved).toFixed(1)}"`;
-    const isPie = (p) => p.r.engine === focus;
+    const isPie = (p) => p.r.engine === focus && !p.ghost;
     // the chart stretches with the card, but its marks keep their size on screen: the line keeps its weight
     // (non-scaling stroke), each dot is a round cap of a zero-length line (so it stays 7px across, as the Engines card's
     // dots), and the names are HTML laid over the chart at the right place, at the card's own type size
@@ -276,11 +319,25 @@ window.Pie = window.Pie || {};
     const dots = [...points.filter((p) => !isPie(p)), ...points.filter(isPie)]
       .map((p) => point(x(p.ai).toFixed(1), y(p.achieved).toFixed(1), isPie(p) ? "rf-dot" : "rf-dot is-other", isPie(p) ? Pie.engines.colorOf(p.r.engine) : "")).join("");
     const pct = (vx, vy) => `left: ${((vx / W) * 100).toFixed(2)}%; top: ${((vy / H) * 100).toFixed(2)}%`;
-    // only the picked engine is named, beside its dot in its colour: to the right, or to the left near the right edge
-    const labels = points.filter(isPie).map((p) => {
-      const cx = x(p.ai), left = cx > W - 40;
-      return `<span class="rf-name is-pie${left ? " is-left" : ""}" style="${pct(cx, y(p.achieved))}; color: ${Pie.engines.colorOf(p.r.engine)}">${esc(names().engine(p.r.engine))}</span>`;
-    }).join("");
+    // no engine is named on the chart: the picked one is the dot in its colour, and the list under it names them all
+    // the move from the Raw pass to the speculative one: the Raw pass a grey dot, as the cards grey every pass not in
+    // focus, the speculative the engine's dot; a straight line in the engine's colour from the edge of the one to the
+    // edge of the other, its small arrowhead's tip on the second dot
+    const arrow = (() => {
+      const a = points.find((p) => p.ghost), b = points.find(isPie);
+      if (!move || !a || !b) return "";
+      const [x1, y1, x2, y2] = [x(a.ai), y(a.achieved), x(b.ai), y(b.achieved)];
+      const len = Math.hypot(x2 - x1, y2 - y1);
+      const R = 3.5, H = 6.5, Wd = 3.8;  // a dot's radius (7px across), the arrowhead's length and half its width
+      if (len < 2 * R + H + 2) return "";
+      const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+      const tip = [x2 - ux * R, y2 - uy * R], base = [tip[0] - ux * H, tip[1] - uy * H];
+      const head = [tip, [base[0] - uy * Wd, base[1] + ux * Wd], [base[0] + uy * Wd, base[1] - ux * Wd]]
+        .map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ");
+      const color = Pie.engines.colorOf(b.r.engine);
+      return `<line class="rf-move" x1="${(x1 + ux * R).toFixed(1)}" y1="${(y1 + uy * R).toFixed(1)}" x2="${base[0].toFixed(1)}" y2="${base[1].toFixed(1)}" stroke="${color}"/>
+          <polygon class="rf-move-head" points="${head}" fill="${color}"/>`;
+    })();
     const shown = knee > X0 && knee < X1;  // the knee, only when it falls inside the window
     const roofPts = (shown ? [start, knee, X1] : [start, X1]).map((v) => `${x(v).toFixed(1)},${y(roof(v)).toFixed(1)}`);
     const kx = x(knee), ky = y(peak * 1e12);
@@ -291,10 +348,9 @@ window.Pie = window.Pie || {};
           <polyline class="rf-roof" points="${roofPts.join(" ")}"/>
           ${link ? `<line class="rf-link" x1="${L}" x2="${W - R}" y1="${y(link).toFixed(1)}" y2="${y(link).toFixed(1)}"/>` : ""}
           ${shown ? point(kx.toFixed(1), ky.toFixed(1), "rf-knee") + point(kx.toFixed(1), ky.toFixed(1), "rf-knee-hole") : ""}
-          ${dots}
+          ${arrow}${dots}
         </svg>
         ${shown ? `<span class="rf-tick-name${kx > W / 2 ? " is-left" : ""} is-above" style="${pct(kx, ky)}">Knee</span>` : ""}
-        ${labels}
       </div>`;
   };
 
@@ -325,9 +381,17 @@ window.Pie = window.Pie || {};
       } else return false;
       return true;
     },
+    next: () => nextCompare(compare),
+    // the setup control for another page, over the setups named, and a way to say a pick changed the setup
+    setupControl: (active, ids) => setupControl(active, ids.map((id) => MODES.find((m) => m.id === id)).filter(Boolean)),
+    changed: () => onChange(),
+    // a model's maker as the grid draws it (its logo on a white tile), for other menus that name a model
+    makerBadge: (model) => badge(makerOf(model)),
+    // a setup's degree mark (one square for Decode, three for Prefill), for other controls that name a setup
+    degree: (id) => `<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id] || ""}</svg>`,
     setCompare(value) {
       peeked = null;
-      compare = COMPARES[value] ? value : "engines";
+      compare = chosen = COMPARES[value] ? value : "engines";
       try {
         localStorage.setItem("platformCompare", compare);
       } catch {
@@ -398,10 +462,12 @@ window.Pie = window.Pie || {};
       // Speedup and Efficiency are one grid each: the page sets the comparison, and no switch is shown
       const fixed = Pie.schema[state.table]?.compare;
       if (fixed) { peeked = null; compare = fixed; }
+      else if (!peeked) compare = chosen;  // a platform's page shows the viewer's pick, whatever page came before
       const all = Pie.store.snapshot(state.release);
       const modes = Pie.platform.metrics(state);
-      if (!modes.some((m) => m.id === state.platform.mode)) state.platform.mode = "decode";
-      const mode = modes.find((m) => m.id === state.platform.mode);
+      // the viewer's pick is kept as they made it: a page that does not offer it (the TPU has no Peak FLOPs, Spec Decode
+      // is the Roofline page's) shows Decode without forgetting it, so the next page that has it opens on it again
+      const mode = modes.find((m) => m.id === state.platform.mode) || modes.find((m) => m.id === "decode") || modes[0];
       const metric = mode.metric;
       // the engine every cell is about, picked in the bar; pie unless another is picked
       const base = state.platform.engine || Pie.engines.primary;
@@ -601,17 +667,18 @@ window.Pie = window.Pie || {};
 
       element.innerHTML = `
         <div class="platform-bar">
-          <span class="platform-compare" role="group" aria-label="Setup">${modes.map((m) =>
-            // the setups as a segmented control, as the view switch beside it
-            `<button type="button" class="plain-button${m.id === mode.id ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === mode.id}">${esc(m.label)}</button>`).join("")}</span>${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
-          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+          ${setupControl(mode.id, modes)}${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
+          <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           ${only ? "" : `<span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="platform" aria-haspopup="menu" aria-label="Platforms">${esc(!picked.length ? "All Platforms" : picked.length <= 2 ? picked.map((id) => Pie.schema[id]?.short || id).join(", ") : `${picked.length} Platforms`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`}
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="maker" aria-haspopup="menu" aria-label="Makers">${esc(!p.makers?.length ? "All Makers" : p.makers.length <= 2 ? p.makers.join(", ") : `${p.makers.length} Makers`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
-            <span class="platform-compare" role="group" aria-label="View"${fixed ? " hidden" : ""}>${Object.entries(COMPARES).map(([id, name]) =>
-              // the two views as a segmented control, as Finder switches its views; holding R peeks at the other
-              `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}" title="${esc(id === compare ? CAPTIONS[id] : `${CAPTIONS[id]} (V, or hold R)`)}">${esc(name)}</button>`).join("")}</span>
+            ${fixed ? "" : (() => {
+              // the view as one toolbar button in macOS's Icon and Text style: its sidebar icon and its name, so the
+              // viewer sees what they are looking at; a click moves on to the next view, as V does; holding R peeks
+              const next = nextCompare(compare);
+              return `<button type="button" class="plain-button view-cycle" data-compare="${next}" aria-label="${esc(`View: ${COMPARES[compare]}. Switch to ${COMPARES[next]}`)}" title="${esc(`${CAPTIONS[compare]}. Click for ${COMPARES[next]} (V)`)}">${Pie.icon(COMPARE_ICONS[compare])}<span>${esc(COMPARES[compare])}</span></button>`;
+            })()}
           </span>
         </div>
         <div class="platform-scroll">
