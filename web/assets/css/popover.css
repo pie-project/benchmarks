@@ -187,3 +187,5 @@
 .popover.is-searchable { display: flex; flex-direction: column; overflow: hidden; }
 .popover.is-searchable[hidden] { display: none; }
 .popover-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+
+.popover.is-fit { min-width: 0; }

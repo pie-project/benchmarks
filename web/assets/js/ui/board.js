@@ -133,8 +133,52 @@ window.Pie = window.Pie || {};
   // the win rate on each platform apart: an engine is held only against the others on that platform's machines
   const onPlatform = (rows, ids) => rows.filter((r) => ids.includes(Pie.platformOf(Pie.store.index.hardware[r.hardware] || {})));
   const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]]].map(([id, title, ids]) => ({
-    id, title, ids, sub: "Head-to-head decode win rate",
+    id, title, ids, sub: "Chance to decode faster than an average engine",  // one line, as the grid's, so the card keeps its height on a switch
+    value: (rows, engine) => strengths(rows, ids)[engine] || null,
+    label: (v) => `${Math.round(v)}%`,
   }));
+  // each platform's card shows its bars or, picked in its corner, the grid of head-to-heads they are fitted from
+  const GRID_KEY = "pieGridCards";  // kept per browser, as the cards' other picks are
+  const gridCards = new Set((() => { try { return JSON.parse(localStorage.getItem(GRID_KEY)) || []; } catch { return []; } })());
+  const BARS_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V8M8 13V3.5M12 13V6.5"/></svg>';
+  const GRID_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg>';
+  // the platform pages' setup control in small: symbols on a grey capsule, the picked one in the accent, no thumb
+  const viewToggle = (id) => `<span class="platform-compare board-view" role="group" aria-label="View">
+      <button type="button" class="plain-button${gridCards.has(id) ? "" : " is-active"}" data-board-view="${id}" data-view="bars" aria-label="Bars" title="Bars">${BARS_ICON}</button>
+      <button type="button" class="plain-button${gridCards.has(id) ? " is-active" : ""}" data-board-view="${id}" data-view="grid" aria-label="Head-to-head grid" title="Head-to-head grid">${GRID_ICON}</button>
+    </span>`;
+  // the head-to-heads on a platform folded into one strength per engine by the Bradley–Terry model (Pr(i beats j) =
+  // p_i / (p_i + p_j)), fitted by Hunter's MM steps, with half a win and half a loss added to every pair met so an
+  // engine that never won still gets a finite strength; shown as the chance of beating an engine of average strength
+  const btCache = new Map();
+  const strengths = (rows, platforms) => {
+    const key = platforms.join();
+    if (btCache.get(key)?.rows === rows) return btCache.get(key).out;
+    const all = setups(onPlatform(rows, platforms), "decode_tok_s");
+    const ids = engineIds().filter((e) => all.some((s) => s[e]));
+    const wins = {}, games = {};
+    for (const a of ids) for (const b of ids) if (a !== b) {
+      const met = all.filter((s) => s[a] && s[b]);
+      if (!met.length) continue;
+      wins[`${a}|${b}`] = met.filter((s) => s[a] > s[b]).length + .5;
+      games[`${a}|${b}`] = met.length + 1;
+    }
+    let p = Object.fromEntries(ids.map((e) => [e, 1]));
+    for (let step = 0; step < 200; step++) {
+      const next = {};
+      for (const a of ids) {
+        const others = ids.filter((b) => games[`${a}|${b}`]);
+        const w = others.reduce((n, b) => n + wins[`${a}|${b}`], 0);
+        const d = others.reduce((n, b) => n + games[`${a}|${b}`] / (p[a] + p[b]), 0);
+        next[a] = d ? w / d : p[a];
+      }
+      const g = Math.exp(ids.reduce((n, e) => n + Math.log(next[e]), 0) / ids.length);  // scaled so the average is 1
+      p = Object.fromEntries(ids.map((e) => [e, next[e] / g]));
+    }
+    const out = Object.fromEntries(ids.filter(() => ids.length > 1).map((e) => [e, { v: 100 * p[e] / (p[e] + 1), n: all.filter((s) => s[e]).length }]));
+    btCache.set(key, { rows, out });
+    return out;
+  };
   // head to head on one platform: each cell counts the setups the row's engine decoded faster than the column's, a setup
   // counting only where both ran it; an engine never meets itself, so the diagonal stays empty; the rows by wins
   const matrix = (summary, rows) => {
@@ -190,7 +234,7 @@ window.Pie = window.Pie || {};
   // a shorter name where the engine's own would crowd its neighbours under a bar
   const SHORT = { llamacpp: "Llama" };
   const ranking = (summary, rows) => {
-    const W = 300, H = 185, L = 24, R = 4, T = 10, B = 44;  // room under the bars for the logo and the name under it; the bars 20px shorter on screen
+    const W = 456, H = 185, L = 24, R = 4, T = 10, B = 44;  // half the row wide, so the bars keep the height they had at a third; room under them for the logo and name
     const list = engineIds().map((engine) => ({ engine, ...summary.value(rows, engine) })).filter((e) => e.v !== undefined && e.v !== null)
       .sort((a, b) => b.v - a.v);
     if (!list.length) return `<p class="board-empty">No runs yet</p>`;
@@ -467,7 +511,8 @@ window.Pie = window.Pie || {};
           <p class="board-banner-sub">Compare cost, hardware and models<br>for the throughput you need to serve</p>
         </div> -->
         <section class="board-log" aria-label="Changelog">
-          <h2 class="board-log-title">Changelog</h2>
+          <div class="board-log-head"><h2 class="board-log-title">Changelog</h2><form class="board-subscribe" hidden><input type="email" required placeholder="Email" aria-label="Email" value="${esc(Pie.account?.user()?.email || "")}"><button type="submit" aria-label="Notify me" title="Notify me"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M9 4.5 12.5 8 9 11.5"/></svg></button></form>
+            <button class="board-log-bell${subscribed() ? " is-subscribed" : ""}" type="button" data-board-subscribe aria-label="Email me new releases" title="Email me new releases"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11.5V7a4 4 0 0 1 8 0v4.5l1 1H3zM6.5 14a1.5 1.5 0 0 0 3 0"/></svg></button></div>
           <ol class="board-log-list">${changelog().map(logItem).join("")}</ol>
         </section>
       </div>`;
@@ -517,8 +562,8 @@ window.Pie = window.Pie || {};
       .map((id) => `<span class="board-key"><span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}</span>`).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     const outline = [
-      ["Across every model", SUMMARY.map((m) => [m.id, m.title])],
-      ["Across model sizes", [["size", "Dense models"], ["moe", "MoE models"]]],
+      ["Head to head", SUMMARY.map((m) => [m.id, m.title])],
+      ...(Pie.signedIn() ? [["Speed by model size", [["size", "Dense models"], ["moe", "MoE models"]]]] : []),  // for an account only
       ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"], ...(Pie.signedIn() ? [[USE.id, "Share of the limit"]] : [])]],
       ...(Pie.signedIn() ? [["At datacenter scale", [[SCALING.id, "Chip scaling"]]]] : []),  // the datacenter section for an account only
     ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
@@ -538,13 +583,13 @@ window.Pie = window.Pie || {};
         <nav class="board-outline" aria-label="On this page">${outline}</nav>
         <div class="board-main">
           <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">Across every model</h1>
+            <div class="board-section-text"><h1 class="board-title">Head to head</h1>
             <p class="board-lede">Every engine compared with the others on each machine and model they share.</p></div>
           </div>
-          <div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, m.sub, matrix(m, rows), "", false)).join("")}</div>${hero()}
-          <h1 class="board-title">Across model sizes</h1>
-          <p class="board-lede">Dense models by their size, mixtures of experts by the parameters each token reads, on each platform's fastest machine and engine.</p>
-          <div class="board-stack">${sizeCard(rows)}${moeCard(rows)}</div>
+          <div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has(m.id) ? "Head-to-head decode win rate" : m.sub, gridCards.has(m.id) ? matrix(m, rows) : ranking(m, rows), viewToggle(m.id), false)).join("")}</div>${""/* the banner and the Changelog, off for now: hero() */}
+          ${Pie.signedIn() ? `<h1 class="board-title">Speed by model size</h1>
+          <p class="board-lede">Each platform's fastest machine and engine. MoE models by active parameters.</p>
+          <div class="board-stack">${sizeCard(rows)}${moeCard(rows)}</div>` : ""}
           <div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">On one model</h1>
             <p class="board-lede">Each platform is shown on the machine where the most engines ran this model.</p></div>
@@ -592,7 +637,11 @@ window.Pie = window.Pie || {};
       // how far the row has moved up past the line since it could first reach it (at once, for a row the page opens on)
       const r = row[0].getBoundingClientRect();
       const start = Math.max(0, line - (r.top + view.scrollTop));
-      const through = Math.min(0.999, Math.max(0, (line - r.top - start) / r.height));
+      // the hand-off runs over the scroll left before the next section reaches the line, so every card in the row gets
+      // its turn even when the next row follows close behind (a tall window)
+      const next = sections.find((x) => x.getBoundingClientRect().top > r.top + 2);
+      const span = Math.max(1, Math.min(r.height, (next ? next.getBoundingClientRect().top - r.top : r.height) - start));
+      const through = Math.min(0.999, Math.max(0, (line - r.top - start) / span));
       current = row[Math.floor(through * row.length)];
     }
     const id = pinned || current?.id.slice(6);
@@ -649,7 +698,7 @@ window.Pie = window.Pie || {};
     const engine = g.dataset.tipEngine;
     const wide = engine === "mlxlm";
     const head = wide ? g.dataset.tipHead.slice(names().engine(engine).length).trim() : g.dataset.tipHead;
-    return `<div class="board-tip-head"><svg class="board-tip-logo" ${wide ? 'style="width: 23.8px" viewBox="0 0 27.2 16"' : 'viewBox="0 0 16 16"'} aria-hidden="true">${logo(engine, wide ? 5.6 : 0, 0, 16)}</svg>${esc(head)}</div>
+    return `<div class="board-tip-head"><svg class="board-tip-logo" ${wide ? 'style="width: 18.7px" viewBox="0 0 27.2 16"' : 'viewBox="0 0 16 16"'} aria-hidden="true">${logo(engine, wide ? 5.6 : 0, 0, 16)}</svg>${esc(head)}</div>
     <div class="board-tip-value">${esc(g.dataset.tipValue)}</div>${g.dataset.tipNote ? `<div class="board-tip-note">${esc(g.dataset.tipNote)}</div>` : ""}`;
   };
   let tipFor = null;
@@ -676,12 +725,95 @@ window.Pie = window.Pie || {};
   element.addEventListener("scroll", hideTip, { passive: true, capture: true });
 
 
+  // the Changelog's bell: an email, sent to a subscribers table in the site's Supabase project once one is connected;
+  // until then the reader is thanked all the same and the field cleared
+  const SUBSCRIBED_KEY = "pieSubscribed";
+  const subscribed = () => { try { return localStorage.getItem(SUBSCRIBED_KEY) === "1"; } catch { return false; } };
+  const subscribe = (email) => {
+    const { url, anonKey } = Pie.authConfig || {};
+    if (!url || !anonKey) return;
+    fetch(`${url}/rest/v1/subscribers`, {
+      method: "POST",
+      headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ email }),
+    }).catch(() => {});
+  };
+  // a head-to-head grid, or a platform card's bars, can be pulled about by hand, with a rubber band's give, and springs back to the middle of its
+  // card when let go, as a Mac view bounces at its edge
+  let tug = null;
+  element.addEventListener("pointerdown", (event) => {
+    // the platform cards' bars the same, but only sideways
+    const grid = event.target.closest?.(".board-matrix, .is-matrices .board-chart");
+    if (!grid || event.button !== 0) return;
+    tug = { grid, x: event.clientX, y: event.clientY, id: event.pointerId, flat: grid.classList.contains("board-chart") };
+    grid.setPointerCapture(event.pointerId);
+    grid.style.transition = "none";
+    grid.classList.add("is-tugged");
+  });
+  element.addEventListener("pointermove", (event) => {
+    if (!tug || event.pointerId !== tug.id) return;
+    const give = (d) => Math.sign(d) * 60 * (1 - Math.exp(-Math.abs(d) / 120));  // the farther, the harder it pulls back
+    tug.grid.style.transform = `translate(${give(event.clientX - tug.x)}px, ${tug.flat ? 0 : give(event.clientY - tug.y)}px)`;
+  });
+  const letGo = (event) => {
+    if (!tug || event.pointerId !== tug.id) return;
+    tug.grid.style.transition = "transform .45s cubic-bezier(.3, 1.4, .5, 1)";  // a spring's small overshoot on the way home
+    tug.grid.style.transform = "";
+    tug.grid.classList.remove("is-tugged");
+    tug = null;
+  };
+  element.addEventListener("pointerup", letGo);
+  element.addEventListener("pointercancel", letGo);
+
+  // the field opens in the title's place and closes again on a click anywhere else, as a Mac search field gives way
+  const setSubscribe = (open) => {
+    const form = element.querySelector(".board-subscribe");
+    if (!form) return;
+    form.hidden = !open;
+    element.querySelector("[data-board-subscribe]")?.classList.toggle("is-on", open);
+    form.closest(".board-log-head").classList.toggle("is-open", open);
+    if (open) form.querySelector("input").focus({ preventScroll: true });
+  };
+  document.addEventListener("pointerdown", (event) => {
+    if (!event.target.closest?.(".board-log-head")) setSubscribe(false);
+  });
+  element.addEventListener("submit", (event) => {
+    const form = event.target.closest(".board-subscribe");
+    if (!form) return;
+    event.preventDefault();
+    const input = form.querySelector("input");
+    subscribe(input.value.trim());
+    input.value = "";
+    // the row says so in words, then gives the title back
+    setSubscribe(false);
+    const title = element.querySelector(".board-log-title");
+    title.innerHTML = '<svg class="board-log-check" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"/></svg>Subscribed';
+    setTimeout(() => { title.textContent = "Changelog"; }, 3000);
+    // the bell stays filled from then on, as a Mac marks a setting that is on
+    try { localStorage.setItem(SUBSCRIBED_KEY, "1"); } catch { /* private windows can refuse storage */ }
+    element.querySelector("[data-board-subscribe]")?.classList.add("is-subscribed");
+  });
+
   element.addEventListener("click", (event) => {
+    const bell = event.target.closest("[data-board-subscribe]");
+    if (bell) {
+      setSubscribe(element.querySelector(".board-subscribe").hidden);
+      return;
+    }
     const go = event.target.closest("[data-board-go]");
     if (go) {
       pinned = go.dataset.boardGo;
       element.querySelector(`#board-${go.dataset.boardGo}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
       follow();
+      return;
+    }
+    // a platform card's bars or grid
+    const view = event.target.closest("[data-board-view]");
+    if (view) {
+      if (view.dataset.view === "grid") gridCards.add(view.dataset.boardView); else gridCards.delete(view.dataset.boardView);
+      try { localStorage.setItem(GRID_KEY, JSON.stringify([...gridCards])); } catch { /* private windows can refuse storage */ }
+      delete element.dataset.key;  // the page redraws only when its key changes; this pick changes what it shows
+      Pie.board.render(state);
       return;
     }
     // the rankings' Speculation, on or off, as a toolbar's toggle: the three cards redraw on the runs it names
