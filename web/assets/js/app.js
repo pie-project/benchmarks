@@ -11,6 +11,7 @@
       state.table = "board";
       linkedCard = hardware;
     }
+    if (view === "quality") state.table = "checks";  // #quality opens the Quality checks
     if (view === "overview" || view === "mac") {
       state.table = "mac";
       Object.assign(state.overview, { hardware: hardware || null, workload: workload || "raw" });
@@ -55,7 +56,7 @@
     toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isPlatform = Pie.schema[state.table]?.view === "platform";
-    const isMethod = ["welcome", "inferlets", "services", "profiler", "methodology", "methods", "fit", "board"].includes(state.table);
+    const isMethod = ["welcome", "inferlets", "services", "profiler", "methodology", "methods", "fit", "board", "checks"].includes(state.table);
     filterBar.hidden = isOverview || isMethod || isPlatform;
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
@@ -79,6 +80,7 @@
     Pie.methodology.render(state);
     Pie.methods.render(state);
     Pie.board.render(state);
+    Pie.checks.render(state);
     sidebar.render(state);
     if (isPlatform) {
       const shown = Pie.platform.render(state);
