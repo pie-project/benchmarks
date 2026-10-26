@@ -475,3 +475,8 @@
 .toolbar-search-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .toolbar-search.is-filtered { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 14%, transparent); }  /* a page filtered: its words in the accent */
 .toolbar-search:focus:not(:focus-visible) { outline: none; }
+/* a phone has no ⌘K: the search button is its glass alone, its words shown only while a page is filtered */
+@media (max-width: 899px) {
+  .toolbar-search:not(.is-filtered) .toolbar-search-text { display: none; }
+  .toolbar-search { padding: 0 9px; }
+}
