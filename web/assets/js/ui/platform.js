@@ -35,7 +35,7 @@ window.Pie = window.Pie || {};
   // the setups as one segmented control, the grid's and the Roofline page's alike: each segment its degree and its name
   // the setups in two groups, each named in grey before it: one request at a time, then many at once
   const setupControl = (active, modes) => `<span class="platform-compare" role="group" aria-label="Setup">${modes.map((m, i) =>
-    (m.id === "batching" ? `<span class="setup-group is-second">Batched</span>` : i === 0 ? `<span class="setup-group">1 request</span>` : "") +
+    (m.id === "batching" ? `<span class="setup-group is-second">Batched</span>` : i === 0 ? `<span class="setup-group">Single</span>` : "") +
     `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}" title="${esc(`${m.title || m.label}, ${m.id === "batching" ? "as many requests at once as the hardware needs to stay busy" : "one request"}`)}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.label)}</button>`).join("")}</span>`;
   let onChange = () => {};
 
@@ -371,6 +371,7 @@ window.Pie = window.Pie || {};
     changed: () => onChange(),
     // a model's maker as the grid draws it (its logo on a white tile), for other menus that name a model
     makerBadge: (model) => badge(makerOf(model)),
+    makerName: (model) => makerOf(model).name || "Cloud",  // the band a model sits under in the grids
     // a setup's degree mark (one square for Decode, three for Prefill), for other controls that name a setup
     degree: (id) => `<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id] || ""}</svg>`,
     setCompare(value) {
@@ -623,7 +624,7 @@ window.Pie = window.Pie || {};
                 })()
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}${c.all.some(Pie.isNew) ? " is-new" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}${c.pie.miniature ? `<span class="platform-mini" title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}">mini</span>` : ""}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${why ? ` data-tip="${esc(card("", "", [], why))}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;

@@ -220,3 +220,5 @@
 .data-table .cell-glyphs.is-slotted .sidebar-glyph[style] { margin-left: 0; }  /* the tiles on one grid with the empty slots */
 .data-table .cell-glyphs.is-slotted .sidebar-glyph svg { fill: none; }
 .data-table .cell-glyphs.is-slotted .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }  /* Apple's mark is a filled glyph */
+.data-table .cell-glyphs .sidebar-glyph.is-fit { opacity: .35; }  /* would fit, not measured yet */
+.data-table tbody tr.is-new td { background: rgba(255, 204, 0, .18); }  /* local preview: measured today or later */

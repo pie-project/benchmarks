@@ -9,8 +9,8 @@ window.Pie = window.Pie || {};
     { id: "start", label: "" },  // the home page on its own at the top, under no heading, as a Mac app sets its first page
     { id: "home", label: "Compare" },
     { id: "platforms", label: "Platforms" },
-    { id: "measurements", label: "Measurements", login: true },
-    { id: "catalog", label: "Catalog", login: true },
+    { id: "measurements", label: "Measurements" },  // open to everyone for now (login: true closes it again)
+    { id: "catalog", label: "Catalog" },  // open to everyone for now (login: true closes it again)
     { id: "resources", label: "Resources", login: true },  // how the numbers are worked out, after the data itself
   ];
   // the sections an account opens: hidden, and their pages closed, until the viewer logs in (ui/account.js)
@@ -84,12 +84,29 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
+    // how close the engines come to one another's answers, across every measurement: off for now, Quality Checks shows it
+    accuracy: {
+      label: "Accuracy",
+      section: null,
+      view: "accuracy",
+      filters: [],
+      columns: [],
+    },
     // how well models answer: Artificial Analysis measures it, so the sidebar links there rather than to a page of ours
     scores: {
-      label: "Quality",
+      label: "Intelligence",  // the model's own smarts (Artificial Analysis's Intelligence Index), not an engine's
       section: "home",
       href: "https://artificialanalysis.ai/",
       tint: "#7a4cf5",  // Artificial Analysis's purple, as the platforms' tiles wear theirs
+      filters: [],
+      columns: [],
+    },
+    // pie against a reference engine: token distributions, kernel tests and benchmark scores side by side
+    checks: {
+      label: "Quality Checks",
+      title: "Quality",
+      section: "home",  // in Compare, where Accuracy was
+      view: "checks",
       filters: [],
       columns: [],
     },
@@ -219,16 +236,6 @@ window.Pie = window.Pie || {};
         text("note", "Note", "Run", { wide: true }),
       ],
     },
-    // pie against a reference engine: token distributions, kernel tests and benchmark scores side by side
-    checks: {
-      label: "Quality Checks",
-      title: "Quality",
-      section: "measurements",
-      view: "checks",
-      filters: [],
-      columns: [],
-    },
-
 
     methods: {
       label: "Roofline",
@@ -256,7 +263,6 @@ window.Pie = window.Pie || {};
     //   filters: [],
     //   columns: [],
     // },
-
 
     hardware: {
       label: "Hardware",

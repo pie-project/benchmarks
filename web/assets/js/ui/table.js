@@ -51,17 +51,19 @@ window.Pie = window.Pie || {};
       const [id, s] = platform;
       return `<td class="${classes}"><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${format.escape(value)}</span></td>`;
     }
-    if (column.key === "platforms" && !format.isEmpty(value)) {
+    if (column.key === "platforms" && (!format.isEmpty(value) || row.fits)) {
       // each platform as its sidebar tile alone, its name on hover, as Finder's Tags column shows colour, not words;
       // every platform keeps its own slot down the column, empty where a model was not measured there, so a platform's
       // tiles stand in one line and the eye runs down it
       const ID = { mac: "mac", gpu: "nvidia", tpu: "tpu", amd: "amd", wafer: "cerebras" };
-      const has = String(value).toLowerCase().split(", ");
+      // a model not yet measured shows where it would fit, its tiles faded
+      const has = String(value || "").toLowerCase().split(", ");
+      const fits = String(row.fits || "").toLowerCase().split(", ");
       const slots = platformSlots().map((t) => {
         const s = Pie.schema[ID[t]];
-        return has.includes(t) && s
-          ? `<span class="sidebar-glyph" style="--tint: ${s.tint}" title="${format.escape(s.label)}" aria-label="${format.escape(s.label)}">${Pie.icon(ID[t])}</span>`
-          : `<span class="cell-slot" aria-hidden="true"></span>`;
+        if (has.includes(t) && s) return `<span class="sidebar-glyph" style="--tint: ${s.tint}" title="${format.escape(s.label)}" aria-label="${format.escape(s.label)}">${Pie.icon(ID[t])}</span>`;
+        if (fits.includes(t) && s) return `<span class="sidebar-glyph is-fit" style="--tint: ${s.tint}" title="${format.escape(`${s.label}: fits, not measured yet`)}" aria-label="${format.escape(`${s.label}, fits`)}">${Pie.icon(ID[t])}</span>`;
+        return `<span class="cell-slot" aria-hidden="true"></span>`;
       });
       return `<td class="${classes}"><span class="cell-glyphs is-slotted">${slots.join("")}</span></td>`;
     }
@@ -83,6 +85,7 @@ window.Pie = window.Pie || {};
     if ((state.table === "results" || state.table === "quality") && !row.stale && store.isMeasured(row)) classes.push("is-highlighted");
     // a listed setup with no numbers stays in the table, in quiet grey
     if (state.table === "results" && !store.isMeasured(row)) classes.push("is-unmeasured");
+    if (Pie.isNew(row)) classes.push("is-new");
     if (row.stale) {
       classes.push("is-stale");
       const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";

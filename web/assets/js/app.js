@@ -56,7 +56,9 @@
     toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isPlatform = Pie.schema[state.table]?.view === "platform";
-    const isMethod = ["welcome", "inferlets", "services", "profiler", "methodology", "methods", "fit", "board", "checks"].includes(state.table);
+    // the miniatures' banner over every page that can show their results
+    document.getElementById("mini-banner").hidden = true;  // the miniatures note, off: !(Pie.store.miniatures && (isPlatform || ["results", "measurements", "welcome"].includes(state.table)));
+    const isMethod = ["welcome", "inferlets", "services", "profiler", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
     filterBar.hidden = isOverview || isMethod || isPlatform;
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
@@ -489,6 +491,7 @@
   bindGlobal();
   // logging in or out shows or hides the sections only an account opens, and leaves a page that closes with them
   document.addEventListener("pie:account", () => render());
+  document.addEventListener("pie:refresh", () => render());  // a pick kept outside the state (the Results page's dates)
   // the ⌘K palette opens pages and filters the ones that filter: a platform grid, the overview, a table
   Pie.palette.bind({
     state,

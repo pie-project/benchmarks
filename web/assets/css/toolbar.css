@@ -459,7 +459,7 @@
 
 /* Log in after the search: the toolbar's one prominent button, filled solid black in light mode and white in dark, so it
    stands out in both, its word in the other */
-.toolbar-login { flex: none; height: 28px; padding: 0 12px; border: 0; border-radius: var(--radius-field); font: inherit; font-size: 13px; font-weight: 500; color: #fff; background: #1d1d1f; cursor: pointer; }
+.toolbar-login { flex: none; height: 28px; padding: 0 12px; border: 0; border-radius: 12px; font: inherit; font-size: 13px; font-weight: 500; color: #fff; background: #1d1d1f; cursor: pointer; }
 :root[data-theme="dark"] .toolbar-login { color: #1d1d1f; background: #f5f5f7; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .toolbar-login { color: #1d1d1f; background: #f5f5f7; } }
 .toolbar-login:hover { opacity: .85; }
