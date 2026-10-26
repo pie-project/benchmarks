@@ -14,6 +14,7 @@ on:
       kernels_commit: { description: "pie commit for the kernel tests", required: false, default: "main" }
       tag: { description: "manual tag the rows are stored under", required: false, default: "0.5.3-b5" }
       kernels: { description: "also run the kernel test suite, one pod per platform", type: boolean, required: false, default: true }
+      mac: { description: "a Mac platform id (pie on Metal against mlx-lm, on that runner); empty: none", required: false, default: "" }
 concurrency: { group: "parity-${{ github.run_id }}", cancel-in-progress: false }
 
 jobs:
@@ -40,7 +41,7 @@ jobs:
           T: "${{ inputs.tag }}"
           RUN: "${{ github.run_id }}"
         run: |
-          [[ "$P" =~ ^[a-z0-9.,-]+$ && "$A" =~ ^[a-z0-9.,-]+$ && "$S" =~ ^[1-9][0-9]*$ && "$T" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "::error::bad inputs"; exit 1; }
+          [[ "$P" =~ ^[a-z0-9.,-]*$ && "$A" =~ ^[a-z0-9.,-]+$ && "$S" =~ ^[1-9][0-9]*$ && "$T" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "::error::bad inputs"; exit 1; }
           sha() { local c="${1:-main}"; [[ "$c" =~ ^[0-9a-f]{40}$ ]] && echo "$c" || gh api "repos/pie-project/pie/commits/$c" --jq .sha; }
           echo "commit=$(sha "$C")" >> "$GITHUB_OUTPUT"
           echo "kcommit=$(sha "$KC")" >> "$GITHUB_OUTPUT"
@@ -71,6 +72,7 @@ jobs:
 
   launch:
     needs: plan
+    if: fromJson(needs.plan.outputs.pods).include[0] != null
     runs-on: ubuntu-latest
     strategy: { fail-fast: false, matrix: "${{ fromJson(needs.plan.outputs.pods) }}" }
     steps:
@@ -161,6 +163,43 @@ jobs:
         if: always()
         with: { name: "kernels-${{ matrix.platform }}", path: kernels-out/, if-no-files-found: warn, retention-days: 30 }
 
+  # the Mac: pie on Metal against mlx-lm (vLLM has no Mac build), every model one after another on one runner
+  mac:
+    needs: plan
+    if: inputs.mac != ''
+    runs-on: [self-hosted, macos, "${{ inputs.mac }}"]
+    timeout-minutes: 720
+    env: { C: "${{ needs.plan.outputs.commit }}", KC: "${{ needs.plan.outputs.kcommit }}", HF_TOKEN: "${{ secrets.HF_TOKEN }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - name: install harness
+        run: |
+          export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/opt/homebrew/bin:$PATH"
+          printf '%s\n' "$HOME/.local/bin" "$HOME/.cargo/bin" /opt/homebrew/bin >> "$GITHUB_PATH"
+          uv venv --quiet .venv && uv pip install --quiet --python .venv/bin/python -e ".[quality]"
+          echo "PIE_ROOT=$HOME/qual/pie" >> "$GITHUB_ENV"
+      - name: mlx-lm, latest release
+        run: |
+          v=$(curl -fsSL https://pypi.org/pypi/mlx-lm/json | jq -r .info.version)
+          py="$HOME/.cache/pie-evals/baselines/mlx-lm-$v"
+          [ -x "$py/bin/python" ] || { uv venv --quiet --python 3.12 "$py" && uv pip install --quiet --python "$py/bin/python" "mlx-lm==$v" transformers tiktoken; }
+          echo "MLX_PY=$py/bin/python" >> "$GITHUB_ENV"
+      - name: parity
+        run: |
+          args=""; for a in $(echo "${{ inputs.artifacts }}" | tr ',' ' '); do args="$args --artifact $a"; done
+          .venv/bin/pie-evals-node build --pie-commit "$C" --features metal --pie-root "$PIE_ROOT"
+          .venv/bin/pie-evals-node parity $args --platform "${{ inputs.mac }}" --pie-root "$PIE_ROOT" --pie-commit "$C" --features metal \
+            --store parity-out/store --tag "${{ inputs.tag }}" --tag-kind manual --out parity-out || echo "::warning::some models failed"
+      - name: kernel tests
+        if: inputs.kernels
+        env: { PIE_KERNEL_ERR: "1" }
+        run: |
+          .venv/bin/pie-evals-node kernels --platform "${{ inputs.mac }}" --pie-root "$HOME/qual/pie-k" --pie-commit "$KC" \
+            --store parity-out/store --tag "${{ inputs.tag }}" --tag-kind manual --out kernels-out || echo "::warning::kernel tests failed"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: "parity-${{ inputs.mac }}-mac", path: parity-out/, if-no-files-found: warn, retention-days: 30 }
+
   # the pods are this run's alone: end them now rather than at their 10-minute idle watchdog
   teardown:
     needs: [launch, parity, kernels]
@@ -184,7 +223,7 @@ jobs:
           .venv/bin/pie-evals release-pods --repo "${{ github.repository }}" $IDS
 
   collect:
-    needs: [plan, parity, kernels]
+    needs: [plan, parity, kernels, mac]
     if: always() && needs.plan.result == 'success'
     runs-on: [self-hosted, site]  # the site laptop: bookkeeping never shares a benchmark Mac
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
