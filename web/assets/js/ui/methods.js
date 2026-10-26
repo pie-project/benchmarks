@@ -18,6 +18,7 @@ window.Pie = window.Pie || {};
     leviathan: { authors: "Y. Leviathan, M. Kalman, Y. Matias", title: "Fast Inference from Transformers via Speculative Decoding", venue: "ICML 2023, arXiv:2211.17192", year: 2022, url: "https://arxiv.org/abs/2211.17192" },
     chen: { authors: "C. Chen et al.", title: "Accelerating Large Language Model Decoding with Speculative Sampling", venue: "arXiv:2302.01318", year: 2023, url: "https://arxiv.org/abs/2302.01318" },
     megatron: { authors: "M. Shoeybi et al.", title: "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism", venue: "arXiv:1909.08053", year: 2019, url: "https://arxiv.org/abs/1909.08053" },
+    metal: { authors: "Apple", title: "MTLDevice.recommendedMaxWorkingSetSize", venue: "Metal documentation", year: 2016, url: "https://developer.apple.com/documentation/metal/mtldevice/recommendedmaxworkingsetsize" },
     kwon: { authors: "W. Kwon et al.", title: "Efficient Memory Management for Large Language Model Serving with PagedAttention", venue: "SOSP 2023, arXiv:2309.06180", year: 2023, url: "https://arxiv.org/abs/2309.06180" },
   };
 
@@ -47,22 +48,64 @@ window.Pie = window.Pie || {};
     "Draft time": ["T", "draft"], "Drafter weights read": ["W", "draft"], "Step time": ["T", "step"],
     "Requests": ["b"], "Bandwidth bound": ["R", "mem"], "Compute bound": ["R", "math"], "Interconnect bound": ["R", "link"],
     "Arithmetic per output token": ["Q", "tok"],
+    "Weights size": ["S"], "Needs": ["M", "need"], "Usable memory": ["M", "gpu"], "Fits": ["fit"],
+    "Parameters": ["N"], "Bits per weight": ["b"], "Headroom": ["h"], "Memory": ["M"], "Usable share": ["u"],
   };
   const v = (name) => {
     const [base, sub] = SYM[name];
-    return `<span class="m-var" title="${name}"><i>${base}</i>${sub ? `<sub>${sub}</sub>` : ""}</span>`;
+    // a quantity as Numbers writes a reference in a formula: a rounded token with its name; its symbol on hover
+    return `<span class="m-var" data-name="${name}" title="${base}${sub ? `_${sub}` : ""}">${name}</span>`;
   };
+  // where each input comes from, in a sentence, and the catalog page that holds its numbers
+  const SOURCES = {
+    "Weights read": ["Active parameters × bits per weight: 4.5 for 4-bit, 8.5 for 8-bit, 16 for bf16.", "models"],
+    "Weights touched": ["As Weights read, with every expert the prompt's tokens reach.", "models"],
+    "Cache read": ["KV cache for the prompt plus half the answer, from the model's shape.", "models"],
+    "Caches read": ["Cache read for every request in the batch.", "models"],
+    "Prompt cache": ["The KV cache the prompt writes, from the model's config.", "models"],
+    "Memory bandwidth": ["The machine's peak, from its spec sheet.", "hardware"],
+    "Peak FLOPS": ["FP16 peak from the spec sheet. Apple's are estimates.", "hardware"],
+    "Active body": ["Parameters each token runs through, minus embeddings and output head.", "models"],
+    "Output head": ["Vocabulary × hidden size, the last matmul.", "models"],
+    "Layers": ["Transformer layers, from the model's config.json.", "models"],
+    "Link latency": ["30 µs on Thunderbolt 5, 15 µs on PCIe 5.0 and NVLink.", "hardware"],
+    "Link bandwidth": ["10 GB/s on Thunderbolt 5, 64 GB/s on PCIe 5.0 ×16, 900 GB/s on NVLink.", "hardware"],
+    "Activations exchanged": ["Hidden state per all-reduce: tokens × hidden size × 2 bytes.", "models"],
+    "Prompt tokens": [() => `${Pie.store.index.workloads?.raw?.prompt_tokens ?? 512} tokens, all in one pass.`, "workloads"],
+    "Requests": [() => `${Pie.store.index.workloads?.throughput?.concurrency ?? 32} at once.`, "workloads"],
+    "Arithmetic per output token": ["2 × (Active body + Output head), plus the prompt's share.", "models"],
+    "Acceptance": [() => `${Pie.specAlpha}%, set in the field above. The runs do not record it yet.`, null],
+    "Drafts": ["Every width from 1 to 16 is tried; the Limit keeps the fastest.", null],
+    "Drafter weights read": ["A 0.5 B block drafter at the model's bits per weight.", null],
+    "Memory time": ["Raw Decode's.", null],
+    "Math time": ["Raw Decode's.", null],
+    "Interconnect time": ["Raw Decode's.", null],
+    "Raw Decode": ["The Raw Decode limit, without drafting.", null],
+    "Parameters": ["Every parameter, not only the active ones: all of them sit in memory.", "models"],
+    "Bits per weight": ["The build the engine runs: 4.5 for a Mac's 4-bit MLX build, 4.25 for MXFP4, 8 for FP8, 16 for bf16.", "models"],
+    "Memory": ["The machine's memory, every GPU's together.", "hardware"],
+    "Headroom": ["1.25: a quarter more for the KV cache, activations and the runtime.", null],
+  };
+  // a quantity's colour says where it comes from, the same on every workload, as Numbers colours each table's
+  // references: the machine blue, the model green, the workload orange, an assumption grey, a worked-out term purple
+  const KIND = { hardware: "#0a84ff", models: "#30d158", workloads: "#ff9f0a" };
+  const GROUPS = ["workloads", "models", "hardware", null];
+  const ASSUMED = new Set(["Acceptance", "Drafts", "Drafter weights read", "Headroom", "Usable share"]);
+  const colorOf = (name) => KIND[SOURCES[name]?.[1]] || (ASSUMED.has(name) ? "#8e8e93" : "#bf5af2");
+  const tint = (html) => html.replace(/class="m-(?:var|tag)" data-name="([^"]+)"/g, (m, name) => `${m} style="--pill: ${colorOf(name)}"`);
+  // a term as Finder lists a tagged file: its colour as a dot before the name
+  const tag = (name) => `<span class="m-tag" data-name="${name}"><span class="m-dot"></span>${name}</span>`;
   const o = (x) => `<span class="m-op">${x}</span>`;
   const par = (x) => `<span class="m-paren">(</span>${x}<span class="m-paren">)</span>`;
   // a fraction in one line, as Math Notes and Numbers write one: a slash, and brackets round a side that holds an
   // operator outside its own brackets, so every formula stays a single row
   const bare = (x) => x.replace(/<span class="m-paren[^"]*">\(<\/span>.*<span class="m-paren[^"]*">\)<\/span>/s, "");
-  const side = (x) => (bare(x).includes('class="m-op"') ? par(x) : x);
-  const fr = (num, den) => `${side(num)}${o("/")}${side(den)}`;
+  const side = (x) => (/class="m-op">[+−]</.test(bare(x)) ? par(x) : x);  // × binds before ÷, so only a sum needs them
+  const fr = (num, den) => `${side(num)}${o("÷")}${side(den)}`;
   const fn = (name, ...args) => `<span class="m-fn">${name}</span>${par(args.join(`<span class="m-comma">,</span>`))}`;
   const sum = (...xs) => xs.join(o("+"));
-  const times = (...xs) => xs.join(o("·"));
-  const link = `2${v("Layers")}${par(sum(v("Link latency"), fr(v("Activations exchanged"), v("Link bandwidth"))))}`;
+  const times = (...xs) => xs.join(o("×"));
+  const link = `2${o("×")}${v("Layers")}${o("×")}${par(sum(v("Link latency"), fr(v("Activations exchanged"), v("Link bandwidth"))))}`;
 
   // the effect of a simplification on the limit, as one quiet tag on its row
   const EFFECT = { up: "Raises the limit", down: "Lowers the limit", small: "Under 1%", choice: "Choice" };
@@ -75,7 +118,7 @@ window.Pie = window.Pie || {};
       lede: "One request decodes one token at a time. Each token reads the model's active weights and its context from memory and does two operations per active weight. The limit is whichever of the two takes longer.",
       equations: [
         eq("Memory time", fr(sum(v("Weights read"), v("Cache read")), v("Memory bandwidth")), ["roofline", "shazeer"]),
-        eq("Math time", fr(`2${par(sum(v("Active body"), v("Output head")))}`, v("Peak FLOPS")), ["kaplan"]),
+        eq("Math time", fr(`2${o("×")}${par(sum(v("Active body"), v("Output head")))}`, v("Peak FLOPS")), ["kaplan"]),
         eq("Interconnect time", link, ["megatron"]),
         eq("Limit", fr("1", fn("max", v("Memory time"), v("Math time"), v("Interconnect time"))), ["roofline"]),
       ],
@@ -112,11 +155,11 @@ window.Pie = window.Pie || {};
       id: "spec",  // the setup pop-up's id for Spec Decode, so picking it opens this chapter
       lede: "A small drafter proposes the next few tokens and the model checks all of them in one pass, keeping each one it agrees with. More drafts cost more and add less, so the limit is the draft width that gives the most tokens per second.",
       equations: [
-        eq("Tokens per step", fr(`1${o("−")}${v("Acceptance")}<sup>${v("Drafts")}+1</sup>`, `1${o("−")}${v("Acceptance")}`), ["leviathan"]),
-        eq("Verify time", fn("max", v("Memory time"), `${par(sum(v("Drafts"), "1"))}${v("Math time")}`), ["roofline"]),
+        eq("Tokens per step", fr(`1${o("−")}${v("Acceptance")}${o("^")}${par(sum(v("Drafts"), "1"))}`, `1${o("−")}${v("Acceptance")}`), ["leviathan"]),
+        eq("Verify time", fn("max", v("Memory time"), `${par(sum(v("Drafts"), "1"))}${o("×")}${v("Math time")}`), ["roofline"]),
         eq("Draft time", fr(v("Drafter weights read"), v("Memory bandwidth")), ["roofline"]),
         eq("Step time", sum(v("Verify time"), v("Draft time")), ["leviathan", "chen"]),
-        eq("Limit", fn("max", v("Raw Decode"), `<span class="m-limit"><span class="m-fn">max</span><span class="m-under">${v("Drafts")}</span></span>${fr(v("Tokens per step"), v("Step time"))}`), ["leviathan"]),
+        eq("Limit", fn("max", v("Raw Decode"), fr(v("Tokens per step"), v("Step time"))), ["leviathan"]),
       ],
       symbols: "k is the number of drafted tokens per step and α the chance that each is accepted. Memory time and Math time are Raw Decode's. A block drafter proposes all k drafts in one pass, so its Draft time is one read of its weights; a drafter that proposes one token at a time pays k of them. The limit tries every k from 1 to 16 and keeps the fastest, and falls back to Raw Decode when no k pays.",
       why: [
@@ -206,7 +249,7 @@ window.Pie = window.Pie || {};
       lede: "The whole prompt goes through in one pass. The weights are read once for all of its tokens, so arithmetic, not memory, sets the speed.",
       equations: [
         eq("Memory time", fr(sum(v("Weights touched"), v("Prompt cache")), v("Memory bandwidth")), ["roofline"]),
-        eq("Math time", fr(`2${par(sum(times(v("Active body"), v("Prompt tokens")), v("Output head")))}`, v("Peak FLOPS")), ["kaplan"]),
+        eq("Math time", fr(`2${o("×")}${par(sum(times(v("Active body"), v("Prompt tokens")), v("Output head")))}`, v("Peak FLOPS")), ["kaplan"]),
         eq("Interconnect time", link, ["megatron"]),
         eq("Limit", fr(v("Prompt tokens"), fn("max", v("Memory time"), v("Math time"), v("Interconnect time"))), ["roofline"]),
       ],
@@ -239,6 +282,17 @@ window.Pie = window.Pie || {};
       },
     },
   ];
+
+  // Memory Fit: whether a model fits a machine, worked out for every pair whether it ran or not; a crossed circle in
+  // the grid where it does not
+  const FIT = {
+    id: "fit",
+    equations: [
+      eq("Weights size", fr(times(v("Parameters"), v("Bits per weight")), "8"), ["kaplan"]),
+      eq("Needs", times(v("Weights size"), v("Headroom")), ["kwon"]),
+      eq("Fits", `${v("Needs")}${o("≤")}${v("Memory")}`, []),
+    ],
+  };
 
   // a chapter per workload in the grid's pop-up: the same names, in the same order (decode, then prefill), taken from
   // its list so the two cannot drift apart. A workload without a chapter written for it has none
@@ -283,8 +337,7 @@ window.Pie = window.Pie || {};
   let state = null;
 
   const page = () => {
-    const i = CHAPTERS.findIndex((c) => c.id === current);
-    const c = CHAPTERS[i];
+    const c = state.table === "fit" ? FIT : CHAPTERS.find((ch) => ch.id === current);
 
     // a citation is the work's first author and year, a link straight to the paper
     const cite = (key) => {
@@ -295,7 +348,20 @@ window.Pie = window.Pie || {};
     const prose = (text) => esc(text).replace(/\s?\{(\w+)\}/g, (_, key) => (REFS[key] ? cite(key) : ""));
     // the formulas as rows of the site's data table: the result's name, then its equation in symbols
     const formulaRows = c.equations.map((e) => `
-      <tr><td class="lim-term">${esc(e.result)}</td><td class="lim-formula"><span class="m-eq">${v(e.result)}<span class="m-rel">=</span>${e.math}</span></td></tr>`).join("");
+      <tr><td class="row-number"></td><td class="lim-term">${tag(e.result)}</td><td class="lim-formula"><span class="m-eq">${e.math}</span></td><td class="lim-fill"></td><td class="lim-source">${e.cites.map(cite).join(", ")}</td></tr>`).join("");
+
+    // every quantity the formulas use and none of them works out, in order of first use: how it is found and where
+    const made = new Set(c.equations.map((e) => e.result));
+    const used = [...new Set(c.equations.flatMap((e) => [...e.math.matchAll(/data-name="([^"]+)"/g)].map((m) => m[1])))]
+      .filter((name) => !made.has(name) && SOURCES[name])
+      // grouped by where they come from, so each colour reads as one block: workload, model, machine, the rest
+      .sort((x, y) => GROUPS.indexOf(SOURCES[x][1]) - GROUPS.indexOf(SOURCES[y][1]));
+    const inputRows = used.map((name) => {
+      const [text, from] = SOURCES[name];
+      const how = typeof text === "function" ? text() : text;  // a workload's number, read from the catalog
+      const source = from ? `<a class="cite" role="link" tabindex="0" data-go="${from}">${esc(Pie.schema[from].label)}</a>` : "";
+      return `<tr><td class="row-number"></td><td class="lim-term">${tag(name)}</td><td class="lim-how" title="${esc(how)}">${esc(how)}</td><td class="lim-fill"></td><td class="lim-source">${source}</td></tr>`;
+    }).join("");
 
     // the bar: the grid's workload pop-up and its Configuration, the same buttons in the same place
     const bar = `
@@ -310,11 +376,11 @@ window.Pie = window.Pie || {};
 
     // the chapter as the site's other pages: the formulas as a data table under the bar, each citing its works by
     // name, linked
-    return `${bar}
+    return `${c === FIT ? "" : bar}
       <div class="lim-tables">
         <table class="data-table lim-table">
-          <thead><tr><th>Term</th><th>Formula</th><th class="lim-fill"></th></tr></thead>
-          <tbody>${formulaRows.replace(/<\/tr>/g, '<td class="lim-fill"></td></tr>')}</tbody>
+          <thead><tr><th class="row-number" aria-label="Row"></th><th>Term</th><th>Definition</th><th class="lim-fill"></th><th class="lim-source">Reference</th></tr></thead>
+          <tbody>${tint(formulaRows + inputRows)}</tbody>
         </table>
       </div>`;
   };
@@ -341,15 +407,18 @@ window.Pie = window.Pie || {};
   Pie.bindSpecField(element, () => {
     const input = element.querySelector("[data-alpha]");
     if (input && document.activeElement !== input) input.value = Pie.specAlpha;
+    // and the Acceptance row says the new value
+    const row = element.querySelector('.m-tag[data-name="Acceptance"]')?.closest("tr")?.querySelector(".lim-how");
+    if (row) row.textContent = row.title = SOURCES.Acceptance[0]();
   });
 
   Pie.methods = {
     render(viewState) {
       state = viewState;
-      element.hidden = state.table !== "methods";
+      element.hidden = state.table !== "methods" && state.table !== "fit";
       // the grid's workload, or the first chapter when that workload has none written yet
       current = CHAPTERS.some((c) => c.id === state.platform.mode) ? state.platform.mode : CHAPTERS[0].id;
-      const key = `${current}@${state.release}`;
+      const key = `${state.table === "fit" ? "fit" : current}@${state.release}`;
       if (!element.hidden && element.dataset.key !== key) {
         element.innerHTML = page();
         element.dataset.key = key;

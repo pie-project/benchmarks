@@ -27,10 +27,8 @@
 
   const ensureRelease = () => {
     ensurePhone();
-    const options = query.releaseOptions();
-    if (!options.some((option) => option.id === state.release)) {
-      state.release = options[0]?.id;
-    }
+    // there is no release picker: every page shows the latest
+    state.release = query.releaseOptions()[0]?.id;
   };
 
   // the site always shows the Full suite; CI still runs Targeted and Full, but only Full is published to read
@@ -46,7 +44,7 @@
     toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isPlatform = Pie.schema[state.table]?.view === "platform";
-    const isMethod = ["welcome", "inferlets", "services", "profiler", "methodology", "methods"].includes(state.table);
+    const isMethod = ["welcome", "inferlets", "services", "profiler", "methodology", "methods", "fit", "board"].includes(state.table);
     filterBar.hidden = isOverview || isMethod || isPlatform;
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
@@ -55,16 +53,21 @@
     overview.element.hidden = !isOverview;
     Pie.platform.element.hidden = !isPlatform;
     // a platform is a folder: back returns to All Platforms and forward reopens the platform just left, as in Finder
-    toolbar.elements.nav.hidden = !isPlatform && state.table !== "welcome";
-    toolbar.elements.back.disabled = !isPlatform;
-    toolbar.elements.forward.disabled = state.table !== "welcome" || !forwardTo;
+    // Efficiency is a page of its own, not a folder in the list: no back or forward there
+    const inFolder = isPlatform && Pie.schema[state.table]?.platform;
+    toolbar.elements.nav.hidden = !inFolder;
+    toolbar.elements.back.disabled = !inFolder;
+    toolbar.elements.forward.disabled = state.table !== "speedups" || !forwardTo;
     toolbar.elements.metricPicker.hidden = true;  // the metric lives in the platform table's own bar
+    toolbar.elements.releasePicker.hidden = true;  // the latest release only, so nothing to pick
+    toolbar.elements.viewPicker.hidden = true;
     Pie.welcome.render(state);
     Pie.inferlets.render(state);
     Pie.services.render(state);
     Pie.profiler.render(state);
     Pie.methodology.render(state);
     Pie.methods.render(state);
+    Pie.board.render(state);
     sidebar.render(state);
     if (isPlatform) {
       const shown = Pie.platform.render(state);
@@ -117,7 +120,7 @@
     elements.sidebarToggle.addEventListener("click", () => preferences.toggleSidebar());
     const back = () => {
       const from = state.table;
-      navigate("welcome");
+      navigate("speedups");
       forwardTo = from;
       render();
     };
@@ -221,6 +224,10 @@
         state.overview.qualityEngine = value;
       } else if (String(key).startsWith("limit:")) {
         Pie.methodology.pick(key.slice(6), value);
+      } else if (String(key).startsWith("board:")) {
+        Pie.board.pick(key.slice(6), value);
+      } else if (String(key).startsWith("grid:")) {
+        Pie.platform.pick(key.slice(5), value);
       } else if (value === popover.ALL) {
         state.setFilter(key, []);
       } else {
@@ -243,6 +250,7 @@
 
   const bindGlobal = () => {
     sidebar.onSelect((tableName) => navigate(tableName));
+    Pie.welcome.onOpen((platform) => navigate("results", { platform: [platform] }));
     sidebar.bindLogo();
     sidebar.bindDrawer(() => preferences.showDrawer(false));
     // a slide-over left open closes when the window grows back to the desktop sidebar
@@ -307,7 +315,8 @@
       }
       // 1 to 4 pick a setup by its fixed number, whatever a platform measured: a number keeps its setup on every
       // platform, and one the page does not list does nothing; plain keys, as R and U are
-      const setup = Pie.platform.metrics()[Number(event.key) - 1];
+      // Spec Decode has no button (its runs are columns in Decode), so it takes no number
+      const setup = Pie.platform.metrics().filter((m) => m.id !== "spec")[Number(event.key) - 1];
       if (setup && Pie.platform.metrics(state).includes(setup) && /^[1-9]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey && !typing
           && (Pie.schema[state.table]?.view === "platform" || state.table === "methods")) {
         event.preventDefault();

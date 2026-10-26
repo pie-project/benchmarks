@@ -15,8 +15,8 @@ window.Pie = window.Pie || {};
 
   Pie.schema = {
     welcome: {
-      label: "All Platforms",
-      section: "home",
+      label: "Platforms",
+      section: "catalog",
       view: "welcome",  // not a table: why the numbers can be trusted
       filters: [],
       columns: [],
@@ -40,17 +40,45 @@ window.Pie = window.Pie || {};
     //   filters: [],
     //   columns: [],
     // },
-    // All hardware, hidden for now: the platform pages list their own machines
-    // all_hardware: {
-    //   label: "All hardware",
-    //   section: "platforms",
-    //   view: "platform",
-    //   tint: "#0a84ff",  // every platform's machines, grouped by platform
-    //   filters: [],
-    //   columns: [],
-    // },
+    // every platform's machines in one grid, a header row per platform, every model a column
+    // every engine side by side on one model, as Artificial Analysis ranks models
+    board: {
+      label: "Rankings",
+      section: "home",
+      view: "board",
+      filters: [],
+      columns: [],
+    },
+    // every machine in one table: each engine against the hardware's theoretical limit
+    all_hardware: {
+      label: "FP Efficiency",
+      section: "home",
+      view: "platform",
+      compare: "ceiling",
+      filters: [],
+      columns: [],
+    },
+    // every machine in one table: pie against the other engines
+    speedups: {
+      label: "Relative Speed",
+      section: "home",
+      view: "platform",
+      compare: "engines",
+      filters: [],
+      columns: [],
+    },
+    // every machine in one table: the engine's own tokens per second
+    tps: {
+      label: "Best TPS",
+      section: "home",
+      view: "platform",
+      compare: "tps",
+      filters: [],
+      columns: [],
+    },
     mac: {
       label: "Apple Silicon",
+      short: "Mac",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "mac",
@@ -60,6 +88,7 @@ window.Pie = window.Pie || {};
     },
     nvidia: {
       label: "NVIDIA GPU",
+      short: "NVIDIA",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "nvidia",
@@ -69,6 +98,7 @@ window.Pie = window.Pie || {};
     },
     tpu: {
       label: "Google TPU",
+      short: "TPU",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "tpu",
@@ -78,6 +108,7 @@ window.Pie = window.Pie || {};
     },
     amd: {
       label: "AMD GPU",
+      short: "AMD",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "amd",
@@ -87,6 +118,7 @@ window.Pie = window.Pie || {};
     },
     cerebras: {
       label: "Cerebras",
+      short: "Cerebras",  // as the tables name it
       section: "platforms",
       view: "platform",
       platform: "cerebras",
@@ -96,7 +128,8 @@ window.Pie = window.Pie || {};
     },
     android: {
       label: "Android",
-      section: "platforms",
+      short: "Android",  // as the tables name it
+      section: null,  // no page until a machine is measured; still a row in the Platforms list
       view: "platform",
       platform: "android",
       tint: "#3ddc84",
@@ -105,7 +138,8 @@ window.Pie = window.Pie || {};
     },
     web: {
       label: "WebGPU",
-      section: "platforms",
+      short: "WebGPU",  // as the tables name it
+      section: null,  // no page until a machine is measured; still a row in the Platforms list
       view: "platform",
       platform: "web",
       tint: "#5b8def",
@@ -115,11 +149,12 @@ window.Pie = window.Pie || {};
     results: {
       label: "Results",
       section: "measurements",
-      filters: ["engine", "model", "hardware", "workload", "status"],  // in the order of the columns they filter
+      filters: ["engine", "model", "platform", "hardware", "workload", "status"],  // in the order of the columns they filter
       numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
         reference("model", "Model", "Setup", "models"),
+        text("platform", "Platform", "Setup", { hidden: true }),  // only a filter: the hardware already names it
         reference("hardware", "Hardware", "Setup", "hardware"),
         reference("workload", "Workload", "Setup", "workloads"),
         text("status", "Status", "Setup", { status: true }),
@@ -176,6 +211,14 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
+    // how a model is judged to fit a machine, the same table as Roofline
+    fit: {
+      label: "Memory",
+      section: "resources",
+      view: "methods",
+      filters: [],
+      columns: [],
+    },
 
     // the Limit calculator, hidden for now; its code stays (methodology.js), and Pie.ceiling there still feeds the grid
     // methodology: {
@@ -192,14 +235,14 @@ window.Pie = window.Pie || {};
     hardware: {
       label: "Hardware",
       section: "catalog",
-      filters: ["platform"],
+      numbered: true,
+      filters: [],
       columns: [
         text("name", "Name", "Identity"),
         text("platform", "Platform", "Identity"),
         text("resource", "Resource", "Identity"),
         text("full_name", "Full name", "Identity"),
         text("id", "ID", "Identity", { code: true }),
-        text("class", "Class", "Identity"),
         text("location", "Location", "Identity"),
         text("runs", "CI runs", "Identity", { tags: true }),
         text("vendor", "Vendor", "Identity"),
@@ -224,6 +267,7 @@ window.Pie = window.Pie || {};
     engines: {
       label: "Engines",
       section: "catalog",
+      numbered: true,
       filters: [],
       columns: [
         reference("id", "Engine", "Identity", "engines"),
@@ -241,14 +285,15 @@ window.Pie = window.Pie || {};
     models: {
       label: "Models",
       section: "catalog",
-      filters: ["family", "architecture"],
+      numbered: true,
+      filters: [],
       columns: [
         text("name", "Name", "Identity"),
         text("platforms", "Platforms", "Identity", { hint: "The platforms this model is measured on" }),
         text("family", "Family", "Identity", { code: true }),
         text("architecture", "Architecture", "Shape"),
         text("ssd_streaming", "SSD streaming", "Shape"),
-        text("draft", "Draft", "Shape", { hint: "pie decodes single-stream rows with a drafter (speculative decoding)" }),
+        text("speculation", "Speculation", "Shape", { hint: "Whether the model has a drafter, so it runs with speculative decoding" }),
         number("params_b", "Params", "Shape", "B", 1),
         number("active_b", "Active", "Shape", "B", 1),
         number("layers", "Layers", "Shape", "", 0, { hint: "Transformer layers, from the model's config.json" }),
@@ -264,9 +309,11 @@ window.Pie = window.Pie || {};
     workloads: {
       label: "Workloads",
       section: "catalog",
+      numbered: true,
       filters: [],
       columns: [
         text("label", "Workload", "Identity"),
+        text("goal", "Goal", "Identity"),
         number("concurrency", "Parallel requests", "Shape", "", 0),
         number("prompt_tokens", "Prompt", "Shape", "tok", 0),
         number("output_tokens", "Output", "Shape", "tok", 0),
@@ -278,6 +325,7 @@ window.Pie = window.Pie || {};
     quality_tasks: {
       label: "Benchmarks",
       section: "catalog",
+      numbered: true,
       filters: [],
       columns: [
         text("task", "Task", "Identity", { code: true }),

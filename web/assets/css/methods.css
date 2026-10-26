@@ -412,11 +412,14 @@
 .lim-table { width: 100%; font-size: 13px; }
 .lim-table .lim-fill { width: 100%; padding: 0; }
 .lim-table .lim-term { color: var(--color-label-secondary); }
+.lim-table .lim-how { max-width: 560px; overflow: hidden; text-overflow: ellipsis; color: var(--color-label-secondary); }
 /* the formulas typeset as a paper sets them: italic symbols with upright subscripts, stacked fractions, a math face */
 .lim-table td.lim-formula { padding-top: 0; padding-bottom: 0; white-space: nowrap; }
-.lim-table .m-eq { display: inline-block; vertical-align: middle; font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", "Times New Roman", serif; font-size: 16px; line-height: 20px; color: var(--color-label); }
+.lim-table .m-eq { display: inline-block; vertical-align: middle; font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; color: var(--color-label); }  /* the system font, as the rest of the table */
 .lim-table .m-var { white-space: nowrap; }
-.lim-table .m-var i { font-style: italic; }
+.lim-table .m-var { display: inline-block; padding: 0 6px; border-radius: 5px; font-size: 12px; font-weight: 500; line-height: 18px; color: color-mix(in srgb, var(--pill, var(--color-accent)) 75%, var(--color-label)); background: color-mix(in srgb, var(--pill, var(--color-accent)) 18%, transparent); }  /* a Numbers token: its colour as text on a tint of it */
+.lim-table .m-tag { display: inline-flex; align-items: center; gap: 7px; }
+.lim-table .m-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--pill); }  /* a Finder tag */
 .lim-table .m-var sub { font-style: normal; font-size: .68em; vertical-align: -.3em; line-height: 0; margin-left: .05em; }
 /* an operator over a range, as max over k: the range under its name, centred */
 .lim-table .m-limit { display: inline-flex; flex-direction: column; align-items: center; margin-right: .15em; line-height: 1; }
@@ -426,13 +429,15 @@
 .lim-table .m-op { margin: 0 .3em; }
 .lim-table .m-comma { margin-right: .35em; }
 .lim-table .m-fn { font-style: normal; }
-.lim-table .m-paren { color: var(--color-label-secondary); }
+.lim-table .m-paren { margin: 0 .15em; color: var(--color-label-secondary); }
 .lim-table .lim-source .cite { margin-right: 4px; }
 .lim-table .lim-authors, .lim-table .lim-venue { color: var(--color-label-secondary); }
 .lim-table a { color: var(--color-label); text-decoration: none; }
 .lim-table a:hover { color: var(--color-accent); }
-.lim-table .lim-source .cite { margin: 0; font-size: 13px; text-decoration: none; color: var(--color-accent); }
-.lim-table .lim-source .cite:hover { text-decoration: underline; }
+.lim-table .lim-source { color: var(--color-label-secondary); text-align: right; white-space: nowrap; }  /* the same grey as the term, at the far right */
+.lim-table .lim-source .cite { cursor: pointer; margin: 0; font-size: inherit; font-weight: inherit; text-decoration: none; color: inherit; }
+.lim-table .lim-source .cite:hover { color: var(--color-accent); }
+.lim-table thead th:hover { color: var(--color-label-secondary); }  /* nothing to sort, so the headers stay put */
 /* a click opens Test Conditions without a focus ring, as the pop-ups do; the keyboard still gets one */
 .rules-button:focus:not(:focus-visible) { outline: none; box-shadow: none; }
 
@@ -459,6 +464,9 @@
   font-variant-numeric: tabular-nums; text-align: right; caret-color: var(--color-accent); -webkit-appearance: none; appearance: none;
 }
 .spec-unit { margin-right: 2px; }
+/* the same corners as the setup toggle beside it */
+.platform-bar .spec-field { border-radius: 8px; }
+
 .spec-stepper { display: inline-flex; flex-direction: column; align-self: stretch; justify-content: center; width: 18px; }
 .spec-stepper button {
   display: grid; flex: 0 0 50%; place-items: center; padding: 0; border: 0; background: none; border-radius: 4px;
@@ -486,3 +494,6 @@
 .rules-button { width: var(--control-height); height: var(--control-height); padding: 0; justify-content: center; border-radius: var(--radius-control); }
 .rules-button svg { width: 16px; height: 16px; }
 @media (max-width: 899px) { .rules-button { width: 34px; height: 34px; border-radius: 999px; } .rules-button svg { width: 20px; height: 20px; } }
+/* the Roofline table numbers its rows as the catalog tables do */
+.lim-table { counter-reset: lim-row; }
+.lim-table td.row-number::before { counter-increment: lim-row; content: counter(lim-row); }

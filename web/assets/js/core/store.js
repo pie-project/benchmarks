@@ -21,10 +21,48 @@ window.Pie = window.Pie || {};
   // each machine names its platform as the sidebar does, for the hardware table's Platform column and filter
   for (const hw of tables.hardware || []) {
     const id = Pie.platformOf(hw);
-    if (id) hw.platform = Pie.schema[id]?.label || id;
+    if (id) hw.platform = Pie.schema[id]?.short || id;
+  }
+
+  // what each workload is for: the limit it pushes against
+  const GOALS = {
+    raw: "Single-request speed against the memory and compute limits.",
+    spec: "Pass the memory limit by checking several drafted tokens per weight read.",
+    throughput: "Fill the compute limit by sharing each weight read across requests.",
+  };
+  for (const w of tables.workloads || []) w.goal = GOALS[w.id] || null;
+  // whether a model can speculate: it has a drafter
+  for (const m of tables.models || []) m.speculation = m.draft === "true" ? "Yes" : "No";
+
+  // what does not fit, worked out for every machine and model, run or not: the weights times 1.25 against the
+  // machine's memory. A Mac runs the MLX build (the model's own needs figure); a GPU runs the weights a recorded misfit
+  // names, else the model's own release
+  const noFit = (tables.no_fit ||= {});
+  const engines = (tables.engines || []).map((e) => e.id);
+  const known = {};
+  for (const hw of tables.hardware || []) {
+    if (Pie.platformOf(hw) === "mac") continue;
+    // only a misfit the GPU engines recorded names the weights a GPU runs; the catalog's other cards carry the Mac builds'
+    for (const [model, by] of Object.entries(noFit[hw.id] || {})) if (by.vllm || by.sglang) known[model] ??= by.vllm || by.sglang;
+  }
+  for (const hw of tables.hardware || []) {
+    const memory = hw.memory_gib;
+    if (!memory) continue;
+    const mac = Pie.platformOf(hw) === "mac";
+    const holds = memory;
+    for (const m of tables.models || []) {
+      if (noFit[hw.id]?.[m.id]) continue;
+      // the GPU runs the model's own release: MXFP4 at the 4-bit size, FP8 at a byte a weight, else 16 bits
+      const bytes = /mxfp4/.test(m.schemes) ? null : /fp8/.test(m.schemes) ? 1 : 2;
+      const needs = mac ? m.needs_gib : known[m.id] ?? (bytes ? m.params_b && m.params_b * bytes * 1e9 / 2 ** 30 * 1.25 : m.needs_gib);
+      if (needs && needs > holds) (noFit[hw.id] ||= {})[m.id] = Object.fromEntries(engines.map((e) => [e, Math.round(needs * 10) / 10]));
+    }
   }
 
   const snapshots = tables.snapshots || {};
+  // each result names its machine's platform, for the Results table's Platform filter
+  const platformByHardware = Object.fromEntries((tables.hardware || []).map((hw) => [hw.id, hw.platform]));
+  for (const rows of Object.values(snapshots)) for (const row of rows) row.platform = platformByHardware[row.hardware] || null;
   // runs whose first-token timing is known to be wrong, by engine, workload and run: there the client sent every request
   // of a round at once to an engine serving one at a time, so each time to first token counted the queue ahead of it
   // (pie PR #1011). Prefill, TTFT and whole-request latency are withheld; decode, timed between tokens, is kept

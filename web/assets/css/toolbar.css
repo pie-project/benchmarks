@@ -454,6 +454,3 @@
 .toolbar > .search-field { order: 2; }
 .toolbar > .search-cancel { order: 3; }
 .toolbar > .release-picker, .toolbar > .view-picker { order: 4; }  /* the run last, at the trailing edge */
-/* the theme button sits in the bar's grey, as Latest and Search do, and darkens under the pointer as they do */
-.toolbar > .theme-toggle { background: var(--color-fill); }
-.toolbar > .theme-toggle:hover { background: var(--color-fill-secondary); }
