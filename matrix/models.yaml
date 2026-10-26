@@ -201,7 +201,7 @@ artifacts:
     family: glm5_next
     scheme: fp8
     kind: miniature
-    miniature: {layers: "0-7", experts: 32, period: 4, note: "3 dense KDA, DSA+MoE, 3 KDA+MoE, DSA; 32 of 288 experts"}
+    miniature: {layers: "0-7", experts: 32, period: 4, shrink_family: glm5_next, note: "3 dense KDA, DSA+MoE, 3 KDA+MoE, DSA; 32 of 288 experts"}
     max_context: 4096
     expected_gib: 8.0
     tiers: [weekly]

@@ -130,6 +130,7 @@ class MiniatureRecipe(BaseModel):
     period: int = Field(default=1, description="layer-type pattern period the selection must be a multiple of")
     engram_vocab: int | None = Field(default=None, description="DeepSeek-V4.1: re-carve each Engram hash table to this bucket base (--engram-vocab)")
     attn_res_block_size: int | None = Field(default=None, description="Kimi-K3: AttnRes block stride of the cut (--attn-res-block-size)")
+    shrink_family: str | None = Field(default=None, description="the shrink script's family where the checkpoint's index matches several (--family)")
     note: str = ""
 
     @property
