@@ -14,7 +14,7 @@ jobs:
   # the Mac reads the database (liszt is on the tailnet, GitHub's runners are not)
   build:
     runs-on: [self-hosted, site]  # a laptop that only builds the site: never waits behind a benchmark
-    concurrency: { group: pages-build, cancel-in-progress: true }  # a newer build replaces an older one
+    concurrency: { group: pages-build, cancel-in-progress: false }  # a build in flight finishes; only the newest waiting one follows it
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
