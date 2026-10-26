@@ -24,7 +24,7 @@
 
 .board-grid-cards.is-three { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .board-stack { display: flex; flex-direction: column; gap: 12px; }
-.board-card { scroll-margin-top: 16px; padding: 14px 16px 10px; border-radius: 12px; background: color-mix(in srgb, var(--color-label) 4%, transparent); }  /* a grouped box as System Settings draws one: a fill, no outline */
+.board-card { scroll-margin-top: 16px; padding: 14px 16px 10px; border-radius: 12px; background: none; box-shadow: inset 0 0 0 1px var(--color-separator); }  /* a card is an outline on the page, no fill */
 .board-card h2 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
 .board-sub { margin: 2px 0 8px; font-size: 11px; line-height: 1.4; color: var(--color-label-secondary); }
 .board-empty { margin: 48px 0; font-size: 13px; text-align: center; color: var(--color-label-tertiary); }
