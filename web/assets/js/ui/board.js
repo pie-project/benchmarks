@@ -133,7 +133,7 @@ window.Pie = window.Pie || {};
   // the win rate on each platform apart: an engine is held only against the others on that platform's machines
   const onPlatform = (rows, ids) => rows.filter((r) => ids.includes(Pie.platformOf(Pie.store.index.hardware[r.hardware] || {})));
   const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]]].map(([id, title, ids]) => ({
-    id, title, ids, sub: "Head-to-head decode win rate · Speculation included",
+    id, title, ids, sub: "Head-to-head decode win rate",
   }));
   // head to head on one platform: each cell counts the setups the row's engine decoded faster than the column's, a setup
   // counting only where both ran it; an engine never meets itself, so the diagonal stays empty; the rows by wins
@@ -143,8 +143,13 @@ window.Pie = window.Pie || {};
     const played = (a, b) => all.filter((s) => s[a] && s[b]).length;
     const ids = engineIds().filter((e) => all.some((s) => s[e]));
     if (ids.length < 2) return `<p class="board-empty">No runs yet</p>`;
-    const total = (a) => ids.reduce((n, b) => n + (a === b ? 0 : won(a, b)), 0);
-    const order = [...ids].sort((a, b) => total(b) - total(a));
+    // an engine measured here only with speculation (Splash drafts on every run): its battles drawn as dashed tiles
+    const own = onPlatform(rows, summary.ids).filter((r) => r.decode_tok_s);
+    const spec = new Set(ids.filter((e) => !own.some((r) => r.engine === e && r.workload === "raw")));
+    // the rows by their average win rate against the others, not by wins counted: an engine run on fewer setups still
+    // sits above one it beats, so the green gathers above the diagonal
+    const rate = (a) => { const r = ids.filter((b) => b !== a && played(a, b)).map((b) => won(a, b) / played(a, b)); return r.length ? r.reduce((x, y) => x + y, 0) / r.length : 0; };
+    const order = [...ids].sort((a, b) => rate(b) - rate(a));
     // MLX's mark is its wordmark, wider than the square the others fill, so its box widens to hold it
     // Splash's mark alone, in its tile's coral with no tile behind it, as the other logos stand on the page
     const mark = (e) => `<svg class="board-matrix-logo${e === "mlxlm" ? " is-wide" : ""}" viewBox="${e === "mlxlm" ? "-6 0 28 16" : "0 0 16 16"}" aria-hidden="true">${e === "splash" ? '<image href="assets/img/engines/splash-glyph.png" width="16" height="16"/>' : logo(e, 0, 0, 16)}</svg>`;
@@ -158,7 +163,7 @@ window.Pie = window.Pie || {};
       // the share won, as LMArena shades its battles: green where the row leads, blue where it trails, a step deeper
       // for every tenth past even; within a twentieth of even stays neutral
       const share = w / n, step = Math.min(4, Math.floor(Math.abs(share - .5) * 20 + .5) >> 1);
-      return `<td class="${step ? (share > .5 ? "is-win" : "is-loss") : ""}" data-step="${step}" data-tip-engine="${esc(a)}" data-tip-vs="${esc(b)}" data-tip-head="${esc(`${names().engine(a)} vs ${names().engine(b)}`)}" data-tip-value="${share.toFixed(2)}" data-tip-note="${w} of ${n}">${share.toFixed(2)}</td>`;
+      return `<td class="${step ? (share > .5 ? "is-win" : "is-loss") : ""}${spec.has(a) || spec.has(b) ? " is-spec" : ""}" data-step="${step}" data-tip-engine="${esc(a)}" data-tip-vs="${esc(b)}" data-tip-head="${esc(`${names().engine(a)} vs ${names().engine(b)}`)}" data-tip-value="${share.toFixed(2)}" data-tip-note="${w} of ${n}">${share.toFixed(2)}</td>`;
     };
     // the two sides named along their axes, each centred on the tiles: the row's engine beside the rows but pinned to
     // the card's left edge, the column's under the columns; the grid and its scale centred in the card
@@ -166,7 +171,7 @@ window.Pie = window.Pie || {};
     const key = `<span class="board-matrix-key" aria-hidden="true"><span class="board-matrix-tick">1</span><span class="board-matrix-bar">${[4, 3, 2, 1].map((k) => `<i class="is-win" data-step="${k}"></i>`).join("")}<i data-step="0"></i>${[1, 2, 3, 4].map((k) => `<i class="is-loss" data-step="${k}"></i>`).join("")}</span><span class="board-matrix-tick">0</span></span>`;
     // the two sides named along the card's edges, the same on every card: Engine A at the left edge across from the
     // middle, Engine B along the foot; the grid centred in the room between them
-    return `<div class="board-matrix-frame"><span class="board-matrix-axis is-a"><span>Engine A</span></span><span class="board-matrix-axis is-b">Engine B</span>${key}<table class="board-matrix">
+    return `<div class="board-matrix-frame"><span class="board-matrix-axis is-a"><span>Engine A</span></span><span class="board-matrix-axis is-b">Engine B</span>${key}${spec.size ? '<span class="board-matrix-spec"><i></i>Speculative</span>' : ""}<table class="board-matrix">
       <thead><tr><th></th>${order.map((e) => `<th scope="col">${head(e, false)}</th>`).join("")}</tr></thead>
       <tbody>${order.map((a) => `<tr><th scope="row">${head(a, true)}</th>${order.map((b) => cell(a, b)).join("")}</tr>`).join("")}</tbody>
     </table></div>`;

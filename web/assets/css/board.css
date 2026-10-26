@@ -239,8 +239,8 @@
    deeper the wider the margin, never louder than the page's bars; the names upright over the columns and before the
    logos down the rows; the diagonal blank; a stepped scale to the right */
 .board-matrix { margin: 0 0 4px; border-collapse: separate; border-spacing: 2px; font-size: 9px; font-variant-numeric: tabular-nums; }
-.board-matrix th, .board-matrix td { height: 18px; padding: 0; text-align: center; }
-.board-matrix td { border-radius: 3px; color: var(--color-label); background: var(--color-fill); }  /* a small corner, so a wide tile reads as a cell, not a pill */
+.board-matrix th, .board-matrix td { height: 20px; padding: 0; text-align: center; }
+.board-matrix td { --tile: var(--color-fill); border-radius: 3px; color: var(--color-label); background: var(--tile); }  /* a small corner, so a wide tile reads as a cell, not a pill */
 .board-matrix thead th { font-weight: 400; vertical-align: bottom; padding-bottom: 4px; }
 .board-matrix th[scope="row"] { text-align: right; padding: 0 2px 0 0; white-space: nowrap; }  /* as wide as its names, so a logo never meets a tile */
 .board-matrix td { width: 42px; min-width: 42px; max-width: 42px; }
@@ -255,16 +255,22 @@
 .board-matrix:has(td[data-tip-head]:hover) td[data-tip-head]:not(:hover) { opacity: .4; }  /* the battle under the pointer stays, the rest fade, as the page's bars do */
 .board-matrix td.is-self, .board-matrix td.board-matrix-total { background: none; }
 .board-matrix td[data-step="4"] { color: #fff; }  /* only the deepest step turns its figure white */
+/* a battle measured with speculation: the tile keeps its colour under fine white lines at 45 degrees, as pie's bars wear
+   theirs */
+.board-card-body .board-matrix td.is-spec { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, .28) 0 1.6px, transparent 1.6px 5px), var(--tile); }
+/* its key, at the foot's left, level with Engine B */
+.board-matrix-spec { position: absolute; left: 0; bottom: 1px; display: flex; align-items: center; gap: 4px; font-size: 9px; line-height: 1; color: var(--color-label-secondary); }
+.board-matrix-spec i { width: 12px; height: 8px; border-radius: 2px; background: repeating-linear-gradient(135deg, rgba(255, 255, 255, .45) 0 1.2px, transparent 1.2px 3.5px), var(--color-label-tertiary); }
 .board-card-body { --board-win: #34c759; --board-loss: var(--color-accent); }  /* Apple's system green, and the site's accent blue */
 /* the steps in the site's own green and blue, the system colours its marks wear, stronger the wider the margin */
-.board-card-body .is-win[data-step="1"] { background: color-mix(in srgb, var(--board-win) 18%, var(--color-fill)); }
-.board-card-body .is-win[data-step="2"] { background: color-mix(in srgb, var(--board-win) 34%, var(--color-fill)); }
-.board-card-body .is-win[data-step="3"] { background: color-mix(in srgb, var(--board-win) 52%, var(--color-fill)); }
-.board-card-body .is-win[data-step="4"] { background: color-mix(in srgb, var(--board-win) 80%, var(--color-fill)); }
-.board-card-body .is-loss[data-step="1"] { background: color-mix(in srgb, var(--board-loss) 18%, var(--color-fill)); }
-.board-card-body .is-loss[data-step="2"] { background: color-mix(in srgb, var(--board-loss) 34%, var(--color-fill)); }
-.board-card-body .is-loss[data-step="3"] { background: color-mix(in srgb, var(--board-loss) 52%, var(--color-fill)); }
-.board-card-body .is-loss[data-step="4"] { background: color-mix(in srgb, var(--board-loss) 80%, var(--color-fill)); }
+.board-card-body .is-win[data-step="1"] { --tile: color-mix(in srgb, var(--board-win) 18%, var(--color-fill)); background: var(--tile); }
+.board-card-body .is-win[data-step="2"] { --tile: color-mix(in srgb, var(--board-win) 34%, var(--color-fill)); background: var(--tile); }
+.board-card-body .is-win[data-step="3"] { --tile: color-mix(in srgb, var(--board-win) 52%, var(--color-fill)); background: var(--tile); }
+.board-card-body .is-win[data-step="4"] { --tile: color-mix(in srgb, var(--board-win) 80%, var(--color-fill)); background: var(--tile); }
+.board-card-body .is-loss[data-step="1"] { --tile: color-mix(in srgb, var(--board-loss) 18%, var(--color-fill)); background: var(--tile); }
+.board-card-body .is-loss[data-step="2"] { --tile: color-mix(in srgb, var(--board-loss) 34%, var(--color-fill)); background: var(--tile); }
+.board-card-body .is-loss[data-step="3"] { --tile: color-mix(in srgb, var(--board-loss) 52%, var(--color-fill)); background: var(--tile); }
+.board-card-body .is-loss[data-step="4"] { --tile: color-mix(in srgb, var(--board-loss) 80%, var(--color-fill)); background: var(--tile); }
 .board-matrix-total { min-width: 20px; font-weight: 500; color: var(--color-label); }
 .board-matrix thead .board-matrix-total { font-size: 10px; font-weight: 400; color: var(--color-label-secondary); }
 /* the axes' names, small and grey: Engine A turned up the left side, Engine B centred under the grid */
