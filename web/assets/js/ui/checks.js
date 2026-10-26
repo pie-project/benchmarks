@@ -60,7 +60,11 @@ window.Pie = window.Pie || {};
     const ordered = [...models.values()].sort((a, b) => Pie.store.names.model(a.model).localeCompare(Pie.store.names.model(b.model)) || a.artifact.localeCompare(b.artifact));
     const refs = (p) => [...new Set(rows.filter((r) => r.platform === p).map((r) => engineLabel(r.ref_engine)))].join(", ");
     const head = `<tr><th class="qc-lead">Model</th>${platforms.map((p) => `<th><span>${esc(hardwareName(p))}</span><small>vs ${esc(refs(p))}</small></th>`).join("")}</tr>`;
-    const cell = (r) => (!r ? '<td class="qc-none">–</td>' : `
+    const cell = (r) => (!r ? '<td class="qc-none">–</td>' : r.ref_unsupported ? `
+      <td class="qc-cell qc-unsupported" data-tip="${esc(`${engineLabel(r.ref_engine)} cannot run this model\n${r.ref_unsupported}${r.pie_ok ? "\npie runs it" : ""}`)}" aria-label="${esc(engineLabel(r.ref_engine))} cannot run this model">
+        ${Pie.icon("unsupported")}
+        ${r.miniature ? miniBadge(r) : ""}
+      </td>` : `
       <td class="qc-cell" data-tip="${esc(parityTip(r))}">
         <span class="qc-figure">${kl(r.kl_mean)}<span class="qc-sep">/</span>${pct(r.top1_agree)}</span>
         ${r.miniature ? miniBadge(r) : ""}
