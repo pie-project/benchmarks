@@ -205,16 +205,22 @@ def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_k
 @click.option("--out", "out_dir", type=click.Path(), default="parity-out")
 @click.option("--pie-commit", default=None, help="check pie out at this commit and put its cached build in place (a pod: `build` ran first)")
 @click.option("--features", default="cuda", show_default=True, help="the build's features, with --pie-commit")
-def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag_kind, out_dir, pie_commit, features):
-    from pie_evals.quality.dist_run import run_parity
+@click.option("--accuracy", "accuracy_tasks", default="", help="comma-separated question sets: score the full model on them (pie and vLLM) instead of parity")
+@click.option("--n", type=int, default=100, show_default=True, help="questions per set in an accuracy run")
+def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag_kind, out_dir, pie_commit, features, accuracy_tasks, n):
+    from pie_evals.quality.dist_run import run_accuracy, run_parity
 
     if pie_commit:
         _restore_pie(Path(pie_root), pie_commit, features)
     failed = []
     for a in artifacts:
         try:
-            run_parity(a, platform_id, pie_root=Path(pie_root), matrix_dir=matrix_dir, store_dir=store_dir, tag=tag, tag_kind=tag_kind,
-                       out_dir=Path(out_dir), log=lambda m_: click.echo(m_, err=True))
+            if accuracy_tasks:
+                run_accuracy(a, platform_id, [t for t in accuracy_tasks.split(",") if t], n, pie_root=Path(pie_root), matrix_dir=matrix_dir, store_dir=store_dir,
+                             tag=tag, tag_kind=tag_kind, out_dir=Path(out_dir), log=lambda m_: click.echo(m_, err=True))
+            else:
+                run_parity(a, platform_id, pie_root=Path(pie_root), matrix_dir=matrix_dir, store_dir=store_dir, tag=tag, tag_kind=tag_kind,
+                           out_dir=Path(out_dir), log=lambda m_: click.echo(m_, err=True))
         except Exception as e:  # noqa: BLE001 — one model that fails must not drop the others
             failed.append(f"{a}: {type(e).__name__}: {str(e).strip()[-600:]}")
             click.echo(f"FAIL  {failed[-1]}", err=True)

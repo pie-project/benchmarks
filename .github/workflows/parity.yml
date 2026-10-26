@@ -14,6 +14,8 @@ on:
       kernels_commit: { description: "pie commit for the kernel tests", required: false, default: "main" }
       tag: { description: "manual tag the rows are stored under", required: false, default: "0.5.3-b5" }
       kernels: { description: "also run the kernel test suite, one pod per platform", type: boolean, required: false, default: true }
+      accuracy: { description: "comma-separated question sets (gsm8k,mmlu,arc,math500,ifeval): score the full models on them, pie and vLLM, instead of parity; use with an 8-GPU platform", required: false, default: "" }
+      n: { description: "questions per set in an accuracy run", required: false, default: "100" }
       mac: { description: "a Mac platform id (pie on Metal against mlx-lm, on that runner); empty: none", required: false, default: "" }
 concurrency: { group: "parity-${{ github.run_id }}", cancel-in-progress: false }
 
@@ -135,7 +137,8 @@ jobs:
         run: |
           nvidia-smi 2>/dev/null || rocm-smi 2>/dev/null || true
           .venv/bin/pie-evals-node parity ${{ matrix.artifacts }} --platform "${{ matrix.platform }}" --pie-root "${PIE_ROOT:-/tmp/pie}" \
-            --pie-commit "$C" --features "$F" --store parity-out/store --tag "${{ inputs.tag }}" --tag-kind manual --out parity-out
+            --pie-commit "$C" --features "$F" --store parity-out/store --tag "${{ inputs.tag }}" --tag-kind manual --out parity-out \
+            ${{ inputs.accuracy != '' && format('--accuracy {0} --n {1}', inputs.accuracy, inputs.n) || '' }}
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: "parity-${{ matrix.platform }}-${{ matrix.shard }}", path: parity-out/, if-no-files-found: warn, retention-days: 30 }
