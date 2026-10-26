@@ -89,6 +89,10 @@ class SglangEngine(Engine):
                 # has no KV left beside a 256-wide graph (36212036845) and at 0.82 kv-oversub OOMs in prefill (36264810212)
                 wide = card < 80 and workload_concurrency(workload) >= 128
                 gmu = min(float(gmu), 0.79 if wide else 0.75)
+            if self.artifact.family == "glm5_next" and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+                # the TileLang DSA kernels (below) want more than 0.95 leaves past the static pool: GLM-5.3-Flash
+                # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV
+                gmu = 0.88
             args += ["--gpu-mem-util", str(gmu)]  # -> mem_fraction_static
         graph_bs = r.get("cuda_graph_max_bs")
         if graph_bs is None:
@@ -107,6 +111,21 @@ class SglangEngine(Engine):
             args += ["--report-timing"]
         if r.get("attention_backend"):
             args += ["--sglang-attention-backend", str(r["attention_backend"])]
+        dsa = r.get("dsa_backend")
+        if dsa is None and self.artifact.family == "glm5_next" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+            # 0.5.22 picks trtllm-gen MLA for a bf16 KV cache on SM120, an SM100-only kernel ("TllmGenFmhaRunner:
+            # Unsupported architecture", GLM-5.3-Flash on pro6000-x4, weekly 39901346624); TileLang runs on SM120
+            dsa = "tilelang"
+        if dsa:
+            args += ["--sglang-dsa-backend", str(dsa)]
+        moe = r.get("moe_runner_backend")
+        if moe is None and self.artifact.family == "deepseek_v41" and int(self.mode.tp) == 4:
+            # its auto pick, flashinfer_mxfp4, refuses a tp4 share of the experts ("hidden_size and
+            # intermediate_size_per_partition to be multiples of 128 (got hidden=5120, intermediate=576)",
+            # h200-x4 weekly 39999127297); Marlin is SGLang's other MXFP4 MoE runner
+            moe = "marlin"
+        if moe:
+            args += ["--sglang-moe-runner-backend", str(moe)]
         if r.get("sampling_backend"):
             args += ["--sglang-sampling-backend", str(r["sampling_backend"])]
         if r.get("page_size"):

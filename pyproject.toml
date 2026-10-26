@@ -10,6 +10,7 @@ dependencies = [
     "numpy>=1.26",
     "click>=8.1",
     "huggingface_hub>=0.24",
+    "hf_xet>=1.1",  # DeepSeek-V4.1-Flash's shards download only through Xet ("too large ... install hf_xet")
     "psycopg[binary]>=3.2",
 ]
 
