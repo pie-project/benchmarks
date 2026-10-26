@@ -203,9 +203,13 @@ def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_k
 @click.option("--tag", default=None)
 @click.option("--tag-kind", type=click.Choice(["release", "manual"]), default=None)
 @click.option("--out", "out_dir", type=click.Path(), default="parity-out")
-def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag_kind, out_dir):
+@click.option("--pie-commit", default=None, help="check pie out at this commit and put its cached build in place (a pod: `build` ran first)")
+@click.option("--features", default="cuda", show_default=True, help="the build's features, with --pie-commit")
+def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag_kind, out_dir, pie_commit, features):
     from pie_evals.quality.dist_run import run_parity
 
+    if pie_commit:
+        _restore_pie(Path(pie_root), pie_commit, features)
     failed = []
     for a in artifacts:
         try:
@@ -217,6 +221,38 @@ def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     (Path(out_dir) / "failed.json").write_text(json.dumps(failed, indent=1))
     sys.exit(1 if failed else 0)
+
+
+def _restore_pie(pie_root: Path, pie_commit: str, features: str) -> None:
+    from . import build as pb
+
+    mirror = Path(os.environ["PIE_MIRROR"]) if os.environ.get("PIE_MIRROR") else None
+    pb.ensure_checkout(pie_root, pie_commit, mirror=mirror)
+    pb.ensure(pie_root, pie_commit, [f for f in features.split(",") if f],
+              target_dir=Path(os.environ["CARGO_TARGET_DIR"]) if os.environ.get("CARGO_TARGET_DIR") else None,
+              python=os.environ.get("PIE_PY", "python3"), log=lambda m_: click.echo(m_, err=True))
+
+
+@main.command("kernels", help="pie's kernel test suite for the platform's backend (kernels-cuda / kernels-rocm) as one quality row: passed / (passed + failed).")
+@click.option("--platform", "platform_id", required=True)
+@click.option("--matrix", "matrix_dir", default="matrix")
+@click.option("--store", "store_dir", default=None, help="postgresql://... or a directory (default: $PIE_EVALS_DB, else ./store)")
+@click.option("--pie-root", type=click.Path(), default=os.environ.get("PIE_ROOT", str(DEFAULT_PIE_ROOT)))
+@click.option("--pie-commit", default=None, help="check pie out at this commit first")
+@click.option("--tag", default=None)
+@click.option("--tag-kind", type=click.Choice(["release", "manual"]), default=None)
+@click.option("--out", "out_dir", type=click.Path(), default="kernels-out")
+@click.option("--log", "log_file", type=click.Path(exists=True), default=None, help="parse this saved `cargo test` output instead of running the tests")
+def kernels_cmd(platform_id, matrix_dir, store_dir, pie_root, pie_commit, tag, tag_kind, out_dir, log_file):
+    from pie_evals.quality.kernels import run_kernels
+
+    if pie_commit:
+        from . import build as pb
+
+        pb.ensure_checkout(Path(pie_root), pie_commit, mirror=Path(os.environ["PIE_MIRROR"]) if os.environ.get("PIE_MIRROR") else None)
+    s = run_kernels(platform_id, pie_root=Path(pie_root), matrix_dir=matrix_dir, store_dir=store_dir, tag=tag, tag_kind=tag_kind,
+                    out_dir=Path(out_dir), log_file=Path(log_file) if log_file else None, log=lambda m_: click.echo(m_, err=True))
+    sys.exit(1 if s.get("failed") or s.get("error") else 0)
 
 
 @main.command("rescore", help="Grade saved quality answers again with the current scorers.")

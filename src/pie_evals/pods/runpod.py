@@ -281,6 +281,7 @@ def create_pod(
     community_fallback: bool = True,
     labels: list[str] | None = None,
     idle_minutes: int = 20,
+    name_prefix: str = "pie-evals",
     log=print,
 ) -> PodHandle:
     if not platform.runpod_gpu_type:
@@ -288,7 +289,7 @@ def create_pod(
     if not (runner_pat or runner_token or exec_script):
         raise ValueError("need runner_token (pre-minted registration token) or runner_pat, or an exec script")
     key = api_key or os.environ["RUNPOD_API_KEY"]
-    name = f"pie-evals-{platform.id}-{int(time.time())}"
+    name = f"{name_prefix}-{platform.id}-{int(time.time())}"
     script = startup_script(labels or platform.runner_labels, repo=repo, kill_minutes=kill_minutes, image_version=image_version, debug=debug, idle_minutes=idle_minutes)
     body: dict = {
         "name": name,
