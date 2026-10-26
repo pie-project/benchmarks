@@ -59,6 +59,8 @@ def miniature_argv(
         argv += ["--engram-vocab", str(r.engram_vocab)]
     if r.attn_res_block_size is not None:
         argv += ["--attn-res-block-size", str(r.attn_res_block_size)]
+    if r.shrink_family:
+        argv += ["--family", r.shrink_family]
     if cache_dir is not None:
         argv += ["--cache", str(cache_dir)]
     return argv
