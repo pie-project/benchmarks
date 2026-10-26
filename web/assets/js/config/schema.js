@@ -6,7 +6,8 @@ window.Pie = window.Pie || {};
   const reference = (key, label, group, table, options = {}) => ({ key, label, group, type: "reference", table, ...options });
 
   Pie.sections = [
-    { id: "home", label: "Overview" },
+    { id: "start", label: "" },  // the home page on its own at the top, under no heading, as a Mac app sets its first page
+    { id: "home", label: "Compare" },
     { id: "platforms", label: "Platforms" },
     { id: "measurements", label: "Measurements", login: true },
     { id: "catalog", label: "Catalog", login: true },
@@ -47,7 +48,7 @@ window.Pie = window.Pie || {};
     // every engine side by side on one model, as Artificial Analysis ranks models
     board: {
       label: "Rankings",
-      section: "home",
+      section: "start",
       tint: "#0A84FF",  // a tile in System Settings' blue, as the platforms below wear theirs
       view: "board",
       filters: [],
