@@ -5,11 +5,12 @@
 # .xla.zt and writes out/<job_id>/records.jsonl. A job with vLLM or SGLang cells also gets their TPU builds
 # (vllm-tpu, sglang-jax at the engines.yaml pins) in their own venvs, installed beside the toolchains.
 #
-#   bash infra/tpu/run-on-vm.sh <pie_commit> jobs/<job_id>.json
+#   bash infra/tpu/run-on-vm.sh <pie_commit> jobs/<job_id>.json [jobs/<job_id>.json ...]
 set -euo pipefail
 commit=$1
-job=$2
-job_id=$(basename "$job" .json)
+# one or more job files: a plan the budget split into shards runs them one after another on this VM
+jobs=("${@:2}")
+job=${jobs[0]}
 here=$(pwd)
 
 # a data disk (platforms.yaml tpu.data_disk_gb) holds ~/.cache: the checkpoints, their imports, the venvs
@@ -36,7 +37,7 @@ uv pip install -q --python .venv/bin/python -e .
 # the venvs ready (baselines.ensure_baseline, the same call it makes itself when a venv is missing)
 pids=()
 for engine in vllm sglang; do
-  pin=$(jq -r ".baseline_versions.$engine // empty" "$job" 2>/dev/null || true)
+  pin=$(jq -rs "map(.baseline_versions.$engine // empty) | first // empty" "${jobs[@]}" 2>/dev/null || true)
   [ -n "$pin" ] || continue
   echo "$engine (TPU build) $pin: installing in the background"
   .venv/bin/python -c "import sys; from pie_evals.node.baselines import ensure_baseline; print(ensure_baseline(sys.argv[1], sys.argv[2], backend='xla'))" "$engine" "$pin" \
@@ -77,4 +78,8 @@ if [ "${chips:-0}" -gt 1 ] && [ -z "${TPU_ALL_CHIPS:-}" ]; then  # tpu.all_chips
   echo "$chips TPU chips on this host: the engines see chip 0 only"
   export TPU_VISIBLE_CHIPS=0 TPU_CHIPS_PER_PROCESS_BOUNDS=1,1,1 TPU_PROCESS_BOUNDS=1,1,1
 fi
-.venv/bin/pie-evals-node run --job "$job" --pie-root "$PIE_ROOT" --out "out/$job_id" --download
+rc=0
+for job in "${jobs[@]}"; do
+  .venv/bin/pie-evals-node run --job "$job" --pie-root "$PIE_ROOT" --out "out/$(basename "$job" .json)" --download || rc=$?
+done
+exit $rc
