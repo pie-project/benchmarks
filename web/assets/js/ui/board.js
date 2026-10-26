@@ -482,7 +482,7 @@ window.Pie = window.Pie || {};
           </div>
           ${tools || aside ? `<div class="board-card-side">${tools ? `<span class="board-card-tools">${TOOLS(id)}</span>` : ""}${aside}</div>` : ""}
         </div>
-        ${body}
+        <div class="board-card-body">${body}</div>
       </section>`;
 
   const page = () => {
