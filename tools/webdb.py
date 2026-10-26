@@ -558,6 +558,7 @@ def quality_checks(store, a2m) -> dict[str, list[dict]]:
                 worst = {"name": name, **(errors[name] or {})}
             row["worst"] = worst if isinstance(worst, dict) else ({"max_abs": worst} if worst is not None else None)
             row.pop("errors", None)
+            row["failing"] = q.get("failing") or q.get("failures") or []
         out[kind].append(row)
     return out
 
