@@ -388,8 +388,9 @@ def watch_baselines(obj, lock):
 @click.option("--labels", default=None, help="comma-separated runner labels (default: the platform's); a pod hosting several platforms carries all of theirs")
 @click.option("--idle-minutes", type=int, default=20, show_default=True, help="the pod terminates itself after this long without a job")
 @click.option("--reuse", is_flag=True, help="if a live pod already carries every label, queue on it instead of renting another (needs GH_RUNNER_PAT)")
+@click.option("--name-prefix", default="pie-evals", show_default=True, help="pod name prefix (reap only ends pie-evals-* pods)")
 @click.pass_obj
-def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_version, network_volume_id, kill_minutes, cuda_versions, debug, exec_script, wait_runner, labels, idle_minutes, reuse):
+def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_version, network_volume_id, kill_minutes, cuda_versions, debug, exec_script, wait_runner, labels, idle_minutes, reuse, name_prefix):
     from pie_evals.pods import runpod
 
     m: Matrix = obj["matrix"]
@@ -454,7 +455,7 @@ def launch_pod(obj, platform, repo, runner_pat, runner_token, image, image_versi
                                       container_disk_gb=max(int(rp.get("container_disk_gb", 40)), plat.container_disk_gb or 0), cloud_type=str(rp.get("cloud_type", "SECURE")),
                                       allowed_cuda_versions=list(cuda_versions) or None, debug=debug, exec_script=exec_script,
                                       community_fallback=bool(rp.get("community_fallback", True)), log=lambda m_: click.echo(m_, err=True),
-                                      labels=lab, idle_minutes=idle_minutes)
+                                      labels=lab, idle_minutes=idle_minutes, name_prefix=name_prefix)
             except RuntimeError as e:
                 errors.append(f"{pid}: {str(e)[:120]}")
                 click.echo(f"no pod for {pid}: {str(e)[:600]}", err=True)
