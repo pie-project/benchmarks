@@ -21,6 +21,7 @@ on:
       persist: { type: boolean, required: false, default: true }
       skip_recorded: { type: boolean, required: false, default: false }
       pie_env: { type: string, required: false, default: "" }
+      own_pods: { type: boolean, required: false, default: false }  # this run's shards only on pods it rents itself (runs side by side)
     outputs:
       platforms: { value: "${{ jobs.expand.outputs.platforms }}" }
 
@@ -60,6 +61,7 @@ jobs:
           [ -n "${{ inputs.max_jobs }}" ] && PLAT_ARGS="$PLAT_ARGS --max-jobs ${{ inputs.max_jobs }}"
           [ -n "${{ inputs.max_jobs_per_platform }}" ] && PLAT_ARGS="$PLAT_ARGS --max-jobs-per-platform ${{ inputs.max_jobs_per_platform }}"
           [ "${{ inputs.skip_recorded }}" = "true" ] && PLAT_ARGS="$PLAT_ARGS --skip-recorded"
+          [ "${{ inputs.own_pods }}" = "true" ] && PLAT_ARGS="$PLAT_ARGS --run-label run-${{ github.run_id }}"
           .venv/bin/pie-evals jobs --tier "${{ inputs.tier }}" --pie-commit "${{ inputs.pie_commit }}" --out jobs --skip-unavailable $PLAT_ARGS
           echo "matrix=$(cat jobs/gh-matrix.json)" >> "$GITHUB_OUTPUT"
           echo "needs_pods=$(jq -r '[.include[] | select(.runpod)] | length > 0' jobs/gh-matrix.json)" >> "$GITHUB_OUTPUT"
