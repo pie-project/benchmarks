@@ -66,7 +66,7 @@
     // a platform is a folder: back returns to All Platforms and forward reopens the platform just left, as in Finder
     // Efficiency is a page of its own, not a folder in the list: no back or forward there
     const inFolder = isPlatform && Pie.schema[state.table]?.platform;
-    toolbar.elements.nav.hidden = !inFolder;
+    toolbar.elements.nav.hidden = true;  // no back or forward chevrons, for now
     toolbar.elements.back.disabled = !inFolder;
     toolbar.elements.forward.disabled = state.table !== "speedups" || !forwardTo;
     toolbar.elements.metricPicker.hidden = true;  // the metric lives in the platform table's own bar
