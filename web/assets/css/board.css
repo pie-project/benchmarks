@@ -201,3 +201,25 @@
 .board-pick-logo { width: 13px; height: 13px; flex: none; overflow: visible; }  /* an engine's logo before its name in a pick */
 .popover .board-pick-logo { margin-right: 6px; }
 .board-log-glyph svg .is-filled { fill: var(--color-accent); stroke: none; }  /* the changelog's bars, solid as the sidebar's */
+
+/* iPhone: the page as an iOS one reads, the desktop's same parts set for a narrow screen */
+@media (max-width: 899px) {
+  /* a wide chart keeps a size its words can be read at and is swiped across inside its card, as Stocks and Health do;
+     the rankings' three cards, already as wide as the screen, stay as they are */
+  .board-stack .board-card-body { margin: 0 -16px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .board-stack .board-card-body::-webkit-scrollbar { display: none; }
+  .board-stack .board-card-body > svg.board-chart { min-width: 640px; }
+  /* a card's tools and its pick move under its words, the pick first and the tools at the row's end */
+  .board-card-head { flex-direction: column; gap: 10px; }
+  .board-card-side { flex-direction: row-reverse; align-self: stretch; align-items: center; justify-content: space-between; }
+  .board-card-tools { margin: 0; }
+  /* a section's pick or toggle goes under its description, at the start of the line */
+  .board-section-head { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .board-section-head > .board-title-pick, .board-section-head > .board-toggle { margin: 0; }
+  /* the banner, the recommender and the changelog stacked, each a phone's size */
+  .board-hero .board-banner { height: 200px; }
+  .board-hero .board-banner.is-recommender { height: 170px; }
+  .board-log { height: 280px; }
+  /* the foot's last line as two lines */
+  .board-footer-base { flex-direction: column; gap: 4px; }
+}
