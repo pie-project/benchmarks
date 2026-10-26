@@ -47,7 +47,7 @@ window.Pie = window.Pie || {};
     // every platform's machines in one grid, a header row per platform, every model a column
     // every engine side by side on one model, as Artificial Analysis ranks models
     board: {
-      label: "Rankings",
+      label: "Overview",
       section: "start",
       tint: "#0A84FF",  // a tile in System Settings' blue, as the platforms below wear theirs
       view: "board",
@@ -136,7 +136,7 @@ window.Pie = window.Pie || {};
     cerebras: {
       label: "Cerebras",
       short: "Cerebras",  // as the tables name it
-      section: "platforms",
+      section: null,  // no page for now; still a row in the Platforms list ("platforms" to bring it back)
       view: "platform",
       platform: "cerebras",
       tint: "#f05a28",

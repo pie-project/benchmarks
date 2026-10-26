@@ -696,8 +696,6 @@
 .tip-roof .rf-knee-hole { stroke: var(--color-menu); stroke-width: 3.6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .tip-roof .rf-name, .tip-roof .rf-tick-name { position: absolute; transform: translate(8px, -50%); white-space: nowrap; font-size: 11px; line-height: 1; pointer-events: none; }
 .tip-roof .rf-name.is-pie { font-weight: 700; }
-.tip-roof .rf-move { fill: none; stroke-width: 1.5; vector-effect: non-scaling-stroke; }  /* Raw to Spec, the roof's own weight family */
-.tip-roof .rf-move-head { stroke: none; }
 .tip-roof .rf-name.is-left, .tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 8px), -50%); }
 .tip-roof .rf-tick-name { font-weight: 500; color: var(--color-label-tertiary); transform: translate(6px, calc(-100% - 4px)); }
 .tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 6px), calc(-100% - 4px)); }
@@ -782,3 +780,7 @@
 .platform-bar .filter-button.is-engine[aria-expanded="true"] { background: color-mix(in srgb, var(--tint) 30%, transparent); }
 .platform-bar .filter-button.is-engine .popup-chevron { stroke: var(--tint); }
 .view-cycle svg .is-filled { fill: var(--color-accent); stroke: none; }  /* a solid icon in the view button, in the sidebar's blue */
+
+/* the setups' two groups named in small grey type inside the capsule, the second set off by a hairline */
+.setup-group { padding: 0 4px 0 8px; font-size: 10px; font-weight: 500; white-space: nowrap; color: var(--color-label-tertiary); }
+.setup-group.is-second { margin-left: 4px; border-left: 1px solid var(--color-separator); }

@@ -458,7 +458,7 @@ window.Pie = window.Pie || {};
   const MONTH = new Intl.DateTimeFormat("en-US", { month: "short" });
   const DAY = { format: (d) => `${d.getDate()} ${MONTH.format(d)}` };
   const logItem = (e) => {
-    const [mark, text] = [`<span class="board-log-glyph">${Pie.icon("board")}</span>`, `${e.run.id} · ${e.results.toLocaleString()} results`];
+    const [mark, text] = [`<span class="board-log-glyph">${Pie.icon("bars")}</span>`, `${e.run.id} · ${e.results.toLocaleString()} results`];
     return `<li class="board-log-item">
         <div class="board-log-kind">${esc(e.kind)} · ${esc(DAY.format(new Date(e.at.replace(" ", "T"))))}</div>
         <div class="board-log-text">${mark}<span>${esc(text)}</span></div>
