@@ -149,6 +149,9 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
         argv += ["--attention-backend", str(engine.recipe["attention_backend"])]
     env = engine.process_env()
     cfg = json.loads((snapshot / "config.json").read_text()) if (snapshot / "config.json").exists() else {}
+    if "vision_config" in cfg:
+        # the cut keeps only the language model: vLLM then builds no vision tower and reads no visual weights
+        argv += ["--limit-mm-per-prompt", json.dumps({"image": 0, "video": 0})]
     if str(engine.platform.backend) == "xla" and "kv_lora_rank" in {**cfg, **(cfg.get("text_config") or {})}:
         # vllm-tpu serves an MLA model only on its new model design with DP attention ("MLA models require both ...")
         env["NEW_MODEL_DESIGN"] = "1"
@@ -299,7 +302,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     summary["samples"] = [{"id": i, "ref": a, "pie": b} for i, (a, b) in enumerate(zip(ref_texts, pie_texts, strict=True))]
     (out_dir / f"{art.id}-{platform_id}.json").write_text(json.dumps(summary, indent=1))
     where = Store(store_dir).write_quality(summary, tag=tag, tag_kind=tag_kind)
-    log(f"parity {art.id}@{platform_id}: KL mean {summary['kl_mean']}, top-1 {summary['top1_agree']}, exact {summary['exact_match']:.2f} -> {where}")
+    log(f"parity {art.id}@{platform_id}: KL mean {summary['kl_mean']}, top-1 {summary['top1_agree']} (decisive {summary.get('top1_agree_decisive')}, ref top-1 p {summary.get('ref_top1_p')}), exact {summary['exact_match']:.2f} -> {where}")
     return summary
 
 
