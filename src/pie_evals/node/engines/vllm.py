@@ -154,6 +154,8 @@ class VllmEngine(Engine):
             args += ["--block-size", str(int(r["block_size"]))]
         if r.get("enforce_eager"):
             args.append("--enforce-eager")
+        if r.get("language_model_only"):
+            args.append("--language-model-only")
 
         kv = r.get("kv_cache_dtype") or _VLLM_KV_DTYPES.get(str(self.artifact.kv_dtype), str(self.artifact.kv_dtype))
         if kv and kv != "auto":

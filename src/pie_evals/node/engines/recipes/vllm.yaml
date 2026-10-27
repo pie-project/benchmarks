@@ -125,6 +125,12 @@ competitive:
             The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
             FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
             on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
+        language_model_only:
+          value: true
+          rationale: >
+            The miniature is carved without the vision tower, and vLLM 0.31 builds it anyway, then
+            fails init on every visual.* weight the checkpoint lacks (weekly 40421366253). Text-only
+            serving, as pie runs it.
     nemotron_h:
       knobs:
         attention_backend:
