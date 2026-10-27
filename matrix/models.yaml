@@ -267,6 +267,7 @@ artifacts:
     scheme: fp8
     kind: miniature
     miniature: {layers: "0-5", experts: 8, period: 1, note: "pie's minimax-m3-mini: 3 dense + 3 MoE layers of 60; 8 of 128 experts"}
+    pie_sku: minimax-m3-mini-mxfp8a8g32-nvfp4a4-kv-bf16   # MXFP8 projections beside compressed-tensors NVFP4 experts, imported (the NVFP4 global scales are inverted at import)
     max_context: 4096
     expected_gib: 8.0
     tiers: [weekly]
