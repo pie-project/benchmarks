@@ -799,6 +799,8 @@ def main() -> None:
     ever = {(r["hardware"], r["engine"], r["model"], r["workload"]) for rows in snaps.values() for r in rows}
     for t in order:
         have = {(r["hardware"], r["engine"], r["model"], r["workload"]): r for r in snaps[t]}
+        # a model run cut down to fit (a miniature) on a machine is never "does not fit" there for the other engines
+        cut = {(r["hardware"], r["model"]) for r in snaps[t] if r.get("miniature")}
         tried = attempts.get(t, {})
         filled = []
         for key in grid:
@@ -811,10 +813,11 @@ def main() -> None:
                     row["note"] = f"In {t}: {attempt_note(tried[key])[:1].lower()}{attempt_note(tried[key])[1:]}"
                 filled.append(row)
                 continue
-            gib = misfits.get(hw, {}).get(model, {}).get(engine)
+            gib = None if (hw, model) in cut else misfits.get(hw, {}).get(model, {}).get(engine)
             if gib:
                 streaming = f" {streams[model].lower()} SSD streaming" if streams.get(model) in ("With", "Without") else ""
-                filled.append(empty_row(key, t, "no_fit", f"Needs about {round(gib)} GB{streaming}; this Mac's GPU can use about {gpu_note(memory.get(hw))} GB"))
+                where = "this Mac's GPU can use" if re.match(r"m\d", hw) else "this machine holds"
+                filled.append(empty_row(key, t, "no_fit", f"Needs about {round(gib)} GB{streaming}; {where} about {gpu_note(memory.get(hw))} GB"))
             elif (hw, engine, model) in unsupported or key in unsupported:
                 filled.append(empty_row(key, t, "unsupported", unsupported.get((hw, engine, model)) or unsupported[key]))
             elif key in tried:

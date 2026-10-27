@@ -196,6 +196,7 @@ window.Pie = window.Pie || {};
     const [y, m, d] = when.slice(0, 10).split("-").map(Number);
     return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   };
+  let lastAll = null;  // the release's rows, every status, for the hover cards
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
@@ -247,6 +248,14 @@ window.Pie = window.Pie || {};
     // Spec Decode in FP Efficiency: the roofline over the list, the picked engine's Raw run and its speculative one as
     // two dots, an arrow from the first to the second: drafting reads the weights once for several tokens, so the pass
     // moves right along the roof, and up by what it kept
+    // the engines with no number here say why, in grey under the measured ones: not supported, does not fit, failed, or
+    // not measured yet, so one engine alone reads as the only one that could run, or the only one run so far
+    const WHY = { unsupported: "Not supported", no_fit: "Does not fit", fail: "Failed", not_run: "Not measured yet", no_data: "Not measured yet" };
+    const others = (lastAll || []).filter((r) => r.hardware === mac && r.model === model && r.workload === mode.workload && !order.some((o) => o.engine === r.engine));
+    for (const r of [...new Map(others.map((r) => [r.engine, r])).values()]) {
+      lines.push(`<div class="tip-row is-absent"><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
+      <span class="tip-value">${esc(WHY[r.status] || "Not measured yet")}</span><span class="tip-when"></span></div>`);
+    }
     if (specBound && roofline) {
       const moved = specMove(order, raw, specBound);
       if (moved) return `<div class="rf-move-card">${roofCard(moved, { move: true })}${card("", "", lines)}</div>`;
@@ -483,6 +492,7 @@ window.Pie = window.Pie || {};
       if (fixed) { peeked = null; compare = fixed; }
       else if (!peeked) compare = chosen;  // a platform's page shows the viewer's pick, whatever page came before
       const all = Pie.store.snapshot(state.release);
+      lastAll = all;  // the hover cards name the engines that left a cell empty
       const modes = Pie.platform.metrics(state);
       // the viewer's pick is kept as they made it: a page that does not offer it (the TPU has no Peak FLOPs, Spec Decode
       // is the Roofline page's) shows Decode without forgetting it, so the next page that has it opens on it again

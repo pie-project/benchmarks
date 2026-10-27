@@ -801,3 +801,6 @@
 /* a miniature's number on fine 45-degree lines instead of a tag, as the charts mark pie's bars; its hover card names it */
 .platform-table td:has(> .platform-cell.is-mini) { background-image: repeating-linear-gradient(135deg, var(--color-separator) 0 1px, transparent 1px 6px); background-attachment: fixed; }  /* grey lines over the cell's own background, fixed to the window so they run on from cell to cell */
 .platform-table td > .platform-cell.is-mini { background: none; }
+.tip-row.is-absent { color: var(--color-label-tertiary); }
+.tip-row.is-absent .tip-dot { opacity: .35; }
+.tip-row.is-absent .tip-value { font-weight: 400; color: var(--color-label-tertiary); }
