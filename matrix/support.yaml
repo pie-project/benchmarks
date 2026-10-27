@@ -144,6 +144,11 @@ unsupported:
   # MI300X (gfx942) gpt-oss dies at load on "Unknown quantization method: mxfp4" (its quantization/__init__.py)
   - when: {engine: sglang, family: gpt_oss, arch: cdna3}
     reason: "SGLang 0.5.22 on ROCm serves mxfp4 (gpt-oss) only on gfx95x (MI350/MI355); the MI300X (gfx942) has no mxfp4 path"
+  # SGLang 0.5.22 decodes Qwen3.8-Flash-Next's full-attention layers through qwen_sparse_attn_backend's flash_attn.cute
+  # FlashAttentionForwardSm80, which CUDA refuses to launch on sm_86/sm_89 (A40, L40S; the 4090 OOMs in prefill
+  # graph capture before it gets there): "CUDA_LAUNCH_INVALID_CONFIG ... cudaErrorInvalidValue" (weekly 40421366253)
+  - when: {engine: sglang, family: qwen4_exp, arch: [ampere, ada], not_platform: [a100-pcie-x1, a100-x2, a100-pcie-x2, a100-sxm-x8, a100-sxm40-x1, a100-sxm-x1]}
+    reason: "SGLang 0.5.22's qwen4_exp sparse-attention decode kernel (flash_attn.cute Sm80) fails to launch on sm_86/sm_89: CUDA_LAUNCH_INVALID_CONFIG"
   # SGLang's static pool for Kimi-K3 mini (weights + the KDA state pool) needs more than 0.935 of a 32 GB
   # card, and at 0.95 the process sits at 31.2 GiB before the first c8 batch (nightly 36103831529 s10:
   # ss serves, c8 / lc-1k / lc-2k OOM on 200-400 MiB); a 24 GB card does not load it at all
