@@ -89,6 +89,13 @@ class SglangEngine(Engine):
                 # has no KV left beside a 256-wide graph (36212036845) and at 0.82 kv-oversub OOMs in prefill (36264810212)
                 wide = card < 80 and workload_concurrency(workload) >= 128
                 gmu = min(float(gmu), 0.79 if wide else 0.75)
+            elif self.artifact.family in ("glm5_next", "qwen4_exp"):
+                # 0.5.22 captures piecewise prefill graphs past the static pool, and the linear-attention
+                # layers' chunk state makes them large: GLM-5.3-Flash's 2048-token graph took 5.7 GiB and
+                # OOMed at 0.9 on an 80 GB H100 (weekly 40415495702; its c256 passed under the 0.80 cap
+                # below), Qwen3.8-Flash-Next OOMed at 0.9 on a 24 GB 4090 (40421366253). vLLM's 0.9
+                # already holds its graphs and activations; this keeps SGLang's inside the same card
+                gmu = min(float(gmu), 0.85 if card >= 80 else 0.75)
             if self.artifact.family == "glm5_next" and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
                 # the TileLang DSA kernels (below) want more than 0.95 leaves past the static pool: GLM-5.3-Flash
                 # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV
