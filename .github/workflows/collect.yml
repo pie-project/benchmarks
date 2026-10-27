@@ -14,10 +14,11 @@ on:
       drop_engines: { description: "comma-separated engines whose results and quality scores to delete instead of importing", required: false, default: "" }
       drop_workloads: { description: "comma-separated workloads whose results to delete instead of importing", required: false, default: "" }
       move_tags: { description: "comma-separated src:dst tag pairs: move src's good rows into dst instead of importing", required: false, default: "" }
+      runner: { description: "runner label to import on (site; or an idle Mac like m5-max-64g when the site laptop is backed up)", required: false, default: "site" }
 
 jobs:
   collect:
-    runs-on: [self-hosted, site]  # the site laptop: bookkeeping never shares a benchmark Mac
+    runs-on: [self-hosted, "${{ inputs.runner || 'site' }}"]  # the site laptop: bookkeeping shares a benchmark Mac only when asked to
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
