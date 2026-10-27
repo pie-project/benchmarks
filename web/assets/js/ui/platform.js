@@ -108,9 +108,9 @@ window.Pie = window.Pie || {};
   const TODAY = {
     models: new Set(["deepseek-v4.1-flash", "glm-5.3-flash", "kimi-k3", "glm-5.3", "hy4-preview", "mimo-v2.6-flash-rl", "qwen3.8-flash-next",
       "muse-spark-open-816b-a42b", "nvidia-nemotron-3-ultra-550b-a55b"]),
-    // only machines the run can still fill: B200 and MI300X have no RunPod stock, pie's TPU engine serves none of these
+    // only machines the run can still fill: B300 and MI300X have no RunPod stock, pie's TPU engine serves none of these
     // models, and MiniMax's miniature loads in no engine (left out of the models above)
-    hardware: new Set(["b300-x1", "h200-x1", "pro6000-x1", "a100-sxm-x1", "h100-sxm-x1", "a40-x1", "l40s-x1", "rtx5090-x1", "rtx4090-x1"]),
+    hardware: new Set(["h200-x1", "b200-x1", "pro6000-x1", "a100-sxm-x1", "h100-sxm-x1", "a40-x1", "l40s-x1", "rtx5090-x1", "rtx4090-x1"]),
   };
   const PENDING = '<svg class="platform-pending" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.8V8l2.2 1.6"/></svg>';
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/></svg>';
