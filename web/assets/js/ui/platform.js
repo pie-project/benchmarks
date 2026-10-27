@@ -107,9 +107,10 @@ window.Pie = window.Pie || {};
   // pending, not missing (a local preview mark, until the run's last results land)
   const TODAY = {
     models: new Set(["deepseek-v4.1-flash", "glm-5.3-flash", "kimi-k3", "glm-5.3", "hy4-preview", "mimo-v2.6-flash-rl", "qwen3.8-flash-next",
-      "muse-spark-open-816b-a42b", "nvidia-nemotron-3-ultra-550b-a55b", "minimax-m3.1-flash"]),
-    hardware: new Set(["b300-x1", "b200-x1", "h200-x1", "pro6000-x1", "a100-sxm-x1", "h100-sxm-x1", "a40-x1", "l40s-x1", "rtx5090-x1",
-      "rtx4090-x1", "mi300x-x1", "tpu-v6e-1", "tpu-v5p-8"]),
+      "muse-spark-open-816b-a42b", "nvidia-nemotron-3-ultra-550b-a55b"]),
+    // only machines the run can still fill: B200 and MI300X have no RunPod stock, pie's TPU engine serves none of these
+    // models, and MiniMax's miniature loads in no engine (left out of the models above)
+    hardware: new Set(["b300-x1", "h200-x1", "pro6000-x1", "a100-sxm-x1", "h100-sxm-x1", "a40-x1", "l40s-x1", "rtx5090-x1", "rtx4090-x1"]),
   };
   const PENDING = '<svg class="platform-pending" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.8V8l2.2 1.6"/></svg>';
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/></svg>';
@@ -562,14 +563,23 @@ window.Pie = window.Pie || {};
           const fullNeeds = Pie.store.index.models[id]?.needs_gib;
           if ((compare === "tps" || compare === "ceiling") && cut) { c = null; needs = noFit[mac]?.[id]?.[base] || fullNeeds || 1; }
           const own = snapshot.find((r) => here(r) && r.engine === base);
+          // a catalog model (a datacenter release, run in the cloud as a miniature) is never "does not fit" when engines
+          // are compared: a machine its miniature has not reached reads "–", and a failed run "–" with the error on hover
+          const cloud = Pie.store.index.models[id]?.catalog && compare === "engines";
+          if (cloud) needs = null;
+          const failed = own && own.status === "fail";
+          if (cloud && failed && !c) { grid[mac][model] = { c: null, needs: null, failed: true, why: own.note ? `Failed: ${own.note}` : "The run failed" }; continue; }
           // an empty cell explains itself only when there is something to say: it does not fit, or its run failed
-          grid[mac][model] = { c, needs, why: needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a miniature ran` : `Needs about ${Math.round(needs)} GB`) : own?.note || "" };
+          grid[mac][model] = { c, needs, failed, why: needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a miniature ran` : `Needs about ${Math.round(needs)} GB`) : own?.note || "" };
         }
       }
       // Hide unavailable drops the models and machines with nothing to compare, as the results table does
       // picked platforms drop the models and machines with nothing to show, as a platform's own page reads
       const hide = state.hideEmpty || picked.length > 0;
-      const models = hide ? allModels.filter((model) => macs.some((mac) => grid[mac][model].c)) : allModels;
+      // a cell awaiting today's run (its clock) counts as something to show, so its row and column stay
+      const awaiting = (mac, model) => !grid[mac][model].c && !grid[mac][model].needs && !grid[mac][model].failed && TODAY.models.has(realOf(model)) && TODAY.hardware.has(mac);
+      const shows = (mac, model) => grid[mac][model].c || awaiting(mac, model);
+      const models = hide ? allModels.filter((model) => macs.some((mac) => shows(mac, model))) : allModels;
       const median = (list) => {
         const sorted = list.filter((g) => g !== undefined && g !== null).sort((a, b) => a - b);
         return sorted.length ? sorted[sorted.length >> 1] : null;
@@ -593,7 +603,7 @@ window.Pie = window.Pie || {};
         // empties sink to the bottom whichever way the column sorts
         return named.sort((a, b) => (val(a) === null) - (val(b) === null) || dir * ((val(a) ?? 0) - (val(b) ?? 0)));
       };
-      const grouped = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => grid[mac][model].c)) : g.macs) }))
+      const grouped = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => shows(mac, model))) : g.macs) }))
         .filter((g) => (!only && !narrowMacs) || g.macs.length);  // a search hides the platforms it leaves empty
       // one list of machines, no platform rows; on All Platforms each machine wears its platform's mark
       const shownGroups = [{ platform: null, macs: order(grouped.flatMap((g) => g.macs)) }];
@@ -649,7 +659,7 @@ window.Pie = window.Pie || {};
               : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
             return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}${c.pie.miniature ? `<span class="platform-mini" title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}">Mini</span>` : ""}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
-          if (TODAY.models.has(realOf(model)) && TODAY.hardware.has(mac) && !needs) return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty is-pending" data-tip="${esc(card("", "", [], "Being measured in today's miniature run"))}">${PENDING}</span></td>`;
+          if (TODAY.models.has(realOf(model)) && TODAY.hardware.has(mac) && !needs && !grid[mac][model].failed) return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty is-pending" data-tip="${esc(card("", "", [], "Being measured in today's miniature run"))}">${PENDING}</span></td>`;
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${why ? ` data-tip="${esc(card("", "", [], why))}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
