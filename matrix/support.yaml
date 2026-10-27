@@ -238,6 +238,23 @@ unsupported:
     reason: "vLLM 0.32.0 Hy4 sparse MLA asserts NUM_TOPK_TOKENS 16 is not a multiple of BLOCK_N 128"
   - when: {engine: vllm, program: parity, artifact: nemotron-3-ultra-mini, platform: rtx4090-x1}
     reason: "vLLM 0.32.0 Nemotron 3 mini leaves no room for cuBLAS workspace on a 24 GB card"
+  # quality parity on Cloud TPU (tpu.yml parity, vllm-tpu 0.32.0, tpu-v6e-1 and tpu-v5p-8): the reference fails at boot on every mini
+  - when: {engine: vllm, program: parity, backend: xla, artifact: deepseek-v4.1-flash-mini8}
+    reason: "vllm-tpu 0.32.0 has no JAX DeepseekV41ForCausalLM; its PyTorch fallback dies on torch.cuda.Stream (requires CUDA)"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: [glm-5.3-flash-mini8-fp8, glm-5.3-mini, hy4-mini6]}
+    reason: "vllm-tpu 0.32.0 has no JAX model for this arch; its PyTorch fallback cannot place tensors on device \"tpu\""
+  - when: {engine: vllm, program: parity, backend: xla, artifact: mimo-v2.6-flash-mini}
+    reason: "vllm-tpu 0.32.0 asserts page_size_padded >= unpadded_page_size_bytes for MiMo-V2.6's KV cache (kv_cache_interface.py:518)"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: kimi-k3-mini8}
+    reason: "vllm-tpu 0.32.0 has no KimiK3ForConditionalGeneration in vllm.models.kimi_k3"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: qwen3.8-flash-next-mini}
+    reason: "vllm-tpu 0.32.0: Qwen4Exp supports CUDA and ROCm only"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: muse-spark-mini4}
+    reason: "vllm-tpu 0.32.0's Transformers does not recognize model type muse_spark"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: minimax-m3.1-flash-mini}
+    reason: "vllm-tpu 0.32.0: mxfp8 quantization is not supported on TPU"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: nemotron-3-ultra-mini}
+    reason: "vllm-tpu 0.32.0: is_act_and_mul=False (Nemotron's relu2 MLP) is supported only for CUDA, XPU and ROCm"
   - when: {engine: mlxlm, tp: ">1"}
     reason: "mlx-lm is single device"
   - when: {engine: mlxlm, family: muse_glimmer}
