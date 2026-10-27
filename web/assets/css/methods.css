@@ -252,7 +252,7 @@
 #hide-empty.is-active:hover,
 .platform-hide.is-active:hover { background: var(--color-fill-secondary); }
 /* on a phone they are capsules, as the setup pop-up beside them */
-@media (max-width: 899px) { .rules-button { height: 34px; padding: 0 14px; border-radius: 999px; font-size: 15px; } }
+@media (max-width: 899px) { .rules-button { height: 34px; padding: 0 8px; border-radius: 999px; font-size: 15px; } }  /* the glyph alone, snug beside the last filter */
 /* a rule row takes a grey wash on hover: it follows the pointer like a menu row, but blue would promise a pick */
 
 /* the bar's pop-ups take the same light fill as Configuration: one control style across the row, as a macOS toolbar keeps */

@@ -139,7 +139,8 @@ window.Pie = window.Pie || {};
   }));
   // each platform's card shows its bars or, picked in its corner, the grid of head-to-heads they are fitted from
   const GRID_KEY = "pieGridCards2";  // kept per browser, as the cards' other picks are
-  const gridCards = new Set((() => { try { return JSON.parse(localStorage.getItem(GRID_KEY)) ?? ["index-gpu"]; } catch { return []; } })());
+  // a phone opens every platform on its bars, the grid too wide for it; the kept picks and the NVIDIA grid are a desktop's
+  const gridCards = new Set(window.matchMedia("(max-width: 899px)").matches ? [] : (() => { try { return JSON.parse(localStorage.getItem(GRID_KEY)) ?? ["index-gpu"]; } catch { return []; } })());
   const BARS_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V8M8 13V3.5M12 13V6.5"/></svg>';
   const GRID_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg>';
   // the platform pages' setup control in small: symbols on a grey capsule, the picked one in the accent, no thumb
@@ -267,8 +268,9 @@ window.Pie = window.Pie || {};
   const ENGINE_KEYS = { "use-engine": "pieUseEngine", "scale-engine": "pieScaleEngine" };
   const keptEngine = (k) => { try { const e = localStorage.getItem(ENGINE_KEYS[k]); return Pie.store.tables.engines.some((x) => x.id === e) ? e : null; } catch { return null; } };
   let useEngine = keptEngine("use-engine"), scaleEngine = keptEngine("scale-engine");
-  const engineMark = (engine) => engine ? `<svg class="board-pick-logo" viewBox="0 0 16 16" aria-hidden="true">${logo(engine, 0, 0, 16)}</svg>` : "";
-  const enginePick = (k, engine) => `<button class="filter-button board-card-pick" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="Engine">${engineMark(engine)}${esc(engine ? names().engine(engine) : "Fastest engine")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
+  // MLX's wordmark runs wider than the square the other logos fill: its box widens to hold it, so the pick's padding stays
+  const engineMark = (engine) => engine ? `<svg class="board-pick-logo${engine === "mlxlm" ? " is-wide" : ""}" viewBox="${engine === "mlxlm" ? "-5.6 0 27.2 16" : "0 0 16 16"}" aria-hidden="true">${logo(engine, 0, 0, 16)}</svg>` : "";
+  const enginePick = (k, engine) => `<button class="filter-button board-card-pick" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="Engine">${engineMark(engine)}${engine === "mlxlm" ? "" : esc(engine ? names().engine(engine) : "Fastest engine")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
   const engineSub = (sub, engine) => (engine ? sub.replace("fastest engine", names().engine(engine)).replace("Decode speed against", `${names().engine(engine)}'s decode speed against`) : sub);
   // the model's speeds as one card, Decode, Prefill or Throughput picked in its corner and kept per browser, each wearing
   // the setup control's degree mark; time to first token, a latency rather than a speed, keeps a card of its own
@@ -488,7 +490,7 @@ window.Pie = window.Pie || {};
           </ul>
           <form class="board-footer-mail">
             <label for="board-footer-email">Get new results by email</label>
-            <span><input id="board-footer-email" type="email" required placeholder="Email" value="${esc(Pie.account?.user()?.email || "")}"><button type="submit" aria-label="Subscribe"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M9 4.5 12.5 8 9 11.5"/></svg></button></span>
+            <span><input id="board-footer-email" type="email" required placeholder="Email" value="${esc(Pie.account?.user()?.email || "")}"><button type="submit" aria-label="Subscribe"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M9 4.5 12.5 8 9 11.5"/></svg><span class="board-footer-mail-word">Subscribe</span></button></span>
           </form>
         </div>
         <div class="board-footer-base">
@@ -615,10 +617,10 @@ window.Pie = window.Pie || {};
             // the last section: one card as the others, its engine picked in its corner with the engine's logo
             const acc = Pie.checks?.accuracyChart(state);
             if (!acc?.chart) return "";
-            const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="accuracy-engine" aria-haspopup="menu" aria-label="Engine">${engineMark(acc.engine)}${esc(acc.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
+            const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="accuracy-engine" aria-haspopup="menu" aria-label="${esc(acc.label)}">${engineMark(acc.engine)}${acc.engine === "mlxlm" ? "" : esc(acc.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
             return `<div class="board-section-head"><div class="board-section-text"><h1 class="board-title">Accuracy</h1>
             <p class="board-lede">pie’s benchmark score gap to another engine, same model.</p></div></div>
-            <div class="board-stack">${card("accuracy", "Score gap", `${acc.label} minus pie, in points, with its 95% range · Right of zero, pie scores lower`, acc.chart, pick)}</div>`;
+            <div class="board-stack">${card("accuracy", "Score gap", `${acc.label} minus pie, in points · Right of zero, pie scores lower`, acc.chart, pick)}</div>`;
           })()}
         </div>
       </div>${footer()}</div>`;

@@ -15,7 +15,7 @@ window.Pie = window.Pie || {};
   let rows = [];
   let at = 0;
 
-  const ICON_SEARCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  const ICON_SEARCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14ZM16 16l4 4"/></svg>';
   const go = (table) => {
     app.state.table = table;
     app.render();

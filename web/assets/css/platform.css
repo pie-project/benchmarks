@@ -790,3 +790,9 @@
 .mini-banner { margin: 0; padding: 8px 20px; font-size: 13px; color: #8a5a00; background: #fff6e0; border-bottom: 1px solid #f0dca8; }
 :root[data-theme="dark"] .mini-banner { color: #ffd479; background: #2c2412; border-color: #4a3a17; }
 .mini-banner[hidden] { display: none; }
+/* the bars: their words are controls, never text to select; a drag scrolls them (app.js) */
+.platform-bar, .board-bar, .filter-bar { user-select: none; -webkit-user-select: none; scrollbar-width: none; }
+.platform-bar::-webkit-scrollbar, .board-bar::-webkit-scrollbar, .filter-bar::-webkit-scrollbar { display: none; }
+.is-dragging { cursor: grabbing; }
+.is-dragging * { pointer-events: none; }
+.platform-cell .platform-main { white-space: nowrap; }  /* a number, its unit and its Mini tag stay on one line, a phone's narrow column too */
