@@ -273,7 +273,11 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     commit = subprocess.run(["git", "-C", str(pie_root), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     model_path = snapshot
     if needs_import(art) or tp > 1 or backend == "xla":
-        model_path = ensure_artifact(art, snapshot, pie_root / "target/release/pie", commit, log=log)
+        imported = art
+        if backend == "xla" and art.pie_sku and re.search(r"[0-9]a[48](g[0-9]+)?-", art.pie_sku):
+            # the XLA engine has no activation-quantized matmuls: pie picks the row it serves (MiniMax-M3.1-Flash's widened bf16)
+            imported = art.model_copy(update={"pie_sku": None})
+        model_path = ensure_artifact(imported, snapshot, pie_root / "target/release/pie", commit, log=log)
     precipe = load_recipe("pie", "default", plat, workload, family=art.family)
     precipe["snapshot_dir"] = str(model_path)
     if backend == "xla":
