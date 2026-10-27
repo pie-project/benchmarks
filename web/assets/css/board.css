@@ -433,3 +433,17 @@
 }
 .board-pick-logo.is-wide { width: 22px; }  /* MLX's wordmark */
 @media (max-width: 899px) { .board-card-pick .board-pick-logo.is-wide { width: 34px; } }
+/* coverage: engines down, platforms across, each cell a count over a thin bar in the engine's colour */
+.cov-scroll { overflow-x: auto; scrollbar-width: none; margin-top: 4px; }
+.cov-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.cov-table th, .cov-table td { height: 36px; padding: 0 12px; border-top: .5px solid var(--color-separator); }
+.cov-table thead th { height: 28px; border-top: 0; font-size: 11px; font-weight: 500; color: var(--color-label-secondary); text-align: left; }
+.cov-table tbody th { font-weight: 400; text-align: left; white-space: nowrap; }
+.cov-name { display: inline-flex; align-items: center; gap: 6px; color: var(--color-label); }
+.cov-table td { min-width: 90px; }
+.cov-n { display: block; font-weight: 500; color: var(--color-label); }
+.cov-track { display: block; height: 4px; margin-top: 3px; border-radius: 2px; background: var(--color-fill); overflow: hidden; }
+.cov-track i { display: block; height: 100%; border-radius: 2px; }
+.cov-table td.is-none { color: var(--color-label-quaternary); }
+.cov-table .cov-total { font-weight: 600; color: var(--color-label); text-align: right; }
+.cov-table thead th:last-child { text-align: right; }
