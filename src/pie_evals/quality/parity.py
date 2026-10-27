@@ -84,7 +84,7 @@ def rows(summaries: list[dict]) -> list[dict]:
         pies = [r for r in arms.values() if r["engine"] == "pie"]
         pie = pies[0] if pies else None
         cells = []
-        for art, r in sorted(arms.items(), key=lambda kv: (ENGINE_RANK.get(kv[1]["engine"], 9), kv[0])):
+        for _art, r in sorted(arms.items(), key=lambda kv: (ENGINE_RANK.get(kv[1]["engine"], 9), kv[0])):
             cell = _cell(r)
             if pie is None:
                 cell["score_flag"] = cell["agree_flag"] = "n/a"
