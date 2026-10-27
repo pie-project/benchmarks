@@ -24,6 +24,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 TOPK = 20
 EPS = 1e-12
+DECISIVE = 0.5
 
 
 def _post(url: str, body: dict, timeout: float = 900.0) -> dict:
@@ -103,6 +104,10 @@ def compare(ref: list[list[dict[int, float]]], pie: list[list[dict[int, float]]]
     over the shared prefix only, and counted."""
     kls: list[float] = []
     agree = total = misaligned = 0
+    # a miniature's near-flat positions make top-1 a coin toss on rounding: also count the positions where
+    # the reference's top-1 leads its runner-up by DECISIVE nats, and how much mass the reference's top-k holds
+    dec_agree = dec_total = 0
+    ref_p1 = ref_mass = 0.0
     for r, p, start in zip(ref, pie, answer_from, strict=True):
         if len(r) != len(p):
             misaligned += 1
@@ -112,11 +117,19 @@ def compare(ref: list[list[dict[int, float]]], pie: list[list[dict[int, float]]]
             kls.append(partition_kl(r[i], p[i]))
             total += 1
             agree += _argmax(r[i]) == _argmax(p[i])
+            top = sorted(r[i].values(), reverse=True)
+            ref_p1 += math.exp(top[0])
+            ref_mass += sum(math.exp(v) for v in top)
+            if len(top) < 2 or top[0] - top[1] >= DECISIVE:
+                dec_total += 1
+                dec_agree += _argmax(r[i]) == _argmax(p[i])
     kls.sort()
     pct = lambda q: kls[min(len(kls) - 1, int(q * len(kls)))] if kls else None  # noqa: E731
     return {
         "positions": total, "kl_mean": sum(kls) / len(kls) if kls else None, "kl_p50": pct(0.5), "kl_p99": pct(0.99),
         "kl_max": kls[-1] if kls else None, "top1_agree": agree / total if total else None, "misaligned_texts": misaligned,
+        "top1_agree_decisive": dec_agree / dec_total if dec_total else None, "decisive_positions": dec_total,
+        "ref_top1_p": ref_p1 / total if total else None, "ref_topk_mass": ref_mass / total if total else None,
     }
 
 
