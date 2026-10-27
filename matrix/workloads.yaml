@@ -49,7 +49,7 @@ workloads:
   - id: pf256-512
     kind: concurrency
     params: {concurrency: 256, num_requests: 1024, prefill: 512, decode: 1}
-    tiers: [nightly, weekly]
+    tiers: [nightly, weekly, targeted]
     est_minutes: 2
 
   # -- long context

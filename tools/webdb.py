@@ -737,8 +737,31 @@ def tag_date(tag: str, meta: dict) -> str | None:
     return local(meta["at"])
 
 
+class ReadOnce:
+    """The store read once: the build asks for the records and quality tables many times, each a full fetch over the tailnet."""
+
+    def __init__(self, store):
+        self.store = store
+        self._table = None
+        self._quality = {}
+
+    def table(self):
+        if self._table is None:
+            self._table = self.store.table()
+        return self._table
+
+    def quality(self, samples: bool = False):
+        if samples not in self._quality:
+            self._quality[samples] = self.store.quality(samples=samples)
+        # fresh dicts each call: callers fill in fields of their own
+        return [dict(q) for q in self._quality[samples]]
+
+    def __getattr__(self, name):
+        return getattr(self.store, name)
+
+
 def main() -> None:
-    store = Store(sys.argv[1] if len(sys.argv) > 1 else None)
+    store = ReadOnce(Store(sys.argv[1] if len(sys.argv) > 1 else None))
     a2m, models = artifact_to_model()
     # the site's grid: our Macs, the engines that run on a Mac, the models we measure there
     config = json.loads((ROOT / "config.json").read_text())
