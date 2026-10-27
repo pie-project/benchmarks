@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths-ignore: ["docs/**", "**/*.md"]
   workflow_run:
-    workflows: [pie eval, quality, smoke, nightly, weekly, tpu, collect]
+    workflows: [pie eval, quality, smoke, nightly, weekly, tpu, collect, parity import]
     types: [completed]
   schedule:
     - cron: "*/5 * * * *"   # results land in the database during a run; the site picks them up within 5 minutes

@@ -1,0 +1,24 @@
+name: parity import
+# imports the parity and kernel stores a parity run has uploaded so far, so rows reach the site while it still runs
+on:
+  workflow_dispatch:
+    inputs:
+      run_id: { description: "parity run whose parity-*/kernels-* artifacts to import", required: true }
+permissions: { contents: read, actions: read }
+jobs:
+  import:
+    runs-on: [self-hosted, site]  # the site laptop: bookkeeping never shares a benchmark Mac
+    concurrency: { group: "parity-import-${{ inputs.run_id }}", cancel-in-progress: false }
+    env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv && uv pip install -e ".[orchestrate]"
+      - uses: actions/download-artifact@v4
+        with: { pattern: "parity-*", path: out, run-id: "${{ inputs.run_id }}", github-token: "${{ github.token }}" }
+      - uses: actions/download-artifact@v4
+        with: { pattern: "kernels-*", path: out, run-id: "${{ inputs.run_id }}", github-token: "${{ github.token }}" }
+      - name: import into the database
+        run: |
+          shopt -s nullglob
+          for d in out/*/store; do echo "== $d"; .venv/bin/pie-evals import-store "$d"; done
