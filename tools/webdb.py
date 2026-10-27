@@ -30,7 +30,8 @@ WEB = ROOT / "web"
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
 RAW = ["raw-512-256"]  # the single request with speculation off: what the hardware limit is measured against
 SPEC = ["spec-512-256"]  # the same request with speculation on: every engine drafts with its own drafter
-CATEGORIES = (("throughput", THROUGHPUT, "Batching"), ("raw", RAW, "Raw"), ("spec", SPEC, "Speculative"))
+PREFILL_BATCH = ["pf256-512"]  # 256 cold prompts at once, one token each: the batch's prompt tokens over the wall
+CATEGORIES = (("throughput", THROUGHPUT, "Batching"), ("raw", RAW, "Raw"), ("spec", SPEC, "Speculative"), ("prefill_batch", PREFILL_BATCH, "Batched Prefill"))
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 
 WL_PRIORITY = {wl: (cat, i) for cat, ids, _ in CATEGORIES for i, wl in enumerate(ids)}

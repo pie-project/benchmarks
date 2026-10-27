@@ -20,6 +20,7 @@ window.Pie = window.Pie || {};
     { id: "spec", group: "Decode", label: "Spec Decode", item: "Speculative", icon: "M2 8h5M5 5l3 3-3 3M9 8h5M12 5l3 3-3 3", detail: "single request, speculation on", workload: "spec", metric: METRICS[0] },
     { id: "prefill", group: "Prefill", label: "Prefill Throughput", title: "Prefill Throughput", item: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
     { id: "batching", group: "Decode", label: "Decode Throughput", title: "Decode Throughput", item: "Batched", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
+    { id: "pbatch", group: "Prefill", label: "Prefill Throughput", title: "Batched Prefill Throughput", item: "Batched", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "256 cold prompts at once, one token each", workload: "prefill_batch", metric: METRICS[1] },
   ];
   // the setups' segments show how much of the chip each pass fills, as a level fills: Decode one token at a time (a dot,
   // waiting on memory), Prefill the prompt's tokens in one row (a line, toward the compute roof but on some machines
@@ -31,6 +32,7 @@ window.Pie = window.Pie || {};
     spec: mark(3.45, 5.9) + mark(8.35, 5.9),  // the token and the draft checked with it
     prefill: AT.map((x) => mark(x, 5.9)).join(""),
     batching: AT.flatMap((y) => AT.map((x) => mark(x, y))).join(""),
+    pbatch: [3.45, 8.35].flatMap((y) => AT.map((x) => mark(x, y))).join(""),  // many prompts' rows read together
   };
   // the setups as one segmented control, the grid's and the Roofline page's alike: each segment its degree and its name
   // the setups in two groups, each named in grey before it: one request at a time, then many at once
@@ -434,7 +436,7 @@ window.Pie = window.Pie || {};
         .filter((r) => Pie.store.isMeasured(r) && (!only || platformOf(Pie.store.index.hardware[r.hardware] || {})?.id === only))
         .map((r) => r.workload));
       // the TPU shows Raw Decode and Raw Prefill only
-      const HIDDEN = { tpu: ["spec", "batching"] };
+      const HIDDEN = { tpu: ["spec", "batching", "pbatch"] };
       // Spec Decode lives in Raw Decode, a column beside each model it ran: no button of its own
       return MODES.filter((m) => m.id !== "spec" && (m.limit || ran.has(m.workload)) && !(HIDDEN[only] || []).includes(m.id));
     },
