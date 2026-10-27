@@ -111,7 +111,7 @@ def run_kernels(platform_id: str, *, pie_root: Path, matrix_dir: str = "matrix",
 
     plat = Matrix.load(matrix_dir).platforms[platform_id]
     backend = str(plat.backend)
-    if backend not in ("cuda", "rocm"):
+    if backend not in ("cuda", "rocm", "xla"):
         raise RuntimeError(f"{platform_id}: no kernel suite for backend {backend}")
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.monotonic()
