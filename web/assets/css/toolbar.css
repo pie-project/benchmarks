@@ -180,7 +180,7 @@
     gap: 2px;
     height: auto;
     min-height: calc(var(--bar-height) + env(safe-area-inset-top));
-    padding: env(safe-area-inset-top) max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
+    padding: env(safe-area-inset-top) max(var(--edge), env(safe-area-inset-right)) 0 max(var(--edge), env(safe-area-inset-left));  /* the buttons start and end where the content does */
   }
 
   .toolbar .tool-button {
@@ -481,3 +481,18 @@
   .toolbar-search { padding: 0 9px; }
 }
 .tool-button:focus:not(:focus-visible) { outline: none; }  /* no ring after a click, only for the keyboard */
+@media (max-width: 899px) { .toolbar > .toolbar-login { margin-left: 6px; } }  /* the bar's 2px gap, plus room to tell search from Log in */
+/* phones: Log in and search as chunky as the drawer's rows, 44px tall with their 10px corner and 17px type */
+@media (max-width: 899px) {
+  .toolbar-login { height: 44px; padding: 0 18px; border-radius: 10px; font-size: 17px; }
+  .toolbar-search { height: 44px; min-width: 44px; justify-content: center; border-radius: 10px; }
+  .toolbar-search svg { width: 18px; height: 18px; }
+}
+/* phones, as iOS sets its navigation bar: a frosted bar over the page, its buttons round glass-grey circles and capsules
+   44px high, Log in a solid capsule; the title in iOS's 17pt semibold */
+@media (max-width: 899px) {
+  .toolbar { background: color-mix(in srgb, var(--color-background) 82%, transparent); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); }
+  .toolbar .sidebar-toggle, .toolbar-search { width: 44px; height: 44px; min-width: 44px; padding: 0; justify-content: center; border-radius: 999px; background: var(--color-fill); }
+  .toolbar .sidebar-toggle svg { width: 20px; height: 20px; }
+  .toolbar-login { border-radius: 999px; padding: 0 20px; font-weight: 600; }
+}

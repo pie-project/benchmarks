@@ -141,3 +141,5 @@
     --row-height: 40px;
   }
 }
+/* phones: a taller top bar, so the 44px buttons sit in it with room around them as in iOS's navigation bar */
+@media (max-width: 899px) { :root { --bar-height: 60px; } }
