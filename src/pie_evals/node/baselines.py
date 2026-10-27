@@ -302,11 +302,18 @@ def _image_sglang(d: Path, version: str, log=print) -> Path:
     return py
 
 
-def ensure_baseline(engine: str, version: str, root: Path | None = None, *, backend: str | None = None, timeout_s: int = 3600, log=print) -> Path:
+#: pins whose install already failed in this process: every later model of that engine fails at
+#: once instead of holding the GPU through another install (h200 weekly 40417931828 tried twice)
+_FAILED: dict[tuple[str, str, str | None], str] = {}
+
+
+def ensure_baseline(engine: str, version: str, root: Path | None = None, *, backend: str | None = None, timeout_s: int = 900, log=print) -> Path:
     """Install the baseline into its venv if needed; return its python. ``backend`` picks the
     engine's build for that platform backend (``xla``: vllm-tpu) where it has one."""
     if engine not in SPECS:
         raise ValueError(f"no installer for baseline {engine}")
+    if (engine, version, backend) in _FAILED:
+        raise RuntimeError(f"{engine} {version} install already failed on this pod: {_FAILED[engine, version, backend]}")
     bkey = _backend_key(engine, backend)
     spec = (BACKEND_SPECS[bkey] if bkey else SPECS[engine])(version)
     uv_flags = _uv_flags(engine, backend, version)
@@ -331,7 +338,18 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     ienv = {k: v for k, v in os.environ.items() if k not in ("PIP_CONSTRAINT", "UV_CONSTRAINT", "VIRTUAL_ENV")}
     if shutil.which("uv"):
         subprocess.run(["uv", "venv", "--quiet", "--python", "3.12", str(d)], check=True, env=ienv)
-        subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), *uv_flags, *spec], check=True, timeout=timeout_s, env=ienv)
+        # a healthy pod installs from PyPI in 15 s to 3 min; a pod on a starved link took over an
+        # hour and the watchdog then killed the shard's other engines (h200 weekly 40417931828).
+        # One retry keeps the wheels the first try finished in the uv cache.
+        for attempt in (1, 2):
+            try:
+                subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), *uv_flags, *spec], check=True, timeout=timeout_s, env=ienv)
+                break
+            except subprocess.SubprocessError as e:
+                if attempt == 2:
+                    _FAILED[engine, version, backend] = str(e)[:300]
+                    raise
+                log(f"baseline: {' '.join(spec)} install failed ({str(e)[:200]}); retrying once")
     else:
         subprocess.run(["python3", "-m", "venv", str(d)], check=True)
         subprocess.run([str(py), "-m", "pip", "install", "-q", *spec], check=True, timeout=timeout_s)
