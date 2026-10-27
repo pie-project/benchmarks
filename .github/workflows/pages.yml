@@ -14,7 +14,9 @@ jobs:
   # the Mac reads the database (liszt is on the tailnet, GitHub's runners are not)
   build:
     runs-on: [self-hosted, pages]  # its own runner on the site laptop: the site runners also expand and collect benchmark runs, and a build queued behind them was replaced by the next before it started
-    concurrency: { group: pages-build, cancel-in-progress: false }  # a build in flight finishes; only the newest waiting one follows it
+    # only the newest build counts: new code or new results replace a build in flight. The 5-minute schedule does not,
+    # since a build outlasts 5 minutes and scheduled builds would otherwise cancel each other forever
+    concurrency: { group: pages-build, cancel-in-progress: "${{ github.event_name != 'schedule' }}" }
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
