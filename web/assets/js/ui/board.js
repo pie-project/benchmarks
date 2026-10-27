@@ -482,20 +482,11 @@ window.Pie = window.Pie || {};
             <p class="board-footer-lead">Measured in CI on real hardware: every engine on the same model and the same machine.</p>
             <p class="board-footer-meta">${newest ? `Release ${esc(newest)}` : ""}${newest && when ? " · " : ""}${when ? `Data updated ${esc(when)}` : ""}</p>
           </div>
-          <ul class="board-footer-trust">
-            ${Pie.schema.methods?.section && Pie.isOpen("methods") ? `<li><a href="#" data-board-open="methods">How we measure</a></li>` : ""}
-            <li><a href="#" data-board-open="results">All results</a></li>
-            <li><a href="#" data-board-cite>Cite this data</a></li>
-            <li><a href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">Benchmark code</a></li>
-          </ul>
-          <form class="board-footer-mail">
-            <label for="board-footer-email">Get new results by email</label>
-            <span><input id="board-footer-email" type="email" required placeholder="Email" value="${esc(Pie.account?.user()?.email || "")}"><button type="submit" aria-label="Subscribe"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M9 4.5 12.5 8 9 11.5"/></svg><span class="board-footer-mail-word">Subscribe</span></button></span>
-          </form>
+          ${Pie.schema.methods?.section && Pie.isOpen("methods") ? `<ul class="board-footer-trust"><li><a href="#" data-board-open="methods">How we measure</a></li></ul>` : ""}
+          <a class="board-footer-star" href="https://github.com/pie-project/pie" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Star on GitHub</a>
         </div>
         <div class="board-footer-base">
           <span class="board-footer-links"><span class="board-footer-mark"><svg viewBox="0 0 67.89 67.89" aria-hidden="true"><path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z"/></svg>Pie Project © ${new Date().getFullYear()}</span><a href="https://github.com/pie-project/pie/blob/main/LICENSE" target="_blank" rel="noopener">Apache 2.0 license</a><a href="https://github.com/pie-project/pie" target="_blank" rel="noopener">GitHub</a></span>
-          <a class="board-footer-icon" href="https://github.com/pie-project/pie" target="_blank" rel="noopener" aria-label="Pie on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
         </div>
       </footer>`;
   };
@@ -652,13 +643,13 @@ window.Pie = window.Pie || {};
           </div>
           <div class="board-stack">${card(SCALING.id, SCALING.title, engineSub(SCALING.sub, scaleEngine), scaling(rows), enginePick("scale-engine", scaleEngine))}</div>` : ""}
           ${(() => {
-            // the last section: one card as the others, its engine picked in its corner with the engine's logo
+            // the last section: one card as the others, its platform picked in its corner with the platform's mark
             const acc = Pie.checks?.accuracyChart(state);
             if (!Pie.signedIn() || !acc?.chart) return "";  // the Accuracy section, for an account only
-            const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="accuracy-engine" aria-haspopup="menu" aria-label="${esc(acc.label)}">${engineMark(acc.engine)}${acc.engine === "mlxlm" ? "" : esc(acc.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
+            const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="accuracy-platform" aria-haspopup="menu" aria-label="${esc(acc.label)}">${Pie.platform.badge(acc.platform)}${esc(acc.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
             return `<div class="board-section-head"><div class="board-section-text"><h1 class="board-title">Accuracy</h1>
-            <p class="board-lede">pie’s benchmark score gap to another engine, same model.</p></div></div>
-            <div class="board-stack">${card("accuracy", "Score gap", `${acc.label} minus pie, in points · Right of zero, pie scores lower`, acc.chart, pick)}</div>`;
+            <p class="board-lede">pie’s benchmark score gap to every engine on the same weights and machine.</p></div></div>
+            <div class="board-stack">${card("accuracy", "Score gap", "The other engine minus pie, in points · Right of zero, pie scores lower", acc.chart, pick)}</div>`;
           })()}
         </div>
       </div>${footer()}</div>`;
@@ -758,13 +749,16 @@ window.Pie = window.Pie || {};
     if (Pie.tapCard.isTouch()) return;
     const g = event.target.closest?.(".board-bar[data-tip-head], .board-matrix td[data-tip-head], .qc-mark[data-tip-html]");  // a bar, a battle in a head-to-head grid, or an accuracy gap
     if (!g) {
-      if (tipFor) { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board"); }
+      if (tipFor) { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board", "is-card"); }
       return;
     }
     if (g !== tipFor) {
       tipFor = g;
       tooltip.innerHTML = g.dataset.tipHtml || tipHtml(g);
-      tooltip.classList.add("is-board");
+      // a Quality card brings the platform pages' card format; the board's own marks keep its compact one
+      const qc = !!g.dataset.tipHtml && tooltip.querySelector(".qc-tip-rows");
+      tooltip.classList.toggle("is-board", !qc);
+      tooltip.classList.toggle("is-card", !!qc);
       tooltip.hidden = false;
     }
     const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
@@ -772,7 +766,7 @@ window.Pie = window.Pie || {};
     tooltip.style.left = `${Math.max(8, x)}px`;
     tooltip.style.top = `${Math.max(8, y)}px`;
   });
-  const hideTip = () => { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board"); };
+  const hideTip = () => { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board", "is-card"); };
   element.addEventListener("pointerleave", hideTip);
   element.addEventListener("scroll", hideTip, { passive: true, capture: true });
 
@@ -828,27 +822,6 @@ window.Pie = window.Pie || {};
   };
   document.addEventListener("pointerdown", (event) => {
     if (!event.target.closest?.(".board-log-head")) setSubscribe(false);
-  });
-  // the footer's email: sent the same way as the Changelog's bell, the field then says so in place
-  element.addEventListener("submit", (event) => {
-    const form = event.target.closest(".board-footer-mail");
-    if (!form) return;
-    event.preventDefault();
-    const input = form.querySelector("input");
-    subscribe(input.value.trim());
-    try { localStorage.setItem(SUBSCRIBED_KEY, "1"); } catch { /* private windows */ }
-    form.querySelector("label").textContent = "Subscribed. Thank you";
-    input.value = "";
-  });
-  // Cite this data: a plain citation copied, the link says so a moment
-  element.addEventListener("click", (event) => {
-    const cite = event.target.closest("[data-board-cite]");
-    if (!cite) return;
-    event.preventDefault();
-    const at = Pie.store.tables.updated_at ? new Date(Pie.store.tables.updated_at).toISOString().slice(0, 10) : "";
-    navigator.clipboard?.writeText(`Pie Project. Pie inference engine benchmarks${at ? `, data of ${at}` : ""}. https://benchmarks.pie-project.org`).catch(() => {});
-    cite.textContent = "Copied";
-    setTimeout(() => { cite.textContent = "Cite this data"; }, 1500);
   });
   element.addEventListener("submit", (event) => {
     const form = event.target.closest(".board-subscribe");
@@ -1045,9 +1018,9 @@ window.Pie = window.Pie || {};
         const current = scaleModelOf(measured());
         return scaleModels(measured()).map((id) => ({ value: id, label: names().model(id), selected: id === current, icon: Pie.platform.makerBadge(id) }));
       }
-      if (k === "accuracy-engine") {
+      if (k === "accuracy-platform") {
         const acc = Pie.checks?.accuracyChart(state);
-        return (acc?.engines || []).map((e) => ({ value: e, label: names().engine(e), selected: e === acc.engine, icon: engineMark(e) }));
+        return (acc?.platforms || []).map((p) => ({ value: p, label: Pie.schema[p]?.label || p, selected: p === acc.platform, icon: Pie.platform.badge(p) }));
       }
       if (k === "size" || k === "moe") return SIZES.map((m) => ({ value: m.id, label: m.label, selected: m.id === (k === "moe" ? moeMetric : sizeMetric), icon: Pie.platform.degree(m.setup) }));
       if (k === "metric") return SPEEDS.map((m) => ({ value: m.id, label: m.label, selected: m.id === modelMetric, icon: metricIcon(m) }));
@@ -1056,7 +1029,7 @@ window.Pie = window.Pie || {};
     },
     pick(k, value) {
       if (k === "model") model = value;
-      if (k === "accuracy-engine") Pie.checks?.pick(value);
+      if (k === "accuracy-platform") Pie.checks?.pick(value);
       if (k === "metric" && SPEEDS.some((m) => m.id === value)) {
         modelMetric = value;
         try { localStorage.setItem(METRIC_KEY, value); } catch { /* private windows can refuse storage */ }

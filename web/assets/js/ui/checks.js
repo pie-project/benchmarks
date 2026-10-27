@@ -18,14 +18,17 @@ window.Pie = window.Pie || {};
   const err = (v) => (!isNum(v) ? "–" : v === 0 ? "0" : v < 0.001 || v >= 1000 ? v.toExponential(1) : v.toPrecision(2));
   const short = (v) => (v ? String(v).slice(0, 9) : "");
 
-  let accuracyEngine = null;  // the engine the Accuracy table sets beside pie; vLLM when it has arms
+  let accuracyPlatform = null;  // the platform the Accuracy grid shows: its own pie code (Metal, CUDA, XLA, ROCm)
   let openFor = null;  // the kernel row whose failing tests are listed in the popover
 
   const empty = (text) => `<p class="qc-empty">${esc(text)}</p>`;
-  // a hover card as a Mac info panel reads: the subject in bold, then a row per figure, its name in grey on the left and
-  // its value on the right, a mismatch last in red; carried as HTML in data-tip-html
-  const card = (title, rows, off = false) => `<div class="board-tip-battle qc-tip"><div class="board-tip-head">${esc(title)}</div>${rows
-    .filter(Boolean).map(([k, v]) => `<div class="board-tip-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}${off ? `<div class="qc-tip-off">Mismatch</div>` : ""}</div>`;
+  // a hover card in the platform pages' own format: the subject in bold, then a row per figure, its name on the left and
+  // its value on the right; a score row carries its engine's dot, the figures under it are dimmed; the verdict closes the
+  // card under a rule, red where pie scores lower and green where it holds. Rows are [name, value, dim, engine];
+  // carried as HTML in data-tip-html
+  const card = (title, rows, off = false, ok = "") => `<div class="tip-title">${esc(title)}</div><div class="tip-rows qc-tip-rows">${rows
+    .filter(Boolean).map(([k, v, dim, engine]) => `<div class="tip-row${dim ? " is-slack" : ""}">${engine ? `<span class="tip-dot" style="background: ${Pie.engines.colorOf(engine)}"></span>` : "<span></span>"}<span class="tip-name">${esc(k)}</span><span class="tip-value">${esc(v)}</span></div>`).join("")}</div>${off
+    ? `<div class="tip-foot qc-tip-off">${esc(off === true ? "Mismatch" : off)}</div>` : ok ? `<div class="tip-foot qc-tip-ok">${esc(ok)}</div>` : ""}`;
   const range = (a) => (isNum(a?.ci_low) && isNum(a?.ci_high) ? `${pct(a.ci_low)} – ${pct(a.ci_high)}` : "");
   const section = (title, caption, body) => `
     <section class="qc-section">
@@ -112,34 +115,51 @@ window.Pie = window.Pie || {};
     <div class="qc-pop-head">${esc(hardwareName(row.platform))}: ${esc((row.failing || []).length)} failing</div>
     <ul>${(row.failing || []).map((f) => `<li><code>${esc(f.name)}</code>${f.message ? `<span>${esc(f.message)}</span>` : ""}</li>`).join("") || "<li>No names recorded.</li>"}</ul>`;
 
-  // ---- accuracy: pie beside another engine, per model and task -------------------------------------------
-  // the newest release whose parity rows carry the picked engine; the viewer's release first
+  // ---- accuracy: pie beside every engine on the same weights, per platform ------------------------------
+  // the platforms whose pie code differs, in the sidebar's order; a row without a platform was scored on the quality Mac
+  const PLATFORMS = ["mac", "nvidia", "tpu", "amd"];
+  const familyOf = (row) => { const hw = row.platform && Pie.store.index.hardware[row.platform]; return hw ? Pie.platformOf(hw) : "mac"; };
+  const platformLabel = (id) => Pie.schema[id]?.label || id;
+  // the closest reference first: an engine on pie's own weights and chat template (mlx-lm, vLLM), then the rest
+  const RANK = { mlxlm: 0, vllm: 0, sglang: 1, splash: 2, llamacpp: 3 };
+  const byRank = (a, b) => (RANK[a.arm.engine] ?? 9) - (RANK[b.arm.engine] ?? 9);
+  // red only where pie answers worse: its score below the engine's beyond both intervals. Identical text is drift, a
+  // number in the hover card, never red (two correct engines round differently and the wording follows)
+  const isOff = (arm) => arm.score_flag === "mismatch";
+  // the newest release with comparisons on the picked platform; the viewer's release first. Only arms compared with
+  // pie (same weights, same machine) count: the rest have no gap
   const accuracyRows = (state) => {
     const byTag = tables().parity || {};
     const tags = [state.release, ...(tables().tags || []).map((t) => t.id)].filter((t) => byTag[t]?.length);
-    const arms = (tag) => byTag[tag].flatMap((row) => row.arms.filter((a) => a.engine !== "pie").map((a) => ({ row, arm: a })));
-    const engines = [...new Set(tags.flatMap((t) => arms(t).map((x) => x.arm.engine)))]
-      .sort((a, b) => (a === "vllm" ? -1 : b === "vllm" ? 1 : engineLabel(a).localeCompare(engineLabel(b))));
-    if (!engines.includes(accuracyEngine)) accuracyEngine = engines[0] || null;
-    const tag = tags.find((t) => arms(t).some((x) => x.arm.engine === accuracyEngine));
-    return { engines, tag, items: tag ? arms(tag).filter((x) => x.arm.engine === accuracyEngine) : [] };
+    const arms = (tag) => byTag[tag].flatMap((row) => row.arms.filter((a) => a.engine !== "pie" && isNum(a.diff)).map((a) => ({ row, arm: a, platform: familyOf(row) })));
+    const platforms = PLATFORMS.filter((p) => tags.some((t) => arms(t).some((x) => x.platform === p)));
+    if (!platforms.includes(accuracyPlatform)) accuracyPlatform = platforms[0] || null;
+    const tag = tags.find((t) => arms(t).some((x) => x.platform === accuracyPlatform));
+    return { platforms, tag, items: tag ? arms(tag).filter((x) => x.platform === accuracyPlatform).sort(byRank) : [] };
   };
+  const platformBar = (platforms) => platforms.length ? `<span class="platform-compare qc-picker" role="group" aria-label="Platform">${platforms.map((p) =>
+    `<button type="button" data-qc-platform="${esc(p)}" class="plain-button${p === accuracyPlatform ? " is-active" : ""}" aria-pressed="${p === accuracyPlatform}">${esc(platformLabel(p))}</button>`).join("")}</span>` : "";
 
   const flagTag = (flag) => (flag === "mismatch" ? '<span class="qc-flag is-mismatch">Mismatch</span>'
     : flag === "ok" ? '<span class="qc-flag is-ok">Match</span>' : '<span class="qc-flag">–</span>');
 
   // the gap at a glance: one row per model and task, a dot at the reference's score minus pie's (in points), a line for
   // its 95% range (both intervals combined) and a grey band for the tolerance; a dot outside its band is a mismatch
-  const deltaChart = (items, other, bare = false) => {
+  const deltaChart = (items, bare = false) => {
     const half = (a) => (isNum(a?.ci_low) && isNum(a?.ci_high) ? (a.ci_high - a.ci_low) / 2 : 0);
+    const engines = [...new Set(items.map((x) => x.arm.engine))];
+    // one engine names itself in the key; several name the engine on each row
+    const other = engines.length === 1 ? engineLabel(engines[0]) : "The other engine";
     const rows = items.map(({ row, arm }) => {
       const pie = row.arms.find((a) => a.artifact === (arm.vs || row.pie));
       if (!pie || !isNum(arm.diff)) return null;
       const err = Math.hypot(half(pie), half(arm));
-      const flag = arm.score_flag === "mismatch" || arm.agree_flag === "mismatch";
-      return { label: `${Pie.store.names.model(row.model)} · ${row.task}`, d: arm.diff * 100, err: err * 100, tol: isNum(arm.tolerance) ? arm.tolerance * 100 : null, flag,
-        tip: card(`${Pie.store.names.model(row.model)} · ${row.task}`, [["pie", pct(pie.score)], [other, pct(arm.score)],
-          ["Gap", `${arm.diff > 0 ? "+" : arm.diff < 0 ? "−" : ""}${Math.abs(arm.diff * 100).toFixed(1)} ± ${(err * 100).toFixed(1)} pts`], isNum(arm.tolerance) ? ["Tolerance", `±${pct(arm.tolerance)}`] : null], flag) };
+      const title = `${Pie.store.names.model(row.model)} · ${row.task}`;
+      return { label: engines.length === 1 ? title : `${title} · ${engineLabel(arm.engine)}`, d: arm.diff * 100, err: err * 100, tol: isNum(arm.tolerance) ? arm.tolerance * 100 : null, flag: isOff(arm),
+        tip: card(title, [["pie", pct(pie.score), false, "pie"], [engineLabel(arm.engine), pct(arm.score), false, arm.engine],
+          ["Difference", `${arm.diff < 0 ? "+" : arm.diff > 0 ? "−" : ""}${Math.abs(arm.diff * 100).toFixed(1)} pts`, true],
+          isNum(arm.tolerance) ? ["Noise", `±${(arm.tolerance * 100).toFixed(1)} pts`, true] : null, isNum(arm.agree) ? ["Same wording", pct(arm.agree, 0), true] : null],
+          isOff(arm) ? `pie scores lower than ${engineLabel(arm.engine)}, beyond noise` : false) };
     }).filter(Boolean).sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
     if (!rows.length) return "";
     const W = 880, L = 210, R = 24, RH = 18, T = 22, H = T + rows.length * RH + 8;
@@ -165,51 +185,53 @@ window.Pie = window.Pie || {};
   };
 
   const accuracyTable = (state) => {
-    const { engines, tag, items } = accuracyRows(state);
+    const { platforms, tag, items } = accuracyRows(state);
     if (!items.length) return empty("No accuracy scores to compare yet.");
-    const picker = engines.length > 1 ? `
-      <span class="platform-compare qc-picker" role="group" aria-label="Engine">${engines.map((e) =>
-        `<button type="button" data-engine="${esc(e)}" class="plain-button${e === accuracyEngine ? " is-active" : ""}" aria-pressed="${e === accuracyEngine}">${esc(engineLabel(e))}</button>`).join("")}</span>` : "";
-    const other = engineLabel(accuracyEngine);
     const body = items.map(({ row, arm }) => {
       const pie = row.arms.find((a) => a.artifact === (arm.vs || row.pie));
-      const flag = arm.score_flag === "mismatch" || arm.agree_flag === "mismatch" ? "mismatch" : arm.score_flag;
+      const other = engineLabel(arm.engine);
+      const flag = isOff(arm) ? "mismatch" : arm.score_flag;
       const tip = [`pie ${pie ? `${pct(pie.score)} (95% ${pct(pie.ci_low)} to ${pct(pie.ci_high)}, n ${pie.n})` : "not run"}`,
         `${other} ${pct(arm.score)} (95% ${pct(arm.ci_low)} to ${pct(arm.ci_high)}, n ${arm.n})`,
-        isNum(arm.tolerance) ? `Tolerance ${pct(arm.tolerance)}` : "",
-        isNum(arm.agree) ? `Same answer as pie on ${pct(arm.agree, 0)} of prompts` : ""].filter(Boolean).join("\n");
+        row.platform ? `On ${hardwareName(row.platform)}` : "",
+        isNum(arm.tolerance) ? `Allowed gap ±${(arm.tolerance * 100).toFixed(1)} pts` : "",
+        isNum(arm.agree) ? `Identical text to pie on ${pct(arm.agree, 0)} of prompts (drift, not a fault)` : ""].filter(Boolean).join("\n");
       return `
       <tr data-tip="${esc(tip)}">
         <th class="qc-lead" scope="row"><span>${esc(Pie.store.names.model(row.model))}</span></th>
         <td>${esc(row.task)}</td>
         <td class="qc-num">${pie ? pct(pie.score) : "–"}</td>
+        <td>${esc(other)}</td>
         <td class="qc-num">${pct(arm.score)}</td>
         <td class="qc-num${arm.score_flag === "mismatch" ? " is-off" : ""}">${isNum(arm.diff) ? `${arm.diff > 0 ? "+" : arm.diff < 0 ? "−" : ""}${(Math.abs(arm.diff) * 100).toFixed(1)}` : "–"}</td>
         <td>${flagTag(flag)}</td>
       </tr>`;
     }).join("");
-    return `${picker}${deltaChart(items, other)}
+    return `${platforms.length > 1 ? platformBar(platforms) : ""}${deltaChart(items)}
       <div class="qc-scroll"><table class="qc-table qc-accuracy">
-        <thead><tr><th class="qc-lead">Model</th><th>Task</th><th class="qc-num">pie</th><th class="qc-num">${esc(other)}</th><th class="qc-num">Delta</th><th>Parity</th></tr></thead>
+        <thead><tr><th class="qc-lead">Model</th><th>Task</th><th class="qc-num">pie</th><th>Engine</th><th class="qc-num">Its score</th><th class="qc-num">Delta</th><th>Parity</th></tr></thead>
         <tbody>${body}</tbody></table></div>
-      <p class="qc-foot">Release ${esc(tag)}. Delta is ${esc(other)} minus pie, in points. A mismatch is a gap wider than both 95% intervals together, or under 95% identical answers on the same weights.</p>`;
+      <p class="qc-foot">Release ${esc(tag)}, ${esc(platformLabel(accuracyPlatform))}. Delta is the engine minus pie, in points. Only engines on pie's weights and machine are compared. A mismatch is pie scoring lower by more than both 95% intervals together; identical text is shown as drift only.</p>`;
   };
 
   // the page: one grid in the platform pages' style, the benchmark tasks down the side and the models across under
-  // their makers; each cell pie's score with its gap to the engine picked in the bar, red where it is a mismatch
-  const engineBar = (engines) => engines.length ? `<span class="platform-compare qc-picker" role="group" aria-label="Engine">${engines.map((e) =>
-    `<button type="button" data-engine="${esc(e)}" class="plain-button${e === accuracyEngine ? " is-active" : ""}" aria-pressed="${e === accuracyEngine}">pie vs ${esc(engineLabel(e))}</button>`).join("")}</span>` : "";
+  // their makers, for the platform picked in the bar; each cell pie's score with its gap to the closest reference engine
+  // on the same weights and machine (mlx-lm, vLLM), red where any engine there disagrees
   const gridPage = (state) => {
-    const { engines, tag, items } = accuracyRows(state);
-    const other = engineLabel(accuracyEngine);
+    const { platforms, items } = accuracyRows(state);
     const models = [...new Set(items.map((x) => x.row.model))]
       .sort((a, b) => Pie.platform.makerName(a).localeCompare(Pie.platform.makerName(b)) || Pie.store.names.model(a).localeCompare(Pie.store.names.model(b)));
     const tasks = [...new Set(items.map((x) => x.row.task))].sort();
+    // a cell's comparisons, the closest engine first, on one machine (the first that ran it) so they share one pie score
     const at = {};
-    for (const x of items) at[`${x.row.task}|${x.row.model}`] = x;
-    const gap = (x) => {
+    for (const x of items) {
+      const list = at[`${x.row.task}|${x.row.model}`] ||= [];
+      if (!list.length || list[0].row === x.row) list.push(x);
+    }
+    const gap = (xs) => {
+      const x = xs?.[0];
       const pie = x?.row.arms.find((a) => a.artifact === (x.arm.vs || x.row.pie));
-      return pie && isNum(x.arm.diff) ? { pie, d: -x.arm.diff * 100, off: x.arm.score_flag === "mismatch" || x.arm.agree_flag === "mismatch" } : null;
+      return pie ? { pie, d: -x.arm.diff * 100, off: xs.some((y) => isOff(y.arm)) } : null;
     };
     const signed = (d) => `${d > 0.05 ? "+" : d < -0.05 ? "−" : ""}${Math.abs(d).toFixed(1)}`;
     const median = (list) => { const v = list.filter(isNum).sort((a, b) => a - b); return v.length ? v[v.length >> 1] : null; };
@@ -227,20 +249,31 @@ window.Pie = window.Pie || {};
       return `<th scope="col"><span class="platform-col"><span><span class="platform-model">${esc(Pie.store.names.model(m))}</span><span class="platform-sub">${esc(size)}</span></span></span></th>`;
     }).join("")}<th class="platform-fill"></th></tr>`;
     const body = tasks.map((task) => {
-      const o = median(models.map((m) => gap(at[`${task}|${m}`])?.d));
+      const gaps = models.map((m) => gap(at[`${task}|${m}`])).filter(Boolean);
+      const o = median(gaps.map((g) => g.d));
+      const bad = gaps.filter((g) => g.off).length;  // the median is a number; red only when a model in the row scores worse
       return `<tr><th class="platform-row" scope="row"><span class="platform-chip"><span>${esc(task)}</span></span></th>
-        <td class="is-overall">${o === null ? `<span class="platform-cell is-empty">–</span>` : `<span class="platform-cell ${Math.abs(o) < 0.05 ? "is-even" : o > 0 ? "is-ahead" : "is-behind"}">${signed(o)}</span>`}</td>
+        <td class="is-overall">${o === null ? `<span class="platform-cell is-empty">–</span>` : `<span class="platform-cell ${bad ? "is-behind" : "is-same"}"${bad ? ` data-tip="${esc(`pie scores lower on ${bad} ${bad === 1 ? "model" : "models"}`)}"` : ""}>${signed(o)}</span>`}</td>
         ${models.map((m) => {
-          const x = at[`${task}|${m}`];
-          const g = gap(x);
-          if (!g) return `<td><span class="platform-cell is-empty"${x ? ` data-tip="${esc(`${other} ${pct(x.arm.score)}\npie not run`)}"` : ""}>–</span></td>`;
-          const tip = card(`${Pie.store.names.model(m)} · ${task}`, [["pie", pct(g.pie.score)], ["95% range", range(g.pie)], [other, pct(x.arm.score)], ["95% range", range(x.arm)],
-            isNum(x.arm.tolerance) ? ["Tolerance", `±${pct(x.arm.tolerance)}`] : null], g.off);
-          return `<td><span class="platform-cell ${g.off ? "is-behind" : "is-even"}" data-tip-html="${esc(tip)}"><span class="platform-main">${pct(g.pie.score)}<span class="qc-gap${g.off ? " is-off" : ""}">${signed(g.d)}</span></span></span></td>`;
+          const xs = at[`${task}|${m}`];
+          const g = gap(xs);
+          if (!g) return `<td><span class="platform-cell is-empty">–</span></td>`;
+          // what answers "is quality hurt?": both scores, the difference, how much of it is noise, and a verdict in words;
+          // the identical-text share is drift, a number only
+          const many = xs.length > 1;  // several engines name theirs on each difference
+          const worse = xs.filter((y) => isOff(y.arm)).map((y) => engineLabel(y.arm.engine));
+          const tip = card(`${Pie.store.names.model(m)} · ${task}`, [xs[0].row.platform ? ["Machine", hardwareName(xs[0].row.platform), true] : null,
+            ["pie", pct(g.pie.score), false, "pie"],
+            ...xs.flatMap(({ arm }) => [[engineLabel(arm.engine), pct(arm.score), false, arm.engine],
+              [many ? `Difference to ${engineLabel(arm.engine)}` : "Difference", `${signed(-arm.diff * 100)} pts`, true],
+              isNum(arm.tolerance) ? ["Noise", `±${(arm.tolerance * 100).toFixed(1)} pts`, true] : null,
+              isNum(arm.agree) ? ["Same wording", pct(arm.agree, 0), true] : null])],
+            worse.length ? `pie scores lower than ${worse.join(" and ")}, beyond noise` : false);
+          return `<td><span class="platform-cell ${g.off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${pct(g.pie.score)}<span class="qc-gap${g.off ? " is-off" : ""}">${signed(g.d)}</span></span></span></td>`;
         }).join("")}<td class="platform-fill"></td></tr>`;
     }).join("");
     const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
-    return `<div class="platform-bar">${engineBar(engines)}</div>
+    return `<div class="platform-bar">${platformBar(platforms)}</div>
       <div class="platform-scroll">${items.length ? `<table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>` : empty("No accuracy scores to compare yet.")}</div>`;
   };
 
@@ -253,7 +286,7 @@ window.Pie = window.Pie || {};
       ${section("Parity", "KL divergence of pie's next-token distribution from the reference engine's, mean over answer positions, and how often both pick the same top token.",
         `<div class="qc-banner" role="note"${(tables().quality_parity || []).length ? "" : " hidden"}>Miniature models: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</div>${parityTable()}`)}
       ${section("Kernels", "pie's kernel tests on each backend, against reference implementations.", kernelsTable())}
-      ${section("Accuracy", "Benchmark scores of pie beside another engine on the same model.", accuracyTable(state))}
+      ${section("Accuracy", "Benchmark scores of pie beside every engine that ran the same weights on the same machine, per platform.", accuracyTable(state))}
       <div class="qc-pop" role="dialog" hidden></div>
     </div>`;
 
@@ -265,9 +298,9 @@ window.Pie = window.Pie || {};
 
   const wire = () => {
     element.addEventListener("click", (event) => {
-      const engine = event.target.closest("[data-engine]");
-      if (engine) {
-        accuracyEngine = engine.dataset.engine;
+      const platform = event.target.closest("[data-qc-platform]");
+      if (platform) {
+        accuracyPlatform = platform.dataset.qcPlatform;
         Pie.checks.render(Pie.state);
         return;
       }
@@ -292,9 +325,10 @@ window.Pie = window.Pie || {};
     // a cell's details follow the pointer in the site's chart tooltip
     element.addEventListener("mousemove", (event) => {
       const target = event.target.closest("[data-tip], [data-tip-html]");
-      if (!target) { tooltip.hidden = true; tooltip.classList.remove("is-board"); return; }
-      if (target.dataset.tipHtml) { tooltip.innerHTML = target.dataset.tipHtml; tooltip.classList.add("is-board"); }
-      else { tooltip.textContent = target.dataset.tip; tooltip.classList.remove("is-board"); }
+      // an HTML card in the platform pages' card format; a plain note as text
+      if (!target) { tooltip.hidden = true; tooltip.classList.remove("is-card"); return; }
+      if (target.dataset.tipHtml) { tooltip.innerHTML = target.dataset.tipHtml; tooltip.classList.add("is-card"); }
+      else { tooltip.textContent = target.dataset.tip; tooltip.classList.remove("is-card"); }
       tooltip.hidden = false;
       const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
       const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8);
@@ -306,18 +340,18 @@ window.Pie = window.Pie || {};
 
   Pie.checks = {
     element,
-    // the accuracy gap, for the Overview's last section: the engine pick and the chart
+    // the accuracy gap, for the Overview's last section: the platform pick and the chart
     accuracyBlock(state) {
-      const { engines, items } = accuracyRows(state);
-      const chart = deltaChart(items, engineLabel(accuracyEngine));
-      return chart ? `${engineBar(engines)}${chart}` : "";
+      const { platforms, items } = accuracyRows(state);
+      const chart = deltaChart(items);
+      return chart ? `${platformBar(platforms)}${chart}` : "";
     },
-    // the same chart bare, for a card of the Overview's own, with the engines it can be set against
+    // the same chart bare, for a card of the Overview's own, with the platforms it can show
     accuracyChart(state) {
-      const { engines, items } = accuracyRows(state);
-      return { engines, engine: accuracyEngine, label: engineLabel(accuracyEngine), chart: deltaChart(items, engineLabel(accuracyEngine), true) };
+      const { platforms, items } = accuracyRows(state);
+      return { platforms, platform: accuracyPlatform, label: platformLabel(accuracyPlatform), chart: deltaChart(items, true) };
     },
-    pick(engine) { accuracyEngine = engine; },
+    pick(platform) { accuracyPlatform = platform; },
     render(state) {
       element.hidden = state.table !== "checks";
       if (element.hidden) return;
