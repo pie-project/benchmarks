@@ -198,6 +198,10 @@ jobs:
           .venv/bin/pie-evals-node build --pie-commit "$C" --features metal --pie-root "$PIE_ROOT"
           .venv/bin/pie-evals-node parity $args --platform "${{ inputs.mac }}" --pie-root "$PIE_ROOT" --pie-commit "$C" --features metal \
             --store parity-out/store --tag "${{ inputs.tag }}" --tag-kind manual --out parity-out || echo "::warning::some models failed"
+      # the parity rows leave the Mac before the kernel build can fill its disk and take the runner down
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: "parity-${{ inputs.mac }}-mac-models", path: parity-out/, if-no-files-found: warn, retention-days: 30 }
       - name: kernel tests
         if: inputs.kernels
         env: { PIE_KERNEL_ERR: "1" }

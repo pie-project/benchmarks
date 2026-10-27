@@ -3,10 +3,21 @@ name: parity import
 on:
   workflow_dispatch:
     inputs:
-      run_id: { description: "parity run whose parity-*/kernels-* artifacts to import", required: true }
+      run_id: { description: "parity run whose parity-*/kernels-* artifacts to import (empty: none)", required: false, default: "" }
+      mac: { description: "runner Mac holding a saved parity-out (its store/ is imported too)", required: false, default: "" }
+      mac_dir: { description: "that parity-out's path on the Mac", required: false, default: "~/qual/mac-rows/parity-out" }
 permissions: { contents: read, actions: read }
 jobs:
+  mac:
+    if: inputs.mac != ''
+    runs-on: [self-hosted, macos, "${{ inputs.mac }}"]
+    steps:
+      - run: rm -rf saved && mkdir saved && cp -R ${{ inputs.mac_dir }}/store saved/
+      - uses: actions/upload-artifact@v4
+        with: { name: "parity-${{ inputs.mac }}-saved", path: saved/ }
   import:
+    needs: mac
+    if: always() && needs.mac.result != 'failure'
     runs-on: [self-hosted, site]  # the site laptop: bookkeeping never shares a benchmark Mac
     concurrency: { group: "parity-import-${{ inputs.run_id }}", cancel-in-progress: false }
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
@@ -15,9 +26,14 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
       - uses: actions/download-artifact@v4
+        if: inputs.run_id != ''
         with: { pattern: "parity-*", path: out, run-id: "${{ inputs.run_id }}", github-token: "${{ github.token }}" }
       - uses: actions/download-artifact@v4
+        if: inputs.run_id != ''
         with: { pattern: "kernels-*", path: out, run-id: "${{ inputs.run_id }}", github-token: "${{ github.token }}" }
+      - uses: actions/download-artifact@v4
+        if: inputs.mac != ''
+        with: { pattern: "parity-*-saved", path: out }
       - name: import into the database
         run: |
           shopt -s nullglob
