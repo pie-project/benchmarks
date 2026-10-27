@@ -103,6 +103,15 @@ window.Pie = window.Pie || {};
   };
   const fmtNum = (n) => (n >= 100 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 }));
   const EVEN = 0.045;  // under 5%, as the cell rounds it, the engines are even: run-to-run spread, not a result
+  // the 2026-10-26 miniature run: these models on these machines are being measured now; an empty cell among them is
+  // pending, not missing (a local preview mark, until the run's last results land)
+  const TODAY = {
+    models: new Set(["deepseek-v4.1-flash", "glm-5.3-flash", "kimi-k3", "glm-5.3", "hy4-preview", "mimo-v2.6-flash-rl", "qwen3.8-flash-next",
+      "muse-spark-open-816b-a42b", "nvidia-nemotron-3-ultra-550b-a55b", "minimax-m3.1-flash"]),
+    hardware: new Set(["b300-x1", "b200-x1", "h200-x1", "pro6000-x1", "a100-sxm-x1", "h100-sxm-x1", "a40-x1", "l40s-x1", "rtx5090-x1",
+      "rtx4090-x1", "mi300x-x1", "tpu-v6e-1", "tpu-v5p-8"]),
+  };
+  const PENDING = '<svg class="platform-pending" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.8V8l2.2 1.6"/></svg>';
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/></svg>';
   const signed = (p) => {
     const pct = Math.round(p * 100);
@@ -639,6 +648,7 @@ window.Pie = window.Pie || {};
               : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
             return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}${c.pie.miniature ? `<span class="platform-mini" title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}">Mini</span>` : ""}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
+          if (TODAY.models.has(realOf(model)) && TODAY.hardware.has(mac) && !needs) return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty is-pending" data-tip="${esc(card("", "", [], "Being measured in today's miniature run"))}">${PENDING}</span></td>`;
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${why ? ` data-tip="${esc(card("", "", [], why))}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
