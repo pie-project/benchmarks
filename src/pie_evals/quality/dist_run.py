@@ -189,7 +189,9 @@ def mlx_side(snapshot: Path, rendered: list[str], greedy: bool, log_path: Path) 
 def _reason(e: Exception, out_dir: Path, art_id: str, ref_name: str) -> str:
     """The line that says why the reference engine could not run the model: its log's last error line, else the exception."""
     for log_path in sorted(out_dir.glob(f"{art_id}-{'vllm' if ref_name == 'vllm' else 'mlx'}*.log"), key=lambda p: p.stat().st_mtime, reverse=True):
-        lines = [ln.strip() for ln in log_path.read_text(errors="replace").splitlines() if re.search(r"(Error|not supported|unsupported)", ln)]
+        lines = [ln.strip() for ln in log_path.read_text(errors="replace").splitlines() if re.search(r"(Error|not supported|unsupported)", ln)
+                 # vLLM's wrapper lines name no cause: the root cause is the line before them
+                 and not re.search(r"(Engine core initialization failed|Error raised in subprocess|ValidationError: 1 validation error|Pin memory is not supported)", ln)]
         if lines:
             return lines[-1][:400]
     return f"{type(e).__name__}: {str(e).strip().splitlines()[-1][:400] if str(e).strip() else ''}"
