@@ -330,7 +330,7 @@
 /* no brand block: the link columns take the row, the mark leads the last line */
 .board-footer-inner { display: block; }
 .board-footer-mark { display: inline-flex; align-items: center; gap: 6px; }
-.board-footer-mark svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 4.5; transform: translateY(-1px); }  /* the triangle's weight sits high: nudged onto the text's middle */
+.board-footer-mark svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 6; transform: translateY(-1px); }  /* the triangle's weight sits high: nudged onto the text's middle */
 .board-footer-date { margin: -4px 0 8px; color: var(--color-label-tertiary); }
 /* the footer band: what the data is and when, the links that back it, a way to hear of the next release */
 .board-footer-band { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px; max-width: 1080px; margin: 0 auto; padding: 32px var(--edge) 24px; }
@@ -340,7 +340,7 @@
 .board-footer-trust a { color: var(--color-label-secondary); text-decoration: none; }
 .board-footer-trust a:hover { color: var(--color-label); }
 .board-footer-mail label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 500; color: var(--color-label); }
-.board-footer-mail span { display: flex; gap: 6px; }
+.board-footer-mail > span { display: flex; gap: 6px; }
 .board-footer-mail input { flex: 1; min-width: 0; height: 28px; padding: 0 10px; border: 0; border-radius: 12px; font: inherit; font-size: 12px; color: var(--color-label); background: var(--color-fill); outline: none; }
 .board-footer-mail button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 12px; color: #fff; background: #1d1d1f; cursor: pointer; }
 :root[data-theme="dark"] .board-footer-mail button { color: #1d1d1f; background: #f5f5f7; }
@@ -363,3 +363,73 @@
 .board-card .qc-chart:hover .qc-mark:hover { opacity: 1; }  /* the row under the pointer stays, the rest fade, as the bars do */
 .board-card .qc-chart-key { gap: 16px; margin: 6px 0 4px; font-size: 12px; color: var(--color-label-secondary); }
 .board-card .qc-key-band, .board-card .qc-key-dot { width: 8px; height: 8px; border-radius: 2px; }
+/* phones: a card whose corner holds only the bars-or-grid switch keeps it beside the title, as on a desktop */
+@media (max-width: 899px) {
+  .board-card-head:has(.board-view):not(:has(.board-card-tools)) { flex-direction: row; }
+  .board-card-head:has(.board-view):not(:has(.board-card-tools)) .board-card-side { align-self: flex-start; }
+}
+@media (max-width: 899px) {
+  .board-card .qc-chart { min-width: 640px; }  /* the gap chart keeps readable labels and scrolls sideways in its card, as the bar charts do */
+  .board-footer-base { align-items: flex-start; }
+  .board-footer-links { gap: 6px 16px; }
+  .board-footer-icon { flex: none; }
+}
+@media (max-width: 899px) { .board-footer-icon { display: none; } }  /* GitHub is already a link in the line above */
+@media (max-width: 899px) {
+  .board-view .plain-button { min-width: 40px; padding: 0 8px; }  /* phones: wider segments, a thumb's width each */
+  .board-view svg { width: 16px; height: 16px; }
+}
+/* phones: the model, measure and engine picks as the bar's capsules, the card's tools as round grey buttons, as the
+   top bar now draws its own */
+@media (max-width: 899px) {
+  .board-title-pick, .board-card-pick { height: 34px; padding: 0 12px 0 8px; border-radius: 999px; font-size: 15px; }
+  .board-title-pick .model-badge, .board-card-pick .board-pick-logo { width: 20px; height: 20px; }
+  .board-card-tools { gap: 6px; }
+  .board-card-tool { width: 34px; height: 34px; border-radius: 999px; background: var(--color-fill); }
+  .board-card-tool svg { width: 16px; height: 16px; }
+}
+/* phones: a card's head in two halves along its top edge, the title and its lines on the left, the pick and the tools
+   on the right, wrapping under one another there when they need to */
+@media (max-width: 899px) {
+  .board-card-head:not(:has(.board-view)) { flex-direction: row; align-items: flex-start; }
+  .board-card-head:not(:has(.board-view)) > .board-card-titles { flex: 1 1 50%; min-width: 0; }
+  .board-card-head:not(:has(.board-view)) > .board-card-side { flex: 1 1 50%; min-width: 0; flex-direction: row-reverse; flex-wrap: wrap-reverse; align-self: flex-start; justify-content: flex-start; gap: 8px; }
+}
+@media (max-width: 899px) {
+  .board-card-head:has(.board-view) > .board-card-titles { flex: 1 1 auto; min-width: 0; }  /* the title and its line wrap before the switch */
+  .board-card-head:has(.board-view) > .board-card-side { flex: none; }
+  .board-card-head:has(.board-view) .board-sub { overflow-wrap: anywhere; }
+}
+@media (max-width: 899px) { .board-card-titles .board-sub { overflow-wrap: anywhere; } }
+/* phones: the footer in iOS's sizes, its links in one row, the email field and its button 44px capsules as the bar's */
+@media (max-width: 899px) {
+  .board-footer-band { gap: 24px; padding: 28px var(--edge) 20px; }
+  .board-footer-lead { font-size: 15px; }
+  .board-footer-meta { font-size: 13px; }
+  .board-footer-trust { flex-direction: row; flex-wrap: wrap; gap: 8px 20px; font-size: 15px; }
+  .board-footer-mail label { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+  .board-footer-mail > span { gap: 8px; }
+  .board-footer-mail input { height: 44px; padding: 0 18px; border-radius: 999px; font-size: 17px; }
+  .board-footer-mail button { width: 44px; height: 44px; border-radius: 999px; }
+  .board-footer-mail button svg { width: 16px; height: 16px; }
+  .board-footer-base { padding: 16px 0 calc(24px + env(safe-area-inset-bottom)); font-size: 13px; }
+}
+.board-footer-mail button .board-footer-mail-word { display: none; }  /* the word, a phone's only; the field's span rule must not show it */
+/* phones, as an iOS form: links in the accent, a rounded field over a full-width Subscribe button, the small print centred */
+@media (max-width: 899px) {
+  .board-footer-trust a { color: var(--color-accent); }
+  .board-footer-mail > span { flex-direction: column; gap: 10px; }
+  .board-footer-mail input { border-radius: 10px; }
+  .board-footer-mail button { width: 100%; border-radius: 10px; font: inherit; font-size: 17px; font-weight: 600; }
+  .board-footer-mail button svg { display: none; }
+  .board-footer-mail button .board-footer-mail-word { display: inline; }
+  .board-footer-base { justify-content: center; text-align: center; }
+  .board-footer-links { justify-content: center; }
+}
+@media (max-width: 899px) {
+  .board-footer-mail input { flex: none; width: 100%; height: 50px; }  /* stacked, the field keeps its height */
+  .board-footer-mail button { flex: none; height: 50px; }
+  .board-footer-base { align-items: center; }
+}
+.board-pick-logo.is-wide { width: 22px; }  /* MLX's wordmark */
+@media (max-width: 899px) { .board-card-pick .board-pick-logo.is-wide { width: 34px; } }

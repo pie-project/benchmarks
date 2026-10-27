@@ -365,3 +365,16 @@
 .sidebar .sidebar-home:hover { opacity: 1; }  /* no fade on hover either */
 .sidebar .sidebar-home .sidebar-logo { width: 13px; height: 13px; }
 .sidebar .sidebar-logo.is-spinning { animation: none; }  /* the brand button keeps still */
+/* phones, in the same production look: the open page in a soft grey with its name in full ink, no ring round its symbol */
+@media (max-width: 899px) {
+  .sidebar .sidebar-item.is-selected { color: var(--color-label); background: var(--color-fill); }
+  .sidebar .sidebar-item.is-selected svg { stroke: var(--color-label); }
+  .sidebar .sidebar-glyph[style], .sidebar .sidebar-item.is-selected .sidebar-glyph[style] { width: 20px; height: 20px; margin-left: 0; box-shadow: none; background: none; }
+  .sidebar .sidebar-item.is-selected .sidebar-count { color: var(--color-label-secondary); }
+  .sidebar .sidebar-item.is-selected .sidebar-tag { border-color: var(--color-label-tertiary); color: var(--color-label-secondary); }
+}
+@media (max-width: 899px) {
+  .sidebar .sidebar-home { height: 44px; padding: 0 18px 0 14px; gap: 8px; border-radius: 10px; font-size: 17px; }  /* the drawer's rows' height, corner and type */
+  .sidebar .sidebar-home .sidebar-logo { width: 16px; height: 16px; }
+}
+@media (max-width: 899px) { .sidebar .sidebar-home { border-radius: 999px; } }  /* a capsule, as Log in on the bar */

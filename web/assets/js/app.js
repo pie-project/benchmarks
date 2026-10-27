@@ -491,7 +491,37 @@
   bindGlobal();
   // logging in or out shows or hides the sections only an account opens, and leaves a page that closes with them
   document.addEventListener("pie:account", () => render());
-  document.addEventListener("pie:refresh", () => render());  // a pick kept outside the state (the Results page's dates)
+  document.addEventListener("pie:refresh", () => render());
+  // a toolbar row wider than the window (a phone, a narrow window) scrolls sideways by dragging it with a mouse, as a
+  // finger swipes it; a drag never selects its words or clicks the button it started on
+  {
+    const BARS = ".platform-bar, .board-bar, .filter-bar";
+    let drag = null;
+    document.addEventListener("pointerdown", (event) => {
+      const bar = event.target.closest?.(BARS);
+      if (!bar || event.pointerType !== "mouse" || event.button !== 0 || bar.scrollWidth <= bar.clientWidth) return;
+      drag = { bar, x: event.clientX, left: bar.scrollLeft, moved: false };
+    });
+    document.addEventListener("pointermove", (event) => {
+      if (!drag) return;
+      const dx = event.clientX - drag.x;
+      if (!drag.moved && Math.abs(dx) < 4) return;
+      drag.moved = true;
+      drag.bar.scrollLeft = drag.left - dx;
+      drag.bar.classList.add("is-dragging");
+    });
+    document.addEventListener("pointerup", () => {
+      if (!drag) return;
+      const { bar, moved } = drag;
+      drag = null;
+      bar.classList.remove("is-dragging");
+      if (!moved) return;
+      // the click that ends the drag goes nowhere; one that never comes is not waited for
+      const swallow = (e) => { e.stopPropagation(); e.preventDefault(); };
+      bar.addEventListener("click", swallow, { capture: true, once: true });
+      setTimeout(() => bar.removeEventListener("click", swallow, { capture: true }), 0);
+    });
+  }  // a pick kept outside the state (the Results page's dates)
   // the ⌘K palette opens pages and filters the ones that filter: a platform grid, the overview, a table
   Pie.palette.bind({
     state,
