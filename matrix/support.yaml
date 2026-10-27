@@ -215,6 +215,27 @@ unsupported:
     reason: "mlx-lm 0.32.2 has no DSA indexer, so GLM-5.3 loads with 20 missing parameters"
   - when: {engine: mlxlm, program: parity, family: hy_v4}
     reason: "mlx-lm 0.32.2 ships no hy_v4 model, so it cannot load Hy4"
+  # quality parity on RunPod (parity.yml, vLLM 0.32.0): the reference fails at boot on these arch x mini pairs
+  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [a40-x1, a100-sxm-x1]}
+    reason: "vLLM 0.32.0 DeepSeek-V4.1 needs fp8e4nv, which Ampere lacks"
+  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [l40s-x1, rtx4090-x1]}
+    reason: "vLLM 0.32.0 DeepSeek-V4.1 CUTLASS DSL kernel fails PTX assembly on Ada"
+  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [rtx5090-x1, pro6000-x1]}
+    reason: "vLLM 0.32.0 has no SM120 sparse-MLA decode kernel for DeepSeek-V4.1 (64 heads, topk 128)"
+  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [b200-x1, b300-x1]}
+    reason: "vLLM 0.32.0 DeepGEMM asserts on DeepSeek-V4.1 mini tensor rank on Blackwell (layout.hpp:46)"
+  - when: {engine: vllm, program: parity, artifact: [glm-5.3-flash-mini8-fp8, glm-5.3-mini], platform: [a40-x1, a100-sxm-x1, l40s-x1, rtx4090-x1]}
+    reason: "vLLM 0.32.0 has no MLA attention backend for GLM-5.3 on Ampere or Ada"
+  - when: {engine: vllm, program: parity, artifact: glm-5.3-mini, platform: [rtx5090-x1, pro6000-x1]}
+    reason: "vLLM 0.32.0 w8a8 CUTLASS GEMM returns an invalid status for GLM-5.3 on SM120"
+  - when: {engine: vllm, program: parity, artifact: glm-5.3-mini, platform: [b200-x1, b300-x1]}
+    reason: "vLLM 0.32.0 Blackwell grouped top-k needs top_k below the experts in the chosen groups; the mini keeps 8 of 8"
+  - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [a40-x1, a100-sxm-x1, l40s-x1, rtx4090-x1, rtx5090-x1, pro6000-x1]}
+    reason: "vLLM 0.32.0 has no sparse MLA backend for Hy4 on this arch and refuses dense fallback"
+  - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [h100-sxm-x1, h200-x1, b200-x1, b300-x1]}
+    reason: "vLLM 0.32.0 Hy4 sparse MLA asserts NUM_TOPK_TOKENS 16 is not a multiple of BLOCK_N 128"
+  - when: {engine: vllm, program: parity, artifact: nemotron-3-ultra-mini, platform: rtx4090-x1}
+    reason: "vLLM 0.32.0 Nemotron 3 mini leaves no room for cuBLAS workspace on a 24 GB card"
   - when: {engine: mlxlm, tp: ">1"}
     reason: "mlx-lm is single device"
   - when: {engine: mlxlm, family: muse_glimmer}
