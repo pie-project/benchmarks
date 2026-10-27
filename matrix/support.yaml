@@ -179,6 +179,15 @@ unsupported:
     reason: "gemma4-26b-a4b's 2112-wide dense intermediate halves to 1056, not whole u4g64 groups, so its down plane cannot band (pie #674)"
   - when: {engine: llamacpp, tp: ">1"}
     reason: "llama.cpp layer-split is not tensor parallel; compared at tp1 only"
+  # quality parity on the Mac (parity.yml mac job, mlx-lm 0.32.2): the reference cannot load these minis
+  - when: {engine: mlxlm, program: parity, family: deepseek_v41}
+    reason: "mlx-lm 0.32.2 has no engram memory, which DeepSeek-V4.1 layer 1 uses"
+  - when: {engine: mlxlm, program: parity, family: glm5_next}
+    reason: "mlx-lm 0.32.2 ships no glm5_next model, so it cannot load GLM-5.3-Flash"
+  - when: {engine: mlxlm, program: parity, family: glm5}
+    reason: "mlx-lm 0.32.2 has no DSA indexer, so GLM-5.3 loads with 20 missing parameters"
+  - when: {engine: mlxlm, program: parity, family: hy_v4}
+    reason: "mlx-lm 0.32.2 ships no hy_v4 model, so it cannot load Hy4"
   - when: {engine: mlxlm, tp: ">1"}
     reason: "mlx-lm is single device"
   - when: {engine: mlxlm, family: muse_glimmer}
