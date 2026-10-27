@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import math
 import time
+import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
@@ -27,8 +28,11 @@ EPS = 1e-12
 
 def _post(url: str, body: dict, timeout: float = 900.0) -> dict:
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:  # the server's own words on why, not just its status
+        raise RuntimeError(f"HTTP {e.code} from {url}: {e.read()[:1000].decode(errors='replace')}") from e
 
 
 def wait_ready(base: str, timeout_s: float = 1800.0) -> str:
