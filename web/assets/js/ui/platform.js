@@ -556,7 +556,7 @@ window.Pie = window.Pie || {};
           // a model that runs cut down to fit (a miniature) never "does not fit": where its miniature did not run, the cell
           // says that instead of the full model's size
           // only where this run measures (or measured) the model cut down: elsewhere the full model's "does not fit" stands
-          const cut = rows.some((r) => here(r) && r.miniature) || (TODAY.models.has(id) && TODAY.hardware.has(mac));
+          const cut = TODAY.models.has(id) && TODAY.hardware.has(mac);
           let needs = cut ? null : noFit[mac]?.[id]?.[base];
           // Best TPS and FP Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
           const fullNeeds = Pie.store.index.models[id]?.needs_gib;
