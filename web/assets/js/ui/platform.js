@@ -679,7 +679,6 @@ window.Pie = window.Pie || {};
               : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
             return `<td class="${sorted}" data-col="${esc(model)}"><span${c.pie.miniature ? ` title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}"` : ""} class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
-          if (TODAY.models.has(realOf(model)) && TODAY.hardware.has(mac) && !needs && !grid[mac][model].failed) return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty is-pending" data-tip="${esc(card("", "", [], "Being measured in today's miniature run"))}">${PENDING}</span></td>`;
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${why ? ` data-tip="${esc(card("", "", [], why))}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
