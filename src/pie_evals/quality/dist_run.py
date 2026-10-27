@@ -152,7 +152,9 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
     if "vision_config" in cfg:
         # the cut keeps only the language model: vLLM then builds no vision tower and reads no visual weights
         argv += ["--limit-mm-per-prompt", json.dumps({"image": 0, "video": 0})]
-    if str(engine.platform.backend) == "xla" and "kv_lora_rank" in {**cfg, **(cfg.get("text_config") or {})}:
+    keys = {**cfg, **(cfg.get("text_config") or {})}
+    # DeepSeek-V4.1's config names no kv_lora_rank, yet vLLM serves it as MLA
+    if str(engine.platform.backend) == "xla" and ("kv_lora_rank" in keys or str(keys.get("model_type", "")).startswith("deepseek")):
         # vllm-tpu serves an MLA model only on its new model design with DP attention ("MLA models require both ...")
         env["NEW_MODEL_DESIGN"] = "1"
         argv += ["--additional-config", json.dumps({"sharding": {"sharding_strategy": {"enable_dp_attention": True}}})]
