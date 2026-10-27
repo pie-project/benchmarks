@@ -287,6 +287,52 @@ artifacts:
     expected_gib: 0.5
     tiers: [smoke, nightly, weekly]
 
+  # ---------------- quality only: the Mac quality page's models at full precision on the GPUs ----------------
+  # pie against vLLM on the same bf16 weights and the same GPU (parity.yml --accuracy), the GPU twin of the Mac's
+  # pie-vs-mlx-lm table. No tiers: no benchmark cell runs them; the parity workflow names them explicitly
+  - id: qwen3.5-4b-bf16
+    base_model: Qwen/Qwen3.5-4B
+    family: qwen3_5
+    scheme: bf16
+    expected_gib: 8.4
+    pie_sku: qwen35-d4b-bf16-kv-bf16   # import picks the u4g64 twin otherwise
+    tiers: []
+  - id: qwen3.5-9b-bf16
+    base_model: Qwen/Qwen3.5-9B
+    family: qwen3_5
+    scheme: bf16
+    expected_gib: 17.6
+    pie_sku: qwen35-d9b-bf16-kv-bf16
+    tiers: []
+  - id: qwen3.6-35b-a3b-bf16
+    base_model: Qwen/Qwen3.6-35B-A3B
+    family: qwen3_6_moe
+    scheme: bf16
+    expected_gib: 65.2
+    pie_sku: qwen36-35b-a3b-bf16-kv-bf16
+    tiers: []
+  - id: qwen3.8-27b-bf16
+    base_model: Qwen/Qwen3.8-27B
+    family: qwen3_6
+    scheme: bf16
+    expected_gib: 50.3
+    pie_sku: qwen38-27b-bf16-kv-bf16   # the plain row: the import otherwise lands the mtp drafter twin
+    tiers: []
+  - id: gemma-4-26b-a4b-bf16
+    base_model: google/gemma-4-26B-A4B-it
+    family: gemma4_moe
+    scheme: bf16
+    expected_gib: 48.4
+    pie_sku: gemma4-26b-a4b-bf16-kv-bf16
+    tiers: []
+  - id: gemma-4-31b-bf16
+    base_model: google/gemma-4-31B-it
+    family: gemma4
+    scheme: bf16
+    expected_gib: 57.7
+    pie_sku: gemma4-31b-bf16-kv-bf16
+    tiers: []
+
   # ---------------- nightly: full mid-size, several schemes (dense qwen3 has no reader in pie and is not planned) ----------------
   - id: gpt-oss-20b-mxfp4
     base_model: openai/gpt-oss-20b
