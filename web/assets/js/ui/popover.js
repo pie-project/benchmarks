@@ -144,7 +144,8 @@ window.Pie = window.Pie || {};
     const current = state.selected(key);
     const entries = Pie.query.filterValues(state.table, key);
     const values = entries
-      .map((entry) => option(entry.value, current.includes(entry.value), Pie.format.option(column, entry.value), "menuitemcheckbox"))
+      // a model after its maker's logo, as the Models page lists them
+      .map((entry) => option(entry.value, current.includes(entry.value), `${column.table === "models" && Pie.platform?.makerBadge ? Pie.platform.makerBadge(entry.value) : ""}${Pie.format.option(column, entry.value)}`, "menuitemcheckbox"))
       .join("");
     return `${option(ALL, !current.length, `All ${Pie.filters.plural(column).toLowerCase()}`)}<div class="popover-separator"></div>${values}`;
   };

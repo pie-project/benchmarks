@@ -62,10 +62,14 @@ window.Pie = window.Pie || {};
     { test: /^glm/, name: "Z.ai", logo: "zai" },
     { test: /^mimo/, name: "Xiaomi", logo: "xiaomi" },
     { test: /^deepseek/, name: "DeepSeek", logo: "deepseek" },
+    { test: /^kimi/, name: "Moonshot", logo: "moonshot" },
+    { test: /^hy/, name: "Tencent", logo: "hunyuan" },
+    { test: /^minimax/, name: "MiniMax", logo: "minimax" },
+    { test: /^nemotron/, name: "NVIDIA", logo: "nvidia" },
   ];
   const makerOf = (model) => MAKERS.find((m) => m.test.test(Pie.store.index.models[model.split("~")[0]]?.family || "")) || { name: "", logo: "" };
   // each maker's colour, taken from its logo, for the dot before its name in the makers menu; a black logo reads grey
-  const MAKER_TINT = { Alibaba: "#615ced", DeepSeek: "#4d6bfe", Google: "#4285f4", Meta: "#0866ff", OpenAI: "#10a37f", Xiaomi: "#ff6900", "Z.ai": "#8e8e93" };
+  const MAKER_TINT = { Alibaba: "#615ced", DeepSeek: "#4d6bfe", Google: "#4285f4", Meta: "#0866ff", OpenAI: "#10a37f", Xiaomi: "#ff6900", "Z.ai": "#8e8e93", Moonshot: "#8e8e93", Tencent: "#0055e9", MiniMax: "#e73562", NVIDIA: "#76b900" };
   // a model with no maker logo in the set runs in the cloud: a cloud glyph on its tile
   const CLOUD = '<svg class="model-cloud" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 12.5a3 3 0 0 1-.4-6A4 4 0 0 1 11.8 6a3.25 3.25 0 0 1 .2 6.5z"/></svg>';
   const badge = (maker) => `<span class="model-badge" aria-hidden="true">${maker.logo ? `<img src="assets/img/models/${maker.logo}.svg" alt="">` : CLOUD}</span>`;
@@ -422,7 +426,8 @@ window.Pie = window.Pie || {};
         const current = viewState.platform.makers || [];
         const makers = [...new Set([...pageMakers, ...current])].sort();
         return [{ value: "", label: "All Makers", selected: !current.length }, { separator: true },
-          ...makers.map((name) => ({ value: name, label: name, selected: current.includes(name), check: true, dot: MAKER_TINT[name] || "#8e8e93" }))];
+          // each maker after its logo, as the grid heads its columns
+          ...makers.map((name) => ({ value: name, label: name, selected: current.includes(name), check: true, icon: badge(MAKERS.find((m) => m.name === name) || { logo: "" }) }))];
       }
       if (k !== "engine" || !viewState) return [];
       const current = viewState.platform.engine || Pie.engines.primary;
@@ -537,7 +542,8 @@ window.Pie = window.Pie || {};
           const id = realOf(model);
           const here = (r) => r.hardware === mac && r.model === id;
           const c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base);
-          const needs = noFit[mac]?.[id]?.[base];
+          // a model cut down to fit (a miniature) did run here: no "does not fit", even before pie's own row lands
+          const needs = rows.some((r) => here(r) && r.miniature) ? null : noFit[mac]?.[id]?.[base];
           const own = snapshot.find((r) => here(r) && r.engine === base);
           // an empty cell explains itself only when there is something to say: it does not fit, or its run failed
           grid[mac][model] = { c, needs, why: needs ? `Needs about ${Math.round(needs)} GB` : own?.note || "" };
@@ -624,7 +630,7 @@ window.Pie = window.Pie || {};
                 })()
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}${c.all.some(Pie.isNew) ? " is-new" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}${c.pie.miniature ? `<span class="platform-mini" title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}">mini</span>` : ""}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}${c.pie.miniature ? `<span class="platform-mini" title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}">Mini</span>` : ""}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${why ? ` data-tip="${esc(card("", "", [], why))}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
