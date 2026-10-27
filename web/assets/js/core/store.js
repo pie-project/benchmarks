@@ -119,9 +119,11 @@ window.Pie = window.Pie || {};
     const ids = (tables.suites || {})[Pie.state.suite];
     return ids ? new Set(ids) : null;
   };
+  // a model of the catalog list counts in every suite once CI has measured it, so new models reach the grids
+  const catalogIds = new Set((tables.models || []).filter((m) => m.catalog).map((m) => m.id));
   const inSuite = (model) => {
     const ids = suiteModels();
-    return !ids || ids.has(model);
+    return !ids || ids.has(model) || catalogIds.has(model);
   };
   const ofSuite = (rows) => (suiteModels() ? rows.filter((row) => inSuite(row.model)) : rows);
 

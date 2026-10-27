@@ -51,6 +51,10 @@ window.Pie = window.Pie || {};
       const [id, s] = platform;
       return `<td class="${classes}"><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${format.escape(value)}</span></td>`;
     }
+    // a model's name after its maker's logo, as the grids head their columns
+    if (column.key === "name" && "base_model" in row && Pie.platform?.makerBadge) {
+      return `<td class="${classes}"><span class="model-name-cell">${Pie.platform.makerBadge(row.id)}<span>${format.escape(value)}</span></span></td>`;
+    }
     if (column.key === "platforms" && (!format.isEmpty(value) || row.fits)) {
       // each platform as its sidebar tile alone, its name on hover, as Finder's Tags column shows colour, not words;
       // every platform keeps its own slot down the column, empty where a model was not measured there, so a platform's
@@ -85,7 +89,6 @@ window.Pie = window.Pie || {};
     if ((state.table === "results" || state.table === "quality") && !row.stale && store.isMeasured(row)) classes.push("is-highlighted");
     // a listed setup with no numbers stays in the table, in quiet grey
     if (state.table === "results" && !store.isMeasured(row)) classes.push("is-unmeasured");
-    if (Pie.isNew(row)) classes.push("is-new");
     if (row.stale) {
       classes.push("is-stale");
       const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";

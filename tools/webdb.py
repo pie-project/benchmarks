@@ -107,13 +107,15 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
     # the catalog's models (matrix/models.yaml `catalog:`): every model the site lists, run or not. A model CI runs takes
     # the stated sizes and layer count it lacks; one it does not run becomes a catalog-only row (no results, no grid)
     for c in load("models").get("catalog") or []:
-        mid = c["name"].lower()
+        # the same id CI gives the model's runs (from its repo name), so the catalog row and its results meet
+        mid = model_name(c["base_model"]).lower() if c.get("base_model") else c["name"].lower()
         row = by_model.get(mid)
         if row is None:
             row = by_model[mid] = {"id": mid, "name": c["name"], "family": c.get("family"), "base_model": c.get("base_model"),
                                    "schemes": c.get("precision") or "", "artifacts": 0, "draft": "true" if c.get("mtp") else "false",
                                    "catalog_only": True}
         row["catalog"] = True
+        row["name"] = c["name"]  # the catalog's short name, not the repo's ("Nemotron-3-Ultra", not "...-550B-A55B")
         if c.get("mtp"):
             row["draft"] = "true"  # ships its own draft head: speculative decoding works out of the box
         # the card's sizes win over the ones read from a name; the rest only fill what is missing

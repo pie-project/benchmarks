@@ -784,10 +784,9 @@
 /* the setups' two groups named in small grey type inside the capsule, the second set off by a hairline */
 .setup-group { padding: 0 4px 0 8px; font-size: 10px; font-weight: 500; white-space: nowrap; color: var(--color-label-tertiary); }
 .setup-group.is-second { margin-left: 4px; border-left: 1px solid var(--color-separator); }
-.platform-cell.is-new { background: rgba(255, 204, 0, .25); border-radius: 6px; }  /* local preview: a number measured today or later */
 
 /* a datacenter model cut to fit one device: its cells say so, and the page carries a banner */
-.platform-mini { margin-left: 4px; padding: 0 4px; border-radius: 4px; font-size: 9px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; vertical-align: 2px; color: var(--color-label-secondary); background: var(--color-fill); }
+.platform-mini { margin-left: 5px; padding: 0 5px; border-radius: 4px; font-size: 9px; font-weight: 500; line-height: 14px; vertical-align: 1px; color: var(--color-label-tertiary); background: none; box-shadow: inset 0 0 0 .5px var(--color-label-tertiary); }  /* a quiet outlined capsule, as System Settings marks a Beta feature: title case, hairline, no fill */
 .mini-banner { margin: 0; padding: 8px 20px; font-size: 13px; color: #8a5a00; background: #fff6e0; border-bottom: 1px solid #f0dca8; }
 :root[data-theme="dark"] .mini-banner { color: #ffd479; background: #2c2412; border-color: #4a3a17; }
 .mini-banner[hidden] { display: none; }
