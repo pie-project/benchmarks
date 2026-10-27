@@ -453,6 +453,8 @@ class PieEngine(Engine):
         batch.
         """
         if self.pie_engine_name() != "cuda_native":
+            # the CLI engines' bench boots `pie serve` itself and copies its output here
+            self.env["PIE_BENCH_SERVER_LOG"] = str(log_path)
             return
         if self._server_proc is not None:
             return
