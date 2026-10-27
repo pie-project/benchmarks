@@ -157,12 +157,14 @@ artifacts:
   - id: deepseek-v4.1-flash-mini8
     base_model: deepseek-ai/DeepSeek-V4.1-Flash
     family: deepseek_v41  # CSA2 (cross-layer KV/index reuse) + single-pass mHC + Engram
-    scheme: mxfp4         # fp8 dense planes read out to bf16 by the shrink; MXFP4 experts as released
+    scheme: mxfp4         # MXFP8 dense planes and MXFP4 experts, both as released
     kind: miniature
-    # matches catalog row dsv41-flash-mini-bf16-mxfp4-kv-bf16 (pie PR #627): every CSA2 mode once
+    # matches catalog row dsv41-flash-mini-fp8b32a8g32-mxfp4a8g32-kv-bf16: every CSA2 mode once
     # (SWA, SWA+Engram, Full@2, Reuse@2, decoder Full@1, Reuse, Reindex, Reuse), 16 of 384 experts,
-    # Engram tables re-carved to a 20 000 bucket base (482k rows of 384M)
-    miniature: {layers: "0-3,20,21,24,25", experts: 16, period: 1, engram_vocab: 20000, note: "pie's flash41_mini fixture; 6.24 GiB download"}
+    # Engram tables re-carved to a 20 000 bucket base (482k rows of 384M). keep_fp8: planes read out
+    # to bf16 under the release's fp8 quantization_config fail SGLang 0.5.22's load ("Downcasting not
+    # allowed"), so pie, vLLM and SGLang all read the fp8 planes
+    miniature: {layers: "0-3,20,21,24,25", experts: 16, period: 1, engram_vocab: 20000, keep_fp8: true, note: "pie's flash41_mini fixture; 6.24 GiB download"}
     max_context: 4096
     expected_gib: 7.0
     tiers: [smoke, nightly, weekly]
