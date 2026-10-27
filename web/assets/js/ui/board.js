@@ -547,6 +547,43 @@ window.Pie = window.Pie || {};
   const TOOLS = (id) => `<button class="board-card-tool" type="button" data-board-link="${id}" aria-label="Copy a link to this chart" title="Copy a link to this chart"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.9 9.1a2.5 2.5 0 0 0 3.5 0l2.1-2.1a2.5 2.5 0 0 0-3.5-3.5l-.9.9"/><path d="M9.1 6.9a2.5 2.5 0 0 0-3.5 0L3.5 9a2.5 2.5 0 0 0 3.5 3.5l.9-.9"/></svg></button><button class="board-card-tool" type="button" data-board-save="${id}" aria-label="Save as image" title="Save as image"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.25" y="3" width="11.5" height="10" rx="2"/><circle cx="5.75" cy="6.25" r="1"/><path d="m2.5 11.5 3.2-3.2 2.3 2.3 2-2 3.5 3.5"/></svg></button><button class="board-card-tool" type="button" data-board-data="${id}" aria-label="Download the data" title="Download the data (log in)"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.25" y="3" width="11.5" height="10" rx="2"/><path d="M2.25 6.5h11.5M2.25 9.75h11.5M7 6.5V13"/></svg></button>`;
   // a card: its badge and title, and under them what it measures, with how to read it ("Higher is better") on a line
   // of its own; at the far end its tools (link, image, data), and under them the pick of what the card shows
+  // coverage: every model down, each platform across, in each cell a square per engine, filled where it measured the
+  // model there (any setup, a miniature too); over it, each engine's share of all the model and platform pairs
+  const COVER_PLATFORMS = [["mac", "Mac"], ["nvidia", "NVIDIA"], ["amd", "AMD"], ["tpu", "TPU"]];
+  const coverage2 = (rows) => {
+    const ran = new Set();
+    for (const r of rows) {
+      if (!(r.decode_tok_s || r.prefill_tok_s || r.output_tok_s)) continue;
+      const p = Pie.platformOf(Pie.store.index.hardware[r.hardware] || {});
+      ran.add(`${r.engine}|${r.model}|${p}`);
+    }
+    const engines = engineIds().filter((e) => [...ran].some((k) => k.startsWith(`${e}|`)));
+    const models = (Pie.store.tables.models || []).map((m) => m.id)
+      .sort((a, b) => (Pie.platform?.makerName(a) || "").localeCompare(Pie.platform?.makerName(b) || "") || names().model(a).localeCompare(names().model(b)));
+    // drawn as the Performance card: a group per platform, a bar per engine, its height the models it ran there, the
+    // models themselves in its hover card
+    const on = (e, p) => models.filter((m) => ran.has(`${e}|${m}|${p}`));
+    const W = 1040, H = 209, L = 8, R = 8, T = 12, B = 46;
+    const cells = COVER_PLATFORMS.map(([p, l]) => ({ p, l, bars: engines.map((e) => ({ e, list: on(e, p) })).filter((b) => b.list.length) })).filter((c) => c.bars.length);
+    if (!cells.length) return `<p class="board-empty">No runs yet</p>`;
+    const top = niceMax(Math.max(...cells.flatMap((c) => c.bars.map((b) => b.list.length))));
+    const base = H - B;
+    const y = (v) => T + (base - T) * (1 - v / top);
+    const slot = (W - L - R) / cells.length;
+    const most = Math.max(...cells.map((c) => c.bars.length));
+    const BW = Math.min(28, (slot * 0.6 - (most - 1) * 2) / most);
+    const marks = cells.map((c, i) => {
+      const width = c.bars.length * BW + (c.bars.length - 1) * 2;
+      const left = L + slot * i + (slot - width) / 2;
+      const bars = c.bars.map((b, j) => bar(left + j * (BW + 2), y(b.list.length), BW, base, Pie.engines.colorOf(b.e), String(b.list.length),
+        { engine: b.e, head: `${names().engine(b.e)} on ${c.l}`, value: `${b.list.length} of ${models.length} models`, note: b.list.map((m) => names().model(m)).join(", ") },
+        { x: left + j * (BW + 2) - 1, w: BW + 2 })).join("");
+      const cx = L + slot * i + slot / 2;
+      return `${bars}<text class="board-group" x="${cx}" y="${base + 18}">${esc(c.l)}</text>
+        <text class="board-machine" x="${cx}" y="${base + 33}">${esc(`${new Set(c.bars.flatMap((b) => b.list)).size} models run`)}</text>`;
+    }).join("");
+    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Models run by engine and platform">${lines(L, W - R, y, top)}<line class="board-axis" x1="${L}" x2="${W - R}" y1="${base}" y2="${base}"/>${marks}</svg>`;
+  };
   const card = (id, title, sub, body, aside = "", tools = true) => `
       <section class="board-card" id="board-${id}">
         <div class="board-card-head">
@@ -574,7 +611,7 @@ window.Pie = window.Pie || {};
       ["Head to head", SUMMARY.map((m) => [m.id, m.title])],
       ...(Pie.signedIn() ? [["Speed by model size", [["size", "Dense models"], ["moe", "MoE models"]]]] : []),  // for an account only
       ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"], ...(Pie.signedIn() ? [[USE.id, "Share of the limit"]] : [])]],
-      ["Accuracy", [["accuracy", "Score gap"]]],
+      ...(Pie.signedIn() ? [["Accuracy", [["accuracy", "Score gap"]]]] : []),  // for an account only, as its section
       ...(Pie.signedIn() ? [["At datacenter scale", [[SCALING.id, "Chip scaling"]]]] : []),  // the datacenter section for an account only
     ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${BADGES[id]?.[0] || "var(--color-label-tertiary)"}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
@@ -607,6 +644,7 @@ window.Pie = window.Pie || {};
           </div>
           <div class="board-stack">${metricCard(rows, groups)}${card(TTFT.id, TTFT.title, TTFT.sub, chart(TTFT, rows, groups))}
             ${Pie.signedIn() ? card(USE.id, USE.title, engineSub(USE.sub, useEngine), use(rows), enginePick("use-engine", useEngine)) : ""}</div>
+          ${""/* the Coverage section, off for now: coverage2(rows) */}
           ${Pie.signedIn() ? `          <div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">At datacenter scale</h1>
             <p class="board-lede">A model split across several GPUs, at each chip count, against a perfect split.</p></div>
@@ -616,7 +654,7 @@ window.Pie = window.Pie || {};
           ${(() => {
             // the last section: one card as the others, its engine picked in its corner with the engine's logo
             const acc = Pie.checks?.accuracyChart(state);
-            if (!acc?.chart) return "";
+            if (!Pie.signedIn() || !acc?.chart) return "";  // the Accuracy section, for an account only
             const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="accuracy-engine" aria-haspopup="menu" aria-label="${esc(acc.label)}">${engineMark(acc.engine)}${acc.engine === "mlxlm" ? "" : esc(acc.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
             return `<div class="board-section-head"><div class="board-section-text"><h1 class="board-title">Accuracy</h1>
             <p class="board-lede">pie’s benchmark score gap to another engine, same model.</p></div></div>
