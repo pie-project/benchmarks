@@ -25,8 +25,10 @@ RELAYOUT_MARK = "would relayout a weight plane"
 def needs_import(artifact: ArtifactSpec) -> bool:
     # pie serve reads safetensors and .zt only; mlx and gguf checkpoints go
     # through `pie model import` (nightly 35967154121: the GGUF snapshot dir
-    # "holds no .safetensors and no .zt container")
-    return artifact.source_format in (SourceFormat.MLX, SourceFormat.GGUF) or (bool(artifact.pie_sku) and artifact.scheme == QuantScheme.AFFINE_U4_G64)
+    # "holds no .safetensors and no .zt container"); a compressed-tensors NVFP4
+    # bank's global scales are inverted at import, never at boot (weekly
+    # 40465556208: "this load would apply Some(Recip) on the way in")
+    return artifact.source_format in (SourceFormat.MLX, SourceFormat.GGUF) or (bool(artifact.pie_sku) and artifact.scheme == QuantScheme.AFFINE_U4_G64) or "-nvfp4a4-" in (artifact.pie_sku or "")
 
 
 def artifact_root(root: Path | None = None) -> Path:
