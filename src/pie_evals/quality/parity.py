@@ -9,6 +9,10 @@ checks, both per engine arm:
   Only meaningful on the same weights (same scheme and checkpoint), and not for
   Splash, which renders its own chat template. Flag ``mismatch`` below 95%.
 
+Only arms on the same weights as a pie arm (same scheme and checkpoint) are
+compared: another quantization scores differently for reasons that are not pie's,
+so such an arm is dropped from the row.
+
 Hardware does not change accuracy, so a pie mismatch on the same model is a
 pie bug until shown otherwise; the site says so.
 """
@@ -70,12 +74,13 @@ def compare(pie: dict, arm: dict, cell: dict) -> dict:
 
 
 def rows(summaries: list[dict]) -> list[dict]:
-    """One row per (model, task) with every engine's cell: ``summaries`` are the quality rows of one tag, samples included."""
-    grouped: dict[tuple[str, str], dict[str, dict]] = {}
+    """One row per (model, task, platform) with every engine's cell: ``summaries`` are the quality rows of one tag, samples
+    included. A row without a platform was scored on the quality Mac; pie is only compared on the machine it ran on."""
+    grouped: dict[tuple[str, str, str], dict[str, dict]] = {}
     for s in summaries:
-        grouped.setdefault((s["model"].removesuffix("@vllm"), s["task"]), {})[s["artifact"]] = s
+        grouped.setdefault((s["model"].removesuffix("@vllm"), s["task"], s.get("platform") or ""), {})[s["artifact"]] = s
     out = []
-    for (model, task), arms in sorted(grouped.items()):
+    for (model, task, platform), arms in sorted(grouped.items()):
         pies = [r for r in arms.values() if r["engine"] == "pie"]
         pie = pies[0] if pies else None
         cells = []
@@ -86,8 +91,12 @@ def rows(summaries: list[dict]) -> list[dict]:
             elif r["engine"] == "pie":
                 cell["score_flag"] = cell["agree_flag"] = "reference"
             else:
-                # the pie arm on the same weights when there is one (a GPU's vLLM arm against the GPU's pie arm)
-                same = next((p for p in pies if (p.get("scheme"), p.get("checkpoint")) == (r.get("scheme"), r.get("checkpoint"))), pie)
+                # only the pie arm on the same weights (a GPU's vLLM arm against the GPU's pie arm); an arm on weights pie
+                # never ran (llama.cpp's GGUF beside pie's MLX) is a different model, not a parity check, and is left out
+                weights = (r.get("scheme"), r.get("checkpoint"))
+                same = next((p for p in pies if all(weights) and (p.get("scheme"), p.get("checkpoint")) == weights), None)
+                if same is None:
+                    continue
                 compare(same, r, cell)
                 cell["vs"] = same["artifact"]
             cells.append(cell)
@@ -96,5 +105,5 @@ def rows(summaries: list[dict]) -> list[dict]:
             flag = "no_pie"
         else:
             flag = "mismatch" if "mismatch" in flags else "ok"
-        out.append({"model": model, "task": task, "flag": flag, "pie": pie["artifact"] if pie else None, "arms": cells})
+        out.append({"model": model, "task": task, "platform": platform or None, "flag": flag, "pie": pie["artifact"] if pie else None, "arms": cells})
     return out

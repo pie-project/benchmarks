@@ -130,10 +130,24 @@ def test_parity_compares_answers_only_on_the_same_weights():
     b = [{"id": str(i), "text": "#### 2" if i < 3 else "#### 1"} for i in range(10)]
     same = rows([_arm("x-mlx4", "pie", 0.8, samples=a), _arm("x-mlxlm", "mlxlm", 0.8, samples=b)])[0]
     assert same["arms"][1]["agree"] == 0.7 and same["arms"][1]["agree_flag"] == "mismatch" and same["flag"] == "mismatch"
-    gguf = rows([_arm("x-mlx4", "pie", 0.8, samples=a), _arm("x-llamacpp", "llamacpp", 0.8, samples=b, scheme="gguf_q4_k_m")])[0]
-    assert gguf["arms"][1]["agree_flag"] == "n/a" and gguf["flag"] == "ok"
     splash = rows([_arm("x-mlx4", "pie", 0.8, samples=a), _arm("x-splash", "splash", 0.8, samples=b)])[0]
     assert splash["arms"][1]["agree_flag"] == "n/a"
+
+
+def test_parity_leaves_out_an_arm_on_other_weights():
+    from pie_evals.quality.parity import rows
+
+    gguf = rows([_arm("x-mlx4", "pie", 0.3), _arm("x-llamacpp", "llamacpp", 0.6, scheme="gguf_q4_k_m", checkpoint="org/x-GGUF")])[0]
+    assert [c["engine"] for c in gguf["arms"]] == ["pie"] and gguf["flag"] == "ok"
+
+
+def test_parity_compares_on_the_machine_pie_ran_on():
+    from pie_evals.quality.parity import rows
+
+    h100 = {**_arm("x-mlx4", "pie", 0.8), "platform": "h100-sxm-x1"}
+    vllm = {**_arm("x-mlx4@vllm", "vllm", 0.8), "model": "x-mlx4@vllm", "platform": "b200-x1"}
+    out = rows([h100, vllm, _arm("x-mlx4", "pie", 0.8) | {"artifact": "x-mac"}])
+    assert [(r["platform"], [c["engine"] for c in r["arms"]]) for r in out] == [(None, ["pie"]), ("b200-x1", ["vllm"]), ("h100-sxm-x1", ["pie"])]
 
 
 def test_parity_compares_a_vllm_arm_with_the_pie_arm_on_its_weights():

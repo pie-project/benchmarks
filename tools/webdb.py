@@ -270,6 +270,18 @@ def quality_arms(config: dict) -> list[tuple[str, str]]:
     return out
 
 
+def mismatched_arms() -> dict[str, str]:
+    """{competitor artifact: why}: arms quantized unlike the pie arm they stand beside. Their
+    scores measure the quantization, not the engine, so the quality table shows none of them."""
+    arts = {a["id"]: a for a in load("models")["artifacts"]}
+    out = {}
+    for a in arts.values():
+        pie = arts.get(a.get("baseline_of") or "")
+        if pie and a.get("scheme") != pie.get("scheme"):
+            out[a["id"]] = f"Runs {a.get('scheme')} weights where pie runs {pie.get('scheme')}: not compared"
+    return out
+
+
 def quality_tasks() -> list[dict]:
     from pie_evals.quality.tasks import TASKS
 
@@ -830,7 +842,8 @@ def main() -> None:
     quality = stack(order, scores, qkeys, lambda item, key, src: {k: v for k, v in item.items() if k != "_at"}, lambda item: item["date"])
     # every arm the release compares, on every task, has a row like the results table: its score, or "not run"
     arms = quality_arms(config)
-    tasks = [t["id"] for t in quality_tasks()]
+    mismatched = mismatched_arms()
+    tasks =[t["id"] for t in quality_tasks()]
     # quality runs on the big Mac: a missing score is explained the way the results table explains a missing number
     qmac = "m5-max-128g" if "m5-max-128g" in hardware_ids else hardware_ids[-1]
 
@@ -855,6 +868,9 @@ def main() -> None:
         armed = {(eng, a2m.get(art, art)) for eng, art in arms}
         quality[t] += [missing(model, eng, "", task, t, "no_data")
                        for eng in engine_ids for model in model_ids if (eng, model) not in armed for task in tasks]
+        # apples to apples: a competitor on other weights keeps its row, without a score
+        quality[t] = [missing(r["model"], r["engine"], r["artifact"], r["task"], t, "unsupported") | {"note": mismatched[r["artifact"]]}
+                      if r["artifact"] in mismatched else r for r in quality[t]]
         for r in quality[t]:
             r.setdefault("status", "pass")
         # the results page's order: engine, then model, then task

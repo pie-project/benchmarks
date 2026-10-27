@@ -385,6 +385,7 @@ window.Pie = window.Pie || {};
 
   Pie.platform = {
     refreshCard: () => refreshCard(),
+    badge: (id) => badgeOf(id),
     element,
     batchedBound,
 
