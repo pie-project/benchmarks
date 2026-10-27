@@ -13,7 +13,7 @@ permissions: { contents: read }
 jobs:
   # the Mac reads the database (liszt is on the tailnet, GitHub's runners are not)
   build:
-    runs-on: [self-hosted, site]  # a laptop that only builds the site: never waits behind a benchmark
+    runs-on: [self-hosted, pages]  # its own runner on the site laptop: the site runners also expand and collect benchmark runs, and a build queued behind them was replaced by the next before it started
     concurrency: { group: pages-build, cancel-in-progress: false }  # a build in flight finishes; only the newest waiting one follows it
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
