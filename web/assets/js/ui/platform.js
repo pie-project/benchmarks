@@ -438,7 +438,7 @@ window.Pie = window.Pie || {};
       // the TPU shows Raw Decode and Raw Prefill only
       const HIDDEN = { tpu: ["spec", "batching", "pbatch"] };
       // Spec Decode lives in Raw Decode, a column beside each model it ran: no button of its own
-      return MODES.filter((m) => m.id !== "spec" && (m.limit || ran.has(m.workload)) && !(HIDDEN[only] || []).includes(m.id));
+      return MODES.filter((m) => m.id !== "spec" && (m.limit || m.id === "pbatch" || ran.has(m.workload)) && !(HIDDEN[only] || []).includes(m.id));
     },
 
     onChange(handler) {
