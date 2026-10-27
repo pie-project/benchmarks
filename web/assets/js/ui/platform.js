@@ -197,6 +197,14 @@ window.Pie = window.Pie || {};
     return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   };
   let lastAll = null;  // the release's rows, every status, for the hover cards
+  // the engines with no number in a cell, each with why: not supported, does not fit, failed (its error), not measured yet
+  const WHY = { unsupported: "Not supported", no_fit: "Does not fit", fail: "Failed", not_run: "Not measured yet", no_data: "Not measured yet" };
+  const absentRows = (mac, model, mode, order) => {
+    // only an engine that says why it gave nothing; one not measured yet is left out, as anything unnamed is
+    const others = (lastAll || []).filter((r) => r.hardware === mac && r.model === model && r.workload === mode.workload && !order.some((o) => o.engine === r.engine) && ["unsupported", "no_fit", "fail"].includes(r.status));
+    return [...new Map(others.map((r) => [r.engine, r])).values()].map((r) => `<div class="tip-row is-absent"${r.note ? ` title="${esc(r.note)}"` : ""}><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
+      <span class="tip-value">${esc(WHY[r.status] || "Not measured yet")}</span><span class="tip-when"></span></div>`);
+  };
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
@@ -250,12 +258,7 @@ window.Pie = window.Pie || {};
     // moves right along the roof, and up by what it kept
     // the engines with no number here say why, in grey under the measured ones: not supported, does not fit, failed, or
     // not measured yet, so one engine alone reads as the only one that could run, or the only one run so far
-    const WHY = { unsupported: "Not supported", no_fit: "Does not fit", fail: "Failed", not_run: "Not measured yet", no_data: "Not measured yet" };
-    const others = (lastAll || []).filter((r) => r.hardware === mac && r.model === model && r.workload === mode.workload && !order.some((o) => o.engine === r.engine));
-    for (const r of [...new Map(others.map((r) => [r.engine, r])).values()]) {
-      lines.push(`<div class="tip-row is-absent"><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
-      <span class="tip-value">${esc(WHY[r.status] || "Not measured yet")}</span><span class="tip-when"></span></div>`);
-    }
+    lines.push(...absentRows(mac, model, mode, order));
     if (specBound && roofline) {
       const moved = specMove(order, raw, specBound);
       if (moved) return `<div class="rf-move-card">${roofCard(moved, { move: true })}${card("", "", lines)}</div>`;
@@ -689,7 +692,14 @@ window.Pie = window.Pie || {};
               : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
             return `<td class="${sorted}" data-col="${esc(model)}"><span${c.pie.miniature ? ` title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}"` : ""} class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
-          return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${why ? ` data-tip="${esc(card("", "", [], why))}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
+          // an empty cell lists every engine that has a row here and why it gave no number, as a measured cell's card does
+          // the engines that did measure here, though pie did not (the comparison needs pie): their numbers first
+          const ranHere = [...new Map(rows.filter((r) => r.hardware === mac && r.model === realOf(model) && r[metric.key]).map((r) => [r.engine, r])).values()]
+            .sort((a, b) => b[metric.key] - a[metric.key]);
+          const absent = [...ranHere.map((r) => `<div class="tip-row"><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
+            <span class="tip-value">${esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`), ...absentRows(mac, realOf(model), modeOf(null), ranHere)];
+          const emptyTip = absent.length ? card("", "", absent) : why ? card("", "", [], why) : "";
+          return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
 
