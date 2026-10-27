@@ -197,6 +197,16 @@ competitive:
               rationale: >
                 FA3 has no MLA or sparse-MLA path; unset leaves vLLM's own pick for the
                 datacenter models, as it deploys them.
+    blackwell:
+      family:
+        deepseek_v41:
+          knobs:
+            block_size:
+              value: 64
+              rationale: >
+                FlashInfer's SM120 sparse-MLA decode kernels are built for 64-token pages only
+                ("page_block_size=32 is unsupported": the V4.1 miniature on the pro6000-x1,
+                weekly 40415491631).
     apple9:
       knobs: {}
   backend:

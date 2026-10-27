@@ -131,11 +131,12 @@ class MiniatureRecipe(BaseModel):
     engram_vocab: int | None = Field(default=None, description="DeepSeek-V4.1: re-carve each Engram hash table to this bucket base (--engram-vocab)")
     attn_res_block_size: int | None = Field(default=None, description="Kimi-K3: AttnRes block stride of the cut (--attn-res-block-size)")
     shrink_family: str | None = Field(default=None, description="the shrink script's family where the checkpoint's index matches several (--family)")
+    keep_fp8: bool = Field(default=False, description="DeepSeek-V4/V4.1: keep the fp8 planes as released (--keep-fp8); read out to bf16 they no longer match the config's quantization_config, which vLLM and SGLang load by")
     note: str = ""
 
     @property
     def recipe_hash(self) -> str:
-        key = json.dumps([self.layers, self.experts, self.repeat, self.text_only, self.engram_vocab, self.attn_res_block_size], sort_keys=True)
+        key = json.dumps([self.layers, self.experts, self.repeat, self.text_only, self.engram_vocab, self.attn_res_block_size] + ([True] if self.keep_fp8 else []), sort_keys=True)
         return hashlib.sha256(key.encode()).hexdigest()[:10]
 
     @property
@@ -151,6 +152,8 @@ class MiniatureRecipe(BaseModel):
             t += f"-g{self.engram_vocab}"
         if self.attn_res_block_size is not None:
             t += f"-b{self.attn_res_block_size}"
+        if self.keep_fp8:
+            t += "-fp8"
         return t
 
 
