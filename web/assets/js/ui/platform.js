@@ -223,15 +223,19 @@ window.Pie = window.Pie || {};
       return `<span class="tip-delta ${delta >= 0 ? "is-up" : "is-down"}">${sign}${esc(value(Math.abs(delta), metric.unit))}</span>`;
     };
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
+    // a miniature's tok/s is a cut model's, no real model's speed: its card reads each engine against pie, and the
+    // fastest, never a rate or a bound
+    const mini = Boolean(c.pie.miniature);
+    const relative = (r) => `${(metric.higher ? r[metric.key] / c.pie[metric.key] : c.pie[metric.key] / r[metric.key]).toFixed(2)}×`;
     // Engines compares the engines only; Roofline adds each one's share of the bound, the bounds and the chart
-    const roofline = compare === "ceiling";
+    const roofline = compare === "ceiling" && !mini;
     const lines = order.map((r, i) => {
       // Raw: each engine's share of the hardware limit; the others: what the feature adds over its raw row
       const extra = !roofline ? null : limit ? share(r, metric) : specBound ? r[metric.key] / specBound.tps : batchPeak ? r[metric.key] / batchPeak : overRaw(r, metric, raw);
       const note = extra === null ? "" : limit || batchPeak || specBound ? `${Math.round(extra * 100)}%` : times(extra);
       return `<div class="tip-row${r === c.pie ? " is-pie" : ""}"${r === c.pie ? ` style="color: ${Pie.engines.colorOf(r.engine)}"` : ""}>
       <span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}${i === 0 ? '<span class="tip-tag">Fastest</span>' : ""}</span>
-      <span class="tip-value">${specBound && roofline ? specGain(r) : `${esc(value(r[metric.key], metric.unit))}${roofline ? `<span class="tip-share">${note}</span>` : ""}`}</span><span class="tip-when">${esc(day(r))}</span></div>`;
+      <span class="tip-value">${mini ? esc(relative(r)) : specBound && roofline ? specGain(r) : `${esc(value(r[metric.key], metric.unit))}${roofline ? `<span class="tip-share">${note}</span>` : ""}`}</span><span class="tip-when">${esc(day(r))}</span></div>`;
     });
     // the cell's row and column already name the setup, and the bar above the metric: the card is only the engines
     // the hardware limit closes the list as one more row, aligned with the engines': its speed at 100%, and a tag for
@@ -385,6 +389,7 @@ window.Pie = window.Pie || {};
 
   Pie.platform = {
     refreshCard: () => refreshCard(),
+    badge: (id) => badgeOf(id),
     element,
     batchedBound,
 

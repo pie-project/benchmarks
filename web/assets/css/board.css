@@ -323,9 +323,14 @@
 .board-footer-links { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 20px; }
 .board-footer-links a { color: inherit; text-decoration: none; }
 .board-footer-links a:hover { color: var(--color-label); }
-.board-footer-icon { display: inline-flex; color: var(--color-label-tertiary); }
-.board-footer-icon:hover { color: var(--color-label); }
-.board-footer-icon svg { width: 16px; height: 16px; fill: currentColor; }
+/* a star for the repo in the Log in button's black (white in dark mode), the GitHub mark before its label */
+.board-footer a.board-footer-star { grid-column: 3; justify-self: end; align-self: center; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 12px; font-size: 13px; font-weight: 500; color: #fff; background: #1d1d1f; }
+:root[data-theme="dark"] .board-footer a.board-footer-star { color: #1d1d1f; background: #f5f5f7; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .board-footer a.board-footer-star { color: #1d1d1f; background: #f5f5f7; } }
+.board-footer a.board-footer-star:hover { opacity: .85; }
+.board-footer a.board-footer-star:active { opacity: .7; }
+.board-footer-star svg { width: 14px; height: 14px; fill: currentColor; }
+@media (max-width: 899px) { .board-footer a.board-footer-star { grid-column: auto; justify-self: start; } }  /* phones: under the line, at its start */
 .board-footer-line.is-date { margin-top: 10px; color: var(--color-label-tertiary); }
 /* no brand block: the link columns take the row, the mark leads the last line */
 .board-footer-inner { display: block; }
@@ -339,12 +344,6 @@
 .board-footer-trust { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .board-footer-trust a { color: var(--color-label-secondary); text-decoration: none; }
 .board-footer-trust a:hover { color: var(--color-label); }
-.board-footer-mail label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 500; color: var(--color-label); }
-.board-footer-mail > span { display: flex; gap: 6px; }
-.board-footer-mail input { flex: 1; min-width: 0; height: 28px; padding: 0 10px; border: 0; border-radius: 12px; font: inherit; font-size: 12px; color: var(--color-label); background: var(--color-fill); outline: none; }
-.board-footer-mail button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 12px; color: #fff; background: #1d1d1f; cursor: pointer; }
-:root[data-theme="dark"] .board-footer-mail button { color: #1d1d1f; background: #f5f5f7; }
-.board-footer-mail button svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 @media (max-width: 899px) { .board-footer-band { grid-template-columns: 1fr; gap: 20px; } }
 
 /* the Accuracy card's chart in the Overview's own hand: its ticks, gridlines and labels as the bar charts draw theirs,
@@ -372,9 +371,7 @@
   .board-card .qc-chart { min-width: 640px; }  /* the gap chart keeps readable labels and scrolls sideways in its card, as the bar charts do */
   .board-footer-base { align-items: flex-start; }
   .board-footer-links { gap: 6px 16px; }
-  .board-footer-icon { flex: none; }
 }
-@media (max-width: 899px) { .board-footer-icon { display: none; } }  /* GitHub is already a link in the line above */
 @media (max-width: 899px) {
   .board-view .plain-button { min-width: 40px; padding: 0 8px; }  /* phones: wider segments, a thumb's width each */
   .board-view svg { width: 16px; height: 16px; }
@@ -401,36 +398,22 @@
   .board-card-head:has(.board-view) .board-sub { overflow-wrap: anywhere; }
 }
 @media (max-width: 899px) { .board-card-titles .board-sub { overflow-wrap: anywhere; } }
-/* phones: the footer in iOS's sizes, its links in one row, the email field and its button 44px capsules as the bar's */
+/* phones: the footer in iOS's sizes, its links in one row */
 @media (max-width: 899px) {
   .board-footer-band { gap: 24px; padding: 28px var(--edge) 20px; }
   .board-footer-lead { font-size: 15px; }
   .board-footer-meta { font-size: 13px; }
   .board-footer-trust { flex-direction: row; flex-wrap: wrap; gap: 8px 20px; font-size: 15px; }
-  .board-footer-mail label { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
-  .board-footer-mail > span { gap: 8px; }
-  .board-footer-mail input { height: 44px; padding: 0 18px; border-radius: 999px; font-size: 17px; }
-  .board-footer-mail button { width: 44px; height: 44px; border-radius: 999px; }
-  .board-footer-mail button svg { width: 16px; height: 16px; }
   .board-footer-base { padding: 16px 0 calc(24px + env(safe-area-inset-bottom)); font-size: 13px; }
 }
-.board-footer-mail button .board-footer-mail-word { display: none; }  /* the word, a phone's only; the field's span rule must not show it */
 /* phones, as an iOS form: links in the accent, a rounded field over a full-width Subscribe button, the small print centred */
 @media (max-width: 899px) {
   .board-footer-trust a { color: var(--color-accent); }
-  .board-footer-mail > span { flex-direction: column; gap: 10px; }
-  .board-footer-mail input { border-radius: 10px; }
-  .board-footer-mail button { width: 100%; border-radius: 10px; font: inherit; font-size: 17px; font-weight: 600; }
-  .board-footer-mail button svg { display: none; }
-  .board-footer-mail button .board-footer-mail-word { display: inline; }
   .board-footer-base { justify-content: center; text-align: center; }
   .board-footer-links { justify-content: center; }
 }
 @media (max-width: 899px) {
-  .board-footer-mail input { flex: none; width: 100%; height: 50px; }  /* stacked, the field keeps its height */
-  .board-footer-mail button { flex: none; height: 50px; }
-  .board-footer-base { align-items: center; }
-}
+  }
 .board-pick-logo.is-wide { width: 22px; }  /* MLX's wordmark */
 @media (max-width: 899px) { .board-card-pick .board-pick-logo.is-wide { width: 34px; } }
 /* coverage: engines down, platforms across, each cell a count over a thin bar in the engine's colour */

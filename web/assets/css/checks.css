@@ -114,10 +114,15 @@
 .qc-bar-note { margin-left: 8px; font-size: 11px; color: var(--color-label-tertiary); }
 .qc-gap { margin-left: 6px; font-size: 10px; font-weight: 400; color: var(--color-label-tertiary); }
 .qc-gap.is-off { color: var(--color-negative); }
+/* pie on par with the other engine: the cell, its gap and the Overall chip in green, as a mismatch is in red */
+.platform-cell.is-same, .platform-cell.is-same .qc-gap { color: var(--color-positive); }
+.platform-table td.is-overall .platform-cell.is-same { color: var(--color-positive); background: color-mix(in srgb, var(--color-positive) 14%, transparent); }
 #checks .platform-scroll > .qc-empty { margin: 24px var(--edge); }
 .board-accuracy .qc-picker { margin: 0 0 12px; }
-.qc-tip { min-width: 180px; }
-.qc-tip .board-tip-head { margin-bottom: 2px; font-weight: 600; }
-.qc-tip-off { display: flex; align-items: center; gap: 5px; margin-top: 4px; font-size: 11px; font-weight: 600; color: var(--color-negative); }
-.qc-tip-off::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+/* the hover card in the platform pages' format (.tip-title, .tip-row): name, value, no date column; the verdict a footer */
+.qc-tip-rows .tip-row { grid-template-columns: 8px 1fr auto; }
+.qc-tip-off, .qc-tip-ok { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+.qc-tip-off { color: var(--color-negative); }
+.qc-tip-ok { color: var(--color-positive); }
+.qc-tip-off::before, .qc-tip-ok::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 #checks .platform-main { white-space: nowrap; }  /* a score and its gap stay on one line */
