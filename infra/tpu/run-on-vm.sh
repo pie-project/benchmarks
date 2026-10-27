@@ -93,8 +93,11 @@ if [ -n "${PARITY_ARTIFACTS:-}" ]; then
   # one model at a time, its checkpoint and import dropped after it: the VM's disk holds one model's, not five
   for a in $(echo "$PARITY_ARTIFACTS" | tr ',' ' '); do
     [ "$a" != kernels ] || continue  # the kernel suite runs after the models, on the device they left idle
-    .venv/bin/pie-evals-node parity --artifact "$a" --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" \
-      --store out/parity/store --tag "$PARITY_TAG" --tag-kind manual --out out/parity || rc=$?
+    # a model's cap (PARITY_MODEL_MINUTES, 60 by default): a hung serve or compile costs one model, not the run
+    timeout -k 60 "$(( ${PARITY_MODEL_MINUTES:-60} * 60 ))" .venv/bin/pie-evals-node parity --artifact "$a" --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" \
+      --store out/parity/store --tag "$PARITY_TAG" --tag-kind manual --out out/parity || { rc=$?; echo "parity $a: exit $rc"; }
+    # the servers run in sessions of their own: a capped model's leave the chip held
+    pkill -9 -f 'vllm.entrypoints|parity_pie_serve|target/release/pie' || true
     mv out/parity/failed.json "out/parity/failed-$a.json" || true
     rm -rf "$HOME"/.cache/huggingface/hub/models--* "$HOME"/.cache/pie-evals/artifacts
   done
