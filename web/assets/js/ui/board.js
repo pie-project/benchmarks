@@ -749,13 +749,16 @@ window.Pie = window.Pie || {};
     if (Pie.tapCard.isTouch()) return;
     const g = event.target.closest?.(".board-bar[data-tip-head], .board-matrix td[data-tip-head], .qc-mark[data-tip-html]");  // a bar, a battle in a head-to-head grid, or an accuracy gap
     if (!g) {
-      if (tipFor) { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board"); }
+      if (tipFor) { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board", "is-card"); }
       return;
     }
     if (g !== tipFor) {
       tipFor = g;
       tooltip.innerHTML = g.dataset.tipHtml || tipHtml(g);
-      tooltip.classList.add("is-board");
+      // a Quality card brings the platform pages' card format; the board's own marks keep its compact one
+      const qc = !!g.dataset.tipHtml && tooltip.querySelector(".qc-tip-rows");
+      tooltip.classList.toggle("is-board", !qc);
+      tooltip.classList.toggle("is-card", !!qc);
       tooltip.hidden = false;
     }
     const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
@@ -763,7 +766,7 @@ window.Pie = window.Pie || {};
     tooltip.style.left = `${Math.max(8, x)}px`;
     tooltip.style.top = `${Math.max(8, y)}px`;
   });
-  const hideTip = () => { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board"); };
+  const hideTip = () => { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board", "is-card"); };
   element.addEventListener("pointerleave", hideTip);
   element.addEventListener("scroll", hideTip, { passive: true, capture: true });
 

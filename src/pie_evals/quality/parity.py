@@ -1,13 +1,16 @@
 """Parity of quality scores across engines.
 
-For one model and one task, every engine that ran it is compared with pie. Two
-checks, both per engine arm:
+For one model and one task, every engine that ran it is compared with pie, per
+engine arm:
 
-- score: the difference from pie is larger than the two 95% intervals combined
-  (the half-widths added in quadrature). Flag ``mismatch``.
-- answers: share of identical prompts where the greedy answer is exactly pie's.
-  Only meaningful on the same weights (same scheme and checkpoint), and not for
-  Splash, which renders its own chat template. Flag ``mismatch`` below 95%.
+- score: the only verdict. ``mismatch`` when pie scores lower than the engine by
+  more than the two 95% intervals combined (the half-widths added in quadrature):
+  pie answered worse, beyond the noise of the question sample. pie scoring higher
+  is not a fault, and a gap inside the intervals is noise.
+- answers: share of prompts where the greedy text is exactly pie's, a measure of
+  drift and never a verdict: two correct engines round differently, a near tie
+  flips one token and the rest of the text follows, often to the same answer.
+  Only on the same weights, and not for Splash, which renders its own chat template.
 
 Only arms on the same weights as a pie arm (same scheme and checkpoint) are
 compared: another quantization scores differently for reasons that are not pie's,
@@ -21,7 +24,6 @@ from __future__ import annotations
 
 import math
 
-AGREE_FLOOR = 0.95
 ENGINE_RANK = {"pie": 0, "vllm": 1, "mlxlm": 1, "splash": 2, "llamacpp": 3}
 #: an arm's name when its summary carries none: a vLLM arm (artifact ``<id>@vllm``) is compared with pie as mlx-lm is
 LABELS = {"pie": "pie", "vllm": "vLLM", "mlxlm": "mlx-lm", "splash": "Splash", "llamacpp": "llama.cpp"}
@@ -59,7 +61,7 @@ def compare(pie: dict, arm: dict, cell: dict) -> dict:
     tolerance = math.sqrt(_half(pie) ** 2 + _half(arm) ** 2)
     cell["diff"] = round(diff, 3)
     cell["tolerance"] = round(tolerance, 3)
-    cell["score_flag"] = "mismatch" if abs(diff) > tolerance else "ok"
+    cell["score_flag"] = "mismatch" if diff > tolerance else "ok"  # diff is the engine minus pie: pie lower
     known = all(r.get(k) for r in (arm, pie) for k in ("scheme", "checkpoint"))
     same_weights = known and arm["scheme"] == pie["scheme"] and arm["checkpoint"] == pie["checkpoint"]
     if arm["engine"] in OWN_TEMPLATE:
@@ -69,7 +71,7 @@ def compare(pie: dict, arm: dict, cell: dict) -> dict:
     else:
         share = _answers(pie, arm)
         cell["agree"] = None if share is None else round(share, 3)
-        cell["agree_flag"] = "n/a" if share is None else ("ok" if share >= AGREE_FLOOR else "mismatch")
+        cell["agree_flag"] = "n/a" if share is None else "measured"  # drift, shown as a number
     return cell
 
 
@@ -100,7 +102,7 @@ def rows(summaries: list[dict]) -> list[dict]:
                 compare(same, r, cell)
                 cell["vs"] = same["artifact"]
             cells.append(cell)
-        flags = [c[k] for c in cells for k in ("score_flag", "agree_flag")]
+        flags = [c["score_flag"] for c in cells]
         if pie is None:
             flag = "no_pie"
         else:
