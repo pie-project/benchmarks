@@ -194,6 +194,9 @@ window.Pie = window.Pie || {};
         text("status", "Status", "Setup", { status: true }),
         text("release", "Release", "Setup", { code: true }),
         text("scheme", "Quantization", "Setup", { code: true }),
+        // a datacenter model cut to fit one device: how much of it ran ("8 of 93 layers"), and its own size
+        text("miniature", "Miniature", "Setup", { hint: "Layers kept when a model too big for the device ran cut down; for engine-to-engine comparison only" }),
+        number("mini_params_b", "Mini size", "Setup", "B", 1, { hint: "The cut-down model's parameters (an estimate from the full model's)" }),
         number("decode_tok_s", "Decode", "Speed", "tok/s", 1),
         number("prefill_tok_s", "Prefill", "Speed", "tok/s", 0, {
           // under load the first token waits behind other requests, so no fair prefill rate exists

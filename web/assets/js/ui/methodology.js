@@ -33,7 +33,7 @@ window.Pie = window.Pie || {};
   const HYBRID = /qwen3_5|qwen3_6|qwen4/;
   const layersFor = (p) => (p <= 5 ? 32 : p <= 15 ? 40 : p <= 40 ? 64 : 80);
   const models = () => (Pie.store.rows("models") || []).filter((m) => m.params_b).map((m) => {
-    const layers = layersFor(m.params_b);
+    const layers = m.layers || layersFor(m.params_b);  // the config's count where the catalog states it
     return {
       id: m.id,
       label: m.name,
@@ -45,6 +45,9 @@ window.Pie = window.Pie || {};
       // what the catalog says the model supports: a paired drafter, and SSD streaming of its experts
       draft: String(m.draft) === "true",
       ssd: Boolean(m.ssd_streaming) && m.ssd_streaming !== "n/a",
+      // the residual width the GPUs exchange between them; where the catalog has none, the width a dense model of this
+      // size and depth would have (12 x hidden^2 parameters a layer)
+      hidden: m.hidden_size || Math.round(Math.sqrt((m.params_b * 1e9) / (12 * layers))),
     };
   });
 
@@ -315,7 +318,7 @@ window.Pie = window.Pie || {};
     const m = models().find((x) => x.id === id);
     if (!m?.total) return null;
     return { total: m.total, emb: 0, tied: true, ple: 0, routed: m.total, k: m.active / m.total, full: m.layers, sliding: 0, window: 0,
-      kvLayer: (m.kvKB / m.layers) * 1e3, linear: 0, state: 0, layers: m.layers, shared: 0 };
+      kvLayer: (m.kvKB / m.layers) * 1e3, linear: 0, state: 0, layers: m.layers, shared: 0, hidden: m.hidden };
   };
 
   // the link between the GPUs of a multi-GPU machine, per direction per GPU, and the latency of one exchange. The catalog
