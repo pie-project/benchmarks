@@ -92,11 +92,16 @@ if [ -n "${PARITY_ARTIFACTS:-}" ]; then
   rc=0
   # one model at a time, its checkpoint and import dropped after it: the VM's disk holds one model's, not five
   for a in $(echo "$PARITY_ARTIFACTS" | tr ',' ' '); do
+    [ "$a" != kernels ] || continue  # the kernel suite runs after the models, on the device they left idle
     .venv/bin/pie-evals-node parity --artifact "$a" --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" \
       --store out/parity/store --tag "$PARITY_TAG" --tag-kind manual --out out/parity || rc=$?
     mv out/parity/failed.json "out/parity/failed-$a.json" || true
     rm -rf "$HOME"/.cache/huggingface/hub/models--* "$HOME"/.cache/pie-evals/artifacts
   done
+  if [[ ",$PARITY_ARTIFACTS," == *,kernels,* ]]; then  # pie's kernel tests (engine-xla's KERR lines) as one row
+    .venv/bin/pie-evals-node kernels --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" --store out/parity/store \
+      --tag "$PARITY_TAG" --tag-kind manual --out out/parity/kernels || rc=$?
+  fi
   exit $rc
 fi
 rc=0
