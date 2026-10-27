@@ -555,14 +555,14 @@ window.Pie = window.Pie || {};
           let c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base);
           // a model that runs cut down to fit (a miniature) never "does not fit": where its miniature did not run, the cell
           // says that instead of the full model's size
-          const cut = miniModels.has(id);
+          const cut = miniModels.has(id) || TODAY.models.has(id);
           let needs = cut ? null : noFit[mac]?.[id]?.[base];
           // Best TPS and FP Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
           const fullNeeds = Pie.store.index.models[id]?.needs_gib;
           if ((compare === "tps" || compare === "ceiling") && cut) { c = null; needs = noFit[mac]?.[id]?.[base] || fullNeeds || 1; }
           const own = snapshot.find((r) => here(r) && r.engine === base);
           // an empty cell explains itself only when there is something to say: it does not fit, or its run failed
-          grid[mac][model] = { c, needs, why: needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a miniature ran` : `Needs about ${Math.round(needs)} GB`) : own?.note || (cut && !rows.some(here) ? "Not run on this machine: the miniature ran on the GPUs listed in the run" : "") };
+          grid[mac][model] = { c, needs, why: needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a miniature ran` : `Needs about ${Math.round(needs)} GB`) : own?.note || (cut && !rows.some(here) ? "Not in today's run: its miniature runs on the GPUs and TPUs the run lists" : "") };
         }
       }
       // Hide unavailable drops the models and machines with nothing to compare, as the results table does
