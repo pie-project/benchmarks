@@ -107,9 +107,9 @@ window.Pie = window.Pie || {};
   // pending, not missing (a local preview mark, until the run's last results land)
   const TODAY = {
     models: new Set(["deepseek-v4.1-flash", "glm-5.3-flash", "kimi-k3", "glm-5.3", "hy4-preview", "mimo-v2.6-flash-rl", "qwen3.8-flash-next",
-      "muse-spark-open-816b-a42b", "nvidia-nemotron-3-ultra-550b-a55b"]),
+      "muse-spark-open-816b-a42b", "nvidia-nemotron-3-ultra-550b-a55b", "minimax-m3.1-flash"]),
     // only machines the run can still fill: B300 and MI300X have no RunPod stock, pie's TPU engine serves none of these
-    // models, and MiniMax's miniature loads in no engine (left out of the models above)
+    // models
     hardware: new Set(["h200-x1", "b200-x1", "pro6000-x1", "a100-sxm-x1", "h100-sxm-x1", "a40-x1", "l40s-x1", "rtx5090-x1", "rtx4090-x1"]),
   };
   const PENDING = '<svg class="platform-pending" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.8V8l2.2 1.6"/></svg>';
@@ -357,6 +357,15 @@ window.Pie = window.Pie || {};
   let peeked = null;  // the chosen view while R is held, so it can come back
   let refreshCard = () => {};
   let viewState = null;  // the state the grid last drew, for the engine menu
+  // model sizes, by total parameters as the catalog states them: the filter bar narrows the columns to a few at once
+  const SIZES = [
+    { id: "small", label: "Under 10B", test: (b) => b < 10 },
+    { id: "medium", label: "10B to 40B", test: (b) => b >= 10 && b < 40 },
+    { id: "large", label: "40B to 200B", test: (b) => b >= 40 && b < 200 },
+    { id: "datacenter", label: "200B and up", test: (b) => b >= 200 },
+  ];
+  const paramsOf = (id) => (Pie.store.tables.models || []).find((m) => m.id === id)?.params_b;
+  const sizeOf = (id) => { const b = paramsOf(id); return b == null ? null : SIZES.find((sz) => sz.test(b))?.id; };
   let pageMakers = [];  // the makers with a result on the page the grid last drew
   let pagePlatforms = [];  // the platforms with a result in the setup the grid last drew
 
@@ -439,6 +448,12 @@ window.Pie = window.Pie || {};
           // each maker after its logo, as the grid heads its columns
           ...makers.map((name) => ({ value: name, label: name, selected: current.includes(name), check: true, icon: badge(MAKERS.find((m) => m.name === name) || { logo: "" }) }))];
       }
+      if (k === "size" && viewState) {
+        // All Sizes, then each size band, several at once, as the makers menu checks several makers
+        const current = viewState.platform.sizes || [];
+        return [{ value: "", label: "All Sizes", selected: !current.length }, { separator: true },
+          ...SIZES.map((sz) => ({ value: sz.id, label: sz.label, selected: current.includes(sz.id), check: true }))];
+      }
       if (k !== "engine" || !viewState) return [];
       const current = viewState.platform.engine || Pie.engines.primary;
       // each engine with its dot, as the catalog marks it
@@ -449,6 +464,10 @@ window.Pie = window.Pie || {};
       if (k === "platform" && viewState) {
         const now = viewState.platform.platforms || [];
         viewState.platform.platforms = !value ? [] : now.includes(value) ? now.filter((id) => id !== value) : [...now, value];
+      }
+      if (k === "size" && viewState) {
+        const now = viewState.platform.sizes || [];
+        viewState.platform.sizes = !value ? [] : now.includes(value) ? now.filter((v) => v !== value) : [...now, value];
       }
       if (k === "maker" && viewState) {
         const now = viewState.platform.makers || [];
@@ -530,6 +549,7 @@ window.Pie = window.Pie || {};
       for (const name of Object.keys(makerFill)) makerFill[name] /= makerCount[name];
       // the maker picked in the bar narrows the columns to its models
       const sortedModels = (narrowModels ? modelHits : suiteModels).filter((id) => !p.makers?.length || p.makers.includes(makerOf(id).name || "Cloud"))
+        .filter((id) => !p.sizes?.length || p.sizes.includes(sizeOf(id)))
         .sort((a, b) => byRank(p.makerOrder, makerOf(a).name, makerOf(b).name)
           || makerFill[makerOf(b).name] - makerFill[makerOf(a).name] || byName(makerOf(a).name || "~", makerOf(b).name || "~")
           || byRank(p.modelOrder, a, b) || fillOf(b) - fillOf(a) || byName(names().model(a), names().model(b)));
@@ -657,7 +677,7 @@ window.Pie = window.Pie || {};
                 })()
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}${c.pie.miniature ? `<span class="platform-mini" title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}">Mini</span>` : ""}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            return `<td class="${sorted}" data-col="${esc(model)}"><span${c.pie.miniature ? ` title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}"` : ""} class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           if (TODAY.models.has(realOf(model)) && TODAY.hardware.has(mac) && !needs && !grid[mac][model].failed) return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty is-pending" data-tip="${esc(card("", "", [], "Being measured in today's miniature run"))}">${PENDING}</span></td>`;
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${why ? ` data-tip="${esc(card("", "", [], why))}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
@@ -694,6 +714,7 @@ window.Pie = window.Pie || {};
           <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           ${only ? "" : `<span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="platform" aria-haspopup="menu" aria-label="Platforms">${esc(!picked.length ? "All Platforms" : picked.length <= 2 ? picked.map((id) => Pie.schema[id]?.short || id).join(", ") : `${picked.length} Platforms`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`}
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="maker" aria-haspopup="menu" aria-label="Makers">${esc(!p.makers?.length ? "All Makers" : p.makers.length <= 2 ? p.makers.join(", ") : `${p.makers.length} Makers`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="size" aria-haspopup="menu" aria-label="Model sizes">${esc(!p.sizes?.length ? "All Sizes" : p.sizes.length <= 2 ? p.sizes.map((id) => SIZES.find((sz) => sz.id === id)?.label || id).join(", ") : `${p.sizes.length} Sizes`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             ${fixed ? "" : (() => {
