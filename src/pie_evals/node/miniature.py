@@ -61,6 +61,8 @@ def miniature_argv(
         argv += ["--attn-res-block-size", str(r.attn_res_block_size)]
     if r.shrink_family:
         argv += ["--family", r.shrink_family]
+    if r.keep_fp8:
+        argv.append("--keep-fp8")
     if cache_dir is not None:
         argv += ["--cache", str(cache_dir)]
     return argv
