@@ -18,12 +18,15 @@ import re
 import sys
 
 
-def rewrite(text: str) -> str:
+def rewrite(text: str, port: str | None = None) -> str:
     out, section = [], None
     for line in text.splitlines():
         header = re.match(r"^\[([^\]]+)\]\s*$", line)
         if header:
             section = header.group(1)
+        elif section == "server" and port and re.match(r"^listen\s*=", line):
+            # the bench connects to the port in the file's name; its `listen = "127.0.0.1:0"` binds another
+            line = f'listen = "127.0.0.1:{port}"'
         elif section == "engine":
             if re.match(r"^type\s*=", line):
                 line = 'type = "xla"'
@@ -39,8 +42,9 @@ def main() -> None:
         sys.exit("pie_xla.py: PIE_XLA_REAL_PIE is not set")
     if "--config" in argv:
         path = argv[argv.index("--config") + 1]
+        port = re.search(r"-(\d+)\.toml$", path)
         with open(path) as f:
-            text = rewrite(f.read())
+            text = rewrite(f.read(), port and port.group(1))
         with open(path, "w") as f:
             f.write(text)
     os.execv(real, [real, *argv])
