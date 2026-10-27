@@ -89,10 +89,15 @@ if [ -n "${PARITY_ARTIFACTS:-}" ]; then
   .venv/bin/pie-evals-node build --pie-commit "$commit" --features xla --pie-root "$PIE_ROOT"
   PIE_PY=$(.venv/bin/python -c "from pie_evals.node.build import bench_python; print(bench_python())" | tail -n 1)
   export PIE_PY
-  args=()
-  for a in $(echo "$PARITY_ARTIFACTS" | tr ',' ' '); do args+=(--artifact "$a"); done
-  exec .venv/bin/pie-evals-node parity "${args[@]}" --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" \
-    --store out/parity/store --tag "$PARITY_TAG" --tag-kind manual --out out/parity
+  rc=0
+  # one model at a time, its checkpoint and import dropped after it: the VM's disk holds one model's, not five
+  for a in $(echo "$PARITY_ARTIFACTS" | tr ',' ' '); do
+    .venv/bin/pie-evals-node parity --artifact "$a" --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" \
+      --store out/parity/store --tag "$PARITY_TAG" --tag-kind manual --out out/parity || rc=$?
+    mv out/parity/failed.json "out/parity/failed-$a.json" || true
+    rm -rf "$HOME"/.cache/huggingface/hub/models--* "$HOME"/.cache/pie-evals/artifacts
+  done
+  exit $rc
 fi
 rc=0
 for job in "${jobs[@]}"; do

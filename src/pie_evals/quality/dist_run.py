@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import tempfile
@@ -74,7 +75,8 @@ class Server:
     def __init__(self, argv: list[str], env: dict, cwd: str | None, log_path: Path, url: str | None = None):
         self.log_path = log_path
         self.fh = log_path.open("w")
-        self.proc = subprocess.Popen(argv, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        # its own process group: stop() reaches the server's children too (pie under the serve script, vLLM's engine core)
+        self.proc = subprocess.Popen(argv, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, start_new_session=True)
         self.url = url
         self.ready = threading.Event()
         threading.Thread(target=self._pump, daemon=True).start()
@@ -110,11 +112,22 @@ class Server:
             return ""
 
     def stop(self) -> None:
-        self.proc.terminate()
-        try:
-            self.proc.wait(timeout=60)
-        except subprocess.TimeoutExpired:
-            self.proc.kill()
+        # the whole group, until none of it is left: a child that outlives the server holds the device (TPU: /dev/vfio busy)
+        def group(sig) -> bool:
+            try:
+                os.killpg(self.proc.pid, sig)
+                return True
+            except ProcessLookupError:
+                return False
+
+        group(signal.SIGTERM)
+        deadline = time.monotonic() + 60
+        while self.proc.poll() is None or group(0):
+            if time.monotonic() > deadline:
+                group(signal.SIGKILL)
+                self.proc.wait()
+                break
+            time.sleep(1)
         self.fh.close()
 
 
@@ -134,7 +147,13 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
         argv += ["--kv-cache-dtype", str(engine.artifact.kv_dtype)]
     if engine.recipe.get("attention_backend"):
         argv += ["--attention-backend", str(engine.recipe["attention_backend"])]
-    return Server(argv, engine.process_env(), None, log_path, url=f"http://127.0.0.1:{port}")
+    env = engine.process_env()
+    cfg = json.loads((snapshot / "config.json").read_text()) if (snapshot / "config.json").exists() else {}
+    if str(engine.platform.backend) == "xla" and "kv_lora_rank" in {**cfg, **(cfg.get("text_config") or {})}:
+        # vllm-tpu serves an MLA model only on its new model design with DP attention ("MLA models require both ...")
+        env["NEW_MODEL_DESIGN"] = "1"
+        argv += ["--additional-config", json.dumps({"sharding": {"sharding_strategy": {"enable_dp_attention": True}}})]
+    return Server(argv, env, None, log_path, url=f"http://127.0.0.1:{port}")
 
 
 def pie_server(engine, workload, log_path: Path) -> Server:

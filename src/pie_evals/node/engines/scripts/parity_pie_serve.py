@@ -25,8 +25,8 @@ def main() -> None:
         proc = subprocess.Popen([str(args.pie_bin), "--config", str(path), "serve"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
         for line in proc.stdout:
             sys.stdout.write(line)
-            if "Server ready at " in line:
-                print(f"PARITY_URL=http://127.0.0.1:{cfg.server.port}", flush=True)
+            if "Server ready at " in line:  # the port it bound: [server] listen asks the OS for one
+                print(f"PARITY_URL=http://127.0.0.1:{line.strip().rsplit(':', 1)[-1]}", flush=True)
         sys.exit(proc.wait())
 
     from pie.server import Server
