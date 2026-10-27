@@ -194,8 +194,12 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
     counters["cold_cache_verified"] = 1.0 if verdict == "cold" else 0.0
     if prefill_tok_s is not None:
         counters["prefill_ttft_mismatch"] = 1.0 if prefill_mismatch(prefill_tok_s, _pct(ttft, 50), prompt_tok, len(completed)) else 0.0
+    # batched prefill (many prompts at once, one token each): the batch's prompt tokens over the wall
+    batched_prefill = (concurrency or 0) > 1 and completed and wall and out_tok <= len(completed)
+    if batched_prefill:
+        prefill_tok_s = prompt_tok / wall
     # single-stream: the lane's decode rate is the aggregate; concurrency: aggregate output tok/s is the headline
-    primary = "decode_tok_s" if (concurrency in (None, 1)) and decode_tok_s else "output_tok_s"
+    primary = "prefill_tok_s" if batched_prefill else "decode_tok_s" if (concurrency in (None, 1)) and decode_tok_s else "output_tok_s"
     ms_per_tok_per_layer = None
     if num_layers and decode_tok_s:
         ms_per_tok_per_layer = 1000.0 / decode_tok_s / num_layers

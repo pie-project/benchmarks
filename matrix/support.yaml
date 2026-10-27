@@ -24,6 +24,8 @@ unsupported:
     reason: "SGLang: kimi-k3 kv-oversub on 48 GB has no mem_fraction_static that fits both KV and the MoE prefill"
   - when: {engine: sglang, family: kimi_k3, platform: l40s-x1, workload: c256}
     reason: "SGLang: kimi-k3 c256 on 48 GB has no mem_fraction_static that fits both KV and the 256-wide graph"
+  - when: {engine: sglang, family: kimi_k3, platform: l40s-x1, workload: pf256-512}
+    reason: "SGLang: kimi-k3 256-wide batch on 48 GB has no mem_fraction_static that fits both KV and the graph"
   # Splash 1.3.2 pairs every model with its DFlash2 draft and has no flag to serve without it
   - when: {engine: splash, workload: raw-512-256}
     reason: "Splash always drafts: no flag turns speculation off, so it has no raw row"
