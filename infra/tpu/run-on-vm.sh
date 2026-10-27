@@ -41,7 +41,7 @@ pids=()
 for engine in vllm sglang; do
   if [ -n "${PARITY_ARTIFACTS:-}" ]; then
     [ "$engine" = vllm ] || continue
-    pin=$(.venv/bin/python -c "from pie_evals.plan.matrix import Matrix; print(Matrix.load('matrix').engines['vllm'].pin)")
+    pin=${PARITY_VLLM_PIN:-$(.venv/bin/python -c "from pie_evals.plan.matrix import Matrix; print(Matrix.load('matrix').engines['vllm'].pin)")}
   else
     pin=$(jq -rs "map(.baseline_versions.$engine // empty) | first // empty" "${jobs[@]}" 2>/dev/null || true)
   fi
