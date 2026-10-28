@@ -521,11 +521,11 @@
 .platform-table thead tr.platform-maker-row th.platform-corner { border-bottom: 0; }
 .platform-bar-side.is-end { margin-left: auto; }
 
-/* columns keep their width on a wide window: the table ends where its models do, as a Numbers table does */
-.platform-table { --col-w: clamp(156px, (var(--platform-visible, 100vw) - 190px) / var(--cols), 240px); min-width: 0; width: max(100%, calc(190px + var(--col-w) * var(--cols))); }
+/* the model columns share the window's width: no empty space past the last model */
+.platform-table { --col-w: max(156px, (var(--platform-visible, 100vw) - 190px) / var(--cols)); min-width: 0; width: max(100%, calc(190px + var(--col-w) * var(--cols))); }
 @media (max-width: 899px) { .platform-table { width: max(100%, calc(116px + 96px * var(--cols))); } }
-.platform-table col.col-fill { width: auto; }
-.platform-table .platform-fill { padding: 0; }
+.platform-table col.col-fill { width: 0; }  /* spare width goes to the model columns, never an empty band at the end */
+.platform-table .platform-fill { padding: 0; border: 0; }
 
 /* a cell's quiet second line under the comparison on the feature views: what the feature adds over raw */
 .platform-main { display: block; line-height: 16px; }
@@ -547,7 +547,7 @@
   .platform-table th.is-overall { left: 236px; }
   .platform-table.is-grouped td.is-overall,
   .platform-table.is-grouped th.is-overall { left: 386px; }
-  .platform-table { --col-w: clamp(156px, (var(--platform-visible, 100vw) - 328px) / max(var(--cols) - 1, 1), 240px); width: max(100%, calc(328px + var(--col-w) * (var(--cols) - 1))); }
+  .platform-table { --col-w: max(156px, (var(--platform-visible, 100vw) - 328px) / max(var(--cols) - 1, 1)); width: max(100%, calc(328px + var(--col-w) * (var(--cols) - 1))); }
 }
 
 
@@ -850,3 +850,15 @@
 .tip-row.is-absent { color: var(--color-label-tertiary); }
 .tip-row.is-absent .tip-dot { opacity: .35; }
 .tip-row.is-absent .tip-value { font-weight: 400; color: var(--color-label-tertiary); }
+
+/* a machine's eye, at the right of its cell (the sticky cell holds it): shown on the hover of the Hardware or Overall cell, not the rest of the row; closed, it stays, and the row keeps only the name, dimmed */
+.platform-eye { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 5px; color: var(--color-label-tertiary); background: none; cursor: pointer; opacity: 0; }
+.platform-eye:focus:not(:focus-visible) { outline: none; }
+.platform-eye svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.platform-eye:hover { color: var(--color-label-secondary); background: var(--color-fill); }
+.platform-table tbody tr:has(> th.platform-row:hover, > td.is-overall:hover) .platform-eye,
+.platform-eye:focus-visible,
+.platform-eye[aria-pressed="true"] { opacity: 1; }
+.platform-table tbody tr.is-hidden-row .platform-chip { color: var(--color-label-tertiary); }
+@media (hover: none) { .platform-eye { opacity: 1; } }  /* no hover on a phone: the eye always shows */
+.platform-table tbody th.platform-row { padding-right: 32px; }  /* room for the eye after the longest name */

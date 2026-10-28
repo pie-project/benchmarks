@@ -533,7 +533,7 @@ window.Pie = window.Pie || {};
       const only = Pie.schema[state.table]?.platform;
       // the Overview pages offer the platforms with a result in this setup, and any picked narrow the machines to theirs
       pagePlatforms = only ? [] : PLATFORMS.filter((pl) => rows.some((r) => platformOf(Pie.store.index.hardware[r.hardware] || {}) === pl)).map((pl) => pl.id);
-      const picked = only ? [] : (state.platform.platforms || []);
+      const picked = [];  // no platform filter: All Platforms shows every platform, each its own table
       const groups = PLATFORMS.filter((p) => (!only || p.id === only) && (!picked.length || picked.includes(p.id)))
         .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p).map((hw) => hw.id) }))
         .filter((g) => !only || g.macs.length);
@@ -651,7 +651,10 @@ window.Pie = window.Pie || {};
       // no sort: the machines in the catalog's order, no arrow anywhere
       const sortKey = p.sort?.key || null;
       const dir = p.sort?.dir || 1;
-      const order = (list) => {
+      // machines hidden with their eye keep only their name, at the foot of their list
+      const hidden = new Set(p.hidden || []);
+      const order = (list) => { const s = sorted(list); return [...s.filter((mac) => !hidden.has(mac)), ...s.filter((mac) => hidden.has(mac))]; };
+      const sorted = (list) => {
         const named = [...list];
         if (!sortKey) return named;
         if (sortKey === "name") return named.sort((a, b) => dir * macName(a).localeCompare(macName(b), undefined, { numeric: true }));
@@ -682,10 +685,16 @@ window.Pie = window.Pie || {};
         const short = terse(name);
         return pageNames.some((other) => other !== name && terse(other) === short) ? name.replace(/^RTX (PRO )?/, (m, pro) => (pro ? "PRO " : "")) : short;
       };
+      const EYE = "M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8z";
+      const eye = (mac) => {
+        const off = hidden.has(mac);
+        const label = off ? "Show this machine's numbers" : "Hide this machine's numbers";
+        return `<button type="button" class="platform-eye" data-hide-mac="${esc(mac)}" aria-pressed="${off}" aria-label="${label}" title="${label}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${EYE}"/>${off ? '<path d="M3 13 13 3"/>' : '<circle cx="8" cy="8" r="2"/>'}</svg></button>`;
+      };
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
         const short = shortOf(mac);
-        return `<th class="platform-row" scope="row"><span class="platform-chip"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}>${only ? "" : badgeOf(platformOf(hw || {})?.id)}<span class="platform-name">${esc(chipName(mac))}</span>${short !== chipName(mac) ? `<span class="platform-short">${esc(short)}</span>` : ""}${specOf(hw)}</span></th>`;
+        return `<th class="platform-row" scope="row"><span class="platform-chip"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}>${only ? "" : badgeOf(platformOf(hw || {})?.id)}<span class="platform-name">${esc(chipName(mac))}</span>${short !== chipName(mac) ? `<span class="platform-short">${esc(short)}</span>` : ""}${specOf(hw)}</span>${eye(mac)}</th>`;
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
@@ -704,6 +713,7 @@ window.Pie = window.Pie || {};
       const tableOf = ({ macs: list, models }, first = true) => {
       const shownGroups = [{ platform: null, macs: list }];
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
+        if (hidden.has(mac)) return `<tr class="is-hidden-row">${machine(mac, g.platform)}<td class="is-overall"></td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
           : compare === "tps" ? `<td class="is-overall"><span class="platform-cell is-even">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span></td>`
@@ -782,7 +792,6 @@ window.Pie = window.Pie || {};
         <div class="platform-bar">
           ${setupControl(mode.id, modes)}${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
           <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
-          ${only ? "" : `<span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="platform" aria-haspopup="menu" aria-label="Platforms">${esc(!picked.length ? "All Platforms" : picked.length <= 2 ? picked.map((id) => Pie.schema[id]?.short || id).join(", ") : `${picked.length} Platforms`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`}
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="maker" aria-haspopup="menu" aria-label="Makers">${esc(!p.makers?.length ? "All Makers" : p.makers.length <= 2 ? p.makers.join(", ") : `${p.makers.length} Makers`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="size" aria-haspopup="menu" aria-label="Model sizes">${esc(!p.sizes?.length ? "All Sizes" : p.sizes.length <= 2 ? p.sizes.map((id) => SIZES.find((sz) => sz.id === id)?.label || id).join(", ") : `${p.sizes.length} Sizes`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
@@ -807,6 +816,27 @@ window.Pie = window.Pie || {};
     },
 
     bind(state) {
+      element.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-hide-mac]");
+        if (!button) return;
+        event.stopPropagation();
+        const mac = button.dataset.hideMac;
+        const hidden = new Set(state.platform.hidden || []);
+        if (hidden.has(mac)) hidden.delete(mac); else hidden.add(mac);
+        state.platform.hidden = [...hidden];
+        Pie.saveView?.();
+        // the page stays where it was: drawn again, it keeps its height and each platform's sideways place
+        const top = element.querySelector(".platform-scroll")?.scrollTop || 0;
+        const lefts = [...element.querySelectorAll(".platform-section-scroll")].map((s) => s.scrollLeft);
+        const put = () => {
+          const page = element.querySelector(".platform-scroll");
+          if (page) page.scrollTop = top;
+          element.querySelectorAll(".platform-section-scroll").forEach((s, i) => { s.scrollLeft = lefts[i] || 0; });
+        };
+        document.dispatchEvent(new CustomEvent("pie:refresh"));
+        put();
+        requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(put)));
+      }, true);
       element.addEventListener("click", (event) => {
         const button = event.target.closest("[data-narrow]");
         if (!button) return;
