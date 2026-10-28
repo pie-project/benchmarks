@@ -645,8 +645,11 @@ window.Pie = window.Pie || {};
       };
       const grouped = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => shows(mac, model))) : g.macs) }))
         .filter((g) => (!only && !narrowMacs) || g.macs.length);  // a search hides the platforms it leaves empty
-      // one list of machines, no platform rows; on All Platforms each machine wears its platform's mark
-      const shownGroups = [{ platform: null, macs: order(grouped.flatMap((g) => g.macs)) }];
+      // a platform's page is one list of machines; All Platforms gives each platform its own table, headed by its name
+      // and its own maker and model heads, with only the models measured on it
+      const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs)), models }]
+        : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: models.filter((model) => g.macs.some((mac) => shows(mac, model))) }))
+          .filter((g) => g.macs.length && g.models.length);
 
       const cells = [];
       const number = (gain) => {
@@ -672,6 +675,8 @@ window.Pie = window.Pie || {};
         bandwidth: { title: "Bandwidth-bound: the share of the bandwidth bound", path: "M2 5.5h9M8.5 3l2.5 2.5L8.5 8M14 10.5H5M7.5 8 5 10.5 7.5 13" },
         interconnect: { title: "Interconnect-bound: the share of the bound set by the link between the GPUs", path: "M6.5 9.5l3-3M7.2 4.6l1.4-1.4a2.6 2.6 0 0 1 3.7 3.7l-1.4 1.4M8.8 11.4l-1.4 1.4a2.6 2.6 0 0 1-3.7-3.7l1.4-1.4" },
       };
+      const tableOf = ({ macs: list, models }) => {
+      const shownGroups = [{ platform: null, macs: list }];
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
@@ -733,6 +738,16 @@ window.Pie = window.Pie || {};
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
+      return `<table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
+      };
+      // each platform under its header bar, which folds it away as a Finder group does; its table scrolls sideways on its own
+      const tables = only ? tableOf(sections[0] || { macs: [], models: [] }) : sections.map((g) => `<section class="platform-section">
+        <div class="platform-group-row platform-section-bar${folded(g.platform.id) ? " is-collapsed" : ""}" data-group="${g.platform.id}" role="button" aria-expanded="${!folded(g.platform.id)}">
+          <span class="platform-group-bar">
+            <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"} · ${g.models.length} ${g.models.length === 1 ? "model" : "models"}</span></span>
+            <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
+          </span>
+        </div>${folded(g.platform.id) ? "" : `<div class="platform-section-scroll">${tableOf(g)}</div>`}</section>`).join("");
 
       element.innerHTML = `
         <div class="platform-bar">
@@ -752,13 +767,13 @@ window.Pie = window.Pie || {};
           </span>
         </div>
         <div class="platform-scroll">
-          <table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>
+          ${tables}
         </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
       if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
-      const macsShown = shownGroups.reduce((n, g) => n + g.macs.length, 0);
-      return { macs: macsShown, models: new Set(models.map(realOf)).size, metric };
+      const macsShown = sections.reduce((n, g) => n + g.macs.length, 0);
+      return { macs: macsShown, models: new Set(sections.flatMap((g) => g.models).map(realOf)).size, metric };
     },
 
     bind(state) {
@@ -766,7 +781,7 @@ window.Pie = window.Pie || {};
       // sideways swipe, or the wheel anywhere else, scrolls as it always does
       element.addEventListener("wheel", (event) => {
         if (!event.target.closest(".platform-table thead") || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
-        const scroller = element.querySelector(".platform-scroll");
+        const scroller = event.target.closest(".platform-section-scroll") || element.querySelector(".platform-scroll");
         if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
         event.preventDefault();
         scroller.scrollLeft += event.deltaY;
@@ -783,10 +798,12 @@ window.Pie = window.Pie || {};
       let dragged = false;
       // a unit that moves together: a model's column, or a maker's band with all of its models' columns
       const unitOf = (th) => {
+        // on All Platforms each platform is its own table: a column moves within its table
+        const table = th.closest("table");
         const cells = th.dataset.drop === "model"
-          ? [...element.querySelectorAll(`[data-col="${CSS.escape(th.dataset.id)}"]`)]
-          : [th, ...[...element.querySelectorAll(`[data-drop="model"][data-maker="${CSS.escape(th.dataset.id)}"]`)]
-              .flatMap((head) => [...element.querySelectorAll(`[data-col="${CSS.escape(head.dataset.id)}"]`)])];
+          ? [...table.querySelectorAll(`[data-col="${CSS.escape(th.dataset.id)}"]`)]
+          : [th, ...[...table.querySelectorAll(`[data-drop="model"][data-maker="${CSS.escape(th.dataset.id)}"]`)]
+              .flatMap((head) => [...table.querySelectorAll(`[data-col="${CSS.escape(head.dataset.id)}"]`)])];
         const r = th.getBoundingClientRect();
         return { id: th.dataset.id, cells, left: r.left, width: r.width };
       };
@@ -803,7 +820,7 @@ window.Pie = window.Pie || {};
         const { th } = press;
         press = null;
         const kind = th.dataset.drop;
-        const heads = [...element.querySelectorAll(`[data-drop="${kind}"]`)].filter((x) => kind === "maker" || x.dataset.maker === th.dataset.maker);
+        const heads = [...th.closest("table").querySelectorAll(`[data-drop="${kind}"]`)].filter((x) => kind === "maker" || x.dataset.maker === th.dataset.maker);
         if (heads.length < 2) return;
         const units = heads.map(unitOf);
         const index = heads.indexOf(th);

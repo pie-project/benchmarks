@@ -357,7 +357,8 @@
       }
       // ← and → scroll a platform's grid three model columns at a time, not the browser's few points
       if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && plain && !event.shiftKey && onPlatform && !popover.isOpen()) {
-        const scroller = document.querySelector("#platform .platform-scroll");
+        // on All Platforms each platform scrolls alone: the keys move the one under the pointer
+        const scroller = document.querySelector("#platform .platform-section:hover .platform-section-scroll") || document.querySelector("#platform .platform-scroll");
         const col = [...(scroller?.querySelectorAll("col.col-model") || [])].pop();  // a model's column, not Overall's
         if (scroller && col) {
           event.preventDefault();
