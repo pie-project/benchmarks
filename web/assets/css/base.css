@@ -7,8 +7,9 @@
 html,
 body {
   height: 100%;
-  /* a two-finger swipe sideways scrolls the grids, never the browser back or forward a page */
-  overscroll-behavior-x: none;
+  /* a two-finger swipe sideways scrolls the grids, never the browser back or forward a page; and a fast
+     scroll past either end never pulls the whole window, sidebar and toolbar with it */
+  overscroll-behavior: none;
 }
 
 body {
@@ -52,6 +53,9 @@ svg {
   min-width: 0;
   height: 100vh;
 }
+
+/* a page's own scroller stops dead at its ends: a fast scroll past the content never pulls the toolbar along */
+.platform-scroll, .table-container, .overview, .method { overscroll-behavior-y: none; }
 
 .spacer {
   flex: 1;
