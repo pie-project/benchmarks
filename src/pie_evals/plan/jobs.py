@@ -257,11 +257,28 @@ def recorded_cell_keys(store: Store, tier: Tier, pie_commit: str, baseline_pins:
     return done
 
 
-def plan_pods(matrix: Matrix, jobs: list[JobSpec]) -> list[dict]:
+def plan_pods(matrix: Matrix, jobs: list[JobSpec], *, pod_per_job: bool = False) -> list[dict]:
     """One pod per hardware configuration: every job whose platform names this pod
     (an x1 on its x2) is routed to it by runner label and runs there in turn, so the
     build, the checkpoints and the caches are shared. Resident runners (Macs) need
-    no pod and are left out. The kill timer covers the whole queue."""
+    no pod and are left out. The kill timer covers the whole queue.
+
+    ``pod_per_job`` (a run on its own pods): every job gets its own pod, of its own
+    platform first (a one-GPU L40S, not an x2 with one GPU masked) and its host second,
+    so the shards run side by side instead of in turn on one pod."""
+    if pod_per_job:
+        out = []
+        for j in jobs:
+            plat = matrix.platforms[j.platform_id]
+            host = matrix.platforms[plat.pod or plat.id]
+            if not (plat.runpod_gpu_type or host.runpod_gpu_type):
+                continue
+            order = [x for x in (plat, host) if x.runpod_gpu_type]
+            out.append({"pod": f"{plat.id}-{j.shard}", "labels": sorted(set(plat.runner_labels)), "jobs": [j.job_id],
+                        "est_minutes": round(j.est_minutes, 1),
+                        "kill_minutes": max(matrix.kill_minutes, int(j.est_minutes * matrix.kill_factor) + 30),
+                        "fallback": list(dict.fromkeys(x.id for x in order))})
+        return sorted(out, key=lambda p: p["pod"])
     pods: dict[str, dict] = {}
     for j in jobs:
         plat = matrix.platforms[j.platform_id]

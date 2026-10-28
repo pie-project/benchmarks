@@ -155,7 +155,7 @@ def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloa
         # a pod's runner carries the run's label too, so two runs on one GPU type never trade shards
         extra = [run_label] if run_label and plat.runpod_gpu_type else []
         gh.append({"job_id": j.job_id, "platform": j.platform_id, "pod": plat.pod or plat.id, "shard": j.shard, "labels": plat.runner_labels + extra, "os": plat.os, "runpod": bool(plat.runpod_gpu_type), "cells": len(j.cells), "est_minutes": round(j.est_minutes, 1)})
-    pods = plan_pods(m, js)
+    pods = plan_pods(m, js, pod_per_job=bool(run_label))
     if run_label:
         for p in pods:
             p["labels"] = sorted(set(p["labels"]) | {run_label})
