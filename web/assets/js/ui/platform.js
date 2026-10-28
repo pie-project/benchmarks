@@ -54,6 +54,15 @@ window.Pie = window.Pie || {};
   ];
   const platformOf = (hw) => PLATFORMS.find((p) => p.has(hw));
   // a platform's mark is the sidebar's: the same tinted squircle and glyph wherever it appears
+  // a platform's scroll bar shows while its table scrolls and a moment after, then hides, as macOS's overlay scrollers do
+  const hideAfter = new WeakMap();
+  document.addEventListener("scroll", (event) => {
+    const scroller = event.target;
+    if (!scroller.classList?.contains("platform-section-scroll")) return;
+    scroller.classList.add("is-scrolling");
+    clearTimeout(hideAfter.get(scroller));
+    hideAfter.set(scroller, setTimeout(() => scroller.classList.remove("is-scrolling"), 900));
+  }, { capture: true, passive: true });
   const badgeOf = (id) => `<span class="sidebar-glyph" style="--tint: ${Pie.schema[id]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(id)}</span>`;
 
   // a model's maker as a small app icon: its logo on a white tile (logos from LobeHub's icon set, MIT)
@@ -778,15 +787,6 @@ window.Pie = window.Pie || {};
     },
 
     bind(state) {
-      // a mouse wheel over the model heads scrolls the models sideways, as a timeline's ruler does; a trackpad's own
-      // sideways swipe, or the wheel anywhere else, scrolls as it always does
-      element.addEventListener("wheel", (event) => {
-        if (!event.target.closest(".platform-table thead") || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
-        const scroller = event.target.closest(".platform-section-scroll") || element.querySelector(".platform-scroll");
-        if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
-        event.preventDefault();
-        scroller.scrollLeft += event.deltaY;
-      }, { passive: false });
 
       // drag a maker's band among the makers, or a model's head among its maker's models, as a column moves in Finder's
       // list view: the whole column (the head and every cell under it) slides sideways within its lane, and the columns
