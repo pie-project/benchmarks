@@ -128,6 +128,14 @@ window.Pie = window.Pie || {};
   const isOff = (arm) => arm.score_flag === "mismatch";
   // the newest release with comparisons on the picked platform; the viewer's release first. Only arms compared with
   // pie (same weights, same machine) count: the rest have no gap
+  // one platform's rows, in the newest release that ran it there; the Accuracy grid shows every platform, each its own
+  const rowsOn = (state, platform) => {
+    const byTag = tables().parity || {};
+    const tags = [state.release, ...(tables().tags || []).map((t) => t.id)].filter((t) => byTag[t]?.length);
+    const arms = (tag) => byTag[tag].flatMap((row) => row.arms.filter((a) => a.engine !== "pie" && isNum(a.diff)).map((a) => ({ row, arm: a, platform: familyOf(row) })));
+    const tag = tags.find((t) => arms(t).some((x) => x.platform === platform));
+    return tag ? arms(tag).filter((x) => x.platform === platform).sort(byRank) : [];
+  };
   const accuracyRows = (state) => {
     const byTag = tables().parity || {};
     const tags = [state.release, ...(tables().tags || []).map((t) => t.id)].filter((t) => byTag[t]?.length);
@@ -216,8 +224,7 @@ window.Pie = window.Pie || {};
   // the page: one grid in the platform pages' style, the benchmark tasks down the side and the models across under
   // their makers, for the platform picked in the bar; each cell pie's score with its gap to the closest reference engine
   // on the same weights and machine (mlx-lm, vLLM), red where any engine there disagrees
-  const gridPage = (state) => {
-    const { platforms, items } = accuracyRows(state);
+  const gridOf = (items) => {
     const models = [...new Set(items.map((x) => x.row.model))]
       .sort((a, b) => Pie.platform.makerName(a).localeCompare(Pie.platform.makerName(b)) || Pie.store.names.model(a).localeCompare(Pie.store.names.model(b)));
     const tasks = [...new Set(items.map((x) => x.row.task))].sort();
@@ -270,8 +277,24 @@ window.Pie = window.Pie || {};
         }).join("")}<td class="platform-fill"></td></tr>`;
     }).join("");
     const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
-    return `<div class="platform-bar">${platformBar(platforms)}</div>
-      <div class="platform-scroll">${items.length ? `<table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>` : empty("No accuracy scores to compare yet.")}</div>`;
+    return `<table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
+  };
+  // every platform at once, as the compare pages stack theirs: a header bar that folds it, over its own grid
+  const folded = {};
+  const gridPage = (state) => {
+    const sections = accuracyRows(state).platforms.map((p) => ({ p, items: rowsOn(state, p) })).filter((x) => x.items.length);
+    if (!sections.length) return `<div class="platform-scroll">${empty("No accuracy scores to compare yet.")}</div>`;
+    return `<div class="platform-scroll">${sections.map(({ p, items }) => {
+      const models = new Set(items.map((x) => x.row.model)).size;
+      const tasks = new Set(items.map((x) => x.row.task)).size;
+      return `<section class="platform-section">
+        <div class="platform-group-row platform-section-bar${folded[p] ? " is-collapsed" : ""}" data-qc-fold="${esc(p)}" role="button" aria-expanded="${!folded[p]}">
+          <span class="platform-group-bar">
+            <span class="platform-group-name">${Pie.platform.badge(p)}<b>${esc(platformLabel(p))}</b><span>${models} ${models === 1 ? "model" : "models"} · ${tasks} ${tasks === 1 ? "task" : "tasks"}</span></span>
+            <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
+          </span>
+        </div><div class="platform-section-body"${folded[p] ? " hidden" : ""}><div class="platform-section-scroll">${gridOf(items)}</div></div></section>`;
+    }).join("")}</div>`;
   };
 
   const page = (state) => `
@@ -295,6 +318,26 @@ window.Pie = window.Pie || {};
 
   const wire = () => {
     element.addEventListener("click", (event) => {
+      // a platform's bar folds its grid in place, sliding, as the compare pages fold theirs
+      const bar = event.target.closest("[data-qc-fold]");
+      if (bar) {
+        const id = bar.dataset.qcFold;
+        const body = bar.nextElementSibling;
+        const fold = !folded[id];
+        folded[id] = fold;
+        bar.classList.toggle("is-collapsed", fold);
+        bar.setAttribute("aria-expanded", String(!fold));
+        body.getAnimations().forEach((a) => a.cancel());
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (fold) {
+          if (reduce) { body.hidden = true; return; }
+          body.animate([{ height: `${body.offsetHeight}px` }, { height: "0px" }], { duration: 200, easing: "ease-in-out" }).onfinish = () => { body.hidden = true; };
+        } else {
+          body.hidden = false;
+          if (!reduce) body.animate([{ height: "0px" }, { height: `${body.offsetHeight}px` }], { duration: 200, easing: "ease-in-out" });
+        }
+        return;
+      }
       const platform = event.target.closest("[data-qc-platform]");
       if (platform) {
         accuracyPlatform = platform.dataset.qcPlatform;
