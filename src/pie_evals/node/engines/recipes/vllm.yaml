@@ -238,3 +238,8 @@ competitive:
         prefix_caching:
           value: false
           rationale: common.py's --mixed-phase help asks for prefix caching OFF on both engines.
+
+# The fork that keeps every miniature running: branch pie-evals/v<release> holds one small Python fix per
+# commit over upstream's tag v<release>, and the CUDA install overlays it on the PyPI wheel (baselines.ensure_fork).
+# Fixes are shape guards, missing-arch fallbacks and loader fixes only: a full model's speed never changes.
+fork: {repo: pie-project/vllm, upstream: vllm-project/vllm, src: .}

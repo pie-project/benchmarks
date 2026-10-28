@@ -68,3 +68,8 @@ competitive:
           value: true
           flag: none
           rationale: Would be on for the prefix shape once the script exposes it.
+
+# The fork that keeps every miniature running: branch pie-evals/v<release> holds one small Python fix per
+# commit over upstream's tag v<release>, and the CUDA install overlays it on the PyPI wheel (baselines.ensure_fork).
+# Fixes are shape guards, missing-arch fallbacks and loader fixes only: a full model's speed never changes.
+fork: {repo: pie-project/sglang, upstream: sgl-project/sglang, src: python}
