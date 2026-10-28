@@ -747,7 +747,7 @@ window.Pie = window.Pie || {};
             <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${esc(g.platform.sub)} · ${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"} · ${g.models.length} ${g.models.length === 1 ? "model" : "models"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
           </span>
-        </div>${folded(g.platform.id) ? "" : `<div class="platform-section-scroll">${tableOf(g)}</div>`}</section>`).join("");
+        </div><div class="platform-section-body"${folded(g.platform.id) ? " hidden" : ""}><div class="platform-section-scroll">${tableOf(g)}</div></div></section>`).join("");
 
       element.innerHTML = `
         <div class="platform-bar">
@@ -914,8 +914,29 @@ window.Pie = window.Pie || {};
         const group = event.target.closest("[data-group]");
         if (group) {
           const id = group.dataset.group;
-          state.platform.collapsed = { ...(state.platform.collapsed || {}), [id]: !state.platform.collapsed?.[id] };
-          onChange();
+          const toggle = () => {
+            state.platform.collapsed = { ...(state.platform.collapsed || {}), [id]: !state.platform.collapsed?.[id] };
+            onChange();
+          };
+          // on All Platforms the table slides shut or open under its bar as the chevron turns, as a Finder group does;
+          // it is folded in place, with no redraw, so the slide starts on the click
+          const bar = group.classList.contains("platform-section-bar") ? group : null;
+          if (!bar) { toggle(); return; }
+          const body = bar.nextElementSibling;
+          const fold = !state.platform.collapsed?.[id];
+          state.platform.collapsed = { ...(state.platform.collapsed || {}), [id]: fold };
+          Pie.saveView?.();
+          bar.classList.toggle("is-collapsed", fold);
+          bar.setAttribute("aria-expanded", String(!fold));
+          body.getAnimations().forEach((a) => a.cancel());
+          const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+          if (fold) {
+            if (reduce) { body.hidden = true; return; }
+            body.animate([{ height: `${body.offsetHeight}px` }, { height: "0px" }], { duration: 200, easing: "ease-in-out" }).onfinish = () => { body.hidden = true; };
+          } else {
+            body.hidden = false;
+            if (!reduce) body.animate([{ height: "0px" }, { height: `${body.offsetHeight}px` }], { duration: 200, easing: "ease-in-out" });
+          }
           return;
         }
         // a header cycles its column: ascending, then descending, then back to no sort

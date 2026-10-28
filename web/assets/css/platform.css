@@ -296,7 +296,12 @@
 .platform-section-bar .sidebar-glyph[style] { width: 20px; height: 20px; border-radius: 5px; }
 .platform-section-bar .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; }
 .platform-section-bar .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
+/* the body clips while it slides; the scroller inside keeps its scroll bar, so nothing shifts as it settles */
+.platform-section-body { overflow: hidden; }
 .platform-section-scroll { overflow-x: auto; }
+/* a table's last row meets the next platform's bar: the bar's separator there, not the lighter one between rows */
+.platform-section-scroll .platform-table tbody tr:last-child th,
+.platform-section-scroll .platform-table tbody tr:last-child td { border-bottom-color: var(--color-separator); }
 
 /* with the metric in the toolbar, the bar holds only Hide unavailable, at its end */
 .platform-bar { display: flex; justify-content: space-between; align-items: center; padding-left: 8px; }
