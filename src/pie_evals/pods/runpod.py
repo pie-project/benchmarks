@@ -460,14 +460,15 @@ def list_pods(api_key: str | None = None) -> list[dict]:
 
 
 def reap(max_age_s: int, api_key: str | None = None, dry_run: bool = False, keep: set[str] | None = None, hard_max_age_s: int | None = None) -> list[str]:
-    """Terminate pie-evals pods older than ``max_age_s`` (orphans from failed
+    """Terminate pie-evals and parity pods older than ``max_age_s`` (orphans from failed
     workflows). A pod in ``keep`` (its runner is busy with a job) is spared until
     ``hard_max_age_s``: one pod works through a whole configuration's queue."""
     killed = []
     now = time.time()
     for p in list_pods(api_key):
         name = p.get("name", "")
-        if not name.startswith("pie-evals-"):
+        # benchmark pods (pie-evals-*) and the parity workflow's (qual-<run id>-*)
+        if not name.startswith(("pie-evals-", "qual-")):
             continue
         try:
             created = int(name.rsplit("-", 1)[-1])
