@@ -326,8 +326,6 @@
 .platform-narrow svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
 .platform-narrow:hover { color: var(--color-label-secondary); background: var(--color-fill-secondary); }
 .platform-narrow[aria-pressed="true"] svg { transform: scaleX(-1); }
-/* room under the last platform, as a Mac list leaves under its last row: the data never sits on the window's edge */
-.platform-section:last-child { margin-bottom: 32px; }
 /* a table's last row meets the next platform's bar: the bar's separator there, not the lighter one between rows */
 .platform-section-scroll .platform-table tbody tr:last-child th,
 .platform-section-scroll .platform-table tbody tr:last-child td { border-bottom-color: var(--color-separator); }
