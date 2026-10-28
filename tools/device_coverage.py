@@ -1,0 +1,104 @@
+"""What is still missing from a device evaluation (matrix/device-eval.yaml) on one platform.
+
+Reads the site's data (web/data/db.js, a local path or the published URL) and prints, for each representative
+model: which variant was measured (full or miniature), every engine x setup cell, and the pie-vs-vLLM quality
+check. Exit status 0 only when every cell is done: a number, or a declared reason the engine cannot run it.
+
+    python tools/device_coverage.py --platform l40s-x1 --tag 0.5.3-b5
+    python tools/device_coverage.py --platform l40s-x1 --tag 0.5.3-b5 --db https://benchmarks.pie-project.org/data/db.js
+    python tools/device_coverage.py --platform l40s-x1 --tag 0.5.3-b5 --json   # machine-readable, for an agent loop
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import urllib.request
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def load_db(src: str) -> dict:
+    text = urllib.request.urlopen(src).read().decode() if src.startswith("http") else Path(src).read_text()
+    return json.loads(text[text.index("{"): text.rindex("}") + 1])
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--platform", required=True, help="platform id, e.g. l40s-x1")
+    ap.add_argument("--tag", required=True, help="the run's tag on the site, e.g. 0.5.3-b5")
+    ap.add_argument("--db", default=str(ROOT / "web/data/db.js"))
+    ap.add_argument("--spec", default=str(ROOT / "matrix/device-eval.yaml"))
+    ap.add_argument("--json", action="store_true")
+    a = ap.parse_args()
+
+    spec = yaml.safe_load(Path(a.spec).read_text())
+    db = load_db(a.db)
+    rows = [r for r in db["snapshots"].get(a.tag, []) if r["hardware"] == a.platform]
+    parity = [q for q in db.get("quality_parity", []) if q.get("platform") == a.platform and q.get("tag") == a.tag]
+    qspec = spec["quality"]
+
+    report, gaps = [], 0
+    for m in spec["models"]:
+        candidates = [m["model"], *m.get("alternates", [])]
+        # the variant measured: the first candidate with any row for this platform and tag
+        variant = next((c for c in candidates if any(r["model"] == c for r in rows)), None)
+        mini = variant is not None and any(r["model"] == variant and r.get("miniature") for r in rows)
+        cells = {}
+        for engine in spec["engines"]:
+            for s in spec["setups"]:
+                hit = [r for r in rows if r["model"] == variant and r["engine"] == engine and r["workload"] == s["workload"]]
+                ok = [r for r in hit if r["status"] == "pass" and r.get(s["metric"])]
+                unsup = [r for r in hit if r["status"] == "unsupported"]
+                if ok:
+                    cells[f"{engine}/{s['id']}"] = {"status": "pass", "value": max(r[s["metric"]] for r in ok)}
+                elif unsup:
+                    cells[f"{engine}/{s['id']}"] = {"status": "unsupported", "why": unsup[0].get("note", "")}
+                else:
+                    why = next((r.get("note", "") for r in hit), "")
+                    cells[f"{engine}/{s['id']}"] = {"status": hit[0]["status"] if hit else "missing", "why": why}
+        q = [p for p in parity if p.get("model") == variant]
+        if not q:
+            quality = {"status": "missing"}
+        else:
+            p = q[-1]
+            kl, top1 = p.get("kl_mean"), p.get("top1_agree")
+            if p.get("ref_unsupported"):
+                quality = {"status": "fail", "why": f"{p.get('ref_engine', 'reference')}: {p['ref_unsupported']}"}
+            elif kl is None or top1 is None:
+                quality = {"status": "fail", "why": "no positions compared (pie did not load or produced no tokens)"}
+            elif kl > qspec["max_kl"] or top1 < qspec["min_top1"]:
+                quality = {"status": "anomaly", "kl": kl, "top1": top1}
+            else:
+                quality = {"status": "pass", "kl": kl, "top1": top1}
+        done = variant is not None and all(c["status"] in ("pass", "unsupported") for c in cells.values()) and quality["status"] == "pass"
+        gaps += 0 if done else 1
+        report.append({"n": m["n"], "model": m["model"], "variant": variant, "miniature": mini, "cells": cells,
+                       "quality": quality, "done": done})
+
+    if a.json:
+        print(json.dumps({"platform": a.platform, "tag": a.tag, "complete": gaps == 0, "models": report}, indent=1))
+        return 0 if gaps == 0 else 1
+    short = {"pass": "ok", "unsupported": "n/a", "missing": "--", "fail": "FAIL", "noisy": "noisy", "anomaly": "ANOM"}
+    heads = [f"{e}/{s['id']}" for e in spec["engines"] for s in spec["setups"]]
+    print(f"{a.platform} @ {a.tag}: {len(report) - gaps} of {len(report)} models complete")
+    print("  #  model                          variant                       " + " ".join(h.split("/")[0][:2] + h.split("/")[1][0] + h.split("_")[-1][0] for h in heads) + "  quality")
+    for r in report:
+        marks = " ".join(f"{short.get(r['cells'][h]['status'], '?'):>4}" for h in heads)
+        name = (r["variant"] or "-") + (" (mini)" if r["miniature"] else "")
+        print(f"{r['n']:>3}  {r['model'][:30]:30} {name[:29]:29} {marks}  {short.get(r['quality']['status'], '?')}")
+    for r in report:
+        for h, c in r["cells"].items():
+            if c["status"] not in ("pass",) and c.get("why"):
+                print(f"  {r['model']} {h}: {c['status']}: {c['why'][:160]}")
+        if r["quality"]["status"] != "pass":
+            print(f"  {r['model']} quality: {r['quality']}")
+    return 0 if gaps == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
