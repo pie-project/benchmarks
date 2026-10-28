@@ -92,7 +92,7 @@ jobs:
         id: pod
         # one try: a launch that waits for stock holds back every other pod of the run, which sits idle (the bench
         # starts only after every launch); a GPU with no stock is filled by a later rerun of the missing cells
-        run: .venv/bin/pie-evals launch-pod --platform "${{ join(matrix.fallback, ',') }}" --labels "${{ join(matrix.labels, ',') }}" --repo "${{ github.repository }}" --image "${{ vars.RUNPOD_IMAGE || 'pieproject/runpod-ci-runner:latest' }}" --kill-minutes 1440 --reuse --wait-runner 600 --debug
+        run: .venv/bin/pie-evals launch-pod --platform "${{ join(matrix.fallback, ',') }}" --labels "${{ join(matrix.labels, ',') }}" --repo "${{ github.repository }}" --image "${{ vars.RUNPOD_IMAGE || 'pieproject/runpod-ci-runner:latest' }}" --kill-minutes 1440 ${{ inputs.own_pods && '' || '--reuse' }} --wait-runner 600 --debug
         env:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_RUNNER_PAT: ${{ secrets.GH_RUNNER_PAT }}
