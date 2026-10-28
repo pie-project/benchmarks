@@ -533,7 +533,7 @@ window.Pie = window.Pie || {};
       const only = Pie.schema[state.table]?.platform;
       // the Overview pages offer the platforms with a result in this setup, and any picked narrow the machines to theirs
       pagePlatforms = only ? [] : PLATFORMS.filter((pl) => rows.some((r) => platformOf(Pie.store.index.hardware[r.hardware] || {}) === pl)).map((pl) => pl.id);
-      const picked = only ? [] : (state.platform.platforms || []);
+      const picked = [];  // no platform filter: All Platforms shows every platform, each its own table
       const groups = PLATFORMS.filter((p) => (!only || p.id === only) && (!picked.length || picked.includes(p.id)))
         .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p).map((hw) => hw.id) }))
         .filter((g) => !only || g.macs.length);
@@ -782,7 +782,6 @@ window.Pie = window.Pie || {};
         <div class="platform-bar">
           ${setupControl(mode.id, modes)}${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
           <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
-          ${only ? "" : `<span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="platform" aria-haspopup="menu" aria-label="Platforms">${esc(!picked.length ? "All Platforms" : picked.length <= 2 ? picked.map((id) => Pie.schema[id]?.short || id).join(", ") : `${picked.length} Platforms`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`}
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="maker" aria-haspopup="menu" aria-label="Makers">${esc(!p.makers?.length ? "All Makers" : p.makers.length <= 2 ? p.makers.join(", ") : `${p.makers.length} Makers`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="size" aria-haspopup="menu" aria-label="Model sizes">${esc(!p.sizes?.length ? "All Sizes" : p.sizes.length <= 2 ? p.sizes.map((id) => SIZES.find((sz) => sz.id === id)?.label || id).join(", ") : `${p.sizes.length} Sizes`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
