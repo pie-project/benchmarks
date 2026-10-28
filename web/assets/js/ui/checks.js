@@ -290,7 +290,7 @@ window.Pie = window.Pie || {};
       return `<section class="platform-section">
         <div class="platform-group-row platform-section-bar${folded[p] ? " is-collapsed" : ""}" data-qc-fold="${esc(p)}" role="button" aria-expanded="${!folded[p]}">
           <span class="platform-group-bar">
-            <span class="platform-group-name">${Pie.platform.badge(p)}<b>${esc(platformLabel(p))}</b><span>${models} ${models === 1 ? "model" : "models"} · ${tasks} ${tasks === 1 ? "task" : "tasks"}</span></span>
+            <span class="platform-group-name">${Pie.platform.badge(p)}<b>${esc(platformLabel(p))}</b><span>${models} ${models === 1 ? "model" : "models"} × ${tasks} ${tasks === 1 ? "task" : "tasks"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
           </span>
         </div><div class="platform-section-body"${folded[p] ? " hidden" : ""}><div class="platform-section-scroll">${gridOf(items)}</div></div></section>`;
