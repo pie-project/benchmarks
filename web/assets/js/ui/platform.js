@@ -63,6 +63,11 @@ window.Pie = window.Pie || {};
     clearTimeout(hideAfter.get(scroller));
     hideAfter.set(scroller, setTimeout(() => scroller.classList.remove("is-scrolling"), 900));
   }, { capture: true, passive: true });
+  // a miniature's striped cells draw their lines from the table's corner, not their own, so the lines run on unbroken from
+  // cell to cell and move with the table as it scrolls
+  const stripes = (root) => root.querySelectorAll("td:has(> .platform-cell.is-mini)").forEach((td) => {
+    td.style.backgroundPosition = `${-td.offsetLeft}px ${-td.offsetTop}px`;
+  });
   const badgeOf = (id) => `<span class="sidebar-glyph" style="--tint: ${Pie.schema[id]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(id)}</span>`;
 
   // a model's maker as a small app icon: its logo on a white tile (logos from LobeHub's icon set, MIT)
@@ -134,7 +139,7 @@ window.Pie = window.Pie || {};
   // pie's advantage over the best other engine: a speed ratio, or the inverse for a time
   // Compare: "engines", named Speedup, shows each engine against the best other engine; "ceiling", named Efficiency, shows each engine's
   // share of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
-  const COMPARES = { engines: "Relative Speed", ceiling: "FP Efficiency", tps: "Best TPS" };
+  const COMPARES = { engines: "Relative Speed", ceiling: "Kernel Efficiency", tps: "Best TPS" };
   // each view wears the icon of the sidebar page that shows it for every machine
   const COMPARE_ICONS = { engines: "speedups", ceiling: "all_hardware", tps: "tps" };
   const nextCompare = (id) => { const ids = Object.keys(COMPARES); return ids[(ids.indexOf(id) + 1) % ids.length]; };
@@ -145,7 +150,7 @@ window.Pie = window.Pie || {};
     tps: "The engine's own speed",
   };
   // the view the viewer picked with the view button or V, kept across pages and reloads; Relative Speed until they pick.
-  // The FP Efficiency, Relative Speed and Best TPS pages each show their own view without touching the pick
+  // The Kernel Efficiency, Relative Speed and Best TPS pages each show their own view without touching the pick
   const saved = (() => { try { return localStorage.getItem("platformCompare"); } catch { return null; } })();
   let chosen = COMPARES[saved] ? saved : "engines";
   let compare = chosen;
@@ -269,7 +274,7 @@ window.Pie = window.Pie || {};
     if (specBound && roofline) lines.push(`<div class="tip-row is-limit">
       <svg class="tip-limit-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 11.5a5.5 5.5 0 1 1 11 0M8 11.5l2.6-3.4"/></svg><span class="tip-name" title="The limit at the best draft width, at ${Pie.specAlpha}% acceptance">Spec Limit</span>
       <span class="tip-value">${esc(value(specBound.tps, metric.unit))}</span><span class="tip-when"></span></div>`);
-    // Spec Decode in FP Efficiency: the roofline over the list, the picked engine's Raw run and its speculative one as
+    // Spec Decode in Kernel Efficiency: the roofline over the list, the picked engine's Raw run and its speculative one as
     // two dots, an arrow from the first to the second: drafting reads the weights once for several tokens, so the pass
     // moves right along the roof, and up by what it kept
     // the engines with no number here say why, in grey under the measured ones: not supported, does not fit, failed, or
@@ -279,7 +284,8 @@ window.Pie = window.Pie || {};
       const moved = specMove(order, raw, specBound);
       if (moved) return `<div class="rf-move-card">${roofCard(moved, { move: true })}${card("", "", lines)}</div>`;
     }
-    return card("", "", lines);
+    // a miniature's card says so at its head, in place of the browser's own tooltip that would cover it
+    return mini ? card("Miniature model", `${c.pie.miniature}, cut to fit`, lines) : card("", "", lines);
   };
 
   // a result on the roofline model (Williams et al., 2009): its pass's arithmetic intensity, the FLOPs it does per byte
@@ -609,7 +615,7 @@ window.Pie = window.Pie || {};
           // only where this run measures (or measured) the model cut down: elsewhere the full model's "does not fit" stands
           const cut = TODAY.models.has(id) && TODAY.hardware.has(mac);
           let needs = cut ? null : noFit[mac]?.[id]?.[base];
-          // Best TPS and FP Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
+          // Best TPS and Kernel Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
           const fullNeeds = Pie.store.index.models[id]?.needs_gib;
           if ((compare === "tps" || compare === "ceiling") && cut) { c = null; needs = noFit[mac]?.[id]?.[base] || fullNeeds || 1; }
           const own = snapshot.find((r) => here(r) && r.engine === base);
@@ -721,15 +727,16 @@ window.Pie = window.Pie || {};
                   return { kind, html: `<svg class="platform-bound-mark" viewBox="0 0 16 16" role="img" aria-label="${mark.title}"><title>${mark.title}</title><path d="${mark.path}"/></svg>${Math.round(share * 100)}%` };
                 })()
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
-              : c.gain === null ? { kind: "is-even", html: esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span${c.pie.miniature ? ` title="${esc(`Miniature: ${c.pie.miniature}, cut to fit one device`)}"` : ""} class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+              // a miniature's own tok/s is a cut model's, no real speed: with no other engine to set it against, it shows none
+              : c.gain === null ? { kind: "is-even", html: c.pie.miniature ? "–" : esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
+            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           // an empty cell lists every engine that has a row here and why it gave no number, as a measured cell's card does
           // the engines that did measure here, though pie did not (the comparison needs pie): their numbers first
           const ranHere = [...new Map(rows.filter((r) => r.hardware === mac && r.model === realOf(model) && r[metric.key]).map((r) => [r.engine, r])).values()]
             .sort((a, b) => b[metric.key] - a[metric.key]);
           const absent = [...ranHere.map((r) => `<div class="tip-row"><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
-            <span class="tip-value">${esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`), ...absentRows(mac, realOf(model), modeOf(null), ranHere)];
+            <span class="tip-value">${r.miniature ? "Miniature" : esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`), ...absentRows(mac, realOf(model), modeOf(null), ranHere)];
           const emptyTip = absent.length ? card("", "", absent) : why ? card("", "", [], why) : "";
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
@@ -794,6 +801,7 @@ window.Pie = window.Pie || {};
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
       if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
+      stripes(element);
       const macsShown = sections.reduce((n, g) => n + g.macs.length, 0);
       return { macs: macsShown, models: new Set(sections.flatMap((g) => g.models).map(realOf)).size, metric };
     },
@@ -809,6 +817,7 @@ window.Pie = window.Pie || {};
         Pie.saveView?.();
         const label = narrow ? "Show Overall and memory" : "Hide Overall and memory";
         element.querySelectorAll(".platform-table").forEach((table) => table.classList.toggle("is-tight", narrow));
+        stripes(element);  // the columns moved
         element.querySelectorAll("[data-narrow]").forEach((b) => { b.setAttribute("aria-pressed", String(narrow)); b.title = label; b.setAttribute("aria-label", label); });
       }, true);
 
@@ -960,6 +969,7 @@ window.Pie = window.Pie || {};
             body.animate([{ height: `${body.offsetHeight}px` }, { height: "0px" }], { duration: 200, easing: "ease-in-out" }).onfinish = () => { body.hidden = true; };
           } else {
             body.hidden = false;
+            stripes(body);  // laid out only now: folded, its cells had no place
             if (!reduce) body.animate([{ height: "0px" }, { height: `${body.offsetHeight}px` }], { duration: 200, easing: "ease-in-out" });
           }
           return;
