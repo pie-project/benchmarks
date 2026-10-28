@@ -54,16 +54,6 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    // every machine in one table: each engine against the hardware's theoretical limit
-    all_hardware: {
-      label: "FP Efficiency",
-      section: "home",
-      tint: "#30B0C7",  // teal
-      view: "platform",
-      compare: "ceiling",
-      filters: [],
-      columns: [],
-    },
     // every machine in one table: pie against the other engines
     speedups: {
       label: "Relative Speed",
@@ -71,6 +61,14 @@ window.Pie = window.Pie || {};
       tint: "#FF2D55",  // pink
       view: "platform",
       compare: "engines",
+      filters: [],
+      columns: [],
+    },
+    // how close the engines come to one another's answers, across every measurement: off for now, Quality Checks shows it
+    accuracy: {
+      label: "Accuracy",
+      section: null,
+      view: "accuracy",
       filters: [],
       columns: [],
     },
@@ -84,20 +82,13 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    // how close the engines come to one another's answers, across every measurement: off for now, Quality Checks shows it
-    accuracy: {
-      label: "Accuracy",
-      section: null,
-      view: "accuracy",
-      filters: [],
-      columns: [],
-    },
-    // how well models answer: Artificial Analysis measures it, so the sidebar links there rather than to a page of ours
-    scores: {
-      label: "Intelligence",  // the model's own smarts (Artificial Analysis's Intelligence Index), not an engine's
+    // every machine in one table: each engine against the hardware's theoretical limit
+    all_hardware: {
+      label: "Kernel Efficiency",
       section: "home",
-      href: "https://artificialanalysis.ai/",
-      tint: "#7a4cf5",  // Artificial Analysis's purple, as the platforms' tiles wear theirs
+      tint: "#30B0C7",  // teal
+      view: "platform",
+      compare: "ceiling",
       filters: [],
       columns: [],
     },
@@ -107,6 +98,15 @@ window.Pie = window.Pie || {};
       title: "Quality",
       section: "home",  // in Compare, where Accuracy was
       view: "checks",
+      filters: [],
+      columns: [],
+    },
+    // how well models answer: Artificial Analysis measures it, so the sidebar links there rather than to a page of ours
+    scores: {
+      label: "Intelligence",  // the model's own smarts (Artificial Analysis's Intelligence Index), not an engine's
+      section: "home",
+      href: "https://artificialanalysis.ai/",
+      tint: "#7a4cf5",  // Artificial Analysis's purple, as the platforms' tiles wear theirs
       filters: [],
       columns: [],
     },
