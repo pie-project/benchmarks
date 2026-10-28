@@ -667,9 +667,19 @@ window.Pie = window.Pie || {};
         // the sign and the colour say ahead or behind, as Stocks shows a change; an even cell is the same number in grey
         return { kind, html: Math.round(gain * 100) ? signed(gain) : "0%" };
       };
+      // narrowed, a machine goes by the name people say, without its memory: no "RTX", and no SXM or PCIe unless that is all
+      // that tells two apart on the page
+      const terse = (name) => name.replace(/^RTX (PRO )?/, (m, pro) => (pro ? "PRO " : "")).replace(/ (SXM|PCIe)\b/, "");
+      const pageNames = macs.map((mac) => chipName(mac));
+      const shortOf = (mac) => {
+        const name = chipName(mac);
+        const short = terse(name);
+        return pageNames.some((other) => other !== name && terse(other) === short) ? name.replace(/^RTX (PRO )?/, (m, pro) => (pro ? "PRO " : "")) : short;
+      };
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
-        return `<th class="platform-row" scope="row"><span class="platform-chip"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}>${only ? "" : badgeOf(platformOf(hw || {})?.id)}<span>${esc(chipName(mac))}</span>${specOf(hw)}</span></th>`;
+        const short = shortOf(mac);
+        return `<th class="platform-row" scope="row"><span class="platform-chip"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}>${only ? "" : badgeOf(platformOf(hw || {})?.id)}<span class="platform-name">${esc(chipName(mac))}</span>${short !== chipName(mac) ? `<span class="platform-short">${esc(short)}</span>` : ""}${specOf(hw)}</span></th>`;
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
@@ -685,7 +695,7 @@ window.Pie = window.Pie || {};
         bandwidth: { title: "Bandwidth-bound: the share of the bandwidth bound", path: "M2 5.5h9M8.5 3l2.5 2.5L8.5 8M14 10.5H5M7.5 8 5 10.5 7.5 13" },
         interconnect: { title: "Interconnect-bound: the share of the bound set by the link between the GPUs", path: "M6.5 9.5l3-3M7.2 4.6l1.4-1.4a2.6 2.6 0 0 1 3.7 3.7l-1.4 1.4M8.8 11.4l-1.4 1.4a2.6 2.6 0 0 1-3.7-3.7l1.4-1.4" },
       };
-      const tableOf = ({ macs: list, models }) => {
+      const tableOf = ({ macs: list, models }, first = true) => {
       const shownGroups = [{ platform: null, macs: list }];
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         const o = overall(mac);
@@ -734,7 +744,9 @@ window.Pie = window.Pie || {};
         if (makers.length && makers[makers.length - 1].maker.name === maker.name) { makers[makers.length - 1].n += 1; makers[makers.length - 1].count += 1; }
         else makers.push({ maker, n: 1, count: 1 });
       }
-      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner is-sortable" data-sort="name" aria-hidden="true"></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }) =>
+      // the first table's corner above Hardware narrows every table's pinned column to each machine's mark and name, for room
+      // for the models, and back: one button for the page, the other corners left empty
+      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner">${first ? `<button type="button" class="platform-narrow" data-narrow aria-pressed="${Boolean(p.narrow)}" aria-label="${p.narrow ? "Show Overall and memory" : "Hide Overall and memory"}" title="${p.narrow ? "Show Overall and memory" : "Hide Overall and memory"}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button>` : ""}</th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }) =>
         `<th class="platform-maker" colspan="${n}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${count} ${count === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
@@ -748,16 +760,16 @@ window.Pie = window.Pie || {};
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
-      return `<table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
+      return `<table class="platform-table${p.narrow ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
       };
       // each platform under its header bar, which folds it away as a Finder group does; its table scrolls sideways on its own
-      const tables = only ? tableOf(sections[0] || { macs: [], models: [] }) : sections.map((g) => `<section class="platform-section">
+      const tables = only ? tableOf(sections[0] || { macs: [], models: [] }) : sections.map((g, i) => `<section class="platform-section">
         <div class="platform-group-row platform-section-bar${folded(g.platform.id) ? " is-collapsed" : ""}" data-group="${g.platform.id}" role="button" aria-expanded="${!folded(g.platform.id)}">
           <span class="platform-group-bar">
-            <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"} × ${g.models.length} ${g.models.length === 1 ? "model" : "models"}</span></span>
+            <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}, ${g.models.length} ${g.models.length === 1 ? "model" : "models"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
           </span>
-        </div><div class="platform-section-body"${folded(g.platform.id) ? " hidden" : ""}><div class="platform-section-scroll">${tableOf(g)}</div></div></section>`).join("");
+        </div><div class="platform-section-body"${folded(g.platform.id) ? " hidden" : ""}><div class="platform-section-scroll">${tableOf(g, i === 0)}</div></div></section>`).join("");
 
       element.innerHTML = `
         <div class="platform-bar">
@@ -787,6 +799,18 @@ window.Pie = window.Pie || {};
     },
 
     bind(state) {
+      element.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-narrow]");
+        if (!button) return;
+        event.stopPropagation();
+        if (event.detail) button.blur();  // a click leaves no focus behind, so the arrow keys after it draw no ring
+        const narrow = !state.platform.narrow;
+        state.platform.narrow = narrow;
+        Pie.saveView?.();
+        const label = narrow ? "Show Overall and memory" : "Hide Overall and memory";
+        element.querySelectorAll(".platform-table").forEach((table) => table.classList.toggle("is-tight", narrow));
+        element.querySelectorAll("[data-narrow]").forEach((b) => { b.setAttribute("aria-pressed", String(narrow)); b.title = label; b.setAttribute("aria-label", label); });
+      }, true);
 
       // drag a maker's band among the makers, or a model's head among its maker's models, as a column moves in Finder's
       // list view: the whole column (the head and every cell under it) slides sideways within its lane, and the columns
