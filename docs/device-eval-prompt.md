@@ -34,7 +34,8 @@ A cell is done with a number, or a `matrix/support.yaml` row (exact limitation +
 
 - **Recorded runs: CI only.** CI holds the DB URL and RunPod key, rents, reaps, and writes rows.
   - Bench: `gh workflow run weekly.yml -R pie-project/benchmarks -f platforms=[PLATFORM] -f artifacts=<ids> -f workloads=raw-512-256,c32,pf256-512 -f tag=[TAG] -f own_pods=true -f max_jobs_per_platform=[PODS]` (`--ref <branch>` for harness fixes).
-  - Quality: `gh workflow run parity.yml ... -f platforms=[PLATFORM] -f artifacts=<ids> -f tag=[TAG] -f kernels=false`, then `parity-import.yml -f run_id=<run>`.
+  - Quality: `gh workflow run parity.yml ... -f platforms=[PLATFORM] -f artifacts=<ids> -f tag=[TAG] -f kernels=false -f shards=[PODS]`, then `parity-import.yml -f run_id=<run>`.
+  - A miniature whose recipe needs a pie change (a new `shrink_checkpoint.py` family): dispatch both with `-f pie_commit=<your pie PR's sha>`; CI builds the cut with that commit's script.
   - Publish: `gh workflow run pages.yml` (rebuilds `web/data/db.js`), then rerun the coverage check.
   - Cancel duplicate dispatches; `gh run delete` cancelled or no-op runs.
 - **Debug pods:** RunPod (Liszt template if available, else `development`), over Tailscale (`ssh root@<pod-id>`, `pod-setup`). Smoke, debug, patch only; numbers there are leads, never results.
@@ -47,7 +48,7 @@ A cell is done with a number, or a `matrix/support.yaml` row (exact limitation +
 
 - Branch per upstream release: `pie-evals/<version>` (e.g. `pie-evals/v0.32.0`). Rebase onto each new release.
 - One small commit per fix. Check the branch first: the fix may exist.
-- CI installs the fork branch, not PyPI: set it in `src/pie_evals/node/engines/recipes/<engine>.yaml`.
+- CI installs the release wheel and overlays the fork branch's Python changes on it (`fork:` in `src/pie_evals/node/engines/recipes/<engine>.yaml`, applied by `baselines.ensure_fork`; benchmarks #805). The fork has no upstream tags: push the release commit as branch `upstream/v<version>` and open each fix PR against it, so the diff is only the fixes.
 - One fork build serves every comparison on every GPU. Never patch a venv in place.
 - Fixes must not change speed for full models: shape guards, missing-arch fallbacks, loader fixes only.
 
@@ -103,3 +104,6 @@ A cell is done with a number, or a `matrix/support.yaml` row (exact limitation +
 - Access: the DB URL is a CI secret; the pie-project RunPod account (CI's) has `development`, not the Liszt template. Record via CI; debug on rented pods.
 - L40S (sm_89): vLLM 0.32 DeepSeek-V4.1 emits `mul.bf16x2` (needs sm_90); SGLang `mhc_pre` split-k only takes `hc_hidden_size` 16384/28672 (mini8: 20480). Fork fixes.
 - SGLang on L40S: qwen3.8-flash-next fails a CUTLASS DSL block shape and CUDA-graph capture; mimo-v2.6-flash `Hidden size mismatch` on the miniature. Start early.
+- Coverage (fixed in #805): a `support.yaml` row for a miniature, or for Batching / Batched Prefill, never reached the site, and a declared vLLM parity gap counted as a failure, so the check could not reach 0. Rerun the check against a site built from the branch that carries the fix.
+- Artifacts: six of the 19 had no CUDA artifact (Qwen3-0.6B, Gemma-4-12B for 31B, Qwen3.5-9B for 27B, and bf16 cuts of Qwen3.6-35B-A3B, Muse-Glimmer-30B, Gemma-4-26B-A4B). `shrink_checkpoint.py --dry-run` prints a cut's size without downloading; Qwen3.6 needs `shrink_family: qwen3_5_moe`, Gemma-4 MoE needs pie #1162, and DeepSeek-V4-Flash is released FP8/FP4, not bf16.
+- A changed recipe does not reach a run already dispatched (the run pins the branch commit): cancel and redispatch, and force-cancel (`gh api -X POST .../force-cancel`) a parity run whose pods already launched.
