@@ -284,6 +284,20 @@
 .platform-table tbody tr.platform-group-row:hover th { background: var(--color-chrome); }
 .platform-table tbody tr.platform-group-row th:first-child { position: static; }
 
+/* All Platforms: each platform a header bar, as the grouped rows had, over its own table that scrolls sideways alone */
+.platform-section-bar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  background: var(--color-chrome);
+  border-bottom: .5px solid var(--color-separator);
+}
+.platform-section-bar .platform-group-bar { width: 100%; position: static; }
+.platform-section-bar .sidebar-glyph[style] { width: 20px; height: 20px; border-radius: 5px; }
+.platform-section-bar .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; }
+.platform-section-bar .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
+.platform-section-scroll { overflow-x: auto; }
+
 /* with the metric in the toolbar, the bar holds only Hide unavailable, at its end */
 .platform-bar { display: flex; justify-content: space-between; align-items: center; padding-left: 8px; }
 
