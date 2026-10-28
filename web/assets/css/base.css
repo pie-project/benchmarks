@@ -7,6 +7,8 @@
 html,
 body {
   height: 100%;
+  /* a two-finger swipe sideways scrolls the grids, never the browser back or forward a page */
+  overscroll-behavior-x: none;
 }
 
 body {
