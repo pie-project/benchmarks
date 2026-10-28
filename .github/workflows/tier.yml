@@ -90,9 +90,16 @@ jobs:
         run: .venv/bin/pie-evals pins set "${{ inputs.pins }}"
       - name: launch pod
         id: pod
-        # one try: a launch that waits for stock holds back every other pod of the run, which sits idle (the bench
-        # starts only after every launch); a GPU with no stock is filled by a later rerun of the missing cells
-        run: .venv/bin/pie-evals launch-pod --platform "${{ join(matrix.fallback, ',') }}" --labels "${{ join(matrix.labels, ',') }}" --repo "${{ github.repository }}" --image "${{ vars.RUNPOD_IMAGE || 'pieproject/runpod-ci-runner:latest' }}" --kill-minutes 1440 ${{ inputs.own_pods && '' || '--reuse' }} --wait-runner 600 --debug
+        # one try on shared pods: a launch that waits for stock holds back every other pod of the run, which sits idle
+        # (the bench starts only after every launch). A run on its own pods (one pod per shard, a one-GPU part whose
+        # stock reads "Low" for minutes at a time) retries a no-instance answer every 5 minutes for up to 45
+        run: |
+          for try in 1 2 3 4 5 6 7 8 9 10; do
+            .venv/bin/pie-evals launch-pod --platform "${{ join(matrix.fallback, ',') }}" --labels "${{ join(matrix.labels, ',') }}" --repo "${{ github.repository }}" --image "${{ vars.RUNPOD_IMAGE || 'pieproject/runpod-ci-runner:latest' }}" --kill-minutes 1440 ${{ inputs.own_pods && '' || '--reuse' }} --wait-runner 600 --debug 2>&1 | tee launch.log && exit 0
+            [ "${{ inputs.own_pods }}" = "true" ] && grep -q "no instance" launch.log || exit 1
+            echo "no stock (try $try); retrying in 5 minutes"; sleep 300
+          done
+          exit 1
         env:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_RUNNER_PAT: ${{ secrets.GH_RUNNER_PAT }}
