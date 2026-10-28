@@ -38,6 +38,15 @@ default:
     qwen3_6:
       knobs: {}
       backend:
+        cuda:
+          knobs:
+            device_kv_budget:
+              value: 8GiB
+            engine_option:
+              value: {max_state_slots: 16}
+              rationale: >
+                At the default 256 state slots Qwen3.6-27B's delta state takes 23 GB and a
+                single 80 GB card refuses the load beside its 56 GB of weights.
         metal:
           knobs:
             total_pages:
