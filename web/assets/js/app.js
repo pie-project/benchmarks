@@ -440,6 +440,9 @@
     }
   };
 
+  // a page that changes in place, with no redraw (a platform folding on All Platforms), keeps its view the same way
+  Pie.saveView = saveView;
+
   // the release history stays open or closed as the viewer left it
   document.addEventListener("toggle", (event) => {
     if (event.target.id !== "history-details") return;
