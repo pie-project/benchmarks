@@ -32,7 +32,7 @@ window.Pie = window.Pie || {};
     // the keys, as a menu shows each command's shortcut at its right
     ["Shortcuts", [
       { big: "1 2 3 4", label: "Setup", line: "Latency Decode, Prefill; Throughput Decode, Prefill, on a grid page." },
-      { big: "V", label: "Switch view", line: "Relative Speed and FP Efficiency, on a platform's page." },
+      { big: "V", label: "Switch view", line: "Relative Speed and Kernel Efficiency, on a platform's page." },
       { big: "Hold R", label: "Peek at the other view", line: "Shows the other view until the key is let go." },
       { big: "Hold U", label: "Show unavailable", line: "Shows the empty rows and columns until the key is let go." },
       { big: "[  ]", label: "Previous, next page", line: "Steps through the grid pages in the sidebar's order." },
