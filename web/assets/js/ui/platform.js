@@ -35,10 +35,11 @@ window.Pie = window.Pie || {};
     pbatch: [3.45, 8.35].flatMap((y) => AT.map((x) => mark(x, y))).join(""),  // many prompts' rows read together
   };
   // the setups as one segmented control, the grid's and the Roofline page's alike: each segment its degree and its name
-  // the setups in two groups, each named in grey before it: one request at a time, then many at once
+  // the setups in two groups, each named in grey before it: Latency (one request at a time), then Throughput (many at
+  // once); a segment says only its phase, Decode or Prefill, its full name in its tooltip
   const setupControl = (active, modes) => `<span class="platform-compare" role="group" aria-label="Setup">${modes.map((m, i) =>
-    (m.id === "batching" ? `<span class="setup-group is-second">Batched</span>` : i === 0 ? `<span class="setup-group">Single</span>` : "") +
-    `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}" title="${esc(`${m.title || m.label}, ${m.id === "batching" ? "as many requests at once as the hardware needs to stay busy" : "one request"}`)}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.label)}</button>`).join("")}</span>`;
+    (m.id === "batching" ? `<span class="setup-group is-second">Throughput</span>` : i === 0 ? `<span class="setup-group">Latency</span>` : "") +
+    `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}" title="${esc(`${m.title || m.label}, ${m.id === "batching" ? "as many requests at once as the hardware needs to stay busy" : "one request"}`)}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.id === "spec" ? m.label : m.group)}</button>`).join("")}</span>`;
   let onChange = () => {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)

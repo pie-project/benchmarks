@@ -298,7 +298,8 @@
 .platform-section-bar .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
 /* the body clips while it slides; the scroller inside keeps its scroll bar, so nothing shifts as it settles */
 .platform-section-body { overflow: hidden; }
-.platform-section-scroll { overflow-x: auto; }
+/* no rubber band sideways: a fast swipe into an end would pull the pinned Hardware and Overall columns along with it */
+.platform-section-scroll { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: none; }  /* sideways only: the page scrolls down */
 /* a table's last row meets the next platform's bar: the bar's separator there, not the lighter one between rows */
 .platform-section-scroll .platform-table tbody tr:last-child th,
 .platform-section-scroll .platform-table tbody tr:last-child td { border-bottom-color: var(--color-separator); }
