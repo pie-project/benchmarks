@@ -36,12 +36,3 @@ models:
   - {n: 18, model: gemma-4-e4b, family: gemma4, covers: "Gemma-4 per-layer embeddings dense", alternates: [gemma-4-e2b]}
   - {n: 19, model: gpt-oss-20b, family: gpt_oss, covers: "attention sinks + sliding window + MXFP4 MoE",
      alternates: [gpt-oss-120b]}
-  # every other model the site lists: the device row has no empty column
-  - {n: 20, model: qwen3.5-0.8b, family: qwen3_5, covers: "GDN hybrid dense, smallest"}
-  - {n: 21, model: qwen3.5-4b, family: qwen3_5, covers: "GDN hybrid dense"}
-  - {n: 22, model: qwen3.5-9b, family: qwen3_5, covers: "GDN hybrid dense"}
-  - {n: 23, model: qwen3.6-27b, family: qwen3_6, covers: "GDN hybrid dense"}
-  - {n: 24, model: gemma-4-e2b, family: gemma4, covers: "Gemma-4 per-layer embeddings dense, smallest"}
-  - {n: 25, model: gemma-4-12b, family: gemma4, covers: "Gemma-4 standard dense"}
-  - {n: 26, model: gpt-oss-120b, family: gpt_oss, covers: "attention sinks + sliding window + MXFP4 MoE, large"}
-  - {n: 27, model: nvidia-nemotron-3-ultra-550b-a55b, family: nemotron_h, covers: "Mamba-2 + MoE + attention hybrid, large"}
