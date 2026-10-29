@@ -183,7 +183,7 @@ def pie_server(engine, workload, log_path: Path, prewarm: bool = True) -> Server
     if str(engine.platform.backend) == "xla":
         # the XLA engine compiles a program per new fire shape (up to a minute each on a hybrid model): at load,
         # 8 at a time, and lanes waiting on one are not abandoned
-        env["PIE_XLA_PREWARM"] = "1" if prewarm else "0"
+        env["PIE_XLA_PREWARM"] = "1" if prewarm and os.environ.get("PARITY_PIE_PREWARM", "1") == "1" else "0"
         env.setdefault("PIE_SILENCE_TIMEOUT", "7200s")
     return Server(argv, env, str(engine.pie_root / "scripts/bench"), log_path)
 
