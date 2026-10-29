@@ -78,6 +78,33 @@ workloads:
     tiers: [weekly]
     est_minutes: 2
 
+  # the rest of the saturation sweep, where a cut model saturates outside 16-256
+  - id: c512
+    kind: concurrency
+    params: {concurrency: 512, num_requests: 2048, prefill: 128, decode: 256}
+    tiers: [weekly]
+    est_minutes: 12
+  - id: pf4-512
+    kind: concurrency
+    params: {concurrency: 4, num_requests: 16, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf8-512
+    kind: concurrency
+    params: {concurrency: 8, num_requests: 32, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf16-512
+    kind: concurrency
+    params: {concurrency: 16, num_requests: 64, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf512-512
+    kind: concurrency
+    params: {concurrency: 512, num_requests: 2048, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 5
+
   # -- long context
   - id: lc-1k-128
     kind: long_context
