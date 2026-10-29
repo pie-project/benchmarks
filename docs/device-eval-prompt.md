@@ -115,36 +115,44 @@ Once a model's cells all have numbers, every cell where pie is behind the fastes
 
 ## Lessons
 
-- Measure on the machine itself; dispatching CI to measure elsewhere loses hours to stock, queueing and lost context.
-- The database URL is a GitHub secret: results go in through the `pod import` workflow on the `site` runner, never by copying the URL.
-- Site builds must never cancel each other: with imports every 10 min and merges in between, a cancelling build starved the site for an hour.
-- Throughput workloads with a shared prompt let pie prefill from its prefix cache (306k tok/s vs vLLM 7.6k, above the compute bound): every throughput workload is cold.
-- Keep sweeps and smokes out of `/workspace/out`; the importer takes everything there.
-- The quality table keys rows by (artifact, task, tag), not platform: a TPU run overwrote the GPU's pie scores under the same tag. Use a per-device tag for quality runs.
-- `liszt-cuda` (CUDA 13.4 toolkit) boots on 13.2-driver hosts; PTX from a 13.4 NVRTC may not load there: compile to sm SASS or use a 13.2/13.0 NVRTC.
-- pie main failed to boot models over ~9 GB on L40S after pie #1157 (fixed 32 GiB device KV budget); pie #1163 fixes it.
-- L40S (sm_89): vLLM 0.32 DeepSeek-V4.1 emits `mul.bf16x2` (sm_90 only); sparse MLA and DSA need fork fallbacks below sm_90 (pie-project/vllm#4, pie-project/sglang#3).
-- Workers on the laptop stop when it sleeps: keep it on AC, lid open, `caffeinate`; or run the workers on the pods with a `claude setup-token` token.
-- SGLang on L40S: qwen3.8-flash-next fails a CUTLASS DSL block shape and CUDA-graph capture; mimo-v2.6-flash `Hidden size mismatch` on the miniature. Start early.
-- Coverage (#805): `support.yaml` rows for miniatures or for Batching / Batched Prefill never reached the site, and a declared vLLM parity gap counted as a failure, so the check could not reach 0.
-- Artifacts: six of the 19 had no CUDA artifact. `shrink_checkpoint.py --dry-run` prints a cut's size without downloading; Qwen3.6 needs `shrink_family: qwen3_5_moe`, Gemma-4 MoE needs pie #1162, DeepSeek-V4-Flash ships FP8/FP4. A cut needing a pie script change: dispatch with `-f pie_commit=<pie PR sha>`.
-- Pods: a run used to rent one pod per hardware type and run its shards in turn (l40s-x1 rode an l40s-x2), with `--reuse` collapsing parallel launches onto one runner. On own pods each shard now rents its own pod of its own platform, `max_jobs_per_platform` caps pods instead of dropping jobs, and no-stock launches retry every 5 minutes (#805). Check the launch job count right after dispatch.
-- Stock: one-GPU L40S read "Low" only on CUDA 13.2 hosts and then "Out" for hours. Check `get-capacity` before choosing a device.
-- A run pins the branch commit at dispatch: a recipe fix needs a cancel and redispatch, and a parity run whose pods launched needs a force-cancel, after which its pods must be terminated by hand. Poll GitHub every 5-10 minutes: tight loops hit the secondary rate limit.
-- L40S run stalls: 25 pie PRs waited hours for merges only the operator could make; workers handed back at every long
-  job and sat idle until resumed; a pod sat idle with 3 red cells after its worker called it done.
-- Per-pod Claude logins need device codes from the operator: drive pods over SSH from laptop workers instead.
-- The site read "does not fit" for miniatures missing from a hard-coded list in `platform.js` (#839): a model with a
-  miniature row on a machine is cut to fit there.
-- pie main #1173 wedged the server under load; #1178 kept its speedup without the wedge. Rerun a short c256 on main after
-  every pie merge wave.
-- Saturation: pie admitted at most 256 requests and wedged on a second 512-wide round until #1175; sweep every engine to
-  flat, not to a fixed N.
-- Several workers on one GPU: wrap every job in `flock /workspace/gpu.lock`; `tmux has-session -t raw` also matches `raw2`
-  (use `-t =raw`). One server per job: pie's KV pool fills with idle cache across jobs.
-- Miniatures: build with `PIE_PY` set to pie's venv (else shrink skips DeepSeek-V4.1's engram map); give pie a named
-  `pie_sku` (it guessed a Qwen3.6 row for a Qwen3.8 cut, an 8-layer row for a 24-layer cut, bf16 for block-FP8 GLM).
-- Merging job shards: take the union of `baseline_versions`, or the other shards' engines fall back to the stock venvs.
-- `nsys` records no vLLM kernels without `--trace-fork-before-exec=true`. A `pie tune` user profile pins every knob and
-  masks fixes in the checked-in profiles: remove it before measuring.
-- After the last pie rerun, `gh workflow run pod-import.yml -f reset=true` so rows from older pie builds drop out.
+### Every device
+
+- **Process.** Measure on the machine itself, never via CI elsewhere (stock, queueing and lost context cost hours). Drive
+  pods over SSH from laptop workers; per-pod Claude logins need device codes from the operator. Keep the laptop on AC,
+  lid open, `caffeinate`. Check `get-capacity` before choosing a device: stock can read "Out" for hours.
+- **Stalls to prevent (L40S run):** 25 pie PRs waited hours for merges only the operator could make; workers handed back
+  at every long job and sat idle until resumed; a pod sat idle with red cells after its worker called it done.
+- **Data path.** The database URL is a GitHub secret: results enter only through the `pod import` workflow on the `site`
+  runner. Site builds never cancel each other. Only final dirs go in `/workspace/out` (the importer takes everything
+  there). After the last pie rerun, `gh workflow run pod-import.yml -f reset=true` so rows from older builds drop out.
+  Quality rows are keyed by (artifact, task, tag), not platform: use a per-device tag for quality runs.
+- **Site.** Look at the device row itself: miniatures once read "does not fit" because of a hard-coded list (#839).
+- **Fairness.** Every throughput workload is cold: with a shared prompt pie prefilled from its prefix cache (306k tok/s vs
+  vLLM 7.6k, above the compute bound). Sweep every engine to flat, never a fixed N. One server per job (pie's KV pool
+  fills with idle cache across jobs).
+- **pie main.** After every pie merge wave, rerun a short c256 on main before rebuilding all pods: #1173 wedged the server
+  under load (fixed by #1178), and pie wedged on a second 512-wide round until #1175.
+- **Shared GPU.** Several jobs on one pod: wrap each in `flock /workspace/gpu.lock`; `tmux has-session -t raw` also
+  matches `raw2` (use `-t =raw`).
+- **Miniatures.** `shrink_checkpoint.py --dry-run` prints a cut's size without downloading. Build with `PIE_PY` set to
+  pie's venv (else shrink skips DeepSeek-V4.1's engram map). Give pie a named `pie_sku`: it guessed a Qwen3.6 row for a
+  Qwen3.8 cut, an 8-layer row for a 24-layer cut, bf16 for block-FP8 GLM. Qwen3.6 needs `shrink_family: qwen3_5_moe`.
+- **Harness.** Merging job shards: take the union of `baseline_versions`, or the other shards' engines fall back to the
+  stock venvs. `nsys` records no vLLM kernels without `--trace-fork-before-exec=true`. A `pie tune` user profile pins
+  every knob and masks the checked-in profiles: remove it before measuring.
+- **Image.** `liszt-cuda` (CUDA 13.4 toolkit) boots on 13.2-driver hosts; PTX from a 13.4 NVRTC may not load there:
+  compile to sm SASS or use a 13.2/13.0 NVRTC.
+
+### Device-specific
+
+Read the forks' `pie-evals/<version>` branch log first: an earlier device's fixes may already cover yours.
+
+- **Below sm_90 (L40S, A100, A40, RTX 4090/5090 class):** vLLM 0.32 DeepSeek-V4.1 emits `mul.bf16x2` (sm_90 only) and its
+  decoder-replay CUDA graphs fault; sparse MLA and DSA need fork fallbacks (pie-project/vllm#4, pie-project/sglang#3);
+  SGLang MXFP8 runs only via block-FP8 below SM100. pie needed sm_89 profile entries for tensor-core attention and MoE
+  paths (`profiles/sm89/nvidia-l40s.toml`); a new device starts from `pie tune`.
+- **48 GB cards (L40S):** most of the 19 run as miniatures; Kimi-K3's KDA state caps SGLang at c128. SGLang on L40S:
+  qwen3.8-flash-next fails a CUTLASS DSL block shape and CUDA-graph capture, and mimo-v2.6-flash reports `Hidden size
+  mismatch` on the miniature. Start these early.
+- **Hopper and newer (H100, H200, B200):** the sub-sm_90 fallbacks are unused; expect fewer miniatures (80+ GB) and the
+  engines' native FP8 paths, so compare on the release's own precision.
