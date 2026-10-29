@@ -445,9 +445,17 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
                 srv.stop()
                 srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie-noprewarm.log", prewarm=False)
                 model = srv.wait(5400)
+            # PARITY_PIE_RESTART=1: a fresh server for each set (XLA hybrids leak state slots: a server runs dry
+            # after ~128 requests); its compiled programs load back from the disk cache
+            fresh = False
             for t, (_items, rendered) in sets.items():
                 if t not in todo["pie"]:
                     continue
+                if fresh and os.environ.get("PARITY_PIE_RESTART") == "1":
+                    srv.stop()
+                    srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie-{t}.log")
+                    model = srv.wait(5400)
+                fresh = True
                 answers["pie"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY, **req)
                 log(f"accuracy {art.id}@{platform_id}: pie {t} done")
                 emit("pie", t, answers["pie"][t])
