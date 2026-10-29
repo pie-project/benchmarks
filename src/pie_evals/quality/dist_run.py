@@ -161,7 +161,7 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
     return Server(argv, env, None, log_path, url=f"http://127.0.0.1:{port}")
 
 
-def pie_server(engine, workload, log_path: Path) -> Server:
+def pie_server(engine, workload, log_path: Path, prewarm: bool = True) -> Server:
     from pie_evals.node.workloads import common_args_for
 
     argv = engine.build_argv(workload, common_args_for(workload), log_path.with_suffix(".json"))
@@ -170,6 +170,11 @@ def pie_server(engine, workload, log_path: Path) -> Server:
     argv = [argv[0], str(script), *argv[i + 1:]]
     env = engine.process_env()
     env["PYTHONPATH"] = ":".join([str(engine.pie_root / "scripts/bench"), env.get("PYTHONPATH", "")])
+    if str(engine.platform.backend) == "xla":
+        # the XLA engine compiles a program per new fire shape (up to a minute each on a hybrid model): at load,
+        # 8 at a time, and lanes waiting on one are not abandoned
+        env["PIE_XLA_PREWARM"] = "1" if prewarm else "0"
+        env.setdefault("PIE_SILENCE_TIMEOUT", "7200s")
     return Server(argv, env, str(engine.pie_root / "scripts/bench"), log_path)
 
 
@@ -359,23 +364,28 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
     answers: dict[str, dict[str, list[str]]] = {"vllm": {}, "pie": {}}
     versions = {}
 
-    recipe = load_recipe("vllm", "competitive", plat, workload, family=art.family)
-    recipe["pin"] = vllm_pin or os.environ.get("PARITY_VLLM_PIN") or m.engines["vllm"].pin
-    if not os.environ.get("VLLM_PY"):
-        ensure_baseline("vllm", recipe["pin"], backend=backend, log=log)
-    ref = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
-    versions["vllm"] = ref.version()
-    srv = vllm_server(ref, snapshot, tp, out_dir / f"{art.id}-acc-vllm.log", max_seqs=ACCURACY_CONCURRENCY)
-    try:
-        model = srv.wait(5400)
-        for t, (_items, rendered) in sets.items():
-            answers["vllm"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY)
-            log(f"accuracy {art.id}@{platform_id}: vllm {t} done")
-    except Exception as e:  # noqa: BLE001 — vLLM that cannot serve the model is a crossed-out cell; pie still runs
-        versions["vllm_unsupported"] = _reason(e, out_dir, f"{art.id}-acc", "vllm")
-        log(f"accuracy {art.id}@{platform_id}: vllm cannot run it: {versions['vllm_unsupported']}")
-    finally:
-        srv.stop()
+    # PARITY_ENGINES=pie: pie only (a rerun after pie failed; the vLLM rows already stored stay)
+    engines = [e for e in os.environ.get("PARITY_ENGINES", "vllm,pie").split(",") if e]
+    # XLA: a request may wait on compiles; a request that failed is sent again (greedy: same answer)
+    req = {"timeout": 7200.0, "retries": 2} if backend == "xla" else {}
+    if "vllm" in engines:
+        recipe = load_recipe("vllm", "competitive", plat, workload, family=art.family)
+        recipe["pin"] = vllm_pin or os.environ.get("PARITY_VLLM_PIN") or m.engines["vllm"].pin
+        if not os.environ.get("VLLM_PY"):
+            ensure_baseline("vllm", recipe["pin"], backend=backend, log=log)
+        ref = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
+        versions["vllm"] = ref.version()
+        srv = vllm_server(ref, snapshot, tp, out_dir / f"{art.id}-acc-vllm.log", max_seqs=ACCURACY_CONCURRENCY)
+        try:
+            model = srv.wait(5400)
+            for t, (_items, rendered) in sets.items():
+                answers["vllm"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY)
+                log(f"accuracy {art.id}@{platform_id}: vllm {t} done")
+        except Exception as e:  # noqa: BLE001 — vLLM that cannot serve the model is a crossed-out cell; pie still runs
+            versions["vllm_unsupported"] = _reason(e, out_dir, f"{art.id}-acc", "vllm")
+            log(f"accuracy {art.id}@{platform_id}: vllm cannot run it: {versions['vllm_unsupported']}")
+        finally:
+            srv.stop()
 
     busy = device_idle(backend)
     if busy:
@@ -386,14 +396,27 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
     precipe["snapshot_dir"] = str(model_path)
     pie = get_engine("pie")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=precipe)
     versions["pie"] = commit[:12]
-    srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie.log")
-    try:
-        model = srv.wait(5400)
-        for t, (_items, rendered) in sets.items():
-            answers["pie"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY)
-            log(f"accuracy {art.id}@{platform_id}: pie {t} done")
-    finally:
-        srv.stop()
+    pie_error = None
+    if "pie" in engines:
+        srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie.log")
+        try:
+            try:
+                model = srv.wait(5400)
+            except RuntimeError:
+                if backend != "xla":
+                    raise
+                # a load the warm ladder broke: once more, compiling under the requests instead
+                log(f"accuracy {art.id}@{platform_id}: pie did not come up with prewarm, again without: {srv.tail(5)}")
+                srv.stop()
+                srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie-noprewarm.log", prewarm=False)
+                model = srv.wait(5400)
+            for t, (_items, rendered) in sets.items():
+                answers["pie"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY, **req)
+                log(f"accuracy {art.id}@{platform_id}: pie {t} done")
+        except Exception as e:  # noqa: BLE001 — the sets done so far (and vLLM's) are still stored; raised after
+            pie_error = e
+        finally:
+            srv.stop()
 
     rows = []
     store = Store(store_dir)
@@ -416,4 +439,6 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
             store.write_quality({"artifact": f"{art.id}@vllm", "model": art.id, "engine": "vllm", "label": "vLLM", "task": t, "platform": platform_id,
                                  "score": None, "n": 0, "correct": 0, "ci95": [0, 0], "ref_unsupported": versions["vllm_unsupported"],
                                  "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "samples": []}, tag=tag, tag_kind=tag_kind)
+    if pie_error is not None:
+        raise pie_error
     return rows

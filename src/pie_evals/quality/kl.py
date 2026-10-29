@@ -50,10 +50,16 @@ def wait_ready(base: str, timeout_s: float = 1800.0) -> str:
             time.sleep(3)
 
 
-def greedy(base: str, model: str, prompts: list[str], max_tokens: int, parallel: int = 4) -> list[str]:
+def greedy(base: str, model: str, prompts: list[str], max_tokens: int, parallel: int = 4, timeout: float = 900.0, retries: int = 0) -> list[str]:
     def one(p: str) -> str:
-        r = _post(f"{base}/v1/completions", {"model": model, "prompt": p, "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0})
-        return r["choices"][0]["text"]
+        for attempt in range(retries + 1):
+            try:
+                r = _post(f"{base}/v1/completions", {"model": model, "prompt": p, "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0}, timeout=timeout)
+                return r["choices"][0]["text"]
+            except (RuntimeError, TimeoutError, OSError):  # greedy: the same request again gives the same answer
+                if attempt == retries:
+                    raise
+        raise AssertionError
 
     with ThreadPoolExecutor(parallel) as ex:
         return list(ex.map(one, prompts))
