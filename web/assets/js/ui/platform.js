@@ -710,7 +710,11 @@ window.Pie = window.Pie || {};
         bandwidth: { title: "Bandwidth-bound: the share of the bandwidth bound", path: "M2 5.5h9M8.5 3l2.5 2.5L8.5 8M14 10.5H5M7.5 8 5 10.5 7.5 13" },
         interconnect: { title: "Interconnect-bound: the share of the bound set by the link between the GPUs", path: "M6.5 9.5l3-3M7.2 4.6l1.4-1.4a2.6 2.6 0 0 1 3.7 3.7l-1.4 1.4M8.8 11.4l-1.4 1.4a2.6 2.6 0 0 1-3.7-3.7l1.4-1.4" },
       };
-      const tableOf = ({ macs: list, models }, first = true) => {
+      const tableOf = ({ macs: list, models, platform: own }, first = true) => {
+      // each platform folds its own Hardware column: its choice kept by name, the old page-wide one until then
+      const key = own?.id || only || "all";
+      const tight = p.narrowBy?.[key] ?? Boolean(p.narrow);
+      const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
       const shownGroups = [{ platform: null, macs: list }];
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         if (hidden.has(mac)) return `<tr class="is-hidden-row">${machine(mac, g.platform)}<td class="is-overall"></td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
@@ -761,9 +765,9 @@ window.Pie = window.Pie || {};
         if (makers.length && makers[makers.length - 1].maker.name === maker.name) { makers[makers.length - 1].n += 1; makers[makers.length - 1].count += 1; }
         else makers.push({ maker, n: 1, count: 1 });
       }
-      // the first table's corner above Hardware narrows every table's pinned column to each machine's mark and name, for room
-      // for the models, and back: one button for the page, the other corners left empty
-      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner">${first ? `<button type="button" class="platform-narrow" data-narrow aria-pressed="${Boolean(p.narrow)}" aria-label="${p.narrow ? "Show Overall and memory" : "Hide Overall and memory"}" title="${p.narrow ? "Show Overall and memory" : "Hide Overall and memory"}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button>` : ""}</th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }) =>
+      // each table's corner above Hardware narrows its own pinned column to each machine's mark and name, for room
+      // for the models, and back: one button a platform
+      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }) =>
         `<th class="platform-maker" colspan="${n}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${count} ${count === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
@@ -777,7 +781,7 @@ window.Pie = window.Pie || {};
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
-      return `<table class="platform-table${p.narrow ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
+      return `<table class="platform-table${tight ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
       };
       // each platform under its header bar, which folds it away as a Finder group does; its table scrolls sideways on its own
       const tables = only ? tableOf(sections[0] || { macs: [], models: [] }) : sections.map((g, i) => `<section class="platform-section">
@@ -816,6 +820,21 @@ window.Pie = window.Pie || {};
     },
 
     bind(state) {
+      // a redraw the viewer asked for leaves the page where it was: its height and each platform's sideways place
+      const inPlace = (redraw) => {
+        const page0 = element.querySelector(".platform-scroll");
+        const top = page0?.scrollTop || 0;
+        const left = page0?.scrollLeft || 0;  // one platform's page slides sideways in the page's own scroller
+        const lefts = [...element.querySelectorAll(".platform-section-scroll")].map((s) => s.scrollLeft);
+        const put = () => {
+          const page = element.querySelector(".platform-scroll");
+          if (page) { page.scrollTop = top; page.scrollLeft = left; }
+          element.querySelectorAll(".platform-section-scroll").forEach((s, i) => { s.scrollLeft = lefts[i] || 0; });
+        };
+        redraw();
+        put();
+        requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(put)));
+      };
       element.addEventListener("click", (event) => {
         const button = event.target.closest("[data-hide-mac]");
         if (!button) return;
@@ -825,30 +844,22 @@ window.Pie = window.Pie || {};
         if (hidden.has(mac)) hidden.delete(mac); else hidden.add(mac);
         state.platform.hidden = [...hidden];
         Pie.saveView?.();
-        // the page stays where it was: drawn again, it keeps its height and each platform's sideways place
-        const top = element.querySelector(".platform-scroll")?.scrollTop || 0;
-        const lefts = [...element.querySelectorAll(".platform-section-scroll")].map((s) => s.scrollLeft);
-        const put = () => {
-          const page = element.querySelector(".platform-scroll");
-          if (page) page.scrollTop = top;
-          element.querySelectorAll(".platform-section-scroll").forEach((s, i) => { s.scrollLeft = lefts[i] || 0; });
-        };
-        document.dispatchEvent(new CustomEvent("pie:refresh"));
-        put();
-        requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(put)));
+        inPlace(() => document.dispatchEvent(new CustomEvent("pie:refresh")));
       }, true);
       element.addEventListener("click", (event) => {
         const button = event.target.closest("[data-narrow]");
         if (!button) return;
         event.stopPropagation();
         if (event.detail) button.blur();  // a click leaves no focus behind, so the arrow keys after it draw no ring
-        const narrow = !state.platform.narrow;
-        state.platform.narrow = narrow;
+        // this platform's table alone; the others keep theirs
+        const table = button.closest(".platform-table");
+        const narrow = !table.classList.contains("is-tight");
+        state.platform.narrowBy = { ...state.platform.narrowBy, [button.dataset.narrow]: narrow };
         Pie.saveView?.();
         const label = narrow ? "Show Overall and memory" : "Hide Overall and memory";
-        element.querySelectorAll(".platform-table").forEach((table) => table.classList.toggle("is-tight", narrow));
+        table.classList.toggle("is-tight", narrow);
         stripes(element);  // the columns moved
-        element.querySelectorAll("[data-narrow]").forEach((b) => { b.setAttribute("aria-pressed", String(narrow)); b.title = label; b.setAttribute("aria-label", label); });
+        button.setAttribute("aria-pressed", String(narrow)); button.title = label; button.setAttribute("aria-label", label);
       }, true);
 
       // drag a maker's band among the makers, or a model's head among its maker's models, as a column moves in Finder's
@@ -934,7 +945,7 @@ window.Pie = window.Pie || {};
           const key = kind === "maker" ? "makerOrder" : "modelOrder";
           const rest = (state.platform[key] || []).filter((x) => !order.includes(x));
           state.platform[key] = kind === "maker" ? order.concat(rest) : rest.concat(order);
-          onChange();
+          inPlace(onChange);
         }, SETTLE);
       };
       element.addEventListener("pointerup", finish);
