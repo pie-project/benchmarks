@@ -72,10 +72,19 @@ You work fully autonomously. Never stop until done, never ask, never hand back: 
 3. `pie-evals jobs --tier weekly --pie-commit <sha> --platform [TARGET_DEVICE] --artifact <id> --workload raw-512-256 --workload c<N> --workload pf<N>-512 --out jobs`; `PIE_ROOT=~/pie pie-evals-node run --job jobs/<job>.json --out /workspace/out/<job>`.
 4. **Anomalies** (pie < 50% of the best, CoV > 2%, prefill above the compute bound, latency spikes): profile; **minimal pie diffs that measurably help** (fewest kernel lines that make the cell faster; no rewrites, refactors or added comments; keep only if faster, else revert); deep issues → root cause in the report. A number above the hardware bound is a harness bug until shown otherwise.
 
+### Phase 3b: Make pie the fastest in every cell
+
+Once a model's cells all have numbers, every cell where pie is behind the fastest engine becomes a task, until all four setups are green on the device row:
+1. **Profile both engines on the same cell:** `nsys profile` (CUDA/NVTX; `--sample=none` if CPU sampling is blocked) on pie and on the fastest engine, same model, cut, workload and concurrency. Compare per-kernel time per token or per prefill token: which kernels, launch counts, occupancy, memory bandwidth reached (`ncu` where counters are allowed). Write down the one reason pie is slower (a kernel, a missing fusion, a host-side gap, a batching or scheduling difference).
+2. **Fix it in pie with the smallest diff that measurably helps:** the fewest lines in the kernel or dispatch path; no rewrites, refactors or added comments. Port the faster engine's approach (tile sizes, fused op, attention backend, graph capture) where that is the reason.
+3. **Prove it:** rebuild pie on the pod, rerun the cell, keep the change only if it is faster and the model's output stays correct (a short greedy check against the previous build); otherwise revert.
+4. **Ship it:** a PR to `pie-project/pie` per fix, title naming the part of the gap it closes (e.g. "Prefill part of the pie vs vLLM gap on L40S"), merged once proven. Then rebuild every pod at the new pie commit and rerun pie's cells so the whole row is on one pie build.
+5. Never make a competitor slower to win: fork changes stay correctness-only.
+
 ### Phase 4: Record, Review, Teardown, Report
 
 1. **Record:** automatic (pod import → database → site → localhost). After a bad batch (warm prompts, a wrong cut), clean `/workspace/out` on every pod, then `gh workflow run pod-import.yml -f reset=true` drops the tag and re-imports; it refuses while any pod is unreachable.
-2. **Review without waiting:** every change on a branch, in a PR (benchmarks, pie, forks). Benchmarks PRs that only touch `matrix/*.yaml`, workflows or `tools/webdb.py` for this run may be merged so the site and importer stay correct; pie and fork PRs wait for the operator. One tracking issue `[TARGET_DEVICE] evaluation`: coverage every ~2 h, every PR linked. PR title plain English; body 1–3 sentences (what failed, what changed, how checked). Commits: one title line. No AI attribution anywhere.
+2. **Review without waiting:** every change on a branch, in a PR (benchmarks, pie, forks). Benchmarks PRs that only touch `matrix/*.yaml`, workflows or `tools/webdb.py` for this run may be merged so the site and importer stay correct. Fork PRs (`pie-evals/<version>` branches) and proven pie speed fixes may be merged directly when the operator has approved it for the run (the L40S run on 2026-10-29 had that approval). One tracking issue `[TARGET_DEVICE] evaluation`: coverage every ~2 h, every PR linked. PR title plain English; body 1–3 sentences (what failed, what changed, how checked). Commits: one title line. No AI attribution anywhere.
 3. **Teardown:** terminate each pod as its models finish (`delete-pod`, confirm gone); point `pod-import.yml` back at no pods.
 4. **Final report** (tracking issue): completion matrix (per model × engine × setup, N for throughput, ratios for miniatures); fork and pie PRs; `support.yaml` rows; pie anomalies, most important first; new lessons (also below).
 
