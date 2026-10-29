@@ -41,51 +41,6 @@ window.Pie = window.Pie || {};
   const layersText = (layers) => (isNum(layers) ? `${layers} layers kept` : layers ? `layers ${layers} kept` : "");
   const miniBadge = (row) => `<span class="qc-badge" title="${esc(["Miniature", layersText(row.layers)].filter(Boolean).join(": "))}">Miniature</span>`;
 
-  // ---- parity: a row per model, a column per device ----------------------------------------------------
-  const parityTip = (r) => [
-    `${engineLabel(r.engine || "pie")} vs ${engineLabel(r.ref_engine)} on ${hardwareName(r.platform)}`,
-    `KL mean ${kl(r.kl_mean)}, p50 ${kl(r.kl_p50)}`,
-    `KL p99 ${kl(r.kl_p99)}, max ${kl(r.kl_max)}`,
-    `Top-1 agreement ${pct(r.top1_agree)}${r.top1_agree_decisive != null ? `, ${pct(r.top1_agree_decisive)} where ${engineLabel(r.ref_engine)} leads by 0.5 nats (${r.decisive_positions})` : ""}`,
-    r.ref_top1_p != null ? `${engineLabel(r.ref_engine)} top-1 holds ${pct(r.ref_top1_p)}, its top-20 ${pct(r.ref_topk_mass)}` : "",
-    `Exact match ${pct(r.exact_match, 0)}`,
-    `${r.positions ?? "–"} positions over ${r.prompts ?? "–"} prompts${r.misaligned_texts ? `, ${r.misaligned_texts} misaligned` : ""}`,
-    `pie ${short(r.version) || "–"}, ${engineLabel(r.ref_engine)} ${r.ref_version || "–"}`,
-    r.miniature ? ["Miniature model", layersText(r.layers)].filter(Boolean).join(": ") : "",
-    r.date ? `Measured ${Pie.format.date(r.date)}` : "",
-  ].filter(Boolean).join("\n");
-
-  const parityTable = () => {
-    const rows = tables().quality_parity || [];
-    if (!rows.length) return empty("No parity runs yet.");
-    const platforms = [...new Set(rows.map((r) => r.platform))]
-      .sort((a, b) => hardwareName(a).localeCompare(hardwareName(b)));
-    const models = new Map();
-    for (const r of rows) {
-      const key = r.artifact;
-      if (!models.has(key)) models.set(key, { artifact: r.artifact, model: r.model, cells: {} });
-      models.get(key).cells[r.platform] = r;
-    }
-    const ordered = [...models.values()].sort((a, b) => Pie.store.names.model(a.model).localeCompare(Pie.store.names.model(b.model)) || a.artifact.localeCompare(b.artifact));
-    const refs = (p) => [...new Set(rows.filter((r) => r.platform === p).map((r) => engineLabel(r.ref_engine)))].join(", ");
-    const head = `<tr><th class="qc-lead">Model</th>${platforms.map((p) => `<th><span>${esc(hardwareName(p))}</span><small>vs ${esc(refs(p))}</small></th>`).join("")}</tr>`;
-    const cell = (r) => (!r ? '<td class="qc-none">–</td>' : r.ref_unsupported ? `
-      <td class="qc-cell qc-unsupported" data-tip="${esc(`${engineLabel(r.ref_engine)} cannot run this model\n${r.ref_unsupported}${r.pie_ok ? "\npie runs it" : ""}`)}" aria-label="${esc(engineLabel(r.ref_engine))} cannot run this model">
-        ${Pie.icon("unsupported")}
-        ${r.miniature ? miniBadge(r) : ""}
-      </td>` : `
-      <td class="qc-cell" data-tip="${esc(parityTip(r))}">
-        <span class="qc-figure">${kl(r.kl_mean)}<span class="qc-sep">/</span>${pct(r.top1_agree)}</span>
-        ${r.miniature ? miniBadge(r) : ""}
-      </td>`);
-    const body = ordered.map((m) => `
-      <tr>
-        <th class="qc-lead" scope="row"><span>${esc(Pie.store.names.model(m.model))}</span><code>${esc(m.artifact)}</code></th>
-        ${platforms.map((p) => cell(m.cells[p])).join("")}
-      </tr>`).join("");
-    return `<div class="qc-scroll"><table class="qc-table qc-parity"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
-  };
-
   // ---- kernels: a row per device -----------------------------------------------------------------------
   const kernelsTable = () => {
     const rows = [...(tables().quality_kernels || [])].sort((a, b) => hardwareName(a.platform).localeCompare(hardwareName(b.platform)));
@@ -224,7 +179,11 @@ window.Pie = window.Pie || {};
   // the page: one grid in the platform pages' style, the benchmark tasks down the side and the models across under
   // their makers, for the platform picked in the bar; each cell pie's score with its gap to the closest reference engine
   // on the same weights and machine (mlx-lm, vLLM), red where any engine there disagrees
-  const gridOf = (items) => {
+  const gridOf = (items, platform) => {
+    // each platform's grid folds its Task column on its own, its choice kept as the speed pages keep theirs
+    const key = `quality:${platform}`;
+    const tight = Pie.state?.platform?.narrowBy?.[key] ?? Boolean(Pie.state?.platform?.narrow);
+    const narrowLabel = tight ? "Show Overall" : "Hide Overall";
     const models = [...new Set(items.map((x) => x.row.model))]
       .sort((a, b) => Pie.platform.makerName(a).localeCompare(Pie.platform.makerName(b)) || Pie.store.names.model(a).localeCompare(Pie.store.names.model(b)));
     const tasks = [...new Set(items.map((x) => x.row.task))].sort();
@@ -247,7 +206,7 @@ window.Pie = window.Pie || {};
       if (makers.length && makers[makers.length - 1].name === name) makers[makers.length - 1].n++;
       else makers.push({ name, model: m, n: 1 });
     }
-    const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"></th><th class="platform-corner is-overall"></th>${makers.map((k) =>
+    const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-overall"></th>${makers.map((k) =>
       `<th class="platform-maker" colspan="${k.n}" scope="colgroup"><span class="platform-maker-name">${Pie.platform.makerBadge(k.model)}<b>${esc(k.name)}</b><span>${k.n} ${k.n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill"></th></tr>`;
     const head = `<tr class="platform-head-row"><th class="platform-corner" scope="col">Task</th><th class="platform-corner is-overall" scope="col"><span class="platform-model">Overall</span><span class="platform-sub">Median gap</span></th>${models.map((m) => {
       const info = Pie.store.index.models[m] || {};
@@ -277,7 +236,7 @@ window.Pie = window.Pie || {};
         }).join("")}<td class="platform-fill"></td></tr>`;
     }).join("");
     const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
-    return `<table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
+    return `<table class="platform-table${tight ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
   };
   // every platform at once, as the compare pages stack theirs: a header bar that folds it, over its own grid
   const folded = {};
@@ -293,7 +252,7 @@ window.Pie = window.Pie || {};
             <span class="platform-group-name">${Pie.platform.badge(p)}<b>${esc(platformLabel(p))}</b><span>${models} ${models === 1 ? "model" : "models"}, ${tasks} ${tasks === 1 ? "task" : "tasks"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
           </span>
-        </div><div class="platform-section-body"${folded[p] ? " hidden" : ""}><div class="platform-section-scroll">${gridOf(items)}</div></div></section>`;
+        </div><div class="platform-section-body"${folded[p] ? " hidden" : ""}><div class="platform-section-scroll">${gridOf(items, p)}</div></div></section>`;
     }).join("")}</div>`;
   };
 
@@ -303,8 +262,6 @@ window.Pie = window.Pie || {};
         <h1>Quality</h1>
         <p class="method-lede">Whether pie computes what a reference engine computes, on the same weights and the same device.</p>
       </header>
-      ${section("Parity", "KL divergence of pie's next-token distribution from the reference engine's, mean over answer positions, and how often both pick the same top token.",
-        `<div class="qc-banner" role="note"${(tables().quality_parity || []).length ? "" : " hidden"}>Miniature models: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</div>${parityTable()}`)}
       ${section("Kernels", "pie's kernel tests on each backend, against reference implementations.", kernelsTable())}
       ${section("Accuracy", "Benchmark scores of pie beside every engine that ran the same weights on the same machine, per platform.", accuracyTable(state))}
       <div class="qc-pop" role="dialog" hidden></div>
@@ -318,6 +275,19 @@ window.Pie = window.Pie || {};
 
   const wire = () => {
     element.addEventListener("click", (event) => {
+      const narrow = event.target.closest("[data-narrow]");
+      if (narrow) {
+        if (event.detail) narrow.blur();
+        // this platform's grid alone; the others keep theirs
+        const table = narrow.closest(".platform-table");
+        const on = !table.classList.contains("is-tight");
+        Pie.state.platform.narrowBy = { ...Pie.state.platform.narrowBy, [narrow.dataset.narrow]: on };
+        Pie.saveView?.();
+        const label = on ? "Show Overall" : "Hide Overall";
+        table.classList.toggle("is-tight", on);
+        narrow.setAttribute("aria-pressed", String(on)); narrow.title = label; narrow.setAttribute("aria-label", label);
+        return;
+      }
       // a platform's bar folds its grid in place, sliding, as the compare pages fold theirs
       const bar = event.target.closest("[data-qc-fold]");
       if (bar) {
