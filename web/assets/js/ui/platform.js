@@ -487,15 +487,16 @@ window.Pie = window.Pie || {};
       if (k === "model" && viewState) {
         // All Models, then its groups and under each its models, smallest first; several can be checked at once, and a
         // group's row checks or clears all of its models
-        const current = viewState.platform.models || [];
-        const ids = [...new Set([...pageModels, ...current])];
+        // none picked shows them all, so every model is checked until one is cleared
+        const picked = viewState.platform.models || [];
+        const ids = [...new Set([...pageModels, ...picked])];
+        const current = picked.length ? picked : ids;
         const by = viewState.platform.modelGroup || "maker";
         const groups = {};
         for (const id of ids) (groups[groupOf(id, by)] ||= []).push(id);
         const order = by === "maker" ? Object.keys(groups).sort() : by === "size" ? [...SIZES.map((sz) => sz.label), "Unknown size"] : ["Local", "Cloud"];
         // how the list groups, as Finder's Group By: one pick, the rest of the menu under it
         return [...[["maker", "By Maker"], ["size", "By Size"], ["where", "Local and Cloud"]].map(([id, label]) => ({ value: `by:${id}`, label, selected: by === id })),
-          { separator: true }, { value: "", label: "All Models", selected: !current.length },
           ...order.filter((name) => groups[name]).flatMap((name) => {
             const list = groups[name].sort((a, b) => (paramsOf(a) ?? Infinity) - (paramsOf(b) ?? Infinity) || names().model(a).localeCompare(names().model(b)));
             return [{ separator: true },
@@ -543,11 +544,13 @@ window.Pie = window.Pie || {};
       }
       if (k === "model" && viewState) {
         if (value.startsWith("by:")) { viewState.platform.modelGroup = value.slice(3); return; }
-        const now = viewState.platform.models || [];
+        const now = viewState.platform.models?.length ? viewState.platform.models : pageModels;
         const by = viewState.platform.modelGroup || "maker";
         const own = value.startsWith("group:") ? pageModels.filter((id) => groupOf(id, by) === value.slice(6)) : [value];
         const all = own.every((id) => now.includes(id));
-        viewState.platform.models = !value ? [] : all ? now.filter((id) => !own.includes(id)) : [...new Set([...now, ...own])];
+        const next = all ? now.filter((id) => !own.includes(id)) : [...new Set([...now, ...own])];
+        // every model checked again is no pick at all: the menu shows them all, and models added later show too
+        viewState.platform.models = pageModels.every((id) => next.includes(id)) ? [] : next;
       }
       if (k === "maker" && viewState) {
         const now = viewState.platform.makers || [];
@@ -582,7 +585,10 @@ window.Pie = window.Pie || {};
       pagePlatforms = only ? [] : PLATFORMS.filter((pl) => rows.some((r) => platformOf(Pie.store.index.hardware[r.hardware] || {}) === pl)).map((pl) => pl.id);
       const picked = [];  // no platform filter: All Platforms shows every platform, each its own table
       const groups = PLATFORMS.filter((p) => (!only || p.id === only) && (!picked.length || picked.includes(p.id)))
-        .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p).map((hw) => hw.id) }))
+        .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p)
+          // multi-GPU machines (×2, ×4, ×8) hidden for now, to come back later: delete this line to show them again
+          .filter((hw) => !(hw.class === "gpu" && hw.count > 1))
+          .map((hw) => hw.id) }))
         .filter((g) => !only || g.macs.length);
       const macs = groups.flatMap((g) => g.macs);
       // a platform with no measured result yet, machines or not, shows the empty screen rather than an empty table

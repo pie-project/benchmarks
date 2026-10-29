@@ -1097,6 +1097,7 @@ artifacts:
 # precision: the weights as released; mtp: ships its own draft (MTP) head.
 catalog:
   - {name: DeepSeek-V4.1-Flash, base_model: deepseek-ai/DeepSeek-V4.1-Flash, family: deepseek_v41, params_b: 552, active_b: 16, layers: 40, hidden_size: 5120, experts: 384, top_k: 6, context: 1048576, license: MIT, precision: fp8, mtp: true}  # plus a 196B Engram memory module
+  - {name: DeepSeek-V4-Flash, base_model: deepseek-ai/DeepSeek-V4-Flash, family: deepseek_v4, params_b: 284, active_b: 13}
   - {name: GLM-5.3-Flash, base_model: zai-org/GLM-5.3-Flash, family: glm5_next, params_b: 320, active_b: 18, layers: 45, hidden_size: 4096, experts: 288, top_k: 8, context: 1048576, license: MIT, precision: fp8, mtp: true}
   - {name: GLM-5.3, base_model: zai-org/GLM-5.3, family: glm5, params_b: 744, active_b: 40, layers: 78, hidden_size: 6144, experts: 256, top_k: 8, context: 1048576, license: GLM-5.3, precision: fp8, mtp: true}  # sizes from AWS Bedrock's card; the HF card states none
   - {name: Hy4, base_model: tencent/Hy4-preview, family: hy4, params_b: 770, active_b: 49, layers: 78, hidden_size: 6144, experts: 256, top_k: 8, context: 1048576, license: Apache-2.0, precision: bf16, mtp: true}
