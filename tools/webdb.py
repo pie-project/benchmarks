@@ -344,12 +344,14 @@ def _miniature_shapes() -> dict[str, dict]:
 MINI_SHAPE = _miniature_shapes()
 # the miniatures of a datacenter model (over 100 GiB as released): those stand in for it, the CI fixtures never do
 _FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("kind", "full") == "full" and (a.get("expected_gib") or 0) > 100}
-SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and a["base_model"] in _FULL_BASES}
+# a model that does not fit a device is shown as its miniature there, whatever its size; only the CI's smoke fixtures
+# (tiny cuts in the smoke tier) are never a model's number
+SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and (a["base_model"] in _FULL_BASES or "smoke" not in a.get("tiers", []))}
 
 
 def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
-    """The row to show for each (hardware, engine, model, workload category): the best-matching workload, then on a Mac
-    the MLX weights every Mac engine shares, then the newest. A miniature (a few layers of the real shape) stands in only
+    """The row to show for each (hardware, engine, model, workload category): the newest run, then the best-matching
+    workload, then on a Mac the MLX weights every Mac engine shares. A miniature (a few layers of the real shape) stands in only
     where the model has no full-checkpoint row, and its row says so (``miniature``)."""
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
@@ -374,7 +376,8 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
         model = a2m.get(r["artifact"], r["artifact"])
         key = (r["platform"], r["engine"], model, cat)
         shared = r["platform"] in macs and art.get("source_format") == "mlx"
-        rank = (not mini, -pri, shared, r["started_at"])
+        # the newest run wins: a cell measured again (a fix, a fairer workload, a new saturating N) shows its latest number
+        rank = (r["started_at"], not mini, -pri, shared)
         if key not in best or rank > best[key][0]:
             best[key] = (rank, r)
     return best
