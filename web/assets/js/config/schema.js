@@ -110,16 +110,6 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    mac: {
-      label: "Apple Silicon",
-      short: "Mac",  // as the tables name it
-      section: "platforms",
-      view: "platform",
-      platform: "mac",
-      tint: "#636366",
-      filters: [],
-      columns: [],
-    },
     nvidia: {
       label: "NVIDIA GPU",
       short: "NVIDIA",  // as the tables name it
@@ -130,13 +120,13 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    tpu: {
-      label: "Google TPU",
-      short: "TPU",  // as the tables name it
+    mac: {
+      label: "Apple Silicon",
+      short: "Mac",  // as the tables name it
       section: "platforms",
       view: "platform",
-      platform: "tpu",
-      tint: "#4285f4",
+      platform: "mac",
+      tint: "#636366",
       filters: [],
       columns: [],
     },
@@ -147,6 +137,16 @@ window.Pie = window.Pie || {};
       view: "platform",
       platform: "amd",
       tint: "#ed1c24",
+      filters: [],
+      columns: [],
+    },
+    tpu: {
+      label: "Google TPU",
+      short: "TPU",  // as the tables name it
+      section: "platforms",
+      view: "platform",
+      platform: "tpu",
+      tint: "#4285f4",
       filters: [],
       columns: [],
     },

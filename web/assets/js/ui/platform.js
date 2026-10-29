@@ -44,10 +44,10 @@ window.Pie = window.Pie || {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
   const PLATFORMS = [
-    { id: "mac", label: "Apple Silicon", sub: "Metal", has: (hw) => Pie.platformOf(hw) === "mac" },
-    { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => Pie.platformOf(hw) === "tpu" },
     { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => Pie.platformOf(hw) === "nvidia" },
+    { id: "mac", label: "Apple Silicon", sub: "Metal", has: (hw) => Pie.platformOf(hw) === "mac" },
     { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => Pie.platformOf(hw) === "amd" },
+    { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => Pie.platformOf(hw) === "tpu" },
     { id: "cerebras", label: "Cerebras", sub: "Wafer-scale", has: (hw) => Pie.platformOf(hw) === "cerebras" },
     { id: "android", label: "Android", sub: "Mobile GPU", has: (hw) => Pie.platformOf(hw) === "android" },
     { id: "web", label: "WebGPU", sub: "In-browser", has: (hw) => Pie.platformOf(hw) === "web" },
@@ -666,8 +666,13 @@ window.Pie = window.Pie || {};
         .filter((g) => (!only && !narrowMacs) || g.macs.length);  // a search hides the platforms it leaves empty
       // a platform's page is one list of machines; All Platforms gives each platform its own table, headed by its name
       // and its own maker and model heads, with only the models measured on it
-      const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs)), models }]
-        : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: models.filter((model) => g.macs.some((mac) => shows(mac, model))) }))
+      // a table's miniatures (cut to fit its machines) lead it, then its full models; a maker with both splits its band
+      const minisFirst = (list, ms) => {
+        const mini = (model) => list.some((mac) => grid[mac]?.[model]?.c?.pie?.miniature);
+        return [...ms.filter(mini), ...ms.filter((m) => !mini(m))];
+      };
+      const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs)), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
+        : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: minisFirst(g.macs, models.filter((model) => g.macs.some((mac) => shows(mac, model)))) }))
           .filter((g) => g.macs.length && g.models.length);
 
       const cells = [];
@@ -713,7 +718,7 @@ window.Pie = window.Pie || {};
       const tableOf = ({ macs: list, models, platform: own }, first = true) => {
       // each platform folds its own Hardware column: its choice kept by name, the old page-wide one until then
       const key = own?.id || only || "all";
-      const tight = p.narrowBy?.[key] ?? Boolean(p.narrow);
+      const tight = p.narrowBy?.[key] ?? (p.narrow ?? true);
       const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
       const shownGroups = [{ platform: null, macs: list }];
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
@@ -759,11 +764,14 @@ window.Pie = window.Pie || {};
       const arrow = (key) => (sortKey === key ? `<span class="column-sort">${dir > 0 ? "↑" : "↓"}</span>` : "");
       // a maker heads its models with a band across them, as a platform heads its machines down the side
       const makers = [];
+      // a maker's miniatures and its full models are two bands, as the miniatures lead the table
+      const cut = (model) => list.some((mac) => grid[mac]?.[model]?.c?.pie?.miniature);
       for (const model of models) {
         const maker = makerOf(model);
+        const last = makers[makers.length - 1];
         // a speculation column widens the band but is not another model
-        if (makers.length && makers[makers.length - 1].maker.name === maker.name) { makers[makers.length - 1].n += 1; makers[makers.length - 1].count += 1; }
-        else makers.push({ maker, n: 1, count: 1 });
+        if (last && last.maker.name === maker.name && last.cut === cut(model)) { last.n += 1; last.count += 1; }
+        else makers.push({ maker, n: 1, count: 1, cut: cut(model) });
       }
       // each table's corner above Hardware narrows its own pinned column to each machine's mark and name, for room
       // for the models, and back: one button a platform
@@ -773,9 +781,12 @@ window.Pie = window.Pie || {};
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
         <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
         const m = Pie.store.index.models[realOf(model)] || {};
-        const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
+        const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B` : ""}` : "";
+        // the precision pie ran the model at on this table's machines, after its size
+        const SCHEME = { affine_u4_g64: "4-bit", bf16: "BF16", fp8: "FP8", mxfp4: "MXFP4", gguf_q4_k_m: "Q4_K_M", mlx_2bit: "2-bit" };
+        const precision = [...new Set(list.map((mac) => grid[mac]?.[model]?.c?.pie?.scheme).filter(Boolean).map((s) => SCHEME[s] || s))].join(" / ");
         // the speculative column says so under the model's name, where the other columns give its size
-        const sub = size;
+        const sub = [size, precision].filter(Boolean).join(" · ");
         return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(realOf(model)))}, or drag to move">
           <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
