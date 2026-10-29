@@ -63,20 +63,13 @@ competitive:
       knobs: {}
     ada:
       family:
-        muse_glimmer:
-          knobs:
-            gpu_mem_util:
-              value: 0.85
-              rationale: >
-                At 0.90 of a 48 GB L40S the 256-wide decode and prefill batches of the Muse Glimmer
-                miniature run out of memory past SGLang's static pool (torch.OutOfMemoryError, 150 MiB free);
-                0.85 leaves its graphs and activations room. Its KV pool still holds the batch.
         muse_spark:
           knobs:
             gpu_mem_util:
               value: 0.85
               rationale: >
-                As muse_glimmer: at 0.90 the Muse Spark miniature's 256-wide batches OOM on a 48 GB L40S.
+                At 0.90 of a 48 GB L40S the Muse Spark miniature's 256-wide batches run out of memory past
+                SGLang's static pool (torch.OutOfMemoryError, 70 MiB free); 0.85 leaves its graphs room.
   workload_kind:
     prefix_shared:
       knobs:
