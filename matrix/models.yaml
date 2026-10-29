@@ -301,6 +301,15 @@ artifacts:
     max_context: 4096
     expected_gib: 26.8
     tiers: [weekly]
+  - id: gemma-4-31b-mini
+    base_model: google/gemma-4-31B-it
+    family: gemma4
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-29", period: 6, shrink_family: gemma4, note: "first 30 of 60 layers, five sliding/global periods (bf16 is 58 GB)"}
+    max_context: 4096
+    expected_gib: 31.6
+    tiers: [weekly]
   - id: nemotron-3-ultra-mini
     base_model: nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16
     family: nemotron_h
