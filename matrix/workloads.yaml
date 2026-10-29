@@ -48,13 +48,13 @@ workloads:
   # batched prefill: 256 cold prompts at once, each answered with one token, so the wall is the batch reading its prompts
   - id: pf256-512
     kind: concurrency
-    params: {concurrency: 256, num_requests: 1024, prefill: 512, decode: 1}
+    params: {concurrency: 256, num_requests: 1024, prefill: 512, decode: 1, cold_cache: true}
     tiers: [nightly, weekly, targeted]
     est_minutes: 2
   # the device evaluation's saturated prefill: 16 cold prompts at once, the concurrency past which prefill tok/s grows < 5%
   - id: pf16-512
     kind: concurrency
-    params: {concurrency: 16, num_requests: 64, prefill: 512, decode: 1}
+    params: {concurrency: 16, num_requests: 64, prefill: 512, decode: 1, cold_cache: true}
     tiers: [weekly]
     est_minutes: 1
 
