@@ -35,6 +35,26 @@ default:
         Off: pie tokenizes in the guest, which is part of what the serving
         path costs. Turn on to isolate the engine from the tokenizer.
   family:
+    gemma4:
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                The L40S profile's 2048-token fires (pie #1202, tuned on Qwen3.8 and Nemotron) cut a
+                Gemma-4 dense batch of prompts into small passes: 8192 lifts gemma-4-E4B pf8-512
+                19.0k to 20.4k and c256 6.2k to 6.3k on l40s-x1 (the 31B miniature's working set
+                caps it at 1024 either way).
+    gpt_oss:
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                Larger fires feed the MXFP4 experts more tokens each: gpt-oss-20b pf8-512 19.8k to
+                21.9k and c256 5.9k to 6.2k on l40s-x1 against the profile's 2048.
     qwen3_6:
       knobs: {}
       backend:
