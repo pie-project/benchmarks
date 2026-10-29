@@ -1,0 +1,40 @@
+name: pod import
+# collects the benchmark outputs that agents leave on rented pods (/workspace/out/<job>/records.jsonl) into the
+# database, from the site laptop: it is on the tailnet with the pods, and only a workflow job sees PIE_EVALS_DB.
+# Collecting a run again replaces its rows, so every pass simply takes everything the pods hold so far.
+on:
+  workflow_dispatch:
+    inputs:
+      pods: { description: "comma-separated pod ids on the tailnet", required: false, default: "" }
+      tag: { description: "site tag the rows are stored under", required: false, default: "l40s-full" }
+  schedule:
+    - cron: "*/10 * * * *"
+permissions: { contents: read }
+env:
+  PODS: "${{ inputs.pods || 'djar5c5imsbpdj,abkmiiao0gbm4c,hj06ul5pa8d1si,8ktv61dhwbaac5' }}"
+  TAG: "${{ inputs.tag || 'l40s-full' }}"
+jobs:
+  import:
+    runs-on: [self-hosted, site]  # the site laptop: on the tailnet, and its jobs receive the database secret
+    concurrency: { group: pod-import, cancel-in-progress: false }
+    env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv && uv pip install -e ".[orchestrate]"
+      - name: copy finished outputs from the pods (read only)
+        run: |
+          rm -rf pods && mkdir pods
+          ssh_() { ssh -o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new "root@$1" "$2"; }
+          for p in ${PODS//,/ }; do
+            dirs=$(ssh_ "$p" 'cd /workspace/out 2>/dev/null && for d in */; do [ -s "$d/records.jsonl" ] && printf "%s " "${d%/}"; done' 2>/dev/null) || { echo "::warning::$p unreachable"; continue; }
+            [ -n "$dirs" ] || { echo "$p: nothing yet"; continue; }
+            mkdir -p "pods/$p"
+            ssh_ "$p" "tar -C /workspace/out -czf - $dirs" | tar -C "pods/$p" -xzf - && echo "$p: $dirs"
+          done
+      - name: collect into the database
+        run: |
+          shopt -s nullglob
+          dirs=(pods/*/*/)
+          [ ${#dirs[@]} -gt 0 ] || { echo "no outputs yet"; exit 0; }
+          .venv/bin/pie-evals collect --tier weekly --tag "$TAG" --tag-kind manual "${dirs[@]}"
