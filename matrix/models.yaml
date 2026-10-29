@@ -445,6 +445,7 @@ artifacts:
     active_b: 3.6
     family: gpt_oss
     scheme: mxfp4
+    pie_sku: gptoss-20b-bf16-mxfp4-kv-bf16   # bf16 attention as released, as vLLM serves it: the import otherwise takes the u4g64 row (4-bit attention)
     expected_gib: 10.4
     tiers: [nightly, weekly]
 
