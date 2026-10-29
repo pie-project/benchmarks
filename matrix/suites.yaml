@@ -89,7 +89,7 @@ suites:
       - {engine: llamacpp, workload: control-aa}
       - {engine: mlxlm, workload: control-aa}
   weekly:
-    max_jobs_per_platform: 170  # the device evaluation (matrix/device-eval.yaml) adds its 19 models to the weekly tier
+    max_jobs_per_platform: 400  # the device evaluation (matrix/device-eval.yaml) adds its 19 models and saturation sweeps to the weekly tier
     enforce_budget: true
     exclude: []
   targeted:
