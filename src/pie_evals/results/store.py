@@ -229,6 +229,9 @@ SCHEMA_SQL = (
     "UPDATE quality SET platform = summary->>'platform' WHERE coalesce(summary->>'platform', '') <> ''; "
     "DROP INDEX IF EXISTS quality_tag_key; "
     "CREATE UNIQUE INDEX quality_platform_key ON quality (artifact, task, tag, platform); END IF; END $$;\n"
+    # an import from before the platform key recreates the old one beside it, and then every rerun of a stored score fails on it
+    "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'quality_platform_key') THEN "
+    "DROP INDEX IF EXISTS quality_tag_key; END IF; END $$;\n"
     "CREATE TABLE IF NOT EXISTS quality (artifact text NOT NULL, task text NOT NULL, model text, engine text, "
     "score double precision, n integer, date timestamptz, summary jsonb NOT NULL, samples jsonb, "
     "stored_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (artifact, task));\n"
