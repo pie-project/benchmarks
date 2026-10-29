@@ -15,7 +15,6 @@ platforms:
     memory_gib: 46
     interconnect: pcie
     runner_labels: [self-hosted, linux, l40s-x1]
-    pod: l40s-x2   # its jobs run on the l40s-x2 pod, one GPU masked
     runpod_gpu_type: "NVIDIA L40S"
     tiers: [smoke, nightly, weekly]
   - id: l40s-x2
