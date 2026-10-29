@@ -403,6 +403,14 @@ window.Pie = window.Pie || {};
   const paramsOf = (id) => (Pie.store.tables.models || []).find((m) => m.id === id)?.params_b;
   const sizeOf = (id) => { const b = paramsOf(id); return b == null ? null : SIZES.find((sz) => sz.test(b))?.id; };
   let pageMakers = [];  // the makers with a result on the page the grid last drew
+  let pageModels = [];  // the models with a result on the page the grid last drew
+  // a model's group in the Models menu: its maker, its size band, or Local (it fits a 128 GB Mac) and Cloud
+  const groupOf = (id, by) => {
+    const m = (Pie.store.tables.models || []).find((x) => x.id === id) || {};
+    if (by === "size") return SIZES.find((sz) => sz.id === sizeOf(id))?.label || "Unknown size";
+    if (by === "where") return m.needs_gib != null && m.needs_gib <= 128 ? "Local" : "Cloud";
+    return makerOf(id).name || "Cloud";
+  };
   let pagePlatforms = [];  // the platforms with a result in the setup the grid last drew
 
   Pie.platform = {
@@ -476,6 +484,25 @@ window.Pie = window.Pie || {};
         return [{ value: "", label: "All Platforms", selected: !current.length }, { separator: true },
           ...ids.map((id) => ({ value: id, label: Pie.schema[id]?.short || id, selected: current.includes(id), check: true, dot: Pie.schema[id]?.tint }))];
       }
+      if (k === "model" && viewState) {
+        // All Models, then its groups and under each its models, smallest first; several can be checked at once, and a
+        // group's row checks or clears all of its models
+        const current = viewState.platform.models || [];
+        const ids = [...new Set([...pageModels, ...current])];
+        const by = viewState.platform.modelGroup || "maker";
+        const groups = {};
+        for (const id of ids) (groups[groupOf(id, by)] ||= []).push(id);
+        const order = by === "maker" ? Object.keys(groups).sort() : by === "size" ? [...SIZES.map((sz) => sz.label), "Unknown size"] : ["Local", "Cloud"];
+        // how the list groups, as Finder's Group By: one pick, the rest of the menu under it
+        return [...[["maker", "By Maker"], ["size", "By Size"], ["where", "Local and Cloud"]].map(([id, label]) => ({ value: `by:${id}`, label, selected: by === id })),
+          { separator: true }, { value: "", label: "All Models", selected: !current.length },
+          ...order.filter((name) => groups[name]).flatMap((name) => {
+            const list = groups[name].sort((a, b) => (paramsOf(a) ?? Infinity) - (paramsOf(b) ?? Infinity) || names().model(a).localeCompare(names().model(b)));
+            return [{ separator: true },
+              { value: `group:${name}`, label: name, selected: list.every((id) => current.includes(id)), check: true, icon: by === "maker" ? badge(MAKERS.find((m) => m.name === name) || { logo: "" }) : "" },
+              ...list.map((id) => ({ value: id, label: names().model(id), detail: paramsOf(id) ? `${paramsOf(id)}B` : "", selected: current.includes(id), check: true, indent: true, icon: badge(makerOf(id)) }))];
+          })];
+      }
       if (k === "maker" && viewState) {
         // All Makers, then under a separator every maker with a result on the page, each checked while shown; several
         // can be checked at once, as a Finder tag menu checks several tags
@@ -513,6 +540,14 @@ window.Pie = window.Pie || {};
       if (k === "size" && viewState) {
         const now = viewState.platform.sizes || [];
         viewState.platform.sizes = !value ? [] : now.includes(value) ? now.filter((v) => v !== value) : [...now, value];
+      }
+      if (k === "model" && viewState) {
+        if (value.startsWith("by:")) { viewState.platform.modelGroup = value.slice(3); return; }
+        const now = viewState.platform.models || [];
+        const by = viewState.platform.modelGroup || "maker";
+        const own = value.startsWith("group:") ? pageModels.filter((id) => groupOf(id, by) === value.slice(6)) : [value];
+        const all = own.every((id) => now.includes(id));
+        viewState.platform.models = !value ? [] : all ? now.filter((id) => !own.includes(id)) : [...new Set([...now, ...own])];
       }
       if (k === "maker" && viewState) {
         const now = viewState.platform.makers || [];
@@ -587,6 +622,7 @@ window.Pie = window.Pie || {};
       const fillOf = (id) => fill[id]?.size || 0;
       // the makers menu offers only makers with a result on this page
       pageMakers = [...new Set(rows.filter((r) => r[metric.key] && macs.includes(r.hardware) && suiteModels.includes(r.model)).map((r) => makerOf(r.model).name || "Cloud"))].sort();
+      pageModels = [...new Set(rows.filter((r) => r[metric.key] && macs.includes(r.hardware) && suiteModels.includes(r.model)).map((r) => r.model))];
       // a maker's fullness is its models' average, so one full model outranks eight half-empty ones
       const makerFill = {}, makerCount = {};
       for (const id of suiteModels) {
@@ -596,8 +632,8 @@ window.Pie = window.Pie || {};
       }
       for (const name of Object.keys(makerFill)) makerFill[name] /= makerCount[name];
       // the maker picked in the bar narrows the columns to its models
-      const sortedModels = (narrowModels ? modelHits : suiteModels).filter((id) => !p.makers?.length || p.makers.includes(makerOf(id).name || "Cloud"))
-        .filter((id) => !p.sizes?.length || p.sizes.includes(sizeOf(id)))
+      // the models picked in the bar narrow the columns to them
+      const sortedModels = (narrowModels ? modelHits : suiteModels).filter((id) => !p.models?.length || p.models.includes(id))
         .sort((a, b) => byRank(p.makerOrder, makerOf(a).name, makerOf(b).name)
           || makerFill[makerOf(b).name] - makerFill[makerOf(a).name] || byName(makerOf(a).name || "~", makerOf(b).name || "~")
           || byRank(p.modelOrder, a, b) || fillOf(b) - fillOf(a) || byName(names().model(a), names().model(b)));
@@ -819,8 +855,7 @@ window.Pie = window.Pie || {};
         <div class="platform-bar">
           ${setupControl(mode.id, modes)}${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
           <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><span class="platform-vs">vs</span><button class="filter-button${rival ? " is-engine" : ""}"${rival ? ` style="--tint: ${Pie.engines.colorOf(rival)}"` : ""} type="button" data-grid-pick="rival" aria-haspopup="menu" aria-label="Opponent">${esc(rival ? Pie.store.names.engine(rival) : "Strongest")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
-          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="maker" aria-haspopup="menu" aria-label="Makers">${esc(!p.makers?.length ? "All Makers" : p.makers.length <= 2 ? p.makers.join(", ") : `${p.makers.length} Makers`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
-          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="size" aria-haspopup="menu" aria-label="Model sizes">${esc(!p.sizes?.length ? "All Sizes" : p.sizes.length <= 2 ? p.sizes.map((id) => SIZES.find((sz) => sz.id === id)?.label || id).join(", ") : `${p.sizes.length} Sizes`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             ${fixed ? "" : (() => {
