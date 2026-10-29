@@ -310,6 +310,25 @@ artifacts:
     max_context: 4096
     expected_gib: 16.0
     tiers: [weekly]
+  - id: nemotron-3-super-mini
+    base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+    family: nemotron_h
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-43", experts: 32, period: 1, note: "the first 44 of 88 layers (Mamba-2, latent MoE, attention); 32 of 512 experts (bf16 is 230 GB)"}
+    max_context: 4096
+    expected_gib: 17.0
+    tiers: [weekly]
+  - id: qwen3.8-27b-mini
+    base_model: Qwen/Qwen3.8-27B
+    family: qwen3_6
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-31", period: 4, note: "8 of 16 linear/linear/linear/full periods (bf16 is 52 GB)"}
+    pie_sku: qwen38-27b-bf16-kv-bf16
+    max_context: 4096
+    expected_gib: 27.5
+    tiers: [weekly]
   - id: minimax-m3.1-flash-mini
     base_model: MiniMaxAI/MiniMax-M3.1-Flash
     family: minimax_m3
@@ -607,6 +626,21 @@ artifacts:
     scheme: bf16     # nvidia/...-NVFP4 is the quantized copy
     expected_gib: 1044.1
     tiers: [weekly]
+  - id: nemotron-3-super
+    base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+    display_name: nemotron-3:super
+    params_b: 120
+    active_b: 12
+    layers: 88
+    hidden_size: 4096
+    experts: 512
+    top_k: 22
+    context: 262144
+    vocab: 131072       # untied: an embedding and a separate LM head
+    family: nemotron_h
+    scheme: bf16
+    expected_gib: 230.2
+    tiers: []
   - id: minimax-m3.1-flash
     base_model: MiniMaxAI/MiniMax-M3.1-Flash
     display_name: minimax-m3.1:flash

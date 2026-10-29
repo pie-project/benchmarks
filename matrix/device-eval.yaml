@@ -26,7 +26,7 @@ models:
   - {n: 10, model: muse-glimmer-30b, family: muse_glimmer, covers: "Muse 30B"}
   - {n: 11, model: minimax-m3.1-flash, family: minimax_m3, covers: "lightning attention hybrid MoE"}
   - {n: 12, model: nemotron-3-super, family: nemotron_h, covers: "Mamba-2 + MoE + attention hybrid",
-     alternates: [nvidia-nemotron-3-ultra-550b-a55b, nemotron-h-8b]}
+     alternates: [nvidia-nemotron-3-super-120b-a12b, nvidia-nemotron-3-ultra-550b-a55b, nemotron-h-8b]}
   - {n: 13, model: qwen3.6-35b-a3b, family: qwen3_6_moe, covers: "GDN hybrid MoE, 256 experts"}
   - {n: 14, model: qwen3.8-27b, family: qwen3_6, covers: "GDN hybrid dense",
      alternates: [qwen3.6-27b, qwen3.5-9b, qwen3.5-4b, qwen3.5-0.8b]}

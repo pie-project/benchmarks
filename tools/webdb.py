@@ -27,10 +27,10 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 
 # Each site workload maps to measured workloads, best first.
-THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
+THROUGHPUT = ["c32", "c64", "c256", "c8", "c4", "c16", "c128", "c512"]
 RAW = ["raw-512-256"]  # the single request with speculation off: what the hardware limit is measured against
 SPEC = ["spec-512-256"]  # the same request with speculation on: every engine drafts with its own drafter
-PREFILL_BATCH = ["pf256-512"]  # 256 cold prompts at once, one token each: the batch's prompt tokens over the wall
+PREFILL_BATCH = ["pf256-512", "pf8-512", "pf16-512", "pf32-512", "pf64-512", "pf128-512", "pf512-512"]  # 256 cold prompts at once, one token each: the batch's prompt tokens over the wall
 CATEGORIES = (("throughput", THROUGHPUT, "Batching"), ("raw", RAW, "Raw"), ("spec", SPEC, "Speculative"), ("prefill_batch", PREFILL_BATCH, "Batched Prefill"))
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 
@@ -340,8 +340,8 @@ def _miniature_shapes() -> dict[str, dict]:
 
 
 MINI_SHAPE = _miniature_shapes()
-# the miniatures of a datacenter model (over 100 GiB as released): those stand in for it, the CI fixtures never do
-_FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("kind", "full") == "full" and (a.get("expected_gib") or 0) > 100}
+# the miniatures of a model over 40 GiB as released (no 48 GB GPU holds it): those stand in for it, the CI fixtures never do
+_FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("kind", "full") == "full" and (a.get("expected_gib") or 0) > 40}
 SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and a["base_model"] in _FULL_BASES}
 
 
