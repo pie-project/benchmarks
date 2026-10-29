@@ -26,18 +26,18 @@ workloads:
   # -- concurrency sweep (closed loop; num_requests = 4 x concurrency as in pie-bench)
   - id: c8
     kind: concurrency
-    params: {concurrency: 8, num_requests: 32, prefill: 128, decode: 128}
+    params: {concurrency: 8, num_requests: 32, prefill: 128, decode: 128, cold_cache: true}
     tiers: [smoke, nightly, weekly]
     est_minutes: 1
   - id: c32
     kind: concurrency
     # a dense 27B on a 48 GB Mac serves 128 requests in 12-25 min: requests and rounds get the time to finish
-    params: {concurrency: 32, num_requests: 128, prefill: 128, decode: 128, request_timeout_s: 2400, round_timeout_s: 3000}
+    params: {concurrency: 32, num_requests: 128, prefill: 128, decode: 128, request_timeout_s: 2400, round_timeout_s: 3000, cold_cache: true}
     tiers: [smoke, nightly, weekly, targeted]
     est_minutes: 1.5
   - id: c64
     kind: concurrency
-    params: {concurrency: 64, num_requests: 256, prefill: 128, decode: 256}
+    params: {concurrency: 64, num_requests: 256, prefill: 128, decode: 256, cold_cache: true}
     tiers: [nightly, weekly]
     est_minutes: 3
   - id: c256
