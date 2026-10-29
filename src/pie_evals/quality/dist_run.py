@@ -376,6 +376,27 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
 
     # PARITY_ENGINES=pie: pie only (a rerun after pie failed; the vLLM rows already stored stay)
     engines = [e for e in os.environ.get("PARITY_ENGINES", "vllm,pie").split(",") if e]
+    # PARITY_DONE: <row artifact>/<task> pairs already stored (a rerun after a spot VM was taken back): not asked again
+    done = {d for d in os.environ.get("PARITY_DONE", "").split(",") if d}
+    todo = {e: [t for t in tasks if f"{art.id if e == 'pie' else art.id + '@vllm'}/{t}" not in done] for e in ("vllm", "pie")}
+    engines = [e for e in engines if todo[e]]
+    rows = []
+    store = Store(store_dir)
+
+    def emit(engine: str, t: str, texts: list[str]) -> None:
+        # each set stored as soon as it is answered: a VM taken back mid-model keeps the sets done
+        items = sets[t][0]
+        scores = [TASKS[t][1](i, x) for i, x in zip(items, texts, strict=True)]
+        correct = sum(scores)
+        lo, hi = wilson(correct, len(scores))
+        row = {"artifact": art.id if engine == "pie" else f"{art.id}@vllm", "model": art.id, "engine": engine, "label": "pie" if engine == "pie" else "vLLM",
+               "checkpoint": art.base_model, "scheme": str(art.scheme), "platform": platform_id, "tp": tp, "task": t, "n": len(scores), "correct": correct,
+               "score": correct / len(scores) if scores else None, "ci95": [lo, hi], "version": versions[engine], "empty": sum(1 for x in texts if not x),
+               "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+               "samples": [{"id": i.id, "score": sc, "text": x} for i, sc, x in zip(items, scores, texts, strict=True)]}
+        store.write_quality(row, tag=tag, tag_kind=tag_kind)
+        log(f"accuracy {row['artifact']} {t}: {correct:.0f}/{len(scores)} = {row['score']:.1%}")
+        rows.append(row)
     # XLA: a request may wait on compiles; a request that failed is sent again (greedy: same answer)
     req = {"timeout": 7200.0, "retries": 2} if backend == "xla" else {}
     if "vllm" in engines:
@@ -389,8 +410,11 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
         try:
             model = srv.wait(5400)
             for t, (_items, rendered) in sets.items():
+                if t not in todo["vllm"]:
+                    continue
                 answers["vllm"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY)
                 log(f"accuracy {art.id}@{platform_id}: vllm {t} done")
+                emit("vllm", t, answers["vllm"][t])
         except Exception as e:  # noqa: BLE001 — vLLM that cannot serve the model is a crossed-out cell; pie still runs
             versions["vllm_unsupported"] = _reason(e, out_dir, f"{art.id}-acc", "vllm")
             log(f"accuracy {art.id}@{platform_id}: vllm cannot run it: {versions['vllm_unsupported']}")
@@ -421,29 +445,16 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
                 srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie-noprewarm.log", prewarm=False)
                 model = srv.wait(5400)
             for t, (_items, rendered) in sets.items():
+                if t not in todo["pie"]:
+                    continue
                 answers["pie"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY, **req)
                 log(f"accuracy {art.id}@{platform_id}: pie {t} done")
+                emit("pie", t, answers["pie"][t])
         except Exception as e:  # noqa: BLE001 — the sets done so far (and vLLM's) are still stored; raised after
             pie_error = e
         finally:
             srv.stop()
 
-    rows = []
-    store = Store(store_dir)
-    for engine, by_task in answers.items():
-        for t, texts in by_task.items():
-            items = sets[t][0]
-            scores = [TASKS[t][1](i, x) for i, x in zip(items, texts, strict=True)]
-            correct = sum(scores)
-            lo, hi = wilson(correct, len(scores))
-            row = {"artifact": art.id if engine == "pie" else f"{art.id}@vllm", "model": art.id, "engine": engine, "label": "pie" if engine == "pie" else "vLLM",
-                   "checkpoint": art.base_model, "scheme": str(art.scheme), "platform": platform_id, "tp": tp, "task": t, "n": len(scores), "correct": correct,
-                   "score": correct / len(scores) if scores else None, "ci95": [lo, hi], "version": versions[engine], "empty": sum(1 for x in texts if not x),
-                   "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                   "samples": [{"id": i.id, "score": sc, "text": x} for i, sc, x in zip(items, scores, texts, strict=True)]}
-            store.write_quality(row, tag=tag, tag_kind=tag_kind)
-            log(f"accuracy {row['artifact']} {t}: {correct:.0f}/{len(scores)} = {row['score']:.1%}")
-            rows.append(row)
     if "vllm_unsupported" in versions:
         for t in tasks:
             store.write_quality({"artifact": f"{art.id}@vllm", "model": art.id, "engine": "vllm", "label": "vLLM", "task": t, "platform": platform_id,
