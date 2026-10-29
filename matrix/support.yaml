@@ -145,8 +145,6 @@ unsupported:
   # 4090 ss 25 tok/s; the H100 (1189 tok/s at c64) and Blackwell cards keep the baseline
   - when: {engine: sglang, family: gpt_oss, arch: ampere}
     reason: "SGLang 0.5.20 gpt-oss mxfp4 falls back to dequant on Ampere: 5-12 tok/s, not a baseline"
-  - when: {engine: sglang, family: gpt_oss, arch: ada}
-    reason: "SGLang 0.5.20 gpt-oss mxfp4 falls back to dequant on Ada: ~25 tok/s single-stream, not a baseline"
   # SGLang 0.5.22's flashinfer cannot build its gpt-oss mxfp8 kernels for Blackwell (sm120: RTX 5090, PRO 4500,
   # PRO 6000): "Ninja build failed ... mxfp8_quantization_sm100" (0.5.3-b5, run 39104203014)
   # SGLang 0.5.22 unpacks gpt-oss-120b's mxfp4 experts at load and runs one 80 GB card out of memory
