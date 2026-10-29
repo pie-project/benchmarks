@@ -406,7 +406,8 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
             ensure_baseline("vllm", recipe["pin"], backend=backend, log=log)
         ref = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
         versions["vllm"] = ref.version()
-        srv = vllm_server(ref, snapshot, tp, out_dir / f"{art.id}-acc-vllm.log", max_seqs=ACCURACY_CONCURRENCY)
+        # PARITY_VLLM_TP: vLLM over more chips than pie's one (a model whose load does not fit one chip in vLLM-TPU)
+        srv = vllm_server(ref, snapshot, int(os.environ.get("PARITY_VLLM_TP") or tp), out_dir / f"{art.id}-acc-vllm.log", max_seqs=ACCURACY_CONCURRENCY)
         try:
             model = srv.wait(5400)
             for t, (_items, rendered) in sets.items():
