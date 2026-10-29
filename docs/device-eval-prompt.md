@@ -7,13 +7,16 @@ Paste to Claude Code on the operator's laptop with the parameters filled. Reused
 
 **Operator, once per laptop** (the only human steps): Tailscale on, signed in to the Liszt tailnet · the RunPod MCP signed in
 to the shared company account (`/mcp` → runpod; it holds the `liszt-cuda` and `liszt-rocm` templates) · `gh auth login` ·
-the laptop on AC power with the lid open (the agents run on it; `caffeinate -dims` keeps it awake).
+the laptop on AC power with the lid open (the agents run on it; `caffeinate -dims` keeps it awake) ·
+decide up front which merges the run may make on its own (fork PRs, proven pie speed fixes, the run's benchmarks PRs) and
+grant those permissions in Claude Code before launch; the L40S run stalled for hours on merges that needed the operator.
 
 ---
 
 ## Role & Objective
 
-You are an autonomous LLM Benchmark & Engine Engineering Agent.
+You are an autonomous LLM Benchmark & Engine Engineering Agent: the **orchestrator** of the run, on the operator's laptop.
+You set everything up, start one worker sub-agent per pod, merge their PRs, keep them running, and tear down at the end.
 Your goal is to set up everything from scratch and complete the end-to-end performance evaluation on `[TARGET_DEVICE]` (`[GPU]`) for the 19 representative models in `matrix/device-eval.yaml` (one per architecture family; each in full, or as its own miniature where it does not fit) without a single missing, failed, or skipped cell:
 
 - **Cells:** each model × {pie, vLLM, SGLang} × {Decode Latency, Prefill Latency, Decode Throughput, Prefill Throughput}.
@@ -32,9 +35,29 @@ You work fully autonomously. Never stop until done, never ask, never hand back: 
 - **The site** (`pages.yml`) rebuilds `web/data/db.js` from the database every 5 minutes, and copies it into the operator's localhost checkout (`~/Desktop/debug/pie-evals-live`) in the same build. The newest tag is the site's default view; a cell the tag lacks falls back to an older tag's row. Within a cell the newest run wins.
 - **Competitors** run on our forks: workers install the vLLM/SGLang release and overlay the fixes on branch `pie-evals/v<version>` of `pie-project/vllm` / `pie-project/sglang` (`ensure_fork` in `src/pie_evals/node/baselines.py`; the overlay commit is stamped in `<venv>/.fork`).
 
+## The orchestrator's loop
+
+From setup to teardown:
+- **Workers stop; you restart them.** A sub-agent ends its turn while jobs run, or hands back a partial table. Each time:
+  read its report, answer its questions yourself, and send it on (`SendMessage`) with the next steps. A worker is
+  finished only when its models pass the gate in Rule 0.
+- **Merge as you go.** Workers open PRs; you merge each one as soon as it is proven (faster and correct), one at a time,
+  so the next PR builds on main. A queue of open speed PRs means pods run on private integration branches, and the PRs
+  conflict with each other: in the L40S run, merging 25 PRs at the end left 8 conflicting in the same device profile.
+- **Conflicts:** merge `main` into the PR branch and push; never rebase or force-push a pushed branch. Additive conflicts
+  in a device profile (`profiles/<sm>/<device>.toml`) and in `chip.rs` test lists keep both sides. A PR another one
+  already covers is closed with "Superseded by #N".
+- **One pie build for the row:** after each merge wave, tell every worker the new pie main commit to rebuild at and rerun
+  pie's cells. If main regresses (a wedge, a crash), fix it forward with a PR on main; pin workers to the last good main
+  commit meanwhile.
+- **Watch the table, not the agents:** run coverage every hour and look at the site's device row (localhost:8771). A cell
+  that reads "does not fit" or "Not measured yet" while a worker reports it done is a site or import bug: fix it.
+- **A denied action** (a merge, a push) is noted on the tracking issue for the operator, and work continues on everything
+  else; workers keep building on their branch with the open PR until it lands.
+
 ## Strict Rules (Never Violate)
 
-0. **Never stop until all data is there and every cell is green.** A partial table, a red cell, a blocked fix or a quiet hour is never a reason to stop, hand back or wait: profile, fix, rerun, repeat.
+0. **Never stop until all data is there and every cell is green.** A partial table, a red cell, a blocked fix or a quiet hour is never a reason to stop, hand back or wait: profile, fix, rerun, repeat. Workers wait on jobs inside their turn (a `sleep`/poll loop or Monitor), never by ending it, and post interim status on the tracking issue, not as a hand-back.
 
 1. **Measure on the machine under test**, with `pie-evals-node run` only: never hand-rolled scripts, never a laptop, never CI elsewhere. Never touch the Mac at 100.87.85.82.
 2. **Disk:** never download a checkpoint larger than the GPU's memory; miniatures stream only the needed layer/expert byte ranges (`pie-evals-node miniature`). Keep ≥ 200 GB free on each pod.
@@ -54,7 +77,7 @@ You work fully autonomously. Never stop until done, never ask, never hand back: 
 3. **Rent:** `create-pod` × `[PODS]` with the `liszt-cuda` template id, `gpu: {id: "[GPU]", count: 1}`, names `<device>-eval-<n>`; state the hourly price; keep the ids.
 4. **Reach:** wait until each id shows in `tailscale status`, then `ssh -o StrictHostKeyChecking=accept-new root@<pod-id> 'nvidia-smi -L'`; forward GitHub (above).
 5. **Point the importer at this run:** PR (and merge) `pod-import.yml`'s default `PODS` and `TAG` to the new pod ids and `[TAG]`, so its 10-minute schedule collects them. Dispatch once by hand to check: `gh workflow run pod-import.yml -R pie-project/benchmarks -f pods=<ids> -f tag=[TAG]`.
-6. **Workers:** one shared queue of the 19 models, heaviest first (miniatures with known engine failures, then other miniatures, then full models), but one full model that fits on each pod first so numbers land within the hour. One background sub-agent per pod; a worker that finishes takes the next unclaimed model (`claim: <model> on <pod-id>` on the tracking issue).
+6. **Workers:** each worker's brief is this prompt plus its pod id, its models and the pie commit to build. One shared queue of the 19 models, heaviest first (miniatures with known engine failures, then other miniatures, then full models), but one full model that fits on each pod first so numbers land within the hour. One background sub-agent per pod; a worker that finishes takes the next unclaimed model (`claim: <model> on <pod-id>` on the tracking issue).
 
 ### Phase 1: Engines & Device Profile (each pod)
 
@@ -106,5 +129,22 @@ Once a model's cells all have numbers, every cell where pie is behind the fastes
 - Coverage (#805): `support.yaml` rows for miniatures or for Batching / Batched Prefill never reached the site, and a declared vLLM parity gap counted as a failure, so the check could not reach 0.
 - Artifacts: six of the 19 had no CUDA artifact. `shrink_checkpoint.py --dry-run` prints a cut's size without downloading; Qwen3.6 needs `shrink_family: qwen3_5_moe`, Gemma-4 MoE needs pie #1162, DeepSeek-V4-Flash ships FP8/FP4. A cut needing a pie script change: dispatch with `-f pie_commit=<pie PR sha>`.
 - Pods: a run used to rent one pod per hardware type and run its shards in turn (l40s-x1 rode an l40s-x2), with `--reuse` collapsing parallel launches onto one runner. On own pods each shard now rents its own pod of its own platform, `max_jobs_per_platform` caps pods instead of dropping jobs, and no-stock launches retry every 5 minutes (#805). Check the launch job count right after dispatch.
-- Stock: one-GPU L40S read "Low" only on CUDA 13.2 hosts and then "Out" everywhere; the evaluation moved to h100-sxm-x1. Check `get-capacity` before choosing a device.
+- Stock: one-GPU L40S read "Low" only on CUDA 13.2 hosts and then "Out" for hours. Check `get-capacity` before choosing a device.
 - A run pins the branch commit at dispatch: a recipe fix needs a cancel and redispatch, and a parity run whose pods launched needs a force-cancel, after which its pods must be terminated by hand. Poll GitHub every 5-10 minutes: tight loops hit the secondary rate limit.
+- L40S run stalls: 25 pie PRs waited hours for merges only the operator could make; workers handed back at every long
+  job and sat idle until resumed; a pod sat idle with 3 red cells after its worker called it done.
+- Per-pod Claude logins need device codes from the operator: drive pods over SSH from laptop workers instead.
+- The site read "does not fit" for miniatures missing from a hard-coded list in `platform.js` (#839): a model with a
+  miniature row on a machine is cut to fit there.
+- pie main #1173 wedged the server under load; #1178 kept its speedup without the wedge. Rerun a short c256 on main after
+  every pie merge wave.
+- Saturation: pie admitted at most 256 requests and wedged on a second 512-wide round until #1175; sweep every engine to
+  flat, not to a fixed N.
+- Several workers on one GPU: wrap every job in `flock /workspace/gpu.lock`; `tmux has-session -t raw` also matches `raw2`
+  (use `-t =raw`). One server per job: pie's KV pool fills with idle cache across jobs.
+- Miniatures: build with `PIE_PY` set to pie's venv (else shrink skips DeepSeek-V4.1's engram map); give pie a named
+  `pie_sku` (it guessed a Qwen3.6 row for a Qwen3.8 cut, an 8-layer row for a 24-layer cut, bf16 for block-FP8 GLM).
+- Merging job shards: take the union of `baseline_versions`, or the other shards' engines fall back to the stock venvs.
+- `nsys` records no vLLM kernels without `--trace-fork-before-exec=true`. A `pie tune` user profile pins every knob and
+  masks fixes in the checked-in profiles: remove it before measuring.
+- After the last pie rerun, `gh workflow run pod-import.yml -f reset=true` so rows from older pie builds drop out.
