@@ -694,6 +694,24 @@ def gpu_unsupported(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[st
     return out
 
 
+def gpu_unsupported_setups(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[str]) -> dict[tuple, str]:
+    """{(gpu, engine, model, category): reason} for any GPU setup (a miniature's too) a support rule declares
+    unsupported. Unlike gpu_unsupported it never blanks a measured row: it only explains a cell no run filled."""
+    from pie_evals.plan.matrix import Matrix
+
+    m = Matrix.load(ROOT / "matrix")
+    out: dict[tuple, str] = {}
+    for c in m.expand():
+        if c.platform.id not in gpu_ids or str(c.engine) not in engine_ids or c.workload.id not in WL_PRIORITY:
+            continue
+        if c.program.id != "text-completion-bench" or c.artifact.id not in a2m:
+            continue
+        reason = c.declared_unsupported_reason
+        if reason and not reason.startswith("does not fit"):
+            out.setdefault((c.platform.id, str(c.engine), a2m[c.artifact.id], WL_PRIORITY[c.workload.id][0]), reason)
+    return out
+
+
 def gpu_no_fit(store, a2m: dict[str, str], hw_rows: list[dict], gpu_ids: list[str]) -> dict:
     """{gpu: {model: {engine: GiB needed}}}: the planner's fit rule over the weights the GPU runs used."""
     from pie_evals.plan.matrix import gpu_gib
@@ -810,6 +828,12 @@ def main() -> None:
     # even where an older engine release once measured it: one release of each engine per tag
     gpu_unsup = gpu_unsupported(a2m, gpu_ids, all_engines, config.get("benchmarks", []))
     grid += [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in gpu_ids for c, _, _ in CATEGORIES if (hw, e, m, c) in gpu_keys]
+    # a setup another engine measured on this GPU that the matrix declares unsupported for this one (a miniature's
+    # engine gap too): its reason, not a blank
+    setup_unsup = {k: r for k, r in gpu_unsupported_setups(a2m, gpu_ids, all_engines).items()
+                   if k[2] in model_ids and k[1] in engine_ids and k not in gpu_keys
+                   and any(g[0] == k[0] and g[2] == k[2] and g[3] == k[3] for g in gpu_keys)}
+    grid += list(setup_unsup)
     # a TPU the project cannot get at all (support.yaml: no access, no quota) has no runs, only its reasons
     tpus = {p["id"] for p in load("platforms")["platforms"] if p.get("backend") == "xla"}
     grid += [(hw, e, m, "raw") for hw, e, m in gpu_unsup
@@ -827,6 +851,7 @@ def main() -> None:
         attempts.setdefault(t, {}).update(rs)
     unsupported = unsupported_reasons(a2m, config, hardware_ids, engine_ids, model_ids)
     unsupported.update(gpu_unsup)
+    unsupported.update({k: r for k, r in setup_unsup.items() if k not in unsupported})
     memory = {h["id"]: h.get("memory_gib") for h in hw_rows}
     streams = {m["id"]: m.get("ssd_streaming") for m in models}
     # every combination of Mac, engine, model and workload has a row in every tag, on every Mac, run there or not:
