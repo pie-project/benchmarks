@@ -96,6 +96,10 @@ class SglangEngine(Engine):
                 # below), Qwen3.8-Flash-Next OOMed at 0.9 on a 24 GB 4090 (40421366253). vLLM's 0.9
                 # already holds its graphs and activations; this keeps SGLang's inside the same card
                 gmu = min(float(gmu), 0.85 if card >= 80 else 0.75)
+            if self.artifact.family == "qwen3_6" and card < 80:
+                # the Qwen3.8-27B miniature (27.5 GiB) at 0.95 left SGLang's GDN activations and graphs 2 GiB and
+                # OOMed from c16 on the 48 GB L40S; vLLM's 0.9 holds its own inside the same card
+                gmu = min(float(gmu), 0.88)
             if self.artifact.family == "glm5_next" and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
                 # the TileLang DSA kernels (below) want more than 0.95 leaves past the static pool: GLM-5.3-Flash
                 # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV
