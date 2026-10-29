@@ -78,6 +78,18 @@ default:
             engine_option:
               value: {max_state_slots: 64}
   arch:
+    ada:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                The 8 GiB cap and 16 state slots fit the full 27B beside its 56 GB on an 80 GB card. On a
+                48 GB L40S the 27B runs as a miniature, and 16 slots seated 16 of c256's lanes (368 tok/s
+                against vLLM's 1138): the pool fits the card, and the slots match the shapes vLLM and SGLang run.
+            engine_option:
+              value: {max_state_slots: 128}
     tpu-v5e:
       knobs:
         gpu_mem_util:
