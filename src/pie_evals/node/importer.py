@@ -83,6 +83,7 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
     d = artifact_dir(artifact, commit, root, plain=plain)
     have = find_zt(d)
     if have:
+        _tokenizer_beside(snapshot, d)
         return have
     tmp = d.parent / f".tmp-{d.name}-{os.uname().nodename}-{os.getpid()}-{uuid.uuid4().hex[:6]}"  # pods on one volume share pids (pie #650: a shared spool zeroes the loser)
     tmp.mkdir(parents=True, exist_ok=True)
@@ -113,4 +114,17 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
         return find_zt(d)  # type: ignore[return-value]
     d.parent.mkdir(parents=True, exist_ok=True)
     os.replace(tmp, d)
+    _tokenizer_beside(snapshot, d)
     return find_zt(d)  # type: ignore[return-value]
+
+
+def _tokenizer_beside(snapshot: Path, d: Path) -> None:
+    """Copy the snapshot's config, tokenizer and chat template next to the .zt: pie_bench's pretokenized prompts
+    (pie #1220) load the Hugging Face tokenizer from the .zt's directory (kimi-k3-mini8 on pro6000-x1)."""
+    import shutil
+
+    if not snapshot.is_dir():
+        return
+    for f in snapshot.iterdir():
+        if f.is_file() and f.suffix not in (".safetensors", ".bin", ".pt", ".gguf", ".zt", ".pdf") and not (d / f.name).exists() and f.stat().st_size < 64 << 20:
+            shutil.copy2(f, d / f.name)
