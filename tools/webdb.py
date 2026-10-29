@@ -27,10 +27,12 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 
 # Each site workload maps to measured workloads, best first.
-THROUGHPUT = ["c32", "c64", "c256", "c8", "c4", "c16", "c128", "c512"]
+# a device evaluation measures throughput at the concurrency that saturates its GPU (c<N>, pf<N>-512, N a power of two):
+# every N is listed, after the fixed counts the Macs use, so each cell shows whichever N it was measured at
+THROUGHPUT = ["c32", "c64", "c256", "c8", "c4", "c16", "c128", "c512", "c1024"]
 RAW = ["raw-512-256"]  # the single request with speculation off: what the hardware limit is measured against
 SPEC = ["spec-512-256"]  # the same request with speculation on: every engine drafts with its own drafter
-PREFILL_BATCH = ["pf256-512", "pf8-512", "pf16-512", "pf32-512", "pf64-512", "pf128-512", "pf512-512"]  # 256 cold prompts at once, one token each: the batch's prompt tokens over the wall
+PREFILL_BATCH = ["pf256-512", "pf4-512", "pf8-512", "pf16-512", "pf32-512", "pf64-512", "pf128-512", "pf512-512", "pf1024-512"]  # 256 cold prompts at once, one token each: the batch's prompt tokens over the wall
 CATEGORIES = (("throughput", THROUGHPUT, "Batching"), ("raw", RAW, "Raw"), ("spec", SPEC, "Speculative"), ("prefill_batch", PREFILL_BATCH, "Batched Prefill"))
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 
@@ -340,14 +342,16 @@ def _miniature_shapes() -> dict[str, dict]:
 
 
 MINI_SHAPE = _miniature_shapes()
-# the miniatures of a model over 40 GiB as released (no 48 GB GPU holds it): those stand in for it, the CI fixtures never do
-_FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("kind", "full") == "full" and (a.get("expected_gib") or 0) > 40}
-SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and a["base_model"] in _FULL_BASES}
+# the miniatures of a datacenter model (over 100 GiB as released): those stand in for it, the CI fixtures never do
+_FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("kind", "full") == "full" and (a.get("expected_gib") or 0) > 100}
+# a model that does not fit a device is shown as its miniature there, whatever its size; only the CI's smoke fixtures
+# (tiny cuts in the smoke tier) are never a model's number
+SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and (a["base_model"] in _FULL_BASES or "smoke" not in a.get("tiers", []))}
 
 
 def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
-    """The row to show for each (hardware, engine, model, workload category): the best-matching workload, then on a Mac
-    the MLX weights every Mac engine shares, then the newest. A miniature (a few layers of the real shape) stands in only
+    """The row to show for each (hardware, engine, model, workload category): the newest run, then the best-matching
+    workload, then on a Mac the MLX weights every Mac engine shares. A miniature (a few layers of the real shape) stands in only
     where the model has no full-checkpoint row, and its row says so (``miniature``)."""
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
@@ -372,7 +376,8 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
         model = a2m.get(r["artifact"], r["artifact"])
         key = (r["platform"], r["engine"], model, cat)
         shared = r["platform"] in macs and art.get("source_format") == "mlx"
-        rank = (not mini, -pri, shared, r["started_at"])
+        # the newest run wins: a cell measured again (a fix, a fairer workload, a new saturating N) shows its latest number
+        rank = (r["started_at"], not mini, -pri, shared)
         if key not in best or rank > best[key][0]:
             best[key] = (rank, r)
     return best

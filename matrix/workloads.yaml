@@ -26,18 +26,18 @@ workloads:
   # -- concurrency sweep (closed loop; num_requests = 4 x concurrency as in pie-bench)
   - id: c8
     kind: concurrency
-    params: {concurrency: 8, num_requests: 32, prefill: 128, decode: 128}
+    params: {concurrency: 8, num_requests: 32, prefill: 128, decode: 128, cold_cache: true}
     tiers: [smoke, nightly, weekly]
     est_minutes: 1
   - id: c32
     kind: concurrency
     # a dense 27B on a 48 GB Mac serves 128 requests in 12-25 min: requests and rounds get the time to finish
-    params: {concurrency: 32, num_requests: 128, prefill: 128, decode: 128, request_timeout_s: 2400, round_timeout_s: 3000}
+    params: {concurrency: 32, num_requests: 128, prefill: 128, decode: 128, request_timeout_s: 2400, round_timeout_s: 3000, cold_cache: true}
     tiers: [smoke, nightly, weekly, targeted]
     est_minutes: 1.5
   - id: c64
     kind: concurrency
-    params: {concurrency: 64, num_requests: 256, prefill: 128, decode: 256}
+    params: {concurrency: 64, num_requests: 256, prefill: 128, decode: 256, cold_cache: true}
     tiers: [nightly, weekly]
     est_minutes: 3
   - id: c256
@@ -51,7 +51,9 @@ workloads:
     params: {concurrency: 256, num_requests: 1024, prefill: 512, decode: 1, cold_cache: true}
     tiers: [nightly, weekly, targeted]
     est_minutes: 2
-  # the saturation sweep of the device evaluation: powers of two, the same shapes as c64/c256 and pf256-512
+  # the device evaluation's saturation sweep (powers of two; N = the smallest past which tok/s grows < 5%), every prompt
+  # cold: a unique leading tag per request, so no engine serves the batch from a prefix cache (a shared prompt let pie read
+  # 306k tok/s of prefill on an L40S, 40x vLLM, above the compute bound)
   - id: c16
     kind: concurrency
     params: {concurrency: 16, num_requests: 64, prefill: 128, decode: 256, cold_cache: true}
@@ -67,6 +69,16 @@ workloads:
     params: {concurrency: 512, num_requests: 2048, prefill: 128, decode: 256, cold_cache: true}
     tiers: [weekly]
     est_minutes: 12
+  - id: c1024
+    kind: concurrency
+    params: {concurrency: 1024, num_requests: 4096, prefill: 128, decode: 256, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 20
+  - id: pf4-512
+    kind: concurrency
+    params: {concurrency: 4, num_requests: 16, prefill: 512, decode: 1, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 1
   - id: pf8-512
     kind: concurrency
     params: {concurrency: 8, num_requests: 32, prefill: 512, decode: 1, cold_cache: true}
@@ -96,7 +108,12 @@ workloads:
     kind: concurrency
     params: {concurrency: 512, num_requests: 2048, prefill: 512, decode: 1, cold_cache: true}
     tiers: [weekly]
-    est_minutes: 4
+    est_minutes: 5
+  - id: pf1024-512
+    kind: concurrency
+    params: {concurrency: 1024, num_requests: 4096, prefill: 512, decode: 1, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 10
 
   # -- long context
   - id: lc-1k-128
