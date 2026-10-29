@@ -339,7 +339,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
 
 
 #: requests in flight on both engines in an accuracy run: the same for pie and vLLM
-ACCURACY_CONCURRENCY = 16
+ACCURACY_CONCURRENCY = int(os.environ.get("PARITY_ACCURACY_CONCURRENCY") or 16)  # an override for diagnosis only
 
 
 def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *, pie_root: Path, matrix_dir: str = "matrix", store_dir: str | None = None,
