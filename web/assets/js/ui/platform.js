@@ -44,8 +44,8 @@ window.Pie = window.Pie || {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
   const PLATFORMS = [
-    { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => Pie.platformOf(hw) === "nvidia" },
     { id: "mac", label: "Apple Silicon", sub: "Metal", has: (hw) => Pie.platformOf(hw) === "mac" },
+    { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => Pie.platformOf(hw) === "nvidia" },
     { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => Pie.platformOf(hw) === "amd" },
     { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => Pie.platformOf(hw) === "tpu" },
     { id: "cerebras", label: "Cerebras", sub: "Wafer-scale", has: (hw) => Pie.platformOf(hw) === "cerebras" },
@@ -169,13 +169,15 @@ window.Pie = window.Pie || {};
     // the architecture-based bound (methodology.js), the same one the Methods page explains
     return Pie.batchedCeiling?.(mac, model, scheme) || null;
   }
-  const cell = (rows, metric, base) => {
+  // pie against the opponent picked in the bar, or the strongest other engine on the cell when none is picked
+  const cell = (rows, metric, base, rival) => {
     const pie = rows.find((r) => r.engine === base && r[metric.key]);
     const others = rows.filter((r) => r.engine !== base && r[metric.key]);
     if (!pie) return null;
+    const rivals = rival ? others.filter((r) => r.engine === rival) : others;
     // a machine where only pie runs (a TPU today) still shows pie's own number, with nothing to compare it to
-    if (!others.length) return { pie, best: null, gain: null, all: [pie] };
-    const best = others.reduce((a, b) => ((metric.higher ? b[metric.key] > a[metric.key] : b[metric.key] < a[metric.key]) ? b : a));
+    if (!rivals.length) return { pie, best: null, gain: null, all: [pie, ...others] };
+    const best = rivals.reduce((a, b) => ((metric.higher ? b[metric.key] > a[metric.key] : b[metric.key] < a[metric.key]) ? b : a));
     const gain = metric.higher ? pie[metric.key] / best[metric.key] - 1 : best[metric.key] / pie[metric.key] - 1;
     return { pie, best, gain, all: [pie, ...others] };
   };
@@ -489,6 +491,13 @@ window.Pie = window.Pie || {};
         return [{ value: "", label: "All Sizes", selected: !current.length }, { separator: true },
           ...SIZES.map((sz) => ({ value: sz.id, label: sz.label, selected: current.includes(sz.id), check: true }))];
       }
+      if (k === "rival" && viewState) {
+        // the strongest other engine on each cell, then each other engine with its dot, as the catalog marks it
+        const base = viewState.platform.engine || Pie.engines.primary;
+        const current = viewState.platform.rival !== base ? viewState.platform.rival || "" : "";
+        return [{ value: "", label: "Strongest", selected: !current }, { separator: true },
+          ...Pie.store.tables.engines.filter((e) => e.id !== base).map((e) => ({ value: e.id, label: Pie.store.names.engine(e.id), selected: e.id === current, dot: Pie.engines.colorOf(e.id) }))];
+      }
       if (k !== "engine" || !viewState) return [];
       const current = viewState.platform.engine || Pie.engines.primary;
       // each engine with its dot, as the catalog marks it
@@ -496,6 +505,7 @@ window.Pie = window.Pie || {};
     },
     pick(k, value) {
       if (k === "engine" && viewState) viewState.platform.engine = value;
+      if (k === "rival" && viewState) viewState.platform.rival = value || null;
       if (k === "platform" && viewState) {
         const now = viewState.platform.platforms || [];
         viewState.platform.platforms = !value ? [] : now.includes(value) ? now.filter((id) => id !== value) : [...now, value];
@@ -524,8 +534,10 @@ window.Pie = window.Pie || {};
       // is the Roofline page's) shows Decode without forgetting it, so the next page that has it opens on it again
       const mode = modes.find((m) => m.id === state.platform.mode) || modes.find((m) => m.id === "decode") || modes[0];
       const metric = mode.metric;
-      // the engine every cell is about, picked in the bar; pie unless another is picked
+      // the engine every cell is about, picked in the bar; pie unless another is picked. The second pick is its
+      // opponent: the strongest other engine on each cell unless one is picked
       const base = state.platform.engine || Pie.engines.primary;
+      const rival = state.platform.rival && state.platform.rival !== base ? state.platform.rival : null;
       const snapshot = all.filter((r) => r.workload === mode.workload);
       const raw = all.filter((r) => r.workload === "raw" && Pie.store.isMeasured(r));
       const rows = snapshot.filter(Pie.store.isMeasured);
@@ -609,7 +621,7 @@ window.Pie = window.Pie || {};
         for (const model of allModels) {
           const id = realOf(model);
           const here = (r) => r.hardware === mac && r.model === id;
-          let c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base);
+          let c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base, rival);
           // a model that runs cut down to fit (a miniature) never "does not fit": where its miniature did not run, the cell
           // says that instead of the full model's size
           // only where this run measures (or measured) the model cut down: elsewhere the full model's "does not fit" stands
@@ -806,7 +818,7 @@ window.Pie = window.Pie || {};
       element.innerHTML = `
         <div class="platform-bar">
           ${setupControl(mode.id, modes)}${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
-          <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+          <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><span class="platform-vs">vs</span><button class="filter-button${rival ? " is-engine" : ""}"${rival ? ` style="--tint: ${Pie.engines.colorOf(rival)}"` : ""} type="button" data-grid-pick="rival" aria-haspopup="menu" aria-label="Opponent">${esc(rival ? Pie.store.names.engine(rival) : "Strongest")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="maker" aria-haspopup="menu" aria-label="Makers">${esc(!p.makers?.length ? "All Makers" : p.makers.length <= 2 ? p.makers.join(", ") : `${p.makers.length} Makers`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="size" aria-haspopup="menu" aria-label="Model sizes">${esc(!p.sizes?.length ? "All Sizes" : p.sizes.length <= 2 ? p.sizes.map((id) => SIZES.find((sz) => sz.id === id)?.label || id).join(", ") : `${p.sizes.length} Sizes`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
