@@ -331,6 +331,16 @@ artifacts:
     max_context: 4096
     expected_gib: 27.5
     tiers: [weekly]
+  - id: qwen3.6-27b-mini
+    base_model: Qwen/Qwen3.6-27B
+    family: qwen3_6
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-31", period: 4, shrink_family: qwen3_5_moe, note: "8 of 16 linear/linear/linear/full periods (bf16 is 54 GB)"}
+    pie_sku: qwen36-27b-bf16-kv-bf16-l32
+    max_context: 4096
+    expected_gib: 27.5
+    tiers: [weekly]
   - id: minimax-m3.1-flash-mini
     base_model: MiniMaxAI/MiniMax-M3.1-Flash
     family: minimax_m3
@@ -366,7 +376,7 @@ artifacts:
     scheme: bf16
     expected_gib: 8.4
     pie_sku: qwen35-d4b-bf16-kv-bf16   # import picks the u4g64 twin otherwise
-    tiers: []
+    tiers: [weekly]
   - id: qwen3.5-9b-bf16
     base_model: Qwen/Qwen3.5-9B
     family: qwen3_5
