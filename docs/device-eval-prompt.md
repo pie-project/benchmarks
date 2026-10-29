@@ -79,3 +79,9 @@ Anomalies (inspect as each model finishes): pie < 50% of vLLM/SGLang, latency sp
 - pie main fails to boot models over ~9 GB on L40S since pie #1157 (a fixed 32 GiB device KV budget); use a commit with pie #1163.
 - L40S (sm_89): vLLM 0.32 DeepSeek-V4.1 emits `mul.bf16x2` (sm_90 only); SGLang `mhc_pre` split-k takes `hc_hidden_size` 16384/28672 only (mini8: 20480; pie-project/sglang#1).
 - SGLang on L40S: qwen3.8-flash-next fails a CUTLASS DSL block shape and CUDA-graph capture; mimo-v2.6-flash `Hidden size mismatch` on the miniature. Start early.
+- Throughput workloads must send cold prompts: a shared prompt plus a "(Request #i)" suffix let pie prefill from its prefix cache (pf256-512 306k tok/s, 40x vLLM, on the Muse Glimmer mini). Prefill throughput above the compute bound is a bug, not a result.
+- Check the prompt token counts per engine: pie's Muse Spark template rendered 560 tokens where the release chat template renders 677 (pie#1201). Check pie's deployment row: a 24-layer cut was served by an 8-layer row that reads only the first layers (pie#1167), and block-FP8 checkpoints were identified as their bf16 row and dequantized (set pie_sku).
+- A `pie tune` user profile (~/.pie/profiles/cuda/user/) pins every knob and masks checked-in profile fixes; `pie tune --no-check` searches nothing. Move it aside before measuring.
+- The gateway admitted on a stale inflight count after cold rounds and wedged (no healthy worker, GPU idle): pie#1175.
+- nsys sees no vLLM kernels unless the engine core runs in-process or `--trace-fork-before-exec=true` is set.
+- Pushing to the forks' pie-evals/<version> branches and `gh pr merge` may be blocked for the agent: run a fork branch under review with PIE_EVALS_FORK_REF_<ENGINE>.
