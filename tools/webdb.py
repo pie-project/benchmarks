@@ -27,10 +27,10 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 
 # Each site workload maps to measured workloads, best first.
-THROUGHPUT = ["c32", "c64", "c256", "c8", "c4", "c16", "c128"]
+THROUGHPUT = ["c32", "c64", "c256", "c8", "c4", "c16", "c128", "c512"]
 RAW = ["raw-512-256"]  # the single request with speculation off: what the hardware limit is measured against
 SPEC = ["spec-512-256"]  # the same request with speculation on: every engine drafts with its own drafter
-PREFILL_BATCH = ["pf256-512", "pf32-512", "pf64-512", "pf128-512"]  # 256 cold prompts at once, one token each: the batch's prompt tokens over the wall
+PREFILL_BATCH = ["pf256-512", "pf32-512", "pf64-512", "pf128-512", "pf512-512"]  # 256 cold prompts at once, one token each: the batch's prompt tokens over the wall
 CATEGORIES = (("throughput", THROUGHPUT, "Batching"), ("raw", RAW, "Raw"), ("spec", SPEC, "Speculative"), ("prefill_batch", PREFILL_BATCH, "Batched Prefill"))
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 

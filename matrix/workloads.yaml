@@ -62,6 +62,16 @@ workloads:
     params: {concurrency: 128, num_requests: 512, prefill: 128, decode: 256}
     tiers: [weekly]
     est_minutes: 4
+  - id: c512
+    kind: concurrency
+    params: {concurrency: 512, num_requests: 2048, prefill: 128, decode: 256}
+    tiers: [weekly]
+    est_minutes: 10
+  - id: pf512-512
+    kind: concurrency
+    params: {concurrency: 512, num_requests: 2048, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 4
   - id: pf32-512
     kind: concurrency
     params: {concurrency: 32, num_requests: 128, prefill: 512, decode: 1}
