@@ -301,7 +301,7 @@ def report(obj, tier, out):
 @click.pass_obj
 def checks(obj, tier):
     """After a collect: each cell against its last 7 days, and each engine's output length against pie's.
-    Writes both tables to the job summary and a warning per finding; never fails the run."""
+    Writes both tables to the job summary and a warning per finding; only a prompt-length mismatch fails (exit 3)."""
     m: Matrix = obj["matrix"]
     st: Store = obj["store"]
     t = Tier(tier)
@@ -317,6 +317,11 @@ def checks(obj, tier):
             click.echo(f"::warning::regression {r['engine']} {r['platform']} {r['artifact']} {r['workload']}: {r['delta_rel']*100:+.1f}% against the last 7 days")
     for r in lengths:
         click.echo(f"::warning::output length {r['engine']} {r['platform']} {r['model']} {r['workload']}: {r['gap_rel']*100:+.0f}% tokens per request against pie")
+    prompts = rp.prompt_length_mismatches(m, st, t)
+    for r in prompts:
+        click.echo(f"::error::prompt length {r['platform']} {r['model']} {r['workload']}: engines prefill different prompts, mean tokens per request {r['per_request']}")
+    if prompts:
+        raise SystemExit(3)
 
 
 @main.command("pins")
