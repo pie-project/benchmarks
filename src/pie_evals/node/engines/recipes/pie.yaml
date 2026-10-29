@@ -107,6 +107,15 @@ default:
             (14.32 GiB used > 14.17 cap) boots gemma-4-E4B's 14.3 GiB of weights (b5 39658500805);
             every engine gets the same higher share there.
   backend:
+    cuda:
+      knobs:
+        max_forward_requests:
+          value: "$serve_concurrency"
+          rationale: >
+            Engine-side admission = the widest concurrency of the shapes the server boots for, as
+            vLLM's max_num_seqs and SGLang's max_running_requests are set. At the script's 512,
+            engine-cuda holds readout rows and guest scratch for 512 lanes: 6.3 GB on the
+            gpt-oss-120b miniature, which cut its fires to 1024 tokens on l40s-x1.
     xla:
       knobs:
         max_forward_tokens:
