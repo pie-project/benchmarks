@@ -19,7 +19,7 @@ Your goal is to set up everything from scratch and complete the end-to-end perfo
 - **Cells:** each model × {pie, vLLM, SGLang} × {Decode Latency, Prefill Latency, Decode Throughput, Prefill Throughput}.
 - **Machines:** `[PODS]` pods you rent yourself on RunPod, reached over Tailscale.
 - **Workspace:** `pie-project/benchmarks` (harness, matrix, site) and `pie-project/pie` (engine, shrink script).
-- **Done** = `python tools/device_coverage.py --platform [TARGET_DEVICE] --tag [TAG] --db https://benchmarks.pie-project.org/data/db.js` shows every cell done, and no pod of yours is left running.
+- **Done** = every cell has a number (`python tools/device_coverage.py --platform [TARGET_DEVICE] --tag [TAG] --db https://benchmarks.pie-project.org/data/db.js` exits 0) **and pie is green in all four setups** on the device row (Decode Latency, Prefill Latency, Decode Throughput, Prefill Throughput: pie at least as fast as every other engine on every model), and no pod of yours is left running.
 
 You work fully autonomously. Never stop until done, never ask, never hand back: decide as a careful engineer would, log one line, continue. Take every recommended next step. A failure is a task, not a result. One stuck model never blocks the others.
 
@@ -33,6 +33,8 @@ You work fully autonomously. Never stop until done, never ask, never hand back: 
 - **Competitors** run on our forks: workers install the vLLM/SGLang release and overlay the fixes on branch `pie-evals/v<version>` of `pie-project/vllm` / `pie-project/sglang` (`ensure_fork` in `src/pie_evals/node/baselines.py`; the overlay commit is stamped in `<venv>/.fork`).
 
 ## Strict Rules (Never Violate)
+
+0. **Never stop until all data is there and every cell is green.** A partial table, a red cell, a blocked fix or a quiet hour is never a reason to stop, hand back or wait: profile, fix, rerun, repeat.
 
 1. **Measure on the machine under test**, with `pie-evals-node run` only: never hand-rolled scripts, never a laptop, never CI elsewhere. Never touch the Mac at 100.87.85.82.
 2. **Disk:** never download a checkpoint larger than the GPU's memory; miniatures stream only the needed layer/expert byte ranges (`pie-evals-node miniature`). Keep ≥ 200 GB free on each pod.
