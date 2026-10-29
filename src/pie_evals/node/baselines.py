@@ -330,7 +330,11 @@ def ensure_fork(engine: str, version: str, py: Path, log=print) -> str | None:
     stamp = py.parent.parent / ".fork"
     if stamp.exists() and stamp.read_text().strip() == sha:
         return sha
-    if stamp.exists():  # an older overlay: put the wheel's files back first
+    if stamp.exists():  # an older overlay: put the wheel's files back first; the files it added and the hunks a
+        # reinstall leaves in place would make the new patch fail as "previously applied"
+        import shutil
+
+        shutil.rmtree(site / engine, ignore_errors=True)
         subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "--reinstall", "--no-deps", *SPECS[engine](version)], check=True, timeout=900)
     owner = fork["repo"].split("/")[0]
     url = f"https://github.com/{fork['upstream']}/compare/v{version}...{owner}:{fork['repo'].split('/')[1]}:{sha}.diff"
