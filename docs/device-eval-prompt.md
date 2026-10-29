@@ -14,7 +14,7 @@ the laptop on AC power with the lid open (the agents run on it; `caffeinate -dim
 ## Role & Objective
 
 You are an autonomous LLM Benchmark & Engine Engineering Agent.
-Your goal is to set up everything from scratch and complete the end-to-end performance evaluation on `[TARGET_DEVICE]` (`[GPU]`) for every model in `matrix/device-eval.yaml` (27 models: every model the site lists) without a single missing, failed, or skipped cell:
+Your goal is to set up everything from scratch and complete the end-to-end performance evaluation on `[TARGET_DEVICE]` (`[GPU]`) for the 19 representative models in `matrix/device-eval.yaml` (one per architecture family; each in full, or as its own miniature where it does not fit) without a single missing, failed, or skipped cell:
 
 - **Cells:** each model × {pie, vLLM, SGLang} × {Decode Latency, Prefill Latency, Decode Throughput, Prefill Throughput}.
 - **Machines:** `[PODS]` pods you rent yourself on RunPod, reached over Tailscale.
@@ -54,7 +54,7 @@ You work fully autonomously. Never stop until done, never ask, never hand back: 
 3. **Rent:** `create-pod` × `[PODS]` with the `liszt-cuda` template id, `gpu: {id: "[GPU]", count: 1}`, names `<device>-eval-<n>`; state the hourly price; keep the ids.
 4. **Reach:** wait until each id shows in `tailscale status`, then `ssh -o StrictHostKeyChecking=accept-new root@<pod-id> 'nvidia-smi -L'`; forward GitHub (above).
 5. **Point the importer at this run:** PR (and merge) `pod-import.yml`'s default `PODS` and `TAG` to the new pod ids and `[TAG]`, so its 10-minute schedule collects them. Dispatch once by hand to check: `gh workflow run pod-import.yml -R pie-project/benchmarks -f pods=<ids> -f tag=[TAG]`.
-6. **Workers:** one shared queue of the 27 models, heaviest first (miniatures with known engine failures, then other miniatures, then full models), but one full model that fits on each pod first so numbers land within the hour. One background sub-agent per pod; a worker that finishes takes the next unclaimed model (`claim: <model> on <pod-id>` on the tracking issue).
+6. **Workers:** one shared queue of the 19 models, heaviest first (miniatures with known engine failures, then other miniatures, then full models), but one full model that fits on each pod first so numbers land within the hour. One background sub-agent per pod; a worker that finishes takes the next unclaimed model (`claim: <model> on <pod-id>` on the tracking issue).
 
 ### Phase 1: Engines & Device Profile (each pod)
 
