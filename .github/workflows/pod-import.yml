@@ -83,3 +83,12 @@ jobs:
             .venv/bin/pie-evals drop-tag "$TAG"
           fi
           .venv/bin/pie-evals collect --tier weekly --tag "$TAG" --tag-kind manual "${dirs[@]}"
+      - name: collect the pods' parity stores (/workspace/parity/store) into the database
+        run: |
+          rm -rf parity && mkdir parity
+          ssh_() { for i in 1 2 3; do ssh -o BatchMode=yes -o ConnectTimeout=45 -o StrictHostKeyChecking=accept-new "root@$1" "$2" && return 0; sleep 10; done; return 1; }
+          for p in ${PODS//,/ }; do
+            ssh_ "$p" 'test -d /workspace/parity/store' 2>/dev/null || continue
+            mkdir -p "parity/$p" && ssh_ "$p" 'tar -C /workspace/parity -czf - store' | tar -C "parity/$p" -xzf - || continue
+            .venv/bin/pie-evals import-store "parity/$p/store"
+          done
