@@ -17,7 +17,7 @@ import subprocess
 import uuid
 from pathlib import Path
 
-from pie_evals.schema import ArtifactSpec, QuantScheme, SourceFormat
+from pie_evals.schema import ArtifactKind, ArtifactSpec, QuantScheme, SourceFormat
 
 RELAYOUT_MARK = "would relayout a weight plane"
 
@@ -28,7 +28,9 @@ def needs_import(artifact: ArtifactSpec) -> bool:
     # "holds no .safetensors and no .zt container"); a compressed-tensors NVFP4
     # bank's global scales are inverted at import, never at boot (weekly
     # 40465556208: "this load would apply Some(Recip) on the way in")
-    return artifact.source_format in (SourceFormat.MLX, SourceFormat.GGUF) or (bool(artifact.pie_sku) and artifact.scheme == QuantScheme.AFFINE_U4_G64) or "-nvfp4a4-" in (artifact.pie_sku or "")
+    # a miniature with a named deployment: pie serve would guess the row from the safetensors (L40S: the Qwen3.6-35B-A3B
+    # mini was taken for a Qwen3.8-Flash-Next mini and failed at boot), so the import lands the row named
+    return artifact.source_format in (SourceFormat.MLX, SourceFormat.GGUF) or (bool(artifact.pie_sku) and artifact.scheme == QuantScheme.AFFINE_U4_G64) or "-nvfp4a4-" in (artifact.pie_sku or "") or (bool(artifact.pie_sku) and artifact.kind == ArtifactKind.MINIATURE)
 
 
 def artifact_root(root: Path | None = None) -> Path:
