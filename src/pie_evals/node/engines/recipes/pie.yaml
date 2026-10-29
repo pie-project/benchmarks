@@ -57,6 +57,16 @@ default:
               rationale: >
                 Larger fires feed the MXFP4 experts more tokens each: gpt-oss-20b pf8-512 19.8k to
                 21.9k and c256 5.9k to 6.2k on l40s-x1 against the profile's 2048.
+    nemotron_h:
+      arch:
+        ada:
+          knobs:
+            max_forward_requests:
+              value: 256
+              rationale: >
+                pie_bench's default 512 lanes size the activations and readouts for twice the 256 state
+                slots a lane needs, so on the 48 GB L40S Nemotron-3-Super's mini seated 236 slots:
+                c256 2038 tok/s against SGLang's 2149. At 256 lanes it seats 252: 2063 tok/s.
     qwen3_6:
       knobs: {}
       backend:
