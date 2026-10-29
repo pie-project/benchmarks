@@ -7,6 +7,7 @@ on:
     inputs:
       pods: { description: "comma-separated pod ids on the tailnet", required: false, default: "" }
       tag: { description: "site tag the rows are stored under", required: false, default: "l40s-full" }
+      reset: { description: "drop every row of the tag first, so the pods' current /workspace/out is all the tag holds", type: boolean, required: false, default: false }
   schedule:
     - cron: "*/10 * * * *"
 permissions: { contents: read }
@@ -37,4 +38,6 @@ jobs:
           shopt -s nullglob
           dirs=(pods/*/*/)
           [ ${#dirs[@]} -gt 0 ] || { echo "no outputs yet"; exit 0; }
+          # a reset clears what the pods no longer stand behind (smokes, sweeps, superseded runs) before the re-import
+          [ "${{ inputs.reset }}" != true ] || .venv/bin/pie-evals drop-tag "$TAG"
           .venv/bin/pie-evals collect --tier weekly --tag "$TAG" --tag-kind manual "${dirs[@]}"
