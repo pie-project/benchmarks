@@ -45,10 +45,6 @@ unsupported:
     reason: "no tensor parallel on Vulkan"
   - when: {backend: wgpu, tp: ">1"}
     reason: "no tensor parallel on wgpu"
-  # engine-cuda has no selected reader in pool.cuh, so every dsv4 flash row (and the V4.1 rows)
-  # is on its CANNOT_SERVE list for attention.pool_lse_selected; Metal, Vulkan and wgpu cover it
-  - when: {family: deepseek_v4, engine: pie, backend: cuda}
-    reason: "engine-cuda refuses attention.pool_lse_selected (dsv4 flash rows are CANNOT_SERVE on CUDA; Metal/Vulkan/wgpu only)"
   # engine-cuda's CANNOT_SERVE list is empty at pie 6875edb (the dsv41 rows dispatch on CUDA), and vLLM 0.31.0
   # (DeepseekV41ForCausalLM) and SGLang 0.5.22 (deepseek_v4.py, model_type deepseek_v41) both ship V4.1
   # pie #1056 carries Nemotron-3 Ultra as released (every weight bf16)

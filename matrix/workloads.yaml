@@ -26,57 +26,84 @@ workloads:
   # -- concurrency sweep (closed loop; num_requests = 4 x concurrency as in pie-bench)
   - id: c8
     kind: concurrency
-    params: {concurrency: 8, num_requests: 32, prefill: 128, decode: 128}
+    params: {cold_cache: true, concurrency: 8, num_requests: 32, prefill: 128, decode: 128}
     tiers: [smoke, nightly, weekly]
     est_minutes: 1
   - id: c32
     kind: concurrency
     # a dense 27B on a 48 GB Mac serves 128 requests in 12-25 min: requests and rounds get the time to finish
-    params: {concurrency: 32, num_requests: 128, prefill: 128, decode: 128, request_timeout_s: 2400, round_timeout_s: 3000}
+    params: {cold_cache: true, concurrency: 32, num_requests: 128, prefill: 128, decode: 128, request_timeout_s: 2400, round_timeout_s: 3000}
     tiers: [smoke, nightly, weekly, targeted]
     est_minutes: 1.5
   - id: c64
     kind: concurrency
-    params: {concurrency: 64, num_requests: 256, prefill: 128, decode: 256}
+    params: {cold_cache: true, concurrency: 64, num_requests: 256, prefill: 128, decode: 256}
     tiers: [nightly, weekly]
     est_minutes: 3
   - id: c256
     kind: concurrency
-    params: {concurrency: 256, num_requests: 1024, prefill: 128, decode: 256}
+    params: {cold_cache: true, concurrency: 256, num_requests: 1024, prefill: 128, decode: 256}
     tiers: [nightly, weekly]
     est_minutes: 6
   # batched prefill: 256 cold prompts at once, each answered with one token, so the wall is the batch reading its prompts
   - id: pf256-512
     kind: concurrency
-    params: {concurrency: 256, num_requests: 1024, prefill: 512, decode: 1}
+    params: {cold_cache: true, concurrency: 256, num_requests: 1024, prefill: 512, decode: 1}
     tiers: [nightly, weekly, targeted]
     est_minutes: 2
   # the saturation sweep of the device evaluation (powers of two; N = smallest past which tok/s grows < 5%)
   - id: c16
     kind: concurrency
-    params: {concurrency: 16, num_requests: 64, prefill: 128, decode: 256}
+    params: {cold_cache: true, concurrency: 16, num_requests: 64, prefill: 128, decode: 256}
     tiers: [weekly]
     est_minutes: 2
   - id: c128
     kind: concurrency
-    params: {concurrency: 128, num_requests: 512, prefill: 128, decode: 256}
+    params: {cold_cache: true, concurrency: 128, num_requests: 512, prefill: 128, decode: 256}
     tiers: [weekly]
     est_minutes: 4
   - id: pf32-512
     kind: concurrency
-    params: {concurrency: 32, num_requests: 128, prefill: 512, decode: 1}
+    params: {cold_cache: true, concurrency: 32, num_requests: 128, prefill: 512, decode: 1}
     tiers: [weekly]
     est_minutes: 1
   - id: pf64-512
     kind: concurrency
-    params: {concurrency: 64, num_requests: 256, prefill: 512, decode: 1}
+    params: {cold_cache: true, concurrency: 64, num_requests: 256, prefill: 512, decode: 1}
     tiers: [weekly]
     est_minutes: 1
   - id: pf128-512
     kind: concurrency
-    params: {concurrency: 128, num_requests: 512, prefill: 512, decode: 1}
+    params: {cold_cache: true, concurrency: 128, num_requests: 512, prefill: 512, decode: 1}
     tiers: [weekly]
     est_minutes: 2
+
+  # the rest of the saturation sweep, where a cut model saturates outside 16-256
+  - id: c512
+    kind: concurrency
+    params: {cold_cache: true, concurrency: 512, num_requests: 2048, prefill: 128, decode: 256}
+    tiers: [weekly]
+    est_minutes: 12
+  - id: pf4-512
+    kind: concurrency
+    params: {cold_cache: true, concurrency: 4, num_requests: 16, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf8-512
+    kind: concurrency
+    params: {cold_cache: true, concurrency: 8, num_requests: 32, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf16-512
+    kind: concurrency
+    params: {cold_cache: true, concurrency: 16, num_requests: 64, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf512-512
+    kind: concurrency
+    params: {cold_cache: true, concurrency: 512, num_requests: 2048, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 5
 
   # -- long context
   - id: lc-1k-128
