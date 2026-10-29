@@ -153,6 +153,16 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
         # the cut keeps only the language model: vLLM then builds no vision tower and reads no visual weights
         argv += ["--limit-mm-per-prompt", json.dumps({"image": 0, "video": 0})]
     keys = {**cfg, **(cfg.get("text_config") or {})}
+    if str(engine.platform.backend) == "xla" and str(engine.artifact.scheme) == "mxfp4":
+        # vllm-tpu requantizes MXFP4 experts to 512-wide blocks, which its gmm kernel multiplies as fp4 (TPU7x only;
+        # "Mosaic failed to compile" on v5p/v6e); blocks narrower than the MXU are dequantized to bf16 in VMEM first,
+        # and int8 is a type v5p/v6e can hold there (fp4 is not: "Unsupported type vector<..xf4E2M1FN>")
+        env.setdefault("MOE_REQUANTIZE_BLOCK_SIZE", "32")
+        env.setdefault("MOE_REQUANTIZE_WEIGHT_DTYPE", "int8")
+    if str(engine.platform.backend) == "xla" and str(engine.artifact.family).startswith("gemma4"):
+        # Gemma-4's 512-wide heads: the tuned attention blocks (bq 256, bkv 1024) need 78 MiB of VMEM, a v5p has 64
+        env.setdefault("RPA_V3_PREFILL_BLOCK_SIZES", "128,512,128,256")
+        env.setdefault("RPA_V3_MIXED_BLOCK_SIZES", "128,512,128,256")
     # DeepSeek-V4.1's config names no kv_lora_rank, yet vLLM serves it as MLA
     if str(engine.platform.backend) == "xla" and ("kv_lora_rank" in keys or str(keys.get("model_type", "")).startswith("deepseek")):
         # vllm-tpu serves an MLA model only on its new model design with DP attention ("MLA models require both ...")
@@ -161,7 +171,7 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
     return Server(argv, env, None, log_path, url=f"http://127.0.0.1:{port}")
 
 
-def pie_server(engine, workload, log_path: Path) -> Server:
+def pie_server(engine, workload, log_path: Path, prewarm: bool = True) -> Server:
     from pie_evals.node.workloads import common_args_for
 
     argv = engine.build_argv(workload, common_args_for(workload), log_path.with_suffix(".json"))
@@ -170,6 +180,11 @@ def pie_server(engine, workload, log_path: Path) -> Server:
     argv = [argv[0], str(script), *argv[i + 1:]]
     env = engine.process_env()
     env["PYTHONPATH"] = ":".join([str(engine.pie_root / "scripts/bench"), env.get("PYTHONPATH", "")])
+    if str(engine.platform.backend) == "xla":
+        # the XLA engine compiles a program per new fire shape (up to a minute each on a hybrid model): at load,
+        # 8 at a time, and lanes waiting on one are not abandoned
+        env["PIE_XLA_PREWARM"] = "1" if prewarm and os.environ.get("PARITY_PIE_PREWARM", "1") == "1" else "0"
+        env.setdefault("PIE_SILENCE_TIMEOUT", "7200s")
     return Server(argv, env, str(engine.pie_root / "scripts/bench"), log_path)
 
 
@@ -324,7 +339,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
 
 
 #: requests in flight on both engines in an accuracy run: the same for pie and vLLM
-ACCURACY_CONCURRENCY = 16
+ACCURACY_CONCURRENCY = int(os.environ.get("PARITY_ACCURACY_CONCURRENCY") or 16)  # an override for diagnosis only
 
 
 def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *, pie_root: Path, matrix_dir: str = "matrix", store_dir: str | None = None,
@@ -359,23 +374,53 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
     answers: dict[str, dict[str, list[str]]] = {"vllm": {}, "pie": {}}
     versions = {}
 
-    recipe = load_recipe("vllm", "competitive", plat, workload, family=art.family)
-    recipe["pin"] = vllm_pin or os.environ.get("PARITY_VLLM_PIN") or m.engines["vllm"].pin
-    if not os.environ.get("VLLM_PY"):
-        ensure_baseline("vllm", recipe["pin"], backend=backend, log=log)
-    ref = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
-    versions["vllm"] = ref.version()
-    srv = vllm_server(ref, snapshot, tp, out_dir / f"{art.id}-acc-vllm.log", max_seqs=ACCURACY_CONCURRENCY)
-    try:
-        model = srv.wait(5400)
-        for t, (_items, rendered) in sets.items():
-            answers["vllm"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY)
-            log(f"accuracy {art.id}@{platform_id}: vllm {t} done")
-    except Exception as e:  # noqa: BLE001 — vLLM that cannot serve the model is a crossed-out cell; pie still runs
-        versions["vllm_unsupported"] = _reason(e, out_dir, f"{art.id}-acc", "vllm")
-        log(f"accuracy {art.id}@{platform_id}: vllm cannot run it: {versions['vllm_unsupported']}")
-    finally:
-        srv.stop()
+    # PARITY_ENGINES=pie: pie only (a rerun after pie failed; the vLLM rows already stored stay)
+    engines = [e for e in os.environ.get("PARITY_ENGINES", "vllm,pie").split(",") if e]
+    # PARITY_DONE: <row artifact>/<task> pairs already stored (a rerun after a spot VM was taken back): not asked again
+    done = {d for d in os.environ.get("PARITY_DONE", "").split(",") if d}
+    todo = {e: [t for t in tasks if f"{art.id if e == 'pie' else art.id + '@vllm'}/{t}" not in done] for e in ("vllm", "pie")}
+    engines = [e for e in engines if todo[e]]
+    rows = []
+    store = Store(store_dir)
+
+    def emit(engine: str, t: str, texts: list[str]) -> None:
+        # each set stored as soon as it is answered: a VM taken back mid-model keeps the sets done
+        items = sets[t][0]
+        scores = [TASKS[t][1](i, x) for i, x in zip(items, texts, strict=True)]
+        correct = sum(scores)
+        lo, hi = wilson(correct, len(scores))
+        row = {"artifact": art.id if engine == "pie" else f"{art.id}@vllm", "model": art.id, "engine": engine, "label": "pie" if engine == "pie" else "vLLM",
+               "checkpoint": art.base_model, "scheme": str(art.scheme), "platform": platform_id, "tp": tp, "task": t, "n": len(scores), "correct": correct,
+               "score": correct / len(scores) if scores else None, "ci95": [lo, hi], "version": versions[engine], "empty": sum(1 for x in texts if not x),
+               "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+               "samples": [{"id": i.id, "score": sc, "text": x} for i, sc, x in zip(items, scores, texts, strict=True)]}
+        store.write_quality(row, tag=tag, tag_kind=tag_kind)
+        log(f"accuracy {row['artifact']} {t}: {correct:.0f}/{len(scores)} = {row['score']:.1%}")
+        rows.append(row)
+    # XLA: a request may wait on compiles; a request that failed is sent again (greedy: same answer)
+    req = {"timeout": 7200.0, "retries": 2} if backend == "xla" else {}
+    if "vllm" in engines:
+        recipe = load_recipe("vllm", "competitive", plat, workload, family=art.family)
+        recipe["pin"] = vllm_pin or os.environ.get("PARITY_VLLM_PIN") or m.engines["vllm"].pin
+        if not os.environ.get("VLLM_PY"):
+            ensure_baseline("vllm", recipe["pin"], backend=backend, log=log)
+        ref = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
+        versions["vllm"] = ref.version()
+        # PARITY_VLLM_TP: vLLM over more chips than pie's one (a model whose load does not fit one chip in vLLM-TPU)
+        srv = vllm_server(ref, snapshot, int(os.environ.get("PARITY_VLLM_TP") or tp), out_dir / f"{art.id}-acc-vllm.log", max_seqs=ACCURACY_CONCURRENCY)
+        try:
+            model = srv.wait(5400)
+            for t, (_items, rendered) in sets.items():
+                if t not in todo["vllm"]:
+                    continue
+                answers["vllm"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY)
+                log(f"accuracy {art.id}@{platform_id}: vllm {t} done")
+                emit("vllm", t, answers["vllm"][t])
+        except Exception as e:  # noqa: BLE001 — vLLM that cannot serve the model is a crossed-out cell; pie still runs
+            versions["vllm_unsupported"] = _reason(e, out_dir, f"{art.id}-acc", "vllm")
+            log(f"accuracy {art.id}@{platform_id}: vllm cannot run it: {versions['vllm_unsupported']}")
+        finally:
+            srv.stop()
 
     busy = device_idle(backend)
     if busy:
@@ -386,34 +431,44 @@ def run_accuracy(artifact_id: str, platform_id: str, tasks: list[str], n: int, *
     precipe["snapshot_dir"] = str(model_path)
     pie = get_engine("pie")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=precipe)
     versions["pie"] = commit[:12]
-    srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie.log")
-    try:
-        model = srv.wait(5400)
-        for t, (_items, rendered) in sets.items():
-            answers["pie"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY)
-            log(f"accuracy {art.id}@{platform_id}: pie {t} done")
-    finally:
-        srv.stop()
+    pie_error = None
+    if "pie" in engines:
+        srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie.log")
+        try:
+            try:
+                model = srv.wait(5400)
+            except RuntimeError:
+                if backend != "xla":
+                    raise
+                # a load the warm ladder broke: once more, compiling under the requests instead
+                log(f"accuracy {art.id}@{platform_id}: pie did not come up with prewarm, again without: {srv.tail(5)}")
+                srv.stop()
+                srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie-noprewarm.log", prewarm=False)
+                model = srv.wait(5400)
+            # PARITY_PIE_RESTART=1: a fresh server for each set (XLA hybrids leak state slots: a server runs dry
+            # after ~128 requests); its compiled programs load back from the disk cache
+            fresh = False
+            for t, (_items, rendered) in sets.items():
+                if t not in todo["pie"]:
+                    continue
+                if fresh and os.environ.get("PARITY_PIE_RESTART") == "1":
+                    srv.stop()
+                    srv = pie_server(pie, workload, out_dir / f"{art.id}-acc-pie-{t}.log")
+                    model = srv.wait(5400)
+                fresh = True
+                answers["pie"][t] = kl.greedy(srv.url, model, rendered, TASKS[t][2], parallel=ACCURACY_CONCURRENCY, **req)
+                log(f"accuracy {art.id}@{platform_id}: pie {t} done")
+                emit("pie", t, answers["pie"][t])
+        except Exception as e:  # noqa: BLE001 — the sets done so far (and vLLM's) are still stored; raised after
+            pie_error = e
+        finally:
+            srv.stop()
 
-    rows = []
-    store = Store(store_dir)
-    for engine, by_task in answers.items():
-        for t, texts in by_task.items():
-            items = sets[t][0]
-            scores = [TASKS[t][1](i, x) for i, x in zip(items, texts, strict=True)]
-            correct = sum(scores)
-            lo, hi = wilson(correct, len(scores))
-            row = {"artifact": art.id if engine == "pie" else f"{art.id}@vllm", "model": art.id, "engine": engine, "label": "pie" if engine == "pie" else "vLLM",
-                   "checkpoint": art.base_model, "scheme": str(art.scheme), "platform": platform_id, "tp": tp, "task": t, "n": len(scores), "correct": correct,
-                   "score": correct / len(scores) if scores else None, "ci95": [lo, hi], "version": versions[engine], "empty": sum(1 for x in texts if not x),
-                   "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                   "samples": [{"id": i.id, "score": sc, "text": x} for i, sc, x in zip(items, scores, texts, strict=True)]}
-            store.write_quality(row, tag=tag, tag_kind=tag_kind)
-            log(f"accuracy {row['artifact']} {t}: {correct:.0f}/{len(scores)} = {row['score']:.1%}")
-            rows.append(row)
     if "vllm_unsupported" in versions:
         for t in tasks:
             store.write_quality({"artifact": f"{art.id}@vllm", "model": art.id, "engine": "vllm", "label": "vLLM", "task": t, "platform": platform_id,
                                  "score": None, "n": 0, "correct": 0, "ci95": [0, 0], "ref_unsupported": versions["vllm_unsupported"],
                                  "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "samples": []}, tag=tag, tag_kind=tag_kind)
+    if pie_error is not None:
+        raise pie_error
     return rows
