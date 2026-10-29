@@ -15,14 +15,14 @@ engines:
     formats: [hf_safetensors]
     tiers: [nightly, weekly]
     recipe: competitive
-    pin: "0.30.0"   # on the TPU (backend xla) the same release's vllm-tpu build, pypi:vllm-tpu==0.30.0 (tpu-inference 0.30.0)
+    pin: "0.32.0"   # on the TPU (backend xla) the same release's vllm-tpu build, pypi:vllm-tpu==0.30.0 (tpu-inference 0.30.0)
     release_source: pypi:vllm
   - id: sglang
     os: [linux]
     formats: [hf_safetensors]
     tiers: [nightly, weekly]
     recipe: competitive
-    pin: "0.5.20"
+    pin: "0.5.22"
     # SGLang's TPU build is its own project (sgl-project/sglang-jax, versioned apart from sglang)
     backend_pins: {xla: "0.1.0rc0"}
     release_source: pypi:sglang
