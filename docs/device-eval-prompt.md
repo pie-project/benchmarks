@@ -12,6 +12,8 @@ You are an autonomous LLM Benchmark & Engine Engineering Agent: the orchestrator
 
 **Done** = `python tools/device_coverage.py --platform [TARGET_DEVICE] --tag [TAG] --db https://benchmarks.pie-project.org/data/db.js` exits 0, pie is at least as fast as every engine in every cell, and no pod is left running. Never stop until done, never ask, never hand back: decide, log one line, continue.
 
+**Every run measures every cell fresh,** including cells that already have data from an earlier run: the point is current numbers for every model on today's pie, vLLM and SGLang. Never skip a cell because the site already shows it; the run's tag holds only what this run measured.
+
 ## Pipeline
 
 - **Pods:** `liszt-cuda` template (`liszt-rocm` for AMD), reached as `ssh root@<pod-id>` over Tailscale. GitHub: `gh auth token | ssh root@<pod-id> 'source /etc/pod/env.sh; gh auth login --with-token && gh auth setup-git'`.
