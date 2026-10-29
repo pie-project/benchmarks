@@ -25,10 +25,11 @@ jobs:
       - run: uv venv && uv pip install -e ".[orchestrate]"
       - name: copy finished outputs from the pods (read only)
         run: |
-          rm -rf pods && mkdir pods
-          ssh_() { ssh -o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new "root@$1" "$2"; }
+          rm -rf pods unreachable && mkdir pods
+          # pods far away ride a Tailscale relay, whose first handshake can take tens of seconds: a long timeout, three tries
+          ssh_() { for i in 1 2 3; do ssh -o BatchMode=yes -o ConnectTimeout=45 -o StrictHostKeyChecking=accept-new "root@$1" "$2" && return 0; sleep 10; done; return 1; }
           for p in ${PODS//,/ }; do
-            dirs=$(ssh_ "$p" 'cd /workspace/out 2>/dev/null && for d in */; do [ -s "$d/records.jsonl" ] && printf "%s " "${d%/}"; done' 2>/dev/null) || { echo "::warning::$p unreachable"; continue; }
+            dirs=$(ssh_ "$p" 'cd /workspace/out 2>/dev/null && for d in */; do [ -s "$d/records.jsonl" ] && printf "%s " "${d%/}"; done' 2>/dev/null) || { echo "::warning::$p unreachable"; echo "$p" >> unreachable; continue; }
             [ -n "$dirs" ] || { echo "$p: nothing yet"; continue; }
             mkdir -p "pods/$p"
             ssh_ "$p" "tar -C /workspace/out -czf - $dirs" | tar -C "pods/$p" -xzf - && echo "$p: $dirs"
@@ -39,5 +40,9 @@ jobs:
           dirs=(pods/*/*/)
           [ ${#dirs[@]} -gt 0 ] || { echo "no outputs yet"; exit 0; }
           # a reset clears what the pods no longer stand behind (smokes, sweeps, superseded runs) before the re-import
-          [ "${{ inputs.reset }}" != true ] || .venv/bin/pie-evals drop-tag "$TAG"
+          # never with a pod missing: its rows would be dropped and not come back until the next pass reaches it
+          if [ "${{ inputs.reset }}" = true ]; then
+            if [ -s unreachable ]; then echo "::error::reset skipped: unreachable $(tr '\n' ' ' < unreachable)"; exit 1; fi
+            .venv/bin/pie-evals drop-tag "$TAG"
+          fi
           .venv/bin/pie-evals collect --tier weekly --tag "$TAG" --tag-kind manual "${dirs[@]}"
