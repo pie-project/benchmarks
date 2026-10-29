@@ -84,9 +84,9 @@ unsupported:
   - when: {engine: sglang, artifact: minimax-m3.1-flash, platform: [h200-x4, h100-sxm-x4]}
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
   # weekly 40421366253: the miniature keeps the release's widths, so it fails as the full model does
-  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini}
+  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1]}   # pie-project/vllm pie-evals/v0.32.0 loads it on L40S
     reason: "vLLM 0.32.0 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 (expert load: size of tensor a (192) must match b (384))"
-  - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, arch: [ampere, ada, hopper]}
+  - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, arch: [ampere, hopper]}   # ada: pie-project/sglang pie-evals/v0.5.22 runs it
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
   - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, platform: [pro6000-x1, pro6000-x2, pro6000-x4, pro4500-x1, rtx5090-x1]}
     reason: "SGLang 0.5.22 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 on sm_120 (expert load: size of tensor a (192) must match b (384))"
@@ -115,8 +115,6 @@ unsupported:
     reason: "attention-only KV policies are not valid on a windowed kv ring (pie: use pie:inferlet/forward-hybrid); the gemma4_moe forward pass is hybrid"
   # SGLang 0.5.20 cannot run gemma-4: every cell dies in its own code with
   # "view size is not compatible with input tensor's size and stride" / "shape '[-1, 1024]' is invalid" (L40S, 4090, 5090, A100 x2)
-  - when: {engine: sglang, family: gemma4, not_backend: [xla, rocm]}  # the TPU runs sglang-jax, its own codebase
-    reason: "SGLang 0.5.20 gemma-4 crashes in its attention/view path on every card tried; revisit at the next pin"
   # SGLang 0.5.22 from AMD's ROCm image dies the same way capturing its decode graphs (MI350X, weekly 39709793022):
   # decode_cuda_graph_runner.py:517 "shape '[-1, 1024]' is invalid for input of size 512"
   - when: {engine: sglang, family: gemma4, backend: rocm}
@@ -147,8 +145,6 @@ unsupported:
   # 4090 ss 25 tok/s; the H100 (1189 tok/s at c64) and Blackwell cards keep the baseline
   - when: {engine: sglang, family: gpt_oss, arch: ampere}
     reason: "SGLang 0.5.20 gpt-oss mxfp4 falls back to dequant on Ampere: 5-12 tok/s, not a baseline"
-  - when: {engine: sglang, family: gpt_oss, arch: ada}
-    reason: "SGLang 0.5.20 gpt-oss mxfp4 falls back to dequant on Ada: ~25 tok/s single-stream, not a baseline"
   # SGLang 0.5.22's flashinfer cannot build its gpt-oss mxfp8 kernels for Blackwell (sm120: RTX 5090, PRO 4500,
   # PRO 6000): "Ninja build failed ... mxfp8_quantization_sm100" (0.5.3-b5, run 39104203014)
   # SGLang 0.5.22 unpacks gpt-oss-120b's mxfp4 experts at load and runs one 80 GB card out of memory

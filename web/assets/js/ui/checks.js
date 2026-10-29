@@ -224,7 +224,11 @@ window.Pie = window.Pie || {};
   // the page: one grid in the platform pages' style, the benchmark tasks down the side and the models across under
   // their makers, for the platform picked in the bar; each cell pie's score with its gap to the closest reference engine
   // on the same weights and machine (mlx-lm, vLLM), red where any engine there disagrees
-  const gridOf = (items) => {
+  const gridOf = (items, platform) => {
+    // each platform's grid folds its Task column on its own, its choice kept as the speed pages keep theirs
+    const key = `quality:${platform}`;
+    const tight = Pie.state?.platform?.narrowBy?.[key] ?? Boolean(Pie.state?.platform?.narrow);
+    const narrowLabel = tight ? "Show Overall" : "Hide Overall";
     const models = [...new Set(items.map((x) => x.row.model))]
       .sort((a, b) => Pie.platform.makerName(a).localeCompare(Pie.platform.makerName(b)) || Pie.store.names.model(a).localeCompare(Pie.store.names.model(b)));
     const tasks = [...new Set(items.map((x) => x.row.task))].sort();
@@ -247,7 +251,7 @@ window.Pie = window.Pie || {};
       if (makers.length && makers[makers.length - 1].name === name) makers[makers.length - 1].n++;
       else makers.push({ name, model: m, n: 1 });
     }
-    const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"></th><th class="platform-corner is-overall"></th>${makers.map((k) =>
+    const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-overall"></th>${makers.map((k) =>
       `<th class="platform-maker" colspan="${k.n}" scope="colgroup"><span class="platform-maker-name">${Pie.platform.makerBadge(k.model)}<b>${esc(k.name)}</b><span>${k.n} ${k.n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill"></th></tr>`;
     const head = `<tr class="platform-head-row"><th class="platform-corner" scope="col">Task</th><th class="platform-corner is-overall" scope="col"><span class="platform-model">Overall</span><span class="platform-sub">Median gap</span></th>${models.map((m) => {
       const info = Pie.store.index.models[m] || {};
@@ -277,7 +281,7 @@ window.Pie = window.Pie || {};
         }).join("")}<td class="platform-fill"></td></tr>`;
     }).join("");
     const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
-    return `<table class="platform-table" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
+    return `<table class="platform-table${tight ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
   };
   // every platform at once, as the compare pages stack theirs: a header bar that folds it, over its own grid
   const folded = {};
@@ -293,7 +297,7 @@ window.Pie = window.Pie || {};
             <span class="platform-group-name">${Pie.platform.badge(p)}<b>${esc(platformLabel(p))}</b><span>${models} ${models === 1 ? "model" : "models"}, ${tasks} ${tasks === 1 ? "task" : "tasks"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
           </span>
-        </div><div class="platform-section-body"${folded[p] ? " hidden" : ""}><div class="platform-section-scroll">${gridOf(items)}</div></div></section>`;
+        </div><div class="platform-section-body"${folded[p] ? " hidden" : ""}><div class="platform-section-scroll">${gridOf(items, p)}</div></div></section>`;
     }).join("")}</div>`;
   };
 
@@ -318,6 +322,19 @@ window.Pie = window.Pie || {};
 
   const wire = () => {
     element.addEventListener("click", (event) => {
+      const narrow = event.target.closest("[data-narrow]");
+      if (narrow) {
+        if (event.detail) narrow.blur();
+        // this platform's grid alone; the others keep theirs
+        const table = narrow.closest(".platform-table");
+        const on = !table.classList.contains("is-tight");
+        Pie.state.platform.narrowBy = { ...Pie.state.platform.narrowBy, [narrow.dataset.narrow]: on };
+        Pie.saveView?.();
+        const label = on ? "Show Overall" : "Hide Overall";
+        table.classList.toggle("is-tight", on);
+        narrow.setAttribute("aria-pressed", String(on)); narrow.title = label; narrow.setAttribute("aria-label", label);
+        return;
+      }
       // a platform's bar folds its grid in place, sliding, as the compare pages fold theirs
       const bar = event.target.closest("[data-qc-fold]");
       if (bar) {

@@ -146,7 +146,13 @@ def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: Worklo
 
 
 def recipe_names(engine: str) -> list[str]:
-    return sorted(_load_yaml(engine))
+    return sorted(k for k in _load_yaml(engine) if k != "fork")
 
 
-__all__ = ["RECIPE_DIR", "load_recipe", "recipe_names", "recipe_path"]
+def recipe_fork(engine: str) -> dict[str, Any] | None:
+    """The engine's fork (``fork:`` in its recipe file): where the fixes that keep the miniatures running live."""
+    path = recipe_path(engine)
+    return (yaml.safe_load(path.read_text()) or {}).get("fork") if path.is_file() else None
+
+
+__all__ = ["RECIPE_DIR", "load_recipe", "recipe_fork", "recipe_names", "recipe_path"]

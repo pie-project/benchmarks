@@ -108,6 +108,25 @@ artifacts:
     baseline_of: qwen3.5-0.8b-bf16
     tiers: [targeted]
 
+  - id: qwen3-0.6b-bf16
+    base_model: Qwen/Qwen3-0.6B
+    family: qwen3
+    scheme: bf16
+    expected_gib: 1.2
+    pie_sku: qwen3-0.6b-bf16-kv-bf16
+    tiers: [weekly]
+  - id: gemma-4-12b-bf16
+    base_model: google/gemma-4-12B-it
+    family: gemma4
+    scheme: bf16
+    expected_gib: 22.3
+    tiers: [weekly]
+  - id: gemma-4-e2b-bf16
+    base_model: google/gemma-4-E2B-it
+    family: gemma4
+    scheme: bf16
+    expected_gib: 8.7
+    tiers: [weekly]
   - id: gemma-4-e4b-bf16
     base_model: google/gemma-4-E4B-it
     family: gemma4
@@ -252,6 +271,62 @@ artifacts:
     max_context: 4096
     expected_gib: 12.0
     tiers: [weekly]
+  # the L40S device evaluation (matrix/device-eval.yaml): bf16 Hugging Face cuts every GPU engine loads
+  - id: qwen3.6-35b-a3b-mini
+    base_model: Qwen/Qwen3.6-35B-A3B
+    family: qwen3_6_moe
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-39", experts: 64, period: 4, shrink_family: qwen3_5_moe, note: "every layer; 64 of 256 experts (bf16 is 65 GB)"}
+    pie_sku: qwen36-35b-a3b-bf16-kv-bf16-l40-e64   # unnamed, pie's import takes it for a Qwen3.8-Flash-Next mini
+    max_context: 4096
+    expected_gib: 20.4
+    tiers: [weekly]
+  - id: muse-glimmer-30b-mini
+    base_model: meta-models/Muse-Glimmer-30B
+    family: muse_glimmer
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-23", period: 4, note: "6 of 13 sliding/sliding/sliding/full periods (bf16 is 60 GB)"}
+    max_context: 4096
+    expected_gib: 30.2
+    tiers: [weekly]
+  - id: deepseek-v4-flash-mini
+    base_model: deepseek-ai/DeepSeek-V4-Flash
+    family: deepseek_v4
+    scheme: mxfp4         # FP8 dense planes and FP4 experts, as released
+    kind: miniature
+    miniature: {layers: "0-3,42", experts: 16, period: 1, note: "the same cut as deepseek-v4-flash-mini5, from the released checkpoint"}
+    max_context: 4096
+    expected_gib: 3.7
+  - id: gemma-4-26b-a4b-mini
+    base_model: google/gemma-4-26B-A4B-it
+    family: gemma4_moe
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-29", experts: 64, period: 6, shrink_family: gemma4, note: "every layer; 64 of 128 experts (bf16 is 48 GB); needs pie #1162"}
+    max_context: 4096
+    expected_gib: 26.8
+    tiers: [weekly]
+  - id: gemma-4-31b-mini
+    base_model: google/gemma-4-31B-it
+    family: gemma4
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-29", period: 6, shrink_family: gemma4, note: "first 30 of 60 layers, five sliding/global periods (bf16 is 58 GB)"}
+    max_context: 4096
+    expected_gib: 31.6
+    tiers: [weekly]
+  - id: gpt-oss-120b-mxfp4-mini
+    base_model: openai/gpt-oss-120b
+    params_b: 117
+    active_b: 5.1
+    family: gpt_oss
+    scheme: mxfp4
+    kind: miniature
+    miniature: {layers: "0-35", experts: 64, period: 2, note: "every layer; 64 of 128 experts (mxfp4 is 61 GB)"}
+    expected_gib: 34.0
+    tiers: [weekly]
   - id: nemotron-3-ultra-mini
     base_model: nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16
     family: nemotron_h
@@ -260,6 +335,36 @@ artifacts:
     miniature: {layers: "0-8", experts: 64, period: 1, note: "pie's nemotron3-ultra-mini: M E M E M E M * E, four Mamba-2, four latent MoE, one attention; 64 of 512 experts"}
     max_context: 4096
     expected_gib: 16.0
+    tiers: [weekly]
+  - id: nemotron-3-super-mini
+    base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+    family: nemotron_h
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-43", experts: 32, period: 1, note: "the first 44 of 88 layers (Mamba-2, latent MoE, attention); 32 of 512 experts (bf16 is 230 GB)"}
+    pie_sku: nemotron3-super-bf16-kv-bf16-l44-e32
+    max_context: 4096
+    expected_gib: 15.0
+    tiers: [weekly]
+  - id: qwen3.8-27b-mini
+    base_model: Qwen/Qwen3.8-27B
+    family: qwen3_6
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-31", period: 4, note: "8 of 16 linear/linear/linear/full periods (bf16 is 52 GB)"}
+    pie_sku: qwen38-27b-bf16-kv-bf16-l32
+    max_context: 4096
+    expected_gib: 27.5
+    tiers: [weekly]
+  - id: qwen3.6-27b-mini
+    base_model: Qwen/Qwen3.6-27B
+    family: qwen3_6
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-31", period: 4, shrink_family: qwen3_5_moe, note: "8 of 16 linear/linear/linear/full periods (bf16 is 54 GB)"}
+    pie_sku: qwen36-27b-bf16-kv-bf16-l32
+    max_context: 4096
+    expected_gib: 27.5
     tiers: [weekly]
   - id: minimax-m3.1-flash-mini
     base_model: MiniMaxAI/MiniMax-M3.1-Flash
@@ -296,14 +401,14 @@ artifacts:
     scheme: bf16
     expected_gib: 8.4
     pie_sku: qwen35-d4b-bf16-kv-bf16   # import picks the u4g64 twin otherwise
-    tiers: []
+    tiers: [weekly]
   - id: qwen3.5-9b-bf16
     base_model: Qwen/Qwen3.5-9B
     family: qwen3_5
     scheme: bf16
     expected_gib: 17.6
     pie_sku: qwen35-d9b-bf16-kv-bf16
-    tiers: []
+    tiers: [weekly]
   - id: qwen3.6-35b-a3b-bf16
     base_model: Qwen/Qwen3.6-35B-A3B
     family: qwen3_6_moe
@@ -558,6 +663,21 @@ artifacts:
     scheme: bf16     # nvidia/...-NVFP4 is the quantized copy
     expected_gib: 1044.1
     tiers: [weekly]
+  - id: nemotron-3-super
+    base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+    display_name: nemotron-3:super
+    params_b: 120
+    active_b: 12
+    layers: 88
+    hidden_size: 4096
+    experts: 512
+    top_k: 22
+    context: 262144
+    vocab: 131072       # untied: an embedding and a separate LM head
+    family: nemotron_h
+    scheme: bf16
+    expected_gib: 230.2
+    tiers: []
   - id: minimax-m3.1-flash
     base_model: MiniMaxAI/MiniMax-M3.1-Flash
     display_name: minimax-m3.1:flash

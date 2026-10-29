@@ -131,6 +131,26 @@ competitive:
             The miniature is carved without the vision tower, and vLLM 0.31 builds it anyway, then
             fails init on every visual.* weight the checkpoint lacks (weekly 40421366253). Text-only
             serving, as pie runs it.
+    minimax_m3:
+      knobs:
+        attention_backend:
+          value: null
+          rationale: >
+            MiniMax-M3 attends with its own sparse attention (MSA, Triton below sm_100); a named
+            FlashInfer backend is not its path. Unset leaves vLLM's own pick, as it deploys it.
+    gemma4:
+      knobs:
+        language_model_only:
+          value: true
+          rationale: >
+            The benchmarks are text-only, as pie serves them. vLLM 0.32 otherwise budgets Gemma-4's
+            video input and refuses to start the 31B miniature at the Raw shape ("max_tokens_per_mm_item
+            (2496) is larger than max_num_batched_tokens (2048)", l40s-x1).
+    gemma4_moe:
+      knobs:
+        language_model_only:
+          value: true
+          rationale: Text-only serving, as for gemma4 (vLLM budgets the vision/video input otherwise).
     nemotron_h:
       knobs:
         attention_backend:
@@ -238,3 +258,8 @@ competitive:
         prefix_caching:
           value: false
           rationale: common.py's --mixed-phase help asks for prefix caching OFF on both engines.
+
+# The fork that keeps every miniature running: branch pie-evals/v<release> holds one small Python fix per
+# commit over upstream's tag v<release>, and the CUDA install overlays it on the PyPI wheel (baselines.ensure_fork).
+# Fixes are shape guards, missing-arch fallbacks and loader fixes only: a full model's speed never changes.
+fork: {repo: pie-project/vllm, upstream: vllm-project/vllm, src: .}

@@ -27,10 +27,12 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 
 # Each site workload maps to measured workloads, best first.
-THROUGHPUT = ["c32", "c64", "c256", "c8", "c4"]
+# a device evaluation measures throughput at the concurrency that saturates its GPU (c<N>, pf<N>-512, N a power of two):
+# every N is listed, after the fixed counts the Macs use, so each cell shows whichever N it was measured at
+THROUGHPUT = ["c32", "c64", "c256", "c8", "c4", "c16", "c128", "c512", "c1024"]
 RAW = ["raw-512-256"]  # the single request with speculation off: what the hardware limit is measured against
 SPEC = ["spec-512-256"]  # the same request with speculation on: every engine drafts with its own drafter
-PREFILL_BATCH = ["pf256-512"]  # 256 cold prompts at once, one token each: the batch's prompt tokens over the wall
+PREFILL_BATCH = ["pf256-512", "pf4-512", "pf8-512", "pf16-512", "pf32-512", "pf64-512", "pf128-512", "pf512-512", "pf1024-512"]  # 256 cold prompts at once, one token each: the batch's prompt tokens over the wall
 CATEGORIES = (("throughput", THROUGHPUT, "Batching"), ("raw", RAW, "Raw"), ("spec", SPEC, "Speculative"), ("prefill_batch", PREFILL_BATCH, "Batched Prefill"))
 SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates and times on the site are Pacific
 
@@ -342,12 +344,14 @@ def _miniature_shapes() -> dict[str, dict]:
 MINI_SHAPE = _miniature_shapes()
 # the miniatures of a datacenter model (over 100 GiB as released): those stand in for it, the CI fixtures never do
 _FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("kind", "full") == "full" and (a.get("expected_gib") or 0) > 100}
-SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and a["base_model"] in _FULL_BASES}
+# a model that does not fit a device is shown as its miniature there, whatever its size; only the CI's smoke fixtures
+# (tiny cuts in the smoke tier) are never a model's number
+SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and (a["base_model"] in _FULL_BASES or "smoke" not in a.get("tiers", []))}
 
 
 def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
-    """The row to show for each (hardware, engine, model, workload category): the best-matching workload, then on a Mac
-    the MLX weights every Mac engine shares, then the newest. A miniature (a few layers of the real shape) stands in only
+    """The row to show for each (hardware, engine, model, workload category): the newest run, then the best-matching
+    workload, then on a Mac the MLX weights every Mac engine shares. A miniature (a few layers of the real shape) stands in only
     where the model has no full-checkpoint row, and its row says so (``miniature``)."""
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
@@ -372,7 +376,8 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
         model = a2m.get(r["artifact"], r["artifact"])
         key = (r["platform"], r["engine"], model, cat)
         shared = r["platform"] in macs and art.get("source_format") == "mlx"
-        rank = (not mini, -pri, shared, r["started_at"])
+        # the newest run wins: a cell measured again (a fix, a fairer workload, a new saturating N) shows its latest number
+        rank = (r["started_at"], not mini, -pri, shared)
         if key not in best or rank > best[key][0]:
             best[key] = (rank, r)
     return best
@@ -694,6 +699,24 @@ def gpu_unsupported(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[st
     return out
 
 
+def gpu_unsupported_setups(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[str]) -> dict[tuple, str]:
+    """{(gpu, engine, model, category): reason} for any GPU setup (a miniature's too) a support rule declares
+    unsupported. Unlike gpu_unsupported it never blanks a measured row: it only explains a cell no run filled."""
+    from pie_evals.plan.matrix import Matrix
+
+    m = Matrix.load(ROOT / "matrix")
+    out: dict[tuple, str] = {}
+    for c in m.expand():
+        if c.platform.id not in gpu_ids or str(c.engine) not in engine_ids or c.workload.id not in WL_PRIORITY:
+            continue
+        if c.program.id != "text-completion-bench" or c.artifact.id not in a2m:
+            continue
+        reason = c.declared_unsupported_reason
+        if reason and not reason.startswith("does not fit"):
+            out.setdefault((c.platform.id, str(c.engine), a2m[c.artifact.id], WL_PRIORITY[c.workload.id][0]), reason)
+    return out
+
+
 def gpu_no_fit(store, a2m: dict[str, str], hw_rows: list[dict], gpu_ids: list[str]) -> dict:
     """{gpu: {model: {engine: GiB needed}}}: the planner's fit rule over the weights the GPU runs used."""
     from pie_evals.plan.matrix import gpu_gib
@@ -810,6 +833,12 @@ def main() -> None:
     # even where an older engine release once measured it: one release of each engine per tag
     gpu_unsup = gpu_unsupported(a2m, gpu_ids, all_engines, config.get("benchmarks", []))
     grid += [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in gpu_ids for c, _, _ in CATEGORIES if (hw, e, m, c) in gpu_keys]
+    # a setup another engine measured on this GPU that the matrix declares unsupported for this one (a miniature's
+    # engine gap too): its reason, not a blank
+    setup_unsup = {k: r for k, r in gpu_unsupported_setups(a2m, gpu_ids, all_engines).items()
+                   if k[2] in model_ids and k[1] in engine_ids and k not in gpu_keys
+                   and any(g[0] == k[0] and g[2] == k[2] and g[3] == k[3] for g in gpu_keys)}
+    grid += list(setup_unsup)
     # a TPU the project cannot get at all (support.yaml: no access, no quota) has no runs, only its reasons
     tpus = {p["id"] for p in load("platforms")["platforms"] if p.get("backend") == "xla"}
     grid += [(hw, e, m, "raw") for hw, e, m in gpu_unsup
@@ -827,6 +856,7 @@ def main() -> None:
         attempts.setdefault(t, {}).update(rs)
     unsupported = unsupported_reasons(a2m, config, hardware_ids, engine_ids, model_ids)
     unsupported.update(gpu_unsup)
+    unsupported.update({k: r for k, r in setup_unsup.items() if k not in unsupported})
     memory = {h["id"]: h.get("memory_gib") for h in hw_rows}
     streams = {m["id"]: m.get("ssd_streaming") for m in models}
     # every combination of Mac, engine, model and workload has a row in every tag, on every Mac, run there or not:

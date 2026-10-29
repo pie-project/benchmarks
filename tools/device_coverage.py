@@ -27,6 +27,27 @@ def load_db(src: str) -> dict:
     return json.loads(text[text.index("{"): text.rindex("}") + 1])
 
 
+def parity_unsupported(artifact: str | None, platform: str) -> str | None:
+    """The support.yaml reason vLLM cannot be pie's parity reference for this artifact here, or None. A rule
+    that names a workload, a tp or a program other than parity speaks for something else."""
+    arts = {a["id"]: a for a in yaml.safe_load((ROOT / "matrix/models.yaml").read_text())["artifacts"]}
+    plats = {p["id"]: p for p in yaml.safe_load((ROOT / "matrix/platforms.yaml").read_text())["platforms"]}
+    a, p = arts.get(artifact or ""), plats.get(platform, {})
+    if a is None:
+        return None
+    have = {"engine": "vllm", "program": "parity", "artifact": a["id"], "family": a.get("family"),
+            "scheme": a.get("scheme"), "artifact_kind": a.get("kind", "full"), "platform": platform,
+            "arch": p.get("arch"), "backend": p.get("backend"), "os": p.get("os")}
+    for rule in yaml.safe_load((ROOT / "matrix/support.yaml").read_text()).get("unsupported", []):
+        when = rule["when"]
+        if when.get("engine") != "vllm" or any(k.removeprefix("not_") not in have for k in when):
+            continue
+        if all((have[k[4:]] not in v if isinstance(v, list) else have[k[4:]] != v) if k.startswith("not_")
+               else (have[k] in v if isinstance(v, list) else have[k] == v) for k, v in when.items()):
+            return rule["reason"]
+    return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--platform", required=True, help="platform id, e.g. l40s-x1")
@@ -67,7 +88,10 @@ def main() -> int:
         else:
             p = q[-1]
             kl, top1 = p.get("kl_mean"), p.get("top1_agree")
-            if p.get("ref_unsupported"):
+            declared = parity_unsupported(p.get("artifact"), a.platform) if p.get("ref_unsupported") and p.get("pie_ok") in (True, "True") else None
+            if declared:
+                quality = {"status": "unsupported", "why": f"{p.get('ref_engine', 'reference')}: {declared}"}
+            elif p.get("ref_unsupported"):
                 quality = {"status": "fail", "why": f"{p.get('ref_engine', 'reference')}: {p['ref_unsupported']}"}
             elif kl is None or top1 is None:
                 quality = {"status": "fail", "why": "no positions compared (pie did not load or produced no tokens)"}
@@ -75,7 +99,7 @@ def main() -> int:
                 quality = {"status": "anomaly", "kl": kl, "top1": top1}
             else:
                 quality = {"status": "pass", "kl": kl, "top1": top1}
-        done = variant is not None and all(c["status"] in ("pass", "unsupported") for c in cells.values()) and quality["status"] == "pass"
+        done = variant is not None and all(c["status"] in ("pass", "unsupported") for c in cells.values()) and quality["status"] in ("pass", "unsupported")
         gaps += 0 if done else 1
         report.append({"n": m["n"], "model": m["model"], "variant": variant, "miniature": mini, "cells": cells,
                        "quality": quality, "done": done})
@@ -95,7 +119,7 @@ def main() -> int:
         for h, c in r["cells"].items():
             if c["status"] not in ("pass",) and c.get("why"):
                 print(f"  {r['model']} {h}: {c['status']}: {c['why'][:160]}")
-        if r["quality"]["status"] != "pass":
+        if r["quality"]["status"] not in ("pass",):
             print(f"  {r['model']} quality: {r['quality']}")
     return 0 if gaps == 0 else 1
 

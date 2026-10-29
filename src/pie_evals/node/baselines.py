@@ -10,6 +10,7 @@ llama.cpp cells are declared unsupported in matrix/support.yaml).
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -304,6 +305,46 @@ def _image_sglang(d: Path, version: str, log=print) -> Path:
 
 #: pins whose install already failed in this process: every later model of that engine fails at
 #: once instead of holding the GPU through another install (h200 weekly 40417931828 tried twice)
+def ensure_fork(engine: str, version: str, py: Path, log=print) -> str | None:
+    """Overlay the fork's fixes for this release on the installed wheel: the Python changes on branch
+    ``pie-evals/v<version>`` of the fork named in the engine's recipe (``fork:``), over upstream's tag
+    ``v<version>``. Returns the fork commit applied, or None when the release has no fork branch."""
+    import urllib.request
+
+    from .engines.recipes import recipe_fork
+
+    fork = recipe_fork(engine)
+    if not fork:
+        return None
+    branch = f"pie-evals/v{version}"
+    try:
+        head = subprocess.run(["git", "ls-remote", f"https://github.com/{fork['repo']}", f"refs/heads/{branch}"],
+                              capture_output=True, text=True, check=True, timeout=60).stdout.split()
+    except (OSError, subprocess.SubprocessError) as e:
+        raise RuntimeError(f"{engine}: cannot read fork {fork['repo']} {branch}: {e}") from e
+    if not head:
+        return None
+    sha = head[0]
+    site = Path(subprocess.run([str(py), "-c", "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
+                               capture_output=True, text=True, check=True).stdout.strip())
+    stamp = py.parent.parent / ".fork"
+    if stamp.exists() and stamp.read_text().strip() == sha:
+        return sha
+    if stamp.exists():  # an older overlay: put the wheel's files back first
+        subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "--reinstall", "--no-deps", *SPECS[engine](version)], check=True, timeout=900)
+    owner = fork["repo"].split("/")[0]
+    url = f"https://github.com/{fork['upstream']}/compare/v{version}...{owner}:{fork['repo'].split('/')[1]}:{sha}.diff"
+    diff = urllib.request.urlopen(url, timeout=120).read()
+    strip = len(Path(fork.get("src", ".")).parts) + 1 if fork.get("src", ".") != "." else 1
+    # a file the fork adds outlives the wheel reinstall: remove it, or patch refuses to create it again
+    for m in re.finditer(rb"^--- /dev/null\n\+\+\+ b/(\S+)", diff, re.M):
+        site.joinpath(*Path(m.group(1).decode()).parts[strip - 1:]).unlink(missing_ok=True)
+    subprocess.run(["patch", f"-p{strip}", "--forward", "--batch", "-d", str(site)], input=diff, check=True, capture_output=True, timeout=120)
+    stamp.write_text(sha + "\n")
+    log(f"baseline: {engine} {version} with {fork['repo']}@{sha[:10]} ({branch})")
+    return sha
+
+
 _FAILED: dict[tuple[str, str, str | None], str] = {}
 
 
@@ -324,6 +365,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     if (d / ".ok").exists():
         ensure_python_headers(py, log=log)
         if cuda:
+            ensure_fork(engine, version, py, log=log)
             ensure_nvcc(py, log=log)
             ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
             if engine == "sglang":
@@ -355,6 +397,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
         subprocess.run([str(py), "-m", "pip", "install", "-q", *spec], check=True, timeout=timeout_s)
     ensure_python_headers(py, log=log)
     if cuda:
+        ensure_fork(engine, version, py, log=log)
         ensure_nvcc(py, log=log)
         ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
         if engine == "sglang":

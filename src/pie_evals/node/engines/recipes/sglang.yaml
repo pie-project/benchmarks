@@ -61,6 +61,21 @@ competitive:
   arch:
     hopper:
       knobs: {}
+  family:
+    gemma4:
+      knobs:
+        disable_hybrid_swa_memory:
+          value: false
+          rationale: >
+            Gemma-4's global layers are wider than its sliding ones (head_dim 512 vs 256), so one uniform
+            pool sized for the global rows fails every sliding-layer write (CUDA-graph capture: "shape
+            '[-1, 1024]' is invalid for input of size 512", gemma-4-E4B on l40s-x1). SGLang 0.5.22 runs
+            Gemma-4 on its split full/SWA pools, as it deploys it.
+    gemma4_moe:
+      knobs:
+        disable_hybrid_swa_memory:
+          value: false
+          rationale: Same split full/SWA pools as gemma4 (global head_dim 512, sliding 256).
   workload_kind:
     prefix_shared:
       knobs:
@@ -68,3 +83,8 @@ competitive:
           value: true
           flag: none
           rationale: Would be on for the prefix shape once the script exposes it.
+
+# The fork that keeps every miniature running: branch pie-evals/v<release> holds one small Python fix per
+# commit over upstream's tag v<release>, and the CUDA install overlays it on the PyPI wheel (baselines.ensure_fork).
+# Fixes are shape guards, missing-arch fallbacks and loader fixes only: a full model's speed never changes.
+fork: {repo: pie-project/sglang, upstream: sgl-project/sglang, src: python}
