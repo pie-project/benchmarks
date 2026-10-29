@@ -57,7 +57,7 @@ You work fully autonomously. Never stop until done, never ask, never hand back: 
 ### Phase 1: Engines & Device Profile (each pod)
 
 1. Clone benchmarks and pie on the pod; `uv venv && uv pip install -e ".[dev,orchestrate]"`; `pie-evals-node build --pie-commit <sha> --features cuda --pie-root ~/pie`.
-2. vLLM/SGLang venvs with the fork overlay at the current `pie-evals/v<version>` heads; before each final run re-overlay so `.fork` matches the heads on every pod, and rerun any competitor cell measured on an older overlay.
+2. vLLM/SGLang venvs with the fork overlay at the current `pie-evals/v<version>` heads (the forks carry no upstream tags: push the release commit as `upstream/v<version>` and open fix PRs against it); before each final run re-overlay so `.fork` matches the heads on every pod, and rerun any competitor cell measured on an older overlay.
 3. Device profile `pie/crates/engine-cuda/profiles/<sm>/<device>.toml`; missing → `pie tune cuda`, verify, PR to pie.
 
 ### Phase 2: Models, Miniatures & 100% Smoke Gate
@@ -91,3 +91,9 @@ You work fully autonomously. Never stop until done, never ask, never hand back: 
 - pie main failed to boot models over ~9 GB on L40S after pie #1157 (fixed 32 GiB device KV budget); pie #1163 fixes it.
 - L40S (sm_89): vLLM 0.32 DeepSeek-V4.1 emits `mul.bf16x2` (sm_90 only); sparse MLA and DSA need fork fallbacks below sm_90 (pie-project/vllm#4, pie-project/sglang#3).
 - Workers on the laptop stop when it sleeps: keep it on AC, lid open, `caffeinate`; or run the workers on the pods with a `claude setup-token` token.
+- SGLang on L40S: qwen3.8-flash-next fails a CUTLASS DSL block shape and CUDA-graph capture; mimo-v2.6-flash `Hidden size mismatch` on the miniature. Start early.
+- Coverage (#805): `support.yaml` rows for miniatures or for Batching / Batched Prefill never reached the site, and a declared vLLM parity gap counted as a failure, so the check could not reach 0.
+- Artifacts: six of the 19 had no CUDA artifact. `shrink_checkpoint.py --dry-run` prints a cut's size without downloading; Qwen3.6 needs `shrink_family: qwen3_5_moe`, Gemma-4 MoE needs pie #1162, DeepSeek-V4-Flash ships FP8/FP4. A cut needing a pie script change: dispatch with `-f pie_commit=<pie PR sha>`.
+- Pods: a run used to rent one pod per hardware type and run its shards in turn (l40s-x1 rode an l40s-x2), with `--reuse` collapsing parallel launches onto one runner. On own pods each shard now rents its own pod of its own platform, `max_jobs_per_platform` caps pods instead of dropping jobs, and no-stock launches retry every 5 minutes (#805). Check the launch job count right after dispatch.
+- Stock: one-GPU L40S read "Low" only on CUDA 13.2 hosts and then "Out" everywhere; the evaluation moved to h100-sxm-x1. Check `get-capacity` before choosing a device.
+- A run pins the branch commit at dispatch: a recipe fix needs a cancel and redispatch, and a parity run whose pods launched needs a force-cancel, after which its pods must be terminated by hand. Poll GitHub every 5-10 minutes: tight loops hit the secondary rate limit.
