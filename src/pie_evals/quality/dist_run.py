@@ -153,6 +153,10 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
         # the cut keeps only the language model: vLLM then builds no vision tower and reads no visual weights
         argv += ["--limit-mm-per-prompt", json.dumps({"image": 0, "video": 0})]
     keys = {**cfg, **(cfg.get("text_config") or {})}
+    if str(engine.platform.backend) == "xla" and str(engine.artifact.scheme) == "mxfp4":
+        # vllm-tpu requantizes MXFP4 experts to 512-wide blocks, which its gmm kernel multiplies as fp4 (TPU7x only;
+        # "Mosaic failed to compile" on v5p/v6e); blocks narrower than the MXU are dequantized to bf16 in VMEM first
+        env.setdefault("MOE_REQUANTIZE_BLOCK_SIZE", "32")
     # DeepSeek-V4.1's config names no kv_lora_rank, yet vLLM serves it as MLA
     if str(engine.platform.backend) == "xla" and ("kv_lora_rank" in keys or str(keys.get("model_type", "")).startswith("deepseek")):
         # vllm-tpu serves an MLA model only on its new model design with DP attention ("MLA models require both ...")
