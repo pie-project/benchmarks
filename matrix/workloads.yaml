@@ -68,6 +68,11 @@ workloads:
     params: {concurrency: 512, num_requests: 2048, prefill: 128, decode: 256, cold_cache: true}
     tiers: [weekly]
     est_minutes: 10
+  - id: c1024
+    kind: concurrency
+    params: {concurrency: 1024, num_requests: 4096, prefill: 128, decode: 256, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 20
   - id: pf512-512
     kind: concurrency
     params: {concurrency: 512, num_requests: 2048, prefill: 512, decode: 1, cold_cache: true}
