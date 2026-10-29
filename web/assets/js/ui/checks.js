@@ -41,6 +41,51 @@ window.Pie = window.Pie || {};
   const layersText = (layers) => (isNum(layers) ? `${layers} layers kept` : layers ? `layers ${layers} kept` : "");
   const miniBadge = (row) => `<span class="qc-badge" title="${esc(["Miniature", layersText(row.layers)].filter(Boolean).join(": "))}">Miniature</span>`;
 
+  // ---- parity: a row per model, a column per device ----------------------------------------------------
+  const parityTip = (r) => [
+    `${engineLabel(r.engine || "pie")} vs ${engineLabel(r.ref_engine)} on ${hardwareName(r.platform)}`,
+    `KL mean ${kl(r.kl_mean)}, p50 ${kl(r.kl_p50)}`,
+    `KL p99 ${kl(r.kl_p99)}, max ${kl(r.kl_max)}`,
+    `Top-1 agreement ${pct(r.top1_agree)}${r.top1_agree_decisive != null ? `, ${pct(r.top1_agree_decisive)} where ${engineLabel(r.ref_engine)} leads by 0.5 nats (${r.decisive_positions})` : ""}`,
+    r.ref_top1_p != null ? `${engineLabel(r.ref_engine)} top-1 holds ${pct(r.ref_top1_p)}, its top-20 ${pct(r.ref_topk_mass)}` : "",
+    `Exact match ${pct(r.exact_match, 0)}`,
+    `${r.positions ?? "–"} positions over ${r.prompts ?? "–"} prompts${r.misaligned_texts ? `, ${r.misaligned_texts} misaligned` : ""}`,
+    `pie ${short(r.version) || "–"}, ${engineLabel(r.ref_engine)} ${r.ref_version || "–"}`,
+    r.miniature ? ["Miniature model", layersText(r.layers)].filter(Boolean).join(": ") : "",
+    r.date ? `Measured ${Pie.format.date(r.date)}` : "",
+  ].filter(Boolean).join("\n");
+
+  const parityTable = () => {
+    const rows = tables().quality_parity || [];
+    if (!rows.length) return empty("No parity runs yet.");
+    const platforms = [...new Set(rows.map((r) => r.platform))]
+      .sort((a, b) => hardwareName(a).localeCompare(hardwareName(b)));
+    const models = new Map();
+    for (const r of rows) {
+      const key = r.artifact;
+      if (!models.has(key)) models.set(key, { artifact: r.artifact, model: r.model, cells: {} });
+      models.get(key).cells[r.platform] = r;
+    }
+    const ordered = [...models.values()].sort((a, b) => Pie.store.names.model(a.model).localeCompare(Pie.store.names.model(b.model)) || a.artifact.localeCompare(b.artifact));
+    const refs = (p) => [...new Set(rows.filter((r) => r.platform === p).map((r) => engineLabel(r.ref_engine)))].join(", ");
+    const head = `<tr><th class="qc-lead">Model</th>${platforms.map((p) => `<th><span>${esc(hardwareName(p))}</span><small>vs ${esc(refs(p))}</small></th>`).join("")}</tr>`;
+    const cell = (r) => (!r ? '<td class="qc-none">–</td>' : r.ref_unsupported ? `
+      <td class="qc-cell qc-unsupported" data-tip="${esc(`${engineLabel(r.ref_engine)} cannot run this model\n${r.ref_unsupported}${r.pie_ok ? "\npie runs it" : ""}`)}" aria-label="${esc(engineLabel(r.ref_engine))} cannot run this model">
+        ${Pie.icon("unsupported")}
+        ${r.miniature ? miniBadge(r) : ""}
+      </td>` : `
+      <td class="qc-cell" data-tip="${esc(parityTip(r))}">
+        <span class="qc-figure">${kl(r.kl_mean)}<span class="qc-sep">/</span>${pct(r.top1_agree)}</span>
+        ${r.miniature ? miniBadge(r) : ""}
+      </td>`);
+    const body = ordered.map((m) => `
+      <tr>
+        <th class="qc-lead" scope="row"><span>${esc(Pie.store.names.model(m.model))}</span><code>${esc(m.artifact)}</code></th>
+        ${platforms.map((p) => cell(m.cells[p])).join("")}
+      </tr>`).join("");
+    return `<div class="qc-scroll"><table class="qc-table qc-parity"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+  };
+
   // ---- kernels: a row per device -----------------------------------------------------------------------
   const kernelsTable = () => {
     const rows = [...(tables().quality_kernels || [])].sort((a, b) => hardwareName(a.platform).localeCompare(hardwareName(b.platform)));
@@ -262,6 +307,8 @@ window.Pie = window.Pie || {};
         <h1>Quality</h1>
         <p class="method-lede">Whether pie computes what a reference engine computes, on the same weights and the same device.</p>
       </header>
+      ${section("Parity", "KL divergence of pie's next-token distribution from the reference engine's, mean over answer positions, and how often both pick the same top token.",
+        `<div class="qc-banner" role="note"${(tables().quality_parity || []).length ? "" : " hidden"}>Miniature models: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</div>${parityTable()}`)}
       ${section("Kernels", "pie's kernel tests on each backend, against reference implementations.", kernelsTable())}
       ${section("Accuracy", "Benchmark scores of pie beside every engine that ran the same weights on the same machine, per platform.", accuracyTable(state))}
       <div class="qc-pop" role="dialog" hidden></div>
