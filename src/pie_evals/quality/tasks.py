@@ -82,6 +82,10 @@ def _number(text: str) -> str | None:
 
 
 def answer_part(text: str) -> str:
+    # a harmony answer decoded without its special tokens (vLLM's) reads "analysis…assistantfinal…": grade its final
+    # channel only, as pie's is graded, never a number its reasoning quotes
+    if "<|message|>" not in text and "assistantfinal" in text:
+        text = text.split("assistantfinal")[-1]
     marks = list(re.finditer(r"(?:to=(\w+))?\s*<\|message\|>", text))
     if marks:
         final = [m for m in marks if m.group(1) != "self"]
