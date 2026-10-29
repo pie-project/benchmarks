@@ -35,6 +35,8 @@ jobs:
           s = re.sub(r'(href|src)="(assets/[^"]+|data/[^"]+)"', lambda m: f'{m.group(1)}="{m.group(2)}?v={v}"', s)
           open(p, "w").write(s)
           PY
+      # the operator's localhost preview (a checkout on this laptop) gets the same data the site does
+      - run: '[ -d "$HOME/Desktop/debug/pie-evals-live/web/data" ] && cp web/data/db.js "$HOME/Desktop/debug/pie-evals-live/web/data/db.js" || true'
       - uses: actions/upload-artifact@v4
         with: { name: site-files, path: site, retention-days: 3 }
   deploy:
