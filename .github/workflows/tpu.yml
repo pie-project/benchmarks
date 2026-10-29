@@ -20,7 +20,14 @@ on:
       tag: { description: "a tag for the site (0.5.3-b5); empty: main-<sha>", required: false, default: "" }
       zone: { description: "comma-separated zones to try in order (empty: the platform's tpu.zones; v6e: us-east5-b first)", required: false, default: "" }
       parity: { description: "comma-separated artifact ids: pie vs vLLM-TPU quality parity instead of the benchmark (empty: the benchmark)", required: false, default: "" }
+      accuracy: { description: "parity only: comma-separated question sets (gsm8k,mmlu,arc,math500,ifeval): score the models on them, pie and vLLM-TPU, instead of KL parity", required: false, default: "" }
+      n: { description: "questions per set in an accuracy run", required: false, default: "100" }
       vllm: { description: "parity only: vllm-tpu release (latest: the newest on PyPI; empty: the engines.yaml pin)", required: false, default: "latest" }
+      lanes: { description: "parity only: models run side by side, one chip each (a v5p-8 has 4)", required: false, default: "1" }
+      done: { description: "accuracy only: <row artifact>/<task> pairs already stored, skipped (a rerun after a spot VM was taken back)", required: false, default: "" }
+      vllm_tp: { description: "accuracy only: vLLM over this many chips (pie keeps one)", required: false, default: "" }
+      vm_env: { description: "parity only: extra PARITY_*/PIE_* settings for the VM, space-separated KEY=VALUE (PARITY_PIE_PREWARM=0)", required: false, default: "" }
+      model_minutes: { description: "accuracy only: a model's cap in minutes", required: false, default: "150" }
       platform: { description: "TPU platform (platforms.yaml): tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4", required: false, default: "tpu-v6e-1" }
 # the schedule one at a time; every manual run its own VM, in parallel with the others (each deletes its own)
 concurrency: { group: "tpu-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'schedule' }}", cancel-in-progress: false }
@@ -120,10 +127,10 @@ jobs:
       - name: wait for the VM
         run: bash infra/tpu/vm.sh wait
       - name: copy the harness and the job
-        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", PARITY: "${{ github.event.inputs.parity }}", VLLM: "${{ github.event.inputs.vllm }}", TAG: "${{ github.event.inputs.tag }}" }
+        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", PARITY: "${{ github.event.inputs.parity }}", VLLM: "${{ github.event.inputs.vllm }}", TAG: "${{ github.event.inputs.tag }}", ACCURACY: "${{ github.event.inputs.accuracy }}", NQ: "${{ github.event.inputs.n }}", LANES: "${{ github.event.inputs.lanes }}", MINUTES: "${{ github.event.inputs.model_minutes }}", ENGINES: "${{ github.event.inputs.engines }}", DONE: "${{ github.event.inputs.done }}", VTP: "${{ github.event.inputs.vllm_tp }}", VMENV: "${{ github.event.inputs.vm_env }}" }
         run: |
           tar czf /tmp/pie-evals.tgz --exclude=.git --exclude=.venv .  # no .git: provenance reads PIE_EVALS_HARNESS_COMMIT
-          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; [ -n "$PARITY" ] && printf 'export PARITY_ARTIFACTS=%q PARITY_PLATFORM=%q PARITY_TAG=%q\n' "$PARITY" "$PLATFORM" "${TAG:-main-${C:0:9}}" >> /tmp/vm.env || true; [ "$VLLM" = latest ] && VLLM=$(curl -fsSL https://pypi.org/pypi/vllm-tpu/json | jq -r .info.version); [ -n "$PARITY" ] && [ -n "$VLLM" ] && printf 'export PARITY_VLLM_PIN=%q\n' "$VLLM" >> /tmp/vm.env || true; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true; [ -n "${TPU_ALL_CHIPS:-}" ] && echo "export TPU_ALL_CHIPS=1" >> /tmp/vm.env || true )
+          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > /tmp/vm.env; [ -n "$PARITY" ] && printf 'export PARITY_ARTIFACTS=%q PARITY_PLATFORM=%q PARITY_TAG=%q\n' "$PARITY" "$PLATFORM" "${TAG:-main-${C:0:9}}" >> /tmp/vm.env || true; [ -n "$ACCURACY" ] && printf 'export PARITY_ACCURACY=%q PARITY_N=%q PARITY_MODEL_MINUTES=%q\n' "$ACCURACY" "${NQ:-100}" "${MINUTES:-150}" >> /tmp/vm.env || true; [ -n "$PARITY" ] && printf 'export PARITY_LANES=%q\n' "${LANES:-1}" >> /tmp/vm.env || true; [ -n "$PARITY" ] && [ -n "$ENGINES" ] && printf 'export PARITY_ENGINES=%q\n' "$ENGINES" >> /tmp/vm.env || true; [ -n "$PARITY" ] && [ -n "$DONE" ] && printf 'export PARITY_DONE=%q\n' "$DONE" >> /tmp/vm.env || true; [ -n "$PARITY" ] && [ -n "$VTP" ] && printf 'export PARITY_VLLM_TP=%q\n' "$VTP" >> /tmp/vm.env || true; for kv in $VMENV; do [[ "$kv" =~ ^(PARITY|PIE)_[A-Z0-9_]+=[A-Za-z0-9._,:/-]*$ ]] && printf 'export %s=%q\n' "${kv%%=*}" "${kv#*=}" >> /tmp/vm.env || true; done; [ "$VLLM" = latest ] && VLLM=$(curl -fsSL https://pypi.org/pypi/vllm-tpu/json | jq -r .info.version); [ -n "$PARITY" ] && [ -n "$VLLM" ] && printf 'export PARITY_VLLM_PIN=%q\n' "$VLLM" >> /tmp/vm.env || true; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> /tmp/vm.env || true; [ -n "${TPU_ALL_CHIPS:-}" ] && echo "export TPU_ALL_CHIPS=1" >> /tmp/vm.env || true )
           # the first ssh pushes the key; retried while the VM's sshd and the key settle
           for i in 1 2 3 4 5; do
             bash infra/tpu/vm.sh put /tmp/pie-evals.tgz /tmp/vm.env && break

@@ -61,15 +61,31 @@ competitive:
   arch:
     hopper:
       knobs: {}
-    ada:
-      family:
-        muse_spark:
+  family:
+    gemma4:
+      knobs:
+        disable_hybrid_swa_memory:
+          value: false
+          rationale: >
+            Gemma-4's global layers are wider than its sliding ones (head_dim 512 vs 256), so one uniform
+            pool sized for the global rows fails every sliding-layer write (CUDA-graph capture: "shape
+            '[-1, 1024]' is invalid for input of size 512", gemma-4-E4B on l40s-x1). SGLang 0.5.22 runs
+            Gemma-4 on its split full/SWA pools, as it deploys it.
+    gpt_oss:
+      arch:
+        ada:
           knobs:
-            gpu_mem_util:
-              value: 0.85
+            disable_piecewise_cuda_graph:
+              value: true
               rationale: >
-                At 0.90 of a 48 GB L40S the Muse Spark miniature's 256-wide batches run out of memory past
-                SGLang's static pool (torch.OutOfMemoryError, 70 MiB free); 0.85 leaves its graphs room.
+                SGLang 0.5.22 unpacks gpt-oss's MXFP4 experts on Ada and runs out of memory capturing its
+                prefill graphs for the 120B miniature ("CUDA error: out of memory" at 2.07 GB free,
+                num_tokens=4096, l40s-x1 pf4-512); prefill runs eager, decode keeps its graphs.
+    gemma4_moe:
+      knobs:
+        disable_hybrid_swa_memory:
+          value: false
+          rationale: Same split full/SWA pools as gemma4 (global head_dim 512, sliding 256).
   workload_kind:
     prefix_shared:
       knobs:

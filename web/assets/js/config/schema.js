@@ -130,16 +130,6 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    tpu: {
-      label: "Google TPU",
-      short: "TPU",  // as the tables name it
-      section: "platforms",
-      view: "platform",
-      platform: "tpu",
-      tint: "#4285f4",
-      filters: [],
-      columns: [],
-    },
     amd: {
       label: "AMD GPU",
       short: "AMD",  // as the tables name it
@@ -147,6 +137,16 @@ window.Pie = window.Pie || {};
       view: "platform",
       platform: "amd",
       tint: "#ed1c24",
+      filters: [],
+      columns: [],
+    },
+    tpu: {
+      label: "Google TPU",
+      short: "TPU",  // as the tables name it
+      section: "platforms",
+      view: "platform",
+      platform: "tpu",
+      tint: "#4285f4",
       filters: [],
       columns: [],
     },

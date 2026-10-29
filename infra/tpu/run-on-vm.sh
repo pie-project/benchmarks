@@ -81,7 +81,7 @@ done
 # only, so pie, vLLM (tp1) and SGLang-JAX (whose default mesh must equal the device count) all run on one chip
 chips=$(ls -d /dev/accel* 2>/dev/null | wc -l || true)
 [ "$chips" -gt 0 ] || chips=$(ls /dev/vfio 2>/dev/null | grep -cv '^vfio$' || true)
-if [ "${chips:-0}" -gt 1 ] && [ -z "${TPU_ALL_CHIPS:-}" ]; then  # tpu.all_chips: a tp>1 platform uses them all
+if [ "${chips:-0}" -gt 1 ] && [ -z "${TPU_ALL_CHIPS:-}" ] && [ -z "${PARITY_VLLM_TP:-}" ]; then  # tpu.all_chips: a tp>1 platform uses them all
   echo "$chips TPU chips on this host: the engines see chip 0 only"
   export TPU_VISIBLE_CHIPS=0 TPU_CHIPS_PER_PROCESS_BOUNDS=1,1,1 TPU_PROCESS_BOUNDS=1,1,1
 fi
@@ -90,17 +90,47 @@ if [ -n "${PARITY_ARTIFACTS:-}" ]; then
   PIE_PY=$(.venv/bin/python -c "from pie_evals.node.build import bench_python; print(bench_python())" | tail -n 1)
   export PIE_PY
   rc=0
-  # one model at a time, its checkpoint and import dropped after it: the VM's disk holds one model's, not five
-  for a in $(echo "$PARITY_ARTIFACTS" | tr ',' ' '); do
-    [ "$a" != kernels ] || continue  # the kernel suite runs after the models, on the device they left idle
-    # a model's cap (PARITY_MODEL_MINUTES, 60 by default): a hung serve or compile costs one model, not the run
-    timeout -k 60 "$(( ${PARITY_MODEL_MINUTES:-60} * 60 ))" .venv/bin/pie-evals-node parity --artifact "$a" --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" \
-      --store out/parity/store --tag "$PARITY_TAG" --tag-kind manual --out out/parity || { rc=$?; echo "parity $a: exit $rc"; }
-    # the servers run in sessions of their own: a capped model's leave the chip held
-    pkill -9 -f 'vllm.entrypoints|parity_pie_serve|target/release/pie' || true
-    mv out/parity/failed.json "out/parity/failed-$a.json" || true
-    rm -rf "$HOME"/.cache/huggingface/hub/models--* "$HOME"/.cache/pie-evals/artifacts
+  # PARITY_LANES (a slice with that many chips): the models split round-robin over lanes, each lane its own chip,
+  # running its models one at a time; 1 (the default): every model on chip 0, one after another
+  lanes=${PARITY_LANES:-1}
+  [ "$lanes" -le "${chips:-1}" ] || lanes=${chips:-1}
+  models=()
+  for a in $(echo "$PARITY_ARTIFACTS" | tr ',' ' '); do [ "$a" = kernels ] || models+=("$a"); done
+  lane() {
+    local i=$1 a k lrc=0
+    if [ "$lanes" -gt 1 ]; then
+      export TPU_VISIBLE_CHIPS=$i TPU_VISIBLE_DEVICES=$i TPU_CHIPS_PER_PROCESS_BOUNDS=1,1,1 TPU_PROCESS_BOUNDS=1,1,1
+      export TPU_MESH_CONTROLLER_ADDRESS=localhost:$((8476 + i)) TPU_MESH_CONTROLLER_PORT=$((8476 + i))
+    fi
+    for ((k = i; k < ${#models[@]}; k += lanes)); do
+      a=${models[$k]}
+      # a model's cap (PARITY_MODEL_MINUTES, 60 by default): a hung serve or compile costs one model, not the run
+      timeout -k 60 "$(( ${PARITY_MODEL_MINUTES:-60} * 60 ))" .venv/bin/pie-evals-node parity --artifact "$a" --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" \
+        --store out/parity/store --tag "$PARITY_TAG" --tag-kind manual --out "out/parity/lane$i" \
+        ${PARITY_ACCURACY:+--accuracy "$PARITY_ACCURACY" --n "${PARITY_N:-100}"} || { lrc=$?; echo "parity $a: exit $lrc"; }
+      # the servers run in sessions of their own: a capped model's leave the chip held (this lane's only)
+      for p in $(pgrep -f 'vllm.entrypoints|parity_pie_serve|target/release/pie' || true); do
+        [ "$lanes" -gt 1 ] && ! tr '\0' '\n' < "/proc/$p/environ" 2>/dev/null | grep -qx "TPU_VISIBLE_CHIPS=$i" && continue
+        kill -9 "$p" 2>/dev/null || true
+      done
+      mv "out/parity/lane$i/failed.json" "out/parity/failed-$a.json" || true
+      # its checkpoint and import dropped after it: the VM's disk holds a few models', not all
+      hub=$(.venv/bin/python -c "import sys; from pie_evals.plan.matrix import Matrix; print(Matrix.load('matrix').artifacts[sys.argv[1]].base_model.replace('/', '--'))" "$a" 2>/dev/null || true)
+      if [ "$lanes" -gt 1 ] && [ -n "$hub" ]; then
+        rm -rf "$HOME/.cache/huggingface/hub/models--$hub" "$HOME"/.cache/pie-evals/artifacts/"$a"-*
+      else
+        rm -rf "$HOME"/.cache/huggingface/hub/models--* "$HOME"/.cache/pie-evals/artifacts
+      fi
+    done
+    return $lrc
+  }
+  pids=()
+  for ((i = 0; i < lanes; i++)); do
+    # lanes after the first start a little later: their downloads and imports do not all land at once
+    ( sleep $((i * 30)); lane "$i" ) > >(sed -u "s/^/[lane $i] /") 2>&1 &
+    pids+=($!)
   done
+  for p in "${pids[@]}"; do wait "$p" || rc=$?; done
   if [[ ",$PARITY_ARTIFACTS," == *,kernels,* ]]; then  # pie's kernel tests (engine-xla's KERR lines) as one row
     .venv/bin/pie-evals-node kernels --platform "$PARITY_PLATFORM" --pie-root "$PIE_ROOT" --store out/parity/store \
       --tag "$PARITY_TAG" --tag-kind manual --out out/parity/kernels || rc=$?

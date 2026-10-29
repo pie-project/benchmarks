@@ -274,4 +274,4 @@ jobs:
           if [ ${#dirs[@]} -gt 0 ]; then .venv/bin/pie-evals collect --tier "${{ inputs.tier }}" "${tagargs[@]}" "${dirs[@]}"; else echo "::warning::no node outputs"; fi
       - name: regressions and output length
         if: inputs.persist
-        run: .venv/bin/pie-evals checks --tier "${{ inputs.tier }}" || echo "::warning::checks did not run"
+        run: .venv/bin/pie-evals checks --tier "${{ inputs.tier }}" || { [ $? -eq 3 ] && exit 1; echo "::warning::checks did not run"; }

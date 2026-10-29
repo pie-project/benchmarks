@@ -45,9 +45,9 @@ window.Pie = window.Pie || {};
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
   const PLATFORMS = [
     { id: "mac", label: "Apple Silicon", sub: "Metal", has: (hw) => Pie.platformOf(hw) === "mac" },
-    { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => Pie.platformOf(hw) === "tpu" },
     { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => Pie.platformOf(hw) === "nvidia" },
     { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => Pie.platformOf(hw) === "amd" },
+    { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => Pie.platformOf(hw) === "tpu" },
     { id: "cerebras", label: "Cerebras", sub: "Wafer-scale", has: (hw) => Pie.platformOf(hw) === "cerebras" },
     { id: "android", label: "Android", sub: "Mobile GPU", has: (hw) => Pie.platformOf(hw) === "android" },
     { id: "web", label: "WebGPU", sub: "In-browser", has: (hw) => Pie.platformOf(hw) === "web" },
@@ -169,13 +169,15 @@ window.Pie = window.Pie || {};
     // the architecture-based bound (methodology.js), the same one the Methods page explains
     return Pie.batchedCeiling?.(mac, model, scheme) || null;
   }
-  const cell = (rows, metric, base) => {
+  // pie against the opponent picked in the bar, or the strongest other engine on the cell when none is picked
+  const cell = (rows, metric, base, rival) => {
     const pie = rows.find((r) => r.engine === base && r[metric.key]);
     const others = rows.filter((r) => r.engine !== base && r[metric.key]);
     if (!pie) return null;
+    const rivals = rival ? others.filter((r) => r.engine === rival) : others;
     // a machine where only pie runs (a TPU today) still shows pie's own number, with nothing to compare it to
-    if (!others.length) return { pie, best: null, gain: null, all: [pie] };
-    const best = others.reduce((a, b) => ((metric.higher ? b[metric.key] > a[metric.key] : b[metric.key] < a[metric.key]) ? b : a));
+    if (!rivals.length) return { pie, best: null, gain: null, all: [pie, ...others] };
+    const best = rivals.reduce((a, b) => ((metric.higher ? b[metric.key] > a[metric.key] : b[metric.key] < a[metric.key]) ? b : a));
     const gain = metric.higher ? pie[metric.key] / best[metric.key] - 1 : best[metric.key] / pie[metric.key] - 1;
     return { pie, best, gain, all: [pie, ...others] };
   };
@@ -401,6 +403,14 @@ window.Pie = window.Pie || {};
   const paramsOf = (id) => (Pie.store.tables.models || []).find((m) => m.id === id)?.params_b;
   const sizeOf = (id) => { const b = paramsOf(id); return b == null ? null : SIZES.find((sz) => sz.test(b))?.id; };
   let pageMakers = [];  // the makers with a result on the page the grid last drew
+  let pageModels = [];  // the models with a result on the page the grid last drew
+  // a model's group in the Models menu: its maker, its size band, or Local (it fits a 128 GB Mac) and Cloud
+  const groupOf = (id, by) => {
+    const m = (Pie.store.tables.models || []).find((x) => x.id === id) || {};
+    if (by === "size") return SIZES.find((sz) => sz.id === sizeOf(id))?.label || "Unknown size";
+    if (by === "where") return m.needs_gib != null && m.needs_gib <= 128 ? "Local" : "Cloud";
+    return makerOf(id).name || "Cloud";
+  };
   let pagePlatforms = [];  // the platforms with a result in the setup the grid last drew
 
   Pie.platform = {
@@ -474,6 +484,26 @@ window.Pie = window.Pie || {};
         return [{ value: "", label: "All Platforms", selected: !current.length }, { separator: true },
           ...ids.map((id) => ({ value: id, label: Pie.schema[id]?.short || id, selected: current.includes(id), check: true, dot: Pie.schema[id]?.tint }))];
       }
+      if (k === "model" && viewState) {
+        // All Models, then its groups and under each its models, smallest first; several can be checked at once, and a
+        // group's row checks or clears all of its models
+        // none picked shows them all, so every model is checked until one is cleared
+        const picked = viewState.platform.models || [];
+        const ids = [...new Set([...pageModels, ...picked])];
+        const current = picked.length ? picked : ids;
+        const by = viewState.platform.modelGroup || "maker";
+        const groups = {};
+        for (const id of ids) (groups[groupOf(id, by)] ||= []).push(id);
+        const order = by === "maker" ? Object.keys(groups).sort() : by === "size" ? [...SIZES.map((sz) => sz.label), "Unknown size"] : ["Local", "Cloud"];
+        // how the list groups, as Finder's Group By: one pick, the rest of the menu under it
+        return [...[["maker", "By Maker"], ["size", "By Size"], ["where", "Local and Cloud"]].map(([id, label]) => ({ value: `by:${id}`, label, selected: by === id })),
+          ...order.filter((name) => groups[name]).flatMap((name) => {
+            const list = groups[name].sort((a, b) => (paramsOf(a) ?? Infinity) - (paramsOf(b) ?? Infinity) || names().model(a).localeCompare(names().model(b)));
+            return [{ separator: true },
+              { value: `group:${name}`, label: name, selected: list.every((id) => current.includes(id)), check: true, icon: by === "maker" ? badge(MAKERS.find((m) => m.name === name) || { logo: "" }) : "" },
+              ...list.map((id) => ({ value: id, label: names().model(id), detail: paramsOf(id) ? `${paramsOf(id)}B` : "", selected: current.includes(id), check: true, indent: true, icon: badge(makerOf(id)) }))];
+          })];
+      }
       if (k === "maker" && viewState) {
         // All Makers, then under a separator every maker with a result on the page, each checked while shown; several
         // can be checked at once, as a Finder tag menu checks several tags
@@ -489,6 +519,13 @@ window.Pie = window.Pie || {};
         return [{ value: "", label: "All Sizes", selected: !current.length }, { separator: true },
           ...SIZES.map((sz) => ({ value: sz.id, label: sz.label, selected: current.includes(sz.id), check: true }))];
       }
+      if (k === "rival" && viewState) {
+        // the strongest other engine on each cell, then each other engine with its dot, as the catalog marks it
+        const base = viewState.platform.engine || Pie.engines.primary;
+        const current = viewState.platform.rival !== base ? viewState.platform.rival || "" : "";
+        return [{ value: "", label: "Strongest", selected: !current }, { separator: true },
+          ...Pie.store.tables.engines.filter((e) => e.id !== base).map((e) => ({ value: e.id, label: Pie.store.names.engine(e.id), selected: e.id === current, dot: Pie.engines.colorOf(e.id) }))];
+      }
       if (k !== "engine" || !viewState) return [];
       const current = viewState.platform.engine || Pie.engines.primary;
       // each engine with its dot, as the catalog marks it
@@ -496,6 +533,7 @@ window.Pie = window.Pie || {};
     },
     pick(k, value) {
       if (k === "engine" && viewState) viewState.platform.engine = value;
+      if (k === "rival" && viewState) viewState.platform.rival = value || null;
       if (k === "platform" && viewState) {
         const now = viewState.platform.platforms || [];
         viewState.platform.platforms = !value ? [] : now.includes(value) ? now.filter((id) => id !== value) : [...now, value];
@@ -503,6 +541,16 @@ window.Pie = window.Pie || {};
       if (k === "size" && viewState) {
         const now = viewState.platform.sizes || [];
         viewState.platform.sizes = !value ? [] : now.includes(value) ? now.filter((v) => v !== value) : [...now, value];
+      }
+      if (k === "model" && viewState) {
+        if (value.startsWith("by:")) { viewState.platform.modelGroup = value.slice(3); return; }
+        const now = viewState.platform.models?.length ? viewState.platform.models : pageModels;
+        const by = viewState.platform.modelGroup || "maker";
+        const own = value.startsWith("group:") ? pageModels.filter((id) => groupOf(id, by) === value.slice(6)) : [value];
+        const all = own.every((id) => now.includes(id));
+        const next = all ? now.filter((id) => !own.includes(id)) : [...new Set([...now, ...own])];
+        // every model checked again is no pick at all: the menu shows them all, and models added later show too
+        viewState.platform.models = pageModels.every((id) => next.includes(id)) ? [] : next;
       }
       if (k === "maker" && viewState) {
         const now = viewState.platform.makers || [];
@@ -524,8 +572,10 @@ window.Pie = window.Pie || {};
       // is the Roofline page's) shows Decode without forgetting it, so the next page that has it opens on it again
       const mode = modes.find((m) => m.id === state.platform.mode) || modes.find((m) => m.id === "decode") || modes[0];
       const metric = mode.metric;
-      // the engine every cell is about, picked in the bar; pie unless another is picked
+      // the engine every cell is about, picked in the bar; pie unless another is picked. The second pick is its
+      // opponent: the strongest other engine on each cell unless one is picked
       const base = state.platform.engine || Pie.engines.primary;
+      const rival = state.platform.rival && state.platform.rival !== base ? state.platform.rival : null;
       const snapshot = all.filter((r) => r.workload === mode.workload);
       const raw = all.filter((r) => r.workload === "raw" && Pie.store.isMeasured(r));
       const rows = snapshot.filter(Pie.store.isMeasured);
@@ -535,7 +585,10 @@ window.Pie = window.Pie || {};
       pagePlatforms = only ? [] : PLATFORMS.filter((pl) => rows.some((r) => platformOf(Pie.store.index.hardware[r.hardware] || {}) === pl)).map((pl) => pl.id);
       const picked = [];  // no platform filter: All Platforms shows every platform, each its own table
       const groups = PLATFORMS.filter((p) => (!only || p.id === only) && (!picked.length || picked.includes(p.id)))
-        .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p).map((hw) => hw.id) }))
+        .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p)
+          // multi-GPU machines (×2, ×4, ×8) hidden for now, to come back later: delete this line to show them again
+          .filter((hw) => !(hw.class === "gpu" && hw.count > 1))
+          .map((hw) => hw.id) }))
         .filter((g) => !only || g.macs.length);
       const macs = groups.flatMap((g) => g.macs);
       // a platform with no measured result yet, machines or not, shows the empty screen rather than an empty table
@@ -575,6 +628,7 @@ window.Pie = window.Pie || {};
       const fillOf = (id) => fill[id]?.size || 0;
       // the makers menu offers only makers with a result on this page
       pageMakers = [...new Set(rows.filter((r) => r[metric.key] && macs.includes(r.hardware) && suiteModels.includes(r.model)).map((r) => makerOf(r.model).name || "Cloud"))].sort();
+      pageModels = [...new Set(rows.filter((r) => r[metric.key] && macs.includes(r.hardware) && suiteModels.includes(r.model)).map((r) => r.model))];
       // a maker's fullness is its models' average, so one full model outranks eight half-empty ones
       const makerFill = {}, makerCount = {};
       for (const id of suiteModels) {
@@ -584,8 +638,8 @@ window.Pie = window.Pie || {};
       }
       for (const name of Object.keys(makerFill)) makerFill[name] /= makerCount[name];
       // the maker picked in the bar narrows the columns to its models
-      const sortedModels = (narrowModels ? modelHits : suiteModels).filter((id) => !p.makers?.length || p.makers.includes(makerOf(id).name || "Cloud"))
-        .filter((id) => !p.sizes?.length || p.sizes.includes(sizeOf(id)))
+      // the models picked in the bar narrow the columns to them
+      const sortedModels = (narrowModels ? modelHits : suiteModels).filter((id) => !p.models?.length || p.models.includes(id))
         .sort((a, b) => byRank(p.makerOrder, makerOf(a).name, makerOf(b).name)
           || makerFill[makerOf(b).name] - makerFill[makerOf(a).name] || byName(makerOf(a).name || "~", makerOf(b).name || "~")
           || byRank(p.modelOrder, a, b) || fillOf(b) - fillOf(a) || byName(names().model(a), names().model(b)));
@@ -609,11 +663,11 @@ window.Pie = window.Pie || {};
         for (const model of allModels) {
           const id = realOf(model);
           const here = (r) => r.hardware === mac && r.model === id;
-          let c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base);
+          let c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base, rival);
           // a model that runs cut down to fit (a miniature) never "does not fit": where its miniature did not run, the cell
           // says that instead of the full model's size
           // only where this run measures (or measured) the model cut down: elsewhere the full model's "does not fit" stands
-          const cut = TODAY.models.has(id) && TODAY.hardware.has(mac);
+          const cut = (TODAY.models.has(id) && TODAY.hardware.has(mac)) || snapshot.some((r) => here(r) && r.miniature);
           let needs = cut ? null : noFit[mac]?.[id]?.[base];
           // Best TPS and Kernel Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
           const fullNeeds = Pie.store.index.models[id]?.needs_gib;
@@ -666,8 +720,13 @@ window.Pie = window.Pie || {};
         .filter((g) => (!only && !narrowMacs) || g.macs.length);  // a search hides the platforms it leaves empty
       // a platform's page is one list of machines; All Platforms gives each platform its own table, headed by its name
       // and its own maker and model heads, with only the models measured on it
-      const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs)), models }]
-        : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: models.filter((model) => g.macs.some((mac) => shows(mac, model))) }))
+      // a table's miniatures (cut to fit its machines) lead it, then its full models; a maker with both splits its band
+      const minisFirst = (list, ms) => {
+        const mini = (model) => list.some((mac) => grid[mac]?.[model]?.c?.pie?.miniature);
+        return [...ms.filter(mini), ...ms.filter((m) => !mini(m))];
+      };
+      const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs)), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
+        : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: minisFirst(g.macs, models.filter((model) => g.macs.some((mac) => shows(mac, model)))) }))
           .filter((g) => g.macs.length && g.models.length);
 
       const cells = [];
@@ -710,7 +769,11 @@ window.Pie = window.Pie || {};
         bandwidth: { title: "Bandwidth-bound: the share of the bandwidth bound", path: "M2 5.5h9M8.5 3l2.5 2.5L8.5 8M14 10.5H5M7.5 8 5 10.5 7.5 13" },
         interconnect: { title: "Interconnect-bound: the share of the bound set by the link between the GPUs", path: "M6.5 9.5l3-3M7.2 4.6l1.4-1.4a2.6 2.6 0 0 1 3.7 3.7l-1.4 1.4M8.8 11.4l-1.4 1.4a2.6 2.6 0 0 1-3.7-3.7l1.4-1.4" },
       };
-      const tableOf = ({ macs: list, models }, first = true) => {
+      const tableOf = ({ macs: list, models, platform: own }, first = true) => {
+      // each platform folds its own Hardware column: its choice kept by name, the old page-wide one until then
+      const key = own?.id || only || "all";
+      const tight = p.narrowBy?.[key] ?? (p.narrow ?? true);
+      const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
       const shownGroups = [{ platform: null, macs: list }];
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         if (hidden.has(mac)) return `<tr class="is-hidden-row">${machine(mac, g.platform)}<td class="is-overall"></td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
@@ -755,29 +818,35 @@ window.Pie = window.Pie || {};
       const arrow = (key) => (sortKey === key ? `<span class="column-sort">${dir > 0 ? "↑" : "↓"}</span>` : "");
       // a maker heads its models with a band across them, as a platform heads its machines down the side
       const makers = [];
+      // a maker's miniatures and its full models are two bands, as the miniatures lead the table
+      const cut = (model) => list.some((mac) => grid[mac]?.[model]?.c?.pie?.miniature);
       for (const model of models) {
         const maker = makerOf(model);
+        const last = makers[makers.length - 1];
         // a speculation column widens the band but is not another model
-        if (makers.length && makers[makers.length - 1].maker.name === maker.name) { makers[makers.length - 1].n += 1; makers[makers.length - 1].count += 1; }
-        else makers.push({ maker, n: 1, count: 1 });
+        if (last && last.maker.name === maker.name && last.cut === cut(model)) { last.n += 1; last.count += 1; }
+        else makers.push({ maker, n: 1, count: 1, cut: cut(model) });
       }
-      // the first table's corner above Hardware narrows every table's pinned column to each machine's mark and name, for room
-      // for the models, and back: one button for the page, the other corners left empty
-      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner">${first ? `<button type="button" class="platform-narrow" data-narrow aria-pressed="${Boolean(p.narrow)}" aria-label="${p.narrow ? "Show Overall and memory" : "Hide Overall and memory"}" title="${p.narrow ? "Show Overall and memory" : "Hide Overall and memory"}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button>` : ""}</th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }) =>
+      // each table's corner above Hardware narrows its own pinned column to each machine's mark and name, for room
+      // for the models, and back: one button a platform
+      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }) =>
         `<th class="platform-maker" colspan="${n}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${count} ${count === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
         <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
         const m = Pie.store.index.models[realOf(model)] || {};
-        const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B active` : ""}` : "";
+        const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B` : ""}` : "";
+        // the precision pie ran the model at on this table's machines, after its size
+        const SCHEME = { affine_u4_g64: "4-bit", bf16: "BF16", fp8: "FP8", mxfp4: "MXFP4", gguf_q4_k_m: "Q4_K_M", mlx_2bit: "2-bit" };
+        const precision = [...new Set(list.map((mac) => grid[mac]?.[model]?.c?.pie?.scheme).filter(Boolean).map((s) => SCHEME[s] || s))].join(" / ");
         // the speculative column says so under the model's name, where the other columns give its size
-        const sub = size;
+        const sub = [size, precision].filter(Boolean).join(" · ");
         return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(realOf(model)))}, or drag to move">
           <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
-      return `<table class="platform-table${p.narrow ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
+      return `<table class="platform-table${tight ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
       };
       // each platform under its header bar, which folds it away as a Finder group does; its table scrolls sideways on its own
       const tables = only ? tableOf(sections[0] || { macs: [], models: [] }) : sections.map((g, i) => `<section class="platform-section">
@@ -791,9 +860,8 @@ window.Pie = window.Pie || {};
       element.innerHTML = `
         <div class="platform-bar">
           ${setupControl(mode.id, modes)}${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
-          <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
-          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="maker" aria-haspopup="menu" aria-label="Makers">${esc(!p.makers?.length ? "All Makers" : p.makers.length <= 2 ? p.makers.join(", ") : `${p.makers.length} Makers`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
-          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="size" aria-haspopup="menu" aria-label="Model sizes">${esc(!p.sizes?.length ? "All Sizes" : p.sizes.length <= 2 ? p.sizes.map((id) => SIZES.find((sz) => sz.id === id)?.label || id).join(", ") : `${p.sizes.length} Sizes`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+          <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><span class="platform-vs">vs</span><button class="filter-button${rival ? " is-engine" : ""}"${rival ? ` style="--tint: ${Pie.engines.colorOf(rival)}"` : ""} type="button" data-grid-pick="rival" aria-haspopup="menu" aria-label="Opponent">${esc(rival ? Pie.store.names.engine(rival) : "Strongest")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             ${fixed ? "" : (() => {
@@ -816,6 +884,21 @@ window.Pie = window.Pie || {};
     },
 
     bind(state) {
+      // a redraw the viewer asked for leaves the page where it was: its height and each platform's sideways place
+      const inPlace = (redraw) => {
+        const page0 = element.querySelector(".platform-scroll");
+        const top = page0?.scrollTop || 0;
+        const left = page0?.scrollLeft || 0;  // one platform's page slides sideways in the page's own scroller
+        const lefts = [...element.querySelectorAll(".platform-section-scroll")].map((s) => s.scrollLeft);
+        const put = () => {
+          const page = element.querySelector(".platform-scroll");
+          if (page) { page.scrollTop = top; page.scrollLeft = left; }
+          element.querySelectorAll(".platform-section-scroll").forEach((s, i) => { s.scrollLeft = lefts[i] || 0; });
+        };
+        redraw();
+        put();
+        requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(put)));
+      };
       element.addEventListener("click", (event) => {
         const button = event.target.closest("[data-hide-mac]");
         if (!button) return;
@@ -825,30 +908,22 @@ window.Pie = window.Pie || {};
         if (hidden.has(mac)) hidden.delete(mac); else hidden.add(mac);
         state.platform.hidden = [...hidden];
         Pie.saveView?.();
-        // the page stays where it was: drawn again, it keeps its height and each platform's sideways place
-        const top = element.querySelector(".platform-scroll")?.scrollTop || 0;
-        const lefts = [...element.querySelectorAll(".platform-section-scroll")].map((s) => s.scrollLeft);
-        const put = () => {
-          const page = element.querySelector(".platform-scroll");
-          if (page) page.scrollTop = top;
-          element.querySelectorAll(".platform-section-scroll").forEach((s, i) => { s.scrollLeft = lefts[i] || 0; });
-        };
-        document.dispatchEvent(new CustomEvent("pie:refresh"));
-        put();
-        requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(put)));
+        inPlace(() => document.dispatchEvent(new CustomEvent("pie:refresh")));
       }, true);
       element.addEventListener("click", (event) => {
         const button = event.target.closest("[data-narrow]");
         if (!button) return;
         event.stopPropagation();
         if (event.detail) button.blur();  // a click leaves no focus behind, so the arrow keys after it draw no ring
-        const narrow = !state.platform.narrow;
-        state.platform.narrow = narrow;
+        // this platform's table alone; the others keep theirs
+        const table = button.closest(".platform-table");
+        const narrow = !table.classList.contains("is-tight");
+        state.platform.narrowBy = { ...state.platform.narrowBy, [button.dataset.narrow]: narrow };
         Pie.saveView?.();
         const label = narrow ? "Show Overall and memory" : "Hide Overall and memory";
-        element.querySelectorAll(".platform-table").forEach((table) => table.classList.toggle("is-tight", narrow));
+        table.classList.toggle("is-tight", narrow);
         stripes(element);  // the columns moved
-        element.querySelectorAll("[data-narrow]").forEach((b) => { b.setAttribute("aria-pressed", String(narrow)); b.title = label; b.setAttribute("aria-label", label); });
+        button.setAttribute("aria-pressed", String(narrow)); button.title = label; button.setAttribute("aria-label", label);
       }, true);
 
       // drag a maker's band among the makers, or a model's head among its maker's models, as a column moves in Finder's
@@ -934,7 +1009,7 @@ window.Pie = window.Pie || {};
           const key = kind === "maker" ? "makerOrder" : "modelOrder";
           const rest = (state.platform[key] || []).filter((x) => !order.includes(x));
           state.platform[key] = kind === "maker" ? order.concat(rest) : rest.concat(order);
-          onChange();
+          inPlace(onChange);
         }, SETTLE);
       };
       element.addEventListener("pointerup", finish);

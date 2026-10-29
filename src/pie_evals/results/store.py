@@ -170,7 +170,8 @@ class DirStore(BaseStore):
 
     def write_quality(self, summary: dict, *, tag: str | None = None, tag_kind: str | None = None) -> str:
         summary = {**summary, "tag": tag, "tag_kind": tag_kind} if tag else summary
-        path = self.root / "quality" / f"{summary['artifact']}-{summary['task']}.json"
+        on = f"-{summary['platform']}" if summary.get("platform") else ""  # one file a platform, as the database keys it
+        path = self.root / "quality" / f"{summary['artifact']}-{summary['task']}{on}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         # a tag keeps its good score: a stored score is only replaced when it is missing
         if path.exists() and json.loads(path.read_text()).get("score") is not None:
@@ -219,9 +220,18 @@ SCHEMA_SQL = (
     "CREATE INDEX IF NOT EXISTS records_tag ON records (tag);\n"
     # quality scores stack per tag like results: '' is the untagged (legacy) score
     "ALTER TABLE quality ADD COLUMN IF NOT EXISTS tag text NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS tag_kind text;\n"
-    "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'quality_tag_key') THEN "
+    "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname IN ('quality_tag_key', 'quality_platform_key')) THEN "
     "ALTER TABLE quality DROP CONSTRAINT IF EXISTS quality_pkey; "
     "CREATE UNIQUE INDEX quality_tag_key ON quality (artifact, task, tag); END IF; END $$;\n"
+    # a score is per platform as well: a TPU run of an artifact id the GPU shares replaced the GPU's pie scores
+    "ALTER TABLE quality ADD COLUMN IF NOT EXISTS platform text NOT NULL DEFAULT '';\n"
+    "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'quality_platform_key') THEN "
+    "UPDATE quality SET platform = summary->>'platform' WHERE coalesce(summary->>'platform', '') <> ''; "
+    "DROP INDEX IF EXISTS quality_tag_key; "
+    "CREATE UNIQUE INDEX quality_platform_key ON quality (artifact, task, tag, platform); END IF; END $$;\n"
+    # an import from before the platform key recreates the old one beside it, and then every rerun of a stored score fails on it
+    "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'quality_platform_key') THEN "
+    "DROP INDEX IF EXISTS quality_tag_key; END IF; END $$;\n"
     "CREATE TABLE IF NOT EXISTS quality (artifact text NOT NULL, task text NOT NULL, model text, engine text, "
     "score double precision, n integer, date timestamptz, summary jsonb NOT NULL, samples jsonb, "
     "stored_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (artifact, task));\n"
@@ -340,13 +350,13 @@ class PgStore(BaseStore):
         head = {k: v for k, v in summary.items() if k != "samples"}
         with self.connect() as conn, conn.transaction():
             cur = conn.execute(
-                "INSERT INTO quality (artifact, task, tag, tag_kind, model, engine, score, n, date, summary, samples) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (artifact, task, tag) DO UPDATE SET "
+                "INSERT INTO quality (artifact, task, tag, platform, tag_kind, model, engine, score, n, date, summary, samples) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (artifact, task, tag, platform) DO UPDATE SET "
                 "tag_kind = EXCLUDED.tag_kind, model = EXCLUDED.model, engine = EXCLUDED.engine, score = EXCLUDED.score, n = EXCLUDED.n, "
                 "date = EXCLUDED.date, summary = EXCLUDED.summary, samples = EXCLUDED.samples, stored_at = now() "
                 # the newer score replaces the stored one, as a newer good record does; a run that scored nothing replaces nothing
                 "WHERE EXCLUDED.score IS NOT NULL OR quality.score IS NULL",
-                (summary["artifact"], summary["task"], tag or "", tag_kind, summary.get("model"), summary.get("engine"),
+                (summary["artifact"], summary["task"], tag or "", summary.get("platform") or "", tag_kind, summary.get("model"), summary.get("engine"),
                  summary.get("score"), summary.get("n"), summary.get("date"), Jsonb(head), Jsonb(summary.get("samples"))),
             )
         kept = "" if cur.rowcount else " (kept: this run scored nothing, the stored score stands)"

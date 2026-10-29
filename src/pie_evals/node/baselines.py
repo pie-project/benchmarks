@@ -10,6 +10,7 @@ llama.cpp cells are declared unsupported in matrix/support.yaml).
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -315,8 +316,7 @@ def ensure_fork(engine: str, version: str, py: Path, log=print) -> str | None:
     fork = recipe_fork(engine)
     if not fork:
         return None
-    # PIE_EVALS_FORK_REF_<ENGINE> runs a fork branch under review (a PR into pie-evals/v<version>) instead
-    branch = os.environ.get(f"PIE_EVALS_FORK_REF_{engine.upper()}") or f"pie-evals/v{version}"
+    branch = f"pie-evals/v{version}"
     try:
         head = subprocess.run(["git", "ls-remote", f"https://github.com/{fork['repo']}", f"refs/heads/{branch}"],
                               capture_output=True, text=True, check=True, timeout=60).stdout.split()
@@ -330,17 +330,19 @@ def ensure_fork(engine: str, version: str, py: Path, log=print) -> str | None:
     stamp = py.parent.parent / ".fork"
     if stamp.exists() and stamp.read_text().strip() == sha:
         return sha
-    if stamp.exists():  # an older overlay: put the wheel's files back first
+    if stamp.exists():  # an older overlay: put the wheel's files back first; the files it added and the hunks a
+        # reinstall leaves in place would make the new patch fail as "previously applied"
+        import shutil
+
+        shutil.rmtree(site / engine, ignore_errors=True)
         subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "--reinstall", "--no-deps", *SPECS[engine](version)], check=True, timeout=900)
     owner = fork["repo"].split("/")[0]
     url = f"https://github.com/{fork['upstream']}/compare/v{version}...{owner}:{fork['repo'].split('/')[1]}:{sha}.diff"
     diff = urllib.request.urlopen(url, timeout=120).read()
     strip = len(Path(fork.get("src", ".")).parts) + 1 if fork.get("src", ".") != "." else 1
-    # files an earlier overlay created outlive the wheel's reinstall: take them away so they apply again
-    lines = diff.decode(errors="replace").splitlines()
-    for prev, line in zip(lines, lines[1:]):
-        if prev == "--- /dev/null" and line.startswith("+++ b/"):
-            (site / Path(*Path(line[6:]).parts[strip - 1:])).unlink(missing_ok=True)
+    # a file the fork adds outlives the wheel reinstall: remove it, or patch refuses to create it again
+    for m in re.finditer(rb"^--- /dev/null\n\+\+\+ b/(\S+)", diff, re.M):
+        site.joinpath(*Path(m.group(1).decode()).parts[strip - 1:]).unlink(missing_ok=True)
     subprocess.run(["patch", f"-p{strip}", "--forward", "--batch", "-d", str(site)], input=diff, check=True, capture_output=True, timeout=120)
     stamp.write_text(sha + "\n")
     log(f"baseline: {engine} {version} with {fork['repo']}@{sha[:10]} ({branch})")

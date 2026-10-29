@@ -170,6 +170,28 @@ def output_length_mismatches(matrix: Matrix, store: Store, tier: Tier | None = N
     return sorted(out, key=lambda r: -abs(r["gap_rel"]))
 
 
+def prompt_length_mismatches(matrix: Matrix, store: Store, tier: Tier | None = None, *, rel: float = 0.01) -> list[dict]:
+    """Every engine of a cold-prompt workload is sent the same prompts; a spread past ``rel`` in the mean prompt
+    tokens per request the engines report means one prefilled more work than another (a chat template only one applied)."""
+    groups: dict[tuple, dict[str, dict]] = defaultdict(dict)
+    for row in store.latest_by_cell(tier).values():
+        done = int(row.get("requests") or 0) - int(row.get("failed") or 0)
+        wl = matrix.workloads.get(str(row["workload"]))
+        if row["status"] not in ("pass", "noisy") or not row.get("prompt_tokens") or done <= 0 or not (wl and wl.params.get("cold_cache")):
+            continue
+        key = (row["platform"], model_of(matrix, str(row["artifact"])), str(row["workload"]))
+        prev = groups[key].get(row["engine"])
+        if prev is None or row["started_at"] > prev["started_at"]:
+            groups[key][row["engine"]] = {**row, "per_request": row["prompt_tokens"] / done}
+    out = []
+    for (platform, model, workload), by_engine in groups.items():
+        per = {e: r["per_request"] for e, r in by_engine.items()}
+        if len(per) > 1 and max(per.values()) / min(per.values()) - 1 > rel:
+            out.append({"platform": platform, "model": model, "workload": workload, "per_request": per,
+                        "spread_rel": max(per.values()) / min(per.values()) - 1})
+    return sorted(out, key=lambda r: -r["spread_rel"])
+
+
 def output_length_markdown(rows: list[dict]) -> str:
     lines = ["# Output length against pie", "", "| machine | model | workload | engine | tokens per request | pie | gap |", "|---|---|---|---|---|---|---|"]
     for r in rows:
