@@ -51,6 +51,32 @@ workloads:
     params: {concurrency: 256, num_requests: 1024, prefill: 512, decode: 1}
     tiers: [nightly, weekly, targeted]
     est_minutes: 2
+  # the saturation sweep of the device evaluation (powers of two; N = smallest past which tok/s grows < 5%)
+  - id: c16
+    kind: concurrency
+    params: {concurrency: 16, num_requests: 64, prefill: 128, decode: 256}
+    tiers: [weekly]
+    est_minutes: 2
+  - id: c128
+    kind: concurrency
+    params: {concurrency: 128, num_requests: 512, prefill: 128, decode: 256}
+    tiers: [weekly]
+    est_minutes: 4
+  - id: pf32-512
+    kind: concurrency
+    params: {concurrency: 32, num_requests: 128, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf64-512
+    kind: concurrency
+    params: {concurrency: 64, num_requests: 256, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf128-512
+    kind: concurrency
+    params: {concurrency: 128, num_requests: 512, prefill: 512, decode: 1}
+    tiers: [weekly]
+    est_minutes: 2
 
   # -- long context
   - id: lc-1k-128
