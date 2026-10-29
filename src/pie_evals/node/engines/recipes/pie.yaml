@@ -30,10 +30,12 @@ default:
         concurrency rows decode plain, since drafting costs throughput under load.
         "on" or "off" forces it for every row. Only rows whose artifact has a drafter row speculate.
     pretokenized_prompts:
-      value: false
+      value: true
       rationale: >
-        Off: pie tokenizes in the guest, which is part of what the serving
-        path costs. Turn on to isolate the engine from the tokenizer.
+        On: pie prefills the token ids of the same Hugging Face chat render
+        vLLM, SGLang and the served engines tokenize. pie's own template
+        differs where the checkpoint ships none (Kimi-K3 c128: 180 tokens on
+        pie, 148 on vLLM), so the guest render fed pie more work per request.
   family:
     gemma4:
       arch:

@@ -40,3 +40,13 @@ def test_a_drop_past_two_spreads_of_the_week_is_a_regression():
     week = {"c": [50.0, 50.2, 49.9, 50.1]}
     found = rp.regressions(SimpleNamespace(workloads={}), FakeStore(latest, week), None)
     assert found and found[0]["kind"] == "regression" and round(found[0]["vs_peak_rel"], 2) == -0.2
+
+
+def test_engines_prefilling_different_prompts_are_named():
+    cold = SimpleNamespace(artifacts=MATRIX.artifacts, workloads={"c128": SimpleNamespace(params={"cold_cache": True})})
+    def prow(engine, pt, artifact="a"):
+        return row(engine, 2048, artifact=artifact, workload="c128", prompt_tokens=pt)
+    store = FakeStore({"1": prow("pie", 180 * 8), "2": prow("vllm", 148 * 8), "3": prow("sglang", 148 * 8)})
+    found = rp.prompt_length_mismatches(cold, store)
+    assert len(found) == 1 and found[0]["per_request"] == {"pie": 180, "vllm": 148, "sglang": 148}
+    assert not rp.prompt_length_mismatches(cold, FakeStore({"1": prow("pie", 148 * 8), "2": prow("vllm", 149 * 8)}))
