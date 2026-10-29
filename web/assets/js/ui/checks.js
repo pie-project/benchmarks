@@ -131,14 +131,16 @@ window.Pie = window.Pie || {};
   // one platform's rows, in the newest release that ran it there; the Accuracy grid shows every platform, each its own
   const rowsOn = (state, platform) => {
     const byTag = tables().parity || {};
-    const tags = [state.release, ...(tables().tags || []).map((t) => t.id)].filter((t) => byTag[t]?.length);
+    // the releases first; then a device's own quality tag (0.5.3-b5-amd), so a platform scored apart still shows
+    const tags = [...new Set([state.release, ...(tables().tags || []).map((t) => t.id), ...Object.keys(byTag)])].filter((t) => byTag[t]?.length);
     const arms = (tag) => byTag[tag].flatMap((row) => row.arms.filter((a) => a.engine !== "pie" && isNum(a.diff)).map((a) => ({ row, arm: a, platform: familyOf(row) })));
     const tag = tags.find((t) => arms(t).some((x) => x.platform === platform));
     return tag ? arms(tag).filter((x) => x.platform === platform).sort(byRank) : [];
   };
   const accuracyRows = (state) => {
     const byTag = tables().parity || {};
-    const tags = [state.release, ...(tables().tags || []).map((t) => t.id)].filter((t) => byTag[t]?.length);
+    // the releases first; then a device's own quality tag (0.5.3-b5-amd), so a platform scored apart still shows
+    const tags = [...new Set([state.release, ...(tables().tags || []).map((t) => t.id), ...Object.keys(byTag)])].filter((t) => byTag[t]?.length);
     const arms = (tag) => byTag[tag].flatMap((row) => row.arms.filter((a) => a.engine !== "pie" && isNum(a.diff)).map((a) => ({ row, arm: a, platform: familyOf(row) })));
     const platforms = PLATFORMS.filter((p) => tags.some((t) => arms(t).some((x) => x.platform === p)));
     if (!platforms.includes(accuracyPlatform)) accuracyPlatform = platforms[0] || null;
