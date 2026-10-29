@@ -824,7 +824,7 @@ def test_pie_metal_args(tmp_path, monkeypatch):
     assert flag_value(argv, "--engine") == "metal"
     assert flag_value(argv, "--max-model-len") == "2048"
     assert flag_value(argv, "--concurrency") == "32"
-    assert "--report-timing" in argv and "--no-pretokenized-prompts" in argv
+    assert "--report-timing" in argv and "--pretokenized-prompts" in argv
     assert "--dump-all-token-ids" in argv and "--json-out" in argv
     assert "--gpu-mem-util" not in argv and "--tp-size" not in argv and "--device" not in argv
     assert flag_value(argv, "--inferlet-dir") == str(PIE_ROOT / "examples/text-completion-bench")
