@@ -115,10 +115,11 @@ class VllmEngine(Engine):
         gmu = r.get("gpu_mem_util", 0.90)
         if gmu is not None:
             card = float(self.platform.memory_gib or 0.0) / max(1, int(self.mode.tp))
-            if self.artifact.family == "kimi_k3" and 40 <= card < 80 and workload_concurrency(workload) >= 128:
+            if self.artifact.family == "kimi_k3" and ((40 <= card < 80 and workload_concurrency(workload) >= 128) or workload_concurrency(workload) >= 512):
                 # Kimi-K3's MoE activations at c256 outgrow what vLLM's profile run leaves past 0.9
                 # on a 48 GB L40S (nightly 36212036845 s06: OOM on 1.38 GiB); 80 GB cards serve it at 0.9
-                gmu = min(float(gmu), 0.85)
+                # up to c256, while at c512 the KDA prefill's state gather OOMs past 0.85 on the 96 GB RTX PRO 6000
+                gmu = min(float(gmu), 0.85 if card < 80 else 0.75)
             elif self.mode.spec_dec and 0 < card < 40:
                 # a latency boot seats one sequence and hands the rest to kv, then the speculative
                 # warm-up asks 394 MiB past 0.9 on a 24 GB 4090 (gemma-4-E4B ngram, nightly
