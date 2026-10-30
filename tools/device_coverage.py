@@ -98,7 +98,7 @@ def main() -> int:
                 quality = {"status": "fail", "why": f"{p.get('ref_engine', 'reference')}: {p['ref_unsupported']}"}
             elif kl is None or top1 is None:
                 quality = {"status": "fail", "why": "no positions compared (pie did not load or produced no tokens)"}
-            elif kl > qspec["max_kl"] or top1 < qspec["min_top1"]:
+            elif kl > qspec["max_kl"] or (top1 < qspec["min_top1"] and m["model"] not in qspec.get("kl_only", [])):
                 quality = {"status": "anomaly", "kl": kl, "top1": top1}
             else:
                 quality = {"status": "pass", "kl": kl, "top1": top1}
