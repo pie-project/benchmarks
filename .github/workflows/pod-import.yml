@@ -66,7 +66,7 @@ jobs:
     concurrency: { group: pod-import-pro6000, cancel-in-progress: false }
     env:
       PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}"
-      PODS: "${{ inputs.tag == 'pro6000-full' && inputs.pods || 'tpqh5rtwsneklz,fsey4z3ouhkd4i,yvlyqc1h82sikg,j3a8sc17krfs3f' }}"
+      PODS: "${{ inputs.tag == 'pro6000-full' && inputs.pods || 'tpqh5rtwsneklz,fsey4z3ouhkd4i,j3a8sc17krfs3f' }}"
       TAG: pro6000-full
     steps:
       - uses: actions/checkout@v4
