@@ -173,8 +173,9 @@ class DirStore(BaseStore):
         on = f"-{summary['platform']}" if summary.get("platform") else ""  # one file a platform, as the database keys it
         path = self.root / "quality" / f"{summary['artifact']}-{summary['task']}{on}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
-        # a tag keeps its good score: a stored score is only replaced when it is missing
-        if path.exists() and json.loads(path.read_text()).get("score") is not None:
+        # a release keeps its good score: a stored score is only replaced when it is missing; a manual tag (a device
+        # run) takes the newer score, as the database does, so a rerun after a fix replaces the broken one
+        if (tag_kind == "release" or summary.get("score") is None) and path.exists() and json.loads(path.read_text()).get("score") is not None:
             return f"{path} (kept: a score is stored)"
         path.write_text(json.dumps(summary, indent=1))
         return str(path)
