@@ -230,8 +230,12 @@ def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, back
         srv = vllm_server(ref_engine, snapshot, tp, out_dir / f"{art.id}-vllm.log")
         try:
             model = srv.wait(3600)
-            ref_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1)
-            ref_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1)
+            # a render that already opens with BOS: vLLM would prepend a second one, pie does not (pie #1231), and
+            # every position would compare one token apart (Muse Glimmer on pro6000-x1: top-1 0.3%, 40 of 40 misaligned)
+            bos = getattr(_tokenizer(snapshot), "bos_token", None)
+            extra = {"add_special_tokens": False} if bos and rendered and all(r.startswith(bos) for r in rendered) else None
+            ref_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1, extra=extra)
+            ref_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1, extra=extra)
         finally:
             srv.stop()
         return ref_texts, ref_scored
