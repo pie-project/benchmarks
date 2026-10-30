@@ -59,7 +59,8 @@ def main() -> int:
 
     spec = yaml.safe_load(Path(a.spec).read_text())
     db = load_db(a.db)
-    rows = [r for r in db["snapshots"].get(a.tag, []) if r["hardware"] == a.platform]
+    # a stale row is an older tag's cell the site shows in a gap: it is not this run's measurement
+    rows = [r for r in db["snapshots"].get(a.tag, []) if r["hardware"] == a.platform and not r.get("stale")]
     parity = [q for q in db.get("quality_parity", []) if q.get("platform") == a.platform and q.get("tag") == a.tag]
     qspec = spec["quality"]
 
