@@ -16,6 +16,7 @@ env:
   TAG: "${{ inputs.tag || 'l40s-full' }}"
 jobs:
   import:
+    if: ${{ inputs.tag != 'pro6000-full' }}
     runs-on: [self-hosted, site]  # the site laptop: on the tailnet, and its jobs receive the database secret
     concurrency: { group: pod-import, cancel-in-progress: false }
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
@@ -25,14 +26,19 @@ jobs:
       - run: uv venv && uv pip install -e ".[orchestrate]"
       - name: copy finished outputs from the pods (read only)
         run: |
-          rm -rf pods unreachable && mkdir pods
+          rm -rf pods unreachable new.sig && mkdir pods && touch new.sig
+          # only the dirs whose records.jsonl changed (size and mtime) since the last import that took them; a reset takes all
+          state=~/.pod-import/$TAG.state && mkdir -p ~/.pod-import && touch "$state"
+          [ "${{ inputs.reset }}" = true ] && state=/dev/null
           # pods far away ride a Tailscale relay, whose first handshake can take tens of seconds: a long timeout, three tries
           ssh_() { for i in 1 2 3; do ssh -o BatchMode=yes -o ConnectTimeout=45 -o StrictHostKeyChecking=accept-new "root@$1" "$2" && return 0; sleep 10; done; return 1; }
           for p in ${PODS//,/ }; do
-            dirs=$(ssh_ "$p" 'cd /workspace/out 2>/dev/null && for d in */; do [ -s "$d/records.jsonl" ] && printf "%s " "${d%/}"; done' 2>/dev/null) || { echo "::warning::$p unreachable"; echo "$p" >> unreachable; continue; }
-            [ -n "$dirs" ] || { echo "$p: nothing yet"; continue; }
+            sigs=$(ssh_ "$p" 'cd /workspace/out 2>/dev/null && for d in */; do [ -s "$d/records.jsonl" ] && echo "${d%/} $(stat -c %s.%Y "$d/records.jsonl")"; done; true' 2>/dev/null) || { echo "::warning::$p unreachable"; echo "$p" >> unreachable; continue; }
+            changed=$(echo "$sigs" | while read -r d s; do [ -n "$d" ] && ! grep -qxF "$p $d $s" "$state" && echo "$p $d $s"; done; true)
+            [ -n "$changed" ] || { echo "$p: nothing new"; continue; }
+            dirs=$(echo "$changed" | cut -d' ' -f2 | tr '\n' ' ')
             mkdir -p "pods/$p"
-            ssh_ "$p" "tar -C /workspace/out -czf - $dirs" | tar -C "pods/$p" -xzf - && echo "$p: $dirs"
+            ssh_ "$p" "tar -C /workspace/out -czf - $dirs" | tar -C "pods/$p" -xzf - && echo "$changed" >> new.sig && echo "$p: $dirs"
           done
       - name: collect into the database
         run: |
@@ -45,4 +51,68 @@ jobs:
             if [ -s unreachable ]; then echo "::error::reset skipped: unreachable $(tr '\n' ' ' < unreachable)"; exit 1; fi
             .venv/bin/pie-evals drop-tag "$TAG"
           fi
-          .venv/bin/pie-evals collect --tier weekly --tag "$TAG" --tag-kind manual "${dirs[@]}"
+          .venv/bin/pie-evals collect --tier weekly --tag "$TAG" --tag-kind manual "${dirs[@]}" > collect.log 2>&1 || rc=$?
+          cat collect.log
+          # remember each dir that landed, so the next pass skips it until its records change; a reset starts the state over
+          state=~/.pod-import/$TAG.state && touch "$state"
+          [ "${{ inputs.reset }}" = true ] && : > "$state"
+          while read -r p d s; do grep -q "^pods/$p/$d -> " collect.log && echo "$p $d $s"; done < new.sig > landed || true
+          awk 'NR==FNR { k[$1" "$2]; next } !(($1" "$2) in k)' landed "$state" > state.tmp && cat landed >> state.tmp && mv state.tmp "$state"
+          exit ${rc:-0}
+  # the pro6000-x1 evaluation, side by side with the run above
+  import-pro6000:
+    if: ${{ github.event_name == 'schedule' || inputs.tag == 'pro6000-full' }}
+    runs-on: [self-hosted, site]  # the site laptop: on the tailnet, and its jobs receive the database secret
+    concurrency: { group: pod-import-pro6000, cancel-in-progress: false }
+    env:
+      PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}"
+      PODS: "${{ inputs.tag == 'pro6000-full' && inputs.pods || 'tpqh5rtwsneklz,fsey4z3ouhkd4i,yvlyqc1h82sikg,j3a8sc17krfs3f' }}"
+      TAG: pro6000-full
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv && uv pip install -e ".[orchestrate]"
+      - name: copy finished outputs from the pods (read only)
+        run: |
+          rm -rf pods unreachable new.sig && mkdir pods && touch new.sig
+          # only the dirs whose records.jsonl changed (size and mtime) since the last import that took them; a reset takes all
+          state=~/.pod-import/$TAG.state && mkdir -p ~/.pod-import && touch "$state"
+          [ "${{ inputs.reset }}" = true ] && state=/dev/null
+          # pods far away ride a Tailscale relay, whose first handshake can take tens of seconds: a long timeout, three tries
+          ssh_() { for i in 1 2 3; do ssh -o BatchMode=yes -o ConnectTimeout=45 -o StrictHostKeyChecking=accept-new "root@$1" "$2" && return 0; sleep 10; done; return 1; }
+          for p in ${PODS//,/ }; do
+            sigs=$(ssh_ "$p" 'cd /workspace/out 2>/dev/null && for d in */; do [ -s "$d/records.jsonl" ] && echo "${d%/} $(stat -c %s.%Y "$d/records.jsonl")"; done; true' 2>/dev/null) || { echo "::warning::$p unreachable"; echo "$p" >> unreachable; continue; }
+            changed=$(echo "$sigs" | while read -r d s; do [ -n "$d" ] && ! grep -qxF "$p $d $s" "$state" && echo "$p $d $s"; done; true)
+            [ -n "$changed" ] || { echo "$p: nothing new"; continue; }
+            dirs=$(echo "$changed" | cut -d' ' -f2 | tr '\n' ' ')
+            mkdir -p "pods/$p"
+            ssh_ "$p" "tar -C /workspace/out -czf - $dirs" | tar -C "pods/$p" -xzf - && echo "$changed" >> new.sig && echo "$p: $dirs"
+          done
+      - name: collect into the database
+        run: |
+          shopt -s nullglob
+          dirs=(pods/*/*/)
+          [ ${#dirs[@]} -gt 0 ] || { echo "no outputs yet"; exit 0; }
+          # a reset clears what the pods no longer stand behind (smokes, sweeps, superseded runs) before the re-import
+          # never with a pod missing: its rows would be dropped and not come back until the next pass reaches it
+          if [ "${{ inputs.reset }}" = true ]; then
+            if [ -s unreachable ]; then echo "::error::reset skipped: unreachable $(tr '\n' ' ' < unreachable)"; exit 1; fi
+            .venv/bin/pie-evals drop-tag "$TAG"
+          fi
+          .venv/bin/pie-evals collect --tier weekly --tag "$TAG" --tag-kind manual "${dirs[@]}" > collect.log 2>&1 || rc=$?
+          cat collect.log
+          # remember each dir that landed, so the next pass skips it until its records change; a reset starts the state over
+          state=~/.pod-import/$TAG.state && touch "$state"
+          [ "${{ inputs.reset }}" = true ] && : > "$state"
+          while read -r p d s; do grep -q "^pods/$p/$d -> " collect.log && echo "$p $d $s"; done < new.sig > landed || true
+          awk 'NR==FNR { k[$1" "$2]; next } !(($1" "$2) in k)' landed "$state" > state.tmp && cat landed >> state.tmp && mv state.tmp "$state"
+          exit ${rc:-0}
+      - name: collect the pods' parity stores (/workspace/parity/store) into the database
+        run: |
+          rm -rf parity && mkdir parity
+          ssh_() { for i in 1 2 3; do ssh -o BatchMode=yes -o ConnectTimeout=45 -o StrictHostKeyChecking=accept-new "root@$1" "$2" && return 0; sleep 10; done; return 1; }
+          for p in ${PODS//,/ }; do
+            ssh_ "$p" 'test -d /workspace/parity/store' 2>/dev/null || continue
+            mkdir -p "parity/$p" && ssh_ "$p" 'tar -C /workspace/parity -czf - store' | tar -C "parity/$p" -xzf - || continue
+            .venv/bin/pie-evals import-store "parity/$p/store"
+          done

@@ -232,6 +232,13 @@ SCHEMA_SQL = (
     # an import from before the platform key recreates the old one beside it, and then every rerun of a stored score fails on it
     "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'quality_platform_key') THEN "
     "DROP INDEX IF EXISTS quality_tag_key; END IF; END $$;\n"
+    # a row an import from before the platform key wrote has platform '': the same score twice, the site shows either.
+    # the newer of the two stays, under its platform
+    "DELETE FROM quality a USING quality b WHERE a.platform = '' AND b.platform <> '' AND b.platform = a.summary->>'platform' "
+    "AND a.artifact = b.artifact AND a.task = b.task AND a.tag = b.tag AND coalesce(b.summary->>'date', '') >= coalesce(a.summary->>'date', '');\n"
+    "DELETE FROM quality b USING quality a WHERE a.platform = '' AND b.platform <> '' AND b.platform = a.summary->>'platform' "
+    "AND a.artifact = b.artifact AND a.task = b.task AND a.tag = b.tag;\n"
+    "UPDATE quality SET platform = summary->>'platform' WHERE platform = '' AND coalesce(summary->>'platform', '') <> '';\n"
     "CREATE TABLE IF NOT EXISTS quality (artifact text NOT NULL, task text NOT NULL, model text, engine text, "
     "score double precision, n integer, date timestamptz, summary jsonb NOT NULL, samples jsonb, "
     "stored_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (artifact, task));\n"

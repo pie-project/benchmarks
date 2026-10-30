@@ -23,7 +23,7 @@ import time
 from pathlib import Path
 
 PIE_UPSTREAM = "https://github.com/pie-project/pie.git"  # public; pods have no SSH key
-BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2"]  # pie_client + scripts/bench/common.py (pie_client itself rides on PYTHONPATH); transformers renders chat templates
+BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2", "tiktoken"]  # pie_client + scripts/bench/common.py (pie_client itself rides on PYTHONPATH); transformers renders chat templates
 
 
 DEFAULT_CACHE = Path.home() / ".cache/pie-evals"
@@ -49,7 +49,7 @@ def bench_python(cache_root: Path | None = None, log=print) -> Path:
         else:
             subprocess.run(["python3", "-m", "venv", str(venv)], check=True)
         _pip_install(py, BENCH_DEPS)
-    elif subprocess.run([str(py), "-c", "import transformers, jinja2"], capture_output=True).returncode != 0:
+    elif subprocess.run([str(py), "-c", "import transformers, jinja2, tiktoken"], capture_output=True).returncode != 0:
         # a venv made before the baseline clients needed the chat template renderer
         log(f"venv: adding the bench client deps to {venv}")
         _pip_install(py, BENCH_DEPS)
