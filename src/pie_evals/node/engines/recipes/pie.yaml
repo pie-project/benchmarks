@@ -130,6 +130,14 @@ default:
                 (1,555 tok/s), as vLLM and SGLang size theirs.
             engine_option:
               value: {}
+        qwen3_6_moe:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                The RTX PRO 6000 profile's 1024-row walk fires (pie #1250, for Qwen3.8-Flash-Next) cut
+                Qwen3.6-35B-A3B's 256 experts to ~32 routes each a fire: pf64-512 39.8k -> 38.2k tok/s.
+                8192-row fires, as before.
     tpu-v5e:
       knobs:
         gpu_mem_util:
