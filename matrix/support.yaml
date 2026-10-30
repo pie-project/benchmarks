@@ -65,9 +65,9 @@ unsupported:
   # refused ("No common block size for 64 (FLASHINFER_MLA_SPARSE_DSV41: [128])"). SGLang sends capability
   # >= 10 to the candidate indexer, whose DeepGEMM paged sparse MQA logits it enables on SM100 only
   # (deep_gemm_wrapper/configurer.py), so the JIT DeepGEMM switch cannot help there
-  - when: {engine: vllm, family: deepseek_v41, platform: [pro6000-x1, pro6000-x2, pro6000-x4, pro6000-maxq-x1, pro6000-mig24-x1, pro6000-mig48-x1, pro6000-wk-x1, pro5000-x1, pro4500bw-x1, pro4500bw-se-x1, pro4000-x1, rtx5090-x1, rtx5080-x1]}
+  - when: {engine: vllm, family: deepseek_v41, platform: [pro6000-x2, pro6000-x4, pro6000-maxq-x1, pro6000-mig24-x1, pro6000-mig48-x1, pro6000-wk-x1, pro5000-x1, pro4500bw-x1, pro4500bw-se-x1, pro4000-x1, rtx5090-x1, rtx5080-x1]}
     reason: "vLLM 0.32's SM120 sparse-MLA decode takes 64-token pages only and its DSv4.1 backend 128-token blocks only (\"page_block_size=32 is unsupported\"; with --block-size 64 \"No common block size\")"
-  - when: {engine: sglang, family: deepseek_v41, platform: [pro6000-x1, pro6000-x2, pro6000-x4, pro6000-maxq-x1, pro6000-mig24-x1, pro6000-mig48-x1, pro6000-wk-x1, pro5000-x1, pro4500bw-x1, pro4500bw-se-x1, pro4000-x1, rtx5090-x1, rtx5080-x1]}
+  - when: {engine: sglang, family: deepseek_v41, platform: [pro6000-x2, pro6000-x4, pro6000-maxq-x1, pro6000-mig24-x1, pro6000-mig48-x1, pro6000-wk-x1, pro5000-x1, pro4500bw-x1, pro4500bw-se-x1, pro4000-x1, rtx5090-x1, rtx5080-x1]}
     reason: "SGLang 0.5.22's V4.1 candidate indexer needs DeepGEMM's paged sparse MQA logits, which it enables on SM100 only (\"the candidate indexer needs DeepGEMM's paged sparse MQA logits\" on sm_120)"
   # weekly 39999127297 (h200-x4): MiniMax-M3.1-Flash ships MXFP8 projections beside NVFP4 experts
   - when: {engine: vllm, artifact: minimax-m3.1-flash}
@@ -210,7 +210,7 @@ unsupported:
     reason: "vLLM 0.32.0 DeepSeek-V4.1 needs fp8e4nv, which Ampere lacks"
   - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [l40s-x1, rtx4090-x1]}
     reason: "vLLM 0.32.0 DeepSeek-V4.1 CUTLASS DSL kernel fails PTX assembly on Ada"
-  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [rtx5090-x1, pro6000-x1]}
+  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [rtx5090-x1]}
     reason: "vLLM 0.32.0 has no SM120 sparse-MLA decode kernel for DeepSeek-V4.1 (64 heads, topk 128)"
   - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [b200-x1, b300-x1]}
     reason: "vLLM 0.32.0 DeepGEMM asserts on DeepSeek-V4.1 mini tensor rank on Blackwell (layout.hpp:46)"
