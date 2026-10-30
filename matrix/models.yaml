@@ -237,6 +237,16 @@ artifacts:
     expected_gib: 6.0
     pie_sku: glm53-mini-e4m3tile128a8-kv-bf16   # the block-FP8 row vLLM and SGLang serve; identified, pie would dequantize to its bf16 row
     tiers: [weekly]
+  - id: glm-5.3-mini78
+    base_model: zai-org/GLM-5.3
+    family: glm_moe_dsa
+    scheme: fp8
+    kind: miniature
+    miniature: {layers: "0-77", experts: 16, period: 1, note: "all 78 layers (3 dense + 75 MoE DSA) at full width; 16 of 256 experts (62 GiB, for 141 GB cards)"}
+    max_context: 4096
+    expected_gib: 62.0
+    pie_sku: glm53-mini-e4m3tile128a8-kv-bf16-l78-e16   # the block-FP8 row vLLM and SGLang serve, cut to the checkpoint's depth and experts
+    tiers: [weekly]
   - id: hy4-mini6
     base_model: tencent/Hy4-preview
     family: hy_v4
