@@ -50,11 +50,11 @@ def wait_ready(base: str, timeout_s: float = 1800.0) -> str:
             time.sleep(3)
 
 
-def greedy(base: str, model: str, prompts: list[str], max_tokens: int, parallel: int = 4, timeout: float = 900.0, retries: int = 0) -> list[str]:
+def greedy(base: str, model: str, prompts: list[str], max_tokens: int, parallel: int = 4, timeout: float = 900.0, retries: int = 0, extra: dict | None = None) -> list[str]:
     def one(p: str) -> str:
         for attempt in range(retries + 1):
             try:
-                r = _post(f"{base}/v1/completions", {"model": model, "prompt": p, "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0}, timeout=timeout)
+                r = _post(f"{base}/v1/completions", {"model": model, "prompt": p, "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0, **(extra or {})}, timeout=timeout)
                 return r["choices"][0]["text"]
             except (RuntimeError, TimeoutError, OSError):  # greedy: the same request again gives the same answer
                 if attempt == retries:
@@ -72,10 +72,10 @@ def _dist(entry) -> dict[int, float]:
     return {int(k): float(v["logprob"] if isinstance(v, dict) else v) for k, v in entry.items()}
 
 
-def scored(base: str, model: str, texts: list[str], parallel: int = 4) -> list[list[dict[int, float]]]:
+def scored(base: str, model: str, texts: list[str], parallel: int = 4, extra: dict | None = None) -> list[list[dict[int, float]]]:
     """Teacher-forced top-20 log-probabilities of every position of each text."""
     def one(t: str) -> list[dict[int, float]]:
-        r = _post(f"{base}/v1/completions", {"model": model, "prompt": t, "max_tokens": 1, "temperature": 0.0, "prompt_logprobs": TOPK})
+        r = _post(f"{base}/v1/completions", {"model": model, "prompt": t, "max_tokens": 1, "temperature": 0.0, "prompt_logprobs": TOPK, **(extra or {})})
         return [_dist(e) for e in r["choices"][0].get("prompt_logprobs") or r.get("prompt_logprobs") or []]
 
     with ThreadPoolExecutor(parallel) as ex:
