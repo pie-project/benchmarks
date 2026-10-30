@@ -83,7 +83,8 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
     d = artifact_dir(artifact, commit, root, plain=plain)
     have = find_zt(d)
     if have:
-        return _with_tokenizer(d, snapshot)
+        _tokenizer_beside(snapshot, d)
+        return have
     tmp = d.parent / f".tmp-{d.name}-{os.uname().nodename}-{os.getpid()}-{uuid.uuid4().hex[:6]}"  # pods on one volume share pids (pie #650: a shared spool zeroes the loser)
     tmp.mkdir(parents=True, exist_ok=True)
     source = snapshot / artifact.gguf_file if artifact.gguf_file else snapshot  # a GGUF repo is one file plus the base model's config.json
@@ -113,22 +114,17 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
         return find_zt(d)  # type: ignore[return-value]
     d.parent.mkdir(parents=True, exist_ok=True)
     os.replace(tmp, d)
-    return _with_tokenizer(d, snapshot)
+    _tokenizer_beside(snapshot, d)
+    return find_zt(d)  # type: ignore[return-value]
 
 
-#: what pie_bench's HF chat render (pretokenized prompts) reads beside the weights
-_TOKENIZER_FILES = ("config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json",
-                    "special_tokens_map.json", "chat_template.jinja", "tokenizer.model", "processor_config.json")
-
-
-def _with_tokenizer(d: Path, snapshot: Path) -> Path:
-    """The artifact's .zt, with the snapshot's tokenizer and config copied beside it: pie_bench renders the
-    prompts with the HF tokenizer of the .zt's directory (AutoTokenizer on the .zt itself parses it as
-    config.json). Serving the directory instead makes pie identify it as a safetensors checkpoint."""
+def _tokenizer_beside(snapshot: Path, d: Path) -> None:
+    """Copy the snapshot's config, tokenizer and chat template next to the .zt: pie_bench's pretokenized prompts
+    (pie #1220) load the Hugging Face tokenizer from the .zt's directory (kimi-k3-mini8 on pro6000-x1)."""
     import shutil
 
-    src = snapshot if snapshot.is_dir() else snapshot.parent
-    for name in _TOKENIZER_FILES:
-        if (src / name).exists() and not (d / name).exists():
-            shutil.copy2(src / name, d / name)
-    return find_zt(d)  # type: ignore[return-value]
+    if not snapshot.is_dir():
+        return
+    for f in snapshot.iterdir():
+        if f.is_file() and f.suffix not in (".safetensors", ".bin", ".pt", ".gguf", ".zt", ".pdf") and not (d / f.name).exists() and f.stat().st_size < 64 << 20:
+            shutil.copy2(f, d / f.name)
