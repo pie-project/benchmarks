@@ -191,3 +191,6 @@
 .popover.is-fit { min-width: 0; }
 .popover-option .model-badge { width: 16px; height: 16px; margin-right: 6px; border-radius: 4px; flex: none; }
 .popover-option .model-badge img { width: 11px; height: 11px; }
+
+/* a model under its group in the Models menu, set in by a logo's width */
+.popover-indent { display: inline-block; width: 24px; flex: none; }

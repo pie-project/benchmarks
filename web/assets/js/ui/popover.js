@@ -69,7 +69,7 @@ window.Pie = window.Pie || {};
   const SEARCHABLE = new Set(["board:model", "board:scale"]);
   const isLimit = (key) => /^(limit|board|grid):/.test(String(key));
   const limitMenu = (key) => ((String(key).startsWith("board:") ? Pie.board : String(key).startsWith("grid:") ? Pie.platform : Pie.methodology)?.menu(String(key).slice(String(key).indexOf(":") + 1)) || [])
-    .map((o) => (o.separator ? `<div class="popover-separator"></div>` : option(o.value, o.selected, `${o.icon || ""}<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>`, o.check ? "menuitemcheckbox" : undefined)))
+    .map((o) => (o.separator ? `<div class="popover-separator"></div>` : option(o.value, o.selected, `${o.indent ? '<span class="popover-indent"></span>' : ""}${o.icon || ""}<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>${o.detail ? `<span class="popover-detail">${Pie.format.escape(o.detail)}</span>` : ""}`, o.check ? "menuitemcheckbox" : undefined)))
     .join("");
 
   // the view menu: Performance or Roofline, one pick with a checkmark; under a separator Hide Unavailable, checked while on,
@@ -217,7 +217,7 @@ window.Pie = window.Pie || {};
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
-      if (!element.hidden && (owner === "grid:maker" || owner === "grid:platform" || owner === "grid:size")) {
+      if (!element.hidden && (owner === "grid:maker" || owner === "grid:platform" || owner === "grid:size" || owner === "grid:model")) {
         element.innerHTML = limitMenu(owner);
         return;
       }
@@ -255,7 +255,7 @@ window.Pie = window.Pie || {};
         if (!target || target.disabled) return;
         const key = target.closest("[data-key]")?.dataset.key || owner;
         // a menu that checks several (the makers) stays open between picks, as a filter menu does
-        const several = key === "grid:maker" || key === "grid:platform" || key === "grid:size";
+        const several = key === "grid:maker" || key === "grid:platform" || key === "grid:size" || key === "grid:model";
         if (!several && (isLimit(key) || key === RELEASE || key === SUITE || key === METRIC || key === COMPARE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL || key === QUAL_ENGINE)) this.close();
         onPick(key, target.dataset.value);
       });

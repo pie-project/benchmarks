@@ -117,7 +117,7 @@ window.Pie = window.Pie || {};
 
   // ---- accuracy: pie beside every engine on the same weights, per platform ------------------------------
   // the platforms whose pie code differs, in the sidebar's order; a row without a platform was scored on the quality Mac
-  const PLATFORMS = ["mac", "nvidia", "tpu", "amd"];
+  const PLATFORMS = ["mac", "nvidia", "amd", "tpu"];
   const familyOf = (row) => { const hw = row.platform && Pie.store.index.hardware[row.platform]; return hw ? Pie.platformOf(hw) : "mac"; };
   const platformLabel = (id) => Pie.schema[id]?.label || id;
   // the closest reference first: an engine on pie's own weights and chat template (mlx-lm, vLLM), then the rest
@@ -229,7 +229,7 @@ window.Pie = window.Pie || {};
   const gridOf = (items, platform) => {
     // each platform's grid folds its Task column on its own, its choice kept as the speed pages keep theirs
     const key = `quality:${platform}`;
-    const tight = Pie.state?.platform?.narrowBy?.[key] ?? Boolean(Pie.state?.platform?.narrow);
+    const tight = Pie.state?.platform?.narrowBy?.[key] ?? (Pie.state?.platform?.narrow ?? true);
     const narrowLabel = tight ? "Show Overall" : "Hide Overall";
     const models = [...new Set(items.map((x) => x.row.model))]
       .sort((a, b) => Pie.platform.makerName(a).localeCompare(Pie.platform.makerName(b)) || Pie.store.names.model(a).localeCompare(Pie.store.names.model(b)));

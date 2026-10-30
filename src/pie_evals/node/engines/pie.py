@@ -335,6 +335,10 @@ class PieEngine(Engine):
                 # pie_bench writes 10240, and the scratch those axes reserve is wired: Qwen3.5-9B's took
                 # 5.2 GB on the 16 GB M3 and left no byte for the kv pool (0.5.3-b5, every rerun doesnt_fit)
                 v = SMALL_MAC_FORWARD_TOKENS
+            elif v == "$serve_concurrency":
+                from pie_evals.node.engines.shape import workload_concurrency
+
+                v = workload_concurrency(workload)
             if v is not None:
                 args += [flag, str(v)]
         for knob, flag in _BOOL_OPTIONAL_FLAGS:

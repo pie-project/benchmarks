@@ -14,7 +14,7 @@ window.Pie = window.Pie || {};
     { id: "throughput", label: "Throughput", setup: "batching", title: "Throughput", sub: "Output tokens per second, 32 requests at once · Higher is better", workload: "throughput", key: "output_tok_s", unit: "tok/s", higher: true },
     { id: "ttft", label: "Time to first token", title: "Time to first token", sub: "Milliseconds, one request with a 512-token prompt · Lower is better", workload: "raw", key: "ttft_ms_p50", unit: "ms", higher: false },
   ];
-  const PLATFORM_ORDER = ["mac", "nvidia", "tpu", "amd", "cerebras", "android", "web"];
+  const PLATFORM_ORDER = ["mac", "nvidia", "amd", "tpu", "cerebras", "android", "web"];
 
   let state = null;
   let model = null;  // the picked model; none picked opens on the one the most engines and platforms ran

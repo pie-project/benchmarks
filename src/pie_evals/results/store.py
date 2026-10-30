@@ -173,8 +173,9 @@ class DirStore(BaseStore):
         on = f"-{summary['platform']}" if summary.get("platform") else ""  # one file a platform, as the database keys it
         path = self.root / "quality" / f"{summary['artifact']}-{summary['task']}{on}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
-        # a tag keeps its good score: a stored score is only replaced when it is missing
-        if path.exists() and json.loads(path.read_text()).get("score") is not None:
+        # a release keeps its good score: a stored score is only replaced when it is missing; a manual tag (a device
+        # run) takes the newer score, as the database does, so a rerun after a fix replaces the broken one
+        if (tag_kind == "release" or summary.get("score") is None) and path.exists() and json.loads(path.read_text()).get("score") is not None:
             return f"{path} (kept: a score is stored)"
         path.write_text(json.dumps(summary, indent=1))
         return str(path)
@@ -229,6 +230,16 @@ SCHEMA_SQL = (
     "UPDATE quality SET platform = summary->>'platform' WHERE coalesce(summary->>'platform', '') <> ''; "
     "DROP INDEX IF EXISTS quality_tag_key; "
     "CREATE UNIQUE INDEX quality_platform_key ON quality (artifact, task, tag, platform); END IF; END $$;\n"
+    # an import from before the platform key recreates the old one beside it, and then every rerun of a stored score fails on it
+    "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'quality_platform_key') THEN "
+    "DROP INDEX IF EXISTS quality_tag_key; END IF; END $$;\n"
+    # a row an import from before the platform key wrote has platform '': the same score twice, the site shows either.
+    # the newer of the two stays, under its platform
+    "DELETE FROM quality a USING quality b WHERE a.platform = '' AND b.platform <> '' AND b.platform = a.summary->>'platform' "
+    "AND a.artifact = b.artifact AND a.task = b.task AND a.tag = b.tag AND coalesce(b.summary->>'date', '') >= coalesce(a.summary->>'date', '');\n"
+    "DELETE FROM quality b USING quality a WHERE a.platform = '' AND b.platform <> '' AND b.platform = a.summary->>'platform' "
+    "AND a.artifact = b.artifact AND a.task = b.task AND a.tag = b.tag;\n"
+    "UPDATE quality SET platform = summary->>'platform' WHERE platform = '' AND coalesce(summary->>'platform', '') <> '';\n"
     "CREATE TABLE IF NOT EXISTS quality (artifact text NOT NULL, task text NOT NULL, model text, engine text, "
     "score double precision, n integer, date timestamptz, summary jsonb NOT NULL, samples jsonb, "
     "stored_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (artifact, task));\n"

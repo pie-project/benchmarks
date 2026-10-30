@@ -89,6 +89,10 @@ class SglangEngine(Engine):
                 # has no KV left beside a 256-wide graph (36212036845) and at 0.82 kv-oversub OOMs in prefill (36264810212)
                 wide = card < 80 and workload_concurrency(workload) >= 128
                 gmu = min(float(gmu), 0.79 if wide else 0.75)
+            elif self.artifact.family == "deepseek_v4" and card < 80 and str(self.platform.arch) in ("ada", "ampere"):
+                # below sm_90 the fork runs DeepSeek-V4 attention and indexer on Triton/torch fallbacks whose
+                # activations live past the static pool: at 0.9 c512 and pf16-512 OOMed on the L40S
+                gmu = min(float(gmu), 0.75)
             elif self.artifact.family in ("glm5_next", "qwen4_exp"):
                 # 0.5.22 captures piecewise prefill graphs past the static pool, and the linear-attention
                 # layers' chunk state makes them large: GLM-5.3-Flash's 2048-token graph took 5.7 GiB and
@@ -108,7 +112,8 @@ class SglangEngine(Engine):
             # mem_fraction_static leaves the graphs and activations whatever is past it; on a
             # 96 GB card at 0.9 that was 9.5 GiB, and kimi-k3 mini at c64 wanted 1.2 GiB more
             # (nightly 36089882075 s04: OOM at c64, c256, mixed, prefix; c32 served)
-            capped = 0.80 if int(graph_bs) >= 256 else 0.85
+            # a checkpoint over half the card keeps 0.85: at 0.80 Qwen3.6-35B-A3B bf16 (65 GB) left no KV on the 96 GB card
+            capped = 0.80 if int(graph_bs) >= 256 and float(self.artifact.expected_gib or 0.0) / card <= 0.5 else 0.85
             if float(gmu) > capped:
                 args[-1] = str(capped)
         args += ["--max-model-len", str(max_model_len_for(workload))]  # -> context_length
@@ -130,6 +135,11 @@ class SglangEngine(Engine):
             # its auto pick, flashinfer_mxfp4, refuses a tp4 share of the experts ("hidden_size and
             # intermediate_size_per_partition to be multiples of 128 (got hidden=5120, intermediate=576)",
             # h200-x4 weekly 39999127297); Marlin is SGLang's other MXFP4 MoE runner
+            moe = "marlin"
+        if moe is None and self.artifact.family == "gpt_oss" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+            # 0.5.22's auto pick on SM120, flashinfer_mxfp4 (cutlass_sm120), quantizes the activations to MXFP8
+            # (MXFP8 x MXFP4); Marlin keeps them bf16 (W4A16), the precision pie and vLLM serve gpt-oss at.
+            # triton_kernel, the other bf16 runner, fails there ("persistent kernel is required", pro6000-x1)
             moe = "marlin"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]

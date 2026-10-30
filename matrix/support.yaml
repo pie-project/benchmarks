@@ -45,17 +45,8 @@ unsupported:
     reason: "no tensor parallel on Vulkan"
   - when: {backend: wgpu, tp: ">1"}
     reason: "no tensor parallel on wgpu"
-  # engine-cuda has no selected reader in pool.cuh, so every dsv4 flash row (and the V4.1 rows)
-  # is on its CANNOT_SERVE list for attention.pool_lse_selected; Metal, Vulkan and wgpu cover it
-  - when: {family: deepseek_v4, engine: pie, backend: cuda}
-    reason: "engine-cuda refuses attention.pool_lse_selected (dsv4 flash rows are CANNOT_SERVE on CUDA; Metal/Vulkan/wgpu only)"
   # engine-cuda's CANNOT_SERVE list is empty at pie 6875edb (the dsv41 rows dispatch on CUDA), and vLLM 0.31.0
   # (DeepseekV41ForCausalLM) and SGLang 0.5.22 (deepseek_v4.py, model_type deepseek_v41) both ship V4.1
-  # Muse Spark (MuseSparkForConditionalGeneration) is in neither vLLM 0.31.0's registry nor SGLang 0.5.22's models
-  - when: {family: muse_spark, engine: vllm}
-    reason: "vLLM 0.31.0 has no Muse Spark model (MuseSparkForConditionalGeneration is not in its registry)"
-  - when: {family: muse_spark, engine: sglang}
-    reason: "SGLang 0.5.22 has no Muse Spark model (no muse_spark in sglang/srt/models)"
   # pie #1056 carries Nemotron-3 Ultra as released (every weight bf16)
   # weekly 39867658406: on sm_120 SGLang runs MiMo's MXFP4 experts through its FP8 triton MoE, which asserts on the packed width
   - when: {engine: sglang, artifact: mimo-v2.6-flash, platform: pro6000-x4}
@@ -151,7 +142,8 @@ unsupported:
   # ("Tried to allocate 1.03 GiB ... 719 MiB is free", weekly 39545243163); vLLM and pie load it there
   - when: {engine: sglang, artifact: gpt-oss-120b-mxfp4, platform: h100-pcie-x1}
     reason: "SGLang 0.5.22 runs out of memory loading gpt-oss-120b on one 80 GB H100 (its mxfp4 unpack)"
-  - when: {engine: sglang, family: gpt_oss, arch: blackwell}
+  # with flashinfer-jit-cache 0.7.1 it builds and serves gpt-oss-20b on the PRO 6000 (raw 245.7 tok/s decode, pro6000-full)
+  - when: {engine: sglang, family: gpt_oss, arch: blackwell, not_platform: [pro6000-x1]}
     reason: "SGLang 0.5.22 cannot build its gpt-oss kernels for Blackwell (flashinfer compile fails)"
   # SGLang 0.5.22's ROCm build registers the mxfp4 quantization only on gfx95x (MI350/MI355): on the
   # MI300X (gfx942) gpt-oss dies at load on "Unknown quantization method: mxfp4" (its quantization/__init__.py)
@@ -224,11 +216,11 @@ unsupported:
     reason: "vLLM 0.32.0 DeepGEMM asserts on DeepSeek-V4.1 mini tensor rank on Blackwell (layout.hpp:46)"
   - when: {engine: vllm, program: parity, artifact: [glm-5.3-flash-mini8-fp8, glm-5.3-mini], platform: [a40-x1, a100-sxm-x1, l40s-x1, rtx4090-x1]}
     reason: "vLLM 0.32.0 has no MLA attention backend for GLM-5.3 on Ampere or Ada"
-  - when: {engine: vllm, program: parity, artifact: glm-5.3-mini, platform: [rtx5090-x1, pro6000-x1]}
+  - when: {engine: vllm, program: parity, artifact: glm-5.3-mini, platform: rtx5090-x1}
     reason: "vLLM 0.32.0 w8a8 CUTLASS GEMM returns an invalid status for GLM-5.3 on SM120"
   - when: {engine: vllm, program: parity, artifact: glm-5.3-mini, platform: [b200-x1, b300-x1]}
     reason: "vLLM 0.32.0 Blackwell grouped top-k needs top_k below the experts in the chosen groups; the mini keeps 8 of 8"
-  - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [a40-x1, a100-sxm-x1, l40s-x1, rtx4090-x1, rtx5090-x1, pro6000-x1]}
+  - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [a40-x1, a100-sxm-x1, l40s-x1, rtx4090-x1, rtx5090-x1]}
     reason: "vLLM 0.32.0 has no sparse MLA backend for Hy4 on this arch and refuses dense fallback"
   - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [h100-sxm-x1, h200-x1, b200-x1, b300-x1]}
     reason: "vLLM 0.32.0 Hy4 sparse MLA asserts NUM_TOPK_TOKENS 16 is not a multiple of BLOCK_N 128"

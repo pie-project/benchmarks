@@ -30,11 +30,33 @@ default:
         concurrency rows decode plain, since drafting costs throughput under load.
         "on" or "off" forces it for every row. Only rows whose artifact has a drafter row speculate.
     pretokenized_prompts:
-      value: false
+      value: true
       rationale: >
-        Off: pie tokenizes in the guest, which is part of what the serving
-        path costs. Turn on to isolate the engine from the tokenizer.
+        On: pie prefills the token ids of the same Hugging Face chat render
+        vLLM, SGLang and the served engines tokenize. pie's own template
+        differs where the checkpoint ships none (Kimi-K3 c128: 180 tokens on
+        pie, 148 on vLLM), so the guest render fed pie more work per request.
   family:
+    gemma4:
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                The L40S profile's 2048-token fires (pie #1202, tuned on Qwen3.8 and Nemotron) cut a
+                Gemma-4 dense batch of prompts into small passes: 8192 lifts gemma-4-E4B pf8-512
+                19.0k to 20.4k and c256 6.2k to 6.3k on l40s-x1 (the 31B miniature's working set
+                caps it at 1024 either way).
+    gpt_oss:
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                Larger fires feed the MXFP4 experts more tokens each: gpt-oss-20b pf8-512 19.8k to
+                21.9k and c256 5.9k to 6.2k on l40s-x1 against the profile's 2048.
     qwen3_6:
       knobs: {}
       backend:
@@ -78,6 +100,24 @@ default:
             engine_option:
               value: {max_state_slots: 64}
   arch:
+    ada:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                The 8 GiB cap and 16 state slots fit the full 27B beside its 56 GB on an 80 GB card. On a
+                48 GB L40S the 27B runs as a miniature, and 16 slots seated 16 of c256's lanes (368 tok/s
+                against vLLM's 1138): the pool fits the card, and the slots match the shapes vLLM and SGLang run.
+            engine_option:
+              value: {max_state_slots: 128}
+            max_forward_tokens:
+              value: 2240
+              rationale: >
+                A 2048-row fire holds three of a batch's 556-token prompts (1668 rows, 7 of 8 GEMM row
+                tiles); 2240 holds four. Qwen3.8-27B's mini pf16-512 on l40s-x1: 5.46 s to 5.26 s for its
+                64 prompts (fresh GEMM tunings both), c128 within 1%.
     tpu-v5e:
       knobs:
         gpu_mem_util:
@@ -87,6 +127,15 @@ default:
             (14.32 GiB used > 14.17 cap) boots gemma-4-E4B's 14.3 GiB of weights (b5 39658500805);
             every engine gets the same higher share there.
   backend:
+    cuda:
+      knobs:
+        max_forward_requests:
+          value: "$serve_concurrency"
+          rationale: >
+            Engine-side admission = the widest concurrency of the shapes the server boots for, as
+            vLLM's max_num_seqs and SGLang's max_running_requests are set. At the script's 512,
+            engine-cuda holds readout rows and guest scratch for 512 lanes: 6.3 GB on the
+            gpt-oss-120b miniature, which cut its fires to 1024 tokens on l40s-x1.
     xla:
       knobs:
         max_forward_tokens:

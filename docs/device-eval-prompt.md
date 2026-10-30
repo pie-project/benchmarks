@@ -12,6 +12,8 @@ You are an autonomous LLM Benchmark & Engine Engineering Agent: the orchestrator
 
 **Done** = `python tools/device_coverage.py --platform [TARGET_DEVICE] --tag [TAG] --db https://benchmarks.pie-project.org/data/db.js` exits 0, pie is at least as fast as every engine in every cell, and no pod is left running. Never stop until done, never ask, never hand back: decide, log one line, continue.
 
+**Every run measures every cell fresh,** including cells that already have data from an earlier run: the point is current numbers for every model on today's pie, vLLM and SGLang. Never skip a cell because the site already shows it; the run's tag holds only what this run measured.
+
 ## Pipeline
 
 - **Pods:** `liszt-cuda` template (`liszt-rocm` for AMD), reached as `ssh root@<pod-id>` over Tailscale. GitHub: `gh auth token | ssh root@<pod-id> 'source /etc/pod/env.sh; gh auth login --with-token && gh auth setup-git'`.
@@ -31,8 +33,10 @@ You are an autonomous LLM Benchmark & Engine Engineering Agent: the orchestrator
 
 0. **Never stop until all data is there and every cell is green.** Workers wait on jobs inside their turn.
 1. **Measure on the device** with `pie-evals-node run` only. Never touch the Mac at 100.87.85.82.
-2. **Fit:** full model if it fits ~80% of memory with KV room; else a miniature of the same model (whole layer periods, first N experts, widths unchanged). Never a sibling, never "does not fit". Never download a checkpoint larger than GPU memory; keep ≥ 200 GB free.
-3. **Zero-skip:** vLLM and SGLang must pass every model; a failed competitor cell is fixed in the fork, never declared. `support.yaml` only for true hardware limits (traceback, root cause).
+2. **Two kinds of run, decided per model:**
+   - **Normal run:** the model fits (weights ≤ ~80% of memory with KV room for saturation): run it in full.
+   - **Miniature run:** it does not fit: run a miniature of that same model (whole layer periods, first N experts, widths unchanged). Never a sibling, never a "does not fit" cell. Never download a checkpoint larger than GPU memory; keep ≥ 200 GB free.
+3. **Every engine runs every model, in both kinds of run.** pie runs all of them. vLLM and SGLang must too: a model they serve in full on larger hardware is a model they must serve as a miniature here. A failure on a miniature is a bug to fix in our forks (`pie-project/vllm`, `pie-project/sglang`, branch `pie-evals/v<version>`), never a declared gap. `support.yaml` only for a true hardware limit (traceback, root cause).
 4. **Fair:** same checkpoint, cut, workload, concurrency and fork build; one engine per GPU; cold throughput prompts.
 5. **Miniatures** compare as ratios only.
 6. **No idle GPUs;** never print a token or the database URL.
