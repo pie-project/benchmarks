@@ -28,6 +28,9 @@ def _render(snapshot: Path, prompts: list[str]) -> list[str]:
     tok = _tokenizer(snapshot)
     out = []
     for p in prompts:
+        if not getattr(tok, "chat_template", None):  # DeepSeek-V4-Flash ships none: plain text, as pie_bench renders it
+            out.append(f"{SYSTEM}\n\n{p}")
+            continue
         msgs = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": p}]
         try:
             out.append(tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True, enable_thinking=False, reasoning_strength="low"))
