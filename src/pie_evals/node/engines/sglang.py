@@ -135,6 +135,11 @@ class SglangEngine(Engine):
             # intermediate_size_per_partition to be multiples of 128 (got hidden=5120, intermediate=576)",
             # h200-x4 weekly 39999127297); Marlin is SGLang's other MXFP4 MoE runner
             moe = "marlin"
+        if moe is None and self.artifact.family == "gpt_oss" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+            # 0.5.22's auto pick on SM120, flashinfer_mxfp4 (cutlass_sm120), quantizes the activations to MXFP8
+            # (MXFP8 x MXFP4); Marlin keeps them bf16 (W4A16), the precision pie and vLLM serve gpt-oss at.
+            # triton_kernel, the other bf16 runner, fails there ("persistent kernel is required", pro6000-x1)
+            moe = "marlin"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]
         if r.get("sampling_backend"):
