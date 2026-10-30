@@ -305,7 +305,9 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
         precipe["max_forward_tokens"] = 512
         precipe["engine_option"] = {**(precipe.get("engine_option") or {}), "max_state_slots": 4}
     pie_engine = get_engine("pie")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=precipe)
-    srv = pie_server(pie_engine, workload, out_dir / f"{art.id}-pie.log")
+    # teacher-forced scoring reads out every prompt position: boot pie wider than the one-lane shape, whose
+    # readout plane (max_forward_requests 1) refused the scored fires
+    srv = pie_server(pie_engine, workload.model_copy(update={"params": {**workload.params, "concurrency": 64}}), out_dir / f"{art.id}-pie.log")
     try:
         model = srv.wait(3600)
         pie_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1)
