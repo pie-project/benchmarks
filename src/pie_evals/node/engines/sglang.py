@@ -112,7 +112,8 @@ class SglangEngine(Engine):
             # mem_fraction_static leaves the graphs and activations whatever is past it; on a
             # 96 GB card at 0.9 that was 9.5 GiB, and kimi-k3 mini at c64 wanted 1.2 GiB more
             # (nightly 36089882075 s04: OOM at c64, c256, mixed, prefix; c32 served)
-            capped = 0.80 if int(graph_bs) >= 256 else 0.85
+            # a checkpoint over half the card keeps 0.85: at 0.80 Qwen3.6-35B-A3B bf16 (65 GB) left no KV on the 96 GB card
+            capped = 0.80 if int(graph_bs) >= 256 and float(self.artifact.expected_gib or 0.0) / card <= 0.5 else 0.85
             if float(gmu) > capped:
                 args[-1] = str(capped)
         args += ["--max-model-len", str(max_model_len_for(workload))]  # -> context_length
