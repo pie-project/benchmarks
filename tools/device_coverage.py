@@ -63,6 +63,8 @@ def main() -> int:
     rows = [r for r in db["snapshots"].get(a.tag, []) if r["hardware"] == a.platform and not r.get("stale")]
     parity = [q for q in db.get("quality_parity", []) if q.get("platform") == a.platform and q.get("tag") == a.tag]
     qspec = spec["quality"]
+    from pie_evals.quality.kl import DECISIVE
+    assert qspec["decisive_margin"] == DECISIVE, "matrix/device-eval.yaml decisive_margin must match quality/kl.py DECISIVE"
 
     report, gaps = [], 0
     for m in spec["models"]:
@@ -88,7 +90,7 @@ def main() -> int:
             quality = {"status": "missing"}
         else:
             p = q[-1]
-            kl, top1 = p.get("kl_mean"), p.get("top1_agree")
+            kl, top1 = p.get("kl_mean"), p.get("top1_agree_decisive" if p.get("miniature") else "top1_agree")
             declared = parity_unsupported(p.get("artifact"), a.platform) if p.get("ref_unsupported") and p.get("pie_ok") in (True, "True") else None
             if declared:
                 quality = {"status": "unsupported", "why": f"{p.get('ref_engine', 'reference')}: {declared}"}
