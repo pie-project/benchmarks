@@ -426,6 +426,16 @@ artifacts:
     max_context: 4096
     expected_gib: 15.0
     tiers: [weekly]
+  - id: nemotron-3-super-mini88
+    base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+    family: nemotron_h
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-87", experts: 128, period: 1, note: "all 88 layers (Mamba-2, latent MoE, attention); 128 of 512 experts (67 GiB, for 141 GB cards)"}
+    pie_sku: nemotron3-super-bf16-kv-bf16-e128
+    max_context: 4096
+    expected_gib: 67.2
+    tiers: [weekly]
   - id: qwen3.8-27b-mini
     base_model: Qwen/Qwen3.8-27B
     family: qwen3_6
