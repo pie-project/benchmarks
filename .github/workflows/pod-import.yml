@@ -124,7 +124,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { tag: h100-full, pods: "66r29refi3g9uw-1" }
           - { tag: b200-full, pods: "eqe15vib6mcwnf,v5l3uj1ghir123-1" }
     runs-on: [pod-import]  # liszt-server: on the tailnet with the pods; the site laptop's queue starved these imports
     concurrency: { group: "pod-import-${{ matrix.tag }}", cancel-in-progress: false }
