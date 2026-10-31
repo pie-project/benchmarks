@@ -51,6 +51,10 @@ class SglangEngine(Engine):
         # it. On the L40S x2 pod the custom kernel hung Qwen3.5-0.8B and died with "unspecified
         # launch failure" on Qwen3.6-27B (weekly 39545360541)
         env.update(self.no_peer_env())
+        if self.artifact.family == "deepseek_v41" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" not in str(self.platform.accelerator):
+            # on sm_100 0.5.22 scores DeepSeek-V4.1's candidate indexer only through DeepGEMM's JIT paged sparse
+            # MQA logits ("the candidate indexer needs DeepGEMM's paged sparse MQA logits", b200-x1); the pod has nvcc
+            env["SGLANG_ENABLE_JIT_DEEPGEMM"] = env["SGL_ENABLE_JIT_DEEPGEMM"] = "1"
         return env
 
     def default_python(self) -> str:

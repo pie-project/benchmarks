@@ -52,6 +52,10 @@ class VllmEngine(Engine):
             # 0.31.0's CUTLASS block-FP8 GEMM aborts on sm_120 for MiMo's FP8 projections ("cutlass_gemm_caller:
             # Invalid status", weekly 39680748696); vLLM then takes the next kernel it ranks for block FP8
             env["VLLM_DISABLED_KERNELS"] = "CutlassFp8BlockScaledMMKernel"
+        if self.artifact.family == "deepseek_v41" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" not in str(self.platform.accelerator):
+            # on sm_100 0.32.0's mega attention runs wo_a through DeepGEMM's fp8_einsum, whose grouped weight
+            # only DeepGEMM's MXFP8 linear kernel lays out; without it boot dies on "t.dim() == N" (b200-x1)
+            env["VLLM_USE_DEEP_GEMM"] = "1"
         if int(self.mode.tp) > 1:
             # 0.31.0 forked its tp workers after CUDA was up in the engine core, and every worker
             # died on "Cannot re-initialize CUDA in forked subprocess" (L40S x2, weekly 39545360541)
