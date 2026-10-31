@@ -444,7 +444,7 @@ artifacts:
     scheme: bf16
     expected_gib: 50.3
     pie_sku: qwen38-27b-bf16-kv-bf16   # the plain row: the import otherwise lands the mtp drafter twin
-    tiers: []
+    tiers: [weekly]
   - id: gemma-4-26b-a4b-bf16
     base_model: google/gemma-4-26B-A4B-it
     family: gemma4_moe
