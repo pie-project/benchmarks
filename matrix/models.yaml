@@ -331,6 +331,15 @@ artifacts:
     miniature: {layers: "0-3,42", experts: 16, period: 1, note: "the same cut as deepseek-v4-flash-mini5, from the released checkpoint"}
     max_context: 4096
     expected_gib: 3.7
+  - id: deepseek-v4-flash-mini43
+    base_model: deepseek-ai/DeepSeek-V4-Flash
+    family: deepseek_v4
+    scheme: mxfp4         # FP8 dense planes and FP4 experts, as released
+    kind: miniature
+    miniature: {layers: "0-42", experts: 16, period: 1, note: "all 43 layers at full width; 16 of 256 experts, the expert count pie's dsv4-flash-mini deployment lands (64 experts, 42.4 GiB, would fit an 80 GB card)"}
+    pie_sku: dsv4-flash-mini-fp8b128a8-mxfp4a8-kv-bf16-l43   # the release's FP8 dense planes and MXFP4 experts at the mini's 16 experts, all 43 layers
+    max_context: 4096
+    expected_gib: 17.0
   - id: gemma-4-26b-a4b-mini
     base_model: google/gemma-4-26B-A4B-it
     family: gemma4_moe
