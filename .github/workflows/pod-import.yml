@@ -126,6 +126,7 @@ jobs:
         include:
           - { tag: h100-full, pods: "yt6tq0eyp68itv,66r29refi3g9uw" }
           - { tag: h200-full, pods: "kt2kayb9c16mqq,yvumqzy9tyatci" }
+          - { tag: b200-full, pods: "eqe15vib6mcwnf,v5l3uj1ghir123" }
     runs-on: [self-hosted, site]  # the site laptop: on the tailnet, and its jobs receive the database secret
     concurrency: { group: "pod-import-${{ matrix.tag }}", cancel-in-progress: false }
     env:
