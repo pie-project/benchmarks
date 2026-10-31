@@ -51,9 +51,6 @@ unsupported:
   # weekly 39867658406: on sm_120 SGLang runs MiMo's MXFP4 experts through its FP8 triton MoE, which asserts on the packed width
   - when: {engine: sglang, artifact: mimo-v2.6-flash, platform: pro6000-x4}
     reason: "SGLang 0.5.22 sends MiMo-V2.6-Flash's MXFP4 experts to its FP8 triton MoE on sm_120 (fused_experts: Hidden size mismatch)"
-  # weekly 40014471810: past the MoE runner, SGLang's hyper-connection kernel refuses DeepSeek-V4.1-Flash's width
-  - when: {engine: sglang, artifact: deepseek-v4.1-flash, platform: [h200-x4, h100-sxm-x4, h100-sxm-x8]}
-    reason: "SGLang 0.5.22's mhc_pre splitk kernel takes hc_hidden_size 16384 or 28672 only; DeepSeek-V4.1-Flash's is 20480"
   # weekly 40405793203 / 40415491631: vLLM's DeepSeek-V4 kernels need Hopper's bf16x2 math and e4m3 in triton
   - when: {engine: vllm, family: deepseek_v41, arch: ada}
     reason: "vLLM 0.32's DeepSeek-V4 dequant_gather_k kernel fails ptxas below sm_90 (\"Feature 'mul.bf16x2' requires .target sm_90\"; l40s-x1)"
