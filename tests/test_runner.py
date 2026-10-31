@@ -294,6 +294,14 @@ def test_a_slow_first_round_is_confirmed_away_not_withheld(job, patched, tmp_pat
     assert c8.status == CellStatus.NOISY and len(c8.perf.rounds) == 4
 
 
+def test_one_slow_boot_among_five_rounds_is_dropped(job, patched, tmp_path):
+    job = job.model_copy(update={"repetition": job.repetition.model_copy(update={"min_rounds": 3, "confirm_rounds": 2, "max_rounds": 5})})
+    FakeEngine.behaviour["ss-128-64"] = [100.0, 101.0, 80.0, 100.0, 99.0]  # a slow boot in the last three: noisy before
+    recs, _ = _run(job, patched, tmp_path)
+    ss = next(r for r in recs if r.cell.workload.id == "ss-128-64")
+    assert ss.status == CellStatus.PASS and len(ss.perf.rounds) == 5 and ss.perf.decode_tok_s == 100.0
+
+
 def test_heavy_model_on_a_small_mac_boots_short_and_long_shapes_apart():
     from pie_evals.node.engines.shape import context_tokens_for
     from pie_evals.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
