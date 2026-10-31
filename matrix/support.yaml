@@ -143,7 +143,7 @@ unsupported:
   - when: {engine: sglang, artifact: gpt-oss-120b-mxfp4, platform: h100-pcie-x1}
     reason: "SGLang 0.5.22 runs out of memory loading gpt-oss-120b on one 80 GB H100 (its mxfp4 unpack)"
   # with flashinfer-jit-cache 0.7.1 it builds and serves gpt-oss-20b on the PRO 6000 (raw 245.7 tok/s decode, pro6000-full)
-  - when: {engine: sglang, family: gpt_oss, arch: blackwell, not_platform: [pro6000-x1]}
+  - when: {engine: sglang, family: gpt_oss, arch: blackwell, not_platform: [pro6000-x1, b200-x1]}
     reason: "SGLang 0.5.22 cannot build its gpt-oss kernels for Blackwell (flashinfer compile fails)"
   # SGLang 0.5.22's ROCm build registers the mxfp4 quantization only on gfx95x (MI350/MI355): on the
   # MI300X (gfx942) gpt-oss dies at load on "Unknown quantization method: mxfp4" (its quantization/__init__.py)
