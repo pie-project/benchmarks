@@ -547,7 +547,7 @@ artifacts:
     scheme: bf16
     expected_gib: 57.7
     pie_sku: gemma4-31b-bf16-kv-bf16
-    tiers: []
+    tiers: [weekly]   # the full model fits the 141 GB H200 (device evaluation, #889)
 
   # ---------------- nightly: full mid-size, several schemes (dense qwen3 has no reader in pie and is not planned) ----------------
   - id: gpt-oss-20b-mxfp4
