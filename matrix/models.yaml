@@ -550,7 +550,7 @@ artifacts:
     scheme: bf16
     expected_gib: 48.4
     pie_sku: gemma4-26b-a4b-bf16-kv-bf16
-    tiers: []
+    tiers: [weekly]   # the full model fits the 141 GB H200 (device evaluation, #889)
   - id: gemma-4-31b-bf16
     base_model: google/gemma-4-31B-it
     family: gemma4
