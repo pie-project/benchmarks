@@ -56,6 +56,10 @@ class VllmEngine(Engine):
             # on sm_100 0.32.0's mega attention runs wo_a through DeepGEMM's fp8_einsum, whose grouped weight
             # only DeepGEMM's MXFP8 linear kernel lays out; without it boot dies on "t.dim() == N" (b200-x1)
             env["VLLM_USE_DEEP_GEMM"] = "1"
+        if self.artifact.family == "deepseek_v4" and self.platform is not None and str(self.platform.arch) == "hopper":
+            # on sm_90 0.32.0's CUTLASS block-FP8 GEMM refuses DeepSeek-V4-Flash's projections (dispatch_scaled_mm,
+            # h200-x1) and the path past it dies on the grouped wo_a; DeepGEMM serves both (raw decode 445 tok/s)
+            env["VLLM_USE_DEEP_GEMM"] = "1"
         if int(self.mode.tp) > 1:
             # 0.31.0 forked its tp workers after CUDA was up in the engine core, and every worker
             # died on "Cannot re-initialize CUDA in forked subprocess" (L40S x2, weekly 39545360541)
