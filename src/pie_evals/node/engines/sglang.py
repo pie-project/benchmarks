@@ -101,9 +101,10 @@ class SglangEngine(Engine):
                 # below), Qwen3.8-Flash-Next OOMed at 0.9 on a 24 GB 4090 (40421366253). vLLM's 0.9
                 # already holds its graphs and activations; this keeps SGLang's inside the same card
                 gmu = min(float(gmu), 0.85 if card >= 80 else 0.75)
-            if self.artifact.family == "minimax_m3" and card >= 80:
+            if self.artifact.family in ("minimax_m3", "glm_moe_dsa") and card >= 80:
                 # MiniMax-M3.1-Flash mini60-e16 (43.4 GiB, 54% of an 80 GB H100) took the 0.95 above and its
                 # block-FP8 Triton prefill OOMed at pf8 past the static pool (347 MiB free); 0.88 leaves room
+                # GLM-5.3 mini78-e12 (51 GiB) likewise OOMed in FA3 prefill at pf16/pf32-512 at 0.95
                 gmu = min(float(gmu), 0.88)
             if card < 80 and workload_concurrency(workload) >= 512:
                 # a 512-wide decode graph and batch OOM past the static pool at 0.9 on a 48 GB L40S
