@@ -212,12 +212,22 @@ artifacts:
     max_context: 4096
     expected_gib: 22.0   # 19 GiB of weights + the KDA state pool; on a 24 GB card the load reserves 3.2 GB and the first fire wants 4.0 GB (nightly 35935510089)
     tiers: [smoke, nightly, weekly]
+  - id: kimi-k3-mini16
+    base_model: moonshotai/Kimi-K3
+    family: kimi_k3       # KDA + MLA (every 4th), latent MoE, AttnRes
+    scheme: mxfp4         # experts as released (compressed-tensors MXFP4); dense planes bf16
+    kind: miniature
+    miniature: {layers: "0-15", experts: 32, period: 4, attn_res_block_size: 4, note: "shrink family kimi_k3; 16 of 93 layers (mini8's pattern twice), 32 of 896 experts; 31.2 GiB download, for 80 GB cards"}
+    max_context: 4096
+    expected_gib: 33.0
+    pie_sku: kimik3-mini-bf16-mxfp4-kv-bf16-l16   # mini8's row cut to 16 layers
+    tiers: [weekly]
   - id: kimi-k3-mini24
     base_model: moonshotai/Kimi-K3
     family: kimi_k3       # KDA + MLA (every 4th), latent MoE, AttnRes
     scheme: mxfp4         # experts as released (compressed-tensors MXFP4); dense planes bf16
     kind: miniature
-    miniature: {layers: "0-23", experts: 32, period: 4, attn_res_block_size: 4, note: "shrink family kimi_k3; 24 of 93 layers (mini8's pattern three times), 32 of 896 experts; 43.9 GiB download, for 80 GB cards (0-32 is 58.4 GiB)"}
+    miniature: {layers: "0-23", experts: 32, period: 4, attn_res_block_size: 4, note: "shrink family kimi_k3; 24 of 93 layers (mini8's pattern three times), 32 of 896 experts; 43.9 GiB download. SGLang 0.5.22 holds its MXFP4 experts at about twice the size on an H100 and has no room left for the KDA state there, so 80 GB cards take mini16"}
     max_context: 4096
     expected_gib: 46.0
     pie_sku: kimik3-mini-bf16-mxfp4-kv-bf16-l24   # mini8's row cut to 24 layers
