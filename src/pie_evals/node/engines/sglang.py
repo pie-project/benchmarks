@@ -109,6 +109,10 @@ class SglangEngine(Engine):
                 # MiniMax-M3.1-Flash mini60-e16 (43.4 GiB, 54% of an 80 GB H100) took the 0.95 above and its
                 # block-FP8 Triton prefill OOMed at pf8 past the static pool (347 MiB free); 0.88 leaves room
                 gmu = min(float(gmu), 0.88)
+            if self.artifact.family == "muse_spark" and card <= 80:
+                # Muse Spark mini4 (12 GiB) at 0.9 on an 80 GB H100: its pf16/pf32-512 prefill OOMed past
+                # the static pool (512 MiB asked, 115 MiB free); pf64 and up passed. 0.85 leaves the activations room
+                gmu = min(float(gmu), 0.85)
             if card < 80 and workload_concurrency(workload) >= 512:
                 # a 512-wide decode graph and batch OOM past the static pool at 0.9 on a 48 GB L40S
                 # (Hy4 mini c512 / pf512-512: 160-190 MiB free); 0.85 leaves them room
