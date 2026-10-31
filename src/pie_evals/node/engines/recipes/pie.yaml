@@ -118,6 +118,18 @@ default:
                 A 2048-row fire holds three of a batch's 556-token prompts (1668 rows, 7 of 8 GEMM row
                 tiles); 2240 holds four. Qwen3.8-27B's mini pf16-512 on l40s-x1: 5.46 s to 5.26 s for its
                 64 prompts (fresh GEMM tunings both), c128 within 1%.
+    hopper:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                On the 141 GB H200 the full Qwen3.8-27B at 16 state slots seated 16 of c64's lanes (867 tok/s
+                at c64 and c128 alike); with the cap and the 8 GiB budget off the engine sizes its slots beside
+                its pool, as on the RTX PRO 6000 and as vLLM and SGLang size theirs.
+            engine_option:
+              value: {}
     blackwell:
       family:
         qwen3_6:
