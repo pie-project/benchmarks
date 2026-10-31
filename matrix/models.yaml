@@ -296,6 +296,15 @@ artifacts:
     max_context: 4096
     expected_gib: 4.0
     tiers: [weekly]
+  - id: mimo-v2.6-flash-mini48
+    base_model: XiaomiMiMo/MiMo-V2.6-Flash-RL
+    family: mimo_v2
+    scheme: mxfp4
+    kind: miniature
+    miniature: {layers: "0-47", experts: 128, period: 1, note: "all 48 layers (full attention at 0, 5, 11, ...; windowed between) at full width; 128 of 256 experts (~87 GiB, for 141 GB cards)"}
+    max_context: 4096
+    expected_gib: 87.0
+    tiers: [weekly]
   - id: qwen3.8-flash-next-mini
     base_model: Qwen/Qwen3.8-Flash-Next
     family: qwen4_exp
