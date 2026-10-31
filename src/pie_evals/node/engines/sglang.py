@@ -51,6 +51,10 @@ class SglangEngine(Engine):
         # it. On the L40S x2 pod the custom kernel hung Qwen3.5-0.8B and died with "unspecified
         # launch failure" on Qwen3.6-27B (weekly 39545360541)
         env.update(self.no_peer_env())
+        if self.artifact.family == "deepseek_v41" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" not in str(self.platform.accelerator):
+            # on sm_100 0.5.22 scores DeepSeek-V4.1's candidate indexer only through DeepGEMM's JIT paged sparse
+            # MQA logits ("the candidate indexer needs DeepGEMM's paged sparse MQA logits", b200-x1); the pod has nvcc
+            env["SGLANG_ENABLE_JIT_DEEPGEMM"] = env["SGL_ENABLE_JIT_DEEPGEMM"] = "1"
         return env
 
     def default_python(self) -> str:
@@ -101,6 +105,10 @@ class SglangEngine(Engine):
                 # below), Qwen3.8-Flash-Next OOMed at 0.9 on a 24 GB 4090 (40421366253). vLLM's 0.9
                 # already holds its graphs and activations; this keeps SGLang's inside the same card
                 gmu = min(float(gmu), 0.85 if card >= 80 else 0.75)
+            if self.artifact.family == "minimax_m3" and card >= 80:
+                # MiniMax-M3.1-Flash mini60-e16 (43.4 GiB, 54% of an 80 GB H100) took the 0.95 above and its
+                # block-FP8 Triton prefill OOMed at pf8 past the static pool (347 MiB free); 0.88 leaves room
+                gmu = min(float(gmu), 0.88)
             if card < 80 and workload_concurrency(workload) >= 512:
                 # a 512-wide decode graph and batch OOM past the static pool at 0.9 on a 48 GB L40S
                 # (Hy4 mini c512 / pf512-512: 160-190 MiB free); 0.85 leaves them room

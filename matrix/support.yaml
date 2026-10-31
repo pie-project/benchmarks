@@ -72,7 +72,7 @@ unsupported:
   - when: {engine: sglang, artifact: minimax-m3.1-flash, platform: [h200-x4, h100-sxm-x4]}
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
   # weekly 40421366253: the miniature keeps the release's widths, so it fails as the full model does
-  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1, pro6000-x1, h100-sxm-x1]}   # pie-project/vllm pie-evals/v0.32.0 loads it on L40S, the RTX PRO 6000 and the H100
+  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1, pro6000-x1, h100-sxm-x1, h200-x1]}   # pie-project/vllm pie-evals/v0.32.0 loads it on L40S, the RTX PRO 6000, the H100 and the H200
     reason: "vLLM 0.32.0 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 (expert load: size of tensor a (192) must match b (384))"
   - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, arch: [ampere]}   # ada and hopper: pie-project/sglang pie-evals/v0.5.22 runs it (MXFP8 to block FP8 on sm_89 to sm_99)
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
