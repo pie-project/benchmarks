@@ -526,7 +526,7 @@ artifacts:
     scheme: bf16
     expected_gib: 65.2
     pie_sku: qwen36-35b-a3b-bf16-kv-bf16
-    tiers: []
+    tiers: [weekly]   # the full model fits the 141 GB H200 (device evaluation, #889)
   - id: qwen3.8-27b-bf16
     base_model: Qwen/Qwen3.8-27B
     family: qwen3_6
