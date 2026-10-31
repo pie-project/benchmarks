@@ -667,6 +667,12 @@ class NodeRunner:
             return self._failed(cell, ErrorClass.HARNESS_INVALID, f"harness: {e}", fingerprint, duration=time.monotonic() - t0)
         # median of the steady rounds (the last min_rounds) is the record; every round travels with it
         steady = list(range(len(rounds)))[-need:] if need > 1 else list(range(len(rounds)))
+        if len(rounds) >= 5:
+            # a baseline restarts for every round and each boot settles at its own speed: one slow boot among
+            # the last three marked a cell noisy while four of five agreed (b200-x1 vLLM raw 447/429/422/422/360)
+            mid = median(rounds)
+            far = max(range(len(rounds)), key=lambda i: abs(rounds[i] - mid))
+            steady = [i for i in range(len(rounds)) if i != far]
         med_idx = sorted(steady, key=lambda i: rounds[i])[len(steady) // 2]
         perf: PerfMetrics = results[med_idx].perf
         perf.rounds = rounds
