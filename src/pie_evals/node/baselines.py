@@ -316,7 +316,8 @@ def ensure_fork(engine: str, version: str, py: Path, log=print) -> str | None:
     fork = recipe_fork(engine)
     if not fork:
         return None
-    branch = f"pie-evals/v{version}"
+    # PIE_EVALS_FORK_BRANCH_<ENGINE> overlays an open fork PR branch instead (stamped with its own commit)
+    branch = os.environ.get(f"PIE_EVALS_FORK_BRANCH_{engine.upper()}") or f"pie-evals/v{version}"
     try:
         head = subprocess.run(["git", "ls-remote", f"https://github.com/{fork['repo']}", f"refs/heads/{branch}"],
                               capture_output=True, text=True, check=True, timeout=60).stdout.split()
