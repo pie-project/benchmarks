@@ -408,6 +408,16 @@ artifacts:
     max_context: 4096
     expected_gib: 8.0
     tiers: [weekly]
+  - id: minimax-m3.1-flash-mini60-e32
+    base_model: MiniMaxAI/MiniMax-M3.1-Flash
+    family: minimax_m3
+    scheme: fp8
+    kind: miniature
+    miniature: {layers: "0-59", experts: 32, period: 1, note: "all 60 layers (3 dense + 57 MoE) at full width; 32 of 128 experts (70.5 GiB, for 141 GB cards)"}
+    pie_sku: minimax-m3-mini-mxfp8a8g32-nvfp4a4-kv-bf16-l60-e32   # MXFP8 projections beside NVFP4 experts, cut to the checkpoint's depth and experts
+    max_context: 4096
+    expected_gib: 70.5
+    tiers: [weekly]
 
   - id: minimax-m3.1-flash-mini60-e16
     base_model: MiniMaxAI/MiniMax-M3.1-Flash
