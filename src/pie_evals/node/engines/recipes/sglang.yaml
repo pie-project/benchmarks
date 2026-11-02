@@ -26,6 +26,14 @@ default:
         SGLang's default page is 1 token; 16 matches pie's page and vLLM's
         block so KV fragmentation is comparable across the three.
 
+  platform:
+    l4-x1:
+      knobs:
+        gpu_mem_util:
+          value: 0.95
+          rationale: >
+            A 24 GB L4 at 0.90 leaves vLLM no KV cache beside gemma-4-E4B's 14.2 GiB of weights and
+            its profiling peak ("Available KV cache memory: -0.08 GiB"); every engine gets 0.95 there.
   arch:
     tpu-v5e:
       knobs:

@@ -48,7 +48,7 @@ from ..shape import max_model_len_for, workload_concurrency, workload_num_reques
 RECIPE_DIR = Path(__file__).resolve().parent
 
 # family first, so an arch override (e.g. FA3 on Hopper) still wins over a family default
-_OVERRIDE_AXES = ("family", "arch", "backend", "workload_kind", "artifact")
+_OVERRIDE_AXES = ("family", "arch", "backend", "workload_kind", "artifact", "platform")
 
 
 def recipe_path(engine: str) -> Path:
@@ -123,6 +123,7 @@ def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: Worklo
         "backend": str(platform.backend),
         "workload_kind": str(workload.kind),
         "artifact": artifact or "",
+        "platform": platform.id,
     }
     for section in _section_chain(data, name):
         _merge_knobs(knobs, rationale, section.get("knobs"))
