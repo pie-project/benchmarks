@@ -586,7 +586,7 @@ artifacts:
     family: qwen3_6
     scheme: bf16
     kind: miniature
-    miniature: {layers: "0-15", period: 4, note: "4 of 16 linear/linear/linear/full periods (about 15 GiB, for 32 GB cards)"}
+    miniature: {layers: "0-15", period: 4, shrink_family: qwen3_5_moe, note: "4 of 16 linear/linear/linear/full periods (about 15 GiB, for 32 GB cards)"}
     pie_sku: qwen38-27b-bf16-kv-bf16-l16
     max_context: 4096
     expected_gib: 15.0
