@@ -199,6 +199,17 @@ default:
                 4.4k-row pass, slower a token than two passes of four on the L40S profile's 2304:
                 pf8-512 5.8k to 6.1k tok/s (vLLM 6.2k, which prefills in 2048-token chunks);
                 gemma-4-E4B keeps 8192 (20.8k against 18.9k at 2304).
+    gemma-4-26b-a4b-mini:
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                pie_bench's default asks 10240 and the card serves 6317, whose activation arena leaves
+                3071 cache pages: c128's 128 lanes of 425 tokens need 3456, so lanes park at every
+                wave's end. 4096 leaves 3327 pages and still holds most of pf8-512's 4.4k rows a pass:
+                c128 2057 to 2211 tok/s (vLLM 2308), pf8-512 18.9k (vLLM 18.5k).
 
 competitive:
   extends: default
