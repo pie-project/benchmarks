@@ -116,7 +116,7 @@ def recipe_for_cell(recipe: dict, recipe_name: str, cell: Cell) -> dict:
     SGLang then captured graphs to that cell's concurrency (32) and ran every
     wider shape eager, and vLLM's prefix cache followed the first shape. The
     keys the boot added (snapshot_dir, pin, program_path) are kept."""
-    fresh = load_recipe(str(cell.engine), recipe_name, cell.platform, cell.workload, family=cell.artifact.family)
+    fresh = load_recipe(str(cell.engine), recipe_name, cell.platform, cell.workload, family=cell.artifact.family, artifact=cell.artifact.id)
     for k, v in recipe.items():
         if isinstance(fresh.get(k), str) and fresh[k].startswith("$serve_"):
             fresh[k] = v
@@ -432,7 +432,7 @@ class NodeRunner:
             try:
                 pre.between_engines(self.platform.os if self.platform else None, [])
                 cls = get_engine(first.engine)
-                recipe = load_recipe(str(first.engine), recipe_name, first.platform, first.workload, family=first.artifact.family)
+                recipe = load_recipe(str(first.engine), recipe_name, first.platform, first.workload, family=first.artifact.family, artifact=first.artifact.id)
                 recipe["program_path"] = first.program.path
                 recipe["snapshot_dir"] = str(model_path)
                 if str(first.engine) in self.job.baseline_versions:

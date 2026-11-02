@@ -179,6 +179,18 @@ default:
           value: 64
           rationale: >
             The XLA engine's own default; covers c32. The metal arm would write 512.
+  artifact:
+    gemma-4-31b-mini:
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                Its family's 8192-token fires carry all eight 553-token prompts of pf8-512 in one
+                4.4k-row pass, slower a token than two passes of four on the L40S profile's 2304:
+                pf8-512 5.8k to 6.1k tok/s (vLLM 6.2k, which prefills in 2048-token chunks);
+                gemma-4-E4B keeps 8192 (20.8k against 18.9k at 2304).
 
 competitive:
   extends: default

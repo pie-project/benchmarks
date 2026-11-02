@@ -19,6 +19,8 @@
         metal: {knobs: {...}}
       workload_kind:   # per workload.kind overrides (prefix_shared, mixed_length ...)
         prefix_shared: {knobs: {...}}
+      artifact:        # per artifact.id overrides, last: one model where its family's default loses
+        gemma-4-31b-mini: {arch: {ada: {knobs: {...}}}}
 
 A knob may be written as ``{value: X, rationale: "..."}`` or as the bare
 value. Values that depend on the workload are written as ``"$concurrency"``,
@@ -46,7 +48,7 @@ from ..shape import max_model_len_for, workload_concurrency, workload_num_reques
 RECIPE_DIR = Path(__file__).resolve().parent
 
 # family first, so an arch override (e.g. FA3 on Hopper) still wins over a family default
-_OVERRIDE_AXES = ("family", "arch", "backend", "workload_kind")
+_OVERRIDE_AXES = ("family", "arch", "backend", "workload_kind", "artifact")
 
 
 def recipe_path(engine: str) -> Path:
@@ -108,7 +110,7 @@ def _resolve_value(v: Any, subs: dict[str, Any]) -> Any:
     return v
 
 
-def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: WorkloadSpec, family: str | None = None) -> dict[str, Any]:
+def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: WorkloadSpec, family: str | None = None, artifact: str | None = None) -> dict[str, Any]:
     """Flat ``{knob: value}`` for ``recipes/<engine>.yaml`` section ``name``,
     with per-family / per-arch / per-backend / per-workload-kind overrides
     applied and ``$concurrency``-style values resolved against ``workload``."""
@@ -120,6 +122,7 @@ def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: Worklo
         "arch": platform.arch,
         "backend": str(platform.backend),
         "workload_kind": str(workload.kind),
+        "artifact": artifact or "",
     }
     for section in _section_chain(data, name):
         _merge_knobs(knobs, rationale, section.get("knobs"))
