@@ -131,9 +131,10 @@ class SglangEngine(Engine):
                 # the 27 GiB Muse Glimmer miniature's 256-wide batches OOM past the static pool at 0.95
                 # on a 48 GB L40S (150-200 MiB free); 0.85 still holds the weights and the batch's KV
                 gmu = 0.85
-            if self.artifact.family == "glm5_next" and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+            if self.artifact.family == "glm5_next" and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator) and card >= 80:
                 # the TileLang DSA kernels (below) want more than 0.95 leaves past the static pool: GLM-5.3-Flash
-                # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV
+                # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV.
+                # A 32 GB RTX 5090 keeps the 0.75 above: at 0.88 the 2048-token prefill graph OOMed (2.95 GB free)
                 gmu = 0.88
             args += ["--gpu-mem-util", str(gmu)]  # -> mem_fraction_static
         graph_bs = r.get("cuda_graph_max_bs")
