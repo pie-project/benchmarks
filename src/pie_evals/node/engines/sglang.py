@@ -190,6 +190,10 @@ class SglangEngine(Engine):
             # (MXFP8 x MXFP4); Marlin keeps them bf16 (W4A16), the precision pie and vLLM serve gpt-oss at.
             # triton_kernel, the other bf16 runner, fails there ("persistent kernel is required", pro6000-x1)
             moe = "marlin"
+        if moe is None and self.artifact.family == "gpt_oss" and self.platform is not None and str(self.platform.arch) == "ampere":
+            # 0.5.22's auto pick below sm_90 dequantizes every expert each forward (A100: TTFT 1.8 s at 600 tokens,
+            # pf64-512 hangs past 600 s); Marlin is its W4A16 MXFP4 runner, the one vLLM picks on Ampere
+            moe = "marlin"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]
         if r.get("sampling_backend"):
