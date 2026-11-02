@@ -52,7 +52,7 @@ unsupported:
   - when: {engine: sglang, artifact: mimo-v2.6-flash, platform: pro6000-x4}
     reason: "SGLang 0.5.22 sends MiMo-V2.6-Flash's MXFP4 experts to its FP8 triton MoE on sm_120 (fused_experts: Hidden size mismatch)"
   # weekly 40405793203 / 40415491631: vLLM's DeepSeek-V4 kernels need Hopper's bf16x2 math and e4m3 in triton
-  - when: {engine: vllm, family: deepseek_v41, arch: ada}
+  - when: {engine: vllm, family: deepseek_v41, arch: ada, not_platform: [rtx4090-x1]}   # pie-project/vllm pie-evals/v0.32.0 serves it on the 4090
     reason: "vLLM 0.32's DeepSeek-V4 dequant_gather_k kernel fails ptxas below sm_90 (\"Feature 'mul.bf16x2' requires .target sm_90\"; l40s-x1)"
   - when: {engine: vllm, family: deepseek_v41, arch: ampere}
     reason: "vLLM 0.32's DeepSeek-V4 triton kernels use fp8e4nv, which Ampere lacks (\"type fp8e4nv not supported in this architecture\"; a40-x1, a100-sxm-x1)"
@@ -72,7 +72,7 @@ unsupported:
   - when: {engine: sglang, artifact: minimax-m3.1-flash, platform: [h200-x4, h100-sxm-x4]}
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
   # weekly 40421366253: the miniature keeps the release's widths, so it fails as the full model does
-  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1, pro6000-x1, h100-sxm-x1, h200-x1]}   # pie-project/vllm pie-evals/v0.32.0 loads it on L40S, the RTX PRO 6000, the H100 and the H200
+  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1, pro6000-x1, h100-sxm-x1, h200-x1, rtx4090-x1]}   # pie-project/vllm pie-evals/v0.32.0 loads it on L40S, the RTX PRO 6000, the H100 and the H200
     reason: "vLLM 0.32.0 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 (expert load: size of tensor a (192) must match b (384))"
   - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, arch: [ampere]}   # ada and hopper: pie-project/sglang pie-evals/v0.5.22 runs it (MXFP8 to block FP8 on sm_89 to sm_99)
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
@@ -149,7 +149,7 @@ unsupported:
   # SGLang 0.5.22 decodes Qwen3.8-Flash-Next's full-attention layers through qwen_sparse_attn_backend's flash_attn.cute
   # FlashAttentionForwardSm80, which CUDA refuses to launch on sm_86/sm_89 (A40, L40S; the 4090 OOMs in prefill
   # graph capture before it gets there): "CUDA_LAUNCH_INVALID_CONFIG ... cudaErrorInvalidValue" (weekly 40421366253)
-  - when: {engine: sglang, family: qwen4_exp, arch: [ampere, ada], not_platform: [a100-pcie-x1, a100-x2, a100-pcie-x2, a100-sxm-x8, a100-sxm40-x1, a100-sxm-x1]}
+  - when: {engine: sglang, family: qwen4_exp, arch: [ampere, ada], not_platform: [a100-pcie-x1, a100-x2, a100-pcie-x2, a100-sxm-x8, a100-sxm40-x1, a100-sxm-x1, rtx4090-x1]}
     reason: "SGLang 0.5.22's qwen4_exp sparse-attention decode kernel (flash_attn.cute Sm80) fails to launch on sm_86/sm_89: CUDA_LAUNCH_INVALID_CONFIG"
   # SGLang's static pool for Kimi-K3 mini (weights + the KDA state pool) needs more than 0.935 of a 32 GB
   # card, and at 0.95 the process sits at 31.2 GiB before the first c8 batch (nightly 36103831529 s10:
