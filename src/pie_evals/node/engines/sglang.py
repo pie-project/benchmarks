@@ -111,10 +111,11 @@ class SglangEngine(Engine):
                 # block-FP8 Triton prefill OOMed at pf8 past the static pool (347 MiB free); 0.88 leaves room
                 # GLM-5.3 mini78-e12 (51 GiB) likewise OOMed in FA3 prefill at pf16/pf32-512 at 0.95
                 gmu = min(float(gmu), 0.88)
-            if self.artifact.family in ("glm_moe_dsa", "hy_v4") and card < 48:
+            if self.artifact.family in ("glm_moe_dsa", "hy_v4", "minimax_m3") and card < 48:
                 # the GLM-5.3 mini at 0.9 on a 32 GB RTX 5090 left 2.55 GB past the static pool, and its
                 # 2048-token piecewise prefill graph OOMed capturing the MLA bmm buffers (every cell); 0.8 leaves it room.
-                # The Hy4 mini OOMed the same way (2.54 GB free, radix attention output)
+                # The Hy4 mini OOMed the same way (2.54 GB free, radix attention output), the MiniMax-M3.1 mini at its
+                # 4096-token graph (2.40 GB free, c64-c256 and every pf cell)
                 gmu = min(float(gmu), 0.80)
             if self.artifact.family == "deepseek_v4" and str(self.platform.arch) == "hopper":
                 # the 5-layer DeepSeek-V4-Flash mini leaves 0.9 of an H100 to KV, and FlashInfer's CUTLASS MoE
