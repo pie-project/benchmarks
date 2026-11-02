@@ -409,6 +409,16 @@ artifacts:
     expected_gib: 31.6
     tiers: [weekly]
   # the L4 device evaluation (24 GB): the L40S cuts above that do not fit, cut again
+  - id: gemma-4-e4b-mini30
+    base_model: google/gemma-4-E4B-it
+    family: gemma4
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-29", period: 6, shrink_family: gemma4, note: "first 30 of 42 layers, five sliding/global periods (24 own their KV, 6 share it); vLLM has no KV room beside the whole E4B's batches on a 24 GB card"}
+    pie_sku: gemma4-e4b-mini-l30-bf16-kv-bf16
+    max_context: 4096
+    expected_gib: 7.0
+    tiers: [weekly]
   - id: kimi-k3-mini4
     base_model: moonshotai/Kimi-K3
     family: kimi_k3
