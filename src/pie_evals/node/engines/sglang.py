@@ -121,6 +121,11 @@ class SglangEngine(Engine):
                 # the TileLang DSA kernels (below) want more than 0.95 leaves past the static pool: GLM-5.3-Flash
                 # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV
                 gmu = 0.88
+            if self.platform.id == "rtx4090-x1":
+                # 0.5.22 captures its piecewise prefill graphs past the static pool, and on a 24 GB card the
+                # 10% left at 0.9 does not hold them (GLM-5.3 and Hy4 minis raw: OOM capturing at 36 MiB free);
+                # 0.80 keeps the graphs, a checkpoint over 60% of the card the 0.85 its weights and KV need
+                gmu = min(float(gmu), 0.85 if weights / card > 0.6 else 0.80)
             args += ["--gpu-mem-util", str(gmu)]  # -> mem_fraction_static
         graph_bs = r.get("cuda_graph_max_bs")
         if graph_bs is None:
