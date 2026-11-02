@@ -190,6 +190,10 @@ class NodeRunner:
         # a baseline boots its server inside the cell: a checkpoint of hundreds of GiB loads, compiles and captures
         # for longer than ten minutes (vLLM on MiMo-V2.6-Flash, 166 GiB on two H200s: still loading at 600 s)
         gib = float(getattr(getattr(cell, "artifact", None), "expected_gib", None) or 0)
+        # SGLang on a B200 autotunes its MXFP8 GEMMs and captures 74 prefill shapes before it serves:
+        # MiniMax-M3.1-Flash's miniature took past ten minutes to boot
+        if str(getattr(cell, "engine", "")) in ("sglang", "vllm"):
+            floor = max(floor, 1200.0)
         if gib >= 100:
             floor = max(floor, 600.0 + gib * 6.0)
         scaled = max(floor, float(cell.workload.est_minutes) * 60.0 * 10.0, float(cell.workload.params.get("round_timeout_s") or 0))
