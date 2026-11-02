@@ -589,7 +589,7 @@ window.Pie = window.Pie || {};
           // multi-GPU machines (×2, ×4, ×8) hidden for now, to come back later: delete this line to show them again
           .filter((hw) => !(hw.class === "gpu" && hw.count > 1))
           // not shown: A100 PCIe is not evaluated
-          .filter((hw) => hw.id !== "nvidia-a100-80gb-pcie")
+          .filter((hw) => hw.id !== "a100-pcie-x1")
           .map((hw) => hw.id) }))
         .filter((g) => !only || g.macs.length);
       const macs = groups.flatMap((g) => g.macs);
