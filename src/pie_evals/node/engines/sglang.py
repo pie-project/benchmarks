@@ -155,12 +155,14 @@ class SglangEngine(Engine):
             # 0.5.22 picks trtllm-gen MLA for a bf16 KV cache on SM120, an SM100-only kernel ("TllmGenFmhaRunner:
             # Unsupported architecture", GLM-5.3-Flash on pro6000-x4, weekly 39901346624); TileLang runs on SM120
             dsa = "tilelang"
-        rtx_blackwell = self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator)
-        if self.artifact.family in ("glm_moe_dsa", "glm5_next") and rtx_blackwell:
-            # 0.5.22 stores a DSA model's KV cache in fp8_e4m3 on SM100 and up (SM120 too); bf16 is the precision pie and
-            # vLLM serve: GLM-5.3 mini pf256-512 66k tok/s with fp8 KV, 26.7k with bf16 (pro6000-x1)
+        blackwell = self.platform is not None and str(self.platform.arch) == "blackwell"
+        rtx_blackwell = blackwell and "RTX" in str(self.platform.accelerator)
+        if self.artifact.family in ("glm_moe_dsa", "glm5_next", "hy_v4", "deepseek_v4") and blackwell:
+            # 0.5.22 stores a DSA model's KV cache in fp8_e4m3 on SM100 and up (SM120 too), and DeepSeek-V4's on every
+            # GPU; bf16 is the precision pie and vLLM serve: GLM-5.3 mini pf256-512 66k tok/s with fp8 KV, 26.7k with
+            # bf16 (pro6000-x1)
             args += ["--sglang-kv-cache-dtype", "bfloat16"]
-            if dsa is None and self.artifact.family == "glm_moe_dsa":
+            if dsa is None and self.artifact.family == "glm_moe_dsa" and rtx_blackwell:
                 # at a bf16 KV, trtllm-gen MLA is SM100-only and TileLang's sparse prefill wants 231 KB of shared memory
                 dsa = "flashmla_sparse"
         if dsa:
