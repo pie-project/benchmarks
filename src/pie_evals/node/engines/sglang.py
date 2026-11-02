@@ -84,8 +84,9 @@ class SglangEngine(Engine):
             # they leave no KV room under it (kimi-k3 mini, 18.4 GiB on a 32 GB 5090: "raise
             # --mem-fraction-static above 0.935"); a heavy checkpoint gets the fraction it needs
             weights = float(self.artifact.expected_gib or 0.0)
-            # Qwen3.8-27B bf16 (52% of a 96 GB card) keeps 0.9: at 0.95 its prefill graphs fail to capture (pf8-pf32)
-            if weights and card and weights / card > 0.5 and not (self.artifact.family == "qwen3_6" and weights / card < 0.6):
+            # Qwen3.8-27B bf16 (52% of a 96 GB card, 63% of an 80 GB one) keeps 0.9: at 0.95 its prefill graphs fail
+            # to capture (pf8-pf32; on the H100 "num_active_captures_ > 0" at pf4-pf32, c16, c32)
+            if weights and card and weights / card > 0.5 and not (self.artifact.family == "qwen3_6" and weights / card < 0.65):
                 gmu = max(float(gmu), 0.95)
             elif self.artifact.family == "kimi_k3":
                 # past the static pool SGLang keeps only graphs and activations; Kimi-K3's MoE
@@ -105,10 +106,15 @@ class SglangEngine(Engine):
                 # below), Qwen3.8-Flash-Next OOMed at 0.9 on a 24 GB 4090 (40421366253). vLLM's 0.9
                 # already holds its graphs and activations; this keeps SGLang's inside the same card
                 gmu = min(float(gmu), 0.85 if card >= 80 else 0.75)
-            if self.artifact.family == "minimax_m3" and card >= 80:
+            if self.artifact.family in ("minimax_m3", "glm_moe_dsa") and card >= 80:
                 # MiniMax-M3.1-Flash mini60-e16 (43.4 GiB, 54% of an 80 GB H100) took the 0.95 above and its
                 # block-FP8 Triton prefill OOMed at pf8 past the static pool (347 MiB free); 0.88 leaves room
+                # GLM-5.3 mini78-e12 (51 GiB) likewise OOMed in FA3 prefill at pf16/pf32-512 at 0.95
                 gmu = min(float(gmu), 0.88)
+            if self.artifact.family == "deepseek_v4" and str(self.platform.arch) == "hopper":
+                # the 5-layer DeepSeek-V4-Flash mini leaves 0.9 of an H100 to KV, and FlashInfer's CUTLASS MoE
+                # workspace for a 4096-token prefill OOMed past it (pf8-512, h100-sxm-x1)
+                gmu = min(float(gmu), 0.85)
             if self.artifact.family == "muse_spark" and card <= 80:
                 # Muse Spark mini4 (12 GiB) at 0.9 on an 80 GB H100: its pf16/pf32-512 prefill OOMed past
                 # the static pool (512 MiB asked, 115 MiB free); pf64 and up passed. 0.85 leaves the activations room

@@ -43,7 +43,7 @@ You are an autonomous LLM Benchmark & Engine Engineering Agent: the orchestrator
 
 ## Phases
 
-0. **Setup:** check prerequisites; `get-capacity` (retry every 5 min, never switch GPU); rent `[PODS]` pods (state the price); SSH in; point `pod-import.yml` at the pod ids and `[TAG]`; start workers (brief = this prompt + pod + models + pie commit), one fitting full model per pod first.
+0. **Setup:** check prerequisites; `get-capacity` (retry every 5 min, never switch GPU); rent `[PODS]` pods (state the price); SSH in; write the pod ids to `.github/pod-lists/[TAG]` (one per line; the import matrix needs `[TAG]` listed) and empty it at the end; start workers (brief = this prompt + pod + models + pie commit), one fitting full model per pod first.
 1. **Engines:** `pie-evals-node build --pie-commit <sha> --features cuda`; vLLM/SGLang at the fork heads; device profile in `profiles/<sm>/<device>.toml` (missing → `pie tune cuda`).
 2. **Smoke** (512 in, 16 out) every model × engine; fix in order: flags → miniature recipe → fork or pie patch.
 3. **Benchmark:** `raw-512-256` for latency; `c<N>` and `pf<N>-512` for throughput, sweeping N until tok/s grows < 5%, same N for all engines. Anything above the hardware bound is a harness bug; `pie-evals jobs … --out jobs`, then `pie-evals-node run --job <job> --out /workspace/out/<job>`.

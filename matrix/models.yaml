@@ -426,6 +426,16 @@ artifacts:
     max_context: 4096
     expected_gib: 15.0
     tiers: [weekly]
+  - id: nemotron-3-super-mini88-e64
+    base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+    family: nemotron_h
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-87", experts: 64, period: 1, note: "all 88 layers (Mamba-2, latent MoE, attention); 64 of 512 experts (40.9 GiB, for 80 GB cards; 96 experts measure 54 GiB)"}
+    pie_sku: nemotron3-super-bf16-kv-bf16-e64
+    max_context: 4096
+    expected_gib: 40.9
+    tiers: [weekly]
   - id: nemotron-3-super-mini88
     base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
     family: nemotron_h
@@ -526,7 +536,7 @@ artifacts:
     scheme: bf16
     expected_gib: 65.2
     pie_sku: qwen36-35b-a3b-bf16-kv-bf16
-    tiers: []
+    tiers: [weekly]   # the full model fits the 141 GB H200 (device evaluation, #889)
   - id: qwen3.8-27b-bf16
     base_model: Qwen/Qwen3.8-27B
     family: qwen3_6
@@ -540,14 +550,14 @@ artifacts:
     scheme: bf16
     expected_gib: 48.4
     pie_sku: gemma4-26b-a4b-bf16-kv-bf16
-    tiers: []
+    tiers: [weekly]   # the full model fits the 141 GB H200 (device evaluation, #889)
   - id: gemma-4-31b-bf16
     base_model: google/gemma-4-31B-it
     family: gemma4
     scheme: bf16
     expected_gib: 57.7
     pie_sku: gemma4-31b-bf16-kv-bf16
-    tiers: []
+    tiers: [weekly]   # the full model fits the 141 GB H200 (device evaluation, #889)
 
   # ---------------- nightly: full mid-size, several schemes (dense qwen3 has no reader in pie and is not planned) ----------------
   - id: gpt-oss-20b-mxfp4
