@@ -454,17 +454,9 @@ artifacts:
     scheme: bf16
     kind: miniature
     miniature: {layers: "0-29", experts: 16, period: 6, shrink_family: gemma4, note: "every layer; 16 of 128 experts (10.8 GiB download)"}
+    pie_sku: gemma4-26b-a4b-bf16-kv-bf16-e16
     max_context: 4096
     expected_gib: 11.0
-    tiers: [weekly]
-  - id: gemma-4-31b-mini12
-    base_model: google/gemma-4-31B-it
-    family: gemma4
-    scheme: bf16
-    kind: miniature
-    miniature: {layers: "0-11", period: 6, shrink_family: gemma4, note: "first 12 of 60 layers, two sliding/global periods (14.6 GiB download)"}
-    max_context: 4096
-    expected_gib: 14.8
     tiers: [weekly]
   - id: gemma-4-26b-a4b-mini-e32
     base_model: google/gemma-4-26B-A4B-it
