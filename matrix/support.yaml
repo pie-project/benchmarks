@@ -54,8 +54,7 @@ unsupported:
   # weekly 40405793203 / 40415491631: vLLM's DeepSeek-V4 kernels need Hopper's bf16x2 math and e4m3 in triton
   - when: {engine: vllm, family: deepseek_v41, arch: ada}
     reason: "vLLM 0.32's DeepSeek-V4 dequant_gather_k kernel fails ptxas below sm_90 (\"Feature 'mul.bf16x2' requires .target sm_90\"; l40s-x1)"
-  - when: {engine: vllm, family: deepseek_v41, arch: ampere}
-    reason: "vLLM 0.32's DeepSeek-V4 triton kernels use fp8e4nv, which Ampere lacks (\"type fp8e4nv not supported in this architecture\"; a40-x1, a100-sxm-x1)"
+  # pie-project/vllm#18 (pie-evals/v0.32.0) lowers Triton's e4m3 casts to integer code below sm_89, so Ampere serves it
   # weekly 40415491631 / 40465375938 (pro6000-x1): on sm_120 neither baseline has a V4.1 attention path.
   # vLLM's FlashInfer DSv4.1 backend takes 128-token kernel blocks only, and at that default the SM120
   # sparse-MLA decode is handed 32-token pages while FlashInfer builds it for 64 only; --block-size 64 is
@@ -203,7 +202,7 @@ unsupported:
   - when: {engine: mlxlm, program: parity, family: hy_v4}
     reason: "mlx-lm 0.32.2 ships no hy_v4 model, so it cannot load Hy4"
   # quality parity on RunPod (parity.yml, vLLM 0.32.0): the reference fails at boot on these arch x mini pairs
-  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [a40-x1, a100-sxm-x1]}
+  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [a40-x1]}
     reason: "vLLM 0.32.0 DeepSeek-V4.1 needs fp8e4nv, which Ampere lacks"
   - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [l40s-x1, rtx4090-x1]}
     reason: "vLLM 0.32.0 DeepSeek-V4.1 CUTLASS DSL kernel fails PTX assembly on Ada"
