@@ -138,6 +138,14 @@ class SglangEngine(Engine):
                 # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV.
                 # A 32 GB RTX 5090 keeps the 0.75 above: at 0.88 the 2048-token prefill graph OOMed (2.95 GB free)
                 gmu = 0.88
+            if self.artifact.family in ("glm5_next", "hy_v4") and card <= 32:
+                # 0.9 of a 32 GB card leaves 3 GiB past the static pool, and the GLM-5.3-Flash and Hy4 minis'
+                # breakable prefill graphs OOMed capturing there (9 / 25 MiB free, pro4500-x1 raw-512-256)
+                gmu = min(float(gmu), 0.78)
+            if self.artifact.family == "qwen3_6_moe" and card <= 32:
+                # the Qwen3.6-35B-A3B mini (20.4 GiB, 64% of a 32 GB card) took the 0.95 above and its prefill graphs
+                # failed to capture past the static pool ("num_active_captures_ > 0", pro4500-x1 raw-512-256)
+                gmu = min(float(gmu), 0.88)
             args += ["--gpu-mem-util", str(gmu)]  # -> mem_fraction_static
         graph_bs = r.get("cuda_graph_max_bs")
         if graph_bs is None:
@@ -162,12 +170,14 @@ class SglangEngine(Engine):
             # 0.5.22 picks trtllm-gen MLA for a bf16 KV cache on SM120, an SM100-only kernel ("TllmGenFmhaRunner:
             # Unsupported architecture", GLM-5.3-Flash on pro6000-x4, weekly 39901346624); TileLang runs on SM120
             dsa = "tilelang"
-        rtx_blackwell = self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator)
-        if self.artifact.family in ("glm_moe_dsa", "glm5_next") and rtx_blackwell:
-            # 0.5.22 stores a DSA model's KV cache in fp8_e4m3 on SM100 and up (SM120 too); bf16 is the precision pie and
-            # vLLM serve: GLM-5.3 mini pf256-512 66k tok/s with fp8 KV, 26.7k with bf16 (pro6000-x1)
+        blackwell = self.platform is not None and str(self.platform.arch) == "blackwell"
+        rtx_blackwell = blackwell and "RTX" in str(self.platform.accelerator)
+        if self.artifact.family in ("glm_moe_dsa", "glm5_next", "hy_v4", "deepseek_v4") and blackwell:
+            # 0.5.22 stores a DSA model's KV cache in fp8_e4m3 on SM100 and up (SM120 too), and DeepSeek-V4's on every
+            # GPU; bf16 is the precision pie and vLLM serve: GLM-5.3 mini pf256-512 66k tok/s with fp8 KV, 26.7k with
+            # bf16 (pro6000-x1)
             args += ["--sglang-kv-cache-dtype", "bfloat16"]
-            if dsa is None and self.artifact.family == "glm_moe_dsa":
+            if dsa is None and self.artifact.family == "glm_moe_dsa" and rtx_blackwell:
                 # at a bf16 KV, trtllm-gen MLA is SM100-only and TileLang's sparse prefill wants 231 KB of shared memory
                 dsa = "flashmla_sparse"
         if dsa:
@@ -182,6 +192,10 @@ class SglangEngine(Engine):
             # 0.5.22's auto pick on SM120, flashinfer_mxfp4 (cutlass_sm120), quantizes the activations to MXFP8
             # (MXFP8 x MXFP4); Marlin keeps them bf16 (W4A16), the precision pie and vLLM serve gpt-oss at.
             # triton_kernel, the other bf16 runner, fails there ("persistent kernel is required", pro6000-x1)
+            moe = "marlin"
+        if moe is None and self.artifact.family == "gpt_oss" and self.platform is not None and str(self.platform.arch) == "ampere":
+            # 0.5.22's auto pick below sm_90 dequantizes every expert each forward (A100: TTFT 1.8 s at 600 tokens,
+            # pf64-512 hangs past 600 s); Marlin is its W4A16 MXFP4 runner, the one vLLM picks on Ampere
             moe = "marlin"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]
