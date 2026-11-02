@@ -125,7 +125,7 @@ def jobs(obj, tier, pie_commit, platforms, engines, programs, artifacts, workloa
         for pid in (p for p in (plats or []) if p in barred):
             click.echo(f"skip platform {pid}: not in config.json machines", err=True)
         plats = [p for p in (list(m.platforms) if plats is None else plats) if p not in barred]
-    cells = m.expand()
+    cells = m.expand(platforms=plats, artifacts=artifacts)
     if programs:
         cells = [c for c in cells if c.program.id in programs]
     if artifacts:
