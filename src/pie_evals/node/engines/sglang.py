@@ -135,6 +135,14 @@ class SglangEngine(Engine):
                 # the TileLang DSA kernels (below) want more than 0.95 leaves past the static pool: GLM-5.3-Flash
                 # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV
                 gmu = 0.88
+            if self.artifact.family in ("glm5_next", "hy_v4") and card <= 32:
+                # 0.9 of a 32 GB card leaves 3 GiB past the static pool, and the GLM-5.3-Flash and Hy4 minis'
+                # breakable prefill graphs OOMed capturing there (9 / 25 MiB free, pro4500-x1 raw-512-256)
+                gmu = min(float(gmu), 0.78)
+            if self.artifact.family == "qwen3_6_moe" and card <= 32:
+                # the Qwen3.6-35B-A3B mini (20.4 GiB, 64% of a 32 GB card) took the 0.95 above and its prefill graphs
+                # failed to capture past the static pool ("num_active_captures_ > 0", pro4500-x1 raw-512-256)
+                gmu = min(float(gmu), 0.88)
             args += ["--gpu-mem-util", str(gmu)]  # -> mem_fraction_static
         graph_bs = r.get("cuda_graph_max_bs")
         if graph_bs is None:
