@@ -419,6 +419,16 @@ artifacts:
     max_context: 4096
     expected_gib: 7.0
     tiers: [weekly]
+  - id: gemma-4-31b-mini12
+    base_model: google/gemma-4-31B-it
+    family: gemma4
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-11", period: 6, shrink_family: gemma4, note: "first 12 of 60 layers, two sliding/global periods (14.6 GiB download, for 24 GB cards)"}
+    pie_sku: gemma4-31b-bf16-kv-bf16-l12
+    max_context: 4096
+    expected_gib: 14.8
+    tiers: [weekly]
   - id: kimi-k3-mini4
     base_model: moonshotai/Kimi-K3
     family: kimi_k3
