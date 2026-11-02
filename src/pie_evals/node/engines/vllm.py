@@ -52,9 +52,10 @@ class VllmEngine(Engine):
             # 0.31.0's CUTLASS block-FP8 GEMM aborts on sm_120 for MiMo's FP8 projections ("cutlass_gemm_caller:
             # Invalid status", weekly 39680748696); vLLM then takes the next kernel it ranks for block FP8
             env["VLLM_DISABLED_KERNELS"] = "CutlassFp8BlockScaledMMKernel"
-        if self.artifact.family == "deepseek_v41" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" not in str(self.platform.accelerator):
+        if self.artifact.family in ("deepseek_v41", "deepseek_v4") and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" not in str(self.platform.accelerator):
             # on sm_100 0.32.0's mega attention runs wo_a through DeepGEMM's fp8_einsum, whose grouped weight
-            # only DeepGEMM's MXFP8 linear kernel lays out; without it boot dies on "t.dim() == N" (b200-x1)
+            # only DeepGEMM's MXFP8 linear kernel lays out; without it boot dies on "t.dim() == N" (b200-x1). V4-Flash's
+            # fused wq_a/wkv projection also dies in CUTLASS block-FP8 dispatch_scaled_mm there (b200-x1)
             env["VLLM_USE_DEEP_GEMM"] = "1"
         if self.artifact.family == "deepseek_v4" and self.platform is not None and str(self.platform.arch) == "hopper":
             # on sm_90 0.32.0's CUTLASS block-FP8 GEMM refuses DeepSeek-V4-Flash's projections (dispatch_scaled_mm,
