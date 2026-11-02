@@ -52,7 +52,7 @@ unsupported:
   - when: {engine: sglang, artifact: mimo-v2.6-flash, platform: pro6000-x4}
     reason: "SGLang 0.5.22 sends MiMo-V2.6-Flash's MXFP4 experts to its FP8 triton MoE on sm_120 (fused_experts: Hidden size mismatch)"
   # weekly 40405793203 / 40415491631: vLLM's DeepSeek-V4 kernels need Hopper's bf16x2 math and e4m3 in triton
-  - when: {engine: vllm, family: deepseek_v41, arch: ada}
+  - when: {engine: vllm, family: deepseek_v41, arch: ada, not_platform: [l4-x1]}   # pie-project/vllm pie-evals/v0.32.0 serves it below sm_90
     reason: "vLLM 0.32's DeepSeek-V4 dequant_gather_k kernel fails ptxas below sm_90 (\"Feature 'mul.bf16x2' requires .target sm_90\"; l40s-x1)"
   # pie-project/vllm#18 (pie-evals/v0.32.0) lowers Triton's e4m3 casts to integer code below sm_89, so Ampere serves it
   # weekly 40415491631 / 40465375938 (pro6000-x1): on sm_120 neither baseline has a V4.1 attention path.
@@ -71,7 +71,7 @@ unsupported:
   - when: {engine: sglang, artifact: minimax-m3.1-flash, platform: [h200-x4, h100-sxm-x4]}
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
   # weekly 40421366253: the miniature keeps the release's widths, so it fails as the full model does
-  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1, pro6000-x1, h100-sxm-x1, h200-x1, pro4500-x1, rtx5090-x1]}   # pie-project/vllm pie-evals/v0.32.0 loads it on L40S, the RTX PRO 6000, the H100 and the H200
+  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1, pro6000-x1, h100-sxm-x1, h200-x1, pro4500-x1, rtx5090-x1, l4-x1]}   # pie-project/vllm pie-evals/v0.32.0 loads it on L40S, the RTX PRO 6000, the H100 and the H200
     reason: "vLLM 0.32.0 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 (expert load: size of tensor a (192) must match b (384))"
   - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, arch: [ampere]}   # ada and hopper: pie-project/sglang pie-evals/v0.5.22 runs it (MXFP8 to block FP8 on sm_89 to sm_99)
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
