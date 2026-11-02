@@ -212,6 +212,16 @@ artifacts:
     max_context: 4096
     expected_gib: 22.0   # 19 GiB of weights + the KDA state pool; on a 24 GB card the load reserves 3.2 GB and the first fire wants 4.0 GB (nightly 35935510089)
     tiers: [smoke, nightly, weekly]
+  - id: kimi-k3-mini4
+    base_model: moonshotai/Kimi-K3
+    family: kimi_k3
+    scheme: mxfp4
+    kind: miniature
+    miniature: {layers: "0-3", experts: 32, period: 4, attn_res_block_size: 4, note: "shrink family kimi_k3; one KDA/MLA period of 93 layers, 32 of 896 experts; 12.1 GiB download, for 32 GB cards (SGLang has no room beside mini8's 18.4 GiB)"}
+    pie_sku: kimik3-mini-bf16-mxfp4-kv-bf16-l4
+    platforms: [rtx5090-x1]
+    expected_gib: 14.0
+    tiers: [weekly]
   - id: kimi-k3-mini16
     base_model: moonshotai/Kimi-K3
     family: kimi_k3       # KDA + MLA (every 4th), latent MoE, AttnRes
