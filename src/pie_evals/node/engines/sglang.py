@@ -84,8 +84,9 @@ class SglangEngine(Engine):
             # they leave no KV room under it (kimi-k3 mini, 18.4 GiB on a 32 GB 5090: "raise
             # --mem-fraction-static above 0.935"); a heavy checkpoint gets the fraction it needs
             weights = float(self.artifact.expected_gib or 0.0)
-            # Qwen3.8-27B bf16 (52% of a 96 GB card) keeps 0.9: at 0.95 its prefill graphs fail to capture (pf8-pf32)
-            if weights and card and weights / card > 0.5 and not (self.artifact.family == "qwen3_6" and weights / card < 0.6):
+            # Qwen3.8-27B bf16 (52% of a 96 GB card, 63% of an 80 GB one) keeps 0.9: at 0.95 its prefill graphs fail
+            # to capture (pf8-pf32; on the H100 "num_active_captures_ > 0" at pf4-pf32, c16, c32)
+            if weights and card and weights / card > 0.5 and not (self.artifact.family == "qwen3_6" and weights / card < 0.65):
                 gmu = max(float(gmu), 0.95)
             elif self.artifact.family == "kimi_k3":
                 # past the static pool SGLang keeps only graphs and activations; Kimi-K3's MoE
