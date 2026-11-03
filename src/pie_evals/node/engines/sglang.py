@@ -95,6 +95,10 @@ class SglangEngine(Engine):
                 # has no KV left beside a 256-wide graph (36212036845) and at 0.82 kv-oversub OOMs in prefill (36264810212)
                 wide = card < 80 and workload_concurrency(workload) >= 128
                 gmu = min(float(gmu), 0.79 if wide else 0.75)
+                if card < 48:
+                    # the 12 GiB one-period Kimi-K3 mini on a 32 GB RTX 5090: at 0.75 its Triton fused MoE
+                    # asked 710 MiB past the static pool at c64-c256 and every pf cell (365 MiB free)
+                    gmu = min(float(gmu), 0.6)
             elif self.artifact.family == "deepseek_v4" and card < 80 and str(self.platform.arch) in ("ada", "ampere"):
                 # below sm_90 the fork runs DeepSeek-V4 attention and indexer on Triton/torch fallbacks whose
                 # activations live past the static pool: at 0.9 c512 and pf16-512 OOMed on the L40S
