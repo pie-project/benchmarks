@@ -100,6 +100,20 @@ default:
             engine_option:
               value: {max_state_slots: 64}
   platform:
+    a40-x1:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                The 80 GB rule (8 GiB of KV, 16 state slots) seated 16 of c128's lanes for the Qwen3.8-27B
+                miniature on a 48 GB A40: 287 tok/s against vLLM's 901. As on Ada, 128 slots and no cap:
+                c128 1075 tok/s, pf8-512 unchanged (3.80k).
+            engine_option:
+              value: {max_state_slots: 128}
+            max_forward_tokens:
+              value: 2240
     l4-x1:
       family:
         muse_glimmer:
