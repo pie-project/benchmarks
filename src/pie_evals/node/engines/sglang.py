@@ -157,10 +157,10 @@ class SglangEngine(Engine):
             dsa = "tilelang"
         blackwell = self.platform is not None and str(self.platform.arch) == "blackwell"
         rtx_blackwell = blackwell and "RTX" in str(self.platform.accelerator)
-        if self.artifact.family in ("glm_moe_dsa", "glm5_next", "hy_v4", "deepseek_v4") and blackwell:
-            # 0.5.22 stores a DSA model's KV cache in fp8_e4m3 on SM100 and up (SM120 too), and DeepSeek-V4's on every
-            # GPU; bf16 is the precision pie and vLLM serve: GLM-5.3 mini pf256-512 66k tok/s with fp8 KV, 26.7k with
-            # bf16 (pro6000-x1)
+        if self.artifact.family in ("glm_moe_dsa", "glm5_next", "hy_v4") and blackwell:
+            # 0.5.22 stores a DSA model's KV cache in fp8_e4m3 on SM100 and up (SM120 too); bf16 is the precision pie and
+            # vLLM serve: GLM-5.3 mini pf256-512 66k tok/s with fp8 KV, 26.7k with bf16 (pro6000-x1). DeepSeek-V4's pool
+            # asserts uint8 storage at a bf16 KV (b200-x1), so it keeps SGLang's fp8.
             args += ["--sglang-kv-cache-dtype", "bfloat16"]
             if dsa is None and self.artifact.family == "glm_moe_dsa" and rtx_blackwell:
                 # at a bf16 KV, trtllm-gen MLA is SM100-only and TileLang's sparse prefill wants 231 KB of shared memory
