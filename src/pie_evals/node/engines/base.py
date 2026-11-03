@@ -534,10 +534,12 @@ def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: flo
             pass
         now = time.monotonic()
         table = process_table()
-        cpu = sum(table[p][1] for p in tree_pids([proc.pid, *extra_pids()], table))
-        if last_cpu is None or cpu > last_cpu + 0.05:
+        # per process: a tree's summed CPU drops when a busy child exits (an inductor compile pool), and the
+        # nvcc/ptxas of a JIT build that follows stayed under the old peak for minutes (SGLang Marlin on sm_86)
+        cpu = {p: table[p][1] for p in tree_pids([proc.pid, *extra_pids()], table)}
+        if last_cpu is None or any(c > last_cpu.get(p, 0.0) + 0.05 for p, c in cpu.items()):
             last_work = now
-        last_cpu = cpu if last_cpu is None else max(cpu, last_cpu)
+        last_cpu = cpu
         timed_out, stalled = now - start > timeout_s, now - last_work > stall_s
         if stalled and not timed_out and on_stall is not None:
             try:
