@@ -279,8 +279,8 @@ competitive:
                 support, and drops the whole model to eager ("setting cudagraph_mode=NONE"): a batch-1
                 decode then waits on the host's launches, 14.4 to 18 ms a token as the shared host's clocks
                 move, and every raw-512-256 run was noisy (round CoV 3.9-4.4%). Piecewise graphs keep the
-                attention eager and graph the rest: 6 requests x 3 rounds 84.7 tok/s each, spread 0.1%,
-                greedy tokens unchanged.
+                attention eager and graph the rest: 6 requests x 3 rounds 84.7 tok/s each, spread 0.1%;
+                greedy tokens part from eager's no sooner than two eager runs part from each other.
 
 # The fork that keeps every miniature running: branch pie-evals/v<release> holds one small Python fix per
 # commit over upstream's tag v<release>, and the CUDA install overlays it on the PyPI wheel (baselines.ensure_fork).
