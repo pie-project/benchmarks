@@ -33,7 +33,7 @@ window.Pie = window.Pie || {};
   };
   for (const w of tables.workloads || []) w.goal = GOALS[w.id] || null;
   // Raw and Speculative measure both phases of one request: its Prefill and its Decode
-  const PD = { raw: "Raw P/D", spec: "Speculative P/D" };
+  const PD = { raw: "Raw P/D", spec: "Speculative P/D", throughput: "Batched Decode" };
   for (const w of tables.workloads || []) if (PD[w.id]) w.label = PD[w.id];
   // single-request workloads first, then the batched ones
   const ORDER = ["raw", "spec", "throughput", "prefill_batch"];
