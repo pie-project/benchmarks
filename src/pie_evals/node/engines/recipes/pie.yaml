@@ -179,6 +179,24 @@ default:
           value: 64
           rationale: >
             The XLA engine's own default; covers c32. The metal arm would write 512.
+  platform:
+    rtx4090-x1:
+      family:
+        gemma4:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
+                KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
+        kimi_k3:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 128}
+              rationale: >
+                At the default 256 slots the Kimi-K3 mini's KDA state for one sequence beside the declared
+                slots wants 6.3 GB where a 24 GB RTX 4090 leaves 3.6 GB past the weights and arena ("the card
+                does not hold this deployment"); 128 slots, as vLLM seats about 135 lanes at c512 there.
 
 competitive:
   extends: default
@@ -214,21 +232,3 @@ competitive:
       knobs: {}
     prefix_shared:
       knobs: {}
-  platform:
-    rtx4090-x1:
-      family:
-        gemma4:
-          knobs:
-            gpu_mem_util:
-              value: 0.95
-              rationale: >
-                gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
-                KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
-        kimi_k3:
-          knobs:
-            engine_option:
-              value: {max_state_slots: 128}
-              rationale: >
-                At the default 256 slots the Kimi-K3 mini's KDA state for one sequence beside the declared
-                slots wants 6.3 GB where a 24 GB RTX 4090 leaves 3.6 GB past the weights and arena ("the card
-                does not hold this deployment"); 128 slots, as vLLM seats about 135 lanes at c512 there.
