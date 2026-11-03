@@ -138,9 +138,10 @@ class SglangEngine(Engine):
                 # a 512-wide decode graph and batch OOM past the static pool at 0.9 on a 48 GB L40S
                 # (Hy4 mini c512 / pf512-512: 160-190 MiB free); 0.85 leaves them room
                 gmu = min(float(gmu), 0.85)
-            if self.artifact.family == "muse_glimmer" and card < 80 and workload_concurrency(workload) >= 128:
+            if self.artifact.family == "muse_glimmer" and card < 80 and (workload_concurrency(workload) >= 128 or card <= 32):
                 # the 27 GiB Muse Glimmer miniature's 256-wide batches OOM past the static pool at 0.95
-                # on a 48 GB L40S (150-200 MiB free); 0.85 still holds the weights and the batch's KV
+                # on a 48 GB L40S (150-200 MiB free); 0.85 still holds the weights and the batch's KV. On a 32 GB
+                # card its 12-layer mini (19.4 GiB) OOMed at 0.95 at every shape below c128 too (pro4500-x1)
                 gmu = 0.85
             if self.artifact.family == "glm5_next" and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator) and card >= 80:
                 # the TileLang DSA kernels (below) want more than 0.95 leaves past the static pool: GLM-5.3-Flash
