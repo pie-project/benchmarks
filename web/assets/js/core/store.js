@@ -32,8 +32,9 @@ window.Pie = window.Pie || {};
     prefill_batch: "How many prompt tokens per second the machine reads when many prompts arrive at once.",
   };
   for (const w of tables.workloads || []) w.goal = GOALS[w.id] || null;
-  // Raw measures both phases of one request: its Prefill and its Decode
-  for (const w of tables.workloads || []) if (w.id === "raw") w.label = "Raw P/D";
+  // Raw and Speculative measure both phases of one request: its Prefill and its Decode
+  const PD = { raw: "Raw P/D", spec: "Speculative P/D" };
+  for (const w of tables.workloads || []) if (PD[w.id]) w.label = PD[w.id];
   // single-request workloads first, then the batched ones
   const ORDER = ["raw", "spec", "throughput", "prefill_batch"];
   const rank = (w) => (ORDER.includes(w.id) ? ORDER.indexOf(w.id) : ORDER.length);
