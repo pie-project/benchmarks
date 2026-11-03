@@ -166,7 +166,7 @@ window.Pie = window.Pie || {};
       section: null,  // no page until a machine is measured; still a row in the Platforms list
       view: "platform",
       platform: "android",
-      tint: "#3ddc84",
+      tint: "#1f9d55",
       filters: [],
       columns: [],
     },
