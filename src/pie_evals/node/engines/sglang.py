@@ -58,6 +58,11 @@ class SglangEngine(Engine):
             # on sm_100 0.5.22 scores DeepSeek-V4.1's candidate indexer only through DeepGEMM's JIT paged sparse
             # MQA logits ("the candidate indexer needs DeepGEMM's paged sparse MQA logits", b200-x1); the pod has nvcc
             env["SGLANG_ENABLE_JIT_DEEPGEMM"] = env["SGL_ENABLE_JIT_DEEPGEMM"] = "1"
+        if self.artifact.id == "gpt-oss-120b-mxfp4" and self.platform is not None and str(self.platform.arch) == "hopper" and float(self.platform.memory_gib or 0) <= 80:
+            # 0.5.22 swizzles gpt-oss-120b's MXFP4 experts for triton_kernels at load, and the swizzle's temporaries
+            # fragment the caching allocator past what an 80 GB card holds ("Tried to allocate 1.03 GiB", 8.3 GiB
+            # reserved but unallocated, h100-sxm-x1); with expandable segments it loads (raw decode 206 tok/s)
+            env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
         return env
 
     def default_python(self) -> str:
