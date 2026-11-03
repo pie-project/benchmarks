@@ -35,8 +35,8 @@ Pie.format = {
     return `<span class="engine-tag" style="--engine-color: ${Pie.engines.colorOf(id)}">${this.escape(label)}</span>`;
   },
 
-  // a workload's name after the setup marks the platform pages give it: Raw and Speculative both their Decode and their Prefill
-  workloadMarks: { raw: ["decode", "prefill"], spec: ["spec", "prefill"], throughput: ["batching"], prefill_batch: ["pbatch"] },
+  // a workload's name after the setup marks the platform pages give it; Raw and Speculative as a run carry both phases
+  workloadMarks: { raw: ["decode", "prefill"], spec: ["spec", "prefill"], raw_decode: ["decode"], raw_prefill: ["prefill"], spec_decode: ["spec"], spec_prefill: ["prefill"], throughput: ["batching"], prefill_batch: ["pbatch"] },
 
   workloadTag(id) {
     const marks = (this.workloadMarks[id] || []).map((mode) => Pie.platform?.degree?.(mode) || "").join("");
