@@ -237,8 +237,8 @@ class SglangEngine(Engine):
         if r.get("disable_cuda_graph"):
             args.append("--sglang-disable-cuda-graph")
         piecewise_off = r.get("disable_piecewise_cuda_graph")
-        if piecewise_off is None and self.artifact.family == "minimax_m3" and self.platform is not None and str(self.platform.arch) == "ampere":
-            # 0.5.22 spends minutes per piecewise prefill shape compiling MiniMax-M3's sm_80 fallbacks (36 of 42 in
+        if piecewise_off is None and self.artifact.family in ("minimax_m3", "glm_moe_dsa", "hy_v4") and self.platform is not None and str(self.platform.arch) == "ampere":
+            # 0.5.22 spends minutes per piecewise prefill shape compiling these models' sm_80 fallbacks (GLM-5.3 mini: 18 s a shape) (36 of 42 in
             # 5:51 on an A100, the bench's 180 s no-CPU-work stop kills it); decode graphs still capture
             piecewise_off = True
         if piecewise_off:
