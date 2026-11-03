@@ -123,6 +123,10 @@ class SglangEngine(Engine):
                 # a 24 GB L4 keeps 3.4 GiB past the static pool for SGLang's graphs and activations: the 13 GiB
                 # Qwen3.6-35B-A3B mini took 0.95 above and every c/pf graph capture failed ("num_active_captures_ > 0")
                 gmu = min(float(gmu), 0.85)
+            if self.artifact.id == "gpt-oss-120b-mxfp4" and str(self.platform.arch) == "ampere" and card >= 80:
+                # gpt-oss-120b (61 GiB, 76% of an 80 GB A100) took the 0.95 above, and its Marlin MoE prefill graphs
+                # OOMed capturing past the static pool at pf8/pf16-512 (184 MiB asked, 45 MiB free, a100-sxm-x1); pf64 served at 0.85
+                gmu = min(float(gmu), 0.85)
             if self.artifact.family in ("minimax_m3", "glm_moe_dsa") and card >= 80:
                 # MiniMax-M3.1-Flash mini60-e16 (43.4 GiB, 54% of an 80 GB H100) took the 0.95 above and its
                 # block-FP8 Triton prefill OOMed at pf8 past the static pool (347 MiB free); 0.88 leaves room
