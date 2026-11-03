@@ -559,6 +559,15 @@ artifacts:
     max_context: 4096
     expected_gib: 12.2
     tiers: [weekly]
+  - id: gemma-4-26b-a4b-mini-e24
+    base_model: google/gemma-4-26B-A4B-it
+    family: gemma4_moe
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-29", experts: 24, period: 6, shrink_family: gemma4, note: "every layer; 24 of 128 experts; 13.5 GiB download, for 24 GB cards (pie reads the 26B-A4B row at its full depth only, so no 12-layer cut)"}
+    max_context: 4096
+    expected_gib: 13.5
+    tiers: [weekly]
   - id: gemma-4-31b-mini12
     base_model: google/gemma-4-31B-it
     family: gemma4
