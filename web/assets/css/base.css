@@ -105,6 +105,15 @@ svg {
   font-weight: 500;
 }
 
+.swept-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-label-secondary);
+}
+
+.swept-tag svg { width: 13px; height: 13px; fill: var(--color-background); stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
+
 .workload-tag {
   display: inline-flex;
   align-items: center;
