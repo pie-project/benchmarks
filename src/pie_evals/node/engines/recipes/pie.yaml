@@ -107,6 +107,14 @@ default:
           rationale: >
             A 24 GB L4 at 0.90 leaves vLLM no KV cache beside gemma-4-E4B's 14.2 GiB of weights and
             its profiling peak ("Available KV cache memory: -0.08 GiB"); every engine gets 0.95 there.
+      family:
+        muse_glimmer:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                The L4 profile's 2304-token fires cut a batch of Muse Glimmer prompts into small passes:
+                8192 lifts the 4-layer mini's pf8-512 11.0k to 11.6k and pf16-512 11.6k to 11.9k tok/s.
   arch:
     ada:
       family:
