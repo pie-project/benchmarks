@@ -189,6 +189,12 @@ default:
               rationale: >
                 gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
                 KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM prefills gemma-4-E4B in 2048-token chunks on the RTX 4090; pie's 8192-token fires stalled
+                the c256 decode behind each wave of prompts: c256 5.27k to 5.79k tok/s (vLLM 5.84k), pf16-512
+                16.7k to 15.7k.
         kimi_k3:
           knobs:
             engine_option:
