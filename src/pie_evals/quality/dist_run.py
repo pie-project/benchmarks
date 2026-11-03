@@ -27,6 +27,20 @@ ANSWER_TOKENS = 256
 PARITY_TASKS = ("gsm8k", "mmlu", "arc", "math500", "ifeval")
 #: the shape whose engine config pie_bench boots with: concurrency 1, a 4k context
 WORKLOAD = "lc-2k-128"
+#: the reference's greedy answers, saved once per artifact (``<artifact>.json``): every later run scores both engines on
+#: the same texts. A fresh greedy pass is not repeatable (MiniMax-M3.1-Flash mini60 on h100-sxm-x1: six runs of one pie
+#: build gave KL 0.084 to 0.187 as vLLM's answers changed), so the gate read the reference's draw, not pie.
+TEXTS_DIR = "parity-texts"
+
+
+def saved_texts(matrix_dir: str, artifact_id: str, rendered: list[str]) -> list[str] | None:
+    """The saved reference answers of ``artifact_id`` when they were written for these prompts and this length."""
+    p = Path(matrix_dir) / TEXTS_DIR / f"{artifact_id}.json"
+    if not p.exists():
+        return None
+    d = json.loads(p.read_text())
+    ok = d.get("prompts") == kl.texts_hash(rendered) and d.get("answer_tokens") == ANSWER_TOKENS and len(d.get("texts") or []) == len(rendered)
+    return d["texts"] if ok else None
 
 
 def prompts(log=print) -> list[str]:
@@ -212,7 +226,7 @@ def _reason(e: Exception, out_dir: Path, art_id: str, ref_name: str) -> str:
     return f"{type(e).__name__}: {str(e).strip().splitlines()[-1][:400] if str(e).strip() else ''}"
 
 
-def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log):
+def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log, texts=None):
     from pie_evals.node.engines import get_engine
     from pie_evals.node.engines.recipes import load_recipe
 
@@ -234,13 +248,13 @@ def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, back
             # every position would compare one token apart (Muse Glimmer on pro6000-x1: top-1 0.3%, 40 of 40 misaligned)
             bos = getattr(_tokenizer(snapshot), "bos_token", None)
             extra = {"add_special_tokens": False} if bos and rendered and all(r.startswith(bos) for r in rendered) else None
-            ref_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1, extra=extra)
+            ref_texts = texts if texts is not None else kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1, extra=extra)
             ref_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1, extra=extra)
         finally:
             srv.stop()
         return ref_texts, ref_scored
     summary["ref_version"] = subprocess.run([os.environ.get("MLX_PY", sys.executable), "-c", "import mlx_lm; print(mlx_lm.__version__)"], capture_output=True, text=True).stdout.strip()
-    ref_texts, _ = mlx_side(snapshot, rendered, True, out_dir / f"{art.id}-mlx-greedy.log")
+    ref_texts = texts if texts is not None else mlx_side(snapshot, rendered, True, out_dir / f"{art.id}-mlx-greedy.log")[0]
     _, ref_scored = mlx_side(snapshot, [r + t for r, t in zip(rendered, ref_texts, strict=True)], False, out_dir / f"{art.id}-mlx-score.log")
     return ref_texts, ref_scored
 
@@ -277,8 +291,14 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     # 1. the reference: greedy answers, then the teacher-forced distributions over prompt + answer.
     # A reference that cannot run the model is a cell of its own (the site's crossed-out circle); pie still runs.
     ref_texts = ref_scored = None
+    texts = saved_texts(matrix_dir, art.id, rendered)
+    summary["ref_texts"] = "saved" if texts is not None else "greedy"
     try:
-        ref_texts, ref_scored = _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log)
+        ref_texts, ref_scored = _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log, texts)
+        if texts is None:  # the answers to save under matrix/parity-texts, so the next run scores the same texts
+            (out_dir / f"{art.id}.json").write_text(json.dumps({"prompts": kl.texts_hash(rendered), "answer_tokens": ANSWER_TOKENS,
+                                                                 "ref_engine": ref_name, "ref_version": summary.get("ref_version"),
+                                                                 "platform": platform_id, "texts": ref_texts}, indent=1))
     except Exception as e:  # noqa: BLE001
         summary["ref_unsupported"] = _reason(e, out_dir, art.id, ref_name)
         log(f"parity {art.id}@{platform_id}: {ref_name} cannot run it: {summary['ref_unsupported']}")
