@@ -42,6 +42,11 @@ class VllmEngine(Engine):
             "TRITON_CACHE_DIR": str(jit / "triton"),
             "TORCHINDUCTOR_CACHE_DIR": str(jit / "inductor"),
             "VLLM_CACHE_ROOT": str(jit / "vllm"),
+            # FlashAttention 4's CuTe DSL kernels compile per shape and, unasked, only in memory: every
+            # round's fresh server compiled them inside the measurement (Gemma-4-E4B pf64-512 on
+            # h100-sxm-x1: 20.9k tok/s against 62.0k with them warm)
+            "FLASH_ATTENTION_CUTE_DSL_CACHE_ENABLED": "1",
+            "FLASH_ATTENTION_CUTE_DSL_CACHE_DIR": str(jit / "cute_dsl"),
             **self.nccl_env(),
         }
         if self.platform is not None and str(self.platform.backend) == "rocm":

@@ -45,6 +45,9 @@ class SglangEngine(Engine):
             "SGLANG_JIT_CACHE_DIR": str(jit / "sglang"),
             "TRITON_CACHE_DIR": str(jit / "triton"),
             "TORCHINDUCTOR_CACHE_DIR": str(jit / "inductor"),
+            # FlashAttention 4's CuTe DSL kernels kept on the volume too, as vLLM's
+            "FLASH_ATTENTION_CUTE_DSL_CACHE_ENABLED": "1",
+            "FLASH_ATTENTION_CUTE_DSL_CACHE_DIR": str(jit / "cute_dsl"),
             **self.nccl_env(),
         }
         # sglang_bench.py has no flag for disable_custom_all_reduce and SGLang reads no env for
