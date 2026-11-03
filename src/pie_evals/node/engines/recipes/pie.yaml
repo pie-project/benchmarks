@@ -332,6 +332,15 @@ default:
                 c128 2057 to 2211 tok/s (vLLM 2308), pf8-512 18.9k (vLLM 18.5k).
     gemma-4-26b-a4b-bf16:
       platform:
+        b200-x1:
+          knobs:
+            max_forward_requests:
+              value: 512
+              rationale: >
+                c1024's 1024 lanes of 768 tokens want ~165 GB of cache rows (25 sliding layers of 8 kv heads at
+                256) and the B200's pool holds ~105 GB, so lanes run out of pages mid-request; readout rows for
+                512 lanes keep the admitted lanes whole: c1024 18.2k/19.4k to 19.0k/20.8k tok/s over two rounds
+                (640 and 768 lanes came out 15.3k).
         h100-sxm-x1:
           knobs:
             max_forward_requests:
