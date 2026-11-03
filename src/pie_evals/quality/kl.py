@@ -15,6 +15,7 @@ two engines' own greedy answers.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import time
@@ -137,6 +138,11 @@ def compare(ref: list[list[dict[int, float]]], pie: list[list[dict[int, float]]]
         "top1_agree_decisive": dec_agree / dec_total if dec_total else None, "decisive_positions": dec_total,
         "ref_top1_p": ref_p1 / total if total else None, "ref_topk_mass": ref_mass / total if total else None,
     }
+
+
+def texts_hash(texts: list[str]) -> str:
+    """A short digest of a list of texts (the rendered prompts a saved reference was written for)."""
+    return hashlib.sha256(json.dumps(texts).encode()).hexdigest()[:16]
 
 
 def exact_match(a: list[str], b: list[str]) -> float:
