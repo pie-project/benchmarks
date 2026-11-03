@@ -270,6 +270,14 @@ competitive:
                 KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
     a40-x1:
       family:
+        glm5_next:
+          knobs:
+            compilation_config:
+              value: {cudagraph_mode: PIECEWISE}
+              rationale: >
+                GLM-5.3-Flash's sparse MLA runs on XPU_MLA_SPARSE on sm_86 too, the whole model eager
+                ("setting cudagraph_mode=NONE"): raw-512-256 rounds 52.2/55.6/52.0/56.2/54.6 tok/s, noisy
+                (CoV 3.2%). Piecewise graphs as for GLM-5.3 below.
         glm_moe_dsa:
           knobs:
             compilation_config:
