@@ -147,9 +147,9 @@ class SglangEngine(Engine):
                 # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV.
                 # A 32 GB RTX 5090 keeps the 0.75 above: at 0.88 the 2048-token prefill graph OOMed (2.95 GB free)
                 gmu = 0.88
-            if self.artifact.family in ("glm5_next", "hy_v4") and card <= 32:
-                # 0.9 of a 32 GB card leaves 3 GiB past the static pool, and the GLM-5.3-Flash and Hy4 minis'
-                # breakable prefill graphs OOMed capturing there (9 / 25 MiB free, pro4500-x1 raw-512-256)
+            if self.artifact.family in ("glm5_next", "hy_v4", "muse_spark") and card <= 32:
+                # 0.9 of a 32 GB card leaves 3 GiB past the static pool, and the GLM-5.3-Flash, Hy4 and Muse Spark minis'
+                # prefill OOMed there (9 / 25 MiB free at 0.9, Muse Spark 230 MiB at 0.85; pro4500-x1)
                 gmu = min(float(gmu), 0.78)
             if self.artifact.family == "qwen3_6_moe" and card <= 32:
                 # the Qwen3.6-35B-A3B mini (20.4 GiB, 64% of a 32 GB card) took the 0.95 above and its prefill graphs
