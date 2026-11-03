@@ -84,7 +84,8 @@ window.Pie = window.Pie || {};
     { test: /^minimax/, name: "MiniMax", logo: "minimax" },
     { test: /^nemotron/, name: "NVIDIA", logo: "nvidia" },
   ];
-  const makerOf = (model) => MAKERS.find((m) => m.test.test(Pie.store.index.models[model.split("~")[0]]?.family || "")) || { name: "", logo: "" };
+  // a miniature (nemotron-3-ultra-mini8) has no catalog family: its id names the maker
+  const makerOf = (model) => { const id = model.split("~")[0]; const family = Pie.store.index.models[id]?.family || id.replace(/-/g, "_"); return MAKERS.find((m) => m.test.test(family)) || { name: "", logo: "" }; };
   // each maker's colour, taken from its logo, for the dot before its name in the makers menu; a black logo reads grey
   const MAKER_TINT = { Alibaba: "#615ced", DeepSeek: "#4d6bfe", Google: "#4285f4", Meta: "#0866ff", OpenAI: "#10a37f", Xiaomi: "#ff6900", "Z.ai": "#8e8e93", Moonshot: "#8e8e93", Tencent: "#0055e9", MiniMax: "#e73562", NVIDIA: "#76b900" };
   // a model with no maker logo in the set runs in the cloud: a cloud glyph on its tile
