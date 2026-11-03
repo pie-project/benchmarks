@@ -103,6 +103,17 @@ competitive:
               rationale: >
                 gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
                 KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
+  artifact:
+    gpt-oss-120b-mxfp4-mini:
+      platform:
+        a40-x1:
+          knobs:
+            disable_piecewise_cuda_graph:
+              value: true
+              rationale: >
+                As on Ada: SGLang 0.5.22 runs out of memory capturing the 120B miniature's prefill graphs on a
+                48 GB A40 (c128, 2.15 GB free at 0.95, "num_active_captures_ > 0"); prefill runs eager, decode
+                keeps its graphs.
 
 # The fork that keeps every miniature running: branch pie-evals/v<release> holds one small Python fix per
 # commit over upstream's tag v<release>, and the CUDA install overlays it on the PyPI wheel (baselines.ensure_fork).
