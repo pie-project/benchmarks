@@ -105,6 +105,15 @@ svg {
   font-weight: 500;
 }
 
+.workload-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.workload-tag .mode-icon { color: var(--color-label-secondary); }
+.workload-tag .mode-icon + .mode-icon { margin-left: -4px; }  /* Raw's two marks read as one */
+
 .engine-tag::before {
   content: "";
   width: 8px;

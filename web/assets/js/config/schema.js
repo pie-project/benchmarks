@@ -351,7 +351,7 @@ window.Pie = window.Pie || {};
       numbered: true,
       filters: [],
       columns: [
-        text("label", "Workload", "Identity"),
+        reference("id", "Workload", "Identity", "workloads"),
         text("goal", "Goal", "Identity"),
         number("concurrency", "Parallel requests", "Shape", "", 0),
         number("prompt_tokens", "Prompt", "Shape", "tok", 0),
