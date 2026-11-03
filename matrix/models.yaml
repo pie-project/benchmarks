@@ -703,6 +703,42 @@ artifacts:
     max_context: 4096
     expected_gib: 14.6
     tiers: [weekly]
+  # the RTX 4090 table fill (2026-11-03): the models its row still showed as "does not fit"
+  - id: qwen3.6-27b-mini12
+    base_model: Qwen/Qwen3.6-27B
+    family: qwen3_6
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-11", period: 4, shrink_family: qwen3_5_moe, note: "3 of 16 linear/linear/linear/full periods; 14.1 GiB download, for 24 GB cards"}
+    pie_sku: qwen36-27b-bf16-kv-bf16-l12
+    platforms: [rtx4090-x1]
+    max_context: 4096
+    expected_gib: 14.1
+    tiers: [weekly]
+  - id: gpt-oss-120b-mxfp4-mini24-e32
+    base_model: openai/gpt-oss-120b
+    params_b: 117
+    active_b: 5.1
+    family: gpt_oss
+    scheme: mxfp4
+    kind: miniature
+    miniature: {layers: "0-23", experts: 32, period: 2, note: "12 of 18 sliding/full pairs; 32 of 128 experts; 12.8 GiB download, for 24 GB cards"}
+    pie_sku: gptoss-20b-bf16-mxfp4-kv-bf16   # 24 layers of 32 experts at the 120B's widths are the 20B's shapes: pie has a row for them there
+    platforms: [rtx4090-x1]
+    max_context: 4096
+    expected_gib: 12.8
+    tiers: [weekly]
+  - id: nemotron-3-ultra-mini-e32
+    base_model: nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16
+    family: nemotron_h
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-8", experts: 32, period: 1, note: "pie's nemotron3-ultra-mini at 32 of 512 experts; 13.9 GiB download, for 24 GB cards (64 experts load at 18.9 GiB and leave vLLM and SGLang no KV)"}
+    pie_sku: nemotron3-ultra-mini-bf16-kv-bf16-e32
+    platforms: [rtx4090-x1]
+    max_context: 4096
+    expected_gib: 13.9
+    tiers: [weekly]
 
   - id: nemotron-h-mini8
     base_model: nvidia/Nemotron-H-8B-Base-8K
