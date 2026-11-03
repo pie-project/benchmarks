@@ -335,6 +335,10 @@ class PieEngine(Engine):
                 # pie_bench writes 10240, and the scratch those axes reserve is wired: Qwen3.5-9B's took
                 # 5.2 GB on the 16 GB M3 and left no byte for the kv pool (0.5.3-b5, every rerun doesnt_fit)
                 v = SMALL_MAC_FORWARD_TOKENS
+            elif knob == "max_forward_tokens" and v is None and self.platform.backend == Backend.CUDA and self.artifact.family == "nemotron_h" and 0 < float(self.platform.memory_gib or 0) <= 32:
+                # pie_bench's 10240 leaves the Nemotron-3-Super mini 905 MiB for the cache on a 32 GB RTX 5090 (50
+                # sequences seat): 2048-token fires lift c256 3.63k -> 3.84k tok/s, pf16-512 15.8k (16.2k before)
+                v = 2048
             elif v == "$serve_concurrency":
                 from pie_evals.node.engines.shape import workload_concurrency
 
