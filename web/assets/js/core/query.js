@@ -37,7 +37,19 @@ window.Pie = window.Pie || {};
   // a phase of a run (Raw Decode) picks the run's rows (raw): the Workloads table's rows, one run each
   const runOf = (key, value) => (key === "workload" ? store.index.workloads[value]?.of || value : value);
   const matchesFilters = (row, filters) =>
-    Object.entries(filters).every(([key, values]) => !values.length || values.some((value) => runOf(key, value) === String(row[key])));
+    Object.entries(filters).every(([key, values]) => !values.length || values.some((value) => value === String(row[key]) || runOf(key, value) === String(row[key])));
+
+  // a Raw or Speculative run as two Results rows, its Decode and its Prefill, each with its own phase's numbers
+  const DECODE_ONLY = ["decode_tok_s", "output_tok_s", "itl_ms_p50", "itl_ms_p99"];
+  const PREFILL_ONLY = ["prefill_tok_s", "ttft_ms_p50", "ttft_ms_p99"];
+  const byPhase = (rows) => rows.flatMap((row) => {
+    if (!["raw", "spec"].includes(row.workload)) return [row];
+    const decode = { ...row, workload: `${row.workload}_decode` };
+    const prefill = { ...row, workload: `${row.workload}_prefill` };
+    for (const key of PREFILL_ONLY) delete decode[key];
+    for (const key of DECODE_ONLY) delete prefill[key];
+    return [decode, prefill];
+  });
 
   const compare = (key, direction) => (a, b) => {
     const emptyOrder = format.isEmpty(a[key]) - format.isEmpty(b[key]);
@@ -49,7 +61,7 @@ window.Pie = window.Pie || {};
 
   const visibleRows = (state) => {
     const schema = Pie.schema[state.table];
-    const source = state.table === "results" ? store.snapshot(state.release)
+    const source = state.table === "results" ? byPhase(store.snapshot(state.release))
       : state.table === "quality" ? store.qualitySnapshot(state.release)
       : store.rows(state.table);
     const query = state.query.trim().toLowerCase();
