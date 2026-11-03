@@ -711,7 +711,7 @@ artifacts:
     kind: miniature
     miniature: {layers: "0-11", period: 4, shrink_family: qwen3_5_moe, note: "3 of 16 linear/linear/linear/full periods; 14.1 GiB download, for 24 GB cards"}
     pie_sku: qwen36-27b-bf16-kv-bf16-l12
-    platforms: [rtx4090-x1, pro4500-x1]
+    platforms: [rtx4090-x1, pro4500-x1, rtx5090-x1]
     max_context: 4096
     expected_gib: 14.1
     tiers: [weekly]
@@ -724,7 +724,7 @@ artifacts:
     kind: miniature
     miniature: {layers: "0-23", experts: 32, period: 2, note: "12 of 18 sliding/full pairs; 32 of 128 experts; 12.8 GiB download, for 24 GB cards"}
     pie_sku: gptoss-20b-bf16-mxfp4-kv-bf16   # 24 layers of 32 experts at the 120B's widths are the 20B's shapes: pie has a row for them there
-    platforms: [rtx4090-x1, pro4500-x1]
+    platforms: [rtx4090-x1, pro4500-x1, rtx5090-x1]
     max_context: 4096
     expected_gib: 12.8
     tiers: [weekly]
