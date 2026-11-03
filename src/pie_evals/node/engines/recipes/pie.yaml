@@ -108,7 +108,7 @@ default:
               value: 2048
               rationale: >
                 At 8192-token fires each wave of prompts stalls the Nemotron-3-Super mini's decode on a 48 GB A40:
-                2048 (vLLM's chunk there too) lifts c512 1392 to 1685 tok/s (vLLM 1476), c256 1380 to 1641,
+                2048 lifts c512 1392 to 1685 tok/s (vLLM 1476), c256 1380 to 1641,
                 pf16-512 7.06k to 6.81k (vLLM 6.46k).
         qwen3_6:
           knobs:
