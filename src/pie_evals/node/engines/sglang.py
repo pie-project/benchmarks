@@ -181,9 +181,9 @@ class SglangEngine(Engine):
             dsa = "tilelang"
         blackwell = self.platform is not None and str(self.platform.arch) == "blackwell"
         rtx_blackwell = blackwell and "RTX" in str(self.platform.accelerator)
-        # DeepSeek-V4's pool on SM120 stores only the FP8 FlashMLA page layout ("assert self.store_dtype == torch.uint8"
-        # at a bf16 KV, every cell on pro4500-x1): RTX Blackwell keeps the fp8 KV SGLang deploys it with
-        if self.artifact.family in ("glm_moe_dsa", "glm5_next", "hy_v4", "deepseek_v4") and blackwell and not (self.artifact.family == "deepseek_v4" and rtx_blackwell):
+        # DeepSeek-V4's pool stores only the FP8 FlashMLA page layout ("assert self.store_dtype == torch.uint8" at a
+        # bf16 KV, every cell on pro4500-x1 and b200-x1): it keeps the fp8 KV SGLang deploys it with
+        if self.artifact.family in ("glm_moe_dsa", "glm5_next", "hy_v4") and blackwell:
             # 0.5.22 stores a DSA model's KV cache in fp8_e4m3 on SM100 and up (SM120 too), and DeepSeek-V4's on every
             # GPU; bf16 is the precision pie and vLLM serve: GLM-5.3 mini pf256-512 66k tok/s with fp8 KV, 26.7k with
             # bf16 (pro6000-x1)
