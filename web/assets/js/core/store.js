@@ -32,6 +32,10 @@ window.Pie = window.Pie || {};
     prefill_batch: "How many prompt tokens per second the machine reads when many prompts arrive at once.",
   };
   for (const w of tables.workloads || []) w.goal = GOALS[w.id] || null;
+  // single-request workloads first, then the batched ones
+  const ORDER = ["raw", "spec", "throughput", "prefill_batch"];
+  const rank = (w) => (ORDER.includes(w.id) ? ORDER.indexOf(w.id) : ORDER.length);
+  (tables.workloads || []).sort((a, b) => rank(a) - rank(b));
   // whether a model can speculate: it has a drafter
   for (const m of tables.models || []) m.speculation = m.draft === "true" ? "Yes" : "No";
 
