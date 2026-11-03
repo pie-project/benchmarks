@@ -290,10 +290,8 @@ default:
               rationale: >
                 The 48 GB of weights leave an 80 GB H100 about 15 GB for the cache rows and graph bodies once
                 512 lanes' readout rows and an 8192-token fire's arena are down, and the pool seats fewer than
-                256 of c512's lanes: rows for 256 lanes and 4096-token fires give the pool the rest. c512
-                7.9k to 8.8k tok/s (vLLM 9.0k).
-            max_forward_tokens:
-              value: 4096
+                256 of c512's lanes: readout rows for 256 lanes give the pool the rest. c512 7.9k to 8.5k tok/s
+                (vLLM 9.0k); 4096-token fires reached 8.8k but cut pf64-512 49.1k to 44.8k.
     gemma-4-31b-bf16:
       platform:
         h100-sxm-x1:
@@ -302,10 +300,9 @@ default:
               value: 64
               rationale: >
                 The 58 GB of weights leave an 80 GB H100 12.8 GB past them, of which an 8192-token fire's
-                arena and 512 lanes' readout rows took all but ~7 GB: the pool seated ~18 of c512's lanes. Rows
-                for 64 lanes and 2048-token fires seat ~28: c512 664 to 990 tok/s (vLLM 1285, ~37 lanes).
-            max_forward_tokens:
-              value: 2048
+                arena and windowed kv rows and 512 lanes' readout rows took all but ~7 GB: the pool seated ~18
+                of c512's lanes. Readout rows for 64 lanes seat ~26: c512 664 to 934 tok/s (vLLM 1285, ~37
+                lanes); 2048-token fires reach 990 but cost the prefill rows their wide passes.
 competitive:
   extends: default
   knobs:
