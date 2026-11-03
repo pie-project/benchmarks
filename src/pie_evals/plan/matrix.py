@@ -132,13 +132,15 @@ class Matrix:
         )
 
     # ---- expansion ---------------------------------------------------------------
-    def expand(self) -> list[Cell]:
+    def expand(self, platforms=None, artifacts=None) -> list[Cell]:
         cells: list[Cell] = []
         for eng in self.engines.values():
             for plat in self.platforms.values():
-                if plat.os not in eng.os:
+                if plat.os not in eng.os or (platforms and plat.id not in platforms):
                     continue
                 for art in self.artifacts.values():
+                    if artifacts and art.id not in artifacts:
+                        continue
                     if str(art.source_format) not in eng.formats:
                         continue
                     if art.platforms is not None and plat.id not in art.platforms:

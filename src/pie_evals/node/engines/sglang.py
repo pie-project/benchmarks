@@ -84,8 +84,9 @@ class SglangEngine(Engine):
             # they leave no KV room under it (kimi-k3 mini, 18.4 GiB on a 32 GB 5090: "raise
             # --mem-fraction-static above 0.935"); a heavy checkpoint gets the fraction it needs
             weights = float(self.artifact.expected_gib or 0.0)
-            # Qwen3.8-27B bf16 (52% of a 96 GB card) keeps 0.9: at 0.95 its prefill graphs fail to capture (pf8-pf32)
-            if weights and card and weights / card > 0.5 and not (self.artifact.family == "qwen3_6" and weights / card < 0.6):
+            # Qwen3.8-27B bf16 (52% of a 96 GB card, 63% of an 80 GB one) keeps 0.9: at 0.95 its prefill graphs fail
+            # to capture (pf8-pf32; on the H100 "num_active_captures_ > 0" at pf4-pf32, c16, c32)
+            if weights and card and weights / card > 0.5 and not (self.artifact.family == "qwen3_6" and weights / card < 0.65):
                 gmu = max(float(gmu), 0.95)
             elif self.artifact.family == "kimi_k3":
                 # past the static pool SGLang keeps only graphs and activations; Kimi-K3's MoE
@@ -94,6 +95,10 @@ class SglangEngine(Engine):
                 # has no KV left beside a 256-wide graph (36212036845) and at 0.82 kv-oversub OOMs in prefill (36264810212)
                 wide = card < 80 and workload_concurrency(workload) >= 128
                 gmu = min(float(gmu), 0.79 if wide else 0.75)
+                if card < 48:
+                    # the 12 GiB one-period Kimi-K3 mini on a 32 GB RTX 5090: at 0.75 its Triton fused MoE
+                    # asked 710 MiB past the static pool at c64-c256 and every pf cell (365 MiB free)
+                    gmu = min(float(gmu), 0.6)
             elif self.artifact.family == "deepseek_v4" and card < 80 and str(self.platform.arch) in ("ada", "ampere"):
                 # below sm_90 the fork runs DeepSeek-V4 attention and indexer on Triton/torch fallbacks whose
                 # activations live past the static pool: at 0.9 c512 and pf16-512 OOMed on the L40S
@@ -105,27 +110,60 @@ class SglangEngine(Engine):
                 # below), Qwen3.8-Flash-Next OOMed at 0.9 on a 24 GB 4090 (40421366253). vLLM's 0.9
                 # already holds its graphs and activations; this keeps SGLang's inside the same card
                 gmu = min(float(gmu), 0.85 if card >= 80 else 0.75)
-            if self.artifact.family == "minimax_m3" and card >= 80:
+            if self.platform.id == "l4-x1":
+                # a 24 GB L4 keeps 3.4 GiB past the static pool for SGLang's graphs and activations: the 13 GiB
+                # Qwen3.6-35B-A3B mini took 0.95 above and every c/pf graph capture failed ("num_active_captures_ > 0")
+                gmu = min(float(gmu), 0.85)
+            if self.artifact.family in ("minimax_m3", "glm_moe_dsa") and card >= 80:
                 # MiniMax-M3.1-Flash mini60-e16 (43.4 GiB, 54% of an 80 GB H100) took the 0.95 above and its
                 # block-FP8 Triton prefill OOMed at pf8 past the static pool (347 MiB free); 0.88 leaves room
+                # GLM-5.3 mini78-e12 (51 GiB) likewise OOMed in FA3 prefill at pf16/pf32-512 at 0.95
                 gmu = min(float(gmu), 0.88)
+            if self.artifact.family in ("glm_moe_dsa", "hy_v4", "minimax_m3") and card < 48:
+                # the GLM-5.3 mini at 0.9 on a 32 GB RTX 5090 left 2.55 GB past the static pool, and its
+                # 2048-token piecewise prefill graph OOMed capturing the MLA bmm buffers (every cell); 0.8 leaves it room.
+                # The Hy4 mini OOMed the same way (2.54 GB free, radix attention output), the MiniMax-M3.1 mini at its
+                # 4096-token graph (2.40 GB free, c64-c256 and every pf cell)
+                gmu = min(float(gmu), 0.80)
+            if self.artifact.family == "deepseek_v4" and str(self.platform.arch) == "hopper":
+                # the 5-layer DeepSeek-V4-Flash mini leaves 0.9 of an H100 to KV, and FlashInfer's CUTLASS MoE
+                # workspace for a 4096-token prefill OOMed past it (pf8-512, h100-sxm-x1)
+                gmu = min(float(gmu), 0.85)
+            if self.artifact.family == "muse_spark" and card <= 80:
+                # Muse Spark mini4 (12 GiB) at 0.9 on an 80 GB H100: its pf16/pf32-512 prefill OOMed past
+                # the static pool (512 MiB asked, 115 MiB free); pf64 and up passed. 0.85 leaves the activations room.
+                # A 32 GB RTX 5090 at 0.85 still OOMed every c and pf cell (512 MiB asked, 199 MiB free): 0.75 there
+                gmu = min(float(gmu), 0.85 if card >= 48 else 0.75)
             if card < 80 and workload_concurrency(workload) >= 512:
                 # a 512-wide decode graph and batch OOM past the static pool at 0.9 on a 48 GB L40S
                 # (Hy4 mini c512 / pf512-512: 160-190 MiB free); 0.85 leaves them room
                 gmu = min(float(gmu), 0.85)
-            if self.artifact.family == "muse_glimmer" and card < 80 and workload_concurrency(workload) >= 128:
+            if self.artifact.family == "muse_glimmer" and card < 80 and (workload_concurrency(workload) >= 128 or card <= 32):
                 # the 27 GiB Muse Glimmer miniature's 256-wide batches OOM past the static pool at 0.95
-                # on a 48 GB L40S (150-200 MiB free); 0.85 still holds the weights and the batch's KV
+                # on a 48 GB L40S (150-200 MiB free); 0.85 still holds the weights and the batch's KV. On a 32 GB
+                # card its 12-layer mini (19.4 GiB) OOMed at 0.95 at every shape below c128 too (pro4500-x1)
                 gmu = 0.85
-            if self.artifact.family == "glm5_next" and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+            if self.artifact.family == "glm5_next" and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator) and card >= 80:
                 # the TileLang DSA kernels (below) want more than 0.95 leaves past the static pool: GLM-5.3-Flash
-                # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV
+                # OOMed by 72 MiB on the 96 GB card (weekly 39904326176); a 768-token cell needs little KV.
+                # A 32 GB RTX 5090 keeps the 0.75 above: at 0.88 the 2048-token prefill graph OOMed (2.95 GB free)
                 gmu = 0.88
+            if self.artifact.family in ("glm5_next", "hy_v4", "muse_spark") and card <= 32:
+                # 0.9 of a 32 GB card leaves 3 GiB past the static pool, and the GLM-5.3-Flash, Hy4 and Muse Spark minis'
+                # prefill OOMed there (9 / 25 MiB free at 0.9, Muse Spark 230 MiB at 0.85; pro4500-x1)
+                gmu = min(float(gmu), 0.78)
+            if self.artifact.family == "qwen3_6_moe" and card <= 32:
+                # the Qwen3.6-35B-A3B mini (20.4 GiB, 64% of a 32 GB card) took the 0.95 above and its prefill graphs
+                # failed to capture past the static pool ("num_active_captures_ > 0", pro4500-x1 raw-512-256)
+                gmu = min(float(gmu), 0.88)
             if self.platform.id == "rtx4090-x1":
                 # 0.5.22 captures its piecewise prefill graphs past the static pool, and on a 24 GB card the
                 # 10% left at 0.9 does not hold them (GLM-5.3 and Hy4 minis raw: OOM capturing at 36 MiB free);
                 # 0.80 keeps the graphs, a checkpoint over 60% of the card the 0.85 its weights and KV need
                 gmu = min(float(gmu), 0.85 if weights / card > 0.6 else 0.80)
+                if self.artifact.family == "kimi_k3":
+                    # the Kimi-K3 mini's MoE prefill wants 754 MiB more than 0.75 leaves (pf16-512 and c512 OOM)
+                    gmu = min(float(gmu), 0.70)
             args += ["--gpu-mem-util", str(gmu)]  # -> mem_fraction_static
         graph_bs = r.get("cuda_graph_max_bs")
         if graph_bs is None:
@@ -150,12 +188,16 @@ class SglangEngine(Engine):
             # 0.5.22 picks trtllm-gen MLA for a bf16 KV cache on SM120, an SM100-only kernel ("TllmGenFmhaRunner:
             # Unsupported architecture", GLM-5.3-Flash on pro6000-x4, weekly 39901346624); TileLang runs on SM120
             dsa = "tilelang"
-        rtx_blackwell = self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator)
-        if self.artifact.family in ("glm_moe_dsa", "glm5_next") and rtx_blackwell:
-            # 0.5.22 stores a DSA model's KV cache in fp8_e4m3 on SM100 and up (SM120 too); bf16 is the precision pie and
-            # vLLM serve: GLM-5.3 mini pf256-512 66k tok/s with fp8 KV, 26.7k with bf16 (pro6000-x1)
+        blackwell = self.platform is not None and str(self.platform.arch) == "blackwell"
+        rtx_blackwell = blackwell and "RTX" in str(self.platform.accelerator)
+        # DeepSeek-V4's pool stores only the FP8 FlashMLA page layout ("assert self.store_dtype == torch.uint8" at a
+        # bf16 KV, every cell on pro4500-x1 and b200-x1): it keeps the fp8 KV SGLang deploys it with
+        if self.artifact.family in ("glm_moe_dsa", "glm5_next", "hy_v4") and blackwell:
+            # 0.5.22 stores a DSA model's KV cache in fp8_e4m3 on SM100 and up (SM120 too), and DeepSeek-V4's on every
+            # GPU; bf16 is the precision pie and vLLM serve: GLM-5.3 mini pf256-512 66k tok/s with fp8 KV, 26.7k with
+            # bf16 (pro6000-x1)
             args += ["--sglang-kv-cache-dtype", "bfloat16"]
-            if dsa is None and self.artifact.family == "glm_moe_dsa":
+            if dsa is None and self.artifact.family == "glm_moe_dsa" and rtx_blackwell:
                 # at a bf16 KV, trtllm-gen MLA is SM100-only and TileLang's sparse prefill wants 231 KB of shared memory
                 dsa = "flashmla_sparse"
         if dsa:
@@ -170,6 +212,10 @@ class SglangEngine(Engine):
             # 0.5.22's auto pick on SM120, flashinfer_mxfp4 (cutlass_sm120), quantizes the activations to MXFP8
             # (MXFP8 x MXFP4); Marlin keeps them bf16 (W4A16), the precision pie and vLLM serve gpt-oss at.
             # triton_kernel, the other bf16 runner, fails there ("persistent kernel is required", pro6000-x1)
+            moe = "marlin"
+        if moe is None and self.artifact.family == "gpt_oss" and self.platform is not None and str(self.platform.arch) == "ampere":
+            # 0.5.22's auto pick below sm_90 dequantizes every expert each forward (A100: TTFT 1.8 s at 600 tokens,
+            # pf64-512 hangs past 600 s); Marlin is its W4A16 MXFP4 runner, the one vLLM picks on Ampere
             moe = "marlin"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]

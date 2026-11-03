@@ -116,7 +116,7 @@ def recipe_for_cell(recipe: dict, recipe_name: str, cell: Cell) -> dict:
     SGLang then captured graphs to that cell's concurrency (32) and ran every
     wider shape eager, and vLLM's prefix cache followed the first shape. The
     keys the boot added (snapshot_dir, pin, program_path) are kept."""
-    fresh = load_recipe(str(cell.engine), recipe_name, cell.platform, cell.workload, family=cell.artifact.family)
+    fresh = load_recipe(str(cell.engine), recipe_name, cell.platform, cell.workload, family=cell.artifact.family, artifact=cell.artifact.id)
     for k, v in recipe.items():
         if isinstance(fresh.get(k), str) and fresh[k].startswith("$serve_"):
             fresh[k] = v
@@ -190,6 +190,10 @@ class NodeRunner:
         # a baseline boots its server inside the cell: a checkpoint of hundreds of GiB loads, compiles and captures
         # for longer than ten minutes (vLLM on MiMo-V2.6-Flash, 166 GiB on two H200s: still loading at 600 s)
         gib = float(getattr(getattr(cell, "artifact", None), "expected_gib", None) or 0)
+        # SGLang on a B200 autotunes its MXFP8 GEMMs and captures 74 prefill shapes before it serves:
+        # MiniMax-M3.1-Flash's miniature took past ten minutes to boot
+        if str(getattr(cell, "engine", "")) in ("sglang", "vllm"):
+            floor = max(floor, 1200.0)
         if gib >= 100:
             floor = max(floor, 600.0 + gib * 6.0)
         scaled = max(floor, float(cell.workload.est_minutes) * 60.0 * 10.0, float(cell.workload.params.get("round_timeout_s") or 0))
@@ -432,7 +436,7 @@ class NodeRunner:
             try:
                 pre.between_engines(self.platform.os if self.platform else None, [])
                 cls = get_engine(first.engine)
-                recipe = load_recipe(str(first.engine), recipe_name, first.platform, first.workload, family=first.artifact.family)
+                recipe = load_recipe(str(first.engine), recipe_name, first.platform, first.workload, family=first.artifact.family, artifact=first.artifact.id)
                 recipe["program_path"] = first.program.path
                 recipe["snapshot_dir"] = str(model_path)
                 if str(first.engine) in self.job.baseline_versions:

@@ -588,6 +588,8 @@ window.Pie = window.Pie || {};
         .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p)
           // multi-GPU machines (×2, ×4, ×8) hidden for now, to come back later: delete this line to show them again
           .filter((hw) => !(hw.class === "gpu" && hw.count > 1))
+          // not shown: A100 PCIe, H100 PCIe and L4 are not evaluated
+          .filter((hw) => !["a100-pcie-x1", "h100-pcie-x1", "l4-x1"].includes(hw.id))
           .map((hw) => hw.id) }))
         .filter((g) => !only || g.macs.length);
       const macs = groups.flatMap((g) => g.macs);
