@@ -264,6 +264,7 @@ class Engine(ABC):
     def process_env(self, *extra: dict[str, str]) -> dict[str, str]:
         drop = self.drop_env()
         env = {k: v for k, v in os.environ.items() if k not in drop}
+        env.setdefault("MAX_JOBS", jit_jobs())
         for e in (self.env, *extra):
             env.update(e)
         return env
@@ -522,6 +523,21 @@ def stall_dump(pids: list[int]) -> str:
                     return "?"
             out.append(f"-- tid {task.name} {read('comm')} wchan={read('wchan')}\n{read('stack')}")
     return "\n".join(out)
+
+
+def jit_jobs() -> str:
+    """Parallel compiles for an engine's JIT build (FlashInfer's ninja reads MAX_JOBS): what the container's CPU quota
+    and memory hold, not the host's core count. Unset, ninja ran 82 nvcc at once on an RTX 4090 pod of 8.5 CPUs and
+    87 GiB (about 1.6 GiB each) building SGLang's Nemotron-H CUTLASS MoE, and the container was OOM-killed."""
+    jobs = os.cpu_count() or 8
+    for path, per in (("/sys/fs/cgroup/cpu.max", None), ("/sys/fs/cgroup/memory.max", 4 << 30)):
+        try:
+            limit = open(path).read().split()
+            if limit and limit[0] != "max":
+                jobs = min(jobs, max(1, int(limit[0]) // int(limit[1]) if per is None else int(limit[0]) // per))
+        except (OSError, ValueError, IndexError):
+            pass
+    return str(jobs)
 
 
 def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: float, extra_pids=lambda: [], poll_s: float = 5.0, on_stall=None) -> tuple[int, bool, bool]:
