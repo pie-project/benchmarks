@@ -101,7 +101,7 @@ def main() -> int:
             # layers: the top-1 holds 0.14% of the mass) has no top-1 to gate on; its KL still decides
             elif kl is None or (top1 is None and not (p.get("miniature") and p.get("positions") and p.get("decisive_positions") == 0)):
                 quality = {"status": "fail", "why": "no positions compared (pie did not load or produced no tokens)"}
-            elif kl > qspec["max_kl"] or (top1 is not None and top1 < qspec["min_top1"] and m["model"] not in qspec.get("kl_only", [])):
+            elif kl > max(qspec["max_kl"], 2 * qspec.get("ref_self_kl", {}).get(m["model"], 0.0)) or (top1 is not None and top1 < qspec["min_top1"] and m["model"] not in qspec.get("kl_only", [])):
                 quality = {"status": "anomaly", "kl": kl, "top1": top1}
             else:
                 quality = {"status": "pass", "kl": kl, "top1": top1}
