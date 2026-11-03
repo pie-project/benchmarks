@@ -86,7 +86,8 @@ class SglangEngine(Engine):
             weights = float(self.artifact.expected_gib or 0.0)
             # Qwen3.8-27B bf16 (52% of a 96 GB card, 63% of an 80 GB one) keeps 0.9: at 0.95 its prefill graphs fail
             # to capture (pf8-pf32; on the H100 "num_active_captures_ > 0" at pf4-pf32, c16, c32)
-            if weights and card and weights / card > 0.5 and not (self.artifact.family == "qwen3_6" and weights / card < 0.65):
+            # the 19.4 GiB Muse Glimmer mini12 (61% of a 32 GB 5090) at 0.95 OOMed past the static pool at pf16-512 and c64
+            if weights and card and weights / card > 0.5 and not (self.artifact.family in ("qwen3_6", "muse_glimmer") and weights / card < 0.65):
                 gmu = max(float(gmu), 0.95)
             elif self.artifact.family == "kimi_k3":
                 # past the static pool SGLang keeps only graphs and activations; Kimi-K3's MoE
@@ -217,8 +218,17 @@ class SglangEngine(Engine):
             # 0.5.22's auto pick below sm_90 dequantizes every expert each forward (A100: TTFT 1.8 s at 600 tokens,
             # pf64-512 hangs past 600 s); Marlin is its W4A16 MXFP4 runner, the one vLLM picks on Ampere
             moe = "marlin"
+        if moe is None and self.artifact.family == "kimi_k3" and blackwell and not rtx_blackwell:
+            # 0.5.22's auto pick on SM100, flashinfer_mxfp4 (trtllm-gen), quantizes the activations to MXFP8, and
+            # trtllm-gen has no bf16-activation kernel for Kimi-K3's experts ("No kernel found ... mDtypeB: Bfloat16");
+            # Marlin keeps them bf16 (W4A16), as the release declares and pie serves (the triton kernels have no SITU)
+            moe = "marlin"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]
+        if moe is None and self.artifact.family == "gpt_oss" and blackwell and not rtx_blackwell:
+            # 0.5.22's auto pick on SM100, flashinfer_mxfp4 (trtllm-gen), quantizes the activations to MXFP8
+            # (MXFP8 x MXFP4); its bf16 precision keeps them bf16 (W4A16), as pie and vLLM serve gpt-oss
+            args += ["--sglang-flashinfer-mxfp4-moe-precision", "bf16"]
         if r.get("sampling_backend"):
             args += ["--sglang-sampling-backend", str(r["sampling_backend"])]
         if r.get("page_size"):
@@ -227,7 +237,12 @@ class SglangEngine(Engine):
             args += ["--sglang-max-total-tokens", str(int(r["max_total_tokens"]))]
         if r.get("disable_cuda_graph"):
             args.append("--sglang-disable-cuda-graph")
-        if r.get("disable_piecewise_cuda_graph"):
+        piecewise_off = r.get("disable_piecewise_cuda_graph")
+        if piecewise_off is None and self.artifact.family in ("minimax_m3", "glm_moe_dsa", "hy_v4") and self.platform is not None and str(self.platform.arch) == "ampere":
+            # 0.5.22 spends minutes per piecewise prefill shape compiling these models' sm_80 fallbacks (GLM-5.3 mini: 18 s a shape) (36 of 42 in
+            # 5:51 on an A100, the bench's 180 s no-CPU-work stop kills it); decode graphs still capture
+            piecewise_off = True
+        if piecewise_off:
             args.append("--sglang-disable-piecewise-cuda-graph")
 
         hybrid_swa = r.get("disable_hybrid_swa_memory")

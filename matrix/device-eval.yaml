@@ -18,7 +18,11 @@ setups:
 # kl_only: DSA models whose sparse indexer keeps fewer than 64 keys a query (index_topk < 64) gate on KL alone: tiny
 # numeric differences flip which keys survive, so top-1 diverges between any two engines (Hy4, index_topk 16:
 # vLLM vs SGLang agree on 56% of teacher-forced positions, below pie vs vLLM's 62.5%; vLLM eager vs graphs 98.7%)
-quality: {task_prefix: "parity@", max_kl: 0.05, min_top1: 0.90, decisive_margin: 0.5, kl_only: [hy4-preview]}
+# ref_self_kl: models whose reference disagrees with itself past max_kl; their KL gates at twice that. MiniMax-M3.1-Flash
+# (NVFP4 experts on NVFP4 activations): vLLM against vLLM at 8 sequences instead of 1, same texts, KL 0.0545, top-1 0.93
+# (b200-x1, vLLM 0.32.0)
+quality: {task_prefix: "parity@", max_kl: 0.05, min_top1: 0.90, decisive_margin: 0.5, kl_only: [hy4-preview],
+          ref_self_kl: {minimax-m3.1-flash: 0.0545}}
 models:
   - {n: 1, model: deepseek-v4.1-flash, family: deepseek_v41, covers: "CSA2 + single-pass mHC + Engram + MoE"}
   - {n: 2, model: deepseek-v4-flash, family: deepseek_v4, covers: "CSA/HCA sparse attention + mHC + MoE"}

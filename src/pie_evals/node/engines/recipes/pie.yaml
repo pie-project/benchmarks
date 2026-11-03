@@ -100,6 +100,46 @@ default:
             engine_option:
               value: {max_state_slots: 64}
   platform:
+    a100-sxm-x1:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                The 80 GB rule (8 GiB of KV, 16 state slots) seats 16 lanes for Qwen3.8-27B bf16 on an A100 SXM: c64
+                400 tok/s against vLLM's 1007. 64 slots (about 6 GB of delta state) and the default KV pool.
+            engine_option:
+              value: {max_state_slots: 64}
+        qwen3_6_moe:
+          knobs:
+            max_forward_tokens:
+              value: 32768
+              rationale: >
+                Wider prefill fires feed Qwen3.6-35B-A3B's 64-expert mini more rows each on an A100 SXM: pf32-512
+                23.7k -> 24.1k and pf64-512 23.9k -> 24.7k tok/s (SGLang 25.0k / 25.6k).
+    a40-x1:
+      family:
+        nemotron_h:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At 8192-token fires each wave of prompts stalls the Nemotron-3-Super mini's decode on a 48 GB A40:
+                2048 lifts c512 1392 to 1685 tok/s (vLLM 1476), c256 1380 to 1641,
+                pf16-512 7.06k to 6.81k (vLLM 6.46k).
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                The 80 GB rule (8 GiB of KV, 16 state slots) seated 16 of c128's lanes for the Qwen3.8-27B
+                miniature on a 48 GB A40: 287 tok/s against vLLM's 901. As on Ada, 128 slots and no cap:
+                c128 1075 tok/s, pf8-512 unchanged (3.80k).
+            engine_option:
+              value: {max_state_slots: 128}
+            max_forward_tokens:
+              value: 2240
     l4-x1:
       family:
         muse_glimmer:
@@ -163,6 +203,20 @@ default:
               rationale: >
                 vLLM chunks Gemma-4-26B-A4B's prefill at 2048 tokens on the RTX 4090; the mini's c256 at pie's
                 8192-token fires 1.53k tok/s, at 2048 1.70k (vLLM 1.94k on mo5t09; its kv room seats ~17 lanes).
+        kimi_k3:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At 8192-token fires the Kimi-K3 mini's activation arena (4.3 GB) leaves a 24 GB RTX 4090 538 MiB for
+                graph bodies and cache rows, and its 64 state slots are served at 6 ("max_state_slots 64 is served at
+                6"): c64 ran 504 tok/s against vLLM's 3115. vLLM chunks its prefill at 2048 there too.
+            engine_option:
+              value: {max_state_slots: 64}
+              rationale: >
+                At the default 256 slots (and at 128) the Kimi-K3 mini's KDA state beside one sequence does not
+                fit what a 24 GB RTX 4090 leaves past the weights and arena ("the card does not hold this
+                deployment"); 64 slots seat c64, the widest shape vLLM serves it at there (c128 OOMs mid-run).
   arch:
     ada:
       family:
@@ -255,6 +309,16 @@ default:
                 4.4k-row pass, slower a token than two passes of four on the L40S profile's 2304:
                 pf8-512 5.8k to 6.1k tok/s (vLLM 6.2k, which prefills in 2048-token chunks);
                 gemma-4-E4B keeps 8192 (20.8k against 18.9k at 2304).
+    gemma-4-31b-mini18:
+      platform:
+        pro4500-x1:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                pie_bench's default 10240-token ask leaves the 32 GB card's cache pages short of c64's 64 lanes
+                of 768 tokens, so lanes park at each wave's end: 2048-token fires give c64 1,460 to 1,643 tok/s
+                (vLLM 1,614); pf8-512 7.8k to 7.5k (vLLM 7.1k).
     gemma-4-26b-a4b-mini:
       arch:
         ada:
@@ -266,6 +330,28 @@ default:
                 3071 cache pages: c128's 128 lanes of 425 tokens need 3456, so lanes park at every
                 wave's end. 4096 leaves 3327 pages and still holds most of pf8-512's 4.4k rows a pass:
                 c128 2057 to 2211 tok/s (vLLM 2308), pf8-512 18.9k (vLLM 18.5k).
+    gemma-4-26b-a4b-bf16:
+      platform:
+        h100-sxm-x1:
+          knobs:
+            max_forward_requests:
+              value: 256
+              rationale: >
+                The 48 GB of weights leave an 80 GB H100 about 15 GB for the cache rows and graph bodies once
+                512 lanes' readout rows and an 8192-token fire's arena are down, and the pool seats fewer than
+                256 of c512's lanes: readout rows for 256 lanes give the pool the rest. c512 7.9k to 8.5k tok/s
+                (vLLM 9.0k); 4096-token fires reached 8.8k but cut pf64-512 49.1k to 44.8k.
+    gemma-4-31b-bf16:
+      platform:
+        h100-sxm-x1:
+          knobs:
+            max_forward_requests:
+              value: 64
+              rationale: >
+                The 58 GB of weights leave an 80 GB H100 12.8 GB past them, of which an 8192-token fire's
+                arena and windowed kv rows and 512 lanes' readout rows took all but ~7 GB: the pool seated ~18
+                of c512's lanes. Readout rows for 64 lanes seat ~26: c512 664 to 934 tok/s (vLLM 1285, ~37
+                lanes); 2048-token fires reach 990 but cost the prefill rows their wide passes.
 competitive:
   extends: default
   knobs:
@@ -300,14 +386,3 @@ competitive:
       knobs: {}
     prefix_shared:
       knobs: {}
-  platform:
-    rtx4090-x1:
-      family:
-        kimi_k3:
-          knobs:
-            engine_option:
-              value: {max_state_slots: 128}
-              rationale: >
-                At the default 256 slots the Kimi-K3 mini's KDA state for one sequence beside the declared
-                slots wants 6.3 GB where a 24 GB RTX 4090 leaves 3.6 GB past the weights and arena ("the card
-                does not hold this deployment"); 128 slots, as vLLM seats about 135 lanes at c512 there.

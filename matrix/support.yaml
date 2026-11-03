@@ -20,6 +20,13 @@ unsupported:
     reason: "no quota: the project's TPU7x (Ironwood) quota is 0 in us-central1, its only region (TPUS_PER_TPU_FAMILY)"
   # SGLang 0.5.20 cannot serve kimi-k3's widest shapes on a 48 GB L40S at any static fraction: at 0.75
   # no KV fits beside the 256-wide graph, from 0.79 the MoE prefill OOMs by 768 MiB (nightlies 36212036845, 36264810212, 36295501246)
+  # SGLang 0.5.22 cannot serve the Kimi-K3 mini4 on a 24 GB RTX 4090 at c64 or pf16-512: below 0.78 static its pool holds
+  # no KDA state ("max_mamba_cache_size=-7", total_rest_memory -0.20 GB at 0.76), at 0.75 and up its MoE prefill OOMs past
+  # the pool (754 MiB wanted, 617 MiB free); vLLM and pie serve both
+  - when: {engine: sglang, family: kimi_k3, platform: rtx4090-x1, workload: c64}
+    reason: "SGLang: kimi-k3 mini c64 on 24 GB has no mem_fraction_static that fits both the KDA state pool and the MoE prefill"
+  - when: {engine: sglang, family: kimi_k3, platform: rtx4090-x1, workload: pf16-512}
+    reason: "SGLang: kimi-k3 mini pf16-512 on 24 GB has no mem_fraction_static that fits both the KDA state pool and the MoE prefill"
   - when: {engine: sglang, family: kimi_k3, platform: l40s-x1, workload: kv-oversub}
     reason: "SGLang: kimi-k3 kv-oversub on 48 GB has no mem_fraction_static that fits both KV and the MoE prefill"
   - when: {engine: sglang, family: kimi_k3, platform: l40s-x1, workload: c256}
