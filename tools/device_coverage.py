@@ -89,7 +89,8 @@ def main() -> int:
         if not q:
             quality = {"status": "missing"}
         else:
-            p = q[-1]
+            # the newest run of the variant: an earlier artifact's row (a retired miniature) can sit later in the list
+            p = max(q, key=lambda r: str(r.get("date") or ""))
             kl, top1 = p.get("kl_mean"), p.get("top1_agree_decisive" if p.get("miniature") else "top1_agree")
             declared = parity_unsupported(p.get("artifact"), a.platform) if p.get("ref_unsupported") and p.get("pie_ok") in (True, "True") else None
             if declared:
