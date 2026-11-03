@@ -132,6 +132,14 @@ default:
                 vLLM chunks gpt-oss-20b's prefill at 2048 tokens on the RTX 4090; pie's 8192-token fires left
                 its c256 decode waiting behind each wave of prompts: c256 6.55k to 7.22k tok/s with pie #1355
                 (vLLM 7.28k), pf16-512 22.5k to 20.8k (vLLM 19.5k).
+        kimi_k3:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 64}
+              rationale: >
+                At the default 256 slots (and at 128) the Kimi-K3 mini's KDA state beside one sequence does not
+                fit what a 24 GB RTX 4090 leaves past the weights and arena ("the card does not hold this
+                deployment"); 64 slots seat c64, the widest shape vLLM serves it at there (c128 OOMs mid-run).
   arch:
     ada:
       family:
@@ -279,14 +287,3 @@ competitive:
       knobs: {}
     prefix_shared:
       knobs: {}
-  platform:
-    rtx4090-x1:
-      family:
-        kimi_k3:
-          knobs:
-            engine_option:
-              value: {max_state_slots: 64}
-              rationale: >
-                At the default 256 slots (and at 128) the Kimi-K3 mini's KDA state beside one sequence does not
-                fit what a 24 GB RTX 4090 leaves past the weights and arena ("the card does not hold this
-                deployment"); 64 slots seat c64, the widest shape vLLM serves it at there (c128 OOMs mid-run).
