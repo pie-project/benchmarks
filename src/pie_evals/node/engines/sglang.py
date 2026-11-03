@@ -191,6 +191,10 @@ class SglangEngine(Engine):
             # (nightly 36089882075 s04: OOM at c64, c256, mixed, prefix; c32 served)
             # a checkpoint over half the card keeps 0.85: at 0.80 Qwen3.6-35B-A3B bf16 (65 GB) left no KV on the 96 GB card
             capped = 0.80 if int(graph_bs) >= 256 and float(self.artifact.expected_gib or 0.0) / card <= 0.5 else 0.85
+            if self.artifact.id == "gpt-oss-120b-mxfp4" and str(self.platform.arch) == "hopper" and card <= 80:
+                # its weights alone take 0.896 of an 80 GB H100 under SGLang ("Raise --mem-fraction-static above
+                # 0.896", h100-sxm-x1 c128): it keeps the 0.95 every heavy checkpoint gets, as its raw cells do
+                capped = float(gmu)
             if float(gmu) > capped:
                 args[-1] = str(capped)
         args += ["--max-model-len", str(max_model_len_for(workload))]  # -> context_length
