@@ -34,8 +34,10 @@ window.Pie = window.Pie || {};
     });
   };
 
+  // a phase of a run (Raw Decode) picks the run's rows (raw): the Workloads table's rows, one run each
+  const runOf = (key, value) => (key === "workload" ? store.index.workloads[value]?.of || value : value);
   const matchesFilters = (row, filters) =>
-    Object.entries(filters).every(([key, values]) => !values.length || values.includes(String(row[key])));
+    Object.entries(filters).every(([key, values]) => !values.length || values.some((value) => runOf(key, value) === String(row[key])));
 
   const compare = (key, direction) => (a, b) => {
     const emptyOrder = format.isEmpty(a[key]) - format.isEmpty(b[key]);
@@ -77,6 +79,10 @@ window.Pie = window.Pie || {};
       return a.localeCompare(b);
     };
 
+    // the workloads as the Workloads table lists them, Raw and Speculative each as Decode and Prefill
+    if (key === "workload") {
+      return store.tables.workloads.filter((w) => counts[w.of || w.id]).map((w) => ({ value: w.id, count: counts[w.of || w.id] }));
+    }
     return Object.keys(counts).sort(order).map((value) => ({ value, count: counts[value] }));
   };
 
