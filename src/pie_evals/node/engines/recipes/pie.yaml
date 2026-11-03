@@ -140,6 +140,15 @@ default:
               value: {max_state_slots: 128}
             max_forward_tokens:
               value: 2240
+        kimi_k3:
+          knobs:
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                At 8192-token fires the Kimi-K3 mini's activation arena and the KDA scratch held for it left
+                1.7 GB for the graph bodies and cache rows on a 48 GB A40, so most compositions walked
+                eagerly and c256 seated ~188 lanes: 4096 seats ~234, c256 1761 to 1876 tok/s (vLLM 1858),
+                pf16-512 4978 to 4961 (vLLM 4993).
       artifact:
         qwen3.5-0.8b-bf16:
           knobs:
