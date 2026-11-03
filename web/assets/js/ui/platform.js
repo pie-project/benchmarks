@@ -48,7 +48,7 @@ window.Pie = window.Pie || {};
     { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => Pie.platformOf(hw) === "nvidia" },
     { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => Pie.platformOf(hw) === "amd" },
     { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => Pie.platformOf(hw) === "tpu" },
-    { id: "cerebras", label: "Cerebras", sub: "Wafer-scale", has: (hw) => Pie.platformOf(hw) === "cerebras" },
+    { id: "cerebras", label: "Cerebras", sub: "CSL", has: (hw) => Pie.platformOf(hw) === "cerebras" },
     { id: "android", label: "Mobile", sub: "Mobile GPU", has: (hw) => Pie.platformOf(hw) === "android" },
     { id: "web", label: "Browser", sub: "WebGPU", has: (hw) => Pie.platformOf(hw) === "web" },
   ];
