@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag: [l40s-full, pro6000-full, rtx4090-full, pro4500-full, a100-pcie-full, h100-pcie-full, rtx5090-full, l4-full, a40-full, a100-sxm-full, b200-full, h100-full, h200-full]
+        tag: [pro6000-full, rtx4090-full, pro4500-full, rtx5090-full, a40-full, a100-sxm-full, b200-full, h100-full, h200-full]
     runs-on: [pod-import]  # liszt-server: on the tailnet with the pods; the site laptop's queue starved these imports
     concurrency: { group: "pod-import-${{ matrix.tag }}", cancel-in-progress: false }
     env:
