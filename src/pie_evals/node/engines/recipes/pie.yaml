@@ -148,6 +148,21 @@ default:
                 vLLM chunks Nemotron-3-Super's prefill at 2048 tokens on the RTX 4090; at pie's 8192 the
                 mini's fire working set left 238 MiB for graph bodies and cache rows (no body armed, 29 state
                 slots). At 2048: c128 1.02k to 1.50k tok/s (vLLM 1.55k), pf16-512 4.4k to 10.6k.
+        qwen3_6_moe:
+          knobs:
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                At pie's 8192 Qwen3.6-35B-A3B's mini fire working set left its gated delta state 87 slots on
+                the RTX 4090; at 4096: pf32-512 11.3k to 21.0k tok/s (SGLang 21.6k on mo5t09), c128 2.96k to
+                3.30k (2048: 19.9k and 3.27k).
+        gemma4_moe:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM chunks Gemma-4-26B-A4B's prefill at 2048 tokens on the RTX 4090; the mini's c256 at pie's
+                8192-token fires 1.53k tok/s, at 2048 1.70k (vLLM 1.94k on mo5t09; its kv room seats ~17 lanes).
   arch:
     ada:
       family:
