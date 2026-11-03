@@ -288,7 +288,7 @@ window.Pie = window.Pie || {};
       if (moved) return `<div class="rf-move-card">${roofCard(moved, { move: true })}${card("", "", lines)}</div>`;
     }
     // a miniature's card says so at its head, in place of the browser's own tooltip that would cover it
-    return mini ? card("Model slice", `${c.pie.miniature}, cut to fit`, lines) : card("", "", lines);
+    return mini ? card("Model slice", c.pie.miniature, lines) : card("", "", lines);
   };
 
   // a result on the roofline model (Williams et al., 2009): its pass's arithmetic intensity, the FLOPs it does per byte
