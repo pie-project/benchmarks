@@ -142,9 +142,9 @@ class SglangEngine(Engine):
                 # a 512-wide decode graph and batch OOM past the static pool at 0.9 on a 48 GB L40S
                 # (Hy4 mini c512 / pf512-512: 160-190 MiB free); 0.85 leaves them room
                 gmu = min(float(gmu), 0.85)
-            if self.artifact.family == "nemotron_h" and card < 80 and workload_concurrency(workload) >= 256:
-                # the Nemotron-3-Ultra mini's 256-wide decode graphs left 111 MiB past the static pool at 0.9 on a
-                # 48 GB A40, and its Triton fused MoE prefill asked 842 MiB (c256); its c512 passed at the 0.85 above
+            if self.artifact.family == "nemotron_h" and 40 <= card < 80:
+                # the Nemotron-3-Ultra mini's Triton fused MoE prefill asked 842-874 MiB past the static pool at 0.9 on a
+                # 48 GB A40, with 111-187 MiB free (c256, pf16-512); its c256 and c512 passed at 0.85
                 gmu = min(float(gmu), 0.85)
             if self.artifact.family == "muse_glimmer" and card < 80 and (workload_concurrency(workload) >= 128 or card <= 32):
                 # the 27 GiB Muse Glimmer miniature's 256-wide batches OOM past the static pool at 0.95
