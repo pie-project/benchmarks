@@ -210,6 +210,10 @@ class SglangEngine(Engine):
             moe = "marlin"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]
+        if moe is None and self.artifact.family == "gpt_oss" and blackwell and not rtx_blackwell:
+            # 0.5.22's auto pick on SM100, flashinfer_mxfp4 (trtllm-gen), quantizes the activations to MXFP8
+            # (MXFP8 x MXFP4); its bf16 precision keeps them bf16 (W4A16), as pie and vLLM serve gpt-oss
+            args += ["--sglang-flashinfer-mxfp4-moe-precision", "bf16"]
         if r.get("sampling_backend"):
             args += ["--sglang-sampling-backend", str(r["sampling_backend"])]
         if r.get("page_size"):
