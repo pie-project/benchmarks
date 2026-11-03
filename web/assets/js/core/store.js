@@ -158,11 +158,28 @@ window.Pie = window.Pie || {};
 
   countResults();
 
+  // Raw and Speculative each measure a request's two phases in one run: the Workloads table lists each phase as its
+  // own row of the same benchmark; the results keep naming the run (raw, spec)
+  const runs = indexById("workloads");
+  const PHASES = {
+    raw: [
+      ["decode", "Raw Decode", "How fast one request writes its output, alone."],
+      ["prefill", "Raw Prefill", "How fast one request reads its prompt, alone."],
+    ],
+    spec: [
+      ["decode", "Speculative Decode", "How fast one request writes when a small drafter guesses ahead and the model checks several tokens at once."],
+      ["prefill", "Speculative Prefill", "How fast one request reads its prompt with the drafter loaded."],
+    ],
+  };
+  tables.workloads = (tables.workloads || []).flatMap((w) => (PHASES[w.id]
+    ? PHASES[w.id].map(([phase, label, goal]) => ({ ...w, id: `${w.id}_${phase}`, of: w.id, phase, label, goal }))
+    : [w]));
+
   const index = {
     hardware: indexById("hardware"),
     engines: indexById("engines"),
     models: indexById("models"),
-    workloads: indexById("workloads"),
+    workloads: { ...runs, ...indexById("workloads") },
   };
 
   const names = {
