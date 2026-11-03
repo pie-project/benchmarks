@@ -35,6 +35,14 @@ Pie.format = {
     return `<span class="engine-tag" style="--engine-color: ${Pie.engines.colorOf(id)}">${this.escape(label)}</span>`;
   },
 
+  // a workload's name after the setup marks the platform pages give it: Raw both its Decode and its Prefill
+  workloadMarks: { raw: ["decode", "prefill"], spec: ["spec"], throughput: ["batching"], prefill_batch: ["pbatch"] },
+
+  workloadTag(id) {
+    const marks = (this.workloadMarks[id] || []).map((mode) => Pie.platform?.degree?.(mode) || "").join("");
+    return `<span class="workload-tag">${marks}${this.escape(Pie.store.names.workload(id))}</span>`;
+  },
+
   hardwareTag(id) {
     return `<span class="hardware-tag">${this.escape(id)}</span>`;
   },
@@ -67,6 +75,9 @@ Pie.format = {
     }
     if (column.table === "hardware") {
       return this.hardwareTag(id);
+    }
+    if (column.table === "workloads") {
+      return this.workloadTag(id);
     }
     return this.escape(Pie.store.names.of(column.table, id));
   },
