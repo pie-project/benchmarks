@@ -111,6 +111,13 @@ default:
                 400 tok/s against vLLM's 1007. 64 slots (about 6 GB of delta state) and the default KV pool.
             engine_option:
               value: {max_state_slots: 64}
+        qwen3_6_moe:
+          knobs:
+            max_forward_tokens:
+              value: 32768
+              rationale: >
+                Wider prefill fires feed Qwen3.6-35B-A3B's 64-expert mini more rows each on an A100 SXM: pf32-512
+                23.7k -> 24.1k and pf64-512 23.9k -> 24.7k tok/s (SGLang 25.0k / 25.6k).
     a40-x1:
       family:
         nemotron_h:
