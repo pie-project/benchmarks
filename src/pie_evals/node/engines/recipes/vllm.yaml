@@ -258,6 +258,16 @@ competitive:
         prefix_caching:
           value: false
           rationale: common.py's --mixed-phase help asks for prefix caching OFF on both engines.
+  platform:
+    rtx4090-x1:
+      family:
+        gemma4:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
+                KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
 
 # The fork that keeps every miniature running: branch pie-evals/v<release> holds one small Python fix per
 # commit over upstream's tag v<release>, and the CUDA install overlays it on the PyPI wheel (baselines.ensure_fork).
