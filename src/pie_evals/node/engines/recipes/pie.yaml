@@ -324,6 +324,15 @@ default:
             The XLA engine's own default; covers c32. The metal arm would write 512.
   artifact:
     gemma-4-31b-mini:
+      platform:
+        a40-x1:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                The 8192-row arena leaves the 31B miniature's cache rows less room on a 48 GB A40: 2304 seats
+                ~31 lanes, not ~28, c128 409 to 445 tok/s; pf8-512 unchanged (3.20k), its fires carry four prompts
+                either way.
       arch:
         ada:
           knobs:
