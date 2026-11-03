@@ -140,6 +140,14 @@ default:
               value: {max_state_slots: 128}
             max_forward_tokens:
               value: 2240
+      artifact:
+        qwen3.5-0.8b-bf16:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: >
+                At its default 256 state slots pie seated 256 of c512's lanes for Qwen3.5-0.8B on a 48 GB A40
+                ("more lanes than the state pool seats"), where vLLM and SGLang seat every lane; 1024 seat c512 and c1024.
     l4-x1:
       family:
         muse_glimmer:
