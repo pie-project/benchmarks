@@ -168,6 +168,9 @@ class VllmEngine(Engine):
             args += ["--block-size", str(int(r["block_size"]))]
         if r.get("enforce_eager"):
             args.append("--enforce-eager")
+        if r.get("compilation_config"):
+            cfg = r["compilation_config"]
+            args += ["--compilation-config", cfg if isinstance(cfg, str) else json.dumps(cfg)]
         if r.get("language_model_only"):
             args.append("--language-model-only")
 

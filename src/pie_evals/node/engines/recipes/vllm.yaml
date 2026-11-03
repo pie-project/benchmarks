@@ -268,6 +268,19 @@ competitive:
               rationale: >
                 gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
                 KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
+    a40-x1:
+      family:
+        glm_moe_dsa:
+          knobs:
+            compilation_config:
+              value: {cudagraph_mode: PIECEWISE}
+              rationale: >
+                On sm_86 vLLM 0.32 serves GLM-5.3's sparse MLA on XPU_MLA_SPARSE, which has no full-graph
+                support, and drops the whole model to eager ("setting cudagraph_mode=NONE"): a batch-1
+                decode then waits on the host's launches, 14.4 to 18 ms a token as the shared host's clocks
+                move, and every raw-512-256 run was noisy (round CoV 3.9-4.4%). Piecewise graphs keep the
+                attention eager and graph the rest: 6 requests x 3 rounds 84.7 tok/s each, spread 0.1%,
+                greedy tokens unchanged.
 
 # The fork that keeps every miniature running: branch pie-evals/v<release> holds one small Python fix per
 # commit over upstream's tag v<release>, and the CUDA install overlays it on the PyPI wheel (baselines.ensure_fork).
