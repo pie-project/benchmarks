@@ -778,12 +778,14 @@ window.Pie = window.Pie || {};
       const tight = p.narrowBy?.[key] ?? (p.narrow ?? true);
       const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
       const shownGroups = [{ platform: null, macs: list }];
-      // a model's column is a slice on every machine (its header says Slice), or on some only: then each sliced cell
-      // carries the mark and the header says so
-      const ran = (model) => list.filter((mac) => grid[mac]?.[model]?.c?.pie);
-      const sliced = (model) => ran(model).filter((mac) => grid[mac][model].c.pie.miniature).length;
-      const someSliced = (model) => sliced(model) > 0 && sliced(model) < ran(model).length;
-      const SLICE_MARK = '<svg class="slice-mark" viewBox="0 0 16 16" aria-label="Model slice"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>';
+      // a model slice's cell carries the slice mark in its top-left corner; its popover says how much of the model ran,
+      // as the columns' (i) does
+      const sliceMark = (cut, model) => {
+        const all = Pie.store.index.models[realOf(model)]?.layers;
+        const kept = parseInt(cut, 10);
+        const how = kept && all ? `${kept} of ${all} layers kept (${Math.round((kept / all) * 100)}%)` : cut;
+        return `<span class="column-info slice-mark" tabindex="0" role="button" aria-label="Model slice"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg><span class="column-info-pop" role="tooltip">${esc(`Model slice: ${how}, to fit one device. For engine-to-engine comparison only, not the full model's speed.`)}</span></span>`;
+      };
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         if (hidden.has(mac)) return `<tr class="is-hidden-row">${machine(mac, g.platform)}<td class="is-overall"></td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
         const o = overall(mac);
@@ -811,7 +813,7 @@ window.Pie = window.Pie || {};
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               // a miniature's own tok/s is a cut model's, no real speed: with no other engine to set it against, it shows none
               : c.gain === null ? { kind: "is-even", html: c.pie.miniature ? "–" : esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${c.pie.miniature && someSliced(model) ? SLICE_MARK : ""}${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           // an empty cell lists every engine that has a row here and why it gave no number, as a measured cell's card does
           // the engines that did measure here, though pie did not (the comparison needs pie): their numbers first
@@ -851,7 +853,7 @@ window.Pie = window.Pie || {};
         // the speculative column says so under the model's name, where the other columns give its size
         const sub = [size, precision].filter(Boolean).join(" · ");
         return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(realOf(model)))}, or drag to move">
-          <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}${sliced(model) ? `<span class="slice-tag" title="${someSliced(model) ? "A model slice on the marked machines, the full model on the rest" : "A model slice on every machine"}: layers removed to fit one device. For engine-to-engine comparison only, not the full model's speed.">${someSliced(model) ? "Partly sliced" : "Slice"}</span>` : ""}</span></span></span></th>`;
+          <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
