@@ -281,6 +281,31 @@ default:
                 3071 cache pages: c128's 128 lanes of 425 tokens need 3456, so lanes park at every
                 wave's end. 4096 leaves 3327 pages and still holds most of pf8-512's 4.4k rows a pass:
                 c128 2057 to 2211 tok/s (vLLM 2308), pf8-512 18.9k (vLLM 18.5k).
+    gemma-4-26b-a4b-bf16:
+      platform:
+        h100-sxm-x1:
+          knobs:
+            max_forward_requests:
+              value: 256
+              rationale: >
+                The 48 GB of weights leave an 80 GB H100 about 15 GB for the cache rows and graph bodies once
+                512 lanes' readout rows and an 8192-token fire's arena are down, and the pool seats fewer than
+                256 of c512's lanes: rows for 256 lanes and 4096-token fires give the pool the rest. c512
+                7.9k to 8.8k tok/s (vLLM 9.0k).
+            max_forward_tokens:
+              value: 4096
+    gemma-4-31b-bf16:
+      platform:
+        h100-sxm-x1:
+          knobs:
+            max_forward_requests:
+              value: 64
+              rationale: >
+                The 58 GB of weights leave an 80 GB H100 12.8 GB past them, of which an 8192-token fire's
+                arena and 512 lanes' readout rows took all but ~7 GB: the pool seated ~18 of c512's lanes. Rows
+                for 64 lanes and 2048-token fires seat ~28: c512 664 to 990 tok/s (vLLM 1285, ~37 lanes).
+            max_forward_tokens:
+              value: 2048
 competitive:
   extends: default
   knobs:
