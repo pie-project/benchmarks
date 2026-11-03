@@ -161,8 +161,8 @@ window.Pie = window.Pie || {};
       columns: [],
     },
     android: {
-      label: "Android",
-      short: "Android",  // as the tables name it
+      label: "Mobile",
+      short: "Mobile",  // as the tables name it
       section: null,  // no page until a machine is measured; still a row in the Platforms list
       view: "platform",
       platform: "android",
