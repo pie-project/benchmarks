@@ -66,7 +66,15 @@ Pie.format = {
     if (column.type === "reference") {
       return this.reference(column, value);
     }
+    if (column.swept && String(value).includes("–")) {
+      return this.sweptTag(value);
+    }
     return this.escape(value);
+  },
+
+  // a value each machine picks within a range, as macOS marks an adjustable setting: the sliders symbol, then the range
+  sweptTag(range) {
+    return `<span class="swept-tag" title="Picked per machine"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="10" cy="4" r="1.6"/><circle cx="5" cy="8" r="1.6"/><circle cx="11" cy="12" r="1.6"/></svg>${this.escape(range)}</span>`;
   },
 
   reference(column, id) {
