@@ -350,6 +350,16 @@ default:
                 512 lanes' readout rows and an 8192-token fire's arena are down, and the pool seats fewer than
                 256 of c512's lanes: readout rows for 256 lanes give the pool the rest. c512 7.9k to 8.5k tok/s
                 (vLLM 9.0k); 4096-token fires reached 8.8k but cut pf64-512 49.1k to 44.8k.
+    qwen3.8-27b-bf16:
+      platform:
+        b200-x1:
+          knobs:
+            max_forward_requests:
+              value: 384
+              rationale: >
+                c512's lanes each carry 64 layers' worth of recurrent state and KV, and readout rows for all 512 leave
+                the pool and the prefill fires less room: readout rows for 384 lanes take c512 6.63k/6.51k to
+                6.78k/6.80k tok/s over two rounds on b200-x1 (256 lanes 6.72k/6.65k; vLLM 7.24k).
     gemma-4-31b-bf16:
       platform:
         h100-sxm-x1:
