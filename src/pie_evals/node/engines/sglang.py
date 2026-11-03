@@ -127,6 +127,10 @@ class SglangEngine(Engine):
                 # gpt-oss-120b (61 GiB, 76% of an 80 GB A100) took the 0.95 above, and its Marlin MoE prefill graphs
                 # OOMed capturing past the static pool at pf8/pf16-512 (184 MiB asked, 45 MiB free, a100-sxm-x1); pf64 served at 0.85
                 gmu = min(float(gmu), 0.85)
+            if self.artifact.family == "qwen3_6" and str(self.platform.arch) == "ampere" and card >= 80 and weights / card < 0.7:
+                # Qwen3.6-27B bf16 (54 GiB, 68% of an 80 GB A100) took the 0.95 above, and its prefill OOMed past the
+                # static pool at pf4/pf16-512 (272 MiB asked, 67 MiB free, a100-sxm-x1); 0.9, as Qwen3.8-27B keeps
+                gmu = min(float(gmu), 0.9)
             if self.artifact.family in ("minimax_m3", "glm_moe_dsa") and card >= 80:
                 # MiniMax-M3.1-Flash mini60-e16 (43.4 GiB, 54% of an 80 GB H100) took the 0.95 above and its
                 # block-FP8 Triton prefill OOMed at pf8 past the static pool (347 MiB free); 0.88 leaves room
