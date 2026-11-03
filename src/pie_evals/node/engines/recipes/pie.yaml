@@ -100,6 +100,17 @@ default:
             engine_option:
               value: {max_state_slots: 64}
   platform:
+    a100-sxm-x1:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                The 80 GB rule (8 GiB of KV, 16 state slots) seats 16 lanes for Qwen3.8-27B bf16 on an A100 SXM: c64
+                400 tok/s against vLLM's 1007. 64 slots (about 6 GB of delta state) and the default KV pool.
+            engine_option:
+              value: {max_state_slots: 64}
     a40-x1:
       family:
         nemotron_h:
