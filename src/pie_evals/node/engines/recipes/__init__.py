@@ -19,8 +19,13 @@
         metal: {knobs: {...}}
       workload_kind:   # per workload.kind overrides (prefix_shared, mixed_length ...)
         prefix_shared: {knobs: {...}}
+<<<<<<< HEAD
+      platform:        # per platform.id overrides (rtx4090-x1 ...), applied last
+        rtx4090-x1: {knobs: {...}}
+=======
       artifact:        # per artifact.id overrides, last: one model where its family's default loses
         gemma-4-31b-mini: {arch: {ada: {knobs: {...}}}}
+>>>>>>> origin/main
 
 A knob may be written as ``{value: X, rationale: "..."}`` or as the bare
 value. Values that depend on the workload are written as ``"$concurrency"``,
@@ -47,8 +52,13 @@ from ..shape import max_model_len_for, workload_concurrency, workload_num_reques
 
 RECIPE_DIR = Path(__file__).resolve().parent
 
+<<<<<<< HEAD
+# family first, so an arch override (e.g. FA3 on Hopper) still wins over a family default; a platform override last
+_OVERRIDE_AXES = ("family", "arch", "backend", "workload_kind", "platform")
+=======
 # family first, so an arch override (e.g. FA3 on Hopper) still wins over a family default
 _OVERRIDE_AXES = ("family", "arch", "backend", "workload_kind", "artifact", "platform")
+>>>>>>> origin/main
 
 
 def recipe_path(engine: str) -> Path:
@@ -122,7 +132,10 @@ def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: Worklo
         "arch": platform.arch,
         "backend": str(platform.backend),
         "workload_kind": str(workload.kind),
+<<<<<<< HEAD
+=======
         "artifact": artifact or "",
+>>>>>>> origin/main
         "platform": platform.id,
     }
     for section in _section_chain(data, name):
