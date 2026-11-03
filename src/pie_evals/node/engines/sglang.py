@@ -217,8 +217,17 @@ class SglangEngine(Engine):
             # 0.5.22's auto pick below sm_90 dequantizes every expert each forward (A100: TTFT 1.8 s at 600 tokens,
             # pf64-512 hangs past 600 s); Marlin is its W4A16 MXFP4 runner, the one vLLM picks on Ampere
             moe = "marlin"
+        if moe is None and self.artifact.family == "kimi_k3" and blackwell and not rtx_blackwell:
+            # 0.5.22's auto pick on SM100, flashinfer_mxfp4 (trtllm-gen), quantizes the activations to MXFP8, and
+            # trtllm-gen has no bf16-activation kernel for Kimi-K3's experts ("No kernel found ... mDtypeB: Bfloat16");
+            # Marlin keeps them bf16 (W4A16), as the release declares and pie serves (the triton kernels have no SITU)
+            moe = "marlin"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]
+        if moe is None and self.artifact.family == "gpt_oss" and blackwell and not rtx_blackwell:
+            # 0.5.22's auto pick on SM100, flashinfer_mxfp4 (trtllm-gen), quantizes the activations to MXFP8
+            # (MXFP8 x MXFP4); its bf16 precision keeps them bf16 (W4A16), as pie and vLLM serve gpt-oss
+            args += ["--sglang-flashinfer-mxfp4-moe-precision", "bf16"]
         if r.get("sampling_backend"):
             args += ["--sglang-sampling-backend", str(r["sampling_backend"])]
         if r.get("page_size"):
