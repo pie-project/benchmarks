@@ -134,6 +134,12 @@ default:
                 (vLLM 7.28k), pf16-512 22.5k to 20.8k (vLLM 19.5k).
         kimi_k3:
           knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At 8192-token fires the Kimi-K3 mini's activation arena (4.3 GB) leaves a 24 GB RTX 4090 538 MiB for
+                graph bodies and cache rows, and its 64 state slots are served at 6 ("max_state_slots 64 is served at
+                6"): c64 ran 504 tok/s against vLLM's 3115. vLLM chunks its prefill at 2048 there too.
             engine_option:
               value: {max_state_slots: 64}
               rationale: >
