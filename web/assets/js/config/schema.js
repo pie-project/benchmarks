@@ -353,7 +353,7 @@ window.Pie = window.Pie || {};
       columns: [
         reference("id", "Workload", "Identity", "workloads"),
         text("goal", "Goal", "Identity"),
-        number("concurrency", "Parallel requests", "Shape", "", 0),
+        text("parallel", "Parallel requests", "Shape", { numeric: true, info: "A batched workload sweeps its requests: each machine runs the count at which the fastest engine stops gaining more than 5%, the same count for every engine." }),
         number("prompt_tokens", "Prompt", "Shape", "tok", 0),
         number("output_tokens", "Output", "Shape", "tok", 0),
         text("benchmark", "Benchmark", "Identity", { code: true }),
