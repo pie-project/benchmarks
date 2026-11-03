@@ -224,6 +224,16 @@ default:
                 4.4k-row pass, slower a token than two passes of four on the L40S profile's 2304:
                 pf8-512 5.8k to 6.1k tok/s (vLLM 6.2k, which prefills in 2048-token chunks);
                 gemma-4-E4B keeps 8192 (20.8k against 18.9k at 2304).
+    gemma-4-31b-mini18:
+      platform:
+        pro4500-x1:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                pie_bench's default 10240-token ask leaves the 32 GB card's cache pages short of c64's 64 lanes
+                of 768 tokens, so lanes park at each wave's end: 2048-token fires give c64 1,460 to 1,643 tok/s
+                (vLLM 1,614); pf8-512 7.8k to 7.5k (vLLM 7.1k).
     gemma-4-26b-a4b-mini:
       arch:
         ada:
