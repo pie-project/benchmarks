@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag: [pro6000-full, rtx4090-full, a40-full, a100-sxm-full, b200-full, h100-full]
+        tag: [pro6000-full, rtx4090-full, a40-full, a100-sxm-full, b200-full, h100-full, l40s-fill, rtx4090-fill, pro6000-fill, pro4500-fill, rtx5090-fill, a40-fill, a100-sxm-fill, b200-fill, h100-fill, h200-fill]
     runs-on: [pod-import]  # liszt-server: on the tailnet with the pods; the site laptop's queue starved these imports
     # a dispatch (a reset, a pod list) is its own group: a later run's pending job of the tag never cancels it
     concurrency: { group: "pod-import-${{ matrix.tag }}${{ github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}", cancel-in-progress: false }
