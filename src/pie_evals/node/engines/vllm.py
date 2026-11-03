@@ -150,14 +150,8 @@ class VllmEngine(Engine):
             args += ["--report-timing"]
         if r.get("attention_backend"):
             args += ["--attention-backend", str(r["attention_backend"])]
-        moe = r.get("moe_backend")
-        if moe is None and self.artifact.family == "kimi_k3" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" not in str(self.platform.accelerator):
-            # 0.32.0's first MXFP4 pick on SM100 for a W4A16 release is trtllm-gen MXFP4 x MXFP8, and trtllm-gen has no
-            # bf16-activation kernel for Kimi-K3's experts; the OpenAI triton kernels keep the activations bf16, as the
-            # release declares (input_activations null) and pie serves
-            moe = "triton"
-        if moe:
-            args += ["--moe-backend", str(moe)]
+        if r.get("moe_backend"):
+            args += ["--moe-backend", str(r["moe_backend"])]
 
         prefix = r.get("prefix_caching")
         if prefix is None:

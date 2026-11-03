@@ -211,8 +211,8 @@ class SglangEngine(Engine):
         if moe is None and self.artifact.family == "kimi_k3" and blackwell and not rtx_blackwell:
             # 0.5.22's auto pick on SM100, flashinfer_mxfp4 (trtllm-gen), quantizes the activations to MXFP8, and
             # trtllm-gen has no bf16-activation kernel for Kimi-K3's experts ("No kernel found ... mDtypeB: Bfloat16");
-            # the OpenAI triton kernels keep them bf16 (W4A16), as the release declares and pie serves
-            moe = "triton_kernel"
+            # Marlin keeps them bf16 (W4A16), as the release declares and pie serves (the triton kernels have no SITU)
+            moe = "marlin"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]
         if moe is None and self.artifact.family == "gpt_oss" and blackwell and not rtx_blackwell:
