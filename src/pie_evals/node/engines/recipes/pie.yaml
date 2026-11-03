@@ -109,6 +109,29 @@ default:
               rationale: >
                 The L4 profile's 2304-token fires cut a batch of Muse Glimmer prompts into small passes:
                 8192 lifts the 4-layer mini's pf8-512 11.0k to 11.6k and pf16-512 11.6k to 11.9k tok/s.
+    rtx4090-x1:
+      family:
+        gemma4:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
+                KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM prefills gemma-4-E4B in 2048-token chunks on the RTX 4090; pie's 8192-token fires stalled
+                the c256 decode behind each wave of prompts: c256 5.27k to 5.79k tok/s (vLLM 5.84k), pf16-512
+                16.7k to 15.7k.
+        gpt_oss:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM chunks gpt-oss-20b's prefill at 2048 tokens on the RTX 4090; pie's 8192-token fires left
+                its c256 decode waiting behind each wave of prompts: c256 6.55k to 7.22k tok/s with pie #1355
+                (vLLM 7.28k), pf16-512 22.5k to 20.8k (vLLM 19.5k).
   arch:
     ada:
       family:
@@ -212,7 +235,6 @@ default:
                 3071 cache pages: c128's 128 lanes of 425 tokens need 3456, so lanes park at every
                 wave's end. 4096 leaves 3327 pages and still holds most of pf8-512's 4.4k rows a pass:
                 c128 2057 to 2211 tok/s (vLLM 2308), pf8-512 18.9k (vLLM 18.5k).
-
 competitive:
   extends: default
   knobs:
@@ -247,3 +269,14 @@ competitive:
       knobs: {}
     prefix_shared:
       knobs: {}
+  platform:
+    rtx4090-x1:
+      family:
+        kimi_k3:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 128}
+              rationale: >
+                At the default 256 slots the Kimi-K3 mini's KDA state for one sequence beside the declared
+                slots wants 6.3 GB where a 24 GB RTX 4090 leaves 3.6 GB past the weights and arena ("the card
+                does not hold this deployment"); 128 slots, as vLLM seats about 135 lanes at c512 there.

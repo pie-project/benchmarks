@@ -21,6 +21,8 @@
         prefix_shared: {knobs: {...}}
       artifact:        # per artifact.id overrides, last: one model where its family's default loses
         gemma-4-31b-mini: {arch: {ada: {knobs: {...}}}}
+      platform:        # per platform.id overrides (rtx4090-x1 ...), applied last
+        rtx4090-x1: {knobs: {...}}
 
 A knob may be written as ``{value: X, rationale: "..."}`` or as the bare
 value. Values that depend on the workload are written as ``"$concurrency"``,
