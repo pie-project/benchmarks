@@ -26,9 +26,10 @@ window.Pie = window.Pie || {};
 
   // what each workload is for: the limit it pushes against
   const GOALS = {
-    raw: "Single-request speed against the memory and compute limits.",
-    spec: "Pass the memory limit by checking several drafted tokens per weight read.",
-    throughput: "Fill the compute limit by sharing each weight read across requests.",
+    raw: "How fast one request runs alone: its prompt read and its output written.",
+    spec: "How fast one request writes when a small drafter guesses ahead and the model checks several tokens at once.",
+    throughput: "How many output tokens per second the machine writes when many requests share it.",
+    prefill_batch: "How many prompt tokens per second the machine reads when many prompts arrive at once.",
   };
   for (const w of tables.workloads || []) w.goal = GOALS[w.id] || null;
   // whether a model can speculate: it has a drafter
