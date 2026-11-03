@@ -71,9 +71,9 @@ unsupported:
   - when: {engine: sglang, artifact: minimax-m3.1-flash, platform: [h200-x4, h100-sxm-x4]}
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
   # weekly 40421366253: the miniature keeps the release's widths, so it fails as the full model does
-  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1, pro6000-x1, h100-sxm-x1, h200-x1, pro4500-x1, rtx5090-x1, l4-x1]}   # pie-project/vllm pie-evals/v0.32.0 loads it on L40S, the RTX PRO 6000, the H100 and the H200
+  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1, pro6000-x1, h100-sxm-x1, h200-x1, pro4500-x1, rtx5090-x1, l4-x1, a40-x1]}   # pie-project/vllm pie-evals/v0.32.0 loads it on L40S, the RTX PRO 6000, the H100 and the H200
     reason: "vLLM 0.32.0 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 (expert load: size of tensor a (192) must match b (384))"
-  - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, arch: [ampere]}   # ada and hopper: pie-project/sglang pie-evals/v0.5.22 runs it (MXFP8 to block FP8 on sm_89 to sm_99)
+  - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, arch: [ampere], not_platform: [a40-x1]}   # ada and hopper: pie-project/sglang pie-evals/v0.5.22 runs it (MXFP8 to block FP8 on sm_89 to sm_99)
     reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
   - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, platform: [pro6000-x2, pro6000-x4]}
     reason: "SGLang 0.5.22 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 on sm_120 (expert load: size of tensor a (192) must match b (384))"
@@ -131,7 +131,7 @@ unsupported:
   # A100 ss-512-256 12 tok/s and lc-8k 5 tok/s (nightly 36082960398 s05, two cells ate the shard's hour),
   # 4090 ss 25 tok/s; the H100 (1189 tok/s at c64) and Blackwell cards keep the baseline
   # SGLang 0.5.22 serves gpt-oss-20b on the A100 PCIe through that fallback (raw decode 171 tok/s, prefill 325 tok/s): measured there
-  - when: {engine: sglang, family: gpt_oss, arch: ampere, not_platform: [a100-pcie-x1, a100-sxm-x1]}
+  - when: {engine: sglang, family: gpt_oss, arch: ampere, not_platform: [a100-pcie-x1, a100-sxm-x1, a40-x1]}
     reason: "SGLang 0.5.20 gpt-oss mxfp4 falls back to dequant on Ampere: 5-12 tok/s, not a baseline"
   # SGLang 0.5.22's flashinfer cannot build its gpt-oss mxfp8 kernels for Blackwell (sm120: RTX 5090, PRO 4500,
   # PRO 6000): "Ninja build failed ... mxfp8_quantization_sm100" (0.5.3-b5, run 39104203014)
@@ -149,7 +149,7 @@ unsupported:
   # SGLang 0.5.22 decodes Qwen3.8-Flash-Next's full-attention layers through qwen_sparse_attn_backend's flash_attn.cute
   # FlashAttentionForwardSm80, which CUDA refuses to launch on sm_86/sm_89 (A40, L40S; the 4090 OOMs in prefill
   # graph capture before it gets there): "CUDA_LAUNCH_INVALID_CONFIG ... cudaErrorInvalidValue" (weekly 40421366253)
-  - when: {engine: sglang, family: qwen4_exp, arch: [ampere, ada], not_platform: [a100-pcie-x1, a100-x2, a100-pcie-x2, a100-sxm-x8, a100-sxm40-x1, a100-sxm-x1, l4-x1]}   # SGLang served it on the L40S (l40s-full, 2026-10-29)
+  - when: {engine: sglang, family: qwen4_exp, arch: [ampere, ada], not_platform: [a100-pcie-x1, a100-x2, a100-pcie-x2, a100-sxm-x8, a100-sxm40-x1, a100-sxm-x1, l4-x1, a40-x1]}   # SGLang served it on the L40S (l40s-full, 2026-10-29)
     reason: "SGLang 0.5.22's qwen4_exp sparse-attention decode kernel (flash_attn.cute Sm80) fails to launch on sm_86/sm_89: CUDA_LAUNCH_INVALID_CONFIG"
   # SGLang's static pool for Kimi-K3 mini (weights + the KDA state pool) needs more than 0.935 of a 32 GB
   # card, and at 0.95 the process sits at 31.2 GiB before the first c8 batch (nightly 36103831529 s10:
@@ -199,17 +199,15 @@ unsupported:
   - when: {engine: mlxlm, program: parity, family: hy_v4}
     reason: "mlx-lm 0.32.2 ships no hy_v4 model, so it cannot load Hy4"
   # quality parity on RunPod (parity.yml, vLLM 0.32.0): the reference fails at boot on these arch x mini pairs
-  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [a40-x1]}
-    reason: "vLLM 0.32.0 DeepSeek-V4.1 needs fp8e4nv, which Ampere lacks"
   - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [l40s-x1, rtx4090-x1]}
     reason: "vLLM 0.32.0 DeepSeek-V4.1 CUTLASS DSL kernel fails PTX assembly on Ada"
   - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [b200-x1, b300-x1]}
     reason: "vLLM 0.32.0 DeepGEMM asserts on DeepSeek-V4.1 mini tensor rank on Blackwell (layout.hpp:46)"
-  - when: {engine: vllm, program: parity, artifact: [glm-5.3-flash-mini8-fp8, glm-5.3-mini], platform: [a40-x1, a100-sxm-x1, l40s-x1, rtx4090-x1]}
+  - when: {engine: vllm, program: parity, artifact: [glm-5.3-flash-mini8-fp8, glm-5.3-mini], platform: [a100-sxm-x1, l40s-x1, rtx4090-x1]}
     reason: "vLLM 0.32.0 has no MLA attention backend for GLM-5.3 on Ampere or Ada"
   - when: {engine: vllm, program: parity, artifact: glm-5.3-mini, platform: [b200-x1, b300-x1]}
     reason: "vLLM 0.32.0 Blackwell grouped top-k needs top_k below the experts in the chosen groups; the mini keeps 8 of 8"
-  - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [a40-x1, a100-sxm-x1, l40s-x1, rtx4090-x1]}
+  - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [a100-sxm-x1, l40s-x1, rtx4090-x1]}
     reason: "vLLM 0.32.0 has no sparse MLA backend for Hy4 on this arch and refuses dense fallback"
   - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [h100-sxm-x1, h200-x1, b200-x1, b300-x1]}
     reason: "vLLM 0.32.0 Hy4 sparse MLA asserts NUM_TOPK_TOKENS 16 is not a multiple of BLOCK_N 128"
