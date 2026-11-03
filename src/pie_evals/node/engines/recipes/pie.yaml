@@ -195,6 +195,14 @@ default:
                 vLLM prefills gemma-4-E4B in 2048-token chunks on the RTX 4090; pie's 8192-token fires stalled
                 the c256 decode behind each wave of prompts: c256 5.27k to 5.79k tok/s (vLLM 5.84k), pf16-512
                 16.7k to 15.7k.
+        gpt_oss:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM chunks gpt-oss-20b's prefill at 2048 tokens on the RTX 4090; pie's 8192-token fires left
+                its c256 decode waiting behind each wave of prompts: c256 6.55k to 7.22k tok/s with pie #1355
+                (vLLM 7.28k), pf16-512 22.5k to 20.8k (vLLM 19.5k).
         kimi_k3:
           knobs:
             engine_option:
