@@ -166,7 +166,7 @@ window.Pie = window.Pie || {};
       section: null,  // no page until a machine is measured; still a row in the Platforms list
       view: "platform",
       platform: "android",
-      tint: "#D9A400",  // yellow: no other platform wears it
+      tint: "#1C1C1E",  // black: no other platform wears it
       filters: [],
       columns: [],
     },
