@@ -171,3 +171,15 @@ def test_a_quality_write_keeps_a_stored_score(tmp_path):
     assert store.quality(samples=True)[0]["score"] == 0.8
     store.write_quality({**base, "score": 0.5}, tag="0.5.2", tag_kind="release")
     assert store.quality(samples=True)[0]["score"] == 0.8
+
+
+def test_parity_reads_saved_reference_texts_only_for_their_prompts(tmp_path):
+    from pie_evals.quality import dist_run, kl
+
+    rendered = ["q1", "q2"]
+    (tmp_path / dist_run.TEXTS_DIR).mkdir()
+    saved = {"prompts": kl.texts_hash(rendered), "answer_tokens": dist_run.ANSWER_TOKENS, "texts": ["a1", "a2"]}
+    (tmp_path / dist_run.TEXTS_DIR / "m.json").write_text(json.dumps(saved))
+    assert dist_run.saved_texts(str(tmp_path), "m", rendered) == ["a1", "a2"]
+    assert dist_run.saved_texts(str(tmp_path), "m", ["q1", "other"]) is None
+    assert dist_run.saved_texts(str(tmp_path), "absent", rendered) is None
