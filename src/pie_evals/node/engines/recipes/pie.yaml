@@ -118,6 +118,14 @@ default:
               rationale: >
                 Wider prefill fires feed Qwen3.6-35B-A3B's 64-expert mini more rows each on an A100 SXM: pf32-512
                 23.7k -> 24.1k and pf64-512 23.9k -> 24.7k tok/s (SGLang 25.0k / 25.6k).
+      artifact:
+        qwen3.5-0.8b-bf16:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: >
+                At its default 256 state slots pie seated 256 of c512's lanes for Qwen3.5-0.8B on an A100 SXM
+                (c256 25.1k, c512 24.2k tok/s), where vLLM and SGLang seat every lane; 1024 seat c512 and c1024, as on the A40.
     a40-x1:
       family:
         nemotron_h:
