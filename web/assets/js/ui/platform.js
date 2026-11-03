@@ -49,7 +49,7 @@ window.Pie = window.Pie || {};
     { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => Pie.platformOf(hw) === "amd" },
     { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => Pie.platformOf(hw) === "tpu" },
     { id: "cerebras", label: "Cerebras", sub: "Wafer-scale", has: (hw) => Pie.platformOf(hw) === "cerebras" },
-    { id: "android", label: "Android", sub: "Mobile GPU", has: (hw) => Pie.platformOf(hw) === "android" },
+    { id: "android", label: "Mobile", sub: "Mobile GPU", has: (hw) => Pie.platformOf(hw) === "android" },
     { id: "web", label: "WebGPU", sub: "In-browser", has: (hw) => Pie.platformOf(hw) === "web" },
   ];
   const platformOf = (hw) => PLATFORMS.find((p) => p.has(hw));
