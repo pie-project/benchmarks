@@ -959,7 +959,7 @@ def main() -> None:
     (WEB / "data").mkdir(parents=True, exist_ok=True)
     # db.js holds what the site draws first; every other tag is a file of its own, fetched when a page asks for it
     split_db.write(db, WEB / "data")
-    print({k: len(v) for k, v in db.items()}, {t["id"]: (len(snaps[t["id"]]), len(quality[t["id"]])) for t in tags})
+    print({k: len(v) for k, v in db.items() if hasattr(v, "__len__")}, {t["id"]: (len(snaps.get(t["id"]) or []), len(quality.get(t["id"]) or [])) for t in tags})
     print({t: {f: sum(1 for r in parity[t] if r["flag"] == f) for f in ("ok", "mismatch", "no_pie")} for t in parity})
 
 
