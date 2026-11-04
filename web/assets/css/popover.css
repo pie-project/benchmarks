@@ -194,3 +194,13 @@
 
 /* a model under its group in the Models menu, set in by a logo's width */
 .popover-indent { display: inline-block; width: 24px; flex: none; }
+
+/* a submenu's row: the chevron at its right end, and the row stays lit while its list is open, as a Mac menu's does */
+.popover-chevron { flex: none; width: 7px; height: 10px; margin-left: 8px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.popover-parent .popover-detail { color: var(--color-label-secondary); }
+.popover-parent.is-open { background: var(--color-accent); color: var(--color-on-accent); }
+.popover-parent.is-open *, .popover-option:hover .popover-chevron { color: var(--color-on-accent); stroke: var(--color-on-accent); }
+.popover-parent.is-open .popover-chevron { stroke: var(--color-on-accent); }
+.popover-sub { min-width: 160px; }
+.popover .view-icon { width: 14px; height: 14px; flex: none; margin-right: 2px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }  /* each view after its sidebar symbol */
+.popover .view-icon .is-filled { fill: currentColor; stroke: none; }  /* the solid rack, as the sidebar drew it */

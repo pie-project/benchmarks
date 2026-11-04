@@ -246,6 +246,8 @@ window.Pie = window.Pie || {};
   const SHORT_COMPARES = { engines: "Relative", tps: "Tokens per Second", ceiling: "Efficiency" };
   // each view wears the icon of the sidebar page that shows it for every machine
   const COMPARE_ICONS = { engines: "speedups", ceiling: "all_hardware", tps: "tps" };
+  // each view's symbol, in its menu row and on the button when picked: a gear for Relative Speed, the solid rack for Tokens per Second, the f for Kernel Efficiency
+  const viewIcon = (id) => `<svg class="view-icon" viewBox="0 0 24 24" aria-hidden="true">${id === "engines" ? '<g transform="scale(1.5)" stroke-width="1.2"><path stroke-linejoin="round" d="M14.15 6.63L14.15 9.37L12.81 8.94L12.06 10.74L13.32 11.38L11.38 13.32L10.74 12.06L8.94 12.81L9.37 14.15L6.63 14.15L7.06 12.81L5.26 12.06L4.62 13.32L2.68 11.38L3.94 10.74L3.19 8.94L1.85 9.37L1.85 6.63L3.19 7.06L3.94 5.26L2.68 4.62L4.62 2.68L5.26 3.94L7.06 3.19L6.63 1.85L9.37 1.85L8.94 3.19L10.74 3.94L11.38 2.68L13.32 4.62L12.06 5.26L12.81 7.06z"/><circle cx="8" cy="8" r="2"/></g>' : id === "tps" ? '<path class="is-filled" fill-rule="evenodd" d="M4.5 2.5h15A2 2 0 0 1 21.5 4.5v5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zm2 3v2.75H10V5.5zM4.5 12.5h15a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zm2 3v2.75H10V15.5z"/>' : Pie.icons[COMPARE_ICONS[id]]}</svg>`;
   const nextCompare = (id) => { const ids = Object.keys(COMPARES); return ids[(ids.indexOf(id) + 1) % ids.length]; };
   // what the numbers in each view mean, as the help tag on its segment: a Mac explains a control where it is
   const CAPTIONS = {
@@ -656,17 +658,16 @@ window.Pie = window.Pie || {};
       if (k === "setup" && viewState) {
         const NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
         const picked = viewState.platform.mode || "decode";
-        return ["decode", "prefill", "batching", "pbatch"].map((id) => ({ value: id, label: NAMES[id], selected: id === picked, icon: `<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id]}</svg>` }));
+        return ["decode", "prefill", "batching", "pbatch"].map((id) => ({ value: id, label: NAMES[id], selected: id === picked, detail: id === "decode" || id === "prefill" ? "Latency" : "Throughput", icon: `<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id]}</svg>` }));
       }
       // the bar's one settings menu, as a Mac toolbar's View Options: the view, then pie's engine, then whom it is set against
       if (k === "options" && viewState) {
         const own = (key, items) => items.map((o) => (o.separator ? o : { ...o, key: `grid:${key}` }));
         const fixedView = Pie.schema[viewState.table]?.compare;
         return [
-          ...(fixedView ? [] : [{ heading: "View" }, ...own("view", ["engines", "tps", "ceiling"].map((id) => ({ value: id, label: COMPARES[id], selected: id === compare }))), { separator: true }]),
-          { heading: "Engine" }, ...own("engine", this.menu("engine")),
-          { separator: true },
-          { heading: "Compared with" }, ...own("rival", this.menu("rival").filter((o) => !o.separator)),
+          ...(fixedView ? [] : [{ heading: "View" }, ...own("view", ["engines", "tps", "ceiling"].map((id) => ({ value: id, label: COMPARES[id], selected: id === compare, icon: viewIcon(id) }))), { separator: true }]),
+          // the engine and its opponent are one row each, the pick in grey, their lists to the side, as Finder's View menu nests its Sort By
+          { label: "Engine", detail: Pie.store.names.engine(viewState.platform.engine || Pie.engines.primary), submenu: own("engine", this.menu("engine")) },
         ];
       }
       if (k !== "engine" || !viewState) return [];
@@ -720,7 +721,7 @@ window.Pie = window.Pie || {};
       // the engine every cell is about, picked in the bar; pie unless another is picked. The second pick is its
       // opponent: the strongest other engine on each cell unless one is picked
       const base = state.platform.engine || Pie.engines.primary;
-      const rival = state.platform.rival && state.platform.rival !== base ? state.platform.rival : null;
+      const rival = null;  // every cell is set against the strongest other engine
       const snapshot = all.filter((r) => r.workload === mode.workload);
       const raw = all.filter((r) => r.workload === "raw" && Pie.store.isMeasured(r));
       const rows = snapshot.filter(Pie.store.isMeasured);
@@ -1044,7 +1045,7 @@ window.Pie = window.Pie || {};
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
-            <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent"><svg class="options-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 8h12M2 11.5h12"/><circle cx="10" cy="4.5" r="1.4"/><circle cx="5.5" cy="8" r="1.4"/><circle cx="11" cy="11.5" r="1.4"/></svg>${esc(COMPARES[compare])} · ${esc(Pie.store.names.engine(base))} vs ${esc(rival ? Pie.store.names.engine(rival) : "Strongest")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+            <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
             <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
 
           </span>
