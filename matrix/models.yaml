@@ -1379,17 +1379,19 @@ artifacts:
     expected_gib: 75.0
     platforms: [m5-max-128g]
     tiers: [targeted]
+  # Splash 1.5.0 reads Qwen3.8-Flash-Next only in the tensor layout of ISTA-DASLab's GGUFs (its README's own
+  # Q2_0 build); llama.cpp's converter output lacks attn_qkv, attn_gate, ssm_alpha/beta and hc_*_inject, so Splash
+  # runs ISTA's 2.4 bpw Q2_0 file, labelled as its own format
   - id: qwen3.8-flash-next-q2k-splash
-    base_model: pie-local/Qwen3.8-Flash-Next-GGUF
-    revision: q2k
+    base_model: ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF
     family: qwen4_exp
-    scheme: gguf_q2_k
+    scheme: gguf_q2_0
     source_format: splash
-    gguf_file: Qwen3.8-Flash-Next-Q2_K.gguf
+    gguf_file: Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf
     tokenizer_from: pie-local/Qwen3.8-Flash-Next-MLX
     baseline_of: qwen3.8-flash-next-mlx2
     baseline_label: Splash
-    expected_gib: 75.0
+    expected_gib: 61.9
     platforms: [m5-max-128g]
     tiers: [targeted]
   - id: qwen3.8-flash-next-mlx2-mini8

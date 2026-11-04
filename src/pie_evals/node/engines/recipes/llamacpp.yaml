@@ -80,3 +80,22 @@ competitive:
             is 53 GB (every request a Metal out-of-memory "Compute error",
             targeted 38336669202); shared, it asks 49.4 GB. Numerics, batch
             sizes and throughput are unchanged (Gemma 4 12B, 1 and 32 streams).
+  artifact:
+    qwen3.8-flash-next-q2k-llamacpp:
+      backend:
+        metal:
+          knobs:
+            server_extra:
+              value: ["--batch-size", "2048", "--ubatch-size", "512", "--cont-batching"]
+              rationale: &q38kv >
+                No --kv-unified: qwen4exp's sparse-attention indexer scores every cell of the
+                KV buffer, and one buffer shared by 256 slots of 2048 asks a 330 GB compute
+                buffer (Metal out of memory at load, q38-2bit). Per-slot buffers load at the
+                same batch sizes.
+    qwen3.8-flash-next-q2k-mini8-llamacpp:
+      backend:
+        metal:
+          knobs:
+            server_extra:
+              value: ["--batch-size", "2048", "--ubatch-size", "512", "--cont-batching"]
+              rationale: *q38kv

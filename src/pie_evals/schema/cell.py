@@ -52,6 +52,7 @@ class QuantScheme(StrEnumBase):
     W4A16_MARLIN = "w4a16_marlin"
     GGUF_Q4_K_M = "gguf_q4_k_m"
     GGUF_Q2_K = "gguf_q2_k"
+    GGUF_Q2_0 = "gguf_q2_0"
     GGUF_Q8_0 = "gguf_q8_0"
     AWQ = "awq"
     GPTQ = "gptq"
