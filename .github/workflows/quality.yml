@@ -17,7 +17,8 @@ on:
       artifacts: { description: "comma-separated artifact ids (empty: every arm of the suite, with its pie arm)", required: false, default: "" }
       tasks: { description: "comma-separated tasks (gsm8k, ifeval, mmlu, arc, math500)", required: false, default: "gsm8k,ifeval,mmlu,arc,math500" }
       n: { description: "questions per task", required: false, default: "100" }
-      mac: { description: "Mac id, or auto: the fast Mac (m5-max-128g, then m5-max-64g) with an idle runner", type: choice, options: [auto, m5-max-128g, m5-max-64g], default: "auto" }
+      mac: { description: "Mac id, or auto: the fast Mac (m5-max-128g, then m5-max-64g) with an idle runner", required: false, default: "auto" }
+      platform: { description: "store the rows under the Mac's platform id (true: a per-Mac Quality cell)", type: boolean, required: false, default: false }
 
 jobs:
   start:
@@ -57,6 +58,7 @@ jobs:
           fi
           [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::pie_commit must be a full sha, got '$COMMIT'"; exit 1; }
           # every arm of the suite in config.json, and the pie arm each one is compared with
+          [[ "$IN_MAC" =~ ^[a-z0-9-]*$ ]] || { echo "::error::bad mac '$IN_MAC'"; exit 1; }
           [[ "$SUITE" =~ ^(targeted|full)$ ]] || { echo "::error::bad suite '$SUITE'"; exit 1; }
           want=$(.venv/bin/pie-evals suite "$SUITE")
           artifacts=$(.venv/bin/python -c "import sys,yaml; want=set(filter(None,sys.argv[1].split(','))); arts=yaml.safe_load(open('matrix/models.yaml'))['artifacts']; pie={a.get('baseline_of') for a in arts if a['id'] in want}; print(','.join(a['id'] for a in arts if a['id'] in want or a['id'] in pie or (a['id'] not in pie and a.get('baseline_of') in want)))" "$want")
@@ -130,4 +132,5 @@ jobs:
           args=""
           for a in $(echo "${{ needs.start.outputs.artifacts }}" | tr ',' ' '); do args="$args --artifact $a"; done
           for t in $(echo "${{ inputs.tasks || 'gsm8k,ifeval,mmlu,arc,math500' }}" | tr ',' ' '); do args="$args --task $t"; done
-          .venv/bin/pie-evals-node quality $args --n "${{ inputs.n || 100 }}" --pie-root "$PIE_ROOT" --tag "$TAG" --tag-kind "$kind"
+          .venv/bin/pie-evals-node quality $args --n "${{ inputs.n || 100 }}" --pie-root "$PIE_ROOT" --tag "$TAG" --tag-kind "$kind" \
+            ${{ inputs.platform && format('--platform {0}', needs.start.outputs.mac) || '' }}

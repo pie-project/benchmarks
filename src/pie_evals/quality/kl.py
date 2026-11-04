@@ -140,6 +140,33 @@ def compare(ref: list[list[dict[int, float]]], pie: list[list[dict[int, float]]]
     }
 
 
+def gibberish(tok, n: int = 64, length: int = 48, seed: int = 0) -> list[str]:
+    """``n`` word-salad prompts of random vocabulary tokens, each a text that tokenizes back to the same ids, and
+    ends on one more token: its position's distribution is the model's first-token distribution after the salad."""
+    import random
+
+    rng = random.Random(seed)
+    special = set(getattr(tok, "all_special_ids", []) or [])
+    vocab = [i for i in range(min(len(tok), getattr(tok, "vocab_size", len(tok)))) if i not in special]
+    bos = getattr(tok, "bos_token", None) or ""
+    out: list[str] = []
+    while len(out) < n:
+        ids = tok.encode(tok.decode([rng.choice(vocab) for _ in range(length + 1)]), add_special_tokens=False)
+        text = tok.decode(ids)
+        if ids and tok.encode(text, add_special_tokens=False) == ids and text.isprintable():
+            out.append(bos + text)
+    return out
+
+
+def last_position(ref: list[list[dict[int, float]]], pie: list[list[dict[int, float]]], expect: list[int]) -> dict:
+    """``compare`` at each text's last position only (the first-token distribution), over the texts both engines
+    tokenized to the ``expect`` count of tokens; the others are counted, not compared."""
+    keep = [i for i, (r, p, e) in enumerate(zip(ref, pie, expect, strict=True)) if len(r) == len(p) == e]
+    out = compare([ref[i] for i in keep], [pie[i] for i in keep], [len(ref[i]) - 1 for i in keep])
+    out["prompt_tokens_mismatch"] = len(ref) - len(keep)
+    return out
+
+
 def texts_hash(texts: list[str]) -> str:
     """A short digest of a list of texts (the rendered prompts a saved reference was written for)."""
     return hashlib.sha256(json.dumps(texts).encode()).hexdigest()[:16]
