@@ -309,6 +309,7 @@
 /* the strip closes with the bar's separator, so it reads as the table's own foot, not part of the next platform's bar */
 .platform-section-body { border-bottom: .5px solid var(--color-separator); }
 /* narrowed from the corner button: the pinned column only the machine's mark and name, Overall and the memory away */
+.platform-table.is-tight col.col-machine { width: 160px; }
 .platform-table.is-tight colgroup col:nth-child(2) { width: 0; }
 .platform-table.is-tight .is-overall { visibility: hidden; padding: 0; border: 0; overflow: hidden; }
 .platform-table.is-tight .platform-mem { display: none; }
