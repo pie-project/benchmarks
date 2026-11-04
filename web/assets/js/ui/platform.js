@@ -761,7 +761,7 @@ window.Pie = window.Pie || {};
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
         const short = shortOf(mac);
-        return `<th class="platform-row" scope="row" data-hide-mac="${esc(mac)}"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}><span class="platform-chip">${only ? "" : badgeOf(platformOf(hw || {})?.id)}<span class="platform-name">${esc(chipName(mac))}</span>${short !== chipName(mac) ? `<span class="platform-short">${esc(short)}</span>` : ""}${specOf(hw)}</span>${eye(mac)}</th>`;
+        return `<th class="platform-row" scope="row" data-hide-mac="${esc(mac)}"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}><span class="platform-chip">${badgeOf(platformOf(hw || {})?.id)}<span class="platform-name">${esc(chipName(mac))}</span>${short !== chipName(mac) ? `<span class="platform-short">${esc(short)}</span>` : ""}${specOf(hw)}</span>${eye(mac)}</th>`;
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
