@@ -41,7 +41,7 @@ SITE_TZ = ZoneInfo("America/Los_Angeles")  # the team is in California: dates an
 WL_PRIORITY = {wl: (cat, i) for cat, ids, _ in CATEGORIES for i, wl in enumerate(ids)}
 
 ENGINE_META = {
-    "pie":      ("pie", "Apache-2.0", "pie-project/pie"),
+    "pie":      ("Pie", "Apache-2.0", "pie-project/pie"),
     "vllm":     ("vLLM", "Apache-2.0", "vllm-project/vllm"),
     "sglang":   ("SGLang", "Apache-2.0", "sgl-project/sglang"),
     "llamacpp": ("llama.cpp", "MIT", "ggml-org/llama.cpp"),
@@ -140,6 +140,10 @@ def artifact_to_model() -> tuple[dict[str, str], list[dict]]:
             # largest node CI can rent on each platform
             need = row["params_b"] * BYTES_PER_WEIGHT.get(str(c.get("precision") or "bf16"), 2) * 1.25
             row["fits"] = ", ".join(t for t, gb in NODE_GB.items() if need <= gb)
+    # the site's names, one pattern for every model: Family-Version-Size, the total size (matrix/models.yaml `names:`)
+    for mid, name in (load("models").get("names") or {}).items():
+        if mid in by_model:
+            by_model[mid]["name"] = name
     return mapping, list(by_model.values())
 
 
@@ -210,6 +214,12 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
             "runs": ", ".join(t.capitalize() for t in p["tiers"]),
         })
     rows += [row(c) for c in catalog if c["id"] not in used]
+    # one pattern for every accelerator's name, as for the models': its words joined by hyphens (H100-SXM, RTX-PRO-6000,
+    # TPU-v6e), the count after it. A Mac keeps Apple's own name (M5 Max)
+    for r in rows:
+        if r["class"] != "mac" and r.get("name"):
+            name, _, count = r["name"].partition(" ×")
+            r["name"] = name.replace(" ", "-") + (f" ×{count}" if count else "")
     return rows
 
 

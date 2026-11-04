@@ -175,7 +175,7 @@ window.Pie = window.Pie || {};
         </g>`;
     }).join("");
     return `
-      <svg class="trend" width="100%" height="${height}" role="img" aria-label="pie's median decode speed by release">
+      <svg class="trend" width="100%" height="${height}" role="img" aria-label="Pie's median decode speed by release">
         <line class="trend-parity" x1="0" x2="100%" y1="${bottom + 12}" y2="${bottom + 12}"/>
         ${segments}${marks}
       </svg>`;
@@ -273,7 +273,7 @@ window.Pie = window.Pie || {};
     const grad = (id, start, end) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" style="stop-color: var(${start})"/><stop offset="1" style="stop-color: var(${end})"/></linearGradient>`;
     const ring = `
-      <div class="ring" role="img" aria-label="pie decodes faster in ${wins.length} of ${decode.length} comparisons">
+      <div class="ring" role="img" aria-label="Pie decodes faster in ${wins.length} of ${decode.length} comparisons">
         <svg viewBox="0 0 ${size} ${size}" aria-hidden="true">
           <defs>
             ${grad("fit-leads", "--color-ring-start", "--color-engine-pie")}
@@ -385,7 +385,7 @@ window.Pie = window.Pie || {};
         engines.map((engine, j) => heatCell(byModel, model, engine, metric, lists[g], g && !j ? " is-group-start" : "")).join("")).join("");
       return `<div class="heat-row" role="row">${label}${cells}</div>`;
     }).join("");
-    return `<div class="heat-table is-wide" role="table" aria-label="pie against each engine, decode and prefill"
+    return `<div class="heat-table is-wide" role="table" aria-label="Pie against each engine, decode and prefill"
       style="--engines: ${n * METRICS.length}">${groups}${head}${rows}</div>`;
   };
 
@@ -408,7 +408,7 @@ window.Pie = window.Pie || {};
     return `
       <div class="heat-group">
         <div class="heat-group-title">${metric.label}</div>
-        <div class="heat-table" role="table" aria-label="pie against each engine, ${metric.label.toLowerCase()}"
+        <div class="heat-table" role="table" aria-label="Pie against each engine, ${metric.label.toLowerCase()}"
           style="--engines: ${engines.length}">${head}${rows}</div>
       </div>`;
   };

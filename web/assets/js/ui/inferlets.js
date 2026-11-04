@@ -135,7 +135,7 @@ window.Pie = window.Pie || {};
         say("This demo needs a browser with WebGPU (a recent Chrome or Edge).");
         return;
       }
-      const status = say("Starting pie…");
+      const status = say("Starting Pie…");
       try {
         const adapter = await navigator.gpu.requestAdapter();
         if (!adapter) throw new Error("This demo needs a browser with WebGPU (no GPU adapter is available).");

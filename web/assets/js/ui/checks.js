@@ -50,7 +50,7 @@ window.Pie = window.Pie || {};
     r.ref_top1_p != null ? `${engineLabel(r.ref_engine)} top-1 holds ${pct(r.ref_top1_p)}, its top-20 ${pct(r.ref_topk_mass)}` : "",
     `Exact match ${pct(r.exact_match, 0)}`,
     `${r.positions ?? "–"} positions over ${r.prompts ?? "–"} prompts${r.misaligned_texts ? `, ${r.misaligned_texts} misaligned` : ""}`,
-    `pie ${short(r.version) || "–"}, ${engineLabel(r.ref_engine)} ${r.ref_version || "–"}`,
+    `Pie ${short(r.version) || "–"}, ${engineLabel(r.ref_engine)} ${r.ref_version || "–"}`,
     r.miniature ? ["Model slice", layersText(r.layers)].filter(Boolean).join(": ") : "",
     r.date ? `Measured ${Pie.format.date(r.date)}` : "",
   ].filter(Boolean).join("\n");
@@ -107,7 +107,7 @@ window.Pie = window.Pie || {};
       </tr>`;
     }).join("");
     return `<div class="qc-scroll"><table class="qc-table qc-kernels">
-      <thead><tr><th class="qc-lead">Platform</th><th class="qc-num">Passed</th><th class="qc-num">Failed</th><th class="qc-num">Ignored</th><th class="qc-num">Worst error</th><th>pie</th></tr></thead>
+      <thead><tr><th class="qc-lead">Platform</th><th class="qc-num">Passed</th><th class="qc-num">Failed</th><th class="qc-num">Ignored</th><th class="qc-num">Worst error</th><th>Pie</th></tr></thead>
       <tbody>${body}</tbody></table></div>`;
   };
 
@@ -120,7 +120,7 @@ window.Pie = window.Pie || {};
   const PLATFORMS = ["mac", "nvidia", "amd", "tpu"];
   const familyOf = (row) => { const hw = row.platform && Pie.store.index.hardware[row.platform]; return hw ? Pie.platformOf(hw) : "mac"; };
   const platformLabel = (id) => Pie.schema[id]?.label || id;
-  // the closest reference first: an engine on pie's own weights and chat template (mlx-lm, vLLM), then the rest
+  // the closest reference first: an engine on Pie's own weights and chat template (mlx-lm, vLLM), then the rest
   const RANK = { mlxlm: 0, vllm: 0, sglang: 1, splash: 2, llamacpp: 3 };
   const byRank = (a, b) => (RANK[a.arm.engine] ?? 9) - (RANK[b.arm.engine] ?? 9);
   // red only where pie answers worse: its score below the engine's beyond both intervals. Only final answers count:
@@ -169,7 +169,7 @@ window.Pie = window.Pie || {};
         tip: card(title, [["pie", pct(pie.score), false, "pie"], [engineLabel(arm.engine), pct(arm.score), false, arm.engine],
           ["Difference", `${arm.diff < 0 ? "+" : arm.diff > 0 ? "−" : ""}${Math.abs(arm.diff * 100).toFixed(1)} pts`, true],
           isNum(arm.tolerance) ? ["Noise", `±${(arm.tolerance * 100).toFixed(1)} pts`, true] : null],
-          isOff(arm) ? `pie scores lower than ${engineLabel(arm.engine)}, beyond noise` : false) };
+          isOff(arm) ? `Pie scores lower than ${engineLabel(arm.engine)}, beyond noise` : false) };
     }).filter(Boolean).sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
     if (!rows.length) return "";
     const W = 880, L = 210, R = 24, RH = 18, T = 22, H = T + rows.length * RH + 8;
@@ -186,11 +186,11 @@ window.Pie = window.Pie || {};
         <circle class="qc-dot" cx="${x(r.d)}" cy="${y}" r="4"/>
       </g>`;
     }).join("");
-    const svg = `<svg class="qc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${other} minus pie, in points`)}">${ticks}${marks}</svg>`;
+    const svg = `<svg class="qc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${other} minus Pie, in points`)}">${ticks}${marks}</svg>`;
     if (bare) return `${svg}<p class="qc-chart-key"><span><i class="qc-key-band"></i>Tolerance</span><span><i class="qc-key-dot"></i>Within it</span><span><i class="qc-key-dot is-off"></i>Mismatch</span></p>`;
     return `<div class="qc-chart-card">
       ${svg}
-      <p class="qc-chart-key"><span><i class="qc-key-band"></i>Tolerance</span><span><i class="qc-key-dot"></i>Within it</span><span><i class="qc-key-dot is-off"></i>Mismatch</span><span>${esc(other)} minus pie, in points; right of zero, pie scores lower</span></p>
+      <p class="qc-chart-key"><span><i class="qc-key-band"></i>Tolerance</span><span><i class="qc-key-dot"></i>Within it</span><span><i class="qc-key-dot is-off"></i>Mismatch</span><span>${esc(other)} minus Pie, in points; right of zero, Pie scores lower</span></p>
     </div>`;
   };
 
@@ -201,7 +201,7 @@ window.Pie = window.Pie || {};
       const pie = row.arms.find((a) => a.artifact === (arm.vs || row.pie));
       const other = engineLabel(arm.engine);
       const flag = isOff(arm) ? "mismatch" : arm.score_flag;
-      const tip = [`pie ${pie ? `${pct(pie.score)} (95% ${pct(pie.ci_low)} to ${pct(pie.ci_high)}, n ${pie.n})` : "not run"}`,
+      const tip = [`Pie ${pie ? `${pct(pie.score)} (95% ${pct(pie.ci_low)} to ${pct(pie.ci_high)}, n ${pie.n})` : "not run"}`,
         `${other} ${pct(arm.score)} (95% ${pct(arm.ci_low)} to ${pct(arm.ci_high)}, n ${arm.n})`,
         row.platform ? `On ${hardwareName(row.platform)}` : "",
         isNum(arm.tolerance) ? `Allowed gap ±${(arm.tolerance * 100).toFixed(1)} pts` : ""].filter(Boolean).join("\n");
@@ -218,9 +218,9 @@ window.Pie = window.Pie || {};
     }).join("");
     return `${platforms.length > 1 ? platformBar(platforms) : ""}${deltaChart(items)}
       <div class="qc-scroll"><table class="qc-table qc-accuracy">
-        <thead><tr><th class="qc-lead">Model</th><th>Task</th><th class="qc-num">pie</th><th>Engine</th><th class="qc-num">Its score</th><th class="qc-num">Delta</th><th>Parity</th></tr></thead>
+        <thead><tr><th class="qc-lead">Model</th><th>Task</th><th class="qc-num">Pie</th><th>Engine</th><th class="qc-num">Its score</th><th class="qc-num">Delta</th><th>Parity</th></tr></thead>
         <tbody>${body}</tbody></table></div>
-      <p class="qc-foot">Release ${esc(tag)}, ${esc(platformLabel(accuracyPlatform))}. Delta is the engine minus pie, in points. Only engines on pie's weights and machine are compared. A mismatch is pie scoring lower by more than both 95% intervals together; only the final answers count.</p>`;
+      <p class="qc-foot">Release ${esc(tag)}, ${esc(platformLabel(accuracyPlatform))}. Delta is the engine minus Pie, in points. Only engines on Pie's weights and machine are compared. A mismatch is pie scoring lower by more than both 95% intervals together; only the final answers count.</p>`;
   };
 
   // the page: one grid in the platform pages' style, the benchmark tasks down the side and the models across under
@@ -265,7 +265,7 @@ window.Pie = window.Pie || {};
       const o = median(gaps.map((g) => g.d));
       const bad = gaps.filter((g) => g.off).length;  // the median is a number; red only when a model in the row scores worse
       return `<tr><th class="platform-row" scope="row"><span class="platform-chip"><span>${esc(task)}</span></span></th>
-        <td class="is-overall">${o === null ? `<span class="platform-cell is-empty">–</span>` : `<span class="platform-cell ${bad ? "is-behind" : "is-same"}"${bad ? ` data-tip="${esc(`pie scores lower on ${bad} ${bad === 1 ? "model" : "models"}`)}"` : ""}>${signed(o)}</span>`}</td>
+        <td class="is-overall">${o === null ? `<span class="platform-cell is-empty">–</span>` : `<span class="platform-cell ${bad ? "is-behind" : "is-same"}"${bad ? ` data-tip="${esc(`Pie scores lower on ${bad} ${bad === 1 ? "model" : "models"}`)}"` : ""}>${signed(o)}</span>`}</td>
         ${models.map((m) => {
           const xs = at[`${task}|${m}`];
           const g = gap(xs);
@@ -278,7 +278,7 @@ window.Pie = window.Pie || {};
             ...xs.flatMap(({ arm }) => [[engineLabel(arm.engine), pct(arm.score), false, arm.engine],
               [many ? `Difference to ${engineLabel(arm.engine)}` : "Difference", `${signed(-arm.diff * 100)} pts`, true],
               isNum(arm.tolerance) ? ["Noise", `±${(arm.tolerance * 100).toFixed(1)} pts`, true] : null])],
-            worse.length ? `pie scores lower than ${worse.join(" and ")}, beyond noise` : false);
+            worse.length ? `Pie scores lower than ${worse.join(" and ")}, beyond noise` : false);
           // a click opens Quality's runs for this model and task, with the engines this cell compares
           const open = { model: [m], task: [task], engine: [...new Set(["pie", ...xs.map((y) => y.arm.engine)])] };
           return `<td class="is-openable" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${g.off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${pct(g.pie.score)}<span class="qc-gap${g.off ? " is-off" : ""}">${signed(g.d)}</span></span></span></td>`;
@@ -309,12 +309,12 @@ window.Pie = window.Pie || {};
     <div class="method-inner qc-inner">
       <header class="method-head qc-head">
         <h1>Quality</h1>
-        <p class="method-lede">Whether pie computes what a reference engine computes, on the same weights and the same device.</p>
+        <p class="method-lede">Whether Pie computes what a reference engine computes, on the same weights and the same device.</p>
       </header>
-      ${section("Parity", "KL divergence of pie's next-token distribution from the reference engine's, mean over answer positions, and how often both pick the same top token.",
+      ${section("Parity", "KL divergence of Pie's next-token distribution from the reference engine's, mean over answer positions, and how often both pick the same top token.",
         `<div class="qc-banner" role="note"${(tables().quality_parity || []).length ? "" : " hidden"}>Model slices: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</div>${parityTable()}`)}
-      ${section("Kernels", "pie's kernel tests on each backend, against reference implementations.", kernelsTable())}
-      ${section("Accuracy", "Benchmark scores of pie beside every engine that ran the same weights on the same machine, per platform.", accuracyTable(state))}
+      ${section("Kernels", "Pie's kernel tests on each backend, against reference implementations.", kernelsTable())}
+      ${section("Accuracy", "Benchmark scores of Pie beside every engine that ran the same weights on the same machine, per platform.", accuracyTable(state))}
       <div class="qc-pop" role="dialog" hidden></div>
     </div>`;
 

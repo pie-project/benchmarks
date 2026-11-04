@@ -648,8 +648,8 @@ window.Pie = window.Pie || {};
             if (!Pie.signedIn() || !acc?.chart) return "";  // the Accuracy section, for an account only
             const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="accuracy-platform" aria-haspopup="menu" aria-label="${esc(acc.label)}">${Pie.platform.badge(acc.platform)}${esc(acc.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
             return `<div class="board-section-head"><div class="board-section-text"><h1 class="board-title">Accuracy</h1>
-            <p class="board-lede">pie’s benchmark score gap to every engine on the same weights and machine.</p></div></div>
-            <div class="board-stack">${card("accuracy", "Score gap", "The other engine minus pie, in points · Right of zero, pie scores lower", acc.chart, pick)}</div>`;
+            <p class="board-lede">Pie’s benchmark score gap to every engine on the same weights and machine.</p></div></div>
+            <div class="board-stack">${card("accuracy", "Score gap", "The other engine minus Pie, in points · Right of zero, Pie scores lower", acc.chart, pick)}</div>`;
           })()}
         </div>
       </div></div>`;  // no footer: the page ends on its last card
