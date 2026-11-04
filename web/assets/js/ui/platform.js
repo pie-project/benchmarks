@@ -59,7 +59,7 @@ window.Pie = window.Pie || {};
     if (ids.includes("spec") || !ids.every((id) => ["decode", "prefill", "batching", "pbatch"].includes(id))) return longSetupControl(active, modes);
     // one button naming the setup with its mark, in the toolbar's view-button style; a click opens the four setups
     const NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
-    return `<span class="filter platform-setup"><button type="button" class="filter-button setup-pick" data-grid-pick="setup" aria-haspopup="menu" title="Setup">${`<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[active] || ""}</svg>`}<span>${esc(NAMES[active] || active)}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`;
+    return `<span class="filter platform-setup"><button type="button" class="filter-button setup-pick label-rolls" data-grid-pick="setup" aria-haspopup="menu" title="Setup">${`<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[active] || ""}</svg>`}<span>${esc(NAMES[active] || active)}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`;
   };
   let onChange = () => {};
   // after each draw: the numbers roll in if a turn drew them, and the next turn is set
@@ -77,9 +77,27 @@ window.Pie = window.Pie || {};
     }, Math.max(0, AUTO_MS - auto.spent));
   };
   const afterDraw = () => {
+    // a wave runs to its end: a redraw in the middle of it (a tag's data arriving, a second pick) picks it up where it
+    // is, each cell's delay counted from the wave's start, rather than cutting it off or starting it again
+    const now = performance.now();
     if (auto.rolling) {
       auto.rolling = false;
-      // a wave from the top-left cell to the bottom-right: each cell starts a step after the one above and left of it
+      clearTimeout(auto.waveTimer);
+      auto.wave = { start: now, ghosts: auto.ghosts || [], longest: 0 };
+      auto.ghosts = null;
+      // the setup button's old name rolls up and out as the new one rises into its place
+      const pick = element.querySelector(auto.labelOf || ".setup-pick");
+      if (pick && auto.label) {
+        pick.insertAdjacentHTML("afterbegin", `<span class="label-ghost" aria-hidden="true">${auto.label}</span>`);
+        pick.classList.add("is-relabel");
+        setTimeout(() => { pick.classList.remove("is-relabel"); pick.querySelector(".label-ghost")?.remove(); }, 1000);
+      }
+      auto.label = null;
+    }
+    const wave = auto.wave;
+    if (wave) {
+      const elapsed = now - wave.start;
+      // a diagonal wave from the top-left cell to the bottom-right: each cell starts a step after the one above and left of it
       let longest = 0;
       for (const table of element.querySelectorAll(".platform-table")) {
         const rows = [...table.tBodies[0]?.rows || []];
@@ -87,23 +105,14 @@ window.Pie = window.Pie || {};
         const step = Math.min(70, 1800 / Math.max(1, span));  // slow: the wave takes up to about two seconds
         rows.forEach((tr, r) => [...tr.cells].forEach((td, c) => {
           const wait = Math.round((r + c) * step);
-          td.style.setProperty("--roll-wait", `${wait}ms`);
+          td.style.setProperty("--roll-wait", `${Math.round(wait - elapsed)}ms`);
           longest = Math.max(longest, wait);
         }));
       }
-      // the setup button's old name rolls up and out as the new one rises into its place
-      const pick = element.querySelector(".setup-pick");
-      if (pick && auto.label) {
-        pick.insertAdjacentHTML("afterbegin", `<span class="label-ghost" aria-hidden="true">${auto.label}</span>`);
-        pick.classList.add("is-relabel");
-        setTimeout(() => { pick.classList.remove("is-relabel"); pick.querySelector(".label-ghost")?.remove(); }, 1000);
-      }
-      auto.label = null;
+      wave.longest = Math.max(wave.longest, longest);
       // the old number in each cell leaves on the same beat, just ahead of the new one
-      const ghosts = auto.ghosts || [];
-      auto.ghosts = null;
       element.querySelectorAll(".platform-table").forEach((table, t) => [...(table.tBodies[0]?.rows || [])].forEach((tr, r) => [...tr.cells].forEach((td, c) => {
-        const old = ghosts[t]?.[r]?.[c];
+        const old = wave.ghosts[t]?.[r]?.[c];
         const cell = td.querySelector(".platform-cell");
         if (!old?.html || !cell) return;
         if (old.pill) {
@@ -115,7 +124,13 @@ window.Pie = window.Pie || {};
         cell.insertAdjacentHTML("beforeend", `<span class="roll-ghost" aria-hidden="true">${old.html}</span>`);
       })));
       element.classList.add("is-rolling");
-      setTimeout(() => { element.classList.remove("is-rolling"); element.querySelectorAll(".roll-ghost").forEach((g) => g.remove()); }, longest + 1000);
+      clearTimeout(auto.waveTimer);
+      auto.waveTimer = setTimeout(() => {
+        if (auto.wave !== wave) return;
+        auto.wave = null;
+        element.classList.remove("is-rolling");
+        element.querySelectorAll(".roll-ghost").forEach((g) => g.remove());
+      }, Math.max(0, wave.longest + 1300 - elapsed));  // the last cell: its wait, the new number's 320 ms start and its .8 s rise
     }
     element.classList.toggle("is-auto-paused", auto.paused);
     // the toolbar switch shows while this page's setups can turn, on while they do
@@ -142,9 +157,10 @@ window.Pie = window.Pie || {};
   element.addEventListener("pointerleave", () => pauseTurns(false));
   document.addEventListener("visibilitychange", () => pauseTurns(document.hidden));
   // the numbers on screen before a turn redraws them, cell by cell, to fade out in the same wave as the new ones rise
-  const captureGhosts = () => {
-    // the setup button's mark and name, to roll up and away as the next setup's roll in, as SwiftUI's numeric text does
-    const pick = element.querySelector(".setup-pick");
+  const captureGhosts = (button = ".setup-pick") => {
+    // the picked button's mark and name (the setup's, or the view's), to roll up and away as the next one's roll in, as SwiftUI's numeric text does
+    const pick = element.querySelector(button);
+    auto.labelOf = button;
     auto.label = pick ? [...pick.children].filter((el) => !el.classList.contains("popup-chevron")).map((el) => el.outerHTML).join("") : null;
     // an Overall cell leaves whole, its coloured capsule with it; a model cell leaves its number
     auto.ghosts = [...element.querySelectorAll(".platform-table")].map((t) => [...(t.tBodies[0]?.rows || [])].map((tr) => [...tr.cells].map((td) =>
@@ -251,7 +267,7 @@ window.Pie = window.Pie || {};
     hardware: new Set(["h200-x1", "b200-x1", "pro6000-x1", "a100-sxm-x1", "h100-sxm-x1", "a40-x1", "l40s-x1", "rtx5090-x1", "rtx4090-x1"]),
   };
   const PENDING = '<svg class="platform-pending" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.8V8l2.2 1.6"/></svg>';
-  const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 12.2 12.2 3.8"/></svg>';
+  const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>';  // the slice mark's square, in its corner too
   const signed = (p) => {
     const pct = Math.round(p * 100);
     return pct > 0 ? `+${pct}%` : pct < 0 ? `−${Math.abs(pct)}%` : "0%";
@@ -695,7 +711,11 @@ window.Pie = window.Pie || {};
       return Pie.store.tables.engines.map((e) => ({ value: e.id, label: Pie.store.names.engine(e.id), selected: e.id === current, dot: Pie.engines.colorOf(e.id) }));
     },
     pick(k, value) {
-      if (k === "view") { Pie.platform.setCompare(value); return; }
+      // a new view or engine redraws every number: it rolls in on the same diagonal wave a setup's turn does, the setup's name staying put
+      // the turn's clock starts again too: a setup turning in right behind a picked view would roll the numbers twice
+      const wave = (button) => { if (!viewState) return; captureGhosts(button); if (!button) auto.label = null; auto.rolling = true; auto.spent = 0; clearTimeout(auto.timer); };
+      if (k === "view") { if (value !== compare) wave('[data-grid-pick="options"]'); Pie.platform.setCompare(value); return; }
+      if (k === "engine" && viewState && value !== (viewState.platform.engine || Pie.engines.primary)) wave();
       if (k === "setup" && viewState) { stopTurns(); auto.rolling = value !== viewState.platform.mode; if (auto.rolling) captureGhosts(); viewState.platform.mode = value; return; }  // a picked setup rolls in as a turn does
       if (k === "engine" && viewState) viewState.platform.engine = value;
       if (k === "rival" && viewState) viewState.platform.rival = value || null;
@@ -894,8 +914,12 @@ window.Pie = window.Pie || {};
       // a platform's page is one list of machines; All Platforms gives each platform its own table, headed by its name
       // and its own maker and model heads, with only the models measured on it
       // a table's miniatures (cut to fit its machines) lead it, then its full models; a maker with both splits its band
+      // a slice is read from the runs, not the cell drawn: Tokens per Second and Kernel Efficiency leave a slice's cell
+      // empty, and the columns must keep the order Relative Speed gives them
+      const sliced = new Set(all.filter((r) => r.miniature && r.engine === base).map((r) => `${r.hardware}|${r.model}`));
+      const slicedOn = (list, model) => list.some((mac) => sliced.has(`${mac}|${model}`));
       const minisFirst = (list, ms) => {
-        const mini = (model) => list.some((mac) => grid[mac]?.[model]?.c?.pie?.miniature);
+        const mini = (model) => slicedOn(list, model);
         return [...ms.filter(mini), ...ms.filter((m) => !mini(m))];
       };
       const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs), only), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
@@ -1006,7 +1030,7 @@ window.Pie = window.Pie || {};
       // a maker heads its models with a band across them, as a platform heads its machines down the side
       const makers = [];
       // a maker's miniatures and its full models are two bands, as the miniatures lead the table
-      const cut = (model) => list.some((mac) => grid[mac]?.[model]?.c?.pie?.miniature);
+      const cut = (model) => slicedOn(list, model);
       for (const model of models) {
         const maker = makerOf(model);
         const last = makers[makers.length - 1];
@@ -1064,7 +1088,7 @@ window.Pie = window.Pie || {};
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
-            <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+            <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
             <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
 
           </span>

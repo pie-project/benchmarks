@@ -108,7 +108,7 @@
 .platform-cell.is-empty { color: var(--color-label-quaternary); text-align: center; font-weight: 400; }
 
 
-.platform-nofit { width: 13px; height: 13px; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.2; vertical-align: -2px; }
+.platform-nofit { width: 12px; height: 12px; fill: none; stroke: var(--color-label-quaternary); stroke-width: 1.1; stroke-linecap: round; vertical-align: -2px; }  /* as the slice mark: same size, colour and line */
 .platform-key .platform-nofit { margin-right: 6px; }
 
 /* the machine column: Apple's mark, the chip, its memory in a quiet mono */
@@ -892,24 +892,26 @@
 .filter-button .options-icon { width: 13px; height: 13px; fill: var(--color-background); stroke: var(--color-label-secondary); stroke-width: 1.3; stroke-linecap: round; vertical-align: -2px; }  /* View Options: the sliders symbol before what is set */
 .filter-button.setup-pick .mode-icon { width: 12px; height: 12px; vertical-align: -1px; }  /* the setup's mark before its name, in the pickers' own button */
 /* a turn's new numbers roll up into place, as the Stocks app moves a price */
-.is-rolling .platform-table tbody td .platform-main { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) calc(var(--roll-wait, 0ms) + 120ms) both; }  /* a diagonal wave, top-left first, the new number just behind the old one leaving */
+.is-rolling .platform-table tbody td .platform-main { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) calc(var(--roll-wait, 0ms) + 320ms) both; }  /* a diagonal wave, top-left first, the new number just behind the old one leaving */
 .platform-cell:has(> .roll-ghost) { position: relative; }
 /* Overall's capsule moves whole, its colour with its number: the old capsule leaves as the new one rises */
 .is-rolling .platform-table tbody td.is-overall .platform-main { animation: none; }
-.is-rolling .platform-table tbody td.is-overall > .platform-cell { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) calc(var(--roll-wait, 0ms) + 120ms) both; }
+.is-rolling .platform-table tbody td.is-overall > .platform-cell { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) calc(var(--roll-wait, 0ms) + 320ms) both; }
 .roll-ghost.is-pill { justify-content: flex-end; }  /* in the cell's own padding, so the old capsule sits where the new one does */
 td.is-overall:has(> .roll-ghost) { overflow: hidden; }
-.roll-ghost { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding: inherit; pointer-events: none; animation: setup-out .6s cubic-bezier(.22, 1, .36, 1) var(--roll-wait, 0ms) both; }
+.roll-ghost { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding: inherit; pointer-events: none; animation: setup-out .45s cubic-bezier(.4, 0, 1, 1) var(--roll-wait, 0ms) both; }
 @keyframes setup-out { from { transform: none; opacity: 1; filter: none; } to { transform: translateY(-35%); opacity: 0; filter: blur(2px); } }
 @keyframes setup-roll { from { transform: translateY(35%); opacity: 0; filter: blur(2px); } to { transform: none; opacity: 1; filter: none; } }
 @media (prefers-reduced-motion: reduce) { .roll-ghost { display: none; } .is-rolling .platform-table tbody td .platform-main { animation: none; } }
 /* the setup button's name changes as a counter does: the old one rolls up and out, the new one up into its place */
-.filter-button.setup-pick { position: relative; overflow: hidden; }
-.setup-pick .label-ghost { position: absolute; inset: 0; display: flex; align-items: center; padding: inherit; pointer-events: none; animation: label-out .8s cubic-bezier(.4, 0, .2, 1) both; }
-.setup-pick.is-relabel > .mode-icon, .setup-pick.is-relabel > span:not(.label-ghost) { animation: label-in .8s cubic-bezier(.4, 0, .2, 1) .12s both; }
+.filter-button.label-rolls { position: relative; overflow: hidden; }
+.label-rolls .label-ghost { position: absolute; inset: 0; display: flex; align-items: center; padding: inherit; pointer-events: none; animation: label-out .8s cubic-bezier(.4, 0, .2, 1) both; }
+.label-rolls.is-relabel > svg:not(.popup-chevron), .label-rolls.is-relabel > span:not(.label-ghost) { animation: label-in .8s cubic-bezier(.4, 0, .2, 1) .12s both; }
 @keyframes label-out { to { transform: translateY(-70%); opacity: 0; filter: blur(1.5px); } }
 @keyframes label-in { from { transform: translateY(70%); opacity: 0; filter: blur(1.5px); } to { transform: none; opacity: 1; filter: none; } }
-@media (prefers-reduced-motion: reduce) { .setup-pick .label-ghost { display: none; } .setup-pick.is-relabel > * { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .label-rolls .label-ghost { display: none; } .label-rolls.is-relabel > * { animation: none; } }
 
 .filter-button .view-icon { width: 14px; height: 14px; flex: none; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }  /* the picked view's symbol before its name */
 .filter-button .view-icon .is-filled { fill: var(--color-label-secondary); stroke: none; }
+.platform-cell.is-nofit { position: relative; min-height: 24px; }  /* as tall as a measured cell, so the corner is the same corner */
+.platform-cell.is-nofit > .platform-nofit { position: absolute; top: 5px; left: 6px; }  /* where the slice mark sits: the cell's top-left corner */
