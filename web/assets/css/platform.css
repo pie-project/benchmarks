@@ -879,7 +879,7 @@
 .platform-table tbody td.is-openable:hover { background: var(--color-hover); }  /* the whole cell is the target, lit as one block */  /* a measured cell opens its run on the Results page */
 /* hovered, its number gives way to the circled arrow macOS uses to go on to a thing's details: here its runs */
 .platform-open { display: none; position: absolute; top: 50%; right: 14px; transform: translateY(-50%); color: var(--color-label-tertiary); }
-.platform-open svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }  /* macOS's filter symbol alone, three lines narrowing: Results filtered to this cell's runs */
+.platform-open svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }  /* macOS's list symbol (list.bullet): the rows of this cell's runs on Results */
 .platform-table td.is-openable:hover .platform-open { display: grid; place-items: center; color: var(--color-label-quaternary); }
 .platform-table td.is-openable:hover > .platform-cell { background: transparent; }
 .platform-table td.is-openable:hover > .platform-cell > :not(.slice-mark) { visibility: hidden; }  /* the cell stays, so its card still opens */
