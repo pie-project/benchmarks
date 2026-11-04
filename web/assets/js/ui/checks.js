@@ -39,7 +39,7 @@ window.Pie = window.Pie || {};
 
   // a miniature keeps a few of the model's layers: a count, or the kept range ("0-4")
   const layersText = (layers) => (isNum(layers) ? `${layers} layers kept` : layers ? `layers ${layers} kept` : "");
-  const miniBadge = (row) => `<span class="qc-badge" title="${esc(["Miniature", layersText(row.layers)].filter(Boolean).join(": "))}">Miniature</span>`;
+  const miniBadge = (row) => `<span class="qc-badge" title="${esc(["Model slice", layersText(row.layers)].filter(Boolean).join(": "))}">Slice</span>`;
 
   // ---- parity: a row per model, a column per device ----------------------------------------------------
   const parityTip = (r) => [
@@ -51,7 +51,7 @@ window.Pie = window.Pie || {};
     `Exact match ${pct(r.exact_match, 0)}`,
     `${r.positions ?? "–"} positions over ${r.prompts ?? "–"} prompts${r.misaligned_texts ? `, ${r.misaligned_texts} misaligned` : ""}`,
     `pie ${short(r.version) || "–"}, ${engineLabel(r.ref_engine)} ${r.ref_version || "–"}`,
-    r.miniature ? ["Miniature model", layersText(r.layers)].filter(Boolean).join(": ") : "",
+    r.miniature ? ["Model slice", layersText(r.layers)].filter(Boolean).join(": ") : "",
     r.date ? `Measured ${Pie.format.date(r.date)}` : "",
   ].filter(Boolean).join("\n");
 
@@ -310,7 +310,7 @@ window.Pie = window.Pie || {};
         <p class="method-lede">Whether pie computes what a reference engine computes, on the same weights and the same device.</p>
       </header>
       ${section("Parity", "KL divergence of pie's next-token distribution from the reference engine's, mean over answer positions, and how often both pick the same top token.",
-        `<div class="qc-banner" role="note"${(tables().quality_parity || []).length ? "" : " hidden"}>Miniature models: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</div>${parityTable()}`)}
+        `<div class="qc-banner" role="note"${(tables().quality_parity || []).length ? "" : " hidden"}>Model slices: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</div>${parityTable()}`)}
       ${section("Kernels", "pie's kernel tests on each backend, against reference implementations.", kernelsTable())}
       ${section("Accuracy", "Benchmark scores of pie beside every engine that ran the same weights on the same machine, per platform.", accuracyTable(state))}
       <div class="qc-pop" role="dialog" hidden></div>

@@ -140,7 +140,7 @@ window.Pie = window.Pie || {};
   // pie's advantage over the best other engine: a speed ratio, or the inverse for a time
   // Compare: "engines", named Speedup, shows each engine against the best other engine; "ceiling", named Efficiency, shows each engine's
   // share of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
-  const COMPARES = { engines: "Relative Speed", ceiling: "Kernel Efficiency", tps: "Best TPS" };
+  const COMPARES = { engines: "Relative Speed", ceiling: "Kernel Efficiency", tps: "Tokens per Second" };
   // each view wears the icon of the sidebar page that shows it for every machine
   const COMPARE_ICONS = { engines: "speedups", ceiling: "all_hardware", tps: "tps" };
   const nextCompare = (id) => { const ids = Object.keys(COMPARES); return ids[(ids.indexOf(id) + 1) % ids.length]; };
@@ -288,7 +288,7 @@ window.Pie = window.Pie || {};
       if (moved) return `<div class="rf-move-card">${roofCard(moved, { move: true })}${card("", "", lines)}</div>`;
     }
     // a miniature's card says so at its head, in place of the browser's own tooltip that would cover it
-    return mini ? card("Miniature model", `${c.pie.miniature}, cut to fit`, lines) : card("", "", lines);
+    return mini ? card("Model slice", c.pie.miniature, lines) : card("", "", lines);
   };
 
   // a result on the roofline model (Williams et al., 2009): its pass's arithmetic intensity, the FLOPs it does per byte
@@ -683,7 +683,7 @@ window.Pie = window.Pie || {};
           const failed = own && own.status === "fail";
           if (cloud && failed && !c) { grid[mac][model] = { c: null, needs: null, failed: true, why: own.note ? `Failed: ${own.note}` : "The run failed" }; continue; }
           // an empty cell explains itself only when there is something to say: it does not fit, or its run failed
-          grid[mac][model] = { c, needs, failed, why: needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a miniature ran` : `Needs about ${Math.round(needs)} GB`) : own?.note || "" };
+          grid[mac][model] = { c, needs, failed, why: needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a model slice ran` : `Needs about ${Math.round(needs)} GB`) : own?.note || "" };
         }
       }
       // Hide unavailable drops the models and machines with nothing to compare, as the results table does
@@ -778,6 +778,14 @@ window.Pie = window.Pie || {};
       const tight = p.narrowBy?.[key] ?? (p.narrow ?? true);
       const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
       const shownGroups = [{ platform: null, macs: list }];
+      // a model slice's cell carries the slice mark in its top-left corner; its popover says how much of the model ran,
+      // as the columns' (i) does
+      const sliceMark = (cut, model) => {
+        const all = Pie.store.index.models[realOf(model)]?.layers;
+        const kept = parseInt(cut, 10);
+        const how = kept && all ? `${kept} of ${all} layers kept (${Math.round((kept / all) * 100)}%)` : cut;
+        return `<span class="column-info slice-mark" tabindex="0" role="button" aria-label="Model slice"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg><span class="column-info-pop" role="tooltip">${esc(`Model slice: ${how}, to fit one device. For engine-to-engine comparison only, not the full model's speed.`)}</span></span>`;
+      };
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
         if (hidden.has(mac)) return `<tr class="is-hidden-row">${machine(mac, g.platform)}<td class="is-overall"></td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
         const o = overall(mac);
@@ -805,14 +813,14 @@ window.Pie = window.Pie || {};
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               // a miniature's own tok/s is a cut model's, no real speed: with no other engine to set it against, it shows none
               : c.gain === null ? { kind: "is-even", html: c.pie.miniature ? "–" : esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}><span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           // an empty cell lists every engine that has a row here and why it gave no number, as a measured cell's card does
           // the engines that did measure here, though pie did not (the comparison needs pie): their numbers first
           const ranHere = [...new Map(rows.filter((r) => r.hardware === mac && r.model === realOf(model) && r[metric.key]).map((r) => [r.engine, r])).values()]
             .sort((a, b) => b[metric.key] - a[metric.key]);
           const absent = [...ranHere.map((r) => `<div class="tip-row"><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
-            <span class="tip-value">${r.miniature ? "Miniature" : esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`), ...absentRows(mac, realOf(model), modeOf(null), ranHere)];
+            <span class="tip-value">${r.miniature ? "Model slice" : esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`), ...absentRows(mac, realOf(model), modeOf(null), ranHere)];
           const emptyTip = absent.length ? card("", "", absent) : why ? card("", "", [], why) : "";
           return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
