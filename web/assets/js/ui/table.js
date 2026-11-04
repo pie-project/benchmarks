@@ -127,10 +127,27 @@ window.Pie = window.Pie || {};
       const numbered = Pie.schema[state.table].numbered;
       const corner = numbered ? `<th class="row-number" aria-label="Row"></th>` : "";
       const head = `<thead><tr>${corner}${this.fill(columns.map((column) => headerCell(column, state)).join(""), columns, state, "th")}</tr></thead>`;
+      // the first rows at once, the rest as the list scrolls toward them: thousands of rows drawn up front made every
+      // sort and filter wait on the page's layout
+      const FIRST = 150, MORE = 400;
+      const draw = (from, to) => rows.slice(from, to).map((row, i) => bodyRow(row, columns, state, from + i)).join("");
       const body = rows.length
-        ? `<tbody>${rows.map((row, index) => bodyRow(row, columns, state, index)).join("")}</tbody>`
+        ? `<tbody>${draw(0, FIRST)}</tbody>`
         : `<tbody><tr><td class="table-empty" colspan="${columns.length + 1 + (numbered ? 1 : 0)}">Nothing matches these filters</td></tr></tbody>`;
       table.innerHTML = head + body;
+      this.more?.disconnect();
+      if (rows.length <= FIRST) return;
+      let shown = FIRST;
+      const tbody = table.querySelector("tbody");
+      const watch = new IntersectionObserver((entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        tbody.insertAdjacentHTML("beforeend", draw(shown, shown + MORE));
+        shown += MORE;
+        watch.disconnect();
+        if (shown < rows.length) watch.observe(tbody.lastElementChild);
+      }, { rootMargin: "1200px 0px" });
+      watch.observe(tbody.lastElementChild);
+      this.more = watch;
     },
 
     // a finger cannot hover a cell's note: a tap on a noted cell or row shows it instead
