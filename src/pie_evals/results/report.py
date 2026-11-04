@@ -170,6 +170,20 @@ def output_length_mismatches(matrix: Matrix, store: Store, tier: Tier | None = N
     return sorted(out, key=lambda r: -abs(r["gap_rel"]))
 
 
+def _declared_unsupported(matrix: Matrix, row: dict) -> bool:
+    """Whether a support.yaml rule rules out the row's cell as the matrix stands now."""
+    from pie_evals.plan.matrix import selector_matches
+    from pie_evals.schema import EngineName
+
+    try:
+        cell = Cell(engine=EngineName(str(row["engine"])), platform=matrix.platforms[str(row["platform"])],
+                    artifact=matrix.artifacts[str(row["artifact"])], workload=matrix.workloads[str(row["workload"])],
+                    program=matrix.programs[str(row.get("program") or "text-completion-bench")], mode=matrix.modes[str(row.get("mode") or "tp1").split(",")[0]])
+    except (AttributeError, KeyError, ValueError):
+        return False
+    return any(selector_matches(rule.when, cell) for rule in matrix.unsupported)
+
+
 def prompt_length_mismatches(matrix: Matrix, store: Store, tier: Tier | None = None, *, rel: float = 0.01) -> list[dict]:
     """Every engine of a cold-prompt workload is sent the same prompts; a spread past ``rel`` in the mean prompt
     tokens per request the engines report means one prefilled more work than another (a chat template only one applied)."""
@@ -178,6 +192,10 @@ def prompt_length_mismatches(matrix: Matrix, store: Store, tier: Tier | None = N
         done = int(row.get("requests") or 0) - int(row.get("failed") or 0)
         wl = matrix.workloads.get(str(row["workload"]))
         if row["status"] not in ("pass", "noisy") or not row.get("prompt_tokens") or done <= 0 or not (wl and wl.params.get("cold_cache")):
+            continue
+        # a row of a cell the matrix now declares unsupported (Splash's c32 from before it was ruled out) is never
+        # measured again, so its older prompts would fail every collect; the site does not show it either
+        if _declared_unsupported(matrix, row):
             continue
         key = (row["platform"], model_of(matrix, str(row["artifact"])), str(row["workload"]))
         prev = groups[key].get(row["engine"])
