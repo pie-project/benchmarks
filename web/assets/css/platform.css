@@ -915,3 +915,15 @@ td.is-overall:has(> .roll-ghost) { overflow: hidden; }
 .filter-button .view-icon .is-filled { fill: var(--color-label-secondary); stroke: none; }
 .platform-cell.is-nofit { position: relative; min-height: 24px; }  /* as tall as a measured cell, so the corner is the same corner */
 .platform-cell.is-nofit > .platform-nofit { position: absolute; top: 5px; left: 6px; }  /* where the slice mark sits: the cell's top-left corner */
+/* the setups as a row of buttons: the shown one filled grey with its name in full colour, the others plain until hovered */
+.setup-row { display: inline-flex; align-items: center; gap: 2px; }
+.setup-row .filter-button.setup-tab { gap: 6px; border-radius: var(--radius-control); color: var(--color-label-secondary); background: none; }
+.setup-row .filter-button.setup-tab:hover { background: var(--color-hover); color: var(--color-label); }
+.setup-row .filter-button.setup-tab.is-active { background: var(--color-fill); color: var(--color-label); }
+.setup-row .setup-tab:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+.setup-row .mode-icon { width: 12px; height: 12px; }
+/* an empty cell rises on the wave as a number does, and what it held leaves from the cell itself */
+.is-rolling .platform-table tbody td:not(.is-overall) > .platform-cell.is-empty { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) calc(var(--roll-wait, 0ms) + 320ms) both; }
+.platform-table tbody td:not(.is-overall):has(> .roll-ghost) { position: relative; }  /* Overall stays sticky */
+@media (prefers-reduced-motion: reduce) { .is-rolling .platform-table tbody td > .platform-cell.is-empty { animation: none; } }
+.platform-table tbody td:not(.is-overall) > .roll-ghost.is-pill > .platform-cell { width: 100%; }  /* an empty cell leaving keeps its own layout, its mark in the corner */

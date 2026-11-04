@@ -57,9 +57,10 @@ window.Pie = window.Pie || {};
   const setupControl = (active, modes) => {
     const ids = modes.map((m) => m.id);
     if (ids.includes("spec") || !ids.every((id) => ["decode", "prefill", "batching", "pbatch"].includes(id))) return longSetupControl(active, modes);
-    // one button naming the setup with its mark, in the toolbar's view-button style; a click opens the four setups
+    // the four setups side by side as buttons, the one shown filled, as a macOS toolbar sets out a few views it switches between
     const NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
-    return `<span class="filter platform-setup"><button type="button" class="filter-button setup-pick label-rolls" data-grid-pick="setup" aria-haspopup="menu" title="Setup">${`<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[active] || ""}</svg>`}<span>${esc(NAMES[active] || active)}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`;
+    return `<span class="setup-row setup-pick platform-setup" role="group" aria-label="Setup">${ids.map((id) =>
+      `<button type="button" class="filter-button setup-tab${id === active ? " is-active" : ""}" data-mode="${id}" aria-pressed="${id === active}" title="${esc(NAMES[id])}, ${id === "decode" || id === "prefill" ? "latency" : "throughput"}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id] || ""}</svg><span>${esc(NAMES[id])}</span></button>`).join("")}</span>`;
   };
   let onChange = () => {};
   // after each draw: the numbers roll in if a turn drew them, and the next turn is set
@@ -116,12 +117,17 @@ window.Pie = window.Pie || {};
         const cell = td.querySelector(".platform-cell");
         if (!old?.html || !cell) return;
         if (old.pill) {
-          if (cell.outerHTML === old.html) return;
+          // an Overall capsule that did not change stays still; an empty cell always waves, out and back in, with its row
+          if (td.classList.contains("is-overall") && cell.outerHTML === old.html) return;
           td.insertAdjacentHTML("beforeend", `<span class="roll-ghost is-pill" aria-hidden="true">${old.html}</span>`);
           return;
         }
-        if (td.querySelector(".platform-main")?.innerHTML === old.html) return;
-        cell.insertAdjacentHTML("beforeend", `<span class="roll-ghost" aria-hidden="true">${old.html}</span>`);
+        // an empty cell (its dash, its does-not-fit mark) waves too: it is the whole cell that rises, so what left it
+        // leaves from the cell's own box, outside the rising one
+        const main = td.querySelector(".platform-main");
+        if (main?.innerHTML === old.html && look(main).style === old.style) return;
+        // the number leaves from exactly where it stood: measured from the cell's right edge, whatever the new cell's padding
+        td.insertAdjacentHTML("beforeend", `<span class="roll-ghost" aria-hidden="true" style="padding: 0 ${old.right ?? 0}px 0 0"><span style="${old.style || ""}">${old.html}</span></span>`);
       })));
       element.classList.add("is-rolling");
       clearTimeout(auto.waveTimer);
@@ -157,14 +163,24 @@ window.Pie = window.Pie || {};
   element.addEventListener("pointerleave", () => pauseTurns(false));
   document.addEventListener("visibilitychange", () => pauseTurns(document.hidden));
   // the numbers on screen before a turn redraws them, cell by cell, to fade out in the same wave as the new ones rise
+  // a number leaves in its own colours (green ahead, red behind, the blue capsule of the fastest), not the colours of
+  // the view arriving: what it looked like is kept beside what it said
+  const LOOK = ["color", "background-color", "padding", "border-radius", "font-weight"];
+  const look = (main) => {
+    if (!main) return { html: "" };
+    const cs = getComputedStyle(main);
+    return { html: main.innerHTML, style: `display: inline-block; ${LOOK.map((k) => `${k}: ${cs.getPropertyValue(k)}`).join("; ")}` };
+  };
   const captureGhosts = (button = ".setup-pick") => {
     // the picked button's mark and name (the setup's, or the view's), to roll up and away as the next one's roll in, as SwiftUI's numeric text does
     const pick = element.querySelector(button);
     auto.labelOf = button;
-    auto.label = pick ? [...pick.children].filter((el) => !el.classList.contains("popup-chevron")).map((el) => el.outerHTML).join("") : null;
+    auto.label = pick?.tagName === "BUTTON" ? [...pick.children].filter((el) => !el.classList.contains("popup-chevron")).map((el) => el.outerHTML).join("") : null;  // a row of buttons only moves its fill
     // an Overall cell leaves whole, its coloured capsule with it; a model cell leaves its number
     auto.ghosts = [...element.querySelectorAll(".platform-table")].map((t) => [...(t.tBodies[0]?.rows || [])].map((tr) => [...tr.cells].map((td) =>
-      (td.classList.contains("is-overall") ? { pill: true, html: td.querySelector(".platform-cell")?.outerHTML || "" } : { html: td.querySelector(".platform-main")?.innerHTML || "" }))));
+      (td.classList.contains("is-overall") ? { pill: true, html: td.querySelector(".platform-cell")?.outerHTML || "" }
+        // an empty cell leaves whole too (its dash, its does-not-fit mark where it sits)
+        : td.querySelector(".platform-main") ? { ...look(td.querySelector(".platform-main")), right: td.getBoundingClientRect().right - td.querySelector(".platform-main").getBoundingClientRect().right } : { pill: true, html: td.querySelector(".platform-cell.is-empty")?.outerHTML || "" }))));
   };
   // the viewer's own pick ends the turns
   const stopTurns = () => { auto.stopped = true; auto.spent = 0; clearTimeout(auto.timer); showAuto(); };
