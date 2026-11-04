@@ -138,9 +138,9 @@ window.Pie = window.Pie || {};
     label: (v) => `${Math.round(v)}%`,
   }));
   // each platform's card shows its bars or, picked in its corner, the grid of head-to-heads they are fitted from
-  const GRID_KEY = "pieGridCards2";  // kept per browser, as the cards' other picks are
+  const GRID_KEY = "pieGridCards3";  // kept per browser, as the cards' other picks are; a new key opened every card on its bars again
   // a phone opens every platform on its bars, the grid too wide for it; the kept picks and the NVIDIA grid are a desktop's
-  const gridCards = new Set(window.matchMedia("(max-width: 899px)").matches ? [] : (() => { try { return JSON.parse(localStorage.getItem(GRID_KEY)) ?? ["index-gpu"]; } catch { return []; } })());
+  const gridCards = new Set(window.matchMedia("(max-width: 899px)").matches ? [] : (() => { try { return JSON.parse(localStorage.getItem(GRID_KEY)) ?? []; } catch { return []; } })());
   const BARS_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V8M8 13V3.5M12 13V6.5"/></svg>';
   const GRID_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg>';
   // the platform pages' setup control in small: symbols on a grey capsule, the picked one in the accent, no thumb

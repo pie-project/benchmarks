@@ -50,7 +50,8 @@ window.Pie = window.Pie || {};
   const AUTO_ORDER = ["decode", "prefill", "batching", "pbatch"];
   const SETUP_NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
   const stillMotion = matchMedia("(prefers-reduced-motion: reduce)");
-  const auto = { stopped: false, paused: false, timer: null, started: 0, spent: 0, rolling: true };  // the first draw rolls in too, as the page opens
+  const AUTO_KEY = "pieAutoTurns";  // the toolbar switch, kept per browser
+  const auto = { stopped: localStorage.getItem(AUTO_KEY) === "off", paused: false, timer: null, started: 0, spent: 0, rolling: true };  // the first draw rolls in too, as the page opens
   const autoOn = () => !auto.stopped && !stillMotion.matches;
   // the setup as one button and its menu (Raw Decode, Raw Prefill, Batched Decode, Batched Prefill); a view with Spec keeps the long switch
   const setupControl = (active, modes) => {
@@ -117,8 +118,18 @@ window.Pie = window.Pie || {};
       setTimeout(() => { element.classList.remove("is-rolling"); element.querySelectorAll(".roll-ghost").forEach((g) => g.remove()); }, longest + 1000);
     }
     element.classList.toggle("is-auto-paused", auto.paused);
+    // the toolbar switch shows while this page's setups can turn, on while they do
+    const sw = document.getElementById("auto-switch");
+    if (sw) { sw.hidden = stillMotion.matches || !element.querySelector(".setup-pick"); showAuto(); }
     nextTurn();
   };
+  document.getElementById("auto-switch")?.addEventListener("click", () => {
+    auto.stopped = !auto.stopped;
+    showAuto();
+    auto.spent = 0;
+    localStorage.setItem(AUTO_KEY, auto.stopped ? "off" : "on");
+    if (auto.stopped) clearTimeout(auto.timer); else nextTurn();
+  });
   const pauseTurns = (on) => {
     if (on === auto.paused) return;
     if (on) { clearTimeout(auto.timer); auto.spent += performance.now() - auto.started; }
@@ -140,7 +151,15 @@ window.Pie = window.Pie || {};
       (td.classList.contains("is-overall") ? { pill: true, html: td.querySelector(".platform-cell")?.outerHTML || "" } : { html: td.querySelector(".platform-main")?.innerHTML || "" }))));
   };
   // the viewer's own pick ends the turns
-  const stopTurns = () => { auto.stopped = true; auto.spent = 0; clearTimeout(auto.timer); };
+  const stopTurns = () => { auto.stopped = true; auto.spent = 0; clearTimeout(auto.timer); showAuto(); };
+  // the toolbar button: pause while the setups turn, play while they rest
+  function showAuto() {
+    const sw = document.getElementById("auto-switch");
+    if (!sw) return;
+    sw.setAttribute("aria-pressed", String(!auto.stopped));
+    sw.title = auto.stopped ? "Play" : "Pause";
+    sw.setAttribute("aria-label", auto.stopped ? "Turn the setups automatically" : "Pause the setups' turn");
+  }
   let openResults = () => {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
@@ -349,7 +368,7 @@ window.Pie = window.Pie || {};
     // a miniature's tok/s is a cut model's, no real model's speed: its card reads each engine against pie, and the
     // fastest, never a rate or a bound
     const mini = Boolean(c.pie.miniature);
-    // each engine as a share of pie's speed, pie at 100%, as the cells speak in percents
+    // each engine as a share of Pie's speed, pie at 100%, as the cells speak in percents
     const relative = (r) => `${Math.round((metric.higher ? r[metric.key] / c.pie[metric.key] : c.pie[metric.key] / r[metric.key]) * 100)}%`;
     // Engines compares the engines only; Roofline adds each one's share of the bound, the bounds and the chart
     const roofline = compare === "ceiling" && !mini;
