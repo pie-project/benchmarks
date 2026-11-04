@@ -876,8 +876,8 @@
 
 .platform-table td.is-openable, .platform-table td.is-openable * { cursor: pointer; }
 .platform-table td.is-openable { position: relative; }
-.platform-table tbody td.is-openable:hover { background: var(--color-label); }  /* the whole cell is the target, in the label's ink: black, or white in dark mode */
-.platform-table tbody td.is-openable:hover .platform-open { color: var(--color-background) !important; }  /* the chevron in the page's own colour on it */  /* a measured cell opens its run on the Results page */
+.platform-table tbody td.is-openable:hover { background: #dcdcdc; }  /* the whole cell is the target, in macOS's unemphasized selection grey */
+:root[data-theme="dark"] .platform-table tbody td.is-openable:hover { background: #464646; }  /* a measured cell opens its run on the Results page */
 /* hovered, its number gives way to the circled arrow macOS uses to go on to a thing's details: here its runs */
 .platform-open { display: none; position: absolute; top: 50%; right: 14px; transform: translateY(-50%); color: var(--color-label-tertiary); }
 .platform-open svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }  /* the chevron System Settings ends a row with: go on to this cell's runs */
