@@ -20,12 +20,14 @@ window.Pie = window.Pie || {};
   const bar = (w, cls = "") => `<span class="skeleton-bar${cls ? ` ${cls}` : ""}" style="width: ${typeof w === "number" ? `${Math.round(w)}px` : w}"></span>`;
   const range = (n) => [...Array(n).keys()];
 
-  const grid = () => range(2).map((s) => `
+  // the four platforms the page lists (Apple Silicon, NVIDIA, AMD, TPU), each with about its own number of machines
+  const ROWS = [5, 10, 2, 3];
+  const grid = () => range(4).map((s) => `
     <div class="skeleton-section">
       <div class="skeleton-head"><span class="skeleton-icon"></span>${bar(96)}${bar(110, "is-faint")}</div>
       <div class="skeleton-grid">
         <div class="skeleton-row is-header"><span>${bar(56, "is-faint")}</span>${range(6).map((c) => `<span class="is-center">${bar(width(c + s, 70, 110))}${bar(36, "is-faint")}</span>`).join("")}</div>
-        ${range(s ? 8 : 5).map((r) => `<div class="skeleton-row"><span><span class="skeleton-icon"></span>${bar(width(r, 40, 80))}</span>${range(6).map((c) => `<span class="is-end">${bar(width(r + c, 28, 44))}</span>`).join("")}</div>`).join("")}
+        ${range(ROWS[s]).map((r) => `<div class="skeleton-row"><span><span class="skeleton-icon"></span>${bar(width(r, 40, 80))}</span>${range(6).map((c) => `<span class="is-end">${bar(width(r + c, 28, 44))}</span>`).join("")}</div>`).join("")}
       </div>
     </div>`).join("");
 
