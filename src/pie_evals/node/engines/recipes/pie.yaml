@@ -165,6 +165,16 @@ default:
               rationale: >
                 At its default 256 state slots pie seated 256 of c512's lanes for Qwen3.5-0.8B on a 48 GB A40
                 ("more lanes than the state pool seats"), where vLLM and SGLang seat every lane; 1024 seat c512 and c1024.
+    b200-x1:
+      knobs:
+        worker_threads:
+          value: 4
+          rationale: >
+            The B200 pod's 20-CPU quota gives pie 10 tokio workers by default, and at c512 the guests then trail
+            the device: a few lanes' outputs sit unconsumed for 4-5 frames while every other lane's next frame
+            waits at the seal (GPU idle about half the time). Four workers keep them level: Qwen3-0.6B c512
+            48.2k to 60-64k tok/s, MiMo mini 27.4k to 54-57k, DeepSeek-V4.1 mini 27.1k to 46k, Gemma-4-26B c1024
+            19.7k to 22.5k (three workers lost lanes to a missed heartbeat there).
     l4-x1:
       family:
         muse_glimmer:
