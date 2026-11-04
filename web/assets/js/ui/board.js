@@ -652,7 +652,7 @@ window.Pie = window.Pie || {};
             <div class="board-stack">${card("accuracy", "Score gap", "The other engine minus pie, in points · Right of zero, pie scores lower", acc.chart, pick)}</div>`;
           })()}
         </div>
-      </div>${footer()}</div>`;
+      </div></div>`;  // no footer: the page ends on its last card
   };
 
   // the page scrolls under its bar, as the other pages' grids do: the bar stays put above, only the content moves

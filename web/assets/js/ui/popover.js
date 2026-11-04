@@ -68,8 +68,15 @@ window.Pie = window.Pie || {};
   // a long list opens with a field over it that narrows it as one types, as Artificial Analysis sets its model menus
   const SEARCHABLE = new Set(["board:model", "board:scale"]);
   const isLimit = (key) => /^(limit|board|grid):/.test(String(key));
-  const limitMenu = (key) => ((String(key).startsWith("board:") ? Pie.board : String(key).startsWith("grid:") ? Pie.platform : Pie.methodology)?.menu(String(key).slice(String(key).indexOf(":") + 1)) || [])
-    .map((o) => (o.separator ? `<div class="popover-separator"></div>` : o.heading ? `<div class="popover-heading">${Pie.format.escape(o.heading)}</div>` : (o.key ? (html) => `<div data-key="${o.key}">${html}</div>` : (html) => html)(option(o.value, o.selected, `${o.indent ? '<span class="popover-indent"></span>' : ""}${o.icon || ""}<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>${o.detail ? `<span class="popover-detail">${Pie.format.escape(o.detail)}</span>` : ""}`, o.check ? "menuitemcheckbox" : undefined))))
+  // a submenu's row, as a Mac menu shows one: its name, what is picked in it in grey, and a chevron; its list opens to the side on hover
+  const sub = Object.assign(document.createElement("div"), { className: "popover popover-sub", hidden: true });
+  sub.setAttribute("role", "menu");
+  document.body.append(sub);
+  let subs = [];
+  const CHEVRON = '<svg class="popover-chevron" viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4"/></svg>';
+  const parentRow = (o) => `<button class="popover-option popover-parent" type="button" aria-haspopup="menu" data-sub="${subs.push(o.submenu) - 1}">${check(false)}<span class="popover-label">${Pie.format.escape(o.label)}</span><span class="popover-detail">${Pie.format.escape(o.detail || "")}</span>${CHEVRON}</button>`;
+  const limitMenu = (key) => (subs = [], (String(key).startsWith("board:") ? Pie.board : String(key).startsWith("grid:") ? Pie.platform : Pie.methodology)?.menu(String(key).slice(String(key).indexOf(":") + 1)) || [])
+    .map((o) => (o.submenu ? parentRow(o) : o.separator ? `<div class="popover-separator"></div>` : o.heading ? `<div class="popover-heading">${Pie.format.escape(o.heading)}</div>` : (o.key ? (html) => `<div data-key="${o.key}">${html}</div>` : (html) => html)(option(o.value, o.selected, `${o.indent ? '<span class="popover-indent"></span>' : ""}${o.icon || ""}<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>${o.detail ? `<span class="popover-detail">${Pie.format.escape(o.detail)}</span>` : ""}`, o.check ? "menuitemcheckbox" : undefined))))
     .join("");
 
   // the view menu: Performance or Roofline, one pick with a checkmark; under a separator Hide Unavailable, checked while on,
@@ -150,6 +157,23 @@ window.Pie = window.Pie || {};
     return `${option(ALL, !current.length, `All ${Pie.filters.plural(column).toLowerCase()}`)}<div class="popover-separator"></div>${values}`;
   };
 
+  const showSub = (row) => {
+    if (row.classList.contains("is-open")) return;
+    for (const r of element.querySelectorAll(".popover-parent.is-open")) r.classList.remove("is-open");
+    row.classList.add("is-open");
+    const items = subs[row.dataset.sub] || [];
+    sub.innerHTML = items.map((o) => (o.separator ? `<div class="popover-separator"></div>` : `<div data-key="${o.key}">${option(o.value, o.selected, `<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>`)}</div>`)).join("");
+    sub.hidden = false;
+    const box = row.getBoundingClientRect();
+    const right = box.right + 4 + sub.offsetWidth <= window.innerWidth - 8;
+    sub.style.left = `${right ? box.right + 4 : box.left - 4 - sub.offsetWidth}px`;
+    sub.style.top = `${Math.max(8, Math.min(box.top - 5, window.innerHeight - sub.offsetHeight - 8))}px`;
+  };
+  const hideSub = () => {
+    sub.hidden = true;
+    for (const r of element.querySelectorAll(".popover-parent.is-open")) r.classList.remove("is-open");
+  };
+
   const place = (target) => {
     const box = target.getBoundingClientRect();
     element.hidden = false;
@@ -200,6 +224,7 @@ window.Pie = window.Pie || {};
         this.close();
         return;
       }
+      hideSub();
       Pie.dates?.close();  // one menu open at a time: the Results page's calendar shuts
       owner = key;
       anchor = target;
@@ -229,6 +254,7 @@ window.Pie = window.Pie || {};
 
     close() {
       element.hidden = true;
+      hideSub();
       owner = null;
       anchor = null;
     },
@@ -249,8 +275,17 @@ window.Pie = window.Pie || {};
         event.preventDefault();
         element.querySelector(".popover-option:not([hidden])")?.click();
       });
-      element.addEventListener("click", (event) => {
+      // a submenu row opens its list on hover, or on click as a Mac menu also allows; any other row shuts it
+      element.addEventListener("pointerover", (event) => {
+        const row = event.target.closest(".popover-option");
+        if (!row) return;
+        if (row.classList.contains("popover-parent")) showSub(row);
+        else hideSub();
+      });
+      const choose = (event) => {
         event.stopPropagation();
+        const parent = event.target.closest(".popover-parent");
+        if (parent) { showSub(parent); return; }
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = target.closest("[data-key]")?.dataset.key || owner;
@@ -258,7 +293,9 @@ window.Pie = window.Pie || {};
         const several = key === "grid:maker" || key === "grid:platform" || key === "grid:size" || key === "grid:model";
         if (!several && (isLimit(key) || key === RELEASE || key === SUITE || key === METRIC || key === COMPARE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL || key === QUAL_ENGINE)) this.close();
         onPick(key, target.dataset.value);
-      });
+      };
+      element.addEventListener("click", choose);
+      sub.addEventListener("click", choose);
     },
   };
 })();
