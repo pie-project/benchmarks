@@ -483,6 +483,16 @@ default:
             (the XLA engine's own default) the load reserved 128 slots and c256 failed ("this fire wants 255
             recurrent slots", gpt-oss-20b on tpu-v6e-1, #1184).
   artifact:
+    gpt-oss-120b-mlx-mxfp4-slice-e10:
+      backend:
+        metal:
+          knobs:
+            max_forward_requests:
+              value: "$serve_concurrency"
+              rationale: >
+                At the script's 512 lanes the arena took 5.4 GB beside the 5.7 GiB slice on the 16 GB M2 and
+                left the kv pool 0 MiB even at 512-token fires (doesnt_fit, mac-slices 41770674896); readout
+                rows for the shapes' own lanes, as on cuda.
     gemma-4-31b-mini:
       platform:
         a40-x1:
