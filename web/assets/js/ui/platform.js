@@ -37,10 +37,110 @@ window.Pie = window.Pie || {};
   // the setups as one segmented control, the grid's and the Roofline page's alike: each segment its degree and its name
   // the setups in two groups, each named in grey before it: Latency (one request at a time), then Throughput (many at
   // once); a segment says only its phase, Decode or Prefill, its full name in its tooltip
-  const setupControl = (active, modes) => `<span class="platform-compare" role="group" aria-label="Setup">${modes.map((m, i) =>
-    (m.id === "batching" ? `<span class="setup-group is-second">Throughput</span>` : i === 0 ? `<span class="setup-group">Latency</span>` : "") +
+  const longSetupControl = (active, modes) => `<span class="platform-compare" role="group" aria-label="Setup">${modes.map((m, i) =>
+    // the group's word only on the side that is picked (Latency or Throughput), so the switch says what it shows and stays short
+    (m.id === "batching" ? `<span class="setup-divider" aria-hidden="true"></span>` : "") +
+    (i === 0 && !["batching", "pbatch"].includes(active) ? `<span class="setup-group">Latency</span>` : "") +
+    (m.id === "batching" && ["batching", "pbatch"].includes(active) ? `<span class="setup-group">Throughput</span>` : "") +
     `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}" title="${esc(`${m.title || m.label}, ${m.id === "batching" ? "as many requests at once as the hardware needs to stay busy" : "one request"}`)}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.id === "spec" ? m.label : m.group)}</button>`).join("")}</span>`;
+  // the setups take turns on their own, as a Smart Stack widget does: one every AUTO_MS, the numbers rolling up into the
+  // next. Hovering the page pauses it; picking a setup stops it for good; no
+  // turns for Reduce Motion or a tab in the background
+  const AUTO_MS = 9000;
+  const AUTO_ORDER = ["decode", "prefill", "batching", "pbatch"];
+  const SETUP_NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
+  const stillMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const auto = { stopped: false, paused: false, timer: null, started: 0, spent: 0, rolling: true };  // the first draw rolls in too, as the page opens
+  const autoOn = () => !auto.stopped && !stillMotion.matches;
+  // the setup as one button and its menu (Raw Decode, Raw Prefill, Batched Decode, Batched Prefill); a view with Spec keeps the long switch
+  const setupControl = (active, modes) => {
+    const ids = modes.map((m) => m.id);
+    if (ids.includes("spec") || !ids.every((id) => ["decode", "prefill", "batching", "pbatch"].includes(id))) return longSetupControl(active, modes);
+    // one button naming the setup with its mark, in the toolbar's view-button style; a click opens the four setups
+    const NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
+    return `<span class="filter platform-setup"><button type="button" class="filter-button setup-pick" data-grid-pick="setup" aria-haspopup="menu" title="Setup">${`<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[active] || ""}</svg>`}<span>${esc(NAMES[active] || active)}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`;
+  };
   let onChange = () => {};
+  // after each draw: the numbers roll in if a turn drew them, and the next turn is set
+  const nextTurn = () => {
+    clearTimeout(auto.timer);
+    const mode = viewState?.platform.mode || "decode";
+    if (!autoOn() || auto.paused || document.hidden || element.hidden || !AUTO_ORDER.includes(mode) || !element.querySelector(".setup-pick")) return;
+    auto.started = performance.now();
+    auto.timer = setTimeout(() => {
+      captureGhosts();
+      viewState.platform.mode = AUTO_ORDER[(AUTO_ORDER.indexOf(mode) + 1) % AUTO_ORDER.length];
+      auto.spent = 0;
+      auto.rolling = true;
+      onChange();
+    }, Math.max(0, AUTO_MS - auto.spent));
+  };
+  const afterDraw = () => {
+    if (auto.rolling) {
+      auto.rolling = false;
+      // a wave from the top-left cell to the bottom-right: each cell starts a step after the one above and left of it
+      let longest = 0;
+      for (const table of element.querySelectorAll(".platform-table")) {
+        const rows = [...table.tBodies[0]?.rows || []];
+        const span = rows.length + (rows[0]?.cells.length || 0);
+        const step = Math.min(70, 1800 / Math.max(1, span));  // slow: the wave takes up to about two seconds
+        rows.forEach((tr, r) => [...tr.cells].forEach((td, c) => {
+          const wait = Math.round((r + c) * step);
+          td.style.setProperty("--roll-wait", `${wait}ms`);
+          longest = Math.max(longest, wait);
+        }));
+      }
+      // the setup button's old name rolls up and out as the new one rises into its place
+      const pick = element.querySelector(".setup-pick");
+      if (pick && auto.label) {
+        pick.insertAdjacentHTML("afterbegin", `<span class="label-ghost" aria-hidden="true">${auto.label}</span>`);
+        pick.classList.add("is-relabel");
+        setTimeout(() => { pick.classList.remove("is-relabel"); pick.querySelector(".label-ghost")?.remove(); }, 1000);
+      }
+      auto.label = null;
+      // the old number in each cell leaves on the same beat, just ahead of the new one
+      const ghosts = auto.ghosts || [];
+      auto.ghosts = null;
+      element.querySelectorAll(".platform-table").forEach((table, t) => [...(table.tBodies[0]?.rows || [])].forEach((tr, r) => [...tr.cells].forEach((td, c) => {
+        const old = ghosts[t]?.[r]?.[c];
+        const cell = td.querySelector(".platform-cell");
+        if (!old?.html || !cell) return;
+        if (old.pill) {
+          if (cell.outerHTML === old.html) return;
+          td.insertAdjacentHTML("beforeend", `<span class="roll-ghost is-pill" aria-hidden="true">${old.html}</span>`);
+          return;
+        }
+        if (td.querySelector(".platform-main")?.innerHTML === old.html) return;
+        cell.insertAdjacentHTML("beforeend", `<span class="roll-ghost" aria-hidden="true">${old.html}</span>`);
+      })));
+      element.classList.add("is-rolling");
+      setTimeout(() => { element.classList.remove("is-rolling"); element.querySelectorAll(".roll-ghost").forEach((g) => g.remove()); }, longest + 1000);
+    }
+    element.classList.toggle("is-auto-paused", auto.paused);
+    nextTurn();
+  };
+  const pauseTurns = (on) => {
+    if (on === auto.paused) return;
+    if (on) { clearTimeout(auto.timer); auto.spent += performance.now() - auto.started; }
+    auto.paused = on;
+    element.classList.toggle("is-auto-paused", on);
+    if (!on) nextTurn();
+  };
+  // paused while the pointer is on the tables or the setup controls, where someone is reading or about to pick
+  element.addEventListener("pointermove", (event) => pauseTurns(Boolean(event.target.closest(".platform-scroll, .platform-setup"))));
+  element.addEventListener("pointerleave", () => pauseTurns(false));
+  document.addEventListener("visibilitychange", () => pauseTurns(document.hidden));
+  // the numbers on screen before a turn redraws them, cell by cell, to fade out in the same wave as the new ones rise
+  const captureGhosts = () => {
+    // the setup button's mark and name, to roll up and away as the next setup's roll in, as SwiftUI's numeric text does
+    const pick = element.querySelector(".setup-pick");
+    auto.label = pick ? [...pick.children].filter((el) => !el.classList.contains("popup-chevron")).map((el) => el.outerHTML).join("") : null;
+    // an Overall cell leaves whole, its coloured capsule with it; a model cell leaves its number
+    auto.ghosts = [...element.querySelectorAll(".platform-table")].map((t) => [...(t.tBodies[0]?.rows || [])].map((tr) => [...tr.cells].map((td) =>
+      (td.classList.contains("is-overall") ? { pill: true, html: td.querySelector(".platform-cell")?.outerHTML || "" } : { html: td.querySelector(".platform-main")?.innerHTML || "" }))));
+  };
+  // the viewer's own pick ends the turns
+  const stopTurns = () => { auto.stopped = true; auto.spent = 0; clearTimeout(auto.timer); };
   let openResults = () => {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
@@ -247,7 +347,8 @@ window.Pie = window.Pie || {};
     // a miniature's tok/s is a cut model's, no real model's speed: its card reads each engine against pie, and the
     // fastest, never a rate or a bound
     const mini = Boolean(c.pie.miniature);
-    const relative = (r) => `${(metric.higher ? r[metric.key] / c.pie[metric.key] : c.pie[metric.key] / r[metric.key]).toFixed(2)}×`;
+    // each engine as a share of pie's speed, pie at 100%, as the cells speak in percents
+    const relative = (r) => `${Math.round((metric.higher ? r[metric.key] / c.pie[metric.key] : c.pie[metric.key] / r[metric.key]) * 100)}%`;
     // Engines compares the engines only; Roofline adds each one's share of the bound, the bounds and the chart
     const roofline = compare === "ceiling" && !mini;
     const lines = order.map((r, i) => {
@@ -418,8 +519,25 @@ window.Pie = window.Pie || {};
   let pagePlatforms = [];  // the platforms with a result in the setup the grid last drew
 
   Pie.platform = {
+    // the next draw's numbers roll in, as a turn's do: a page drawn after its outline (boot/skeleton.js)
+    roll() { auto.rolling = true; },
+
     refreshCard: () => refreshCard(),
     badge: (id) => badgeOf(id),
+    // a model's card, as the Speed pages' model heads show it on hover
+    modelCard: (id, precision = "") => {
+      const m = Pie.store.index.models[id] || {};
+      return `<div class="tip-title">${esc(names().model(id))}</div><div class="spec-rows">${[
+        ["Maker", makerOf(id).name],
+        ["Architecture", m.architecture],
+        ["Parameters", m.params_b && `${m.params_b}B`],
+        ["Active", m.active_b && m.active_b !== m.params_b && `${m.active_b}B a token`],
+        ["Layers", m.layers],
+        ["Experts", m.experts && `${m.experts}${m.top_k ? `, ${m.top_k} a token` : ""}`],
+        ["Context", m.context && `${Number(m.context).toLocaleString()} tokens`],
+        ["Precision here", precision],
+      ].filter(([, v]) => v).map(([k, v]) => `<div class="spec-row"><span>${esc(k)}</span><span>${esc(String(v))}</span></div>`).join("")}</div>`;
+    },
     element,
     batchedBound,
 
@@ -534,12 +652,31 @@ window.Pie = window.Pie || {};
         return [{ value: "", label: "Strongest", selected: !current }, { separator: true },
           ...Pie.store.tables.engines.filter((e) => e.id !== base).map((e) => ({ value: e.id, label: Pie.store.names.engine(e.id), selected: e.id === current, dot: Pie.engines.colorOf(e.id) }))];
       }
+      // the setup menu: the four setups, each after its mark, as the button shows the picked one
+      if (k === "setup" && viewState) {
+        const NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
+        const picked = viewState.platform.mode || "decode";
+        return ["decode", "prefill", "batching", "pbatch"].map((id) => ({ value: id, label: NAMES[id], selected: id === picked, icon: `<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id]}</svg>` }));
+      }
+      // the bar's one settings menu, as a Mac toolbar's View Options: the view, then pie's engine, then whom it is set against
+      if (k === "options" && viewState) {
+        const own = (key, items) => items.map((o) => (o.separator ? o : { ...o, key: `grid:${key}` }));
+        const fixedView = Pie.schema[viewState.table]?.compare;
+        return [
+          ...(fixedView ? [] : [{ heading: "View" }, ...own("view", ["engines", "tps", "ceiling"].map((id) => ({ value: id, label: COMPARES[id], selected: id === compare }))), { separator: true }]),
+          { heading: "Engine" }, ...own("engine", this.menu("engine")),
+          { separator: true },
+          { heading: "Compared with" }, ...own("rival", this.menu("rival").filter((o) => !o.separator)),
+        ];
+      }
       if (k !== "engine" || !viewState) return [];
       const current = viewState.platform.engine || Pie.engines.primary;
       // each engine with its dot, as the catalog marks it
       return Pie.store.tables.engines.map((e) => ({ value: e.id, label: Pie.store.names.engine(e.id), selected: e.id === current, dot: Pie.engines.colorOf(e.id) }));
     },
     pick(k, value) {
+      if (k === "view") { Pie.platform.setCompare(value); return; }
+      if (k === "setup" && viewState) { stopTurns(); auto.rolling = value !== viewState.platform.mode; if (auto.rolling) captureGhosts(); viewState.platform.mode = value; return; }  // a picked setup rolls in as a turn does
       if (k === "engine" && viewState) viewState.platform.engine = value;
       if (k === "rival" && viewState) viewState.platform.rival = value || null;
       if (k === "platform" && viewState) {
@@ -632,7 +769,10 @@ window.Pie = window.Pie || {};
       // by default the fullest first: the makers whose models ran on, or are known not to fit, the most machines here, then within each the model
       // that ran on the most; an order the viewer dragged still wins, and names break ties
       const fill = {};
-      for (const r of rows) if (r.engine === base && r[metric.key] && macs.includes(r.hardware)) (fill[r.model] ||= new Set()).add(r.hardware);
+      // counted over Raw and Batched, Decode and Prefill together: the columns keep one order whichever setup shows
+      const SETUP_WORKLOADS = ["raw", "throughput", "prefill_batch"];
+      const anySetup = all.filter((r) => SETUP_WORKLOADS.includes(r.workload) && Pie.store.isMeasured(r) && r.engine === base && macs.includes(r.hardware) && (r.decode_tok_s || r.prefill_tok_s || r.output_tok_s));
+      for (const r of anySetup) (fill[r.model] ||= new Set()).add(r.hardware);
       // a model that does not fit a machine fills that cell too: the answer is known
       for (const mac of macs) for (const id of suiteModels) if (noFit[mac]?.[id]?.[base]) (fill[id] ||= new Set()).add(mac);
       const fillOf = (id) => fill[id]?.size || 0;
@@ -698,7 +838,9 @@ window.Pie = window.Pie || {};
       const hide = state.hideEmpty || picked.length > 0;
       // a cell awaiting today's run (its clock) counts as something to show, so its row and column stay
       const awaiting = (mac, model) => !grid[mac][model].c && !grid[mac][model].needs && !grid[mac][model].failed && TODAY.models.has(realOf(model)) && TODAY.hardware.has(mac);
-      const shows = (mac, model) => grid[mac][model].c || awaiting(mac, model);
+      const ranAny = new Set(anySetup.map((r) => `${r.hardware}|${r.model}`));
+      // a machine and model measured in any of the four setups keeps its row and column, so a turn only changes numbers
+      const shows = (mac, model) => grid[mac][model].c || awaiting(mac, model) || ranAny.has(`${mac}|${realOf(model)}`);
       const models = hide ? allModels.filter((model) => macs.some((mac) => shows(mac, model))) : allModels;
       const median = (list) => {
         const sorted = list.filter((g) => g !== undefined && g !== null).sort((a, b) => a - b);
@@ -713,12 +855,13 @@ window.Pie = window.Pie || {};
       }
       const overall = (mac) => median(models.map((model) => (compare === "tps" ? grid[mac][model].c?.pie[metric.key] : grid[mac][model].c?.gain)));
       // no sort: the machines in the catalog's order, no arrow anywhere
-      const sortKey = p.sort?.key || null;
-      const dir = p.sort?.dir || 1;
+      // each platform's table keeps its own sort: a click sorts only the table it is in
+      const sortFor = (k) => p.sortBy?.[k] || null;
       // machines hidden with their eye keep only their name, at the foot of their list
       const hidden = new Set(p.hidden || []);
-      const order = (list) => { const s = sorted(list); return [...s.filter((mac) => !hidden.has(mac)), ...s.filter((mac) => hidden.has(mac))]; };
-      const sorted = (list) => {
+      const order = (list, k) => { const s = sorted(list, k); return [...s.filter((mac) => !hidden.has(mac)), ...s.filter((mac) => hidden.has(mac))]; };
+      const sorted = (list, k) => {
+        const { key: sortKey = null, dir = 1 } = sortFor(k) || {};
         const named = [...list];
         if (!sortKey) return named;
         if (sortKey === "name") return named.sort((a, b) => dir * macName(a).localeCompare(macName(b), undefined, { numeric: true }));
@@ -726,7 +869,7 @@ window.Pie = window.Pie || {};
         // empties sink to the bottom whichever way the column sorts
         return named.sort((a, b) => (val(a) === null) - (val(b) === null) || dir * ((val(a) ?? 0) - (val(b) ?? 0)));
       };
-      const grouped = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => shows(mac, model))) : g.macs) }))
+      const grouped = groups.map((g) => ({ ...g, macs: order(hide ? g.macs.filter((mac) => models.some((model) => shows(mac, model))) : g.macs, g.platform.id) }))
         .filter((g) => (!only && !narrowMacs) || g.macs.length);  // a search hides the platforms it leaves empty
       // a platform's page is one list of machines; All Platforms gives each platform its own table, headed by its name
       // and its own maker and model heads, with only the models measured on it
@@ -735,7 +878,7 @@ window.Pie = window.Pie || {};
         const mini = (model) => list.some((mac) => grid[mac]?.[model]?.c?.pie?.miniature);
         return [...ms.filter(mini), ...ms.filter((m) => !mini(m))];
       };
-      const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs)), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
+      const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs), only), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
         : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: minisFirst(g.macs, models.filter((model) => g.macs.some((mac) => shows(mac, model)))) }))
           .filter((g) => g.macs.length && g.models.length);
 
@@ -782,6 +925,7 @@ window.Pie = window.Pie || {};
       const tableOf = ({ macs: list, models, platform: own }, first = true) => {
       // each platform folds its own Hardware column: its choice kept by name, the old page-wide one until then
       const key = own?.id || only || "all";
+      const { key: sortKey = null, dir = 1 } = sortFor(key) || {};
       const tight = p.narrowBy?.[key] ?? (p.narrow ?? true);
       const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
       const shownGroups = [{ platform: null, macs: list }];
@@ -797,8 +941,8 @@ window.Pie = window.Pie || {};
         if (hidden.has(mac)) return `<tr class="is-hidden-row" data-empty="1">${machine(mac, g.platform)}<td class="is-overall" data-hide-mac="${esc(mac)}">${eye(mac)}</td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-empty">–</span>${eye(mac)}</td>`
-          : compare === "tps" ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-even">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span>${eye(mac)}</td>`
-          : (() => { const n = number(o); n.html = Math.round(o * 100) ? signed(o) : "0%"; return `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}">${n.html}</span>${eye(mac)}</td>`; })();
+          : compare === "tps" ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-even"><span class="platform-main">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span></span>${eye(mac)}</td>`
+          : (() => { const n = number(o); n.html = Math.round(o * 100) ? signed(o) : "0%"; return `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}"><span class="platform-main">${n.html}</span></span>${eye(mac)}</td>`; })();
         return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
@@ -890,15 +1034,18 @@ window.Pie = window.Pie || {};
           </span>
         </div><div class="platform-section-body"${folded(g.platform.id) ? " hidden" : ""}><div class="platform-section-scroll">${tableOf(g, i === 0)}</div></div></section>`).join("");
 
+      // a redraw keeps the reader where they were: the page's scroll down and each table's scroll across
+      const keptPage = element.querySelector(".platform-scroll");
+      const kept = keptPage ? { top: keptPage.scrollTop, left: keptPage.scrollLeft, lefts: [...element.querySelectorAll(".platform-section-scroll")].map((x) => x.scrollLeft) } : null;
       element.innerHTML = `
         <div class="platform-bar">
           ${setupControl(mode.id, modes)}${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
-          <span class="filter platform-setup"><button class="filter-button is-engine" style="--tint: ${Pie.engines.colorOf(base)}" type="button" data-grid-pick="engine" aria-haspopup="menu" aria-label="Engine">${esc(Pie.store.names.engine(base))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button><span class="platform-vs">vs</span><button class="filter-button${rival ? " is-engine" : ""}"${rival ? ` style="--tint: ${Pie.engines.colorOf(rival)}"` : ""} type="button" data-grid-pick="rival" aria-haspopup="menu" aria-label="Opponent">${esc(rival ? Pie.store.names.engine(rival) : "Strongest")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
-          <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
-            ${fixed ? "" : `<span class="platform-compare" role="group" aria-label="View">${["engines", "tps", "ceiling"].map((id) =>
-              `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}" title="${esc(CAPTIONS[id])}">${esc(SHORT_COMPARES[id] || COMPARES[id])}</button>`).join("")}</span>`}
+            <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
+            <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent"><svg class="options-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 8h12M2 11.5h12"/><circle cx="10" cy="4.5" r="1.4"/><circle cx="5.5" cy="8" r="1.4"/><circle cx="11" cy="11.5" r="1.4"/></svg>${esc(COMPARES[compare])} · ${esc(Pie.store.names.engine(base))} vs ${esc(rival ? Pie.store.names.engine(rival) : "Strongest")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+            <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+
           </span>
         </div>
         <div class="platform-scroll">
@@ -909,6 +1056,16 @@ window.Pie = window.Pie || {};
       if (scroller) element.style.setProperty("--platform-visible", `${scroller.clientWidth}px`);
       stripes(element);
       const macsShown = sections.reduce((n, g) => n + g.macs.length, 0);
+      if (kept) {
+        const put = () => {
+          const page = element.querySelector(".platform-scroll");
+          if (page) { page.scrollTop = kept.top; page.scrollLeft = kept.left; }
+          element.querySelectorAll(".platform-section-scroll").forEach((x, n) => { x.scrollLeft = kept.lefts[n] || 0; });
+        };
+        put();
+        requestAnimationFrame(put);
+      }
+      afterDraw();
       return { macs: macsShown, models: new Set(sections.flatMap((g) => g.models).map(realOf)).size, metric };
     },
 
@@ -1077,6 +1234,9 @@ window.Pie = window.Pie || {};
         }
         const tab = event.target.closest("[data-mode]");
         if (tab) {
+          stopTurns();
+          auto.rolling = tab.dataset.mode !== state.platform.mode;
+          if (auto.rolling) captureGhosts();
           state.platform.mode = tab.dataset.mode;
           onChange();
           return;
@@ -1121,11 +1281,11 @@ window.Pie = window.Pie || {};
           const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
           if (fold) {
             if (reduce) { body.hidden = true; return; }
-            body.animate([{ height: `${body.offsetHeight}px` }, { height: "0px" }], { duration: 200, easing: "ease-in-out" }).onfinish = () => { body.hidden = true; };
+            body.animate([{ height: `${body.offsetHeight}px` }, { height: "0px" }], { duration: 250, easing: "cubic-bezier(.25, .1, .25, 1)" }).onfinish = () => { body.hidden = true; };
           } else {
             body.hidden = false;
             stripes(body);  // laid out only now: folded, its cells had no place
-            if (!reduce) body.animate([{ height: "0px" }, { height: `${body.offsetHeight}px` }], { duration: 200, easing: "ease-in-out" });
+            if (!reduce) body.animate([{ height: "0px" }, { height: `${body.offsetHeight}px` }], { duration: 250, easing: "cubic-bezier(.25, .1, .25, 1)" });
           }
           return;
         }
@@ -1133,8 +1293,10 @@ window.Pie = window.Pie || {};
         const header = event.target.closest("[data-sort]");
         if (!header) return;
         const key = header.dataset.sort;
-        const now = state.platform.sort;
-        state.platform.sort = now?.key !== key ? { key, dir: 1 } : now.dir > 0 ? { key, dir: -1 } : null;
+        // the table's platform, as its corner button names it: the sort stays in that table
+        const table = header.closest("table")?.querySelector("[data-narrow]")?.dataset.narrow || "all";
+        const mine = state.platform.sortBy?.[table];
+        state.platform.sortBy = { ...(state.platform.sortBy || {}), [table]: mine?.key !== key ? { key, dir: 1 } : mine.dir > 0 ? { key, dir: -1 } : null };
         onChange();
       });
       // Spec Decode's acceptance: the grid redraws at once, the field keeping its focus while it is typed in

@@ -69,7 +69,7 @@ window.Pie = window.Pie || {};
   const SEARCHABLE = new Set(["board:model", "board:scale"]);
   const isLimit = (key) => /^(limit|board|grid):/.test(String(key));
   const limitMenu = (key) => ((String(key).startsWith("board:") ? Pie.board : String(key).startsWith("grid:") ? Pie.platform : Pie.methodology)?.menu(String(key).slice(String(key).indexOf(":") + 1)) || [])
-    .map((o) => (o.separator ? `<div class="popover-separator"></div>` : option(o.value, o.selected, `${o.indent ? '<span class="popover-indent"></span>' : ""}${o.icon || ""}<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>${o.detail ? `<span class="popover-detail">${Pie.format.escape(o.detail)}</span>` : ""}`, o.check ? "menuitemcheckbox" : undefined)))
+    .map((o) => (o.separator ? `<div class="popover-separator"></div>` : o.heading ? `<div class="popover-heading">${Pie.format.escape(o.heading)}</div>` : (o.key ? (html) => `<div data-key="${o.key}">${html}</div>` : (html) => html)(option(o.value, o.selected, `${o.indent ? '<span class="popover-indent"></span>' : ""}${o.icon || ""}<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>${o.detail ? `<span class="popover-detail">${Pie.format.escape(o.detail)}</span>` : ""}`, o.check ? "menuitemcheckbox" : undefined))))
     .join("");
 
   // the view menu: Performance or Roofline, one pick with a checkmark; under a separator Hide Unavailable, checked while on,

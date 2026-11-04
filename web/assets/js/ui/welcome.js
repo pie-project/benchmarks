@@ -35,8 +35,13 @@ window.Pie = window.Pie || {};
 
   // every platform as a row of the site's list, in the sidebar's order: its mark and name, and how many machines ran
   // there as "42 items" in grey at the row's far end, as Finder states a folder's contents; a row opens its platform's page, as its sidebar item does
+  // a header click sorts by its column and a second click reverses it, as every other table here sorts
+  let sortKey = null;
+  let sortDir = 1;
   const table = () => {
-    const list = platforms().map(([id, s]) => ({ id, s, machines: Pie.platform?.machines ? Pie.platform.machines(s.platform) : 0 }));
+    const list = platforms().map(([id, s]) => ({ id, s, name: s.short, stack: STACK[id] || "", machines: Pie.platform?.machines ? Pie.platform.machines(s.platform) : 0 }));
+    if (sortKey) list.sort((a, b) => sortDir * (typeof a[sortKey] === "number" ? a[sortKey] - b[sortKey] : String(a[sortKey]).localeCompare(String(b[sortKey]))));
+    const arrow = (key) => (sortKey === key ? `<span class="column-sort">${sortDir > 0 ? "↑" : "↓"}</span>` : "");
     const rows = list.map(({ id, s, machines: n }, i) => `<tr class="is-link" data-go="${id}">
         <td class="row-number">${i + 1}</td>
         <td><span class="welcome-cell" title="${s.label}"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${s.short}</span></td>
@@ -45,7 +50,7 @@ window.Pie = window.Pie || {};
         <td class="welcome-count is-numeric">${n}</td>
       </tr>`).join("");
     return `<table class="data-table welcome-table">
-      <thead><tr><th class="row-number" aria-label="Row"></th><th>Platform</th><th>Stack</th><th class="welcome-fill"></th><th class="is-numeric">Machines</th></tr></thead>
+      <thead><tr><th class="row-number" aria-label="Row"></th><th data-sort="name">Platform${arrow("name")}</th><th data-sort="stack">Stack${arrow("stack")}</th><th class="welcome-fill"></th><th class="is-numeric" data-sort="machines">Machines${arrow("machines")}</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
   };
@@ -140,6 +145,16 @@ window.Pie = window.Pie || {};
         element.innerHTML = `<div class="filter-bar" aria-hidden="true"></div>${table()}`;
         element.addEventListener("click", (event) => {
           // a row opens Results with the Platform filter set to it, as a folder opens what it holds
+          const head = event.target.closest("th[data-sort]");
+          if (head) {
+            const key = head.dataset.sort;
+            // up, then down, then back to the sidebar's order
+            if (sortKey !== key) { sortKey = key; sortDir = 1; }
+            else if (sortDir > 0) sortDir = -1;
+            else sortKey = null;
+            element.querySelector(".welcome-table").outerHTML = table();
+            return;
+          }
           const row = event.target.closest("[data-go]");
           if (row) open?.(Pie.schema[row.dataset.go].short);
         });

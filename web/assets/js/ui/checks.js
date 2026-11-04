@@ -258,7 +258,7 @@ window.Pie = window.Pie || {};
     const head = `<tr class="platform-head-row"><th class="platform-corner" scope="col">Task</th><th class="platform-corner is-overall" scope="col"><span class="platform-model">Overall</span><span class="platform-sub">Median gap</span></th>${models.map((m) => {
       const info = Pie.store.index.models[m] || {};
       const size = info.params_b ? `${info.params_b}B${info.active_b && info.active_b !== info.params_b ? ` · ${info.active_b}B active` : ""}` : "";
-      return `<th scope="col"><span class="platform-col"><span><span class="platform-model">${esc(Pie.store.names.model(m))}</span><span class="platform-sub">${esc(size)}</span></span></span></th>`;
+      return `<th scope="col" data-tip-html="${esc(Pie.platform.modelCard(m))}"><span class="platform-col"><span><span class="platform-model">${esc(Pie.store.names.model(m))}</span><span class="platform-sub">${esc(size)}</span></span></span></th>`;
     }).join("")}<th class="platform-fill"></th></tr>`;
     const body = tasks.map((task) => {
       const gaps = models.map((m) => gap(at[`${task}|${m}`])).filter(Boolean);
@@ -279,7 +279,9 @@ window.Pie = window.Pie || {};
               [many ? `Difference to ${engineLabel(arm.engine)}` : "Difference", `${signed(-arm.diff * 100)} pts`, true],
               isNum(arm.tolerance) ? ["Noise", `±${(arm.tolerance * 100).toFixed(1)} pts`, true] : null])],
             worse.length ? `pie scores lower than ${worse.join(" and ")}, beyond noise` : false);
-          return `<td><span class="platform-cell ${g.off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${pct(g.pie.score)}<span class="qc-gap${g.off ? " is-off" : ""}">${signed(g.d)}</span></span></span></td>`;
+          // a click opens Quality's runs for this model and task, with the engines this cell compares
+          const open = { model: [m], task: [task], engine: [...new Set(["pie", ...xs.map((y) => y.arm.engine)])] };
+          return `<td class="is-openable" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${g.off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${pct(g.pie.score)}<span class="qc-gap${g.off ? " is-off" : ""}">${signed(g.d)}</span></span></span></td>`;
         }).join("")}<td class="platform-fill"></td></tr>`;
     }).join("");
     const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
@@ -322,8 +324,11 @@ window.Pie = window.Pie || {};
     if (pop) pop.hidden = true;
   };
 
+  let openRuns = () => {};
   const wire = () => {
     element.addEventListener("click", (event) => {
+      const cell = event.target.closest("td[data-open]");
+      if (cell) { openRuns(JSON.parse(cell.dataset.open)); return; }
       const narrow = event.target.closest("[data-narrow]");
       if (narrow) {
         if (event.detail) narrow.blur();
@@ -411,6 +416,8 @@ window.Pie = window.Pie || {};
       return { platforms, platform: accuracyPlatform, label: platformLabel(accuracyPlatform), chart: deltaChart(items, true) };
     },
     pick(platform) { accuracyPlatform = platform; },
+    // a cell's click: the Quality runs, filtered to its model, task and engines
+    onOpenRuns(handler) { openRuns = handler; },
     render(state) {
       element.hidden = state.table !== "checks";
       if (element.hidden) return;

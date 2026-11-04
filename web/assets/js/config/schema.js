@@ -97,6 +97,8 @@ window.Pie = window.Pie || {};
       label: "Quality",
       title: "Quality",
       section: "home",  // in Compare, where Accuracy was
+      tag: "Beta",
+      tint: "#7a4cf5",  // Intelligence's purple
       view: "checks",
       filters: [],
       columns: [],
@@ -104,7 +106,7 @@ window.Pie = window.Pie || {};
     // how well models answer: Artificial Analysis measures it, so the sidebar links there rather than to a page of ours
     scores: {
       label: "Intelligence",  // the model's own smarts (Artificial Analysis's Intelligence Index), not an engine's
-      section: "home",
+      section: null,  // off the sidebar
       href: "https://artificialanalysis.ai/",
       tint: "#7a4cf5",  // Artificial Analysis's purple, as the platforms' tiles wear theirs
       filters: [],
