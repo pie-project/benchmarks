@@ -1,5 +1,7 @@
 """mlx-lm adapter: boots ``python -m mlx_lm server`` on one MLX checkpoint and
-streams from it (macOS only).
+streams from it (macOS only). A family mlx-lm has no model for (Qwen3.8-Flash-Next)
+is served by MLX's other package, ``python -m mlx_vlm.server`` (recipe ``server_module``),
+which serves chat completions only.
 
 mlx-lm's server has no ``ignore_eos``, so a request may stop before its token
 budget; the summary counts those as ``short_responses``.
@@ -24,8 +26,17 @@ class MlxlmEngine(ServedEngine):
     # tokens makes every request write exactly max_tokens (0.31.3 dropped the bias on that path)
     exact_length = "logit_bias"
 
+    def vlm(self) -> bool:
+        return str(self.recipe.get("server_module") or "").startswith("mlx_vlm")
+
+    @property
+    def chat(self) -> bool:  # type: ignore[override]
+        return self.vlm()
+
     def server_python(self) -> str:
-        """The interpreter that has the pinned mlx-lm (not the bench client's)."""
+        """The interpreter that has the pinned mlx-lm (not the bench client's), or mlx-vlm's."""
+        if self.vlm():
+            return str(self.recipe.get("server_python") or os.environ.get("MLX_VLM_PY") or "/tmp/pievenv/bin/python")
         return str(self.recipe.get("server_python") or os.environ.get("MLX_PY") or "/tmp/pievenv/bin/python")
 
     def model_arg(self) -> str:
@@ -60,6 +71,11 @@ class MlxlmEngine(ServedEngine):
         if isinstance(extra, str):
             extra = extra.split()
         module = str(r.get("server_module") or "mlx_lm server").split()
+        if self.vlm():
+            return [
+                self.server_python(), "-m", *module, "--model", self.model_arg(), "--host", "127.0.0.1", "--port", str(port),
+                "--max-num-seqs", str(slots), "--log-level", "ERROR", *[str(x) for x in extra],
+            ]
         return [
             self.server_python(), "-m", *module, "--model", self.model_arg(), "--host", "127.0.0.1", "--port", str(port),
             "--decode-concurrency", str(slots), "--prompt-concurrency", str(int(r.get("prompt_concurrency", 8))),
@@ -68,7 +84,16 @@ class MlxlmEngine(ServedEngine):
             *[str(x) for x in extra],
         ]
 
+    def extra_body(self) -> dict:
+        # the shared client renders every other engine's prompt with thinking off
+        return {"enable_thinking": False} if self.vlm() else {}
+
     def version(self) -> str:
+        if self.vlm():
+            out = subprocess.run([self.server_python(), "-c", "import mlx_vlm; print(mlx_vlm.__version__)"],
+                                 capture_output=True, text=True, timeout=120, check=False)
+            v = out.stdout.strip().splitlines()
+            return f"mlx-vlm {v[-1]}" if out.returncode == 0 and v else "unknown"
         try:
             out = subprocess.run(
                 [self.server_python(), "-c", "import mlx_lm; print(mlx_lm.__version__)"],

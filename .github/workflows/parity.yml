@@ -192,6 +192,10 @@ jobs:
           py="$HOME/.cache/pie-evals/baselines/mlx-lm-$v"
           [ -x "$py/bin/python" ] || { uv venv --quiet --python 3.12 "$py" && uv pip install --quiet --python "$py/bin/python" "mlx-lm==$v" transformers tiktoken; }
           echo "MLX_PY=$py/bin/python" >> "$GITHUB_ENV"
+          # mlx-lm has no Qwen3.8-Flash-Next model: its reference runs on mlx-vlm (dist_run.mlx_python)
+          vlm="$HOME/.cache/pie-evals/baselines/mlx-vlm-0.7.11"
+          [ -x "$vlm/bin/python" ] || { uv venv --quiet --python 3.12 "$vlm" && uv pip install --quiet --python "$vlm/bin/python" "mlx-vlm==0.7.11"; }
+          echo "MLX_VLM_PY=$vlm/bin/python" >> "$GITHUB_ENV"
       - name: parity
         run: |
           args=""; for a in $(echo "${{ inputs.artifacts }}" | tr ',' ' '); do args="$args --artifact $a"; done
