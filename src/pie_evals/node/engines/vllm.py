@@ -58,6 +58,9 @@ class VllmEngine(Engine):
             # ("cannot find -lamdhip64", mi300x-x1). Without the image's bin dirs it takes the pod's own ROCm
             venv = os.environ.get("VIRTUAL_ENV") or "/opt/venv"
             env["PATH"] = ":".join(d for d in os.environ.get("PATH", "").split(":") if d and not d.startswith(venv + "/"))
+            # 0.32.0 picks its V2 model runner for Qwen3.8 by itself, and the ROCm wheel's _C lacks the op it maps
+            # host buffers with ("'_C' object has no attribute 'get_cuda_view_from_cpu_tensor'", mi300x-x1)
+            env["VLLM_USE_V2_MODEL_RUNNER"] = "0"
         if self.artifact.family == "mimo_v2" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
             # 0.31.0's CUTLASS block-FP8 GEMM aborts on sm_120 for MiMo's FP8 projections ("cutlass_gemm_caller:
             # Invalid status", weekly 39680748696); vLLM then takes the next kernel it ranks for block FP8
