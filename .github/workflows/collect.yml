@@ -45,7 +45,8 @@ jobs:
         if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == '' && inputs.move_tags == ''
         run: |
           shopt -s nullglob
-          dirs=(out/out-*)
+          # a node's outputs, or (a tpu.yml run) one directory a shard inside them
+          dirs=(); for d in out/out-* out/out-*/*/; do [ -s "$d/records.jsonl" ] && dirs+=("${d%/}"); done
           tagargs=()
           [ -n "${{ inputs.tag }}" ] && tagargs+=(--tag "${{ inputs.tag }}")
           kind="${{ inputs.tag_kind }}"; [ -z "$kind" ] && [ -n "${{ inputs.tag }}" ] && { kind=manual; [[ "${{ inputs.tag }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && kind=release; }
