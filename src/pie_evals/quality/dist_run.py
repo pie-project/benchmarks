@@ -43,6 +43,21 @@ def saved_texts(matrix_dir: str, artifact_id: str, rendered: list[str]) -> list[
     return d["texts"] if ok else None
 
 
+#: first-token reference distributions, saved once per artifact (``<artifact>.json``) from a device whose reference runs it
+FIRST_REF_DIR = "first-token-ref"
+
+
+def saved_first_ref(matrix_dir: str, artifact_id: str, rendered: list[str]) -> dict | None:
+    """The saved first-token reference of ``artifact_id`` (or of the GPU artifact a ``-tpu`` one cuts the same way), for these prompts."""
+    for aid in dict.fromkeys([artifact_id, artifact_id.removesuffix("-tpu")]):
+        p = Path(matrix_dir) / FIRST_REF_DIR / f"{aid}.json"
+        if p.exists():
+            d = json.loads(p.read_text())
+            if d.get("prompts") == kl.texts_hash(rendered) and len(d.get("last") or []) == len(rendered):
+                return {**d, "artifact": aid}
+    return None
+
+
 def prompts(log=print) -> list[str]:
     out = []
     for t in PARITY_TASKS:
@@ -287,29 +302,44 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
         raise RuntimeError(f"device not idle before the run: {busy}")
     snapshot = ensure_snapshot(art, hf_cache_dir(), pie_root=pie_root, python=os.environ.get("PIE_PY", "python3"), download=True, log=log)
     tok = _tokenizer(snapshot)
-    qs = prompts(log)
-    rendered = _render(snapshot, qs)
+    # PARITY_FIRST_TOKEN=1: word-salad prompts, the same tokens on both engines, one token out: KL of the first-token distribution
+    first = os.environ.get("PARITY_FIRST_TOKEN") == "1"
+    rendered = kl.gibberish(tok) if first else _render(snapshot, prompts(log))
     t0 = time.monotonic()
     ref_name = "mlxlm" if backend == "metal" else "vllm"
     summary: dict = {"artifact": art.id, "model": art.id, "engine": "pie", "ref_engine": ref_name, "platform": platform_id,
                      "task": f"parity@{platform_id}", "checkpoint": art.base_model, "scheme": str(art.scheme), "tp": tp,
                      "miniature": str(art.kind) == "miniature", "layers": getattr(art.miniature, "layers", None) if art.miniature else None,
-                     "prompts": len(rendered), "answer_tokens": ANSWER_TOKENS}
+                     "prompts": len(rendered), "answer_tokens": 1 if first else ANSWER_TOKENS}
+    if first:
+        summary["mode"] = "first_token"
 
     # 1. the reference: greedy answers, then the teacher-forced distributions over prompt + answer.
     # A reference that cannot run the model is a cell of its own (the site's crossed-out circle); pie still runs.
     ref_texts = ref_scored = None
-    texts = saved_texts(matrix_dir, art.id, rendered)
+    texts = [""] * len(rendered) if first else saved_texts(matrix_dir, art.id, rendered)
     summary["ref_texts"] = "saved" if texts is not None else "greedy"
     try:
         ref_texts, ref_scored = _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log, texts)
-        if texts is None:  # the answers to save under matrix/parity-texts, so the next run scores the same texts
+        if texts is None and not first:  # the answers to save under matrix/parity-texts, so the next run scores the same texts
             (out_dir / f"{art.id}.json").write_text(json.dumps({"prompts": kl.texts_hash(rendered), "answer_tokens": ANSWER_TOKENS,
                                                                  "ref_engine": ref_name, "ref_version": summary.get("ref_version"),
                                                                  "platform": platform_id, "texts": ref_texts}, indent=1))
+        if first:  # the reference's first-token distributions, for a device whose own reference cannot run the model
+            (out_dir / FIRST_REF_DIR).mkdir(parents=True, exist_ok=True)
+            (out_dir / FIRST_REF_DIR / f"{art.id}.json").write_text(json.dumps({
+                "prompts": kl.texts_hash(rendered), "ref_engine": ref_name, "ref_version": summary.get("ref_version"), "platform": platform_id,
+                "tokens": [len(x) for x in ref_scored], "last": [{str(k): v for k, v in (x[-1] if x else {}).items()} for x in ref_scored]}))
     except Exception as e:  # noqa: BLE001
         summary["ref_unsupported"] = _reason(e, out_dir, art.id, ref_name)
         log(f"parity {art.id}@{platform_id}: {ref_name} cannot run it: {summary['ref_unsupported']}")
+        saved = saved_first_ref(matrix_dir, art.id, rendered) if first else None
+        if saved:  # the same checkpoint, cut and prompts scored by the reference on another device (vLLM on a GPU)
+            ref_scored = [[{}] * (n - 1) + [{int(k): v for k, v in last.items()}] for n, last in zip(saved["tokens"], saved["last"], strict=True)]
+            ref_texts = texts
+            summary.update(ref_local_unsupported=summary.pop("ref_unsupported"), ref_engine=saved["ref_engine"], ref_version=saved.get("ref_version"),
+                           ref_platform=saved["platform"], ref_artifact=saved["artifact"])
+            log(f"parity {art.id}@{platform_id}: the saved {saved['ref_engine']} reference from {saved['platform']} ({saved['artifact']}) instead")
     log(f"parity {art.id}@{platform_id}: reference {ref_name} done in {(time.monotonic() - t0) / 60:.1f} min")
 
     busy = device_idle(backend)
@@ -342,7 +372,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     srv = pie_server(pie_engine, workload.model_copy(update={"params": {**workload.params, "concurrency": 64}}), out_dir / f"{art.id}-pie.log")
     try:
         model = srv.wait(3600)
-        pie_texts = kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1)
+        pie_texts = [""] * len(rendered) if first else kl.greedy(srv.url, model, rendered, ANSWER_TOKENS, parallel=1)
         pie_scored = kl.scored(srv.url, model, [r + t for r, t in zip(rendered, ref_texts, strict=True)], parallel=1) if ref_texts is not None else None
     finally:
         srv.stop()
@@ -357,7 +387,19 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
         log(f"parity {art.id}@{platform_id}: {ref_name} unsupported, pie answered {sum(1 for t in pie_texts if t)}/{len(pie_texts)} -> {where}")
         return summary
 
-    # 3. compare over the answer positions
+    # 3. compare over the answer positions; first-token mode: the last position of each prompt
+    if first:
+        summary.update(kl.last_position(ref_scored, pie_scored, [len(tok.encode(r, add_special_tokens=False)) for r in rendered]))
+        summary["score"], summary["n"] = summary["top1_agree"], summary["positions"]
+        summary["correct"] = round((summary["top1_agree"] or 0) * summary["positions"])
+        summary["ci95"] = [summary["score"] or 0, summary["score"] or 0]
+        summary["exact_match"] = summary["top1_agree"]
+        summary["samples"] = [{"id": i, "prompt": r} for i, r in enumerate(rendered)]
+        (out_dir / f"{art.id}-{platform_id}.json").write_text(json.dumps(summary, indent=1))
+        where = Store(store_dir).write_quality(summary, tag=tag, tag_kind=tag_kind)
+        log(f"first-token {art.id}@{platform_id}: KL mean {summary['kl_mean']}, top-1 {summary['top1_agree']} over {summary['positions']} prompts, "
+            f"{summary['prompt_tokens_mismatch']} tokenized apart -> {where}")
+        return summary
     starts = [max(0, len(s) - len(tok.encode(t, add_special_tokens=False))) for s, t in zip(ref_scored, ref_texts, strict=True)]
     summary.update(kl.compare(ref_scored, pie_scored, starts))
     summary["exact_match"] = kl.exact_match(ref_texts, pie_texts)

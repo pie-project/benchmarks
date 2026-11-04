@@ -169,7 +169,8 @@ def prepare_cmd(tier, matrix_dir, platforms, engines_f, programs_f, pie_root, pi
 @click.option("--pie-root", type=click.Path(), default=os.environ.get("PIE_ROOT", str(DEFAULT_PIE_ROOT)))
 @click.option("--tag", default=None, help="the release or manual tag these scores belong to")
 @click.option("--tag-kind", type=click.Choice(["release", "manual"]), default=None)
-def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_kind):
+@click.option("--platform", "platform_id", default=None, help="the Mac's platform id, stored on each row (empty: the quality Mac)")
+def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_kind, platform_id):
     from pie_evals.quality.run import TasksSkipped, run_quality
 
     from .machine import machine_lock
@@ -180,7 +181,7 @@ def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_k
             # one engine that fails to load must not drop the other arms of the run: say so, go on, and fail at the end
             try:
                 run_quality(a, list(tasks), n, matrix_dir=matrix_dir, store_dir=store_dir, pie_root=Path(pie_root), tag=tag, tag_kind=tag_kind,
-                            log=lambda m_: click.echo(m_, err=True))
+                            platform=platform_id, log=lambda m_: click.echo(m_, err=True))
             except TasksSkipped as e:
                 skipped.append(str(e))
             except Exception as e:  # noqa: BLE001
@@ -207,8 +208,12 @@ def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_k
 @click.option("--features", default="cuda", show_default=True, help="the build's features, with --pie-commit")
 @click.option("--accuracy", "accuracy_tasks", default="", help="comma-separated question sets: score the full model on them (pie and vLLM) instead of parity")
 @click.option("--n", type=int, default=100, show_default=True, help="questions per set in an accuracy run")
-def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag_kind, out_dir, pie_commit, features, accuracy_tasks, n):
+@click.option("--first-token", is_flag=True, help="word-salad prompts, one token out: KL of the first-token distribution (PARITY_FIRST_TOKEN=1)")
+def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag_kind, out_dir, pie_commit, features, accuracy_tasks, n, first_token):
     from pie_evals.quality.dist_run import run_accuracy, run_parity
+
+    if first_token:
+        os.environ["PARITY_FIRST_TOKEN"] = "1"
 
     if pie_commit:
         _restore_pie(Path(pie_root), pie_commit, features)

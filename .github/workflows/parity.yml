@@ -18,6 +18,7 @@ on:
       n: { description: "questions per set in an accuracy run", required: false, default: "100" }
       vllm: { description: "vLLM release (latest: the newest on PyPI)", required: false, default: "latest" }
       mac: { description: "a Mac platform id (pie on Metal against mlx-lm, on that runner); empty: none", required: false, default: "" }
+      first_token: { description: "word-salad prompts, one token out: KL of the first-token distribution instead of teacher-forced answers", type: boolean, required: false, default: false }
 concurrency: { group: "parity-${{ github.run_id }}", cancel-in-progress: false }
 
 jobs:
@@ -125,7 +126,7 @@ jobs:
     strategy: { fail-fast: false, matrix: "${{ fromJson(needs.gate.outputs.shards) }}" }
     runs-on: ["${{ matrix.label }}"]
     timeout-minutes: 400
-    env: { C: "${{ needs.plan.outputs.commit }}", F: "${{ matrix.backend }}", PARITY_VLLM_PIN: "${{ needs.plan.outputs.vllm }}" }
+    env: { C: "${{ needs.plan.outputs.commit }}", F: "${{ matrix.backend }}", PARITY_VLLM_PIN: "${{ needs.plan.outputs.vllm }}", PARITY_FIRST_TOKEN: "${{ inputs.first_token && '1' || '' }}" }
     steps:
       - uses: actions/checkout@v4
       - name: install harness
@@ -177,7 +178,7 @@ jobs:
     if: inputs.mac != ''
     runs-on: [self-hosted, macos, "${{ inputs.mac }}"]
     timeout-minutes: 720
-    env: { C: "${{ needs.plan.outputs.commit }}", KC: "${{ needs.plan.outputs.kcommit }}", HF_TOKEN: "${{ secrets.HF_TOKEN }}" }
+    env: { C: "${{ needs.plan.outputs.commit }}", KC: "${{ needs.plan.outputs.kcommit }}", HF_TOKEN: "${{ secrets.HF_TOKEN }}", PARITY_FIRST_TOKEN: "${{ inputs.first_token && '1' || '' }}" }
     steps:
       - uses: actions/checkout@v4
       - name: install harness
