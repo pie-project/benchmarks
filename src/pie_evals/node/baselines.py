@@ -326,8 +326,11 @@ def ensure_fork(engine: str, version: str, py: Path, log=print) -> str | None:
     if not head:
         return None
     sha = head[0]
-    site = Path(subprocess.run([str(py), "-c", "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
+    # the directory that holds the package: site-packages for a wheel, the source tree's python/ for the AMD image's
+    # editable SGLang (/sgl-workspace/sglang/python)
+    site = Path(subprocess.run([str(py), "-c", f"import importlib.util, os; print(os.path.dirname(os.path.dirname(importlib.util.find_spec('{engine}').origin)))"],
                                capture_output=True, text=True, check=True).stdout.strip())
+    editable = (site.parent / ".git").exists()
     stamp = py.parent.parent / ".fork"
     if stamp.exists() and stamp.read_text().strip() == sha:
         return sha
@@ -335,8 +338,12 @@ def ensure_fork(engine: str, version: str, py: Path, log=print) -> str | None:
         # reinstall leaves in place would make the new patch fail as "previously applied"
         import shutil
 
-        shutil.rmtree(site / engine, ignore_errors=True)
-        subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "--reinstall", "--no-deps", *SPECS[engine](version)], check=True, timeout=900)
+        if editable:  # the image's source tree: put its files back with git
+            subprocess.run(["git", "-C", str(site.parent), "checkout", "--", "."], check=True)
+            subprocess.run(["git", "-C", str(site.parent), "clean", "-fdq", "--", str(site / engine)], check=True)
+        else:
+            shutil.rmtree(site / engine, ignore_errors=True)
+            subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "--reinstall", "--no-deps", *SPECS[engine](version)], check=True, timeout=900)
     owner = fork["repo"].split("/")[0]
     url = f"https://github.com/{fork['upstream']}/compare/v{version}...{owner}:{fork['repo'].split('/')[1]}:{sha}.diff"
     diff = urllib.request.urlopen(url, timeout=120).read()
@@ -365,12 +372,15 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     uv_flags = _uv_flags(engine, backend, version)
     # the CUDA toolkit and FlashInfer kernels are for the CUDA build only
     cuda = engine in ("vllm", "sglang") and str(backend or "cuda") == "cuda"
+    # the fork's Python fixes apply to the CUDA and the ROCm builds alike (not to vllm-tpu)
+    fork = engine in ("vllm", "sglang") and str(backend or "cuda") in ("cuda", "rocm")
     d = venv_dir(engine, version, root, backend)
     py = d / "bin" / "python"
     if (d / ".ok").exists():
         ensure_python_headers(py, log=log)
-        if cuda:
+        if fork:
             ensure_fork(engine, version, py, log=log)
+        if cuda:
             ensure_nvcc(py, log=log)
             ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
             if engine == "sglang":
@@ -379,7 +389,9 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     if d.exists():
         shutil.rmtree(d, ignore_errors=True)  # a half-finished install
     if bkey == ("sglang", "rocm"):
-        return _image_sglang(d, version, log=log)
+        py = _image_sglang(d, version, log=log)
+        ensure_fork(engine, version, py, log=log)
+        return py
     log(f"baseline: installing {' '.join(spec)} into {d} (once per volume)")
     # the AMD SGLang image pins its own torch through PIP_CONSTRAINT and points VIRTUAL_ENV at its venv
     ienv = {k: v for k, v in os.environ.items() if k not in ("PIP_CONSTRAINT", "UV_CONSTRAINT", "VIRTUAL_ENV")}
@@ -401,8 +413,9 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
         subprocess.run(["python3", "-m", "venv", str(d)], check=True)
         subprocess.run([str(py), "-m", "pip", "install", "-q", *spec], check=True, timeout=timeout_s)
     ensure_python_headers(py, log=log)
-    if cuda:
+    if fork:
         ensure_fork(engine, version, py, log=log)
+    if cuda:
         ensure_nvcc(py, log=log)
         ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
         if engine == "sglang":
