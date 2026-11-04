@@ -57,7 +57,7 @@ def _github_newest(repo: str) -> str | None:
     r = requests.get(f"https://api.github.com/repos/{repo}/releases", timeout=30, params={"per_page": 20}, headers={"Accept": "application/vnd.github+json"})
     if r.status_code != 200:
         return None
-    return next((x["tag_name"] for x in r.json() if not x.get("draft")), None)
+    return next((x["tag_name"] for x in r.json() if not x.get("draft") and _has_binaries(x)), None)
 
 
 def _vkey(v: str) -> tuple:
