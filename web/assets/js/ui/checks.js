@@ -128,15 +128,6 @@ window.Pie = window.Pie || {};
   const isOff = (arm) => arm.score_flag === "mismatch";
   // the newest release with comparisons on the picked platform; the viewer's release first. Only arms compared with
   // pie (same weights, same machine) count: the rest have no gap
-  // one platform's rows, in the newest release that ran it there; the Accuracy grid shows every platform, each its own
-  const rowsOn = (state, platform) => {
-    const byTag = tables().parity || {};
-    // the releases first; then a device's own quality tag (0.5.3-b5-amd), so a platform scored apart still shows
-    const tags = [...new Set([state.release, ...(tables().tags || []).map((t) => t.id), ...Object.keys(byTag)])].filter((t) => byTag[t]?.length);
-    const arms = (tag) => byTag[tag].flatMap((row) => row.arms.filter((a) => a.engine !== "pie" && isNum(a.diff)).map((a) => ({ row, arm: a, platform: familyOf(row) })));
-    const tag = tags.find((t) => arms(t).some((x) => x.platform === platform));
-    return tag ? arms(tag).filter((x) => x.platform === platform).sort(byRank) : [];
-  };
   const accuracyRows = (state) => {
     const byTag = tables().parity || {};
     // the releases first; then a device's own quality tag (0.5.3-b5-amd), so a platform scored apart still shows
@@ -223,65 +214,81 @@ window.Pie = window.Pie || {};
       <p class="qc-foot">Release ${esc(tag)}, ${esc(platformLabel(accuracyPlatform))}. Delta is the engine minus Pie, in points. Only engines on Pie's weights and machine are compared. A mismatch is pie scoring lower by more than both 95% intervals together; only the final answers count.</p>`;
   };
 
-  // the page: one grid in the platform pages' style, the benchmark tasks down the side and the models across under
-  // their makers, for the platform picked in the bar; each cell pie's score with its gap to the closest reference engine
-  // on the same weights and machine (mlx-lm, vLLM), red where any engine there disagrees
-  const gridOf = (items, platform) => {
-    // each platform's grid folds its Task column on its own, its choice kept as the speed pages keep theirs
-    const key = `quality:${platform}`;
-    const tight = Pie.state?.platform?.narrowBy?.[key] ?? (Pie.state?.platform?.narrow ?? true);
-    const narrowLabel = tight ? "Show Overall" : "Hide Overall";
-    const models = [...new Set(items.map((x) => x.row.model))]
-      .sort((a, b) => Pie.platform.makerName(a).localeCompare(Pie.platform.makerName(b)) || Pie.store.names.model(a).localeCompare(Pie.store.names.model(b)));
-    const tasks = [...new Set(items.map((x) => x.row.task))].sort();
-    // a cell's comparisons, the closest engine first, on one machine (the first that ran it) so they share one pie score
-    const at = {};
-    for (const x of items) {
-      const list = at[`${x.row.task}|${x.row.model}`] ||= [];
-      if (!list.length || list[0].row === x.row) list.push(x);
+  // the page: the Performance page's grid, its machines down the side and its models across under their makers, as
+  // platform.js lays them out; a model that fits a machine shows Pie's MATH-500 score and its gap to one engine on the
+  // same weights and machine, a model slice the KL divergence of Pie's first token from that engine's
+  const QUALITY_MAC = "m5-max-128g";  // a score without a platform ran on the quality Mac, as tools/webdb.py says
+  const PREFER = { mac: "mlxlm", nvidia: "vllm", amd: "vllm", tpu: "vllm" };  // the one engine each platform sets Pie against
+  const byPrefer = (platform, engine) => (a, b) => (engine(b) === PREFER[platform]) - (engine(a) === PREFER[platform]) || (RANK[engine(a)] ?? 9) - (RANK[engine(b)] ?? 9);
+  const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>';
+  // a machine's MATH-500 comparison: the viewer's release first, then the newest that scored the model there
+  const scoreOf = (state, mac, model, platform) => {
+    const byTag = tables().parity || {};
+    for (const tag of new Set([state.release, ...(tables().tags || []).map((t) => t.id), ...Object.keys(byTag)])) {
+      for (const row of byTag[tag] || []) {
+        if (row.task !== "math500" || row.model !== model || (row.platform || QUALITY_MAC) !== mac) continue;
+        const arm = row.arms.filter((a) => a.engine !== "pie" && isNum(a.diff)).sort(byPrefer(platform, (a) => a.engine))[0];
+        const pie = arm && row.arms.find((a) => a.artifact === (arm.vs || row.pie));
+        if (pie) return { row, arm, pie, tag, d: -arm.diff * 100 };
+      }
     }
-    const gap = (xs) => {
-      const x = xs?.[0];
-      const pie = x?.row.arms.find((a) => a.artifact === (x.arm.vs || x.row.pie));
-      return pie ? { pie, d: -x.arm.diff * 100, off: xs.some((y) => isOff(y.arm)) } : null;
-    };
+    return null;
+  };
+  // a model slice's first-token KL on a machine: the newest parity row there, its preferred engine first
+  const klOf = (mac, model, platform) => (tables().quality_parity || [])
+    .filter((r) => r.platform === mac && r.model === model && !r.ref_unsupported && isNum(r.kl_mean))
+    .sort((a, b) => byPrefer(platform, (r) => r.ref_engine)(a, b) || String(b.date || "").localeCompare(String(a.date || "")))[0] || null;
+  const gridOf = (state, { platform, macs, models }, layout) => {
+    // each platform's grid folds its Overall column on its own, its choice kept as the speed pages keep theirs
+    const key = `quality:${platform.id}`;
+    const tight = Pie.state?.platform?.narrowBy?.[key] ?? (Pie.state?.platform?.narrow ?? true);
+    const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
+    // a model slice is what the Performance page marks so: a slice ran there, or the model does not fit
+    const nofit = (mac, model) => layout.sliced.has(`${mac}|${model}`) || Boolean(layout.grid[mac]?.[model]?.needs);
+    const at = {};
+    for (const mac of macs) for (const model of models) at[`${mac}|${model}`] = nofit(mac, model) ? { kl: klOf(mac, model, platform.id) } : { score: scoreOf(state, mac, model, platform.id) };
     const signed = (d) => `${d > 0.05 ? "+" : d < -0.05 ? "−" : ""}${Math.abs(d).toFixed(1)}`;
     const median = (list) => { const v = list.filter(isNum).sort((a, b) => a - b); return v.length ? v[v.length >> 1] : null; };
+    // a maker's slices and its full models are two bands, as the Performance page splits them
+    const cut = (model) => macs.some((mac) => layout.sliced.has(`${mac}|${model}`));
     const makers = [];
     for (const m of models) {
       const name = Pie.platform.makerName(m);
-      if (makers.length && makers[makers.length - 1].name === name) makers[makers.length - 1].n++;
-      else makers.push({ name, model: m, n: 1 });
+      const last = makers[makers.length - 1];
+      if (last && last.name === name && last.cut === cut(m)) last.n++;
+      else makers.push({ name, model: m, n: 1, cut: cut(m) });
     }
     const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-overall"></th>${makers.map((k) =>
       `<th class="platform-maker" colspan="${k.n}" scope="colgroup"><span class="platform-maker-name">${Pie.platform.makerBadge(k.model)}<b>${esc(k.name)}</b><span>${k.n} ${k.n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill"></th></tr>`;
-    const head = `<tr class="platform-head-row"><th class="platform-corner" scope="col">Task</th><th class="platform-corner is-overall" scope="col"><span class="platform-model">Overall</span><span class="platform-sub">Median gap</span></th>${models.map((m) => {
+    const head = `<tr class="platform-head-row"><th class="platform-corner" scope="col">Hardware</th><th class="platform-corner is-overall" scope="col"><span class="platform-model">Overall</span><span class="platform-sub">Median gap</span></th>${models.map((m) => {
       const info = Pie.store.index.models[m] || {};
-      const size = info.params_b ? `${info.params_b}B${info.active_b && info.active_b !== info.params_b ? ` · ${info.active_b}B active` : ""}` : "";
+      const size = info.params_b ? `${info.params_b}B${info.active_b && info.active_b !== info.params_b ? ` · ${info.active_b}B` : ""}` : "";
       return `<th scope="col" data-tip-html="${esc(Pie.platform.modelCard(m))}"><span class="platform-col"><span><span class="platform-model">${esc(Pie.store.names.model(m))}</span><span class="platform-sub">${esc(size)}</span></span></span></th>`;
     }).join("")}<th class="platform-fill"></th></tr>`;
-    const body = tasks.map((task) => {
-      const gaps = models.map((m) => gap(at[`${task}|${m}`])).filter(Boolean);
-      const o = median(gaps.map((g) => g.d));
-      const bad = gaps.filter((g) => g.off).length;  // the median is a number; red only when a model in the row scores worse
-      return `<tr><th class="platform-row" scope="row"><span class="platform-chip"><span>${esc(task)}</span></span></th>
+    const body = macs.map((mac) => {
+      const hw = Pie.store.index.hardware[mac];
+      const scores = models.map((m) => at[`${mac}|${m}`].score).filter(Boolean);
+      const o = median(scores.map((g) => g.d));
+      const bad = scores.filter((g) => isOff(g.arm)).length;  // the median is a number; red only when a model in the row scores worse
+      return `<tr><th class="platform-row" scope="row"><span class="platform-chip">${Pie.platform.badge(platform.id)}<span class="platform-name">${esc(String(hw?.name || mac).replace(/^Apple\s+/, ""))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</span></th>
         <td class="is-overall">${o === null ? `<span class="platform-cell is-empty">–</span>` : `<span class="platform-cell ${bad ? "is-behind" : "is-same"}"${bad ? ` data-tip="${esc(`Pie scores lower on ${bad} ${bad === 1 ? "model" : "models"}`)}"` : ""}>${signed(o)}</span>`}</td>
         ${models.map((m) => {
-          const xs = at[`${task}|${m}`];
-          const g = gap(xs);
-          if (!g) return `<td><span class="platform-cell is-empty">–</span></td>`;
-          // what answers "is quality hurt?": both scores, the difference, how much of it is noise, and a verdict in words;
-          const many = xs.length > 1;  // several engines name theirs on each difference
-          const worse = xs.filter((y) => isOff(y.arm)).map((y) => engineLabel(y.arm.engine));
-          const tip = card(`${Pie.store.names.model(m)} · ${task}`, [xs[0].row.platform ? ["Machine", hardwareName(xs[0].row.platform), true] : null,
-            ["pie", pct(g.pie.score), false, "pie"],
-            ...xs.flatMap(({ arm }) => [[engineLabel(arm.engine), pct(arm.score), false, arm.engine],
-              [many ? `Difference to ${engineLabel(arm.engine)}` : "Difference", `${signed(-arm.diff * 100)} pts`, true],
-              isNum(arm.tolerance) ? ["Noise", `±${(arm.tolerance * 100).toFixed(1)} pts`, true] : null])],
-            worse.length ? `Pie scores lower than ${worse.join(" and ")}, beyond noise` : false);
+          const { score: g, kl: r } = at[`${mac}|${m}`];
+          const title = `${Pie.store.names.model(m)} on ${hardwareName(mac)}`;
+          if (r) {
+            const tip = card(title, [["Model slice", layersText(r.layers) || "Yes", true], ["First-token KL", kl(r.kl_mean)], [`Pie vs ${engineLabel(r.ref_engine)}`, `${r.prompts ?? "–"} prompts`, true],
+              r.date ? ["Measured", Pie.format.date(r.date), true] : null]);
+            return `<td><span class="platform-cell is-even is-nofit" data-tip-html="${esc(tip)}">${NOFIT}<span class="platform-main">${kl(r.kl_mean)}</span></span></td>`;
+          }
+          if (!g) return `<td><span class="platform-cell is-empty${"kl" in at[`${mac}|${m}`] ? " is-nofit" : ""}">${"kl" in at[`${mac}|${m}`] ? NOFIT : ""}–</span></td>`;
+          // what answers "is quality hurt?": both scores, the difference, how much of it is noise, and a verdict in words
+          const off = isOff(g.arm);
+          const tip = card(`${title} · MATH-500`, [["Pie", pct(g.pie.score), false, "pie"], [engineLabel(g.arm.engine), pct(g.arm.score), false, g.arm.engine],
+            ["Difference", `${signed(g.d)} pts`, true], isNum(g.arm.tolerance) ? ["Noise", `±${(g.arm.tolerance * 100).toFixed(1)} pts`, true] : null, ["Release", g.tag, true]],
+            off ? `Pie scores lower than ${engineLabel(g.arm.engine)}, beyond noise` : false);
           // a click opens Quality's runs for this model and task, with the engines this cell compares
-          const open = { model: [m], task: [task], engine: [...new Set(["pie", ...xs.map((y) => y.arm.engine)])] };
-          return `<td class="is-openable" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${g.off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${pct(g.pie.score)}<span class="qc-gap${g.off ? " is-off" : ""}">${signed(g.d)}</span></span></span></td>`;
+          const open = { model: [m], task: ["math500"], engine: ["pie", g.arm.engine] };
+          return `<td class="is-openable" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${pct(g.pie.score)}<span class="qc-gap${off ? " is-off" : ""}">${signed(g.d)}</span></span></span></td>`;
         }).join("")}<td class="platform-fill"></td></tr>`;
     }).join("");
     const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
@@ -290,18 +297,18 @@ window.Pie = window.Pie || {};
   // every platform at once, as the compare pages stack theirs: a header bar that folds it, over its own grid
   const folded = {};
   const gridPage = (state) => {
-    const sections = accuracyRows(state).platforms.map((p) => ({ p, items: rowsOn(state, p) })).filter((x) => x.items.length);
+    const layout = Pie.platform.render(state, true);
+    const sections = layout.sections.filter((g) => PLATFORMS.includes(g.platform?.id));
     if (!sections.length) return `<div class="platform-scroll">${empty("No accuracy scores to compare yet.")}</div>`;
-    return `<div class="platform-scroll">${sections.map(({ p, items }) => {
-      const models = new Set(items.map((x) => x.row.model)).size;
-      const tasks = new Set(items.map((x) => x.row.task)).size;
+    return `<div class="platform-scroll">${sections.map((g) => {
+      const p = g.platform.id;
       return `<section class="platform-section">
         <div class="platform-group-row platform-section-bar${folded[p] ? " is-collapsed" : ""}" data-qc-fold="${esc(p)}" role="button" aria-expanded="${!folded[p]}">
           <span class="platform-group-bar">
-            <span class="platform-group-name">${Pie.platform.badge(p)}<b>${esc(platformLabel(p))}</b><span>${models} ${models === 1 ? "model" : "models"}, ${tasks} ${tasks === 1 ? "task" : "tasks"}</span></span>
+            <span class="platform-group-name">${Pie.platform.badge(p)}<b>${esc(g.platform.label)}</b><span>${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}, ${g.models.length} ${g.models.length === 1 ? "model" : "models"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
           </span>
-        </div><div class="platform-section-body"${folded[p] ? " hidden" : ""}><div class="platform-section-scroll">${gridOf(items, p)}</div></div></section>`;
+        </div><div class="platform-section-body"${folded[p] ? " hidden" : ""}><div class="platform-section-scroll">${gridOf(state, g, layout)}</div></div></section>`;
     }).join("")}</div>`;
   };
 
