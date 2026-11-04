@@ -41,6 +41,7 @@ window.Pie = window.Pie || {};
     (m.id === "batching" ? `<span class="setup-group is-second">Throughput</span>` : i === 0 ? `<span class="setup-group">Latency</span>` : "") +
     `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}" title="${esc(`${m.title || m.label}, ${m.id === "batching" ? "as many requests at once as the hardware needs to stay busy" : "one request"}`)}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.id === "spec" ? m.label : m.group)}</button>`).join("")}</span>`;
   let onChange = () => {};
+  let openResults = () => {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
   const PLATFORMS = [
@@ -476,6 +477,10 @@ window.Pie = window.Pie || {};
     onChange(handler) {
       onChange = handler;
     },
+    // a measured cell's click: the Results page, filtered to that run
+    onOpenResults(handler) {
+      openResults = handler;
+    },
     // the engine menu: every engine, the picked one checked
     menu(k) {
       if (k === "platform" && viewState) {
@@ -813,7 +818,11 @@ window.Pie = window.Pie || {};
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               // a miniature's own tok/s is a cut model's, no real speed: with no other engine to set it against, it shows none
               : c.gain === null ? { kind: "is-even", html: c.pie.miniature ? "–" : esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            // a click opens Results on this run: the machine, the model, the workload, and the engines the cell compares
+            const PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
+            const open = { hardware: [mac], model: [realOf(model)], workload: [PHASE[modeOf(c).id] || modeOf(c).workload],
+              engine: compare === "engines" ? [...new Set((c.all || [c.pie]).map((r) => r.engine))] : [c.pie.engine] };
+            return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           // an empty cell lists every engine that has a row here and why it gave no number, as a measured cell's card does
           // the engines that did measure here, though pie did not (the comparison needs pie): their numbers first
@@ -910,6 +919,10 @@ window.Pie = window.Pie || {};
         put();
         requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(put)));
       };
+      element.addEventListener("click", (event) => {
+        const cell = event.target.closest("td[data-open]");
+        if (cell && !event.target.closest(".column-info")) { openResults(JSON.parse(cell.dataset.open)); return; }
+      });
       element.addEventListener("click", (event) => {
         const button = event.target.closest("[data-hide-mac]");
         if (!button) return;
