@@ -21,6 +21,9 @@ from .base import register
 from .served import ServedEngine
 from .shape import hf_snapshot_dir
 
+#: the org of models.yaml's checkpoints that exist only in each Mac's HF cache
+LOCAL_ORG = "pie-local/"
+
 
 def splash_bin() -> str:
     return os.environ.get("SPLASH_BIN") or shutil.which("splash") or "/opt/homebrew/bin/splash"
@@ -38,7 +41,10 @@ class SplashEngine(ServedEngine):
         return {"reasoning_effort": "none"}
 
     def model_arg(self) -> str:
-        """Tokenizer source: the local snapshot of the model Splash serves."""
+        """Tokenizer source: the local snapshot of the model Splash serves (its ``tokenizer_from`` for a GGUF)."""
+        if self.artifact.gguf_file and self.artifact.tokenizer_from:
+            snap = hf_snapshot_dir(self.artifact.tokenizer_from, None)
+            return str(snap) if snap is not None else self.artifact.tokenizer_from
         snap = hf_snapshot_dir(self.artifact.base_model, self.artifact.revision)
         return str(snap) if snap is not None else self.artifact.base_model
 
@@ -51,6 +57,11 @@ class SplashEngine(ServedEngine):
         if isinstance(extra, str):
             extra = extra.split()
         cmd = [splash_bin(), "serve", "--model", self.artifact.base_model, "--host", "127.0.0.1", "--port", str(port), "--no-webui"]
+        if self.artifact.base_model.startswith(LOCAL_ORG):
+            # a checkpoint no hub repo carries (models.yaml `pie-local/`): Splash prepares the files in the HF cache
+            snap = hf_snapshot_dir(self.artifact.base_model, self.artifact.revision)
+            if snap is not None:
+                cmd += ["--model-dir", str(snap / self.artifact.gguf_file if self.artifact.gguf_file else snap)]
         if r.get("max_context") is not None:
             cmd += ["--max-context", str(context if r["max_context"] == "$serve_context" else r["max_context"])]
         return cmd + [str(x) for x in extra]

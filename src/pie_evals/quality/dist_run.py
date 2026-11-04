@@ -202,14 +202,19 @@ def pie_server(engine, workload, log_path: Path, prewarm: bool = True) -> Server
     return Server(argv, env, str(engine.pie_root / "scripts/bench"), log_path)
 
 
-def mlx_side(snapshot: Path, rendered: list[str], greedy: bool, log_path: Path) -> tuple[list[str], list[list[dict[int, float]]]]:
-    """mlx-lm in its own interpreter: greedy answers and teacher-forced top-20 over prompt+answer."""
-    script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "parity_mlx.py"
+def mlx_python(vlm: bool) -> str:
+    """The reference's interpreter: mlx-lm's, or mlx-vlm's for a model mlx-lm has no code for (qwen4_exp)."""
+    return os.environ.get("MLX_VLM_PY" if vlm else "MLX_PY", sys.executable)
+
+
+def mlx_side(snapshot: Path, rendered: list[str], greedy: bool, log_path: Path, vlm: bool = False) -> tuple[list[str], list[list[dict[int, float]]]]:
+    """mlx-lm (or mlx-vlm) in its own interpreter: greedy answers and teacher-forced top-20 over prompt+answer."""
+    script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / ("parity_mlxvlm.py" if vlm else "parity_mlx.py")
     with tempfile.TemporaryDirectory() as tmp:
         inp, out = Path(tmp) / "in.json", Path(tmp) / "out.json"
         inp.write_text(json.dumps({"prompts": rendered, "max_tokens": ANSWER_TOKENS, "topk": kl.TOPK, "greedy": greedy}))
         with log_path.open("w") as fh:
-            subprocess.run([os.environ.get("MLX_PY", sys.executable), str(script), str(snapshot), str(inp), str(out)], stdout=fh, stderr=subprocess.STDOUT, check=True, timeout=6 * 3600)
+            subprocess.run([mlx_python(vlm), str(script), str(snapshot), str(inp), str(out)], stdout=fh, stderr=subprocess.STDOUT, check=True, timeout=6 * 3600)
         d = json.loads(out.read_text())
     return d["texts"], [[{int(k): v for k, v in pos.items()} for pos in t] for t in d["scored"]]
 
@@ -253,9 +258,12 @@ def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, back
         finally:
             srv.stop()
         return ref_texts, ref_scored
-    summary["ref_version"] = subprocess.run([os.environ.get("MLX_PY", sys.executable), "-c", "import mlx_lm; print(mlx_lm.__version__)"], capture_output=True, text=True).stdout.strip()
-    ref_texts = texts if texts is not None else mlx_side(snapshot, rendered, True, out_dir / f"{art.id}-mlx-greedy.log")[0]
-    _, ref_scored = mlx_side(snapshot, [r + t for r, t in zip(rendered, ref_texts, strict=True)], False, out_dir / f"{art.id}-mlx-score.log")
+    vlm = art.family == "qwen4_exp"
+    pkg = "mlx_vlm" if vlm else "mlx_lm"
+    version = subprocess.run([mlx_python(vlm), "-c", f"import {pkg}; print({pkg}.__version__)"], capture_output=True, text=True).stdout.strip()
+    summary["ref_version"] = f"mlx-vlm {version}" if vlm else version
+    ref_texts = texts if texts is not None else mlx_side(snapshot, rendered, True, out_dir / f"{art.id}-mlx-greedy.log", vlm)[0]
+    _, ref_scored = mlx_side(snapshot, [r + t for r, t in zip(rendered, ref_texts, strict=True)], False, out_dir / f"{art.id}-mlx-score.log", vlm)
     return ref_texts, ref_scored
 
 def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir: str = "matrix", store_dir: str | None = None,
