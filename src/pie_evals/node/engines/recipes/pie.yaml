@@ -352,9 +352,11 @@ default:
             The XLA engine's own default (XlaEngineOptions). The TPU runs through
             pie_bench's metal arm, which always writes this knob, at 10240 unless set.
         max_forward_requests:
-          value: 64
+          value: "$serve_concurrency"
           rationale: >
-            The XLA engine's own default; covers c32. The metal arm would write 512.
+            Engine-side admission = the widest concurrency of the shapes the server boots for, as on cuda: at 64
+            (the XLA engine's own default) the load reserved 128 slots and c256 failed ("this fire wants 255
+            recurrent slots", gpt-oss-20b on tpu-v6e-1, #1184).
   artifact:
     gemma-4-31b-mini:
       platform:
