@@ -12,12 +12,27 @@ on:
     - cron: "*/10 * * * *"
 permissions: { contents: read }
 jobs:
-  import:
+  # only the tags whose pod list still names a pod: one runner imports them in turn, and a pass over every tag (most of
+  # them empty, each still checking out and installing) outlasted the 10-minute schedule, so imports queued for hours
+  tags:
     if: ${{ github.event_name == 'schedule' || inputs.tag != '' }}
+    runs-on: [pod-import]
+    outputs: { tags: "${{ steps.list.outputs.tags }}" }
+    steps:
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: .github/pod-lists }
+      - id: list
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then echo 'tags=["${{ inputs.tag }}"]' >> "$GITHUB_OUTPUT"; exit 0; fi
+          tags=$(for f in .github/pod-lists/*; do grep -qv '^#' "$f" 2>/dev/null && grep -v '^#' "$f" | grep -q . && basename "$f"; done | python3 -c 'import sys, json; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+  import:
+    needs: tags
+    if: ${{ needs.tags.outputs.tags != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        tag: [pro6000-full, rtx4090-full, a40-full, a100-sxm-full, b200-full, h100-full, l40s-fill, rtx4090-fill, pro6000-fill, pro4500-fill, rtx5090-fill, a40-fill, a100-sxm-fill, b200-fill, h100-fill, h200-fill, amd-full]
+        tag: ${{ fromJSON(needs.tags.outputs.tags) }}
     runs-on: [pod-import]  # liszt-server: on the tailnet with the pods; the site laptop's queue starved these imports
     # a dispatch (a reset, a pod list) is its own group: a later run's pending job of the tag never cancels it
     concurrency: { group: "pod-import-${{ matrix.tag }}${{ github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}", cancel-in-progress: false }
