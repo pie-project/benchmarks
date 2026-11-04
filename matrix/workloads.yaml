@@ -82,7 +82,7 @@ workloads:
     est_minutes: 1
   - id: pf8-512
     kind: concurrency
-    params: {concurrency: 8, num_requests: 32, prefill: 512, decode: 1, cold_cache: true}
+    params: {concurrency: 8, num_requests: 32, prefill: 512, decode: 1, request_timeout_s: 2400, round_timeout_s: 3000, cold_cache: true}
     tiers: [weekly, targeted]  # a 16 GB Mac's Batched Prefill: 32 at once runs llama.cpp out of memory there (Compute error), so every engine takes 8
     est_minutes: 1
   - id: pf16-512
@@ -92,7 +92,7 @@ workloads:
     est_minutes: 1
   - id: pf32-512
     kind: concurrency
-    params: {concurrency: 32, num_requests: 128, prefill: 512, decode: 1, cold_cache: true}
+    params: {concurrency: 32, num_requests: 128, prefill: 512, decode: 1, request_timeout_s: 2400, round_timeout_s: 3000, cold_cache: true}
     tiers: [weekly, targeted]  # the Macs' Batched Prefill: 32 at once, as their Batched Decode (c32), so llama.cpp's one server of 32 slots holds its KV
     est_minutes: 1
   - id: pf64-512
