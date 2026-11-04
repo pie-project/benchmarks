@@ -57,7 +57,7 @@ window.Pie = window.Pie || {};
     // every machine in one table: pie against the other engines
     // Relative Speed, Tokens per Second and Kernel Efficiency as one page, switched in its bar
     speedups: {
-      label: "Results",
+      label: "Speed",
       section: "home",
       tint: "#FF2D55",  // pink
       view: "platform",
@@ -181,7 +181,7 @@ window.Pie = window.Pie || {};
       columns: [],
     },
     results: {
-      label: "Results",
+      label: "Speed",
       section: "measurements",
       filters: ["engine", "model", "platform", "hardware", "workload", "status"],  // in the order of the columns they filter
       numbered: true,
