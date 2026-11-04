@@ -84,7 +84,7 @@ window.Pie = window.Pie || {};
     if (auto.rolling) {
       auto.rolling = false;
       clearTimeout(auto.waveTimer);
-      auto.wave = { start: now, ghosts: auto.ghosts || [], longest: 0 };
+      auto.wave = null;  // no wave: the new numbers replace the old ones in place
       auto.ghosts = null;
       // the setup button's old name rolls up and out as the new one rises into its place
       const pick = element.querySelector(auto.labelOf || ".setup-pick");
