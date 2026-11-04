@@ -25,8 +25,9 @@ if [ -n "$data" ] && [ -z "$(lsblk -no MOUNTPOINT "$data" | tr -d '[:space:]')" 
 fi
 
 # a fresh VM's unattended-upgrades holds the dpkg lock for minutes, past 15 once (v5e 41764965822): stop it, finish what it left
-sudo systemctl stop unattended-upgrades.service apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
-sudo systemctl kill --signal=KILL unattended-upgrades.service 2>/dev/null || true
+# (the services stopped, a run already started by the timer killed by name: v5e 41797489994 waited 16 min on pid "unattended-upgr")
+sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer unattended-upgrades.service apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
+for _ in 1 2 3 4 5 6; do sudo pkill -9 -f unattended-upgrade 2>/dev/null || break; sleep 5; done
 sudo DEBIAN_FRONTEND=noninteractive dpkg --configure -a 2>/dev/null || true
 sudo apt-get -o DPkg::Lock::Timeout=900 update -q
 sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=900 install -y -q --no-install-recommends \
