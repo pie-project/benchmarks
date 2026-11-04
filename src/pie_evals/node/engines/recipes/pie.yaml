@@ -100,6 +100,26 @@ default:
             engine_option:
               value: {max_state_slots: 64}
   platform:
+    mi300x-x1:
+      family:
+        qwen3_5:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: >
+                The default 256 recurrent-state slots cap the GDN hybrids' lanes ("admission: more lanes than the
+                state pool seats; capping ... seated=256") while the batched rows ask up to 1024; a 192 GB MI300X
+                holds 1024 slots beside the weights.
+        qwen3_6_moe:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: As for qwen3_5; Qwen3.6-35B-A3B stayed at ~7.0k tok/s from c256 to c1024 at 256 slots.
+        qwen3_6:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: As for qwen3_5.
     a100-sxm-x1:
       family:
         qwen3_6:
