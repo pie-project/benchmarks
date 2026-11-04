@@ -100,6 +100,15 @@ default:
             engine_option:
               value: {max_state_slots: 64}
   platform:
+    tpu-v6e-1:
+      family:
+        nemotron_h:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                The Nemotron-3-Super cut's c256 and pf256 fires find no HBM for their program at 0.90
+                (RuntimeProgramAllocationFailure, #1184); vLLM-TPU and SGLang-JAX serve no Nemotron-H on a TPU.
     tpu-v5e-1:
       family:
         gpt_oss:
