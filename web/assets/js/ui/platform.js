@@ -142,6 +142,8 @@ window.Pie = window.Pie || {};
   // Compare: "engines", named Speedup, shows each engine against the best other engine; "ceiling", named Efficiency, shows each engine's
   // share of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
   const COMPARES = { engines: "Relative Speed", ceiling: "Kernel Efficiency", tps: "Tokens per Second" };
+  // the views as Speed's switch names them, in its order: Relative first
+  const SHORT_COMPARES = { engines: "Relative", tps: "Tokens per Second", ceiling: "Efficiency" };
   // each view wears the icon of the sidebar page that shows it for every machine
   const COMPARE_ICONS = { engines: "speedups", ceiling: "all_hardware", tps: "tps" };
   const nextCompare = (id) => { const ids = Object.keys(COMPARES); return ids[(ids.indexOf(id) + 1) % ids.length]; };
@@ -895,12 +897,8 @@ window.Pie = window.Pie || {};
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
-            ${fixed ? "" : (() => {
-              // the view as one toolbar button in macOS's Icon and Text style: its sidebar icon and its name, so the
-              // viewer sees what they are looking at; a click moves on to the next view, as V does; holding R peeks
-              const next = nextCompare(compare);
-              return `<button type="button" class="plain-button view-cycle" data-compare="${next}" aria-label="${esc(`View: ${COMPARES[compare]}. Switch to ${COMPARES[next]}`)}" title="${esc(`${CAPTIONS[compare]}. Click for ${COMPARES[next]} (V)`)}">${Pie.icon(COMPARE_ICONS[compare])}<span>${esc(COMPARES[compare])}</span></button>`;
-            })()}
+            ${fixed ? "" : `<span class="platform-compare" role="group" aria-label="View">${["engines", "tps", "ceiling"].map((id) =>
+              `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}" title="${esc(CAPTIONS[id])}">${esc(SHORT_COMPARES[id] || COMPARES[id])}</button>`).join("")}</span>`}
           </span>
         </div>
         <div class="platform-scroll">
