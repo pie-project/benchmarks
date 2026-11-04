@@ -927,8 +927,8 @@ artifacts:
     family: glm5_next
     scheme: fp8
     kind: miniature
-    miniature: {layers: "0-3", experts: 16, period: 4, shrink_family: glm5_next, note: "one KDA/DSA period of 45 layers, 16 of 288 experts, at the TPU's bf16 row: the 8-layer cut dequantized leaves a 16 GB v5e no KV room"}
-    pie_sku: glm53-flash-mini-bf16-bf16-kv-bf16-l4-e16
+    miniature: {layers: "0-3", experts: 32, period: 4, shrink_family: glm5_next, note: "one KDA/DSA period of 45 layers, 32 of 288 experts (pie's glm53-flash-mini count), at the TPU's bf16 row: the 8-layer cut dequantized leaves a 16 GB v5e no KV room"}
+    pie_sku: glm53-flash-mini-bf16-bf16-kv-bf16-l4
     platforms: [tpu-v5e-1]
     max_context: 4096
     expected_gib: 4.5
