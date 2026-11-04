@@ -36,7 +36,18 @@ def _github_latest(repo: str) -> str | None:
     r = requests.get(f"https://api.github.com/repos/{repo}/releases/latest", timeout=30, headers={"Accept": "application/vnd.github+json"})
     if r.status_code != 200:
         return None
-    return r.json().get("tag_name")
+    if _has_binaries(r.json()):
+        return r.json().get("tag_name")
+    # llama.cpp's v0.9.0 (2026-11-04) is "latest" with only nightly-tag.txt, its b-builds marked pre-release: a pin
+    # without binaries leaves every Mac with no llama-server, so take the newest release that ships them
+    r = requests.get(f"https://api.github.com/repos/{repo}/releases", timeout=30, params={"per_page": 20}, headers={"Accept": "application/vnd.github+json"})
+    if r.status_code != 200:
+        return None
+    return next((x["tag_name"] for x in r.json() if not x.get("draft") and _has_binaries(x)), None)
+
+
+def _has_binaries(release: dict) -> bool:
+    return any(not a["name"].endswith(".txt") for a in release.get("assets") or [])
 
 
 def _github_newest(repo: str) -> str | None:

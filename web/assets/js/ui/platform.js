@@ -760,11 +760,13 @@ window.Pie = window.Pie || {};
     },
 
     // returns the number of machines and models shown, for the toolbar subtitle
-    render(state) {
+    // dry: the machines, models and slices each platform's table holds in Relative Speed, without drawing (the Quality grid)
+    render(state, dry = false) {
       viewState = state;
       // Speedup and Efficiency are one grid each: the page sets the comparison, and no switch is shown
       const fixed = Pie.schema[state.table]?.compare;
       if (fixed) { peeked = null; compare = fixed; }
+      else if (dry) compare = "engines";
       else if (!peeked) compare = chosen;  // a platform's page shows the viewer's pick, whatever page came before
       const all = Pie.store.snapshot(state.release);
       lastAll = all;  // the hover cards name the engines that left a cell empty
@@ -943,6 +945,7 @@ window.Pie = window.Pie || {};
       const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs), only), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
         : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: minisFirst(g.macs, models.filter((model) => g.macs.some((mac) => shows(mac, model)))) }))
           .filter((g) => g.macs.length && g.models.length);
+      if (dry) return { sections, sliced, grid };
 
       const cells = [];
       const number = (gain) => {
