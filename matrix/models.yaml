@@ -1454,6 +1454,294 @@ artifacts:
     expected_gib: 10.83
     tiers: [targeted]
 
+  # ---------------- model slices for the 16 GB Macs ----------------
+  # A model that does not fit a Mac's GPU runs there as a model slice: whole layer periods, the first N experts,
+  # widths unchanged, cut the same way from the MLX weights (pie, mlx-lm, Splash) and the GGUF (llama.cpp,
+  # node/gguf_slice.py); the largest cut whose larger copy fits a 16 GB Mac (10.7 GiB GPU share, fit factor 1.25).
+  - id: qwen3.6-35b-a3b-mlx4-slice
+    base_model: mlx-community/Qwen3.6-35B-A3B-4bit
+    family: qwen3_6_moe
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-39", experts: 80, period: 4, note: "every layer, 80 of 256 experts"}
+    pie_sku: qwen36-35b-a3b-mini-u4g64-kv-bf16-l40-e80
+    expected_gib: 6.55
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.6-35b-a3b-mlxlm-slice
+    base_model: mlx-community/Qwen3.6-35B-A3B-4bit
+    family: qwen3_6_moe
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-39", experts: 80, period: 4, note: "every layer, 80 of 256 experts"}
+    baseline_of: qwen3.6-35b-a3b-mlx4-slice
+    baseline_label: mlx-lm
+    expected_gib: 6.55
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.6-35b-a3b-llamacpp-slice
+    base_model: unsloth/Qwen3.6-35B-A3B-GGUF
+    family: qwen3_6_moe
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Qwen3.6-35B-A3B-4bit
+    kind: miniature
+    miniature: {layers: "0-39", experts: 80, period: 4, note: "every layer, 80 of 256 experts"}
+    baseline_of: qwen3.6-35b-a3b-mlx4-slice
+    baseline_label: llama.cpp
+    expected_gib: 8.02
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.6-35b-a3b-splash-slice
+    base_model: mlx-community/Qwen3.6-35B-A3B-4bit
+    family: qwen3_6_moe
+    scheme: affine_u4_g64
+    source_format: splash
+    kind: miniature
+    miniature: {layers: "0-39", experts: 80, period: 4, note: "every layer, 80 of 256 experts"}
+    baseline_of: qwen3.6-35b-a3b-mlx4-slice
+    baseline_label: Splash
+    expected_gib: 6.55
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gemma-4-26b-a4b-mlx4-slice
+    base_model: mlx-community/gemma-4-26b-a4b-it-4bit
+    family: gemma4_moe
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-29", experts: 56, period: 6, note: "every layer, 56 of 128 experts"}
+    pie_sku: gemma4-26b-a4b-mini-e64-u4g64-kv-bf16-e56
+    expected_gib: 6.49
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gemma-4-26b-a4b-mlxlm-slice
+    base_model: mlx-community/gemma-4-26b-a4b-it-4bit
+    family: gemma4_moe
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-29", experts: 56, period: 6, note: "every layer, 56 of 128 experts"}
+    baseline_of: gemma-4-26b-a4b-mlx4-slice
+    baseline_label: mlx-lm
+    expected_gib: 6.49
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gemma-4-26b-a4b-llamacpp-slice
+    base_model: unsloth/gemma-4-26B-A4B-it-GGUF
+    family: gemma4_moe
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: gemma-4-26B-A4B-it-UD-Q4_K_M.gguf
+    tokenizer_from: mlx-community/gemma-4-26b-a4b-it-4bit
+    kind: miniature
+    miniature: {layers: "0-29", experts: 56, period: 6, note: "every layer, 56 of 128 experts"}
+    baseline_of: gemma-4-26b-a4b-mlx4-slice
+    baseline_label: llama.cpp
+    expected_gib: 8.23
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gpt-oss-20b-mlx4-slice
+    base_model: mlx-community/gpt-oss-20b-MXFP4-Q4
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-23", experts: 24, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 24 of 32 experts"}
+    pie_sku: gptoss-20b-mini-u4g64-mxfp4-kv-bf16-l24-e24
+    expected_gib: 8.04
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gpt-oss-20b-mlxlm-slice
+    base_model: mlx-community/gpt-oss-20b-MXFP4-Q4
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-23", experts: 24, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 24 of 32 experts"}
+    baseline_of: gpt-oss-20b-mlx4-slice
+    baseline_label: mlx-lm
+    expected_gib: 8.04
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gpt-oss-20b-llamacpp-slice
+    base_model: unsloth/gpt-oss-20b-GGUF
+    family: gpt_oss
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: gpt-oss-20b-Q4_K_M.gguf
+    tokenizer_from: mlx-community/gpt-oss-20b-MXFP4-Q4
+    kind: miniature
+    miniature: {layers: "0-23", experts: 24, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 24 of 32 experts"}
+    baseline_of: gpt-oss-20b-mlx4-slice
+    baseline_label: llama.cpp
+    expected_gib: 8.44
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.6-27b-mlx4-slice
+    base_model: mlx-community/Qwen3.6-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-27", period: 4, note: "28 of 64 layers (7 whole periods)"}
+    pie_sku: qwen36-27b-mini-u4g64-kv-bf16-l28
+    expected_gib: 6.92
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.6-27b-mlxlm-slice
+    base_model: mlx-community/Qwen3.6-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-27", period: 4, note: "28 of 64 layers (7 whole periods)"}
+    baseline_of: qwen3.6-27b-mlx4-slice
+    baseline_label: mlx-lm
+    expected_gib: 6.92
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.6-27b-llamacpp-slice
+    base_model: unsloth/Qwen3.6-27B-GGUF
+    family: qwen3_6
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Qwen3.6-27B-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Qwen3.6-27B-4bit
+    kind: miniature
+    miniature: {layers: "0-27", period: 4, note: "28 of 64 layers (7 whole periods)"}
+    baseline_of: qwen3.6-27b-mlx4-slice
+    baseline_label: llama.cpp
+    expected_gib: 7.77
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.6-27b-splash-slice
+    base_model: mlx-community/Qwen3.6-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: splash
+    kind: miniature
+    miniature: {layers: "0-27", period: 4, note: "28 of 64 layers (7 whole periods)"}
+    baseline_of: qwen3.6-27b-mlx4-slice
+    baseline_label: Splash
+    expected_gib: 6.92
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.8-27b-mlx4-slice
+    base_model: mlx-community/Qwen3.8-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-31", period: 4, note: "32 of 64 layers (8 whole periods)"}
+    pie_sku: qwen38-27b-mini-u4g64-kv-bf16-l32
+    expected_gib: 7.71
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.8-27b-mlxlm-slice
+    base_model: mlx-community/Qwen3.8-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-31", period: 4, note: "32 of 64 layers (8 whole periods)"}
+    baseline_of: qwen3.8-27b-mlx4-slice
+    baseline_label: mlx-lm
+    expected_gib: 7.71
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.8-27b-llamacpp-slice
+    base_model: unsloth/Qwen3.8-27B-GGUF
+    family: qwen3_6
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Qwen3.8-27B-UD-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Qwen3.8-27B-4bit
+    kind: miniature
+    miniature: {layers: "0-31", period: 4, note: "32 of 64 layers (8 whole periods)"}
+    baseline_of: qwen3.8-27b-mlx4-slice
+    baseline_label: llama.cpp
+    expected_gib: 8.06
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: qwen3.8-27b-splash-slice
+    base_model: mlx-community/Qwen3.8-27B-4bit
+    family: qwen3_6
+    scheme: affine_u4_g64
+    source_format: splash
+    kind: miniature
+    miniature: {layers: "0-31", period: 4, note: "32 of 64 layers (8 whole periods)"}
+    baseline_of: qwen3.8-27b-mlx4-slice
+    baseline_label: Splash
+    expected_gib: 7.71
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gemma-4-31b-mlx4-slice
+    base_model: mlx-community/gemma-4-31b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-23", period: 6, note: "24 of 60 layers (4 whole periods)"}
+    pie_sku: gemma4-31b-mini-l30-u4g64-kv-bf16-l24
+    expected_gib: 6.88
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gemma-4-31b-mlxlm-slice
+    base_model: mlx-community/gemma-4-31b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-23", period: 6, note: "24 of 60 layers (4 whole periods)"}
+    baseline_of: gemma-4-31b-mlx4-slice
+    baseline_label: mlx-lm
+    expected_gib: 6.88
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gemma-4-31b-llamacpp-slice
+    base_model: unsloth/gemma-4-31B-it-GGUF
+    family: gemma4
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: gemma-4-31B-it-Q4_K_M.gguf
+    tokenizer_from: mlx-community/gemma-4-31b-it-4bit
+    kind: miniature
+    miniature: {layers: "0-23", period: 6, note: "24 of 60 layers (4 whole periods)"}
+    baseline_of: gemma-4-31b-mlx4-slice
+    baseline_label: llama.cpp
+    expected_gib: 7.26
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: muse-glimmer-30b-mlx4-slice
+    base_model: mlx-community/Muse-Glimmer-30B-4bit
+    family: muse_glimmer
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-23", period: 4, note: "24 of 52 layers (6 whole periods)"}
+    pie_sku: muse-glimmer-30b-mini-l24-u4g64-kv-bf16
+    expected_gib: 7.49
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: muse-glimmer-30b-llamacpp-slice
+    base_model: meta-models/Muse-Glimmer-30B-GGUF
+    family: muse_glimmer
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Muse-Glimmer-30B-4bit
+    kind: miniature
+    miniature: {layers: "0-23", period: 4, note: "24 of 52 layers (6 whole periods)"}
+    baseline_of: muse-glimmer-30b-mlx4-slice
+    baseline_label: llama.cpp
+    expected_gib: 8.04
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+
 # The Models page's catalog: every model the site lists, whether CI runs it or not. A model CI runs (above) takes the
 # sizes and layer count it lacks from here; one it does not run is listed with where it would fit (tools/webdb.py).
 # Specs from each release's Hugging Face card and config.json (layers: num_hidden_layers), collected 2026-10-26.

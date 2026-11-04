@@ -31,6 +31,9 @@ class MlxlmEngine(ServedEngine):
     def model_arg(self) -> str:
         """Snapshot directory of the MLX checkpoint (mlx-lm and the tokenizer
         both read it from disk; an HF id would make mlx-lm try the network)."""
+        # a model slice is cut beside the repo's snapshots (miniature.py); the runner names its dir
+        if self.artifact.miniature is not None and self.recipe.get("snapshot_dir"):
+            return str(self.recipe["snapshot_dir"])
         snap = hf_snapshot_dir(self.artifact.base_model, self.artifact.revision)
         if snap is None:
             raise EngineLaunchError(

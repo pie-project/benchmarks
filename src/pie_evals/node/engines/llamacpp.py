@@ -41,6 +41,9 @@ class LlamacppEngine(ServedEngine):
         p = Path(a.gguf_file).expanduser()
         if p.is_absolute() and p.is_file():
             return p
+        # a model slice is cut beside the repo's snapshots (miniature.py); the runner names its dir
+        if a.miniature is not None and self.recipe.get("snapshot_dir"):
+            return Path(self.recipe["snapshot_dir"]) / Path(a.gguf_file).name
         found = hf_snapshot_file(a.base_model, a.gguf_file, a.revision)
         if found is None:
             raise EngineLaunchError(
