@@ -496,3 +496,7 @@
   .toolbar .sidebar-toggle svg { width: 20px; height: 20px; }
   .toolbar-login { border-radius: 999px; padding: 0 20px; font-weight: 600; }
 }
+
+/* Auto: pause while the setups turn, play while they rest */
+.auto-toggle[hidden] { display: none; }
+.auto-toggle[aria-pressed="true"] .auto-icon-play, .auto-toggle[aria-pressed="false"] .auto-icon-pause { display: none; }

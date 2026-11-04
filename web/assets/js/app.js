@@ -95,6 +95,7 @@
     Pie.board.render(state);
     Pie.checks.render(state);
     sidebar.render(state);
+    document.getElementById("auto-switch").hidden = true;  // the platform pages show it again when their setups can turn
     if (isPlatform) {
       const shown = Pie.platform.render(state);
       toolbar.elements.metricValue.textContent = shown.metric.label;
