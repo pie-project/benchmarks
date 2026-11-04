@@ -809,6 +809,28 @@ artifacts:
     max_context: 4096
     expected_gib: 9.0
     tiers: [weekly]
+  - id: gemma-4-12b-mini12
+    base_model: google/gemma-4-12B-it
+    family: gemma4
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-11", period: 6, shrink_family: gemma4, note: "first 12 of 48 layers, two sliding/global periods, for a 16 GB TPU v5e"}
+    pie_sku: gemma4-12b-bf16-kv-bf16-l12
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 7.4
+    tiers: [weekly]
+  - id: gpt-oss-20b-mxfp4-mini12
+    base_model: openai/gpt-oss-20b
+    family: gpt_oss
+    scheme: mxfp4
+    kind: miniature
+    miniature: {layers: "0-11", period: 2, shrink_family: gpt_oss, note: "6 of 12 sliding/full pairs; every expert, for a 16 GB TPU v5e"}
+    pie_sku: gptoss-20b-bf16-mxfp4-kv-bf16-l12
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 7.0
+    tiers: [weekly]
   - id: gemma-4-31b-mini6
     base_model: google/gemma-4-31B-it
     family: gemma4
