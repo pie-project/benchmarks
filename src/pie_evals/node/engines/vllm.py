@@ -53,6 +53,11 @@ class VllmEngine(Engine):
             # AMD's own kernels (AITER) are vLLM's recommended Instinct path and off unless asked for:
             # Qwen3.5-0.8B raw-512-256 on the MI300X decoded 512 tok/s with them, 478 without
             env["VLLM_ROCM_USE_AITER"] = "1"
+            # AITER JIT-builds the kernels its wheel lacks (Muse-Glimmer-30B's mha_varlen_fwd) with the hipcc it finds
+            # on PATH, and the image venv's comes first: a python wrapper over the image's SDK that links nothing
+            # ("cannot find -lamdhip64", mi300x-x1). Without the image's bin dirs it takes the pod's own ROCm
+            venv = os.environ.get("VIRTUAL_ENV") or "/opt/venv"
+            env["PATH"] = ":".join(d for d in os.environ.get("PATH", "").split(":") if d and not d.startswith(venv + "/"))
         if self.artifact.family == "mimo_v2" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
             # 0.31.0's CUTLASS block-FP8 GEMM aborts on sm_120 for MiMo's FP8 projections ("cutlass_gemm_caller:
             # Invalid status", weekly 39680748696); vLLM then takes the next kernel it ranks for block FP8
