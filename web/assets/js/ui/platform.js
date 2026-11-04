@@ -787,7 +787,7 @@ window.Pie = window.Pie || {};
         return `<span class="column-info slice-mark" tabindex="0" role="button" aria-label="Model slice"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg><span class="column-info-pop" role="tooltip">${esc(`Model slice: ${how}, to fit one device. For engine-to-engine comparison only, not the full model's speed.`)}</span></span>`;
       };
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
-        if (hidden.has(mac)) return `<tr class="is-hidden-row">${machine(mac, g.platform)}<td class="is-overall" data-hide-mac="${esc(mac)}">${eye(mac)}</td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
+        if (hidden.has(mac)) return `<tr class="is-hidden-row" data-empty="1">${machine(mac, g.platform)}<td class="is-overall" data-hide-mac="${esc(mac)}">${eye(mac)}</td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-empty">–</span>${eye(mac)}</td>`
           : compare === "tps" ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-even">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span>${eye(mac)}</td>`
@@ -919,6 +919,23 @@ window.Pie = window.Pie || {};
         if (hidden.has(mac)) hidden.delete(mac); else hidden.add(mac);
         state.platform.hidden = [...hidden];
         Pie.saveView?.();
+        // in place, no redraw of the page: the row greys out and goes last, or comes back before the hidden ones; a row
+        // drawn hidden has no numbers to show, so showing it again redraws
+        const off = hidden.has(mac);
+        const rows = [...element.querySelectorAll("tbody tr")].filter((tr) => tr.querySelector(`th.platform-row[data-hide-mac="${CSS.escape(mac)}"]`));
+        if (rows.length && (off || rows.every((tr) => !tr.dataset.empty))) {
+          for (const tr of rows) {
+            tr.classList.toggle("is-hidden-row", off);
+            for (const b of tr.querySelectorAll(".platform-eye")) {
+              b.setAttribute("aria-pressed", String(off));
+              b.querySelector("svg").innerHTML = `<path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8z"/>${off ? '<path d="M3 13 13 3"/>' : '<circle cx="8" cy="8" r="2"/>'}`;
+            }
+            const body = tr.parentElement;
+            if (off) body.append(tr);
+            else body.insertBefore(tr, [...body.children].find((r) => r !== tr && r.classList.contains("is-hidden-row")) || null);
+          }
+          return;
+        }
         inPlace(() => document.dispatchEvent(new CustomEvent("pie:refresh")));
       }, true);
       element.addEventListener("click", (event) => {

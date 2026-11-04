@@ -862,6 +862,7 @@
 .platform-eye:focus-visible,
 .platform-eye[aria-pressed="true"] { opacity: 1; }
 .platform-table tbody tr.is-hidden-row .platform-chip { color: var(--color-label-tertiary); }
+.platform-table tbody tr.is-hidden-row td:not(.is-overall) > *, .platform-table tbody tr.is-hidden-row td.is-overall > .platform-cell { visibility: hidden; }  /* hidden in place: its numbers away, the row kept */
 @media (hover: none) { .platform-eye { opacity: 1; } }
 /* with Overall shown, the eye sits at the row's right end, in Overall's place: the hovered row's Overall gives way to it */
 .platform-table:not(.is-tight) th.platform-row .platform-eye,
