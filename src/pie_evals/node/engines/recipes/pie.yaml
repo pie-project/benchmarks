@@ -175,6 +175,20 @@ default:
             waits at the seal (GPU idle about half the time). Four workers keep them level: Qwen3-0.6B c512
             48.2k to 60-64k tok/s, MiMo mini 27.4k to 54-57k, DeepSeek-V4.1 mini 27.1k to 46k, Gemma-4-26B c1024
             19.7k to 22.5k (three workers lost lanes to a missed heartbeat there).
+      artifact:
+        qwen3.8-27b-bf16:
+          knobs:
+            worker_threads:
+              value: null
+              rationale: >
+                The dense 27B is GPU-bound at c512 whatever the workers (6.9k-7.2k tok/s at 3 to 10), and its prompts
+                want the default's: pf32-512 3.76/3.57 s at four workers, 3.45/3.53 s at ten.
+        gemma-4-31b-bf16:
+          knobs:
+            worker_threads:
+              value: null
+              rationale: >
+                As for Qwen3.8-27B: pf32-512 4.14/3.91 s at four workers, 3.92/3.80 s at ten.
     l4-x1:
       family:
         muse_glimmer:
