@@ -177,6 +177,10 @@ class SglangEngine(Engine):
                 # the Qwen3.6-35B-A3B mini (20.4 GiB, 64% of a 32 GB card) took the 0.95 above and its prefill graphs
                 # failed to capture past the static pool ("num_active_captures_ > 0", pro4500-x1 raw-512-256)
                 gmu = min(float(gmu), 0.88)
+            if self.artifact.family == "nemotron_h" and card <= 32:
+                # the 18.9 GiB Nemotron-3-Ultra mini at 0.9 of a 32 GB RTX 5090 left its 1.2 GiB prefill buffers no room past
+                # the static pool, and every batch failed and retried them (pf64-512: 2.9k tok/s); at 0.85 it runs clean (19.3k)
+                gmu = min(float(gmu), 0.85)
             if self.platform.id == "rtx4090-x1":
                 # 0.5.22 captures its piecewise prefill graphs past the static pool, and on a 24 GB card the
                 # 10% left at 0.9 does not hold them (GLM-5.3 and Hy4 minis raw: OOM capturing at 36 MiB free);
