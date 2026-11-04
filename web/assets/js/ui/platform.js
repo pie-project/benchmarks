@@ -860,8 +860,19 @@ window.Pie = window.Pie || {};
         const SCHEME = { affine_u4_g64: "4-bit", bf16: "BF16", fp8: "FP8", mxfp4: "MXFP4", gguf_q4_k_m: "Q4_K_M", mlx_2bit: "2-bit" };
         const precision = [...new Set(list.map((mac) => grid[mac]?.[model]?.c?.pie?.scheme).filter(Boolean).map((s) => SCHEME[s] || s))].join(" / ");
         // the speculative column says so under the model's name, where the other columns give its size
-        const sub = [size, precision].filter(Boolean).join(" · ");
-        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(realOf(model)))}, or drag to move">
+        const sub = size;
+        // its card on hover, as a machine's: what the model is, and how pie ran it here
+        const sheet = `<div class="tip-title">${esc(names().model(realOf(model)))}</div><div class="spec-rows">${[
+          ["Maker", makerOf(model).name],
+          ["Architecture", m.architecture],
+          ["Parameters", m.params_b && `${m.params_b}B`],
+          ["Active", m.active_b && m.active_b !== m.params_b && `${m.active_b}B a token`],
+          ["Layers", m.layers],
+          ["Experts", m.experts && `${m.experts}${m.top_k ? `, ${m.top_k} a token` : ""}`],
+          ["Context", m.context && `${Number(m.context).toLocaleString()} tokens`],
+          ["Precision here", precision],
+        ].filter(([, v]) => v).map(([k, v]) => `<div class="spec-row"><span>${esc(k)}</span><span>${esc(String(v))}</span></div>`).join("")}</div>`;
+        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" data-tip="${esc(sheet)}">
           <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
