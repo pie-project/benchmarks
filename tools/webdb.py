@@ -416,29 +416,35 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
     }
 
 
-def sweeps(store, a2m: dict[str, str], hardware_ids: list[str], engine_ids: list[str]) -> dict[str, list[list[float]]]:
-    """Batched decode at every concurrency it was measured at, per "hardware|engine|model": [[N, output tok/s], ...],
-    the newest run per N, on the rows ``pick`` would show (no CI fixture, no Splash, a Mac's pie on the MLX weights)."""
+def sweeps(store, a2m: dict[str, str], hardware_ids: list[str], engine_ids: list[str]) -> list[dict]:
+    """Batched decode and prefill at every concurrency a tagged run measured: one entry per machine, engine, model (or
+    its slice) and workload, its levels as [N, tok/s] pairs (output tok/s for throughput, prompt tok/s for
+    prefill_batch), the newest run per level, as a tag's stacked rows keep the newest number. The rows ``pick`` would
+    show only: no CI fixture, no Splash batching, a Mac's pie on the MLX weights."""
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
-    cols = ["platform", "engine", "artifact", "workload", "status", "started_at", "output_tok_s"]
-    best: dict[tuple, dict] = {}
+    cols = ["platform", "engine", "artifact", "workload", "status", "started_at", "tag", "output_tok_s", "prefill_tok_s", "decode_tok_s"]
+    best: dict[tuple, tuple] = {}
     for r in store.table().select(cols).to_pylist():
-        m = re.fullmatch(r"c(\d+)", r["workload"] or "")
-        if not m or not measured(r) or not r["output_tok_s"] or r["platform"] not in hardware_ids or r["engine"] not in engine_ids:
+        level = re.fullmatch(r"c(\d+)|pf(\d+)-\d+", r["workload"] or "")
+        if not level or not r["tag"] or not measured(r) or r["platform"] not in hardware_ids or r["engine"] not in engine_ids:
             continue
+        cat = "throughput" if level.group(1) else "prefill_batch"
+        value = r["output_tok_s"] if cat == "throughput" else r["prefill_tok_s"]
         art = arts.get(r["artifact"], {})
-        if art.get("kind") == "miniature" or r["engine"] == "splash":
+        if not value or (art.get("kind") == "miniature" and r["artifact"] not in SHOWN_MINIATURES):
+            continue
+        if r["engine"] == "splash" and cat == "throughput":
             continue
         if r["platform"] in macs and r["engine"] == "pie" and art and art.get("source_format") != "mlx":
             continue
-        key = (r["platform"], r["engine"], a2m.get(r["artifact"], r["artifact"]), int(m.group(1)))
-        if key not in best or r["started_at"] > best[key]["started_at"]:
-            best[key] = r
-    out: dict[str, list[list[float]]] = {}
-    for (hw, engine, model, n), r in sorted(best.items(), key=lambda kv: kv[0][3]):
-        out.setdefault(f"{hw}|{engine}|{model}", []).append([n, round(r["output_tok_s"], 2)])
-    return out
+        key = (r["platform"], r["engine"], a2m.get(r["artifact"], r["artifact"]), cat, MINIATURE.get(r["artifact"], ""), int(level.group(1) or level.group(2)))
+        if key not in best or r["started_at"] > best[key][0]:
+            best[key] = (r["started_at"], round(value, 2))
+    out: dict[tuple, dict] = {}
+    for (hw, engine, model, cat, mini, n), (_, value) in sorted(best.items(), key=lambda kv: kv[0]):
+        out.setdefault((hw, engine, model, cat, mini), {"hardware": hw, "engine": engine, "model": model, "workload": cat, "miniature": mini, "levels": []})["levels"].append([n, value])
+    return list(out.values())
 
 
 def draft_note(r: dict, engine: str) -> str:
@@ -1009,6 +1015,7 @@ def main() -> None:
     db = {"updated_at": updated_at, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
           "quality_parity": checks["parity"], "quality_kernels": checks["kernels"],
           "no_fit": misfits, "suites": suite_ids,
+          # every batched level a run measured, for the Overview's load chart; small, so split_db keeps it in the core db.js
           "sweeps": sweeps(store, a2m, hardware_ids + gpu_ids, all_engines),
           "hardware": hw_rows,
           # the Engines table lists every engine CI runs, the GPU-only ones (vLLM, SGLang) too; the grids keep to the Mac engines
