@@ -416,31 +416,6 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
     }
 
 
-def sweeps(store, a2m: dict[str, str], hardware_ids: list[str], engine_ids: list[str]) -> dict[str, list[list[float]]]:
-    """Batched decode at every concurrency it was measured at, per "hardware|engine|model": [[N, output tok/s], ...],
-    the newest run per N, on the rows ``pick`` would show (no CI fixture, no Splash, a Mac's pie on the MLX weights)."""
-    arts = {a["id"]: a for a in load("models")["artifacts"]}
-    macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
-    cols = ["platform", "engine", "artifact", "workload", "status", "started_at", "output_tok_s"]
-    best: dict[tuple, dict] = {}
-    for r in store.table().select(cols).to_pylist():
-        m = re.fullmatch(r"c(\d+)", r["workload"] or "")
-        if not m or not measured(r) or not r["output_tok_s"] or r["platform"] not in hardware_ids or r["engine"] not in engine_ids:
-            continue
-        art = arts.get(r["artifact"], {})
-        if art.get("kind") == "miniature" or r["engine"] == "splash":
-            continue
-        if r["platform"] in macs and r["engine"] == "pie" and art and art.get("source_format") != "mlx":
-            continue
-        key = (r["platform"], r["engine"], a2m.get(r["artifact"], r["artifact"]), int(m.group(1)))
-        if key not in best or r["started_at"] > best[key]["started_at"]:
-            best[key] = r
-    out: dict[str, list[list[float]]] = {}
-    for (hw, engine, model, n), r in sorted(best.items(), key=lambda kv: kv[0][3]):
-        out.setdefault(f"{hw}|{engine}|{model}", []).append([n, round(r["output_tok_s"], 2)])
-    return out
-
-
 def draft_note(r: dict, engine: str) -> str:
     """A baseline that drafted with a separate small model on this row says so (pie's drafting shows as the model's Draft)."""
     try:
@@ -1009,7 +984,6 @@ def main() -> None:
     db = {"updated_at": updated_at, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
           "quality_parity": checks["parity"], "quality_kernels": checks["kernels"],
           "no_fit": misfits, "suites": suite_ids,
-          "sweeps": sweeps(store, a2m, hardware_ids + gpu_ids, all_engines),
           "hardware": hw_rows,
           # the Engines table lists every engine CI runs, the GPU-only ones (vLLM, SGLang) too; the grids keep to the Mac engines
           "engines": engines(), "models": [m for m in models if m["id"] in model_ids or m.get("catalog")],
