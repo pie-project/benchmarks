@@ -7,7 +7,7 @@ permissions: { contents: read, actions: read }
 on:
   workflow_dispatch:
     inputs:
-      platforms: { description: "comma-separated platform ids", required: true, default: "b300-x1,b200-x1,h200-x1,pro6000-x1,a100-sxm-x1,h100-sxm-x1,a40-x1,l40s-x1,rtx5090-x1,rtx4090-x1,mi300x-x1" }
+      platforms: { description: "comma-separated platform ids (none: a Mac-only run)", required: true, default: "b300-x1,b200-x1,h200-x1,pro6000-x1,a100-sxm-x1,h100-sxm-x1,a40-x1,l40s-x1,rtx5090-x1,rtx4090-x1,mi300x-x1" }
       artifacts: { description: "comma-separated artifact ids", required: true, default: "deepseek-v4.1-flash-mini8,glm-5.3-flash-mini8-fp8,glm-5.3-mini,hy4-mini6,mimo-v2.6-flash-mini,kimi-k3-mini8,qwen3.8-flash-next-mini,muse-spark-mini4,minimax-m3.1-flash-mini,nemotron-3-ultra-mini" }
       shards: { description: "pods per platform (artifacts split round-robin)", required: false, default: "2" }
       pie_commit: { description: "pie commit for parity", required: false, default: "main" }
@@ -56,7 +56,7 @@ jobs:
           import json, os, yaml
           plats = {p["id"]: p for p in yaml.safe_load(open("matrix/platforms.yaml"))["platforms"]}
           arts = {a["id"] for a in yaml.safe_load(open("matrix/models.yaml"))["artifacts"]}
-          P = [x for x in os.environ["P"].split(",") if x]
+          P = [x for x in os.environ["P"].split(",") if x and x != "none"]
           A = [x for x in os.environ["A"].split(",") if x]
           bad = [x for x in P if x not in plats or not plats[x].get("runpod_gpu_type") or plats[x].get("backend") not in ("cuda", "rocm")] + [x for x in A if x not in arts]
           if bad:
