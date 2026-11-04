@@ -55,12 +55,12 @@ window.Pie = window.Pie || {};
       columns: [],
     },
     // every machine in one table: pie against the other engines
+    // Relative Speed, Tokens per Second and Kernel Efficiency as one page, switched in its bar
     speedups: {
-      label: "Relative Speed",
+      label: "Speed",
       section: "home",
       tint: "#FF2D55",  // pink
       view: "platform",
-      compare: "engines",
       filters: [],
       columns: [],
     },
@@ -75,7 +75,7 @@ window.Pie = window.Pie || {};
     // every machine in one table: the engine's own tokens per second
     tps: {
       label: "Tokens per Second",
-      section: "home",
+      section: null,  // a view of Speed now; the page stays for links
       tint: "#FF9F0A",  // orange
       view: "platform",
       compare: "tps",
@@ -85,7 +85,7 @@ window.Pie = window.Pie || {};
     // every machine in one table: each engine against the hardware's theoretical limit
     all_hardware: {
       label: "Kernel Efficiency",
-      section: "home",
+      section: null,  // a view of Speed now; the page stays for links
       tint: "#30B0C7",  // teal
       view: "platform",
       compare: "ceiling",
