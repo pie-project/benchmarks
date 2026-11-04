@@ -110,6 +110,48 @@ default:
                 At 0.97 pie's kv pool (11.1 GiB beside the 5-layer cut's 3.5 GiB) leaves the XLA fire no room for
                 its temporaries (15.80 > 15.75 GiB, #1184). vLLM-TPU and SGLang-JAX serve no gpt-oss on a v5e, so
                 no other engine's share moves.
+        deepseek_v41:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        glm5_next:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        minimax_m3:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        kimi_k3:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        muse_spark:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        nemotron_h:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
         hy_v4:
           knobs:
             gpu_mem_util:
