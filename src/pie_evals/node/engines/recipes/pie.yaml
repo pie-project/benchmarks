@@ -105,10 +105,10 @@ default:
         kimi_k3:
           knobs:
             gpu_mem_util:
-              value: 0.97
+              value: 0.84
               rationale: >
                 The Kimi-K3 8-layer cut is 22 GiB: at 0.90 its c256 fire found no HBM for its program
-                (RuntimeProgramAllocationFailure, #1184); the higher share leaves the program its room. vLLM-TPU and
+                (RuntimeProgramAllocationFailure, #1184); a smaller pool leaves the program its room. vLLM-TPU and
                 SGLang-JAX serve no Kimi-K3.
         nemotron_h:
           knobs:
