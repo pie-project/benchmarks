@@ -110,6 +110,13 @@ default:
                 At 0.97 pie's kv pool (11.1 GiB beside the 5-layer cut's 3.5 GiB) leaves the XLA fire no room for
                 its temporaries (15.80 > 15.75 GiB, #1184). vLLM-TPU and SGLang-JAX serve no gpt-oss on a v5e, so
                 no other engine's share moves.
+        hy_v4:
+          knobs:
+            gpu_mem_util:
+              value: 0.85
+              rationale: >
+                Hy4's 6-layer cut: its fire's temporaries overflow a v5e at 0.97 (15.84 GiB, #1184); vLLM-TPU and
+                SGLang-JAX serve no Hy4, so no other engine's share moves.
       knobs:
         max_forward_tokens:
           value: 1024
