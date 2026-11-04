@@ -42,8 +42,13 @@ EOF
       image=(--image-family "$fam" --image-project ubuntu-os-accelerator-images)
     fi
     errs=""
+    # TPU_ON_DEMAND=1: never a spot VM (a v6e spot VM was taken back within 20 min in 6 of 8 runs, 2026-11-04); the zones
+    # are tried again on demand until a VM comes or two hours pass
+    modes=("" spot); [ -n "${TPU_ON_DEMAND:-}" ] && modes=("")
+    wait_s=0; [ -n "${TPU_ON_DEMAND:-}" ] && wait_s=7200; until_t=$(( $(date +%s) + wait_s ))
+    while :; do
     for zone in $TPU_ZONES; do
-      for spot in "" spot; do
+      for spot in "${modes[@]}"; do
         echo "trying $zone ${spot:-on-demand}" >&2
         if [ "$TPU_KIND" = tpu ]; then
           disk=()
@@ -73,6 +78,9 @@ EOF
         # a VM half-created by a failed call must not linger
         TPU_ZONES=$zone bash "$0" delete >/dev/null 2>&1 || true
       done
+    done
+    [ "$(date +%s)" -lt "$until_t" ] || break
+    echo "no zone had an on-demand VM: trying again in 5 minutes" >&2; errs=""; sleep 300
     done
     echo "::error::no zone gave a $TPU_NAME VM:"$'\n'"$errs" >&2
     echo "$errs" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
