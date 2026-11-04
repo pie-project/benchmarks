@@ -48,15 +48,17 @@ def expand(obj, tier, as_json):
 
 
 @main.command("check")
+@click.option("--tier", "only", type=click.Choice([t.value for t in Tier]), default=None, help="check this tier only (a run checks the tier it fans out)")
 @click.pass_obj
-def check(obj):
+def check(obj, only):
     """Validate the matrix: budgets per tier. Exit 1 on a violation in an enforced tier."""
     m: Matrix = obj["matrix"]
     cells = m.expand()
-    for t in Tier:
+    tiers = [t for t in Tier if only in (None, t.value)]
+    for t in tiers:
         for p in m.check_budget(t, cells):
             click.echo(("ERROR " if m.suites[t.value].enforce_budget else "warn  ") + p, err=True)
-    problems = [p for t in Tier for p in m.check_budget(t, cells, enforced_only=True)]
+    problems = [p for t in tiers for p in m.check_budget(t, cells, enforced_only=True)]
     click.echo(json.dumps(summarize(cells)))
     sys.exit(1 if problems else 0)
 
