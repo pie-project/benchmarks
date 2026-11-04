@@ -33,6 +33,7 @@ jobs:
       fail-fast: false
       matrix:
         tag: ${{ fromJSON(needs.tags.outputs.tags) }}
+    timeout-minutes: 30  # a pod that drops off the tailnet mid-copy must not hold the one import runner (an outage held it 50 minutes)
     runs-on: [pod-import]  # liszt-server: on the tailnet with the pods; the site laptop's queue starved these imports
     # a dispatch (a reset, a pod list) is its own group: a later run's pending job of the tag never cancels it
     concurrency: { group: "pod-import-${{ matrix.tag }}${{ github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}", cancel-in-progress: false }
@@ -58,7 +59,7 @@ jobs:
           state=~/.pod-import/$TAG.state && mkdir -p ~/.pod-import && touch "$state"
           [ "${{ inputs.reset && inputs.tag == matrix.tag }}" = true ] && state=/dev/null
           # pods far away ride a Tailscale relay, whose first handshake can take tens of seconds: a long timeout, three tries
-          ssh_() { for i in 1 2 3; do ssh -o BatchMode=yes -o ConnectTimeout=45 -o StrictHostKeyChecking=accept-new "root@$1" "$2" && return 0; sleep 10; done; return 1; }
+          ssh_() { for i in 1 2 3; do timeout 900 ssh -o BatchMode=yes -o ConnectTimeout=45 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o StrictHostKeyChecking=accept-new "root@$1" "$2" && return 0; sleep 10; done; return 1; }
           for p in ${PODS//,/ }; do
             sigs=$(ssh_ "$p" 'cd /workspace/out 2>/dev/null && for d in */; do [ -s "$d/records.jsonl" ] && echo "${d%/} $(stat -c %s.%Y "$d/records.jsonl")"; done; true' 2>/dev/null) || { echo "::warning::$p unreachable"; echo "$p" >> unreachable; continue; }
             changed=$(echo "$sigs" | while read -r d s; do [ -n "$d" ] && ! grep -qxF "$p $d $s" "$state" && echo "$p $d $s"; done; true)
@@ -91,7 +92,7 @@ jobs:
         if: ${{ github.event_name == 'schedule' || inputs.tag == matrix.tag }}
         run: |
           rm -rf parity && mkdir parity
-          ssh_() { for i in 1 2 3; do ssh -o BatchMode=yes -o ConnectTimeout=45 -o StrictHostKeyChecking=accept-new "root@$1" "$2" && return 0; sleep 10; done; return 1; }
+          ssh_() { for i in 1 2 3; do timeout 900 ssh -o BatchMode=yes -o ConnectTimeout=45 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o StrictHostKeyChecking=accept-new "root@$1" "$2" && return 0; sleep 10; done; return 1; }
           for p in ${PODS//,/ }; do
             ssh_ "$p" 'test -d /workspace/parity/store' 2>/dev/null || continue
             mkdir -p "parity/$p" && ssh_ "$p" 'tar -C /workspace/parity -czf - store' | tar -C "parity/$p" -xzf - || continue
