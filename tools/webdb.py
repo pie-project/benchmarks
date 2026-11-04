@@ -468,10 +468,32 @@ def attempt_note(r: dict) -> str:
 @functools.cache
 def matrix_cells():
     """The matrix and every cell it expands to, once per build: expanding takes minutes, and three tables read it."""
+    import hashlib
+    import pickle
+
     from pie_evals.plan.matrix import Matrix
 
     m = Matrix.load(ROOT / "matrix")
-    return m, m.expand()
+    # kept on the site laptop between builds, keyed by the matrix files: most builds only bring new results, and
+    # expanding the matrix again would cost five minutes each time
+    digest = hashlib.sha256()
+    for f in sorted((ROOT / "matrix").rglob("*")):
+        if f.is_file():
+            digest.update(str(f.relative_to(ROOT)).encode() + f.read_bytes())
+    cache = Path.home() / ".cache" / "pie-evals" / f"webdb-cells-{digest.hexdigest()[:16]}.pkl"
+    try:
+        return m, pickle.loads(cache.read_bytes())
+    except Exception:
+        pass
+    cells = m.expand()
+    try:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        for old in cache.parent.glob("webdb-cells-*.pkl"):
+            old.unlink(missing_ok=True)
+        cache.write_bytes(pickle.dumps(cells, protocol=pickle.HIGHEST_PROTOCOL))
+    except Exception:
+        pass
+    return m, cells
 
 
 def unsupported_reasons(a2m: dict[str, str], config: dict, hardware_ids: list[str], engine_ids: list[str], model_ids: list[str]) -> dict[tuple, str]:
