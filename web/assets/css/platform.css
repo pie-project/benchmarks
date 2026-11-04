@@ -309,14 +309,11 @@
 /* the strip closes with the bar's separator, so it reads as the table's own foot, not part of the next platform's bar */
 .platform-section-body { border-bottom: .5px solid var(--color-separator); }
 /* narrowed from the corner button: the pinned column only the machine's mark and name, Overall and the memory away */
-.platform-table.is-tight col.col-machine { width: 160px; }
 .platform-table.is-tight colgroup col:nth-child(2) { width: 0; }
 .platform-table.is-tight .is-overall { visibility: hidden; padding: 0; border: 0; overflow: hidden; }
 .platform-table.is-tight .platform-mem { display: none; }
-/* narrowed, the short name stands in for the full one */
+/* narrowed, the machine keeps its full name and its column its width: only the memory and Overall go */
 .platform-short { display: none; }
-.platform-table.is-tight .platform-name:has(+ .platform-short) { display: none; }
-.platform-table.is-tight .platform-short { display: inline; }
 /* the machine column takes Overall's dividing line while Overall is away */
 .platform-table.is-tight tr > :first-child { border-right: .5px solid var(--color-separator); }
 /* the corner's button: a double chevron on a grey tile the size of the platforms' marks, drawn as the ⌘K search button is: its grey, its fill, its light line, pointing left to
