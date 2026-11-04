@@ -454,6 +454,12 @@ default:
             gpt-oss-120b miniature, which cut its fires to 1024 tokens on l40s-x1.
     xla:
       knobs:
+        admission_oversubscription_factor:
+          value: 1.0
+          rationale: >
+            engine-xla has no host or disk kv tier, so an admitted sequence the pool cannot hold stalls the
+            batch: at pie_bench's 4.0 a 256-request c256 seated 146 lanes on the Gemma-4-31B cut's 3085 pages and
+            every request timed out (tpu-v6e-1, #1184). At 1.0 the rest queue for a seat.
         max_forward_tokens:
           value: 2048
           rationale: >
