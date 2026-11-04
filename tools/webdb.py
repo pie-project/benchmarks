@@ -17,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import split_db  # tools/split_db.py, beside this script
 import yaml
 
 from pie_evals.plan.suites import all_models, suites
@@ -948,7 +949,8 @@ def main() -> None:
           "engines": engines(), "models": [m for m in models if m["id"] in model_ids or m.get("catalog")],
           "workloads": workloads(), "quality_tasks": quality_tasks(), "quality": quality.get(order[0], []) if order else []}
     (WEB / "data").mkdir(parents=True, exist_ok=True)
-    (WEB / "data" / "db.js").write_text("const DB = " + json.dumps(db, indent=2, default=str) + ";\n")
+    # db.js holds what the site draws first; every other tag is a file of its own, fetched when a page asks for it
+    split_db.write(db, WEB / "data")
     print({k: len(v) for k, v in db.items()}, {t["id"]: (len(snaps[t["id"]]), len(quality[t["id"]])) for t in tags})
     print({t: {f: sum(1 for r in parity[t] if r["flag"] == f) for f in ("ok", "mismatch", "no_pie")} for t in parity})
 

@@ -7,7 +7,7 @@ window.Pie = window.Pie || {};
   const backdrop = document.getElementById("sidebar-backdrop");
 
   // results count the selected release's enumerated setups, measured or not
-  const count = (id, state) => (id === "results" ? Pie.store.snapshot(state.release).length : (Pie.store.rows(id) || []).length);
+  const count = (id, state) => (id === "results" ? Pie.store.count(state.release).rows : (Pie.store.rows(id) || []).length);
   // a platform counts its machines; an empty one shows none
   const machines = (schema) => (Pie.platform?.machines ? Pie.platform.machines(schema.platform) : 0);
 

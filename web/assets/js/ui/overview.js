@@ -189,11 +189,14 @@ window.Pie = window.Pie || {};
     const o = state.overview;
     const picked = models.includes(o.historyModel) ? [o.historyModel] : models;
     const modelLabel = picked.length === 1 ? names().model(picked[0]) : "All models";
-    const series = Pie.store.tables.hardware.map((hw) => ({ mac: hw.id, points: releasePoints(state, picked, hw.id) }))
+    // every tag's rows, read only while the history is open: most tags are fetched on demand (data/tags)
+    const series = (o.historyOpen ? Pie.store.tables.hardware : []).map((hw) => ({ mac: hw.id, points: releasePoints(state, picked, hw.id) }))
       .filter((line) => line.points.length)
       .map((line, k) => ({ ...line, color: MAC_COLORS[k % MAC_COLORS.length] }));
     const tags = (Pie.store.tables.tags || []).map((tag) => tag.id).reverse().filter((tag) => series.some((line) => line.points.some((p) => p.tag === tag)));
-    const body = tags.length >= 2 ? `<div class="trend-block">
+    const waiting = o.historyOpen && (Pie.store.tables.tags || []).some((tag) => Pie.store.pending(tag.id));
+    const body = waiting ? `<div class="trend-block skeleton-block"><span class="skeleton-bar"></span><span class="skeleton-bar is-short"></span></div>`
+      : tags.length >= 2 ? `<div class="trend-block">
         <div class="trend-legend">${series.map((line) => `<span><i style="background: ${line.color}"></i>${esc(macName(line.mac))}</span>`).join("")}</div>
         ${trendLines(series, tags)}</div>`
       : `<div class="overview-none">Not enough releases measured yet.</div>`;

@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="assets/css/account.css">
   <link rel="stylesheet" href="assets/css/palette.css">
   <link rel="stylesheet" href="assets/css/checks.css">
+  <link rel="stylesheet" href="assets/css/skeleton.css">
 </head>
 <body>
   <aside class="sidebar" id="sidebar">
@@ -141,6 +142,7 @@
       <table class="data-table" id="data-table"></table>
     </div>
 
+    <div class="skeleton" id="skeleton" aria-busy="true" aria-label="Loading" hidden></div>
     <div class="overview" id="overview" hidden></div>
     <div class="platform" id="platform" hidden></div>
     <div class="method" id="welcome" hidden></div>
@@ -156,6 +158,8 @@
   <div class="popover" id="popover" role="menu" hidden></div>
   <div class="chart-tooltip" id="chart-tooltip" role="tooltip" hidden></div>
 
+  <!-- the page's outline first, drawn while the data below is read -->
+  <script src="assets/js/boot/skeleton.js"></script>
   <script src="data/db.js"></script>
 
   <script src="assets/js/config/icons.js"></script>

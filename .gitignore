@@ -8,3 +8,4 @@ jobs/
 .ruff_cache/
 /site/
 /web/data/db.js
+/web/data/tags/

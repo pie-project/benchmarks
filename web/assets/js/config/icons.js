@@ -7,7 +7,7 @@ Pie.icons = {
   welcome: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',  // square.grid.2x2: every platform at once
   board: '<path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/>',  // house: the Overview, the site's home
   bars: '<path d="M6 20v-9M12 20V4.5M18 20v-6"/>',  // chart.bar: a measured release, in the changelog
-  speedups: '<path d="M9.93,5.31L10.17,2.98L13.83,2.98L14.07,5.31L15.27,5.81L17.08,4.33L19.67,6.92L18.19,8.73L18.69,9.93L21.02,10.17L21.02,13.83L18.69,14.07L18.19,15.27L19.67,17.08L17.08,19.67L15.27,18.19L14.07,18.69L13.83,21.02L10.17,21.02L9.93,18.69L8.73,18.19L6.92,19.67L4.33,17.08L5.81,15.27L5.31,14.07L2.98,13.83L2.98,10.17L5.31,9.93L5.81,8.73L4.33,6.92L6.92,4.33L8.73,5.81Z" stroke-linejoin="round"/><circle cx="12" cy="12" r="3"/>',  // gearshape, as SF Symbols draws it: an engine against the others
+  speedups: '<path d="M5 5l7 7-7 7M12 5l7 7-7 7"/>',  // chevron.forward twice (>>), as the double check doubles Quality's: one engine against another
   tps: '<rect x="3.5" y="3.5" width="17" height="6.5" rx="2"/><rect x="3.5" y="14" width="17" height="6.5" rx="2"/><path d="M7 6.75h.01M7 17.25h.01M11 6.75h5.5M11 17.25h5.5"/>',  // server.rack: the hardware a model runs fastest on
   all_hardware: '<path d="M16.5 4.2c-2.4-.7-4.1.2-4.6 2.7L9.6 17.6c-.5 2.5-2.2 3.4-4.6 2.7M8 10h8"/>',  // function, as SF Symbols draws it: the kernel each forward pass runs, against the hardware's limit
   tpu: '<path class="is-filled" transform="translate(2 2) scale(.833)" d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>',  // the maker's own mark (simple-icons, CC0), white on its tile
@@ -18,20 +18,20 @@ Pie.icons = {
   web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9s1.3-6.4 3.8-9z"/>',
   mac: '<path class="is-filled" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>',
   overview: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
-  results: '<path d="M4 5h16M4 12h16M4 19h16"/>',
+  results: '<path d="M8.5 5l7 7-7 7"/>',  // chevron.forward (>), the single of Compare's >>
   quality: '<path d="m5 12 4 4 10-10"/>',
   accuracy: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle class="is-filled" cx="12" cy="12" r="1.5"/>',  // a target: how close the engines land to one another
   scores: '<path class="is-filled" transform="translate(3 3) scale(1.125)" d="M13.982 16h1.996v-3.997h-3.992V16zM7.984 0 3.992 3.997H0v3.998h5.988L9.98 3.997h2.006V0zM7.984 7.995l-3.992 4.008H0V16h5.988l3.992-3.997h2.006V7.995zM15.978 7.995V3.997h-3.992v3.998h3.992"/>',  // Artificial Analysis's mark, white on a tile in their purple: Quality opens their site
   methodology: '<path d="M3.5 17a8.5 8.5 0 1 1 17 0"/><path d="m12 17 4.2-5.2"/><path d="M6.5 13.2l1.2.7M12 8.5v1.4M17.5 13.2l-1.2.7"/>',  // a gauge: the hardware limit
   methods: '<path d="M4 4v16h16"/><path d="M7 16l5-7h8"/>',  // a roofline: the bandwidth slope meeting the flat compute roof
   fit: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="7.5" y="9" width="9" height="6" rx="1"/>',  // rectangle.inset: a model inside the machine's memory
-  hardware: '<rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
-  engines: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/>',
-  models: '<path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="m3 16 9 5 9-5"/>',
-  workloads: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  hardware: '<rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M10 4v2.5M14 4v2.5M10 17.5V20M14 17.5V20M4 10h2.5M4 14h2.5M17.5 10H20M17.5 14H20"/>',  // in the 4-20 box the grid icon fills
+  engines: '<circle cx="12" cy="12" r="3"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3M6.3 6.3l2.1 2.1M15.6 15.6l2.1 2.1M6.3 17.7l2.1-2.1M15.6 8.4l2.1-2.1"/>',  // in the 4-20 box
+  models: '<path d="M12 4 4 8.5l8 4.5 8-4.5L12 4z"/><path d="m4 15.5 8 4.5 8-4.5"/>',  // in the 4-20 box
+  workloads: '<path d="M4 12h3l3-7.5 4 15 3-7.5h3"/>',  // in the 4-20 box
   unsupported: '<circle cx="12" cy="12" r="8.5"/><path d="m6 18 12-12"/>',  // circle.slash: the reference engine cannot run this model
-  checks: '<path d="M4 9.5c2.7-2 5.3-2 8 0s5.3 2 8 0M4 15.5c2.7-2 5.3-2 8 0s5.3 2 8 0"/>',  // almost equal: pie against its reference
-  quality_tasks: '<path d="M9 4h6l1 3H8l1-3z"/><rect x="5" y="7" width="14" height="14" rx="2"/><path d="m9 14 2 2 4-4"/>',
+  checks: '<path d="m3.5 13.5 2.8 2.8 7.4-7.4M13.3 16.3l7.4-7.4"/>',  // Quality's check doubled, in its box: pie's answers against the reference's
+  quality_tasks: '<path d="M9.5 4h5l.8 2.5H8.7L9.5 4z"/><rect x="5.5" y="6.5" width="13" height="13.5" rx="2"/><path d="m9 13.5 2 2 4-4"/>',  // in the 4-20 box
 };
 
 Pie.icon = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${Pie.icons[name] || ""}</svg>`;

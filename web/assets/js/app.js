@@ -75,6 +75,17 @@
     toolbar.elements.metricPicker.hidden = true;  // the metric lives in the platform table's own bar
     toolbar.elements.releasePicker.hidden = true;  // the latest release only, so nothing to pick
     toolbar.elements.viewPicker.hidden = true;
+    // a tag kept apart (data/tags) is fetched first: the page's outline shows meanwhile, and a fetch done draws again
+    if (store.pending(state.release)) {
+      store.snapshot(state.release);
+      Pie.skeleton.show(state.table);
+      sidebar.render(state);
+      toolbar.elements.title.textContent = Pie.schema[state.table]?.title || Pie.schema[state.table]?.label || "";
+      toolbar.elements.subtitle.textContent = "";
+      return;
+    }
+    // the outline gives way to the page, which fades in; a platform's numbers roll in instead
+    if (Pie.skeleton.hide() && isPlatform) Pie.platform.roll();
     Pie.welcome.render(state);
     Pie.inferlets.render(state);
     Pie.services.render(state);
@@ -404,6 +415,7 @@
     Pie.platform.bind(state);
     Pie.platform.onChange(render);
     Pie.platform.onOpenResults((filters) => navigate("results", filters));
+    Pie.checks.onOpenRuns((filters) => navigate("quality", filters));
     overview.bind(state);
     overview.onChange(render);
     overview.onOpenMac((anchor) => popover.open(anchor, popover.MAC, state));
@@ -447,8 +459,10 @@
   // the release history stays open or closed as the viewer left it
   document.addEventListener("toggle", (event) => {
     if (event.target.id !== "history-details") return;
+    const opened = event.target.open && !state.overview.historyOpen;
     state.overview.historyOpen = event.target.open;
     saveView();
+    if (opened) render();  // its tags are read, and fetched, only once it opens
   }, true);
 
   // the page's own scroller: the one the page's data scrolls in (the grid, Rankings, the tables, the method pages)

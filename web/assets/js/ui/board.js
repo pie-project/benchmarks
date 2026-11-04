@@ -453,7 +453,7 @@ window.Pie = window.Pie || {};
   let log = null;
   const changelog = () => log ||= (Pie.store.tables.tags || [])
     .filter((tag) => /^\d+\.\d+/.test(tag.id))
-    .map((tag) => ({ kind: "New release measured", at: tag.date, run: tag, results: Pie.store.snapshot(tag.id).filter(Pie.store.isMeasured).length }))
+    .map((tag) => ({ kind: "New release measured", at: tag.date, run: tag, results: Pie.store.count(tag.id).measured }))
     .filter((e) => e.results)
     .sort((a, b) => b.at.localeCompare(a.at));
   // "21 Sep": the day, then the month in three letters

@@ -36,7 +36,7 @@ jobs:
           open(p, "w").write(s)
           PY
       # the operator's localhost preview (a checkout on this laptop) gets the same data the site does
-      - run: '[ -d "$HOME/Desktop/debug/pie-evals-live/web/data" ] && cp web/data/db.js "$HOME/Desktop/debug/pie-evals-live/web/data/db.js" || true'
+      - run: '[ -d "$HOME/Desktop/debug/pie-evals-live/web/data" ] && cp -R web/data/. "$HOME/Desktop/debug/pie-evals-live/web/data/" || true'
       - uses: actions/upload-artifact@v4
         with: { name: site-files, path: site, retention-days: 1 }  # one deploy every 5 minutes: 3 days of bundles filled the artifact quota
   deploy:

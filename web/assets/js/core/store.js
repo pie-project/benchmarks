@@ -75,14 +75,15 @@ window.Pie = window.Pie || {};
   const snapshots = tables.snapshots || {};
   // each result names its machine's platform, for the Results table's Platform filter
   const platformByHardware = Object.fromEntries((tables.hardware || []).map((hw) => [hw.id, hw.platform]));
-  for (const rows of Object.values(snapshots)) for (const row of rows) row.platform = platformByHardware[row.hardware] || null;
   // runs whose first-token timing is known to be wrong, by engine, workload and run: there the client sent every request
   // of a round at once to an engine serving one at a time, so each time to first token counted the queue ahead of it
   // (pie PR #1011). Prefill, TTFT and whole-request latency are withheld; decode, timed between tokens, is kept
   // only the Oct 18 rows, from runs started before the fix (benchmarks #538, 2026-10-18 02:24 Pacific), were timed that way; later reruns
   // stream one request at a time and keep their prefill
   const QUEUED_TTFT = [{ engine: "vllm", workload: "raw", runs: ["0.5.3-b5"], before: "2026-10-19 00:00" }];
-  for (const rows of Object.values(snapshots)) {
+  // a tag's rows made ready once, as the core loads or as its own file arrives (data/tags, loaded on demand)
+  const prepare = (rows) => {
+    for (const row of rows) row.platform = platformByHardware[row.hardware] || null;
     for (const row of rows) {
       const bad = QUEUED_TTFT.some((q) => q.engine === row.engine && q.workload === row.workload && q.runs.includes(row.release)
         && (row.measured || "") < q.before);
@@ -90,7 +91,8 @@ window.Pie = window.Pie || {};
       for (const key of ["prefill_tok_s", "ttft_ms_p50", "ttft_ms_p99", "latency_ms_p50", "latency_ms_p99"]) row[key] = null;
       row.note = "Prefill and time to first token withheld: this run timed each request from a queue of the round's requests, not its own prefill";
     }
-  }
+  };
+  for (const rows of Object.values(snapshots)) prepare(rows);
   // each model's platforms come from its recorded results, not from the catalog: a platform counts only where a run has a result
   {
     const measured = (row) => ["pass", "noisy"].includes(row.status);
@@ -106,7 +108,7 @@ window.Pie = window.Pie || {};
       }
     }
     // the export already lists where each model was measured across every stored result (GPU and TPU runs too,
-    // which the grids' rows do not carry); the rows here only add to it
+    // which the grids' rows do not carry, and the tags kept apart); the rows here only add to it
     for (const model of tables.models || []) {
       // its layer count, from its config.json as the bounds read it
       model.layers = Pie.architectures?.[model.id]?.layers ?? model.layers ?? null;  // or the catalog's stated count
@@ -120,7 +122,24 @@ window.Pie = window.Pie || {};
   const local = ["localhost", "127.0.0.1"].includes(location.hostname);
   const today = new Date().toLocaleDateString("sv-SE");  // YYYY-MM-DD, as "measured" begins
   Pie.isNew = (row) => local && Boolean(row?.measured) && String(row.measured).slice(0, 10) >= today;
-  const newestTag = (tables.tags || []).find((tag) => snapshots[tag.id]?.length)?.id;
+  // a split export (tools/split_db.py) keeps most tags apart, in data/tags/<tag>.json, each tag with its row counts;
+  // a page asking for one fetches it, shows its placeholder meanwhile, and draws again once every fetch is done
+  const tagOf = new Map((tables.tags || []).map((tag) => [tag.id, tag]));
+  const apart = (tag) => !(tag in snapshots) && Boolean(tagOf.get(tag)?.counts);
+  const loading = new Map();
+  const load = (tag) => {
+    if (!apart(tag) || loading.has(tag)) return;
+    loading.set(tag, fetch(`data/tags/${encodeURIComponent(tag)}.json?v=${encodeURIComponent(tables.updated_at || "")}`)
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error(`data/tags/${tag}.json: ${response.status}`))))
+      .catch((error) => { console.warn(error); return {}; })  // a missing file leaves the tag empty, not loading for good
+      .then((part) => {
+        prepare(snapshots[tag] = part.snapshots || []);
+        if (tables.quality_snapshots) tables.quality_snapshots[tag] = part.quality_snapshots || [];
+        loading.delete(tag);
+        if (!loading.size) document.dispatchEvent(new CustomEvent("pie:refresh"));
+      }));
+  };
+  const newestTag = (tables.tags || []).find((tag) => snapshots[tag.id]?.length || tag.counts?.all[0])?.id;
 
   // the suites a run measures: Targeted (the release models) and Full (every model); the picked one
   // narrows the measurement pages, the Models catalog keeps every model. An export without suites shows all.
@@ -150,11 +169,22 @@ window.Pie = window.Pie || {};
   const snapshotOf = new Map();
   const snapshot = (tag) => {
     const key = `${Pie.state.suite}\u0000${tag}`;
+    if (apart(tag)) return load(tag), [];
     if (!snapshotOf.has(key)) snapshotOf.set(key, ofSuite(snapshots[tag] || []));
     return snapshotOf.get(key);
   };
   // quality scores stack per tag the same way; an export without them falls back to the flat list
-  const qualitySnapshot = (tag) => ofSuite(tables.quality_snapshots ? tables.quality_snapshots[tag] || [] : tables.quality || []);
+  const qualitySnapshot = (tag) => (apart(tag) ? (load(tag), [])
+    : ofSuite(tables.quality_snapshots ? tables.quality_snapshots[tag] || [] : tables.quality || []));
+  // a tag's rows, measured rows and fresh measured rows in the picked suite, from its rows or, kept apart, its counts
+  const count = (tag) => {
+    if (apart(tag)) {
+      const [rows, measured, runs] = tagOf.get(tag).counts[suiteModels() ? Pie.state.suite : "all"] || tagOf.get(tag).counts.all;
+      return { rows, measured, runs };
+    }
+    const rows = snapshot(tag);
+    return { rows: rows.length, measured: rows.filter(isMeasured).length, runs: rows.filter((row) => !row.stale && isMeasured(row)).length };
+  };
 
   const countResults = () => {
     for (const [table, key] of Object.entries(resultKeys)) {
@@ -212,7 +242,7 @@ window.Pie = window.Pie || {};
 
   Pie.store = {
     // whether any result is a miniature (a datacenter model cut to fit one device): the pages showing them carry a banner
-    miniatures: Object.values(snapshots).some((rows) => rows.some((row) => row.miniature)),
+    miniatures: tables.miniatures ?? Object.values(snapshots).some((rows) => rows.some((row) => row.miniature)),
     tables,
     index,
     names,
@@ -221,6 +251,9 @@ window.Pie = window.Pie || {};
     snapshot,
     isMeasured,
     qualitySnapshot,
+    count,
+    // whether a tag's own file is still on its way (or not asked for yet): its page shows the placeholder
+    pending: (tag) => apart(tag),
     inSuite,
 
     suites() {

@@ -7,13 +7,14 @@ window.Pie = window.Pie || {};
   // one option per tag that has rows, newest first, grouped for the picker
   // the menu offers the published releases and the newest run only; older manual runs, probes and main builds stay
   // in the data but are not offered (tags are listed newest first)
-  const newestRun = () => store.tables.tags.find((tag) => tag.kind !== "release" && store.snapshot(tag.id).length)?.id;
+  // a tag kept apart (data/tags) is judged by its counts, so the menu never fetches every tag
+  const newestRun = () => store.tables.tags.find((tag) => tag.kind !== "release" && store.count(tag.id).rows)?.id;
   // the newest pre-release (0.5.3-b5) stays on offer even when a later manual run or main build is newer
   const BETA = /^\d+\.\d+\.\d+-b\d+$/;
-  const newestBeta = () => store.tables.tags.find((tag) => BETA.test(tag.id) && store.snapshot(tag.id).length)?.id;
+  const newestBeta = () => store.tables.tags.find((tag) => BETA.test(tag.id) && store.count(tag.id).rows)?.id;
   const releaseOptions = () =>
     store.tables.tags
-      .filter((tag) => store.snapshot(tag.id).length)
+      .filter((tag) => store.count(tag.id).rows)
       .filter((tag) => tag.kind === "release" || tag.id === newestRun() || tag.id === newestBeta())
       .map((tag) => ({
         id: tag.id,
@@ -21,7 +22,7 @@ window.Pie = window.Pie || {};
         title: tag.id,
         date: tag.date ? format.date(tag.date) : "",
         group: GROUPS[tag.kind] || "Earlier runs",
-        runs: store.snapshot(tag.id).filter((row) => !row.stale && store.isMeasured(row)).length,
+        runs: store.count(tag.id).runs,
       }));
 
   const matchesSearch = (row, columns, query) => {
