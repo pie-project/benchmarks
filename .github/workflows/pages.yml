@@ -16,7 +16,7 @@ jobs:
     runs-on: [self-hosted, pages]  # its own runner on the site laptop: the site runners also expand and collect benchmark runs, and a build queued behind them was replaced by the next before it started
     # a started build always finishes; only the newest waiting build is kept (GitHub drops older pending ones). Cancelling
     # in-flight builds starved the site while results and merges arrived every few minutes: no build finished for an hour
-    concurrency: { group: pages-build, cancel-in-progress: false }
+    concurrency: { group: pages-build-2, cancel-in-progress: false }
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
