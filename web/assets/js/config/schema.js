@@ -55,12 +55,12 @@ window.Pie = window.Pie || {};
       columns: [],
     },
     // every machine in one table: pie against the other engines
+    // Relative Speed, Tokens per Second and Kernel Efficiency as one page, switched in its bar
     speedups: {
-      label: "Relative Speed",
+      label: "Speed",
       section: "home",
       tint: "#FF2D55",  // pink
       view: "platform",
-      compare: "engines",
       filters: [],
       columns: [],
     },
@@ -75,7 +75,7 @@ window.Pie = window.Pie || {};
     // every machine in one table: the engine's own tokens per second
     tps: {
       label: "Tokens per Second",
-      section: "home",
+      section: null,  // a view of Speed now; the page stays for links
       tint: "#FF9F0A",  // orange
       view: "platform",
       compare: "tps",
@@ -85,7 +85,7 @@ window.Pie = window.Pie || {};
     // every machine in one table: each engine against the hardware's theoretical limit
     all_hardware: {
       label: "Kernel Efficiency",
-      section: "home",
+      section: null,  // a view of Speed now; the page stays for links
       tint: "#30B0C7",  // teal
       view: "platform",
       compare: "ceiling",
@@ -94,7 +94,7 @@ window.Pie = window.Pie || {};
     },
     // pie against a reference engine: token distributions, kernel tests and benchmark scores side by side
     checks: {
-      label: "Quality Checks",
+      label: "Quality",
       title: "Quality",
       section: "home",  // in Compare, where Accuracy was
       view: "checks",
@@ -188,7 +188,7 @@ window.Pie = window.Pie || {};
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
         reference("model", "Model", "Setup", "models"),
-        text("platform", "Platform", "Setup", { hidden: true }),  // only a filter: the hardware already names it
+        text("platform", "Platform", "Setup"),
         reference("hardware", "Hardware", "Setup", "hardware"),
         reference("workload", "Workload", "Setup", "workloads"),
         text("status", "Status", "Setup", { status: true }),

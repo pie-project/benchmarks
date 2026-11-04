@@ -13,17 +13,18 @@ Pie.format = {
       .replaceAll('"', "&quot;");
   },
 
+  // one formatter a precision, made once: toLocaleString built a new one for every cell
+  numberFormats: {},
   number(value, decimals = 0) {
-    return Number(value).toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    });
+    const f = (this.numberFormats[decimals] ||= new Intl.NumberFormat(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }));
+    return f.format(Number(value));
   },
 
   date(isoDate) {
     if (!isoDate) return "";
     const [year, month, day] = isoDate.slice(0, 10).split("-").map(Number);
-    return new Date(year, month - 1, day).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    this.dateFormat ||= new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return this.dateFormat.format(new Date(year, month - 1, day));
   },
 
   count(shown, total) {

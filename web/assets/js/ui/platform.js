@@ -41,6 +41,7 @@ window.Pie = window.Pie || {};
     (m.id === "batching" ? `<span class="setup-group is-second">Throughput</span>` : i === 0 ? `<span class="setup-group">Latency</span>` : "") +
     `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}" title="${esc(`${m.title || m.label}, ${m.id === "batching" ? "as many requests at once as the hardware needs to stay busy" : "one request"}`)}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.id === "spec" ? m.label : m.group)}</button>`).join("")}</span>`;
   let onChange = () => {};
+  let openResults = () => {};
 
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
   const PLATFORMS = [
@@ -141,6 +142,8 @@ window.Pie = window.Pie || {};
   // Compare: "engines", named Speedup, shows each engine against the best other engine; "ceiling", named Efficiency, shows each engine's
   // share of its theoretical bound, the card drawing the roofline. The last choice is kept per browser
   const COMPARES = { engines: "Relative Speed", ceiling: "Kernel Efficiency", tps: "Tokens per Second" };
+  // the views as Speed's switch names them, in its order: Relative first
+  const SHORT_COMPARES = { engines: "Relative", tps: "Tokens per Second", ceiling: "Efficiency" };
   // each view wears the icon of the sidebar page that shows it for every machine
   const COMPARE_ICONS = { engines: "speedups", ceiling: "all_hardware", tps: "tps" };
   const nextCompare = (id) => { const ids = Object.keys(COMPARES); return ids[(ids.indexOf(id) + 1) % ids.length]; };
@@ -476,6 +479,10 @@ window.Pie = window.Pie || {};
     onChange(handler) {
       onChange = handler;
     },
+    // a measured cell's click: the Results page, filtered to that run
+    onOpenResults(handler) {
+      openResults = handler;
+    },
     // the engine menu: every engine, the picked one checked
     menu(k) {
       if (k === "platform" && viewState) {
@@ -756,7 +763,7 @@ window.Pie = window.Pie || {};
       const machine = (mac, platform) => {
         const hw = Pie.store.index.hardware[mac];
         const short = shortOf(mac);
-        return `<th class="platform-row" scope="row"><span class="platform-chip"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}>${only ? "" : badgeOf(platformOf(hw || {})?.id)}<span class="platform-name">${esc(chipName(mac))}</span>${short !== chipName(mac) ? `<span class="platform-short">${esc(short)}</span>` : ""}${specOf(hw)}</span>${eye(mac)}</th>`;
+        return `<th class="platform-row" scope="row" data-hide-mac="${esc(mac)}"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}><span class="platform-chip">${badgeOf(platformOf(hw || {})?.id)}<span class="platform-name">${esc(chipName(mac))}</span>${short !== chipName(mac) ? `<span class="platform-short">${esc(short)}</span>` : ""}${specOf(hw)}</span>${eye(mac)}</th>`;
       };
       // a platform heads its machines with a row across the table, as Finder heads a group
       const folded = (id) => Boolean(p.collapsed?.[id]);
@@ -788,11 +795,11 @@ window.Pie = window.Pie || {};
         return `<span class="column-info slice-mark" tabindex="0" role="button" aria-label="Model slice"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg><span class="column-info-pop" role="tooltip">${esc(`Model slice: ${how}, to fit one device. For engine-to-engine comparison only, not the full model's speed.`)}</span></span>`;
       };
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
-        if (hidden.has(mac)) return `<tr class="is-hidden-row">${machine(mac, g.platform)}<td class="is-overall"></td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
+        if (hidden.has(mac)) return `<tr class="is-hidden-row" data-empty="1">${machine(mac, g.platform)}<td class="is-overall" data-hide-mac="${esc(mac)}">${eye(mac)}</td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
         const o = overall(mac);
-        const overallCell = o === null ? `<td class="is-overall"><span class="platform-cell is-empty">–</span></td>`
-          : compare === "tps" ? `<td class="is-overall"><span class="platform-cell is-even">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span></td>`
-          : (() => { const n = number(o); n.html = Math.round(o * 100) ? signed(o) : "0%"; return `<td class="is-overall"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}">${n.html}</span></td>`; })();
+        const overallCell = o === null ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-empty">–</span>${eye(mac)}</td>`
+          : compare === "tps" ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-even">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span>${eye(mac)}</td>`
+          : (() => { const n = number(o); n.html = Math.round(o * 100) ? signed(o) : "0%"; return `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}">${n.html}</span>${eye(mac)}</td>`; })();
         return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
@@ -814,7 +821,11 @@ window.Pie = window.Pie || {};
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               // a miniature's own tok/s is a cut model's, no real speed: with no other engine to set it against, it shows none
               : c.gain === null ? { kind: "is-even", html: c.pie.miniature ? "–" : esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
-            return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            // a click opens Results on this run: the machine, the model, the workload, and the engines the cell compares
+            const PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
+            const open = { hardware: [mac], model: [realOf(model)], workload: [PHASE[modeOf(c).id] || modeOf(c).workload],
+              engine: compare === "engines" ? [...new Set((c.all || [c.pie]).map((r) => r.engine))] : [c.pie.engine] };
+            return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           // an empty cell lists every engine that has a row here and why it gave no number, as a measured cell's card does
           // the engines that did measure here, though pie did not (the comparison needs pie): their numbers first
@@ -852,8 +863,19 @@ window.Pie = window.Pie || {};
         const SCHEME = { affine_u4_g64: "4-bit", bf16: "BF16", fp8: "FP8", mxfp4: "MXFP4", gguf_q4_k_m: "Q4_K_M", mlx_2bit: "2-bit" };
         const precision = [...new Set(list.map((mac) => grid[mac]?.[model]?.c?.pie?.scheme).filter(Boolean).map((s) => SCHEME[s] || s))].join(" / ");
         // the speculative column says so under the model's name, where the other columns give its size
-        const sub = [size, precision].filter(Boolean).join(" · ");
-        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" title="Sort by ${esc(names().model(realOf(model)))}, or drag to move">
+        const sub = size;
+        // its card on hover, as a machine's: what the model is, and how pie ran it here
+        const sheet = `<div class="tip-title">${esc(names().model(realOf(model)))}</div><div class="spec-rows">${[
+          ["Maker", makerOf(model).name],
+          ["Architecture", m.architecture],
+          ["Parameters", m.params_b && `${m.params_b}B`],
+          ["Active", m.active_b && m.active_b !== m.params_b && `${m.active_b}B a token`],
+          ["Layers", m.layers],
+          ["Experts", m.experts && `${m.experts}${m.top_k ? `, ${m.top_k} a token` : ""}`],
+          ["Context", m.context && `${Number(m.context).toLocaleString()} tokens`],
+          ["Precision here", precision],
+        ].filter(([, v]) => v).map(([k, v]) => `<div class="spec-row"><span>${esc(k)}</span><span>${esc(String(v))}</span></div>`).join("")}</div>`;
+        return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" data-tip="${esc(sheet)}">
           <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
@@ -876,12 +898,8 @@ window.Pie = window.Pie || {};
           <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
-            ${fixed ? "" : (() => {
-              // the view as one toolbar button in macOS's Icon and Text style: its sidebar icon and its name, so the
-              // viewer sees what they are looking at; a click moves on to the next view, as V does; holding R peeks
-              const next = nextCompare(compare);
-              return `<button type="button" class="plain-button view-cycle" data-compare="${next}" aria-label="${esc(`View: ${COMPARES[compare]}. Switch to ${COMPARES[next]}`)}" title="${esc(`${CAPTIONS[compare]}. Click for ${COMPARES[next]} (V)`)}">${Pie.icon(COMPARE_ICONS[compare])}<span>${esc(COMPARES[compare])}</span></button>`;
-            })()}
+            ${fixed ? "" : `<span class="platform-compare" role="group" aria-label="View">${["engines", "tps", "ceiling"].map((id) =>
+              `<button type="button" class="plain-button${id === compare ? " is-active" : ""}" data-compare="${id}" aria-pressed="${id === compare}" title="${esc(CAPTIONS[id])}">${esc(SHORT_COMPARES[id] || COMPARES[id])}</button>`).join("")}</span>`}
           </span>
         </div>
         <div class="platform-scroll">
@@ -912,6 +930,10 @@ window.Pie = window.Pie || {};
         requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(put)));
       };
       element.addEventListener("click", (event) => {
+        const cell = event.target.closest("td[data-open]");
+        if (cell && !event.target.closest(".column-info")) { openResults(JSON.parse(cell.dataset.open)); return; }
+      });
+      element.addEventListener("click", (event) => {
         const button = event.target.closest("[data-hide-mac]");
         if (!button) return;
         event.stopPropagation();
@@ -920,6 +942,23 @@ window.Pie = window.Pie || {};
         if (hidden.has(mac)) hidden.delete(mac); else hidden.add(mac);
         state.platform.hidden = [...hidden];
         Pie.saveView?.();
+        // in place, no redraw of the page: the row greys out and goes last, or comes back before the hidden ones; a row
+        // drawn hidden has no numbers to show, so showing it again redraws
+        const off = hidden.has(mac);
+        const rows = [...element.querySelectorAll("tbody tr")].filter((tr) => tr.querySelector(`th.platform-row[data-hide-mac="${CSS.escape(mac)}"]`));
+        if (rows.length && (off || rows.every((tr) => !tr.dataset.empty))) {
+          for (const tr of rows) {
+            tr.classList.toggle("is-hidden-row", off);
+            for (const b of tr.querySelectorAll(".platform-eye")) {
+              b.setAttribute("aria-pressed", String(off));
+              b.querySelector("svg").innerHTML = `<path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8z"/>${off ? '<path d="M3 13 13 3"/>' : '<circle cx="8" cy="8" r="2"/>'}`;
+            }
+            const body = tr.parentElement;
+            if (off) body.append(tr);
+            else body.insertBefore(tr, [...body.children].find((r) => r !== tr && r.classList.contains("is-hidden-row")) || null);
+          }
+          return;
+        }
         inPlace(() => document.dispatchEvent(new CustomEvent("pie:refresh")));
       }, true);
       element.addEventListener("click", (event) => {
@@ -1127,15 +1166,17 @@ window.Pie = window.Pie || {};
         tooltip.style.left = `${Math.max(8, x)}px`;
         tooltip.style.top = `${Math.max(8, y)}px`;
       };
+      // a cell's card shows over the whole cell, its padding and edges too, not only over its number
+      const markOf = (el) => el?.closest("[data-tip]") || el?.closest("td, th")?.querySelector(":scope > [data-tip], :scope > .platform-chip > [data-tip]") || null;
       element.addEventListener("pointermove", (event) => {
         if (event.pointerType !== "mouse") return;
         pointer = { x: event.clientX, y: event.clientY };
-        showCard(event.target.closest("[data-tip]"), event.clientX, event.clientY);
+        showCard(markOf(event.target), event.clientX, event.clientY);
       });
       refreshCard = () => {
         if (!pointer || tooltip.hidden) return;
         const under = document.elementFromPoint(pointer.x, pointer.y);
-        showCard(element.contains(under) ? under?.closest("[data-tip]") : null, pointer.x, pointer.y);
+        showCard(element.contains(under) ? markOf(under) : null, pointer.x, pointer.y);
       };
       window.addEventListener("resize", () => {
         const scroller = element.querySelector(".platform-scroll");

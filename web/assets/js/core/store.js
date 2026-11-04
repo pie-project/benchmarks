@@ -128,9 +128,14 @@ window.Pie = window.Pie || {};
     { id: "targeted", label: "Targeted", title: "Targeted", detail: "Release models" },
     { id: "full", label: "Full", title: "Full", detail: "Every model" },
   ];
+  // the picked suite's models as one set, built once a suite: built per row, it made every page change slow
+  let suiteSet = { suite: undefined, ids: null };
   const suiteModels = () => {
-    const ids = (tables.suites || {})[Pie.state.suite];
-    return ids ? new Set(ids) : null;
+    if (suiteSet.suite !== Pie.state.suite) {
+      const ids = (tables.suites || {})[Pie.state.suite];
+      suiteSet = { suite: Pie.state.suite, ids: ids ? new Set(ids) : null };
+    }
+    return suiteSet.ids;
   };
   // a model of the catalog list counts in every suite once CI has measured it, so new models reach the grids
   const catalogIds = new Set((tables.models || []).filter((m) => m.catalog).map((m) => m.id));
@@ -141,7 +146,13 @@ window.Pie = window.Pie || {};
   const ofSuite = (rows) => (suiteModels() ? rows.filter((row) => inSuite(row.model)) : rows);
 
   // the rows shown for a tag: every combination, with a stale marker where that tag had no run
-  const snapshot = (tag) => ofSuite(snapshots[tag] || []);
+  // kept per tag and suite: the release menu and the pages ask for every tag's rows on each draw
+  const snapshotOf = new Map();
+  const snapshot = (tag) => {
+    const key = `${Pie.state.suite}\u0000${tag}`;
+    if (!snapshotOf.has(key)) snapshotOf.set(key, ofSuite(snapshots[tag] || []));
+    return snapshotOf.get(key);
+  };
   // quality scores stack per tag the same way; an export without them falls back to the flat list
   const qualitySnapshot = (tag) => ofSuite(tables.quality_snapshots ? tables.quality_snapshots[tag] || [] : tables.quality || []);
 

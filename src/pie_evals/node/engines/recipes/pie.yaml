@@ -384,6 +384,20 @@ default:
                 512 lanes' readout rows and an 8192-token fire's arena are down, and the pool seats fewer than
                 256 of c512's lanes: readout rows for 256 lanes give the pool the rest. c512 7.9k to 8.5k tok/s
                 (vLLM 9.0k); 4096-token fires reached 8.8k but cut pf64-512 49.1k to 44.8k.
+            max_forward_tokens:
+              value: 16384
+              rationale: >
+                pf64-512's 64 prompts (35k rows) in 16384-row fires, as the H200 profile asks: pf64-512 48.4k to
+                49.6k tok/s (vLLM 50.8k warm), c512 8.4k / 8.3k within the pod's noise.
+    gemma-4-e4b-bf16:
+      platform:
+        h100-sxm-x1:
+          knobs:
+            max_forward_tokens:
+              value: 16384
+              rationale: >
+                pf64-512's 64 prompts in 16384-row fires, as the H200 profile asks: pf64-512 59.2k to 61.4k tok/s
+                (vLLM 64.6k warm), c512 17.7k / 18.8k within the pod's noise.
     qwen3.8-27b-bf16:
       platform:
         b200-x1:
