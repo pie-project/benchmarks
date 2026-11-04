@@ -128,7 +128,7 @@ unsupported:
   - when: {engine: vllm, family: mimo_v2, backend: xla}
     reason: "vLLM-TPU 0.30.0 cannot build MiMo-V2.6-Flash's KV cache: AssertionError in unify_kv_cache_spec_page_size"
   # pie's XLA forward for gpt-oss-20b needs 17.32 GiB of HLO temporaries; a v5e chip has 15.75 GiB (b5 39699079812)
-  - when: {engine: pie, backend: xla, family: gpt_oss, platform: tpu-v5e-1}
+  - when: {engine: pie, backend: xla, family: gpt_oss, platform: tpu-v5e-1, artifact: [gpt-oss-20b-tpu, gpt-oss-120b-tpu]}
     reason: "doesn't fit: pie's XLA forward needs 17.3 GiB of HLO temporaries for gpt-oss-20b; a v5e chip has 15.75 GiB of HBM"
   # vLLM-TPU 0.30.0's gpt-oss MoE kernel (gmm_v2) holds fp4 vectors Mosaic cannot compile before TPU7x:
   # v6e 39671403474, v5e 39699082874, v5p 39697698286 (gpt-oss-20b and -120b alike)

@@ -739,6 +739,95 @@ artifacts:
     max_context: 4096
     expected_gib: 13.9
     tiers: [weekly]
+  # the 16 GB TPU v5e chip (#1184): the cuts one chip holds with KV room, weights <= ~12.6 GiB
+  - id: gpt-oss-120b-mxfp4-mini12-e32
+    base_model: openai/gpt-oss-120b
+    family: gpt_oss
+    scheme: mxfp4
+    kind: miniature
+    miniature: {layers: "0-11", experts: 32, period: 2, note: "6 of 18 sliding/full pairs; 32 of 128 experts, for a 16 GB TPU v5e"}
+    pie_sku: gptoss-20b-bf16-mxfp4-kv-bf16-l12
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 7.0
+    tiers: [weekly]
+  - id: nemotron-3-ultra-mini-e16
+    base_model: nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16
+    family: nemotron_h
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-8", experts: 16, period: 1, note: "pie's nemotron3-ultra-mini at 16 of 512 experts, for a 16 GB TPU v5e"}
+    pie_sku: nemotron3-ultra-mini-bf16-kv-bf16-e16
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 11.4
+    tiers: [weekly]
+  - id: nemotron-3-super-mini22
+    base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+    family: nemotron_h
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-21", experts: 32, period: 1, note: "the first 22 of 88 layers; 32 of 512 experts, for a 16 GB TPU v5e"}
+    pie_sku: nemotron3-super-bf16-kv-bf16-l22-e32
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 7.5
+    tiers: [weekly]
+  - id: kimi-k3-mini4-e16
+    base_model: moonshotai/Kimi-K3
+    family: kimi_k3
+    scheme: mxfp4
+    kind: miniature
+    miniature: {layers: "0-3", experts: 16, period: 4, attn_res_block_size: 4, note: "shrink family kimi_k3; one KDA/MLA period of 93 layers, 16 of 896 experts, for a 16 GB TPU v5e"}
+    pie_sku: kimik3-l4-bf16-mxfp4-kv-bf16-e16
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 9.0
+    tiers: [weekly]
+  - id: gemma-4-31b-mini6
+    base_model: google/gemma-4-31B-it
+    family: gemma4
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-5", period: 6, shrink_family: gemma4, note: "first 6 of 60 layers, one sliding/global period, for a 16 GB TPU v5e"}
+    pie_sku: gemma4-31b-bf16-kv-bf16-l6
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 8.1
+    tiers: [weekly]
+  - id: qwen3.6-27b-mini8
+    base_model: Qwen/Qwen3.6-27B
+    family: qwen3_6
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-7", period: 4, shrink_family: qwen3_5_moe, note: "2 of 16 linear/linear/linear/full periods, for a 16 GB TPU v5e"}
+    pie_sku: qwen36-27b-bf16-kv-bf16-l8
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 9.8
+    tiers: [weekly]
+  - id: qwen3.8-27b-mini8
+    base_model: Qwen/Qwen3.8-27B
+    family: qwen3_6
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-7", period: 4, shrink_family: qwen3_5_moe, note: "2 of 16 linear/linear/linear/full periods, for a 16 GB TPU v5e"}
+    pie_sku: qwen38-27b-bf16-kv-bf16-l8
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 9.8
+    tiers: [weekly]
+  - id: qwen3.6-35b-a3b-mini-e16
+    base_model: Qwen/Qwen3.6-35B-A3B
+    family: qwen3_6_moe
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-39", experts: 16, period: 4, shrink_family: qwen3_5_moe, note: "every layer; 16 of 256 experts, for a 16 GB TPU v5e"}
+    pie_sku: qwen36-35b-a3b-bf16-kv-bf16-l40-e16
+    platforms: [tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 7.5
+    tiers: [weekly]
 
   - id: nemotron-h-mini8
     base_model: nvidia/Nemotron-H-8B-Base-8K
