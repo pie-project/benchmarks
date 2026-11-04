@@ -1165,15 +1165,17 @@ window.Pie = window.Pie || {};
         tooltip.style.left = `${Math.max(8, x)}px`;
         tooltip.style.top = `${Math.max(8, y)}px`;
       };
+      // a cell's card shows over the whole cell, its padding and edges too, not only over its number
+      const markOf = (el) => el?.closest("[data-tip]") || el?.closest("td, th")?.querySelector(":scope > [data-tip], :scope > .platform-chip > [data-tip]") || null;
       element.addEventListener("pointermove", (event) => {
         if (event.pointerType !== "mouse") return;
         pointer = { x: event.clientX, y: event.clientY };
-        showCard(event.target.closest("[data-tip]"), event.clientX, event.clientY);
+        showCard(markOf(event.target), event.clientX, event.clientY);
       });
       refreshCard = () => {
         if (!pointer || tooltip.hidden) return;
         const under = document.elementFromPoint(pointer.x, pointer.y);
-        showCard(element.contains(under) ? under?.closest("[data-tip]") : null, pointer.x, pointer.y);
+        showCard(element.contains(under) ? markOf(under) : null, pointer.x, pointer.y);
       };
       window.addEventListener("resize", () => {
         const scroller = element.querySelector(".platform-scroll");
