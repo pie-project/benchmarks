@@ -27,6 +27,18 @@ def load_db(src: str) -> dict:
     return json.loads(text[text.index("{"): text.rindex("}") + 1])
 
 
+def tag_rows(src: str, db: dict, tag: str) -> list[dict]:
+    """The tag's rows: in db.js, or in the tags/<tag>.json beside it (tools/split_db.py)."""
+    if tag in db["snapshots"]:
+        return db["snapshots"][tag]
+    split = src.rsplit("/", 1)[0] + f"/tags/{tag}.json"
+    try:
+        text = urllib.request.urlopen(split).read().decode() if split.startswith("http") else Path(split).read_text()
+    except (OSError, ValueError):
+        return []
+    return json.loads(text).get("snapshots", [])
+
+
 def parity_unsupported(artifact: str | None, platform: str) -> str | None:
     """The support.yaml reason vLLM cannot be pie's parity reference for this artifact here, or None. A rule
     that names a workload, a tp or a program other than parity speaks for something else."""
@@ -60,7 +72,7 @@ def main() -> int:
     spec = yaml.safe_load(Path(a.spec).read_text())
     db = load_db(a.db)
     # a stale row is an older tag's cell the site shows in a gap: it is not this run's measurement
-    rows = [r for r in db["snapshots"].get(a.tag, []) if r["hardware"] == a.platform and not r.get("stale")]
+    rows = [r for r in tag_rows(a.db, db, a.tag) if r["hardware"] == a.platform and not r.get("stale")]
     parity = [q for q in db.get("quality_parity", []) if q.get("platform") == a.platform and q.get("tag") == a.tag]
     qspec = spec["quality"]
     from pie_evals.quality.kl import DECISIVE
