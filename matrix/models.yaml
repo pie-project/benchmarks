@@ -828,6 +828,64 @@ artifacts:
     max_context: 4096
     expected_gib: 7.5
     tiers: [weekly]
+  # the TPU's rows of the activation-quantized releases (#1184): engine-xla has no product that quantizes its
+  # activations (fp8 a8, nvfp4 a4 are CUDA's tcgen05 GEMMs), so pie lands the same checkpoint at a row it serves on
+  # a TPU, its fp8 planes dequantized to bf16 at import (vLLM-TPU and SGLang-JAX dequantize fp8 on these chips too)
+  - id: deepseek-v4-flash-mini-tpu
+    base_model: deepseek-ai/DeepSeek-V4-Flash
+    family: deepseek_v4
+    scheme: mxfp4
+    kind: miniature
+    miniature: {layers: "0-3,42", experts: 16, period: 1, note: "deepseek-v4-flash-mini's cut, at the TPU's bf16 dense row"}
+    pie_sku: dsv4-flash-mini-bf16-mxfp4-kv-bf16
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
+    max_context: 4096
+    expected_gib: 3.7
+    tiers: [weekly]
+  - id: deepseek-v4.1-flash-mini8-tpu
+    base_model: deepseek-ai/DeepSeek-V4.1-Flash
+    family: deepseek_v41
+    scheme: mxfp4
+    kind: miniature
+    miniature: {layers: "0-3,20,21,24,25", experts: 16, period: 1, engram_vocab: 20000, keep_fp8: true, note: "deepseek-v4.1-flash-mini8's cut, at the TPU's bf16 dense row"}
+    pie_sku: dsv41-flash-mini-bf16-mxfp4-kv-bf16
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
+    max_context: 4096
+    expected_gib: 7.0
+    tiers: [weekly]
+  - id: glm-5.3-mini-tpu
+    base_model: zai-org/GLM-5.3
+    family: glm_moe_dsa
+    scheme: fp8
+    kind: miniature
+    miniature: {layers: "0-6", experts: 8, period: 1, note: "glm-5.3-mini's cut, at the TPU's bf16 row"}
+    pie_sku: glm53-mini-bf16-kv-bf16
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
+    max_context: 4096
+    expected_gib: 6.0
+    tiers: [weekly]
+  - id: glm-5.3-flash-mini8-fp8-tpu
+    base_model: zai-org/GLM-5.3-Flash
+    family: glm5_next
+    scheme: fp8
+    kind: miniature
+    miniature: {layers: "0-7", experts: 32, period: 4, shrink_family: glm5_next, note: "glm-5.3-flash-mini8-fp8's cut, at the TPU's bf16 row"}
+    pie_sku: glm53-flash-mini-bf16-bf16-kv-bf16
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
+    max_context: 4096
+    expected_gib: 8.0
+    tiers: [weekly]
+  - id: minimax-m3.1-flash-mini-tpu
+    base_model: MiniMaxAI/MiniMax-M3.1-Flash
+    family: minimax_m3
+    scheme: fp8
+    kind: miniature
+    miniature: {layers: "0-5", experts: 8, period: 1, note: "minimax-m3.1-flash-mini's cut, at the TPU's bf16 row"}
+    pie_sku: minimax-m3-mini-bf16-kv-bf16
+    platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
+    max_context: 4096
+    expected_gib: 8.0
+    tiers: [weekly]
 
   - id: nemotron-h-mini8
     base_model: nvidia/Nemotron-H-8B-Base-8K
