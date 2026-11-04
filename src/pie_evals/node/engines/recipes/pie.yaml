@@ -155,9 +155,10 @@ default:
         hy_v4:
           knobs:
             gpu_mem_util:
-              value: 0.85
+              value: 0.92
               rationale: >
-                Hy4's 6-layer cut: its fire's temporaries overflow a v5e at 0.97 (15.84 GiB, #1184); vLLM-TPU and
+                Hy4's 6-layer cut (11 GiB): its fire's temporaries overflow a v5e at 0.97 (15.84 GiB), at 0.85 no
+                sequence's KV fits beside the weights (#1184); vLLM-TPU and
                 SGLang-JAX serve no Hy4, so no other engine's share moves.
       knobs:
         max_forward_tokens:
