@@ -882,5 +882,5 @@
 .platform-open svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }  /* drawn as the machines' eye: its size, its line, its grey */
 .platform-table td.is-openable:hover .platform-open { display: grid; place-items: center; width: 20px; height: 20px; }
 .platform-table td.is-openable:hover > .platform-cell { background: transparent; }
-.platform-table td.is-openable:hover > .platform-cell > * { visibility: hidden; }  /* the cell stays, so its card still opens */
+.platform-table td.is-openable:hover > .platform-cell > :not(.slice-mark) { visibility: hidden; }  /* the cell stays, so its card still opens */
 @media (hover: none) { .platform-table td.is-openable:hover .platform-open { display: none; } .platform-table td.is-openable:hover > .platform-cell > * { visibility: visible; } }
