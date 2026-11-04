@@ -403,6 +403,7 @@
   const bindOverview = () => {
     Pie.platform.bind(state);
     Pie.platform.onChange(render);
+    Pie.platform.onOpenResults((filters) => navigate("results", filters));
     overview.bind(state);
     overview.onChange(render);
     overview.onOpenMac((anchor) => popover.open(anchor, popover.MAC, state));
