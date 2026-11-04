@@ -48,6 +48,8 @@ unsupported:
     reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
   - when: {engine: splash, workload: pf32-512}
     reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: pf8-512}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}

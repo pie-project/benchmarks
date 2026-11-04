@@ -83,7 +83,7 @@ workloads:
   - id: pf8-512
     kind: concurrency
     params: {concurrency: 8, num_requests: 32, prefill: 512, decode: 1, cold_cache: true}
-    tiers: [weekly]
+    tiers: [weekly, targeted]  # a 16 GB Mac's Batched Prefill: 32 at once runs llama.cpp out of memory there (Compute error), so every engine takes 8
     est_minutes: 1
   - id: pf16-512
     kind: concurrency
