@@ -201,6 +201,12 @@ default:
                 16.7k to 15.7k.
         gpt_oss:
           knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                At 0.90 of a 24 GB RTX 4090 gpt-oss-20b's kv pool holds about the 256 c256 lanes to their end
+                and no more, so pie's seated admission held 16 of them back (7.0k tok/s); every engine gets
+                the same higher share there.
             max_forward_tokens:
               value: 2048
               rationale: >
@@ -241,9 +247,10 @@ default:
         kimi_k3:
           knobs:
             max_forward_tokens:
-              value: 2048
+              value: 4096
               rationale: >
-                At 8192-token fires the Kimi-K3 mini's activation arena (4.3 GB) leaves a 24 GB RTX 4090 538 MiB for
+                At 4096-row fires a batch of the Kimi-K3 mini's 549-token prompts packs seven to a fire, against
+                three at 2048: pf16-512 13.6k to 14.7k tok/s (vLLM 15.5k). Earlier: At 8192-token fires the Kimi-K3 mini's activation arena (4.3 GB) leaves a 24 GB RTX 4090 538 MiB for
                 graph bodies and cache rows, and its 64 state slots are served at 6 ("max_state_slots 64 is served at
                 6"): c64 ran 504 tok/s against vLLM's 3115. vLLM chunks its prefill at 2048 there too.
             engine_option:
@@ -252,6 +259,22 @@ default:
                 At the default 256 slots (and at 128) the Kimi-K3 mini's KDA state beside one sequence does not
                 fit what a 24 GB RTX 4090 leaves past the weights and arena ("the card does not hold this
                 deployment"); 64 slots seat c64, the widest shape vLLM serves it at there (c128 OOMs mid-run).
+      artifact:
+        qwen3.8-27b-mini12:
+          knobs:
+            max_forward_tokens:
+              value: 4480
+              rationale: >
+                Eight of a batch's 549-token prompts to a 4480-row fire, against four at the Ada family's 2240:
+                pf32-512 14.3k to 14.6k tok/s.
+        gemma-4-e4b-bf16:
+          knobs:
+            max_forward_tokens:
+              value: 4480
+              rationale: >
+                A batch of gemma-4-E4B's 549-token prompts packs eight to a 4480-row fire; at the family's 2048
+                three ride a fire and a sixth of its rows go empty: pf16-512 15.5k to 17.1k tok/s with the
+                profile's eight lattice steps a doubling (vLLM 17.6k on the same pod).
   arch:
     ada:
       family:

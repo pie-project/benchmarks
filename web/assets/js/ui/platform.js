@@ -790,7 +790,8 @@ window.Pie = window.Pie || {};
       const sliceMark = (cut, model) => {
         const all = Pie.store.index.models[realOf(model)]?.layers;
         const kept = parseInt(cut, 10);
-        const how = kept && all ? `${kept} of ${all} layers kept (${Math.round((kept / all) * 100)}%)` : cut;
+        const experts = String(cut).match(/, (\d+) experts$/)?.[1];
+        const how = (kept && all ? `${kept} of ${all} layers kept (${Math.round((kept / all) * 100)}%)` : String(cut).replace(/, \d+ experts$/, "")) + (experts ? `, the first ${experts} experts` : "");
         return `<span class="column-info slice-mark" tabindex="0" role="button" aria-label="Model slice"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg><span class="column-info-pop" role="tooltip">${esc(`Model slice: ${how}, to fit one device. For engine-to-engine comparison only, not the full model's speed.`)}</span></span>`;
       };
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {

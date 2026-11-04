@@ -304,12 +304,15 @@ def local(ts) -> str:
 def _miniature_labels() -> dict[str, str]:
     arts = load("models")["artifacts"]
     full = {a["base_model"]: a["layers"] for a in arts if a.get("layers") and a.get("kind", "full") == "full"}
+    macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
     out = {}
     for a in arts:
         if a.get("kind") != "miniature" or not a.get("miniature"):
             continue
         kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(a["miniature"]["layers"]).split(","))
         out[a["id"]] = f"{kept} of {full[a['base_model']]} layers" if a["base_model"] in full else f"{kept} layers"
+        if a.get("platforms") and set(a["platforms"]) <= macs and a["miniature"].get("experts"):
+            out[a["id"]] += f", {a['miniature']['experts']} experts"  # a Mac slice may keep every layer and cut only experts
     return out
 
 

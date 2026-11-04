@@ -76,7 +76,9 @@ def ensure_miniature(
     if artifact.kind != ArtifactKind.MINIATURE:
         raise ValueError(f"artifact {artifact.id} is not a miniature")
     out = miniature_snapshot_dir(artifact, hf_cache)
-    if (out / "config.json").exists():
+    # a GGUF arm is one file: its slice is cut from the GGUF itself (gguf_slice), the same cut as its MLX twin's
+    marker = Path(artifact.gguf_file).name if artifact.gguf_file else "config.json"
+    if (out / marker).exists():
         # a snapshot built by an older recipe (same tag, different flags — the
         # --text-only carve renamed every tensor) is rebuilt, not reused
         stamp = out / ".miniature.json"
@@ -108,9 +110,16 @@ def ensure_miniature(
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.parent / f".tmp-{out.name}-{os.uname().nodename}-{os.getpid()}-{uuid.uuid4().hex[:6]}"  # pods on one volume share pids (pie #650: a shared spool zeroes the loser)
     shutil.rmtree(tmp, ignore_errors=True)
-    argv = miniature_argv(artifact, pie_root, tmp, python, cache_dir=cache_dir)
+    if artifact.gguf_file:
+        import sys
+
+        r = artifact.miniature
+        argv = [sys.executable, "-m", "pie_evals.node.gguf_slice", "--repo", artifact.base_model, "--revision", artifact.revision or "main",
+                "--file", artifact.gguf_file, "--layers", r.layers, "--experts", str(r.experts or 0), "--out", str(tmp)]
+    else:
+        argv = miniature_argv(artifact, pie_root, tmp, python, cache_dir=cache_dir)
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s, check=False)
-    if proc.returncode != 0 or not (tmp / "config.json").exists():
+    if proc.returncode != 0 or not (tmp / marker).exists():
         shutil.rmtree(tmp, ignore_errors=True)
         tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-20:]
         raise RuntimeError(
@@ -119,7 +128,7 @@ def ensure_miniature(
     (tmp / ".miniature.json").write_text(
         json.dumps({"artifact": artifact.id, "recipe": artifact.miniature.model_dump(), "argv": argv}, indent=2)
     )
-    if (out / "config.json").exists():  # someone else finished first
+    if (out / marker).exists():  # someone else finished first
         shutil.rmtree(tmp, ignore_errors=True)
         shutil.rmtree(cache_dir, ignore_errors=True)
         return out
