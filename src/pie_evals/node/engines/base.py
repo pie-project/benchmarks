@@ -114,6 +114,15 @@ def classify_failure(returncode: int, stderr: str, stdout: str, timed_out: bool)
     return ErrorClass.CRASH, f"exit {returncode}: " + (stderr.strip().splitlines() or ["(no stderr)"])[-1][:400]
 
 
+def _all_completed(json_out: Path) -> bool:
+    """Whether a bench.json holds every request it was asked for, none failed."""
+    try:
+        s = json.loads(json_out.read_text()).get("summary", {})
+    except (OSError, ValueError):
+        return False
+    return bool(s.get("requests")) and s.get("completed") == s.get("requests") and not s.get("failed")
+
+
 def _pct(values: list[float], q: float) -> float | None:
     if not values:
         return None
@@ -429,6 +438,10 @@ class Engine(ABC):
         stderr = (out_dir / "stderr.txt").read_text(errors="replace")
         if stalled:
             raise EngineLaunchError(ErrorClass.HANG, f"no CPU work from the bench or its engine for {self.stall_s()}s; stopped")
+        # SGLang 0.5.22 on ROCm aborts in its own teardown after the bench wrote every request (gemma-4-E4B raw on
+        # mi300x-x1: 6/6 completed, then SIGABRT); a whole result is the measurement, the exit after it is not
+        if rc == -6 and not timed_out and json_out.exists() and _all_completed(json_out):
+            rc = 0
         if rc != 0 or not json_out.exists():
             cls, msg = classify_failure(rc, stderr, stdout, timed_out)
             if rc == 0 and not timed_out:
