@@ -1742,6 +1742,159 @@ artifacts:
     platforms: [m2-16g, m3-16g, m5-16g]
     tiers: [targeted]
 
+  # gpt-oss-120b on the Macs: in full where it fits (the 128 GB Mac), else as a slice of every layer and the first N of
+  # its 128 experts, the most each Mac's GPU share holds (fit factor 1.25)
+  - id: gpt-oss-120b-mlx-mxfp4
+    base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
+    params_b: 117
+    active_b: 5.1
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    pie_sku: gptoss-120b-u4g64-mxfp4-kv-bf16
+    expected_gib: 58.05
+    platforms: [m5-max-128g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-mlxlm
+    base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    baseline_of: gpt-oss-120b-mlx-mxfp4
+    baseline_label: mlx-lm
+    expected_gib: 58.05
+    platforms: [m5-max-128g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-llamacpp
+    base_model: unsloth/gpt-oss-120b-GGUF
+    family: gpt_oss
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Q4_K_M/gpt-oss-120b-Q4_K_M-00001-of-00002.gguf
+    tokenizer_from: mlx-community/gpt-oss-120b-MXFP4-Q4
+    baseline_of: gpt-oss-120b-mlx-mxfp4
+    baseline_label: llama.cpp
+    expected_gib: 58.45
+    platforms: [m5-max-128g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-mlx-mxfp4-slice-e80
+    base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
+    params_b: 117
+    active_b: 5.1
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-35", experts: 80, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 80 of 128 experts"}
+    pie_sku: gptoss-120b-mini-e64-u4g64-mxfp4-kv-bf16-e80
+    expected_gib: 36.74
+    platforms: [m5-max-64g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-mlxlm-slice-e80
+    base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-35", experts: 80, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 80 of 128 experts"}
+    baseline_of: gpt-oss-120b-mlx-mxfp4-slice-e80
+    baseline_label: mlx-lm
+    expected_gib: 36.74
+    platforms: [m5-max-64g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-llamacpp-slice-e80
+    base_model: unsloth/gpt-oss-120b-GGUF
+    family: gpt_oss
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Q4_K_M/gpt-oss-120b-Q4_K_M-00001-of-00002.gguf
+    tokenizer_from: mlx-community/gpt-oss-120b-MXFP4-Q4
+    kind: miniature
+    miniature: {layers: "0-35", experts: 80, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 80 of 128 experts"}
+    baseline_of: gpt-oss-120b-mlx-mxfp4-slice-e80
+    baseline_label: llama.cpp
+    expected_gib: 37.1
+    platforms: [m5-max-64g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-mlx-mxfp4-slice-e60
+    base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
+    params_b: 117
+    active_b: 5.1
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-35", experts: 60, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 60 of 128 experts"}
+    pie_sku: gptoss-120b-mini-e64-u4g64-mxfp4-kv-bf16-e60
+    expected_gib: 27.86
+    platforms: [m4-pro-48g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-mlxlm-slice-e60
+    base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-35", experts: 60, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 60 of 128 experts"}
+    baseline_of: gpt-oss-120b-mlx-mxfp4-slice-e60
+    baseline_label: mlx-lm
+    expected_gib: 27.86
+    platforms: [m4-pro-48g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-llamacpp-slice-e60
+    base_model: unsloth/gpt-oss-120b-GGUF
+    family: gpt_oss
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Q4_K_M/gpt-oss-120b-Q4_K_M-00001-of-00002.gguf
+    tokenizer_from: mlx-community/gpt-oss-120b-MXFP4-Q4
+    kind: miniature
+    miniature: {layers: "0-35", experts: 60, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 60 of 128 experts"}
+    baseline_of: gpt-oss-120b-mlx-mxfp4-slice-e60
+    baseline_label: llama.cpp
+    expected_gib: 28.2
+    platforms: [m4-pro-48g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-mlx-mxfp4-slice-e14
+    base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
+    params_b: 117
+    active_b: 5.1
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-35", experts: 14, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 14 of 128 experts"}
+    pie_sku: gptoss-120b-mini-e64-u4g64-mxfp4-kv-bf16-e14
+    expected_gib: 7.45
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-mlxlm-slice-e14
+    base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
+    family: gpt_oss
+    scheme: mxfp4
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-35", experts: 14, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 14 of 128 experts"}
+    baseline_of: gpt-oss-120b-mlx-mxfp4-slice-e14
+    baseline_label: mlx-lm
+    expected_gib: 7.45
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+  - id: gpt-oss-120b-llamacpp-slice-e14
+    base_model: unsloth/gpt-oss-120b-GGUF
+    family: gpt_oss
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Q4_K_M/gpt-oss-120b-Q4_K_M-00001-of-00002.gguf
+    tokenizer_from: mlx-community/gpt-oss-120b-MXFP4-Q4
+    kind: miniature
+    miniature: {layers: "0-35", experts: 14, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 14 of 128 experts"}
+    baseline_of: gpt-oss-120b-mlx-mxfp4-slice-e14
+    baseline_label: llama.cpp
+    expected_gib: 7.74
+    platforms: [m2-16g, m3-16g, m5-16g]
+    tiers: [targeted]
+
 # The Models page's catalog: every model the site lists, whether CI runs it or not. A model CI runs (above) takes the
 # sizes and layer count it lacks from here; one it does not run is listed with where it would fit (tools/webdb.py).
 # Specs from each release's Hugging Face card and config.json (layers: num_hidden_layers), collected 2026-10-26.

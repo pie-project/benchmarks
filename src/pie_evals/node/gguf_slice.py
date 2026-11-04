@@ -122,7 +122,7 @@ def parse_layers(spec: str) -> list[int]:
 
 
 def plan(kv, tensors, layers: list[int], experts: int | None):
-    """The slice's metadata and its tensors as (out name, dims, type, source offset, bytes kept)."""
+    """The slice's metadata and its tensors as (out name, dims, type, source address, bytes kept)."""
     arch = next(v for k, _, v in kv if k == "general.architecture")
     meta = {k: (t, v) for k, t, v in kv}
     blocks = meta[f"{arch}.block_count"][1]
@@ -165,10 +165,20 @@ def plan(kv, tensors, layers: list[int], experts: int | None):
 
 
 def slice_gguf(repo: str, file: str, layers: str, experts: int | None, out_dir: Path, revision: str = "main", dry_run: bool = False, log=print) -> Path:
-    url = _url(repo, revision, file)
-    version, kv, tensors, end = read_header(url)
-    align = next((v for k, _, v in kv if k == "general.alignment"), 32)
-    data0 = (end + align - 1) // align * align
+    from .snapshots import gguf_shards
+
+    # a split GGUF (`...-00001-of-00004.gguf`): every shard is a GGUF of its own tensors; the
+    # first carries the model's metadata. The slice is one file.
+    urls = [_url(repo, revision, f) for f in gguf_shards(file)]
+    version, kv, tensors = None, None, []
+    for si, url in enumerate(urls):
+        v, skv, st, end = read_header(url)
+        align = next((x for k, _, x in skv if k == "general.alignment"), 32)
+        data0 = (end + align - 1) // align * align
+        if kv is None:
+            version, kv = v, [(k, t, x) for k, t, x in skv if not k.startswith("split.")]
+        tensors += [(name, dims, ty, (si, data0 + off)) for name, dims, ty, off in st]
+    align = next((x for k, _, x in kv if k == "general.alignment"), 32)
     out_kv, out_t = plan(kv, tensors, parse_layers(layers), experts)
     total = sum(t[4] for t in out_t)
     log(f"gguf slice: {len(out_t)} of {len(tensors)} tensors, {total / 2**30:.2f} GiB of {sum(nbytes(d, ty) for _, d, ty, _ in tensors) / 2**30:.2f}")
@@ -190,9 +200,10 @@ def slice_gguf(repo: str, file: str, layers: str, experts: int | None, out_dir: 
     # neighbours in the source are fetched in one request: a layer's norms and small planes are
     # a few KiB each, and a request per plane is most of a slice's time
     groups: list[list[int]] = []
-    for i, (_, _, _, off, size) in enumerate(out_t):
+    for i, (_, _, _, (si, off), size) in enumerate(out_t):
+        first = out_t[groups[-1][0]] if groups else None
         prev = out_t[groups[-1][-1]] if groups else None
-        if prev and off - (prev[3] + prev[4]) <= (1 << 20) and off + size - out_t[groups[-1][0]][3] <= CHUNK:
+        if prev and prev[3][0] == si and 0 <= off - (prev[3][1] + prev[4]) <= (1 << 20) and off + size - first[3][1] <= CHUNK:
             groups[-1].append(i)
         else:
             groups.append([i])
@@ -200,18 +211,19 @@ def slice_gguf(repo: str, file: str, layers: str, experts: int | None, out_dir: 
     with tmp.open("wb") as f:
         f.write(head)
         for g in groups:
-            lo = out_t[g[0]][3]
-            hi = max(out_t[i][3] + out_t[i][4] for i in g)
+            url = urls[out_t[g[0]][3][0]]
+            lo = out_t[g[0]][3][1]
+            hi = max(out_t[i][3][1] + out_t[i][4] for i in g)
             if hi - lo <= CHUNK:
-                span = _get(url, data0 + lo, data0 + hi)
+                span = _get(url, lo, hi)
                 for i in g:
                     f.seek(len(head) + offsets[i])
-                    f.write(span[out_t[i][3] - lo:out_t[i][3] - lo + out_t[i][4]])
+                    f.write(span[out_t[i][3][1] - lo:out_t[i][3][1] - lo + out_t[i][4]])
             else:  # one plane larger than a request: in pieces
                 (i,) = g
                 f.seek(len(head) + offsets[i])
                 for s in range(0, out_t[i][4], CHUNK):
-                    f.write(_get(url, data0 + lo + s, data0 + lo + min(out_t[i][4], s + CHUNK)))
+                    f.write(_get(url, lo + s, lo + min(out_t[i][4], s + CHUNK)))
             done += sum(out_t[i][4] for i in g)
             if done - shown >= 1 << 30:
                 shown = done
