@@ -880,8 +880,8 @@
 :root[data-theme="dark"] .platform-table tbody td.is-openable:hover { background: #464646; }  /* a measured cell opens its run on the Results page */
 /* hovered, its number gives way to the circled arrow macOS uses to go on to a thing's details: here its runs */
 .platform-open { display: none; position: absolute; top: 50%; right: 14px; transform: translateY(-50%); color: var(--color-label-tertiary); }
-.platform-table td.is-openable:hover .platform-open { display: inline-flex; align-items: center; gap: 3px; color: var(--color-label-secondary); font-size: 12px; font-weight: 500; white-space: nowrap; }  /* where the click goes, with the sidebar's out arrow, as a link to another page */
-.platform-open svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.platform-table td.is-openable:hover .platform-open { display: inline-flex; align-items: center; gap: 4px; color: var(--color-label-secondary); font-size: 13px; font-weight: 500; white-space: nowrap; }  /* where the click goes, with the sidebar's out arrow, as a link to another page */
+.platform-open svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }  /* the sidebar's out arrow as it draws it: its size and line, in the text's grey */
 .platform-table td.is-openable:hover > .platform-cell { background: transparent; }
 .platform-table td.is-openable:hover > .platform-cell > * { visibility: hidden; }  /* the slice mark too: only the chevron */  /* the cell stays, so its card still opens */
 @media (hover: none) { .platform-table td.is-openable:hover .platform-open { display: none; } .platform-table td.is-openable:hover > .platform-cell > * { visibility: visible; } }
