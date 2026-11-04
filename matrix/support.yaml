@@ -111,10 +111,7 @@ unsupported:
     reason: "attention-only KV policies are not valid on a windowed kv ring (pie: use pie:inferlet/forward-hybrid); the gemma4_moe forward pass is hybrid"
   # SGLang 0.5.20 cannot run gemma-4: every cell dies in its own code with
   # "view size is not compatible with input tensor's size and stride" / "shape '[-1, 1024]' is invalid" (L40S, 4090, 5090, A100 x2)
-  # SGLang 0.5.22 from AMD's ROCm image dies the same way capturing its decode graphs (MI350X, weekly 39709793022):
-  # decode_cuda_graph_runner.py:517 "shape '[-1, 1024]' is invalid for input of size 512"
-  - when: {engine: sglang, family: gemma4, backend: rocm}
-    reason: "SGLang 0.5.22 (ROCm) gemma-4 crashes capturing its decode graphs: shape '[-1, 1024]' is invalid for input of size 512"
+  # (on the MI300X SGLang 0.5.22 serves gemma-4: E4B raw 6/6, then an abort in its teardown the harness now tolerates)
   # sglang-jax 0.1.0rc0 loads only the gemma-4 layout it was written for: E2B/E4B die at startup on
   # "'>=' not supported between 'int' and 'NoneType'" (no global KV heads), 12B on model type gemma4_unified (b5 39575054600)
   - when: {engine: sglang, family: gemma4, backend: xla}
@@ -155,6 +152,10 @@ unsupported:
   # MI300X (gfx942) gpt-oss dies at load on "Unknown quantization method: mxfp4" (its quantization/__init__.py)
   - when: {engine: sglang, family: gpt_oss, arch: cdna3}
     reason: "SGLang 0.5.22 on ROCm serves mxfp4 (gpt-oss) only on gfx95x (MI350/MI355); the MI300X (gfx942) has no mxfp4 path"
+  # MiMo-V2.6-Flash's MXFP4 experts the same way: AITER's fused MoE quantizes activations to fp4 there, which gfx942 has no
+  # type for ("fused_dynamic_mx_quant_moe_sort_hip_impl: not support output type: fp4x2", then SIGABRT; mi300x-x1)
+  - when: {engine: sglang, family: mimo_v2, arch: cdna3}
+    reason: "SGLang 0.5.22 on ROCm runs MXFP4 experts (MiMo) through AITER's fp4 activation MoE, which gfx942 (MI300X) has no fp4 type for"
   # SGLang 0.5.22 decodes Qwen3.8-Flash-Next's full-attention layers through qwen_sparse_attn_backend's flash_attn.cute
   # FlashAttentionForwardSm80, which CUDA refuses to launch on sm_86/sm_89 (A40, L40S; the 4090 OOMs in prefill
   # graph capture before it gets there): "CUDA_LAUNCH_INVALID_CONFIG ... cudaErrorInvalidValue" (weekly 40421366253)

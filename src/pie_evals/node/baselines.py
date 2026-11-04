@@ -305,7 +305,7 @@ def _image_sglang(d: Path, version: str, log=print) -> Path:
 
 #: pins whose install already failed in this process: every later model of that engine fails at
 #: once instead of holding the GPU through another install (h200 weekly 40417931828 tried twice)
-def ensure_fork(engine: str, version: str, py: Path, log=print) -> str | None:
+def ensure_fork(engine: str, version: str, py: Path, log=print, backend: str | None = None) -> str | None:
     """Overlay the fork's fixes for this release on the installed wheel: the Python changes on branch
     ``pie-evals/v<version>`` of the fork named in the engine's recipe (``fork:``), over upstream's tag
     ``v<version>``. Returns the fork commit applied, or None when the release has no fork branch."""
@@ -343,7 +343,12 @@ def ensure_fork(engine: str, version: str, py: Path, log=print) -> str | None:
             subprocess.run(["git", "-C", str(site.parent), "clean", "-fdq", "--", str(site / engine)], check=True)
         else:
             shutil.rmtree(site / engine, ignore_errors=True)
-            subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "--reinstall", "--no-deps", *SPECS[engine](version)], check=True, timeout=900)
+            # the backend's own build (vLLM's ROCm wheel from its index), not PyPI's CUDA one
+            bkey = _backend_key(engine, backend)
+            spec = (BACKEND_SPECS[bkey] if bkey else SPECS[engine])(version)
+            subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "--reinstall", "--no-deps",
+                            *_uv_flags(engine, backend, version), *spec], check=True, timeout=900,
+                           env={k: v for k, v in os.environ.items() if k not in ("PIP_CONSTRAINT", "UV_CONSTRAINT", "VIRTUAL_ENV")})
     owner = fork["repo"].split("/")[0]
     url = f"https://github.com/{fork['upstream']}/compare/v{version}...{owner}:{fork['repo'].split('/')[1]}:{sha}.diff"
     diff = urllib.request.urlopen(url, timeout=120).read()
@@ -379,7 +384,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     if (d / ".ok").exists():
         ensure_python_headers(py, log=log)
         if fork:
-            ensure_fork(engine, version, py, log=log)
+            ensure_fork(engine, version, py, log=log, backend=backend)
         if cuda:
             ensure_nvcc(py, log=log)
             ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
@@ -390,7 +395,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
         shutil.rmtree(d, ignore_errors=True)  # a half-finished install
     if bkey == ("sglang", "rocm"):
         py = _image_sglang(d, version, log=log)
-        ensure_fork(engine, version, py, log=log)
+        ensure_fork(engine, version, py, log=log, backend=backend)
         return py
     log(f"baseline: installing {' '.join(spec)} into {d} (once per volume)")
     # the AMD SGLang image pins its own torch through PIP_CONSTRAINT and points VIRTUAL_ENV at its venv
@@ -414,7 +419,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
         subprocess.run([str(py), "-m", "pip", "install", "-q", *spec], check=True, timeout=timeout_s)
     ensure_python_headers(py, log=log)
     if fork:
-        ensure_fork(engine, version, py, log=log)
+        ensure_fork(engine, version, py, log=log, backend=backend)
     if cuda:
         ensure_nvcc(py, log=log)
         ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
