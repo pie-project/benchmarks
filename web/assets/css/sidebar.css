@@ -352,7 +352,6 @@
 .sidebar-item.is-selected svg .is-filled { fill: var(--color-label); }
 .sidebar-item .sidebar-out { stroke: var(--color-label-tertiary); }
 /* the platforms are named alone, with no symbol */
-.sidebar .sidebar-item.is-platform > .sidebar-glyph { display: none; }
 /* a row that leaves the site: on hover its arrow darkens and nudges toward where it goes; no ring after a click */
 .sidebar-item:focus:not(:focus-visible) { outline: none; }
 .sidebar-item.is-link .sidebar-out { transition: transform .15s ease, stroke .15s ease; }
