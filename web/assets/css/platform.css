@@ -856,7 +856,8 @@
 .platform-eye { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 5px; color: var(--color-label-tertiary); background: none; cursor: pointer; opacity: 0; }
 .platform-eye:focus:not(:focus-visible) { outline: none; }
 .platform-eye svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
-.platform-eye:hover { color: var(--color-label-secondary); background: var(--color-fill); }
+.platform-eye { pointer-events: none; }  /* only a sign: the whole entry, its name to its Overall, hides and shows the machine */
+.platform-table th.platform-row, .platform-table td.is-overall { cursor: pointer; }
 .platform-table tbody tr:has(> th.platform-row:hover, > td.is-overall:hover) .platform-eye,
 .platform-eye:focus-visible,
 .platform-eye[aria-pressed="true"] { opacity: 1; }
