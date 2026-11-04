@@ -861,7 +861,12 @@
 .platform-eye:focus-visible,
 .platform-eye[aria-pressed="true"] { opacity: 1; }
 .platform-table tbody tr.is-hidden-row .platform-chip { color: var(--color-label-tertiary); }
-@media (hover: none) { .platform-eye { opacity: 1; } }  /* no hover on a phone: the eye always shows */
+@media (hover: none) { .platform-eye { opacity: 1; } }
+/* with Overall shown, the eye sits at the row's right end, in Overall's place: the hovered row's Overall gives way to it */
+.platform-table:not(.is-tight) th.platform-row .platform-eye,
+.platform-table.is-tight td.is-overall .platform-eye { display: none; }
+.platform-table:not(.is-tight) tbody tr:has(> th.platform-row:hover, > td.is-overall:hover) td.is-overall .platform-cell,
+.platform-table:not(.is-tight) tbody tr:has(.platform-eye[aria-pressed="true"]) td.is-overall .platform-cell { visibility: hidden; }  /* no hover on a phone: the eye always shows */
 .platform-table tbody th.platform-row { padding-right: 32px; }  /* room for the eye after the longest name */
 
 /* the two engine pop-ups read as one phrase, as a Finder search rule: [pie] vs [Strongest] */
