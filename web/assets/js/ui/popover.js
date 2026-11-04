@@ -64,7 +64,7 @@ window.Pie = window.Pie || {};
 
   // a Limit setting: its options, a checkmark on the current one, like the other menus
   // a page's own menus by prefix: limit: for the Limit page, board: for the Leaderboard
-  const COMPACT = new Set(["board:size", "board:moe", "board:metric", "board:load", "board:use-engine", "board:scale-engine"]);
+  const COMPACT = new Set(["board:size", "board:moe", "board:metric", "board:use-engine", "board:scale-engine"]);
   // a long list opens with a field over it that narrows it as one types, as Artificial Analysis sets its model menus
   const SEARCHABLE = new Set(["board:model", "board:scale"]);
   const isLimit = (key) => /^(limit|board|grid):/.test(String(key));
