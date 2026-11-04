@@ -874,4 +874,11 @@
 /* the two engine pop-ups read as one phrase, as a Finder search rule: [pie] vs [Strongest] */
 .platform-setup .platform-vs { margin: 0 6px; color: var(--color-label-secondary); }
 
-.platform-table td.is-openable { cursor: pointer; }  /* a measured cell opens its run on the Results page */
+.platform-table td.is-openable { position: relative; cursor: pointer; }  /* a measured cell opens its run on the Results page */
+/* hovered, its number gives way to a results sheet: the rows it opens */
+.platform-open { display: none; position: absolute; top: 50%; right: 14px; transform: translateY(-50%); color: var(--color-label-tertiary); }
+.platform-open svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.platform-table td.is-openable:hover .platform-open { display: block; }
+.platform-table td.is-openable:hover > .platform-cell { background: transparent; }
+.platform-table td.is-openable:hover > .platform-cell > * { visibility: hidden; }  /* the cell stays, so its card still opens */
+@media (hover: none) { .platform-table td.is-openable:hover .platform-open { display: none; } .platform-table td.is-openable:hover > .platform-cell > * { visibility: visible; } }
