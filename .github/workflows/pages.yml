@@ -41,7 +41,7 @@ jobs:
         with: { name: site-files, path: site, retention-days: 1 }  # one deploy every 5 minutes: 3 days of bundles filled the artifact quota
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, laptop-pages]  # GitHub's own runners fill up with CI and TPU waits: a deploy queued 10+ minutes behind them
     # a started deploy always finishes: cancelling one mid-way leaves Pages stuck in "updating_pages"
     concurrency: { group: pages-deploy, cancel-in-progress: false }
     permissions: { contents: read, pages: write, id-token: write }

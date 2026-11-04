@@ -213,7 +213,7 @@ window.Pie = window.Pie || {};
         number("latency_ms_p50", "E2E p50", "Latency", "ms", 0),
         number("latency_ms_p99", "E2E p99", "Latency", "ms", 0),
         number("resident_gib", "Memory", "Resources", "GiB", 1),
-        text("commit", "pie commit", "Run", { code: true }),
+        text("commit", "Pie commit", "Run", { code: true }),
         text("measured", "Measured", "Run", { code: true }),
         text("note", "Note", "Run", { wide: true }),
       ],

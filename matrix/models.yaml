@@ -2172,3 +2172,27 @@ catalog:
   - {name: MiniMax-M3.1-Flash, base_model: MiniMaxAI/MiniMax-M3.1-Flash, family: minimax_m3, params_b: 428, active_b: 23, layers: 60, hidden_size: 6144, experts: 128, top_k: 4, context: 1048576, license: MiniMax community, precision: mxfp8, mtp: true}
   - {name: Nemotron-3-Ultra, base_model: nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16, family: nemotron_h, params_b: 550, active_b: 55, layers: 108, hidden_size: 8192, experts: 512, top_k: 22, context: 1048576, license: OpenMDW-1.1, precision: bf16, mtp: true}  # 108 blocks: 48 Mamba-2, 48 MoE, 12 attention
   - {name: Nemotron-3-Super, base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16, family: nemotron_h, params_b: 120, active_b: 12, precision: bf16}
+
+# The site's model names, one pattern for all: Family-Version-Size, the total size (the active size is on each model's card).
+# Models already named so (Muse-Glimmer-30B, Qwen3.5-9B) are not listed.
+names:
+  deepseek-v4-flash: DeepSeek-V4-Flash-284B
+  deepseek-v4.1-flash: DeepSeek-V4.1-Flash-552B
+  gemma-4-12b: Gemma-4-12B
+  gemma-4-26b-a4b: Gemma-4-26B
+  gemma-4-31b: Gemma-4-31B
+  gemma-4-e2b: Gemma-4-E2B
+  gemma-4-e4b: Gemma-4-E4B
+  glm-5.3: GLM-5.3-744B
+  glm-5.3-flash: GLM-5.3-Flash-320B
+  gpt-oss-120b: GPT-OSS-120B
+  gpt-oss-20b: GPT-OSS-20B
+  hy4-preview: Hy4-770B
+  kimi-k3: Kimi-K3-2.8T
+  mimo-v2.6-flash-rl: MiMo-V2.6-Flash-RL-309B
+  minimax-m3.1-flash: MiniMax-M3.1-Flash-428B
+  muse-spark-open-816b-a42b: Muse-Spark-Open-816B
+  nvidia-nemotron-3-super-120b-a12b: Nemotron-3-Super-120B
+  nvidia-nemotron-3-ultra-550b-a55b: Nemotron-3-Ultra-550B
+  qwen3.6-35b-a3b: Qwen3.6-35B
+  qwen3.8-flash-next: Qwen3.8-Flash-Next-125B
