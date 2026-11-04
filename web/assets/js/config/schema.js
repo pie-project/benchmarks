@@ -188,7 +188,7 @@ window.Pie = window.Pie || {};
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
         reference("model", "Model", "Setup", "models"),
-        text("platform", "Platform", "Setup", { hidden: true }),  // only a filter: the hardware already names it
+        text("platform", "Platform", "Setup"),
         reference("hardware", "Hardware", "Setup", "hardware"),
         reference("workload", "Workload", "Setup", "workloads"),
         text("status", "Status", "Setup", { status: true }),
