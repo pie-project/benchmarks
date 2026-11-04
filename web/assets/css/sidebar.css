@@ -350,6 +350,10 @@
 .sidebar-item.is-selected { background: var(--color-fill); font-weight: 500; }
 .sidebar-item.is-selected svg, .sidebar-item.is-selected .sidebar-glyph[style] svg { stroke: var(--color-label); }
 .sidebar-item.is-selected svg .is-filled { fill: var(--color-label); }
+/* a platform keeps its coloured tile, as the tables show it: the white mark on its tint */
+.sidebar .sidebar-item.is-platform .sidebar-glyph[style] { width: 16px; height: 16px; border-radius: 4px; background: var(--tint); }
+.sidebar .sidebar-item.is-platform .sidebar-glyph[style] svg { width: 11px; height: 11px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sidebar .sidebar-item.is-platform .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
 .sidebar-item .sidebar-out { stroke: var(--color-label-tertiary); }
 /* a row that leaves the site: on hover its arrow darkens and nudges toward where it goes; no ring after a click */
 .sidebar-item:focus:not(:focus-visible) { outline: none; }
