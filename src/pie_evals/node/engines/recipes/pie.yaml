@@ -100,6 +100,13 @@ default:
             engine_option:
               value: {max_state_slots: 64}
   platform:
+    tpu-v6e-1:
+      knobs:
+        max_forward_tokens:
+          value: 8192
+          rationale: >
+            The batched prefill at the backend's 2048 rows fires 4 prompts at a time: pf256-512 50k tok/s on
+            Qwen3-0.6B against vLLM-TPU's 230k (#1184).
     tpu-v5e-1:
       family:
         gpt_oss:
