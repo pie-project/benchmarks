@@ -9,6 +9,7 @@ a throughput (concurrency) run.
 """
 from __future__ import annotations
 
+import functools
 import json
 import re
 import subprocess
@@ -464,12 +465,21 @@ def attempt_note(r: dict) -> str:
     return (msg[:1].upper() + msg[1:])[:160] if msg else ("Failed" if r["status"] == "fail" else "Not run")
 
 
-def unsupported_reasons(a2m: dict[str, str], config: dict, hardware_ids: list[str], engine_ids: list[str], model_ids: list[str]) -> dict[tuple, str]:
-    """{(hardware, engine, model): reason} for setups the matrix declares unsupported, or that an engine has no build of."""
-    from pie_evals.plan.matrix import Matrix, selector_matches
-    from pie_evals.schema import Tier
+@functools.cache
+def matrix_cells():
+    """The matrix and every cell it expands to, once per build: expanding takes minutes, and three tables read it."""
+    from pie_evals.plan.matrix import Matrix
 
     m = Matrix.load(ROOT / "matrix")
+    return m, m.expand()
+
+
+def unsupported_reasons(a2m: dict[str, str], config: dict, hardware_ids: list[str], engine_ids: list[str], model_ids: list[str]) -> dict[tuple, str]:
+    """{(hardware, engine, model): reason} for setups the matrix declares unsupported, or that an engine has no build of."""
+    from pie_evals.plan.matrix import selector_matches
+    from pie_evals.schema import Tier
+
+    m, cells = matrix_cells()
     wanted = set(all_models(config))
     pie_arts = {a.baseline_of for a in m.artifacts.values() if a.id in wanted and a.baseline_of}
     # every copy of a configured model counts, not only the configured arm: an arm left out of
@@ -477,7 +487,7 @@ def unsupported_reasons(a2m: dict[str, str], config: dict, hardware_ids: list[st
     arms = {a.id for a in m.artifacts.values() if a.id in wanted or a.id in pie_arts or a.baseline_of in pie_arts}
     benches = set(config.get("benchmarks", []))
     seen: dict[tuple, list[str | None]] = {}
-    for c in m.cells_for(Tier.TARGETED):
+    for c in m.cells_for(Tier.TARGETED, cells):
         if c.platform.id not in hardware_ids or str(c.engine) not in engine_ids or c.artifact.id not in arms:
             continue
         # the release runs pair pie with its own weights and every other engine with its copy, nothing else
@@ -681,11 +691,11 @@ def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: l
 
 def gpu_unsupported(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[str], benches: list[str]) -> dict[tuple, str]:
     """{(gpu, engine, model): reason} for GPU setups a support rule declares unsupported (not the fit rule)."""
-    from pie_evals.plan.matrix import Matrix, selector_matches
+    from pie_evals.plan.matrix import selector_matches
 
-    m = Matrix.load(ROOT / "matrix")
+    m, cells = matrix_cells()
     out: dict[tuple, str] = {}
-    for c in m.expand():
+    for c in cells:
         if c.platform.id not in gpu_ids or str(c.engine) not in engine_ids or (benches and c.workload.id not in benches):
             continue
         # the key has no workload, so only the Raw request decides it: speculation's own gaps (no drafter) must not
@@ -706,11 +716,9 @@ def gpu_unsupported(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[st
 def gpu_unsupported_setups(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[str]) -> dict[tuple, str]:
     """{(gpu, engine, model, category): reason} for any GPU setup (a miniature's too) a support rule declares
     unsupported. Unlike gpu_unsupported it never blanks a measured row: it only explains a cell no run filled."""
-    from pie_evals.plan.matrix import Matrix
-
-    m = Matrix.load(ROOT / "matrix")
+    m, cells = matrix_cells()
     out: dict[tuple, str] = {}
-    for c in m.expand():
+    for c in cells:
         if c.platform.id not in gpu_ids or str(c.engine) not in engine_ids or c.workload.id not in WL_PRIORITY:
             continue
         if c.program.id != "text-completion-bench" or c.artifact.id not in a2m:
