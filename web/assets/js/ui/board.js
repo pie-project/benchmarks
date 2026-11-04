@@ -257,6 +257,75 @@ window.Pie = window.Pie || {};
     return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${summary.title} by engine`)}">${lines(L, W - R, y, top)}<line class="board-axis" x1="${L}" x2="${W - R}" y1="${base}" y2="${base}"/>${marks}</svg>`;
   };
 
+  // pie's gain, cell by cell: every machine, model and setup where pie and another engine both ran, as one dot at pie's
+  // speed over the fastest other engine's, as the platform pages' Relative Speed reads a cell; a row per platform
+  const GAIN = { id: "gain", title: "Pie’s gain, cell by cell", sub: "Pie against the fastest other engine on each machine, model and setup · Right of zero, Pie is faster" };
+  const GAIN_SETUPS = [
+    { workload: "raw", key: "decode_tok_s", label: "Decode", unit: "tok/s" },
+    { workload: "raw", key: "prefill_tok_s", label: "Prefill", unit: "tok/s" },
+    { workload: "spec", key: "decode_tok_s", label: "Spec decode", unit: "tok/s" },
+    { workload: "throughput", key: "output_tok_s", label: "Batched decode", unit: "tok/s" },
+    { workload: "prefill_batch", key: "prefill_tok_s", label: "Batched prefill", unit: "tok/s" },
+  ];
+  const signedPct = (g) => `${g >= 0 ? "+" : "−"}${Math.abs(Math.round(g * 100))}%`;
+  const gainCells = (rows) => {
+    const cells = [];
+    for (const s of GAIN_SETUPS) {
+      const by = {};
+      // a model slice is held only against the same slice
+      for (const r of rows) if (r.workload === s.workload && r[s.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}`] ||= []).push(r);
+      for (const list of Object.values(by)) {
+        const pie = list.find((r) => r.engine === "pie");
+        const others = list.filter((r) => r.engine !== "pie");
+        if (!pie || !others.length) continue;
+        const best = others.reduce((a, b) => (b[s.key] > a[s.key] ? b : a));
+        cells.push({ s, pie, best, gain: pie[s.key] / best[s.key] - 1, platform: Pie.platformOf(Pie.store.index.hardware[pie.hardware] || {}) });
+      }
+    }
+    return cells;
+  };
+  // a fixed scatter in [-1, 1] from a cell's name, so the dots keep their places from one drawing to the next
+  const jitter = (text) => {
+    let h = 2166136261;
+    for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
+    return ((h >>> 0) / 4294967295) * 2 - 1;
+  };
+  const gains = (rows) => {
+    const all = gainCells(rows);
+    const groups = PLATFORM_ORDER.map((p) => ({ p, cells: all.filter((c) => c.platform === p) })).filter((g) => g.cells.length);
+    if (!groups.length) return `<p class="board-empty">No runs yet</p>`;
+    // pie's speed over the other's on a log scale, so twice as fast and half as fast sit as far from zero; past the ends
+    // a dot waits at the edge, its own number in its hover card
+    const W = 1040, ROW = 56, NAME = 120, L = NAME + 16, R = 16, T = 8, B = 26;
+    const LO = Math.log2(0.5), HI = Math.log2(4);
+    const H = T + groups.length * ROW + B;
+    const x = (g) => L + (W - L - R) * (Math.min(HI, Math.max(LO, Math.log2(1 + g))) - LO) / (HI - LO);
+    const ticks = [-0.5, 0, 1, 3].map((g) => `${g ? `<line class="board-grid" x1="${x(g)}" x2="${x(g)}" y1="${T}" y2="${H - B}"/>` : ""}<text class="board-tick" x="${x(g)}" y="${H - B + 18}">${g ? signedPct(g) : "0"}</text>`).join("");
+    const zero = `<line class="board-axis" x1="${x(0)}" x2="${x(0)}" y1="${T}" y2="${H - B}"/>`;
+    const body = groups.map((grp, i) => {
+      const mid = T + i * ROW + ROW / 2;
+      const dots = grp.cells.map((c) => {
+        const cx = x(c.gain), cy = mid + jitter(`${c.pie.hardware}|${c.pie.model}|${c.pie.miniature}|${c.s.label}`) * 15;
+        const tone = c.gain > 0 ? "is-ahead" : c.gain < 0 ? "is-behind" : "";
+        const tipRows = [["Machine", machineName(c.pie.hardware)], ["Model", `${names().model(c.pie.model)}${c.pie.miniature ? " (slice)" : ""}`], ["Setup", c.s.label],
+          [names().engine("pie"), full(c.pie[c.s.key], c.s.unit)], [names().engine(c.best.engine), full(c.best[c.s.key], c.s.unit)]];
+        return `<g class="board-bar board-cell ${tone}" data-tip-engine="pie" data-tip-head="${esc(`${names().engine("pie")} vs ${names().engine(c.best.engine)}`)}" data-tip-value="${esc(signedPct(c.gain))}" data-tip-rows="${esc(JSON.stringify(tipRows))}">
+          <circle class="board-hit" cx="${cx}" cy="${cy}" r="5"/><circle class="board-cell-dot" cx="${cx}" cy="${cy}" r="2.6"/></g>`;
+      }).join("");
+      // the median as a short rule across the row, its number beside it
+      const sorted = grp.cells.map((c) => c.gain).sort((a, b) => a - b);
+      const n = sorted.length, median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+      const ahead = grp.cells.filter((c) => c.gain > 0).length;
+      return `${i ? `<line class="board-axis is-faint" x1="0" x2="${W}" y1="${T + i * ROW}" y2="${T + i * ROW}"/>` : ""}
+        <text class="board-row-name" x="8" y="${mid - 3}"><tspan class="board-row-platform">${esc(Pie.schema[grp.p]?.short || grp.p)}</tspan></text>
+        <text class="board-machine is-start" x="8" y="${mid + 12}">${esc(`Ahead in ${ahead} of ${n}`)}</text>
+        <g class="board-swarm">${dots}</g>
+        <line class="board-median" x1="${x(median)}" x2="${x(median)}" y1="${mid - 20}" y2="${mid + 20}"/>
+        <text class="board-median-label" x="${x(median) + 5}" y="${mid - 13}">Median ${esc(signedPct(median))}</text>`;
+    }).join("");
+    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(GAIN.title)}">${ticks}${zero}${body}</svg>`;
+  };
+
   // across model sizes: each platform's fastest machine and engine on each model, by its parameters; dense
   // models only, since a mixture of experts reads a fraction of its weights per token; both axes are logarithmic
   const SIZES = [
@@ -533,6 +602,8 @@ window.Pie = window.Pie || {};
     metric:         ["#0A84FF", '<path d="M4 6h16M4 12h12M4 18h5"/><path d="M14.5 18.1v3.5"/>'],  // blue, text being written: three lines 6 apart, the cursor a clear step after the short last one
     scaling:        ["#8E8E93", Pie.icons.hardware],  // grey, a chip
     use:            ["#AC8E68", Pie.icons.methods],  // brown, a roofline
+    gain:           ["#00C7BE"],  // mint: pie against the others, cell by cell
+    load:           ["#FF9F0A"],  // orange: speed as the requests pile up
   };
   // a chart card's tools at its title's end, as Artificial Analysis sets them: a link to it, its image, its data
   const TOOLS = (id) => `<button class="board-card-tool" type="button" data-board-link="${id}" aria-label="Copy a link to this chart" title="Copy a link to this chart"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.9 9.1a2.5 2.5 0 0 0 3.5 0l2.1-2.1a2.5 2.5 0 0 0-3.5-3.5l-.9.9"/><path d="M9.1 6.9a2.5 2.5 0 0 0-3.5 0L3.5 9a2.5 2.5 0 0 0 3.5 3.5l.9-.9"/></svg></button><button class="board-card-tool" type="button" data-board-save="${id}" aria-label="Save as image" title="Save as image"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.25" y="3" width="11.5" height="10" rx="2"/><circle cx="5.75" cy="6.25" r="1"/><path d="m2.5 11.5 3.2-3.2 2.3 2.3 2-2 3.5 3.5"/></svg></button><button class="board-card-tool" type="button" data-board-data="${id}" aria-label="Download the data" title="Download the data (log in)"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.25" y="3" width="11.5" height="10" rx="2"/><path d="M2.25 6.5h11.5M2.25 9.75h11.5M7 6.5V13"/></svg></button>`;
@@ -599,7 +670,7 @@ window.Pie = window.Pie || {};
       .map((id) => `<span class="board-key"><span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}</span>`).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     const outline = [
-      ["Head to head", SUMMARY.map((m) => [m.id, m.title])],
+      ["Head to head", [...SUMMARY.map((m) => [m.id, m.title]), [GAIN.id, "Pie’s gain"]]],
       ...(Pie.signedIn() ? [["Speed by model size", [["size", "Dense models"], ["moe", "MoE models"]]]] : []),  // for an account only
       ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"], ...(Pie.signedIn() ? [[USE.id, "Share of the limit"]] : [])]],
       ...(Pie.signedIn() ? [["Accuracy", [["accuracy", "Score gap"]]]] : []),  // for an account only, as its section
@@ -624,7 +695,8 @@ window.Pie = window.Pie || {};
             <div class="board-section-text"><h1 class="board-title">Head to head</h1>
             <p class="board-lede">Every engine compared with the others on each machine and model they share.</p></div>
           </div>
-          <div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has(m.id) ? "Head-to-head decode win rate" : m.sub, gridCards.has(m.id) ? matrix(m, rows) : ranking(m, rows), viewToggle(m.id), false)).join("")}</div>${""/* the banner and the Changelog, off for now: hero() */}
+          <div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has(m.id) ? "Head-to-head decode win rate" : m.sub, gridCards.has(m.id) ? matrix(m, rows) : ranking(m, rows), viewToggle(m.id), false)).join("")}</div>
+          <div class="board-stack">${card(GAIN.id, GAIN.title, GAIN.sub, gains(rows))}</div>${""/* the banner and the Changelog, off for now: hero() */}
           ${Pie.signedIn() ? `<h1 class="board-title">Speed by model size</h1>
           <p class="board-lede">Each platform's fastest machine and engine. MoE models by active parameters.</p>
           <div class="board-stack">${sizeCard(rows)}${moeCard(rows)}</div>` : ""}
@@ -742,7 +814,8 @@ window.Pie = window.Pie || {};
     const wide = engine === "mlxlm";
     const head = wide ? g.dataset.tipHead.slice(names().engine(engine).length).trim() : g.dataset.tipHead;
     return `<div class="board-tip-head"><svg class="board-tip-logo" ${wide ? 'style="width: 18.7px" viewBox="0 0 27.2 16"' : 'viewBox="0 0 16 16"'} aria-hidden="true">${logo(engine, wide ? 5.6 : 0, 0, 16)}</svg>${esc(head)}</div>
-    <div class="board-tip-value">${esc(g.dataset.tipValue)}</div>${g.dataset.tipNote ? `<div class="board-tip-note">${esc(g.dataset.tipNote)}</div>` : ""}`;
+    <div class="board-tip-value">${esc(g.dataset.tipValue)}</div>${g.dataset.tipNote ? `<div class="board-tip-note">${esc(g.dataset.tipNote)}</div>` : ""}${
+      g.dataset.tipRows ? JSON.parse(g.dataset.tipRows).map(([k, v]) => `<div class="board-tip-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("") : ""}`;  // a cell's own figures, as a battle's card lists them
   };
   let tipFor = null;
   element.addEventListener("pointermove", (event) => {
@@ -940,7 +1013,8 @@ window.Pie = window.Pie || {};
   const saveData = (cardElement) => {
     if (!cardElement) return;
     const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const bars = [...cardElement.querySelectorAll(".board-bar[data-tip-head]")].map((g) => [g.dataset.tipHead, g.dataset.tipValue, g.dataset.tipNote]);
+    const bars = [...cardElement.querySelectorAll(".board-bar[data-tip-head]")].map((g) => [g.dataset.tipHead, g.dataset.tipValue,
+      g.dataset.tipNote || (g.dataset.tipRows ? JSON.parse(g.dataset.tipRows).map(([k, v]) => `${k}: ${v}`).join("; ") : "")]);
     const points = [...cardElement.querySelectorAll(".board-point > title, .board-bar > title")].map((t) => [t.textContent]);
     const rows = bars.length ? [["Name", "Value", "Note"], ...bars] : [["Point"], ...points];
     if (rows.length < 2) return;

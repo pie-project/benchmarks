@@ -62,7 +62,7 @@
 .skeleton-block .skeleton-bar.is-short { width: 60%; }
 
 /* the page drawn in place of its outline fades in */
-.content.is-revealing > :is(.overview, .method, .table-container, .filter-bar) { animation: skeleton-reveal .32s ease-out both; }
+.content.is-revealing > :not(.skeleton) { animation: skeleton-reveal .32s ease-out both; }  /* every page, whichever it is */
 @keyframes skeleton-reveal { from { opacity: 0; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
