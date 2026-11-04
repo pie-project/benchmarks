@@ -157,7 +157,7 @@ artifacts:
     scheme: mxfp4
     kind: miniature
     # matches catalog row gptoss-20b-mini-bf16-mxfp4-kv-bf16 (layers: 5; pie PR pie-evals/gptoss-mini-sku)
-    miniature: {layers: "0-4", experts: 16, period: 2, note: "sliding/full pairs; 16 of 32 experts"}
+    miniature: {layers: "0-4", experts: 16, period: 2, shrink_family: gpt_oss, note: "sliding/full pairs; 16 of 32 experts"}
     expected_gib: 2.5
     tiers: [smoke, nightly, weekly]
     pie_sku: gptoss-20b-mini-bf16-mxfp4-kv-bf16   # the tp>1 artifact is imported as this row (import picks the first fitting row otherwise: the u4g64 twin, which has no tp2)
@@ -722,7 +722,7 @@ artifacts:
     family: gpt_oss
     scheme: mxfp4
     kind: miniature
-    miniature: {layers: "0-23", experts: 32, period: 2, note: "12 of 18 sliding/full pairs; 32 of 128 experts; 12.8 GiB download, for 24 GB cards"}
+    miniature: {layers: "0-23", experts: 32, period: 2, shrink_family: gpt_oss, note: "12 of 18 sliding/full pairs; 32 of 128 experts; 12.8 GiB download, for 24 GB cards"}
     pie_sku: gptoss-20b-bf16-mxfp4-kv-bf16   # 24 layers of 32 experts at the 120B's widths are the 20B's shapes: pie has a row for them there
     platforms: [rtx4090-x1, pro4500-x1, rtx5090-x1, tpu-v6e-1, tpu-v5e-1, tpu-v4-8]
     max_context: 4096
@@ -745,7 +745,7 @@ artifacts:
     family: gpt_oss
     scheme: mxfp4
     kind: miniature
-    miniature: {layers: "0-11", experts: 32, period: 2, note: "6 of 18 sliding/full pairs; 32 of 128 experts, for a 16 GB TPU v5e"}
+    miniature: {layers: "0-11", experts: 32, period: 2, shrink_family: gpt_oss, note: "6 of 18 sliding/full pairs; 32 of 128 experts, for a 16 GB TPU v5e"}
     pie_sku: gptoss-20b-bf16-mxfp4-kv-bf16-l12
     platforms: [tpu-v5e-1]
     max_context: 4096
@@ -778,7 +778,7 @@ artifacts:
     family: kimi_k3
     scheme: mxfp4
     kind: miniature
-    miniature: {layers: "0-3", experts: 16, period: 4, attn_res_block_size: 4, note: "shrink family kimi_k3; one KDA/MLA period of 93 layers, 16 of 896 experts, for a 16 GB TPU v5e"}
+    miniature: {layers: "0-3", experts: 16, period: 4, attn_res_block_size: 2, note: "shrink family kimi_k3; one KDA/MLA period of 93 layers, 16 of 896 experts, for a 16 GB TPU v5e"}
     pie_sku: kimik3-l4-bf16-mxfp4-kv-bf16-e16
     platforms: [tpu-v5e-1]
     max_context: 4096
