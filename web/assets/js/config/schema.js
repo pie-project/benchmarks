@@ -94,7 +94,7 @@ window.Pie = window.Pie || {};
     },
     // pie against a reference engine: token distributions, kernel tests and benchmark scores side by side
     checks: {
-      label: "Quality Checks",
+      label: "Quality",
       title: "Quality",
       section: "home",  // in Compare, where Accuracy was
       view: "checks",
