@@ -368,6 +368,12 @@ default:
             A v5e chip has 15.75 GiB: at 0.90 neither pie (0 MiB left for KV) nor vLLM-TPU
             (14.32 GiB used > 14.17 cap) boots gemma-4-E4B's 14.3 GiB of weights (b5 39658500805);
             every engine gets the same higher share there.
+        max_forward_tokens:
+          value: 1024
+          rationale: >
+            pie's XLA fire at the backend's 2048 rows (2176 with the padding room) needs 15.8 GiB of HLO
+            temporaries for gpt-oss-20b's 5-layer cut and Hy4's 6-layer one, past a v5e's 15.75 GiB (#1184);
+            1024 rows still hold a Raw prompt in one fire.
   backend:
     cuda:
       knobs:
