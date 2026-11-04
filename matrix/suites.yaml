@@ -129,14 +129,14 @@ suites:
         artifact_kind: full
         tp: 1
         os: macos
-        workload: [ob-story-200, ob-512-200, raw-512-256, spec-512-256, ob-short-100, ob-advanced-500, ctx-4k-256, ctx-8k-256, c4, ss-512-256, c32, pf256-512, pf32-512]
+        workload: [ob-story-200, ob-512-200, raw-512-256, spec-512-256, ob-short-100, ob-advanced-500, ctx-4k-256, ctx-8k-256, c4, ss-512-256, c32, pf256-512, pf32-512, pf8-512]
       - engine: [llamacpp, mlxlm, splash]
         baseline: true
         program: text-completion-bench
         artifact_kind: full
         tp: 1
         os: macos
-        workload: [ob-story-200, ob-512-200, raw-512-256, spec-512-256, ob-short-100, ob-advanced-500, ctx-4k-256, ctx-8k-256, c4, ss-512-256, c32, pf256-512, pf32-512]
+        workload: [ob-story-200, ob-512-200, raw-512-256, spec-512-256, ob-short-100, ob-advanced-500, ctx-4k-256, ctx-8k-256, c4, ss-512-256, c32, pf256-512, pf32-512, pf8-512]
       # a model slice (a model cut to fit a smaller Mac): the same Mac rows, every engine on the same cut
       - engine: pie
         baseline: false
@@ -144,14 +144,14 @@ suites:
         artifact_kind: miniature
         tp: 1
         os: macos
-        workload: [raw-512-256, spec-512-256, c32, pf32-512]
+        workload: [raw-512-256, spec-512-256, c32, pf32-512, pf8-512]
       - engine: [llamacpp, mlxlm, splash]
         baseline: true
         program: text-completion-bench
         artifact_kind: miniature
         tp: 1
         os: macos
-        workload: [raw-512-256, spec-512-256, c32, pf32-512]
+        workload: [raw-512-256, spec-512-256, c32, pf32-512, pf8-512]
       # cold-cache prefill (fair definition): every engine gets the same cold prompt list
       - engine: pie
         baseline: false
@@ -174,14 +174,14 @@ suites:
         artifact: qwen3.8-flash-next-mlx2-mini8
         tp: 1
         os: macos
-        workload: [raw-512-256, c32, pf256-512, pf32-512]
+        workload: [raw-512-256, c32, pf256-512, pf32-512, pf8-512]
       - engine: [mlxlm, llamacpp, splash]
         baseline: true
         program: text-completion-bench
         artifact: [qwen3.8-flash-next-mlx2-mini8-mlxlm, qwen3.8-flash-next-q2k-mini8-llamacpp, qwen3.8-flash-next-q2k-mini8-splash]
         tp: 1
         os: macos
-        workload: [raw-512-256, c32, pf256-512, pf32-512]
+        workload: [raw-512-256, c32, pf256-512, pf32-512, pf8-512]
 
 # Escalation: when a smoke cell of a family is flagged (regression confirmed),
 # every nightly cell of that family on the same platform is promoted into the
