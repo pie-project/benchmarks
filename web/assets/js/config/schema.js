@@ -181,7 +181,7 @@ window.Pie = window.Pie || {};
       columns: [],
     },
     results: {
-      label: "Results",
+      label: "Speed",
       section: "measurements",
       filters: ["engine", "model", "platform", "hardware", "workload", "status"],  // in the order of the columns they filter
       numbered: true,

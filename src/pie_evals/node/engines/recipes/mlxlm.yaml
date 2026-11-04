@@ -36,6 +36,14 @@ default:
     num_draft_tokens:
       value: null
       rationale: null keeps mlx-lm's default draft length (--num-draft-tokens 3).
+  family:
+    qwen4_exp:
+      knobs:
+        server_module:
+          value: mlx_vlm.server
+          rationale: >
+            mlx-lm 0.32.2 has no qwen4_exp model; mlx-vlm (MLX's own package for this model) serves
+            Qwen3.8-Flash-Next from the same MLX checkpoint pie reads.
 
 competitive:
   extends: default

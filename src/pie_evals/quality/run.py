@@ -81,7 +81,7 @@ def generate(engine: str, art, snapshot: Path | None, tok_dir: Path | None, pie_
     rendered = _render(tok_dir, prompts)
     bos = _tokenizer(tok_dir).bos_token
     if engine == "mlxlm":
-        return mlxlm_generate(snapshot, rendered, max_tokens, bos, log)
+        return mlxlm_generate(snapshot, rendered, max_tokens, bos, log, family=art.family)
     if engine == "llamacpp":
         return llamacpp_generate(art, rendered, max_tokens, bos, log)
     raise ValueError(f"no engine {engine!r} (one of {', '.join(ENGINES)})")

@@ -109,6 +109,10 @@ jobs:
           bin="$d/llama-$llama"
           [ -x "$bin/llama-server" ] || { mkdir -p "$bin" && curl -fsSL "https://github.com/ggml-org/llama.cpp/releases/download/$llama/llama-$llama-bin-macos-arm64.tar.gz" | tar xz -C "$bin" --strip-components=1; }
           { echo "MLX_PY=$py/bin/python"; echo "LLAMA_SERVER_BIN=$bin/llama-server"; } >> "$GITHUB_ENV"
+          # mlx-lm has no Qwen3.8-Flash-Next model; its MLX arm runs on mlx-vlm (recipes/mlxlm.yaml, family qwen4_exp)
+          vlm="$d/mlx-vlm-0.7.11"
+          [ -x "$vlm/bin/python" ] || { uv venv --quiet --python 3.12 "$vlm" && uv pip install --quiet --python "$vlm/bin/python" "mlx-vlm==0.7.11"; }
+          echo "MLX_VLM_PY=$vlm/bin/python" >> "$GITHUB_ENV"
           splash=$(pin splash); sdir="$d/splash-$splash"
           if [ ! -x "$sdir/bin/splash" ]; then
             rm -rf "$sdir" && mkdir -p "$sdir/bin"

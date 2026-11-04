@@ -32,7 +32,7 @@ def engine_for(art) -> str:
         return "llamacpp"
     if art.source_format == SourceFormat.SPLASH:
         return "splash"
-    if (art.baseline_label or "").lower() == "mlx-lm":
+    if (art.baseline_label or "").lower() in ("mlx-lm", "mlx"):
         return "mlxlm"
     return "pie"
 
@@ -117,7 +117,21 @@ def _map(fn, items: list) -> list[str]:
         return list(pool.map(fn, items))
 
 
-def mlxlm_generate(snapshot: Path, rendered: list[str], max_tokens: int, bos: str | None, log) -> tuple[list[str], str]:
+def mlxvlm_generate(snapshot: Path, rendered: list[str], max_tokens: int, bos: str | None, log) -> tuple[list[str], str]:
+    """mlx-vlm on the same rendered prompts, greedy, one at a time: the MLX arm of a model mlx-lm has no code for."""
+    py = os.environ.get("MLX_VLM_PY") or "/tmp/pievenv/bin/python"
+    script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "quality_mlxvlm.py"
+    with tempfile.TemporaryDirectory() as tmp:
+        items, out = Path(tmp) / "items.json", Path(tmp) / "out.json"
+        items.write_text(json.dumps([{"prompt": strip_bos(p, bos), "max_tokens": max_tokens} for p in rendered]))
+        subprocess.run([py, str(script), str(snapshot), str(items), str(out)], check=True, timeout=12 * 3600)
+        texts = json.loads(out.read_text())
+    return texts, "mlx-vlm " + _version([py, "-c", "import mlx_vlm; print(mlx_vlm.__version__)"])
+
+
+def mlxlm_generate(snapshot: Path, rendered: list[str], max_tokens: int, bos: str | None, log, family: str | None = None) -> tuple[list[str], str]:
+    if family == "qwen4_exp":  # mlx-lm ships no qwen4_exp model (recipes/mlxlm.yaml)
+        return mlxvlm_generate(snapshot, rendered, max_tokens, bos, log)
     py = os.environ.get("MLX_PY") or "/tmp/pievenv/bin/python"
     port = _free_port()
     cmd = [py, "-m", "mlx_lm", "server", "--model", str(snapshot), "--host", "127.0.0.1", "--port", str(port),

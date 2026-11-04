@@ -158,6 +158,21 @@ suites:
         tp: 1
         os: macos
         workload: [cold-ss-128-64, cold-ss-512-200, cold-ctx-4k-256]
+      # Qwen3.8-Flash-Next with 2-bit experts does not fit a 16 GB Mac: every engine runs the same miniature there
+      - engine: pie
+        baseline: false
+        program: text-completion-bench
+        artifact: qwen3.8-flash-next-mlx2-mini8
+        tp: 1
+        os: macos
+        workload: [raw-512-256, c32, pf256-512]
+      - engine: [mlxlm, llamacpp, splash]
+        baseline: true
+        program: text-completion-bench
+        artifact: [qwen3.8-flash-next-mlx2-mini8-mlxlm, qwen3.8-flash-next-q2k-mini8-llamacpp, qwen3.8-flash-next-q2k-mini8-splash]
+        tp: 1
+        os: macos
+        workload: [raw-512-256, c32, pf256-512]
 
 # Escalation: when a smoke cell of a family is flagged (regression confirmed),
 # every nightly cell of that family on the same platform is promoted into the
