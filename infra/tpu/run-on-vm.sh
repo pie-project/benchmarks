@@ -24,7 +24,11 @@ if [ -n "$data" ] && [ -z "$(lsblk -no MOUNTPOINT "$data" | tr -d '[:space:]')" 
   df -h "$HOME/.cache"
 fi
 
-sudo apt-get -o DPkg::Lock::Timeout=900 update -q  # a fresh VM's unattended-upgrades holds the lock for minutes
+# a fresh VM's unattended-upgrades holds the dpkg lock for minutes, past 15 once (v5e 41764965822): stop it, finish what it left
+sudo systemctl stop unattended-upgrades.service apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
+sudo systemctl kill --signal=KILL unattended-upgrades.service 2>/dev/null || true
+sudo DEBIAN_FRONTEND=noninteractive dpkg --configure -a 2>/dev/null || true
+sudo apt-get -o DPkg::Lock::Timeout=900 update -q
 sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=900 install -y -q --no-install-recommends \
   build-essential cmake ninja-build pkg-config libssl-dev git curl ca-certificates python3-yaml jq
 command -v rustup >/dev/null || curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none
