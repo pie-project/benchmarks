@@ -43,8 +43,9 @@ EOF
     fi
     errs=""
     # TPU_ON_DEMAND=1: never a spot VM (a v6e spot VM was taken back within 20 min in 6 of 8 runs, 2026-11-04); the zones
-    # are tried again on demand until a VM comes or two hours pass
-    modes=("" spot); [ -n "${TPU_ON_DEMAND:-}" ] && modes=("")
+    # are tried again on demand until a VM comes or two hours pass; TPU_ON_DEMAND=retry: on demand then spot, retried alike
+    # (v5p-8: no on-demand permission, its spot zones often full)
+    modes=("" spot); [ "${TPU_ON_DEMAND:-}" = 1 ] && modes=("")
     wait_s=0; [ -n "${TPU_ON_DEMAND:-}" ] && wait_s=7200; until_t=$(( $(date +%s) + wait_s ))
     while :; do
     for zone in $TPU_ZONES; do

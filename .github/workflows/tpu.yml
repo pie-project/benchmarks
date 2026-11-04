@@ -28,7 +28,7 @@ on:
       vllm_tp: { description: "accuracy only: vLLM over this many chips (pie keeps one)", required: false, default: "" }
       vm_env: { description: "parity only: extra PARITY_*/PIE_* settings for the VM, space-separated KEY=VALUE (PARITY_PIE_PREWARM=0)", required: false, default: "" }
       model_minutes: { description: "accuracy only: a model's cap in minutes", required: false, default: "150" }
-      on_demand: { description: "1: on-demand VMs only, the zones retried for up to 2 hours (empty: on demand, then spot)", required: false, default: "" }
+      on_demand: { description: "1: on-demand VMs only, the zones retried for up to 2 hours; retry: on demand then spot, retried alike (empty: on demand, then spot, once)", required: false, default: "" }
       platform: { description: "TPU platform (platforms.yaml): tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4", required: false, default: "tpu-v6e-1" }
 # the schedule one at a time; every manual run its own VM, in parallel with the others (each deletes its own)
 concurrency: { group: "tpu-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'schedule' }}", cancel-in-progress: false }
