@@ -27,7 +27,7 @@ workloads:
   - id: c8
     kind: concurrency
     params: {concurrency: 8, num_requests: 32, prefill: 128, decode: 128, cold_cache: true}
-    tiers: [smoke, nightly, weekly]
+    tiers: [smoke, nightly, weekly, targeted]  # a 16 GB Mac's Batched Decode: 32 at once runs pie and llama.cpp out of GPU memory there, so every engine takes 8
     est_minutes: 1
   - id: c32
     kind: concurrency
