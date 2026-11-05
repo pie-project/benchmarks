@@ -23,6 +23,8 @@ Pie.icons = {
   accuracy: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle class="is-filled" cx="12" cy="12" r="1.5"/>',  // a target: how close the engines land to one another
   scores: '<path class="is-filled" transform="translate(3 3) scale(1.125)" d="M13.982 16h1.996v-3.997h-3.992V16zM7.984 0 3.992 3.997H0v3.998h5.988L9.98 3.997h2.006V0zM7.984 7.995l-3.992 4.008H0V16h5.988l3.992-3.997h2.006V7.995zM15.978 7.995V3.997h-3.992v3.998h3.992"/>',  // Artificial Analysis's mark, white on a tile in their purple: Quality opens their site
   methodology: '<path d="M3.5 17a8.5 8.5 0 1 1 17 0"/><path d="m12 17 4.2-5.2"/><path d="M6.5 13.2l1.2.7M12 8.5v1.4M17.5 13.2l-1.2.7"/>',  // a gauge: the hardware limit
+  reports: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',  // a flag: a measurement flagged for review
+  approach: '<path d="M4 5.5c2.7-1 5.3-1 8 .8v13c-2.7-1.8-5.3-1.8-8-.8z"/><path d="M20 5.5c-2.7-1-5.3-1-8 .8v13c2.7-1.8 5.3-1.8 8-.8z"/>',  // an open book: how the numbers are made, as prose
   methods: '<path d="M4 4v16h16"/><path d="M7 16l5-7h8"/>',  // a roofline: the bandwidth slope meeting the flat compute roof
   fit: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="7.5" y="9" width="9" height="6" rx="1"/>',  // rectangle.inset: a model inside the machine's memory
   hardware: '<rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M10 4v2.5M14 4v2.5M10 17.5V20M14 17.5V20M4 10h2.5M4 14h2.5M17.5 10H20M17.5 14H20"/>',  // in the 4-20 box the grid icon fills

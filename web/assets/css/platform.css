@@ -876,8 +876,8 @@
 
 .platform-table td.is-openable, .platform-table td.is-openable * { cursor: pointer; }
 .platform-table td.is-openable { position: relative; }
-.platform-table tbody td.is-openable:hover { background: #dcdcdc; }  /* the whole cell is the target, in macOS's unemphasized selection grey */
-:root[data-theme="dark"] .platform-table tbody td.is-openable:hover { background: #464646; }  /* a measured cell opens its run on the Results page */
+.platform-table tbody td.is-openable:hover { background: color-mix(in srgb, var(--color-row-hover), var(--color-label) 4%); }  /* the whole cell is the target: the row's hover a shade deeper, so it reads as one step above it */
+:root[data-theme="dark"] .platform-table tbody td.is-openable:hover { background: color-mix(in srgb, var(--color-row-hover), var(--color-label) 6%); }  /* a measured cell opens its run on the Results page */
 /* hovered, its number gives way to the circled arrow macOS uses to go on to a thing's details: here its runs */
 .platform-open { display: none; position: absolute; top: 50%; right: 14px; transform: translateY(-50%); color: var(--color-label-tertiary); }
 .platform-table td.is-openable:hover .platform-open { display: inline-flex; align-items: center; gap: 3px; color: var(--color-label-secondary); font-size: 11px; font-weight: 500; white-space: nowrap; }  /* where the click goes, with the sidebar's out arrow, as a link to another page */
