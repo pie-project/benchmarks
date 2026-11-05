@@ -262,7 +262,15 @@ competitive:
     tpu-v5e-1:
       knobs: {}
       artifact:
-        gpt-oss-20b-mxfp4-mini12: &tpu_v5e_compile_room
+        gpt-oss-20b-mxfp4-mini12: &tpu_v5e_gptoss_room
+          knobs:
+            gpu_mem_util:
+              value: 0.85
+              rationale: >
+                The int8-requantized mini takes 13.03 GiB in vLLM-TPU, past a 0.80 cap (12.6 GiB, 42116951581); at
+                0.97 the KV pool leaves no room for the 1.11G step program. 0.85 holds both.
+        gpt-oss-120b-mxfp4-mini12-e32: *tpu_v5e_gptoss_room
+        muse-glimmer-30b-mini4: &tpu_v5e_compile_room
           knobs:
             gpu_mem_util:
               value: 0.80
@@ -270,8 +278,6 @@ competitive:
                 At 0.97 vLLM-TPU gives the KV pool every byte its memory check sees free, and then cannot load its
                 step program ("Attempting to reserve 1.11G ... 484.27M free", gpt-oss parity 41995643253;
                 Muse-Glimmer's KV pool the same, 3.05G asked with 483.80M free, 41913871355). 0.80 leaves it the room.
-        gpt-oss-120b-mxfp4-mini12-e32: *tpu_v5e_compile_room
-        muse-glimmer-30b-mini4: *tpu_v5e_compile_room
         qwen3.6-27b-mini8:
           knobs:
             max_num_seqs_cap:
