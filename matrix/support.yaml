@@ -131,10 +131,30 @@ unsupported:
   # pie's XLA forward for gpt-oss-20b needs 17.32 GiB of HLO temporaries; a v5e chip has 15.75 GiB (b5 39699079812)
   - when: {engine: pie, backend: xla, family: gpt_oss, platform: tpu-v5e-1, artifact: [gpt-oss-20b-tpu, gpt-oss-120b-tpu]}
     reason: "doesn't fit: pie's XLA forward needs 17.3 GiB of HLO temporaries for gpt-oss-20b; a v5e chip has 15.75 GiB of HBM"
-  # vLLM-TPU 0.30.0's gpt-oss MoE kernel (gmm_v2) holds fp4 vectors Mosaic cannot compile before TPU7x:
-  # v6e 39671403474, v5e 39699082874, v5p 39697698286 (gpt-oss-20b and -120b alike)
-  - when: {engine: vllm, family: gpt_oss, backend: xla}
-    reason: "vLLM-TPU 0.30.0's gpt-oss MoE kernel does not compile on v5e/v5p/v6e: Mosaic has no f4E2M1FN (mxfp4) vectors before TPU7x"
+  # vLLM-TPU 0.32.0 on the TPU minis, past the MLA flags (NEW_MODEL_DESIGN, DP attention) quality/dist_run.py gives it:
+  # it fails at boot on every arch below (parity v6e 41962545036, v5e 41995643253; benchmark 41815002834, 41819942291)
+  - when: {engine: vllm, backend: xla, family: deepseek_v4}
+    reason: "vLLM-TPU 0.32.0 cannot load the DeepSeek-V4-Flash mini: deepseek_v4_fp8 quantization is not supported on TPU (only fp8, gpt_oss_mxfp4, compressed-tensors)"
+  - when: {engine: vllm, backend: xla, family: deepseek_v41}
+    reason: "vLLM-TPU 0.32.0 has no JAX DeepseekV41ForCausalLM; its PyTorch fallback dies on torch.cuda.Stream (requires CUDA)"
+  - when: {engine: vllm, backend: xla, family: [glm_moe_dsa, glm5_next, hy_v4]}
+    reason: "vLLM-TPU 0.32.0 has no JAX model for this arch; its PyTorch fallback cannot place tensors on device \"tpu\""
+  - when: {engine: vllm, backend: xla, family: kimi_k3}
+    reason: "vLLM-TPU 0.32.0 has no KimiK3ForConditionalGeneration in vllm.models.kimi_k3"
+  - when: {engine: vllm, backend: xla, family: minimax_m3}
+    reason: "vLLM-TPU 0.32.0: mxfp8 quantization is not supported on TPU"
+  - when: {engine: vllm, backend: xla, family: muse_spark}
+    reason: "vLLM-TPU 0.32.0's Transformers does not recognize model type muse_spark"
+  - when: {engine: vllm, backend: xla, family: nemotron_h}
+    reason: "vLLM-TPU 0.32.0: is_act_and_mul=False (Nemotron's relu2 MLP) is supported only for CUDA, XPU and ROCm"
+  # Gemma-4-12B (Gemma4Unified) has no JAX model in tpu-inference 0.32.0; its torchax fallback serves one sequence and the
+  # 32-wide prefill, but a batched decode dies on a leaked JAX tracer (v5e 41957062623, v6e 41913921930)
+  - when: {engine: vllm, backend: xla, artifact: [gemma-4-12b-mini12, gemma-4-12b-tpu], workload: [c32, c64, c256]}
+    reason: "vLLM-TPU 0.32.0 serves Gemma-4-12B through its torchax fallback, whose batched decode dies on a JAX UnexpectedTracerError (EngineDeadError)"
+  # sglang-jax 0.1.0rc0 has no model for these archs: config load fails ("Transformers does not recognize model type"),
+  # or its HF fallback imports the checkpoint's PyTorch modeling file (benchmark v5e 41815065818, 41815078603, 41896618915)
+  - when: {engine: sglang, backend: xla, family: [deepseek_v4, deepseek_v41, glm5_next, hy_v4, kimi_k3, minimax_m3, muse_glimmer, muse_spark, nemotron_h]}
+    reason: "sglang-jax 0.1.0rc0 has no model for this arch (no native class; the HF fallback needs PyTorch or a Transformers that knows the model type)"
   # SGLang 0.5.20 has no mxfp4 MoE kernel before Hopper: gpt-oss-20b decodes through a dequant fallback —
   # A100 ss-512-256 12 tok/s and lc-8k 5 tok/s (nightly 36082960398 s05, two cells ate the shard's hour),
   # 4090 ss 25 tok/s; the H100 (1189 tok/s at c64) and Blackwell cards keep the baseline
