@@ -5,6 +5,7 @@ and re-runs baseline cells when this reports a change."""
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -30,17 +31,25 @@ def _pypi_latest(pkg: str) -> str | None:
     return r.json()["info"]["version"]
 
 
+def _gh_headers() -> dict[str, str]:
+    """The job's token when it has one: GitHub's anonymous limit (60 an hour per address) runs out on shared runners."""
+    h = {"Accept": "application/vnd.github+json"}
+    if token := os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN"):
+        h["Authorization"] = f"Bearer {token}"
+    return h
+
+
 def _github_latest(repo: str) -> str | None:
     import requests
 
-    r = requests.get(f"https://api.github.com/repos/{repo}/releases/latest", timeout=30, headers={"Accept": "application/vnd.github+json"})
+    r = requests.get(f"https://api.github.com/repos/{repo}/releases/latest", timeout=30, headers=_gh_headers())
     if r.status_code != 200:
         return None
     if _has_binaries(r.json()):
         return r.json().get("tag_name")
     # llama.cpp's v0.9.0 (2026-11-04) is "latest" with only nightly-tag.txt, its b-builds marked pre-release: a pin
     # without binaries leaves every Mac with no llama-server, so take the newest release that ships them
-    r = requests.get(f"https://api.github.com/repos/{repo}/releases", timeout=30, params={"per_page": 20}, headers={"Accept": "application/vnd.github+json"})
+    r = requests.get(f"https://api.github.com/repos/{repo}/releases", timeout=30, params={"per_page": 20}, headers=_gh_headers())
     if r.status_code != 200:
         return None
     return next((x["tag_name"] for x in r.json() if not x.get("draft") and _has_binaries(x)), None)
@@ -54,7 +63,7 @@ def _github_newest(repo: str) -> str | None:
     """The newest non-draft release, pre-releases included."""
     import requests
 
-    r = requests.get(f"https://api.github.com/repos/{repo}/releases", timeout=30, params={"per_page": 20}, headers={"Accept": "application/vnd.github+json"})
+    r = requests.get(f"https://api.github.com/repos/{repo}/releases", timeout=30, params={"per_page": 20}, headers=_gh_headers())
     if r.status_code != 200:
         return None
     return next((x["tag_name"] for x in r.json() if not x.get("draft") and _has_binaries(x)), None)
