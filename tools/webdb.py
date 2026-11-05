@@ -637,8 +637,8 @@ def quality_by_tag(store, a2m):
     meta: dict[str, dict] = {}
     for q in store.quality():
         t = q.get("tag")
-        if not t or is_check(q):
-            continue
+        if not t or is_check(q) or q.get("score") is None or not q.get("ci95") or None in q["ci95"]:
+            continue  # a run that ended without a score is not a result
         at = datetime.fromisoformat(q["date"].replace("Z", "+00:00"))
         row = {"model": model_of(a2m, q["model"]), "engine": q["engine"], "artifact": q["artifact"],
                "task": q["task"], "score": round(q["score"], 3), "ci_low": round(q["ci95"][0], 3),
