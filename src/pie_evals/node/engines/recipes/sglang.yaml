@@ -122,6 +122,11 @@ competitive:
                 sglang-jax's default 4096-token prefill chunk needs 16.10G of HLO temporaries for the GLM-5.3 mini
                 on a 15.75 GiB v5e (RESOURCE_EXHAUSTED, 41896625792); 2048 is the chunk vLLM-TPU prefills in
                 (max_num_batched_tokens=2048).
+            gpu_mem_util:
+              value: 0.90
+              rationale: >
+                At 0.97 the KV pool leaves sglang-jax 180.63M for a program that reserves 530.41M at load
+                (RuntimeProgramAllocationFailure, 42116961512); 0.90 leaves it the room.
     gpt-oss-120b-mxfp4-mini:
       platform:
         a40-x1:

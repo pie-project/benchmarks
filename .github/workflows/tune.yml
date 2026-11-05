@@ -14,7 +14,7 @@ concurrency: { group: "tune-${{ github.run_id }}", cancel-in-progress: false }
 
 jobs:
   plan:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     outputs: { platforms: "${{ steps.p.outputs.platforms }}", commit: "${{ steps.p.outputs.commit }}" }
     steps:
       - id: p
@@ -28,7 +28,7 @@ jobs:
 
   launch:
     needs: plan
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     strategy: { fail-fast: false, matrix: { platform: "${{ fromJson(needs.plan.outputs.platforms) }}" } }
     steps:
       - uses: actions/checkout@v4
