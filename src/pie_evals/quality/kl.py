@@ -160,10 +160,12 @@ def gibberish(tok, n: int = 64, length: int = 48, seed: int = 0) -> list[str]:
 
 def last_position(ref: list[list[dict[int, float]]], pie: list[list[dict[int, float]]], expect: list[int]) -> dict:
     """``compare`` at each text's last position only (the first-token distribution), over the texts both engines
-    tokenized to the ``expect`` count of tokens; the others are counted, not compared."""
-    keep = [i for i, (r, p, e) in enumerate(zip(ref, pie, expect, strict=True)) if len(r) == len(p) == e]
+    tokenized to the same count of tokens; the others are counted, not compared. ``expect`` (the harness tokenizer's
+    count) is only recorded: an engine may count a template prefix the harness does not (MiniMax-M3.1-Flash)."""
+    keep = [i for i, (r, p) in enumerate(zip(ref, pie, strict=True)) if len(r) == len(p)]
     out = compare([ref[i] for i in keep], [pie[i] for i in keep], [len(ref[i]) - 1 for i in keep])
     out["prompt_tokens_mismatch"] = len(ref) - len(keep)
+    out["prompt_tokens_off_harness"] = sum(1 for i in keep if len(ref[i]) != expect[i])
     # the prompt whose KL is closest to the median, and the reference's top 10 there with both engines' probabilities
     kls = [(partition_kl(ref[i][-1], pie[i][-1]), i) for i in keep if ref[i][-1] and pie[i][-1]]
     if kls:
