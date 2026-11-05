@@ -331,6 +331,9 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
             (out_dir / FIRST_REF_DIR / f"{art.id}.json").write_text(json.dumps({
                 "prompts": kl.texts_hash(rendered), "ref_engine": ref_name, "ref_version": summary.get("ref_version"), "platform": platform_id,
                 "tokens": [len(x) for x in ref_scored], "last": [{str(k): v for k, v in (x[-1] if x else {}).items()} for x in ref_scored]}))
+            if os.environ.get("PARITY_REF_ONLY") == "1":  # a reference for another device's cell: no pie run, no row
+                log(f"first-token {art.id}@{platform_id}: reference saved, pie not run")
+                return summary
     except Exception as e:  # noqa: BLE001
         summary["ref_unsupported"] = _reason(e, out_dir, art.id, ref_name)
         log(f"parity {art.id}@{platform_id}: {ref_name} cannot run it: {summary['ref_unsupported']}")
