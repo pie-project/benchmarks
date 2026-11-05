@@ -80,6 +80,8 @@ def rows(summaries: list[dict]) -> list[dict]:
     included. A row without a platform was scored on the quality Mac; pie is only compared on the machine it ran on."""
     grouped: dict[tuple[str, str, str], dict[str, dict]] = {}
     for s in summaries:
+        if s.get("score") is None or not s.get("ci95") or None in s["ci95"]:
+            continue  # a run that ended without a score is not a result
         grouped.setdefault((s["model"].removesuffix("@vllm"), s["task"], s.get("platform") or ""), {})[s["artifact"]] = s
     out = []
     for (model, task, platform), arms in sorted(grouped.items()):
