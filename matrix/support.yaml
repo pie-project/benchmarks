@@ -249,6 +249,8 @@ unsupported:
   # mlx-lm ships no qwen4_exp model (0.32.2): Qwen3.8-Flash-Next's MLX arm is served by mlx-vlm (recipes/mlxlm.yaml)
   - when: {engine: llamacpp, artifact: qwen3.8-flash-next-q2k-llamacpp, workload: pf256-512}
     reason: "llama.cpp b12096 stalls on a second 256-prompt round of Qwen3.8-Flash-Next: the first round batches (776 tok/s on m5-max-128g), the next runs the prompts one slot at a time (990 s against 19 s on the miniature) and times out"
+  - when: {engine: splash, artifact: qwen3.8-flash-next-q2k-splash, workload: pf256-512}
+    reason: "Splash 1.5.0 admits 32 requests at a time and answers the rest of a 256-prompt batch with frontend_overloaded (992 of 1024 failed on m5-max-128g)"
   - when: {engine: splash, artifact: qwen3.8-flash-next-q2k-mini8-splash}
     reason: "Splash 1.5.0 serves Qwen3.8-Flash-Next only at its 48 layers: \"no supported model has this architecture (text config num_hidden_layers: GGUF 8, Qwen3.8-Flash-Next 48)\", so it cannot run the miniature"
   - when: {engine: splash, artifact_kind: miniature}
