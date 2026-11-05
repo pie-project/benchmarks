@@ -146,7 +146,8 @@ class Server:
             try:
                 os.killpg(self.proc.pid, sig)
                 return True
-            except ProcessLookupError:
+            except (ProcessLookupError, PermissionError):
+                # macOS answers EPERM, not ESRCH, for a group left with only reaped or exiting members
                 return False
 
         group(signal.SIGTERM)
