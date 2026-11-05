@@ -17,13 +17,14 @@ jobs:
       - name: delete TPU VMs older than 4 hours
         run: |
           set -euo pipefail
-          cutoff=$(date -u -d '-4 hours' +%s)
+          D=$(command -v gdate || echo date)  # the site laptops' BSD date has no -d
+          cutoff=$($D -u -d '-4 hours' +%s)
           # name is projects/<p>/locations/<zone>/nodes/<name>: the list has no zone column of its own
           gcloud compute tpus tpu-vm list --zone=- --project pie-project-510103 --format=json |
           jq -r '.[] | (.name | split("/")) as $n | "\($n[-1]) \($n[3]) \(.createTime)"' |
           while read -r name zone created; do
             [ -n "$name" ] || continue
-            t=$(date -u -d "$created" +%s)
+            t=$($D -u -d "$created" +%s)
             if [ "$t" -lt "$cutoff" ] || [[ ",${{ inputs.names }}," == *",$name,"* ]]; then
               echo "deleting $name in $zone (created $created)"
               gcloud compute tpus tpu-vm delete "$name" --zone "$zone" --project pie-project-510103 --quiet
