@@ -669,11 +669,16 @@ def parity_by_tag(store, a2m) -> dict[str, list[dict]]:
 
 def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, when) -> dict[str, list[dict]]:
     """For each tag, one row per key: the tag's own, else the newest tag not later than it (marked stale); never a later tag."""
+    # one pass from the oldest tag to the newest, carrying each key's newest source so far, instead of searching back
+    # through every older tag for every key (66 tags made that the build's slowest step)
     snaps: dict[str, list[dict]] = {}
-    for i, t in enumerate(order):
+    newest: dict = {}
+    for t in reversed(order):
+        for key in tagged.get(t, {}):
+            newest[key] = t
         out = []
         for key in keys:
-            src = next((u for u in order[i:] if key in tagged.get(u, {})), None)
+            src = newest.get(key)
             if src is None:
                 continue
             item = tagged[src][key]
