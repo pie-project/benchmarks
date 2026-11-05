@@ -828,6 +828,9 @@ class ReadOnce:
 
 
 def main() -> None:
+    import time
+    t0 = time.monotonic()
+    lap = lambda what: print(f"[webdb] {what}: {time.monotonic() - t0:.0f}s", file=sys.stderr, flush=True)  # where a slow build spends its time
     store = ReadOnce(Store(sys.argv[1] if len(sys.argv) > 1 else None))
     a2m, models = artifact_to_model()
     # the site's grid: our Macs, the engines that run on a Mac, the models we measure there
@@ -856,6 +859,7 @@ def main() -> None:
     gpu_ids = [p["id"] for p in load("platforms")["platforms"] if p.get("os") != "macos"]
     all_engines = [e["id"] for e in engines()]
     results, rmeta = results_by_tag(store, a2m, hardware_ids + gpu_ids, all_engines, config.get("prefill_only"))
+    lap("results_by_tag")
     gpu_attempts = attempts_by_tag(store, a2m, gpu_ids, all_engines)
     gpu_keys = {k for rs in [*results.values(), *gpu_attempts.values()] for k in rs if k[0] in gpu_ids}
     gpu_models = sorted({k[2] for k in gpu_keys} - set(model_ids))
@@ -864,6 +868,7 @@ def main() -> None:
         suite_ids["full"] = suite_ids["full"] + gpu_models
     engine_ids += [e for e in all_engines if e not in engine_ids and any(k[1] == e for k in gpu_keys)]
     scores, qmeta = quality_by_tag(store, a2m)
+    lap("quality_by_tag")
     # one list of tags for both tables: a tag with only quality scores still gets a results table, filled from earlier tags
     meta = dict(qmeta)
     for t, m in rmeta.items():
@@ -888,6 +893,7 @@ def main() -> None:
     grid += [(hw, e, m, "raw") for hw, e, m in gpu_unsup
              if m in model_ids and (hw, e, m, "raw") not in gpu_keys and (hw in tpus or any(k[0] == hw for k in gpu_keys))]
     snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
+    lap("stack")
     # the Macs the site's grids measure, and every GPU or TPU setup a scheduled CI run launches (tagged with its runs)
     # the Macs the grids measure, every CI GPU and TPU, and every catalog accelerator; a CI Mac without a runner stays out
     hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids or h["class"] != "mac" or not h.get("runs")]
@@ -896,6 +902,7 @@ def main() -> None:
     # sized by the artifact the GPU runs actually loaded, so a 54 GB bf16 model reads "doesn't fit" on a 48 GB card
     misfits.update(gpu_no_fit(store, a2m, hw_rows, gpu_ids))
     attempts = attempts_by_tag(store, a2m, hardware_ids, engine_ids)
+    lap("attempts_by_tag")
     for t, rs in gpu_attempts.items():
         attempts.setdefault(t, {}).update(rs)
     unsupported = unsupported_reasons(a2m, config, hardware_ids, engine_ids, model_ids)
@@ -975,12 +982,15 @@ def main() -> None:
         quality[t].sort(key=lambda r: (rank(engine_ids, r["engine"]), rank(model_ids, r["model"]), r["model"], rank(tasks, r["task"])))
     # parity is per tag and never stacked: a release's table holds only the scores that release measured
     parity = parity_by_tag(store, a2m)
+    lap("parity_by_tag")
     checks = quality_checks(store, a2m)
+    lap("quality_checks")
     # when the newest measurement or score was taken: the site's "Updated" line
     stamps = [r["started_at"] for r in store.table().select(["started_at"]).to_pylist() if r["started_at"] is not None]
     stamps += [datetime.fromisoformat(q["date"].replace("Z", "+00:00")) for q in store.quality() if q.get("date")]
     stamps = [t if t.tzinfo else t.replace(tzinfo=ZoneInfo("UTC")) for t in stamps]
     updated_at = max(stamps).isoformat() if stamps else None
+    lap("max")
     db = {"updated_at": updated_at, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
           "quality_parity": checks["parity"], "quality_kernels": checks["kernels"],
           "no_fit": misfits, "suites": suite_ids,
