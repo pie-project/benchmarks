@@ -151,6 +151,7 @@ window.Pie = window.Pie || {};
     configured,
     open,  // the sheet, for a page that asks one to log in before it gives something (a card's data)
     user: () => user,
+    client: () => (configured ? start() : Promise.reject(new Error("Accounts are not set up"))),  // the Supabase client, for a page that keeps data (Reports)
   };
   changed();
 })();

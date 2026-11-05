@@ -27,6 +27,8 @@ window.Pie = window.Pie || {};
         ? `<span class="sidebar-count"${machines(schema) ? "" : ' title="No measurements yet"'}>${machines(schema)}</span>`
         // the Platforms list counts its rows, one a platform
         : schema.view === "welcome" ? `<span class="sidebar-count">${Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length}</span>`
+        // Methodology counts its chapters
+        : schema.view === "approach" ? `<span class="sidebar-count">${Pie.approach?.chapters ?? ""}</span>`
         : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
     </button>`;
 

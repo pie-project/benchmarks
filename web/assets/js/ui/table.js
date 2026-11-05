@@ -79,6 +79,24 @@ window.Pie = window.Pie || {};
   const platformSlots = () => slotsOf ||= ["mac", "gpu", "tpu", "amd", "wafer"]
     .filter((t) => (Pie.store.tables.models || []).some((m) => String(m.platforms || "").toLowerCase().split(", ").includes(t)));
 
+  // Performance and Quality rows are selected as a Mac list's are (click, ⌘-click, ⇧-click), and the bar's Report files
+  // the selected ones as wrong
+  const flaggable = (state) => (state.table === "results" || state.table === "quality") && Pie.account?.configured;
+  const picked = new Set();  // the selected rows themselves, not a key: two rows alike in every column shown are still two
+  // a measurement has no id of its own: a report names it by every field it has, so no other row reads the same
+  const keyOf = (row) => Object.keys(row).sort().filter((k) => row[k] == null || typeof row[k] !== "object").map((k) => `${k}=${row[k] ?? ""}`).join("|");
+  let pickedOn = null;       // the table they were picked on: another page starts with none
+  const reportButton = document.getElementById("report-selected");
+  // the bar's Report keeps its one label, enabled while rows are selected; how many are selected is said in the
+  // window's subtitle, as Finder says "3 of 40 selected" under its title
+  const subtitle = document.getElementById("toolbar-subtitle");
+  let base = "";
+  const syncReport = () => {
+    if (!reportButton) return;
+    reportButton.disabled = !picked.size;
+    if (subtitle && base) subtitle.textContent = picked.size ? `${base} · ${picked.size.toLocaleString("en-US")} selected` : base;
+  };
+
   const bodyRow = (row, columns, state, index) => {
     const resultKey = store.resultKeys[state.table];
     const classes = [];
@@ -102,7 +120,9 @@ window.Pie = window.Pie || {};
     const cells = columns.map((column) => bodyCell(column, row)).join("");
     const filled = Pie.table.fill(cells, columns, state, "td");
     const number = Pie.schema[state.table].numbered ? `<td class="row-number">${index + 1}</td>` : "";
-    return `<tr class="${classes.join(" ")}"${link || stale}>${number}${filled}</tr>`;
+    if (picked.has(row)) classes.push("is-picked");
+    const pick = flaggable(state) ? ` data-pick="${index}" aria-selected="${picked.has(row)}"` : "";
+    return `<tr class="${classes.join(" ")}"${link || stale}${pick}>${number}${filled}</tr>`;
   };
 
   Pie.table = {
@@ -126,7 +146,15 @@ window.Pie = window.Pie || {};
       const columns = this.visibleColumns(state);
       const numbered = Pie.schema[state.table].numbered;
       const corner = numbered ? `<th class="row-number" aria-label="Row"></th>` : "";
+      if (pickedOn !== state.table) { picked.clear(); pickedOn = state.table; }
+      // a selected row the filters now hide is no longer selected, as Finder drops what a search hides
+      if (picked.size) { const shown = new Set(rows); for (const r of picked) if (!shown.has(r)) picked.delete(r); }
       const head = `<thead><tr>${corner}${this.fill(columns.map((column) => headerCell(column, state)).join(""), columns, state, "th")}</tr></thead>`;
+      this.rows = rows;
+      this.source = state.table;
+      if (reportButton) reportButton.hidden = !flaggable(state);
+      base = flaggable(state) ? subtitle?.textContent || "" : "";  // the page's own subtitle, just written, before the selection is added
+      syncReport();
       // the first rows at once, the rest as the list scrolls toward them: thousands of rows drawn up front made every
       // sort and filter wait on the page's layout
       const FIRST = 150, MORE = 400;
@@ -178,6 +206,51 @@ window.Pie = window.Pie || {};
       table.addEventListener("pointerleave", () => (tooltip.hidden = true));
       table.closest(".table-scroll, .table-wrap")?.addEventListener("scroll", () => (tooltip.hidden = true));
     },
+
+    // a click selects a row alone (a second click on the only one selected clears it), ⌘-click adds or drops one, and
+    // ⇧-click selects the run from the last one clicked; Escape clears. The bar's Report opens the sheet for them
+    bindFlags() {
+      let anchor = null;
+      const mark = () => {
+        for (const tr of table.querySelectorAll("tr[data-pick]")) {
+          const on = picked.has(this.rows[Number(tr.dataset.pick)]);
+          tr.classList.toggle("is-picked", on);
+          tr.setAttribute("aria-selected", on);
+        }
+        syncReport();
+      };
+      // ⇧-click would select the page's text instead of the rows
+      table.addEventListener("mousedown", (event) => { if (event.shiftKey && event.target.closest("tr[data-pick]")) event.preventDefault(); });
+      table.addEventListener("click", (event) => {
+        const tr = event.target.closest("tr[data-pick]");
+        if (!tr || event.target.closest("a, button, input")) return;
+        const at = Number(tr.dataset.pick), key = this.rows[at];
+        if (event.shiftKey && anchor !== null) {
+          const [from, to] = anchor < at ? [anchor, at] : [at, anchor];
+          if (!event.metaKey && !event.ctrlKey) picked.clear();
+          for (let i = from; i <= to; i++) picked.add(this.rows[i]);
+        } else if (event.metaKey || event.ctrlKey) {
+          picked.has(key) ? picked.delete(key) : picked.add(key);
+          anchor = at;
+        } else {
+          const only = picked.size === 1 && picked.has(key);
+          picked.clear();
+          if (!only) picked.add(key);
+          anchor = at;
+        }
+        mark();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && picked.size && !document.querySelector("dialog[open]")) { picked.clear(); anchor = null; mark(); }
+      });
+      reportButton?.addEventListener("click", () => {
+        const at = this.rows.flatMap((r, i) => (picked.has(r) ? [i] : []));  // in the table's order, with its row numbers
+        if (at.length) Pie.reports?.flag(at.map((i) => this.rows[i]), this.source, () => { picked.clear(); anchor = null; mark(); }, at.map((i) => i + 1));
+      });
+    },
+
+    keyOf,
+
 
     onShowResults(handler) {
       table.addEventListener("click", (event) => {

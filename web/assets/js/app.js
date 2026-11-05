@@ -66,7 +66,7 @@
     const isPlatform = Pie.schema[state.table]?.view === "platform";
     // the miniatures' banner over every page that can show their results
     document.getElementById("mini-banner").hidden = true;  // the miniatures note, off: !(Pie.store.miniatures && (isPlatform || ["results", "measurements", "welcome"].includes(state.table)));
-    const isMethod = ["welcome", "inferlets", "services", "profiler", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
+    const isMethod = ["welcome", "inferlets", "services", "approach", "reports", "profiler", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
     filterBar.hidden = isOverview || isMethod || isPlatform;
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
@@ -97,6 +97,8 @@
     Pie.welcome.render(state);
     Pie.inferlets.render(state);
     Pie.services.render(state);
+    Pie.approach.render(state);
+    Pie.reports.render(state);
     Pie.profiler.render(state);
     Pie.methodology.render(state);
     Pie.methods.render(state);
@@ -219,6 +221,7 @@
 
   const bindFilters = () => {
     filters.onOpen((anchor, key) => popover.open(anchor, key, state));
+    filters.onClear(() => { state.filters = {}; render(); });
 
 
 
@@ -283,6 +286,7 @@
     });
     table.onShowResults((key, value) => navigate("results", { [key]: [value] }));
     table.bindTapNotes();
+    table.bindFlags();
     table.container.addEventListener("scroll", () => popover.close());
   };
 
@@ -387,6 +391,13 @@
           scroller.scrollBy({ left: (event.key === "ArrowLeft" ? -3 : 3) * col.offsetWidth, behavior: "smooth" });
         }
       }
+      // on the Performance and Quality tables (and the catalog's) ← and → scroll across the columns as ↑ and ↓ scroll down them
+      const tableScroll = document.getElementById("table-container");
+      if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && plain && !event.shiftKey && !onPlatform && !popover.isOpen()
+          && tableScroll && !tableScroll.hidden && tableScroll.scrollWidth > tableScroll.clientWidth) {
+        event.preventDefault();
+        tableScroll.scrollBy({ left: (event.key === "ArrowLeft" ? -3 : 3) * 132, behavior: "smooth" });
+      }
       // ↑ and ↓ scroll the page's data the same distance ← and → move a grid across: three model columns' worth,
       // on every page with something to scroll (the grid, Rankings, the tables, the method pages)
       if ((event.key === "ArrowUp" || event.key === "ArrowDown") && plain && !event.shiftKey && !popover.isOpen()) {
@@ -450,6 +461,8 @@
       if (saved.table && Pie.schema[saved.table]) state.table = saved.table;
       if (saved.overview) Object.assign(state.overview, saved.overview);
       if (saved.platform) Object.assign(state.platform, saved.platform);
+      // the filters picked on the page a reload reopens stay picked
+      if (saved.filters && saved.table === state.table) state.filters = { ...saved.filters };
     } catch {
       // storage refused or damaged: start from the defaults
     }
@@ -457,7 +470,7 @@
   const saveView = () => {
     try {
       localStorage.setItem(VIEW_KEY, JSON.stringify({
-        table: state.table, suite: state.suite, suitePicked: Boolean(state.suitePicked), overview: { ...state.overview }, platform: { ...state.platform }, hideEmpty: state.hideEmpty,
+        table: state.table, suite: state.suite, suitePicked: Boolean(state.suitePicked), overview: { ...state.overview }, platform: { ...state.platform }, hideEmpty: state.hideEmpty, filters: { ...state.filters },
       }));
     } catch {
       // private windows can refuse storage

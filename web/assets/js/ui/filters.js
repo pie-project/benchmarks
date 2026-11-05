@@ -41,13 +41,18 @@ window.Pie = window.Pie || {};
         .map((key) => filter(schema.columns.find((column) => column.key === key), state.selected(key)))
         .join("")
         // the Results page's dates: a calendar of the days it has results for
-        + (["results", "quality"].includes(state.table) && Pie.dates ? Pie.dates.button() : "");
+        + (["results", "quality"].includes(state.table) && Pie.dates ? Pie.dates.button() : "")
+        // once anything is picked, a Clear puts every filter back, the dates too
+        + (Object.keys(state.filters).length || (["results", "quality"].includes(state.table) && Pie.dates?.active()) ? `<button class="filter-clear" type="button" data-filter-clear>Clear</button>` : "");
       shown = state;
     },
+
+    onClear(handler) { this.cleared = handler; },
 
     onOpen(handler) {
       list.addEventListener("click", (event) => {
         event.stopPropagation();
+        if (event.target.closest("[data-filter-clear]")) { Pie.popover?.close(); Pie.dates?.close(); Pie.dates?.clear(); this.cleared?.(); return; }
         const dates = event.target.closest("[data-dates]");
         if (dates) { Pie.popover?.close(); Pie.dates.open(dates, shown); return; }
         const button = event.target.closest("[data-filter]");

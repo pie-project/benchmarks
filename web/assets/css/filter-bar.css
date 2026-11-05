@@ -51,8 +51,21 @@
 
 .filter.is-set .engine-tag,
 .filter.is-set .hardware-tag {
-  color: var(--color-label);
+  color: var(--color-accent);
 }
+
+/* Clear, after the filters: a plain text button in the accent, as a Mac's Clear beside a search */
+.filter-clear {
+  border: 0;
+  background: none;
+  padding: 0 8px;
+  height: var(--control-height);
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+.filter-clear:hover { text-decoration: underline; }
 
 .filter.is-set .popup-chevron {
   stroke: var(--color-accent);

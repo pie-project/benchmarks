@@ -241,6 +241,22 @@ window.Pie = window.Pie || {};
       ],
     },
 
+    // how the benchmark is run, as prose: the model slices behind the datacenter rows
+    approach: {
+      label: "Methodology",
+      section: "measurements",
+      view: "approach",
+      filters: [],
+      columns: [],
+    },
+    // a measurement that looks wrong, reported by a visitor and closed by a maintainer with its fix
+    reports: {
+      label: "Reports",
+      section: "measurements",
+      view: "reports",
+      filters: [],
+      columns: [],
+    },
     methods: {
       label: "Roofline",
       section: "resources",

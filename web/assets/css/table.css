@@ -89,7 +89,7 @@
 }
 
 .data-table td.is-empty {
-  color: var(--color-label-quaternary);
+  color: var(--color-label-tertiary);  /* one grey for every empty cell's dash, whatever its row */
 }
 
 .data-table td.is-code {
@@ -114,7 +114,7 @@
 }
 
 .data-table tbody tr.is-unmeasured td.is-empty {
-  color: var(--color-label-quaternary);
+  color: var(--color-label-tertiary);
 }
 
 .data-table tbody tr.is-highlighted td {
@@ -224,3 +224,27 @@
 .data-table .model-name-cell { display: inline-flex; align-items: center; gap: 8px; }
 .data-table .model-name-cell .model-badge { width: 18px; height: 18px; border-radius: 5px; }
 .data-table .model-name-cell .model-badge img { width: 12px; height: 12px; }
+
+/* a selected Performance or Quality row, as a Mac list fills its selection: the accent, its text in white */
+.data-table tbody tr[data-pick] { user-select: none; -webkit-user-select: none; }
+.data-table tbody tr.is-picked td, .data-table tbody tr.is-picked:hover td { background: var(--color-accent); color: #fff; }
+.data-table tbody tr.is-picked td * { color: #fff; }
+
+/* the bar's Report: a plain toolbar button, the filters' grey, dimmed until rows are selected */
+.report-selected { display: inline-flex; align-items: center; gap: 6px; height: var(--control-height); padding: 0 10px; border: 0; border-radius: var(--radius-control); background: var(--color-fill); color: var(--color-label); font: inherit; font-size: 13px; cursor: pointer; }
+.report-selected[hidden] { display: none; }
+.report-selected:disabled { color: var(--color-label-tertiary); cursor: default; }
+.report-selected:not(:disabled):hover { background: var(--color-fill-secondary); }
+.report-selected svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+/* a selected row's engine square keeps its colour on the blue: a white ring round it, as Finder rings a tag in a selected row */
+.data-table tbody tr.is-picked .engine-tag::before,
+.data-table tbody tr.is-picked .cell-dot::before,
+.data-table tbody tr.is-picked .status-tag.is-pass::before,
+.data-table tbody tr.is-picked .status-tag.is-noisy::before,
+.data-table tbody tr.is-picked .status-tag.is-fail::before { box-shadow: 0 0 0 1.5px #fff; }  /* the status's square too; an icon (the platform's tile) keeps no ring, as Finder rings tags, not icons */
+/* a status drawn as an empty square (not run, unsupported, no fit, no data): its outline in white on the blue */
+.data-table tbody tr.is-picked .status-tag.is-not_run::before,
+.data-table tbody tr.is-picked .status-tag.is-unsupported::before,
+.data-table tbody tr.is-picked .status-tag.is-no_fit::before,
+.data-table tbody tr.is-picked .status-tag.is-no_data::before { box-shadow: inset 0 0 0 1px #fff; }
+.data-table tbody tr.is-picked td.is-empty, .data-table tbody tr.is-picked.is-unmeasured td.is-empty, .data-table tbody tr.is-picked.is-stale td { color: #fff; }  /* a selected row is white throughout, its dashes too */

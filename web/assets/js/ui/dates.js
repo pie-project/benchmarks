@@ -102,6 +102,8 @@ window.Pie = window.Pie || {};
       place();
     },
     close: () => { if (!element.hidden) close(); },  // another menu opening shuts the calendar
+    active: () => Boolean(range),
+    clear: () => { range = null; picking = null; try { localStorage.removeItem(KEY); } catch { /* private windows can refuse storage */ } },  // the bar's Clear
     // a result shown under the range: measured on a day inside it (a setup not yet measured has no day, so it goes)
     keeps: (row) => !range || (dayOf(row) >= range.from && dayOf(row) <= range.to),
   };
