@@ -164,6 +164,15 @@ def last_position(ref: list[list[dict[int, float]]], pie: list[list[dict[int, fl
     keep = [i for i, (r, p, e) in enumerate(zip(ref, pie, expect, strict=True)) if len(r) == len(p) == e]
     out = compare([ref[i] for i in keep], [pie[i] for i in keep], [len(ref[i]) - 1 for i in keep])
     out["prompt_tokens_mismatch"] = len(ref) - len(keep)
+    # the prompt whose KL is closest to the median, and the reference's top 10 there with both engines' probabilities
+    kls = [(partition_kl(ref[i][-1], pie[i][-1]), i) for i in keep if ref[i][-1] and pie[i][-1]]
+    if kls:
+        med = sorted(k for k, _ in kls)[len(kls) // 2]
+        k, i = min(kls, key=lambda x: abs(x[0] - med))
+        top = sorted(ref[i][-1], key=ref[i][-1].get, reverse=True)[:10]
+        out["first_token_kl"] = k
+        out["first_token_topk"] = {"prompt": i, "ids": top, "ref": [math.exp(ref[i][-1][t]) for t in top],
+                                   "pie": [math.exp(pie[i][-1][t]) if t in pie[i][-1] else None for t in top]}
     return out
 
 

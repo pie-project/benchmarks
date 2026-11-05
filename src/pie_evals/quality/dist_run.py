@@ -390,6 +390,8 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     # 3. compare over the answer positions; first-token mode: the last position of each prompt
     if first:
         summary.update(kl.last_position(ref_scored, pie_scored, [len(tok.encode(r, add_special_tokens=False)) for r in rendered]))
+        if summary.get("first_token_topk"):
+            summary["first_token_topk"]["tokens"] = [tok.decode([t]) for t in summary["first_token_topk"]["ids"]]
         summary["score"], summary["n"] = summary["top1_agree"], summary["positions"]
         summary["correct"] = round((summary["top1_agree"] or 0) * summary["positions"])
         summary["ci95"] = [summary["score"] or 0, summary["score"] or 0]
