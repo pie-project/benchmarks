@@ -57,8 +57,9 @@ class SplashEngine(ServedEngine):
         if isinstance(extra, str):
             extra = extra.split()
         cmd = [splash_bin(), "serve", "--model", self.artifact.base_model, "--host", "127.0.0.1", "--port", str(port), "--no-webui"]
-        if self.artifact.base_model.startswith(LOCAL_ORG):
-            # a checkpoint no hub repo carries (models.yaml `pie-local/`): Splash prepares the files in the HF cache
+        if self.artifact.base_model.startswith(LOCAL_ORG) or self.artifact.gguf_file:
+            # a checkpoint no hub repo carries (models.yaml `pie-local/`), or a GGUF in a subfolder the runner
+            # already fetched (Splash takes a hub GGUF only as OWNER/REPO:VARIANT): Splash prepares the cached files
             snap = hf_snapshot_dir(self.artifact.base_model, self.artifact.revision)
             if snap is not None:
                 cmd += ["--model-dir", str(snap / self.artifact.gguf_file if self.artifact.gguf_file else snap)]
