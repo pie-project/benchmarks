@@ -238,6 +238,11 @@ window.Pie = window.Pie || {};
   const klOf = (mac, model, platform) => (tables().quality_parity || [])
     .filter((r) => r.platform === mac && r.model === model && !r.ref_unsupported && isNum(r.kl_mean))
     .sort((a, b) => byPrefer(platform, (r) => r.ref_engine)(a, b) || String(b.date || "").localeCompare(String(a.date || "")))[0] || null;
+  // pass or fail per cell: a slice passes when its first-token distribution stays within 0.1 nats of the reference
+  // engine's (kernel and rounding noise sits near 0.001, a wrong layer or template well above 0.1); a full model passes
+  // when Pie's MATH-500 score is within 5 points of the reference engine's
+  const KL_PASS = 0.1, MATH_PASS = 5;
+  const MARK = { pass: '<svg class="qc-mark" viewBox="0 0 16 16" aria-label="Pass"><path d="M3.5 8.5l3 3 6-7"/></svg>', fail: '<svg class="qc-mark" viewBox="0 0 16 16" aria-label="Fail"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>' };
   const gridOf = (state, { platform, macs, models }, layout) => {
     // each platform's grid folds its Overall column on its own, its choice kept as the speed pages keep theirs
     const key = `quality:${platform.id}`;
@@ -248,7 +253,6 @@ window.Pie = window.Pie || {};
     const at = {};
     for (const mac of macs) for (const model of models) at[`${mac}|${model}`] = nofit(mac, model) ? { kl: klOf(mac, model, platform.id) } : { score: scoreOf(state, mac, model, platform.id) };
     const signed = (d) => `${d > 0.05 ? "+" : d < -0.05 ? "−" : ""}${Math.abs(d).toFixed(1)}`;
-    const median = (list) => { const v = list.filter(isNum).sort((a, b) => a - b); return v.length ? v[v.length >> 1] : null; };
     // a maker's slices and its full models are two bands, as the Performance page splits them
     const cut = (model) => macs.some((mac) => layout.sliced.has(`${mac}|${model}`));
     const makers = [];
@@ -260,35 +264,36 @@ window.Pie = window.Pie || {};
     }
     const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-overall"></th>${makers.map((k) =>
       `<th class="platform-maker" colspan="${k.n}" scope="colgroup"><span class="platform-maker-name">${Pie.platform.makerBadge(k.model)}<b>${esc(k.name)}</b><span>${k.n} ${k.n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill"></th></tr>`;
-    const head = `<tr class="platform-head-row"><th class="platform-corner" scope="col">Hardware</th><th class="platform-corner is-overall" scope="col"><span class="platform-model">Overall</span><span class="platform-sub">Median gap</span></th>${models.map((m) => {
+    const head = `<tr class="platform-head-row"><th class="platform-corner" scope="col">Hardware</th><th class="platform-corner is-overall" scope="col"><span class="platform-model">Overall</span><span class="platform-sub">Passed</span></th>${models.map((m) => {
       const info = Pie.store.index.models[m] || {};
       const size = info.params_b ? `${info.params_b}B${info.active_b && info.active_b !== info.params_b ? ` · ${info.active_b}B` : ""}` : "";
       return `<th scope="col" data-tip-html="${esc(Pie.platform.modelCard(m))}"><span class="platform-col"><span><span class="platform-model">${esc(Pie.store.names.model(m))}</span><span class="platform-sub">${esc(size)}</span></span></span></th>`;
     }).join("")}<th class="platform-fill"></th></tr>`;
     const body = macs.map((mac) => {
       const hw = Pie.store.index.hardware[mac];
-      const scores = models.map((m) => at[`${mac}|${m}`].score).filter(Boolean);
-      const o = median(scores.map((g) => g.d));
-      const bad = scores.filter((g) => isOff(g.arm)).length;  // the median is a number; red only when a model in the row scores worse
+      const verdicts = models.map((m) => { const { score: g, kl: r } = at[`${mac}|${m}`]; return r ? r.kl_mean < KL_PASS : g ? Math.abs(g.d) <= MATH_PASS : null; }).filter((v) => v !== null);
+      const passed = verdicts.filter(Boolean).length, bad = verdicts.length - passed;
       return `<tr><th class="platform-row" scope="row"><span class="platform-chip">${Pie.platform.badge(platform.id)}<span class="platform-name">${esc(String(hw?.name || mac).replace(/^Apple\s+/, ""))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</span></th>
-        <td class="is-overall">${o === null ? `<span class="platform-cell is-empty">–</span>` : `<span class="platform-cell ${bad ? "is-behind" : "is-same"}"${bad ? ` data-tip="${esc(`Pie scores lower on ${bad} ${bad === 1 ? "model" : "models"}`)}"` : ""}>${signed(o)}</span>`}</td>
+        <td class="is-overall">${!verdicts.length ? `<span class="platform-cell is-empty">–</span>` : `<span class="platform-cell ${bad ? "is-behind" : "is-same"}"${bad ? ` data-tip="${esc(`${bad} ${bad === 1 ? "model fails" : "models fail"}`)}"` : ""}>${passed}/${verdicts.length}</span>`}</td>
         ${models.map((m) => {
           const { score: g, kl: r } = at[`${mac}|${m}`];
           const title = `${Pie.store.names.model(m)} on ${hardwareName(mac)}`;
           if (r) {
-            const tip = card(title, [["Model slice", layersText(r.layers) || "Yes", true], ["First-token KL", kl(r.kl_mean)], [`Pie vs ${engineLabel(r.ref_engine)}`, `${r.prompts ?? "–"} prompts`, true],
+            const tip = card(title, [["Model slice", layersText(r.layers) || "Yes", true], ["First-token KL", kl(r.kl_mean)], ["Same top token", pct(r.top1_agree)], [`Pie vs ${engineLabel(r.ref_engine)}`, `${r.prompts ?? "–"} prompts`, true],
               r.date ? ["Measured", Pie.format.date(r.date), true] : null]);
-            return `<td><span class="platform-cell is-even is-nofit" data-tip-html="${esc(tip)}">${NOFIT}<span class="platform-main">${kl(r.kl_mean)}</span></span></td>`;
+            const ok = r.kl_mean < KL_PASS;
+            const open = { model: [m], task: [r.task], engine: ["pie", r.ref_engine] };
+            return `<td class="is-openable" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${ok ? "is-same" : "is-behind"} is-nofit" data-tip-html="${esc(tip)}">${NOFIT}<span class="platform-main">${MARK[ok ? "pass" : "fail"]}</span></span></td>`;
           }
           if (!g) return `<td><span class="platform-cell is-empty${"kl" in at[`${mac}|${m}`] ? " is-nofit" : ""}">${"kl" in at[`${mac}|${m}`] ? NOFIT : ""}–</span></td>`;
           // what answers "is quality hurt?": both scores, the difference, how much of it is noise, and a verdict in words
-          const off = isOff(g.arm);
+          const off = Math.abs(g.d) > MATH_PASS;
           const tip = card(`${title} · MATH-500`, [["Pie", pct(g.pie.score), false, "pie"], [engineLabel(g.arm.engine), pct(g.arm.score), false, g.arm.engine],
             ["Difference", `${signed(g.d)} pts`, true], isNum(g.arm.tolerance) ? ["Noise", `±${(g.arm.tolerance * 100).toFixed(1)} pts`, true] : null, ["Release", g.tag, true]],
-            off ? `Pie scores lower than ${engineLabel(g.arm.engine)}, beyond noise` : false);
+            off ? `Pie is more than ${MATH_PASS} points from ${engineLabel(g.arm.engine)}` : false);
           // a click opens Quality's runs for this model and task, with the engines this cell compares
           const open = { model: [m], task: ["math500"], engine: ["pie", g.arm.engine] };
-          return `<td class="is-openable" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${pct(g.pie.score)}<span class="qc-gap${off ? " is-off" : ""}">${signed(g.d)}</span></span></span></td>`;
+          return `<td class="is-openable" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${MARK[off ? "fail" : "pass"]}</span></span></td>`;
         }).join("")}<td class="platform-fill"></td></tr>`;
     }).join("");
     const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
