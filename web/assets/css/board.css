@@ -17,7 +17,11 @@
 .board-outline-item { display: flex; align-items: center; gap: 8px; height: var(--control-height); padding: 0 8px; border: 0; border-radius: var(--radius-control); background: none; font: inherit; font-size: 13px; text-align: left; color: var(--color-label); cursor: pointer; }  /* the sidebar's row: its card's colour, then its name */
 
 .board-outline-item:focus:not(:focus-visible) { outline: none; }  /* a click leaves no ring; the keyboard still gets one */
-.board-outline-item.is-current { background: var(--color-selection); }  /* the section in view, filled as the sidebar fills its selection; no fill under the pointer, as there */
+.board-outline-item.is-current { background: none; }  /* the fill is the thumb below, gliding between rows */
+.board-outline { position: sticky; }
+.board-outline-item { position: relative; z-index: 1; }
+.board-outline-thumb { position: absolute; top: 0; left: 0; right: 0; border-radius: var(--radius-control); background: var(--color-selection); pointer-events: none; transition: transform .35s cubic-bezier(.22, 1, .36, 1), height .35s cubic-bezier(.22, 1, .36, 1); }
+@media (prefers-reduced-motion: reduce) { .board-outline-thumb { transition: none; } }  /* the section in view, filled as the sidebar fills its selection; no fill under the pointer, as there */
 .board-outline-dot { width: 8px; height: 8px; flex: none; margin: 0 2px; border-radius: 2px; transition: width .22s cubic-bezier(.2, .8, .2, 1), height .22s cubic-bezier(.2, .8, .2, 1), margin .22s cubic-bezier(.2, .8, .2, 1), border-radius .22s ease; }  /* the card's colour as a small square, as the engines' key marks theirs */
 .board-outline-item.is-current .board-outline-dot { width: 12px; height: 12px; margin: 0; border-radius: 3px; }  /* the section in view: its square grows, the name keeps its place */
 .board-outline-item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

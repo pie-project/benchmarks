@@ -699,7 +699,7 @@ window.Pie = window.Pie || {};
       .map((id) => `<span class="board-key"><span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}</span>`).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     const outline = [
-      ["Head to head", [...SUMMARY.map((m) => [m.id, m.title]), [GAIN.id, "Pie’s gain"]]],
+      ["Head to head", [...SUMMARY.map((m) => [m.id, m.title]), [GAIN.id, GAIN.title]]],
       ...(Pie.signedIn() ? [["Speed by model size", [["size", "Dense models"], ["moe", "MoE models"]]]] : []),  // for an account only
       ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"], ...(Pie.signedIn() ? [[USE.id, "Share of the limit"]] : [])]],
       ...(Pie.signedIn() ? [["Accuracy", [["accuracy", "Score gap"]]]] : []),  // for an account only, as its section
@@ -790,6 +790,13 @@ window.Pie = window.Pie || {};
     const current = bottom ? sections[sections.length - 1] : sections[index];
     const id = pinned || current?.id.slice(6);
     for (const item of element.querySelectorAll("[data-board-go]")) item.classList.toggle("is-current", item.dataset.boardGo === id);
+    // one fill that glides from the old section's row to the new, as a sidebar's selection would, instead of jumping
+    const outline = element.querySelector(".board-outline"), on = outline?.querySelector(".board-outline-item.is-current");
+    if (!outline || !on) return;
+    let thumb = outline.querySelector(":scope > .board-outline-thumb");
+    if (!thumb) { thumb = document.createElement("span"); thumb.className = "board-outline-thumb"; thumb.setAttribute("aria-hidden", "true"); outline.prepend(thumb); }
+    thumb.style.transform = `translateY(${on.offsetTop}px)`;
+    thumb.style.height = `${on.offsetHeight}px`;
   };
   element.addEventListener("scroll", follow, { passive: true, capture: true });  // the scroller's, caught on the way down
 
