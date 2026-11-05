@@ -783,6 +783,14 @@ window.Pie = window.Pie || {};
       const at = Math.max(0, s.getBoundingClientRect().top + view.scrollTop - line);
       turns.push(turns.length ? Math.max(at, turns[turns.length - 1] + STEP) : at);
     }
+    // the cards the page cannot scroll far enough to reach share its last stretch in even steps, so every one is marked
+    // in turn before the bottom, the last at the bottom itself
+    const max = Math.max(0, view.scrollHeight - view.clientHeight - 2);  // the bottom, give or take a rounded pixel
+    const late = turns.findIndex((t) => t > max - STEP);
+    if (late >= 0) {
+      const from = late ? turns[late - 1] : 0, n = turns.length - late;
+      for (let k = 0; k < n; k++) turns[late + k] = from + ((max - from) * (k + 1)) / n;
+    }
     // at the bottom of the page the last section is marked, though its top may never reach the line
     const bottom = view.scrollTop + view.clientHeight >= view.scrollHeight - 2;
     let index = 0;
