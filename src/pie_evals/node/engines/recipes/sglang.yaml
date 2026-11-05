@@ -112,6 +112,16 @@ competitive:
                 gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
                 KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
   artifact:
+    glm-5.3-mini-tpu:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            chunked_prefill_size:
+              value: 2048
+              rationale: >
+                sglang-jax's default 4096-token prefill chunk needs 16.10G of HLO temporaries for the GLM-5.3 mini
+                on a 15.75 GiB v5e (RESOURCE_EXHAUSTED, 41896625792); 2048 is the chunk vLLM-TPU prefills in
+                (max_num_batched_tokens=2048).
     gpt-oss-120b-mxfp4-mini:
       platform:
         a40-x1:

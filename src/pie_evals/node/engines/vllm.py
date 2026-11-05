@@ -63,6 +63,12 @@ class VllmEngine(Engine):
             # models that need the V2 runner (Qwen3.8-Flash-Next's PLE inputs, Muse Spark) keep it
             if self.artifact.family in ("qwen3_6", "mimo_v2"):
                 env["VLLM_USE_V2_MODEL_RUNNER"] = "0"
+        if self.platform is not None and str(self.platform.backend) == "xla" and str(self.artifact.scheme) == "mxfp4":
+            # vllm-tpu requantizes MXFP4 experts to 512-wide fp4 blocks, which Mosaic compiles on TPU7x only; 32-wide
+            # int8 blocks hold the same values (an e2m1 code times its block's e8m0 scale) and compile on v5e/v6e
+            # (as quality/dist_run.py serves gpt-oss there)
+            env["MOE_REQUANTIZE_BLOCK_SIZE"] = "32"
+            env["MOE_REQUANTIZE_WEIGHT_DTYPE"] = "int8"
         if self.artifact.family == "mimo_v2" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
             # 0.31.0's CUTLASS block-FP8 GEMM aborts on sm_120 for MiMo's FP8 projections ("cutlass_gemm_caller:
             # Invalid status", weekly 39680748696); vLLM then takes the next kernel it ranks for block FP8
@@ -177,6 +183,10 @@ class VllmEngine(Engine):
             args.append("--no-chunked-prefill")
         if r.get("max_num_batched_tokens"):
             args += ["--max-num-batched-tokens", str(int(r["max_num_batched_tokens"]))]
+        if r.get("max_num_seqs_cap") and "--max-num-seqs" in self._script_text():
+            # vllm_bench.py's max_num_seqs is the concurrency; a hybrid model whose per-sequence state pool cannot
+            # seat every offered request is capped, the rest queue in vLLM's scheduler
+            args += ["--max-num-seqs", str(int(r["max_num_seqs_cap"]))]
         if r.get("num_gpu_blocks_override"):
             args += ["--num-gpu-blocks-override", str(int(r["num_gpu_blocks_override"]))]
         if r.get("block_size"):
@@ -217,6 +227,13 @@ class VllmEngine(Engine):
         # TODO(pie/benches): no flag for torch.compile / cudagraph capture
         # sizes (vLLM compilation_config); vLLM's defaults apply.
         return args
+
+    def _script_text(self) -> str:
+        # a pie checkout from before vllm_bench.py had a flag would refuse it
+        try:
+            return self.script_path().read_text()
+        except OSError:
+            return ""
 
     def version(self) -> str:
         try:

@@ -259,6 +259,45 @@ competitive:
           value: false
           rationale: common.py's --mixed-phase help asks for prefix caching OFF on both engines.
   platform:
+    tpu-v5e-1:
+      knobs: {}
+      artifact:
+        gpt-oss-20b-mxfp4-mini12: &tpu_v5e_compile_room
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                At 0.97 vLLM-TPU gives the KV pool every byte its memory check sees free, and then cannot load its
+                step program ("Attempting to reserve 1.11G ... 484.27M free", gpt-oss parity 41995643253;
+                Muse-Glimmer's KV pool the same, 3.05G asked with 483.80M free, 41913871355). 0.80 leaves it the room.
+        gpt-oss-120b-mxfp4-mini12-e32: *tpu_v5e_compile_room
+        muse-glimmer-30b-mini4: *tpu_v5e_compile_room
+        qwen3.6-27b-mini8:
+          knobs:
+            max_num_seqs_cap:
+              value: 128
+              rationale: >
+                Qwen3.6's Gated DeltaNet state is held for every seated sequence: 256 of them need 4.9 GB beside the
+                3.98 GiB the 9.8 GB mini leaves at 0.97 ("Cannot fit both KV pools ... lower max_num_seqs",
+                41767218136). 128 seat; the other offered requests queue in vLLM's scheduler.
+        qwen3.6-35b-a3b-mini-e16:
+          knobs:
+            max_num_seqs_cap:
+              value: 96
+              rationale: >
+                30 Gated DeltaNet layers hold 64 MB of state a sequence: 256 seated need 16.5 GB on a 15.75 GiB chip.
+                96 seat beside the 7.5 GB mini; the other offered requests queue in vLLM's scheduler.
+    tpu-v6e-1:
+      knobs: {}
+      artifact:
+        qwen3.6-35b-a3b-mini-e32:
+          knobs:
+            max_num_seqs_cap:
+              value: 192
+              rationale: >
+                30 Gated DeltaNet layers hold 64 MB of state a sequence: 256 seated need 16.5 GB, more than the
+                15.23 GiB the mini leaves at 0.90 ("Cannot fit both KV pools", 41957075507). 192 seat; the other
+                offered requests queue in vLLM's scheduler.
     rtx4090-x1:
       family:
         gpt_oss:

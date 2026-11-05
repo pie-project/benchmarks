@@ -351,6 +351,8 @@ class SglangTpuEngine(ServedEngine):
             cmd += ["--mem-fraction-static", str(r["gpu_mem_util"])]
         if r.get("page_size"):
             cmd += ["--page-size", str(int(r["page_size"]))]
+        if r.get("chunked_prefill_size"):
+            cmd += ["--chunked-prefill-size", str(int(r["chunked_prefill_size"]))]
         return cmd
 
     def version(self) -> str:
