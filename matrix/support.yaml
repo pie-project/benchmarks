@@ -244,8 +244,6 @@ unsupported:
     reason: "vllm-tpu 0.32.0: is_act_and_mul=False (Nemotron's relu2 MLP) is supported only for CUDA, XPU and ROCm"
   - when: {engine: mlxlm, tp: ">1"}
     reason: "mlx-lm is single device"
-  - when: {engine: mlxlm, family: muse_glimmer}
-    reason: "mlx-lm 0.31.3 ships no muse_glimmer model, so it cannot load Muse Glimmer"
   # mlx-lm ships no qwen4_exp model (0.32.2): Qwen3.8-Flash-Next's MLX arm is served by mlx-vlm (recipes/mlxlm.yaml)
   - when: {engine: llamacpp, artifact: qwen3.8-flash-next-q2k-llamacpp, workload: pf256-512}
     reason: "llama.cpp b12096 stalls on a second 256-prompt round of Qwen3.8-Flash-Next: the first round batches (776 tok/s on m5-max-128g), the next runs the prompts one slot at a time (990 s against 19 s on the miniature) and times out"
