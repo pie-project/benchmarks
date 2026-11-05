@@ -435,13 +435,20 @@
 .board-grid-cards + .board-stack { margin-top: 24px; }
 .board-axis.is-faint { opacity: .5; }
 .board-cell-dot { fill: var(--color-label-tertiary); fill-opacity: .85; }
-/* a gradient by the gap: from grey at even to systemGreen or systemRed, a shade deeper, at double or half the speed */
-.board-cell.is-ahead .board-cell-dot { fill: color-mix(in srgb, #2ea84a calc(25% + var(--depth, 1) * 75%), #aeaeb2); }
-.board-cell.is-behind .board-cell-dot { fill: color-mix(in srgb, #e0352b calc(25% + var(--depth, 1) * 75%), #aeaeb2); }
-:root[data-theme="dark"] .board-cell.is-ahead .board-cell-dot { fill: color-mix(in srgb, #30d158 calc(25% + var(--depth, 1) * 75%), #636366); }
-:root[data-theme="dark"] .board-cell.is-behind .board-cell-dot { fill: color-mix(in srgb, #ff453a calc(25% + var(--depth, 1) * 75%), #636366); }
+/* inside the band (20% slower to 50% faster) green, outside it red; the band's edges dotted */
+.board-cell .board-cell-dot { fill: #2ea84a; fill-opacity: .75; }
+.board-cell.is-outlier .board-cell-dot { fill: #e0352b; }
+:root[data-theme="dark"] .board-cell .board-cell-dot { fill: #30d158; }
+:root[data-theme="dark"] .board-cell.is-outlier .board-cell-dot { fill: #ff453a; }
+.board-band-edge { stroke: var(--color-label-tertiary); stroke-width: 1.5; stroke-dasharray: 2 4; stroke-linecap: round; }  /* every border alike: even, and each platform's limit */
 .board-cell:hover .board-cell-dot { fill-opacity: 1; stroke: var(--color-label); stroke-width: 1.5; }
 .board-swarm .board-cell { transition: opacity .15s ease; }
 .board-swarm:has(.board-cell:hover) .board-cell:not(:hover) { opacity: .35; }
 .board-median-label { font-size: 10px; font-weight: 600; text-anchor: middle; fill: var(--color-label); font-variant-numeric: tabular-nums; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .board-swarm .board-cell { transition: none; } }
+
+/* Pie's gain: each platform's name as the bars above name their engines; its median in a card while the pointer is on it */
+.board-row-label .board-row-name { font-size: 12px; font-weight: 600; fill: var(--color-label); }  /* as the engines are named under the bars above, the same size on screen */
+.board-tip-row b.is-ahead { color: var(--color-positive); }
+.board-tip-row b.is-behind { color: var(--color-negative); }
+
