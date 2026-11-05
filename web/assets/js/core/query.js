@@ -64,7 +64,9 @@ window.Pie = window.Pie || {};
     const schema = Pie.schema[state.table];
     const source = state.table === "results" ? byPhase(store.snapshot(state.release))
       // the model slices' first-token checks list with the scores, so a slice cell's See Runs lands on them
-      : state.table === "quality" ? [...store.qualitySnapshot(state.release), ...store.tables.quality_parity || []]
+      // each check is one run of both engines on the same prompts: a row for Pie and a matching one for the reference
+      : state.table === "quality" ? [...store.qualitySnapshot(state.release), ...(store.tables.quality_parity || []).flatMap((r) => (r.ref_engine
+        ? [r, { ...r, engine: r.ref_engine, version: r.ref_version, artifact: r.ref_artifact || r.artifact }] : [r]))]
       : store.rows(state.table);
     const query = state.query.trim().toLowerCase();
 
