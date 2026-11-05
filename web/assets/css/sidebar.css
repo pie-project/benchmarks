@@ -319,7 +319,8 @@
   border-radius: 5px;
   background: var(--tint);
 }
-.sidebar-glyph[style] svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 2; }
+.sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }  /* the platform's mark drawn in white on its tile, wherever the tile sits (a menu too) */
+.sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }  /* Apple's mark is a filled glyph */
 .sidebar-item .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
 .sidebar-item svg .is-filled { fill: var(--color-label); stroke: none; }
 

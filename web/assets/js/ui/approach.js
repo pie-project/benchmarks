@@ -26,16 +26,27 @@ window.Pie = window.Pie || {};
         <p>We restrict model slices to workloads where speed does not depend on output quality. Removing layers or experts breaks the model's language quality, which raises two potential issues. First, a sliced model may emit an end-of-sequence token early; we prevent this by disabling early termination (<code>ignore_eos</code>) and forcing every run to generate all 256 tokens. Second, nonsensical outputs invalidate workloads that depend on token probabilities, such as speculative decoding and accuracy benchmarks. We therefore evaluate model slices only on Raw Decode and Prefill, where execution time depends strictly on tensor shapes and sequence length.</p>
         <h3>Limitations</h3>
         <p>Because model slices run on a single device, they do not measure multi-GPU communication overhead such as tensor-parallel <code>all-reduce</code>. In addition, because we do not scale the vocabulary output head, it accounts for a larger share of total work in a slice than in the full model (our roofline model accounts for this explicitly). Finally, a slice's raw token rate (<code>tok/s</code>) is not the full model's speed. We never report model slices in Best TPS or full-model Kernel Efficiency; we use them strictly for Relative Speed, where all engines run the exact same slice head-to-head.</p>`],
-      ["fit", "Memory Fit", "#AF52DE", "How we decide whether a model fits a machine.", `<p class="approach-empty">This chapter is being written.</p>`],
+      // the former Memory page, its formulas drawn by methods.js
+      ["fit", "Memory Fit", "#AF52DE", "How we decide whether a model fits a machine.", () => `
+        <p>Before a model runs on a machine, we check that it fits: its weights at their precision, with headroom for the KV cache and the engine's own buffers, against the memory the machine lets its GPU use. Where a model does not fit, the grid shows a crossed circle instead of a number.</p>
+        ${tables("fit")}`],
     ]],
     ["Limits", [
-      ["limit", "Theoretical Limit", "#FF3B30", "The roofline ceiling each engine is measured against.", `<p class="approach-empty">This chapter is being written.</p>`],
+      // the former Roofline page: the limit for the workload picked in its bar
+      ["limit", "Theoretical Limit", "#FF3B30", "The roofline ceiling each engine is measured against.", () => `
+        <p>Kernel Efficiency compares an engine's measured speed with the most the machine could deliver: the slower of reading every byte a step needs from memory and doing every operation it needs at the chip's peak rate. Pick a workload to see how its limit is worked out, each term defined and its source cited.</p>
+        ${tables("limit")}`],
     ]],
     ["Quality", [
       ["parity", "Parity Checks", "#007AFF", "How we confirm every engine computes the same model.", `<p class="approach-empty">This chapter is being written.</p>`],
       ["accuracy", "Accuracy", "#FFCC00", "Benchmark scores on the same weights and machine.", `<p class="approach-empty">This chapter is being written.</p>`],
     ]],
   ];
+
+  // a chapter's formula tables, from the Roofline and Memory pages they replace
+  let viewState = null;
+  const tables = (kind) => (viewState && Pie.methods?.chapter ? Pie.methods.chapter(kind, viewState).html : "");
+  const keyOf = () => (viewState && Pie.methods?.chapter && (current === "limit" || current === "fit") ? Pie.methods.chapter(current, viewState).key : current);
 
   // the outline as the overview draws its own: a heading per group, a coloured square and a name per chapter
   const outline = CHAPTERS.map(([head, items]) => `<div class="board-outline-head">${head}</div>${items.map(([id, title, colour]) =>
@@ -48,16 +59,19 @@ window.Pie = window.Pie || {};
   let current = (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
   if (!LIST.some(([id]) => id === current)) current = LIST[0][0];
 
-  const step = (chapter, label, cls) => chapter ? `<button type="button" class="approach-step ${cls}" data-chapter-go="${chapter[0]}"><span class="approach-step-label">${label}</span><span class="approach-step-title">${chapter[1]}</span></button>` : "<span></span>";
+  // the chapters before and after as small picks under the card, as the Overview sets its picks
+  const step = (chapter, label, cls) => chapter ? `<button type="button" class="filter-button board-card-pick approach-step ${cls}" aria-label="${label}: ${chapter[1]}" data-chapter-go="${chapter[0]}">${cls === "is-previous" ? "‹ " : ""}${chapter[1]}${cls === "is-next" ? " ›" : ""}</button>` : "<span></span>";
 
   const draw = () => {
     const at = LIST.findIndex(([id]) => id === current);
     const [, title, , summary, body] = LIST[at];
+    drawn = keyOf();
+    // a chapter as the Overview sets a section: its title and line above, the text in a card of the Overview's shape
     element.querySelector(".approach-main").innerHTML = `
-      <article class="method-pane method-article">
-        <h2>${title}</h2>
-        <p class="method-summary">${summary}</p>
-        <div class="method-pane-body">${body}</div>
+      <div class="board-section-head"><div class="board-section-text"><h1 class="board-title">${title}</h1>
+        <p class="board-lede">${summary}</p></div></div>
+      <article class="board-card method-article${typeof body === "function" ? " has-tables" : ""}">
+        <div class="method-pane-body">${typeof body === "function" ? body() : body}</div>
       </article>
       ${LIST.length > 1 ? `<nav class="approach-steps" aria-label="Chapters">${step(LIST[at - 1], "Previous", "is-previous")}${step(LIST[at + 1], "Next", "is-next")}</nav>` : ""}`;
     for (const item of element.querySelectorAll(".board-outline [data-chapter-go]")) item.classList.toggle("is-current", item.dataset.chapterGo === current);
@@ -76,8 +90,16 @@ window.Pie = window.Pie || {};
       <div class="board-main approach-main"></div>
     </div>`;
 
+  let drawn = null;  // the chapter as last drawn: a new workload or release draws its tables again
+
   // a chapter picked in the outline or the links under it opens at its top
   element.addEventListener("click", (event) => {
+    // the limit's workload bar: the grid's own setup, so a pick changes both pages
+    const mode = event.target.closest("[data-mode]");
+    if (mode && viewState) { viewState.platform.mode = mode.dataset.mode; Pie.platform.changed(); return; }
+    // a term's source opens its catalog page, as the sidebar would
+    const source = event.target.closest("[data-go]");
+    if (source) { document.querySelector(`.sidebar-item[data-table="${source.dataset.go}"]`)?.click(); return; }
     const go = event.target.closest("[data-chapter-go]");
     if (!go || go.dataset.chapterGo === current) return;
     current = go.dataset.chapterGo;
@@ -90,11 +112,18 @@ window.Pie = window.Pie || {};
     element,
     chapters: LIST.length,
     render(state) {
+      viewState = state;
       element.hidden = state.table !== "approach";
-      if (element.hidden || element.dataset.ready === "1") return;
-      element.innerHTML = content;
-      element.dataset.ready = "1";
-      draw();
+      if (element.hidden) return;
+      if (element.dataset.ready !== "1") {
+        element.innerHTML = content;
+        element.dataset.ready = "1";
+        // Spec Decode's acceptance, typed in the limit's bar, works out its rows again
+        // (not while the field is being typed in, which a redraw would take the focus from)
+        Pie.bindSpecField?.(element, () => { if (current === "limit" && !document.activeElement?.matches("[data-alpha]")) draw(); });
+        element.addEventListener("focusout", (event) => { if (event.target.matches("[data-alpha]") && current === "limit") requestAnimationFrame(draw); });
+        draw();
+      } else if (keyOf() !== drawn) draw();
     },
   };
 })();

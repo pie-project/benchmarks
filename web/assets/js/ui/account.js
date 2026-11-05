@@ -127,7 +127,8 @@ window.Pie = window.Pie || {};
     if (!configured) return note("Accounts are not set up on this site yet.", "is-warn");
     try {
       const auth = (await start()).auth;
-      if (act === "out") { await auth.signOut(); user = null; changed(); return close(); }
+      // logging out reloads the page, so nothing drawn for the account (its sections, cards and rows) stays on screen
+      if (act === "out") { await auth.signOut(); user = null; location.reload(); return; }
       // a provider the project has not turned on says so here, rather than leading to Supabase's bare error page
       if (!(await enabled())[act]) return note(`${act === "azure" ? "Microsoft" : "Google"} login is not turned on yet. Use your email for now.`, "is-warn");
       const { error } = await auth.signInWithOAuth({ provider: act, options: { redirectTo: here() } });

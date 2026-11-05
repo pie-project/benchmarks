@@ -373,10 +373,12 @@ window.Pie = window.Pie || {};
     const tflops = machine.tflops * machine.devices;
     const bits = bitsOf(row.scheme);
     const prompt = workload.prompt_tokens;
-    const prefill = metric === "prefill";
-    const tokens = prefill ? prompt : 1;
+    // Batched Prefill ("pbatch"): the workload's prompts all prefilled in one pass, each its own first answer token
+    const batch = metric === "pbatch" ? (workload.concurrency || 1) : 1;
+    const prefill = metric === "prefill" || metric === "pbatch";
+    const tokens = prefill ? prompt * batch : 1;
     const context = prefill ? prompt : prompt + workload.output_tokens / 2;
-    const p = pass(a, { bits, tokens, logits: 1, requests: 1, context });
+    const p = pass(a, { bits, tokens, logits: batch, requests: batch, context });
     const memory = (p.weightGB + p.cacheGB) / bw;
     // a chip with no FLOPS figure has no compute bound: only the bandwidth one is drawn
     const compute = tflops ? p.flops / (tflops * 1e12) : 0;

@@ -126,4 +126,4 @@
 .qc-tip-ok { color: var(--color-positive); }
 .qc-tip-off::before, .qc-tip-ok::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 #checks .platform-main { white-space: nowrap; }  /* a score and its gap stay on one line */
-.qc-mark { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+svg.qc-mark { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }

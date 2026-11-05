@@ -48,3 +48,32 @@ create policy "maintainers close reports" on public.measurement_reports for upda
 
 -- a maintainer, added by their account's id (Authentication → Users):
 -- insert into public.maintainers (user_id) values ('<user uuid>');
+
+-- Submitted results: an engine's team sends a better number with what it takes to reproduce it, kept beside the
+-- reports and published only once rerun on the project's machines (status verified)
+alter table public.measurement_reports add column if not exists kind text not null default 'report' check (kind in ('report', 'result'));
+alter table public.measurement_reports add column if not exists version text check (length(version) <= 200);
+alter table public.measurement_reports add column if not exists config text check (length(config) <= 8000);
+alter table public.measurement_reports add column if not exists link text check (link is null or link ~ '^https://');
+alter table public.measurement_reports drop constraint if exists measurement_reports_status_check;
+alter table public.measurement_reports add constraint measurement_reports_status_check check (status in ('open', 'fixed', 'not_a_bug', 'verified', 'rejected'));
+
+-- for now a result can be submitted without an account; a report still needs one
+drop policy if exists "anyone submits results" on public.measurement_reports;
+create policy "anyone submits results" on public.measurement_reports for insert to anon
+  with check (kind = 'result' and user_id is null and fix_url is null and status = 'open');
+
+-- an outlier closed by a maintainer: the outliers are worked out from the data, not stored, so their state lives here,
+-- keyed by machine, model and setup ("h100-sxm-x1|gemma-4-12b|decode"); anyone reads it, a maintainer writes it
+create table if not exists public.outlier_status (
+  key text primary key,
+  status text not null default 'closed' check (status in ('open', 'closed')),
+  updated_at timestamptz not null default now(),
+  updated_by uuid default auth.uid() references auth.users (id) on delete set null
+);
+alter table public.outlier_status enable row level security;
+drop policy if exists "outlier status is public" on public.outlier_status;
+create policy "outlier status is public" on public.outlier_status for select using (true);
+drop policy if exists "maintainers set outlier status" on public.outlier_status;
+create policy "maintainers set outlier status" on public.outlier_status for all to authenticated
+  using (public.is_maintainer()) with check (public.is_maintainer());

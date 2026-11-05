@@ -6,12 +6,16 @@
   // a link to one chart, #board/<card>: Rankings opens on it, scrolled to that card once the page is drawn
   let linkedCard = null;
   const readHash = () => {
-    const [view, hardware, workload] = decodeURIComponent(location.hash.slice(1)).split("/");
+    const [view, hardware, workload, setup] = decodeURIComponent(location.hash.slice(1)).split("/");
+    // #reports/<machine>/<model>/<setup>: Pie Reports narrowed to that one cell, as a GitHub report's Open link reads
+    if (view === "reports" && hardware) Pie.reports?.focus(hardware, workload, setup);
     if (view === "board" && hardware) {
       state.table = "board";
       linkedCard = hardware;
     }
     if (view === "quality") state.table = "checks";  // #quality opens the Quality checks
+    // any other page opens by its name too (#reports, #approach), so a link from outside the site lands on it
+    else if (view && view !== "board" && view !== "overview" && view !== "mac" && Pie.schema[view]) state.table = view;
     if (view === "overview" || view === "mac") {
       state.table = "mac";
       Object.assign(state.overview, { hardware: hardware || null, workload: workload || "raw" });
@@ -67,7 +71,8 @@
     // the miniatures' banner over every page that can show their results
     document.getElementById("mini-banner").hidden = true;  // the miniatures note, off: !(Pie.store.miniatures && (isPlatform || ["results", "measurements", "welcome"].includes(state.table)));
     const isMethod = ["welcome", "inferlets", "services", "approach", "reports", "profiler", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
-    filterBar.hidden = isOverview || isMethod || isPlatform;
+    // Reports keeps the tables' bar above its table (empty for now, the info button at its end), as Performance does
+    filterBar.hidden = (isOverview || isMethod || isPlatform) && state.table !== "reports";
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
     if (rules) rules.hidden = Pie.schema[state.table]?.section === "catalog";
@@ -117,6 +122,12 @@
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
     } else if (isMethod) {
       toolbar.elements.title.textContent = Pie.schema[state.table].title || Pie.schema[state.table].label;
+      if (state.table === "reports") {
+        filters.render(state);
+        document.getElementById("filter-list").insertAdjacentHTML("afterbegin", Pie.reports.bar());  // its Type filter
+        document.getElementById("report-selected").hidden = true;  // the Report button belongs to the measurement tables
+        document.getElementById("download-rows").hidden = true;  // and so does Download
+      }
       // Quality counts its machines and models under its title, as a grid page does
       toolbar.elements.subtitle.textContent = state.table === "board" ? "Engine Analysis"
         : checked?.macs ? `${checked.macs} ${checked.macs === 1 ? "machine" : "machines"}, ${checked.models} ${checked.models === 1 ? "model" : "models"}` : "";
@@ -269,6 +280,8 @@
 
       } else if (String(key).startsWith("grid:")) {
         Pie.platform.pick(key.slice(5), value);
+      } else if (String(key).startsWith("reports:")) {
+        Pie.reports.pick(key.slice(8), value);
       } else if (value === popover.ALL) {
         state.setFilter(key, []);
       } else {
@@ -436,7 +449,8 @@
   const bindOverview = () => {
     Pie.platform.bind(state);
     Pie.platform.onChange(render);
-    Pie.platform.onOpenResults((filters) => navigate("results", filters));
+    // an empty cell's runs are the unavailable rows Performance hides: they show, as U would show them
+    Pie.platform.onOpenResults(({ _unavailable, ...filters }) => { if (_unavailable) state.hideEmpty = false; navigate("results", filters); });
     Pie.checks.onOpenRuns((filters) => navigate("quality", filters));
     overview.bind(state);
     overview.onChange(render);

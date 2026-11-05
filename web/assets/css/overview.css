@@ -885,16 +885,8 @@
 /* a page of prose (Methodology): one card at reading width, its numbered rules and code as the text around them */
 .approach-main { display: flex; flex-direction: column; gap: 24px; }  /* the chapters down the page as the overview stacks its cards, its outline beside them */
 /* previous and next under the chapter, as Apple's documentation closes an article: the chapter's name under a small label */
-.approach-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.approach-step { display: flex; flex-direction: column; gap: 4px; padding: 16px 20px; border: 0; border-radius: 12px; background: none; box-shadow: inset 0 0 0 1px var(--color-separator); font: inherit; text-align: left; cursor: pointer; }
-.approach-step.is-next { align-items: flex-end; text-align: right; }
-.approach-step:hover { background: var(--color-fill); }
-.approach-step-label { font-size: 12px; color: var(--color-label-secondary); }
-.approach-empty { font-style: italic; color: var(--color-label-tertiary); }  /* a chapter named but not yet written */
-.approach-step-title { font-size: 15px; font-weight: 600; color: var(--color-accent); }
+.approach-empty { color: var(--color-label-secondary); }  /* a chapter named but not yet written */
 .approach-main > .method-article { scroll-margin-top: 48px; border: 0; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--color-separator); }  /* the overview card's outline and corners */
-.approach-main > .method-article { padding: 52px 160px 60px 72px; }  /* prose wants room: a wide right margin keeps its lines a comfortable length */
-@media (max-width: 1280px) { .approach-main > .method-article { padding-right: 96px; } }
 @media (max-width: 760px) { .approach-main > .method-article { padding: 28px 22px 32px; } }
 .method-article .method-pane-body p,
 .method-article .method-list { font-size: 15px; line-height: 1.6; }
@@ -1325,43 +1317,20 @@
 }
 
 
-/* Reports: the form to file one, then every report as a card, a maintainer's fix field at its foot */
-.reports-inner { gap: 24px; }
-.reports-inner > .method-pane { border: 0; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--color-separator); }
-.reports-inner > .board-section-head { margin: 8px 0 0; }
-.reports-form { padding: 32px 40px 28px; }
-.reports-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px 16px; margin-top: 22px; }
-.reports-field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--color-label-secondary); }
-.reports-field.is-wide { margin-top: 14px; }
-.reports-field select, .reports-field input, .reports-field textarea, .reports-fix input, .reports-fix select {
-  font: inherit; font-size: 13px; color: var(--color-label); padding: 7px 10px; border: 0; border-radius: var(--radius-control);
-  background: var(--color-fill); box-shadow: inset 0 0 0 .5px var(--color-separator);
-}
-.reports-field textarea { resize: vertical; line-height: 1.5; }
-.reports-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 16px; }
-.reports-status { font-size: 13px; color: var(--color-label-secondary); }
-.reports-send, .reports-fix button { font: inherit; font-size: 13px; font-weight: 500; padding: 7px 14px; border: 0; border-radius: var(--radius-control); background: var(--color-accent); color: #fff; cursor: pointer; }
-.reports-send:disabled { opacity: .5; cursor: default; }
-.reports-form.is-signed-out .reports-send { margin-top: 18px; }
-.reports-list { display: flex; flex-direction: column; gap: 16px; }
-.reports-card { padding: 20px 24px; }
-.reports-card-head { display: flex; align-items: center; gap: 12px; }
-.reports-card-head h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--color-label); }
-.reports-badge { margin-left: auto; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--color-fill); color: var(--color-label-secondary); }
-.reports-badge.is-open { background: rgba(255, 149, 0, .14); color: #C93400; }
-.reports-badge.is-fixed { background: rgba(52, 199, 89, .14); color: #248A3D; }
-.reports-where { margin: 4px 0 0; font-size: 13px; color: var(--color-label-secondary); }
-.reports-where b { color: var(--color-label); font-weight: 600; }
-.reports-note { margin: 12px 0 0; font-size: 14px; line-height: 1.55; color: var(--color-label); white-space: pre-wrap; }
-.reports-meta { margin: 12px 0 0; font-size: 12px; color: var(--color-label-tertiary); }
-.reports-meta a { color: var(--color-accent); }
-.reports-fix { display: flex; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: .5px solid var(--color-separator); }
-.reports-fix input { flex: 1; min-width: 0; }
+/* Reports: a title and a line under it, then every report as a row of the site's table */
+#reports.method { overflow: auto; }  /* the table scrolls both ways in the page, as Performance's does */
+.reports-table-wrap { min-width: 100%; }
+#reports .reports-empty { padding: 24px var(--edge); }
+.reports-table td.is-wide { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reports-table a { color: var(--color-accent); text-decoration: none; }
+.reports-table a:hover { text-decoration: underline; }
+.reports-none { color: var(--color-label-tertiary); }
+.reports-fix { display: flex; gap: 6px; align-items: center; }
+.reports-fix input, .reports-fix select { height: 24px; padding: 0 8px; border: 0; border-radius: var(--radius-control); font: inherit; font-size: 12px; color: var(--color-label); background: var(--color-fill); }
+.reports-fix input { width: 220px; }
+.reports-fix button { height: 24px; padding: 0 10px; border: 0; border-radius: var(--radius-control); font: inherit; font-size: 12px; font-weight: 500; background: var(--color-accent); color: #fff; cursor: pointer; }
 .reports-empty { font-size: 14px; color: var(--color-label-secondary); margin: 0; }
-@media (prefers-color-scheme: dark) {
-  .reports-badge.is-open { color: #FF9F0A; }
-  .reports-badge.is-fixed { color: #30D158; }
-}
+.reports-sheet-form .reports-send:disabled { opacity: .5; cursor: default; }
 
 /* the sheet the bar's Report opens: the login sheet itself (account.css), in a dialog that only centres it */
 .reports-sheet { padding: 0; border: 0; background: none; overflow: visible; }
@@ -1370,3 +1339,31 @@
 .account-email textarea { min-height: 64px; padding: 7px 10px; border: 0; border-radius: var(--radius-field); font: inherit; font-size: 13px; line-height: 1.4; color: var(--color-label); background: var(--color-fill); outline: none; resize: vertical; }
 .account-email textarea:focus { box-shadow: 0 0 0 3px var(--color-accent-tint), 0 0 0 1px var(--color-accent); }
 .reports-sheet-form .account-primary:disabled { opacity: .5; cursor: default; }
+
+/* a Methodology chapter carrying a limit's formulas (Theoretical Limit, Memory Fit): a little more width for them */
+/* the submit sheet's pickers, drawn as the login sheet's fields */
+.account-email select { height: 30px; padding: 0 8px; border: 0; border-radius: var(--radius-field); font: inherit; font-size: 13px; color: var(--color-label); background: var(--color-fill); outline: none; }
+.account-email select:focus { box-shadow: 0 0 0 3px var(--color-accent-tint), 0 0 0 1px var(--color-accent); }
+.account-email select:invalid { color: var(--color-label-tertiary); }
+/* an outlier's issue: plain grey text with the site's outward arrow, as See Runs reads; the label's colour under the pointer */
+.reports-table a.reports-issue { display: inline-flex; align-items: center; gap: 3px; color: var(--color-label-secondary); text-decoration: none; white-space: nowrap; }
+.reports-table a.reports-issue:hover { color: var(--color-label); text-decoration: none; }
+.reports-issue svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.reports-table td.reports-auto { color: var(--color-label-secondary); }  /* found by the site, not filed by a person: grey */
+
+/* Methodology in the Overview's shape: a section head over each chapter, the text in a board card at the Overview's
+   padding, its lines held to a reading width; the chapters before and after as small picks */
+.approach-main { gap: 0; }
+.approach-main > .board-section-head { margin-bottom: 24px; }
+.approach-main > .method-article { padding: 24px 28px 28px; }
+.approach-main > .method-article .method-pane-body { margin: 0; }
+.approach-main > .method-article .method-pane-body > p, .approach-main > .method-article .method-list { max-width: 720px; font-size: 14px; line-height: 1.6; }
+.approach-main > .method-article h3 { font-size: 15px; margin-top: 24px; }
+.approach-steps { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.approach-step.is-next { margin-left: auto; }
+.approach-steps .approach-step { height: 28px; padding: 0 12px; border-radius: var(--radius-field); font-size: 13px; color: var(--color-label); }  /* the toolbar's search button's size */
+/* a closed outlier stays listed, quieter; a maintainer's status pick is the filters' small pop-up */
+.reports-table tr.is-closed td { color: var(--color-label-tertiary); }
+.reports-status-pick { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; }
+.reports-status-pick .popup-chevron { width: 7px; height: 10px; opacity: 0; transition: opacity .12s; }
+.reports-table tr:hover .reports-status-pick .popup-chevron, .reports-status-pick[aria-expanded="true"] .popup-chevron { opacity: .6; }

@@ -40,10 +40,10 @@ window.Pie = window.Pie || {};
   // symbol names its quantity on hover
   const SYM = {
     "Memory time": ["T", "mem"], "Math time": ["T", "math"], "Interconnect time": ["T", "link"],
-    "Weights read": ["W"], "Weights touched": ["W"], "Cache read": ["C"], "Caches read": ["C"], "Prompt cache": ["C"],
+    "Weights read": ["W"], "Weights touched": ["W"], "Cache read": ["C"], "Caches read": ["C"], "Prompt cache": ["C"], "Prompt caches": ["C"],
     "Memory bandwidth": ["B", "mem"], "Active body": ["N", "act"], "Output head": ["N", "head"], "Peak FLOPS": ["F"],
     "Layers": ["L"], "Link latency": ["τ"], "Activations exchanged": ["A"], "Link bandwidth": ["B", "link"],
-    "Limit": ["R"], "Single Decode": ["R", "raw"], "Prompt tokens": ["P"],
+    "Limit": ["R"], "Single Decode": ["R", "raw"], "Prompt tokens": ["P"], "Prompts": ["n"], "Tokens per prompt": ["P"],
     "Tokens per step": ["E"], "Acceptance": ["α"], "Drafts": ["k"], "Verify time": ["T", "verify"],
     "Draft time": ["T", "draft"], "Drafter weights read": ["W", "draft"], "Step time": ["T", "step"],
     "Requests": ["b"], "Bandwidth bound": ["R", "mem"], "Compute bound": ["R", "math"], "Interconnect bound": ["R", "link"],
@@ -63,6 +63,9 @@ window.Pie = window.Pie || {};
     "Cache read": ["KV cache for the prompt plus half the answer, from the model's shape.", "models"],
     "Caches read": ["Cache read for every request in the batch.", "models"],
     "Prompt cache": ["The KV cache the prompt writes, from the model's config.", "models"],
+    "Prompt caches": ["The KV cache every prompt writes, from the model's config.", "models"],
+    "Prompts": [() => `${Pie.store.index.workloads?.prefill_batch?.concurrency ?? 256} cold prompts at once.`, "workloads"],
+    "Tokens per prompt": [() => `${Pie.store.index.workloads?.prefill_batch?.prompt_tokens ?? 512} tokens each.`, "workloads"],
     "Memory bandwidth": ["The machine's peak, from its spec sheet.", "hardware"],
     "Peak FLOPS": ["FP16 peak from the spec sheet. Apple's are estimates.", "hardware"],
     "Active body": ["Parameters each token runs through, minus embeddings and output head.", "models"],
@@ -281,6 +284,25 @@ window.Pie = window.Pie || {};
         };
       },
     },
+    {
+      id: "pbatch",
+      lede: "Many prompts go through together, each in one pass. The weights are read once for every prompt's tokens, so the step is arithmetic: the speed is the chip's peak rate over the work each token needs.",
+      equations: [
+        eq("Memory time", fr(sum(v("Weights touched"), v("Prompt caches")), v("Memory bandwidth")), ["roofline"]),
+        eq("Math time", fr(`2${o("×")}${v("Prompts")}${o("×")}${par(sum(times(v("Active body"), v("Tokens per prompt")), v("Output head")))}`, v("Peak FLOPS")), ["kaplan"]),
+        eq("Interconnect time", link, ["megatron"]),
+        eq("Limit", fr(times(v("Prompts"), v("Tokens per prompt")), fn("max", v("Memory time"), v("Math time"), v("Interconnect time"))), ["roofline"]),
+      ],
+      why: [
+        "Batching prompts only adds tokens to a pass that is already compute-bound, so the limit is the same arithmetic roof as one prompt's, reached with less idle time between passes {roofline} {kaplan}.",
+      ],
+      assumptions: [
+        ["A mixture-of-experts batch touches nearly every expert, so the weights touched are close to all of them; this only changes memory time, which is not the limit here.", "small"],
+        ["Attention arithmetic, which grows with the square of each prompt, is not counted.", "up"],
+        ["Each prompt needs the output head once, for its first answer token.", null],
+        ["FLOPS is the spec sheet's peak. Apple publishes no FP16 figure, so the catalog's are estimates.", "up"],
+      ],
+    },
   ];
 
   // Memory Fit: whether a model fits a machine, worked out for every pair whether it ran or not; a crossed circle in
@@ -336,8 +358,40 @@ window.Pie = window.Pie || {};
   let current = CHAPTERS[0].id;
   let state = null;
 
-  const page = () => {
-    const c = state.table === "fit" ? FIT : CHAPTERS.find((ch) => ch.id === current);
+  // a Methodology chapter's page of it, read as a document rather than a table: the workload's tabs, its lede, each
+  // formula on a line of its own with its sources, the terms as a definition list, then why and what is assumed
+  const doc = (kind) => {
+    const c = kind === "fit" ? FIT : CHAPTERS.find((ch) => ch.id === current);
+    const cite = (key) => {
+      const r = REFS[key];
+      const author = r.authors.split(",")[0].replace(/ et al\.?$/, "").split(" ").pop();
+      return `<a class="cite" href="${r.url}" target="_blank" rel="noopener" title="${esc(`${r.authors} ${r.title}. ${r.venue}, ${r.year}`)}">${esc(author)} ${r.year}</a>`;
+    };
+    const prose = (text) => esc(text).replace(/\s?\{(\w+)\}/g, (_, key) => (REFS[key] ? ` ${cite(key)}` : ""));
+    const made = new Set(c.equations.map((e) => e.result));
+    const used = [...new Set(c.equations.flatMap((e) => [...e.math.matchAll(/data-name="([^"]+)"/g)].map((m) => m[1])))]
+      .filter((name) => !made.has(name) && SOURCES[name])
+      .sort((x, y) => GROUPS.indexOf(SOURCES[x][1]) - GROUPS.indexOf(SOURCES[y][1]));
+    const terms = used.map((name) => {
+      const [text, from] = SOURCES[name];
+      const how = typeof text === "function" ? text() : text;
+      const source = from ? ` <a class="cite" role="link" tabindex="0" data-go="${from}">${esc(Pie.schema[from].label)}</a>` : "";
+      return `<dt>${tag(name)}</dt><dd>${esc(how)}${source}</dd>`;
+    }).join("");
+    const tabs = c === FIT ? "" : `<div class="m-doc-tabs">${Pie.platform.setupControl(c.id, ["decode", "spec", "prefill", "batching", "pbatch"], true)}${c.id === "spec" ? Pie.specField() : ""}</div>`;
+    return tint(`<div class="m-doc">${tabs}
+      ${c.lede ? `<p>${prose(c.lede)}</p>` : ""}
+      <h3>Formulas</h3>
+      <div class="m-doc-eqs">${c.equations.map((e) => `
+        <div class="m-doc-eq"><span class="m-doc-eq-line">${tag(e.result)}<span class="op">=</span><span class="m-eq">${e.math}</span></span>${e.cites.length ? `<span class="m-doc-cite">${e.cites.map(cite).join(", ")}</span>` : ""}</div>`).join("")}</div>
+      ${terms ? `<h3>Terms</h3><dl class="m-doc-terms">${terms}</dl>` : ""}
+      ${c.why?.length ? `<h3>Why</h3>${c.why.map((t) => `<p>${prose(t)}</p>`).join("")}` : ""}
+      ${c.assumptions?.length ? `<h3>Assumptions</h3><ul class="m-doc-list">${c.assumptions.map(([t]) => `<li>${prose(t)}</li>`).join("")}</ul>` : ""}</div>`);
+  };
+
+  // `kind` is "fit" for Memory Fit, else the workload's limit
+  const page = (kind = state.table === "fit" ? "fit" : "limit") => {
+    const c = kind === "fit" ? FIT : CHAPTERS.find((ch) => ch.id === current);
 
     // a citation is the work's first author and year, a link straight to the paper
     const cite = (key) => {
@@ -412,6 +466,13 @@ window.Pie = window.Pie || {};
   });
 
   Pie.methods = {
+    // a Methodology chapter's tables: the limit for the grid's workload (its setup bar on top) or Memory Fit, and the key
+    // that changes when they would read differently
+    chapter(kind, viewState) {
+      state = viewState;
+      current = CHAPTERS.some((c) => c.id === state.platform.mode) ? state.platform.mode : CHAPTERS[0].id;
+      return { html: doc(kind), key: `${kind === "fit" ? "fit" : current}@${state.release}@${Pie.specAlpha}` };
+    },
     render(viewState) {
       state = viewState;
       element.hidden = state.table !== "methods" && state.table !== "fit";
