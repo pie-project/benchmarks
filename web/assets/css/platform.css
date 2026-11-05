@@ -901,6 +901,8 @@
 td.is-overall:has(> .roll-ghost) { overflow: hidden; }
 .roll-ghost { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding: inherit; pointer-events: none; animation: setup-out .45s cubic-bezier(.4, 0, 1, 1) var(--roll-wait, 0ms) both; }
 @keyframes setup-out { from { transform: none; opacity: 1; filter: none; } to { transform: translateY(-35%); opacity: 0; filter: blur(2px); } }
+/* a number an earlier wave was still bringing in: it first finishes rising, then leaves on its own wave's beat */
+.roll-ghost.is-chained { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) var(--in-wait, 0ms) both, setup-out .45s cubic-bezier(.4, 0, 1, 1) var(--roll-wait, 0ms) forwards; }
 @keyframes setup-roll { from { transform: translateY(35%); opacity: 0; filter: blur(2px); } to { transform: none; opacity: 1; filter: none; } }
 @media (prefers-reduced-motion: reduce) { .roll-ghost { display: none; } .is-rolling .platform-table tbody td .platform-main { animation: none; } }
 /* the setup button's name changes as a counter does: the old one rolls up and out, the new one up into its place */

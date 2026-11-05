@@ -22,7 +22,7 @@
 .skeleton-icon { flex: none; width: 16px; height: 16px; border-radius: 4px; background: var(--color-fill); }
 
 /* the bars breathe slowly, as a redacted view waiting on its data; still for Reduce Motion */
-.skeleton:not([hidden]), .skeleton-nav, .toolbar-title > .skeleton-bar, .skeleton-block { animation: skeleton-breathe 1.6s ease-in-out infinite alternate; }
+.skeleton:not([hidden]), .skeleton-nav, .toolbar-title > .skeleton-bar { animation: skeleton-breathe 1.6s ease-in-out infinite alternate; }
 @keyframes skeleton-breathe { from { opacity: 1; } to { opacity: .55; } }
 
 /* the sidebar's rows and the toolbar's title, until they are named */

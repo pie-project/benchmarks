@@ -97,7 +97,6 @@ window.Pie = window.Pie || {};
       label: "Quality",
       title: "Quality",
       section: "home",  // in Compare, where Accuracy was
-      tag: "Beta",
       tint: "#7a4cf5",  // Intelligence's purple
       view: "checks",
       filters: [],
@@ -313,7 +312,7 @@ window.Pie = window.Pie || {};
         text("repo", "Repo", "Identity", { code: true }),
         text("os", "OS", "Support"),
         text("formats", "Formats", "Support"),
-        text("raw", "Raw", "Decoding", { info: "Decodes with speculation off: the Raw rows." }),
+        text("raw", "Single", "Decoding", { info: "Decodes with speculation off: the Single rows." }),
         text("speculation", "Speculation", "Decoding", { info: "Drafts and verifies tokens: the Speculative rows." }),
         number("_results", "Results", "Coverage", "", 0),
       ],

@@ -35,7 +35,7 @@ window.Pie = window.Pie || {};
     });
   };
 
-  // a phase of a run (Raw Decode) picks the run's rows (raw): the Workloads table's rows, one run each
+  // a phase of a run (Single Decode) picks the run's rows (raw): the Workloads table's rows, one run each
   const runOf = (key, value) => (key === "workload" ? store.index.workloads[value]?.of || value : value);
   const matchesFilters = (row, filters) =>
     Object.entries(filters).every(([key, values]) => !values.length || values.some((value) => value === String(row[key]) || runOf(key, value) === String(row[key])));

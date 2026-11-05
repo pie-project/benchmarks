@@ -434,9 +434,12 @@
    rule with its number; the dot under the pointer stays, the rest fade, as the bars do */
 .board-grid-cards + .board-stack { margin-top: 24px; }
 .board-axis.is-faint { opacity: .5; }
-.board-cell-dot { fill: var(--color-label-tertiary); fill-opacity: .8; }
-.board-cell.is-ahead .board-cell-dot { fill: var(--color-positive); }
-.board-cell.is-behind .board-cell-dot { fill: var(--color-negative); }
+.board-cell-dot { fill: var(--color-label-tertiary); fill-opacity: .85; }
+/* a gradient by the gap: from grey at even to systemGreen or systemRed, a shade deeper, at double or half the speed */
+.board-cell.is-ahead .board-cell-dot { fill: color-mix(in srgb, #2ea84a calc(25% + var(--depth, 1) * 75%), #aeaeb2); }
+.board-cell.is-behind .board-cell-dot { fill: color-mix(in srgb, #e0352b calc(25% + var(--depth, 1) * 75%), #aeaeb2); }
+:root[data-theme="dark"] .board-cell.is-ahead .board-cell-dot { fill: color-mix(in srgb, #30d158 calc(25% + var(--depth, 1) * 75%), #636366); }
+:root[data-theme="dark"] .board-cell.is-behind .board-cell-dot { fill: color-mix(in srgb, #ff453a calc(25% + var(--depth, 1) * 75%), #636366); }
 .board-cell:hover .board-cell-dot { fill-opacity: 1; stroke: var(--color-label); stroke-width: 1.5; }
 .board-swarm .board-cell { transition: opacity .15s ease; }
 .board-swarm:has(.board-cell:hover) .board-cell:not(:hover) { opacity: .35; }

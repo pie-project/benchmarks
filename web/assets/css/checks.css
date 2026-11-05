@@ -108,7 +108,7 @@
 .qc-key-dot.is-off { background: var(--color-negative); }
 
 /* the grid page: the platform pages' bar and table; a cell's gap after its score, small and grey, red on a mismatch */
-#checks { display: flex; flex-direction: column; min-height: 0; }
+#checks { display: flex; flex-direction: column; min-height: 0; overflow: hidden; scrollbar-gutter: auto; }  /* its grid scrolls, as Performance's does, so the bar spans the same width */
 #checks[hidden] { display: none; }
 #checks .qc-picker { margin: 0; }
 .qc-bar-note { margin-left: 8px; font-size: 11px; color: var(--color-label-tertiary); }

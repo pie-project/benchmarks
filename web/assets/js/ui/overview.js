@@ -6,7 +6,7 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("overview");
   const tooltip = document.getElementById("chart-tooltip");
   const WORKLOADS = [
-    { id: "raw", label: "Raw" },
+    { id: "raw", label: "Single" },
     { id: "spec", label: "Speculative" },
     { id: "throughput", label: "Batching saturated" },
   ];
@@ -195,7 +195,7 @@ window.Pie = window.Pie || {};
       .map((line, k) => ({ ...line, color: MAC_COLORS[k % MAC_COLORS.length] }));
     const tags = (Pie.store.tables.tags || []).map((tag) => tag.id).reverse().filter((tag) => series.some((line) => line.points.some((p) => p.tag === tag)));
     const waiting = o.historyOpen && (Pie.store.tables.tags || []).some((tag) => Pie.store.pending(tag.id));
-    const body = waiting ? `<div class="trend-block skeleton-block"><span class="skeleton-bar"></span><span class="skeleton-bar is-short"></span></div>`
+    const body = waiting ? `<div class="trend-block skeleton-block"></div>`  // room kept for the chart, no placeholder bars
       : tags.length >= 2 ? `<div class="trend-block">
         <div class="trend-legend">${series.map((line) => `<span><i style="background: ${line.color}"></i>${esc(macName(line.mac))}</span>`).join("")}</div>
         ${trendLines(series, tags)}</div>`
