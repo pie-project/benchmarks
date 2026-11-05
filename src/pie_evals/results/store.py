@@ -331,6 +331,8 @@ class PgStore(BaseStore):
         conn = psycopg.connect(self.dsn, connect_timeout=15)
         if not self._ready:
             with conn.transaction():
+                # one writer applies the schema at a time: two jobs altering it at once deadlock each other
+                conn.execute("SELECT pg_advisory_xact_lock(7212031)")
                 conn.execute(SCHEMA_SQL)
             self._ready = True
         return conn
