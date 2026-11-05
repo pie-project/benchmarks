@@ -136,23 +136,34 @@ def mlxlm_generate(snapshot: Path, rendered: list[str], max_tokens: int, bos: st
     port = _free_port()
     cmd = [py, "-m", "mlx_lm", "server", "--model", str(snapshot), "--host", "127.0.0.1", "--port", str(port),
            "--decode-concurrency", str(PARALLEL), "--prompt-concurrency", str(PARALLEL), "--prompt-cache-size", "0", "--log-level", "ERROR"]
-    proc, url = _serve(cmd, {}, port, "/v1/models", 1800)
     keep_bos = not adds_bos(snapshot)
-    try:
-        # mlx-lm loads the weights in its generation thread after /v1/models already answers; a model it cannot
-        # load leaves every request waiting (gemma4_unified on 0.31.3): one short request says so in minutes
+    # mlx-lm 0.32's batched generation leaks Metal buffers on the Qwen3.6/3.8 hybrids until its generation thread
+    # dies ("[metal::malloc] Resource limit (499000) exceeded"): a fresh server goes on with the prompts not yet answered
+    texts: list[str | None] = [None] * len(rendered)
+    for attempt in range(6):
+        proc, url = _serve(cmd, {}, port, "/v1/models", 1800)
         try:
-            _post(f"{url}/v1/completions", {"model": str(snapshot), "prompt": "Hello", "max_tokens": 1}, timeout=900)
-        except OSError as e:
-            raise RuntimeError(f"mlx-lm loaded no model to answer with ({e})") from e
+            # mlx-lm loads the weights in its generation thread after /v1/models already answers; a model it cannot
+            # load leaves every request waiting (gemma4_unified on 0.31.3): one short request says so in minutes
+            try:
+                _post(f"{url}/v1/completions", {"model": str(snapshot), "prompt": "Hello", "max_tokens": 1}, timeout=900)
+            except OSError as e:
+                raise RuntimeError(f"mlx-lm loaded no model to answer with ({e})") from e
 
-        def one(p: str) -> str:
-            body = {"model": str(snapshot), "prompt": p if keep_bos else strip_bos(p, bos), "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0}
-            return _post(f"{url}/v1/completions", body)["choices"][0].get("text", "")
+            def one(i: int) -> None:
+                p = rendered[i]
+                body = {"model": str(snapshot), "prompt": p if keep_bos else strip_bos(p, bos), "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0}
+                texts[i] = _post(f"{url}/v1/completions", body)["choices"][0].get("text", "")
 
-        texts = _map(one, rendered)
-    finally:
-        _stop(proc)
+            try:
+                _map(one, [i for i, t in enumerate(texts) if t is None])
+                break
+            except OSError as e:  # RemoteDisconnected, then refused connections
+                if attempt == 5:
+                    raise
+                log(f"mlx-lm server died ({e}); {sum(t is None for t in texts)} prompts left, restarting it")
+        finally:
+            _stop(proc)
     return texts, _version([py, "-c", "import mlx_lm; print(mlx_lm.__version__)"])
 
 
