@@ -9,9 +9,10 @@ window.Pie = window.Pie || {};
   const names = () => Pie.store.names;
 
   const METRICS = [
-    { id: "decode", label: "Decode", setup: "decode", title: "Decode speed", sub: "Output tokens per second, one request · Higher is better", workload: "raw", key: "decode_tok_s", unit: "tok/s", higher: true },
-    { id: "prefill", label: "Prefill", setup: "prefill", title: "Prefill speed", sub: "Prompt tokens per second, one request · Higher is better", workload: "raw", key: "prefill_tok_s", unit: "tok/s", higher: true },
-    { id: "throughput", label: "Throughput", setup: "batching", title: "Throughput", sub: "Output tokens per second, 32 requests at once · Higher is better", workload: "throughput", key: "output_tok_s", unit: "tok/s", higher: true },
+    { id: "decode", label: "Single Decode", setup: "decode", title: "Decode speed", sub: "Output tokens per second, one request · Higher is better", workload: "raw", key: "decode_tok_s", unit: "tok/s", higher: true },
+    { id: "prefill", label: "Single Prefill", setup: "prefill", title: "Prefill speed", sub: "Prompt tokens per second, one request · Higher is better", workload: "raw", key: "prefill_tok_s", unit: "tok/s", higher: true },
+    { id: "throughput", label: "Batched Decode", setup: "batching", title: "Throughput", sub: "Output tokens per second, 32 requests at once · Higher is better", workload: "throughput", key: "output_tok_s", unit: "tok/s", higher: true },
+    { id: "pbatch", label: "Batched Prefill", setup: "pbatch", title: "Batched prefill", sub: "Prompt tokens per second, 256 prompts at once · Higher is better", workload: "prefill_batch", key: "prefill_tok_s", unit: "tok/s", higher: true },
     { id: "ttft", label: "Time to first token", title: "Time to first token", sub: "Milliseconds, one request with a 512-token prompt · Lower is better", workload: "raw", key: "ttft_ms_p50", unit: "ms", higher: false },
   ];
   const PLATFORM_ORDER = ["mac", "nvidia", "amd", "tpu", "cerebras", "android", "web"];
@@ -37,7 +38,7 @@ window.Pie = window.Pie || {};
   // one machine per platform for the model: the one with the most engine and workload pairs, so every card has bars,
   // then the most runs
   const showcase = (rows, picked) => {
-    const raw = rows.filter((r) => r.model === picked && (r.workload === "raw" || r.workload === "throughput"));
+    const raw = rows.filter((r) => r.model === picked && (r.workload === "raw" || r.workload === "throughput" || r.workload === "prefill_batch"));
     const byPlatform = {};
     for (const r of raw) {
       const p = Pie.platformOf(Pie.store.index.hardware[r.hardware] || {});
@@ -261,8 +262,8 @@ window.Pie = window.Pie || {};
   // speed over the fastest other engine's, as the platform pages' Relative Speed reads a cell; a row per platform
   const GAIN = { id: "gain", title: "Pie’s gain, cell by cell", sub: "Pie against the fastest other engine on each machine, model and setup · Right of zero, Pie is faster" };
   const GAIN_SETUPS = [
-    { workload: "raw", key: "decode_tok_s", label: "Decode", unit: "tok/s" },
-    { workload: "raw", key: "prefill_tok_s", label: "Prefill", unit: "tok/s" },
+    { workload: "raw", key: "decode_tok_s", label: "Single decode", unit: "tok/s" },
+    { workload: "raw", key: "prefill_tok_s", label: "Single prefill", unit: "tok/s" },
     { workload: "spec", key: "decode_tok_s", label: "Spec decode", unit: "tok/s" },
     { workload: "throughput", key: "output_tok_s", label: "Batched decode", unit: "tok/s" },
     { workload: "prefill_batch", key: "prefill_tok_s", label: "Batched prefill", unit: "tok/s" },
@@ -309,7 +310,9 @@ window.Pie = window.Pie || {};
         const tone = c.gain > 0 ? "is-ahead" : c.gain < 0 ? "is-behind" : "";
         const tipRows = [["Machine", machineName(c.pie.hardware)], ["Model", `${names().model(c.pie.model)}${c.pie.miniature ? " (slice)" : ""}`], ["Setup", c.s.label],
           [names().engine("pie"), full(c.pie[c.s.key], c.s.unit)], [names().engine(c.best.engine), full(c.best[c.s.key], c.s.unit)]];
-        return `<g class="board-bar board-cell ${tone}" data-tip-engine="pie" data-tip-head="${esc(`${names().engine("pie")} vs ${names().engine(c.best.engine)}`)}" data-tip-value="${esc(signedPct(c.gain))}" data-tip-rows="${esc(JSON.stringify(tipRows))}">
+        // the colour deepens with the gap: grey at even, full green or red by double or half the speed
+        const depth = Math.min(1, Math.abs(Math.log2(1 + c.gain))).toFixed(2);
+        return `<g class="board-bar board-cell ${tone}" style="--depth: ${depth}" data-tip-engine="pie" data-tip-head="${esc(`${names().engine("pie")} vs ${names().engine(c.best.engine)}`)}" data-tip-value="${esc(signedPct(c.gain))}" data-tip-rows="${esc(JSON.stringify(tipRows))}">
           <circle class="board-hit" cx="${cx}" cy="${cy}" r="5"/><circle class="board-cell-dot" cx="${cx}" cy="${cy}" r="2.6"/></g>`;
       }).join("");
       // the median as a short rule across the row, its number beside it

@@ -71,9 +71,8 @@ window.Pie = window.Pie || {};
     // the outline of a page, in place of the page; the pages and their bars stay hidden under it
     show(page) {
       if (!element) return;
-      if (shown !== page) element.innerHTML = draw(page);
+      // no outline is drawn: the page stays empty until its data arrives
       shown = page;
-      element.hidden = false;
       for (const id of ["table-container", "overview", "platform", "welcome", "inferlets", "services", "profiler", "methodology", "methods", "board", "checks"]) {
         const other = document.getElementById(id);
         if (other) other.hidden = true;
@@ -82,18 +81,11 @@ window.Pie = window.Pie || {};
     },
     // the page drawn in its place fades in (a platform's numbers roll in instead, platform.js)
     hide() {
-      if (!element || element.hidden) return false;
-      element.hidden = true;
+      if (!element || shown === null) return false;
       shown = null;
-      const content = element.closest(".content");
-      content.classList.remove("is-revealing");
-      void content.offsetWidth;  // a reveal right after another starts over
-      content.classList.add("is-revealing");
-      setTimeout(() => content.classList.remove("is-revealing"), 500);
       return true;
     },
   };
 
-  chrome();
   Pie.skeleton.show(opening());
 })();

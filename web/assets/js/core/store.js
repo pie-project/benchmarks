@@ -38,7 +38,7 @@ window.Pie = window.Pie || {};
     w.parallel = counts.length > 1 ? `${Math.min(...counts).toLocaleString()}–${Math.max(...counts).toLocaleString()}` : String(w.concurrency ?? "");
   }
   // Raw and Speculative measure both phases of one request: its Prefill and its Decode
-  const PD = { raw: "Raw P/D", spec: "Speculative P/D", throughput: "Batched Decode" };
+  const PD = { raw: "Single P/D", spec: "Speculative P/D", throughput: "Batched Decode" };
   for (const w of tables.workloads || []) if (PD[w.id]) w.label = PD[w.id];
   // single-request workloads first, then the batched ones
   const ORDER = ["raw", "spec", "throughput", "prefill_batch"];
@@ -209,8 +209,8 @@ window.Pie = window.Pie || {};
   const runs = indexById("workloads");
   const PHASES = {
     raw: [
-      ["decode", "Raw Decode", "How fast one request writes its output, alone."],
-      ["prefill", "Raw Prefill", "How fast one request reads its prompt, alone."],
+      ["decode", "Single Decode", "How fast one request writes its output, alone."],
+      ["prefill", "Single Prefill", "How fast one request reads its prompt, alone."],
     ],
     spec: [
       ["decode", "Speculative Decode", "How fast one request writes when a small drafter guesses ahead and the model checks several tokens at once."],

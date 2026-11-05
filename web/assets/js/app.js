@@ -50,7 +50,15 @@
     // a page only an account opens (Measurements, Catalog, Resources), kept from an earlier visit or linked to, opens Rankings
     if (!Pie.isOpen(state.table) || Pie.schema[state.table]?.href) state.table = "board";  // a link (Quality) is not a page
     Pie.palette?.refresh();
-    if (state.table !== shownTable) { shownTable = state.table; restoreScroll(); }
+    if (state.table !== shownTable) {
+      // from one grid page to another (Performance, Quality, a platform): the old numbers wave out as the new wave in,
+      // as if one page changed
+      const gridOf = (t) => (Pie.schema[t]?.view === "platform" ? "platform" : t === "checks" ? "checks" : null);
+      const from = gridOf(shownTable), to = gridOf(state.table);
+      if (from && to && Pie.platform.wave) (to === "checks" ? Pie.checks : Pie.platform).inherit(Pie.platform.ghostsOf(document.getElementById(from)));
+      shownTable = state.table;
+      restoreScroll();
+    }
     ensureSuite();
     ensureRelease();
     toolbar.renderSuite(state);
@@ -93,9 +101,9 @@
     Pie.methodology.render(state);
     Pie.methods.render(state);
     Pie.board.render(state);
-    Pie.checks.render(state);
+    const checked = Pie.checks.render(state);
     sidebar.render(state);
-    document.getElementById("auto-switch").hidden = true;  // the platform pages show it again when their setups can turn
+    if (!isPlatform) Pie.platform.left();
     if (isPlatform) {
       const shown = Pie.platform.render(state);
       toolbar.elements.metricValue.textContent = shown.metric.label;
@@ -107,7 +115,9 @@
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
     } else if (isMethod) {
       toolbar.elements.title.textContent = Pie.schema[state.table].title || Pie.schema[state.table].label;
-      toolbar.elements.subtitle.textContent = state.table === "board" ? "Engine Analysis" : "";
+      // Quality counts its machines and models under its title, as a grid page does
+      toolbar.elements.subtitle.textContent = state.table === "board" ? "Engine Analysis"
+        : checked?.macs ? `${checked.macs} ${checked.macs === 1 ? "machine" : "machines"}, ${checked.models} ${checked.models === 1 ? "model" : "models"}` : "";
       // All Platforms counts its folders and what they hold, as a platform page counts its machines
       if (state.table === "welcome") {
         const platforms = Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length;

@@ -40,17 +40,33 @@ window.Pie = window.Pie || {};
     ]],
 
   ];
+  // the Quality page's rules: what each cell compares and what passes
+  const QUALITY = [
+    ["Full model", [
+      { big: "MATH-500", label: "Benchmark", line: "Pie and one other engine, the same weights on the same machine." },
+      { big: "Within noise", label: "Pass", line: "Pie's score stays inside the run's own noise of the other engine's; 5 points where a run has no noise figure." },
+    ]],
+    ["Model slice", [
+      { big: "First token", label: "Check", line: "The same prompts on both engines, each forced to give exactly one token." },
+      { big: "KL < 0.15", label: "Pass", line: "KL divergence between the two engines' first-token distributions." },
+    ]],
+    ["Inference", [
+      { big: "Greedy", label: "Decoding", line: "Temperature 0, top-p 1." },
+      { big: "Off", label: "Thinking", line: "No reasoning tokens." },
+    ]],
+  ];
   const esc = (text) => Pie.format.escape(text);
 
   // facts as Get Info lists them: a grey heading per topic, one plain label-value row per rule, no icons (those mark
   // what a menu can pick),
   // a separator between topics; the rule's note shows when the pointer rests on its row
-  const content = GROUPS.map(([title, items]) => `
+  const listOf = (groups) => groups.map(([title, items]) => `
     <div class="popover-heading">${esc(title)}</div>${items.map((t) => `
     <div class="rules-row" title="${esc(t.line)}">
       <span class="popover-label">${esc(t.label)}</span>
       <span class="popover-detail">${esc(t.big)}${t.unit ? ` ${esc(t.unit)}` : ""}</span>
     </div>`).join("")}`).join(`<div class="popover-separator"></div>`);
+  const content = listOf(GROUPS), quality = listOf(QUALITY);
 
   // the rules drop down under their "Test Conditions" button, as a macOS popover: a click outside,
   // Escape or the button again closes it
@@ -66,6 +82,7 @@ window.Pie = window.Pie || {};
     owner?.setAttribute("aria-expanded", "false");
     owner = button;
     button.setAttribute("aria-expanded", "true");
+    panel.innerHTML = button.dataset.rules === "quality" ? quality : content;
     panel.hidden = false;
     panel.scrollTop = 0;
     const r = button.getBoundingClientRect();

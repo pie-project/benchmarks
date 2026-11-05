@@ -16,9 +16,9 @@ window.Pie = window.Pie || {};
   // run different kernels with different bottlenecks. Each group opens on its raw row (speculation off), held against
   // the hardware limit; the features under it are only those that change that phase, each shown as its gain over raw
   const MODES = [
-    { id: "decode", group: "Decode", label: "Decode Latency", title: "Decode Latency", item: "Raw", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
+    { id: "decode", group: "Decode", label: "Decode Latency", title: "Decode Latency", item: "Single", icon: "M2 8h8M7 5l3 3-3 3M13 3v10", detail: "single request, speculation off", workload: "raw", metric: METRICS[0], limit: true },
     { id: "spec", group: "Decode", label: "Spec Decode", item: "Speculative", icon: "M2 8h5M5 5l3 3-3 3M9 8h5M12 5l3 3-3 3", detail: "single request, speculation on", workload: "spec", metric: METRICS[0] },
-    { id: "prefill", group: "Prefill", label: "Prefill Latency", title: "Prefill Latency", item: "Raw", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
+    { id: "prefill", group: "Prefill", label: "Prefill Latency", title: "Prefill Latency", item: "Single", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "single request, speculation off", workload: "raw", metric: METRICS[1], limit: true },
     { id: "batching", group: "Decode", label: "Decode Throughput", title: "Batched Decode Throughput", item: "Batched", icon: "M8 2.5l6 3-6 3-6-3zM2 8.5l6 3 6-3M2 11.5l6 3 6-3", detail: "32 requests at once", workload: "throughput", metric: { id: "throughput", label: "Throughput", key: "output_tok_s", unit: "tok/s", higher: true } },
     { id: "pbatch", group: "Prefill", label: "Prefill Throughput", title: "Batched Prefill Throughput", item: "Batched", icon: "M3 4.5h10M3 8h10M3 11.5h6", detail: "256 cold prompts at once, one token each", workload: "prefill_batch", metric: METRICS[1] },
   ];
@@ -48,17 +48,17 @@ window.Pie = window.Pie || {};
   // turns for Reduce Motion or a tab in the background
   const AUTO_MS = 9000;
   const AUTO_ORDER = ["decode", "prefill", "batching", "pbatch"];
-  const SETUP_NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
+  const SETUP_NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
   const stillMotion = matchMedia("(prefers-reduced-motion: reduce)");
-  const AUTO_KEY = "pieAutoTurns";  // the toolbar switch, kept per browser
-  const auto = { stopped: localStorage.getItem(AUTO_KEY) === "off", paused: false, timer: null, started: 0, spent: 0, rolling: true };  // the first draw rolls in too, as the page opens
+  // the setups always turn: no switch; only a pointer resting on the grid holds them
+  const auto = { stopped: false, paused: false, timer: null, started: 0, spent: 0, rolling: true };  // the first draw rolls in too, as the page opens
   const autoOn = () => !auto.stopped && !stillMotion.matches;
-  // the setup as one button and its menu (Raw Decode, Raw Prefill, Batched Decode, Batched Prefill); a view with Spec keeps the long switch
+  // the setup as one button and its menu (Single Decode, Single Prefill, Batched Decode, Batched Prefill); a view with Spec keeps the long switch
   const setupControl = (active, modes) => {
     const ids = modes.map((m) => m.id);
     if (ids.includes("spec") || !ids.every((id) => ["decode", "prefill", "batching", "pbatch"].includes(id))) return longSetupControl(active, modes);
     // the four setups side by side as buttons, the one shown filled, as a macOS toolbar sets out a few views it switches between
-    const NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
+    const NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
     return `<span class="setup-row setup-pick platform-setup" role="group" aria-label="Setup">${ids.map((id) =>
       `<button type="button" class="filter-button setup-tab${id === active ? " is-active" : ""}" data-mode="${id}" aria-pressed="${id === active}" title="${esc(NAMES[id])}, ${id === "decode" || id === "prefill" ? "latency" : "throughput"}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id] || ""}</svg><span>${esc(NAMES[id])}</span></button>`).join("")}</span>`;
   };
@@ -77,14 +77,31 @@ window.Pie = window.Pie || {};
       onChange();
     }, Math.max(0, AUTO_MS - auto.spent));
   };
+  // the page's tables as one sheet for the wave: each table's rows follow the one above's, and the step is set so the
+  // whole page takes about two seconds
+  const waveSpan = (tables) => {
+    const offset = [];
+    let rows = 0, cols = 0;
+    for (const table of tables) {
+      offset.push(rows);
+      const body = [...table.tBodies[0]?.rows || []];
+      rows += body.length;
+      cols = Math.max(cols, body[0]?.cells.length || 0);
+    }
+    return { offset, step: Math.min(70, 1800 / Math.max(1, rows + cols)) };
+  };
+  const WAVE = false;  // the numbers' wave on a switch, off: new numbers simply replace the old
   const afterDraw = () => {
+    if (!WAVE) { auto.rolling = false; auto.ghosts = null; auto.waves = []; }
     // a wave runs to its end: a redraw in the middle of it (a tag's data arriving, a second pick) picks it up where it
     // is, each cell's delay counted from the wave's start, rather than cutting it off or starting it again
     const now = performance.now();
     if (auto.rolling) {
       auto.rolling = false;
-      clearTimeout(auto.waveTimer);
-      auto.wave = null;  // no wave: the new numbers replace the old ones in place
+      // a switch picked mid-wave starts a wave of its own: the ones still running play out, never cut off
+      // still running waves are kept (each cell finishes them in turn); the new one queues behind them
+      auto.waves = auto.waves || [];
+      auto.waves.push({ start: now, ghosts: auto.ghosts || [], at: {}, prev: {}, shown: null });
       auto.ghosts = null;
       // the setup button's old name rolls up and out as the new one rises into its place
       const pick = element.querySelector(auto.labelOf || ".setup-pick");
@@ -95,48 +112,58 @@ window.Pie = window.Pie || {};
       }
       auto.label = null;
     }
-    const wave = auto.wave;
-    if (wave) {
-      const elapsed = now - wave.start;
-      // a diagonal wave from the top-left cell to the bottom-right: each cell starts a step after the one above and left of it
-      let longest = 0;
-      for (const table of element.querySelectorAll(".platform-table")) {
+    const waves = auto.waves || [];
+    if (waves.length) {
+      const newest = waves[waves.length - 1];
+      const tables = [...element.querySelectorAll(".platform-table")];
+      // a diagonal wave from the top-left cell to the bottom-right: each cell starts a step after the one above and left
+      // of it. Waves picked in quick turns queue cell by cell: a cell's next wave starts only once the one before has
+      // fully brought its number in, so every wave plays to its end, however many were started
+      // one wave down the whole page, the top platform's first row to the last one's last row, not one per platform
+      const { offset, step } = waveSpan(tables);
+      tables.forEach((table, t) => {
         const rows = [...table.tBodies[0]?.rows || []];
-        const span = rows.length + (rows[0]?.cells.length || 0);
-        const step = Math.min(70, 1800 / Math.max(1, span));  // slow: the wave takes up to about two seconds
         rows.forEach((tr, r) => [...tr.cells].forEach((td, c) => {
-          const wait = Math.round((r + c) * step);
-          td.style.setProperty("--roll-wait", `${Math.round(wait - elapsed)}ms`);
-          longest = Math.max(longest, wait);
+          const key = `${t}|${r}|${c}`;
+          if (!(key in newest.at)) {
+            newest.prev[key] = cellAt[key];
+            newest.at[key] = cellAt[key] = Math.max(newest.start + Math.round((offset[t] + r + c) * step), cellAt[key] != null ? cellAt[key] + RISE : -Infinity);
+          }
+          td.style.setProperty("--roll-wait", `${Math.round(newest.at[key] - now)}ms`);
         }));
-      }
-      wave.longest = Math.max(wave.longest, longest);
-      // the old number in each cell leaves on the same beat, just ahead of the new one
-      element.querySelectorAll(".platform-table").forEach((table, t) => [...(table.tBodies[0]?.rows || [])].forEach((tr, r) => [...tr.cells].forEach((td, c) => {
-        const old = wave.ghosts[t]?.[r]?.[c];
-        const cell = td.querySelector(".platform-cell");
-        if (!old?.html || !cell) return;
-        if (old.pill) {
-          // an Overall capsule that did not change stays still; an empty cell always waves, out and back in, with its row
-          if (td.classList.contains("is-overall") && cell.outerHTML === old.html) return;
-          td.insertAdjacentHTML("beforeend", `<span class="roll-ghost is-pill" aria-hidden="true">${old.html}</span>`);
-          return;
-        }
-        // an empty cell (its dash, its does-not-fit mark) waves too: it is the whole cell that rises, so what left it
-        // leaves from the cell's own box, outside the rising one
-        const main = td.querySelector(".platform-main");
-        if (main?.innerHTML === old.html && look(main).style === old.style) return;
-        // the number leaves from exactly where it stood: measured from the cell's right edge, whatever the new cell's padding
-        td.insertAdjacentHTML("beforeend", `<span class="roll-ghost" aria-hidden="true" style="padding: 0 ${old.right ?? 0}px 0 0"><span style="${old.style || ""}">${old.html}</span></span>`);
-      })));
+      });
+      // each wave's old numbers leave on that wave's beat at the cell; a number a wave before it was still bringing in
+      // first finishes rising, then leaves
+      waves.forEach((w) => {
+        const first = !w.shown;
+        if (first) w.shown = new Set();
+        tables.forEach((table, t) => [...(table.tBodies[0]?.rows || [])].forEach((tr, r) => [...tr.cells].forEach((td, c) => {
+          const key = `${t}|${r}|${c}`;
+          const old = w.ghosts[t]?.[r]?.[c];
+          const cell = td.querySelector(".platform-cell");
+          if (!cell || w.at[key] == null) return;
+          carryInto(td, old?.carry, now);  // what an earlier page was still letting go of
+          if (!old?.html) return;
+          // the content a wave before it was still bringing in when this wave began
+          const rising = w.prev[key] != null && w.prev[key] + RISE > w.start;
+          if (first) {
+            // an Overall capsule that did not change stays still; an empty cell always waves, out and back in, with its row
+            if (!rising && old.pill && td.classList.contains("is-overall") && cell.outerHTML === old.html) return;
+            const main = td.querySelector(".platform-main");
+            if (!rising && !old.pill && main?.innerHTML === old.html && look(main).style === old.style) return;
+            w.shown.add(key);
+          } else if (!w.shown.has(key)) return;
+          td.insertAdjacentHTML("beforeend", ghostHtml(old, w.at[key], rising ? w.prev[key] + 320 : null, now));
+        })));
+      });
       element.classList.add("is-rolling");
       clearTimeout(auto.waveTimer);
+      const end = Math.max(...waves.flatMap((w) => Object.values(w.at))) + RISE + 200;
       auto.waveTimer = setTimeout(() => {
-        if (auto.wave !== wave) return;
-        auto.wave = null;
+        auto.waves = [];
         element.classList.remove("is-rolling");
         element.querySelectorAll(".roll-ghost").forEach((g) => g.remove());
-      }, Math.max(0, wave.longest + 1300 - elapsed));  // the last cell: its wait, the new number's 320 ms start and its .8 s rise
+      }, Math.max(0, end - now));
     }
     element.classList.toggle("is-auto-paused", auto.paused);
     // the toolbar switch shows while this page's setups can turn, on while they do
@@ -144,13 +171,6 @@ window.Pie = window.Pie || {};
     if (sw) { sw.hidden = stillMotion.matches || !element.querySelector(".setup-pick"); showAuto(); }
     nextTurn();
   };
-  document.getElementById("auto-switch")?.addEventListener("click", () => {
-    auto.stopped = !auto.stopped;
-    showAuto();
-    auto.spent = 0;
-    localStorage.setItem(AUTO_KEY, auto.stopped ? "off" : "on");
-    if (auto.stopped) clearTimeout(auto.timer); else nextTurn();
-  });
   const pauseTurns = (on) => {
     if (on === auto.paused) return;
     if (on) { clearTimeout(auto.timer); auto.spent += performance.now() - auto.started; }
@@ -176,14 +196,45 @@ window.Pie = window.Pie || {};
     const pick = element.querySelector(button);
     auto.labelOf = button;
     auto.label = pick?.tagName === "BUTTON" ? [...pick.children].filter((el) => !el.classList.contains("popup-chevron")).map((el) => el.outerHTML).join("") : null;  // a row of buttons only moves its fill
-    // an Overall cell leaves whole, its coloured capsule with it; a model cell leaves its number
-    auto.ghosts = [...element.querySelectorAll(".platform-table")].map((t) => [...(t.tBodies[0]?.rows || [])].map((tr) => [...tr.cells].map((td) =>
-      (td.classList.contains("is-overall") ? { pill: true, html: td.querySelector(".platform-cell")?.outerHTML || "" }
-        // an empty cell leaves whole too (its dash, its does-not-fit mark where it sits)
-        : td.querySelector(".platform-main") ? { ...look(td.querySelector(".platform-main")), right: td.getBoundingClientRect().right - td.querySelector(".platform-main").getBoundingClientRect().right } : { pill: true, html: td.querySelector(".platform-cell.is-empty")?.outerHTML || "" }))));
+    auto.ghosts = ghostsOf(element);
+  };
+  // what a grid's cells show, to leave as the next numbers rise: an Overall cell leaves whole, its coloured capsule
+  // with it; a model cell leaves its number
+  // what a grid's cells show, to leave as the next numbers rise: an Overall cell leaves whole, its coloured capsule
+  // with it; a model cell leaves its number. Each cell also carries what is still leaving it from an earlier wave, so
+  // a quick switch drops nothing: every layer plays to its end
+  const ghostsOf = (root) => [...root.querySelectorAll(".platform-table")].map((t) => [...(t.tBodies[0]?.rows || [])].map((tr) => [...tr.cells].map((td) => {
+    const main = td.querySelector(":scope > .platform-cell .platform-main"), cell = td.querySelector(":scope > .platform-cell");
+    const carry = [...td.querySelectorAll(":scope > .roll-ghost[data-out]")].filter((g) => +g.dataset.out + 500 > performance.now())
+      .map((g) => ({ outer: g.outerHTML, out: +g.dataset.out, in: g.dataset.in ? +g.dataset.in : null }));
+    const own = td.classList.contains("is-overall") ? { pill: true, html: cell?.outerHTML || "" }
+      // an empty cell leaves whole too (its dash, its does-not-fit mark where it sits)
+      : main ? { ...look(main), right: td.getBoundingClientRect().right - main.getBoundingClientRect().right } : { pill: true, html: td.querySelector(".platform-cell.is-empty")?.outerHTML || "" };
+    return { ...own, carry };
+  })));
+  // when each cell's current content began its wave, shared by every grid page: the next wave there waits for it to
+  // have fully risen, so waves queue cell by cell across setups and pages alike
+  const RISE = 1120;  // a number's 320 ms start and its .8 s rise
+  const cellAt = {};
+  // a leaving number: out on its wave's beat, and first rising in where it had not finished arriving; its times kept
+  // on it, so a later page can carry it on
+  const ghostHtml = (old, outAt, inAt, now) => {
+    const timing = `--roll-wait: ${Math.round(outAt - now)}ms;${inAt != null ? ` --in-wait: ${Math.round(inAt - now)}ms;` : ""}`;
+    const kind = `roll-ghost${old.pill ? " is-pill" : ""}${inAt != null ? " is-chained" : ""}`;
+    const data = `data-out="${Math.round(outAt)}"${inAt != null ? ` data-in="${Math.round(inAt)}"` : ""}`;
+    return old.pill ? `<span class="${kind}" aria-hidden="true" ${data} style="${timing}">${old.html}</span>`
+      : `<span class="${kind}" aria-hidden="true" ${data} style="${timing} padding: 0 ${old.right ?? 0}px 0 0"><span style="${old.style || ""}">${old.html}</span></span>`;
+  };
+  const carryInto = (td, carry, now) => {
+    for (const g of carry || []) {
+      td.insertAdjacentHTML("beforeend", g.outer);
+      const el = td.lastElementChild;
+      el.style.setProperty("--roll-wait", `${Math.round(g.out - now)}ms`);
+      if (g.in != null) el.style.setProperty("--in-wait", `${Math.round(g.in - now)}ms`);
+    }
   };
   // the viewer's own pick ends the turns
-  const stopTurns = () => { auto.stopped = true; auto.spent = 0; clearTimeout(auto.timer); showAuto(); };
+  const stopTurns = () => { auto.spent = 0; clearTimeout(auto.timer); };  // a pick restarts the clock; the turns go on
   // the toolbar button: pause while the setups turn, play while they rest
   function showAuto() {
     const sw = document.getElementById("auto-switch");
@@ -571,7 +622,125 @@ window.Pie = window.Pie || {};
   };
   let pagePlatforms = [];  // the platforms with a result in the setup the grid last drew
 
+  // the column drag, shared by the speed grids and Quality: wired once on a page's element; settled() redraws in the
+  // new order; returns a check that says whether the last press was a drag (and clears it), so a click can skip sorting
+  const wireColumnDrag = (element, settled) => {
+    const SETTLE = 180;
+    let press = null;
+    let drag = null;
+    let dragged = false;
+    // a unit that moves together: a model's column, or a maker's band with all of its models' columns
+    const unitOf = (th) => {
+      // on All Platforms each platform is its own table: a column moves within its table
+      const table = th.closest("table");
+      const cells = th.dataset.drop === "model"
+        ? [...table.querySelectorAll(`[data-col="${CSS.escape(th.dataset.id)}"]`)]
+        : [th, ...[...table.querySelectorAll(`[data-drop="model"][data-maker="${CSS.escape(th.dataset.id)}"]`)]
+            .flatMap((head) => [...table.querySelectorAll(`[data-col="${CSS.escape(head.dataset.id)}"]`)])];
+      const r = th.getBoundingClientRect();
+      return { id: th.dataset.id, cells, left: r.left, width: r.width };
+    };
+    const shift = (unit, x, animate) => unit.cells.forEach((cell) => {
+      cell.style.transition = animate ? `transform ${SETTLE}ms ease` : "none";
+      cell.style.transform = x ? `translateX(${x}px)` : "";
+    });
+    element.addEventListener("pointerdown", (event) => {
+      const th = event.target.closest("[data-drop]");
+      if (!th || event.button !== 0 || drag) return;
+      press = { th, x: event.clientX };
+    });
+    const lift = (event) => {
+      const { th } = press;
+      press = null;
+      const kind = th.dataset.drop;
+      const heads = [...th.closest("table").querySelectorAll(`[data-drop="${kind}"]`)].filter((x) => kind === "maker" || x.dataset.maker === th.dataset.maker);
+      if (heads.length < 2) return;
+      const units = heads.map(unitOf);
+      const index = heads.indexOf(th);
+      const me = units[index];
+      me.cells.forEach((cell) => cell.classList.add("is-moving"));
+      document.documentElement.classList.add("is-dragging-column");  // the closed hand, wherever the pointer goes
+      th.setPointerCapture(event.pointerId);
+      dragged = true;
+      drag = { kind, units, index, me, x0: event.clientX, lane: [units[0].left, units.at(-1).left + units.at(-1).width], to: index };
+    };
+    element.addEventListener("pointermove", (event) => {
+      if (press && Math.abs(event.clientX - press.x) > 4) lift(event);
+      if (!drag) return;
+      const { units, index, me, lane } = drag;
+      // the column keeps to its lane: it cannot slide past the first or last of its peers
+      const dx = Math.max(lane[0] - me.left, Math.min(lane[1] - me.width - me.left, event.clientX - drag.x0));
+      shift(me, dx, false);
+      // where it would land: past every peer whose middle its middle has reached (held at the lane's end, past the last)
+      const middle = me.left + dx + me.width / 2;
+      let to = index;
+      units.forEach((u, i) => {
+        if (i > index && middle >= u.left + u.width / 2) to = Math.max(to, i);
+        if (i < index && middle <= u.left + u.width / 2) to = Math.min(to, i);
+      });
+      drag.to = to;
+      // the peers it has passed slide aside by its width to open its place
+      units.forEach((u, i) => {
+        if (u === me) return;
+        shift(u, i > index && i <= to ? -me.width : i < index && i >= to ? me.width : 0, true);
+      });
+    });
+    const finish = () => {
+      press = null;
+      if (!drag) return;
+      const { kind, units, index, me, to } = drag;
+      drag = null;
+      // settle into the opened place, then take the new order
+      const place = to > index ? units.slice(index + 1, to + 1).reduce((w, u) => w + u.width, 0)
+        : -units.slice(to, index).reduce((w, u) => w + u.width, 0);
+      shift(me, place, true);
+      setTimeout(() => {
+        units.forEach((u) => { shift(u, 0, false); u.cells.forEach((cell) => cell.classList.remove("is-moving")); });
+        document.documentElement.classList.remove("is-dragging-column");
+        if (to === index) return;
+        const order = units.map((u) => u.id);
+        order.splice(to, 0, order.splice(index, 1)[0]);
+        const key = kind === "maker" ? "makerOrder" : "modelOrder";
+        const rest = (Pie.state.platform[key] || []).filter((x) => !order.includes(x));
+        Pie.state.platform[key] = kind === "maker" ? order.concat(rest) : rest.concat(order);
+        settled();
+      }, SETTLE);
+    };
+    element.addEventListener("pointerup", finish);
+    element.addEventListener("pointercancel", finish);
+    return () => { const was = dragged; dragged = false; return was; };
+  };
+  // another page's grid rolls in on the same diagonal wave, its cells rising top-left first (no old numbers to leave)
+  const waveIn = (root, ghosts = null) => {
+    if (!WAVE || stillMotion.matches) return;
+    const now = performance.now();
+    let end = now;
+    const tables = [...root.querySelectorAll(".platform-table")];
+    const { offset, step } = waveSpan(tables);
+    tables.forEach((table, t) => [...table.tBodies[0]?.rows || []].forEach((tr, r) => [...tr.cells].forEach((td, c) => {
+      const key = `${t}|${r}|${c}`;
+      const prev = cellAt[key];
+      const at = cellAt[key] = Math.max(now + Math.round((offset[t] + r + c) * step), prev != null ? prev + RISE : -Infinity);
+      td.style.setProperty("--roll-wait", `${Math.round(at - now)}ms`);
+      end = Math.max(end, at);
+      // the page left behind leaves from the same cell, as if one page changed its numbers, after it has fully arrived
+      const old = ghosts?.[t]?.[r]?.[c];
+      if (!td.querySelector(".platform-cell")) return;
+      carryInto(td, old?.carry, now);
+      if (old?.html) td.insertAdjacentHTML("beforeend", ghostHtml(old, at, prev != null && prev + RISE > now ? prev + 320 : null, now));
+    })));
+    root.classList.add("is-rolling");
+    clearTimeout(root.waveTimer);
+    root.waveTimer = setTimeout(() => { root.classList.remove("is-rolling"); root.querySelectorAll(".roll-ghost").forEach((g) => g.remove()); }, end + RISE + 200 - now);
+  };
   Pie.platform = {
+    wireColumnDrag,
+    waveIn,
+    wave: WAVE,
+    left() { if (auto.table) auto.table = "away"; },
+    ghostsOf,
+    inherit(ghosts) { auto.inherited = ghosts; },  // the grid page left behind, to leave as this one's numbers rise  // another page is shown: coming back rolls the numbers in
+    specSheet: (mac) => { const hw = Pie.store.index.hardware[mac]; return hw ? specSheet(hw) : ""; },  // a machine's card, for other grids
     // the next draw's numbers roll in, as a turn's do: a page drawn after its outline (boot/skeleton.js)
     roll() { auto.rolling = true; },
 
@@ -632,7 +801,7 @@ window.Pie = window.Pie || {};
       return Pie.store.tables.hardware.filter((hw) => { const p = platformOf(hw); return p && (!id || p.id === id); }).length;
     },
 
-    // the setups, for the pop-up in the bar. Raw Decode and Raw Prefill always; on a platform page, a feature beyond
+    // the setups, for the pop-up in the bar. Single Decode and Single Prefill always; on a platform page, a feature beyond
     // raw (Speculative, Batched) only where this release measured it on one of the platform's machines. Roofline, with
     // no platform, keeps every chapter
     metrics(state) {
@@ -641,9 +810,9 @@ window.Pie = window.Pie || {};
       const ran = new Set(Pie.store.snapshot(state.release)
         .filter((r) => Pie.store.isMeasured(r) && (!only || platformOf(Pie.store.index.hardware[r.hardware] || {})?.id === only))
         .map((r) => r.workload));
-      // the TPU shows Raw Decode and Raw Prefill only
+      // the TPU shows Single Decode and Single Prefill only
       const HIDDEN = { tpu: ["spec", "batching", "pbatch"] };
-      // Spec Decode lives in Raw Decode, a column beside each model it ran: no button of its own
+      // Spec Decode lives in Single Decode, a column beside each model it ran: no button of its own
       return MODES.filter((m) => m.id !== "spec" && (m.limit || m.id === "pbatch" || ran.has(m.workload)) && !(HIDDEN[only] || []).includes(m.id));
     },
 
@@ -707,7 +876,7 @@ window.Pie = window.Pie || {};
       }
       // the setup menu: the four setups, each after its mark, as the button shows the picked one
       if (k === "setup" && viewState) {
-        const NAMES = { decode: "Raw Decode", prefill: "Raw Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
+        const NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
         const picked = viewState.platform.mode || "decode";
         return ["decode", "prefill", "batching", "pbatch"].map((id) => ({ value: id, label: NAMES[id], selected: id === picked, detail: id === "decode" || id === "prefill" ? "Latency" : "Throughput", icon: `<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id]}</svg>` }));
       }
@@ -762,6 +931,10 @@ window.Pie = window.Pie || {};
     // returns the number of machines and models shown, for the toolbar subtitle
     // dry: the machines, models and slices each platform's table holds in Relative Speed, without drawing (the Quality grid)
     render(state, dry = false) {
+      // a page opened from the sidebar rolls its numbers in on the wave, as a switch of setup does
+      // a page switch starts one fresh wave: the page left behind leaves, the waves of an earlier visit are dropped
+      if (!dry && state.table !== auto.table) { if (auto.table) { auto.rolling = true; auto.waves = []; auto.ghosts = auto.inherited || null; auto.label = null; } auto.table = state.table; }
+      auto.inherited = null;
       viewState = state;
       // Speedup and Efficiency are one grid each: the page sets the comparison, and no switch is shown
       const fixed = Pie.schema[state.table]?.compare;
@@ -1204,94 +1377,9 @@ window.Pie = window.Pie || {};
       // it passes slide aside to open its place, so the order shows as it will be. Letting go settles it there.
       // The head itself is the handle: a press that moves a few points drags, one that does not is a click and sorts.
       // The order is the viewer's, kept with the page's other choices
-      const SETTLE = 180;
-      let press = null;
-      let drag = null;
-      let dragged = false;
-      // a unit that moves together: a model's column, or a maker's band with all of its models' columns
-      const unitOf = (th) => {
-        // on All Platforms each platform is its own table: a column moves within its table
-        const table = th.closest("table");
-        const cells = th.dataset.drop === "model"
-          ? [...table.querySelectorAll(`[data-col="${CSS.escape(th.dataset.id)}"]`)]
-          : [th, ...[...table.querySelectorAll(`[data-drop="model"][data-maker="${CSS.escape(th.dataset.id)}"]`)]
-              .flatMap((head) => [...table.querySelectorAll(`[data-col="${CSS.escape(head.dataset.id)}"]`)])];
-        const r = th.getBoundingClientRect();
-        return { id: th.dataset.id, cells, left: r.left, width: r.width };
-      };
-      const shift = (unit, x, animate) => unit.cells.forEach((cell) => {
-        cell.style.transition = animate ? `transform ${SETTLE}ms ease` : "none";
-        cell.style.transform = x ? `translateX(${x}px)` : "";
-      });
-      element.addEventListener("pointerdown", (event) => {
-        const th = event.target.closest("[data-drop]");
-        if (!th || event.button !== 0 || drag) return;
-        press = { th, x: event.clientX };
-      });
-      const lift = (event) => {
-        const { th } = press;
-        press = null;
-        const kind = th.dataset.drop;
-        const heads = [...th.closest("table").querySelectorAll(`[data-drop="${kind}"]`)].filter((x) => kind === "maker" || x.dataset.maker === th.dataset.maker);
-        if (heads.length < 2) return;
-        const units = heads.map(unitOf);
-        const index = heads.indexOf(th);
-        const me = units[index];
-        me.cells.forEach((cell) => cell.classList.add("is-moving"));
-        document.documentElement.classList.add("is-dragging-column");  // the closed hand, wherever the pointer goes
-        th.setPointerCapture(event.pointerId);
-        dragged = true;
-        drag = { kind, units, index, me, x0: event.clientX, lane: [units[0].left, units.at(-1).left + units.at(-1).width], to: index };
-      };
-      element.addEventListener("pointermove", (event) => {
-        if (press && Math.abs(event.clientX - press.x) > 4) lift(event);
-        if (!drag) return;
-        const { units, index, me, lane } = drag;
-        // the column keeps to its lane: it cannot slide past the first or last of its peers
-        const dx = Math.max(lane[0] - me.left, Math.min(lane[1] - me.width - me.left, event.clientX - drag.x0));
-        shift(me, dx, false);
-        // where it would land: past every peer whose middle its middle has reached (held at the lane's end, past the last)
-        const middle = me.left + dx + me.width / 2;
-        let to = index;
-        units.forEach((u, i) => {
-          if (i > index && middle >= u.left + u.width / 2) to = Math.max(to, i);
-          if (i < index && middle <= u.left + u.width / 2) to = Math.min(to, i);
-        });
-        drag.to = to;
-        // the peers it has passed slide aside by its width to open its place
-        units.forEach((u, i) => {
-          if (u === me) return;
-          shift(u, i > index && i <= to ? -me.width : i < index && i >= to ? me.width : 0, true);
-        });
-      });
-      const finish = () => {
-        press = null;
-        if (!drag) return;
-        const { kind, units, index, me, to } = drag;
-        drag = null;
-        // settle into the opened place, then take the new order
-        const place = to > index ? units.slice(index + 1, to + 1).reduce((w, u) => w + u.width, 0)
-          : -units.slice(to, index).reduce((w, u) => w + u.width, 0);
-        shift(me, place, true);
-        setTimeout(() => {
-          units.forEach((u) => { shift(u, 0, false); u.cells.forEach((cell) => cell.classList.remove("is-moving")); });
-          document.documentElement.classList.remove("is-dragging-column");
-          if (to === index) return;
-          const order = units.map((u) => u.id);
-          order.splice(to, 0, order.splice(index, 1)[0]);
-          const key = kind === "maker" ? "makerOrder" : "modelOrder";
-          const rest = (state.platform[key] || []).filter((x) => !order.includes(x));
-          state.platform[key] = kind === "maker" ? order.concat(rest) : rest.concat(order);
-          inPlace(onChange);
-        }, SETTLE);
-      };
-      element.addEventListener("pointerup", finish);
-      element.addEventListener("pointercancel", finish);
+      const wasDrag = wireColumnDrag(element, () => inPlace(onChange));
       element.addEventListener("click", (event) => {
-        if (dragged) {
-          dragged = false;  // the press lifted a head: it was a drag, not a click to sort
-          return;
-        }
+        if (wasDrag()) return;  // the press lifted a head: it was a drag, not a click to sort
         const button = event.target.closest("[data-metric]");
         if (button) {
           state.platform.metric = button.dataset.metric;

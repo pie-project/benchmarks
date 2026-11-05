@@ -246,8 +246,8 @@ window.Pie = window.Pie || {};
   const allowed = (g) => (isNum(g.arm.tolerance) ? g.arm.tolerance * 100 : MATH_PASS);
   const MARK = { pass: '<svg class="qc-mark" viewBox="0 0 16 16" aria-label="Pass"><path d="M3.5 8.5l3 3 6-7"/></svg>', fail: '<svg class="qc-mark" viewBox="0 0 16 16" aria-label="Fail"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>' };
   const gridOf = (state, { platform, macs, models }, layout) => {
-    // each platform's grid folds its Overall column on its own, its choice kept as the speed pages keep theirs
-    const key = `quality:${platform.id}`;
+    // each platform's grid folds its Overall column on its own, the one choice shared with that platform's Performance grid
+    const key = platform.id;
     const tight = Pie.state?.platform?.narrowBy?.[key] ?? (Pie.state?.platform?.narrow ?? true);
     const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
     // a model slice is what the Performance page marks so: a slice ran there, or the model does not fit
@@ -265,18 +265,30 @@ window.Pie = window.Pie || {};
       else makers.push({ name, model: m, n: 1, cut: cut(m) });
     }
     const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-overall"></th>${makers.map((k) =>
-      `<th class="platform-maker" colspan="${k.n}" scope="colgroup"><span class="platform-maker-name">${Pie.platform.makerBadge(k.model)}<b>${esc(k.name)}</b><span>${k.n} ${k.n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill"></th></tr>`;
+      `<th class="platform-maker" colspan="${k.n}" scope="colgroup" data-drop="maker" data-id="${esc(k.name)}"><span class="platform-maker-name">${Pie.platform.makerBadge(k.model)}<b>${esc(k.name)}</b><span>${k.n} ${k.n === 1 ? "model" : "models"}</span></span></th>`).join("")}<th class="platform-fill"></th></tr>`;
     const head = `<tr class="platform-head-row"><th class="platform-corner" scope="col">Hardware</th><th class="platform-corner is-overall" scope="col"><span class="platform-model">Overall</span><span class="platform-sub">Passed</span></th>${models.map((m) => {
       const info = Pie.store.index.models[m] || {};
       const size = info.params_b ? `${info.params_b}B${info.active_b && info.active_b !== info.params_b ? ` · ${info.active_b}B` : ""}` : "";
-      return `<th scope="col" data-tip-html="${esc(Pie.platform.modelCard(m))}"><span class="platform-col"><span><span class="platform-model">${esc(Pie.store.names.model(m))}</span><span class="platform-sub">${esc(size)}</span></span></span></th>`;
+      return `<th scope="col" data-drop="model" data-col="${esc(m)}" data-id="${esc(m)}" data-maker="${esc(Pie.platform.makerName(m))}" data-tip-html="${esc(Pie.platform.modelCard(m))}"><span class="platform-col"><span><span class="platform-model">${esc(Pie.store.names.model(m))}</span><span class="platform-sub">${esc(size)}</span></span></span></th>`;
     }).join("")}<th class="platform-fill"></th></tr>`;
-    const body = macs.map((mac) => {
+    // a machine's eye hides its row, as on Performance: greyed, emptied and moved last, the same machines hidden on both
+    const hidden = new Set(state.platform.hidden || []);
+    const EYE = "M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8z";
+    const eye = (mac) => {
+      const off = hidden.has(mac);
+      const label = off ? "Show this machine's results" : "Hide this machine's results";
+      return `<button type="button" class="platform-eye" data-hide-mac="${esc(mac)}" aria-pressed="${off}" aria-label="${label}" title="${label}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${EYE}"/>${off ? '<path d="M3 13 13 3"/>' : '<circle cx="8" cy="8" r="2"/>'}</svg></button>`;
+    };
+    const rowHead = (mac) => {
       const hw = Pie.store.index.hardware[mac];
+      return `<th class="platform-row" scope="row" data-hide-mac="${esc(mac)}" data-tip-html="${esc(Pie.platform.specSheet(mac))}"><span class="platform-chip">${Pie.platform.badge(platform.id)}<span class="platform-name">${esc(String(hw?.name || mac).replace(/^Apple\s+/, ""))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</span></th>`;
+    };
+    const body = [...macs.filter((mac) => !hidden.has(mac)), ...macs.filter((mac) => hidden.has(mac))].map((mac) => {
+      if (hidden.has(mac)) return `<tr class="is-hidden-row">${rowHead(mac)}<td class="is-overall" data-hide-mac="${esc(mac)}">${eye(mac)}</td>${models.map((m) => `<td data-col="${esc(m)}"></td>`).join("")}<td class="platform-fill"></td></tr>`;
       const verdicts = models.map((m) => { const { score: g, kl: r } = at[`${mac}|${m}`]; return r ? r.kl_mean < KL_PASS : g ? Math.abs(g.d) <= allowed(g) : null; }).filter((v) => v !== null);
       const passed = verdicts.filter(Boolean).length, bad = verdicts.length - passed;
-      return `<tr><th class="platform-row" scope="row"><span class="platform-chip">${Pie.platform.badge(platform.id)}<span class="platform-name">${esc(String(hw?.name || mac).replace(/^Apple\s+/, ""))}</span>${hw?.memory_gib ? `<span class="platform-mem">${hw.memory_gib} GB</span>` : ""}</span></th>
-        <td class="is-overall">${!verdicts.length ? `<span class="platform-cell is-empty">–</span>` : `<span class="platform-cell ${bad ? "is-behind" : "is-same"}"${bad ? ` data-tip="${esc(`${bad} ${bad === 1 ? "model fails" : "models fail"}`)}"` : ""}>${passed}/${verdicts.length}</span>`}</td>
+      return `<tr>${rowHead(mac)}
+        <td class="is-overall" data-hide-mac="${esc(mac)}">${!verdicts.length ? `<span class="platform-cell is-empty">–</span>` : `<span class="platform-cell ${bad ? "is-behind" : "is-same"}"${bad ? ` data-tip="${esc(`${bad} ${bad === 1 ? "model fails" : "models fail"}`)}"` : ""}>${passed}/${verdicts.length}</span>`}${eye(mac)}</td>
         ${models.map((m) => {
           const { score: g, kl: r } = at[`${mac}|${m}`];
           const title = `${Pie.store.names.model(m)} on ${hardwareName(mac)}`;
@@ -287,9 +299,9 @@ window.Pie = window.Pie || {};
               r.date ? ["Measured", Pie.format.date(r.date), true] : null]);
             const ok = r.kl_mean < KL_PASS;
             const open = { model: [m], task: [r.task], engine: ["pie", r.ref_engine] };
-            return `<td class="is-openable" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${ok ? "is-same" : "is-behind"} is-nofit" data-tip-html="${esc(tip)}">${NOFIT}<span class="platform-main">${MARK[ok ? "pass" : "fail"]}</span></span></td>`;
+            return `<td class="is-openable" data-col="${esc(m)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${ok ? "is-same" : "is-behind"} is-nofit" data-tip-html="${esc(tip)}">${NOFIT}<span class="platform-main">${MARK[ok ? "pass" : "fail"]}</span></span></td>`;
           }
-          if (!g) return `<td><span class="platform-cell is-empty${"kl" in at[`${mac}|${m}`] ? " is-nofit" : ""}">${"kl" in at[`${mac}|${m}`] ? NOFIT : ""}–</span></td>`;
+          if (!g) return `<td data-col="${esc(m)}"><span class="platform-cell is-empty${"kl" in at[`${mac}|${m}`] ? " is-nofit" : ""}">${"kl" in at[`${mac}|${m}`] ? NOFIT : ""}–</span></td>`;
           // what answers "is quality hurt?": both scores, the difference, how much of it is noise, and a verdict in words
           const off = Math.abs(g.d) > allowed(g);
           const tip = card(`${title} · MATH-500`, [["Pie", pct(g.pie.score), false, "pie"], [engineLabel(g.arm.engine), pct(g.arm.score), false, g.arm.engine],
@@ -297,19 +309,23 @@ window.Pie = window.Pie || {};
             off ? `Pie is more than ${allowed(g).toFixed(1)} points from ${engineLabel(g.arm.engine)}, beyond noise` : false);
           // a click opens Quality's runs for this model and task, with the engines this cell compares
           const open = { model: [m], task: ["math500"], engine: ["pie", g.arm.engine] };
-          return `<td class="is-openable" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${MARK[off ? "fail" : "pass"]}</span></span></td>`;
+          return `<td class="is-openable" data-col="${esc(m)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${MARK[off ? "fail" : "pass"]}</span></span></td>`;
         }).join("")}<td class="platform-fill"></td></tr>`;
     }).join("");
     const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
     return `<table class="platform-table${tight ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
   };
-  // every platform at once, as the compare pages stack theirs: a header bar that folds it, over its own grid
-  const folded = {};
+  // every platform at once, as the compare pages stack theirs: a header bar that folds it, over its own grid; folded
+  // or open as on Performance, the one choice for both pages
+  const folded = new Proxy({}, { get: (_, id) => Boolean(Pie.state.platform.collapsed?.[id]) });
   const gridPage = (state) => {
     const layout = Pie.platform.render(state, true);
     const sections = layout.sections.filter((g) => PLATFORMS.includes(g.platform?.id));
+    shown = sections;  // counted under the page's title
     if (!sections.length) return `<div class="platform-scroll">${empty("No accuracy scores to compare yet.")}</div>`;
-    return `<div class="platform-scroll">${sections.map((g) => {
+    // the Performance page's bar, with only its info button: what a cell compares and what passes
+    const bar = `<div class="platform-bar"><button type="button" class="plain-button rules-button" data-rules="quality" aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button></div>`;
+    return `${bar}<div class="platform-scroll">${sections.map((g) => {
       const p = g.platform.id;
       return `<section class="platform-section">
         <div class="platform-group-row platform-section-bar${folded[p] ? " is-collapsed" : ""}" data-qc-fold="${esc(p)}" role="button" aria-expanded="${!folded[p]}">
@@ -341,8 +357,24 @@ window.Pie = window.Pie || {};
   };
 
   let openRuns = () => {};
+  let shownFor = null;  // the page last drawn, so only a page switch rolls the grid in
+  let inherited = null;
+  let shown = [];  // the platform sections last drawn  // the grid page left behind, to leave as this one's marks rise
   const wire = () => {
+    // makers and models drag as on Performance, the one order kept for both pages
+    const wasDrag = Pie.platform.wireColumnDrag(element, () => { Pie.saveView?.(); document.dispatchEvent(new CustomEvent("pie:refresh")); });
     element.addEventListener("click", (event) => {
+      if (wasDrag()) return;
+      const eye = event.target.closest(".platform-eye[data-hide-mac]");
+      if (eye) {
+        const hidden = new Set(Pie.state.platform.hidden || []);
+        const mac = eye.dataset.hideMac;
+        if (hidden.has(mac)) hidden.delete(mac); else hidden.add(mac);
+        Pie.state.platform.hidden = [...hidden];
+        Pie.saveView?.();
+        document.dispatchEvent(new CustomEvent("pie:refresh"));
+        return;
+      }
       const cell = event.target.closest("td[data-open]");
       if (cell) { openRuns(JSON.parse(cell.dataset.open)); return; }
       const narrow = event.target.closest("[data-narrow]");
@@ -364,7 +396,8 @@ window.Pie = window.Pie || {};
         const id = bar.dataset.qcFold;
         const body = bar.nextElementSibling;
         const fold = !folded[id];
-        folded[id] = fold;
+        Pie.state.platform.collapsed = { ...(Pie.state.platform.collapsed || {}), [id]: fold };
+        Pie.saveView?.();
         bar.classList.toggle("is-collapsed", fold);
         bar.setAttribute("aria-expanded", String(!fold));
         body.getAnimations().forEach((a) => a.cancel());
@@ -404,7 +437,8 @@ window.Pie = window.Pie || {};
     document.addEventListener("keydown", (event) => { if (event.key === "Escape") closePop(); });
     // a cell's details follow the pointer in the site's chart tooltip
     element.addEventListener("mousemove", (event) => {
-      const target = event.target.closest("[data-tip], [data-tip-html]");
+      // over the whole cell, its padding too, as on Performance
+      const target = event.target.closest("[data-tip], [data-tip-html]") || event.target.closest("td, th")?.querySelector("[data-tip], [data-tip-html]");
       // an HTML card in the platform pages' card format; a plain note as text
       if (!target) { tooltip.hidden = true; tooltip.classList.remove("is-card"); return; }
       if (target.dataset.tipHtml) { tooltip.innerHTML = target.dataset.tipHtml; tooltip.classList.add("is-card"); }
@@ -434,15 +468,21 @@ window.Pie = window.Pie || {};
     pick(platform) { accuracyPlatform = platform; },
     // a cell's click: the Quality runs, filtered to its model, task and engines
     onOpenRuns(handler) { openRuns = handler; },
+    inherit(ghosts) { inherited = ghosts; },
     render(state) {
       element.hidden = state.table !== "checks";
-      if (element.hidden) return;
+      if (element.hidden) { shownFor = null; return; }
       if (element.dataset.ready !== "1") {
         element.dataset.ready = "1";
         wire();
       }
       openFor = null;
       element.innerHTML = gridPage(state);  // the grid alone; page() keeps Parity, Kernels and the table
+      // the page opened from the sidebar rolls its marks in on the Performance grids' wave
+      if (shownFor !== state.table) Pie.platform.waveIn(element, inherited);
+      inherited = null;
+      shownFor = state.table;
+      return { macs: shown.reduce((n, g) => n + g.macs.length, 0), models: new Set(shown.flatMap((g) => g.models)).size };
     },
   };
 })();
