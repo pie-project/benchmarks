@@ -50,17 +50,18 @@ window.Pie = window.Pie || {};
   const AUTO_ORDER = ["decode", "prefill", "batching", "pbatch"];
   const SETUP_NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
   const stillMotion = matchMedia("(prefers-reduced-motion: reduce)");
-  // the setups always turn: no switch; only a pointer resting on the grid holds them
-  const auto = { stopped: false, paused: false, timer: null, started: 0, spent: 0, rolling: true };  // the first draw rolls in too, as the page opens
+  // the setups stay where the viewer put them: no turns on their own (stopped for good), and no roll as the page opens
+  const auto = { stopped: true, paused: false, timer: null, started: 0, spent: 0, rolling: false };
   const autoOn = () => !auto.stopped && !stillMotion.matches;
   // the setup as one button and its menu (Single Decode, Single Prefill, Batched Decode, Batched Prefill); a view with Spec keeps the long switch
-  const setupControl = (active, modes) => {
+  const setupControl = (active, modes, tabs = false) => {
     const ids = modes.map((m) => m.id);
-    if (ids.includes("spec") || !ids.every((id) => ["decode", "prefill", "batching", "pbatch"].includes(id))) return longSetupControl(active, modes);
+    // `tabs` sets Spec Decode out as one more tab (Methodology's limit), where a grid's bar keeps the long switch for it
+    if ((ids.includes("spec") && !tabs) || !ids.every((id) => ["decode", "spec", "prefill", "batching", "pbatch"].includes(id))) return longSetupControl(active, modes);
     // the four setups side by side as buttons, the one shown filled, as a macOS toolbar sets out a few views it switches between
-    const NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
+    const NAMES = { decode: "Single Decode", spec: "Speculative Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
     return `<span class="setup-row setup-pick platform-setup" role="group" aria-label="Setup">${ids.map((id) =>
-      `<button type="button" class="filter-button setup-tab${id === active ? " is-active" : ""}" data-mode="${id}" aria-pressed="${id === active}" title="${esc(NAMES[id])}, ${id === "decode" || id === "prefill" ? "latency" : "throughput"}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id] || ""}</svg><span>${esc(NAMES[id])}</span></button>`).join("")}</span>`;
+      `<button type="button" class="filter-button setup-tab${id === active ? " is-active" : ""}" data-mode="${id}" aria-pressed="${id === active}" title="${esc(NAMES[id])}, ${["decode", "spec", "prefill"].includes(id) ? "latency" : "throughput"}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id] || ""}</svg><span>${esc(NAMES[id])}</span></button>`).join("")}</span>`;
   };
   let onChange = () => {};
   // after each draw: the numbers roll in if a turn drew them, and the next turn is set
@@ -444,8 +445,10 @@ window.Pie = window.Pie || {};
       const plain = raw.find((x) => x.hardware === r.hardware && x.model === r.model && x.engine === r.engine)?.[metric.key];
       if (!plain) return esc(value(r[metric.key], metric.unit));
       const delta = r[metric.key] - plain;
-      const sign = delta >= 0 ? "+" : "−";
-      return `<span class="tip-delta ${delta >= 0 ? "is-up" : "is-down"}">${sign}${esc(value(Math.abs(delta), metric.unit))}</span>`;
+      // no change reads as plain 0, not a green +0
+      if (Math.abs(delta) < 0.05) return `<span class="tip-delta">0 ${esc(metric.unit)}</span>`;
+      const sign = delta > 0 ? "+" : "−";
+      return `<span class="tip-delta ${delta > 0 ? "is-up" : "is-down"}">${sign}${esc(value(Math.abs(delta), metric.unit))}</span>`;
     };
     const order = [...c.all].sort((a, b) => (metric.higher ? b[metric.key] - a[metric.key] : a[metric.key] - b[metric.key]));
     // a miniature's tok/s is a cut model's, no real model's speed: its card reads each engine against pie, and the
@@ -779,7 +782,7 @@ window.Pie = window.Pie || {};
     },
     next: () => nextCompare(compare),
     // the setup control for another page, over the setups named, and a way to say a pick changed the setup
-    setupControl: (active, ids) => setupControl(active, ids.map((id) => MODES.find((m) => m.id === id)).filter(Boolean)),
+    setupControl: (active, ids, tabs) => setupControl(active, ids.map((id) => MODES.find((m) => m.id === id)).filter(Boolean), tabs),
     changed: () => onChange(),
     // a model's maker as the grid draws it (its logo on a white tile), for other menus that name a model
     makerBadge: (model) => badge(makerOf(model)),
@@ -1074,7 +1077,10 @@ window.Pie = window.Pie || {};
       const ranAny = new Set(anySetup.map((r) => `${r.hardware}|${r.model}`));
       // a machine and model measured in any of the four setups keeps its row and column, so a turn only changes numbers
       const shows = (mac, model) => grid[mac][model].c || awaiting(mac, model) || ranAny.has(`${mac}|${realOf(model)}`);
-      const models = hide ? allModels.filter((model) => macs.some((mac) => shows(mac, model))) : allModels;
+      // a model's column, though, is there only where the setup and view on screen have a number for it: a slice's
+      // column goes in Tokens per Second, and a model not run in this setup goes until one is picked that has it
+      const hasData = (mac, model) => grid[mac][model].c || awaiting(mac, model);
+      const models = hide ? allModels.filter((model) => macs.some((mac) => hasData(mac, model))) : allModels;
       const median = (list) => {
         const sorted = list.filter((g) => g !== undefined && g !== null).sort((a, b) => a - b);
         return sorted.length ? sorted[sorted.length >> 1] : null;
@@ -1085,6 +1091,17 @@ window.Pie = window.Pie || {};
       for (const model of models) {
         const vs = macs.map((mac) => grid[mac][model].c?.pie[metric.key]).filter((v) => v > 0);
         if (vs.length > 1) top[model] = Math.max(...vs);
+      }
+      // on All Platforms each platform's table marks its own best machine for a model, not the page's: the fastest Mac
+      // is filled even when a GPU elsewhere on the page is faster
+      const topOf = new Map();
+      const topIn = (list, model) => {
+        const key = `${list.join(",")}|${model}`;
+        if (!topOf.has(key)) {
+          const vs = list.map((mac) => grid[mac][model].c?.pie[metric.key]).filter((v) => v > 0);
+          topOf.set(key, vs.length ? Math.max(...vs) : null);  // a column's only number is its best too
+        }
+        return topOf.get(key);
       }
       const overall = (mac) => median(models.map((model) => (compare === "tps" ? grid[mac][model].c?.pie[metric.key] : grid[mac][model].c?.gain)));
       // no sort: the machines in the catalog's order, no arrow anywhere
@@ -1116,7 +1133,7 @@ window.Pie = window.Pie || {};
         return [...ms.filter(mini), ...ms.filter((m) => !mini(m))];
       };
       const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs), only), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
-        : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: minisFirst(g.macs, models.filter((model) => g.macs.some((mac) => shows(mac, model)))) }))
+        : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: minisFirst(g.macs, models.filter((model) => g.macs.some((mac) => hasData(mac, model)))) }))
           .filter((g) => g.macs.length && g.models.length);
       if (dry) return { sections, sliced, grid };
 
@@ -1207,7 +1224,7 @@ window.Pie = window.Pie || {};
             const PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
             const open = { hardware: [mac], model: [realOf(model)], workload: [PHASE[modeOf(c).id] || modeOf(c).workload],
               engine: compare === "engines" ? [...new Set((c.all || [c.pie]).map((r) => r.engine))] : [c.pie.engine] };
-            return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && top[model] === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && topIn(g.macs.filter((m) => !hidden.has(m)), model) === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           // an empty cell lists every engine that has a row here and why it gave no number, as a measured cell's card does
           // the engines that did measure here, though pie did not (the comparison needs pie): their numbers first
@@ -1215,8 +1232,14 @@ window.Pie = window.Pie || {};
             .sort((a, b) => b[metric.key] - a[metric.key]);
           const absent = [...ranHere.map((r) => `<div class="tip-row"><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
             <span class="tip-value">${r.miniature ? "Model slice" : esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`), ...absentRows(mac, realOf(model), modeOf(null), ranHere)];
-          const emptyTip = absent.length ? card("", "", absent) : why ? card("", "", [], why) : "";
-          return `<td class="${sorted}" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
+          // Tokens per Second and Kernel Efficiency show no card on an empty cell (a slice that has no real speed, a model
+          // that does not fit): the engines' list belongs to Relative Speed
+          const emptyTip = compare === "tps" || compare === "ceiling" ? "" : absent.length ? card("", "", absent) : why ? card("", "", [], why) : "";
+          // an empty cell opens its runs too: every engine's row for this machine, model and setup, the unavailable ones
+          // shown, so it reads why there is no number (it does not fit, the engine has no build of it, the run failed)
+          const EMPTY_PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
+          const openEmpty = { hardware: [mac], model: [realOf(model)], workload: [EMPTY_PHASE[state.platform.mode] || "raw_decode"], _unavailable: true };
+          return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(openEmpty))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
 

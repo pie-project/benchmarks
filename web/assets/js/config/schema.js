@@ -241,6 +241,14 @@ window.Pie = window.Pie || {};
       ],
     },
 
+    // a measurement that looks wrong, reported by a visitor and closed by a maintainer with its fix
+    reports: {
+      label: "Pie Reports",
+      section: "measurements",
+      view: "reports",
+      filters: [],
+      columns: [],
+    },
     // how the benchmark is run, as prose: the model slices behind the datacenter rows
     approach: {
       label: "Methodology",
@@ -249,17 +257,9 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    // a measurement that looks wrong, reported by a visitor and closed by a maintainer with its fix
-    reports: {
-      label: "Reports",
-      section: "measurements",
-      view: "reports",
-      filters: [],
-      columns: [],
-    },
     methods: {
       label: "Roofline",
-      section: "resources",
+      section: null,  // now a Methodology chapter (approach.js); the page stays for old links
       view: "methods",  // how each theoretical limit is worked out, a table of formulas per workload
       filters: [],
       columns: [],
@@ -267,7 +267,7 @@ window.Pie = window.Pie || {};
     // how a model is judged to fit a machine, the same table as Roofline
     fit: {
       label: "Memory",
-      section: "resources",
+      section: null,  // now a Methodology chapter (approach.js); the page stays for old links
       view: "methods",
       filters: [],
       columns: [],

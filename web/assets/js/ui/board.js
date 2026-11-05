@@ -20,7 +20,7 @@ window.Pie = window.Pie || {};
   let state = null;
   let model = null;  // the picked model; none picked opens on the one the most engines and platforms ran
 
-  const measured = () => Pie.store.snapshot(state.release).filter(Pie.store.isMeasured);
+  const measured = () => Pie.store.snapshot((state || Pie.state).release).filter(Pie.store.isMeasured);  // the page's release, or the site's before it is drawn
   const engineIds = () => Pie.store.tables.engines.map((e) => e.id);
 
   // the model with the widest coverage: most platforms, then most engines, then most runs
@@ -260,7 +260,7 @@ window.Pie = window.Pie || {};
 
   // pie's gain, cell by cell: every machine, model and setup where pie and another engine both ran, as one dot at pie's
   // speed over the fastest other engine's, as the platform pages' Relative Speed reads a cell; a row per platform
-  const GAIN = { id: "gain", title: "Outliers", sub: "Pie against the fastest other engine, per cell · Outside the dotted lines, worth a second look" };
+  const GAIN = { id: "gain", title: "Outliers", sub: "Pie against the fastest other engine, per cell · Red: Pie slower, or above the theoretical limit" };
   const GAIN_SETUPS = [
     { workload: "raw", key: "decode_tok_s", label: "Single decode", unit: "tok/s" },
     { workload: "raw", key: "prefill_tok_s", label: "Single prefill", unit: "tok/s" },
@@ -280,7 +280,8 @@ window.Pie = window.Pie || {};
   let gainSetup = (() => { try { const k = localStorage.getItem(GAIN_KEY); return GAIN_PICKS.some((g) => g.id === k) ? k : "decode"; } catch { return "decode"; } })();
   // the hardware limit for a cell, in its own unit (the Roofline page's): what pie could reach at most
   const limitOf = (pie, pick) => (pick.workload === "raw" ? Pie.ceiling?.(pie, pick.id)?.tps
-    : pick.workload === "throughput" ? Pie.batchedCeiling?.(pie.hardware, pie.model, pie.scheme)?.tps : null) || null;
+    : pick.workload === "throughput" ? Pie.batchedCeiling?.(pie.hardware, pie.model, pie.scheme)?.tps
+    : pick.workload === "prefill_batch" ? Pie.ceiling?.(pie, "pbatch")?.tps : null) || null;
   const gainCells = (rows, only = null) => {
     const cells = [];
     for (const s of GAIN_SETUPS.filter((g) => !only || (g.workload === only.workload && g.key === only.key))) {
@@ -305,6 +306,10 @@ window.Pie = window.Pie || {};
     for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
     return ((h >>> 0) / 4294967295) * 2 - 1;
   };
+  // a red dot: pie slower than the strongest other engine, or a full model (not a slice, whose limit is a cut model's)
+  // measured above its own cell's theoretical limit, which no engine can beat; everything else is green
+  const pastLimit = (c) => !c.pie.miniature && c.room != null && c.gain > c.room;
+  const isRed = (c) => c.gain < 0 || pastLimit(c);
   const gains = (rows) => {
     const all = gainCells(rows, GAIN_PICKS.find((g) => g.id === gainSetup));
     const groups = PLATFORM_ORDER.map((p) => ({ p, cells: all.filter((c) => c.platform === p) })).filter((g) => g.cells.length);
@@ -323,11 +328,10 @@ window.Pie = window.Pie || {};
     const LO = Math.floor(Math.log2(1 + least)), HI = Math.ceil(Math.log2(1 + most));
     const H = T + groups.length * ROW + B;
     const x = (g) => L + (W - L - R) * (Math.min(HI, Math.max(LO, Math.log2(1 + g))) - LO) / (HI - LO);
-    const outside = (c) => c.gain < LOW || c.gain > high[c.platform];
+    const outside = isRed;
     // a tick at each end and at even and double the speed
     const ticks = [2 ** LO - 1, 0, 1, 2 ** HI - 1].filter((g, i, v) => v.indexOf(g) === i).map((g) => `<text class="board-tick" x="${x(g)}" y="${H - B + 18}">${g ? signedPct(g) : "0"}</text>`).join("");
-    const zero = `<line class="board-band-edge" x1="${x(LOW)}" x2="${x(LOW)}" y1="${T}" y2="${H - B}"/>`
-      + groups.map((g, i) => `<line class="board-band-edge" x1="${x(high[g.p])}" x2="${x(high[g.p])}" y1="${T + i * ROW}" y2="${T + (i + 1) * ROW}"><title>${esc(`Most Pie could gain here: ${signedPct(high[g.p])}`)}</title></line>`).join("");
+    const zero = `<line class="board-band-edge" x1="${x(LOW)}" x2="${x(LOW)}" y1="${T}" y2="${H - B}"/>`;
     const body = groups.map((grp, i) => {
       const mid = T + i * ROW + ROW / 2;
       const dots = grp.cells.map((c) => {
@@ -362,6 +366,17 @@ window.Pie = window.Pie || {};
   const ENGINE_KEYS = { "use-engine": "pieUseEngine", "scale-engine": "pieScaleEngine" };
   const keptEngine = (k) => { try { const e = localStorage.getItem(ENGINE_KEYS[k]); return Pie.store.tables.engines.some((x) => x.id === e) ? e : null; } catch { return null; } };
   let useEngine = keptEngine("use-engine"), scaleEngine = keptEngine("scale-engine");
+  // Share of the limit compares every engine on each machine: its mode (one request decoding or prefilling) and the
+  // platform it narrows to are picked in its corner, kept per browser
+  const USE_MODES = [
+    { id: "decode", label: "Single Decode", workload: "raw", key: "decode_tok_s" },
+    { id: "prefill", label: "Single Prefill", workload: "raw", key: "prefill_tok_s" },
+    { id: "batching", label: "Batched Decode", workload: "throughput", key: "output_tok_s" },
+    { id: "pbatch", label: "Batched Prefill", workload: "prefill_batch", key: "prefill_tok_s" },
+  ];
+  const kept = (k, ok, fallback) => { try { const v = localStorage.getItem(k); return ok(v) ? v : fallback; } catch { return fallback; } };
+  let useMode = kept("pieUseMode", (v) => USE_MODES.some((m) => m.id === v), "decode");
+  const useModel = "";  // always every model: each engine's median over all of them, no model to pick
   // MLX's wordmark runs wider than the square the other logos fill: its box widens to hold it, so the pick's padding stays
   const engineMark = (engine) => engine ? `<svg class="board-pick-logo${engine === "mlxlm" ? " is-wide" : ""}" viewBox="${engine === "mlxlm" ? "-5.6 0 27.2 16" : "0 0 16 16"}" aria-hidden="true">${logo(engine, 0, 0, 16)}</svg>` : "";
   const enginePick = (k, engine) => `<button class="filter-button board-card-pick" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="Engine">${engineMark(engine)}${engine === "mlxlm" ? "" : esc(engine ? names().engine(engine) : "Fastest engine")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
@@ -375,7 +390,10 @@ window.Pie = window.Pie || {};
   const metricIcon = (m) => Pie.platform.degree(m.setup);
   const gainPick = () => {
     const g = GAIN_PICKS.find((x) => x.id === gainSetup);
-    return `<button class="filter-button board-card-pick" type="button" data-board-pick="gain-setup" aria-haspopup="menu" aria-label="Setup">${Pie.platform.degree(g.id)}${esc(g.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
+    // beside the setup, the way to Reports: an outlier is where a wrong number shows first, and the open ones are counted
+    const open = Pie.reports?.open?.();
+    const reports = `<button class="filter-button board-card-pick" type="button" data-board-reports title="Open Reports"><svg class="board-pick-flag" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 14V2.5M4 2.5h7.5l-1.5 3 1.5 3H4"/></svg>Reports${open ? `<span class="board-pick-count">${open}</span>` : ""}</button>`;
+    return `<span class="board-card-picks"><button class="filter-button board-card-pick" type="button" data-board-pick="gain-setup" aria-haspopup="menu" aria-label="Setup">${Pie.platform.degree(g.id)}${esc(g.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${reports}</span>`;
   };
   const metricCard = (rows, groups) => {
     const m = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];
@@ -509,42 +527,41 @@ window.Pie = window.Pie || {};
 
   // how much of the hardware each machine uses: the measured speed as a share of its roofline limit, so machines of any
   // size and any number of chips sit on one scale; decode is held by memory bandwidth, prefill mostly by compute
-  const USE = { id: "use", title: "Share of the limit", sub: "Measured speed against each machine's roofline limit, fastest engine, one request · Higher uses more of the hardware" };
-  const BOUND = { bandwidth: "memory bound", compute: "compute bound", balanced: "balanced", interconnect: "interconnect bound" };
-  const use = (all) => {
-    const rows = useEngine ? all.filter((r) => r.engine === useEngine) : all;  // one engine, or the fastest on each machine
+  // Efficiency: how close each engine gets to the hardware, a card per platform as Head to head sets its own, a bar per
+  // engine at its median share of the machine's roofline limit over every machine (and model, or the one picked) it ran
+  const USE = { id: "use", title: "Share of the theoretical maximum" };
+  const USE_CARDS = [["use", "Apple", "mac"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"]];
+  const useShares = (rows, platform) => {
+    const mode = USE_MODES.find((m) => m.id === useMode);
+    const out = {};  // engine -> its shares, one per machine and model at its best run there
     const best = {};
-    for (const key of ["decode_tok_s", "prefill_tok_s"])
-      for (const r of rows) if (r.workload === "raw" && r.model === model && r[key] && (!(best[r.hardware] ||= {})[key] || r[key] > best[r.hardware][key][key])) best[r.hardware][key] = r;
-    const share = (r, key, metric) => {
-      const c = r && Pie.ceiling?.(r, metric);
-      return c?.tps ? { v: Math.min(100, 100 * r[key] / c.tps), r, c, key } : null;
-    };
-    const list = Object.entries(best).map(([hardware, b]) => ({ hardware, decode: share(b.decode_tok_s, "decode_tok_s", "decode"), prefill: share(b.prefill_tok_s, "prefill_tok_s", "prefill") }))
-      .filter((e) => e.decode || e.prefill).sort((a, b) => (b.decode?.v || 0) - (a.decode?.v || 0));
-    if (!list.length) return `<p class="board-empty">No limit for this model yet</p>`;
-    // a row per machine, as a Mac list: its name, then a bar for each of decode and prefill on the same 0 to 100 scale
-    // rows as tall as the site's tables set theirs (about 28px on screen), each row's name, bar and number on its middle
-    const W = 1040, ROW = 30, HEAD = 24, NAME = 220, GAP = 24, BAR = (W - NAME - GAP * 2) / 2;
-    const mid = (top) => top + ROW / 2 + 4;  // a line of 12px type, centred on the row
-    const H = HEAD + list.length * ROW;
-    const cell = (s, x0, top, color) => {
-      if (!s) return `<text class="board-machine is-start" x="${x0}" y="${mid(top)}">Not measured</text>`;
-      const w = Math.max(2, (BAR - 44) * s.v / 100);
-      const tip = `${machineName(s.r.hardware)}, ${names().engine(s.r.engine)}: ${full(s.r[s.key], "tok/s")} of a ${full(s.c.tps, "tok/s")} limit, ${BOUND[s.c.bound] || s.c.bound}`;
-      return `<g class="board-bar"><title>${esc(tip)}</title><rect x="${x0}" y="${top + (ROW - 18) / 2}" width="${w}" height="18" rx="4.5" style="fill: ${color}"/>
-          <text class="board-value is-start" x="${x0 + w + 6}" y="${mid(top)}">${Math.round(s.v)}%</text><rect class="board-hit" x="${x0}" y="${top}" width="${BAR}" height="${ROW}"/></g>`;
-    };
-    const head = [["Decode", NAME + GAP], ["Prefill", NAME + GAP * 2 + BAR]].map(([t, x]) => `<text class="board-col" x="${x}" y="14">${t}</text>`).join("");
-    const body = list.map((e, i) => {
-      const top = HEAD + i * ROW;
-      const hw = Pie.store.index.hardware[e.hardware] || {};
-      const color = Pie.schema[Pie.platformOf(hw)]?.tint || "var(--color-label-tertiary)";
-      return `${i % 2 ? "" : `<rect class="board-stripe" x="0" y="${top}" width="${W}" height="${ROW}" rx="5"/>`}
-        <text class="board-row-name" x="8" y="${mid(top)}"><tspan class="board-row-platform">${esc(Pie.schema[Pie.platformOf(hw)]?.short || "")}</tspan> ${esc(machineName(e.hardware).replace(/^TPU\s+/, ""))}</text>
-        ${cell(e.decode, NAME + GAP, top, color)}${cell(e.prefill, NAME + GAP * 2 + BAR, top, color)}`;
-    }).join("");
-    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(USE.title)}">${head}${body}</svg>`;
+    for (const r of rows) {
+      if (r.workload !== mode.workload || !r[mode.key] || (useModel && r.model !== useModel)) continue;
+      if (Pie.platformOf(Pie.store.index.hardware[r.hardware] || {}) !== platform) continue;
+      const limit = limitOf(r, mode);
+      if (!limit) continue;
+      const k = `${r.engine}|${r.hardware}|${r.model}`;
+      const v = Math.min(100, 100 * r[mode.key] / limit);
+      if (!best[k] || v > best[k]) best[k] = v;
+    }
+    for (const [k, v] of Object.entries(best)) (out[k.split("|")[0]] ||= []).push(v);
+    return out;
+  };
+  const useSummary = (id, title, platform, rows) => {
+    const shares = useShares(rows, platform);
+    const mid = (v) => { const a = [...v].sort((p, q) => p - q), n = a.length; return n ? (n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2) : null; };
+    return { id, title, value: (_, engine) => (shares[engine] ? { v: mid(shares[engine]), n: shares[engine].length, detail: `Median over ${shares[engine].length} ${shares[engine].length === 1 ? "machine and model" : "machines and models"}` } : {}),
+      label: (v) => `${Math.round(v)}%` };
+  };
+  const chevronMark = '<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>';
+  const useSection = (rows) => {
+    const mode = USE_MODES.find((m) => m.id === useMode);
+    return `<div class="board-section-head">
+            <div class="board-section-text"><h1 class="board-title">Efficiency</h1>
+            <p class="board-lede">How close each engine gets to the hardware's peak.</p></div>
+            <button class="filter-button board-title-pick" type="button" data-board-pick="use-mode" aria-haspopup="menu" aria-label="Mode">${Pie.platform.degree(mode.id)}${esc(mode.label)}${chevronMark}</button>
+          </div>
+          <div class="board-grid-cards is-matrices">${USE_CARDS.map(([id, title, platform]) => card(id, title, "Share of the theoretical maximum", ranking(useSummary(id, title, platform, rows), rows), "", false)).join("")}</div>`;
   };
 
   // the changelog: each release measured, newest first, read from the runs themselves; development runs are left out
@@ -618,7 +635,8 @@ window.Pie = window.Pie || {};
   // in one of Apple's system colours, so the charts are told apart at a glance as Artificial Analysis marks them with squares
   const BADGES = {
     index:          ["#5E5CE6", '<circle cx="12" cy="12" r="9"/><path d="m12 12 2.6-5.2"/><circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/><path d="M7 15.5h.01M6.5 11h.01M9 7h.01M17.5 11h.01M17 15.5h.01"/>'],  // indigo, a speedometer as SF Symbols draws gauge.with.needle: a dial, its needle just right of upright
-    "index-mac":    ["#636366"],  // each platform's speed index in its sidebar tile's colour
+    "index-mac":    ["#636366"],
+    use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
     "index-gpu":    ["#76b900"],
     "index-amd":    ["#ed1c24"],
     "index-tpu":    ["#4285f4"],
@@ -630,7 +648,6 @@ window.Pie = window.Pie || {};
     ttft:           ["#FF375F", '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.5 2M10 2.5h4"/>'],  // pink, a timer
     metric:         ["#0A84FF", '<path d="M4 6h16M4 12h12M4 18h5"/><path d="M14.5 18.1v3.5"/>'],  // blue, text being written: three lines 6 apart, the cursor a clear step after the short last one
     scaling:        ["#8E8E93", Pie.icons.hardware],  // grey, a chip
-    use:            ["#AC8E68", Pie.icons.methods],  // brown, a roofline
     gain:           ["#00C7BE"],  // mint: pie against the others, cell by cell
     load:           ["#FF9F0A"],  // orange: speed as the requests pile up
   };
@@ -699,11 +716,9 @@ window.Pie = window.Pie || {};
       .map((id) => `<span class="board-key"><span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}</span>`).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     const outline = [
+      ["Efficiency", USE_CARDS.map(([id, title]) => [id, title])],
       ["Head to head", [...SUMMARY.map((m) => [m.id, m.title]), [GAIN.id, GAIN.title]]],
-      ...(Pie.signedIn() ? [["Speed by model size", [["size", "Dense models"], ["moe", "MoE models"]]]] : []),  // for an account only
-      ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"], ...(Pie.signedIn() ? [[USE.id, "Share of the limit"]] : [])]],
-      ...(Pie.signedIn() ? [["Accuracy", [["accuracy", "Score gap"]]]] : []),  // for an account only, as its section
-      ...(Pie.signedIn() ? [["At datacenter scale", [[SCALING.id, "Chip scaling"]]]] : []),  // the datacenter section for an account only
+      ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"]]],
     ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${BADGES[id]?.[0] || "var(--color-label-tertiary)"}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
@@ -720,38 +735,23 @@ window.Pie = window.Pie || {};
       <div class="board-scroll"><div class="board-inner">
         <nav class="board-outline" aria-label="On this page">${outline}</nav>
         <div class="board-main">
+          ${useSection(rows)}
           <div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">Head to head</h1>
-            <p class="board-lede">Every engine compared with the others on each machine and model they share.</p></div>
+            <p class="board-lede">Every engine compared with the others on each machine and model.</p></div>
           </div>
           <div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has(m.id) ? "Head-to-head decode win rate" : m.sub, gridCards.has(m.id) ? matrix(m, rows) : ranking(m, rows), viewToggle(m.id), false)).join("")}</div>
           <div class="board-stack">${card(GAIN.id, GAIN.title, GAIN.sub, gains(rows), gainPick())}</div>${""/* the banner and the Changelog, off for now: hero() */}
-          ${Pie.signedIn() ? `<h1 class="board-title">Speed by model size</h1>
-          <p class="board-lede">Each platform's fastest machine and engine. MoE models by active parameters.</p>
-          <div class="board-stack">${sizeCard(rows)}${moeCard(rows)}</div>` : ""}
+          ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
           <div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">On one model</h1>
             <p class="board-lede">Each platform is shown on the machine where the most engines ran this model.</p></div>
             <button class="filter-button board-title-pick" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(model)}${esc(names().model(model))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
-          <div class="board-stack">${metricCard(rows, groups)}${card(TTFT.id, TTFT.title, TTFT.sub, chart(TTFT, rows, groups))}
-            ${Pie.signedIn() ? card(USE.id, USE.title, engineSub(USE.sub, useEngine), use(rows), enginePick("use-engine", useEngine)) : ""}</div>
+          <div class="board-stack">${metricCard(rows, groups)}${card(TTFT.id, TTFT.title, TTFT.sub, chart(TTFT, rows, groups))}</div>
           ${""/* the Coverage section, off for now: coverage2(rows) */}
-          ${Pie.signedIn() ? `          <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">At datacenter scale</h1>
-            <p class="board-lede">A model split across several GPUs, at each chip count, against a perfect split.</p></div>
-            <button class="filter-button board-title-pick" type="button" data-board-pick="scale" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(scaleModelOf(rows))}${esc(names().model(scaleModelOf(rows)))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
-          </div>
-          <div class="board-stack">${card(SCALING.id, SCALING.title, engineSub(SCALING.sub, scaleEngine), scaling(rows), enginePick("scale-engine", scaleEngine))}</div>` : ""}
-          ${(() => {
-            // the last section: one card as the others, its platform picked in its corner with the platform's mark
-            const acc = Pie.checks?.accuracyChart(state);
-            if (!Pie.signedIn() || !acc?.chart) return "";  // the Accuracy section, for an account only
-            const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="accuracy-platform" aria-haspopup="menu" aria-label="${esc(acc.label)}">${Pie.platform.badge(acc.platform)}${esc(acc.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-            return `<div class="board-section-head"><div class="board-section-text"><h1 class="board-title">Accuracy</h1>
-            <p class="board-lede">Pie’s benchmark score gap to every engine on the same weights and machine.</p></div></div>
-            <div class="board-stack">${card("accuracy", "Score gap", "The other engine minus Pie, in points · Right of zero, Pie scores lower", acc.chart, pick)}</div>`;
-          })()}
+          ${""/* At datacenter scale, off: the scaling card stays in scaling() */}
+          ${""/* Accuracy, off: Pie.checks.accuracyChart still draws it on the Quality page */}
         </div>
       </div></div>`;  // no footer: the page ends on its last card
   };
@@ -959,6 +959,10 @@ window.Pie = window.Pie || {};
     element.querySelector("[data-board-subscribe]")?.classList.add("is-subscribed");
   });
 
+  // the Outliers card's Reports button opens Reports, as the sidebar would
+  element.addEventListener("click", (event) => {
+    if (event.target.closest("[data-board-reports]")) document.querySelector('.sidebar-item[data-table="reports"]')?.click();
+  });
   element.addEventListener("click", (event) => {
     const bell = event.target.closest("[data-board-subscribe]");
     if (bell) {
@@ -1124,6 +1128,19 @@ window.Pie = window.Pie || {};
 
   Pie.board = {
     element,
+    // every red dot of the Outliers card on a full model, in every setup, by the card's own rule (isRed): for Pie Reports
+    // and the GitHub reports
+    outliers() {
+      const rows = measured();
+      return GAIN_PICKS.flatMap((pick) => {
+        // the red dots of full models only: a slice's numbers are a cut model's, not reported
+        return gainCells(rows, pick).filter((c) => !c.pie.miniature && isRed(c)).map((c) => ({
+          setup: pick.id, label: pick.label, workload: pick.workload, key: pick.key, unit: c.s.unit,
+          hardware: c.pie.hardware, model: c.pie.model, miniature: c.pie.miniature || null,
+          pie: c.pie[c.s.key], best: c.best.engine, bestValue: c.best[c.s.key], gain: c.gain, above: pastLimit(c),
+        }));
+      });
+    },
     // the model menu: every model this release measured, the widest coverage first
     menu(k) {
       if (k === "use-engine" || k === "scale-engine") {
@@ -1134,6 +1151,7 @@ window.Pie = window.Pie || {};
         return [{ value: "", label: "Fastest engine", selected: !current },
           ...engineIds().filter((e) => ran.has(e)).map((e) => ({ value: e, label: names().engine(e), selected: e === current, icon: engineMark(e) }))];
       }
+      if (k === "use-mode") return USE_MODES.map((m) => ({ value: m.id, label: m.label, selected: m.id === useMode, icon: Pie.platform.degree(m.id) }));
       if (k === "scale") {
         const current = scaleModelOf(measured());
         return scaleModels(measured()).map((id) => ({ value: id, label: names().model(id), selected: id === current, icon: Pie.platform.makerBadge(id) }));
@@ -1151,6 +1169,7 @@ window.Pie = window.Pie || {};
     pick(k, value) {
       if (k === "model") model = value;
       if (k === "accuracy-platform") Pie.checks?.pick(value);
+      if (k === "use-mode" && USE_MODES.some((m) => m.id === value)) { useMode = value; try { localStorage.setItem("pieUseMode", value); } catch { /* private windows can refuse storage */ } }
       if (k === "gain-setup" && GAIN_PICKS.some((g) => g.id === value)) {
         gainSetup = value;
         try { localStorage.setItem(GAIN_KEY, value); } catch { /* private windows can refuse storage */ }

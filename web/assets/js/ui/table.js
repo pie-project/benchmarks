@@ -87,6 +87,13 @@ window.Pie = window.Pie || {};
   const keyOf = (row) => Object.keys(row).sort().filter((k) => row[k] == null || typeof row[k] !== "object").map((k) => `${k}=${row[k] ?? ""}`).join("|");
   let pickedOn = null;       // the table they were picked on: another page starts with none
   const reportButton = document.getElementById("report-selected");
+  const submitButton = document.getElementById("submit-result");  // an engine's team sends a better number (off for now)
+  const downloadButton = document.getElementById("download-rows");  // the rows the filters show, every column, as a CSV file
+  // a CSV of the rows, every column the page has (hidden ones too), in the table's order: the raw values, not as drawn
+  const csvOf = (rows, columns) => {
+    const cell = (v) => { const t = v == null ? "" : String(v); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    return [columns.map((c) => cell(c.label)).join(","), ...rows.map((r) => columns.map((c) => cell(r[c.key])).join(","))].join("\n");
+  };
   // the bar's Report keeps its one label, enabled while rows are selected; how many are selected is said in the
   // window's subtitle, as Finder says "3 of 40 selected" under its title
   const subtitle = document.getElementById("toolbar-subtitle");
@@ -153,6 +160,9 @@ window.Pie = window.Pie || {};
       this.rows = rows;
       this.source = state.table;
       if (reportButton) reportButton.hidden = !flaggable(state);
+      if (submitButton) submitButton.hidden = !flaggable(state);
+      if (downloadButton) downloadButton.hidden = !flaggable(state);
+      this.columns = Pie.schema[state.table].columns.filter((c) => c.key && !c.key.startsWith("_"));
       base = flaggable(state) ? subtitle?.textContent || "" : "";  // the page's own subtitle, just written, before the selection is added
       syncReport();
       // the first rows at once, the rest as the list scrolls toward them: thousands of rows drawn up front made every
@@ -242,6 +252,18 @@ window.Pie = window.Pie || {};
       });
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && picked.size && !document.querySelector("dialog[open]")) { picked.clear(); anchor = null; mark(); }
+      });
+      downloadButton?.addEventListener("click", () => {
+        const blob = new Blob([csvOf(this.rows, this.columns)], { type: "text/csv" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `pie-${this.source === "results" ? "performance" : this.source}-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      });
+      submitButton?.addEventListener("click", () => {
+        const one = picked.size === 1 ? this.rows.find((r) => picked.has(r)) : null;
+        Pie.reports?.submit(one, this.source, () => { picked.clear(); anchor = null; mark(); });
       });
       reportButton?.addEventListener("click", () => {
         const at = this.rows.flatMap((r, i) => (picked.has(r) ? [i] : []));  // in the table's order, with its row numbers

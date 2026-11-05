@@ -35,6 +35,12 @@ jobs:
           s = re.sub(r'(href|src)="(assets/[^"]+|data/[^"]+)"', lambda m: f'{m.group(1)}="{m.group(2)}?v={v}"', s)
           open(p, "w").write(s)
           PY
+      # one open pie issue per platform ("[NVIDIA] Benchmarks") lists Pie Reports: the Outliers card's red dots and the reports
+      # people filed, rewritten only when the list changes, and the issue numbers written beside the data for the site's links.
+      # Runs with this laptop's gh login and Chrome; a failure never holds the site back
+      - name: platform issues
+        continue-on-error: true
+        run: .venv/bin/python tools/outlier_issues.py site
       # the operator's localhost preview (a checkout on this laptop) gets the same data the site does
       - run: '[ -d "$HOME/Desktop/debug/pie-evals-live/web/data" ] && cp -R web/data/. "$HOME/Desktop/debug/pie-evals-live/web/data/" || true'
       - uses: actions/upload-artifact@v4

@@ -531,8 +531,8 @@
 .tip-share { display: inline-block; min-width: 34px; margin-left: 6px; color: var(--color-label-secondary); font-weight: 400; }
 /* Spec Decode in Efficiency: what drafting added over the engine's own Raw speed, green, or cost it, red */
 .tip-delta { font-weight: 400; }
-.tip-delta.is-up { color: var(--color-green, #30d158); }
-.tip-delta.is-down { color: var(--color-red, #ff453a); }
+.tip-delta.is-up { color: var(--color-positive); }  /* the grid's own green and red, as its cells read ahead and behind */
+.tip-delta.is-down { color: var(--color-negative); }
 .platform-bar { position: relative; }
 .platform-bar .view-toggle { position: absolute; left: 50%; transform: translateX(-50%); }
 
@@ -787,8 +787,12 @@
 /* Speed TPS: the unit after each number, small and grey, as Activity Monitor writes its rates */
 .platform-unit { margin-left: 3px; font-size: .82em; font-weight: 400; color: var(--color-label-tertiary); }
 /* Speed TPS: the fastest machine on a model, a blue capsule like the Overall column's */
-.platform-table .platform-cell.is-top .platform-main { display: inline-block; width: auto; padding: 2px 7px; border-radius: 5px; font-weight: 600; color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 16%, transparent); }
-.platform-table .platform-cell.is-top .platform-unit { color: inherit; opacity: .7; }
+/* a model's best machine: the whole cell tinted, as the Performance table tints a highlighted row */
+.platform-table tbody td:has(> .platform-cell.is-top) { background: var(--color-row-highlight); }
+.platform-table .platform-cell.is-top .platform-main, .platform-table .platform-cell.is-top .platform-unit { color: var(--color-accent); }  /* its number in the accent, at the other cells' weight */
+.platform-table tbody tr:hover td:has(> .platform-cell.is-top) { background: var(--color-row-highlight-hover); }
+.platform-table tbody td.is-openable:hover:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-row-highlight-hover), var(--color-accent) 8%); }  /* the cell under the pointer one step bluer still, as a plain cell's hover is one step greyer */
+.platform-table tbody td.is-openable:hover:has(> .platform-cell.is-top) .platform-open { color: var(--color-accent); }  /* and its See Runs stays blue */
 /* phones: a machine's name ends in an ellipsis inside its column instead of running under Overall, and the platform's
    tile gives its room to the name */
 @media (max-width: 899px) {

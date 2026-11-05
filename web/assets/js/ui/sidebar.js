@@ -29,6 +29,8 @@ window.Pie = window.Pie || {};
         : schema.view === "welcome" ? `<span class="sidebar-count">${Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length}</span>`
         // Methodology counts its chapters
         : schema.view === "approach" ? `<span class="sidebar-count">${Pie.approach?.chapters ?? ""}</span>`
+        // Reports counts the ones still open
+        : schema.view === "reports" ? `<span class="sidebar-count">${Pie.reports?.open() ?? ""}</span>`
         : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
     </button>`;
 
@@ -38,6 +40,7 @@ window.Pie = window.Pie || {};
       .filter(([, schema]) => schema.section === section.id)
       .map(([id, schema]) => item(id, schema, id === current, state))
       .join("");
+    if (!items) return "";  // a section with no pages left (Resources, its pages now Methodology chapters) shows no heading
     return `${section.label ? `<div class="sidebar-heading">${section.label}</div>` : ""}${items}`;
   };
 
