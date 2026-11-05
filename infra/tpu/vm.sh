@@ -67,10 +67,10 @@ EOF
             fi
           fi
           out=$(gcloud compute tpus tpu-vm create "$TPU_NAME" "${P[@]}" --zone "$zone" --accelerator-type "$TPU_TYPE" \
-                  --version "$TPU_RUNTIME" "${disk[@]}" ${spot:+--spot} --labels "owner=pie-evals" --quiet 2>&1) && { echo "zone=$zone"; exit 0; }
+                  --version "$TPU_RUNTIME" ${disk[@]+"${disk[@]}"} ${spot:+--spot} --labels "owner=pie-evals" --quiet 2>&1) && { echo "zone=$zone"; exit 0; }
         else
           out=$(gcloud compute instances create "$TPU_NAME" "${P[@]}" --zone "$zone" --machine-type "$TPU_MACHINE_TYPE" \
-                  "${image[@]}" --boot-disk-size "${TPU_DATA_DISK_GB:-200}GB" --maintenance-policy TERMINATE \
+                  ${image[@]+"${image[@]}"} --boot-disk-size "${TPU_DATA_DISK_GB:-200}GB" --maintenance-policy TERMINATE \
                   ${spot:+--provisioning-model SPOT --instance-termination-action DELETE} --labels "owner=pie-evals" --quiet 2>&1) \
             && { echo "zone=$zone"; exit 0; }
         fi
@@ -115,7 +115,7 @@ EOF
   put|get)
     if [ "$cmd" = put ]; then args=("$@" "$TPU_NAME:"); else
       rec=(); [ "${1:-}" = --recurse ] && { rec=(--recurse); shift; }
-      args=("${rec[@]}" "$TPU_NAME:$1" "$2")
+      args=(${rec[@]+"${rec[@]}"} "$TPU_NAME:$1" "$2")
     fi
     if [ "$TPU_KIND" = tpu ]; then
       gcloud compute tpus tpu-vm scp "${args[@]}" "${P[@]}" --zone "$TPU_ZONE" "${SSH[@]}"
