@@ -149,6 +149,10 @@ def gibberish(tok, n: int = 64, length: int = 48, seed: int = 0) -> list[str]:
     special = set(getattr(tok, "all_special_ids", []) or [])
     vocab = [i for i in range(min(len(tok), getattr(tok, "vocab_size", len(tok)))) if i not in special]
     bos = getattr(tok, "bos_token", None) or ""
+    # MiniMax's bos_token is its turn opener: a raw prompt opens on the document start ]~!b[, which pie writes when the
+    # text lacks it and vLLM does not, so the text spells it and both engines read the same tokens
+    if bos == "]~b]" and "]~!b[" in tok.get_vocab():
+        bos = "]~!b[" + bos
     out: list[str] = []
     while len(out) < n:
         ids = tok.encode(tok.decode([rng.choice(vocab) for _ in range(length + 1)]), add_special_tokens=False)
