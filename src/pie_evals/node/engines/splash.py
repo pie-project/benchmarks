@@ -63,6 +63,8 @@ class SplashEngine(ServedEngine):
             snap = hf_snapshot_dir(self.artifact.base_model, self.artifact.revision)
             if snap is not None:
                 cmd += ["--model-dir", str(snap / self.artifact.gguf_file if self.artifact.gguf_file else snap)]
+        if r.get("queue_size") is not None:
+            cmd += ["--queue-size", str(slots if r["queue_size"] == "$serve_concurrency" else r["queue_size"])]
         if r.get("max_context") is not None:
             cmd += ["--max-context", str(context if r["max_context"] == "$serve_context" else r["max_context"])]
         return cmd + [str(x) for x in extra]

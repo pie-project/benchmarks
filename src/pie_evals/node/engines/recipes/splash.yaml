@@ -26,6 +26,12 @@ competitive:
     max_context:
       value: "$serve_context"
       rationale: Longest shape of the process, rounded like pie max-model-len.
+    queue_size:
+      value: "$serve_concurrency"
+      rationale: >
+        Splash admits 32 requests at once by default and answers the rest with 503 frontend_overloaded
+        (`--queue-size REQUESTS: requests admitted at once, running or waiting; more get 503 (default: 32)`);
+        every engine takes the whole batch, so Splash admits the process's widest shape.
   workload_kind:
     prefix_shared:
       knobs:
