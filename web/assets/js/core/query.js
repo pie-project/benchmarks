@@ -63,7 +63,8 @@ window.Pie = window.Pie || {};
   const visibleRows = (state) => {
     const schema = Pie.schema[state.table];
     const source = state.table === "results" ? byPhase(store.snapshot(state.release))
-      : state.table === "quality" ? store.qualitySnapshot(state.release)
+      // the model slices' first-token checks list with the scores, so a slice cell's See Runs lands on them
+      : state.table === "quality" ? [...store.qualitySnapshot(state.release), ...store.tables.quality_parity || []]
       : store.rows(state.table);
     const query = state.query.trim().toLowerCase();
 
