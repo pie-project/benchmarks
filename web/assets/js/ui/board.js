@@ -296,7 +296,7 @@ window.Pie = window.Pie || {};
     if (!groups.length) return `<p class="board-empty">No runs yet</p>`;
     // pie's speed over the other's on a log scale, so twice as fast and half as fast sit as far from zero; past the ends
     // a dot waits at the edge, its own number in its hover card
-    const W = 1040, ROW = 56, NAME = 120, L = NAME + 16, R = 16, T = 8, B = 26;
+    const W = 1040, ROW = 56, NAME = 190, L = NAME + 16, R = 16, T = 8, B = 26;
     const LO = Math.log2(0.5), HI = Math.log2(4);
     const H = T + groups.length * ROW + B;
     const x = (g) => L + (W - L - R) * (Math.min(HI, Math.max(LO, Math.log2(1 + g))) - LO) / (HI - LO);
@@ -318,10 +318,8 @@ window.Pie = window.Pie || {};
       const ahead = grp.cells.filter((c) => c.gain > 0).length;
       return `${i ? `<line class="board-axis is-faint" x1="0" x2="${W}" y1="${T + i * ROW}" y2="${T + i * ROW}"/>` : ""}
         <text class="board-row-name" x="8" y="${mid - 3}"><tspan class="board-row-platform">${esc(Pie.schema[grp.p]?.short || grp.p)}</tspan></text>
-        <text class="board-machine is-start" x="8" y="${mid + 12}">${esc(`Ahead in ${ahead} of ${n}`)}</text>
-        <g class="board-swarm">${dots}</g>
-        <line class="board-median" x1="${x(median)}" x2="${x(median)}" y1="${mid - 20}" y2="${mid + 20}"/>
-        <text class="board-median-label" x="${x(median) + 5}" y="${mid - 13}">Median ${esc(signedPct(median))}</text>`;
+        <text class="board-machine is-start" x="8" y="${mid + 12}">${esc(`Median ${signedPct(median)} · ahead in ${ahead} of ${n}`)}</text>
+        <g class="board-swarm">${dots}</g>`;
     }).join("");
     return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(GAIN.title)}">${ticks}${zero}${body}</svg>`;
   };

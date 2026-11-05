@@ -440,6 +440,5 @@
 .board-cell:hover .board-cell-dot { fill-opacity: 1; stroke: var(--color-label); stroke-width: 1.5; }
 .board-swarm .board-cell { transition: opacity .15s ease; }
 .board-swarm:has(.board-cell:hover) .board-cell:not(:hover) { opacity: .35; }
-.board-median { stroke: var(--color-label); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
-.board-median-label { font-size: 10px; font-weight: 600; fill: var(--color-label); font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--color-background); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.board-median-label { font-size: 10px; font-weight: 600; text-anchor: middle; fill: var(--color-label); font-variant-numeric: tabular-nums; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .board-swarm .board-cell { transition: none; } }
