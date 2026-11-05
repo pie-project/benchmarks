@@ -12,7 +12,7 @@ on:
       pod_id: { description: "an already-running pod whose runner is registered (skips launch; teardown still terminates it)", required: false, default: "" }
 jobs:
   launch:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     outputs: { pod_id: "${{ inputs.pod_id || steps.pod.outputs.pod_id }}" }
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
   teardown:
     needs: [launch, probe]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3

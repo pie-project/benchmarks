@@ -23,7 +23,7 @@ on:
       own_pods: { description: "rent this run's own pods, so runs go side by side", type: boolean, required: false, default: false }
 jobs:
   resolve:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     outputs: { pie_commit: "${{ steps.c.outputs.commit }}", pins: "${{ steps.c.outputs.pins }}" }
     steps:
       - id: c

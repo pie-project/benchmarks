@@ -76,7 +76,7 @@ jobs:
   launch:
     needs: expand
     if: needs.expand.outputs.needs_pods == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.expand.outputs.pods) }}
@@ -116,7 +116,7 @@ jobs:
   gate:
     needs: [expand, launch]
     if: always() && needs.expand.result == 'success' && fromJson(needs.expand.outputs.matrix).include[0] != null
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     outputs:
       matrix: ${{ steps.gate.outputs.matrix }}
     steps:
@@ -231,7 +231,7 @@ jobs:
   teardown:
     needs: [expand, launch, gate, bench]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     steps:
       - uses: actions/download-artifact@v4
         with: { pattern: "launched-*", path: launched, merge-multiple: true }
