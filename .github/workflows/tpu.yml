@@ -39,7 +39,7 @@ env:
 
 jobs:
   decide:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     outputs:
       commit: ${{ steps.c.outputs.commit }}
       run: ${{ steps.d.outputs.run }}
@@ -91,7 +91,7 @@ jobs:
   bench:
     needs: decide
     if: needs.decide.outputs.run == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     timeout-minutes: 340  # a plan of several shards runs them one after another
     env: { C: "${{ needs.decide.outputs.commit }}" }
     outputs:
@@ -179,7 +179,7 @@ jobs:
   teardown:
     needs: [decide, bench]
     if: always() && needs.decide.outputs.run == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v2
