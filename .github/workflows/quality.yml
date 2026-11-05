@@ -134,3 +134,7 @@ jobs:
           for t in $(echo "${{ inputs.tasks || 'gsm8k,ifeval,mmlu,arc,math500' }}" | tr ',' ' '); do args="$args --task $t"; done
           .venv/bin/pie-evals-node quality $args --n "${{ inputs.n || 100 }}" --pie-root "$PIE_ROOT" --tag "$TAG" --tag-kind "$kind" \
             ${{ inputs.platform && format('--platform {0}', needs.start.outputs.mac) || '' }}
+      - name: free the Mac's disk
+        # the last step, pass or fail: a Mac's disk fills over a night of jobs, and the next one must not start on a full disk
+        if: always() && runner.os == 'macOS'
+        run: bash infra/ci/mac-hooks/disk.sh

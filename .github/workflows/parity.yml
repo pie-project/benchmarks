@@ -149,6 +149,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: "parity-${{ matrix.platform }}-${{ matrix.shard }}", path: parity-out/, if-no-files-found: warn, retention-days: 30 }
+      - name: free the Mac's disk
+        # the last step, pass or fail: a Mac's disk fills over a night of jobs, and the next one must not start on a full disk
+        if: always() && runner.os == 'macOS'
+        run: bash infra/ci/mac-hooks/disk.sh
 
   kernels:
     needs: [plan, gate]
@@ -219,6 +223,10 @@ jobs:
         with: { name: "parity-${{ inputs.mac }}-mac", path: parity-out/, if-no-files-found: warn, retention-days: 30 }
 
   # the pods are this run's alone: end them now rather than at their 10-minute idle watchdog
+      - name: free the Mac's disk
+        # the last step, pass or fail: a Mac's disk fills over a night of jobs, and the next one must not start on a full disk
+        if: always() && runner.os == 'macOS'
+        run: bash infra/ci/mac-hooks/disk.sh
   teardown:
     needs: [launch, parity, kernels]
     if: always()
