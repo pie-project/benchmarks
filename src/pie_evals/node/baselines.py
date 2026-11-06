@@ -403,6 +403,9 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     cuda = engine in ("vllm", "sglang") and str(backend or "cuda") == "cuda"
     if engine == "trtllm":
         ensure_mpi(log=log)
+        if (d / ".ok").exists() and not (d / "bin" / "pip").exists() and shutil.which("uv"):
+            # DeepGEMM locates its JIT headers through `pip show tensorrt_llm`; a uv venv has no pip
+            subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "pip"], check=False, timeout=600)
     # the fork's Python fixes apply to the CUDA and the ROCm builds alike (not to vllm-tpu)
     fork = engine in ("vllm", "sglang") and str(backend or "cuda") in ("cuda", "rocm")
     d = venv_dir(engine, version, root, backend)
@@ -448,6 +451,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     ensure_python_headers(py, log=log)
     if engine == "trtllm":
         ensure_cuda_devkit(py, log=log)
+        subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "pip"], check=False, timeout=600)
     if fork:
         ensure_fork(engine, version, py, log=log, backend=backend)
     if cuda:

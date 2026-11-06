@@ -84,6 +84,14 @@ unsupported:
   # the E4B checkpoint took 18.8 GiB and its 5.25 GiB embedding copy then did not fit the 24 GB card (rtx4090-x1)
   - when: {engine: trtllm, artifact: gemma-4-e4b-bf16, platform: rtx4090-x1}
     reason: "TensorRT-LLM loads Gemma-4-E4B with its vision and audio towers and has no text-only switch for it: it does not fit 24 GB"
+  # TensorRT-LLM's DeepSeek-V4 needs Hopper or newer ("DeepSeek-V4 requires Hopper or newer GPUs, got SM80/SM89")
+  - when: {engine: trtllm, family: deepseek_v4, arch: [ada, ampere]}
+    reason: "TensorRT-LLM runs DeepSeek-V4 only on Hopper or newer GPUs"
+  # TensorRT-LLM builds Gemma-4 with its vision tower and has no text-only switch for it: the 31B cuts that fit 24 and 32 GB
+  # for the other engines did not ("Executor creation failed due to insufficient GPU memory ... Model", rtx4090-x1 mini12,
+  # rtx5090-x1 mini18)
+  - when: {engine: trtllm, artifact: [gemma-4-31b-mini12, gemma-4-31b-mini18], platform: [rtx4090-x1, rtx5090-x1, pro4500-x1]}
+    reason: "TensorRT-LLM loads Gemma-4 with its vision tower (no text-only switch): this cut does not fit the card for it"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}
