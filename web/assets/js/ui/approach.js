@@ -112,7 +112,7 @@ window.Pie = window.Pie || {};
     // a chapter as the Overview sets a section: its title and line above, the text in a card of the Overview's shape
     element.querySelector(".approach-main").innerHTML = `
       <div class="board-section-head"><div class="board-section-text"><h1 class="board-title">${title}</h1>
-        <p class="board-lede">${summary}</p></div></div>
+        <p class="board-lede">${summary}</p></div>${current === "limit" ? Pie.methods?.setupPick?.() || "" : ""}</div>
       <article class="board-card method-article${typeof body === "function" ? " has-tables" : ""}">
         <div class="method-pane-body">${typeof body === "function" ? body() : body}</div>
       </article>
@@ -140,6 +140,9 @@ window.Pie = window.Pie || {};
   // a chapter picked in the outline or the links under it opens at its top
   element.addEventListener("click", (event) => {
     // the limit's workload bar: the grid's own setup, so a pick changes both pages
+    // the limit's workload pop-up opens the grid's own setup menu, so a pick changes both pages
+    const setup = event.target.closest("[data-methods-setup]");
+    if (setup) { event.stopPropagation(); Pie.popover.open(setup, "methods:setup", null); return; }
     const mode = event.target.closest("[data-mode]");
     if (mode && viewState) { viewState.platform.mode = mode.dataset.mode; Pie.platform.changed(); return; }
     // a term's source opens its catalog page, as the sidebar would
