@@ -46,6 +46,25 @@ competitive:
           rationale: >
             MiniMax-M3's lightning-attention KV manager is built only with its sparse attention config
             ("MiniMax-M3 requires sparse_attention_config.algorithm='minimax_m3'", pro6000-x1).
+    qwen3_6:
+      knobs:
+        max_batch_cap:
+          value: 128
+          rationale: >
+            Qwen3.6/3.8-27B's GDN state pool at 512 sequences took the 96 GB card ("CUDA out of memory", pro6000-x1);
+            128 at once, the rest queue, as vLLM caps its hybrids.
+    gemma4:
+      knobs:
+        max_batch_cap:
+          value: 256
+          rationale: >
+            FlashInfer's prefill workspace for 512 Gemma-4-31B sequences overflowed ("Buffer overflow when allocating
+            memory for batch_prefill_tmp_v", pro6000-x1); 256 at once, the rest queue.
+    gemma4_moe:
+      knobs:
+        max_batch_cap:
+          value: 256
+          rationale: As gemma4 (the 26B-A4B's executor died initialising 512 sequences on pro6000-x1).
     nemotron_h:
       knobs:
         max_batch_cap:

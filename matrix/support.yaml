@@ -96,6 +96,13 @@ unsupported:
   # flashmla sm90 prefill phase1.cuh, h100-sxm-x1)
   - when: {engine: trtllm, family: glm5_next, arch: hopper}
     reason: "TensorRT-LLM's SM90 sparse prefill kernel (FlashMLA) asserts on GLM-5.3-Flash's index top-k"
+  # TensorRT-LLM's DeepSeek-V4 MoE kernel takes 256 or 384 experts ("n_experts must be 256 or 384", pro6000-x1, pro4500-x1);
+  # the miniature keeps the first 16
+  - when: {engine: trtllm, artifact: [deepseek-v4-flash-mini, deepseek-v4-flash-mini43]}
+    reason: "TensorRT-LLM's DeepSeek-V4 MoE kernel needs all 256 (or 384) experts; the miniature keeps 16"
+  # MiniMax-M3.1-Flash's FP8 experts have no SM120 MoE kernel in TensorRT-LLM ("no MoE implementation can serve this layer", pro6000-x1)
+  - when: {engine: trtllm, family: minimax_m3, platform: [rtx5090-x1, pro4500-x1, pro6000-x1, pro6000-x2, pro6000-x4]}
+    reason: "TensorRT-LLM has no SM120 MoE kernel for MiniMax-M3.1-Flash's FP8 experts"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}
