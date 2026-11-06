@@ -230,9 +230,11 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
         if r["class"] != "mac" and r.get("name"):
             name, _, count = r["name"].partition(" ×")
             r["name"] = name.replace(" ", "-") + (f" ×{count}" if count else "")
-        # a browser row is the same card as a native one, seen through Chrome's WebGPU: its name says so
+        # a browser row is the same card as a native one, seen through Chrome's WebGPU: its name says so, and its
+        # vendor names the browser beside the card's maker (the site files a machine whose vendor is "NVIDIA" under NVIDIA)
         if r["class"] == "web" and r.get("name"):
             r["name"] += " Chrome"
+            r["vendor"] = f"Chrome ({r.get('vendor') or 'GPU'})"
     return rows
 
 
