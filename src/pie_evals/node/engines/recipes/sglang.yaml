@@ -152,6 +152,13 @@ competitive:
               rationale: >
                 At 0.97 the KV pool leaves sglang-jax 180.63M for a program that reserves 530.41M at load
                 (RuntimeProgramAllocationFailure, 42116961512); 0.90 leaves it the room.
+    gemma-4-26b-a4b-mini12-e32:
+      knobs:
+        chunked_prefill_size:
+          value: 2048
+          rationale: >
+            sglang-jax's 4096-token extend precompile needs 15.79G of HLO temporaries for this v5e cut on a 15.75G
+            chip (41957058471; every bucket up to 2048 compiled); 2048 is the chunk vLLM-TPU prefills in.
     gpt-oss-120b-mxfp4-mini:
       platform:
         a40-x1:
