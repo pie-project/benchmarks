@@ -502,3 +502,4 @@
 .auto-toggle[aria-pressed="true"] .auto-icon-play, .auto-toggle[aria-pressed="false"] .auto-icon-pause { display: none; }
 .auto-toggle .auto-icon-pause { stroke-width: 2; }  /* SF Symbols' pause: two round-capped strokes, as heavy as the play triangle reads */
 
+.toolbar-login[hidden] { display: none; }

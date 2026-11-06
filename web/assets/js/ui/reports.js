@@ -24,7 +24,7 @@ window.Pie = window.Pie || {};
   // an outlier closed by a maintainer: kept in outlier_status by its machine, model and setup (the outliers themselves are
   // worked out, not stored), so it reads Closed and leaves the counts until the data moves it again
   let closedOutliers = new Set();
-  const keyOf = (o) => `${o.hardware}|${o.model}|${o.setup}`;
+  const keyOf = (o) => `${o.engine}|${o.hardware}|${o.model}|${o.setup}`;
   const isClosed = (o) => closedOutliers.has(keyOf(o));
   // a maintainer's status: the cell reads as every other status (its square and word), a pop-up under it, its arrows only
   // on hover, as a Mac list lets a cell be edited in place
@@ -76,7 +76,6 @@ window.Pie = window.Pie || {};
   // a row's type, as the site's tables mark a category: a small coloured square before its name
   const TYPES = {
     limit: { label: "Exceeds Limit", color: "#FF9500", title: "Pie measures above the hardware's theoretical maximum: the run or the limit's inputs are off" },
-    behind: { label: "Behind Competitor", color: "var(--color-negative)", title: "Another engine is faster on the same machine, model and setup" },
     report: { label: "Report", color: "#8E8E93", title: "Filed by a visitor" },
   };
   const typeTag = (t) => `<span class="cell-dot" style="--dot: ${TYPES[t].color}" title="${esc(TYPES[t].title)}">${esc(TYPES[t].label)}</span>`;
@@ -89,9 +88,9 @@ window.Pie = window.Pie || {};
   const outlierRow = (o, i) => `
     <tr class="is-outlier-row${isClosed(o) ? " is-closed" : ""}">
       <td class="row-number">${i + 1}</td>
-      <td>${typeTag(o.above ? "limit" : "behind")}</td>
-      <td>${maintainer ? statusPick(o) : statusTag(isClosed(o) ? "fixed" : "open")}</td>
-      <td>${tag.engineTag("pie", nameOf("engines", "pie"))}</td>
+      <td>${typeTag("limit")}</td>
+      <td>${statusTag(isClosed(o) ? "fixed" : "open")}</td>
+      <td>${tag.engineTag(o.engine, nameOf("engines", o.engine))}</td>
       <td>${esc(nameOf("models", o.model))}${o.miniature ? ` <span class="reports-none">(slice)</span>` : ""}</td>
       <td>${tag.hardwareTag(o.hardware)}</td>
       <td><span class="workload-tag">${Pie.platform.degree(OUTLIER_WORKLOAD[o.setup])}${esc(o.label)}</span></td>
@@ -145,7 +144,7 @@ window.Pie = window.Pie || {};
     const note = (text) => `<tr><td class="table-empty" colspan="${COLUMNS}">${esc(text)}</td></tr>`;
     // the filed reports first, newest first, then the outliers the data shows now
     const filed = (Array.isArray(reports) ? reports : []).filter((r) => keeps("report") && inFocus(r));
-    const found = outliers().filter((o) => keeps(o.above ? "limit" : "behind") && inFocus(o));
+    const found = outliers().filter((o) => keeps("limit") && inFocus(o));
     const body = reports === null && !found.length ? ""
       : filed.length || found.length ? filed.map(row).join("") + found.map((o, i) => outlierRow(o, filed.length + i)).join("")
       : typeof reports === "string" ? note(reports) : note("No reports yet");
@@ -345,8 +344,14 @@ window.Pie = window.Pie || {};
     // open the sheet for the selected rows of the Performance (results) or Quality table, once signed in;
     // `sent` runs once the reports are filed (the table clears its selection); `numbers` are the rows' numbers in the table
     flag(rows, source, sent, numbers) {
-      if (!Pie.account?.configured || !rows.length) return;
-      if (!Pie.signedIn()) { Pie.account.open(); return; }  // a report is filed under an account: log in first
+      if (!rows.length) return;
+      // a report is a GitHub issue on the open benchmarks repo, written out from the picked measurements: no account here
+      const name = (t, id) => nameOf(t, id);
+      const lines = rows.map((row) => `| ${name("engines", row.engine)} | ${name("models", row.model)} | ${name("hardware", row.hardware || row.platform)} | ${source === "quality" ? row.task : name("workloads", row.workload)} | ${valueOf(row, source) || "—"} |`);
+      const body = `<!-- What looks off in these measurements? -->\n\n\n| Engine | Model | Machine | ${source === "quality" ? "Task" : "Workload"} | Value |\n|---|---|---|---|---|\n${lines.join("\n")}\n`;
+      window.open(`https://github.com/pie-project/benchmarks/issues/new?body=${encodeURIComponent(body)}&labels=report`, "_blank", "noopener");
+      sent?.();
+      return;
       onSent = sent;
       flagged = rows.map((row) => ({
         source, row_id: Pie.table.keyOf(row),
