@@ -270,6 +270,14 @@ competitive:
                 The int8-requantized mini takes 13.03 GiB in vLLM-TPU, past a 0.80 cap (12.6 GiB, 42116951581); at
                 0.97 the KV pool leaves no room for the 1.11G step program. 0.85 holds both.
         gpt-oss-120b-mxfp4-mini12-e32: *tpu_v5e_gptoss_room
+        deepseek-v4-flash-mini-tpu:
+          knobs:
+            gpu_mem_util:
+              value: 0.75
+              rationale: >
+                At 0.97 vLLM-TPU sizes DeepSeek-V4's KV pool from every byte free, then its compressed-attention
+                cache asks 2.80G more with 483.89M free (RESOURCE_EXHAUSTED in _initialize_ds_v4_kv_cache,
+                42160767180). 0.75 leaves that room.
         muse-glimmer-30b-mini4: &tpu_v5e_compile_room
           knobs:
             gpu_mem_util:
