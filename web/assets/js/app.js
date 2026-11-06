@@ -70,9 +70,9 @@
     const isPlatform = Pie.schema[state.table]?.view === "platform";
     // the miniatures' banner over every page that can show their results
     document.getElementById("mini-banner").hidden = true;  // the miniatures note, off: !(Pie.store.miniatures && (isPlatform || ["results", "measurements", "welcome"].includes(state.table)));
-    const isMethod = ["welcome", "inferlets", "services", "approach", "reports", "profiler", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
+    const isMethod = ["welcome", "inferlets", "services", "approach", "reports", "gaps", "profiler", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
     // Reports keeps the tables' bar above its table (empty for now, the info button at its end), as Performance does
-    filterBar.hidden = (isOverview || isMethod || isPlatform) && state.table !== "reports";
+    filterBar.hidden = (isOverview || isMethod || isPlatform) && state.table !== "reports" && state.table !== "gaps";
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
     if (rules) rules.hidden = Pie.schema[state.table]?.section === "catalog";
@@ -104,6 +104,7 @@
     Pie.services.render(state);
     Pie.approach.render(state);
     Pie.reports.render(state);
+    Pie.gaps.render(state);
     Pie.profiler.render(state);
     Pie.methodology.render(state);
     Pie.methods.render(state);
@@ -122,9 +123,9 @@
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
     } else if (isMethod) {
       toolbar.elements.title.textContent = Pie.schema[state.table].title || Pie.schema[state.table].label;
-      if (state.table === "reports") {
+      if (state.table === "reports" || state.table === "gaps") {
         filters.render(state);
-        document.getElementById("filter-list").insertAdjacentHTML("afterbegin", Pie.reports.bar());  // its Type filter
+        document.getElementById("filter-list").insertAdjacentHTML("afterbegin", state.table === "reports" ? Pie.reports.bar() : Pie.gaps.bar());  // its Type or Gap filter
         document.getElementById("report-selected").hidden = true;  // the Report button belongs to the measurement tables
         document.getElementById("download-rows").hidden = true;  // and so does Download
       }
@@ -282,6 +283,8 @@
         Pie.platform.pick(key.slice(5), value);
       } else if (String(key).startsWith("reports:")) {
         Pie.reports.pick(key.slice(8), value);
+      } else if (String(key).startsWith("gaps:")) {
+        Pie.gaps.pick(key.slice(5), value);
       } else if (value === popover.ALL) {
         state.setFilter(key, []);
       } else {

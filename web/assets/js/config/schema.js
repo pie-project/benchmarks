@@ -10,6 +10,7 @@ window.Pie = window.Pie || {};
     { id: "home", label: "Compare" },
     { id: "platforms", label: "Platforms" },
     { id: "measurements", label: "Measurements" },  // open to everyone for now (login: true closes it again)
+    { id: "reports", label: "Flagged Runs" },  // CI runs the data flags for a second look
     { id: "catalog", label: "Catalog" },  // open to everyone for now (login: true closes it again)
     { id: "resources", label: "Resources" },  // how the numbers are worked out, after the data itself
   ];
@@ -245,8 +246,16 @@ window.Pie = window.Pie || {};
     // a measurement that looks wrong, reported by a visitor and closed by a maintainer with its fix
     reports: {
       label: "CI Reports",
-      section: "measurements",
+      section: "reports",
       view: "reports",
+      filters: [],
+      columns: [],
+    },
+    // the cells where engines sit far apart: the fastest at least twice the slowest, a run worth a second look
+    gaps: {
+      label: "Engine Gaps",
+      section: "reports",
+      view: "gaps",
       filters: [],
       columns: [],
     },

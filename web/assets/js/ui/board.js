@@ -1166,6 +1166,22 @@ window.Pie = window.Pie || {};
         }));
       });
     },
+    // every cell where the fastest and slowest engine sit at least half the theoretical maximum apart, widest first, for
+    // Engine Gaps; a cell above its limit is CI Reports' to list, and one with no limit cannot be measured this way
+    gaps(least = 0.5) {
+      const rows = measured();
+      return GAIN_PICKS.flatMap((pick) => {
+        const by = {};
+        for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}`] ||= []).push(r);
+        return Object.values(by).filter((list) => new Set(list.map((r) => r.engine)).size > 1).map((list) => {
+          const fast = list.reduce((a, b) => (b[pick.key] > a[pick.key] ? b : a));
+          const slow = list.reduce((a, b) => (b[pick.key] < a[pick.key] ? b : a));
+          return { setup: pick.id, label: pick.label, hardware: fast.hardware, model: fast.model, miniature: fast.miniature || null, engines: list.length,
+            fast: fast.engine, fastValue: fast[pick.key], slow: slow.engine, slowValue: slow[pick.key], gap: fast[pick.key] / slow[pick.key] - 1,
+            limit: limitOf(fast, pick), measured: fast.measured || null };
+        }).map((g) => ({ ...g, spread: g.limit ? (g.fastValue - g.slowValue) / g.limit : null })).filter((g) => g.spread >= least && g.fastValue <= g.limit);
+      }).sort((a, b) => b.spread - a.spread);
+    },
     // the model menu: every model this release measured, the widest coverage first
     menu(k) {
       if (k === "use-engine" || k === "scale-engine") {

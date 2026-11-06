@@ -92,7 +92,7 @@ def body(platform: str, cells: list[dict], reports: list[dict] = (), names: dict
     num = lambda v, unit: f"{round(v):,} {unit}"
     parts = []
     # the site's own type names, each with its colour (Pie Reports' Type filter)
-    for above, heading in ((True, "🟧 Exceeds Limit"),):
+    for above, heading in ((True, "🟧 Exceeds Theoretical Limit"),):
         kind = [c for c in cells if c["above"] == above]
         if not kind:
             continue
@@ -116,7 +116,7 @@ def body(platform: str, cells: list[dict], reports: list[dict] = (), names: dict
         parts.append("No reports yet.")
     # the ones a maintainer closed on the site, kept at the foot so the history stays readable
     if closed:
-        rows = "\n".join(f"| {c['modelName']} | {c['machine']} | {c['label']} | {'Exceeds Limit' if c['above'] else 'Behind Competitor'} | "
+        rows = "\n".join(f"| {c['modelName']} | {c['machine']} | {c['label']} | {'Exceeds Theoretical Limit' if c['above'] else 'Behind Competitor'} | "
                          f"[Open]({SITE}/#reports/{c['hardware']}/{c['model']}/{c['setup']}) |" for c in closed)
         parts.append(f"## ✅ Closed [{len(closed)}]\n\n| Model | Machine | Setup | Type | |\n|---|---|---|---|---|\n{rows}")
     return "\n\n".join(parts) + "\n"

@@ -1318,7 +1318,7 @@
 
 
 /* Reports: a title and a line under it, then every report as a row of the site's table */
-#reports.method { overflow: auto; }  /* the table scrolls both ways in the page, as Performance's does */
+#reports.method, #gaps.method { overflow: auto; }  /* the table scrolls both ways in the page, as Performance's does */
 .reports-table-wrap { min-width: 100%; }
 #reports .reports-empty { padding: 24px var(--edge); }
 .reports-table td.is-wide { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
