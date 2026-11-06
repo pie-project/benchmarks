@@ -201,7 +201,7 @@ suites:
         program: text-completion-bench
         backend: webgpu
         tp: 1
-        artifact: [qwen3.5-4b-webllm, qwen3.5-9b-webllm, gemma-4-e2b-webllm]
+        artifact: [qwen3.5-4b-webllm, qwen3.5-9b-webllm, gemma-4-e2b-webllm, gemma-4-e4b-webllm, gemma-4-12b-webllm, qwen3.6-35b-a3b-webllm-slice, gemma-4-26b-a4b-webllm-slice, gpt-oss-20b-webllm-slice, gemma-4-31b-webllm-slice, muse-glimmer-30b-webllm-slice, gpt-oss-120b-webllm-slice-e10, qwen3.8-flash-next-webllm-mini]
         workload: [raw-512-256, c32, pf32-512]
       # Qwen3.8-Flash-Next with 2-bit experts does not fit a 16 GB Mac: every engine runs the same miniature there
       - engine: pie

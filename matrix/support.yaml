@@ -118,12 +118,25 @@ unsupported:
   # the loaded model's lock (engine.ts asyncGenerate), so there is no batched decode or prefill to measure
   - when: {engine: webllm, workload: [c32, pf32-512]}
     reason: "WebLLM decodes one sequence at a time: MLCEngine serializes requests on the model's lock, so it has no batched decode or batched prefill"
-  # WebLLM runs only an MLC-compiled build; mlc-ai ships q4f16_1 builds (web-llm 0.2.87 prebuiltAppConfig) of Qwen3.5-4B,
-  # Qwen3.5-9B and Gemma-4-E2B of the browser rows' 14 models, so only those three have WebLLM cells (models.yaml
-  # *-webllm). The rest have none: Gemma-4-E4B and Gemma-4-12B have no prebuilt build or model library, and the
-  # sliced models (the 16 GB Macs' cuts of Qwen3.6-35B-A3B, Qwen3.6-27B, Qwen3.8-27B, Qwen3.8-Flash-Next,
-  # Gemma-4-26B-A4B, Gemma-4-31B, gpt-oss-20b, gpt-oss-120b, Muse-Glimmer-30B) would each need its own MLC
-  # compile of the cut checkpoint (mlc_llm convert_weight + compile --device webgpu)
+  # WebLLM runs only an MLC-compiled build. mlc-ai ships three of the browser rows' 14 models (Qwen3.5-4B, Qwen3.5-9B,
+  # Gemma-4-E2B). These
+  # mlc-llm cannot build: `mlc_llm gen_config` at mlc-llm 44fd06d (2026-10-30, web-llm 0.2.87's) on each release's config
+  # stops with these errors. Its Gemma 4 port is the dense E2B shape only (gemma4_config.py), and it has no Qwen3.5-MoE,
+  # gpt-oss, Muse-Glimmer, Gemma-4 unified or Qwen4-exp model
+  - when: {engine: webllm, artifact: gemma-4-e4b-webllm}
+    reason: "mlc-llm cannot build it: ValueError: The first Gemma 4 target requires 8 query heads and one KV head (Gemma-4-E4B has 2 KV heads)"
+  - when: {engine: webllm, artifact: gemma-4-12b-webllm}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: gemma4_unified"
+  - when: {engine: webllm, artifact: [gemma-4-26b-a4b-webllm-slice, gemma-4-31b-webllm-slice]}
+    reason: "mlc-llm cannot build it: ValueError: The text+audio milestone supports causal attention only (mlc-llm's Gemma 4 is the dense E2B shape; this model's attention is bidirectional over images, its K equals V)"
+  - when: {engine: webllm, artifact: qwen3.6-35b-a3b-webllm-slice}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: qwen3_5_moe"
+  - when: {engine: webllm, artifact: [gpt-oss-20b-webllm-slice, gpt-oss-120b-webllm-slice-e10]}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: gpt_oss"
+  - when: {engine: webllm, artifact: muse-glimmer-30b-webllm-slice}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: muse_glimmer"
+  - when: {engine: webllm, artifact: qwen3.8-flash-next-webllm-mini}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: qwen4_exp"
   # GLM-5.3-Flash on SM100: its KDA convolution indexes the batch with 32-bit offsets and overflowed even at 128 sequences
   # ("KDA convolution tensor offsets must fit int32", b200-x1); with the SM80/SM89/SM90/SM120 limits above no GPU serves it
   - when: {engine: trtllm, family: glm5_next}
