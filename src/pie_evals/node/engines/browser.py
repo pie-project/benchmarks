@@ -259,7 +259,9 @@ class PieWebEngine(BrowserEngine):
         cap = float(r.get("web_kv_budget_gib") or room)
         kv = f"{max(256, int(min(room, cap) * 1024))}MiB"
         config = (
-            f"max_forward_tokens = {int(r.get('web_max_forward_tokens') or 2048)}\n"
+            # 512 tokens a fire, as the site's own tab runs pie: at 2048 a batch of 32 prompts made WebGPU refuse
+            # pie's command buffers (Gemma-4-26B-A4B's cut: 99 of 128 pf32 requests failed; at 512 none)
+            f"max_forward_tokens = {int(r.get('web_max_forward_tokens') or 512)}\n"
             f"max_forward_requests = {slots}\n"
             f"max_state_slots = {slots}\n"
             f"max_model_len = {context}\n"
