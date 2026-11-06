@@ -938,12 +938,14 @@ def main() -> None:
     # even where an older engine release once measured it: one release of each engine per tag
     gpu_unsup = gpu_unsupported(a2m, gpu_ids, all_engines, config.get("benchmarks", []))
     grid += [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in gpu_ids + phone_ids for c, _, _ in CATEGORIES if (hw, e, m, c) in gpu_keys]
+    # only a number stands against a declared gap: an attempt that failed or never ran reads as unsupported
+    measured = {k for rs in results.values() for k in rs}
     # a setup another engine measured on this GPU that the matrix declares unsupported for this one (a miniature's
     # engine gap too): its reason, not a blank
     setup_unsup = {k: r for k, r in gpu_unsupported_setups(a2m, gpu_ids, all_engines).items()
-                   if k[2] in model_ids and k[1] in engine_ids and k not in gpu_keys
+                   if k[2] in model_ids and k[1] in engine_ids and k not in measured
                    and any(g[0] == k[0] and g[2] == k[2] and g[3] == k[3] for g in gpu_keys)}
-    grid += list(setup_unsup)
+    grid += [k for k in setup_unsup if k not in gpu_keys]
     # a TPU the project cannot get at all (support.yaml: no access, no quota) has no runs, only its reasons
     tpus = {p["id"] for p in load("platforms")["platforms"] if p.get("backend") == "xla"}
     grid += [(hw, e, m, "raw") for hw, e, m in gpu_unsup
