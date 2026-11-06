@@ -8,7 +8,7 @@ window.Pie = window.Pie || {};
   const tag = Pie.format;
   // how far apart the engines must sit to be listed, as a share of the theoretical maximum: picked in the bar, kept per browser
   const LEASTS = [0.25, 0.5, 0.75];
-  let least = (() => { try { const v = Number(localStorage.getItem("pieGapsLeast")); return LEASTS.includes(v) ? v : 0.5; } catch { return 0.5; } })();
+  let least = (() => { try { const v = Number(localStorage.getItem("pieGapsLeast")); return LEASTS.includes(v) ? v : 0.75; } catch { return 0.75; } })();
   const gaps = () => { try { return Pie.board?.gaps?.(least) || []; } catch { return []; } };
   const nameOf = (table, id) => {
     const row = (Pie.store.rows(table) || []).find((r) => r.id === id);
