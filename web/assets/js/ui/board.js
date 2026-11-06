@@ -707,11 +707,11 @@ window.Pie = window.Pie || {};
         <div class="board-card-body">${body}</div>
       </section>`;
 
-  // the welcome band's one number, on the buttons' line at its right: every benchmark run, the store's count once the
-  // export carries it (totals.runs), else an estimate: every tag's fresh measured setups (~4,600 on 2026-11-05) at ~1.95
-  // runs each (a Batched Decode row sweeps up to four concurrencies, every other row is one run), ~9,000, quality evals
-  // and failed runs left out
-  const RUNS = 9000;
+  // the welcome band's one number, on the buttons' line at its right: every benchmark run and quality eval, the store's
+  // count once the export carries it (totals.runs), else an estimate: every tag's fresh measured setups (~4,600 on
+  // 2026-11-05) at ~1.95 runs each (a Batched Decode row sweeps up to four concurrencies, every other row is one run),
+  // ~9,000, with the quality evals and failed runs that leaves out, 10,000
+  const RUNS = 10000;
   // past a hundred, a count reads as its floor with two figures kept ("20,000+"), so it stays true as the runs go on
   const atLeast = (n) => {
     if (n < 100) return String(n);
