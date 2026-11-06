@@ -46,12 +46,14 @@ def test_jobs_carry_time_policy(matrix, tmp_path):
         assert j.est_minutes <= matrix.job_budget_minutes
 
 
+@pytest.mark.slow
 def test_every_tier_within_job_caps(matrix):
     cells = matrix.expand()
     for t in Tier:
         assert matrix.check_budget(t, cells) == [], matrix.check_budget(t, cells)
 
 
+@pytest.mark.slow
 def test_multi_gpu_platforms_only_run_tp_gt1(matrix):
     for c in matrix.expand():
         if c.platform.count >= 2 and c.mode.tp == 1:
