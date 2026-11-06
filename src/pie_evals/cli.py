@@ -402,7 +402,8 @@ def pins(obj, action, assignments):
     if action == "latest":
         out = []
         for e in m.engines.values():
-            if not e.release_source:
+            # an engine with no pin (the phone engines) has nothing to set: `pins set` would refuse its line
+            if not e.release_source or not e.pin:
                 continue
             kind, ident = e.release_source.split(":", 1)
             if kind == "pypi":
