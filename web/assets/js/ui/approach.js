@@ -8,23 +8,9 @@ window.Pie = window.Pie || {};
   const REPO = "https://github.com/pie-project/benchmarks";  // the open repository the Welcome chapter points to
   // [outline group, [id, title, colour, summary, body]]
   const CHAPTERS = [
-    ["Start", [
-      ["welcome", "Welcome", "#0A84FF", "Open benchmarks for every inference engine.", `
-        <p>This site measures how fast inference engines run real models on real hardware: Apple Silicon, NVIDIA, AMD and Google TPUs. Every engine runs the same models, the same workloads and the same settings, on the same machines.</p>
-        <h3>The goal</h3>
-        <p>A fair, public reference for inference speed. Not a race: most engines land within a few percent of each other, and the numbers should show that plainly. When one engine does better or worse, you can see exactly where and why.</p>
-        <h3>How it works</h3>
-        <ul class="method-list">
-          <li><b>Measured in CI.</b> Every result comes from automated runs on dedicated machines, repeated until the noise is small.</li>
-          <li><b>Checked against the hardware.</b> Each result is compared with the machine's theoretical maximum. A number above it is flagged as a CI error and looked into.</li>
-          <li><b>Open end to end.</b> The harness, the raw data and this methodology are on GitHub.</li>
-        </ul>
-        <h3>Contribute</h3>
-        <ul class="method-list">
-          <li><b>Add your engine.</b> Open a pull request with its recipe, and it joins the next run on every machine. <a href="${REPO}" target="_blank" rel="noopener">GitHub</a></li>
-          <li><b>Report a measurement.</b> Select rows on Performance or Quality and press Report. It opens an issue with the numbers filled in.</li>
-          <li><b>Improve the method.</b> Settings, limits and workloads are all files in the repository. Changes are reviewed in the open.</li>
-        </ul>`],
+    ["", [  // Welcome on its own at the top, under no heading, as the sidebar sets Overview
+      ["welcome", "Welcome", "#0A84FF", "Open benchmarks for every inference engine.", () => welcome()],
+      ["trust", "Why Trust Us", "#A2845E", "The safeguards behind every number.", () => trust()],
     ]],
     ["Setup", [
       ["setup", "Test Setup", "#8E8E93", "The machines, engines and versions behind every number.", `<p class="approach-empty">This chapter is being written.</p>`],
@@ -62,13 +48,59 @@ window.Pie = window.Pie || {};
     ]],
   ];
 
+  // Welcome as a landing page, as a vendor's docs open: the live counts, the path a number takes, what is measured, why
+  // to trust it and how to take part, each linking on to its chapter or page
+  const welcome = () => {
+    const n = (v) => Number(v || 0).toLocaleString("en-US");
+    const rows = (t) => (Pie.store.rows(t) || []).length;
+    const stats = [["Engines", rows("engines")], ["Machines", Pie.platform?.machines?.() || 0], ["Models", rows("models")],
+      ["Measurements", viewState ? Pie.store.count(viewState.release).rows : 0]];
+    const chevron = '<svg class="welcome-flow-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
+    // the path every number takes; the limit check in the grid's CI Error red, the step that catches a wrong one
+    const STEP_COLOURS = ["#007AFF", "#5E5CE6", "#30B0C7", "var(--color-negative)", "#34C759"];  // each step its own system colour
+    const flow = [["Recipe", "An engine's settings, a file in the repository"], ["CI run", "On a dedicated machine, nothing else running"],
+      ["Repeated", "Rounds until the noise is small"], ["Limit check", "Above the theoretical maximum is a CI Error", "is-check"], ["Published", "Here and on GitHub, raw data included"]];
+    const workloads = [["decode", "Single Decode", "One request writing its answer"], ["prefill", "Single Prefill", "One request reading its prompt"],
+      ["batching", "Batched Decode", "Many requests writing at once"], ["pbatch", "Batched Prefill", "Many prompts read at once"], ["spec", "Speculative Decode", "A draft model guessing ahead"]];
+    return `
+      <p class="welcome-lead">Every engine is capped by the same hardware limits, so most run within a few percent of each other. We measure the gap and show where it comes from.</p>
+      <dl class="welcome-stats">${stats.map(([label, v]) => `<div><dt>${label}</dt><dd>${n(v)}</dd></div>`).join("")}</dl>
+      <h3>How a number is made</h3>
+      <ol class="welcome-flow">${flow.map(([t, d, cls], i) => `<li class="${cls || ""}" style="--step: ${STEP_COLOURS[i]}"><i>${i + 1}</i><b>${t}</b><span>${d}</span></li>`).join("")}</ol>
+      <h3>What we measure</h3>
+      <ul class="welcome-list">${workloads.map(([id, t, d]) => `<li><button type="button" data-chapter-go="workloads">${Pie.platform.degree(id)}<b>${t}</b><span>${d}</span></button></li>`).join("")}</ul>`;
+  };
+
+  // Why Trust Us: the safeguards as the workloads' rows, each glyph white on a small tile in its chapter's colour, as Settings
+  // marks its rows; the name and its line, each row opening its chapter
+  const trust = () => {
+    const ICONS = {
+      sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+      server: '<rect x="4" y="4.5" width="16" height="6" rx="1.5"/><rect x="4" y="13.5" width="16" height="6" rx="1.5"/><path d="M7.5 7.5h.01M7.5 16.5h.01"/>',
+      repeat: '<path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/>',
+      equal: '<path d="M5 9h14M5 15h14"/>',
+      gauge: '<path d="M3 16.5a9 9 0 1 1 18 0M12 16.5l5-5.5"/><circle cx="12" cy="16.5" r="1.3"/>',
+      code: '<path d="M8.5 7.5 4 12l4.5 4.5M15.5 7.5 20 12l-4.5 4.5M13.5 5.5l-3 13"/>',
+    };
+    const rows = [["sliders", "#34C759", "Same setup", "Same weights, workloads and settings for every engine", "fairness"],
+      ["server", "#8E8E93", "Dedicated machines", "Nothing else runs during a benchmark", "setup"],
+      ["repeat", "#FF9500", "Repeated runs", "Warmup, then rounds until the noise is small", "measurement"],
+      ["equal", "#007AFF", "Same results", "Every engine checked to compute the same model", "parity"],
+      ["gauge", "#FF3B30", "Limit check", "Above the theoretical maximum is a CI Error", "limit"],
+      ["code", "#5E5CE6", "Open source", "Harness, recipes and raw data on GitHub", null]];
+    const glyph = (icon, colour) => `<span class="trust-tile" style="--tile: ${colour}"><svg class="mode-icon trust-glyph" viewBox="0 0 24 24" aria-hidden="true">${ICONS[icon]}</svg></span>`;
+    return `<ul class="welcome-list is-trust">${rows.map(([icon, colour, t, d, chapter]) => `<li>${chapter
+      ? `<button type="button" data-chapter-go="${chapter}">${glyph(icon, colour)}<b>${t}</b><span>${d}</span></button>`
+      : `<a href="${REPO}" target="_blank" rel="noopener">${glyph(icon, colour)}<b>${t}</b><span>${d}</span></a>`}</li>`).join("")}</ul>`;
+  };
+
   // a chapter's formula tables, from the Roofline and Memory pages they replace
   let viewState = null;
   const tables = (kind) => (viewState && Pie.methods?.chapter ? Pie.methods.chapter(kind, viewState).html : "");
   const keyOf = () => (viewState && Pie.methods?.chapter && (current === "limit" || current === "fit") ? Pie.methods.chapter(current, viewState).key : current);
 
   // the outline as the overview draws its own: a heading per group, a coloured square and a name per chapter
-  const outline = CHAPTERS.map(([head, items]) => `<div class="board-outline-head">${head}</div>${items.map(([id, title, colour]) =>
+  const outline = CHAPTERS.map(([head, items]) => `${head ? `<div class="board-outline-head">${head}</div>` : ""}${items.map(([id, title, colour]) =>
     `<button type="button" class="board-outline-item" data-chapter-go="${id}"><i class="board-outline-dot" style="background: ${colour}" aria-hidden="true"></i><span>${title}</span></button>`).join("")}`).join("");
 
   // one chapter at a time, as Apple's documentation shows one article a page: the outline picks it, the links under
@@ -145,7 +177,7 @@ window.Pie = window.Pie || {};
       element.hidden = state.table !== "approach";
       if (element.hidden) return;
       if (element.dataset.ready !== "1") {
-        element.innerHTML = content;
+        element.innerHTML = content + (Pie.board?.footer?.() || "");  // the overview's foot, read once the overview has loaded
         element.dataset.ready = "1";
         // Spec Decode's acceptance, typed in the limit's bar, works out its rows again
         // (not while the field is being typed in, which a redraw would take the focus from)
