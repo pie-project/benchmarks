@@ -13,9 +13,9 @@ window.Pie = window.Pie || {};
       ["trust", "Why Trust Us", "#A2845E", "The safeguards behind every number.", () => trust()],
     ]],
     ["Setup", [
-      ["setup", "Test Setup", "#8E8E93", "The machines, engines and versions behind every number.", () => setup()],
-      ["workloads", "Workloads", "#30B0C7", "Decode, prefill, batching and speculative decoding, and what each measures.", () => workloadsPage()],
-      ["fairness", "Fairness", "#34C759", "How every engine gets the same weights, settings and chance.", () => fairness()],
+      ["setup", "CI Setup", "#8E8E93", "The CI setup behind every run.", () => setup()],
+      ["workloads", "Workloads", "#30B0C7", "What each setup measures.", () => workloadsPage()],
+      ["fairness", "Engine Settings", "#34C759", "What every engine shares, and what each tunes.", () => fairness()],
       ["measurement", "Measurement", "#FF9500", "Rounds, warmup, noise and how a cell's number is chosen.", () => measurement()],
     ]],
     ["Models", [
@@ -33,7 +33,7 @@ window.Pie = window.Pie || {};
         <p>Because model slices run on a single device, they do not measure multi-GPU communication overhead such as tensor-parallel <code>all-reduce</code>. In addition, because we do not scale the vocabulary output head, it accounts for a larger share of total work in a slice than in the full model (our roofline model accounts for this explicitly). Finally, a slice's raw token rate (<code>tok/s</code>) is not the full model's speed. We never report model slices in Best TPS or full-model Kernel Efficiency; we use them strictly for Relative Speed, where all engines run the exact same slice head-to-head.</p>`],
       // the former Memory page, its formulas drawn by methods.js
       ["fit", "Memory Fit", "#AF52DE", "How we decide whether a model fits a machine.", () => `
-        <p>Before a model runs on a machine, we check that it fits: its weights at their precision, with headroom for the KV cache and the engine's own buffers, against the memory the machine lets its GPU use. Where a model does not fit, the grid shows a crossed circle instead of a number.</p>
+        <p>A model runs only where its weights, KV cache and engine buffers fit the GPU's memory. Where it does not, the grid shows a crossed mark <svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>.</p>
         ${tables("fit")}`],
     ]],
     ["Limits", [
@@ -53,8 +53,6 @@ window.Pie = window.Pie || {};
   const welcome = () => {
     const n = (v) => Number(v || 0).toLocaleString("en-US");
     const rows = (t) => (Pie.store.rows(t) || []).length;
-    const stats = [["Engines", rows("engines")], ["Machines", Pie.platform?.machines?.() || 0], ["Models", rows("models")],
-      ["Measurements", viewState ? Pie.store.count(viewState.release).rows : 0]];
     const chevron = '<svg class="welcome-flow-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
     // the path every number takes; the limit check in the grid's CI Error red, the step that catches a wrong one
     const STEP_COLOURS = ["#007AFF", "#5E5CE6", "#30B0C7", "var(--color-negative)", "#34C759"];  // each step its own system colour
@@ -64,7 +62,6 @@ window.Pie = window.Pie || {};
       ["batching", "Batched Decode", "Many requests writing at once"], ["pbatch", "Batched Prefill", "Many prompts read at once"], ["spec", "Speculative Decode", "A draft model guessing ahead"]];
     return `
       <p class="welcome-lead">Every engine is capped by the same hardware limits, so most run within a few percent of each other. We measure the gap and show where it comes from.</p>
-      <dl class="welcome-stats">${stats.map(([label, v]) => `<div><dt>${label}</dt><dd>${n(v)}</dd></div>`).join("")}</dl>
       <h3>How a number is made</h3>
       <ol class="welcome-flow">${flow.map(([t, d, cls], i) => `<li class="${cls || ""}" style="--step: ${STEP_COLOURS[i]}"><i>${i + 1}</i><b>${t}</b><span>${d}</span></li>`).join("")}</ol>
       <h3>What we measure</h3>
@@ -79,17 +76,28 @@ window.Pie = window.Pie || {};
   const steps = (rows) => `<ol class="welcome-flow" style="grid-template-columns: repeat(${rows.length}, minmax(0, 1fr))">${rows.map(([colour, t, d, cls], i) =>
     `<li class="${cls || ""}" style="--step: ${colour}"><i>${i + 1}</i><b>${t}</b><span>${d}</span></li>`).join("")}</ol>`;
 
+  // each platform's CI workflow, a row each that opens its file on GitHub
+  const workflow = (file) => `${REPO}/blob/main/.github/workflows/${file}`;
+  const flows = (rows) => `<ul class="welcome-list is-trust is-flows">${rows.map(([colour, t, file, d]) =>
+    `<li><a href="${workflow(file)}" target="_blank" rel="noopener"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><code>${file}</code><span>${d}</span></a></li>`).join("")}</ul>`;
+  // the engines we fork: each fork's branch, a row that opens it on GitHub
+  const forks = (rows) => `<ul class="welcome-list is-trust is-flows">${rows.map(([colour, t, repo, branch, d]) =>
+    `<li><a href="https://github.com/${repo}/tree/${branch}" target="_blank" rel="noopener"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><code>${branch}</code><span>${d}</span></a></li>`).join("")}</ul>`;
   const setup = () => `
-      ${lead("Every number comes from a CI job on a machine that runs nothing else.")}
-      <h3>Machines</h3>
-      ${facts([["#636366", "Apple Silicon", "Five Macs, M2 16 GB to M5 Max 128 GB, each a dedicated runner"],
-        ["#76b900", "NVIDIA GPU", "One-GPU cloud pods, RTX 4090 to B200, rented for the run"],
-        ["#ED1C24", "AMD GPU", "MI300X pods, rented for the run"],
-        ["#4285F4", "Google TPU", "v6e and v5e, one chip each, a fresh VM for every run"],
-        ["#8E8E93", "Browser", "Chrome over WebGPU on an RTX 4090 and an RTX 5090"]])}
+      <h3>Workflows</h3>
+      ${flows([["#636366", "Apple Silicon", "pie-eval.yml", "The resident Macs, one job per Mac"],
+        ["#76b900", "NVIDIA GPU", "tier.yml", "RunPod pods launched as CI runners, torn down after"],
+        ["#ED1C24", "AMD GPU", "tier.yml", "MI300X pods, the same flow"],
+        ["#4285F4", "Google TPU", "tpu.yml", "A Cloud TPU VM per run, deleted after"],
+        ["#8E8E93", "Browser", "pod-import.yml", "Chrome on rented pods, its results imported"],
+        ["#FFCC00", "Quality", "quality.yml", "MATH-500 and first-token checks"]])}
+      <h3>Engine forks</h3>
+      <p>Each run uses the latest release. A fix we need lives in a public fork.</p>
+      ${forks([["#E5484D", "vLLM", "pie-project/vllm", "pie-evals/v0.32.0", "Fork of vLLM 0.32.0"],
+        ["#34C759", "SGLang", "pie-project/sglang", "pie-evals/v0.5.22", "Fork of SGLang 0.5.22"]])}
       <h3>Before every run</h3>
       ${steps([["#007AFF", "Lock", "One job per machine at a time"], ["#5E5CE6", "Clean", "Leftover apps and engines closed"],
-        ["#30B0C7", "Quiet", "The run waits for an idle GPU"], ["#34C759", "Pinned", "Each engine's release recorded with its numbers"]])}`;
+        ["#30B0C7", "Quiet", "The run waits for an idle GPU"], ["#34C759", "Pinned", "Engine versions recorded"]])}`;
 
   const workloadsPage = () => {
     const rows = [["decode", "Single Decode", "512 tokens in, 256 out, one request: output tokens per second"],
@@ -106,26 +114,28 @@ window.Pie = window.Pie || {};
   };
 
   const fairness = () => `
-      ${lead("An engine should win on its code, not on its setup.")}
       ${facts([["#34C759", "Same weights", "One checkpoint and precision class for every engine"],
         ["#30B0C7", "Same prompts", "Identical token ids, checked after every run"],
         ["#5E5CE6", "Same slice", "Where a model is cut to fit, every engine runs the same cut"],
         ["#007AFF", "Same decoding", "Greedy, temperature 0, thinking off"],
+        ["#FFCC00", "Same KV cache", "bf16 on every engine"],
+        ["#FF2D55", "Like-for-like drafters", "The same draft model across engines, verified losslessly"],
+        ["#64D2FF", "One feature at a time", "Each measured alone, against the plain run"],
         ["#FF9500", "Own best settings", "Each engine tuned for its highest throughput, the recipe public"],
-        ["#AF52DE", "Latest releases", "The newest release of each engine at run time"]])}`;
+        ["#AF52DE", "Latest releases", "The newest release of each engine at run time, every run dated and tagged"]])}`;
 
   const measurement = () => `
       ${lead("A cell's number is the median of repeated rounds, taken after warmup.")}
       ${steps([["#8E8E93", "Warmup", "2 to 3 runs, not counted"], ["#007AFF", "Rounds", "3 for one request, 2 for a batch"],
         ["#FF9500", "Noise", "Over 2% spread adds rounds, up to 5; 5% for a batch"], ["#34C759", "Median", "The middle round is the number"],
         ["var(--color-negative)", "Limit check", "Above the theoretical maximum is a CI Error", "is-check"]])}
-      <p>A cell whose rounds still disagree is marked noisy. Between rounds a Mac cools down, so heat cannot slow the later ones.</p>`;
+      <p>Rounds that still disagree are marked noisy. Macs cool down between rounds.</p>`;
 
   const parity = () => `
       ${lead("A fast engine only counts if it computes the same model.")}
       ${steps([["#007AFF", "Same prompts", "Sent to both engines"], ["#5E5CE6", "One token", "Each engine gives exactly one"],
         ["#30B0C7", "Compare", "KL divergence of the two distributions"], ["#34C759", "Pass", "Under 0.15"]])}
-      <p>Kernel and rounding noise sits near 0.001; a wrong layer or chat template lands far above 0.15. This is the check for model slices, whose answers stop making sense once layers are cut.</p>`;
+      <p>Two correct engines differ only in kernel order and bf16 rounding, which moves the distribution by about 0.001. A real bug, such as a wrong layer, rotary setting or chat template, lands far above 0.15, so the line sits two orders of magnitude above the noise. The first token comes from one pass through every layer, so it tests the whole model, even on a slice whose answers no longer make sense.</p>`;
 
   const accuracy = () => `
       ${lead("On a model that fits, Pie and another engine answer the same benchmark on the same weights and machine.")}
@@ -136,12 +146,20 @@ window.Pie = window.Pie || {};
 
   // Why Trust Us: the safeguards as the workloads' rows, each marked by a small square in its chapter's colour, as the
   // outline marks the chapters; the name and its line, each row opening its chapter
+  // every run in one store, its size as the site's export counts it: the runs, and the compute hours behind them
+  const db = () => {
+    const t = Pie.store.tables.totals || {};
+    const runs = t.runs ? `${(Math.floor(t.runs / 1000) * 1000).toLocaleString("en-US")}+ runs` : "Every run";
+    const hours = t.machine_s ? `, ${Math.round(t.machine_s / 3600).toLocaleString("en-US")} compute hours` : "";
+    return `${runs}${hours}, in one database`;
+  };
   const trust = () => {
     const rows = [["#34C759", "Same setup", "Same weights, workloads and settings for every engine", "fairness"],
       ["#8E8E93", "Dedicated machines", "Nothing else runs during a benchmark", "setup"],
       ["#FF9500", "Repeated runs", "Warmup, then rounds until the noise is small", "measurement"],
       ["#007AFF", "Same results", "Every engine checked to compute the same model", "parity"],
       ["#FF3B30", "Limit check", "Above the theoretical maximum is a CI Error", "limit"],
+      ["#30B0C7", "One database", db(), "measurement"],
       ["#5E5CE6", "Open source", "Harness, recipes and raw data on GitHub", null]];
     const mark = (colour) => `<span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span>`;
     return `<ul class="welcome-list is-trust">${rows.map(([colour, t, d, chapter]) => `<li>${chapter
