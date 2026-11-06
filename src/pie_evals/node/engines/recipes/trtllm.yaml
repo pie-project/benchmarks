@@ -60,11 +60,20 @@ competitive:
           rationale: >
             FlashInfer's prefill workspace for 512 Gemma-4-31B sequences overflowed ("Buffer overflow when allocating
             memory for batch_prefill_tmp_v", pro6000-x1); 256 at once, the rest queue.
+        kv_free_mem_fraction:
+          value: 0.6
+          rationale: >
+            TensorRT-LLM builds Gemma-4 with its vision tower, and at the default 0.9 its KV-sizing pool left the
+            executor's own buffers no room ("Executor creation failed due to insufficient GPU memory ... Additional
+            executor resources", gemma-4-31B and 26B-A4B on h100-sxm-x1).
     gemma4_moe:
       knobs:
         max_batch_cap:
           value: 256
           rationale: As gemma4 (the 26B-A4B's executor died initialising 512 sequences on pro6000-x1).
+        kv_free_mem_fraction:
+          value: 0.6
+          rationale: As gemma4 ("Can't allocate profile workspace for MoE GEMM profile", l40s-x1).
     nemotron_h:
       knobs:
         max_batch_cap:
@@ -95,7 +104,7 @@ competitive:
         qwen3_6_moe: {knobs: {max_batch_cap: 64}}  # at 128 the 5090's pool was 70 MB short (4.18 of 4.25 GB)
         qwen3_6: {knobs: {max_batch_cap: 128}}
         qwen4_exp: {knobs: {max_batch_cap: 128}}
-        nemotron_h: {knobs: {max_batch_cap: 128}}
+        nemotron_h: {knobs: {max_batch_cap: 128, kv_free_mem_fraction: 0.5}}
         gemma4: {knobs: {kv_free_mem_fraction: 0.5}}
     pro4500-x1:
       knobs: {kv_free_mem_fraction: 0.75}
@@ -103,7 +112,7 @@ competitive:
         qwen3_6_moe: {knobs: {max_batch_cap: 64}}  # at 128 the 5090's pool was 70 MB short (4.18 of 4.25 GB)
         qwen3_6: {knobs: {max_batch_cap: 128}}
         qwen4_exp: {knobs: {max_batch_cap: 128}}
-        nemotron_h: {knobs: {max_batch_cap: 128}}
+        nemotron_h: {knobs: {max_batch_cap: 128, kv_free_mem_fraction: 0.5}}
         gemma4: {knobs: {kv_free_mem_fraction: 0.5}}
     rtx4090-x1:
       knobs: {kv_free_mem_fraction: 0.75}
@@ -111,4 +120,4 @@ competitive:
         qwen3_6_moe: {knobs: {max_batch_cap: 64}}  # at 128 the 5090's pool was 70 MB short (4.18 of 4.25 GB)
         qwen3_6: {knobs: {max_batch_cap: 128}}
         qwen4_exp: {knobs: {max_batch_cap: 128}}
-        nemotron_h: {knobs: {max_batch_cap: 128}}
+        nemotron_h: {knobs: {max_batch_cap: 128, kv_free_mem_fraction: 0.5}}
