@@ -136,8 +136,13 @@
       <div class="filter-list" id="filter-list"></div>
       <button class="plain-button rules-button" type="button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
       <span class="spacer"></span>
+      <!-- what the row colours mean, on Performance and Quality: the latest run in blue, a CI Error in red -->
+      <span class="table-keys" id="table-keys" hidden>
+        <span class="platform-key" title="Measured in the latest run"><i class="platform-key-swatch is-latest" aria-hidden="true"></i>Latest</span>
+        <span class="platform-key" id="table-key-error" title="Measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>CI Error</span>
+      </span>
       <!-- Submit Result, off for now (reports.js keeps its sheet): <button hidden class="report-selected" id="submit-result" type="button">Submit Result</button> -->
-      <button hidden class="report-selected" id="download-rows" type="button" title="Download these rows as a CSV file"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v8.5M4.5 8 8 11.5 11.5 8"/><path d="M3 13.5h10"/></svg><span>Download</span></button>
+      <button hidden class="report-selected" id="download-rows" type="button" title="Download these rows as a CSV file"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v7.5M5 7l3 3 3-3"/><path d="M3 10.5v1.75c0 .7.55 1.25 1.25 1.25h7.5c.7 0 1.25-.55 1.25-1.25V10.5"/></svg><span>Download</span></button>
       <button hidden disabled class="report-selected" id="report-selected" type="button" title="Report the picked measurements as wrong"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 14V2.5M4 2.5h7.5l-1.5 3 1.5 3H4"/></svg><span>Report</span></button>
       <button hidden class="release-picker is-prominent" id="release-picker" type="button" aria-haspopup="menu" aria-label="Release">
         <span class="release-picker-label">Release</span>

@@ -175,6 +175,11 @@ window.Pie = window.Pie || {};
       if (reportButton) reportButton.hidden = !flaggable(state);
       if (submitButton) submitButton.hidden = !flaggable(state);
       if (downloadButton) downloadButton.hidden = !flaggable(state);
+      // the row colours' keys, with the measurement tables only; CI Error tints Performance's rows alone
+      const keys = document.getElementById("table-keys");
+      if (keys) keys.hidden = !flaggable(state);
+      const errorKey = document.getElementById("table-key-error");
+      if (errorKey) errorKey.hidden = state.table !== "results";
       this.columns = Pie.schema[state.table].columns.filter((c) => c.key && !c.key.startsWith("_"));
       base = flaggable(state) ? subtitle?.textContent || "" : "";  // the page's own subtitle, just written, before the selection is added
       syncReport();
