@@ -47,6 +47,7 @@ ENGINE_META = {
     "trtllm":   ("TensorRT-LLM", "Apache-2.0", "NVIDIA/TensorRT-LLM"),
     "llamacpp": ("llama.cpp", "MIT", "ggml-org/llama.cpp"),
     "mlxlm":    ("MLX", "MIT", "ml-explore/mlx-lm"),
+    "vllm-metal": ("vLLM Metal", "Apache-2.0", "vllm-project/vllm-metal"),
     "splash":   ("Splash", None, "incoai/splash"),
 }
 # an engine the site's own palette (tokens.css) has no color for brings its own
@@ -229,7 +230,7 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
 # what each engine can decode with: plain (speculation off, the Raw rows) and speculative (with a drafter).
 # Splash pairs every model with its DFlash2 draft and has no flag to turn it off (support.yaml)
 DECODING = {"pie": (True, True), "llamacpp": (True, True), "mlxlm": (True, True), "splash": (False, True),
-            "vllm": (True, True), "sglang": (True, True), "trtllm": (True, False)}
+            "vllm": (True, True), "sglang": (True, True), "trtllm": (True, False), "vllm-metal": (True, False)}
 
 
 def engines() -> list[dict]:

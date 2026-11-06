@@ -17,7 +17,7 @@ on:
       models: { description: "comma-separated model ids (empty: the suite's); a baseline arm brings its pie counterpart", required: false, default: "" }
       macs: { description: "comma-separated Mac ids (empty: config.json)", required: false, default: "" }
       benchmarks: { description: "comma-separated workload ids (empty: config.json)", required: false, default: "" }
-      engines: { description: "any of pie,llamacpp,mlxlm,splash (default all)", required: false, default: "pie,llamacpp,mlxlm,splash" }
+      engines: { description: "any of pie,llamacpp,mlxlm,splash,vllm-metal (default all)", required: false, default: "pie,llamacpp,mlxlm,splash,vllm-metal" }
 
 env:
   PIE_REPO: ${{ vars.PIE_REPO || 'pie-project/pie' }}
@@ -65,9 +65,9 @@ jobs:
           [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::pie_commit must be a full sha, got '$COMMIT'"; exit 1; }
           [[ "$SUITE" =~ ^(targeted|full)$ ]] || { echo "::error::bad suite '$SUITE'"; exit 1; }
           models=$(.venv/bin/pie-evals suite "$SUITE"); macs=$(jq -r '.machines // [] | join(",")' config.json); workloads=$(jq -r '.benchmarks // [] | join(",")' config.json)
-          engines=pie,llamacpp,mlxlm,splash
+          engines=pie,llamacpp,mlxlm,splash,vllm-metal
           if [ "${{ github.event_name }}" = workflow_dispatch ]; then
-            [ -n "$IN_MODELS" ] && models=$IN_MODELS; [ -n "$IN_MACS" ] && macs=$IN_MACS; [ -n "$IN_WORKLOADS" ] && workloads=$IN_WORKLOADS; engines=${IN_ENGINES:-pie,llamacpp,mlxlm,splash}
+            [ -n "$IN_MODELS" ] && models=$IN_MODELS; [ -n "$IN_MACS" ] && macs=$IN_MACS; [ -n "$IN_WORKLOADS" ] && workloads=$IN_WORKLOADS; engines=${IN_ENGINES:-pie,llamacpp,mlxlm,splash,vllm-metal}
           fi
           [[ "$models$macs$workloads$engines" =~ ^[a-z0-9.,-]*$ ]] || { echo "::error::bad input"; exit 1; }
           # an unknown workload id would silently leave only the control: refuse it instead

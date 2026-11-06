@@ -30,6 +30,7 @@ class EngineName(StrEnumBase):
     TRTLLM = "trtllm"
     LLAMACPP = "llamacpp"
     MLXLM = "mlxlm"
+    VLLM_METAL = "vllm-metal"
     SPLASH = "splash"
 
 
