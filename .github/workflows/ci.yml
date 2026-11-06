@@ -9,6 +9,7 @@ concurrency:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # hosted minutes are billed: no job may run on for hours
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -16,10 +17,11 @@ jobs:
       - run: .venv/bin/ruff check src tests
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with: { enable-cache: true }
       - run: uv venv && uv pip install -e ".[dev,orchestrate]" pytest-xdist
-      - run: .venv/bin/pytest -q -n auto
+      - run: .venv/bin/pytest -q -n auto -m "not slow"  # fast unit tests only; each test stops at 120 s (pytest-timeout)
       - run: .venv/bin/pie-evals check

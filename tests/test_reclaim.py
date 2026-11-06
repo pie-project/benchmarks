@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_reclaim_keeps_this_jobs_imports_and_builds(tmp_path: Path, monkeypatch):
     m = Matrix.load(ROOT / "matrix")
-    job = make_jobs(m, Tier.NIGHTLY, pie_commit="c" * 40, platforms=["l40s-x1"], engines=["pie"], cells=[c for c in m.expand() if c.artifact.id == "qwen3.5-0.8b-bf16"])[0]
+    job = make_jobs(m, Tier.NIGHTLY, pie_commit="c" * 40, platforms=["l40s-x1"], engines=["pie"], cells=[c for c in m.expand(artifacts=["qwen3.5-0.8b-bf16"])])[0]
     root = tmp_path / "cache"
     for d in ("artifacts/qwen3.5-0.8b-bf16-cccccccc", "artifacts/qwen3.5-0.8b-bf16-01234567", "artifacts/gemma-4-e4b-bf16-cccccccc", "artifacts/.tmp-x", "builds/cccccccccccc-cuda", "builds/012345678901-cuda", "shrink"):
         (root / d).mkdir(parents=True)
@@ -32,7 +32,7 @@ def test_reclaim_keeps_this_jobs_imports_and_builds(tmp_path: Path, monkeypatch)
 
 def test_reclaim_on_a_mac_drops_hf_repos_only_when_asked(tmp_path: Path, monkeypatch):
     m = Matrix.load(ROOT / "matrix")
-    job = make_jobs(m, Tier.TARGETED, pie_commit="c" * 40, platforms=["m4-pro-48g"], engines=["pie"], cells=[c for c in m.expand() if c.artifact.id == "gemma-4-26b-a4b-mlx4"])[0]
+    job = make_jobs(m, Tier.TARGETED, pie_commit="c" * 40, platforms=["m4-pro-48g"], engines=["pie"], cells=[c for c in m.expand(artifacts=["gemma-4-26b-a4b-mlx4"])])[0]
     root = tmp_path / "cache"
     for d in ("artifacts/gemma-4-26b-a4b-mlx4-cccccccc", "artifacts/gemma-4-26b-a4b-mlx4-cccccccc-plain", "artifacts/gemma-4-26b-a4b-mlx4-01234567-plain", "artifacts/gemma-4-26b-a4b-mlx4-01234567", "builds/cccccccccccc-metal", "builds/012345678901-metal"):
         (root / d).mkdir(parents=True)

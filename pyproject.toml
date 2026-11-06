@@ -18,7 +18,7 @@ dependencies = [
 accuracy = ["torch; sys_platform != 'darwin'", "mlx-lm; sys_platform == 'darwin'", "transformers>=4.44", "safetensors", "datasets"]
 orchestrate = ["requests>=2.31"]
 quality = ["lm-eval[ifeval]>=0.4", "transformers", "jinja2", "tiktoken", "blobfile"]
-dev = ["pytest>=8.0", "ruff>=0.5"]
+dev = ["pytest>=8.0", "pytest-timeout>=2.3", "ruff>=0.5"]
 web = ["pytz", "pyyaml"]
 
 [project.scripts]
@@ -38,6 +38,9 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# a test that runs past this fails instead of holding CI for hours; the whole-matrix checks are "slow" and stay out of CI
+timeout = 120
+markers = ["slow: expands the whole matrix (about a minute each); not run in CI"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

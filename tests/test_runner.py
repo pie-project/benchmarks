@@ -253,7 +253,7 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
     lc32k = WorkloadSpec(id="lc-32k-128", kind="long_context", params={"prefill": 32768, "decode": 128, "concurrency": 1})
     # Qwen3.6-27B (14 GiB) on the 32 GB RTX 5090: two boots; the 0.8B: one
     for aid, split in (("qwen3.6-27b-mlx4", True), ("qwen3.5-0.8b-bf16", False)):
-        cells = [c for c in m.expand() if c.artifact.id == aid and c.program.id == "text-completion-bench"]
+        cells = [c for c in m.expand(artifacts=[aid]) if c.program.id == "text-completion-bench"]
         jobs = make_jobs(m, Tier.NIGHTLY, pie_commit="c" * 40, platforms=["rtx5090-x1"], engines=["pie"], cells=cells)
         groups = {}
         for j in jobs:

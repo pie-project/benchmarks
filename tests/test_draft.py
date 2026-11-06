@@ -104,7 +104,7 @@ def test_a_speculative_shape_drafts_wherever_the_engine_can(hub):
     assert _engine(LlamacppEngine, _art("qwen3.8-27b-llamacpp"), speculation="off").speculates(spec)
     assert not _engine(MlxlmEngine, _art("qwen3.8-27b-mlxlm")).speculates(spec)
     # and the matrix runs it only where something drafts: Splash always, pie with its drafter row
-    cells = [c for c in Matrix.load(ROOT / "matrix").expand() if c.workload.id == "spec-512-256" and c.platform.id == "m5-max-128g"]
+    cells = [c for c in Matrix.load(ROOT / "matrix").expand(platforms=["m5-max-128g"]) if c.workload.id == "spec-512-256" and c.platform.id == "m5-max-128g"]
     why = {(str(c.engine), c.artifact.id): c.declared_unsupported_reason for c in cells}
     assert why[("splash", "qwen3.8-27b-splash")] is None and why[("pie", "qwen3.8-27b-mlx4")] is None
     assert why[("llamacpp", "qwen3.8-27b-llamacpp")] is None
