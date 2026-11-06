@@ -92,6 +92,10 @@ unsupported:
   # rtx5090-x1 mini18)
   - when: {engine: trtllm, artifact: [gemma-4-31b-mini12, gemma-4-31b-mini18], platform: [rtx4090-x1, rtx5090-x1, pro4500-x1]}
     reason: "TensorRT-LLM loads Gemma-4 with its vision tower (no text-only switch): this cut does not fit the card for it"
+  # on SM90 FlashMLA's sparse prefill asserts on GLM-5.3-Flash's top-k ("Assertion `params.topk % (2*B_TOPK) == 0` failed",
+  # flashmla sm90 prefill phase1.cuh, h100-sxm-x1)
+  - when: {engine: trtllm, family: glm5_next, arch: hopper}
+    reason: "TensorRT-LLM's SM90 sparse prefill kernel (FlashMLA) asserts on GLM-5.3-Flash's index top-k"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}

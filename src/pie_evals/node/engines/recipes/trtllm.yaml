@@ -73,7 +73,7 @@ competitive:
     rtx5090-x1:
       knobs: {kv_free_mem_fraction: 0.75}
       family:
-        qwen3_6_moe: {knobs: {max_batch_cap: 128}}
+        qwen3_6_moe: {knobs: {max_batch_cap: 64}}  # at 128 the 5090's pool was 70 MB short (4.18 of 4.25 GB)
         qwen3_6: {knobs: {max_batch_cap: 128}}
         qwen4_exp: {knobs: {max_batch_cap: 128}}
         nemotron_h: {knobs: {max_batch_cap: 128}}
@@ -81,7 +81,7 @@ competitive:
     pro4500-x1:
       knobs: {kv_free_mem_fraction: 0.75}
       family:
-        qwen3_6_moe: {knobs: {max_batch_cap: 128}}
+        qwen3_6_moe: {knobs: {max_batch_cap: 64}}  # at 128 the 5090's pool was 70 MB short (4.18 of 4.25 GB)
         qwen3_6: {knobs: {max_batch_cap: 128}}
         qwen4_exp: {knobs: {max_batch_cap: 128}}
         nemotron_h: {knobs: {max_batch_cap: 128}}
@@ -89,7 +89,7 @@ competitive:
     rtx4090-x1:
       knobs: {kv_free_mem_fraction: 0.75}
       family:
-        qwen3_6_moe: {knobs: {max_batch_cap: 128}}
+        qwen3_6_moe: {knobs: {max_batch_cap: 64}}  # at 128 the 5090's pool was 70 MB short (4.18 of 4.25 GB)
         qwen3_6: {knobs: {max_batch_cap: 128}}
         qwen4_exp: {knobs: {max_batch_cap: 128}}
         nemotron_h: {knobs: {max_batch_cap: 128}}
