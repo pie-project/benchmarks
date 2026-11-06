@@ -117,7 +117,7 @@ window.Pie = window.Pie || {};
 
   // ---- accuracy: pie beside every engine on the same weights, per platform ------------------------------
   // the platforms whose pie code differs, in the sidebar's order; a row without a platform was scored on the quality Mac
-  const PLATFORMS = ["mac", "nvidia", "amd", "tpu"];
+  const PLATFORMS = ["mac", "nvidia", "amd", "tpu", "web"];
   const familyOf = (row) => { const hw = row.platform && Pie.store.index.hardware[row.platform]; return hw ? Pie.platformOf(hw) : "mac"; };
   const platformLabel = (id) => Pie.schema[id]?.label || id;
   // the closest reference first: an engine on Pie's own weights and chat template (mlx-lm, vLLM), then the rest

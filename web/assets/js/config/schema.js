@@ -176,7 +176,7 @@ window.Pie = window.Pie || {};
     web: {
       label: "Browser",
       short: "Browser",  // as the tables name it
-      section: null,  // no page until a machine is measured; still a row in the Platforms list
+      section: null,  // its page once a browser is on the site (store.js); still a row in the Platforms list
       view: "platform",
       platform: "web",
       tint: "#AEAEB2",  // light gray
