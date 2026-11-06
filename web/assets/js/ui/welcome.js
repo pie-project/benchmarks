@@ -11,7 +11,7 @@ window.Pie = window.Pie || {};
   };
   const platforms = () => Object.entries(Pie.schema).filter(([, s]) => s.view === "platform" && s.platform);
   // the platforms not yet running in CI; every other one has numbers, though a local checkout may not hold them
-  const SOON = new Set(["android", "web"]);
+  const SOON = new Set(["android", "web"].filter((id) => !(DB.hardware || []).some((hw) => Pie.platformOf(hw) === id)));
   const CHEVRON = '<svg class="welcome-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
   // a platform as a row of a grouped list, as macOS Settings sets them: its sidebar mark, its name, one line, and where it leads
   const tile = ([id, s]) => {
