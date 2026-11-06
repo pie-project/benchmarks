@@ -112,6 +112,18 @@ competitive:
                 gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
                 KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
   artifact:
+    minimax-m3.1-flash-mini-tpu-bf16:
+      knobs:
+        pin:
+          value: git-b3e3e16b2
+          rationale: >
+            sglang-jax 0.1.0rc0 (its newest release) has no MiniMax-M3; its main has MiniMaxM3SparseForConditionalGeneration
+            with MSA sparse decode (models/minimax_m3.py), so this model runs sglang-jax at that main commit (2026-10-20).
+        page_size:
+          value: 128
+          rationale: >
+            sglang-jax's MSA backend refuses any page size but the model's sparse_block_size (128): its decode top-k
+            picks KV pages as the sparse blocks.
     glm-5.3-mini-tpu:
       platform:
         tpu-v5e-1:

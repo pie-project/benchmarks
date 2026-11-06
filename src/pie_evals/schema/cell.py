@@ -136,11 +136,13 @@ class MiniatureRecipe(BaseModel):
     attn_res_block_size: int | None = Field(default=None, description="Kimi-K3: AttnRes block stride of the cut (--attn-res-block-size)")
     shrink_family: str | None = Field(default=None, description="the shrink script's family where the checkpoint's index matches several (--family)")
     keep_fp8: bool = Field(default=False, description="DeepSeek-V4/V4.1: keep the fp8 planes as released (--keep-fp8); read out to bf16 they no longer match the config's quantization_config, which vLLM and SGLang load by")
+    widen_bf16: bool = Field(default=False, description="the cut's quantized planes (MXFP8, NVFP4) read out to bf16 and its quantization_config dropped (node/widen.py), for an engine that cannot load the release's quantization; pie runs the same files")
     note: str = ""
 
     @property
     def recipe_hash(self) -> str:
-        key = json.dumps([self.layers, self.experts, self.repeat, self.text_only, self.engram_vocab, self.attn_res_block_size] + ([True] if self.keep_fp8 else []), sort_keys=True)
+        key = json.dumps([self.layers, self.experts, self.repeat, self.text_only, self.engram_vocab, self.attn_res_block_size] + ([True] if self.keep_fp8 else [])
+                         + (["bf16"] if self.widen_bf16 else []), sort_keys=True)
         return hashlib.sha256(key.encode()).hexdigest()[:10]
 
     @property
@@ -158,6 +160,8 @@ class MiniatureRecipe(BaseModel):
             t += f"-b{self.attn_res_block_size}"
         if self.keep_fp8:
             t += "-fp8"
+        if self.widen_bf16:
+            t += "-bf16"
         return t
 
 
