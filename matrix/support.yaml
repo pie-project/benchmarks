@@ -124,6 +124,14 @@ unsupported:
   # sliced models (the 16 GB Macs' cuts of Qwen3.6-35B-A3B, Qwen3.6-27B, Qwen3.8-27B, Qwen3.8-Flash-Next,
   # Gemma-4-26B-A4B, Gemma-4-31B, gpt-oss-20b, gpt-oss-120b, Muse-Glimmer-30B) would each need its own MLC
   # compile of the cut checkpoint (mlc_llm convert_weight + compile --device webgpu)
+  # GLM-5.3-Flash on SM100: its KDA convolution indexes the batch with 32-bit offsets and overflowed even at 128 sequences
+  # ("KDA convolution tensor offsets must fit int32", b200-x1); with the SM80/SM89/SM90/SM120 limits above no GPU serves it
+  - when: {engine: trtllm, family: glm5_next}
+    reason: "TensorRT-LLM 1.4.0rc2.post1 cannot serve GLM-5.3-Flash here (KDA int32 offsets on SM100; sparse attention kernels missing or asserting elsewhere)"
+  # DeepSeek-V4.1 on SM100: the loader refuses the checkpoint's Engram token map ("weight load is incomplete ... engram.token_map",
+  # b200-x1); elsewhere its CSA2 projections need SM100
+  - when: {engine: trtllm, family: deepseek_v41}
+    reason: "TensorRT-LLM 1.4.0rc2.post1 cannot serve DeepSeek-V4.1 here (CSA2 projections need SM100; on SM100 its loader refuses the Engram token map)"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}
