@@ -57,11 +57,14 @@ if _extra:
 # SparseCore ("SparseCore info is missing"). Where the chip has none, the same gather in XLA: each token's 512 nope
 # bytes (its (4, 128) uint8 block) and its 64 rope bf16 (high bytes [0:64], low [64:128] of its 128-byte row).
 _GATHER = "tpu_inference.kernels.experimental.deepseek_v4.core_attention.csa_gather"
+# and its compressor's projection kernel (proj_and_save_state) halts a v5e ("Semaphore ... has a nonzero value upon exit
+# from a Mosaic kernel", tpu.yml 42179311323): there tpu-inference's own golden reference for it (project_and_save_state_ref)
+_PROJ = "tpu_inference.kernels.experimental.deepseek_v4.compress_and_store.proj_and_save_state"
 
 
 class _XlaCsaGather:
     def find_spec(self, name, path=None, target=None):
-        if name != _GATHER:
+        if name not in (_GATHER, _PROJ):
             return None
         for finder in sys.meta_path:
             if finder is self or not hasattr(finder, "find_spec"):
@@ -80,6 +83,22 @@ class _XlaCsaGather:
             if pltpu.get_tpu_info().sparse_core is not None:
                 return
             import jax.numpy as jnp
+
+            if name == _PROJ:
+                from tpu_inference.kernels.experimental.deepseek_v4.compress_and_store.project_and_save_state_ref import \
+                    ref_wkv_proj_and_save_state
+
+                def proj_and_save_state(hidden_states, wkv_wgate, ape, positions, slot_mapping, cache, compress_ratio, interpret=False):
+                    # the reference reads head_dim and overlap only as their product, the state width
+                    state_dim = wkv_wgate.shape[1]
+                    slots_per_token = state_dim // (cache.shape[2] * cache.shape[3] // 4)
+                    return ref_wkv_proj_and_save_state(hidden_states, wkv_wgate, ape, positions, slot_mapping, cache,
+                                                       state_block_size=cache.shape[1] // slots_per_token,
+                                                       head_dim=state_dim // 2, compress_ratio=compress_ratio, overlap=False)
+
+                module.proj_and_save_state = proj_and_save_state
+                sys.stderr.write("pie-evals: no SparseCore on this chip; DeepSeek-V4's proj_and_save_state runs as its XLA reference\n")
+                return
 
             def csa_gather(nope_cache, rope_cache, indices):
                 nope = jnp.take(nope_cache.reshape(-1, 4 * nope_cache.shape[3]), indices, axis=0)
