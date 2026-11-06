@@ -507,20 +507,15 @@
 .approach-main .board-section-head > .board-title-pick .mode-icon { margin-left: 0; }
 .method-article .method-pane-body .m-doc > p { max-width: 720px; font-size: 14px; line-height: 1.6; }  /* the workload's lede and its why at the chapter's own text size */
 .method-article .method-pane-body .m-doc > h3 ~ p { max-width: 60%; }  /* Why at 60% of the column on every workload */
-/* the formulas as a paper aligns its equations: one list, hairlines between, every result in one column and every = under
-   the last, the source at the right; no boxes */
-.m-doc-eqs { display: grid; grid-template-columns: max-content max-content minmax(0, 1fr) max-content; column-gap: 14px; margin-top: 6px; }
-.m-doc-eq { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: baseline; padding: 9px 0; }
-.m-doc-eq + .m-doc-eq { border-top: .5px solid var(--color-separator); }
-.m-doc-eq-line { display: contents; }
-.m-doc-eq-line > .m-eq { grid-column: 3; }
+.m-doc-eqs { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.m-doc-eq { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 12px 16px; border-radius: 10px; background: var(--color-fill); }  /* never scrolls: a long formula wraps between its terms, its sources drop under it */
+.m-doc-eq-line { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
 .m-doc-eq-line > .op { color: var(--color-label-secondary); }
 .m-doc .m-tag { display: inline-flex; align-items: center; gap: 7px; font-weight: 500; color: var(--color-label); }
 .m-doc .m-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--pill); }
-.m-doc .m-eq { min-width: 0; font-size: 14px; line-height: 20px; font-variant-numeric: tabular-nums; color: var(--color-label); white-space: normal; }
+.m-doc .m-eq { min-width: 0; font-size: 13px; line-height: 26px; font-variant-numeric: tabular-nums; color: var(--color-label); white-space: normal; }
 .m-doc .m-eq .m-var, .m-doc .m-eq .m-tag { white-space: nowrap; }  /* a term never breaks inside itself */
-.m-doc .m-eq .m-var { padding: 0; border-radius: 0; background: none; font-size: 14px; line-height: inherit; }  /* a term as a coloured word, as an equation sets its symbols, not a pill */
-.m-doc-cite { grid-column: 4; margin-left: 0; text-align: right; font-size: 12px; color: var(--color-label-secondary); white-space: nowrap; }
+.m-doc-cite { margin-left: auto; font-size: 12px; color: var(--color-label-secondary); white-space: nowrap; }
 .m-doc .cite { color: var(--color-label-secondary); text-decoration: none; cursor: pointer; }
 .m-doc .cite:hover { color: var(--color-accent); }
 .m-doc-terms { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 24px; margin-top: 10px; font-size: 14px; line-height: 1.5; }
@@ -530,4 +525,4 @@
 .m-doc-list li { position: relative; }
 .m-doc-list li::before { content: ""; position: absolute; left: -16px; top: calc(.75em - 2.5px); width: 5px; height: 5px; border-radius: 1.5px; background: var(--color-label-tertiary); }  /* a small rounded square, as the site marks its keys, not a round bullet */
 .m-doc-list li + li { margin-top: 6px; }
-@media (max-width: 760px) { .m-doc-terms { grid-template-columns: minmax(0, 1fr); gap: 2px 0; } .m-doc-terms dd { margin-bottom: 8px; } .m-doc-eqs, .m-doc-eq { display: block; } .m-doc-eq-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; } .m-doc-cite { display: block; margin-top: 4px; text-align: left; } }
+@media (max-width: 760px) { .m-doc-terms { grid-template-columns: minmax(0, 1fr); gap: 2px 0; } .m-doc-terms dd { margin-bottom: 8px; } .m-doc-eq { flex-direction: column; align-items: flex-start; gap: 6px; } .m-doc-cite { margin-left: 0; } }
