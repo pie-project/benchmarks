@@ -192,7 +192,7 @@ class NodeRunner:
         gib = float(getattr(getattr(cell, "artifact", None), "expected_gib", None) or 0)
         # SGLang on a B200 autotunes its MXFP8 GEMMs and captures 74 prefill shapes before it serves:
         # MiniMax-M3.1-Flash's miniature took past ten minutes to boot
-        if str(getattr(cell, "engine", "")) in ("sglang", "vllm"):
+        if str(getattr(cell, "engine", "")) in ("sglang", "vllm", "trtllm"):
             floor = max(floor, 1200.0)
         if gib >= 100:
             floor = max(floor, 600.0 + gib * 6.0)
@@ -443,7 +443,7 @@ class NodeRunner:
                     from .baselines import SPECS, ensure_baseline
 
                     recipe["pin"] = self.job.baseline_versions[str(first.engine)]
-                    if str(first.engine) in SPECS and not os.environ.get({"vllm": "VLLM_PY", "sglang": "SGLANG_PY"}.get(str(first.engine), "")):
+                    if str(first.engine) in SPECS and not os.environ.get({"vllm": "VLLM_PY", "sglang": "SGLANG_PY", "trtllm": "TRTLLM_PY"}.get(str(first.engine), "")):
                         ensure_baseline(str(first.engine), recipe["pin"], backend=str(first.platform.backend), log=self.log)
                 engine = cls(pie_root=self.pie_root, artifact=first.artifact, platform=first.platform, mode=first.mode, recipe=recipe, num_layers=num_layers)
                 self._plain_deployment(engine, cells, snapshot, model_path, recipe)

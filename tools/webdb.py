@@ -44,10 +44,13 @@ ENGINE_META = {
     "pie":      ("Pie", "Apache-2.0", "pie-project/pie"),
     "vllm":     ("vLLM", "Apache-2.0", "vllm-project/vllm"),
     "sglang":   ("SGLang", "Apache-2.0", "sgl-project/sglang"),
+    "trtllm":   ("TensorRT-LLM", "Apache-2.0", "NVIDIA/TensorRT-LLM"),
     "llamacpp": ("llama.cpp", "MIT", "ggml-org/llama.cpp"),
     "mlxlm":    ("MLX", "MIT", "ml-explore/mlx-lm"),
     "splash":   ("Splash", None, "incoai/splash"),
 }
+# an engine the site's own palette (tokens.css) has no color for brings its own
+ENGINE_COLOR = {"trtllm": "#a2845e"}
 METRICS = ["decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "ttft_ms_p99",
            "itl_ms_p50", "itl_ms_p99", "latency_ms_p50", "latency_ms_p99", "resident_gib", "load_s"]
 
@@ -226,7 +229,7 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
 # what each engine can decode with: plain (speculation off, the Raw rows) and speculative (with a drafter).
 # Splash pairs every model with its DFlash2 draft and has no flag to turn it off (support.yaml)
 DECODING = {"pie": (True, True), "llamacpp": (True, True), "mlxlm": (True, True), "splash": (False, True),
-            "vllm": (True, True), "sglang": (True, True)}
+            "vllm": (True, True), "sglang": (True, True), "trtllm": (True, False)}
 
 
 def engines() -> list[dict]:
@@ -235,6 +238,7 @@ def engines() -> list[dict]:
         name, lic, repo = ENGINE_META.get(e["id"], (e["id"], None, None))
         rows.append({"id": e["id"], "name": name, "version": e.get("pin") or "main", "license": lic, "repo": repo,
                      "os": ", ".join(e.get("os", [])), "formats": ", ".join(e.get("formats", [])),
+                     **({"color": ENGINE_COLOR[e["id"]]} if e["id"] in ENGINE_COLOR else {}),
                      **dict(zip(("raw", "speculation"), ("Yes" if ok else "No" for ok in DECODING.get(e["id"], (True, False)))))})
     return rows
 

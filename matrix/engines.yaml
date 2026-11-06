@@ -1,6 +1,6 @@
 # Engines. `formats` is what the engine can load; a cell whose artifact format
 # is not in the list is not generated at all (it is not a coverage gap, the
-# engine simply does not take that input). `os` restricts platforms.
+# engine simply does not take that input). `os` (and `backends`) restrict platforms.
 # `recipe` names the competitive-configuration recipe under
 # src/pie_evals/node/engines/recipes/<engine>/. Baselines only run from
 # nightly up; the smoke tier compares pie against its own history.
@@ -26,6 +26,14 @@ engines:
     # SGLang's TPU build is its own project (sgl-project/sglang-jax, versioned apart from sglang)
     backend_pins: {xla: "0.1.0rc0"}
     release_source: pypi:sglang
+  - id: trtllm
+    os: [linux]
+    backends: [cuda]   # NVIDIA GPUs only
+    formats: [hf_safetensors]
+    tiers: [nightly, weekly]
+    recipe: competitive
+    pin: "1.4.0rc2.post1"   # its PyTorch backend (trtllm-serve on the HF checkpoint); 1.2.1, the last non-rc, predates Gemma-4, Qwen3.5 and gpt-oss on Blackwell RTX
+    release_source: pypi:tensorrt-llm
   - id: llamacpp
     os: [linux, macos]
     formats: [gguf]
