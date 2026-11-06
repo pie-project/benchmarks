@@ -192,10 +192,13 @@ class LlamacppWebgpuEngine(BrowserEngine):
         _link(files / "model.gguf", LlamacppEngine.gguf_path(self))
         _link(files / "lw", self.build_dir())
         r = self.recipe
+        # llama-server's shape: one slot per request in flight. Its context is what a request of these shapes holds
+        # (a 512-token prompt and its template, 256 out) rather than the 2048 the envelope rounds to: 32 slots of 2048
+        # ran Gemma-4-12B out of the RTX 4090's memory in the tab (vkAllocateMemory: VK_ERROR_OUT_OF_DEVICE_MEMORY)
+        per_slot = min(context, int(r.get("slot_context") or 1024))
         return {
             "module_url": "/files/lw/lw.mjs", "model_url": "/files/model.gguf",
-            # llama-server's shape: one slot per request in flight, each with the whole context
-            "n_ctx": context * slots, "n_slots": slots,
+            "n_ctx": per_slot * slots, "n_slots": slots,
             "n_batch": int(r.get("n_batch") or 2048), "n_ubatch": int(r.get("n_ubatch") or 512),
             "flash_attn": {"on": 1, "off": 0}.get(str(r.get("flash_attn", "auto")), -1),
         }

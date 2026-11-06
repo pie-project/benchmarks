@@ -1409,6 +1409,7 @@ def test_llamacpp_webgpu_gets_a_slot_per_request_and_the_whole_context_each(monk
     monkeypatch.setattr(browser.LlamacppWebgpuEngine, "build_dir", lambda self: tmp_path)
     o = _options(eng.server_cmd(8125, 32, 768))
     assert o["n_slots"] == 32 and o["n_ctx"] == 32 * 768 and o["n_batch"] == 2048 and o["n_ubatch"] == 512
+    assert _options(eng.server_cmd(8125, 32, 2048))["n_ctx"] == 32 * 1024
 
 
 def test_pie_in_the_tab_sizes_its_pool_and_slots_to_the_shape(monkeypatch, tmp_path):
