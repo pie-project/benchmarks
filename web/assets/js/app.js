@@ -404,6 +404,16 @@
           scroller.scrollBy({ left: (event.key === "ArrowLeft" ? -3 : 3) * col.offsetWidth, behavior: "smooth" });
         }
       }
+      // the Quality grid: ← and → move the platform under the pointer (or the first) three model columns across, as a
+      // platform's grid does
+      if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && plain && !event.shiftKey && state.table === "checks" && !popover.isOpen()) {
+        const scroller = document.querySelector("#checks .platform-section:hover .platform-section-scroll") || document.querySelector("#checks .platform-section-scroll");
+        const col = scroller?.querySelector("tbody td:nth-child(3), thead th:nth-child(3)");
+        if (scroller) {
+          event.preventDefault();
+          scroller.scrollBy({ left: (event.key === "ArrowLeft" ? -3 : 3) * (col?.offsetWidth || 132), behavior: "smooth" });
+        }
+      }
       // on the Performance and Quality tables (and the catalog's) ← and → scroll across the columns as ↑ and ↓ scroll down them
       const tableScroll = document.getElementById("table-container");
       if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && plain && !event.shiftKey && !onPlatform && !popover.isOpen()
