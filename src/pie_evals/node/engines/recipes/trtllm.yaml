@@ -27,6 +27,11 @@ competitive:
           rationale: >
             GLM-5.3-Flash's vision encoder needs transformers 5.17 and the wheel pins 5.5.4 ("set
             disable_mm_encoder=True" for text-only); every row is text, as on the other engines.
+    qwen4_exp:
+      knobs:
+        llm_api_options:
+          value: {disable_mm_encoder: true}
+          rationale: Text-only serving, as vLLM serves it (language_model_only) and pie runs it.
   knobs:
     kv_free_mem_fraction:
       value: null
@@ -36,6 +41,29 @@ competitive:
   platform:
     # on a 32 GB card the default 0.9 left 1.3 GiB beside the KV-sizing pool, and the executor's own buffers did not
     # fit (gemma-4-E4B bf16 on the RTX 5090: "Executor creation failed due to insufficient GPU memory")
-    rtx5090-x1: {knobs: {kv_free_mem_fraction: 0.75}}
-    pro4500-x1: {knobs: {kv_free_mem_fraction: 0.75}}
-    rtx4090-x1: {knobs: {kv_free_mem_fraction: 0.75}}
+    # the hybrids' recurrent-state pool holds every admitted sequence: Qwen3.6-35B-A3B's mini at 512 wanted 16.9 GB
+    # of it with 7.7 GB left on the RTX 5090 ("The V2 Mamba GPU cache quota is too small"); 128 are admitted at once
+    # and the rest queue, as vLLM's max_num_seqs_cap does
+    rtx5090-x1:
+      knobs: {kv_free_mem_fraction: 0.75}
+      family:
+        qwen3_6_moe: {knobs: {max_batch_cap: 128}}
+        qwen3_6: {knobs: {max_batch_cap: 128}}
+        qwen4_exp: {knobs: {max_batch_cap: 128}}
+        nemotron_h: {knobs: {max_batch_cap: 128}}
+        gemma4: {knobs: {kv_free_mem_fraction: 0.5}}
+    pro4500-x1:
+      knobs: {kv_free_mem_fraction: 0.75}
+      family:
+        qwen3_6_moe: {knobs: {max_batch_cap: 128}}
+        qwen3_6: {knobs: {max_batch_cap: 128}}
+        qwen4_exp: {knobs: {max_batch_cap: 128}}
+        nemotron_h: {knobs: {max_batch_cap: 128}}
+        gemma4: {knobs: {kv_free_mem_fraction: 0.5}}
+    rtx4090-x1:
+      knobs: {kv_free_mem_fraction: 0.75}
+      family:
+        qwen3_6_moe: {knobs: {max_batch_cap: 128}}
+        qwen3_6: {knobs: {max_batch_cap: 128}}
+        qwen4_exp: {knobs: {max_batch_cap: 128}}
+        nemotron_h: {knobs: {max_batch_cap: 128}}

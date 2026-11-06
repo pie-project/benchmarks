@@ -72,6 +72,18 @@ unsupported:
   # kv_cache_config.dtype='fp8_ds_mla'", rtx5090-x1); the other engines keep its KV in bf16
   - when: {engine: trtllm, family: glm_moe_dsa, arch: blackwell, platform: [rtx5090-x1, pro4500-x1, pro6000-x1, pro6000-x2, pro6000-x4]}
     reason: "TensorRT-LLM serves GLM-5.3's sparse MLA on SM120 only with an fp8 KV cache; the other engines keep it bf16"
+  # GLM-5.3 and GLM-5.3-Flash keep their experts in block FP8, and TensorRT-LLM's block-FP8 MoE kernels (DeepGEMM, Triton,
+  # trtllm-gen) start at SM90: "no MoE implementation can serve this layer ... Fp8BlockScalesImpl=sm_unsupported" (l40s-x1, a100-sxm-x1)
+  - when: {engine: trtllm, family: [glm_moe_dsa, glm5_next], arch: [ada, ampere]}
+    reason: "TensorRT-LLM has no block-FP8 MoE kernel below SM90 (Hopper): it cannot serve GLM-5.3's FP8 experts here"
+  # GLM-5.3-Flash's sparse attention forward kernel is SM90a/SM100f only ("Sparse Attention Forward Kernel is only supported on
+  # SM90a and SM100f architectures", pro6000-x1, pro4500-x1)
+  - when: {engine: trtllm, family: glm5_next, platform: [rtx5090-x1, pro4500-x1, pro6000-x1, pro6000-x2, pro6000-x4]}
+    reason: "TensorRT-LLM's sparse attention kernel for GLM-5.3-Flash runs on SM90a and SM100 only, not on SM120"
+  # TensorRT-LLM builds Gemma-4's vision and audio towers too (its text-only switch covers Qwen3-VL and Mistral3 only): loading
+  # the E4B checkpoint took 18.8 GiB and its 5.25 GiB embedding copy then did not fit the 24 GB card (rtx4090-x1)
+  - when: {engine: trtllm, artifact: gemma-4-e4b-bf16, platform: rtx4090-x1}
+    reason: "TensorRT-LLM loads Gemma-4-E4B with its vision and audio towers and has no text-only switch for it: it does not fit 24 GB"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}

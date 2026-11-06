@@ -98,6 +98,10 @@ class TrtllmEngine(ServedEngine):
 
     def server_cmd(self, port: int, slots: int, context: int) -> list[str]:
         r = self.recipe
+        if r.get("max_batch_cap"):
+            # a hybrid model's recurrent-state pool holds every admitted sequence; past the cap the rest
+            # queue in TensorRT-LLM's scheduler, as vLLM's max_num_seqs_cap does
+            slots = min(slots, int(r["max_batch_cap"]))
         cfg = Path(r.get("options_dir") or "/tmp") / f"trtllm-{os.getpid()}-{port}.yaml"
         cfg.parent.mkdir(parents=True, exist_ok=True)
         cfg.write_text(yaml.safe_dump(self.llm_api_options(slots, context), sort_keys=True))
