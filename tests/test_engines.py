@@ -499,6 +499,7 @@ def test_llamacpp_args(tmp_path, hf_cache, monkeypatch):
     assert json.loads(flag_value(argv, "--extra-body")) == {"cache_prompt": False, "ignore_eos": True}
     assert "--ignore-eos" in argv and "--no-ignore-eos" not in argv  # writes exactly the shape's length, as every engine does
     assert "--chat" not in argv and "--no-flush-cache" not in argv
+    assert "--token-ids" in argv  # the template's BOS is prefilled once, as pie does
     # prefix shape asks for cache reuse and keeps its prompts as written
     eng = make(LlamacppEngine, art=art, workload=WORKLOADS["prefix-1k-x64"], python="/usr/bin/python3")
     assert "--cache-reuse" in eng.server_cmd(8123, 16, 2048)
@@ -981,6 +982,27 @@ def test_openai_bench_keeps_the_whole_batch_in_flight_on_a_small_mac(monkeypatch
     ])
     summary, results = asyncio.run(ob.run(args))
     assert all(r.ok for r in results) and summary["config"]["client_in_flight"] == 32
+
+
+def test_openai_bench_sends_token_ids_so_the_bos_is_not_doubled(monkeypatch):
+    import asyncio
+    import types
+
+    ob = _openai_bench()
+    monkeypatch.setattr(ob, "make_prompts", lambda args, n: ["p"] * n)
+    monkeypatch.setattr(ob, "hf_chat_prompts_and_counts", lambda model, system, raw, think: (["<bos>p"] * len(raw), [2] * len(raw)))
+    monkeypatch.setattr(ob, "summarize", lambda **kw: kw)
+    tok = types.SimpleNamespace(encode=lambda text, add_special_tokens: [2, 79] if not add_special_tokens else [2, 2, 79])
+    monkeypatch.setitem(sys.modules, "transformers", types.SimpleNamespace(AutoTokenizer=types.SimpleNamespace(from_pretrained=lambda *a, **k: tok)))
+    sent = []
+    monkeypatch.setattr(ob, "run_one", lambda args, endpoint, prompt, count, max_tokens, server, retries=None: sent.append(prompt) or ob.RequestResult(True, 0.0, 1, 1))
+    argv = ["tput", "--model", "X", "--url", "http://h", "--prompt", "p", "--max-tokens", "4", "--no-ignore-eos",
+            "--warmup", "0", "--num-requests", "2", "--concurrency", "2", "--json-out", "f", "--no-flush-cache"]
+    asyncio.run(ob.run(ob.build_parser().parse_args(argv + ["--token-ids"])))
+    assert sent == [[2, 79], [2, 79]]
+    sent.clear()
+    asyncio.run(ob.run(ob.build_parser().parse_args(argv)))
+    assert sent == ["<bos>p", "<bos>p"]
 
 
 def test_openai_bench_resends_only_a_request_the_server_never_read(monkeypatch):
