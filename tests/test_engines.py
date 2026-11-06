@@ -1315,9 +1315,9 @@ def test_trtllm_serves_the_checkpoint_with_graphs_to_the_batch_and_no_block_reus
     eng = make(TrtllmEngine, plat=platform(count=1))
     eng.recipe["options_dir"] = str(tmp_path)
     cmd = eng.server_cmd(8123, 32, 768)
-    assert "--backend" in cmd and cmd[cmd.index("--backend") + 1] == "pytorch"
-    assert cmd[cmd.index("--max_batch_size") + 1] == "32" and cmd[cmd.index("--max_seq_len") + 1] == "768"
-    opts = yaml.safe_load(Path(cmd[cmd.index("--extra_llm_api_options") + 1]).read_text())
+    assert cmd[1].endswith("trtllm_bench.py") and cmd[2] == "serve"
+    assert cmd[cmd.index("--max-batch-size") + 1] == "32" and cmd[cmd.index("--max-seq-len") + 1] == "768"
+    opts = yaml.safe_load(Path(cmd[cmd.index("--options") + 1]).read_text())
     assert opts["cuda_graph_config"] == {"enable_padding": True, "max_batch_size": 32}
     assert opts["kv_cache_config"]["enable_block_reuse"] is False and opts["kv_cache_config"]["dtype"] == "auto"
     assert "enable_chunked_prefill" not in opts
@@ -1325,6 +1325,7 @@ def test_trtllm_serves_the_checkpoint_with_graphs_to_the_batch_and_no_block_reus
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
     body = json.loads(flag_value(argv, "--extra-body"))
     assert body == {"add_special_tokens": False, "ignore_eos": True} and "--ignore-eos" in argv
+    assert argv[1].endswith("trtllm_bench.py") and "--url" in argv
 
 
 def test_trtllm_runs_on_nvidia_gpus_only():

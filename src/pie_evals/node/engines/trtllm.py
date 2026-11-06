@@ -1,9 +1,9 @@
-"""TensorRT-LLM adapter: ``trtllm-serve`` on its PyTorch backend, streamed through ``openai_bench.py``.
+"""TensorRT-LLM adapter: its PyTorch backend's LLM API on the HF checkpoint, measured in-process.
 
-The PyTorch backend loads the HF checkpoint as it is (no per-model engine build), the same
-snapshot or miniature vLLM and SGLang load. One server is booted per model and holds every
-shape of the process, as llama.cpp and mlx-lm are served; the client stamps the first token
-and the gaps between tokens the same way for every server.
+The PyTorch backend loads the HF checkpoint as it is (no per-model engine build), the same snapshot or
+miniature vLLM and SGLang load. One LLM is booted per model (``scripts/trtllm_bench.py serve``) and every
+cell's bench runs inside its process, streaming from ``LLM.generate_async``: the in-process vantage
+vllm_bench.py and sglang_bench.py measure vLLM and SGLang from, with openai_bench.py's prompts and summary.
 """
 
 from __future__ import annotations
@@ -20,6 +20,8 @@ from pie_evals.schema import EngineName
 from .base import register
 from .served import ServedEngine
 
+SCRIPT = Path(__file__).resolve().parent / "scripts" / "trtllm_bench.py"
+
 _KV_DTYPES = {"bf16": "auto", "fp16": "auto", "auto": "auto", "fp8": "fp8", "fp8_e4m3": "fp8"}
 
 
@@ -30,9 +32,8 @@ class TrtllmEngine(ServedEngine):
     # the OpenAI completion request takes ignore_eos: every request writes exactly max_tokens
     exact_length = "ignore_eos"
 
-    def default_python(self) -> str:
-        # openai_bench.py runs on the bench interpreter; the server runs from the engine's venv
-        return super().default_python()
+    def script_path(self) -> Path:
+        return SCRIPT
 
     def server_python(self) -> str:
         if os.environ.get("TRTLLM_PY"):
@@ -97,21 +98,15 @@ class TrtllmEngine(ServedEngine):
 
     def server_cmd(self, port: int, slots: int, context: int) -> list[str]:
         r = self.recipe
-        py = Path(self.server_python())
         cfg = Path(r.get("options_dir") or "/tmp") / f"trtllm-{os.getpid()}-{port}.yaml"
         cfg.parent.mkdir(parents=True, exist_ok=True)
         cfg.write_text(yaml.safe_dump(self.llm_api_options(slots, context), sort_keys=True))
-        serve = py.parent / "trtllm-serve"
-        cmd = [str(serve)] if serve.exists() else [str(py), "-m", "tensorrt_llm.commands.serve"]
-        cmd += [
-            self.model_arg(), "--host", "127.0.0.1", "--port", str(port), "--backend", "pytorch",
-            "--tp_size", str(max(1, int(self.mode.tp))),
-            "--max_batch_size", str(max(1, slots)), "--max_seq_len", str(context),
-            "--max_num_tokens", str(int(r.get("max_num_tokens") or 8192)),
-            "--trust_remote_code", "--log_level", "warning",
-            "--extra_llm_api_options", str(cfg),
+        return [
+            self.server_python(), str(SCRIPT), "serve", "--model", self.model_arg(), "--port", str(port),
+            "--options", str(cfg), "--tp-size", str(max(1, int(self.mode.tp))),
+            "--max-batch-size", str(max(1, slots)), "--max-seq-len", str(context),
+            "--max-num-tokens", str(int(r.get("max_num_tokens") or 8192)),
         ]
-        return cmd
 
     def version(self) -> str:
         try:
@@ -125,4 +120,4 @@ class TrtllmEngine(ServedEngine):
             return "unknown"
 
     def leftover_process_names(self) -> list[str]:
-        return ["trtllm-serve", "mpi4py", "tensorrt_llm"]
+        return ["trtllm_bench.py", "mpi4py", "tensorrt_llm"]
