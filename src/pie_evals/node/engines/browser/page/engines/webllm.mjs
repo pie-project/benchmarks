@@ -9,6 +9,8 @@ export async function load(o) {
   id = o.model_id;
   const record = { model: new URL(o.model_url, location.href).href, model_id: id, model_lib: new URL(o.model_lib, location.href).href, overrides: o.overrides || {} };
   if (o.required_features) record.required_features = o.required_features;
+  if (o.model_manifest) record.model_manifest = o.model_manifest;
+  if (o.buffer_size_required_bytes) record.buffer_size_required_bytes = o.buffer_size_required_bytes;
   let last = 0;
   engine = await webllm.CreateMLCEngine(id, {
     appConfig: { model_list: [record], useIndexedDBCache: false },
