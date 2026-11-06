@@ -58,6 +58,8 @@ window.Pie = window.Pie || {};
   Pie.gaps = {
     element,
     count: () => gaps().length,
+    // how many rows the table holds, said under the window's title
+    shown: () => { const n = gaps().length; return `${n.toLocaleString("en-US")} ${n === 1 ? "row" : "rows"}`; },
     // the bar's Gap pick, named as CI Reports names its Type, the share picked ticked in its menu
     bar: () => `<span class="filter"><button class="filter-button" type="button" data-gaps-pick="least" aria-haspopup="menu">Gap<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`,
     menu: (k) => (k === "least" ? LEASTS.map((v) => ({ value: String(v), label: `${Math.round(v * 100)}%`, selected: v === least })) : []),

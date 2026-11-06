@@ -145,6 +145,7 @@ window.Pie = window.Pie || {};
     // the filed reports first, newest first, then the outliers the data shows now
     const filed = (Array.isArray(reports) ? reports : []).filter((r) => keeps("report") && inFocus(r));
     const found = outliers().filter((o) => keeps("limit") && inFocus(o));
+    shown = reports === null && !found.length ? "" : `${(filed.length + found.length).toLocaleString("en-US")} ${filed.length + found.length === 1 ? "row" : "rows"}`;
     const body = reports === null && !found.length ? ""
       : filed.length || found.length ? filed.map(row).join("") + found.map((o, i) => outlierRow(o, filed.length + i)).join("")
       : typeof reports === "string" ? note(reports) : note("No reports yet");
@@ -183,10 +184,12 @@ window.Pie = window.Pie || {};
   };
   Pie.pickRows(element);
 
+  let shown = "";  // how many rows the table holds, said under the window's title
   const draw = () => {
     if (element.hidden) return;
     // no title: the table fills the page as Performance's does, the toolbar naming the page
     element.innerHTML = list();
+    if (Pie.toolbar?.elements?.subtitle) Pie.toolbar.elements.subtitle.textContent = shown;
   };
 
   const load = async () => {
@@ -366,7 +369,8 @@ window.Pie = window.Pie || {};
       submitSheet.showModal();
       submitSheet.querySelector(row ? "[name=value]" : "select")?.focus();
     },
-    open: () => openCount(),  // the open reports, filed and found, for the sidebar
+    open: () => openCount(),
+    shown: () => shown,  // the open reports, filed and found, for the sidebar
     // open the sheet for the selected rows of the Performance (results) or Quality table, once signed in;
     // `sent` runs once the reports are filed (the table clears its selection); `numbers` are the rows' numbers in the table
     flag(rows, source, sent, numbers) {
