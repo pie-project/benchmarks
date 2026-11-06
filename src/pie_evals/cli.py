@@ -412,7 +412,10 @@ def pins(obj, action, assignments):
             else:
                 v = bl._github_latest(ident)
             if not v:
-                raise click.ClickException(f"no release found for {e.id} at {e.release_source}")
+                # one engine whose source publishes no release (mlc-llm tags only) keeps its pinned version: it must
+                # not stop every run's start (pie-eval 42172766118 failed on it)
+                click.echo(f"no release found for {e.id} at {e.release_source}; keeping its pin", err=True)
+                continue
             out.append(f"{e.id}={v.lstrip('v')}")
         click.echo(",".join(out))
         return
