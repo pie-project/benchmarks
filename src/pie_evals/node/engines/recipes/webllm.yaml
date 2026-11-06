@@ -22,6 +22,10 @@ default:
       model_manifest: {value: "mlc-model-manifest.json", rationale: "web-llm 0.2.87's record for this build: the library's functions are named in the build's manifest"}
       buffer_size_required_bytes: {value: 201326592, rationale: "web-llm 0.2.87's record for this build"}
       required_features: {value: ["shader-f16"], rationale: "web-llm 0.2.87's record for this build"}
+    qwen3.6-27b-webllm-slice:
+      model_lib: {value: "Qwen3.6-27B-L20-q4f16_1_cs1k-webgpu.wasm", rationale: "compiled with the build (mlc_llm compile --device webgpu, prefill chunk 1024 as web-llm's Qwen3.5 libraries); in the snapshot"}
+    qwen3.8-27b-webllm-slice:
+      model_lib: {value: "Qwen3.8-27B-L24-q4f16_1_cs1k-webgpu.wasm", rationale: "compiled with the build (mlc_llm compile --device webgpu, prefill chunk 1024 as web-llm's Qwen3.5 libraries); in the snapshot"}
 
 competitive:
   extends: default

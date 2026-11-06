@@ -119,7 +119,7 @@ unsupported:
   - when: {engine: webllm, workload: [c32, pf32-512]}
     reason: "WebLLM decodes one sequence at a time: MLCEngine serializes requests on the model's lock, so it has no batched decode or batched prefill"
   # WebLLM runs only an MLC-compiled build. mlc-ai ships three of the browser rows' 14 models (Qwen3.5-4B, Qwen3.5-9B,
-  # Gemma-4-E2B). These
+  # Gemma-4-E2B); Qwen3.6-27B and Qwen3.8-27B are compiled here from the same cut (models.yaml *-webllm-slice). The rest
   # mlc-llm cannot build: `mlc_llm gen_config` at mlc-llm 44fd06d (2026-10-30, web-llm 0.2.87's) on each release's config
   # stops with these errors. Its Gemma 4 port is the dense E2B shape only (gemma4_config.py), and it has no Qwen3.5-MoE,
   # gpt-oss, Muse-Glimmer, Gemma-4 unified or Qwen4-exp model
