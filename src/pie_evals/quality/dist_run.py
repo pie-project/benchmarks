@@ -177,9 +177,10 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
         argv += ["--kv-cache-dtype", str(engine.artifact.kv_dtype)]
     if engine.recipe.get("attention_backend"):
         argv += ["--attention-backend", str(engine.recipe["attention_backend"])]
+    engine.recipe.setdefault("snapshot_dir", str(snapshot))  # the vLLM-TPU settings read the model's config there
     env = engine.process_env()
     cfg = json.loads((snapshot / "config.json").read_text()) if (snapshot / "config.json").exists() else {}
-    if "vision_config" in cfg:
+    if "vision_config" in cfg and "hf_overrides" not in env.get("PIE_EVALS_VLLM_ENGINE_ARGS", ""):
         # the cut keeps only the language model: vLLM then builds no vision tower and reads no visual weights
         argv += ["--limit-mm-per-prompt", json.dumps({"image": 0, "video": 0})]
     keys = {**cfg, **(cfg.get("text_config") or {})}
@@ -364,7 +365,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     if backend == "xla":
         # one 4k request needs little kv; the XLA programs need HBM beside the pool (Kimi-K3 on a v6e: "Attempting to
         # reserve 4.92G ... 4.85G free")
-        precipe["gpu_mem_util"] = min(float(precipe.get("gpu_mem_util") or 0.90), 0.75)
+        precipe["gpu_mem_util"] = precipe.pop("parity_gpu_mem_util", None) or min(float(precipe.get("gpu_mem_util") or 0.90), 0.75)
         # one request at a time: a few recurrent seats (Kimi-K3, Nemotron-3 on a v6e: "one sequence ... beside the
         # state slots takes 6242 MiB") and 512-token fires, whose temporaries fit beside the weights (Qwen3.8-Flash-Next
         # at 2048: "HLO temporaries (32.50G) exceeds available HBM (31.24G)")

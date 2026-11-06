@@ -483,6 +483,21 @@ default:
             (the XLA engine's own default) the load reserved 128 slots and c256 failed ("this fire wants 255
             recurrent slots", gpt-oss-20b on tpu-v6e-1, #1184).
   artifact:
+    hy4-mini6:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            parity_gpu_mem_util:
+              value: 0.92
+              rationale: &v5eparity >
+                Parity on a v5e (quality/dist_run.py caps the share at 0.75): the 11 GiB Hy4 and 11.4 GiB Nemotron-3-Ultra
+                cuts leave no KV beside their weights there ("0 MiB for the kv pages", tpu 41978570753, 41995643253); the
+                bench's 0.92, with parity's 512-row fires.
+    nemotron-3-ultra-mini-e16:
+      knobs:
+        parity_gpu_mem_util:
+          value: 0.92
+          rationale: *v5eparity
     gpt-oss-120b-mlx-mxfp4-slice-e10:
       backend:
         metal:
