@@ -32,6 +32,13 @@ competitive:
           rationale: >
             Its KDA convolution indexes the whole admitted batch with 32-bit offsets, and 512 sequences overflow them
             ("KDA convolution tensor offsets must fit int32", b200-x1); 128 at once, the rest queue.
+    deepseek_v41:
+      knobs:
+        llm_api_options:
+          value: {disable_mm_encoder: true}
+          rationale: >
+            The miniature carries no vision tower and TensorRT-LLM's V4.1 builds it unasked ("Missing DeepSeek-V4.1
+            image weight: vision.patch_embed.proj.weight", b200-x1); text-only, as every engine serves it.
     deepseek_v4:
       knobs:
         kv_cache_dtype:

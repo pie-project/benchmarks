@@ -26,6 +26,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -554,7 +555,17 @@ def jit_jobs() -> str:
     return str(jobs)
 
 
-def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: float, extra_pids=lambda: [], poll_s: float = 5.0, on_stall=None) -> tuple[int, bool, bool]:
+def mac_gpu_busy() -> bool:
+    """A Metal engine waits on its command buffers without CPU: a 31B prefill fire of 13 lanes ran a minute
+    and more on the M4 Pro with the tree's CPU under 0.05 s a poll, and pie was stopped mid-fire as a hang."""
+    if sys.platform != "darwin":
+        return False
+    from pie_evals.node.preflight import mac_gpu_utilization
+
+    return (mac_gpu_utilization() or 0) > 5
+
+
+def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: float, extra_pids=lambda: [], poll_s: float = 5.0, on_stall=None, device_busy=mac_gpu_busy) -> tuple[int, bool, bool]:
     start = last_work = time.monotonic()
     last_cpu = None
     while True:
@@ -567,7 +578,7 @@ def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: flo
         # per process: a tree's summed CPU drops when a busy child exits (an inductor compile pool), and the
         # nvcc/ptxas of a JIT build that follows stayed under the old peak for minutes (SGLang Marlin on sm_86)
         cpu = {p: table[p][1] for p in tree_pids([proc.pid, *extra_pids()], table)}
-        if last_cpu is None or any(c > last_cpu.get(p, 0.0) + 0.05 for p, c in cpu.items()):
+        if last_cpu is None or any(c > last_cpu.get(p, 0.0) + 0.05 for p, c in cpu.items()) or device_busy():
             last_work = now
         last_cpu = cpu
         timed_out, stalled = now - start > timeout_s, now - last_work > stall_s

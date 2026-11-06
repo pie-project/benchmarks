@@ -102,9 +102,18 @@ unsupported:
   # the miniature keeps the first 16
   - when: {engine: trtllm, artifact: [deepseek-v4-flash-mini, deepseek-v4-flash-mini43]}
     reason: "TensorRT-LLM's DeepSeek-V4 MoE kernel needs all 256 (or 384) experts; the miniature keeps 16"
-  # MiniMax-M3.1-Flash's FP8 experts have no SM120 MoE kernel in TensorRT-LLM ("no MoE implementation can serve this layer", pro6000-x1)
-  - when: {engine: trtllm, family: minimax_m3, platform: [rtx5090-x1, pro4500-x1, pro6000-x1, pro6000-x2, pro6000-x4]}
-    reason: "TensorRT-LLM has no SM120 MoE kernel for MiniMax-M3.1-Flash's FP8 experts"
+  # MiniMax-M3.1-Flash's experts found no TensorRT-LLM MoE kernel on SM80, SM90 or SM120 ("no MoE implementation can serve this
+  # layer ... quant_unsupported", a100-sxm-x1, h100-sxm-x1, h200-x1, pro6000-x1), and on SM100 its loader found no w1/w3 for the
+  # miniature's experts (b200-x1)
+  - when: {engine: trtllm, family: minimax_m3}
+    reason: "TensorRT-LLM 1.4.0rc2.post1 has no MoE kernel for MiniMax-M3.1-Flash's experts on these GPUs (SM80/SM90/SM120), and its loader refuses the miniature on SM100"
+  # gpt-oss's MXFP4 experts have no SM80 MoE kernel ("no MoE implementation can serve this layer", a100-sxm-x1)
+  - when: {engine: trtllm, family: gpt_oss, arch: ampere}
+    reason: "TensorRT-LLM has no MXFP4 MoE kernel on Ampere (SM80/SM86) for gpt-oss"
+  # Gemma-4-31B bf16: TensorRT-LLM's worker process died initialising it on every 80-141 GB card ("MPI worker exited
+  # unexpectedly", a100-sxm-x1, h100-sxm-x1, h200-x1); it serves on the 180 GB B200
+  - when: {engine: trtllm, artifact: gemma-4-31b-bf16, platform: [a100-sxm-x1, h100-sxm-x1, h200-x1]}
+    reason: "TensorRT-LLM's worker dies initialising Gemma-4-31B (with its vision tower) on this card"
   # the browser rows (webgpu platforms). WebLLM 0.2.87's MLCEngine serves one request at a time: every request takes
   # the loaded model's lock (engine.ts asyncGenerate), so there is no batched decode or prefill to measure
   - when: {engine: webllm, workload: [c32, pf32-512]}
@@ -217,6 +226,10 @@ unsupported:
   # MiniMax-M3 is on sglang-jax main (sglang.yaml pins minimax-m3.1-flash-mini-tpu-bf16 to it), in bf16 only
   - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu}
     reason: "sglang-jax loads MiniMax-M3 in bf16 only (no MXFP8 or NVFP4): it runs minimax-m3.1-flash-mini-tpu-bf16, the same cut read out to bf16"
+  # on one chip sglang-jax main's MSA backend refuses it: its per-head block selection needs one KV group per tensor rank
+  # (tpu.yml v6e 42162051016)
+  - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu-bf16, platform: [tpu-v6e-1, tpu-v5e-1]}
+    reason: "sglang-jax (main b3e3e16b2) serves MiniMax-M3's MSA attention only at tp a multiple of its 4 KV heads: one chip cannot run it"
   # SGLang 0.5.20 has no mxfp4 MoE kernel before Hopper: gpt-oss-20b decodes through a dequant fallback —
   # A100 ss-512-256 12 tok/s and lc-8k 5 tok/s (nightly 36082960398 s05, two cells ate the shard's hour),
   # 4090 ss 25 tok/s; the H100 (1189 tok/s at c64) and Blackwell cards keep the baseline

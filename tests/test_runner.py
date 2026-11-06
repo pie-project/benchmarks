@@ -364,6 +364,10 @@ def test_checkpoints_download_in_the_background(mac_job, patched, tmp_path, monk
         return real(art, hf, download=False)
 
     monkeypatch.setattr(snapshots, "ensure_snapshot", spy)
+    # a roomy disk: on a nearly full one the runner takes one model at a time and prefetches nothing
+    from pie_evals.node import reclaim
+
+    monkeypatch.setattr(reclaim, "free_gib", lambda *a, **k: 10_000.0)
     r = runner_mod.NodeRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
     recs = r.run()
     assert recs and any(t.startswith("prefetch") for t in threads)
