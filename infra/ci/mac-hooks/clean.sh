@@ -18,6 +18,9 @@ fi
 
 kill_engines
 
+# a lit display (an animated wallpaper, a screensaver) keeps WindowServer drawing on the GPU
+pmset displaysleepnow 2>/dev/null || true
+
 quiet=0; t0=$(date +%s)
 while :; do
   u=$(gpu_util)
