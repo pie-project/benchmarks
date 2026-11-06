@@ -933,3 +933,15 @@ td.is-overall:has(> .roll-ghost) { overflow: hidden; }
 .platform-table tbody td:not(.is-overall):has(> .roll-ghost) { position: relative; }  /* Overall stays sticky */
 @media (prefers-reduced-motion: reduce) { .is-rolling .platform-table tbody td > .platform-cell.is-empty { animation: none; } }
 .platform-table tbody td:not(.is-overall) > .roll-ghost.is-pill > .platform-cell { width: 100%; }  /* an empty cell leaving keeps its own layout, its mark in the corner */
+/* a cell where an engine measured above its theoretical limit: tinted red, as the best machine is tinted blue, and red
+   wins where a cell is both (a number to check outranks a best) */
+.platform-table tbody td.is-over-limit, .platform-table tbody td.is-over-limit:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-negative) 9%, var(--color-background)); }
+.platform-table tbody tr:hover td.is-over-limit, .platform-table tbody tr:hover td.is-over-limit:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-negative) 13%, var(--color-background)); }
+.platform-table tbody td.is-openable.is-over-limit:hover, .platform-table tbody td.is-openable.is-over-limit:hover:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-negative) 17%, var(--color-background)); }
+.platform-table tbody td.is-over-limit .platform-cell .platform-main, .platform-table tbody td.is-over-limit .platform-cell .platform-unit,
+.platform-table tbody td.is-over-limit .platform-cell.is-top .platform-main, .platform-table tbody td.is-over-limit .platform-cell.is-top .platform-unit { color: var(--color-negative); }
+.platform-table tbody td.is-openable.is-over-limit:hover .platform-open { color: var(--color-negative); }
+/* the bar's key for the red cells: their tint as a square, then its name */
+.platform-key { display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; font-size: 12px; color: var(--color-label-secondary); white-space: nowrap; }
+.platform-key-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.platform-key-swatch.is-over-limit { background: color-mix(in srgb, var(--color-negative) 9%, var(--color-background)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-negative) 35%, transparent); }

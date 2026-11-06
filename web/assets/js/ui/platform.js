@@ -888,9 +888,13 @@ window.Pie = window.Pie || {};
         const own = (key, items) => items.map((o) => (o.separator ? o : { ...o, key: `grid:${key}` }));
         const fixedView = Pie.schema[viewState.table]?.compare;
         return [
-          ...(fixedView ? [] : [{ heading: "View" }, ...own("view", ["engines", "tps", "ceiling"].map((id) => ({ value: id, label: COMPARES[id], selected: id === compare, icon: viewIcon(id) }))), { separator: true }]),
-          // the engine and its opponent are one row each, the pick in grey, their lists to the side, as Finder's View menu nests its Sort By
-          { label: "Engine", detail: Pie.store.names.engine(viewState.platform.engine || Pie.engines.primary), submenu: own("engine", this.menu("engine")) },
+          // each view a row with its engines beside it: a click on the view takes it with the default engine (pie), a pick in its
+          // list takes it with that engine
+          ...(fixedView ? [] : [{ heading: "View" }, ...["engines", "tps", "ceiling"].map((id) => ({ value: id, key: "grid:view", label: COMPARES[id], selected: id === compare, icon: viewIcon(id),
+            detail: Pie.store.names.engine(id === compare ? viewState.platform.engine || Pie.engines.primary : Pie.engines.primary),  // the engine each view takes
+            submenu: Pie.store.tables.engines.map((e) => ({ value: `${id}|${e.id}`, key: "grid:view-engine", label: Pie.store.names.engine(e.id), selected: e.id === (id === compare ? viewState.platform.engine || Pie.engines.primary : Pie.engines.primary), dot: Pie.engines.colorOf(e.id) })) }))]),
+          // a page with one fixed view keeps the engine as a row of its own
+          ...(fixedView ? [{ label: "Engine", detail: Pie.store.names.engine(viewState.platform.engine || Pie.engines.primary), submenu: own("engine", this.menu("engine")) }] : []),
         ];
       }
       if (k !== "engine" || !viewState) return [];
@@ -902,7 +906,15 @@ window.Pie = window.Pie || {};
       // a new view or engine redraws every number: it rolls in on the same diagonal wave a setup's turn does, the setup's name staying put
       // the turn's clock starts again too: a setup turning in right behind a picked view would roll the numbers twice
       const wave = (button) => { if (!viewState) return; captureGhosts(button); if (!button) auto.label = null; auto.rolling = true; auto.spent = 0; clearTimeout(auto.timer); };
-      if (k === "view") { if (value !== compare) wave('[data-grid-pick="options"]'); Pie.platform.setCompare(value); return; }
+      // a view clicked: that view with the default engine; a view's engine picked in its list: both
+      if (k === "view") { if (value !== compare) wave('[data-grid-pick="options"]'); if (viewState) viewState.platform.engine = Pie.engines.primary; Pie.platform.setCompare(value); return; }
+      if (k === "view-engine") {
+        const [view, engine] = String(value).split("|");
+        if (viewState) viewState.platform.engine = engine;
+        if (view !== compare) wave('[data-grid-pick="options"]');
+        Pie.platform.setCompare(view);
+        return;
+      }
       if (k === "engine" && viewState && value !== (viewState.platform.engine || Pie.engines.primary)) wave();
       if (k === "setup" && viewState) { stopTurns(); auto.rolling = value !== viewState.platform.mode; if (auto.rolling) captureGhosts(); viewState.platform.mode = value; return; }  // a picked setup rolls in as a turn does
       if (k === "engine" && viewState) viewState.platform.engine = value;
@@ -1224,7 +1236,14 @@ window.Pie = window.Pie || {};
             const PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
             const open = { hardware: [mac], model: [realOf(model)], workload: [PHASE[modeOf(c).id] || modeOf(c).workload],
               engine: compare === "engines" ? [...new Set((c.all || [c.pie]).map((r) => r.engine))] : [c.pie.engine] };
-            return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && topIn(g.macs.filter((m) => !hidden.has(m)), model) === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            // an engine here measured above its own theoretical limit (a full model, not a slice): the cell tinted red,
+            // in every view, as the best machine is tinted blue
+            const overLimit = (c.all || [c.pie]).some((r) => {
+              if (r.miniature || !r[metric.key]) return false;
+              const b = modeOf(c).id === "pbatch" ? Pie.ceiling?.(r, "pbatch") : boundOf(mac, realOf(model), modeOf(c), metric, r);
+              return b?.tps && r[metric.key] > b.tps;
+            });
+            return `<td class="${sorted} is-openable${overLimit ? " is-over-limit" : ""}" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && topIn(g.macs.filter((m) => !hidden.has(m)), model) === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           // an empty cell lists every engine that has a row here and why it gave no number, as a measured cell's card does
           // the engines that did measure here, though pie did not (the comparison needs pie): their numbers first
@@ -1304,6 +1323,7 @@ window.Pie = window.Pie || {};
           ${setupControl(mode.id, modes)}${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
+            <span class="platform-key" title="An engine on this cell measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>CI Error</span>
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
             <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
             <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>

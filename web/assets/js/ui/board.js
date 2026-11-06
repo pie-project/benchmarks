@@ -77,7 +77,7 @@ window.Pie = window.Pie || {};
     return `<g class="board-bar" aria-label="${esc(`${tip.head}: ${tip.value}`)}" data-tip-engine="${esc(tip.engine)}" data-tip-head="${esc(tip.head)}" data-tip-value="${esc(tip.value)}" data-tip-note="${esc(tip.note || "")}">
       <rect class="board-band" x="${band.x}" y="0" width="${band.w}" height="${base}"/>
       <path d="${column(x, top, w, Math.max(base - top, 1))}" style="fill: ${color}"/>
-      ${Pie.engines.isPrimary(tip.engine) ? `<path class="board-sheen" d="${column(x, top, w, Math.max(base - top, 1))}"/>` : ""}
+      ${tip.top ? `<path class="board-sheen" d="${column(x, top, w, Math.max(base - top, 1))}"/>` : ""}
       <text class="board-value${inside ? " is-inside" : ""}" x="${x + w / 2}" y="${inside ? (top + base) / 2 : top - 6}">${value}</text>
 </g>`;
   };
@@ -106,8 +106,10 @@ window.Pie = window.Pie || {};
     const marks = cells.map((c, i) => {
       const width = c.bars.length * BW + (c.bars.length - 1) * 2;
       const left = L + slot * i + (slot - width) / 2;
+      const vals = c.bars.map((r) => r[metric.key]);
+      const lead = metric.higher === false ? Math.min(...vals) : Math.max(...vals);
       const bars = c.bars.map((r, j) => bar(left + j * (BW + 2), y(r[metric.key]), BW, base, Pie.engines.colorOf(r.engine), compact(r[metric.key]),
-        { engine: r.engine, head: `${names().engine(r.engine)} on ${machineName(c.hardware)}`, value: full(r[metric.key], metric.unit) }, { x: left + j * (BW + 2) - 1, w: BW + 2 })).join("");
+        { top: r[metric.key] === lead, engine: r.engine, head: `${names().engine(r.engine)} on ${machineName(c.hardware)}`, value: full(r[metric.key], metric.unit) }, { x: left + j * (BW + 2) - 1, w: BW + 2 })).join("");
       const cx = L + slot * i + slot / 2;
       return `${bars}<text class="board-group" x="${cx}" y="${base + 18}">${esc(Pie.schema[c.platform]?.short || c.platform)}</text>
         <text class="board-machine" x="${cx}" y="${base + 33}">${esc(machineName(c.hardware))}</text>`;
@@ -248,7 +250,7 @@ window.Pie = window.Pie || {};
     const marks = list.map((e, i) => {
       const x = L + slot * i + (slot - BW) / 2;
       const cx = x + BW / 2;
-      const tip = { engine: e.engine, head: names().engine(e.engine), value: summary.label(e.v),
+      const tip = { top: i === 0, engine: e.engine, head: names().engine(e.engine), value: summary.label(e.v),
         note: e.detail || `Over ${e.n} ${e.n === 1 ? "setup" : "setups"}` };
       return `${bar(x, y(e.v), BW, base, Pie.engines.colorOf(e.engine), summary.label(e.v), tip, { x: L + slot * i, w: slot })}
         ${logo(e.engine, cx - 8, base + 6, 16)}
@@ -570,7 +572,7 @@ window.Pie = window.Pie || {};
   const useSection = (rows) => {
     const mode = USE_MODES.find((m) => m.id === useMode);
     return `<div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">Efficiency</h1>
+            <div class="board-section-text"><h1 class="board-title">Kernel Efficiency</h1>
             <p class="board-lede">How close each engine gets to the hardware's peak.</p></div>
             <button class="filter-button board-title-pick" type="button" data-board-pick="use-mode" aria-haspopup="menu" aria-label="Mode">${Pie.platform.degree(mode.id)}${esc(mode.label)}${chevronMark}</button>
           </div>
@@ -729,17 +731,17 @@ window.Pie = window.Pie || {};
       .map((id) => `<span class="board-key"><span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}</span>`).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     const outline = [
-      ["Efficiency", USE_CARDS.map(([id, title]) => [id, title])],
-      ["Head to head", SUMMARY.map((m) => [m.id, m.title])],
-      ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"]]],
+      ["Kernel Efficiency", USE_CARDS.map(([id, title]) => [id, title])],
+      ["Performance Head to Head", SUMMARY.map((m) => [m.id, m.title])],
+      ["Performance by Model", [["metric", "Performance"], [TTFT.id, "Time to first token"]]],
     ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${BADGES[id]?.[0] || "var(--color-label-tertiary)"}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
-    // pie's bars' texture, defined once for every chart on the page: fine diagonal lines in white over its colour, so
-    // the project's own engine stands out from the ones it is measured against
+    // pie's bars' texture, defined once for every chart on the page: a fine grid of dots, as Freeform and Keynote set a
+    // dotted canvas, faint white over its colour, so its bars read as pie's
     const SHEEN = `<svg class="board-defs" width="0" height="0" aria-hidden="true"><defs>
-        <pattern id="board-sheen" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <rect width="1.6" height="5" fill="#fff" fill-opacity=".14"/>
+        <pattern id="board-sheen" width="6" height="6" patternUnits="userSpaceOnUse">
+          <circle cx="3" cy="3" r="1" fill="#fff" fill-opacity=".28"/>
         </pattern></defs></svg>`;
     return `${SHEEN}
       <div class="platform-bar board-bar">
@@ -748,16 +750,26 @@ window.Pie = window.Pie || {};
       <div class="board-scroll"><div class="board-inner">
         <nav class="board-outline" aria-label="On this page">${outline}</nav>
         <div class="board-main">
+          <section class="board-welcome" aria-label="About these benchmarks">
+            <div class="board-welcome-text">
+            <h1>LLM Engine Benchmarks</h1>
+            <p>Where models meet hardware.</p>
+            <div class="board-welcome-actions">
+              <a class="board-welcome-primary" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Benchmarks</a>
+              <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">See how we measure</button>
+            </div>
+            </div>
+          </section>
           ${useSection(rows)}
           <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">Head to head</h1>
+            <div class="board-section-text"><h1 class="board-title">Performance Head to Head</h1>
             <p class="board-lede">Every engine compared with the others on each machine and model.</p></div>
           </div>
           <div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has(m.id) ? "Head-to-head decode win rate" : m.sub, gridCards.has(m.id) ? matrix(m, rows) : ranking(m, rows), viewToggle(m.id), false)).join("")}</div>
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
-          <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">On one model</h1>
+          <div class="board-section-head is-apart">
+            <div class="board-section-text"><h1 class="board-title">Performance by Model</h1>
             <p class="board-lede">Each platform is shown on the machine where the most engines ran this model.</p></div>
             <button class="filter-button board-title-pick" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(model)}${esc(names().model(model))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
@@ -972,6 +984,13 @@ window.Pie = window.Pie || {};
     element.querySelector("[data-board-subscribe]")?.classList.add("is-subscribed");
   });
 
+  // the welcome's buttons open their pages, as the sidebar would
+  element.addEventListener("click", (event) => {
+    const go = event.target.closest("[data-board-go-page]");
+    if (go) event.preventDefault();
+    if (go?.dataset.chapter) Pie.approach?.open(go.dataset.chapter);
+    if (go) document.querySelector(`.sidebar-item[data-table="${go.dataset.boardGoPage}"]`)?.click();
+  });
   // the Outliers card's Reports button opens Reports, as the sidebar would
   element.addEventListener("click", (event) => {
     if (event.target.closest("[data-board-reports]")) document.querySelector('.sidebar-item[data-table="reports"]')?.click();
@@ -1151,7 +1170,7 @@ window.Pie = window.Pie || {};
         // every engine's cells above their own theoretical limit: a measurement to check, whoever ran it
         const seen = new Set();
         return engineIds().flatMap((e) => gainCells(rows, pick, e)).filter((c) => pastLimit(c) && !seen.has(`${c.pie.engine}|${c.pie.hardware}|${c.pie.model}`) && seen.add(`${c.pie.engine}|${c.pie.hardware}|${c.pie.model}`)).map((c) => ({
-          engine: c.pie.engine,
+          engine: c.pie.engine, measured: c.pie.measured || null,
           setup: pick.id, label: pick.label, workload: pick.workload, key: pick.key, unit: c.s.unit,
           hardware: c.pie.hardware, model: c.pie.model, miniature: c.pie.miniature || null,
           pie: c.pie[c.s.key], best: c.best.engine, bestValue: c.best[c.s.key], gain: c.gain, above: pastLimit(c),
