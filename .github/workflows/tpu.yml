@@ -49,7 +49,7 @@ jobs:
       - id: vm
         name: the platform's TPU VM settings
         run: |
-          python3 -c 'import yaml' 2>/dev/null || python3 -m pip install -q --break-system-packages pyyaml
+          python3 -c 'import yaml' 2>/dev/null || python3 -m pip install -q --break-system-packages pyyaml 2>/dev/null || python3 -m pip install -q --user pyyaml
           s=$(bash infra/tpu/vm.sh resolve "$PLATFORM")
           Z="${{ github.event.inputs.zone }}"
           # a full zone answers "no more capacity": a manual run can name others to try first
