@@ -43,9 +43,11 @@ export async function generate({ ids, prompt, max_tokens, temperature, top_p, se
       stamps = [first];
       for (const g of out.intertoken_us || []) stamps.push(stamps[stamps.length - 1] + g / 1000);
     } else {
-      stamps = n ? [end] : [];
+      // many at once (no per-token timing asked): one request's tokens land with its return. A one-token request's
+      // first token is its end; a longer one has no first-token stamp, so no per-lane decode rate is made up
+      stamps = n === 1 ? [end] : [];
     }
-    return { prompt_tokens: out.num_prompt_tokens, output_tokens: n, stamps, first_ms: first ?? (n ? end : null) };
+    return { prompt_tokens: out.num_prompt_tokens, output_tokens: n, stamps, first_ms: first ?? (n === 1 ? end : null) };
   }
 }
 
