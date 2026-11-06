@@ -1428,7 +1428,7 @@ def test_pie_in_the_tab_sizes_its_pool_and_slots_to_the_shape(monkeypatch, tmp_p
     o = _options(eng.server_cmd(8126, 32, 768))
     assert "max_state_slots = 32\n" in o["config"] and "max_forward_requests = 32\n" in o["config"] and "max_model_len = 768\n" in o["config"]
     # the CUDA rows' Gemma-4 max_forward_tokens (pie.yaml, arch ada) does not reach the tab
-    assert "max_forward_tokens = 2048\n" in o["config"]
+    assert "max_forward_tokens = 512\n" in o["config"]
 
 
 def test_the_webgpu_platforms_run_the_browser_engines_only():
@@ -1441,4 +1441,5 @@ def test_the_webgpu_platforms_run_the_browser_engines_only():
     assert engines == {"pie", "webllm", "llamacpp-webgpu"}
     # WebLLM serves one request at a time: its batched rows are declared, not run
     assert {c.workload.id for c in cells if str(c.engine) == "webllm"} == {"raw-512-256"}
-    assert len({c.artifact.id for c in cells if str(c.engine) == "pie"}) == 14
+    # 14 models, two of them past what pie's WebGPU engine takes (support.yaml)
+    assert len({c.artifact.id for c in cells if str(c.engine) == "pie"}) == 12
