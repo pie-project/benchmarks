@@ -32,6 +32,10 @@ class EngineName(StrEnumBase):
     MLXLM = "mlxlm"
     VLLM_METAL = "vllm-metal"
     SPLASH = "splash"
+    # phones (mobile/): Google's LiteRT-LM (the MediaPipe LLM Inference runtime), MLC LLM, MLX Swift
+    LITERT = "litert"
+    MLC = "mlc"
+    MLX_SWIFT = "mlx-swift"
     WEBLLM = "webllm"  # mlc-ai/web-llm in a browser tab (WebGPU)
     LLAMACPP_WEBGPU = "llamacpp-webgpu"  # llama.cpp built for the browser (ggml-webgpu, emscripten)
 
@@ -62,7 +66,11 @@ class QuantScheme(StrEnumBase):
     AWQ = "awq"
     GPTQ = "gptq"
     NVFP4 = "nvfp4"
-    MLC_Q4F16_1 = "mlc_q4f16_1"  # MLC's 4-bit, group 32, fp16 scales (WebLLM's -MLC builds)
+    LITERT_INT4 = "litert_int4"  # LiteRT-LM .litertlm, 4-bit weights (mixed int4/int8 where the release says so)
+    LITERT_INT8 = "litert_int8"
+    LITERT_MIXED = "litert_mixed"  # Gemma 4's mobile quantization-aware weights: 2-, 4- and 8-bit mixed
+    MLC_Q4F16_1 = "mlc_q4f16_1"  # MLC LLM 4-bit group quantization, fp16 activations
+    MLC_Q4F32_1 = "mlc_q4f32_1"
 
 
 class SourceFormat(StrEnumBase):
@@ -70,7 +78,8 @@ class SourceFormat(StrEnumBase):
     GGUF = "gguf"
     MLX = "mlx"
     SPLASH = "splash"
-    MLC = "mlc"  # an MLC-compiled model (-MLC weights + its WebGPU model library)
+    LITERT = "litert"
+    MLC = "mlc"
 
 
 class ArtifactKind(StrEnumBase):
@@ -226,7 +235,7 @@ class ArtifactSpec(BaseModel):
 
 class PlatformSpec(BaseModel):
     id: str
-    os: str  # linux | macos
+    os: str  # linux | macos | android | ios
     backend: Backend
     accelerator: str = Field(description="human name, e.g. 'NVIDIA L40S', 'Apple M1 Max'")
     arch: str = Field(description="ada | blackwell | hopper | ampere | apple7 | apple8 | apple9 ...")
@@ -243,6 +252,7 @@ class PlatformSpec(BaseModel):
     fit_factor: float | None = Field(default=None, description="headroom the fit rule asks of this platform's memory (default: support.yaml fit_factor)")
     pod: str | None = Field(default=None, description="platform whose pod hosts this one's jobs (an x1 on the x2 pod of the same GPU, one GPU masked); default: its own")
     container_disk_gb: int | None = Field(default=None, description="container disk its pod asks for when runpod.yaml's is too small (a checkpoint of a terabyte and more)")
+    device_models: list[str] = Field(default_factory=list, description="a phone's model codes (Android Build.MODEL, iPhone identifier), matched as prefixes by the phone ingest")
 
 
 class WorkloadSpec(BaseModel):

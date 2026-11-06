@@ -51,9 +51,12 @@ ENGINE_META = {
     "webllm":   ("WebLLM", "Apache-2.0", "mlc-ai/web-llm"),
     "llamacpp-webgpu": ("llama.cpp WebGPU", "MIT", "ggml-org/llama.cpp"),
     "splash":   ("Splash", None, "incoai/splash"),
+    "litert":   ("LiteRT-LM", "Apache-2.0", "google-ai-edge/LiteRT-LM"),
+    "mlc":      ("MLC LLM", "Apache-2.0", "mlc-ai/mlc-llm"),
+    "mlx-swift": ("MLX Swift", "MIT", "ml-explore/mlx-swift-lm"),
 }
 # an engine the site's own palette (tokens.css) has no color for brings its own
-ENGINE_COLOR = {"trtllm": "#a2845e", "webllm": "#5e5ce6", "llamacpp-webgpu": "#8e8e93"}
+ENGINE_COLOR = {"trtllm": "#a2845e", "litert": "#34a853", "mlc": "#5856d6", "mlx-swift": "#ff9500", "webllm": "#5e5ce6", "llamacpp-webgpu": "#8e8e93"}
 METRICS = ["decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "ttft_ms_p99",
            "itl_ms_p50", "itl_ms_p99", "latency_ms_p50", "latency_ms_p99", "resident_gib", "load_s"]
 
@@ -71,7 +74,8 @@ def load(name: str) -> dict:
 
 
 def model_name(base: str) -> str:
-    drop = {"4bit", "bf16", "gguf", "mlx", "mxfp4", "q4", "q4km", "mtp", "instruct", "it", "base", "8k", "mini5", "mini8", "q4f16_1"}
+    drop = {"4bit", "bf16", "gguf", "mlx", "mxfp4", "q4", "q4km", "mtp", "instruct", "it", "base", "8k", "mini5", "mini8",
+            "litert", "lm", "mlc", "q4f16_1", "q4f32_1"}  # the phones' LiteRT-LM and MLC releases (pie_evals.results.phone.model_ids)
     tail = base.split("/")[-1]
     return "-".join(p for p in tail.split("-") if p.lower() not in drop)
 
@@ -232,10 +236,39 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
     return rows
 
 
+def phone_hardware(store) -> list[dict]:
+    """The phones the benchmark app (mobile/) has sent rows from, as machines of the site's Mobile platform: named by
+    matrix/phones.yaml, or by what the phone reported when it is not listed there. A test device never shows."""
+    phones = {p["id"]: p for p in load("phones")["phones"]}
+    seen: dict[str, dict] = {}
+    rows = store.table().select(["platform", "started_at", "hardware_fingerprint_json", "tag"]).to_pylist()
+    for r in sorted((r for r in rows if r["started_at"] is not None), key=lambda r: r["started_at"]):
+        pid = r["platform"] or ""
+        if not (pid in phones or pid.startswith(("android-", "ios-"))) or phones.get(pid, {}).get("test") or (r["tag"] or "").startswith("test-"):
+            continue
+        seen[pid] = json.loads(r["hardware_fingerprint_json"] or "{}")
+    out = []
+    for pid, fp in seen.items():
+        p = phones.get(pid, {})
+        name = p.get("name") or " ".join(x for x in (fp.get("manufacturer"), fp.get("model")) if x) or pid
+        chip = p.get("accelerator") or fp.get("soc")
+        out.append({
+            "id": pid, "resource": "Pie phone app", "name": name, "full_name": f"{name} ({chip})" if chip else name,
+            # the site's Mobile platform (Pie.platformOf): every phone, Android or iPhone
+            "class": "android", "location": "local", "vendor": p.get("vendor") or fp.get("manufacturer") or None,
+            "backend": p.get("backend") or ("metal" if fp.get("os") == "ios" else "vulkan"), "arch": p.get("arch") or fp.get("soc"),
+            "count": 1, "memory_gib": p.get("memory_gib") or fp.get("ram_gib"), "memory_type": None, "bandwidth_gbs": None,
+            "cpu_cores": fp.get("cpu_cores"), "gpu_cores": None, "tflops_fp16": None, "interconnect": "uma", "power_w": None,
+            "year": str(p["year"]) if p.get("year") else None, "runs": "Phone app", "price_usd": None, "price_hr": None,
+        })
+    return out
+
+
 # what each engine can decode with: plain (speculation off, the Raw rows) and speculative (with a drafter).
 # Splash pairs every model with its DFlash2 draft and has no flag to turn it off (support.yaml)
 DECODING = {"pie": (True, True), "llamacpp": (True, True), "mlxlm": (True, True), "splash": (False, True),
             "vllm": (True, True), "sglang": (True, True), "trtllm": (True, False), "vllm-metal": (True, False),
+            "litert": (True, False), "mlc": (True, False), "mlx-swift": (True, False),
             "webllm": (True, False), "llamacpp-webgpu": (True, False)}
 
 
@@ -466,7 +499,7 @@ def attempts_by_tag(store, a2m, hardware_ids, engine_ids) -> dict[str, dict[tupl
             continue
         key = (r["platform"], r["engine"], a2m.get(r["artifact"], r["artifact"]), cat)
         t = r["tag"]
-        if not t:  # untagged runs are not shown
+        if not t or t.startswith("test-"):  # untagged runs are not shown, nor a test of the phone app (pie_evals.results.phone)
             continue
         if key not in out.setdefault(t, {}) or r["started_at"] > out[t][key]["started_at"]:
             out[t][key] = r
@@ -586,7 +619,7 @@ def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
             if measured(r) and r["platform"] in hardware_ids and r["engine"] in engine_ids]
     by_tag: dict[str, list[dict]] = {}
     for r in rows:
-        if r["tag"]:  # untagged runs are not shown: every release is a tag
+        if r["tag"] and not r["tag"].startswith("test-"):  # untagged runs are not shown: every release is a tag; a test-* tag never shows
             by_tag.setdefault(r["tag"], []).append(r)
     tagged = {t: pick(rs, a2m) for t, rs in by_tag.items()}
     # config.json "prefill_only": {tag: {"engine": e, "since": ISO time}} reruns that may change only prefill
@@ -864,21 +897,25 @@ def main() -> None:
     # ("GPU"), an AMD GPU or a TPU
     kind = {p["id"]: ("Mac" if p.get("os") == "macos" else "TPU" if p.get("backend") == "xla" else "AMD" if p.get("backend") == "rocm" else "GPU")
             for p in load("platforms")["platforms"]}
+    kind.update({h["id"]: "Phone" for h in phone_hardware(store)})
     platforms: dict[str, set[str]] = {}
     for r in store.table().select(["artifact", "platform", "status"]).to_pylist():
         if r["status"] in ("pass", "noisy") and r["artifact"] in a2m and r["platform"] in kind:
             platforms.setdefault(a2m[r["artifact"]], set()).add(kind[r["platform"]])
-    order = ["Mac", "GPU", "TPU", "AMD"]
+    order = ["Mac", "GPU", "TPU", "AMD", "Phone"]
     for m in models:
         m["platforms"] = ", ".join(t for t in order if t in platforms.get(m["id"], set()))
     engine_ids = [e["id"] for e in mac_engines]
     # the RunPod GPUs join the grids with every engine that ran there (pie, vLLM, SGLang): one row per setup a tag measured or tried
     gpu_ids = [p["id"] for p in load("platforms")["platforms"] if p.get("os") != "macos"]
+    # the phones the app has measured: their rows join the grids as the GPUs' do, every engine that ran there
+    phone_rows = phone_hardware(store)
+    phone_ids = [h["id"] for h in phone_rows]
     all_engines = [e["id"] for e in engines()]
-    results, rmeta = results_by_tag(store, a2m, hardware_ids + gpu_ids, all_engines, config.get("prefill_only"))
+    results, rmeta = results_by_tag(store, a2m, hardware_ids + gpu_ids + phone_ids, all_engines, config.get("prefill_only"))
     lap("results_by_tag")
-    gpu_attempts = attempts_by_tag(store, a2m, gpu_ids, all_engines)
-    gpu_keys = {k for rs in [*results.values(), *gpu_attempts.values()] for k in rs if k[0] in gpu_ids}
+    gpu_attempts = attempts_by_tag(store, a2m, gpu_ids + phone_ids, all_engines)
+    gpu_keys = {k for rs in [*results.values(), *gpu_attempts.values()] for k in rs if k[0] in gpu_ids or k[0] in phone_ids}
     gpu_models = sorted({k[2] for k in gpu_keys} - set(model_ids))
     model_ids += gpu_models
     if "full" in suite_ids:  # Full is every model: the GPU-only ones too
@@ -898,7 +935,7 @@ def main() -> None:
     # a GPU setup the matrix declares unsupported (an engine's own bug or gap) reads unsupported with its reason,
     # even where an older engine release once measured it: one release of each engine per tag
     gpu_unsup = gpu_unsupported(a2m, gpu_ids, all_engines, config.get("benchmarks", []))
-    grid += [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in gpu_ids for c, _, _ in CATEGORIES if (hw, e, m, c) in gpu_keys]
+    grid += [(hw, e, m, c) for e in engine_ids for m in model_ids for hw in gpu_ids + phone_ids for c, _, _ in CATEGORIES if (hw, e, m, c) in gpu_keys]
     # a setup another engine measured on this GPU that the matrix declares unsupported for this one (a miniature's
     # engine gap too): its reason, not a blank
     setup_unsup = {k: r for k, r in gpu_unsupported_setups(a2m, gpu_ids, all_engines).items()
@@ -913,7 +950,7 @@ def main() -> None:
     lap("stack")
     # the Macs the site's grids measure, and every GPU or TPU setup a scheduled CI run launches (tagged with its runs)
     # the Macs the grids measure, every CI GPU and TPU, and every catalog accelerator; a CI Mac without a runner stays out
-    hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids or h["class"] != "mac" or not h.get("runs")]
+    hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids or h["class"] != "mac" or not h.get("runs")] + phone_rows
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
     # a GPU runs every engine on the same Hugging Face weights (bf16, MXFP4), not the Mac's 4-bit ones: its fit is
     # sized by the artifact the GPU runs actually loaded, so a 54 GB bf16 model reads "doesn't fit" on a 48 GB card

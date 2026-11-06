@@ -211,6 +211,59 @@ def store_status(obj):
     click.echo(json.dumps({"store": st.describe(), "records": t.num_rows, "runs": runs, "quality": len(st.quality())}))
 
 
+@main.command("import-phone")
+@click.argument("files", nargs=-1, type=click.Path(exists=True, dir_okay=False))
+@click.option("--spool", type=click.Path(file_okay=False), default=None, help="also store every pending file of this phone inbox (the ingest's --spool)")
+@click.option("--tag", default=None, help="tag for rows that name none (default: the newest release tag)")
+@click.option("--dry-run", is_flag=True, help="check the rows, store nothing")
+@click.pass_obj
+def import_phone(obj, files, spool, tag, dry_run):
+    """Store the benchmark app's records.jsonl (a shared file, or the "Copy for workflow" text) as phone rows."""
+    from pie_evals.results import phone
+    from pie_evals.results.phone_ingest import import_spool
+
+    m: Matrix = obj["matrix"]
+    failed = 0
+    for f in files:
+        good, bad, warnings = phone.validate(phone.read_file(Path(f)), m, phone.model_ids())
+        for w in warnings:
+            click.echo(f"{f}: {w}", err=True)
+        for b in bad:
+            click.echo(f"{f}: line {b['line']}: {b['error']}", err=True)
+        failed += bool(bad)
+        if not good:
+            failed += 1
+            continue
+        if dry_run:
+            click.echo(f"{f}: {len(good)} rows ok ({', '.join(sorted({f'{r.engine}/{r.artifact}/{r.workload}={rec.status}' for r, rec in good}))})")
+            continue
+        for msg in phone.store_rows(good, obj["store"], tag=tag):
+            click.echo(f"{f}: {msg}")
+        stored_tag = good[0][0].tag or tag or phone.latest_release_tag(obj["store"])
+        click.echo(f"{f}: read back under {stored_tag}: {phone.count_rows(obj['store'], stored_tag, sorted({r.run_id for r, _ in good}))}")
+    if spool and not dry_run:
+        ok, bad_files = import_spool(Path(spool).expanduser(), obj["store"], m, tag=tag, log=click.echo)
+        click.echo(f"inbox {spool}: {ok} stored, {bad_files} failed")
+        failed += bad_files
+    if failed:
+        sys.exit(1)
+
+
+@main.command("phone-ingest")
+@click.option("--listen", required=True, help="HOST:PORT; only a loopback or Tailscale (100.64.0.0/10) address")
+@click.option("--token-file", type=click.Path(dir_okay=False), required=True, help="file holding the bearer token (mode 600)")
+@click.option("--init-token", is_flag=True, help="make the token file when it does not exist")
+@click.option("--spool", type=click.Path(file_okay=False), default="~/.pie-evals/phone-inbox", show_default=True)
+@click.option("--direct", is_flag=True, help="store into $PIE_EVALS_DB at once instead of leaving rows in the inbox")
+@click.pass_obj
+def phone_ingest(obj, listen, token_file, init_token, spool, direct):
+    """Serve POST /v1/results for the phone benchmark app, on the tailnet only."""
+    from pie_evals.results.phone_ingest import read_token, serve
+
+    token = read_token(Path(token_file).expanduser(), create=init_token)
+    serve(listen, token, Path(spool).expanduser(), Path(obj["matrix_dir"]).resolve(), obj["store"] if direct else None)
+
+
 @main.command("drop-tag")
 @click.argument("tag")
 @click.pass_obj
@@ -320,9 +373,18 @@ def checks(obj, tier):
     for r in lengths:
         click.echo(f"::warning::output length {r['engine']} {r['platform']} {r['model']} {r['workload']}: {r['gap_rel']*100:+.0f}% tokens per request against pie")
     prompts = rp.prompt_length_mismatches(m, st, t)
+    # only a pair measured in the last two days fails the collect: an old pair no run measures again (a retired
+    # machine's rows) stays a warning, so it cannot turn every later collect red and hide a real failure
+    from datetime import datetime, timedelta, timezone
+    recent = datetime.now(timezone.utc) - timedelta(days=2)
+    fresh = []
     for r in prompts:
-        click.echo(f"::error::prompt length {r['platform']} {r['model']} {r['workload']}: engines prefill different prompts, mean tokens per request {r['per_request']}")
-    if prompts:
+        at = r["newest"] if r["newest"].tzinfo else r["newest"].replace(tzinfo=timezone.utc)
+        level = "error" if at >= recent else "warning"
+        click.echo(f"::{level}::prompt length {r['platform']} {r['model']} {r['workload']}: engines prefill different prompts, mean tokens per request {r['per_request']}")
+        if level == "error":
+            fresh.append(r)
+    if fresh:
         raise SystemExit(3)
 
 

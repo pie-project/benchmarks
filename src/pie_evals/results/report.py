@@ -206,7 +206,8 @@ def prompt_length_mismatches(matrix: Matrix, store: Store, tier: Tier | None = N
         per = {e: r["per_request"] for e, r in by_engine.items()}
         if len(per) > 1 and max(per.values()) / min(per.values()) - 1 > rel:
             out.append({"platform": platform, "model": model, "workload": workload, "per_request": per,
-                        "spread_rel": max(per.values()) / min(per.values()) - 1})
+                        "spread_rel": max(per.values()) / min(per.values()) - 1,
+                        "newest": max(r["started_at"] for r in by_engine.values())})
     return sorted(out, key=lambda r: -r["spread_rel"])
 
 

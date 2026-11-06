@@ -81,3 +81,23 @@ engines:
     recipe: competitive
     pin: "1.1.0"
     release_source: github:incoai/splash
+  # ---- phones (mobile/, matrix/phones.yaml): run by a person in the benchmark app, never planned (os matches no
+  # platform here, tiers: []). llama.cpp and pie run there too, under their own ids, at the pins the app was built with
+  - id: litert
+    os: [android]
+    formats: [litert]
+    tiers: []
+    recipe: default
+    release_source: github:google-ai-edge/LiteRT-LM
+  - id: mlc
+    os: [android, ios]
+    formats: [mlc]
+    tiers: []
+    recipe: default
+    release_source: github:mlc-ai/mlc-llm
+  - id: mlx-swift
+    os: [ios]
+    formats: [mlx]
+    tiers: []
+    recipe: default
+    release_source: github:ml-explore/mlx-swift-lm

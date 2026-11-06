@@ -2262,6 +2262,116 @@ artifacts:
     expected_gib: 5.96
     platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
+
+  # ---------------- phones (mobile/): each engine's closest 4-bit release of the suite's small models ----------------
+  # `platforms: [phone]` keeps them out of every planned run (no platform has that id); the phone app names them.
+  # llama.cpp and MLX Swift run the Mac rows' own GGUF and MLX artifacts above, plus these two 0.8B ones
+  - id: qwen3.5-0.8b-mlx4
+    base_model: mlx-community/Qwen3.5-0.8B-4bit
+    family: qwen3_5
+    scheme: affine_u4_g64
+    source_format: mlx
+    pie_sku: qwen35-d0.8b-u4g64-kv-bf16
+    display_name: qwen3.5:0.8b
+    expected_gib: 0.6
+    platforms: [phone]
+    tiers: []
+  - id: qwen3.5-0.8b-llamacpp
+    base_model: unsloth/Qwen3.5-0.8B-GGUF
+    family: qwen3_5
+    scheme: gguf_q4_k_m
+    source_format: gguf
+    gguf_file: Qwen3.5-0.8B-Q4_K_M.gguf
+    tokenizer_from: mlx-community/Qwen3.5-0.8B-4bit
+    baseline_of: qwen3.5-0.8b-mlx4
+    baseline_label: llama.cpp
+    expected_gib: 0.5
+    platforms: [phone]
+    tiers: []
+  # LiteRT-LM (.litertlm): Gemma 4's are Google's mobile quantization-aware weights (2-, 4- and 8-bit mixed);
+  # Qwen3.5-4B mixed int4 (int4 linears, int8 embedding); Qwen3.5-0.8B has only an int8 release
+  - id: qwen3.5-0.8b-litert
+    base_model: litert-community/Qwen3.5-0.8B
+    family: qwen3_5
+    scheme: litert_int8
+    source_format: litert
+    baseline_of: qwen3.5-0.8b-mlx4
+    baseline_label: LiteRT-LM
+    expected_gib: 1.0
+    platforms: [phone]
+    tiers: []
+  - id: qwen3.5-4b-litert
+    base_model: litert-community/Qwen3.5-4B
+    family: qwen3_5
+    scheme: litert_int4
+    source_format: litert
+    baseline_of: qwen3.5-4b-mlx4
+    baseline_label: LiteRT-LM
+    expected_gib: 2.6
+    platforms: [phone]
+    tiers: []
+  - id: gemma-4-e2b-litert
+    base_model: litert-community/gemma-4-E2B-it-litert-lm
+    family: gemma4
+    scheme: litert_mixed
+    source_format: litert
+    baseline_of: gemma-4-e2b-mlx4
+    baseline_label: LiteRT-LM
+    expected_gib: 2.4
+    platforms: [phone]
+    tiers: []
+  - id: gemma-4-e4b-litert
+    base_model: litert-community/gemma-4-E4B-it-litert-lm
+    family: gemma4
+    scheme: litert_mixed
+    source_format: litert
+    baseline_of: gemma-4-e4b-mlx4
+    baseline_label: LiteRT-LM
+    expected_gib: 3.4
+    platforms: [phone]
+    tiers: []
+  - id: gemma-4-12b-litert
+    base_model: litert-community/gemma-4-12B-it-litert-lm
+    family: gemma4
+    scheme: litert_mixed
+    source_format: litert
+    baseline_of: gemma-4-12b-mlx4
+    baseline_label: LiteRT-LM
+    expected_gib: 6.5
+    platforms: [phone]
+    tiers: []
+  # MLC LLM: 4-bit group quantization (q4f16_1; the 0.8B only has q4f32_1); MLC publishes no Gemma 4 E4B or 12B
+  - id: qwen3.5-0.8b-mlc
+    base_model: mlc-ai/Qwen3.5-0.8B-q4f32_1-MLC
+    family: qwen3_5
+    scheme: mlc_q4f32_1
+    source_format: mlc
+    baseline_of: qwen3.5-0.8b-mlx4
+    baseline_label: MLC
+    expected_gib: 0.6
+    platforms: [phone]
+    tiers: []
+  - id: qwen3.5-4b-mlc
+    base_model: mlc-ai/Qwen3.5-4B-q4f16_1-MLC
+    family: qwen3_5
+    scheme: mlc_q4f16_1
+    source_format: mlc
+    baseline_of: qwen3.5-4b-mlx4
+    baseline_label: MLC
+    expected_gib: 2.4
+    platforms: [phone]
+    tiers: []
+  - id: gemma-4-e2b-mlc
+    base_model: mlc-ai/gemma-4-E2B-it-q4f16_1-MLC
+    family: gemma4
+    scheme: mlc_q4f16_1
+    source_format: mlc
+    baseline_of: gemma-4-e2b-mlx4
+    baseline_label: MLC
+    expected_gib: 3.0
+    platforms: [phone]
+    tiers: []
+
 # The Models page's catalog: every model the site lists, whether CI runs it or not. A model CI runs (above) takes the
 # sizes and layer count it lacks from here; one it does not run is listed with where it would fit (tools/webdb.py).
 # Specs from each release's Hugging Face card and config.json (layers: num_hidden_layers), collected 2026-10-26.
