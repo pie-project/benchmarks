@@ -97,7 +97,7 @@ window.Pie = window.Pie || {};
       <td class="is-numeric">${esc(`${Math.round(o.pie).toLocaleString("en-US")} ${o.unit}`)}</td>
       <td class="is-wide reports-auto">${o.above ? "Above theoretical limit" : `Slower than strongest competitor (${esc(nameOf("engines", o.best))} ${Math.round(o.bestValue).toLocaleString("en-US")} ${esc(o.unit)})`}</td>
       <td class="reports-auto">Auto</td>
-      <td>${esc(dataDay())}</td>
+      <td>${esc(o.measured ? day(String(o.measured).replace(" ", "T")) : dataDay())}</td>
       <td class="reports-fix-cell">${issueLinks(o)}</td>
     </tr>`;
   // an outlier's issue on pie: one stays open per platform ("[NVIDIA] Benchmarks", labelled benchmarks), its description the platform's current

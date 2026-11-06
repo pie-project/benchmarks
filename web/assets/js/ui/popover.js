@@ -74,7 +74,9 @@ window.Pie = window.Pie || {};
   document.body.append(sub);
   let subs = [];
   const CHEVRON = '<svg class="popover-chevron" viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4"/></svg>';
-  const parentRow = (o) => `<button class="popover-option popover-parent" type="button" aria-haspopup="menu" data-sub="${subs.push(o.submenu) - 1}">${check(false)}<span class="popover-label">${Pie.format.escape(o.label)}</span><span class="popover-detail">${Pie.format.escape(o.detail || "")}</span>${CHEVRON}</button>`;
+  // a submenu row: its list beside it on hover; a row with a value of its own (a view) is picked by a click too, its list
+  // then a finer choice within it (the view's engine)
+  const parentRow = (o) => `<button class="popover-option popover-parent" type="button" aria-haspopup="menu" data-sub="${subs.push(o.submenu) - 1}"${o.value !== undefined ? ` data-value="${Pie.format.escape(o.value)}"${o.key ? ` data-key="${o.key}"` : ""}` : ""}>${check(Boolean(o.selected))}${o.icon || ""}<span class="popover-label">${Pie.format.escape(o.label)}</span><span class="popover-detail">${Pie.format.escape(o.detail || "")}</span>${CHEVRON}</button>`;
   const limitMenu = (key) => (subs = [], (String(key).startsWith("board:") ? Pie.board : String(key).startsWith("grid:") ? Pie.platform : String(key).startsWith("reports:") ? Pie.reports : Pie.methodology)?.menu(String(key).slice(String(key).indexOf(":") + 1)) || [])
     .map((o) => (o.submenu ? parentRow(o) : o.separator ? `<div class="popover-separator"></div>` : o.heading ? `<div class="popover-heading">${Pie.format.escape(o.heading)}</div>` : (o.key ? (html) => `<div data-key="${o.key}">${html}</div>` : (html) => html)(option(o.value, o.selected, `${o.indent ? '<span class="popover-indent"></span>' : ""}${o.icon || ""}<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>${o.detail ? `<span class="popover-detail">${Pie.format.escape(o.detail)}</span>` : ""}`, o.check ? "menuitemcheckbox" : undefined))))
     .join("");
@@ -285,7 +287,7 @@ window.Pie = window.Pie || {};
       const choose = (event) => {
         event.stopPropagation();
         const parent = event.target.closest(".popover-parent");
-        if (parent) { showSub(parent); return; }
+        if (parent && parent.dataset.value === undefined) { showSub(parent); return; }
         const target = event.target.closest("[data-value]");
         if (!target || target.disabled) return;
         const key = target.closest("[data-key]")?.dataset.key || owner;
