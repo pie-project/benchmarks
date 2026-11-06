@@ -28,8 +28,9 @@ SPECS = {
 BACKEND_SPECS = {
     ("vllm", "xla"): lambda v: [f"vllm-tpu=={v}"],
     # a pin "git-<sha>": that commit of sglang-jax's repository (a model its newest release does not have yet)
-    ("sglang", "xla"): lambda v: [f"sglang-jax[tpu] @ git+https://github.com/sgl-project/sglang-jax@{v[4:]}#subdirectory=python"
-                                  if v.startswith("git-") else f"sglang-jax[tpu]=={v}"],
+    # main loads Qwen3.5's video processor at startup, which Transformers builds on torch: the CPU wheel (below)
+    ("sglang", "xla"): lambda v: [f"sglang-jax[tpu] @ git+https://github.com/sgl-project/sglang-jax@{v[4:]}#subdirectory=python", "torch"]
+                                 if v.startswith("git-") else [f"sglang-jax[tpu]=={v}"],
     # vLLM's ROCm build: the release's wheel from vLLM's own ROCm index (torch, triton and aiter for
     # the same ROCm beside it), local version `+rocmNNN` (rocm_vllm_spec reads which ROCm it is)
     ("vllm", "rocm"): lambda v: [f"vllm=={rocm_vllm_version(v)}"],
@@ -61,6 +62,7 @@ def rocm_vllm_version(version: str) -> str:
 #: (torchax lowers it to JAX), so the CPU wheel stands in for the 3 GB CUDA one
 BACKEND_UV_FLAGS = {
     ("vllm", "xla"): ["--torch-backend", "cpu"],
+    ("sglang", "xla"): ["--torch-backend", "cpu"],
 }
 
 
