@@ -609,12 +609,14 @@ _REGISTRY: dict[str, type[Engine]] = {}
 
 
 def register(cls: type[Engine]) -> type[Engine]:
-    _REGISTRY[str(cls.name)] = cls
+    # an adapter for one backend only (pie in a browser tab) registers as `<name>@<backend>`
+    backend = getattr(cls, "only_backend", None)
+    _REGISTRY[f"{cls.name}@{backend}" if backend else str(cls.name)] = cls
     return cls
 
 
-def get_engine(name: str | EngineName) -> type[Engine]:
+def get_engine(name: str | EngineName, backend: str | None = None) -> type[Engine]:
     # import side effects register the adapters
-    from . import llamacpp, mlxlm, pie, sglang, splash, trtllm, vllm, vllm_metal  # noqa: F401
+    from . import browser, llamacpp, mlxlm, pie, sglang, splash, trtllm, vllm, vllm_metal  # noqa: F401
 
-    return _REGISTRY[str(name)]
+    return _REGISTRY.get(f"{name}@{backend}") or _REGISTRY[str(name)]

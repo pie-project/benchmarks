@@ -99,7 +99,7 @@ def split_draft_processes(groups: dict[tuple, list]) -> dict[tuple, list]:
     out: dict[tuple, list] = {}
     for key, cells in groups.items():
         engine, artifact, mode = key
-        cls = get_engine(cells[0].engine)
+        cls = get_engine(cells[0].engine, str(cells[0].platform.backend))
         drafts = cells[0].artifact.draft_model and issubclass(cls, ServedEngine) and cls.draft_args is not ServedEngine.draft_args
         spec = [c for c in cells if c.workload.kind.value == "single_stream"] if drafts else []
         if not spec or len(spec) == len(cells):
@@ -435,7 +435,7 @@ class NodeRunner:
             recipe_name = "competitive" if str(first.engine) != "pie" else "default"
             try:
                 pre.between_engines(self.platform.os if self.platform else None, [])
-                cls = get_engine(first.engine)
+                cls = get_engine(first.engine, str(first.platform.backend))
                 recipe = load_recipe(str(first.engine), recipe_name, first.platform, first.workload, family=first.artifact.family, artifact=first.artifact.id)
                 recipe["program_path"] = first.program.path
                 recipe["snapshot_dir"] = str(model_path)

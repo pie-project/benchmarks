@@ -1429,7 +1429,7 @@ artifacts:
     miniature: {layers: "0-7", experts: 64, period: 4, shrink_family: qwen4_exp_hf, note: "8 of 48 layers, 64 of 512 experts, 8 of 128 n-gram parts; cut from the bf16 release by shrink_checkpoint.py, then quantized like the full checkpoint"}
     pie_sku: qwen38-flash-next-mini-u4g64-u2g128-kv-bf16-l8-e64
     expected_gib: 3.4
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.8-flash-next-mlx2-mini8-mlxlm
     base_model: pie-local/Qwen3.8-Flash-Next-MLX
@@ -1472,7 +1472,7 @@ artifacts:
     baseline_of: qwen3.8-flash-next-mlx2-mini8
     baseline_label: llama.cpp
     expected_gib: 3.4
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.5-4b-mlx4
     base_model: mlx-community/Qwen3.5-4B-4bit
@@ -1842,7 +1842,7 @@ artifacts:
     miniature: {layers: "0-39", experts: 56, period: 4, note: "every layer, 56 of 256 experts"}
     pie_sku: qwen36-35b-a3b-mini-u4g64-kv-bf16-l40-e56
     expected_gib: 4.97
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.6-35b-a3b-mlxlm-slice
     base_model: mlx-community/Qwen3.6-35B-A3B-4bit
@@ -1868,7 +1868,7 @@ artifacts:
     baseline_of: qwen3.6-35b-a3b-mlx4-slice
     baseline_label: llama.cpp
     expected_gib: 6.31
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.6-35b-a3b-splash-slice
     base_model: mlx-community/Qwen3.6-35B-A3B-4bit
@@ -1891,7 +1891,7 @@ artifacts:
     miniature: {layers: "0-29", experts: 36, period: 6, note: "every layer, 36 of 128 experts"}
     pie_sku: gemma4-26b-a4b-mini-e64-u4g64-kv-bf16-e36
     expected_gib: 4.62
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: gemma-4-26b-a4b-mlxlm-slice
     base_model: mlx-community/gemma-4-26b-a4b-it-4bit
@@ -1917,7 +1917,7 @@ artifacts:
     baseline_of: gemma-4-26b-a4b-mlx4-slice
     baseline_label: llama.cpp
     expected_gib: 6.13
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: gpt-oss-20b-mlx4-slice
     base_model: mlx-community/gpt-oss-20b-MXFP4-Q4
@@ -1928,7 +1928,7 @@ artifacts:
     miniature: {layers: "0-23", experts: 16, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 16 of 32 experts"}
     pie_sku: gptoss-20b-mini-u4g64-mxfp4-kv-bf16-l24-e16
     expected_gib: 5.68
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: gpt-oss-20b-mlxlm-slice
     base_model: mlx-community/gpt-oss-20b-MXFP4-Q4
@@ -1954,7 +1954,7 @@ artifacts:
     baseline_of: gpt-oss-20b-mlx4-slice
     baseline_label: llama.cpp
     expected_gib: 6.07
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.6-27b-mlx4-slice
     base_model: mlx-community/Qwen3.6-27B-4bit
@@ -1965,7 +1965,7 @@ artifacts:
     miniature: {layers: "0-19", period: 4, note: "20 of 64 layers (5 whole periods)"}
     pie_sku: qwen36-27b-mini-u4g64-kv-bf16-l20
     expected_gib: 5.32
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.6-27b-mlxlm-slice
     base_model: mlx-community/Qwen3.6-27B-4bit
@@ -1991,7 +1991,7 @@ artifacts:
     baseline_of: qwen3.6-27b-mlx4-slice
     baseline_label: llama.cpp
     expected_gib: 6.08
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.6-27b-splash-slice
     base_model: mlx-community/Qwen3.6-27B-4bit
@@ -2014,7 +2014,7 @@ artifacts:
     miniature: {layers: "0-23", period: 4, note: "24 of 64 layers (6 whole periods)"}
     pie_sku: qwen38-27b-mini-u4g64-kv-bf16-l24
     expected_gib: 6.12
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.8-27b-mlxlm-slice
     base_model: mlx-community/Qwen3.8-27B-4bit
@@ -2040,7 +2040,7 @@ artifacts:
     baseline_of: qwen3.8-27b-mlx4-slice
     baseline_label: llama.cpp
     expected_gib: 6.33
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.8-27b-splash-slice
     base_model: mlx-community/Qwen3.8-27B-4bit
@@ -2063,7 +2063,7 @@ artifacts:
     miniature: {layers: "0-17", period: 6, note: "18 of 60 layers (3 whole periods)"}
     pie_sku: gemma4-31b-mini-l30-u4g64-kv-bf16-l18
     expected_gib: 5.34
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: gemma-4-31b-mlxlm-slice
     base_model: mlx-community/gemma-4-31b-it-4bit
@@ -2089,7 +2089,7 @@ artifacts:
     baseline_of: gemma-4-31b-mlx4-slice
     baseline_label: llama.cpp
     expected_gib: 5.67
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: muse-glimmer-30b-mlx4-slice
     base_model: mlx-community/Muse-Glimmer-30B-4bit
@@ -2100,7 +2100,7 @@ artifacts:
     miniature: {layers: "0-15", period: 4, note: "16 of 52 layers (4 whole periods)"}
     pie_sku: muse-glimmer-30b-mini-l24-u4g64-kv-bf16-l16
     expected_gib: 5.47
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: muse-glimmer-30b-llamacpp-slice
     base_model: meta-models/Muse-Glimmer-30B-GGUF
@@ -2114,7 +2114,7 @@ artifacts:
     baseline_of: muse-glimmer-30b-mlx4-slice
     baseline_label: llama.cpp
     expected_gib: 5.91
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   # gpt-oss-120b on the Macs: in full on the 128 GB Mac (MLX's dense planes are group 32), elsewhere a slice of every
   # layer and the first N of its 128 experts
@@ -2234,7 +2234,7 @@ artifacts:
     miniature: {layers: "0-35", experts: 10, period: 2, shrink_family: gpt_oss_mlx, note: "every layer, 10 of 128 experts"}
     pie_sku: gptoss-120b-mini-e64-u4g32-mxfp4-kv-bf16-e10
     expected_gib: 5.67
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: gpt-oss-120b-mlxlm-slice-e10
     base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
@@ -2260,12 +2260,49 @@ artifacts:
     baseline_of: gpt-oss-120b-mlx-mxfp4-slice-e10
     baseline_label: llama.cpp
     expected_gib: 5.96
-    platforms: [m2-16g, m3-16g, m5-16g]
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
 # The Models page's catalog: every model the site lists, whether CI runs it or not. A model CI runs (above) takes the
 # sizes and layer count it lacks from here; one it does not run is listed with where it would fit (tools/webdb.py).
 # Specs from each release's Hugging Face card and config.json (layers: num_hidden_layers), collected 2026-10-26.
 # precision: the weights as released; mtp: ships its own draft (MTP) head.
+  # ---------------- WebLLM's -MLC builds: the browser rows (the webgpu platforms) ----------------
+  # mlc-ai's prebuilt q4f16_1 weights (4-bit, group 32, fp16 scales) with web-llm 0.2.87's own WebGPU model library
+  # (recipes/webllm.yaml model_lib); pie runs the same model's 4-bit MLX checkpoint (u4g64), llama.cpp its Q4_K_M GGUF
+  - id: qwen3.5-4b-webllm
+    base_model: mlc-ai/Qwen3.5-4B-q4f16_1-MLC
+    family: qwen3_5
+    scheme: mlc_q4f16_1
+    source_format: mlc
+    tokenizer_from: mlx-community/Qwen3.5-4B-4bit
+    baseline_of: qwen3.5-4b-mlx4
+    baseline_label: WebLLM
+    expected_gib: 2.26
+    platforms: [web-rtx4090, web-rtx5090]
+    tiers: [targeted]
+  - id: qwen3.5-9b-webllm
+    base_model: mlc-ai/Qwen3.5-9B-q4f16_1-MLC
+    family: qwen3_5
+    scheme: mlc_q4f16_1
+    source_format: mlc
+    tokenizer_from: mlx-community/Qwen3.5-9B-4bit
+    baseline_of: qwen3.5-9b-mlx4
+    baseline_label: WebLLM
+    expected_gib: 4.9
+    platforms: [web-rtx4090, web-rtx5090]
+    tiers: [targeted]
+  - id: gemma-4-e2b-webllm
+    base_model: mlc-ai/gemma-4-E2B-it-q4f16_1-MLC
+    family: gemma4
+    scheme: mlc_q4f16_1
+    source_format: mlc
+    tokenizer_from: mlx-community/gemma-4-e2b-it-4bit
+    baseline_of: gemma-4-e2b-mlx4
+    baseline_label: WebLLM
+    expected_gib: 3.2
+    platforms: [web-rtx4090, web-rtx5090]
+    tiers: [targeted]
+
 catalog:
   - {name: DeepSeek-V4.1-Flash, base_model: deepseek-ai/DeepSeek-V4.1-Flash, family: deepseek_v41, params_b: 552, active_b: 16, layers: 40, hidden_size: 5120, experts: 384, top_k: 6, context: 1048576, license: MIT, precision: fp8, mtp: true}  # plus a 196B Engram memory module
   - {name: DeepSeek-V4-Flash, base_model: deepseek-ai/DeepSeek-V4-Flash, family: deepseek_v4, params_b: 284, active_b: 13}

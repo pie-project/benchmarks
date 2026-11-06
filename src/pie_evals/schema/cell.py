@@ -32,6 +32,8 @@ class EngineName(StrEnumBase):
     MLXLM = "mlxlm"
     VLLM_METAL = "vllm-metal"
     SPLASH = "splash"
+    WEBLLM = "webllm"  # mlc-ai/web-llm in a browser tab (WebGPU)
+    LLAMACPP_WEBGPU = "llamacpp-webgpu"  # llama.cpp built for the browser (ggml-webgpu, emscripten)
 
 
 class Backend(StrEnumBase):
@@ -42,6 +44,7 @@ class Backend(StrEnumBase):
     VULKAN = "vulkan"
     WGPU = "wgpu"
     XLA = "xla"  # pie's TPU engine (engine-xla over libtpu)
+    WEBGPU = "webgpu"  # a browser tab on the machine's GPU (Chrome, Dawn's Vulkan backend): pie's WebGPU runtime and the browser engines
     ROCM = "rocm"  # AMD Instinct (MI300X, MI350X): pie's CUDA engine over HIP (--features rocm), vLLM's ROCm wheel, the AMD SGLang image
 
 
@@ -59,6 +62,7 @@ class QuantScheme(StrEnumBase):
     AWQ = "awq"
     GPTQ = "gptq"
     NVFP4 = "nvfp4"
+    MLC_Q4F16_1 = "mlc_q4f16_1"  # MLC's 4-bit, group 32, fp16 scales (WebLLM's -MLC builds)
 
 
 class SourceFormat(StrEnumBase):
@@ -66,6 +70,7 @@ class SourceFormat(StrEnumBase):
     GGUF = "gguf"
     MLX = "mlx"
     SPLASH = "splash"
+    MLC = "mlc"  # an MLC-compiled model (-MLC weights + its WebGPU model library)
 
 
 class ArtifactKind(StrEnumBase):

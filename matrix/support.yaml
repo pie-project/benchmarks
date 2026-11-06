@@ -103,6 +103,16 @@ unsupported:
   # MiniMax-M3.1-Flash's FP8 experts have no SM120 MoE kernel in TensorRT-LLM ("no MoE implementation can serve this layer", pro6000-x1)
   - when: {engine: trtllm, family: minimax_m3, platform: [rtx5090-x1, pro4500-x1, pro6000-x1, pro6000-x2, pro6000-x4]}
     reason: "TensorRT-LLM has no SM120 MoE kernel for MiniMax-M3.1-Flash's FP8 experts"
+  # the browser rows (webgpu platforms). WebLLM 0.2.87's MLCEngine serves one request at a time: every request takes
+  # the loaded model's lock (engine.ts asyncGenerate), so there is no batched decode or prefill to measure
+  - when: {engine: webllm, workload: [c32, pf32-512]}
+    reason: "WebLLM decodes one sequence at a time: MLCEngine serializes requests on the model's lock, so it has no batched decode or batched prefill"
+  # WebLLM runs only an MLC-compiled build; mlc-ai ships q4f16_1 builds (web-llm 0.2.87 prebuiltAppConfig) of Qwen3.5-4B,
+  # Qwen3.5-9B and Gemma-4-E2B of the browser rows' 14 models, so only those three have WebLLM cells (models.yaml
+  # *-webllm). The rest have none: Gemma-4-E4B and Gemma-4-12B have no prebuilt build or model library, and the
+  # sliced models (the 16 GB Macs' cuts of Qwen3.6-35B-A3B, Qwen3.6-27B, Qwen3.8-27B, Qwen3.8-Flash-Next,
+  # Gemma-4-26B-A4B, Gemma-4-31B, gpt-oss-20b, gpt-oss-120b, Muse-Glimmer-30B) would each need its own MLC
+  # compile of the cut checkpoint (mlc_llm convert_weight + compile --device webgpu)
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}

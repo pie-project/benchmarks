@@ -48,10 +48,12 @@ ENGINE_META = {
     "llamacpp": ("llama.cpp", "MIT", "ggml-org/llama.cpp"),
     "mlxlm":    ("MLX", "MIT", "ml-explore/mlx-lm"),
     "vllm-metal": ("vLLM Metal", "Apache-2.0", "vllm-project/vllm-metal"),
+    "webllm":   ("WebLLM", "Apache-2.0", "mlc-ai/web-llm"),
+    "llamacpp-webgpu": ("llama.cpp WebGPU", "MIT", "ggml-org/llama.cpp"),
     "splash":   ("Splash", None, "incoai/splash"),
 }
 # an engine the site's own palette (tokens.css) has no color for brings its own
-ENGINE_COLOR = {"trtllm": "#a2845e"}
+ENGINE_COLOR = {"trtllm": "#a2845e", "webllm": "#5e5ce6", "llamacpp-webgpu": "#8e8e93"}
 METRICS = ["decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "ttft_ms_p99",
            "itl_ms_p50", "itl_ms_p99", "latency_ms_p50", "latency_ms_p99", "resident_gib", "load_s"]
 
@@ -69,7 +71,7 @@ def load(name: str) -> dict:
 
 
 def model_name(base: str) -> str:
-    drop = {"4bit", "bf16", "gguf", "mlx", "mxfp4", "q4", "q4km", "mtp", "instruct", "it", "base", "8k", "mini5", "mini8"}
+    drop = {"4bit", "bf16", "gguf", "mlx", "mxfp4", "q4", "q4km", "mtp", "instruct", "it", "base", "8k", "mini5", "mini8", "q4f16_1"}
     tail = base.split("/")[-1]
     return "-".join(p for p in tail.split("-") if p.lower() not in drop)
 
@@ -207,7 +209,7 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
             # grids show short names: the chip for a Mac, RunPod's short name for a GPU; the catalog keeps the full one
             "name": (p["accelerator"] if mac else c.get("short") or p["accelerator"].replace("NVIDIA ", ""))
                     + (f" ×{p['count']}" if p.get("count", 1) > 1 else ""),
-            "class": "mac" if mac else ("tpu" if p.get("backend") == "xla" else "gpu"), "location": "local" if mac else "cloud",
+            "class": "mac" if mac else ("tpu" if p.get("backend") == "xla" else "web" if p.get("backend") == "webgpu" else "gpu"), "location": "local" if mac else "cloud",
             "vendor": c.get("vendor") or ("Apple" if mac else "NVIDIA"),
             "backend": p.get("backend"), "arch": p.get("arch") or c.get("arch"),
             "count": p.get("count", 1), "memory_gib": p.get("memory_gib"),
@@ -224,13 +226,17 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
         if r["class"] != "mac" and r.get("name"):
             name, _, count = r["name"].partition(" ×")
             r["name"] = name.replace(" ", "-") + (f" ×{count}" if count else "")
+        # a browser row is the same card as a native one, seen through Chrome's WebGPU: its name says so
+        if r["class"] == "web" and r.get("name"):
+            r["name"] += " Chrome"
     return rows
 
 
 # what each engine can decode with: plain (speculation off, the Raw rows) and speculative (with a drafter).
 # Splash pairs every model with its DFlash2 draft and has no flag to turn it off (support.yaml)
 DECODING = {"pie": (True, True), "llamacpp": (True, True), "mlxlm": (True, True), "splash": (False, True),
-            "vllm": (True, True), "sglang": (True, True), "trtllm": (True, False), "vllm-metal": (True, False)}
+            "vllm": (True, True), "sglang": (True, True), "trtllm": (True, False), "vllm-metal": (True, False),
+            "webllm": (True, False), "llamacpp-webgpu": (True, False)}
 
 
 def engines() -> list[dict]:

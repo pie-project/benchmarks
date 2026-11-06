@@ -143,6 +143,8 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
     if target_dir:
         env["CARGO_TARGET_DIR"] = str(target_dir)  # pod-local: never a shared cargo target
     feats = ",".join(features)
+    if "wgpu" in features and not env.get("PIE_SLANGC") and not shutil.which("slangc"):
+        env["PIE_SLANGC"] = str(ensure_slangc(pie_root, _cache_root(cache_root), log=log))
     log(f"build: pie {commit[:12]} features={feats} target={env.get('CARGO_TARGET_DIR', 'in-tree')}")
     subprocess.run(["cargo", "build", "--release", "-p", "pie", "--bin", "pie", "--features", feats], cwd=pie_root, env=env, check=True, timeout=timeout_s)
     tdir = Path(env.get("CARGO_TARGET_DIR", pie_root / "target"))
@@ -160,6 +162,23 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
         # the server crate defaults to `cuda`, and `cuda` beside `rocm` is a compile error ("a build carries one")
         nodef = [] if "cuda" in features else ["--no-default-features"]
         subprocess.run([*maturin, "build", "--release", "-o", str(out), *nodef, "--features", feats, "-i", str(py)], cwd=python_dir(pie_root) / "server", env=env, check=True, timeout=timeout_s)
+    if "wgpu" in features:
+        # pie in a browser tab (the webgpu platforms): the runtime and its WebGPU engine as wasm, @pie-project/server-web
+        log("build: @pie-project/server-web (wasm32-unknown-unknown + wasm-bindgen)")
+        if not shutil.which("wasm-bindgen"):
+            lock = (pie_root / "Cargo.lock").read_text()
+            import re as _re
+
+            ver = _re.search(r'name = "wasm-bindgen"\nversion = "([^"]+)"', lock).group(1)
+            subprocess.run(["cargo", "install", "wasm-bindgen-cli", "--locked", "--version", ver], env=env, check=True, timeout=timeout_s)
+        if shutil.which("rustup"):
+            subprocess.run(["rustup", "target", "add", "wasm32-unknown-unknown"], cwd=pie_root, env=env, check=False, timeout=timeout_s)
+        wenv = {k: v for k, v in env.items() if k != "CARGO_TARGET_DIR"}
+        subprocess.run(["bash", "packages/javascript/server-web/build.sh", "release"], cwd=pie_root, env=wenv, check=True, timeout=timeout_s)
+        dist = pie_root / "packages/javascript/server-web/dist"
+        if (out / "web").exists():
+            shutil.rmtree(out / "web")
+        shutil.copytree(dist, out / "web")
     # guest programs: the whole examples/ workspace (every inferlet the matrix can name), built
     # in-tree because bench_inferlet_paths walks up to examples/target; all .wasm are cached
     target = wasm_target(pie_root)
@@ -181,6 +200,29 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
     (out / "COMMIT").write_text(commit + "\n")
     log(f"build: cached at {out}")
     return out
+
+
+def ensure_slangc(pie_root: Path, cache: Path, log=print) -> Path:
+    """The Slang compiler pie's kernels-slang needs to build the wgpu engine, at the version pie's own CI pins
+    (.github/actions/toolchain: SLANG_VERSION), unpacked once on the cache."""
+    import re
+    import tarfile
+    import urllib.request
+
+    action = pie_root / ".github/actions/toolchain/action.yml"
+    m = re.search(r"SLANG_VERSION:\s*'?([0-9.]+)", action.read_text()) if action.exists() else None
+    ver = m.group(1) if m else "2026.17"
+    d = cache / f"slang-{ver}"
+    slangc = d / "bin" / "slangc"
+    if not slangc.exists():
+        log(f"build: fetching slangc {ver}")
+        d.mkdir(parents=True, exist_ok=True)
+        tgz = d / "slang.tar.gz"
+        urllib.request.urlretrieve(f"https://github.com/shader-slang/slang/releases/download/v{ver}/slang-{ver}-linux-x86_64.tar.gz", tgz)
+        with tarfile.open(tgz) as t:
+            t.extractall(d)
+        tgz.unlink()
+    return slangc
 
 
 def wasm_target(pie_root: Path) -> str:

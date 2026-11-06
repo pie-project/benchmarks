@@ -85,7 +85,7 @@ def patched(monkeypatch, tmp_path):
     FakeEngine.calls = []
     FakeEngine.common = {}
     FakeEngine.behaviour = {}
-    monkeypatch.setattr(runner_mod, "get_engine", lambda name: FakeEngine)
+    monkeypatch.setattr(runner_mod, "get_engine", lambda name, backend=None: FakeEngine)
     monkeypatch.setattr(runner_mod, "load_recipe", lambda *a, **k: {})
     for repo in ("models--Qwen--Qwen3.5-0.8B", "models--mlx-community--gemma-4-26b-a4b-it-4bit"):
         snap = tmp_path / "hf" / repo / "snapshots" / "abc"

@@ -15,10 +15,12 @@ import os
 import re
 from pathlib import Path
 
-from pie_evals.schema import ArtifactKind, ArtifactSpec
+from pie_evals.schema import ArtifactKind, ArtifactSpec, SourceFormat
 
 WEIGHT_PATTERNS = ["*.json", "*.safetensors", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.py", "*.jinja"]
 TOKENIZER_PATTERNS = ["*.json", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.jinja"]
+#: an MLC build (WebLLM's -MLC repos): mlc-chat-config.json, the tensor cache index and its params_shard_*.bin
+MLC_PATTERNS = ["*.json", "*.bin", "*.txt", "*.model", "tokenizer*"]
 
 _SPLIT = re.compile(r"-00001-of-(\d{5})\.gguf$")
 
@@ -44,7 +46,8 @@ def snapshot_dir_if_present(artifact: ArtifactSpec, hf_cache: Path, weights: boo
     org, _, name = artifact.base_model.partition("/")
     repo = hf_cache / f"models--{org}--{name}"
     base = repo / "snapshots"
-    marker = artifact.gguf_file or "config.json"  # a GGUF repo carries no config.json
+    # a GGUF repo carries no config.json, nor does an MLC build (its config is mlc-chat-config.json)
+    marker = artifact.gguf_file or ("mlc-chat-config.json" if artifact.source_format == SourceFormat.MLC else "config.json")
 
     # a miniature is built beside its source's snapshots (`mini-l0-4-e16`, miniature.py) and
     # sorts after a hex revision: a full row must never pick it up (pie #680 was that —
@@ -68,6 +71,8 @@ def has_weights(snapshot: Path, artifact: ArtifactSpec) -> bool:
     "Cannot find any model weights". ``exists`` follows the symlink."""
     if artifact.gguf_file:
         return all((snapshot / f).exists() for f in gguf_shards(artifact.gguf_file))
+    if artifact.source_format == SourceFormat.MLC:
+        return any(f.exists() for f in snapshot.glob("params_shard_*.bin"))
     index = snapshot / "model.safetensors.index.json"
     if index.exists():
         # a download the watchdog killed leaves the config and some shards (GLM-5.3-Flash on h200-x4,
@@ -139,6 +144,8 @@ def _ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path |
     kw = {"revision": artifact.revision} if artifact.revision else {}
     if artifact.gguf_file:
         kw["allow_patterns"] = ["*.json", *gguf_shards(artifact.gguf_file)]
+    elif artifact.source_format == SourceFormat.MLC:
+        kw["allow_patterns"] = MLC_PATTERNS
     else:
         kw["allow_patterns"] = WEIGHT_PATTERNS
         # gpt-oss repos also carry original/ and metal/ copies of the weights (gpt-oss-120b: ~3x 65 GB),

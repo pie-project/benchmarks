@@ -68,6 +68,9 @@ global_exclude:
   - {backend: xla, not_platform: tpu-v5e-1, artifact: glm-5.3-mini-tpu, not_workload: [raw-512-256, c256, pf256-512]}
   - {platform: tpu-v5e-1, artifact: glm-5.3-mini-tpu, not_workload: [raw-512-256, c256, pf32-512]}
   - {backend: xla, artifact: qwen3.5-0.8b-xla, not_workload: [ss-512-256, c32, raw-512-256, control-aa, c256, pf256-512]}
+  # a webgpu platform (Chrome on the GPU) runs only what runs in a browser tab: pie's browser runtime, WebLLM and
+  # llama.cpp's WebGPU build; the native engines have their own rows on the same GPU (rtx4090-x1, rtx5090-x1)
+  - {backend: webgpu, not_engine: [pie, webllm, llamacpp-webgpu]}
 
 suites:
   smoke:
@@ -176,6 +179,30 @@ suites:
         tp: 1
         os: macos
         workload: [cold-ss-128-64, cold-ss-512-200, cold-ctx-4k-256]
+      # the browser rows (webgpu platforms: Chrome on an RTX 4090 / 5090): the Mac suite's 14 models, each in full where
+      # a 16 GB Mac runs it in full, else the 16 GB Macs' own slice, the same cut for every engine; pie on its MLX
+      # checkpoint (imported as a .wgpu.zt), llama.cpp's WebGPU build on its GGUF, WebLLM on the -MLC build where mlc-ai ships one
+      - engine: pie
+        baseline: false
+        program: text-completion-bench
+        backend: webgpu
+        tp: 1
+        artifact: [qwen3.5-4b-mlx4, qwen3.5-9b-mlx4, gemma-4-e2b-mlx4, gemma-4-e4b-mlx4, gemma-4-12b-mlx4, qwen3.6-35b-a3b-mlx4-slice, gemma-4-26b-a4b-mlx4-slice, gpt-oss-20b-mlx4-slice, qwen3.6-27b-mlx4-slice, qwen3.8-27b-mlx4-slice, gemma-4-31b-mlx4-slice, muse-glimmer-30b-mlx4-slice, gpt-oss-120b-mlx-mxfp4-slice-e10, qwen3.8-flash-next-mlx2-mini8]
+        workload: [raw-512-256, c32, pf32-512]
+      - engine: llamacpp-webgpu
+        baseline: true
+        program: text-completion-bench
+        backend: webgpu
+        tp: 1
+        artifact: [qwen3.5-4b-llamacpp, qwen3.5-9b-llamacpp, gemma-4-e2b-llamacpp, gemma-4-e4b-llamacpp, gemma-4-12b-llamacpp, qwen3.6-35b-a3b-llamacpp-slice, gemma-4-26b-a4b-llamacpp-slice, gpt-oss-20b-llamacpp-slice, qwen3.6-27b-llamacpp-slice, qwen3.8-27b-llamacpp-slice, gemma-4-31b-llamacpp-slice, muse-glimmer-30b-llamacpp-slice, gpt-oss-120b-llamacpp-slice-e10, qwen3.8-flash-next-q2k-mini8-llamacpp]
+        workload: [raw-512-256, c32, pf32-512]
+      - engine: webllm
+        baseline: true
+        program: text-completion-bench
+        backend: webgpu
+        tp: 1
+        artifact: [qwen3.5-4b-webllm, qwen3.5-9b-webllm, gemma-4-e2b-webllm]
+        workload: [raw-512-256, c32, pf32-512]
       # Qwen3.8-Flash-Next with 2-bit experts does not fit a 16 GB Mac: every engine runs the same miniature there
       - engine: pie
         baseline: false
