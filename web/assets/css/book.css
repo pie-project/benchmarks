@@ -311,3 +311,6 @@
 /* the results above the limit at the formulas' 17px; the tag a step under, as before */
 .lim-over:not(.lim-formulas) > div { font-size: 17px; }
 .lim-over .lim-pill { padding: 1px 6px; font-size: 15px; line-height: 20px; border-radius: 5px; }
+/* Methodology keeps its scrollbar's room whether a chapter scrolls or not, so a long chapter does not shift the
+   centred page left by half a scrollbar against a short one */
+#approach.method { scrollbar-gutter: stable; }

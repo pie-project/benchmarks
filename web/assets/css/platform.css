@@ -110,6 +110,7 @@
 
 .platform-nofit { width: 12px; height: 12px; fill: none; stroke: var(--color-label-quaternary); stroke-width: 1.1; stroke-linecap: round; vertical-align: -2px; }  /* as the slice mark: same size, colour and line */
 .platform-key .platform-nofit { margin-right: 6px; }
+.platform-bar .platform-key .platform-nofit { margin-right: 0; vertical-align: 0; }  /* the bar's key: the mark 6px from its word, as CI Error's swatch */
 
 /* the machine column: Apple's mark, the chip, its memory in a quiet mono */
 .platform-row { display: table-cell; }

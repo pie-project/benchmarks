@@ -237,6 +237,9 @@ window.Pie = window.Pie || {};
     : FILES[engine] ? `<image class="board-logo" href="assets/img/engines/${FILES[engine]}" x="${x}" y="${y}" width="${size}" height="${size}"/>` : "";
   // a shorter name where the engine's own would crowd its neighbours under a bar
   const SHORT = { llamacpp: "Llama" };
+  // a row of platform cards pages sideways by two chevrons at its section's right, in the cards' own view switch (its
+  // grey group of icon buttons), as a Mac pages a row with a pair of arrows in its toolbar
+  const paddlesFor = (row) => `<span class="platform-compare board-view board-carousel-nav" role="group" aria-label="Platforms" data-carousel-nav="${row}"><button type="button" class="plain-button" data-carousel="-1" data-carousel-for="${row}" aria-label="Previous platforms" title="Previous"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg></button><button type="button" class="plain-button" data-carousel="1" data-carousel-for="${row}" aria-label="Next platforms" title="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button></span>`;
   const ranking = (summary, rows) => {
     const W = 456, H = 185, L = 24, R = 4, T = 10, B = 44;  // half the row wide, so the bars keep the height they had at a third; room under them for the logo and name
     const list = engineIds().map((engine) => ({ engine, ...summary.value(rows, engine) })).filter((e) => e.v !== undefined && e.v !== null)
@@ -574,9 +577,9 @@ window.Pie = window.Pie || {};
     return `<div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">Kernel Efficiency</h1>
             <p class="board-lede">How close each engine gets to the hardware's peak.</p></div>
-            <button class="filter-button board-title-pick" type="button" data-board-pick="use-mode" aria-haspopup="menu" aria-label="Mode">${Pie.platform.degree(mode.id)}${esc(mode.label)}${chevronMark}</button>
+            <button class="filter-button board-title-pick" type="button" data-board-pick="use-mode" aria-haspopup="menu" aria-label="Mode">${Pie.platform.degree(mode.id)}${esc(mode.label)}${chevronMark}</button>${paddlesFor("use")}
           </div>
-          <div class="board-grid-cards is-matrices">${USE_CARDS.map(([id, title, platform]) => card(id, title, "Share of the theoretical maximum", ranking(useSummary(id, title, platform, rows), rows), "", false)).join("")}</div>`;
+          <div class="board-carousel" data-carousel-id="use"><div class="board-grid-cards is-matrices">${USE_CARDS.map(([id, title, platform]) => card(id, title, "Share of the theoretical maximum", ranking(useSummary(id, title, platform, rows), rows), "", false)).join("")}</div></div>`;
   };
 
   // the changelog: each release measured, newest first, read from the runs themselves; development runs are left out
@@ -714,8 +717,13 @@ window.Pie = window.Pie || {};
   const RUNS = 10000;
   // past a thousand, a count reads to its nearest thousand ("23,000+" for 23,051, "24,000+" for 23,999)
   const atLeast = (n) => (n < 1000 ? String(n) : `${(Math.round(n / 1000) * 1000).toLocaleString("en-US")}+`);
-  // led by the bars a measured release wears in the changelog, the site's own glyph
-  const welcomeStat = () => `<div class="board-welcome-stat"><b>${Pie.icon("bars")}${esc(atLeast(Pie.store.tables.totals?.runs ?? RUNS))}</b> runs</div>`;
+  // the site's counts as the Welcome chapter sets them: small grey words over large figures, hairlines between
+  const welcomeStat = () => {
+    const n = (v) => v.toLocaleString("en-US");
+    const rows = (t) => (Pie.store.rows(t) || []).length;
+    const stats = [["Engines", n(rows("engines"))], ["Machines", n(Pie.platform?.machines?.() || 0)], ["Models", n(rows("models"))], ["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)]];
+    return `<dl class="welcome-stats board-welcome-stats">${stats.map(([label, v]) => `<div><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
+  };
 
   const page = () => {
     const rows = measured();
@@ -749,7 +757,9 @@ window.Pie = window.Pie || {};
         <nav class="board-outline" aria-label="On this page">${outline}</nav>
         <div class="board-main">
           <section class="board-welcome" aria-label="About these benchmarks">
-            <div class="board-welcome-text">
+            <div class="board-section-head">
+            <div class="board-section-text"><h1 class="board-title">At a Glance</h1>
+            <p class="board-lede">Open benchmarks for every inference engine, run in CI on dedicated machines.</p></div>
             <div class="board-welcome-actions">
               <a class="board-welcome-primary" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Benchmarks</a>
               <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">How we measure</button>
@@ -761,8 +771,9 @@ window.Pie = window.Pie || {};
           <div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">Performance Head to Head</h1>
             <p class="board-lede">Every engine compared with the others on each machine and model.</p></div>
+            ${paddlesFor("summary")}
           </div>
-          <div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has(m.id) ? "Head-to-head decode win rate" : m.sub, gridCards.has(m.id) ? matrix(m, rows) : ranking(m, rows), viewToggle(m.id), false)).join("")}</div>
+          <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has(m.id) ? "Head-to-head decode win rate" : m.sub, gridCards.has(m.id) ? matrix(m, rows) : ranking(m, rows), viewToggle(m.id), false)).join("")}</div></div>
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
           <div class="board-section-head is-apart">
@@ -982,6 +993,22 @@ window.Pie = window.Pie || {};
   });
 
   // the welcome's buttons open their pages, as the sidebar would
+  const paddles = () => element.querySelectorAll(".board-carousel[data-carousel-id]").forEach((carousel) => {
+    const row = carousel.querySelector(".board-grid-cards"), nav = element.querySelector(`[data-carousel-nav="${carousel.dataset.carouselId}"]`);
+    const [back, on] = nav ? nav.querySelectorAll("[data-carousel]") : [];
+    if (!row || !back) return;
+    nav.hidden = row.scrollWidth <= row.clientWidth + 2;  // a row with nothing past it shows none
+    back.disabled = row.scrollLeft < 2;
+    on.disabled = row.scrollLeft + row.clientWidth > row.scrollWidth - 2;
+  });
+  element.addEventListener("click", (event) => {
+    const paddle = event.target.closest("[data-carousel]");
+    if (!paddle) return;
+    const row = element.querySelector(`.board-carousel[data-carousel-id="${paddle.dataset.carouselFor}"] .board-grid-cards`), card = row?.firstElementChild;
+    if (card) row.scrollBy({ left: Number(paddle.dataset.carousel) * (card.getBoundingClientRect().width + (parseFloat(getComputedStyle(row).columnGap) || 0)), behavior: "smooth" });
+  });
+  element.addEventListener("scroll", (event) => { if (event.target.classList?.contains("is-matrices")) paddles(); }, { passive: true, capture: true });
+  window.addEventListener("resize", () => paddles());
   element.addEventListener("click", (event) => {
     const go = event.target.closest("[data-board-go-page]");
     if (go) event.preventDefault();
@@ -1265,6 +1292,7 @@ window.Pie = window.Pie || {};
         const was = element.querySelector(".board-scroll");
         const at = was ? [was.scrollTop, was.scrollLeft] : null;
         element.innerHTML = page();
+        requestAnimationFrame(paddles);
         element.dataset.key = `${model}@${state.release}`;
         const now = element.querySelector(".board-scroll");
         if (at && now) [now.scrollTop, now.scrollLeft] = at;
