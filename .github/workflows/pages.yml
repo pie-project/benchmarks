@@ -23,6 +23,13 @@ jobs:
         with: { ref: main }
       - uses: astral-sh/setup-uv@v5
       - run: uv venv && uv pip install -e ".[web]"
+      # phone rows the tailnet ingest left in this laptop's inbox (mobile/, pie-evals phone-ingest) go into the database
+      # first, so a phone's numbers are on the site within one build; a failure never holds the site back
+      - name: phone inbox
+        continue-on-error: true
+        run: |
+          inbox="$HOME/.pie-evals/phone-inbox"
+          if compgen -G "$inbox/pending/*.jsonl" >/dev/null; then .venv/bin/pie-evals import-phone --spool "$inbox"; fi
       - name: site at /
         run: |
           .venv/bin/python tools/webdb.py
