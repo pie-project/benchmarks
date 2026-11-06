@@ -51,3 +51,54 @@ class _EngineArgsOverlay:
 _extra = os.environ.get("PIE_EVALS_VLLM_ENGINE_ARGS")
 if _extra:
     sys.meta_path.insert(0, _EngineArgsOverlay(json.loads(_extra)))
+
+
+# DeepSeek-V4's sparse attention gathers its cached tokens with a SparseCore kernel (csa_gather), and a v5e has no
+# SparseCore ("SparseCore info is missing"). Where the chip has none, the same gather in XLA: each token's 512 nope
+# bytes (its (4, 128) uint8 block) and its 64 rope bf16 (high bytes [0:64], low [64:128] of its 128-byte row).
+_GATHER = "tpu_inference.kernels.experimental.deepseek_v4.core_attention.csa_gather"
+
+
+class _XlaCsaGather:
+    def find_spec(self, name, path=None, target=None):
+        if name != _GATHER:
+            return None
+        for finder in sys.meta_path:
+            if finder is self or not hasattr(finder, "find_spec"):
+                continue
+            spec = finder.find_spec(name, path, target)
+            if spec is not None:
+                break
+        else:
+            return None
+        exec_module = spec.loader.exec_module
+
+        def patched(module):
+            exec_module(module)
+            from jax.experimental.pallas import tpu as pltpu
+
+            if pltpu.get_tpu_info().sparse_core is not None:
+                return
+            import jax.numpy as jnp
+
+            def csa_gather(nope_cache, rope_cache, indices):
+                nope = jnp.take(nope_cache.reshape(-1, 4 * nope_cache.shape[3]), indices, axis=0)
+                rope = jnp.take(rope_cache.reshape(-1, rope_cache.shape[3]), indices, axis=0).astype(jnp.uint16)
+                half = rope.shape[1] // 2
+                bits = jnp.left_shift(rope[:, :half], 8) | rope[:, half:]
+                return nope, jax_bitcast(bits)
+
+            def jax_bitcast(bits):
+                import jax
+
+                return jax.lax.bitcast_convert_type(bits, jnp.bfloat16)
+
+            module.csa_gather = csa_gather
+            sys.stderr.write("pie-evals: no SparseCore on this chip; DeepSeek-V4's csa_gather runs as an XLA gather\n")
+
+        spec.loader.exec_module = patched
+        return spec
+
+
+if os.environ.get("PIE_EVALS_TPU_XLA_CSA_GATHER") == "1":
+    sys.meta_path.insert(0, _XlaCsaGather())

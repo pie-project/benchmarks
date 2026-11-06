@@ -119,6 +119,9 @@ class VllmEngine(Engine):
             # tpu-inference's own DeepSeek-V4 (models/vllm/experimental, deepseek_v4_fp8 with MXFP4 experts) is on its
             # vLLM path; "auto" picks the JAX path, which has no deepseek_v4_fp8 ("quantization method not supported")
             env["MODEL_IMPL_TYPE"] = "vllm"
+            # its sparse attention's token gather is a SparseCore kernel; on a chip without one (v5e) the site hook
+            # runs the same gather in XLA (scripts/vllm_tpu_site)
+            env["PIE_EVALS_TPU_XLA_CSA_GATHER"] = "1"
         if cfg.get("model_type") == "gemma4_unified":
             # Gemma-4-12B's text model is Gemma-4's (same layers, names model.language_model.*): tpu-inference's JAX
             # Gemma4ForCausalLM serves it; the unified class has no JAX model and its torchax fallback dies on a
