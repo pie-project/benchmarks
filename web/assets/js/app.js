@@ -72,10 +72,10 @@
     document.getElementById("mini-banner").hidden = true;  // the miniatures note, off: !(Pie.store.miniatures && (isPlatform || ["results", "measurements", "welcome"].includes(state.table)));
     const isMethod = ["welcome", "inferlets", "services", "approach", "reports", "gaps", "profiler", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
     // Reports keeps the tables' bar above its table (empty for now, the info button at its end), as Performance does
-    filterBar.hidden = (isOverview || isMethod || isPlatform) && state.table !== "reports" && state.table !== "gaps";
+    filterBar.hidden = (isOverview || isMethod || isPlatform) && state.table !== "reports" && state.table !== "gaps" && state.table !== "approach";
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
-    if (rules) rules.hidden = Pie.schema[state.table]?.section === "catalog" || Pie.schema[state.table]?.section === "reports";  // nor on the flagged runs
+    if (rules) rules.hidden = Pie.schema[state.table]?.section === "catalog" || Pie.schema[state.table]?.section === "reports" || state.table === "approach";  // nor on the flagged runs or Methodology
     table.container.hidden = isOverview || isMethod || isPlatform;
     overview.element.hidden = !isOverview;
     Pie.platform.element.hidden = !isPlatform;
@@ -123,6 +123,11 @@
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
     } else if (isMethod) {
       toolbar.elements.title.textContent = Pie.schema[state.table].title || Pie.schema[state.table].label;
+      // Methodology keeps the bar as the catalog does, empty
+      if (state.table === "approach") {
+        document.getElementById("filter-list").innerHTML = "";
+        for (const id of ["report-selected", "download-rows", "table-keys"]) document.getElementById(id).hidden = true;
+      }
       if (state.table === "reports" || state.table === "gaps") {
         filters.render(state);
         document.getElementById("filter-list").insertAdjacentHTML("afterbegin", state.table === "reports" ? Pie.reports.bar() : Pie.gaps.bar());  // its Type or Gap filter
