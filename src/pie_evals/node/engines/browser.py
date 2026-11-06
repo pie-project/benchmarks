@@ -140,6 +140,8 @@ class WebllmEngine(BrowserEngine):
         url = str(self.recipe.get("model_lib") or "")
         if not url:
             raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"webllm: no model_lib for {self.artifact.id} in recipes/webllm.yaml")
+        if "://" not in url:  # a library compiled with the build (pie-local -MLC builds): beside its weights
+            return Path(self.recipe.get("snapshot_dir") or "") / url
         d = _cache() / "webllm-libs"
         d.mkdir(parents=True, exist_ok=True)
         path = d / url.rsplit("/", 1)[-1]

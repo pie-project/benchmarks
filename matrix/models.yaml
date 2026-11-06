@@ -2425,6 +2425,36 @@ artifacts:
     expected_gib: 3.2
     platforms: [web-rtx4090, web-rtx5090]
     tiers: [targeted]
+  # the rest of the browser rows' models in WebLLM: each the cut the other browser engines run, converted from the
+  # release's bf16 checkpoint by mlc-llm (convert_weight + gen_config, q4f16_1) and compiled for WebGPU (compile --device
+  # webgpu). No hub repo carries these builds: each browser pod holds them in its HF cache under these names, the
+  # model library beside the weights (recipes/webllm.yaml model_lib)
+  - id: qwen3.6-27b-webllm-slice
+    base_model: pie-local/Qwen3.6-27B-q4f16_1-MLC
+    family: qwen3_6
+    scheme: mlc_q4f16_1
+    source_format: mlc
+    tokenizer_from: mlx-community/Qwen3.6-27B-4bit
+    kind: miniature
+    miniature: {layers: "0-19", period: 4, note: "20 of 64 layers (5 whole periods)"}
+    baseline_of: qwen3.6-27b-mlx4-slice
+    baseline_label: WebLLM
+    expected_gib: 5.4
+    platforms: [web-rtx4090, web-rtx5090]
+    tiers: [targeted]
+  - id: qwen3.8-27b-webllm-slice
+    base_model: pie-local/Qwen3.8-27B-q4f16_1-MLC
+    family: qwen3_6
+    scheme: mlc_q4f16_1
+    source_format: mlc
+    tokenizer_from: mlx-community/Qwen3.8-27B-4bit
+    kind: miniature
+    miniature: {layers: "0-23", period: 4, note: "24 of 64 layers (6 whole periods)"}
+    baseline_of: qwen3.8-27b-mlx4-slice
+    baseline_label: WebLLM
+    expected_gib: 6.2
+    platforms: [web-rtx4090, web-rtx5090]
+    tiers: [targeted]
   # the models mlc-llm cannot build (support.yaml says why): their WebLLM cells are declared, never run
   - id: gemma-4-e4b-webllm
     base_model: google/gemma-4-E4B-it
