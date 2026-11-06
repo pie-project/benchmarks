@@ -519,8 +519,8 @@
 .platform-table thead tr.platform-maker-row th.platform-corner { border-bottom: 0; }
 .platform-bar-side.is-end { margin-left: auto; }
 
-/* the model columns share the window's width: no empty space past the last model */
-.platform-table { --col-w: max(200px, (var(--platform-visible, 100vw) - 190px) / var(--cols)); min-width: 0; width: max(100%, calc(190px + var(--col-w) * var(--cols))); }
+/* every model column one width, the table as wide as its columns and set at the left */
+.platform-table { --col-w: 200px; min-width: 0; width: calc(190px + var(--col-w) * var(--cols)); }
 @media (max-width: 899px) { .platform-table { width: max(100%, calc(116px + 96px * var(--cols))); } }
 .platform-table col.col-fill { width: 0; }  /* spare width goes to the model columns, never an empty band at the end */
 .platform-table .platform-fill { padding: 0; border: 0; }
@@ -545,7 +545,7 @@
   .platform-table th.is-overall { left: 236px; }
   .platform-table.is-grouped td.is-overall,
   .platform-table.is-grouped th.is-overall { left: 386px; }
-  .platform-table { --col-w: max(200px, (var(--platform-visible, 100vw) - 328px) / max(var(--cols) - 1, 1)); width: max(100%, calc(328px + var(--col-w) * (var(--cols) - 1))); }
+  .platform-table { width: calc(328px + var(--col-w) * (var(--cols) - 1)); }
 }
 
 
