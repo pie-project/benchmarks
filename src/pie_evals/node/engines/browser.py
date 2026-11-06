@@ -175,7 +175,10 @@ class LlamacppWebgpuEngine(BrowserEngine):
 
     def build_dir(self) -> Path:
         tag = str(self.recipe.get("pin") or "b11312")
-        out = _cache() / "llamacpp-webgpu" / tag
+        import hashlib
+
+        src = hashlib.sha256(b"".join((BROWSER / "llamacpp" / f).read_bytes() for f in ("lw.cpp", "build.sh"))).hexdigest()[:8]
+        out = _cache() / "llamacpp-webgpu" / f"{tag}-{src}"  # a change to the driver or its build is a new build
         if not (out / "lw.wasm").exists():
             subprocess.run(["bash", str(BROWSER / "llamacpp" / "build.sh"), str(out), tag], check=True, timeout=7200)
         return out

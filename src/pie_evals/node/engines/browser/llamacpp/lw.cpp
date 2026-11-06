@@ -58,7 +58,7 @@ EMSCRIPTEN_KEEPALIVE int lw_load(const char * path, int n_ctx, int n_slots, int 
     cp.n_threads = 1;
     cp.n_threads_batch = 1;
     cp.no_perf = true;
-    cp.kv_unified = true;  // llama-server's default: one KV buffer the slots share
+    cp.kv_unified = false;  // llama-server with --parallel N (as the native rows run it): a KV of its own per slot
     cp.flash_attn_type = flash_attn > 0 ? LLAMA_FLASH_ATTN_TYPE_ENABLED : (flash_attn == 0 ? LLAMA_FLASH_ATTN_TYPE_DISABLED : LLAMA_FLASH_ATTN_TYPE_AUTO);
     g_ctx = llama_init_from_model(g_model, cp);
     if (!g_ctx) return -2;

@@ -11,8 +11,8 @@ default:
       value: 512
       rationale: llama-server's default physical batch.
     flash_attn:
-      value: auto
-      rationale: llama.cpp's default; the WebGPU backend takes flash attention where its kernels cover the shape.
+      value: "on"
+      rationale: as the native llama.cpp rows run (recipes/llamacpp.yaml flash_attn on).
     flush_cache:
       value: true
       rationale: every prompt shuffled; a slot's KV is cleared before each request.
