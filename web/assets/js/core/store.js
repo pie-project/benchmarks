@@ -23,8 +23,9 @@ window.Pie = window.Pie || {};
     const id = Pie.platformOf(hw);
     if (id) hw.platform = Pie.schema[id]?.short || id;
   }
-  // the Mobile platform gets its page once a phone has sent rows (the benchmark app, mobile/)
-  if ((tables.hardware || []).some((hw) => Pie.platformOf(hw) === "android")) Pie.schema.android.section = "platforms";
+  // the Mobile and Browser platforms get their pages once a phone (the benchmark app, mobile/) or a browser (WebGPU in
+  // Chrome) is on the site
+  for (const id of ["android", "web"]) if ((tables.hardware || []).some((hw) => Pie.platformOf(hw) === id)) Pie.schema[id].section = "platforms";
 
   // what each workload is for: the limit it pushes against
   const GOALS = {
