@@ -25,3 +25,9 @@ competitive:
       rationale: >
         Unset keeps TensorRT-LLM's default (0.9 of the memory left after weights and activations
         go to KV), its best-throughput setting.
+  platform:
+    # on a 32 GB card the default 0.9 left 1.3 GiB beside the KV-sizing pool, and the executor's own buffers did not
+    # fit (gemma-4-E4B bf16 on the RTX 5090: "Executor creation failed due to insufficient GPU memory")
+    rtx5090-x1: {knobs: {kv_free_mem_fraction: 0.75}}
+    pro4500-x1: {knobs: {kv_free_mem_fraction: 0.75}}
+    rtx4090-x1: {knobs: {kv_free_mem_fraction: 0.75}}
