@@ -278,8 +278,12 @@ class PieWebEngine(BrowserEngine):
             # as the other engines here allocate up to what the card holds
             f"device_memory_mb = {int(float(self.platform.memory_gib or 8) * 1024)}\n"
         )
-        return {"pie_module": "/files/pie/pie.mjs", "model_url": "/files/model.wgpu.zt", "inferlet_url": "/files/text_completion_bench.wasm",
-                "config": config, "worker": bool(r.get("web_worker", True))}
+        out = {"pie_module": "/files/pie/pie.mjs", "model_url": "/files/model.wgpu.zt", "inferlet_url": "/files/text_completion_bench.wasm",
+               "config": config, "worker": bool(r.get("web_worker", True))}
+        if r.get("topk_wasm"):  # a Quality run's first-token distributions (quality/browser.py)
+            _link(files / "first_token_topk.wasm", Path(r["topk_wasm"]))
+            out["topk_url"] = "/files/first_token_topk.wasm"
+        return out
 
     def version(self) -> str:
         out = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], cwd=self.pie_root, capture_output=True, text=True)

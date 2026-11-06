@@ -217,10 +217,19 @@ def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag
 
     if pie_commit:
         _restore_pie(Path(pie_root), pie_commit, features)
+    from pie_evals.plan.matrix import Matrix
+
+    # a browser tab (webgpu): pie alone, against the Mac's reference (quality/browser.py)
+    web = str(Matrix.load(matrix_dir).platforms[platform_id].backend) == "webgpu"
     failed = []
     for a in artifacts:
         try:
-            if accuracy_tasks:
+            if web:
+                from pie_evals.quality.browser import run_browser
+
+                run_browser(a, platform_id, first=first_token, tasks=[t for t in accuracy_tasks.split(",") if t], n=n, pie_root=Path(pie_root), matrix_dir=matrix_dir,
+                            store_dir=store_dir, tag=tag, tag_kind=tag_kind, out_dir=Path(out_dir), log=lambda m_: click.echo(m_, err=True))
+            elif accuracy_tasks:
                 run_accuracy(a, platform_id, [t for t in accuracy_tasks.split(",") if t], n, pie_root=Path(pie_root), matrix_dir=matrix_dir, store_dir=store_dir,
                              tag=tag, tag_kind=tag_kind, out_dir=Path(out_dir), log=lambda m_: click.echo(m_, err=True))
             else:

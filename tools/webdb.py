@@ -711,6 +711,15 @@ def parity_by_tag(store, a2m) -> dict[str, list[dict]]:
         row = {**q, "model": model_of(a2m, q["model"]), "tag": t,
                "scheme": q.get("scheme") or art.get("scheme"), "checkpoint": q.get("checkpoint") or art.get("base_model")}
         by_tag.setdefault(t, []).append(row)
+    # a browser tab (webgpu) runs pie alone: its reference is the newest engine row on the same weights and questions
+    # from another machine (the Mac's mlx-lm on the MLX checkpoint), as its slices take the Mac's first-token reference
+    web = {p["id"] for p in load("platforms")["platforms"] if p.get("backend") == "webgpu"}
+    refs = sorted((r for rs in by_tag.values() for r in rs if r["engine"] != "pie" and r.get("score") is not None and r.get("platform") not in web), key=lambda r: r.get("date") or "")
+    for rs in by_tag.values():
+        for r in [r for r in rs if r["engine"] == "pie" and r.get("platform") in web]:
+            ref = next((x for x in reversed(refs) if (x["scheme"], x["checkpoint"], x["task"], x.get("n")) == (r["scheme"], r["checkpoint"], r["task"], r.get("n"))), None)
+            if ref and not any(x["engine"] != "pie" and x.get("platform") == r["platform"] and x["model"] == r["model"] and x["task"] == r["task"] for x in rs):
+                rs.append({**ref, "platform": r["platform"], "ref_platform": ref.get("platform") or "m5-max-128g"})
     return {t: parity_rows(rs) for t, rs in by_tag.items()}
 
 

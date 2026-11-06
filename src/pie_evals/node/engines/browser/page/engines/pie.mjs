@@ -4,6 +4,7 @@
 let pie = null;
 let client = null;
 let program = null;
+let topkProgram = null;
 
 export async function load(o) {
   pie = await import(new URL(o.pie_module, location.href).href);
@@ -15,13 +16,23 @@ export async function load(o) {
   });
   const bytes = new Uint8Array(await (await fetch(new URL(o.inferlet_url, location.href))).arrayBuffer());
   program = await pie.install(bytes, "text-completion-bench.wasm");
+  // a Quality run's first-token distributions (quality/browser.py): the next token's top-k after a prompt
+  if (o.topk_url) topkProgram = await pie.install(new Uint8Array(await (await fetch(new URL(o.topk_url, location.href))).arrayBuffer()), "first-token-topk.wasm");
   client = await pie.connect();
   return { pie_summary: summary };
 }
 
-export async function generate({ ids, prompt, max_tokens, temperature, top_p, seed, ignore_eos, timing, onToken }) {
+export async function generate({ ids, prompt, max_tokens, temperature, top_p, seed, ignore_eos, return_text, topk, timing, onToken }) {
+  if (topk) {
+    const proc = await client.launchProcess(topkProgram, { prompt_tokens: ids, k: topk });
+    for (;;) {
+      const { event, value } = await proc.recv();
+      if (event === "error") throw new Error(String(value));
+      if (event === "return") { onToken(); return { prompt_tokens: ids.length, output_tokens: 1, topk: JSON.parse(value) }; }
+    }
+  }
   const input = {
-    max_tokens, temperature: temperature ?? 0, top_p: top_p ?? 1, ignore_eos: ignore_eos !== false, return_text: false,
+    max_tokens, temperature: temperature ?? 0, top_p: top_p ?? 1, ignore_eos: ignore_eos !== false, return_text: !!return_text,
     // the first token's stamp and every gap after it, as pie_bench.py asks for one request at a time
     report_timing: !!timing,
   };
@@ -47,7 +58,7 @@ export async function generate({ ids, prompt, max_tokens, temperature, top_p, se
       // first token is its end; a longer one has no first-token stamp, so no per-lane decode rate is made up
       stamps = n === 1 ? [end] : [];
     }
-    return { prompt_tokens: out.num_prompt_tokens, output_tokens: n, stamps, first_ms: first ?? (n === 1 ? end : null) };
+    return { prompt_tokens: out.num_prompt_tokens, output_tokens: n, stamps, first_ms: first ?? (n === 1 ? end : null), text: out.text };
   }
 }
 
