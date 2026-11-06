@@ -1,0 +1,27 @@
+# TensorRT-LLM recipes. Knob -> option mapping lives in TrtllmEngine (trtllm-serve flags and the
+# --extra_llm_api_options yaml). Unset knobs keep TensorRT-LLM's own defaults, what a deployment gets.
+
+default:
+  knobs:
+    cuda_graphs:
+      value: true
+      rationale: >
+        CUDA graphs up to the shape's batch (padded), as SGLang's graph ceiling and vLLM's
+        max_num_seqs are set to the concurrency: a decode batch past the ceiling would run eager.
+    block_reuse:
+      value: false
+      rationale: >
+        Every throughput prompt is cold on every engine; KV block reuse off, as vLLM runs
+        without prefix caching and SGLang without its radix cache.
+    max_num_tokens:
+      value: 8192
+      rationale: TensorRT-LLM's default token budget per step.
+
+competitive:
+  extends: default
+  knobs:
+    kv_free_mem_fraction:
+      value: null
+      rationale: >
+        Unset keeps TensorRT-LLM's default (0.9 of the memory left after weights and activations
+        go to KV), its best-throughput setting.

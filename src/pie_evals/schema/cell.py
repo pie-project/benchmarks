@@ -27,6 +27,7 @@ class EngineName(StrEnumBase):
     PIE = "pie"
     VLLM = "vllm"
     SGLANG = "sglang"
+    TRTLLM = "trtllm"
     LLAMACPP = "llamacpp"
     MLXLM = "mlxlm"
     SPLASH = "splash"

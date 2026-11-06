@@ -60,6 +60,8 @@ class EngineDecl:
     #: a backend whose build of the engine is versioned apart from it (xla: sglang-jax)
     backend_pins: dict[str, str] = field(default_factory=dict)
     release_source: str | None = None
+    #: platform backends the engine runs on (None: every backend of its os)
+    backends: list[str] | None = None
 
     def pin_for(self, backend: str | None) -> str | None:
         return self.backend_pins.get(str(backend or ""), self.pin)
@@ -137,6 +139,8 @@ class Matrix:
         for eng in self.engines.values():
             for plat in self.platforms.values():
                 if plat.os not in eng.os or (platforms and plat.id not in platforms):
+                    continue
+                if eng.backends is not None and str(plat.backend) not in eng.backends:
                     continue
                 for art in self.artifacts.values():
                     if artifacts and art.id not in artifacts:

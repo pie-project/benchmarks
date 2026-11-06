@@ -18,6 +18,8 @@ from pathlib import Path
 SPECS = {
     "vllm": lambda v: [f"vllm=={v}"],
     "sglang": lambda v: [f"sglang[all]=={v}"],
+    # the wheels live on NVIDIA's index (PyPI holds a stub), built against the torch it pins
+    "trtllm": lambda v: [f"tensorrt-llm=={v}"],
 }
 
 #: a baseline's build for another backend: vLLM's TPU build is the ``vllm-tpu`` wheel (vLLM on the
@@ -61,6 +63,9 @@ BACKEND_UV_FLAGS = {
 
 
 def _uv_flags(engine: str, backend: str | None, version: str) -> list[str]:
+    if engine == "trtllm":
+        # tensorrt-llm, its tensorrt and modelopt pins are on NVIDIA's index, torch and the rest on PyPI
+        return ["--extra-index-url", "https://pypi.nvidia.com", "--index-strategy", "unsafe-best-match", "--prerelease", "allow"]
     key = _backend_key(engine, backend)
     if key == ("vllm", "rocm"):
         # the ROCm torch/triton/aiter pins come from vLLM's index, not PyPI's CUDA builds
@@ -215,6 +220,25 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
 
 
 ensure_nvcc = ensure_cuda_devkit  # the old name
+
+
+def ensure_mpi(log=print) -> bool:
+    """TensorRT-LLM imports mpi4py at start, even on one GPU, and mpi4py loads the system's
+    libmpi; the runner image has none. Open MPI from the image's apt repo, once per pod."""
+    import ctypes.util
+
+    if ctypes.util.find_library("mpi"):
+        return True
+    apt = ["apt-get"] if os.geteuid() == 0 else ["sudo", "-n", "apt-get"]
+    env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+    try:
+        subprocess.run(apt + ["update", "-qq"], env=env, check=False, timeout=600, capture_output=True)
+        subprocess.run(apt + ["install", "-y", "-qq", "--no-install-recommends", "libopenmpi-dev", "openmpi-bin"], env=env, check=True, timeout=1200, capture_output=True)
+    except (OSError, subprocess.SubprocessError) as e:
+        log(f"baseline: Open MPI install failed ({e}); TensorRT-LLM cannot start")
+        return False
+    log("baseline: installed Open MPI for TensorRT-LLM")
+    return True
 
 
 def ensure_pip_nvcc_matches_cudart(py: Path, log=print) -> None:
@@ -377,12 +401,16 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     uv_flags = _uv_flags(engine, backend, version)
     # the CUDA toolkit and FlashInfer kernels are for the CUDA build only
     cuda = engine in ("vllm", "sglang") and str(backend or "cuda") == "cuda"
+    if engine == "trtllm":
+        ensure_mpi(log=log)
     # the fork's Python fixes apply to the CUDA and the ROCm builds alike (not to vllm-tpu)
     fork = engine in ("vllm", "sglang") and str(backend or "cuda") in ("cuda", "rocm")
     d = venv_dir(engine, version, root, backend)
     py = d / "bin" / "python"
     if (d / ".ok").exists():
         ensure_python_headers(py, log=log)
+        if engine == "trtllm":
+            ensure_cuda_devkit(py, log=log)
         if fork:
             ensure_fork(engine, version, py, log=log, backend=backend)
         if cuda:
@@ -418,6 +446,8 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
         subprocess.run(["python3", "-m", "venv", str(d)], check=True)
         subprocess.run([str(py), "-m", "pip", "install", "-q", *spec], check=True, timeout=timeout_s)
     ensure_python_headers(py, log=log)
+    if engine == "trtllm":
+        ensure_cuda_devkit(py, log=log)
     if fork:
         ensure_fork(engine, version, py, log=log, backend=backend)
     if cuda:

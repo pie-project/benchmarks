@@ -50,6 +50,11 @@ unsupported:
     reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
   - when: {engine: splash, workload: pf8-512}
     reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  # TensorRT-LLM: the adapter serves plain decoding only (its drafters, EAGLE-3 / MTP / n-gram, are not wired in)
+  - when: {engine: trtllm, workload: spec-512-256}
+    reason: "TensorRT-LLM rows decode plain: its speculative modes are not wired into the harness"
+  - when: {engine: trtllm, spec_dec: [dflash2, mtp, ngram, rs, eagle, dspark]}
+    reason: "TensorRT-LLM rows decode plain: its speculative modes are not wired into the harness"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}
