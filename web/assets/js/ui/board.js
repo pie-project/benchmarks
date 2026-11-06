@@ -13,7 +13,7 @@ window.Pie = window.Pie || {};
     { id: "prefill", label: "Single Prefill", setup: "prefill", title: "Prefill speed", sub: "Prompt tokens per second, one request · Higher is better", workload: "raw", key: "prefill_tok_s", unit: "tok/s", higher: true },
     { id: "throughput", label: "Batched Decode", setup: "batching", title: "Throughput", sub: "Output tokens per second, 32 requests at once · Higher is better", workload: "throughput", key: "output_tok_s", unit: "tok/s", higher: true },
     { id: "pbatch", label: "Batched Prefill", setup: "pbatch", title: "Batched prefill", sub: "Prompt tokens per second, 256 prompts at once · Higher is better", workload: "prefill_batch", key: "prefill_tok_s", unit: "tok/s", higher: true },
-    { id: "ttft", label: "Time to first token", title: "Time to first token", sub: "Milliseconds, one request with a 512-token prompt · Lower is better", workload: "raw", key: "ttft_ms_p50", unit: "ms", higher: false },
+    { id: "ttft", label: "TTFT", title: "TTFT", sub: "Milliseconds, one request with a 512-token prompt · Lower is better", workload: "raw", key: "ttft_ms_p50", unit: "ms", higher: false },
   ];
   const PLATFORM_ORDER = ["mac", "nvidia", "amd", "tpu", "cerebras", "android", "web"];
 
@@ -416,7 +416,7 @@ window.Pie = window.Pie || {};
   const metricCard = (rows, groups) => {
     const m = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];
     const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="metric" aria-haspopup="menu" aria-label="Measure">${metricIcon(m)}${esc(m.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-    return card("metric", "Performance", m.sub, chart(m, rows, groups), pick);
+    return card("metric", "Decode", m.sub, chart(m, rows, groups), pick);
   };
   // the two as one card, Decode or Prefill picked in its corner and kept per browser
   const SIZE_KEY = "pieSizeMetric";
@@ -574,7 +574,7 @@ window.Pie = window.Pie || {};
   const chevronMark = '<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>';
   const useSection = (rows) => {
     const mode = USE_MODES.find((m) => m.id === useMode);
-    return `<div class="board-section-head">
+    return `<div class="board-section-head is-apart">
             <div class="board-section-text"><h1 class="board-title">Kernel Efficiency</h1>
             <p class="board-lede">How close each engine gets to the hardware's peak.</p></div>
             <button class="filter-button board-title-pick" type="button" data-board-pick="use-mode" aria-haspopup="menu" aria-label="Mode">${Pie.platform.degree(mode.id)}${esc(mode.label)}${chevronMark}</button>${paddlesFor("use")}
@@ -721,7 +721,10 @@ window.Pie = window.Pie || {};
   const welcomeStat = () => {
     const n = (v) => v.toLocaleString("en-US");
     const rows = (t) => (Pie.store.rows(t) || []).length;
-    const stats = [["Engines", n(rows("engines"))], ["Machines", n(Pie.platform?.machines?.() || 0)], ["Models", n(rows("models"))], ["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)]];
+    // the effort first: the runs and the machine time behind them, then what they cover
+    const busy = Pie.store.tables.totals?.machine_s;
+    const time = !busy ? null : busy >= 3 * 86400 ? [`Days of compute`, n(Math.round(busy / 86400))] : [`Hours of compute`, n(Math.round(busy / 3600))];
+    const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Models", n(rows("models"))], ["Engines", n(rows("engines"))], ["Platforms", n(Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length)], ["Machines", n(Pie.platform?.machines?.() || 0)]].filter((s) => s && s[1] !== "0");
     return `<dl class="welcome-stats board-welcome-stats">${stats.map(([label, v]) => `<div><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
   };
 
@@ -736,12 +739,9 @@ window.Pie = window.Pie || {};
     const legend = engineIds().filter((id) => shown.has(id))
       .map((id) => `<span class="board-key"><span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}</span>`).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
-    const outline = [
-      ["Efficiency", USE_CARDS.map(([id, title]) => [id, title])],
-      ["Performance", SUMMARY.map((m) => [m.id, m.title])],
-      ["Explore", [["metric", "Performance"], [TTFT.id, "Time to first token"]]],
-    ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
-      `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${BADGES[id]?.[0] || "var(--color-label-tertiary)"}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
+    // each section its own colour from the chips' palette: efficiency green, performance orange, by model purple
+    const outline = [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"], ["metric", "By Model", "#7a4cf5"]].map(([id, title, tint]) =>
+      `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${tint}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
     // pie's bars' texture, defined once for every chart on the page: a fine grid of dots, as Freeform and Keynote set a
     // dotted canvas, faint white over its colour, so its bars read as pie's
@@ -758,11 +758,10 @@ window.Pie = window.Pie || {};
         <div class="board-main">
           <section class="board-welcome" aria-label="About these benchmarks">
             <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">At a Glance</h1>
-            <p class="board-lede">Open benchmarks for every inference engine, run in CI on dedicated machines.</p></div>
+            <div class="board-section-text"><h1 class="board-title">Inference Engine Benchmarks</h1></div>
             <div class="board-welcome-actions">
-              <a class="board-welcome-primary" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Benchmarks</a>
-              <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">How we measure</button>
+              <a class="board-welcome-primary" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Open Source</a>
+              <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">See how we measure</button>
             </div>
             </div>
             ${welcomeStat()}
@@ -830,7 +829,9 @@ window.Pie = window.Pie || {};
     for (let k = 0; k < turns.length; k++) if (turns[k] <= view.scrollTop) index = k;
     const current = bottom ? sections[sections.length - 1] : sections[index];
     const id = pinned || current?.id.slice(6);
-    for (const item of element.querySelectorAll("[data-board-go]")) item.classList.toggle("is-current", item.dataset.boardGo === id);
+    // the outline names three sections, not every card: the one holding the card in view is marked
+    const groupOf = (card) => USE_CARDS.some(([u]) => u === card) ? USE_CARDS[0][0] : SUMMARY.some((m) => m.id === card) ? SUMMARY[0].id : "metric";
+    for (const item of element.querySelectorAll("[data-board-go]")) item.classList.toggle("is-current", item.dataset.boardGo === groupOf(id));
     // one fill that glides from the old section's row to the new, as a sidebar's selection would, instead of jumping
     const outline = element.querySelector(".board-outline"), on = outline?.querySelector(".board-outline-item.is-current");
     if (!outline || !on) return;

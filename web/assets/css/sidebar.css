@@ -369,3 +369,4 @@
   .sidebar .sidebar-home .sidebar-logo { width: 16px; height: 16px; }
 }
 @media (max-width: 899px) { .sidebar .sidebar-home { border-radius: 999px; } }  /* a capsule, as Log in on the bar */
+.sidebar .sidebar-heading { font-weight: 400; }  /* a section's name in the plain weight, its grey enough to set it apart */
