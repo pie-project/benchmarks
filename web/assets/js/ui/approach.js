@@ -79,6 +79,8 @@ window.Pie = window.Pie || {};
   if (!LIST.some(([id]) => id === current)) current = LIST[0][0];
 
 
+  const place = () => `Chapter ${LIST.findIndex(([id]) => id === current) + 1} of ${LIST.length}`;
+
   const draw = () => {
     const at = LIST.findIndex(([id]) => id === current);
     const [, title, , summary, body] = LIST[at];
@@ -92,6 +94,8 @@ window.Pie = window.Pie || {};
       </article>
 `;  // no previous and next: the outline beside the chapter is the way between them
     for (const item of element.querySelectorAll(".board-outline [data-chapter-go]")) item.classList.toggle("is-current", item.dataset.chapterGo === current);
+    // the window's subtitle names the chapter's place, as Books does under a title
+    if (Pie.toolbar?.elements?.subtitle) Pie.toolbar.elements.subtitle.textContent = place();
     // one fill that glides from the old chapter's row to the new, as the overview's outline moves its own
     const nav = element.querySelector(".board-outline"), on = nav?.querySelector(".is-current");
     if (!nav || !on) return;
@@ -135,6 +139,7 @@ window.Pie = window.Pie || {};
       if (element.dataset.ready === "1") draw();
     },
     chapters: LIST.length,
+    place: () => place(),
     render(state) {
       viewState = state;
       element.hidden = state.table !== "approach";
