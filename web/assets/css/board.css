@@ -520,3 +520,4 @@
 .board-section-head > .board-view:not(.board-carousel-nav) + .board-carousel-nav { margin-left: 0; }
 .board-section-head > .board-title-pick + .board-title-pick { margin-left: -8px; }  /* two picks side by side 8px apart, as a pick and its paddles */
 .board-title-pick.is-text { padding: 0 8px 0 10px; }  /* a pick with no mark before its word: the same room at both ends */
+.board-footer-simple { font-size: 12px; color: var(--color-label-secondary); }  /* the update date in the section ledes' size and grey */
