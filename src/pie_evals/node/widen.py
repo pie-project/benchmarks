@@ -115,7 +115,7 @@ def widen_shard(path: Path) -> dict[str, str] | None:
             arr = np.ascontiguousarray(data())
             assert arr.nbytes == size, (name, arr.nbytes, size)
             f.write(memoryview(arr).cast("B"))
-    del mm
+    mm = None  # the mapping goes before the rename (every plane above was read already)
     os.replace(tmp, path)
     return renamed
 

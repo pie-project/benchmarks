@@ -51,7 +51,7 @@ def _node_out(tmp_path, records):
 def test_targeted_is_small_and_baselines_run_on_their_copies(matrix, mac_cells):
     cells = matrix.runnable(Tier.TARGETED, mac_cells)
     assert cells and all(c.mode.tp == 1 for c in cells)
-    assert {c.engine.value for c in cells} == {"pie", "mlxlm", "llamacpp", "splash"}
+    assert {c.engine.value for c in cells} == {"pie", "mlxlm", "llamacpp", "splash", "vllm-metal"}
     assert all(c.engine.value == "pie" or c.workload.id != "control-aa" for c in cells)
     assert {c.engine.value for c in cells if c.artifact.baseline_of} >= {"mlxlm", "llamacpp", "splash"}
     assert all(c.artifact.baseline_of for c in cells if c.engine.value == "splash")
