@@ -12,6 +12,7 @@ engines:
     recipe: default
   - id: vllm
     os: [linux]
+    backends: [cuda, rocm, xla]   # never in a browser tab (the webgpu platforms run the browser engines)
     formats: [hf_safetensors]
     tiers: [nightly, weekly]
     recipe: competitive
@@ -19,6 +20,7 @@ engines:
     release_source: pypi:vllm
   - id: sglang
     os: [linux]
+    backends: [cuda, rocm, xla]   # never in a browser tab (the webgpu platforms run the browser engines)
     formats: [hf_safetensors]
     tiers: [nightly, weekly]
     recipe: competitive
@@ -36,6 +38,7 @@ engines:
     release_source: pypi:tensorrt-llm
   - id: llamacpp
     os: [linux, macos]
+    backends: [cuda, rocm, metal]   # never in a browser tab (the webgpu platforms run the browser engines)
     formats: [gguf]
     tiers: [nightly, weekly]
     recipe: competitive
