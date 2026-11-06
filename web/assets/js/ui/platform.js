@@ -428,9 +428,19 @@ window.Pie = window.Pie || {};
   // the engines with no number in a cell, each with why: not supported, does not fit, failed (its error), not measured yet
   const WHY = { unsupported: "Not supported", no_fit: "Does not fit", fail: "Failed", not_run: "Not measured yet", no_data: "Not measured yet" };
   const absentRows = (mac, model, mode, order) => {
-    // only an engine that says why it gave nothing; one not measured yet is left out, as anything unnamed is
-    const others = (lastAll || []).filter((r) => r.hardware === mac && r.model === model && r.workload === mode.workload && !order.some((o) => o.engine === r.engine) && ["unsupported", "no_fit", "fail"].includes(r.status));
-    return [...new Map(others.map((r) => [r.engine, r])).values()].map((r) => `<div class="tip-row is-absent"${r.note ? ` title="${esc(r.note)}"` : ""}><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
+    // every engine this platform runs is named, never dropped: the reason it gave nothing, its strongest one first
+    const rank = { unsupported: 0, no_fit: 1, fail: 2 };
+    const absent = new Map();
+    // an engine the platform never schedules (llama.cpp on a TPU) has only unsupported rows there: it stays out
+    const runs = new Set((lastAll || []).filter((r) => r.hardware === mac && r.status !== "unsupported").map((r) => r.engine));
+    for (const r of lastAll || []) {
+      if (r.hardware !== mac || !runs.has(r.engine) || order.some((o) => o.engine === r.engine)) continue;
+      const here = r.model === model && r.workload === mode.workload ? r : null;
+      const had = absent.get(r.engine);
+      if (!had) absent.set(r.engine, here || { engine: r.engine, status: "not_run" });
+      else if (here && (rank[here.status] ?? 9) < (rank[had.status] ?? 9)) absent.set(r.engine, here);
+    }
+    return [...absent.values()].map((r) => `<div class="tip-row is-absent"${r.note ? ` title="${esc(r.note)}"` : ""}><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
       <span class="tip-value">${esc(WHY[r.status] || "Not measured yet")}</span><span class="tip-when"></span></div>`);
   };
   const tip = (mac, model, metric, c, mode, raw) => {
