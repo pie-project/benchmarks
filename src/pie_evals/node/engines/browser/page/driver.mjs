@@ -5,6 +5,9 @@ const params = new URLSearchParams(location.search);
 const name = params.get("engine");
 const options = JSON.parse(params.get("options") || "{}");
 let engine = null;
+// when a token or a request last landed: the bridge reads it to tell a slow batch from a stalled one
+let progress = performance.now();
+const tick = () => { progress = performance.now(); };
 
 async function adapterInfo() {
   if (!navigator.gpu) throw new Error("this browser has no WebGPU (navigator.gpu is missing)");
@@ -40,8 +43,9 @@ async function one(req, sampling) {
   const stamps = [];
   const send = performance.now();
   try {
-    const r = await engine.generate({ ...req, ...sampling, onToken: (n = 1) => { const t = performance.now(); for (let k = 0; k < n; k++) stamps.push(t); } });
+    const r = await engine.generate({ ...req, ...sampling, onToken: (n = 1) => { const t = performance.now(); progress = t; for (let k = 0; k < n; k++) stamps.push(t); } });
     const end = performance.now();
+    tick();
     // an engine that reports its own token clock (pie's guest stamps) hands the stamps back itself
     const s = r.stamps || stamps;
     return { ok: true, send_ms: send, first_ms: r.first_ms ?? s[0] ?? null, end_ms: end, stamps_ms: s, prompt_tokens: r.prompt_tokens, output_tokens: r.output_tokens ?? s.length };
@@ -64,6 +68,7 @@ async function pool(reqs, concurrency, sampling) {
 }
 
 async function run(job) {
+  tick();
   const sampling = job.sampling || {};
   const warm = await pool(job.warmup || [], 1, sampling);
   const bad = warm.find((r) => !r.ok);
@@ -80,4 +85,4 @@ async function run(job) {
   };
 }
 
-window.bench = { boot, run };
+window.bench = { boot, run, age: () => performance.now() - progress };
