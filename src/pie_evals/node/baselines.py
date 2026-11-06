@@ -65,7 +65,7 @@ BACKEND_UV_FLAGS = {
 def _uv_flags(engine: str, backend: str | None, version: str) -> list[str]:
     if engine == "trtllm":
         # tensorrt-llm, its tensorrt and modelopt pins are on NVIDIA's index, torch and the rest on PyPI
-        return ["--extra-index-url", "https://pypi.nvidia.com", "--index-strategy", "unsafe-best-match", "--prerelease", "allow"]
+        return ["--extra-index-url", "https://pypi.nvidia.com", "--index-strategy", "unsafe-best-match", "--prerelease", "if-necessary-or-explicit"]
     key = _backend_key(engine, backend)
     if key == ("vllm", "rocm"):
         # the ROCm torch/triton/aiter pins come from vLLM's index, not PyPI's CUDA builds

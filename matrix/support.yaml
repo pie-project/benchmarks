@@ -55,6 +55,10 @@ unsupported:
     reason: "TensorRT-LLM rows decode plain: its speculative modes are not wired into the harness"
   - when: {engine: trtllm, spec_dec: [dflash2, mtp, ngram, rs, eagle, dspark]}
     reason: "TensorRT-LLM rows decode plain: its speculative modes are not wired into the harness"
+  # TensorRT-LLM 1.4.0rc2.post1's PyTorch backend registers no model class for these checkpoints' architectures
+  # (tensorrt_llm/_torch/models: no HYV4ForCausalLM, MiMoV2ForCausalLM, MuseGlimmer*, MuseSpark*), so it cannot load them
+  - when: {engine: trtllm, family: [hy_v4, mimo_v2, muse_glimmer, muse_spark]}
+    reason: "TensorRT-LLM 1.4.0rc2.post1 has no implementation of this architecture (HYV4, MiMoV2, Muse): it cannot load the checkpoint"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}
