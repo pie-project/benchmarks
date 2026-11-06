@@ -75,7 +75,7 @@
     filterBar.hidden = (isOverview || isMethod || isPlatform) && state.table !== "reports" && state.table !== "gaps";
     // the catalog lists what was measured on, not how: no Configuration there
     const rules = filterBar.querySelector("[data-rules]");
-    if (rules) rules.hidden = Pie.schema[state.table]?.section === "catalog";
+    if (rules) rules.hidden = Pie.schema[state.table]?.section === "catalog" || Pie.schema[state.table]?.section === "reports";  // nor on the flagged runs
     table.container.hidden = isOverview || isMethod || isPlatform;
     overview.element.hidden = !isOverview;
     Pie.platform.element.hidden = !isPlatform;
