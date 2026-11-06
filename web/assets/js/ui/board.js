@@ -135,7 +135,7 @@ window.Pie = window.Pie || {};
   };
   // the win rate on each platform apart: an engine is held only against the others on that platform's machines
   const onPlatform = (rows, ids) => rows.filter((r) => ids.includes(Pie.platformOf(Pie.store.index.hardware[r.hardware] || {})));
-  const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]]].map(([id, title, ids]) => ({
+  const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]], ["index-web", "Browser", ["web"]]].map(([id, title, ids]) => ({
     id, title, ids, sub: "Chance to decode faster than an average engine",  // one line, as the grid's, so the card keeps its height on a switch
     value: (rows, engine) => strengths(rows, ids)[engine] || null,
     label: (v) => `${Math.round(v)}%`,
@@ -228,10 +228,11 @@ window.Pie = window.Pie || {};
   // every model: one bar per engine, best first, its name under it; how many setups it rests on is in its hover
   // an engine's logo with no tile behind it; the ones drawn in a single ink take the label colour, so they read in either theme
   const GLYPHS = {
+    trtllm: ["0 0 24 24", '<path fill="#76b900" d="M8.948 8.798v-1.43a6.7 6.7 0 0 1 .424-.018c3.922-.124 6.493 3.374 6.493 3.374s-2.774 3.851-5.75 3.851c-.398 0-.787-.062-1.158-.185v-4.346c1.528.185 1.837.857 2.747 2.385l2.04-1.714s-1.492-1.952-4-1.952a6.016 6.016 0 0 0-.796.035m0-4.735v2.138l.424-.027c5.45-.185 9.01 4.47 9.01 4.47s-4.08 4.964-8.33 4.964c-.37 0-.733-.035-1.095-.097v1.325c.3.035.61.062.91.062 3.957 0 6.82-2.023 9.593-4.408.459.371 2.34 1.263 2.73 1.652-2.633 2.208-8.772 3.984-12.253 3.984-.335 0-.653-.018-.971-.053v1.864H24V4.063zm0 10.326v1.131c-3.657-.654-4.673-4.46-4.673-4.46s1.758-1.944 4.673-2.262v1.237H8.94c-1.528-.186-2.73 1.245-2.73 1.245s.68 2.412 2.739 3.11M2.456 10.9s2.164-3.197 6.5-3.533V6.201C4.153 6.59 0 10.653 0 10.653s2.35 6.802 8.948 7.42v-1.237c-4.84-.6-6.492-5.936-6.492-5.936z"/>'],  // TensorRT-LLM in NVIDIA's own eye, its green
     pie: ["0 0 67.89 67.89", '<path class="is-stroked" d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z" stroke-width="8"/>'],  // the sidebar's weight
     mlxlm: ["13 -42 414 224", '<g><path transform="translate(0 139.72)" d="M 13.9375 0 L 42.3125 0 L 42.3125 -91.796875 L 43.671875 -91.796875 L 78.71875 0 L 97.984375 0 L 133.03125 -91.796875 L 134.390625 -91.796875 L 134.390625 0 L 162.765625 0 L 162.765625 -139.71875 L 125.96875 -139.71875 L 88.984375 -42.015625 L 87.8125 -42.015625 L 50.734375 -139.71875 L 13.9375 -139.71875 Z M 13.9375 0"/><path transform="translate(176.682092 139.72)" d="M 13.9375 0 L 106.21875 0 L 106.21875 -26.046875 L 45.984375 -26.046875 L 45.984375 -139.71875 L 13.9375 -139.71875 Z M 13.9375 0"/></g><g class="is-faint"><path transform="translate(290.57 139.72)" d="M 6.296875 0 L 40.5625 0 L 69.515625 -47.34375 L 70.484375 -47.34375 L 99.625 0 L 135.84375 0 L 91.109375 -69.8125 L 91.109375 -70.296875 L 136.328125 -139.71875 L 100.703125 -139.71875 L 73 -90.71875 L 71.84375 -90.71875 L 43.953125 -139.71875 L 6.484375 -139.71875 L 49.96875 -70.6875 L 49.96875 -70.296875 Z M 6.296875 0"/></g>'],  // MLX's wordmark, its X in grey as the project draws it
   };
-  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", splash: "splash.png" };  // Splash's own tile, its stacked marks on coral
+  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", "llamacpp-webgpu": "llamacpp.png", webllm: "mlc.svg", splash: "splash.png" };  // Splash's own tile, its stacked marks on coral
   const logo = (engine, x, y, size) => GLYPHS[engine]
     ? `<svg class="board-glyph" x="${x - (engine === "mlxlm" ? size * .35 : 0)}" y="${y}" width="${size * (engine === "mlxlm" ? 1.7 : 1)}" height="${size}" viewBox="${GLYPHS[engine][0]}">${GLYPHS[engine][1]}</svg>`
     : FILES[engine] ? `<image class="board-logo" href="assets/img/engines/${FILES[engine]}" x="${x}" y="${y}" width="${size}" height="${size}"/>` : "";
@@ -413,10 +414,14 @@ window.Pie = window.Pie || {};
     const enginePickButton = `<button class="filter-button board-card-pick" type="button" data-board-pick="gain-engine" aria-haspopup="menu" aria-label="Engine">${engineMark(gainEngine)}${gainEngine === "mlxlm" ? "" : esc(names().engine(gainEngine))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
     return `<span class="board-card-picks"><button class="filter-button board-card-pick" type="button" data-board-pick="gain-setup" aria-haspopup="menu" aria-label="Setup">${Pie.platform.degree(g.id)}${esc(g.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${reports}</span>`;
   };
+  // the Decode card's setup pick, at its section's head beside the model: each names what it picks, the choice shows in its menu
+  const metricPick = () => {
+    const m = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];
+    return `<button class="filter-button board-title-pick is-text" type="button" data-board-pick="metric" aria-haspopup="menu" aria-label="Setup" title="${esc(m.label)}">Setup<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
+  };
   const metricCard = (rows, groups) => {
     const m = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];
-    const pick = `<button class="filter-button board-card-pick" type="button" data-board-pick="metric" aria-haspopup="menu" aria-label="Measure">${metricIcon(m)}${esc(m.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-    return card("metric", "Decode", m.sub, chart(m, rows, groups), pick);
+    return card("metric", "Decode", m.sub, chart(m, rows, groups), "", false);
   };
   // the two as one card, Decode or Prefill picked in its corner and kept per browser
   const SIZE_KEY = "pieSizeMetric";
@@ -548,7 +553,7 @@ window.Pie = window.Pie || {};
   // Efficiency: how close each engine gets to the hardware, a card per platform as Head to head sets its own, a bar per
   // engine at its median share of the machine's roofline limit over every machine (and model, or the one picked) it ran
   const USE = { id: "use", title: "Share of the theoretical maximum" };
-  const USE_CARDS = [["use", "Apple", "mac"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"]];
+  const USE_CARDS = [["use", "Apple", "mac"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"], ["use-web", "Browser", "web"]];
   const useShares = (rows, platform) => {
     const mode = USE_MODES.find((m) => m.id === useMode);
     const out = {};  // engine -> its shares, one per machine and model at its best run there
@@ -577,7 +582,7 @@ window.Pie = window.Pie || {};
     return `<div class="board-section-head is-apart">
             <div class="board-section-text"><h1 class="board-title">Kernel Efficiency</h1>
             <p class="board-lede">How close each engine gets to the hardware's peak.</p></div>
-            <button class="filter-button board-title-pick" type="button" data-board-pick="use-mode" aria-haspopup="menu" aria-label="Mode">${Pie.platform.degree(mode.id)}${esc(mode.label)}${chevronMark}</button>${paddlesFor("use")}
+            <button class="filter-button board-title-pick is-text" type="button" data-board-pick="use-mode" aria-haspopup="menu" aria-label="Setup" title="${esc(mode.label)}">Setup${chevronMark}</button>${paddlesFor("use")}
           </div>
           <div class="board-carousel" data-carousel-id="use"><div class="board-grid-cards is-matrices">${USE_CARDS.map(([id, title, platform]) => card(id, title, "Share of the theoretical maximum", ranking(useSummary(id, title, platform, rows), rows), "", false)).join("")}</div></div>`;
   };
@@ -641,10 +646,11 @@ window.Pie = window.Pie || {};
   const BADGES = {
     index:          ["#5E5CE6", '<circle cx="12" cy="12" r="9"/><path d="m12 12 2.6-5.2"/><circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/><path d="M7 15.5h.01M6.5 11h.01M9 7h.01M17.5 11h.01M17 15.5h.01"/>'],  // indigo, a speedometer as SF Symbols draws gauge.with.needle: a dial, its needle just right of upright
     "index-mac":    ["#636366"],
-    use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
+    use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"], "use-web": ["#8e8e93"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
     "index-gpu":    ["#76b900"],
     "index-amd":    ["#ed1c24"],
     "index-tpu":    ["#4285f4"],
+    "index-web":    ["#8e8e93"],  // the browser rows in their sidebar tile's grey
     accuracy:       ["#34c759"],  // green: the answers agree
     wins:           ["#FF9F0A", '<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v6M8.5 19h7"/>'],  // orange, a trophy: its stem runs down into its base
     coverage:       ["#30B0C7", Pie.icons.welcome],  // teal, a grid of squares
@@ -769,17 +775,17 @@ window.Pie = window.Pie || {};
           <div class="board-section-head">
             <div class="board-section-text"><h1 class="board-title">Performance Head to Head</h1>
             <p class="board-lede">Every engine compared with the others on each machine and model.</p></div>
-            ${paddlesFor("summary")}
+            ${viewToggle("summary")}${paddlesFor("summary")}
           </div>
-          <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has(m.id) ? "Head-to-head decode win rate" : m.sub, gridCards.has(m.id) ? matrix(m, rows) : ranking(m, rows), viewToggle(m.id), false)).join("")}</div></div>
+          <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has("summary") ? "Head-to-head decode win rate" : m.sub, gridCards.has("summary") ? matrix(m, rows) : ranking(m, rows), "", false)).join("")}</div></div>
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
           <div class="board-section-head is-apart">
             <div class="board-section-text"><h1 class="board-title">Performance by Model</h1>
             <p class="board-lede">Each platform is shown on the machine where the most engines ran this model.</p></div>
-            <button class="filter-button board-title-pick" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(model)}${esc(names().model(model))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+            ${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
-          <div class="board-stack">${metricCard(rows, groups)}${card(TTFT.id, TTFT.title, TTFT.sub, chart(TTFT, rows, groups))}</div>
+          <div class="board-stack">${metricCard(rows, groups)}${card(TTFT.id, TTFT.title, TTFT.sub, chart(TTFT, rows, groups), "", false)}</div>
           ${""/* the Coverage section, off for now: coverage2(rows) */}
           ${""/* At datacenter scale, off: the scaling card stays in scaling() */}
           ${""/* Accuracy, off: Pie.checks.accuracyChart still draws it on the Quality page */}
@@ -1032,13 +1038,19 @@ window.Pie = window.Pie || {};
       follow();
       return;
     }
-    // a platform card's bars or grid
+    // the platform cards' bars or grid, one switch for the whole row at its section's head
     const view = event.target.closest("[data-board-view]");
     if (view) {
       if (view.dataset.view === "grid") gridCards.add(view.dataset.boardView); else gridCards.delete(view.dataset.boardView);
       try { localStorage.setItem(GRID_KEY, JSON.stringify([...gridCards])); } catch { /* private windows can refuse storage */ }
       delete element.dataset.key;  // the page redraws only when its key changes; this pick changes what it shows
+      // each row of cards stays on the card in view through the redraw, not back at its first
+      const kept = [...element.querySelectorAll("[data-carousel-id] .board-grid-cards")].map((row) => [row.closest("[data-carousel-id]").dataset.carouselId, row.scrollLeft]);
       Pie.board.render(state);
+      for (const [id, left] of kept) {
+        const row = element.querySelector(`[data-carousel-id="${id}"] .board-grid-cards`);
+        if (row) { row.style.scrollBehavior = "auto"; row.scrollLeft = left; row.style.scrollBehavior = ""; }
+      }
       return;
     }
     // the rankings' Speculation, on or off, as a toolbar's toggle: the three cards redraw on the runs it names
