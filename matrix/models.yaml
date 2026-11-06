@@ -944,6 +944,19 @@ artifacts:
     max_context: 4096
     expected_gib: 8.0
     tiers: [weekly]
+  # the same cut read out to bf16 (MXFP8 projections, NVFP4 experts): sglang-jax loads MiniMax-M3 in bf16 only; pie
+  # runs these same files, so the pair compares one checkpoint (pie's TPU row of the release is this bf16 one too)
+  - id: minimax-m3.1-flash-mini-tpu-bf16
+    base_model: MiniMaxAI/MiniMax-M3.1-Flash
+    family: minimax_m3
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-5", experts: 8, period: 1, widen_bf16: true, note: "minimax-m3.1-flash-mini's cut, its quantized planes read out to bf16"}
+    pie_sku: minimax-m3-mini-bf16-kv-bf16
+    platforms: [tpu-v6e-1, tpu-v5e-1]
+    max_context: 4096
+    expected_gib: 12.5
+    tiers: [weekly]
   - id: mimo-v2.6-flash-mini-tpu
     base_model: XiaomiMiMo/MiMo-V2.6-Flash-RL
     family: mimo_v2

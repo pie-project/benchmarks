@@ -27,7 +27,9 @@ SPECS = {
 #: project at its own pin (engines.yaml backend_pins)
 BACKEND_SPECS = {
     ("vllm", "xla"): lambda v: [f"vllm-tpu=={v}"],
-    ("sglang", "xla"): lambda v: [f"sglang-jax[tpu]=={v}"],
+    # a pin "git-<sha>": that commit of sglang-jax's repository (a model its newest release does not have yet)
+    ("sglang", "xla"): lambda v: [f"sglang-jax[tpu] @ git+https://github.com/sgl-project/sglang-jax@{v[4:]}#subdirectory=python"
+                                  if v.startswith("git-") else f"sglang-jax[tpu]=={v}"],
     # vLLM's ROCm build: the release's wheel from vLLM's own ROCm index (torch, triton and aiter for
     # the same ROCm beside it), local version `+rocmNNN` (rocm_vllm_spec reads which ROCm it is)
     ("vllm", "rocm"): lambda v: [f"vllm=={rocm_vllm_version(v)}"],

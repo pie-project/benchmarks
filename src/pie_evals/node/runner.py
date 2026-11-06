@@ -442,7 +442,8 @@ class NodeRunner:
                 if str(first.engine) in self.job.baseline_versions:
                     from .baselines import SPECS, ensure_baseline
 
-                    recipe["pin"] = self.job.baseline_versions[str(first.engine)]
+                    # a recipe may pin one model to another build of the engine (sglang.yaml: MiniMax-M3 on sglang-jax main)
+                    recipe["pin"] = recipe.get("pin") or self.job.baseline_versions[str(first.engine)]
                     if str(first.engine) in SPECS and not os.environ.get({"vllm": "VLLM_PY", "sglang": "SGLANG_PY", "trtllm": "TRTLLM_PY"}.get(str(first.engine), "")):
                         ensure_baseline(str(first.engine), recipe["pin"], backend=str(first.platform.backend), log=self.log)
                 engine = cls(pie_root=self.pie_root, artifact=first.artifact, platform=first.platform, mode=first.mode, recipe=recipe, num_layers=num_layers)

@@ -68,6 +68,14 @@ def miniature_argv(
     return argv
 
 
+def _stamp(artifact: ArtifactSpec) -> dict:
+    """The recipe as .miniature.json records it; widen_bf16 only when set, so the cuts built before it are kept."""
+    r = artifact.miniature.model_dump()
+    if not r.get("widen_bf16"):
+        r.pop("widen_bf16", None)
+    return r
+
+
 def ensure_miniature(
     artifact: ArtifactSpec, pie_root: Path, hf_cache: Path, python: str, timeout_s: int = 3600
 ) -> Path:
@@ -88,7 +96,7 @@ def ensure_miniature(
             prev = json.loads(stamp.read_text())["recipe"]
         except (OSError, ValueError, KeyError):
             return out
-        if prev == artifact.miniature.model_dump():
+        if prev == _stamp(artifact):
             return out
         import shutil
 
@@ -125,8 +133,12 @@ def ensure_miniature(
         raise RuntimeError(
             f"shrink_checkpoint failed for {artifact.id} (exit {proc.returncode}):\n" + "\n".join(tail)
         )
+    if artifact.miniature.widen_bf16:
+        from .widen import widen_bf16
+
+        widen_bf16(tmp)
     (tmp / ".miniature.json").write_text(
-        json.dumps({"artifact": artifact.id, "recipe": artifact.miniature.model_dump(), "argv": argv}, indent=2)
+        json.dumps({"artifact": artifact.id, "recipe": _stamp(artifact), "argv": argv}, indent=2)
     )
     if (out / marker).exists():  # someone else finished first
         shutil.rmtree(tmp, ignore_errors=True)

@@ -193,8 +193,11 @@ unsupported:
     reason: "vLLM-TPU 0.32.0: is_act_and_mul=False (Nemotron's relu2 MLP) is supported only for CUDA, XPU and ROCm"
   # sglang-jax 0.1.0rc0 has no model for these archs: config load fails ("Transformers does not recognize model type"),
   # or its HF fallback imports the checkpoint's PyTorch modeling file (benchmark v5e 41815065818, 41815078603, 41896618915)
-  - when: {engine: sglang, backend: xla, family: [deepseek_v4, deepseek_v41, glm5_next, hy_v4, kimi_k3, minimax_m3, muse_glimmer, muse_spark, nemotron_h]}
+  - when: {engine: sglang, backend: xla, family: [deepseek_v4, deepseek_v41, glm5_next, hy_v4, kimi_k3, muse_glimmer, muse_spark, nemotron_h]}
     reason: "sglang-jax 0.1.0rc0 has no model for this arch (no native class; the HF fallback needs PyTorch or a Transformers that knows the model type)"
+  # MiniMax-M3 is on sglang-jax main (sglang.yaml pins minimax-m3.1-flash-mini-tpu-bf16 to it), in bf16 only
+  - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu}
+    reason: "sglang-jax loads MiniMax-M3 in bf16 only (no MXFP8 or NVFP4): it runs minimax-m3.1-flash-mini-tpu-bf16, the same cut read out to bf16"
   # SGLang 0.5.20 has no mxfp4 MoE kernel before Hopper: gpt-oss-20b decodes through a dequant fallback —
   # A100 ss-512-256 12 tok/s and lc-8k 5 tok/s (nightly 36082960398 s05, two cells ate the shard's hour),
   # 4090 ss 25 tok/s; the H100 (1189 tok/s at c64) and Blackwell cards keep the baseline

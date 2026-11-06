@@ -164,4 +164,4 @@ def test_stale_recipe_snapshot_is_rebuilt(tmp_path, monkeypatch):
     monkeypatch.setattr(mm.subprocess, "run", fake_run)
     got = mm.ensure_miniature(art, tmp_path / "pie", tmp_path, python="py")
     assert calls, "stale snapshot must be rebuilt"
-    assert json.loads((got / ".miniature.json").read_text())["recipe"] == art.miniature.model_dump()
+    assert json.loads((got / ".miniature.json").read_text())["recipe"] == mm._stamp(art)

@@ -362,6 +362,9 @@ class SglangTpuEngine(ServedEngine):
                 capture_output=True, text=True, timeout=120, check=False,
             )
             v = out.stdout.strip().splitlines()
+            pin = str(self.recipe.get("pin") or "")
+            if pin.startswith("git-"):  # a commit's build reports no release of its own (setuptools-scm's fallback)
+                return pin
             return v[-1] if out.returncode == 0 and v else "unknown"
         except Exception:
             return "unknown"
