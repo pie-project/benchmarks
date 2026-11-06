@@ -82,7 +82,8 @@ def _drop_hf_repos(hf_cache: Path, keep_models: set[str], log) -> None:
         return
     revisions = []
     for repo in info.repos:
-        if repo.repo_id in keep_models:
+        # pie-local/ checkpoints (models.yaml) are on no hub: once dropped, no job can fetch them again
+        if repo.repo_id in keep_models or repo.repo_id.startswith("pie-local/"):
             continue
         revisions += [rev.commit_hash for rev in repo.revisions]
         log(f"reclaim: hf repo {repo.repo_id} ({repo.size_on_disk / 2**30:.1f} GiB)")
