@@ -27,6 +27,13 @@ competitive:
           rationale: >
             GLM-5.3-Flash's vision encoder needs transformers 5.17 and the wheel pins 5.5.4 ("set
             disable_mm_encoder=True" for text-only); every row is text, as on the other engines.
+    deepseek_v4:
+      knobs:
+        kv_cache_dtype:
+          value: fp8_ds_mla
+          rationale: >
+            DeepSeek-V4's sparse MLA keeps its KV in the FP8 FlashMLA page layout, as SGLang serves it ("DeepSeek-V4 on
+            Hopper requires kv_cache_config.dtype='fp8_ds_mla'", h200-x1; the same on SM120).
     qwen4_exp:
       knobs:
         llm_api_options:

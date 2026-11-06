@@ -64,6 +64,10 @@ class TrtllmEngine(ServedEngine):
             "TORCHINDUCTOR_CACHE_DIR": str(jit / "inductor"),
             "FLASHINFER_WORKSPACE_BASE": str(jit / "flashinfer"),
             "TLLM_LOG_LEVEL": "WARNING",
+            # DeepGEMM's JIT through the wheel's pip NVRTC 13.0 against the pod's CUDA 13.4 headers (the toolkit the wheel
+            # is built with) failed ("NVRTC compilation failed", GLM-5.3-Flash on h100-sxm-x1); the toolkit's nvcc matches them
+            "TRTLLM_DG_JIT_USE_NVCC": "1",
+            "TRTLLM_DG_CACHE_DIR": str(jit / "deepgemm"),
             **self.nccl_env(),
         }
         return env
