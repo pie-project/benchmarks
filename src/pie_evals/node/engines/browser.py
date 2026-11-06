@@ -256,6 +256,9 @@ class PieWebEngine(BrowserEngine):
             f"max_state_slots = {slots}\n"
             f"max_model_len = {context}\n"
             f'device_kv_budget = "{kv}"\n'
+            # a tab is not told the GPU's memory (WebGPU exposes no heap size) and pie then assumes 8 GiB: it is told,
+            # as the other engines here allocate up to what the card holds
+            f"[wgpu]\ndevice_memory = {int(float(self.platform.memory_gib or 8) * 2**30)}\n"
         )
         return {"pie_module": "/files/pie/pie.mjs", "model_url": "/files/model.wgpu.zt", "inferlet_url": "/files/text_completion_bench.wasm",
                 "config": config, "worker": bool(r.get("web_worker", True))}
