@@ -483,3 +483,8 @@
 .board-welcome-secondary:hover { background: rgba(255, 255, 255, .12); }
 @media (max-width: 760px) { .board-welcome { padding: 24px; } .board-welcome h1 { font-size: 24px; } }
 
+
+/* the foot: one line under the cards' grey hairline, on the page's own white */
+.board-footer-simple { display: flex; flex-wrap: wrap; gap: 6px 20px; max-width: 1080px; margin: 0 auto; padding: 20px var(--edge) 24px; font-size: 12px; color: var(--color-label-tertiary); }
+.board-scroll > .board-footer { border-top: .5px solid var(--color-separator); background: none; }  /* the sidebar's own line */
+.board-footer-updated { margin-left: auto; }
