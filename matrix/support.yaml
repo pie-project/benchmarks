@@ -132,6 +132,9 @@ unsupported:
   # b200-x1); elsewhere its CSA2 projections need SM100
   - when: {engine: trtllm, family: deepseek_v41}
     reason: "TensorRT-LLM 1.4.0rc2.post1 cannot serve DeepSeek-V4.1 here (CSA2 projections need SM100; on SM100 its loader refuses the Engram token map)"
+  # llama.cpp has no browser cell for Qwen3.8-Flash-Next: the Macs' Q2_K cut is not on the hub, and a slice of unsloth's
+  # GGUF keeps the whole n-gram embedding table (gguf_slice: 113 of 1224 tensors, 98.95 GiB of the BF16 release for
+  # pie's 4-layer, 16-expert miniature), which no tab holds; shrink_checkpoint.py carves that table, gguf_slice does not
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}

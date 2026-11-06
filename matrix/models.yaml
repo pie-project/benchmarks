@@ -1429,7 +1429,7 @@ artifacts:
     miniature: {layers: "0-7", experts: 64, period: 4, shrink_family: qwen4_exp_hf, note: "8 of 48 layers, 64 of 512 experts, 8 of 128 n-gram parts; cut from the bf16 release by shrink_checkpoint.py, then quantized like the full checkpoint"}
     pie_sku: qwen38-flash-next-mini-u4g64-u2g128-kv-bf16-l8-e64
     expected_gib: 3.4
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, web-rtx4090, web-rtx5090]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g]
     tiers: [targeted]
   - id: qwen3.8-flash-next-mlx2-mini8-mlxlm
     base_model: pie-local/Qwen3.8-Flash-Next-MLX
@@ -1472,7 +1472,7 @@ artifacts:
     baseline_of: qwen3.8-flash-next-mlx2-mini8
     baseline_label: llama.cpp
     expected_gib: 3.4
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, web-rtx4090, web-rtx5090]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g]
     tiers: [targeted]
   - id: qwen3.5-4b-mlx4
     base_model: mlx-community/Qwen3.5-4B-4bit
@@ -2376,6 +2376,19 @@ artifacts:
 # sizes and layer count it lacks from here; one it does not run is listed with where it would fit (tools/webdb.py).
 # Specs from each release's Hugging Face card and config.json (layers: num_hidden_layers), collected 2026-10-26.
 # precision: the weights as released; mtp: ships its own draft (MTP) head.
+  # Qwen3.8-Flash-Next in the browser: the 16 GB Macs' 2-bit cut (pie-local/Qwen3.8-Flash-Next-MLX) is not on the hub, so
+  # pie runs its own published miniature (qwen38-flash-next-mini: one 4-layer period, 16 of 512 experts) in bf16
+  - id: qwen3.8-flash-next-mini-web
+    base_model: Qwen/Qwen3.8-Flash-Next
+    family: qwen4_exp
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-3", experts: 16, period: 4, note: "pie's qwen38-flash-next-mini: one linear/linear/linear/full period; 16 of 512 experts, the n-gram table in 8 parts"}
+    pie_sku: qwen38-flash-next-mini-bf16-kv-bf16
+    max_context: 4096
+    expected_gib: 6.0
+    platforms: [web-rtx4090, web-rtx5090]
+    tiers: [targeted]
   # ---------------- WebLLM's -MLC builds: the browser rows (the webgpu platforms) ----------------
   # mlc-ai's prebuilt q4f16_1 weights (4-bit, group 32, fp16 scales) with web-llm 0.2.87's own WebGPU model library
   # (recipes/webllm.yaml model_lib); pie runs the same model's 4-bit MLX checkpoint (u4g64), llama.cpp its Q4_K_M GGUF
