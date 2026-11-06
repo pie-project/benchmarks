@@ -150,7 +150,7 @@ def mlxlm_generate(snapshot: Path, rendered: list[str], max_tokens: int, bos: st
             except OSError as e:
                 raise RuntimeError(f"mlx-lm loaded no model to answer with ({e})") from e
 
-            def one(i: int) -> None:
+            def one(i: int, url: str = url) -> None:
                 p = rendered[i]
                 body = {"model": str(snapshot), "prompt": p if keep_bos else strip_bos(p, bos), "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0}
                 texts[i] = _post(f"{url}/v1/completions", body)["choices"][0].get("text", "")

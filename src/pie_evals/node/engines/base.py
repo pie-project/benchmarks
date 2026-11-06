@@ -511,9 +511,10 @@ def stall_dump(pids: list[int]) -> str:
     and every thread's stack — gdb's when it is installed and may attach,
     otherwise the kernel's view from /proc."""
     out = []
-    smi = subprocess.run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used", "--format=csv,noheader"],
-                         capture_output=True, text=True, check=False, timeout=30)
-    out.append("== nvidia-smi (index, util, mem)\n" + (smi.stdout or smi.stderr))
+    if shutil.which("nvidia-smi"):  # a node without NVIDIA GPUs (a Mac, a TPU, an AMD box) still dumps its stacks
+        smi = subprocess.run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used", "--format=csv,noheader"],
+                             capture_output=True, text=True, check=False, timeout=30)
+        out.append("== nvidia-smi (index, util, mem)\n" + (smi.stdout or smi.stderr))
     gdb = shutil.which("gdb")
     for pid in pids:
         try:

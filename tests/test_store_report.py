@@ -17,6 +17,12 @@ def matrix():
     return Matrix.load(ROOT / "matrix")
 
 
+@pytest.fixture(scope="module")
+def cells(matrix):
+    """The two platforms these tests read, expanded once (the whole matrix takes a minute)."""
+    return matrix.expand(platforms=["l40s-x1", "m4-pro-48g"])
+
+
 def _rec(cell, value, when, status=CellStatus.PASS, engine_version="abc123", run="r"):
     prov = Provenance(harness_commit="h", pie_commit="abc123", engine_version=engine_version, checkpoint_revision="rev", hardware_fingerprint={"gpu": "x"})
     return Record(run_id=run, job_id="j", tier=Tier.SMOKE, cell_id=cell.cell_id, cell_key=cell.cell_key, cell=cell.model_copy(update={"engine_version": engine_version}),
@@ -24,8 +30,8 @@ def _rec(cell, value, when, status=CellStatus.PASS, engine_version="abc123", run
                   provenance=prov, started_at=when, duration_s=30.0)
 
 
-def test_store_roundtrip_and_history(tmp_path, matrix):
-    cells = matrix.runnable(Tier.SMOKE)
+def test_store_roundtrip_and_history(tmp_path, matrix, cells):
+    cells = matrix.runnable(Tier.SMOKE, cells)
     cell = next(c for c in cells if c.workload.id == "ss-128-64" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.platform.id == "l40s-x1" and c.program.id == "text-completion-bench")
     st = Store(tmp_path / "store")
     t0 = datetime(2026, 9, 1, tzinfo=timezone.utc)
@@ -36,16 +42,16 @@ def test_store_roundtrip_and_history(tmp_path, matrix):
     assert st.latest_by_cell()[cell.cell_id]["primary_value"] == 433
 
 
-def test_store_refuses_missing_provenance(tmp_path, matrix):
-    cell = matrix.runnable(Tier.SMOKE)[0]
+def test_store_refuses_missing_provenance(tmp_path, matrix, cells):
+    cell = matrix.runnable(Tier.SMOKE, cells)[0]
     r = _rec(cell, 1.0, datetime.now(timezone.utc))
     r.provenance.checkpoint_revision = None
     with pytest.raises(ValueError):
         Store(tmp_path).write_run([r], tier=Tier.SMOKE, run_id="x")
 
 
-def test_regression_is_noise_aware(tmp_path, matrix):
-    cells = matrix.runnable(Tier.SMOKE)
+def test_regression_is_noise_aware(tmp_path, matrix, cells):
+    cells = matrix.runnable(Tier.SMOKE, cells)
     cell = next(c for c in cells if c.workload.id == "ss-128-64" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.platform.id == "l40s-x1" and c.program.id == "text-completion-bench")
     st = Store(tmp_path / "store")
     # the gate looks at the last 7 days: the runs fall inside that window
@@ -59,17 +65,17 @@ def test_regression_is_noise_aware(tmp_path, matrix):
     assert "regression" in md
 
 
-def test_coverage_report_lists_not_run(tmp_path, matrix):
+def test_coverage_report_lists_not_run(tmp_path, matrix, cells):
     st = Store(tmp_path / "store")
-    views = rp.coverage(matrix, st, Tier.SMOKE)
+    views = rp.coverage(matrix, st, Tier.SMOKE, cells)
     statuses = {v.status for v in views}
     assert "not_run" in statuses and "declared_unsupported" in statuses
     md = rp.coverage_markdown(views, Tier.SMOKE)
     assert "## Gaps" in md and "not_run" in md
 
 
-def test_baseline_ratio_requires_input_parity(tmp_path, matrix):
-    cells = matrix.runnable(Tier.NIGHTLY)
+def test_baseline_ratio_requires_input_parity(tmp_path, matrix, cells):
+    cells = matrix.runnable(Tier.NIGHTLY, cells)
     pie = next(c for c in cells if str(c.engine) == "pie" and c.workload.id == "c32" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.platform.id == "l40s-x1" and c.program.id == "text-completion-bench")
     vllm = next(c for c in cells if str(c.engine) == "vllm" and c.workload.id == "c32" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.platform.id == "l40s-x1" and c.program.id == "text-completion-bench")
     st = Store(tmp_path / "store")
@@ -95,7 +101,7 @@ def test_jobs_group_one_model_per_process(matrix, tmp_path):
 
 
 def _pair(matrix, workload="ob-512-200"):
-    cells = matrix.runnable(Tier.TARGETED)
+    cells = matrix.runnable(Tier.TARGETED, matrix.expand(platforms=["m4-pro-48g"], artifacts=["gemma-4-26b-a4b-mlx4", "gemma-4-26b-a4b-llamacpp"]))
 
     def pick(aid):
         return next(c for c in cells if c.workload.id == workload and c.artifact.id == aid and c.platform.id == "m4-pro-48g")
@@ -141,7 +147,8 @@ def test_a_baseline_without_its_pie_row_has_no_ratio(tmp_path, matrix):
 
 def test_targeted_mac_jobs_keep_one_engine_per_process(matrix, tmp_path):
     jobs = make_jobs(matrix, Tier.TARGETED, pie_commit="abc123", store=Store(tmp_path), platforms=["m4-pro-48g"])
-    assert 1 <= len(jobs) <= matrix.suites["targeted"].max_jobs_per_platform
+    suite = matrix.suites["targeted"]
+    assert jobs and (not suite.enforce_budget or len(jobs) <= suite.max_jobs_per_platform)  # the targeted cap is not enforced
     for j in jobs:
         assert j.platform_id == "m4-pro-48g" and j.pie_build_features == ["metal"]
         groups = j.cells_by_process()

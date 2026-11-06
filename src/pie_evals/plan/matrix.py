@@ -135,13 +135,19 @@ class Matrix:
 
     # ---- expansion ---------------------------------------------------------------
     def expand(self, platforms=None, artifacts=None) -> list[Cell]:
+        # every selector (support rules, global_exclude, suite include/exclude) is narrowed loop level by loop
+        # level: the fields one level decides are tested once there, so a cell tests only what is left
+        sels = self._selector_lists()
+        suite_tiers = [Tier(name) for name in self.suites]
         cells: list[Cell] = []
         for eng in self.engines.values():
+            s_eng = _narrow_all(sels, "engine", EngineName(eng.id))
             for plat in self.platforms.values():
                 if plat.os not in eng.os or (platforms and plat.id not in platforms):
                     continue
                 if eng.backends is not None and str(plat.backend) not in eng.backends:
                     continue
+                s_plat = _narrow_all(s_eng, "platform", plat)
                 for art in self.artifacts.values():
                     if artifacts and art.id not in artifacts:
                         continue
@@ -149,14 +155,17 @@ class Matrix:
                         continue
                     if art.platforms is not None and plat.id not in art.platforms:
                         continue
+                    s_art = _narrow_all(s_plat, "artifact", art)
                     for mode in self.modes.values():
                         if mode.tp > 1 and (plat.count < mode.tp or not plat.tp_capable):
                             continue
+                        s_mode = _narrow_all(s_art, "mode", mode)
                         for prog in self.programs.values():
                             if prog.pie_only and eng.id != "pie":
                                 continue
                             if prog.families is not None and art.family not in prog.families:
                                 continue
+                            s_prog = _narrow_all(s_mode, "program", prog)
                             for wl in self.workloads.values():
                                 if prog.workloads is not None and wl.id not in prog.workloads:
                                     continue
@@ -168,27 +177,39 @@ class Matrix:
                                     artifact=art, workload=wl, program=prog, mode=cell_mode,
                                 )
                                 cell.tiers = self._tiers_for(eng, plat, art, wl, prog, mode)
-                                reason = self._unsupported_reason(cell)
+                                # the physical rules (context, fit) are stated before the declared ones: a cell
+                                # that cannot fit says so even when a family/engine rule would also exclude it
+                                reason = self._physical_reason(cell) or next(
+                                    (r.reason for r, sel in s_prog[0] if selector_matches(sel, cell)), None)
                                 if reason:
                                     cell.declared_unsupported_reason = reason
+                                self._apply_suites_one(cell, s_prog, suite_tiers)
                                 cells.append(cell)
-        self._apply_suites(cells)
         return cells
+
+    def _selector_lists(self) -> list[list[tuple[Any, dict[str, Any]]]]:
+        """The selectors expansion applies, in order: support rules, global_exclude, then per suite its
+        exclude and include lists (each entry pairs a payload with the selector)."""
+        out: list[list[tuple[Any, dict[str, Any]]]] = [[(r, r.when) for r in self.unsupported], [(None, s) for s in self.global_exclude]]
+        for suite in self.suites.values():
+            out += [[(None, s) for s in suite.exclude], [(None, s) for s in suite.include]]
+        return out
+
+    @staticmethod
+    def _apply_suites_one(c: Cell, groups: list[list[tuple[Any, dict[str, Any]]]], suite_tiers: list[Tier]) -> None:
+        # global_exclude empties the tiers, then each suite's exclude and include in turn
+        if groups[1] and any(selector_matches(sel, c) for _, sel in groups[1]):
+            c.tiers = []
+        for k, tier in enumerate(suite_tiers):
+            exclude, include = groups[2 + 2 * k], groups[3 + 2 * k]
+            if exclude and tier in c.tiers and any(selector_matches(sel, c) for _, sel in exclude):
+                c.tiers.remove(tier)
+            if include and tier not in c.tiers and any(selector_matches(sel, c) for _, sel in include):
+                c.tiers.append(tier)
 
     def _tiers_for(self, eng: EngineDecl, plat: PlatformSpec, art: ArtifactSpec, wl: WorkloadSpec, prog: ProgramSpec, mode: Mode) -> list[Tier]:
         s = set(eng.tiers) & set(plat.tiers) & set(art.tiers) & set(wl.tiers) & set(prog.tiers) & set(mode.tiers)
         return [t for t in Tier if t in s]
-
-    def _unsupported_reason(self, cell: Cell) -> str | None:
-        # the physical rules (context, fit) are stated before the declared ones: a cell
-        # that cannot fit says so even when a family/engine rule would also exclude it
-        physical = self._physical_reason(cell)
-        if physical:
-            return physical
-        for rule in self.unsupported:
-            if selector_matches(rule.when, cell):
-                return rule.reason
-        return None
 
     def _physical_reason(self, cell: Cell) -> str | None:
         # context rule: a shape longer than the artifact's max_context cannot run on it
@@ -212,18 +233,6 @@ class Matrix:
             if per_device > available:
                 return f"does not fit: {per_device:.1f} GiB per device > {available:.1f} GiB"
         return None
-
-    def _apply_suites(self, cells: list[Cell]) -> None:
-        for c in cells:
-            if any(selector_matches(sel, c) for sel in self.global_exclude):
-                c.tiers = []
-        for tier_name, suite in self.suites.items():
-            tier = Tier(tier_name)
-            for c in cells:
-                if any(selector_matches(sel, c) for sel in suite.exclude) and tier in c.tiers:
-                    c.tiers.remove(tier)
-                if any(selector_matches(sel, c) for sel in suite.include) and tier not in c.tiers:
-                    c.tiers.append(tier)
 
     # ---- queries -----------------------------------------------------------------
     def cells_for(self, tier: Tier, cells: list[Cell] | None = None) -> list[Cell]:
@@ -269,26 +278,55 @@ _OPS = {">=": operator.ge, "<=": operator.le, ">": operator.gt, "<": operator.lt
 
 # one getter per selector field: a rule reads only the fields it names (building every field for each of the
 # unsupported rules on every cell made a full matrix expansion take hours)
-_CELL_FIELDS = {
-    "engine": lambda c: str(c.engine),
-    "backend": lambda c: str(c.platform.backend),
-    "os": lambda c: c.platform.os,
-    "arch": lambda c: c.platform.arch,
-    "platform": lambda c: c.platform.id,
-    "interconnect": lambda c: c.platform.interconnect,
-    "family": lambda c: c.artifact.family,
-    "artifact": lambda c: c.artifact.id,
-    "scheme": lambda c: str(c.artifact.scheme),
-    "source_format": lambda c: str(c.artifact.source_format),
-    "artifact_kind": lambda c: str(c.artifact.kind),
-    "baseline": lambda c: c.artifact.baseline_of is not None,
-    "program": lambda c: c.program.id,
-    "program_category": lambda c: c.program.category,
-    "workload": lambda c: c.workload.id,
-    "workload_kind": lambda c: str(c.workload.kind),
-    "tp": lambda c: c.mode.tp,
-    "spec_dec": lambda c: c.mode.spec_dec,
+_FIELD_SOURCES: dict[str, tuple[str, Any]] = {
+    "engine": ("engine", str),
+    "backend": ("platform", lambda p: str(p.backend)),
+    "os": ("platform", lambda p: p.os),
+    "arch": ("platform", lambda p: p.arch),
+    "platform": ("platform", lambda p: p.id),
+    "interconnect": ("platform", lambda p: p.interconnect),
+    "family": ("artifact", lambda a: a.family),
+    "artifact": ("artifact", lambda a: a.id),
+    "scheme": ("artifact", lambda a: str(a.scheme)),
+    "source_format": ("artifact", lambda a: str(a.source_format)),
+    "artifact_kind": ("artifact", lambda a: str(a.kind)),
+    "baseline": ("artifact", lambda a: a.baseline_of is not None),
+    "program": ("program", lambda p: p.id),
+    "program_category": ("program", lambda p: p.category),
+    "workload": ("workload", lambda w: w.id),
+    "workload_kind": ("workload", lambda w: str(w.kind)),
+    "tp": ("mode", lambda m: m.tp),
+    # a program's spec_dec lands on the cell's mode: decided on the cell, not on the mode the loop holds
+    "spec_dec": ("cell", lambda c: c.mode.spec_dec),
 }
+
+
+def _on_cell(attr: str, get: Any) -> Any:
+    return get if attr == "cell" else lambda c: get(getattr(c, attr))
+
+
+_CELL_FIELDS = {k: _on_cell(attr, get) for k, (attr, get) in _FIELD_SOURCES.items()}
+
+
+def _narrow(sels: list[tuple[Any, dict[str, Any]]], attr: str, obj: Any) -> list[tuple[Any, dict[str, Any]]]:
+    """The selectors that can still match once the cell's ``attr`` is ``obj``, each without the fields that decided."""
+    out = []
+    for payload, sel in sels:
+        rest: dict[str, Any] = {}
+        for key, want in sel.items():
+            negate = key.startswith("not_")
+            src = _FIELD_SOURCES.get(key[4:] if negate else key)
+            if src is None or src[0] != attr:
+                rest[key] = want
+            elif _field_matches(src[1](obj), want) == negate:
+                break
+        else:
+            out.append((payload, rest))
+    return out
+
+
+def _narrow_all(groups: list[list[tuple[Any, dict[str, Any]]]], attr: str, obj: Any) -> list[list[tuple[Any, dict[str, Any]]]]:
+    return [_narrow(g, attr, obj) for g in groups]
 
 
 def _cell_field(cell: Cell, key: str) -> Any:

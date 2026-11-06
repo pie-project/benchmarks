@@ -22,8 +22,8 @@ class CellView:
     history: list[float]
 
 
-def coverage(matrix: Matrix, store: Store, tier: Tier) -> list[CellView]:
-    cells = matrix.cells_for(tier)
+def coverage(matrix: Matrix, store: Store, tier: Tier, cells: list[Cell] | None = None) -> list[CellView]:
+    cells = matrix.cells_for(tier, cells)
     latest = store.latest_by_cell()
     hist = store.history()
     views = []

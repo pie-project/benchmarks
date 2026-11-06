@@ -143,7 +143,7 @@ def test_the_server_drafts_only_for_the_rows_that_speculate(hub, tmp_path, monke
 def test_single_stream_rows_get_a_process_of_their_own():
     m = Matrix.load(ROOT / "matrix")
     for aid, drafts in (("qwen3.8-27b-llamacpp", True), ("gemma-4-26b-a4b-mlxlm", True), ("qwen3.8-27b-mlxlm", False)):
-        cells = [c for c in m.runnable(Tier.TARGETED) if c.artifact.id == aid and c.platform.id == "m5-max-128g"]
+        cells = [c for c in m.runnable(Tier.TARGETED, m.expand(platforms=["m5-max-128g"], artifacts=[aid])) if c.artifact.id == aid and c.platform.id == "m5-max-128g"]
         assert {c.workload.kind.value for c in cells} >= {"single_stream", "concurrency"}, aid
         groups = {process_key(cells[0]): cells}
         out = split_draft_processes(groups)

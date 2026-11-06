@@ -229,7 +229,7 @@ def linux_machine_state() -> dict[str, Any]:
     state["gpu_process_count"] = str(len(procs))
     state["gpu_processes"] = [p["name"] for p in procs][:20]
     # host CPU too: A100 CFG fell 20-42 % on a new pod while every GPU-bound cell held (nightly 36264850727)
-    state["cpu_count"] = str(len(os.sched_getaffinity(0)))
+    state["cpu_count"] = str(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count())
     try:
         with open("/proc/cpuinfo") as f:
             state["cpu_model"] = next((ln.split(":", 1)[1].strip() for ln in f if ln.startswith("model name")), "")

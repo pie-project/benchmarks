@@ -23,8 +23,14 @@ def matrix():
     return Matrix.load(ROOT / "matrix")
 
 
+@pytest.fixture(scope="module")
+def mac_cells(matrix):
+    """The targeted tier runs on the Macs only: their cells, expanded once instead of the whole matrix."""
+    return matrix.expand(platforms=[p for p, spec in matrix.platforms.items() if spec.os == "macos"])
+
+
 def _cell(matrix, platform, workload, artifact="gemma-4-26b-a4b-mlx4"):
-    return next(c for c in matrix.runnable(Tier.TARGETED)
+    return next(c for c in matrix.runnable(Tier.TARGETED, matrix.expand(platforms=[platform], artifacts=[artifact]))
                 if c.platform.id == platform and c.workload.id == workload and c.artifact.id == artifact)
 
 
@@ -42,8 +48,8 @@ def _node_out(tmp_path, records):
     return d
 
 
-def test_targeted_is_small_and_baselines_run_on_their_copies(matrix):
-    cells = matrix.runnable(Tier.TARGETED)
+def test_targeted_is_small_and_baselines_run_on_their_copies(matrix, mac_cells):
+    cells = matrix.runnable(Tier.TARGETED, mac_cells)
     assert cells and all(c.mode.tp == 1 for c in cells)
     assert {c.engine.value for c in cells} == {"pie", "mlxlm", "llamacpp", "splash"}
     assert all(c.engine.value == "pie" or c.workload.id != "control-aa" for c in cells)
@@ -55,9 +61,10 @@ def test_targeted_is_small_and_baselines_run_on_their_copies(matrix):
     assert all((c.artifact.baseline_of is None) == (c.engine.value == "pie") for c in site)
     assert {c.artifact.baseline_label for c in site if c.engine.value != "pie"} >= {"llama.cpp", "mlx-lm", "Splash"}
     assert {c.workload.id for c in cells} == {"control-aa", "ss-128-64", "ss-512-256", "lc-1k-128", "lc-2k-128", "c8", "c32",
-                                              "ob-story-200", "ob-512-200", "raw-512-256", "spec-512-256", "ob-short-100", "ob-advanced-500", "ctx-4k-256", "ctx-8k-256", "c4",
+                                              "ob-story-200", "ob-512-200", "raw-512-256", "spec-512-256", "ob-short-100", "ob-advanced-500", "ctx-4k-256", "ctx-8k-256", "c4", "pf256-512", "pf32-512", "pf8-512",
                                               "cold-ss-128-64", "cold-ss-512-200", "cold-ctx-4k-256"}
-    assert not matrix.check_budget(Tier.TARGETED)
+    # the targeted job count is not enforced (suites.yaml enforce_budget: false), but every process group still fits a job
+    assert not [p for p in matrix.check_budget(Tier.TARGETED, mac_cells) if "cannot fit" in p]
 
 
 def test_metal_build_is_cached_without_a_wheel(tmp_path):

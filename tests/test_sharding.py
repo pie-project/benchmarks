@@ -16,7 +16,7 @@ def matrix():
 
 
 def test_shards_respect_budget_and_keep_groups_whole(matrix):
-    cells = [c for c in matrix.runnable(Tier.NIGHTLY) if c.platform.id == "l40s-x1"]
+    cells = [c for c in matrix.runnable(Tier.NIGHTLY, matrix.expand(platforms=["l40s-x1"])) if c.platform.id == "l40s-x1"]
     shards = shard_groups(cells, matrix.job_budget_minutes)
     assert sum(len(s) for s in shards) == len(cells)
     for sh in shards:
@@ -74,7 +74,7 @@ def test_available_platforms_keeps_runpod_and_online_resident(matrix, monkeypatc
 
 
 def test_targeted_mac_shards_keep_groups_whole(matrix):
-    cells = [c for c in matrix.runnable(Tier.TARGETED) if c.platform.id == "m4-pro-48g"]
+    cells = [c for c in matrix.runnable(Tier.TARGETED, matrix.expand(platforms=["m4-pro-48g"])) if c.platform.id == "m4-pro-48g"]
     budget = 10.0
     shards = shard_groups(cells, budget)
     assert len(shards) > 1
