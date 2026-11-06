@@ -88,9 +88,18 @@ const server = createServer(async (req, res) => {
     if (url.pathname === "/run" && req.method === "POST") {
       if (!ready) return json(res, 503, { error: "not loaded" });
       const job = JSON.parse(await body(req));
-      const turn = running.then(() => page.evaluate((j) => window.bench.run(j), job));
+      const turn = running.then(() => watched(page.evaluate((j) => window.bench.run(j), job)));
       running = turn.catch(() => {});
-      return json(res, 200, await turn);
+      try {
+        return json(res, 200, await turn);
+      } catch (e) {
+        if (!(e instanceof Stalled)) throw e;
+        // the engine stopped making progress (no token, no finished request) with requests in flight: the batch
+        // fails, and a fresh tab boots the engine again for the next one
+        console.log(`bridge: ${e.message}; reloading the tab`);
+        await reboot().catch((err) => console.log(`bridge: reboot failed: ${err?.message ?? err}`));
+        return json(res, 200, { error: e.message, results: [] });
+      }
     }
     const path = normalize(decodeURIComponent(url.pathname));
     for (const [prefix, root] of Object.entries(roots)) {
@@ -146,6 +155,32 @@ context.on("close", () => {
   process.exit(3);
 });
 const q = new URLSearchParams({ engine, options: JSON.stringify(options) });
+class Stalled extends Error {}
+const STALL_MS = Number(process.env.BROWSER_STALL_S || 300) * 1000;
+// a run that sees no progress for STALL_MS is abandoned (pie's tab has been seen to spin without end under load)
+function watched(run) {
+  return new Promise((ok, bad) => {
+    const timer = setInterval(async () => {
+      const age = await Promise.race([page.evaluate(() => window.bench.age()).catch(() => Infinity), new Promise((r) => setTimeout(() => r(Infinity), 20000))]);
+      if (age > STALL_MS) {
+        clearInterval(timer);
+        bad(new Stalled(`no progress in ${Math.round(age / 1000)} s`));
+      }
+    }, 15000);
+    run.then((v) => { clearInterval(timer); ok(v); }, (e) => { clearInterval(timer); bad(e); });
+  });
+}
+async function reboot() {
+  ready = false;
+  const old = page;
+  page = await context.newPage();
+  page.on("console", (m) => console.log(`[tab] ${m.text()}`));
+  page.on("pageerror", (e) => console.log(`[tab] pageerror: ${e.message}`));
+  await old.close().catch(() => {});
+  await page.goto(`http://127.0.0.1:${port}/index.html?${q}`);
+  info = { ...(await page.evaluate(() => window.bench.boot())), browser: version, chrome_args: chromeArgs, reboots: (info.reboots || 0) + 1 };
+  ready = true;
+}
 await page.goto(`http://127.0.0.1:${port}/index.html?${q}`);
 try {
   info = await page.evaluate(() => window.bench.boot());
