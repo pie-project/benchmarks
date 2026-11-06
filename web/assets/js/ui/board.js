@@ -731,9 +731,9 @@ window.Pie = window.Pie || {};
       .map((id) => `<span class="board-key"><span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}</span>`).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     const outline = [
-      ["Kernel Efficiency", USE_CARDS.map(([id, title]) => [id, title])],
-      ["Performance Head to Head", SUMMARY.map((m) => [m.id, m.title])],
-      ["Performance by Model", [["metric", "Performance"], [TTFT.id, "Time to first token"]]],
+      ["Efficiency", USE_CARDS.map(([id, title]) => [id, title])],
+      ["Performance", SUMMARY.map((m) => [m.id, m.title])],
+      ["Explore", [["metric", "Performance"], [TTFT.id, "Time to first token"]]],
     ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${BADGES[id]?.[0] || "var(--color-label-tertiary)"}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
