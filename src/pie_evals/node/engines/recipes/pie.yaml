@@ -493,6 +493,19 @@ default:
                 At the script's 512 lanes the arena took 5.4 GB beside the 5.7 GiB slice on the 16 GB M2 and
                 left the kv pool 0 MiB even at 512-token fires (doesnt_fit, mac-slices 41770674896); readout
                 rows for the shapes' own lanes, as on cuda.
+            device_kv_budget:
+              value: 1GiB
+              rationale: &m2pf8 >
+                At its default kv pool pf8-512 on the 16 GB M2 ran Metal out of memory mid-batch ("waitUntilCompleted refused:
+                Insufficient Memory", 5 of 32 requests, mac-slices 42135629944) while mlx-lm finished it; a
+                smaller kv pool leaves the batch's scratch room; 1 GiB still seats c8's 8 x 768 tokens.
+    gemma-4-26b-a4b-mlx4-slice:
+      backend:
+        metal:
+          knobs:
+            device_kv_budget:
+              value: 2GiB
+              rationale: *m2pf8
     gemma-4-31b-mini:
       platform:
         a40-x1:
