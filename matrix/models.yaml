@@ -1399,6 +1399,7 @@ artifacts:
     scheme: gguf_q2_0
     source_format: splash
     gguf_file: Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf
+    draft_model: incoai/Qwen3.8-Flash-Next-DFlash2   # Splash's own draft: it prepares local files only with it in the HF cache
     tokenizer_from: pie-local/Qwen3.8-Flash-Next-MLX
     baseline_of: qwen3.8-flash-next-mlx2
     baseline_label: Splash
