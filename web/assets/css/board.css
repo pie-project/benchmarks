@@ -468,7 +468,7 @@
 
 /* the welcome over the Overview, as Google's and NVIDIA's developer pages open: a small label, the title, one line, then
    the primary action and a secondary one side by side, all left-aligned on a clean colour sweep */
-.board-welcome { display: flex; align-items: center; gap: 32px; margin: 0 0 48px; min-height: 245px; box-sizing: border-box; padding: 36px;  /* as tall as the cards below it, its content centred */ border-radius: 16px; color: #fff;
+.board-welcome { display: flex; align-items: flex-end; gap: 32px; margin: 0 0 48px; min-height: 245px; box-sizing: border-box; padding: 36px;  /* as tall as the cards below it, its content at the bottom */ border-radius: 16px; color: #fff;
   background: radial-gradient(90% 160% at 0% 0%, rgba(255, 255, 255, .18), transparent 60%),
               linear-gradient(110deg, #2F6BFF 0%, #6E5BFF 30%, #B24FE0 56%, #F2558E 80%, #FF9B4A 100%); }
 .board-welcome-eyebrow { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: rgba(255, 255, 255, .8); }
