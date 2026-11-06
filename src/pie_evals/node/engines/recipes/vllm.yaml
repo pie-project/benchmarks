@@ -304,6 +304,14 @@ competitive:
     tpu-v6e-1:
       knobs: {}
       artifact:
+        deepseek-v4-flash-mini-tpu:
+          knobs:
+            gpu_mem_util:
+              value: 0.75
+              rationale: >
+                DeepSeek-V4's compressed-attention cache takes about a quarter of the KV pool on top of it: at 0.90 it
+                asks 6.40G with 3.12G free (RESOURCE_EXHAUSTED in _initialize_ds_v4_kv_cache, 42160763662), as at 0.97 on
+                the v5e. 0.75 leaves that room.
         qwen3.6-35b-a3b-mini-e32:
           knobs:
             max_num_seqs_cap:
