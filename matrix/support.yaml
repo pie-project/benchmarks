@@ -216,6 +216,10 @@ unsupported:
   # MiniMax-M3 is on sglang-jax main (sglang.yaml pins minimax-m3.1-flash-mini-tpu-bf16 to it), in bf16 only
   - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu}
     reason: "sglang-jax loads MiniMax-M3 in bf16 only (no MXFP8 or NVFP4): it runs minimax-m3.1-flash-mini-tpu-bf16, the same cut read out to bf16"
+  # on one chip sglang-jax main's MSA backend refuses it: its per-head block selection needs one KV group per tensor rank
+  # (tpu.yml v6e 42162051016)
+  - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu-bf16, platform: [tpu-v6e-1, tpu-v5e-1]}
+    reason: "sglang-jax (main b3e3e16b2) serves MiniMax-M3's MSA attention only at tp a multiple of its 4 KV heads: one chip cannot run it"
   # SGLang 0.5.20 has no mxfp4 MoE kernel before Hopper: gpt-oss-20b decodes through a dequant fallback —
   # A100 ss-512-256 12 tok/s and lc-8k 5 tok/s (nightly 36082960398 s05, two cells ate the shard's hour),
   # 4090 ss 25 tok/s; the H100 (1189 tok/s at c64) and Blackwell cards keep the baseline
