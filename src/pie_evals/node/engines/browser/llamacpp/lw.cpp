@@ -47,6 +47,7 @@ EMSCRIPTEN_KEEPALIVE int lw_load(const char * path, int n_ctx, int n_slots, int 
     llama_model_params mp = llama_model_default_params();
     mp.n_gpu_layers = 9999;
     mp.load_mode = LLAMA_LOAD_MODE_NONE;  // read, not mmap: the file is a Blob in the worker
+    mp.lazy_mode = LLAMA_LAZY_MODE_OFF;   // lazy rows need mmap (Gemma-4's per-layer embeddings): read every tensor up front
     g_model = llama_model_load_from_file(path, mp);
     if (!g_model) return -1;
     g_vocab = llama_model_get_vocab(g_model);
