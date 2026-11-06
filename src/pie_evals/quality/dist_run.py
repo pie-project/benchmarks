@@ -178,7 +178,7 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
     if engine.recipe.get("attention_backend"):
         argv += ["--attention-backend", str(engine.recipe["attention_backend"])]
     engine.recipe.setdefault("snapshot_dir", str(snapshot))  # the vLLM-TPU settings read the model's config there
-    env = engine.process_env()
+    env = engine.process_env(*([engine._tpu_env()] if str(engine.platform.backend) == "xla" else []))
     cfg = json.loads((snapshot / "config.json").read_text()) if (snapshot / "config.json").exists() else {}
     if "vision_config" in cfg and "hf_overrides" not in env.get("PIE_EVALS_VLLM_ENGINE_ARGS", ""):
         # the cut keeps only the language model: vLLM then builds no vision tower and reads no visual weights
