@@ -488,3 +488,8 @@
 .board-footer-simple { display: flex; flex-wrap: wrap; gap: 6px 20px; max-width: 1080px; margin: 0 auto; padding: 20px var(--edge) 24px; font-size: 12px; color: var(--color-label-tertiary); }
 .board-scroll > .board-footer { border-top: .5px solid var(--color-separator); background: none; }  /* the sidebar's own line */
 .board-footer-updated { margin-left: auto; }
+
+/* Methodology ends on the overview's foot, set at the bottom of a short chapter */
+#approach.method:not([hidden]) { display: flex; flex-direction: column; }
+#approach > .board-inner { flex: none; width: 100%; }
+#approach > .board-footer { margin-top: auto; border-top: .5px solid var(--color-separator); background: none; }

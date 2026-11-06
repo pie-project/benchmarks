@@ -596,7 +596,7 @@ window.Pie = window.Pie || {};
         <div class="board-log-text">${mark}<span>${esc(text)}</span></div>
       </li>`;
   };
-  // the page's foot: one quiet line under a hairline, open source, its GitHub and the data's last update
+  // the page's foot: one quiet line under a hairline, open source and the data's last update
   const footer = () => {
     const at = Pie.store.tables.updated_at ? new Date(Pie.store.tables.updated_at) : null;
     const when = at ? at.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
@@ -604,7 +604,6 @@ window.Pie = window.Pie || {};
       <footer class="board-footer">
         <div class="board-footer-simple">
           <span>Open source</span>
-          <a href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">GitHub</a>
           ${when ? `<span class="board-footer-updated">Updated ${esc(when)}</span>` : ""}
         </div>
       </footer>`;
@@ -1149,6 +1148,7 @@ window.Pie = window.Pie || {};
 
   Pie.board = {
     element,
+    footer: () => footer(),  // the page's foot, Methodology's too
     // every red dot of the Outliers card on a full model, in every setup, by the card's own rule (isRed): for Pie Reports
     // and the GitHub reports
     outliers() {
