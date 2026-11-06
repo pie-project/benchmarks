@@ -29,6 +29,8 @@ class LlamacppEngine(ServedEngine):
     health_path = "/health"  # 503 while the model loads
     # llama-server honours ignore_eos: every request writes exactly max_tokens (checked on b11703)
     exact_length = "ignore_eos"
+    # llama-server adds BOS to a text prompt that already starts with the template's BOS
+    token_ids = True
 
     # ---- inputs ------------------------------------------------------------
     def server_bin(self) -> str:

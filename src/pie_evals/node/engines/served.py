@@ -45,6 +45,8 @@ class ServedEngine(Engine):
     exact_length: str | None = None
     #: send chat messages (the server renders its template) instead of a rendered prompt
     chat = False
+    #: send the rendered prompt as token ids (a server that adds BOS to the text would prefill it twice)
+    token_ids = False
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
@@ -106,6 +108,8 @@ class ServedEngine(Engine):
             args += ["--api-model", self.api_model()]
         if self.chat:
             args.append("--chat")
+        elif self.token_ids:
+            args.append("--token-ids")
         body = {**self.extra_body(), **(r.get("extra_body") or {})}
         if self.ignore_eos_field:
             body[self.ignore_eos_field] = True

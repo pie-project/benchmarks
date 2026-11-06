@@ -19,6 +19,7 @@ from .mlxlm import MlxlmEngine
 class VllmMetalEngine(MlxlmEngine):
     name = EngineName.VLLM_METAL
     exact_length = "ignore_eos"
+    token_ids = True  # vLLM adds BOS to a text prompt too (Muse-Glimmer c32: 1 token more per request than pie)
 
     def vlm(self) -> bool:
         return False

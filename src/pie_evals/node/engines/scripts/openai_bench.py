@@ -148,6 +148,14 @@ async def run(args: argparse.Namespace):
     prompts, counts = hf_chat_prompts_and_counts(args.model, args.system, raw, getattr(args, "think", None))
     if args.chat:
         prompts = raw  # the counts stay those of the rendered template, to compare with what the server reports
+    elif args.token_ids:
+        # the rendered template already holds the BOS; a server that tokenizes the text adds a second one
+        # (llama.cpp: 1 token more per request than pie), so it gets the ids the counts are taken from
+        from pathlib import Path
+
+        from transformers import AutoTokenizer
+        tok = AutoTokenizer.from_pretrained(str(Path(args.model).parent) if Path(args.model).is_file() else args.model, trust_remote_code=True)
+        prompts = [tok.encode(p, add_special_tokens=False) for p in prompts]
     budgets = [request_max_tokens(args, i) for i in range(len(prompts))]
     endpoint = args.url.rstrip("/") + ("/v1/chat/completions" if args.chat else "/v1/completions")
     server: list[dict[str, Any]] = []
@@ -212,6 +220,7 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--seed", type=int, default=0)
         sp.add_argument("--extra-body", default="", help="extra request fields as JSON")
         sp.add_argument("--chat", action="store_true", help="send chat messages and let the server render its own template")
+        sp.add_argument("--token-ids", action="store_true", help="send the rendered prompt as token ids, not text")
         sp.add_argument("--flush-cache", action=argparse.BooleanOptionalAction, default=True, help="shuffle each prompt so no request reuses a cached prefix")
     return parser
 
