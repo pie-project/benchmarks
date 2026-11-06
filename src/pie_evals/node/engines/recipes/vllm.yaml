@@ -273,11 +273,11 @@ competitive:
         deepseek-v4-flash-mini-tpu:
           knobs:
             gpu_mem_util:
-              value: 0.75
+              value: 0.65
               rationale: >
                 At 0.97 vLLM-TPU sizes DeepSeek-V4's KV pool from every byte free, then its compressed-attention
                 cache asks 2.80G more with 483.89M free (RESOURCE_EXHAUSTED in _initialize_ds_v4_kv_cache,
-                42160767180). 0.75 leaves that room.
+                42160767180); at 0.75 its step program asks 2.34G with 2.11G free (42193066105). 0.65 leaves both room.
         muse-glimmer-30b-mini4: &tpu_v5e_compile_room
           knobs:
             gpu_mem_util:
