@@ -33,9 +33,14 @@
   <aside class="sidebar" id="sidebar">
     <!-- the mark and "Pie" go to pie-project.org, as Apple's subdomains set their logo -->
     <div class="sidebar-brand">
-      <a class="sidebar-home" href="https://pie-project.org" aria-label="Pie website">
-        <svg class="sidebar-logo" viewBox="0 0 67.89 67.89" aria-hidden="true">
-          <path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="8"/>
+      <!-- the mark: three layers, a model's weights on top, the hardware below, and the engine that joins them in the middle,
+           filled, the one layer these benchmarks measure; it leads to the open repository -->
+      <a class="sidebar-home" href="https://github.com/pie-project/benchmarks" aria-label="Benchmarks on GitHub">
+        <svg class="sidebar-logo" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+          <path d="M12 0.75 21 3.25V5.75L12 8.25 3 5.75V3.25Z" fill="currentColor"/>
+          
+          <path d="M3 10.75 12 13.25 21 10.75V13.25L12 15.75 3 13.25Z" fill="currentColor"/>
+          <path d="M3 18.25 12 20.75 21 18.25V20.75L12 23.25 3 20.75Z" fill="currentColor"/>
         </svg>
         <span class="sidebar-name">Benchmarks</span>
       </a>
@@ -76,7 +81,7 @@
       <button class="search-cancel" id="search-cancel" type="button" hidden>Cancel</button>
       <button class="toolbar-search" id="toolbar-search" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"></button>
       <!-- Log in, after the search: opens the account sheet (ui/account.js) -->
-      <button class="toolbar-login" id="toolbar-login" type="button" aria-haspopup="dialog" aria-expanded="false">Log in</button>
+      <button hidden class="toolbar-login" id="toolbar-login" type="button" aria-haspopup="dialog" aria-expanded="false">Log in</button><!-- no accounts: the site is public -->
 
       <button class="release-picker" id="metric-picker" type="button" aria-haspopup="menu" hidden>
         <span class="release-picker-label">Metric</span>

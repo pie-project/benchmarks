@@ -77,7 +77,7 @@ window.Pie = window.Pie || {};
     return `<g class="board-bar" aria-label="${esc(`${tip.head}: ${tip.value}`)}" data-tip-engine="${esc(tip.engine)}" data-tip-head="${esc(tip.head)}" data-tip-value="${esc(tip.value)}" data-tip-note="${esc(tip.note || "")}">
       <rect class="board-band" x="${band.x}" y="0" width="${band.w}" height="${base}"/>
       <path d="${column(x, top, w, Math.max(base - top, 1))}" style="fill: ${color}"/>
-      ${Pie.engines.isPrimary(tip.engine) ? `<path class="board-sheen" d="${column(x, top, w, Math.max(base - top, 1))}"/>` : ""}
+      ${tip.top ? `<path class="board-sheen" d="${column(x, top, w, Math.max(base - top, 1))}"/>` : ""}
       <text class="board-value${inside ? " is-inside" : ""}" x="${x + w / 2}" y="${inside ? (top + base) / 2 : top - 6}">${value}</text>
 </g>`;
   };
@@ -106,8 +106,10 @@ window.Pie = window.Pie || {};
     const marks = cells.map((c, i) => {
       const width = c.bars.length * BW + (c.bars.length - 1) * 2;
       const left = L + slot * i + (slot - width) / 2;
+      const vals = c.bars.map((r) => r[metric.key]);
+      const lead = metric.higher === false ? Math.min(...vals) : Math.max(...vals);
       const bars = c.bars.map((r, j) => bar(left + j * (BW + 2), y(r[metric.key]), BW, base, Pie.engines.colorOf(r.engine), compact(r[metric.key]),
-        { engine: r.engine, head: `${names().engine(r.engine)} on ${machineName(c.hardware)}`, value: full(r[metric.key], metric.unit) }, { x: left + j * (BW + 2) - 1, w: BW + 2 })).join("");
+        { top: r[metric.key] === lead, engine: r.engine, head: `${names().engine(r.engine)} on ${machineName(c.hardware)}`, value: full(r[metric.key], metric.unit) }, { x: left + j * (BW + 2) - 1, w: BW + 2 })).join("");
       const cx = L + slot * i + slot / 2;
       return `${bars}<text class="board-group" x="${cx}" y="${base + 18}">${esc(Pie.schema[c.platform]?.short || c.platform)}</text>
         <text class="board-machine" x="${cx}" y="${base + 33}">${esc(machineName(c.hardware))}</text>`;
@@ -248,7 +250,7 @@ window.Pie = window.Pie || {};
     const marks = list.map((e, i) => {
       const x = L + slot * i + (slot - BW) / 2;
       const cx = x + BW / 2;
-      const tip = { engine: e.engine, head: names().engine(e.engine), value: summary.label(e.v),
+      const tip = { top: i === 0, engine: e.engine, head: names().engine(e.engine), value: summary.label(e.v),
         note: e.detail || `Over ${e.n} ${e.n === 1 ? "setup" : "setups"}` };
       return `${bar(x, y(e.v), BW, base, Pie.engines.colorOf(e.engine), summary.label(e.v), tip, { x: L + slot * i, w: slot })}
         ${logo(e.engine, cx - 8, base + 6, 16)}
@@ -260,7 +262,7 @@ window.Pie = window.Pie || {};
 
   // pie's gain, cell by cell: every machine, model and setup where pie and another engine both ran, as one dot at pie's
   // speed over the fastest other engine's, as the platform pages' Relative Speed reads a cell; a row per platform
-  const GAIN = { id: "gain", title: "Outliers", sub: "Pie against the fastest other engine, per cell · Red: Pie slower, or above the theoretical limit" };
+  const GAIN = { id: "gain", title: "Spread", sub: "Each engine's typical speed against the median of all engines on the same machine and model" };
   const GAIN_SETUPS = [
     { workload: "raw", key: "decode_tok_s", label: "Single decode", unit: "tok/s" },
     { workload: "raw", key: "prefill_tok_s", label: "Single prefill", unit: "tok/s" },
@@ -282,15 +284,17 @@ window.Pie = window.Pie || {};
   const limitOf = (pie, pick) => (pick.workload === "raw" ? Pie.ceiling?.(pie, pick.id)?.tps
     : pick.workload === "throughput" ? Pie.batchedCeiling?.(pie.hardware, pie.model, pie.scheme)?.tps
     : pick.workload === "prefill_batch" ? Pie.ceiling?.(pie, "pbatch")?.tps : null) || null;
-  const gainCells = (rows, only = null) => {
+  // the engine the Outliers card sets against every other one: pie unless picked, kept per browser
+  let gainEngine = (() => { try { const e = localStorage.getItem("pieGainEngine"); return e && Pie.store.tables.engines.some((x) => x.id === e) ? e : "pie"; } catch { return "pie"; } })();
+  const gainCells = (rows, only = null, subject = gainEngine) => {
     const cells = [];
     for (const s of GAIN_SETUPS.filter((g) => !only || (g.workload === only.workload && g.key === only.key))) {
       const by = {};
       // a model slice is held only against the same slice
       for (const r of rows) if (r.workload === s.workload && r[s.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}`] ||= []).push(r);
       for (const list of Object.values(by)) {
-        const pie = list.find((r) => r.engine === "pie");
-        const others = list.filter((r) => r.engine !== "pie");
+        const pie = list.find((r) => r.engine === subject);  // the picked engine (pie by default), named pie below
+        const others = list.filter((r) => r.engine !== subject);
         if (!pie || !others.length) continue;
         const best = others.reduce((a, b) => (b[s.key] > a[s.key] ? b : a));
         // the most pie could gain here: the hardware limit over the fastest other engine
@@ -310,49 +314,59 @@ window.Pie = window.Pie || {};
   // measured above its own cell's theoretical limit, which no engine can beat; everything else is green
   const pastLimit = (c) => !c.pie.miniature && c.room != null && c.gain > c.room;
   const isRed = (c) => c.gain < 0 || pastLimit(c);
+  // Spread: every engine on every cell, at its speed over the median of all engines there, in its own colour. No winner
+  // is marked; a cell above the hardware's theoretical limit gets an orange ring, a measurement to check
+  const SPREAD = 0.5;  // the axis: ±50% around the median, a dot beyond it waits at the edge
   const gains = (rows) => {
-    const all = gainCells(rows, GAIN_PICKS.find((g) => g.id === gainSetup));
-    const groups = PLATFORM_ORDER.map((p) => ({ p, cells: all.filter((c) => c.platform === p) })).filter((g) => g.cells.length);
+    const pick = GAIN_PICKS.find((g) => g.id === gainSetup);
+    const by = {};
+    for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}`] ||= []).push(r);
+    const dots = [];
+    for (const list of Object.values(by)) {
+      if (list.length < 2) continue;  // a cell one engine ran has nothing to sit beside
+      const v = list.map((r) => r[pick.key]).sort((x, y) => x - y), n = v.length;
+      const med = n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2;
+      for (const r of list) {
+        const limit = r.miniature ? null : limitOf(r, pick);
+        dots.push({ r, d: r[pick.key] / med - 1, med, over: Boolean(limit && r[pick.key] > limit), platform: Pie.platformOf(Pie.store.index.hardware[r.hardware] || {}) });
+      }
+    }
+    // a row per engine on each platform: a bar from the median to the engine's own median distance from it, as MLPerf
+    // and Apple's comparisons set one figure per contender, not every run
+    const mid = (v) => { const a = [...v].sort((p, q) => p - q), n = a.length; return n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2; };
+    const order = engineIds();
+    const groups = PLATFORM_ORDER.map((p) => {
+      const mine = dots.filter((d) => d.platform === p);
+      const engines = [...new Set(mine.map((d) => d.r.engine))].sort((x, y) => order.indexOf(x) - order.indexOf(y))
+        .map((e) => { const ds = mine.filter((d) => d.r.engine === e); return { e, d: mid(ds.map((x) => x.d)), n: ds.length, over: ds.filter((x) => x.over).length }; });
+      return { p, engines };
+    }).filter((g) => g.engines.length);
     if (!groups.length) return `<p class="board-empty">No runs yet</p>`;
-    // pie's speed over the other's on a log scale, so twice as fast and half as fast sit as far from zero; past the ends
-    // a dot waits at the edge, its own number in its hover card
-    const W = 1040, ROW = 56, NAME = 64, L = NAME + 24, R = 16, T = 8, B = 26;
-    // the band of ordinary cells: from even (pie no slower) up to the most pie could gain on that platform (the hardware limit over
-    // the fastest other engine, the row's median), 50% where the setup has no limit; a cell outside it is an outlier
-    const LOW = 0;
-    const median = (v) => { const a = [...v].sort((p, q) => p - q), n = a.length; return n ? (n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2) : null; };
-    const high = Object.fromEntries(groups.map((g) => [g.p, median(g.cells.map((c) => c.room).filter((r) => r != null && r > 0)) ?? 0.5]));
-    // the axis reaches every dot and every border, in whole doublings (4x, 8x, 16x...) and halvings, so none is pinned to an edge
-    const most = Math.max(3, ...all.map((c) => c.gain), ...Object.values(high));
-    const least = Math.min(-0.5, ...all.map((c) => c.gain));
-    const LO = Math.floor(Math.log2(1 + least)), HI = Math.ceil(Math.log2(1 + most));
-    const H = T + groups.length * ROW + B;
-    const x = (g) => L + (W - L - R) * (Math.min(HI, Math.max(LO, Math.log2(1 + g))) - LO) / (HI - LO);
-    const outside = isRed;
-    // a tick at each end and at even and double the speed
-    const ticks = [2 ** LO - 1, 0, 1, 2 ** HI - 1].filter((g, i, v) => v.indexOf(g) === i).map((g) => `<text class="board-tick" x="${x(g)}" y="${H - B + 18}">${g ? signedPct(g) : "0"}</text>`).join("");
-    const zero = `<line class="board-band-edge" x1="${x(LOW)}" x2="${x(LOW)}" y1="${T}" y2="${H - B}"/>`;
-    const body = groups.map((grp, i) => {
-      const mid = T + i * ROW + ROW / 2;
-      const dots = grp.cells.map((c) => {
-        const cx = x(c.gain), cy = mid + jitter(`${c.pie.hardware}|${c.pie.model}|${c.pie.miniature}|${c.s.label}`) * 10;
-        const tone = c.gain > 0 ? "is-ahead" : c.gain < 0 ? "is-behind" : "";
-        const tipRows = [["Machine", machineName(c.pie.hardware)], ["Model", `${names().model(c.pie.model)}${c.pie.miniature ? " (slice)" : ""}`], ["Setup", c.s.label],
-          [names().engine("pie"), full(c.pie[c.s.key], c.s.unit)], [names().engine(c.best.engine), full(c.best[c.s.key], c.s.unit)]];
-        return `<g class="board-bar board-cell ${tone}${outside(c) ? " is-outlier" : ""}" data-tip-engine="pie" data-tip-head="${esc(`${names().engine("pie")} vs ${names().engine(c.best.engine)}`)}" data-tip-value="${esc(signedPct(c.gain))}" data-tip-rows="${esc(JSON.stringify(tipRows))}">
-          <circle class="board-hit" cx="${cx}" cy="${cy}" r="5"/><circle class="board-cell-dot" cx="${cx}" cy="${cy}" r="2.6"/></g>`;
+    const SCALE = 0.2;  // ±20% either side of the median
+    const W = 1040, ROW = 26, GAP = 18, NAME = 170, L = NAME + 16, R = 60, T = 6, B = 26;
+    const H = T + groups.reduce((h, g) => h + g.engines.length * ROW + GAP, 0) + B;
+    const x = (d) => L + (W - L - R) * (Math.max(-SCALE, Math.min(SCALE, d)) + SCALE) / (2 * SCALE);
+    const pct = (d) => (Math.round(d * 100) ? `${d > 0 ? "+" : "−"}${Math.abs(Math.round(d * 100))}%` : "0%");
+    let y = T;
+    const body = groups.map((g) => {
+      const head = `<text class="board-row-name" x="8" y="${y + 15}"><tspan class="board-row-platform">${esc(Pie.schema[g.p]?.short || g.p)}</tspan></text>`;
+      const rows = g.engines.map((e, i) => {
+        const top = y + i * ROW, cy = top + ROW / 2;
+        const x0 = x(0), x1 = x(e.d), w = Math.max(2, Math.abs(x1 - x0));
+        const note = `${e.n} ${e.n === 1 ? "cell" : "cells"}${e.over ? `, ${e.over} above the theoretical limit` : ""}`;
+        return `<g class="board-bar" data-tip-engine="${esc(e.e)}" data-tip-head="${esc(names().engine(e.e))}" data-tip-value="${esc(pct(e.d))}" data-tip-rows="${esc(JSON.stringify([["Typical distance from the median", pct(e.d)], ["Over", note]]))}">
+          <rect class="board-hit" x="0" y="${top}" width="${W}" height="${ROW}"/>
+          <rect x="${NAME - 70}" y="${cy - 4}" width="8" height="8" rx="2" style="fill: ${Pie.engines.colorOf(e.e)}"/>
+          <text class="board-machine is-start" x="${NAME - 56}" y="${cy + 4}">${esc(names().engine(e.e))}</text>
+          <rect x="${Math.min(x0, x1)}" y="${cy - 7}" width="${w}" height="14" rx="3" style="fill: ${Pie.engines.colorOf(e.e)}"/>
+          <text class="board-value is-start" x="${Math.max(x0, x1) + 6}" y="${cy + 4}">${pct(e.d)}</text></g>`;
       }).join("");
-      // the median as a short rule across the row, its number beside it
-      const sorted = grp.cells.map((c) => c.gain).sort((a, b) => a - b);
-      const n = sorted.length, median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
-      const ahead = grp.cells.filter((c) => c.gain > 0).length;
-      return `
-        <g class="board-bar board-row-label" data-tip-head="" data-tip-rows="${esc(JSON.stringify([["Median gain", signedPct(median), median > 0 ? "is-ahead" : median < 0 ? "is-behind" : ""], ["Pie ahead", `${Math.round((ahead / n) * 100)}%`], ["Cells", n.toLocaleString()]]))}">
-          <rect class="board-hit" x="0" y="${mid - ROW / 2}" width="${NAME - 8}" height="${ROW}"/>
-          <text class="board-row-name" x="8" y="${mid + 6}"><tspan class="board-row-platform">${esc(Pie.schema[grp.p]?.short || grp.p)}</tspan></text></g>
-        <g class="board-swarm">${dots}</g>`;
+      const out = head + rows;
+      y += g.engines.length * ROW + GAP;
+      return out;
     }).join("");
-    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(GAIN.title)}">${ticks}${zero}${body}</svg>`;
+    const ticks = [-SCALE, -SCALE / 2, 0, SCALE / 2, SCALE].map((t) => `<line class="board-grid" x1="${x(t)}" x2="${x(t)}" y1="${T}" y2="${H - B}"/><text class="board-tick" x="${x(t)}" y="${H - B + 18}">${t ? pct(t) : "Median"}</text>`).join("");
+    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(GAIN.title)}">${ticks}<line class="board-band-edge" x1="${x(0)}" x2="${x(0)}" y1="${T}" y2="${H - B}"/>${body}</svg>`;
   };
 
   // across model sizes: each platform's fastest machine and engine on each model, by its parameters; dense
@@ -393,6 +407,7 @@ window.Pie = window.Pie || {};
     // beside the setup, the way to Reports: an outlier is where a wrong number shows first, and the open ones are counted
     const open = Pie.reports?.open?.();
     const reports = `<button class="filter-button board-card-pick" type="button" data-board-reports title="Open Reports"><svg class="board-pick-flag" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 14V2.5M4 2.5h7.5l-1.5 3 1.5 3H4"/></svg>Reports${open ? `<span class="board-pick-count">${open}</span>` : ""}</button>`;
+    const enginePickButton = `<button class="filter-button board-card-pick" type="button" data-board-pick="gain-engine" aria-haspopup="menu" aria-label="Engine">${engineMark(gainEngine)}${gainEngine === "mlxlm" ? "" : esc(names().engine(gainEngine))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
     return `<span class="board-card-picks"><button class="filter-button board-card-pick" type="button" data-board-pick="gain-setup" aria-haspopup="menu" aria-label="Setup">${Pie.platform.degree(g.id)}${esc(g.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${reports}</span>`;
   };
   const metricCard = (rows, groups) => {
@@ -557,7 +572,7 @@ window.Pie = window.Pie || {};
   const useSection = (rows) => {
     const mode = USE_MODES.find((m) => m.id === useMode);
     return `<div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">Efficiency</h1>
+            <div class="board-section-text"><h1 class="board-title">Kernel Efficiency</h1>
             <p class="board-lede">How close each engine gets to the hardware's peak.</p></div>
             <button class="filter-button board-title-pick" type="button" data-board-pick="use-mode" aria-haspopup="menu" aria-label="Mode">${Pie.platform.degree(mode.id)}${esc(mode.label)}${chevronMark}</button>
           </div>
@@ -717,16 +732,16 @@ window.Pie = window.Pie || {};
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     const outline = [
       ["Efficiency", USE_CARDS.map(([id, title]) => [id, title])],
-      ["Head to head", [...SUMMARY.map((m) => [m.id, m.title]), [GAIN.id, GAIN.title]]],
-      ["On one model", [["metric", "Performance"], [TTFT.id, "Time to first token"]]],
+      ["Performance", SUMMARY.map((m) => [m.id, m.title])],
+      ["Explore", [["metric", "Performance"], [TTFT.id, "Time to first token"]]],
     ].map(([head, items]) => `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${BADGES[id]?.[0] || "var(--color-label-tertiary)"}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
-    // pie's bars' texture, defined once for every chart on the page: fine diagonal lines in white over its colour, so
-    // the project's own engine stands out from the ones it is measured against
+    // pie's bars' texture, defined once for every chart on the page: a fine grid of dots, as Freeform and Keynote set a
+    // dotted canvas, faint white over its colour, so its bars read as pie's
     const SHEEN = `<svg class="board-defs" width="0" height="0" aria-hidden="true"><defs>
-        <pattern id="board-sheen" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <rect width="1.6" height="5" fill="#fff" fill-opacity=".14"/>
+        <pattern id="board-sheen" width="6" height="6" patternUnits="userSpaceOnUse">
+          <circle cx="3" cy="3" r="1" fill="#fff" fill-opacity=".28"/>
         </pattern></defs></svg>`;
     return `${SHEEN}
       <div class="platform-bar board-bar">
@@ -735,16 +750,26 @@ window.Pie = window.Pie || {};
       <div class="board-scroll"><div class="board-inner">
         <nav class="board-outline" aria-label="On this page">${outline}</nav>
         <div class="board-main">
+          <section class="board-welcome" aria-label="About these benchmarks">
+            <div class="board-welcome-text">
+            <h1>LLM Engine Benchmarks</h1>
+            <p>Where models meet hardware.</p>
+            <div class="board-welcome-actions">
+              <a class="board-welcome-primary" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Benchmarks</a>
+              <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">See how we measure</button>
+            </div>
+            </div>
+          </section>
           ${useSection(rows)}
           <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">Head to head</h1>
+            <div class="board-section-text"><h1 class="board-title">Performance Head to Head</h1>
             <p class="board-lede">Every engine compared with the others on each machine and model.</p></div>
           </div>
           <div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has(m.id) ? "Head-to-head decode win rate" : m.sub, gridCards.has(m.id) ? matrix(m, rows) : ranking(m, rows), viewToggle(m.id), false)).join("")}</div>
-          <div class="board-stack">${card(GAIN.id, GAIN.title, GAIN.sub, gains(rows), gainPick())}</div>${""/* the banner and the Changelog, off for now: hero() */}
+          ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
-          <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">On one model</h1>
+          <div class="board-section-head is-apart">
+            <div class="board-section-text"><h1 class="board-title">Performance by Model</h1>
             <p class="board-lede">Each platform is shown on the machine where the most engines ran this model.</p></div>
             <button class="filter-button board-title-pick" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model">${Pie.platform.makerBadge(model)}${esc(names().model(model))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
@@ -959,6 +984,13 @@ window.Pie = window.Pie || {};
     element.querySelector("[data-board-subscribe]")?.classList.add("is-subscribed");
   });
 
+  // the welcome's buttons open their pages, as the sidebar would
+  element.addEventListener("click", (event) => {
+    const go = event.target.closest("[data-board-go-page]");
+    if (go) event.preventDefault();
+    if (go?.dataset.chapter) Pie.approach?.open(go.dataset.chapter);
+    if (go) document.querySelector(`.sidebar-item[data-table="${go.dataset.boardGoPage}"]`)?.click();
+  });
   // the Outliers card's Reports button opens Reports, as the sidebar would
   element.addEventListener("click", (event) => {
     if (event.target.closest("[data-board-reports]")) document.querySelector('.sidebar-item[data-table="reports"]')?.click();
@@ -1134,7 +1166,11 @@ window.Pie = window.Pie || {};
       const rows = measured();
       return GAIN_PICKS.flatMap((pick) => {
         // the red dots of full models only: a slice's numbers are a cut model's, not reported
-        return gainCells(rows, pick).filter((c) => !c.pie.miniature && isRed(c)).map((c) => ({
+        // only cells above the theoretical limit: a measurement to check, not a race between engines
+        // every engine's cells above their own theoretical limit: a measurement to check, whoever ran it
+        const seen = new Set();
+        return engineIds().flatMap((e) => gainCells(rows, pick, e)).filter((c) => pastLimit(c) && !seen.has(`${c.pie.engine}|${c.pie.hardware}|${c.pie.model}`) && seen.add(`${c.pie.engine}|${c.pie.hardware}|${c.pie.model}`)).map((c) => ({
+          engine: c.pie.engine, measured: c.pie.measured || null,
           setup: pick.id, label: pick.label, workload: pick.workload, key: pick.key, unit: c.s.unit,
           hardware: c.pie.hardware, model: c.pie.model, miniature: c.pie.miniature || null,
           pie: c.pie[c.s.key], best: c.best.engine, bestValue: c.best[c.s.key], gain: c.gain, above: pastLimit(c),
@@ -1150,6 +1186,10 @@ window.Pie = window.Pie || {};
         const ran = new Set(measured().filter((r) => r.workload === "raw" && r.decode_tok_s && multi(r)).map((r) => r.engine));
         return [{ value: "", label: "Fastest engine", selected: !current },
           ...engineIds().filter((e) => ran.has(e)).map((e) => ({ value: e, label: names().engine(e), selected: e === current, icon: engineMark(e) }))];
+      }
+      if (k === "gain-engine") {
+        const ran = new Set(measured().map((r) => r.engine));
+        return engineIds().filter((e) => ran.has(e)).map((e) => ({ value: e, label: names().engine(e), selected: e === gainEngine, icon: engineMark(e) }));
       }
       if (k === "use-mode") return USE_MODES.map((m) => ({ value: m.id, label: m.label, selected: m.id === useMode, icon: Pie.platform.degree(m.id) }));
       if (k === "scale") {
@@ -1169,6 +1209,7 @@ window.Pie = window.Pie || {};
     pick(k, value) {
       if (k === "model") model = value;
       if (k === "accuracy-platform") Pie.checks?.pick(value);
+      if (k === "gain-engine" && Pie.store.tables.engines.some((x) => x.id === value)) { gainEngine = value; try { localStorage.setItem("pieGainEngine", value); } catch { /* private windows can refuse storage */ } }
       if (k === "use-mode" && USE_MODES.some((m) => m.id === value)) { useMode = value; try { localStorage.setItem("pieUseMode", value); } catch { /* private windows can refuse storage */ } }
       if (k === "gain-setup" && GAIN_PICKS.some((g) => g.id === value)) {
         gainSetup = value;

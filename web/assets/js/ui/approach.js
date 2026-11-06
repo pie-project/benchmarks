@@ -5,8 +5,27 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("approach");
 
+  const REPO = "https://github.com/pie-project/benchmarks";  // the open repository the Welcome chapter points to
   // [outline group, [id, title, colour, summary, body]]
   const CHAPTERS = [
+    ["Start", [
+      ["welcome", "Welcome", "#0A84FF", "Open benchmarks for every inference engine.", `
+        <p>This site measures how fast inference engines run real models on real hardware: Apple Silicon, NVIDIA, AMD and Google TPUs. Every engine runs the same models, the same workloads and the same settings, on the same machines.</p>
+        <h3>The goal</h3>
+        <p>A fair, public reference for inference speed. Not a race: most engines land within a few percent of each other, and the numbers should show that plainly. When one engine does better or worse, you can see exactly where and why.</p>
+        <h3>How it works</h3>
+        <ul class="method-list">
+          <li><b>Measured in CI.</b> Every result comes from automated runs on dedicated machines, repeated until the noise is small.</li>
+          <li><b>Checked against the hardware.</b> Each result is compared with the machine's theoretical maximum. A number above it is flagged as a CI error and looked into.</li>
+          <li><b>Open end to end.</b> The harness, the raw data and this methodology are on GitHub.</li>
+        </ul>
+        <h3>Contribute</h3>
+        <ul class="method-list">
+          <li><b>Add your engine.</b> Open a pull request with its recipe, and it joins the next run on every machine. <a href="${REPO}" target="_blank" rel="noopener">GitHub</a></li>
+          <li><b>Report a measurement.</b> Select rows on Performance or Quality and press Report. It opens an issue with the numbers filled in.</li>
+          <li><b>Improve the method.</b> Settings, limits and workloads are all files in the repository. Changes are reviewed in the open.</li>
+        </ul>`],
+    ]],
     ["Setup", [
       ["setup", "Test Setup", "#8E8E93", "The machines, engines and versions behind every number.", `<p class="approach-empty">This chapter is being written.</p>`],
       ["workloads", "Workloads", "#30B0C7", "Decode, prefill, batching and speculative decoding, and what each measures.", `<p class="approach-empty">This chapter is being written.</p>`],
@@ -59,8 +78,6 @@ window.Pie = window.Pie || {};
   let current = (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
   if (!LIST.some(([id]) => id === current)) current = LIST[0][0];
 
-  // the chapters before and after as small picks under the card, as the Overview sets its picks
-  const step = (chapter, label, cls) => chapter ? `<button type="button" class="filter-button board-card-pick approach-step ${cls}" aria-label="${label}: ${chapter[1]}" data-chapter-go="${chapter[0]}">${cls === "is-previous" ? "‹ " : ""}${chapter[1]}${cls === "is-next" ? " ›" : ""}</button>` : "<span></span>";
 
   const draw = () => {
     const at = LIST.findIndex(([id]) => id === current);
@@ -73,7 +90,7 @@ window.Pie = window.Pie || {};
       <article class="board-card method-article${typeof body === "function" ? " has-tables" : ""}">
         <div class="method-pane-body">${typeof body === "function" ? body() : body}</div>
       </article>
-      ${LIST.length > 1 ? `<nav class="approach-steps" aria-label="Chapters">${step(LIST[at - 1], "Previous", "is-previous")}${step(LIST[at + 1], "Next", "is-next")}</nav>` : ""}`;
+`;  // no previous and next: the outline beside the chapter is the way between them
     for (const item of element.querySelectorAll(".board-outline [data-chapter-go]")) item.classList.toggle("is-current", item.dataset.chapterGo === current);
     // one fill that glides from the old chapter's row to the new, as the overview's outline moves its own
     const nav = element.querySelector(".board-outline"), on = nav?.querySelector(".is-current");
@@ -110,6 +127,13 @@ window.Pie = window.Pie || {};
 
   Pie.approach = {
     element,
+    // a chapter opened from elsewhere (the Overview's welcome): it is the one drawn the next time the page shows
+    open(id) {
+      if (!LIST.some(([c]) => c === id)) return;
+      current = id;
+      try { localStorage.setItem(KEY, current); } catch { /* private windows can refuse storage */ }
+      if (element.dataset.ready === "1") draw();
+    },
     chapters: LIST.length,
     render(state) {
       viewState = state;

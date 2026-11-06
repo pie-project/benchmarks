@@ -257,7 +257,7 @@ window.Pie = window.Pie || {};
         const blob = new Blob([csvOf(this.rows, this.columns)], { type: "text/csv" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `pie-${this.source === "results" ? "performance" : this.source}-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.download = `${this.source === "results" ? "performance" : this.source}.csv`;
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
       });

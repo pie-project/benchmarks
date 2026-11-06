@@ -461,3 +461,25 @@
 .board-card-picks { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 6px; }  /* the setup pick, Reports under it, both at the right */
 .board-pick-flag { width: 12px; height: 12px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .board-pick-count { margin-left: 2px; color: var(--color-label-secondary); font-variant-numeric: tabular-nums; }
+/* Spread: each dot in its engine's colour; one above the theoretical limit ringed in orange, a measurement to check */
+.board-cell.is-over .board-cell-dot { stroke: #FF9500; stroke-width: 1.6; }
+/* On one model is a different reading (one model, not the medians above): a hairline and more room set it apart */
+.board-section-head.is-apart { margin-top: 56px; padding-top: 40px; border-top: .5px solid var(--color-separator); }
+
+/* the welcome over the Overview, as Google's and NVIDIA's developer pages open: a small label, the title, one line, then
+   the primary action and a secondary one side by side, all left-aligned on a clean colour sweep */
+.board-welcome { display: flex; align-items: center; gap: 32px; margin: 0 0 48px; padding: 54px 36px 32px;  /* the room above the title its label took, kept */ border-radius: 16px; color: #fff;
+  background: radial-gradient(90% 160% at 0% 0%, rgba(255, 255, 255, .18), transparent 60%),
+              linear-gradient(110deg, #2F6BFF 0%, #6E5BFF 30%, #B24FE0 56%, #F2558E 80%, #FF9B4A 100%); }
+.board-welcome-eyebrow { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: rgba(255, 255, 255, .8); }
+.board-welcome h1 { margin: 0; font: 700 28px/1.15 var(--font-display); letter-spacing: -.015em; color: #fff; }
+.board-welcome p { margin: 8px 0 0; font-size: 15px; line-height: 1.45; color: rgba(255, 255, 255, .88); }
+.board-welcome-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.board-welcome-actions > * { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px 0 12px; border: 0; border-radius: 12px; font: inherit; font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; white-space: nowrap; }  /* the sidebar pill's rounding and padding */
+.board-welcome-actions svg { width: 14px; height: 14px; fill: currentColor; }
+.board-welcome-primary { background: #fff; color: #1d1d1f; }
+.board-welcome-primary:hover { background: rgba(255, 255, 255, .9); }
+.board-welcome-secondary { background: transparent; color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6); }
+.board-welcome-secondary:hover { background: rgba(255, 255, 255, .12); }
+@media (max-width: 760px) { .board-welcome { padding: 24px; } .board-welcome h1 { font-size: 24px; } }
+

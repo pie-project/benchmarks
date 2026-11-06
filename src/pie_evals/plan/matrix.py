@@ -267,27 +267,32 @@ _CMP = re.compile(r"^(>=|<=|>|<|!=|==)?\s*(-?\d+)$")
 _OPS = {">=": operator.ge, "<=": operator.le, ">": operator.gt, "<": operator.lt, "!=": operator.ne, "==": operator.eq, None: operator.eq}
 
 
+# one getter per selector field: a rule reads only the fields it names (building every field for each of the
+# unsupported rules on every cell made a full matrix expansion take hours)
+_CELL_FIELDS = {
+    "engine": lambda c: str(c.engine),
+    "backend": lambda c: str(c.platform.backend),
+    "os": lambda c: c.platform.os,
+    "arch": lambda c: c.platform.arch,
+    "platform": lambda c: c.platform.id,
+    "interconnect": lambda c: c.platform.interconnect,
+    "family": lambda c: c.artifact.family,
+    "artifact": lambda c: c.artifact.id,
+    "scheme": lambda c: str(c.artifact.scheme),
+    "source_format": lambda c: str(c.artifact.source_format),
+    "artifact_kind": lambda c: str(c.artifact.kind),
+    "baseline": lambda c: c.artifact.baseline_of is not None,
+    "program": lambda c: c.program.id,
+    "program_category": lambda c: c.program.category,
+    "workload": lambda c: c.workload.id,
+    "workload_kind": lambda c: str(c.workload.kind),
+    "tp": lambda c: c.mode.tp,
+    "spec_dec": lambda c: c.mode.spec_dec,
+}
+
+
 def _cell_field(cell: Cell, key: str) -> Any:
-    return {
-        "engine": str(cell.engine),
-        "backend": str(cell.platform.backend),
-        "os": cell.platform.os,
-        "arch": cell.platform.arch,
-        "platform": cell.platform.id,
-        "interconnect": cell.platform.interconnect,
-        "family": cell.artifact.family,
-        "artifact": cell.artifact.id,
-        "scheme": str(cell.artifact.scheme),
-        "source_format": str(cell.artifact.source_format),
-        "artifact_kind": str(cell.artifact.kind),
-        "baseline": cell.artifact.baseline_of is not None,
-        "program": cell.program.id,
-        "program_category": cell.program.category,
-        "workload": cell.workload.id,
-        "workload_kind": str(cell.workload.kind),
-        "tp": cell.mode.tp,
-        "spec_dec": cell.mode.spec_dec,
-    }[key]
+    return _CELL_FIELDS[key](cell)
 
 
 def selector_matches(sel: dict[str, Any], cell: Cell) -> bool:
