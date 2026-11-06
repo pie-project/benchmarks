@@ -1047,7 +1047,10 @@ def main() -> None:
     stamps = [t if t.tzinfo else t.replace(tzinfo=ZoneInfo("UTC")) for t in stamps]
     updated_at = max(stamps).isoformat() if stamps else None
     lap("max")
-    db = {"updated_at": updated_at, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
+    # the welcome band's number: every benchmark run that ran, in every tag (a failed one too), and every quality eval
+    ran = sum(r["status"] in ("pass", "noisy", "fail") for r in store.table().select(["status"]).to_pylist())
+    totals = {"runs": ran + len(store.quality())}
+    db = {"updated_at": updated_at, "totals": totals, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
           "quality_parity": checks["parity"], "quality_kernels": checks["kernels"],
           "no_fit": misfits, "suites": suite_ids,
           "hardware": hw_rows,

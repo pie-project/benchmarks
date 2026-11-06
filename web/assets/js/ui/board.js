@@ -707,6 +707,20 @@ window.Pie = window.Pie || {};
         <div class="board-card-body">${body}</div>
       </section>`;
 
+  // the welcome band's one number, on the buttons' line at its right: every benchmark run and quality eval, the store's
+  // count once the export carries it (totals.runs), else an estimate: every tag's fresh measured setups (~4,600 on
+  // 2026-11-05) at ~1.95 runs each (a Batched Decode row sweeps up to four concurrencies, every other row is one run),
+  // ~9,000, with the quality evals and failed runs that leaves out, 10,000
+  const RUNS = 10000;
+  // past a hundred, a count reads as its floor with two figures kept ("20,000+"), so it stays true as the runs go on
+  const atLeast = (n) => {
+    if (n < 100) return String(n);
+    const step = 10 ** (String(Math.floor(n)).length - 2);
+    return `${(Math.floor(n / step) * step).toLocaleString("en-US")}+`;
+  };
+  // led by the bars a measured release wears in the changelog, the site's own glyph
+  const welcomeStat = () => `<div class="board-welcome-stat"><b>${Pie.icon("bars")}${esc(atLeast(Pie.store.tables.totals?.runs ?? RUNS))}</b> runs</div>`;
+
   const page = () => {
     const rows = measured();
     const list = models(rows);
@@ -745,6 +759,7 @@ window.Pie = window.Pie || {};
               <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">How we measure</button>
             </div>
             </div>
+            ${welcomeStat()}
           </section>
           ${useSection(rows)}
           <div class="board-section-head">

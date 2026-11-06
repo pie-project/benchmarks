@@ -482,6 +482,13 @@
 .board-welcome-secondary { background: transparent; color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6); }
 .board-welcome-secondary:hover { background: rgba(255, 255, 255, .12); }
 @media (max-width: 760px) { .board-welcome { padding: 24px; } .board-welcome h1 { font-size: 24px; } }
+/* the band's one number at its right, on the buttons' line: led by its glyph, as Finder's and System Settings' info rows
+   lead with an SF Symbol, the figure in the buttons' weight and its word after it; a band too narrow for both lines it
+   under the buttons */
+.board-welcome { flex-wrap: wrap; gap: 16px 32px; }
+.board-welcome-stat { margin-left: auto; font-size: 12px; line-height: 1; color: rgba(255, 255, 255, .78); white-space: nowrap; }
+.board-welcome-stat b { margin-right: 2px; font: 600 15px/1 var(--font-display); font-variant-numeric: tabular-nums; color: #fff; }
+.board-welcome-stat svg { width: 15px; height: 15px; margin-right: 6px; vertical-align: -2.5px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
 
 
 /* the foot: one line under the cards' grey hairline, on the page's own white */
