@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import json
 import random
-import statistics
 import sys
 import urllib.request
 from pathlib import Path
@@ -19,6 +18,7 @@ from typing import Any
 
 from common import (
     RequestResult,
+    _render_chat,  # the same template rendering hf_chat_prompts_and_counts does
     add_mode_subcommands,
     add_output_dump_args,
     finish,
@@ -26,7 +26,6 @@ from common import (
     request_max_tokens,
     summarize,
 )
-from common import _render_chat  # the same template rendering hf_chat_prompts_and_counts does
 
 
 def shuffled(prompt: str, seed: int) -> str:
