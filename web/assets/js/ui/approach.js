@@ -59,8 +59,6 @@ window.Pie = window.Pie || {};
   let current = (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
   if (!LIST.some(([id]) => id === current)) current = LIST[0][0];
 
-  // the chapters before and after as small picks under the card, as the Overview sets its picks
-  const step = (chapter, label, cls) => chapter ? `<button type="button" class="filter-button board-card-pick approach-step ${cls}" aria-label="${label}: ${chapter[1]}" data-chapter-go="${chapter[0]}">${cls === "is-previous" ? "‹ " : ""}${chapter[1]}${cls === "is-next" ? " ›" : ""}</button>` : "<span></span>";
 
   const draw = () => {
     const at = LIST.findIndex(([id]) => id === current);
@@ -73,7 +71,7 @@ window.Pie = window.Pie || {};
       <article class="board-card method-article${typeof body === "function" ? " has-tables" : ""}">
         <div class="method-pane-body">${typeof body === "function" ? body() : body}</div>
       </article>
-      ${LIST.length > 1 ? `<nav class="approach-steps" aria-label="Chapters">${step(LIST[at - 1], "Previous", "is-previous")}${step(LIST[at + 1], "Next", "is-next")}</nav>` : ""}`;
+`;  // no previous and next: the outline beside the chapter is the way between them
     for (const item of element.querySelectorAll(".board-outline [data-chapter-go]")) item.classList.toggle("is-current", item.dataset.chapterGo === current);
     // one fill that glides from the old chapter's row to the new, as the overview's outline moves its own
     const nav = element.querySelector(".board-outline"), on = nav?.querySelector(".is-current");

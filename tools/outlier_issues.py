@@ -40,7 +40,7 @@ f.onload = () => setTimeout(() => { try {
   const w = f.contentWindow, P = w.Pie, names = P.store.names;
   const list = P.board.outliers().map((o) => ({ ...o,
     platform: P.platformOf(P.store.index.hardware[o.hardware] || {}),
-    machine: names.of("hardware", o.hardware), modelName: names.model(o.model), bestName: names.engine(o.best) }));
+    machine: names.of("hardware", o.hardware), modelName: names.model(o.model), bestName: names.engine(o.best), engineName: names.engine(o.engine) }));
   const hardware = {}, machines = {}, models = {};
   for (const h of P.store.tables.hardware || []) { hardware[h.id] = P.platformOf(h); machines[h.id] = names.of("hardware", h.id); }
   for (const m of P.store.tables.models || []) models[m.id] = names.model(m.id);
@@ -92,7 +92,7 @@ def body(platform: str, cells: list[dict], reports: list[dict] = (), names: dict
     num = lambda v, unit: f"{round(v):,} {unit}"
     parts = []
     # the site's own type names, each with its colour (Pie Reports' Type filter)
-    for above, heading in ((True, "🟧 Exceeds Limit"), (False, "🟥 Behind Competitor")):
+    for above, heading in ((True, "🟧 Exceeds Limit"),):
         kind = [c for c in cells if c["above"] == above]
         if not kind:
             continue
@@ -102,9 +102,8 @@ def body(platform: str, cells: list[dict], reports: list[dict] = (), names: dict
             if not group:
                 continue
             # the last column opens Pie Reports on just that cell
-            rows = "\n".join(f"| {c['modelName']}{' (slice)' if c.get('miniature') else ''} | {c['machine']} | {num(c['pie'], c['unit'])} | "
-                             f"{c['bestName']} {num(c['bestValue'], c['unit'])} | {pct(c['gain'])} | [Open]({SITE}/#reports/{c['hardware']}/{c['model']}/{c['setup']}) |" for c in group)
-            parts.append(f"### {setup} [{len(group)}]\n\n| Model | Machine | Pie | Strongest competitor | Pie vs it | |\n|---|---|---|---|---|---|\n{rows}")
+            rows = "\n".join(f"| {c['engineName']} | {c['modelName']}{' (slice)' if c.get('miniature') else ''} | {c['machine']} | {num(c['pie'], c['unit'])} | [Open]({SITE}/#reports/{c['hardware']}/{c['model']}/{c['setup']}) |" for c in group)
+            parts.append(f"### {setup} [{len(group)}]\n\n| Engine | Model | Machine | Measured | |\n|---|---|---|---|---|\n{rows}")
     # the reports people filed on the site, newest first, each opening Pie Reports on its machine and model
     if reports:
         names = names or {}
@@ -143,7 +142,7 @@ def closed_keys(site: Path) -> set[str]:
 
 def sync(site_data: dict, site: Path) -> None:
     closed = closed_keys(site)
-    shut = lambda c: f"{c['hardware']}|{c['model']}|{c['setup']}" in closed
+    shut = lambda c: f"{c['engine']}|{c['hardware']}|{c['model']}|{c['setup']}" in closed
     all_cells = [c for c in site_data["list"] if not shut(c)]
     closed_cells = [c for c in site_data["list"] if shut(c)]
     try:

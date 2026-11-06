@@ -11,10 +11,11 @@ window.Pie = window.Pie || {};
     { id: "platforms", label: "Platforms" },
     { id: "measurements", label: "Measurements" },  // open to everyone for now (login: true closes it again)
     { id: "catalog", label: "Catalog" },  // open to everyone for now (login: true closes it again)
-    { id: "resources", label: "Resources", login: true },  // how the numbers are worked out, after the data itself
+    { id: "resources", label: "Resources" },  // how the numbers are worked out, after the data itself
   ];
   // the sections an account opens: hidden, and their pages closed, until the viewer logs in (ui/account.js)
-  Pie.signedIn = () => Boolean(Pie.account?.user());
+  // everything on the site is public: no page, section or card waits for an account
+  Pie.signedIn = () => true;
   Pie.isOpen = (table) => Pie.signedIn() || !Pie.sections.find((s) => s.id === Pie.schema[table]?.section)?.login;
 
   Pie.schema = {
@@ -243,7 +244,7 @@ window.Pie = window.Pie || {};
 
     // a measurement that looks wrong, reported by a visitor and closed by a maintainer with its fix
     reports: {
-      label: "Pie Reports",
+      label: "CI Reports",
       section: "measurements",
       view: "reports",
       filters: [],

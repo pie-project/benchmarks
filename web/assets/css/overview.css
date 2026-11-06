@@ -1367,3 +1367,8 @@
 .reports-status-pick { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; }
 .reports-status-pick .popup-chevron { width: 7px; height: 10px; opacity: 0; transition: opacity .12s; }
 .reports-table tr:hover .reports-status-pick .popup-chevron, .reports-status-pick[aria-expanded="true"] .popup-chevron { opacity: .6; }
+/* the Reports table: each column as wide as what it holds, the room left over taken by the last, its issue link at the far right */
+.reports-table { width: 100%; table-layout: auto; }
+.reports-table th, .reports-table td { width: 1%; white-space: nowrap; }
+.reports-table th:last-child, .reports-table td.reports-fix-cell { width: auto; text-align: right; }
+.reports-table td.is-wide { max-width: none; }

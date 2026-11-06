@@ -461,3 +461,5 @@
 .board-card-picks { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 6px; }  /* the setup pick, Reports under it, both at the right */
 .board-pick-flag { width: 12px; height: 12px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .board-pick-count { margin-left: 2px; color: var(--color-label-secondary); font-variant-numeric: tabular-nums; }
+/* Spread: each dot in its engine's colour; one above the theoretical limit ringed in orange, a measurement to check */
+.board-cell.is-over .board-cell-dot { stroke: #FF9500; stroke-width: 1.6; }
