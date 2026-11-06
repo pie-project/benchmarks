@@ -128,6 +128,7 @@
         document.getElementById("filter-list").insertAdjacentHTML("afterbegin", state.table === "reports" ? Pie.reports.bar() : Pie.gaps.bar());  // its Type or Gap filter
         document.getElementById("report-selected").hidden = true;  // the Report button belongs to the measurement tables
         document.getElementById("download-rows").hidden = true;  // and so does Download
+        document.getElementById("table-keys").hidden = true;  // and the row colours' keys
       }
       // Quality counts its machines and models under its title, as a grid page does
       toolbar.elements.subtitle.textContent = state.table === "board" ? "Engine Analysis"

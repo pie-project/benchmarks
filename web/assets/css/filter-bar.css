@@ -161,3 +161,7 @@
 .date-foot { display: flex; align-items: center; justify-content: space-between; min-height: 22px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-separator); color: var(--color-label-secondary); }
 .date-clear { padding: 0; border: 0; background: none; font: inherit; color: var(--color-accent); cursor: pointer; }
 .date-empty { margin: 4px 0; color: var(--color-label-secondary); }
+
+/* the row colours' keys before the bar's buttons, as a grid's bar sets its CI Error key */
+.table-keys { display: inline-flex; align-items: center; gap: 12px; margin-right: 8px; }
+.table-keys[hidden], .table-keys .platform-key[hidden] { display: none; }
