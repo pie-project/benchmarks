@@ -107,9 +107,9 @@ unsupported:
   # miniature's experts (b200-x1)
   - when: {engine: trtllm, family: minimax_m3}
     reason: "TensorRT-LLM 1.4.0rc2.post1 has no MoE kernel for MiniMax-M3.1-Flash's experts on these GPUs (SM80/SM90/SM120), and its loader refuses the miniature on SM100"
-  # gpt-oss's MXFP4 experts have no SM80 MoE kernel ("no MoE implementation can serve this layer", a100-sxm-x1)
-  - when: {engine: trtllm, family: gpt_oss, arch: ampere}
-    reason: "TensorRT-LLM has no MXFP4 MoE kernel on Ampere (SM80/SM86) for gpt-oss"
+  # gpt-oss's MXFP4 experts have no SM80/SM89 MoE kernel ("no MoE implementation can serve this layer", a100-sxm-x1, l40s-x1)
+  - when: {engine: trtllm, family: gpt_oss, arch: [ampere, ada]}
+    reason: "TensorRT-LLM has no MXFP4 MoE kernel on Ampere or Ada (SM80-SM89) for gpt-oss"
   # Gemma-4-31B bf16: TensorRT-LLM's worker process died initialising it on every 80-141 GB card ("MPI worker exited
   # unexpectedly", a100-sxm-x1, h100-sxm-x1, h200-x1); it serves on the 180 GB B200
   - when: {engine: trtllm, artifact: gemma-4-31b-bf16, platform: [a100-sxm-x1, h100-sxm-x1, h200-x1]}
