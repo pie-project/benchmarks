@@ -177,7 +177,8 @@ jobs:
           # the node clones from the mirror and restores the cached build. Macs: a resident checkout under $HOME.
           echo "PIE_ROOT=${PIE_ROOT:-$HOME/pie}" >> "$GITHUB_ENV"
       - name: baseline engines
-        if: runner.os == 'macOS' && (contains(inputs.engines, 'mlxlm') || contains(inputs.engines, 'llamacpp'))
+        env: { GH_TOKEN: "${{ github.token }}" }
+        if: runner.os == 'macOS' && (contains(inputs.engines, 'mlxlm') || contains(inputs.engines, 'llamacpp') || contains(inputs.engines, 'vllm-metal'))
         run: |
           pin() { .venv/bin/python -c "import yaml,sys; print({e['id']: e for e in yaml.safe_load(open('matrix/engines.yaml'))['engines']}[sys.argv[1]]['pin'])" "$1"; }
           d="$HOME/.cache/pie-evals/baselines"; mlx=$(pin mlxlm); llama=$(pin llamacpp)
@@ -190,6 +191,11 @@ jobs:
           vlm="$d/mlx-vlm-0.7.11"
           [ -x "$vlm/bin/python" ] || { uv venv --quiet --python 3.12 "$vlm" && uv pip install --quiet --python "$vlm/bin/python" "mlx-vlm==0.7.11"; }
           echo "MLX_VLM_PY=$vlm/bin/python" >> "$GITHUB_ENV"
+          # vllm-metal (vLLM's Apple Silicon plugin) at its pin, installed as its install.sh does
+          if [[ ",${{ inputs.engines }}," == *",vllm-metal,"* ]]; then
+            vm=$(pin vllm-metal); bash infra/ci/mac-vllm-metal.sh "$vm" "$d/vllm-metal-$vm"
+            echo "VLLM_METAL_PY=$d/vllm-metal-$vm/bin/python" >> "$GITHUB_ENV"
+          fi
       - name: splash
         if: runner.os == 'macOS' && contains(inputs.engines, 'splash')
         run: |

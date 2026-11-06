@@ -48,6 +48,15 @@ engines:
     recipe: competitive
     pin: "0.31.3"
     release_source: pypi:mlx-lm
+  # vLLM's Apple Silicon plugin (vllm-project/vllm-metal): vLLM's server and scheduler over MLX models, on the MLX
+  # checkpoints mlx-lm serves. Installed as its install.sh does: the release's wheel, the vLLM core it names, its torch pins
+  - id: vllm-metal
+    os: [macos]
+    formats: [mlx]
+    tiers: [targeted]
+    recipe: competitive
+    pin: "0.33.0"
+    release_source: github:vllm-project/vllm-metal
   - id: splash
     os: [macos]
     formats: [splash]

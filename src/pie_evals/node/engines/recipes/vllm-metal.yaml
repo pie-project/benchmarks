@@ -1,0 +1,42 @@
+# vllm-metal recipes. The adapter boots `vllm serve` (vLLM's Apple Silicon plugin) once per model with
+# `--max-num-seqs <slots>` and `--max-model-len <context>`. Knob -> flag mapping is in VllmMetalEngine.server_cmd.
+
+default:
+  knobs:
+    prefix_caching:
+      value: false
+      rationale: >
+        Off, as for vLLM on the GPUs: a closed-loop client reusing a prompt would otherwise
+        measure the cache, and pie runs without one on these shapes.
+    gpu_mem_util:
+      value: null
+      rationale: null keeps vllm-metal's own KV sizing for unified memory (its default).
+    multimodal_mode:
+      value: text-only
+      rationale: >
+        A text benchmark: the text model, as mlx-lm serves it. Gemma 4's vision sidecar would
+        load encoder weights no request uses.
+    startup_timeout:
+      value: 900
+      rationale: A 30B 4-bit checkpoint pages in for minutes on a laptop-class Mac, and vLLM warms up after it.
+    server_extra:
+      value: []
+      rationale: Extra server flags.
+    flush_cache:
+      value: true
+      rationale: Single stream prefill must not be a prefix cache hit.
+    speculation:
+      value: "off"
+      rationale: Plain decoding, as the other Mac engines' plain rows.
+
+competitive:
+  extends: default
+  workload_kind:
+    prefix_shared:
+      knobs:
+        prefix_caching:
+          value: true
+          rationale: vLLM's prefix cache is its equivalent of pie's prefix tree on the prefix shape.
+        flush_cache:
+          value: false
+          rationale: The shared prefix must stay as written for the cache to find it.

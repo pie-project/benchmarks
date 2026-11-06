@@ -9,6 +9,7 @@ Pie.engines = {
     mlxlm: "var(--color-engine-mlxlm)",
     splash: "var(--color-engine-splash)",
     vllm: "var(--color-engine-vllm)",
+    "vllm-metal": "var(--color-engine-vllm-metal)",
     sglang: "var(--color-engine-sglang)",
   },
 

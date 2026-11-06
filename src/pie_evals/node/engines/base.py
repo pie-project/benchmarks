@@ -615,6 +615,6 @@ def register(cls: type[Engine]) -> type[Engine]:
 
 def get_engine(name: str | EngineName) -> type[Engine]:
     # import side effects register the adapters
-    from . import llamacpp, mlxlm, pie, sglang, splash, trtllm, vllm  # noqa: F401
+    from . import llamacpp, mlxlm, pie, sglang, splash, trtllm, vllm, vllm_metal  # noqa: F401
 
     return _REGISTRY[str(name)]

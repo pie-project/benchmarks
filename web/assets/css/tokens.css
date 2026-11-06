@@ -54,6 +54,7 @@
   --color-engine-mlxlm: #af52de;
   --color-engine-splash: #30b0c7;
   --color-engine-vllm: #ff2d55;
+  --color-engine-vllm-metal: #5856d6;
   --color-engine-sglang: #34c759;
   --color-engine-default: #a3a3a3;
 
@@ -115,6 +116,7 @@
   --color-engine-mlxlm: #bf5af2;
   --color-engine-splash: #40c8e0;
   --color-engine-vllm: #ff375f;
+  --color-engine-vllm-metal: #5e5ce6;
   --color-engine-sglang: #30d158;
 
   --color-card: #2a2a2c;

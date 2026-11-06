@@ -139,7 +139,7 @@ suites:
         tp: 1
         os: macos
         workload: [ob-story-200, ob-512-200, raw-512-256, spec-512-256, ob-short-100, ob-advanced-500, ctx-4k-256, ctx-8k-256, c4, ss-512-256, c32, c8, pf256-512, pf32-512, pf8-512]
-      - engine: [llamacpp, mlxlm, splash]
+      - engine: [llamacpp, mlxlm, splash, vllm-metal]
         baseline: true
         program: text-completion-bench
         artifact_kind: full
@@ -154,7 +154,7 @@ suites:
         tp: 1
         os: macos
         workload: [raw-512-256, spec-512-256, c32, c8, pf32-512, pf8-512]
-      - engine: [llamacpp, mlxlm, splash]
+      - engine: [llamacpp, mlxlm, splash, vllm-metal]
         baseline: true
         program: text-completion-bench
         artifact_kind: miniature
@@ -169,7 +169,7 @@ suites:
         tp: 1
         os: macos
         workload: [cold-ss-128-64, cold-ss-512-200, cold-ctx-4k-256]
-      - engine: [mlxlm, llamacpp, splash]
+      - engine: [mlxlm, llamacpp, splash, vllm-metal]
         baseline: true
         program: text-completion-bench
         artifact_kind: full
@@ -184,7 +184,7 @@ suites:
         tp: 1
         os: macos
         workload: [raw-512-256, c32, c8, pf256-512, pf32-512, pf8-512]
-      - engine: [mlxlm, llamacpp, splash]
+      - engine: [mlxlm, llamacpp, splash, vllm-metal]
         baseline: true
         program: text-completion-bench
         artifact: [qwen3.8-flash-next-mlx2-mini8-mlxlm, qwen3.8-flash-next-q2k-mini8-llamacpp, qwen3.8-flash-next-q2k-mini8-splash]
