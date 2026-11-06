@@ -320,9 +320,18 @@ def checks(obj, tier):
     for r in lengths:
         click.echo(f"::warning::output length {r['engine']} {r['platform']} {r['model']} {r['workload']}: {r['gap_rel']*100:+.0f}% tokens per request against pie")
     prompts = rp.prompt_length_mismatches(m, st, t)
+    # only a pair measured in the last two days fails the collect: an old pair no run measures again (a retired
+    # machine's rows) stays a warning, so it cannot turn every later collect red and hide a real failure
+    from datetime import datetime, timedelta, timezone
+    recent = datetime.now(timezone.utc) - timedelta(days=2)
+    fresh = []
     for r in prompts:
-        click.echo(f"::error::prompt length {r['platform']} {r['model']} {r['workload']}: engines prefill different prompts, mean tokens per request {r['per_request']}")
-    if prompts:
+        at = r["newest"] if r["newest"].tzinfo else r["newest"].replace(tzinfo=timezone.utc)
+        level = "error" if at >= recent else "warning"
+        click.echo(f"::{level}::prompt length {r['platform']} {r['model']} {r['workload']}: engines prefill different prompts, mean tokens per request {r['per_request']}")
+        if level == "error":
+            fresh.append(r)
+    if fresh:
         raise SystemExit(3)
 
 
