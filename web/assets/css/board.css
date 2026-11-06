@@ -495,3 +495,23 @@
 #approach.method:not([hidden]) { display: flex; flex-direction: column; }
 #approach > .board-inner { flex: none; width: 100%; }
 #approach > .board-footer { margin-top: auto; background: none; }
+.board-outline-head { font-weight: 400; }  /* the outlines' section names plain, as the sidebar's */
+/* At a Glance: the counts as small solid chips, each in a colour of the site's palette, the figure and its word in
+   white; two rows of three packed left (the effort, then the coverage), the two links stacked level with them at the right */
+.board-welcome { position: relative; }
+.board-welcome .board-welcome-stats { display: flex; flex-wrap: wrap; gap: 0 8px; margin-top: 20px; }
+.board-welcome .board-welcome-stats::before { content: ""; order: 1; flex-basis: 100%; height: 0; }  /* the break after the third */
+.board-welcome .board-welcome-stats > div, .board-welcome .board-welcome-stats > div:first-child {
+  display: flex; flex: none; flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 5px;
+  height: 24px; padding: 0 10px; border: 0; border-radius: 6px; background: var(--chip); }
+.board-welcome .board-welcome-stats > div:nth-child(1) { --chip: #0A84FF; }
+.board-welcome .board-welcome-stats > div:nth-child(2) { --chip: #34C759; }
+.board-welcome .board-welcome-stats > div:nth-child(3) { --chip: #7a4cf5; }
+.board-welcome .board-welcome-stats > div:nth-child(4) { --chip: #FF9500; }
+.board-welcome .board-welcome-stats > div:nth-child(5) { --chip: #FF2D55; }
+.board-welcome .board-welcome-stats > div:nth-child(6) { --chip: var(--color-engine-splash); }
+.board-welcome .board-welcome-stats > div:nth-child(n + 4) { order: 2; margin-top: 8px; }
+.board-welcome .board-welcome-stats dt { font-size: 12px; line-height: 1; color: rgba(255, 255, 255, .85); text-transform: lowercase; }
+.board-welcome .board-welcome-stats dd { margin: 0; font: 600 12px/1 var(--font-text, inherit); letter-spacing: 0; color: #fff; }
+.board-welcome .board-welcome-actions { position: absolute; right: 0; bottom: 0; margin: 0; flex-direction: column; align-items: flex-end; gap: 8px; }
+.board-welcome .board-welcome-actions > * { justify-content: flex-start; }
