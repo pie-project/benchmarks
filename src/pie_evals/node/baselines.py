@@ -224,6 +224,31 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
 ensure_nvcc = ensure_cuda_devkit  # the old name
 
 
+def ensure_nvrtc_matches_toolkit(py: Path, log=print) -> None:
+    """TensorRT-LLM's trtllm-gen kernels JIT through the venv's pip NVRTC against the pod's CUDA headers, and
+    NVRTC 13.0 refused the 13.4 headers ("identifier cudaFabricOpStatusSource is undefined", b200-x1): the pip
+    NVRTC follows the toolkit's minor."""
+    import json as _json
+
+    try:
+        tk = _json.loads(Path("/usr/local/cuda/version.json").read_text())["cuda"]["version"]
+    except (OSError, KeyError, ValueError):
+        real = Path("/usr/local/cuda").resolve().name  # cuda-13.4
+        tk = real.split("-", 1)[1] if "-" in real else ""
+    mm = ".".join(tk.split(".")[:2])
+    if not mm:
+        return
+    try:
+        have = subprocess.run([str(py), "-c", "from importlib.metadata import version as v; print(v('nvidia-cuda-nvrtc'))"],
+                              capture_output=True, text=True, timeout=60).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return
+    if not have or have.startswith(mm + "."):
+        return
+    log(f"baseline: pip NVRTC {have} beside the CUDA {mm} toolkit; installing nvidia-cuda-nvrtc=={mm}.*")
+    subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), f"nvidia-cuda-nvrtc=={mm}.*"], check=False, timeout=900)
+
+
 def ensure_mpi(log=print) -> bool:
     """TensorRT-LLM imports mpi4py at start, even on one GPU, and mpi4py loads the system's
     libmpi; the runner image has none. Open MPI from the image's apt repo, once per pod."""
@@ -416,6 +441,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
             if not (d / "bin" / "pip").exists() and shutil.which("uv"):
                 # DeepGEMM locates its JIT headers through `pip show tensorrt_llm`; a uv venv has no pip
                 subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "pip"], check=False, timeout=600)
+            ensure_nvrtc_matches_toolkit(py, log=log)
         if fork:
             ensure_fork(engine, version, py, log=log, backend=backend)
         if cuda:
@@ -454,6 +480,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     if engine == "trtllm":
         ensure_cuda_devkit(py, log=log)
         subprocess.run(["uv", "pip", "install", "--quiet", "--python", str(py), "pip"], check=False, timeout=600)
+        ensure_nvrtc_matches_toolkit(py, log=log)
     if fork:
         ensure_fork(engine, version, py, log=log, backend=backend)
     if cuda:
