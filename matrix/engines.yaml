@@ -41,6 +41,23 @@ engines:
     recipe: competitive
     pin: "b11312"
     release_source: github:ggml-org/llama.cpp
+  # in a browser tab on WebGPU (the webgpu platforms: headless Chrome on the GPU); pie runs there as its browser runtime
+  - id: webllm
+    os: [linux]
+    backends: [webgpu]
+    formats: [mlc]
+    tiers: [targeted]
+    recipe: competitive
+    pin: "0.2.87"   # @mlc-ai/web-llm, with its prebuilt v0_2_87 WebGPU model libraries
+    release_source: github:mlc-ai/web-llm
+  - id: llamacpp-webgpu
+    os: [linux]
+    backends: [webgpu]
+    formats: [gguf]
+    tiers: [targeted]
+    recipe: competitive
+    pin: "b11312"   # the native llama.cpp rows' release, built for the browser (emscripten, ggml-webgpu, JSPI)
+    release_source: github:ggml-org/llama.cpp
   - id: mlxlm
     os: [macos]
     formats: [mlx]

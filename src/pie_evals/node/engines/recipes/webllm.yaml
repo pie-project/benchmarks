@@ -1,0 +1,24 @@
+# WebLLM recipes (browser.py WebllmEngine). The tab loads the artifact's -MLC weights and the WebGPU model library
+# web-llm 0.2.87 ships for it (mlc-ai/binary-mlc-llm-libs, web-llm-models/v0_2_87/base), both from local disk.
+
+default:
+  knobs:
+    context_window_size:
+      value: 4096
+      rationale: web-llm's own record for these builds; raised to the shape's context when that is longer.
+    flush_cache:
+      value: true
+      rationale: every prompt shuffled, so no request reuses another's prefix (web-llm keeps no cross-request cache anyway).
+    startup_timeout:
+      value: 1200
+      rationale: the tab copies the weights into the origin's Cache API, then onto the GPU, and compiles its shaders.
+  artifact:
+    qwen3.5-4b-webllm:
+      model_lib: {value: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_87/base/Qwen3.5-4B-q4f16_1_cs1k-webgpu.wasm", rationale: "web-llm 0.2.87's prebuilt library for this build (prebuiltAppConfig)"}
+    qwen3.5-9b-webllm:
+      model_lib: {value: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_87/base/Qwen3.5-9B-q4f16_1_cs1k-webgpu.wasm", rationale: "web-llm 0.2.87's prebuilt library for this build (prebuiltAppConfig)"}
+    gemma-4-e2b-webllm:
+      model_lib: {value: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_87/base/gemma-4-E2B-it-q4f16_1_cs512-webgpu.wasm", rationale: "web-llm 0.2.87's prebuilt library for this build (prebuiltAppConfig)"}
+
+competitive:
+  extends: default

@@ -1352,3 +1352,93 @@ def test_trtllm_runs_on_nvidia_gpus_only():
     m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
     cells = [c for c in m.expand(platforms={"l40s-x1", "tpu-v6e-1", "mi300x-x1"}, artifacts={"qwen3.5-0.8b-bf16"}) if str(c.engine) == "trtllm"]
     assert cells and {c.platform.id for c in cells} == {"l40s-x1"}
+
+
+# ---- browser engines (webgpu platforms) -------------------------------------
+
+
+def _browser_stubs(monkeypatch, tmp_path):
+    from pie_evals.node.engines import browser
+
+    monkeypatch.setattr(browser, "ensure_harness", lambda log=print: "/usr/bin/node")
+    monkeypatch.setenv("PIE_EVALS_CACHE", str(tmp_path / "cache"))
+    return browser
+
+
+def _options(cmd: list[str]) -> dict:
+    return json.loads(flag_value(cmd, "--options"))
+
+
+def test_pie_on_a_webgpu_platform_is_its_browser_runtime():
+    from pie_evals.node.engines.browser import LlamacppWebgpuEngine, PieWebEngine, WebllmEngine
+
+    assert get_engine("pie", "webgpu") is PieWebEngine
+    assert get_engine("pie", "cuda") is PieEngine and get_engine("pie") is PieEngine
+    assert get_engine("webllm") is WebllmEngine and get_engine("llamacpp-webgpu") is LlamacppWebgpuEngine
+
+
+def test_webllm_serves_the_mlc_build_and_its_library_from_disk(monkeypatch, tmp_path):
+    browser = _browser_stubs(monkeypatch, tmp_path)
+    snap = tmp_path / "snap"
+    snap.mkdir()
+    (snap / "mlc-chat-config.json").write_text("{}")
+    lib = tmp_path / "lib.wasm"
+    lib.write_text("wasm")
+    art = artifact(id="qwen3.5-4b-webllm", base_model="mlc-ai/Qwen3.5-4B-q4f16_1-MLC", family="qwen3_5", scheme="mlc_q4f16_1",
+                   source_format="mlc", tokenizer_from="mlx-community/Qwen3.5-4B-4bit")
+    eng = make(browser.WebllmEngine, plat=platform(backend=Backend.WEBGPU, count=1), art=art)
+    eng.recipe["snapshot_dir"] = str(snap)
+    monkeypatch.setattr(browser.WebllmEngine, "model_lib", lambda self: lib)
+    cmd = eng.server_cmd(8124, 1, 1024)
+    assert cmd[1].endswith("bridge.mjs") and flag_value(cmd, "--engine") == "webllm"
+    files = Path(flag_value(cmd, "--files"))
+    assert (files / "model" / "resolve" / "main").resolve() == snap.resolve() and (files / "lib.wasm").resolve() == lib.resolve()
+    assert _options(cmd)["overrides"]["context_window_size"] == 4096 and eng.model_arg() == "mlx-community/Qwen3.5-4B-4bit"
+    argv = argv_for(eng, WORKLOADS["ss-128-64"], tmp_path)
+    assert argv[1].endswith("browser_bench.py") and "--ignore-eos" in argv and flag_value(argv, "--engine-name") == "webllm"
+
+
+def test_llamacpp_webgpu_gets_a_slot_per_request_and_the_whole_context_each(monkeypatch, tmp_path):
+    browser = _browser_stubs(monkeypatch, tmp_path)
+    gguf = tmp_path / "m.gguf"
+    gguf.write_text("gguf")
+    art = artifact(id="qwen3.5-4b-llamacpp", base_model="unsloth/Qwen3.5-4B-GGUF", family="qwen3_5", scheme="gguf_q4_k_m",
+                   source_format="gguf", gguf_file="m.gguf", tokenizer_from="mlx-community/Qwen3.5-4B-4bit")
+    eng = make(browser.LlamacppWebgpuEngine, plat=platform(backend=Backend.WEBGPU, count=1), art=art)
+    monkeypatch.setattr(browser.LlamacppEngine, "gguf_path", lambda self: gguf)
+    monkeypatch.setattr(browser.LlamacppWebgpuEngine, "build_dir", lambda self: tmp_path)
+    o = _options(eng.server_cmd(8125, 32, 768))
+    assert o["n_slots"] == 32 and o["n_ctx"] == 32 * 768 and o["n_batch"] == 2048 and o["n_ubatch"] == 512
+
+
+def test_pie_in_the_tab_sizes_its_pool_and_slots_to_the_shape(monkeypatch, tmp_path):
+    browser = _browser_stubs(monkeypatch, tmp_path)
+    zt = tmp_path / "a.qwen35-d4b-u4g64-kv-bf16.wgpu.zt"
+    zt.write_bytes(b"\0" * 1024)
+    dist, wasm = tmp_path / "dist", tmp_path / "tcb.wasm"
+    dist.mkdir()
+    (dist / "pie.mjs").write_text("")
+    wasm.write_text("")
+    art = artifact(id="qwen3.5-4b-mlx4", base_model="mlx-community/Qwen3.5-4B-4bit", family="qwen3_5", scheme="affine_u4_g64", source_format="mlx")
+    plat = platform(backend=Backend.WEBGPU, count=1)
+    eng = make(browser.PieWebEngine, plat=plat, art=art, recipe_name="default")
+    eng.recipe["snapshot_dir"] = str(zt)
+    monkeypatch.setattr(browser.PieWebEngine, "web_dist", lambda self: dist)
+    monkeypatch.setattr(browser.PieWebEngine, "inferlet", lambda self: wasm)
+    o = _options(eng.server_cmd(8126, 32, 768))
+    assert "max_state_slots = 32\n" in o["config"] and "max_forward_requests = 32\n" in o["config"] and "max_model_len = 768\n" in o["config"]
+    # the CUDA rows' Gemma-4 max_forward_tokens (pie.yaml, arch ada) does not reach the tab
+    assert "max_forward_tokens = 2048\n" in o["config"]
+
+
+def test_the_webgpu_platforms_run_the_browser_engines_only():
+    from pie_evals.plan.matrix import Matrix
+    from pie_evals.schema import Tier
+
+    m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
+    cells = m.runnable(Tier.TARGETED, m.expand(platforms={"web-rtx4090"}))
+    engines = {str(c.engine) for c in cells}
+    assert engines == {"pie", "webllm", "llamacpp-webgpu"}
+    # WebLLM serves one request at a time: its batched rows are declared, not run
+    assert {c.workload.id for c in cells if str(c.engine) == "webllm"} == {"raw-512-256"}
+    assert len({c.artifact.id for c in cells if str(c.engine) == "pie"}) == 14

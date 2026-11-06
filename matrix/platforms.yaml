@@ -950,3 +950,28 @@ platforms:
     runner_labels: [tpu7x-4]
     tiers: [weekly]
     tpu: {machine_type: tpu7x-standard-4t, image: "tpu7x|ironwood|tpu-7", data_disk_gb: 400, zones: [us-central1-c, us-central1-ai1a]}
+  # Chrome on a GPU (WebGPU over Dawn's Vulkan backend on the NVIDIA driver, headless): pie's browser runtime
+  # and the browser engines (WebLLM, llama.cpp's WebGPU backend), each in one tab. The pod is a CUDA one started
+  # with NVIDIA_DRIVER_CAPABILITIES=all, so the driver's Vulkan ICD is mounted; nothing here uses CUDA.
+  - id: web-rtx4090
+    os: linux
+    backend: webgpu
+    accelerator: NVIDIA GeForce RTX 4090
+    arch: ada
+    count: 1
+    memory_gib: 24
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, web-rtx4090]
+    runpod_gpu_type: "NVIDIA GeForce RTX 4090"
+    tiers: [targeted]
+  - id: web-rtx5090
+    os: linux
+    backend: webgpu
+    accelerator: NVIDIA GeForce RTX 5090
+    arch: blackwell
+    count: 1
+    memory_gib: 32
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, web-rtx5090]
+    runpod_gpu_type: "NVIDIA GeForce RTX 5090"
+    tiers: [targeted]

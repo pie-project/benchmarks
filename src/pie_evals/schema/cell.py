@@ -36,6 +36,8 @@ class EngineName(StrEnumBase):
     LITERT = "litert"
     MLC = "mlc"
     MLX_SWIFT = "mlx-swift"
+    WEBLLM = "webllm"  # mlc-ai/web-llm in a browser tab (WebGPU)
+    LLAMACPP_WEBGPU = "llamacpp-webgpu"  # llama.cpp built for the browser (ggml-webgpu, emscripten)
 
 
 class Backend(StrEnumBase):
@@ -46,6 +48,7 @@ class Backend(StrEnumBase):
     VULKAN = "vulkan"
     WGPU = "wgpu"
     XLA = "xla"  # pie's TPU engine (engine-xla over libtpu)
+    WEBGPU = "webgpu"  # a browser tab on the machine's GPU (Chrome, Dawn's Vulkan backend): pie's WebGPU runtime and the browser engines
     ROCM = "rocm"  # AMD Instinct (MI300X, MI350X): pie's CUDA engine over HIP (--features rocm), vLLM's ROCm wheel, the AMD SGLang image
 
 
