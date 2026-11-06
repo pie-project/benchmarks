@@ -459,10 +459,13 @@ def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
     small = platform(count=1).model_copy(update={"memory_gib": 32.0})
     argv = argv_for(make(SglangEngine, plat=small, art=kimi, workload=conc(8)), conc(8), tmp_path)
     assert flag_value(argv, "--gpu-mem-util") == "0.95"
-    # gemma (sliding window) gets one uniform KV pool
-    eng = make(SglangEngine, art=artifact(id="gemma-4-e4b-bf16", base_model="google/gemma-4-E4B-it", family="gemma4"))
+    # a sliding-window gemma gets one uniform KV pool; Gemma-4 keeps the split full/SWA pools (recipes/sglang.yaml, #815)
+    eng = make(SglangEngine, art=artifact(id="gemma-3-4b-bf16", base_model="google/gemma-3-4b-it", family="gemma3"))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
     assert "--sglang-disable-hybrid-swa-memory" in argv
+    eng = make(SglangEngine, art=artifact(id="gemma-4-e4b-bf16", base_model="google/gemma-4-E4B-it", family="gemma4"))
+    argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
+    assert "--sglang-disable-hybrid-swa-memory" not in argv
 
 
 def test_sglang_heavy_checkpoint_gets_the_fraction_it_needs(tmp_path):
@@ -1079,6 +1082,7 @@ def test_an_idle_bench_is_stopped_as_a_hang():
     assert stalled and not timed_out and idle.poll() is not None
 
 
+@pytest.mark.skipif(not Path("/proc").is_dir(), reason="the dump reads each thread from /proc (Linux nodes)")
 def test_a_hang_leaves_a_dump_of_what_the_tree_was_doing():
     import subprocess
     import sys
@@ -1219,23 +1223,25 @@ def test_vllm_on_the_tpu_runs_its_tpu_build(tmp_path, monkeypatch):
     assert argv[2] == "tput" and argv[argv.index("--concurrency") + 1] == "1"
 
 
-def test_the_tpu_runs_pie_vllm_and_sglang_raw_only():
+def test_the_tpu_runs_pie_vllm_and_sglang_raw_prefill_and_batch_rows():
     from pie_evals.plan.matrix import Matrix
     from pie_evals.schema import Tier
 
     m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
-    cells = [c for c in m.runnable(Tier.WEEKLY) if c.platform.id == "tpu-v6e-1"]
+    cells = [c for c in m.runnable(Tier.WEEKLY, m.expand(platforms=["tpu-v6e-1"])) if c.platform.id == "tpu-v6e-1"]
     tpu = {(str(c.engine), c.artifact.id, c.workload.id) for c in cells}
     assert ("vllm", "qwen3.5-0.8b-bf16", "raw-512-256") in tpu and ("pie", "qwen3.5-0.8b-xla", "raw-512-256") in tpu
     assert {e for e, _, _ in tpu} == {"pie", "vllm", "sglang"}
-    # the GPU page's models too, where one 32 GB chip holds them (Qwen3.6-27B and gpt-oss-120b do not)
+    # every arm runs Raw and the 256-prompt prefill, and one batch as large as the chip holds; Qwen3.5-0.8B keeps its own shapes on pie
+    arms = {(e, a) for e, a, _ in tpu}
+    assert all((e, a, "raw-512-256") in tpu and (e, a, "pf256-512") in tpu for e, a in arms)
+    assert {w for e, a, w in tpu if a != "qwen3.5-0.8b-xla"} <= {"raw-512-256", "pf256-512", "c32", "c64", "c256"}
+    # the GPU page's models too, where one 32 GB chip holds them
     more = {"qwen3-0.6b-tpu", "gemma-4-e2b-tpu", "gemma-4-e4b-tpu", "gemma-4-12b-tpu", "gpt-oss-20b-tpu"}
-    # vLLM-TPU's gpt-oss MoE kernel does not compile before TPU7x (support.yaml)
-    assert {(a, w) for e, a, w in tpu if e == "vllm"} == {(a, "raw-512-256") for a in (more - {"gpt-oss-20b-tpu"}) | {"qwen3.5-0.8b-bf16"}}
+    # vLLM-TPU runs gpt-oss on its int8 requant (#1307); pie runs them all
+    assert more <= {a for e, a in arms if e == "vllm"} and more <= {a for e, a in arms if e == "pie"}
     # sglang-jax 0.1.0rc0 loads none of these gemma-4 checkpoints and has no mxfp4 (support.yaml)
-    assert {(a, w) for e, a, w in tpu if e == "sglang"} == {(a, "raw-512-256") for a in {"qwen3-0.6b-tpu", "qwen3.5-0.8b-bf16"}}
-    # the other models are Raw rows, on pie too
-    assert {(a, w) for e, a, w in tpu if e == "pie" and a in more} == {(a, "raw-512-256") for a in more}
+    assert {a for e, a in arms if e == "sglang"} & more == {"qwen3-0.6b-tpu"}
     # sglang-jax is versioned apart from sglang
     assert {c.engine_version for c in cells if str(c.engine) == "sglang"} == {m.engines["sglang"].backend_pins["xla"]}
 

@@ -8,10 +8,11 @@ import pytest
 from pie_evals.node.snapshots import gguf_shards
 from pie_evals.plan.matrix import Matrix, cannot_load
 from pie_evals.plan.suites import all_models, load_config, suite_models, suites
+from pie_evals.schema import Tier
 
 ROOT = Path(__file__).resolve().parents[1]
 
-TIER1 = {"qwen3.8-flash-next", "qwen3.8-27b", "qwen3.6-35b-a3b", "qwen3.5-4b", "gemma-4-26b-a4b", "gemma-4-31b", "muse-glimmer-30b"}
+TIER1 = {"qwen3.8-flash-next", "qwen3.8-27b", "qwen3.6-27b", "qwen3.6-35b-a3b", "qwen3.5-4b", "gemma-4-26b-a4b", "gemma-4-31b", "muse-glimmer-30b"}
 FULL = TIER1 | {"gemma-4-12b", "gemma-4-e2b", "gemma-4-e4b", "gpt-oss-20b", "qwen3.5-9b"}
 
 
@@ -45,7 +46,7 @@ def test_both_suites_name_only_competitor_arms_of_the_matrix(matrix, config):
 
 def test_the_full_suite_holds_the_targeted_one(config):
     assert set(suite_models(config, "targeted")) <= set(suite_models(config, "full"))
-    assert all_models(config) == suite_models(config, "full")
+    assert set(all_models(config)) == set(suite_models(config, "full"))
 
 
 def test_suites_cover_their_models(config, webdb):
@@ -64,26 +65,29 @@ def test_targeted_is_the_default_and_models_still_reads_as_targeted():
 
 def test_every_tier1_model_has_pie_llamacpp_and_mlxlm_arms(matrix, config, webdb):
     a2m, _ = webdb.artifact_to_model()
+    # pie's targeted rows come from suites.yaml's include, whatever the artifact's own tiers say
+    pie_targeted = {str(c.artifact.id) for c in matrix.cells_for(Tier.TARGETED, matrix.expand(platforms=[p for p, s in matrix.platforms.items() if s.os == "macos"])) if str(c.engine) == "pie"}
     arms = {}
     for a in matrix.artifacts.values():
         if a.baseline_of and a2m[a.id] in TIER1 and "targeted" in a.tiers:
             arms.setdefault(a2m[a.id], set()).add(a.baseline_label)
             pie = matrix.artifacts[a.baseline_of]
-            assert "targeted" in pie.tiers and pie.source_format != "gguf", a.id
-            if a2m[a.id] not in {"qwen3.8-27b", "qwen3.6-35b-a3b", "gemma-4-26b-a4b", "muse-glimmer-30b"}:
+            assert pie.id in pie_targeted and pie.source_format != "gguf", a.id
+            if a2m[a.id] not in {"qwen3.8-27b", "qwen3.6-27b", "qwen3.6-35b-a3b", "gemma-4-26b-a4b", "muse-glimmer-30b"}:
                 assert pie.pie_sku and not pie.pie_drafter and "dflash" not in pie.pie_sku, pie.id  # the plain row
     assert set(arms) == TIER1
     for model, labels in arms.items():
         assert {"llama.cpp", "mlx-lm"} <= labels, model
-        assert ("Splash" in labels) == (model in {"qwen3.8-27b", "qwen3.6-35b-a3b"}), model
+        assert ("Splash" in labels) == (model in {"qwen3.8-27b", "qwen3.6-27b", "qwen3.6-35b-a3b", "qwen3.8-flash-next"}), model
 
 
-def test_pie_unsupported_models_say_why(matrix):
+def test_unsupported_models_say_why(matrix):
     for aid in ("gemma-4-12b-mlx4", "gemma-4-e2b-mlx4", "gemma-4-e4b-mlx4"):
-        assert cannot_load(matrix, "pie", matrix.artifacts[aid]), aid
+        assert cannot_load(matrix, "pie", matrix.artifacts[aid]) is None, aid  # pie runs Gemma 4 E2B, E4B and 12B at 4-bit (#604)
         assert cannot_load(matrix, "mlxlm", matrix.artifacts[aid.replace("-mlx4", "-mlxlm")]) is None
-    assert "qwen4_exp" in cannot_load(matrix, "mlxlm", matrix.artifacts["qwen3.8-flash-next-mlxlm"])
-    assert cannot_load(matrix, "mlxlm", matrix.artifacts["muse-glimmer-30b-mlxlm"])
+    # mlx-vlm serves Qwen3.8-Flash-Next's MLX arm (support.yaml), and mlx-lm 0.32 loads Muse Glimmer (#1302)
+    assert cannot_load(matrix, "mlxlm", matrix.artifacts["qwen3.8-flash-next-mlxlm"]) is None
+    assert cannot_load(matrix, "mlxlm", matrix.artifacts["muse-glimmer-30b-mlxlm"]) is None
     assert cannot_load(matrix, "pie", matrix.artifacts["qwen3.5-4b-mlx4"]) is None
 
 

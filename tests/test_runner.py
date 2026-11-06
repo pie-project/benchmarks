@@ -63,7 +63,7 @@ class FakeEngine(Engine):
 @pytest.fixture
 def job(tmp_path):
     m = Matrix.load(ROOT / "matrix")
-    cells = [c for c in m.runnable(Tier.SMOKE) if c.platform.id == "l40s-x1" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.program.id == "text-completion-bench" and c.mode.tp == 1]
+    cells = [c for c in m.runnable(Tier.SMOKE, m.expand(platforms=["l40s-x1"], artifacts=["qwen3.5-0.8b-bf16"])) if c.platform.id == "l40s-x1" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.program.id == "text-completion-bench" and c.mode.tp == 1]
     j = make_jobs(m, Tier.SMOKE, pie_commit="deadbeef", store=Store(tmp_path / "store"), platforms=["l40s-x1"], cells=cells)[0]
     assert {c.workload.id for c in j.cells} >= {"control-aa", "ss-128-64", "c8"}
     return j
@@ -72,7 +72,7 @@ def job(tmp_path):
 @pytest.fixture
 def mac_job(tmp_path):
     m = Matrix.load(ROOT / "matrix")
-    cells = [c for c in m.runnable(Tier.TARGETED) if c.platform.id == "m4-pro-48g" and c.artifact.id == "gemma-4-26b-a4b-mlx4" and str(c.engine) == "pie"]
+    cells = [c for c in m.runnable(Tier.TARGETED, m.expand(platforms=["m4-pro-48g"], artifacts=["gemma-4-26b-a4b-mlx4"])) if c.platform.id == "m4-pro-48g" and c.artifact.id == "gemma-4-26b-a4b-mlx4" and str(c.engine) == "pie"]
     c8 = WorkloadSpec(id="c8", kind="concurrency", params={"concurrency": 8, "num_requests": 32, "prefill": 128, "decode": 128}, est_minutes=1)
     cells.append(cells[0].model_copy(update={"workload": c8}))
     j = make_jobs(m, Tier.TARGETED, pie_commit="deadbeef", store=Store(tmp_path / "store"), platforms=["m4-pro-48g"], cells=cells)[0]
@@ -310,7 +310,7 @@ def test_heavy_model_on_a_small_mac_boots_short_and_long_shapes_apart():
     m = Matrix.load(ROOT / "matrix")
     lc16k = WorkloadSpec(id="lc-16k-128", kind="long_context", params={"prefill": 16384, "decode": 128, "concurrency": 1})
     for plat, split in (("m1-max-32g", True), ("m5-max-128g", False)):
-        cells = [c for c in m.runnable(Tier.TARGETED) if c.artifact.id == "gemma-4-26b-a4b-mlx4" and c.platform.id == plat and str(c.engine) == "pie"]
+        cells = [c for c in m.runnable(Tier.TARGETED, m.expand(platforms=[plat], artifacts=["gemma-4-26b-a4b-mlx4"])) if c.artifact.id == "gemma-4-26b-a4b-mlx4" and c.platform.id == plat and str(c.engine) == "pie"]
         cells.append(cells[0].model_copy(update={"workload": lc16k}))
         groups = {process_key(cells[0]): cells}
         out = split_heavy_processes(groups)
@@ -328,7 +328,7 @@ def test_heavy_model_on_a_small_mac_boots_short_and_long_shapes_apart():
 
 
 def test_recipe_keeps_the_knobs_the_server_booted_with(mac_job, monkeypatch):
-    monkeypatch.setattr(runner_mod, "load_recipe", lambda engine, name, plat, wl, family=None: {"num_parallel": "$serve_concurrency", "_recipe": name})
+    monkeypatch.setattr(runner_mod, "load_recipe", lambda engine, name, plat, wl, family=None, artifact=None: {"num_parallel": "$serve_concurrency", "_recipe": name})
     c8 = next(c for c in mac_job.cells if c.workload.id == "c8")
     assert runner_mod.recipe_for_cell({"num_parallel": 8}, "competitive", c8)["num_parallel"] == 8
     assert runner_mod.recipe_for_cell({}, "competitive", c8)["num_parallel"] == "$serve_concurrency"

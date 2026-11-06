@@ -110,6 +110,8 @@ def make_jobs(
     cells: list[Cell] | None = None,
     label: str | None = None,
 ) -> list[JobSpec]:
+    if cells is None and platforms:  # expand only the platforms asked for, not the whole matrix
+        cells = matrix.expand(platforms=platforms)
     cells = matrix.runnable(tier, cells)
     if platforms:
         cells = [c for c in cells if c.platform.id in platforms]
