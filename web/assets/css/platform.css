@@ -520,10 +520,10 @@
 .platform-bar-side.is-end { margin-left: auto; }
 
 /* every model column one width, the table as wide as its columns and set at the left */
-.platform-table { --col-w: 200px; min-width: 0; width: calc(190px + var(--col-w) * var(--cols)); }
+.platform-table { --col-w: 200px; min-width: calc(100% - 1px); width: calc(190px + var(--col-w) * var(--cols)); }  /* never short of its section: a grid of few models still spans it */
 @media (max-width: 899px) { .platform-table { width: max(100%, calc(116px + 96px * var(--cols))); } }
-.platform-table col.col-fill { width: 0; }  /* spare width goes to the model columns, never an empty band at the end */
-.platform-table .platform-fill { padding: 0; border: 0; }
+.platform-table col.col-fill { width: auto; }  /* spare width, when a grid is narrower than its section, goes after the last maker, whose band runs on over it; the model columns keep their width */
+.platform-table .platform-fill { padding: 0; border-left: 0; border-right: 0; }  /* its rows' lines run on to the end with the band above */
 
 /* a cell's quiet second line under the comparison on the feature views: what the feature adds over raw */
 .platform-main { display: block; line-height: 16px; }
@@ -546,6 +546,7 @@
   .platform-table.is-grouped td.is-overall,
   .platform-table.is-grouped th.is-overall { left: 386px; }
   .platform-table { width: calc(328px + var(--col-w) * (var(--cols) - 1)); }
+  .platform-table.is-tight { width: calc(160px + var(--col-w) * (var(--cols) - 1)); }  /* the narrowed hardware column (160px, no Overall): the table exactly its columns, no slack for the filler */
 }
 
 

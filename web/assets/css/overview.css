@@ -1354,6 +1354,7 @@
 /* Methodology in the Overview's shape: a section head over each chapter, the text in a board card at the Overview's
    padding, its lines held to a reading width; the chapters before and after as small picks */
 .approach-main { gap: 0; }
+#approach.method, #gaps.method { scrollbar-gutter: auto; }  /* no strip kept at the right for a scroll bar that is not there, as the other pages */
 .approach-main > .board-section-head { margin-bottom: 24px; }
 .approach-main > .method-article { padding: 24px 28px 28px; }
 /* every chapter straight on the page, no outline around it, as Apple's documentation sets an article */
