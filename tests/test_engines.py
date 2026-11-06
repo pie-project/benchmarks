@@ -1078,8 +1078,20 @@ def test_an_idle_bench_is_stopped_as_a_hang():
     from pie_evals.node.engines.base import wait_with_stall_check
 
     idle = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
-    rc, timed_out, stalled = wait_with_stall_check(idle, timeout_s=60, stall_s=2, poll_s=0.5)
+    rc, timed_out, stalled = wait_with_stall_check(idle, timeout_s=60, stall_s=2, poll_s=0.5, device_busy=lambda: False)
     assert stalled and not timed_out and idle.poll() is not None
+
+
+def test_a_bench_waiting_on_a_busy_mac_gpu_is_left_to_finish():
+    import subprocess
+    import sys
+
+    from pie_evals.node.engines.base import wait_with_stall_check
+
+    # pie on the M4 Pro: a minute-long Metal prefill fire, the tree's CPU flat meanwhile
+    waiting = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(4)"])
+    rc, timed_out, stalled = wait_with_stall_check(waiting, timeout_s=60, stall_s=2, poll_s=0.5, device_busy=lambda: True)
+    assert (rc, timed_out, stalled) == (0, False, False)
 
 
 @pytest.mark.skipif(not Path("/proc").is_dir(), reason="the dump reads each thread from /proc (Linux nodes)")
