@@ -251,7 +251,7 @@ window.Pie = window.Pie || {};
     const tight = Pie.state?.platform?.narrowBy?.[key] ?? (Pie.state?.platform?.narrow ?? true);
     const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
     // a model slice is what the Performance page marks so: a slice ran there, or the model does not fit
-    const nofit = (mac, model) => layout.sliced.has(`${mac}|${model}`) || Boolean(layout.grid[mac]?.[model]?.needs);
+    const nofit = (mac, model) => layout.sliced.has(`${mac}|${model}`) || Boolean(layout.grid[mac]?.[model]?.needs) || Boolean(klOf(mac, model, platform.id)?.miniature);
     const at = {};
     for (const mac of macs) for (const model of models) at[`${mac}|${model}`] = nofit(mac, model) ? { kl: klOf(mac, model, platform.id) } : { score: scoreOf(state, mac, model, platform.id) };
     const signed = (d) => `${d > 0.05 ? "+" : d < -0.05 ? "−" : ""}${Math.abs(d).toFixed(1)}`;

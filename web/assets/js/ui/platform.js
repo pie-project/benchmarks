@@ -1101,7 +1101,9 @@ window.Pie = window.Pie || {};
       const shows = (mac, model) => grid[mac][model].c || awaiting(mac, model) || ranAny.has(`${mac}|${realOf(model)}`);
       // a model's column, though, is there only where the setup and view on screen have a number for it: a slice's
       // column goes in Tokens per Second, and a model not run in this setup goes until one is picked that has it
-      const hasData = (mac, model) => grid[mac][model].c || awaiting(mac, model);
+      // the Quality grid also keeps a model whose slice has a first-token KL on a machine, though no other engine runs it there
+      const checked = new Set(dry ? (Pie.store.tables.quality_parity || []).filter((r) => !r.ref_unsupported && Number.isFinite(r.kl_mean)).map((r) => `${r.platform}|${r.model}`) : []);
+      const hasData = (mac, model) => grid[mac][model].c || awaiting(mac, model) || checked.has(`${mac}|${realOf(model)}`);
       // comparing engines, a model is shown on a machine only where two engines could run it there: an engine the machine
       // runs with a number, not run yet, a failed run or no row at all could still give one; "Not supported" and "Does not
       // fit" never will. A model no machine could compare on has no column; one merely not measured yet keeps it
@@ -1111,6 +1113,7 @@ window.Pie = window.Pie || {};
         if (r.workload === mode.workload) (modelRows.get(`${r.hardware}|${r.model}`) || modelRows.set(`${r.hardware}|${r.model}`, new Map()).get(`${r.hardware}|${r.model}`)).set(r.engine, r.status);
       }
       const comparable = (mac, model) => {
+        if (checked.has(`${mac}|${realOf(model)}`)) return true;
         const statuses = modelRows.get(`${mac}|${realOf(model)}`) || new Map();
         return [...(engineRuns.get(mac) || [])].filter((e) => !["unsupported", "no_fit"].includes(statuses.get(e))).length >= 2;
       };
