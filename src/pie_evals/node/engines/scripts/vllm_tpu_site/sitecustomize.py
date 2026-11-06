@@ -85,19 +85,27 @@ class _XlaCsaGather:
             import jax.numpy as jnp
 
             if name == _PROJ:
-                from tpu_inference.kernels.experimental.deepseek_v4.compress_and_store.project_and_save_state_ref import \
-                    ref_wkv_proj_and_save_state
+                import jax
 
                 def proj_and_save_state(hidden_states, wkv_wgate, ape, positions, slot_mapping, cache, compress_ratio, interpret=False):
-                    # the reference reads head_dim and overlap only as their product, the state width
+                    # tpu-inference's golden reference (project_and_save_state_ref) row for row, scattering only the
+                    # tokens' rows: the reference itself rewrites the whole cache each step (16.31G of temporaries on a v5e)
+                    num_pages, page_size, d1, d2 = cache.shape
                     state_dim = wkv_wgate.shape[1]
-                    slots_per_token = state_dim // (cache.shape[2] * cache.shape[3] // 4)
-                    return ref_wkv_proj_and_save_state(hidden_states, wkv_wgate, ape, positions, slot_mapping, cache,
-                                                       state_block_size=cache.shape[1] // slots_per_token,
-                                                       head_dim=state_dim // 2, compress_ratio=compress_ratio, overlap=False)
+                    width = state_dim // 2
+                    kv_score = jnp.matmul(hidden_states, wkv_wgate)
+                    packed = jnp.concatenate([kv_score[:, :width], kv_score[:, width:] + ape[jnp.mod(positions, compress_ratio)]], axis=-1)
+                    per_slot = d1 * d2 // 4  # f32 a slot holds
+                    spt = state_dim // per_slot
+                    n = packed.shape[0]
+                    rows = jax.lax.bitcast_convert_type(packed.astype(jnp.float32).reshape(n, spt, per_slot, 1), jnp.uint8)
+                    rows = rows.reshape(n, spt, d2, d1).transpose(0, 1, 3, 2)
+                    flat = cache.reshape(num_pages * (page_size // spt), spt, d1, d2)
+                    idx = jnp.where(slot_mapping >= 0, slot_mapping // spt, flat.shape[0])
+                    return flat.at[idx].set(rows, mode="drop").reshape(cache.shape)
 
                 module.proj_and_save_state = proj_and_save_state
-                sys.stderr.write("pie-evals: no SparseCore on this chip; DeepSeek-V4's proj_and_save_state runs as its XLA reference\n")
+                sys.stderr.write("pie-evals: no SparseCore on this chip; DeepSeek-V4's proj_and_save_state runs as an XLA scatter of its reference\n")
                 return
 
             def csa_gather(nope_cache, rope_cache, indices):
