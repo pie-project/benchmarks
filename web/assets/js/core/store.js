@@ -11,18 +11,20 @@ window.Pie = window.Pie || {};
   };
 
   // the platform a machine belongs to, as the sidebar groups them; the platform pages and the hardware table share it
-  Pie.platformOf = (hw) => (hw.class === "mac" || hw.vendor === "Apple" ? "mac"
+  Pie.platformOf = (hw) => (hw.class === "android" ? "android"  // a phone first: an iPhone's vendor is Apple too
+    : hw.class === "mac" || hw.vendor === "Apple" ? "mac"
     : hw.backend === "xla" ? "tpu"
     : hw.vendor === "NVIDIA" ? "nvidia"
     : hw.vendor === "AMD" ? "amd"
     : hw.vendor === "Cerebras" ? "cerebras"
-    : hw.class === "android" ? "android"
     : hw.class === "web" ? "web" : null);
   // each machine names its platform as the sidebar does, for the hardware table's Platform column and filter
   for (const hw of tables.hardware || []) {
     const id = Pie.platformOf(hw);
     if (id) hw.platform = Pie.schema[id]?.short || id;
   }
+  // the Mobile platform gets its page once a phone has sent rows (the benchmark app, mobile/)
+  if ((tables.hardware || []).some((hw) => Pie.platformOf(hw) === "android")) Pie.schema.android.section = "platforms";
 
   // what each workload is for: the limit it pushes against
   const GOALS = {
