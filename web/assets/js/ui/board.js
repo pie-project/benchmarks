@@ -712,12 +712,8 @@ window.Pie = window.Pie || {};
   // 2026-11-05) at ~1.95 runs each (a Batched Decode row sweeps up to four concurrencies, every other row is one run),
   // ~9,000, with the quality evals and failed runs that leaves out, 10,000
   const RUNS = 10000;
-  // past a hundred, a count reads as its floor with two figures kept ("20,000+"), so it stays true as the runs go on
-  const atLeast = (n) => {
-    if (n < 100) return String(n);
-    const step = 10 ** (String(Math.floor(n)).length - 2);
-    return `${(Math.floor(n / step) * step).toLocaleString("en-US")}+`;
-  };
+  // past a thousand, a count reads to its nearest thousand ("23,000+" for 23,051, "24,000+" for 23,999)
+  const atLeast = (n) => (n < 1000 ? String(n) : `${(Math.round(n / 1000) * 1000).toLocaleString("en-US")}+`);
   // led by the bars a measured release wears in the changelog, the site's own glyph
   const welcomeStat = () => `<div class="board-welcome-stat"><b>${Pie.icon("bars")}${esc(atLeast(Pie.store.tables.totals?.runs ?? RUNS))}</b> runs</div>`;
 
