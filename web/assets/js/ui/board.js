@@ -599,14 +599,13 @@ window.Pie = window.Pie || {};
         <div class="board-log-text">${mark}<span>${esc(text)}</span></div>
       </li>`;
   };
-  // the page's foot: one quiet line under a hairline, open source and the data's last update
+  // the page's foot: one quiet line under a hairline, the data's last update
   const footer = () => {
     const at = Pie.store.tables.updated_at ? new Date(Pie.store.tables.updated_at) : null;
     const when = at ? at.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
     return `
       <footer class="board-footer">
         <div class="board-footer-simple">
-          <span>Open source</span>
           ${when ? `<span class="board-footer-updated">Updated ${esc(when)}</span>` : ""}
         </div>
       </footer>`;
