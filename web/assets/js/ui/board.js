@@ -596,27 +596,16 @@ window.Pie = window.Pie || {};
         <div class="board-log-text">${mark}<span>${esc(text)}</span></div>
       </li>`;
   };
-  // the page's foot, as a Mac site closes its pages: a quiet band under a hairline, Pie's mark and a line, the site's
-  // pages in small grey columns, and the year and the data's last update on the last line. A page link opens its page as
-  // its sidebar row does; the project's links leave in a new tab
+  // the page's foot: one quiet line under a hairline, open source, its GitHub and the data's last update
   const footer = () => {
-    const page = (id) => Pie.schema[id] ? `<li><a href="#" data-board-open="${id}">${esc(Pie.schema[id].label)}</a></li>` : "";
-    const out = (href, text) => `<li><a href="${href}" target="_blank" rel="noopener">${esc(text)}</a></li>`;
     const at = Pie.store.tables.updated_at ? new Date(Pie.store.tables.updated_at) : null;
     const when = at ? at.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
-    const newest = changelog()[0]?.run?.id || "";
     return `
       <footer class="board-footer">
-        <div class="board-footer-band">
-          <div class="board-footer-about">
-            <p class="board-footer-lead">Measured in CI on real hardware: every engine on the same model and the same machine.</p>
-            <p class="board-footer-meta">${newest ? `Release ${esc(newest)}` : ""}${newest && when ? " · " : ""}${when ? `Data updated ${esc(when)}` : ""}</p>
-          </div>
-          ${Pie.schema.methods?.section && Pie.isOpen("methods") ? `<ul class="board-footer-trust"><li><a href="#" data-board-open="methods">How we measure</a></li></ul>` : ""}
-          <a class="board-footer-star" href="https://github.com/pie-project/pie" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Star on GitHub</a>
-        </div>
-        <div class="board-footer-base">
-          <span class="board-footer-links"><span class="board-footer-mark"><svg viewBox="0 0 67.89 67.89" aria-hidden="true"><path d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z"/></svg>Pie Project © ${new Date().getFullYear()}</span><a href="https://github.com/pie-project/pie/blob/main/LICENSE" target="_blank" rel="noopener">Apache 2.0 license</a><a href="https://github.com/pie-project/pie" target="_blank" rel="noopener">GitHub</a></span>
+        <div class="board-footer-simple">
+          <span>Open source</span>
+          <a href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">GitHub</a>
+          ${when ? `<span class="board-footer-updated">Updated ${esc(when)}</span>` : ""}
         </div>
       </footer>`;
   };
@@ -778,7 +767,7 @@ window.Pie = window.Pie || {};
           ${""/* At datacenter scale, off: the scaling card stays in scaling() */}
           ${""/* Accuracy, off: Pie.checks.accuracyChart still draws it on the Quality page */}
         </div>
-      </div></div>`;  // no footer: the page ends on its last card
+      </div>${footer()}</div>`;
   };
 
   // the page scrolls under its bar, as the other pages' grids do: the bar stays put above, only the content moves
