@@ -69,6 +69,8 @@ class VllmEngine(Engine):
             # (as quality/dist_run.py serves gpt-oss there)
             env["MOE_REQUANTIZE_BLOCK_SIZE"] = "32"
             env["MOE_REQUANTIZE_WEIGHT_DTYPE"] = "int8"
+        if self.platform is not None and str(self.platform.backend) == "xla":
+            env.update(self._tpu_env())
         if self.artifact.family == "mimo_v2" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
             # 0.31.0's CUTLASS block-FP8 GEMM aborts on sm_120 for MiMo's FP8 projections ("cutlass_gemm_caller:
             # Invalid status", weekly 39680748696); vLLM then takes the next kernel it ranks for block FP8
@@ -96,6 +98,37 @@ class VllmEngine(Engine):
             # ['CUSTOM', 'PYNCCL'] and died with "unspecified launch failure" (weekly 39652187264)
             env["VLLM_DISABLE_CUSTOM_AR"] = "1"
             env.update(self.no_peer_env())
+        return env
+
+    def _tpu_env(self) -> dict[str, str]:
+        """vLLM-TPU settings a model needs that vllm_bench.py has no flag for: engine args go through
+        ``scripts/vllm_tpu_site`` (PIE_EVALS_VLLM_ENGINE_ARGS), the rest are tpu-inference env vars."""
+        snap = Path(str(self.recipe.get("snapshot_dir") or ""))
+        try:
+            cfg = json.loads((snap / "config.json").read_text())
+        except (OSError, ValueError):
+            cfg = {}
+        keys = {**cfg, **(cfg.get("text_config") or {})}
+        env: dict[str, str] = {}
+        extra: dict[str, Any] = {}
+        if "kv_lora_rank" in keys or str(cfg.get("model_type", "")).startswith("deepseek"):
+            # vllm-tpu serves an MLA model only on its new model design with DP attention ("MLA models require both ...")
+            env["NEW_MODEL_DESIGN"] = "1"
+            extra["additional_config"] = {"sharding": {"sharding_strategy": {"enable_dp_attention": True}}}
+        if cfg.get("model_type") == "deepseek_v4":
+            # tpu-inference's own DeepSeek-V4 (models/vllm/experimental, deepseek_v4_fp8 with MXFP4 experts) is on its
+            # vLLM path; "auto" picks the JAX path, which has no deepseek_v4_fp8 ("quantization method not supported")
+            env["MODEL_IMPL_TYPE"] = "vllm"
+        if cfg.get("model_type") == "gemma4_unified":
+            # Gemma-4-12B's text model is Gemma-4's (same layers, names model.language_model.*): tpu-inference's JAX
+            # Gemma4ForCausalLM serves it; the unified class has no JAX model and its torchax fallback dies on a
+            # batched decode (UnexpectedTracerError). Same weights, the vision and audio embedders are not built
+            extra["hf_overrides"] = {"architectures": ["Gemma4ForCausalLM"]}
+        if extra:
+            env["PIE_EVALS_VLLM_ENGINE_ARGS"] = json.dumps(extra)
+            existing = self.env.get("PYTHONPATH") if hasattr(self, "env") else None
+            existing = existing or os.environ.get("PYTHONPATH")
+            env["PYTHONPATH"] = ":".join([str(Path(__file__).resolve().parent / "scripts" / "vllm_tpu_site")] + ([existing] if existing else []))
         return env
 
     #: the AMD SGLang image's ROCm SDK (its venv) in the pod's environment: vLLM's ROCm wheel brings its own

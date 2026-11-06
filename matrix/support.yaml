@@ -175,8 +175,6 @@ unsupported:
     reason: "doesn't fit: pie's XLA forward needs 17.3 GiB of HLO temporaries for gpt-oss-20b; a v5e chip has 15.75 GiB of HBM"
   # vLLM-TPU 0.32.0 on the TPU minis, past the MLA flags (NEW_MODEL_DESIGN, DP attention) quality/dist_run.py gives it:
   # it fails at boot on every arch below (parity v6e 41962545036, v5e 41995643253; benchmark 41815002834, 41819942291)
-  - when: {engine: vllm, backend: xla, family: deepseek_v4}
-    reason: "vLLM-TPU 0.32.0 cannot load the DeepSeek-V4-Flash mini: deepseek_v4_fp8 quantization is not supported on TPU (only fp8, gpt_oss_mxfp4, compressed-tensors)"
   - when: {engine: vllm, backend: xla, family: deepseek_v41}
     reason: "vLLM-TPU 0.32.0 has no JAX DeepseekV41ForCausalLM; its PyTorch fallback dies on torch.cuda.Stream (requires CUDA)"
   - when: {engine: vllm, backend: xla, family: [glm_moe_dsa, glm5_next, hy_v4]}
@@ -189,10 +187,6 @@ unsupported:
     reason: "vLLM-TPU 0.32.0's Transformers does not recognize model type muse_spark"
   - when: {engine: vllm, backend: xla, family: nemotron_h}
     reason: "vLLM-TPU 0.32.0: is_act_and_mul=False (Nemotron's relu2 MLP) is supported only for CUDA, XPU and ROCm"
-  # Gemma-4-12B (Gemma4Unified) has no JAX model in tpu-inference 0.32.0; its torchax fallback serves one sequence and the
-  # 32-wide prefill, but a batched decode dies on a leaked JAX tracer (v5e 41957062623, v6e 41913921930)
-  - when: {engine: vllm, backend: xla, artifact: [gemma-4-12b-mini12, gemma-4-12b-tpu], workload: [c32, c64, c256]}
-    reason: "vLLM-TPU 0.32.0 serves Gemma-4-12B through its torchax fallback, whose batched decode dies on a JAX UnexpectedTracerError (EngineDeadError)"
   # sglang-jax 0.1.0rc0 has no model for these archs: config load fails ("Transformers does not recognize model type"),
   # or its HF fallback imports the checkpoint's PyTorch modeling file (benchmark v5e 41815065818, 41815078603, 41896618915)
   - when: {engine: sglang, backend: xla, family: [deepseek_v4, deepseek_v41, glm5_next, hy_v4, kimi_k3, minimax_m3, muse_glimmer, muse_spark, nemotron_h]}
