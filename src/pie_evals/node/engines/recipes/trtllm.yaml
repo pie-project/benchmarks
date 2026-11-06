@@ -27,6 +27,11 @@ competitive:
           rationale: >
             GLM-5.3-Flash's vision encoder needs transformers 5.17 and the wheel pins 5.5.4 ("set
             disable_mm_encoder=True" for text-only); every row is text, as on the other engines.
+        max_batch_cap:
+          value: 128
+          rationale: >
+            Its KDA convolution indexes the whole admitted batch with 32-bit offsets, and 512 sequences overflow them
+            ("KDA convolution tensor offsets must fit int32", b200-x1); 128 at once, the rest queue.
     deepseek_v4:
       knobs:
         kv_cache_dtype:
@@ -34,6 +39,20 @@ competitive:
           rationale: >
             DeepSeek-V4's sparse MLA keeps its KV in the FP8 FlashMLA page layout, as SGLang serves it ("DeepSeek-V4 on
             Hopper requires kv_cache_config.dtype='fp8_ds_mla'", h200-x1; the same on SM120).
+    minimax_m3:
+      knobs:
+        llm_api_options:
+          value: {sparse_attention_config: {algorithm: minimax_m3}}
+          rationale: >
+            MiniMax-M3's lightning-attention KV manager is built only with its sparse attention config
+            ("MiniMax-M3 requires sparse_attention_config.algorithm='minimax_m3'", pro6000-x1).
+    nemotron_h:
+      knobs:
+        max_batch_cap:
+          value: 128
+          rationale: >
+            The Mamba-2 state pool holds every admitted sequence: the Nemotron-3-Super mini at 512 wanted 87 GB of it on
+            an 80 GB H100 ("The V2 Mamba GPU cache quota is too small"); 128 at once, the rest queue, as vLLM caps its hybrids.
     qwen4_exp:
       knobs:
         llm_api_options:

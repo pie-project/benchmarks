@@ -64,12 +64,13 @@ class TrtllmEngine(ServedEngine):
             "TORCHINDUCTOR_CACHE_DIR": str(jit / "inductor"),
             "FLASHINFER_WORKSPACE_BASE": str(jit / "flashinfer"),
             "TLLM_LOG_LEVEL": "WARNING",
-            # DeepGEMM's JIT through the wheel's pip NVRTC 13.0 against the pod's CUDA 13.4 headers (the toolkit the wheel
-            # is built with) failed ("NVRTC compilation failed", GLM-5.3-Flash on h100-sxm-x1); the toolkit's nvcc matches them
-            "TRTLLM_DG_JIT_USE_NVCC": "1",
             "TRTLLM_DG_CACHE_DIR": str(jit / "deepgemm"),
             **self.nccl_env(),
         }
+        # DeepGEMM finds its JIT headers by running `pip show tensorrt_llm` ("could not open source file
+        # deep_gemm/nvrtc_std.cuh (no directories in search list)", GLM-5.3 on h100-sxm-x1): the venv's pip goes first
+        venv_bin = str(Path(self.server_python()).parent)
+        env["PATH"] = ":".join([venv_bin] + [d for d in os.environ.get("PATH", "").split(":") if d and d != venv_bin])
         return env
 
     def llm_api_options(self, slots: int, context: int) -> dict[str, Any]:
