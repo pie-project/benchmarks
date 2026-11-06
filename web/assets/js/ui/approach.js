@@ -13,10 +13,10 @@ window.Pie = window.Pie || {};
       ["trust", "Why Trust Us", "#A2845E", "The safeguards behind every number.", () => trust()],
     ]],
     ["Setup", [
-      ["setup", "Test Setup", "#8E8E93", "The machines, engines and versions behind every number.", `<p class="approach-empty">This chapter is being written.</p>`],
-      ["workloads", "Workloads", "#30B0C7", "Decode, prefill, batching and speculative decoding, and what each measures.", `<p class="approach-empty">This chapter is being written.</p>`],
-      ["fairness", "Fairness", "#34C759", "How every engine gets the same weights, settings and chance.", `<p class="approach-empty">This chapter is being written.</p>`],
-      ["measurement", "Measurement", "#FF9500", "Rounds, warmup, noise and how a cell's number is chosen.", `<p class="approach-empty">This chapter is being written.</p>`],
+      ["setup", "Test Setup", "#8E8E93", "The machines, engines and versions behind every number.", () => setup()],
+      ["workloads", "Workloads", "#30B0C7", "Decode, prefill, batching and speculative decoding, and what each measures.", () => workloadsPage()],
+      ["fairness", "Fairness", "#34C759", "How every engine gets the same weights, settings and chance.", () => fairness()],
+      ["measurement", "Measurement", "#FF9500", "Rounds, warmup, noise and how a cell's number is chosen.", () => measurement()],
     ]],
     ["Models", [
       ["slices", "Model Slices", "#5E5CE6", "Single-device architectural proxies.", `
@@ -43,8 +43,8 @@ window.Pie = window.Pie || {};
         ${tables("limit")}`],
     ]],
     ["Quality", [
-      ["parity", "Parity Checks", "#007AFF", "How we confirm every engine computes the same model.", `<p class="approach-empty">This chapter is being written.</p>`],
-      ["accuracy", "Accuracy", "#FFCC00", "Benchmark scores on the same weights and machine.", `<p class="approach-empty">This chapter is being written.</p>`],
+      ["parity", "Parity Checks", "#007AFF", "How we confirm every engine computes the same model.", () => parity()],
+      ["accuracy", "Accuracy", "#FFCC00", "Benchmark scores on the same weights and machine.", () => accuracy()],
     ]],
   ];
 
@@ -70,6 +70,69 @@ window.Pie = window.Pie || {};
       <h3>What we measure</h3>
       <ul class="welcome-list">${workloads.map(([id, t, d]) => `<li><button type="button" data-chapter-go="workloads">${Pie.platform.degree(id)}<b>${t}</b><span>${d}</span></button></li>`).join("")}</ul>`;
   };
+
+  // the chapters' own parts, as Welcome and Why Trust Us draw theirs: a lead line, rows marked by a coloured square,
+  // and numbered steps in their colours
+  const lead = (text) => `<p class="welcome-lead">${text}</p>`;
+  const facts = (rows) => `<ul class="welcome-list is-trust">${rows.map(([colour, t, d]) =>
+    `<li><div class="welcome-row"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><span>${d}</span></div></li>`).join("")}</ul>`;
+  const steps = (rows) => `<ol class="welcome-flow" style="grid-template-columns: repeat(${rows.length}, minmax(0, 1fr))">${rows.map(([colour, t, d, cls], i) =>
+    `<li class="${cls || ""}" style="--step: ${colour}"><i>${i + 1}</i><b>${t}</b><span>${d}</span></li>`).join("")}</ol>`;
+
+  const setup = () => `
+      ${lead("Every number comes from a CI job on a machine that runs nothing else.")}
+      <h3>Machines</h3>
+      ${facts([["#636366", "Apple Silicon", "Five Macs, M2 16 GB to M5 Max 128 GB, each a dedicated runner"],
+        ["#76b900", "NVIDIA GPU", "One-GPU cloud pods, RTX 4090 to B200, rented for the run"],
+        ["#ED1C24", "AMD GPU", "MI300X pods, rented for the run"],
+        ["#4285F4", "Google TPU", "v6e and v5e, one chip each, a fresh VM for every run"],
+        ["#8E8E93", "Browser", "Chrome over WebGPU on an RTX 4090 and an RTX 5090"]])}
+      <h3>Before every run</h3>
+      ${steps([["#007AFF", "Lock", "One job per machine at a time"], ["#5E5CE6", "Clean", "Leftover apps and engines closed"],
+        ["#30B0C7", "Quiet", "The run waits for an idle GPU"], ["#34C759", "Pinned", "Each engine's release recorded with its numbers"]])}`;
+
+  const workloadsPage = () => {
+    const rows = [["decode", "Single Decode", "512 tokens in, 256 out, one request: output tokens per second"],
+      ["prefill", "Single Prefill", "The same request, read as prompt tokens per second"],
+      ["batching", "Batched Decode", "256 requests at once, fewer on a Mac: total output tokens per second"],
+      ["pbatch", "Batched Prefill", "256 prompts of 512 tokens at once, one token out each"],
+      ["spec", "Speculative Decode", "Single Decode with each engine's own drafter, verified greedily"]];
+    return `
+      ${lead("Five setups, each a single question about an engine.")}
+      <ul class="welcome-list">${rows.map(([id, t, d]) => `<li><div class="welcome-row is-icon">${Pie.platform.degree(id)}<b>${t}</b><span>${d}</span></div></li>`).join("")}</ul>
+      <h3>Every workload</h3>
+      ${steps([["#30B0C7", "Seeded", "Byte-identical token ids on every engine"], ["#64D2FF", "Cold", "No prefix-cache hits"],
+        ["#007AFF", "Fixed length", "Every engine writes the same number of tokens"]])}`;
+  };
+
+  const fairness = () => `
+      ${lead("An engine should win on its code, not on its setup.")}
+      ${facts([["#34C759", "Same weights", "One checkpoint and precision class for every engine"],
+        ["#30B0C7", "Same prompts", "Identical token ids, checked after every run"],
+        ["#5E5CE6", "Same slice", "Where a model is cut to fit, every engine runs the same cut"],
+        ["#007AFF", "Same decoding", "Greedy, temperature 0, thinking off"],
+        ["#FF9500", "Own best settings", "Each engine tuned for its highest throughput, the recipe public"],
+        ["#AF52DE", "Latest releases", "The newest release of each engine at run time"]])}`;
+
+  const measurement = () => `
+      ${lead("A cell's number is the median of repeated rounds, taken after warmup.")}
+      ${steps([["#8E8E93", "Warmup", "2 to 3 runs, not counted"], ["#007AFF", "Rounds", "3 for one request, 2 for a batch"],
+        ["#FF9500", "Noise", "Over 2% spread adds rounds, up to 5; 5% for a batch"], ["#34C759", "Median", "The middle round is the number"],
+        ["var(--color-negative)", "Limit check", "Above the theoretical maximum is a CI Error", "is-check"]])}
+      <p>A cell whose rounds still disagree is marked noisy. Between rounds a Mac cools down, so heat cannot slow the later ones.</p>`;
+
+  const parity = () => `
+      ${lead("A fast engine only counts if it computes the same model.")}
+      ${steps([["#007AFF", "Same prompts", "Sent to both engines"], ["#5E5CE6", "One token", "Each engine gives exactly one"],
+        ["#30B0C7", "Compare", "KL divergence of the two distributions"], ["#34C759", "Pass", "Under 0.15"]])}
+      <p>Kernel and rounding noise sits near 0.001; a wrong layer or chat template lands far above 0.15. This is the check for model slices, whose answers stop making sense once layers are cut.</p>`;
+
+  const accuracy = () => `
+      ${lead("On a model that fits, Pie and another engine answer the same benchmark on the same weights and machine.")}
+      ${facts([["#FFCC00", "Benchmark", "MATH-500, competition math"],
+        ["#007AFF", "Decoding", "Greedy, thinking off"],
+        ["#8E8E93", "Compared with", "One other engine on the same machine"],
+        ["#34C759", "Pass", "Within the run's own noise of the other engine; 5 points where it has none"]])}`;
 
   // Why Trust Us: the safeguards as the workloads' rows, each marked by a small square in its chapter's colour, as the
   // outline marks the chapters; the name and its line, each row opening its chapter

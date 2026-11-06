@@ -1423,3 +1423,9 @@
   .welcome-list span { display: none; }
   .welcome-list.is-trust button, .welcome-list.is-trust a { grid-template-columns: 6px minmax(0, 1fr) auto; }
 }
+/* a chapter's facts: the trust rows' layout without the link (no chevron, no hover) */
+.welcome-list .welcome-row { display: grid; grid-template-columns: 6px 160px minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px 0; }
+.welcome-list .welcome-row.is-icon { grid-template-columns: 20px 160px minmax(0, 1fr); }
+@media (max-width: 899px) { .welcome-list .welcome-row, .welcome-list .welcome-row.is-icon { grid-template-columns: 20px minmax(0, 1fr); } .welcome-list .welcome-row span:not(.trust-tile) { display: none; } }
+/* a chapter's lead line, then its rows or steps: the same 28px the Welcome page leaves under its lead */
+.method-article .welcome-lead + .welcome-list, .method-article .welcome-lead + .welcome-flow { margin-top: 28px; }
