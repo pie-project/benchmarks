@@ -1441,4 +1441,5 @@ def test_the_webgpu_platforms_run_the_browser_engines_only():
     assert engines == {"pie", "webllm", "llamacpp-webgpu"}
     # WebLLM serves one request at a time: its batched rows are declared, not run
     assert {c.workload.id for c in cells if str(c.engine) == "webllm"} == {"raw-512-256"}
-    assert len({c.artifact.id for c in cells if str(c.engine) == "pie"}) == 14
+    # 14 models, two of them past what pie's WebGPU engine takes (support.yaml)
+    assert len({c.artifact.id for c in cells if str(c.engine) == "pie"}) == 12

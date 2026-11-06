@@ -135,6 +135,15 @@ unsupported:
   # llama.cpp has no browser cell for Qwen3.8-Flash-Next: the Macs' Q2_K cut is not on the hub, and a slice of unsloth's
   # GGUF keeps the whole n-gram embedding table (gguf_slice: 113 of 1224 tensors, 98.95 GiB of the BF16 release for
   # pie's 4-layer, 16-expert miniature), which no tab holds; shrink_checkpoint.py carves that table, gguf_slice does not
+  # pie's WebGPU engine (pie f37f5533) on the browser rows: the Qwen3.8-Flash-Next miniature's n-gram table is one 6.0 GiB
+  # plane ("this fire wants 6400491520 bytes of one plane in one buffer and the load reserved 4294967292"), past the 4 GiB a
+  # WebGPU buffer may hold (maxBufferSize, Chrome on an RTX 4090 and 5090)
+  - when: {engine: pie, backend: webgpu, artifact: qwen3.8-flash-next-mini-web}
+    reason: "pie's WebGPU engine needs one 6.0 GiB buffer for this model's n-gram table; WebGPU caps a buffer at 4 GiB"
+  # the Qwen3.6-35B-A3B cut: pie's WGSL matmul writes bf16 outputs in pairs and refuses the shared-expert gate's one
+  # output column ("`linear.matmul` would not enqueue: the projection lands 1 columns, odd")
+  - when: {engine: pie, backend: webgpu, artifact: qwen3.6-35b-a3b-mlx4-slice}
+    reason: "pie's WebGPU matmul writes bf16 outputs in pairs and refuses Qwen3.6-35B-A3B's one-column shared-expert gate"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}
