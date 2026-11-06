@@ -352,11 +352,9 @@
 .sidebar-item.is-link:hover .sidebar-out { stroke: var(--color-label-secondary); transform: translate(1.5px, -1.5px); }
 .sidebar-item.is-link .sidebar-glyph[style] svg .is-filled { fill: var(--tint); }
 /* the name and its mark as a black capsule, the Log in button's height, colours and corner (inverted in dark mode) */
-.sidebar .sidebar-home { flex: none; align-self: center; gap: 6px; height: 28px; margin: 0 0 0 -8px; padding: 0 12px 0 10px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #fff; background: #1d1d1f; }
-:root[data-theme="dark"] .sidebar .sidebar-home { color: #1d1d1f; background: #f5f5f7; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sidebar .sidebar-home { color: #1d1d1f; background: #f5f5f7; } }
+.sidebar .sidebar-home { flex: none; align-self: center; gap: 8px; height: 28px; margin: 0; padding: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); background: none; }  /* the mark and the name in the label colour, no plate, as a site's wordmark sits */
 .sidebar .sidebar-home:hover { opacity: 1; }  /* no fade on hover either */
-.sidebar .sidebar-home .sidebar-logo { width: 13px; height: 13px; }
+.sidebar .sidebar-home .sidebar-logo { width: 16px; height: 16px; }
 .sidebar .sidebar-logo.is-spinning { animation: none; }  /* the brand button keeps still */
 /* phones, in the same production look: the open page in a soft grey with its name in full ink, no ring round its symbol */
 @media (max-width: 899px) {
@@ -367,7 +365,7 @@
   .sidebar .sidebar-item.is-selected .sidebar-tag { color: var(--color-label-secondary); }
 }
 @media (max-width: 899px) {
-  .sidebar .sidebar-home { height: 44px; padding: 0 18px 0 14px; gap: 8px; border-radius: 10px; font-size: 17px; }  /* the drawer's rows' height, corner and type */
+  .sidebar .sidebar-home { height: 44px; gap: 8px; font-size: 17px; }  /* the drawer's rows' height and type */
   .sidebar .sidebar-home .sidebar-logo { width: 16px; height: 16px; }
 }
 @media (max-width: 899px) { .sidebar .sidebar-home { border-radius: 999px; } }  /* a capsule, as Log in on the bar */
