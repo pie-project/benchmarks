@@ -187,14 +187,14 @@ suites:
         program: text-completion-bench
         backend: webgpu
         tp: 1
-        artifact: [qwen3.5-4b-mlx4, qwen3.5-9b-mlx4, gemma-4-e2b-mlx4, gemma-4-e4b-mlx4, gemma-4-12b-mlx4, qwen3.6-35b-a3b-mlx4-slice, gemma-4-26b-a4b-mlx4-slice, gpt-oss-20b-mlx4-slice, qwen3.6-27b-mlx4-slice, qwen3.8-27b-mlx4-slice, gemma-4-31b-mlx4-slice, muse-glimmer-30b-mlx4-slice, gpt-oss-120b-mlx-mxfp4-slice-e10, qwen3.8-flash-next-mlx2-mini8]
+        artifact: [qwen3.5-4b-mlx4, qwen3.5-9b-mlx4, gemma-4-e2b-mlx4, gemma-4-e4b-mlx4, gemma-4-12b-mlx4, qwen3.6-35b-a3b-mlx4-slice, gemma-4-26b-a4b-mlx4-slice, gpt-oss-20b-mlx4-slice, qwen3.6-27b-mlx4-slice, qwen3.8-27b-mlx4-slice, gemma-4-31b-mlx4-slice, muse-glimmer-30b-mlx4-slice, gpt-oss-120b-mlx-mxfp4-slice-e10, qwen3.8-flash-next-mini-web]
         workload: [raw-512-256, c32, pf32-512]
       - engine: llamacpp-webgpu
         baseline: true
         program: text-completion-bench
         backend: webgpu
         tp: 1
-        artifact: [qwen3.5-4b-llamacpp, qwen3.5-9b-llamacpp, gemma-4-e2b-llamacpp, gemma-4-e4b-llamacpp, gemma-4-12b-llamacpp, qwen3.6-35b-a3b-llamacpp-slice, gemma-4-26b-a4b-llamacpp-slice, gpt-oss-20b-llamacpp-slice, qwen3.6-27b-llamacpp-slice, qwen3.8-27b-llamacpp-slice, gemma-4-31b-llamacpp-slice, muse-glimmer-30b-llamacpp-slice, gpt-oss-120b-llamacpp-slice-e10, qwen3.8-flash-next-q2k-mini8-llamacpp]
+        artifact: [qwen3.5-4b-llamacpp, qwen3.5-9b-llamacpp, gemma-4-e2b-llamacpp, gemma-4-e4b-llamacpp, gemma-4-12b-llamacpp, qwen3.6-35b-a3b-llamacpp-slice, gemma-4-26b-a4b-llamacpp-slice, gpt-oss-20b-llamacpp-slice, qwen3.6-27b-llamacpp-slice, qwen3.8-27b-llamacpp-slice, gemma-4-31b-llamacpp-slice, muse-glimmer-30b-llamacpp-slice, gpt-oss-120b-llamacpp-slice-e10]
         workload: [raw-512-256, c32, pf32-512]
       - engine: webllm
         baseline: true
