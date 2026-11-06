@@ -107,7 +107,7 @@ suites:
       - {backend: xla, workload: [pf256-512, raw-512-256]}
       - {backend: xla, artifact: qwen3.5-0.8b-xla, workload: c256}
   weekly:
-    max_jobs_per_platform: 400  # the device evaluation (matrix/device-eval.yaml) adds its 19 models and saturation sweeps to the weekly tier
+    max_jobs_per_platform: 900  # the device evaluation (matrix/device-eval.yaml) adds its 19 models and saturation sweeps to the weekly tier, TensorRT-LLM its rows
     enforce_budget: true
     exclude: []
   targeted:

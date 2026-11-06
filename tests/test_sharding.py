@@ -50,7 +50,7 @@ def test_jobs_carry_time_policy(matrix, tmp_path):
 def test_every_tier_within_job_caps(matrix):
     cells = matrix.expand()
     for t in Tier:
-        assert matrix.check_budget(t, cells) == [], matrix.check_budget(t, cells)
+        assert matrix.check_budget(t, cells, enforced_only=True) == [], matrix.check_budget(t, cells, enforced_only=True)
 
 
 @pytest.mark.slow

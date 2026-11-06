@@ -136,7 +136,8 @@ def test_selector_matches_the_splash_arm(cells):
 
 
 def test_targeted_budget_holds(matrix, cells):
-    assert matrix.check_budget(Tier.TARGETED, cells) == []
+    # the targeted job count is not enforced (suites.yaml enforce_budget: false), but every process group still fits a job
+    assert [p for p in matrix.check_budget(Tier.TARGETED, cells) if "cannot fit" in p] == []
 
 
 def test_cell_status_enum_complete():
