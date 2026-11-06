@@ -114,6 +114,8 @@ window.Pie = window.Pie || {};
     if ((state.table === "results" || state.table === "quality") && !row.stale && store.isMeasured(row)) classes.push("is-highlighted");
     // a listed setup with no numbers stays in the table, in quiet grey
     if (state.table === "results" && !store.isMeasured(row)) classes.push("is-unmeasured");
+    // a measurement above its theoretical limit, as CI Reports lists it: the row tinted red
+    if (state.table === "results" && !row.miniature && overLimit().has(`${row.engine}|${row.hardware}|${row.model}|${OVER_SETUP[row.workload]}`)) classes.push("is-over-limit");
     if (row.stale) {
       classes.push("is-stale");
       const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";
@@ -130,6 +132,17 @@ window.Pie = window.Pie || {};
     if (picked.has(row)) classes.push("is-picked");
     const pick = flaggable(state) ? ` data-pick="${index}" aria-selected="${picked.has(row)}"` : "";
     return `<tr class="${classes.join(" ")}"${link || stale}${pick}>${number}${filled}</tr>`;
+  };
+
+  // CI Reports' Exceeds Theoretical Limit cells, by engine, machine, model and setup, worked out once a data load
+  const OVER_SETUP = { raw_decode: "decode", raw_prefill: "prefill", throughput: "batching", prefill_batch: "pbatch" };
+  let overFor = null, overKeys = new Set();
+  const overLimit = () => {
+    if (overFor !== Pie.store.tables) {
+      overFor = Pie.store.tables;
+      try { overKeys = new Set((Pie.board?.outliers?.() || []).map((o) => `${o.engine}|${o.hardware}|${o.model}|${o.setup}`)); } catch { overKeys = new Set(); }
+    }
+    return overKeys;
   };
 
   Pie.table = {

@@ -37,7 +37,7 @@
 .palette-list::-webkit-scrollbar { display: none; }
 .palette-row { height: 32px; border-radius: var(--radius-control); }
 .palette-row.is-current { background: var(--color-fill); }
-.palette-row.is-current .palette-text { color: var(--color-label); font-weight: 500; }
+.palette-row.is-current .palette-text { color: var(--color-label); }
 .palette-row.is-current .palette-sub { color: var(--color-label-secondary); }
 .palette-icon svg { stroke: var(--color-label-secondary); stroke-width: 1.6; }
 .palette-icon svg .is-filled { fill: var(--color-label-secondary); }

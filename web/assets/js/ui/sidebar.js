@@ -31,6 +31,8 @@ window.Pie = window.Pie || {};
         : schema.view === "approach" ? `<span class="sidebar-count">${Pie.approach?.chapters ?? ""}</span>`
         // Reports counts the ones still open
         : schema.view === "reports" ? `<span class="sidebar-count">${Pie.reports?.open() ?? ""}</span>`
+        // Engine Gaps counts its cells
+        : schema.view === "gaps" ? `<span class="sidebar-count">${Pie.gaps?.count() ?? ""}</span>`
         : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
     </button>`;
 

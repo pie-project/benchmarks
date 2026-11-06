@@ -225,6 +225,10 @@
 .data-table .model-name-cell .model-badge { width: 18px; height: 18px; border-radius: 5px; }
 .data-table .model-name-cell .model-badge img { width: 12px; height: 12px; }
 
+/* a Performance row above its theoretical limit, as CI Reports lists it: a light red wash, a shade deeper under the pointer */
+.data-table tbody tr.is-over-limit td { background: color-mix(in srgb, var(--color-negative) 8%, transparent); }
+.data-table tbody tr.is-over-limit:hover td { background: color-mix(in srgb, var(--color-negative) 14%, transparent); }
+
 /* a selected Performance or Quality row, as a Mac list fills its selection: the accent, its text in white */
 .data-table tbody tr[data-pick] { user-select: none; -webkit-user-select: none; }
 .data-table tbody tr.is-picked td, .data-table tbody tr.is-picked:hover td { background: var(--color-accent); color: #fff; }

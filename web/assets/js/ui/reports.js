@@ -75,7 +75,7 @@ window.Pie = window.Pie || {};
   const OUTLIER_WORKLOAD = { decode: "decode", prefill: "prefill", batching: "batching", pbatch: "pbatch" };
   // a row's type, as the site's tables mark a category: a small coloured square before its name
   const TYPES = {
-    limit: { label: "Exceeds Limit", color: "#FF9500", title: "Pie measures above the hardware's theoretical maximum: the run or the limit's inputs are off" },
+    limit: { label: "Exceeds Theoretical Limit", color: "#FF9500", title: "Pie measures above the hardware's theoretical maximum: the run or the limit's inputs are off" },
     report: { label: "Report", color: "#8E8E93", title: "Filed by a visitor" },
   };
   const typeTag = (t) => `<span class="cell-dot" style="--dot: ${TYPES[t].color}" title="${esc(TYPES[t].title)}">${esc(TYPES[t].label)}</span>`;
@@ -86,7 +86,7 @@ window.Pie = window.Pie || {};
   let focused = null;
   const inFocus = (r) => !focused || (r.hardware === focused.hardware && r.model === focused.model && (!focused.setup || !r.setup || r.setup === focused.setup));
   const outlierRow = (o, i) => `
-    <tr class="is-outlier-row${isClosed(o) ? " is-closed" : ""}">
+    <tr class="is-outlier-row${isClosed(o) ? " is-closed" : ""}" data-pick>
       <td class="row-number">${i + 1}</td>
       <td>${typeTag("limit")}</td>
       <td>${statusTag(isClosed(o) ? "fixed" : "open")}</td>
@@ -117,7 +117,7 @@ window.Pie = window.Pie || {};
   };
   const dataDay = () => { const at = Pie.store.tables.updated_at; return at ? day(at) : ""; };
   const row = (r, i) => `
-    <tr data-id="${r.id}">
+    <tr data-id="${r.id}" data-pick>
       <td class="row-number">${i + 1}</td>
       <td>${typeTag("report")}</td>
       <td>${statusTag(r.status)}</td>
@@ -156,6 +156,32 @@ window.Pie = window.Pie || {};
         </table>
       </div>`;
   };
+
+  // rows selected as the Performance table's are, in the accent: a click selects one alone (again clears it), ⌘-click
+  // adds or drops one, ⇧-click the run from the last one clicked; Engine Gaps selects its rows the same way
+  Pie.pickRows = (root) => {
+    let anchor = null;
+    root.addEventListener("mousedown", (event) => { if (event.shiftKey && event.target.closest("tr[data-pick]")) event.preventDefault(); });
+    root.addEventListener("click", (event) => {
+      const tr = event.target.closest("tr[data-pick]");
+      if (!tr || event.target.closest("a, button, input, select")) return;
+      const rows = [...root.querySelectorAll("tr[data-pick]")], at = rows.indexOf(tr);
+      const set = (row, on) => { row.classList.toggle("is-picked", on); row.setAttribute("aria-selected", on); };
+      if (event.shiftKey && anchor !== null) {
+        if (!event.metaKey && !event.ctrlKey) rows.forEach((row) => set(row, false));
+        rows.slice(Math.min(anchor, at), Math.max(anchor, at) + 1).forEach((row) => set(row, true));
+        return;
+      }
+      if (event.metaKey || event.ctrlKey) set(tr, !tr.classList.contains("is-picked"));
+      else {
+        const only = tr.classList.contains("is-picked") && rows.filter((row) => row.classList.contains("is-picked")).length === 1;
+        rows.forEach((row) => set(row, false));
+        if (!only) set(tr, true);
+      }
+      anchor = at;
+    });
+  };
+  Pie.pickRows(element);
 
   const draw = () => {
     if (element.hidden) return;
