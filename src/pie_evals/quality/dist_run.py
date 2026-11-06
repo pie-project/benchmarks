@@ -359,7 +359,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
             # the XLA engine has no activation-quantized matmuls: pie picks the row it serves (MiniMax-M3.1-Flash's widened bf16)
             imported = art.model_copy(update={"pie_sku": None})
         model_path = ensure_artifact(imported, snapshot, pie_root / "target/release/pie", commit, log=log)
-    precipe = load_recipe("pie", "default", plat, workload, family=art.family)
+    precipe = load_recipe("pie", "default", plat, workload, family=art.family, artifact=art.id)
     precipe["snapshot_dir"] = str(model_path)
     if backend == "xla":
         # one 4k request needs little kv; the XLA programs need HBM beside the pool (Kimi-K3 on a v6e: "Attempting to
