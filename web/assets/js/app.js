@@ -137,6 +137,7 @@
       }
       // Quality counts its machines and models under its title, as a grid page does
       toolbar.elements.subtitle.textContent = state.table === "board" ? "Engine Analysis" : state.table === "approach" ? Pie.approach.place()
+        : state.table === "reports" ? Pie.reports.shown() : state.table === "gaps" ? Pie.gaps.shown()
         : checked?.macs ? `${checked.macs} ${checked.macs === 1 ? "machine" : "machines"}, ${checked.models} ${checked.models === 1 ? "model" : "models"}` : "";
       // All Platforms counts its folders and what they hold, as a platform page counts its machines
       if (state.table === "welcome") {
