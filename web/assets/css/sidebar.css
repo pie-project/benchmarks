@@ -354,7 +354,7 @@
 /* the name and its mark as a black capsule, the Log in button's height, colours and corner (inverted in dark mode) */
 .sidebar .sidebar-home { flex: none; align-self: center; gap: 8px; height: 28px; margin: 0; padding: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); background: none; }  /* the mark and the name in the label colour, no plate, as a site's wordmark sits */
 .sidebar .sidebar-home:hover { opacity: 1; }  /* no fade on hover either */
-.sidebar .sidebar-home .sidebar-logo { width: 16px; height: 16px; }
+.sidebar .sidebar-home .sidebar-logo { width: 16px; height: 16px; transform: translateY(1px); }  /* the mark a point lower, level with the name's letters */
 .sidebar .sidebar-logo.is-spinning { animation: none; }  /* the brand button keeps still */
 /* phones, in the same production look: the open page in a soft grey with its name in full ink, no ring round its symbol */
 @media (max-width: 899px) {

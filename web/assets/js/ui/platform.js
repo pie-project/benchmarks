@@ -426,7 +426,7 @@ window.Pie = window.Pie || {};
   };
   let lastAll = null;  // the release's rows, every status, for the hover cards
   // the engines with no number in a cell, each with why: not supported, does not fit, failed (its error), not measured yet
-  const WHY = { unsupported: "Not supported", no_fit: "Does not fit", fail: "Failed", not_run: "Not measured yet", no_data: "Not measured yet" };
+  const WHY = { unsupported: "Not supported", no_fit: "Does not fit", fail: "Failed", not_run: "Not measured", no_data: "Not measured" };
   const absentRows = (mac, model, mode, order) => {
     // every engine this platform runs is named, never dropped: the reason it gave nothing, its strongest one first
     const rank = { unsupported: 0, no_fit: 1, fail: 2 };
@@ -441,7 +441,7 @@ window.Pie = window.Pie || {};
       else if (here && (rank[here.status] ?? 9) < (rank[had.status] ?? 9)) absent.set(r.engine, here);
     }
     return [...absent.values()].map((r) => `<div class="tip-row is-absent"${r.note ? ` title="${esc(r.note)}"` : ""}><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
-      <span class="tip-value">${esc(WHY[r.status] || "Not measured yet")}</span><span class="tip-when"></span></div>`);
+      <span class="tip-value">${esc(WHY[r.status] || "Not measured")}</span><span class="tip-when"></span></div>`);
   };
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
@@ -1102,7 +1102,20 @@ window.Pie = window.Pie || {};
       // a model's column, though, is there only where the setup and view on screen have a number for it: a slice's
       // column goes in Tokens per Second, and a model not run in this setup goes until one is picked that has it
       const hasData = (mac, model) => grid[mac][model].c || awaiting(mac, model);
-      const models = hide ? allModels.filter((model) => macs.some((mac) => hasData(mac, model))) : allModels;
+      // comparing engines, a model is shown on a machine only where two engines could run it there: an engine the machine
+      // runs with a number, not run yet, a failed run or no row at all could still give one; "Not supported" and "Does not
+      // fit" never will. A model no machine could compare on has no column; one merely not measured yet keeps it
+      const engineRuns = new Map(), modelRows = new Map();
+      for (const r of all) {
+        if (r.status !== "unsupported") (engineRuns.get(r.hardware) || engineRuns.set(r.hardware, new Set()).get(r.hardware)).add(r.engine);
+        if (r.workload === mode.workload) (modelRows.get(`${r.hardware}|${r.model}`) || modelRows.set(`${r.hardware}|${r.model}`, new Map()).get(`${r.hardware}|${r.model}`)).set(r.engine, r.status);
+      }
+      const comparable = (mac, model) => {
+        const statuses = modelRows.get(`${mac}|${realOf(model)}`) || new Map();
+        return [...(engineRuns.get(mac) || [])].filter((e) => !["unsupported", "no_fit"].includes(statuses.get(e))).length >= 2;
+      };
+      const models = (hide ? allModels.filter((model) => macs.some((mac) => hasData(mac, model))) : allModels)
+        .filter((model) => compare !== "engines" || macs.some((mac) => comparable(mac, model)));
       const median = (list) => {
         const sorted = list.filter((g) => g !== undefined && g !== null).sort((a, b) => a - b);
         return sorted.length ? sorted[sorted.length >> 1] : null;
@@ -1155,7 +1168,8 @@ window.Pie = window.Pie || {};
         return [...ms.filter(mini), ...ms.filter((m) => !mini(m))];
       };
       const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs), only), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
-        : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: minisFirst(g.macs, models.filter((model) => g.macs.some((mac) => hasData(mac, model)))) }))
+        // a platform shows a model only where two of its engines could run it, as above
+        : grouped.map((g) => ({ platform: g.platform, macs: g.macs, models: minisFirst(g.macs, models.filter((model) => g.macs.some((mac) => hasData(mac, model)) && (compare !== "engines" || g.macs.some((mac) => comparable(mac, model))))) }))
           .filter((g) => g.macs.length && g.models.length);
       if (dry) return { sections, sliced, grid };
 
@@ -1335,6 +1349,7 @@ window.Pie = window.Pie || {};
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             <span class="platform-key" title="An engine on this cell measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>CI Error</span>
+            <span class="platform-key" title="The full model does not fit one machine; a number beside the mark is a model slice&#39;s, for comparing engines">${NOFIT}Does not fit</span>
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
             <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
             <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
