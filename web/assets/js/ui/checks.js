@@ -242,6 +242,8 @@ window.Pie = window.Pie || {};
   // engine's (kernel and rounding noise sits near 0.001, a wrong layer or template well above 0.15); a full model passes
   // when Pie's MATH-500 score is within 5 points of the reference engine's
   const KL_PASS = 0.15, MATH_PASS = 5;
+  // a cell no run can fill says why (support.yaml quality_gaps)
+  const gapOf = (mac, model) => (tables().quality_gaps || []).find((g) => [].concat(g.platform).includes(mac) && [].concat(g.model).includes(model))?.reason || "";
   // a full model's allowance: the run's own noise, 5 points only where a run has no noise figure
   const allowed = (g) => (isNum(g.arm.tolerance) ? g.arm.tolerance * 100 : MATH_PASS);
   const MARK = { pass: '<svg class="qc-mark" viewBox="0 0 16 16" aria-label="Pass"><path d="M3.5 8.5l3 3 6-7"/></svg>', fail: '<svg class="qc-mark" viewBox="0 0 16 16" aria-label="Fail"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>' };
@@ -301,7 +303,7 @@ window.Pie = window.Pie || {};
             const open = { model: [m], task: [r.task], engine: ["pie", r.ref_engine] };
             return `<td class="is-openable${ok ? "" : " is-over-limit"}" data-col="${esc(m)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${ok ? "is-same" : "is-behind"} is-nofit" data-tip-html="${esc(tip)}">${NOFIT}<span class="platform-main">${MARK[ok ? "pass" : "fail"]}</span></span></td>`;
           }
-          if (!g) return `<td data-col="${esc(m)}"><span class="platform-cell is-empty${"kl" in at[`${mac}|${m}`] ? " is-nofit" : ""}">${"kl" in at[`${mac}|${m}`] ? NOFIT : ""}–</span></td>`;
+          if (!g) return `<td data-col="${esc(m)}"><span class="platform-cell is-empty${"kl" in at[`${mac}|${m}`] ? " is-nofit" : ""}"${gapOf(mac, m) ? ` data-tip="${esc(gapOf(mac, m))}"` : ""}>${"kl" in at[`${mac}|${m}`] ? NOFIT : ""}–</span></td>`;
           // what answers "is quality hurt?": both scores, the difference, how much of it is noise, and a verdict in words
           const off = Math.abs(g.d) > allowed(g);
           const tip = card(`${title} · MATH-500`, [["Pie", pct(g.pie.score), false, "pie"], [engineLabel(g.arm.engine), pct(g.arm.score), false, g.arm.engine],
