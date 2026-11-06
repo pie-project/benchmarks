@@ -18,6 +18,8 @@ hub=${HF_HUB_CACHE:-${HF_HOME:-$HOME/.cache/huggingface}/hub}
 # oldest access first: the checkpoints the recent jobs did not touch go before the ones they did
 for repo in $(ls -dtu "$hub"/models--* 2>/dev/null | tail -r); do
   [ "$(free_gib)" -ge "$LOW_GIB" ] && break
+  # pie-local checkpoints (models.yaml) are on no hub: once dropped, no job can fetch them again
+  case "$repo" in */models--pie-local--*) continue ;; esac
   drop "$repo"
 done
 echo "disk: ${before} -> $(free_gib) GiB free"
