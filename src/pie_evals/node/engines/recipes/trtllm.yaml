@@ -19,6 +19,14 @@ default:
 
 competitive:
   extends: default
+  family:
+    glm5_next:
+      knobs:
+        llm_api_options:
+          value: {disable_mm_encoder: true}
+          rationale: >
+            GLM-5.3-Flash's vision encoder needs transformers 5.17 and the wheel pins 5.5.4 ("set
+            disable_mm_encoder=True" for text-only); every row is text, as on the other engines.
   knobs:
     kv_free_mem_fraction:
       value: null

@@ -59,6 +59,19 @@ unsupported:
   # (tensorrt_llm/_torch/models: no HYV4ForCausalLM, MiMoV2ForCausalLM, MuseGlimmer*, MuseSpark*), so it cannot load them
   - when: {engine: trtllm, family: [hy_v4, mimo_v2, muse_glimmer, muse_spark]}
     reason: "TensorRT-LLM 1.4.0rc2.post1 has no implementation of this architecture (HYV4, MiMoV2, Muse): it cannot load the checkpoint"
+  # TensorRT-LLM 1.4.0rc2.post1 serves Kimi-K3's MXFP4 experts only as W4A8 (MXFP8 activations), and only on SM100
+  # ("no MoE implementation can serve this layer": every W4A16 MXFP4 kernel turned it down as quant_unsupported, h200-x1
+  # and rtx5090-x1); pie, vLLM and SGLang serve it W4A16, so no TensorRT-LLM row is the same precision
+  - when: {engine: trtllm, family: kimi_k3}
+    reason: "TensorRT-LLM runs Kimi-K3's experts only with MXFP8 activations (W4A8, SM100 only); the other engines serve them W4A16"
+  # DeepSeek-V4.1's CSA2 projections run on TensorRT-LLM's native MXFP8 kernels, SM100/SM103 only
+  # ("CSA2 native MXFP8 projections require SM100/SM103", rtx5090-x1, h200-x1)
+  - when: {engine: trtllm, family: deepseek_v41, not_platform: [b200-x1, b200-x8, b300-x1, b300-x8]}
+    reason: "TensorRT-LLM runs DeepSeek-V4.1's CSA2 projections only on SM100/SM103 (B200, B300)"
+  # GLM-5.3's DSA sparse MLA on SM120 needs the fp8_ds_mla KV cache ("DeepSeek-V4/DSA sparse MLA on SM120/SM121 requires
+  # kv_cache_config.dtype='fp8_ds_mla'", rtx5090-x1); the other engines keep its KV in bf16
+  - when: {engine: trtllm, family: glm_moe_dsa, arch: blackwell, platform: [rtx5090-x1, pro4500-x1, pro6000-x1, pro6000-x2, pro6000-x4]}
+    reason: "TensorRT-LLM serves GLM-5.3's sparse MLA on SM120 only with an fp8 KV cache; the other engines keep it bf16"
   - when: {backend: metal, tp: ">1"}
     reason: "no tensor parallel on Metal"
   - when: {backend: vulkan, tp: ">1"}
