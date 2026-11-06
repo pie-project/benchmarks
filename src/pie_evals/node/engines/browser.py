@@ -158,7 +158,12 @@ class WebllmEngine(BrowserEngine):
         overrides = {"context_window_size": max(int(self.recipe.get("context_window_size") or 0), context)}
         if self.recipe.get("prefill_chunk_size"):
             overrides["prefill_chunk_size"] = int(self.recipe["prefill_chunk_size"])
-        return {"model_id": self.artifact.id, "model_url": "/files/model/", "model_lib": "/files/lib.wasm", "overrides": overrides}
+        out = {"model_id": self.artifact.id, "model_url": "/files/model/", "model_lib": "/files/lib.wasm", "overrides": overrides}
+        # the rest of web-llm's own record for the build (prebuiltAppConfig): Gemma-4's library is driven by a manifest
+        for k in ("model_manifest", "buffer_size_required_bytes", "required_features"):
+            if self.recipe.get(k) is not None:
+                out[k] = self.recipe[k]
+        return out
 
     def version(self) -> str:
         pkg = BROWSER / "node_modules" / "@mlc-ai" / "web-llm" / "package.json"

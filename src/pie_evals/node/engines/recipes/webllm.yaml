@@ -19,6 +19,9 @@ default:
       model_lib: {value: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_87/base/Qwen3.5-9B-q4f16_1_cs1k-webgpu.wasm", rationale: "web-llm 0.2.87's prebuilt library for this build (prebuiltAppConfig)"}
     gemma-4-e2b-webllm:
       model_lib: {value: "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_87/base/gemma-4-E2B-it-q4f16_1_cs512-webgpu.wasm", rationale: "web-llm 0.2.87's prebuilt library for this build (prebuiltAppConfig)"}
+      model_manifest: {value: "mlc-model-manifest.json", rationale: "web-llm 0.2.87's record for this build: the library's functions are named in the build's manifest"}
+      buffer_size_required_bytes: {value: 201326592, rationale: "web-llm 0.2.87's record for this build"}
+      required_features: {value: ["shader-f16"], rationale: "web-llm 0.2.87's record for this build"}
 
 competitive:
   extends: default
