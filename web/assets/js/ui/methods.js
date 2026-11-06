@@ -378,8 +378,7 @@ window.Pie = window.Pie || {};
       const source = from ? ` <a class="cite" role="link" tabindex="0" data-go="${from}">${esc(Pie.schema[from].label)}</a>` : "";
       return `<dt>${tag(name)}</dt><dd>${esc(how)}${source}</dd>`;
     }).join("");
-    const tabs = c === FIT ? "" : `<div class="m-doc-tabs">${Pie.platform.setupControl(c.id, ["decode", "prefill", "batching", "pbatch"], true)}</div>`;
-    return tint(`<div class="m-doc">${tabs}
+    return tint(`<div class="m-doc">
       ${c.lede ? `<p>${prose(c.lede)}</p>` : ""}
       <h3>Formulas</h3>
       <div class="m-doc-eqs">${c.equations.map((e) => `
@@ -466,6 +465,22 @@ window.Pie = window.Pie || {};
   });
 
   Pie.methods = {
+    // the limit's workload as a pop-up button at the right of the chapter's title, as the Overview sets a card's pick:
+    // its mark, its name and the menu's chevron; it opens Pie.platform's setup menu
+    setupPick() {
+      const NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
+      return `<button class="filter-button board-title-pick" type="button" data-methods-setup aria-haspopup="menu" aria-label="Workload">${Pie.platform.degree(current)}${esc(NAMES[current] || current)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
+    },
+    // its menu (the popover's "methods:setup"): the four workloads after their marks, the picked one checked; a pick is the
+    // grid's workload too, so both pages agree
+    menu(k) {
+      if (k !== "setup") return [];
+      const NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
+      return Object.keys(NAMES).map((id) => ({ value: id, label: NAMES[id], selected: id === current, detail: id === "decode" || id === "prefill" ? "Latency" : "Throughput", icon: Pie.platform.degree(id) }));
+    },
+    pick(k, value) {
+      if (k === "setup" && state && ["decode", "prefill", "batching", "pbatch"].includes(value)) state.platform.mode = value;
+    },
     // a Methodology chapter's tables: the limit for the grid's workload (its setup bar on top) or Memory Fit, and the key
     // that changes when they would read differently
     chapter(kind, viewState) {
