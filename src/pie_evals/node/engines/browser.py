@@ -118,6 +118,11 @@ class BrowserEngine(ServedEngine):
     def leftover_process_names(self) -> list[str]:
         return ["bridge.mjs", "chrome", "headless_shell"]
 
+    def stall_s(self) -> int:
+        # the work runs in Chrome's renderer and GPU processes, not in the watched bridge (node idles while a tab
+        # computes): the bridge itself abandons a batch that stops making progress (BROWSER_STALL_S, 300 s)
+        return int(self.recipe.get("stall_s") or 3600)
+
 
 @register
 class WebllmEngine(BrowserEngine):
