@@ -378,7 +378,7 @@ window.Pie = window.Pie || {};
       const source = from ? ` <a class="cite" role="link" tabindex="0" data-go="${from}">${esc(Pie.schema[from].label)}</a>` : "";
       return `<dt>${tag(name)}</dt><dd>${esc(how)}${source}</dd>`;
     }).join("");
-    const tabs = c === FIT ? "" : `<div class="m-doc-tabs">${Pie.platform.setupControl(c.id, ["decode", "spec", "prefill", "batching", "pbatch"], true)}${c.id === "spec" ? Pie.specField() : ""}</div>`;
+    const tabs = c === FIT ? "" : `<div class="m-doc-tabs">${Pie.platform.setupControl(c.id, ["decode", "prefill", "batching", "pbatch"], true)}</div>`;
     return tint(`<div class="m-doc">${tabs}
       ${c.lede ? `<p>${prose(c.lede)}</p>` : ""}
       <h3>Formulas</h3>
@@ -470,7 +470,8 @@ window.Pie = window.Pie || {};
     // that changes when they would read differently
     chapter(kind, viewState) {
       state = viewState;
-      current = CHAPTERS.some((c) => c.id === state.platform.mode) ? state.platform.mode : CHAPTERS[0].id;
+      // no Speculative Decode here: the grid on it opens the first chapter
+      current = CHAPTERS.some((c) => c.id === state.platform.mode && c.id !== "spec") ? state.platform.mode : CHAPTERS[0].id;
       return { html: doc(kind), key: `${kind === "fit" ? "fit" : current}@${state.release}@${Pie.specAlpha}` };
     },
     render(viewState) {

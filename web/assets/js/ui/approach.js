@@ -39,7 +39,7 @@ window.Pie = window.Pie || {};
     ["Limits", [
       // the former Roofline page: the limit for the workload picked in its bar
       ["limit", "Theoretical Limit", "#FF3B30", "The roofline ceiling each engine is measured against.", () => `
-        <p>Kernel Efficiency compares an engine's measured speed with the most the machine could deliver: the slower of reading every byte a step needs from memory and doing every operation it needs at the chip's peak rate. Pick a workload to see how its limit is worked out, each term defined and its source cited.</p>
+        <p>These limits follow the roofline model (Williams et al., 2009): a step can run no faster than its memory traffic at peak bandwidth or its FLOPs at peak compute, whichever takes longer. Kernel Efficiency is an engine's measured throughput as a percentage of this limit. Select a workload to see its derivation.</p>
         ${tables("limit")}`],
     ]],
     ["Quality", [
@@ -71,27 +71,19 @@ window.Pie = window.Pie || {};
       <ul class="welcome-list">${workloads.map(([id, t, d]) => `<li><button type="button" data-chapter-go="workloads">${Pie.platform.degree(id)}<b>${t}</b><span>${d}</span></button></li>`).join("")}</ul>`;
   };
 
-  // Why Trust Us: the safeguards as the workloads' rows, each glyph white on a small tile in its chapter's colour, as Settings
-  // marks its rows; the name and its line, each row opening its chapter
+  // Why Trust Us: the safeguards as the workloads' rows, each marked by a small square in its chapter's colour, as the
+  // outline marks the chapters; the name and its line, each row opening its chapter
   const trust = () => {
-    const ICONS = {
-      sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
-      server: '<rect x="4" y="4.5" width="16" height="6" rx="1.5"/><rect x="4" y="13.5" width="16" height="6" rx="1.5"/><path d="M7.5 7.5h.01M7.5 16.5h.01"/>',
-      repeat: '<path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/>',
-      equal: '<path d="M5 9h14M5 15h14"/>',
-      gauge: '<path d="M3 16.5a9 9 0 1 1 18 0M12 16.5l5-5.5"/><circle cx="12" cy="16.5" r="1.3"/>',
-      code: '<path d="M8.5 7.5 4 12l4.5 4.5M15.5 7.5 20 12l-4.5 4.5M13.5 5.5l-3 13"/>',
-    };
-    const rows = [["sliders", "#34C759", "Same setup", "Same weights, workloads and settings for every engine", "fairness"],
-      ["server", "#8E8E93", "Dedicated machines", "Nothing else runs during a benchmark", "setup"],
-      ["repeat", "#FF9500", "Repeated runs", "Warmup, then rounds until the noise is small", "measurement"],
-      ["equal", "#007AFF", "Same results", "Every engine checked to compute the same model", "parity"],
-      ["gauge", "#FF3B30", "Limit check", "Above the theoretical maximum is a CI Error", "limit"],
-      ["code", "#5E5CE6", "Open source", "Harness, recipes and raw data on GitHub", null]];
-    const glyph = (icon, colour) => `<span class="trust-tile" style="--tile: ${colour}"><svg class="mode-icon trust-glyph" viewBox="0 0 24 24" aria-hidden="true">${ICONS[icon]}</svg></span>`;
-    return `<ul class="welcome-list is-trust">${rows.map(([icon, colour, t, d, chapter]) => `<li>${chapter
-      ? `<button type="button" data-chapter-go="${chapter}">${glyph(icon, colour)}<b>${t}</b><span>${d}</span></button>`
-      : `<a href="${REPO}" target="_blank" rel="noopener">${glyph(icon, colour)}<b>${t}</b><span>${d}</span></a>`}</li>`).join("")}</ul>`;
+    const rows = [["#34C759", "Same setup", "Same weights, workloads and settings for every engine", "fairness"],
+      ["#8E8E93", "Dedicated machines", "Nothing else runs during a benchmark", "setup"],
+      ["#FF9500", "Repeated runs", "Warmup, then rounds until the noise is small", "measurement"],
+      ["#007AFF", "Same results", "Every engine checked to compute the same model", "parity"],
+      ["#FF3B30", "Limit check", "Above the theoretical maximum is a CI Error", "limit"],
+      ["#5E5CE6", "Open source", "Harness, recipes and raw data on GitHub", null]];
+    const mark = (colour) => `<span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span>`;
+    return `<ul class="welcome-list is-trust">${rows.map(([colour, t, d, chapter]) => `<li>${chapter
+      ? `<button type="button" data-chapter-go="${chapter}">${mark(colour)}<b>${t}</b><span>${d}</span></button>`
+      : `<a href="${REPO}" target="_blank" rel="noopener">${mark(colour)}<b>${t}</b><span>${d}</span></a>`}</li>`).join("")}</ul>`;
   };
 
   // a chapter's formula tables, from the Roofline and Memory pages they replace

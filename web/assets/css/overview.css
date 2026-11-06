@@ -1360,6 +1360,7 @@
 .approach-main > .method-article { padding: 0; box-shadow: none; }
 .approach-main > .method-article .method-pane-body { margin: 0; }
 .approach-main > .method-article .method-pane-body > p, .approach-main > .method-article .method-list { max-width: 720px; font-size: 14px; line-height: 1.6; }
+.approach-main > .method-article .method-list { padding-right: 140px; }  /* the numbered rules held in from the right, narrower than the text around them */
 .approach-main > .method-article h3 { font-size: 15px; margin-top: 24px; }
 .approach-steps { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; }
 .approach-step.is-next { margin-left: auto; }
@@ -1386,9 +1387,9 @@
 /* the path: numbered dots on one line, each step's name and line under its dot; the limit check in the CI Error red */
 .welcome-flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 16px 0 0; padding: 0; list-style: none; counter-reset: none; }
 .welcome-flow li { position: relative; display: flex; flex-direction: column; gap: 4px; padding-right: 16px; }
-.welcome-flow li::before { content: ""; position: absolute; top: 11px; left: 24px; right: 0; height: 1px; background: var(--color-separator); }
+.welcome-flow li::before { content: ""; position: absolute; top: 12px; left: 26px; right: 0; height: 1px; background: var(--color-separator); }
 .welcome-flow li:last-child::before { display: none; }
-.welcome-flow i { position: relative; display: grid; place-items: center; width: 22px; height: 22px; margin-bottom: 8px; border-radius: 6px; font: 600 11px/1 var(--font-display); font-style: normal; color: #fff; background: var(--step, var(--color-label-secondary)); }
+.welcome-flow i { position: relative; display: grid; place-items: center; width: 24px; height: 24px; margin-bottom: 8px; border-radius: 6px; font: 600 12px/1 var(--font-display); font-style: normal; color: #fff; background: var(--step, var(--color-label-secondary)); }
 .welcome-flow b { font-size: 13px; color: var(--color-label); }
 .welcome-flow span { font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }
 .welcome-flow li.is-check b { color: var(--color-negative); }
@@ -1401,12 +1402,10 @@
 .welcome-list .mode-icon { width: 16px; height: 16px; color: var(--color-label-secondary); }
 .welcome-list b { font-size: 13px; font-weight: 500; color: var(--color-label); }
 .welcome-list span { font-size: 13px; color: var(--color-label-secondary); }
-/* Why Trust Us: the workloads' rows, each reason's glyph drawn as an outline in the same grey */
+/* Why Trust Us: the workloads' rows, each reason marked by a small square in its chapter's colour */
 .welcome-list.is-trust { margin-top: 0; }
-.welcome-list .trust-glyph, .welcome-list .trust-glyph rect { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.welcome-list.is-trust button, .welcome-list.is-trust a { grid-template-columns: 24px 160px minmax(0, 1fr) auto; }
-.welcome-list .trust-tile { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--tile); }
-.welcome-list .trust-tile .mode-icon { width: 15px; height: 15px; color: #fff; }
+.welcome-list.is-trust button, .welcome-list.is-trust a { grid-template-columns: 6px 160px minmax(0, 1fr) auto; }
+.welcome-list .trust-tile { width: 6px; height: 6px; border-radius: 1.5px; background: var(--tile); }
 .welcome-link { align-self: flex-start; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--color-accent); text-decoration: none; cursor: pointer; }
 .welcome-link:hover { text-decoration: underline; }
 .welcome-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; margin-top: 12px; }
@@ -1421,5 +1420,5 @@
   .welcome-flow li::before { display: none; }
   .welcome-list button, .welcome-list a { grid-template-columns: 20px minmax(0, 1fr) auto; }
   .welcome-list span { display: none; }
-  .welcome-list.is-trust button, .welcome-list.is-trust a { grid-template-columns: 24px minmax(0, 1fr) auto; }
+  .welcome-list.is-trust button, .welcome-list.is-trust a { grid-template-columns: 6px minmax(0, 1fr) auto; }
 }
