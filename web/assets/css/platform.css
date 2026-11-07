@@ -795,13 +795,14 @@
 .platform-table tbody tr:hover td:has(> .platform-cell.is-top) { background: var(--color-row-highlight-hover); }
 .platform-table tbody td.is-openable:hover:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-row-highlight-hover), var(--color-accent) 8%); }  /* the cell under the pointer one step bluer still, as a plain cell's hover is one step greyer */
 .platform-table tbody td.is-openable:hover:has(> .platform-cell.is-top) .platform-open { color: var(--color-accent); }  /* and its See Runs stays blue */
-/* phones: a machine's name ends in an ellipsis inside its column instead of running under Overall, and the platform's
-   tile gives its room to the name */
+/* a machine's name ends in an ellipsis inside its column instead of running under Overall or up to its edge: narrowed,
+   RTX PRO 6000 is the longest that fits whole, a longer one reads "RTX 4090 Chr…" */
+.platform-table tbody th.platform-row { overflow: hidden; }
+.platform-row .platform-chip { display: flex; max-width: 100%; min-width: 0; }  /* unclipped: the tile sits 2px into the padding */
+.platform-row .platform-chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.platform-row .platform-chip > .platform-mem, .platform-row .platform-chip > .sidebar-glyph { flex: none; }
+/* phones: the platform's tile gives its room to the name */
 @media (max-width: 899px) {
-  .platform-table tbody th.platform-row { overflow: hidden; }
-  .platform-row .platform-chip { display: flex; max-width: 100%; min-width: 0; overflow: hidden; }
-  .platform-row .platform-chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .platform-row .platform-chip .platform-mem { flex: none; }
   .platform-row .platform-chip .sidebar-glyph[style] { display: none; }
 }
 
@@ -875,7 +876,7 @@
 .platform-table.is-tight td.is-overall .platform-eye { display: none; }
 .platform-table:not(.is-tight) tbody tr:has(> th.platform-row:hover, > td.is-overall:hover) td.is-overall .platform-cell,
 .platform-table:not(.is-tight) tbody tr:has(.platform-eye[aria-pressed="true"]) td.is-overall .platform-cell { visibility: hidden; }  /* no hover on a phone: the eye always shows */
-.platform-table tbody th.platform-row { padding-right: 32px; }  /* room for the eye after the longest name */
+.platform-table tbody th.platform-row { padding-right: 26px; }  /* room for the eye's mark after the name */
 
 /* the two engine pop-ups read as one phrase, as a Finder search rule: [pie] vs [Strongest] */
 .platform-setup .platform-vs { margin: 0 6px; color: var(--color-label-secondary); }

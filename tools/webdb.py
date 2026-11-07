@@ -224,12 +224,8 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
             "runs": ", ".join(t.capitalize() for t in p["tiers"]),
         })
     rows += [row(c) for c in catalog if c["id"] not in used]
-    # one pattern for every accelerator's name, as for the models': its words joined by hyphens (H100-SXM, RTX-PRO-6000,
-    # TPU-v6e), the count after it. A Mac keeps Apple's own name (M5 Max)
+    # an accelerator keeps the name its maker writes, words apart (H100 SXM, RTX PRO 6000, TPU v6e), as a Mac keeps Apple's
     for r in rows:
-        if r["class"] != "mac" and r.get("name"):
-            name, _, count = r["name"].partition(" ×")
-            r["name"] = name.replace(" ", "-") + (f" ×{count}" if count else "")
         # a browser row is the same card as a native one, seen through Chrome's WebGPU: its name says so, and its
         # vendor names the browser beside the card's maker (the site files a machine whose vendor is "NVIDIA" under NVIDIA)
         if r["class"] == "web" and r.get("name"):
