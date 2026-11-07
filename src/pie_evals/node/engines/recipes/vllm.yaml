@@ -294,11 +294,15 @@ competitive:
         gemma-4-e4b-tpu:
           knobs:
             gpu_mem_util:
-              value: 0.92
+              value: 0.94
               rationale: >
-                E4B's 14.32 GiB of weights need more than 0.90 of a v5e, and its 256-wide sampler (513.47M) finds no room
-                past the KV pool at 0.97 (42327327144) or 0.94 (0.48G of KV, 447.10M free, 42346656450); 0.92 leaves it
-                0.76G beside a 0.17G pool.
+                E4B's 14.32 GiB of weights need more than 0.90 of a v5e; past them and the KV pool 447.10M stays free at
+                0.94 and at 0.92 alike (42346656450, 42364993156), so the pool is not what crowds the sampler (below).
+            max_num_seqs_cap:
+              value: 128
+              rationale: >
+                The 256-wide sampler program asks 513.47M with 447.10M free whatever the KV share (jit_sample,
+                42327327144, 42346656450, 42364993156); 128 seats halve it. The other offered requests queue in vLLM's scheduler.
         qwen3.6-27b-mini8:
           knobs:
             max_num_seqs_cap:

@@ -174,9 +174,18 @@ competitive:
           rationale: >
             As on the v6e: at 256 slots the GDN state (60 MiB a request) took all of a v5e's HBM past the 7.5 GiB of
             weights ("Not enough memory. Please try to increase --mem-fraction-static", 41913877755); 64 seat.
+        extra_body:
+          value: {skip_special_tokens: false}
+          rationale: >
+            The 16-expert cut's raw greedy output is special tokens, which sglang-jax streams as empty text: the
+            client stamped no token and the raw row had no TTFT or decode speed (42337690224, 42352803031).
     qwen3.6-27b-mini8:
       knobs:
-        gpu_mem_util: *sglang_v5e_room
+        gpu_mem_util:
+          value: 0.80
+          rationale: >
+            At 0.90 the vision tower's warmup copies the 2.37G embedding table with 1.55G free (embeddings.py, in
+            precompile_multimodal_encoder, 42357472918); 0.80 leaves it room beside 9.8 GiB of weights and 64 state slots.
         max_running_requests:
           value: 64
           rationale: >
