@@ -135,7 +135,7 @@ window.Pie = window.Pie || {};
   };
   // the win rate on each platform apart: an engine is held only against the others on that platform's machines
   const onPlatform = (rows, ids) => rows.filter((r) => ids.includes(Pie.platformOf(Pie.store.index.hardware[r.hardware] || {})));
-  const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]], ["index-web", "Browser", ["web"]]].map(([id, title, ids]) => ({
+  const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]], ["index-android", "Mobile", ["android"]], ["index-web", "Browser", ["web"]]].map(([id, title, ids]) => ({
     id, title, ids, sub: "Chance to decode faster than an average engine",  // one line, as the grid's, so the card keeps its height on a switch
     value: (rows, engine) => strengths(rows, ids)[engine] || null,
     label: (v) => `${Math.round(v)}%`,
@@ -232,10 +232,14 @@ window.Pie = window.Pie || {};
     pie: ["0 0 67.89 67.89", '<path class="is-stroked" d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z" stroke-width="8"/>'],  // the sidebar's weight
     mlxlm: ["13 -42 414 224", '<g><path transform="translate(0 139.72)" d="M 13.9375 0 L 42.3125 0 L 42.3125 -91.796875 L 43.671875 -91.796875 L 78.71875 0 L 97.984375 0 L 133.03125 -91.796875 L 134.390625 -91.796875 L 134.390625 0 L 162.765625 0 L 162.765625 -139.71875 L 125.96875 -139.71875 L 88.984375 -42.015625 L 87.8125 -42.015625 L 50.734375 -139.71875 L 13.9375 -139.71875 Z M 13.9375 0"/><path transform="translate(176.682092 139.72)" d="M 13.9375 0 L 106.21875 0 L 106.21875 -26.046875 L 45.984375 -26.046875 L 45.984375 -139.71875 L 13.9375 -139.71875 Z M 13.9375 0"/></g><g class="is-faint"><path transform="translate(290.57 139.72)" d="M 6.296875 0 L 40.5625 0 L 69.515625 -47.34375 L 70.484375 -47.34375 L 99.625 0 L 135.84375 0 L 91.109375 -69.8125 L 91.109375 -70.296875 L 136.328125 -139.71875 L 100.703125 -139.71875 L 73 -90.71875 L 71.84375 -90.71875 L 43.953125 -139.71875 L 6.484375 -139.71875 L 49.96875 -70.6875 L 49.96875 -70.296875 Z M 6.296875 0"/></g>'],  // MLX's wordmark, its X in grey as the project draws it
   };
-  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", "llamacpp-webgpu": "llamacpp.png", webllm: "mlc.svg", splash: "splash.png" };  // Splash's own tile, its stacked marks on coral
+  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", "llamacpp-webgpu": "llamacpp.png", webllm: "mlc.svg", splash: "splash.png", litert: "litert.svg" };  // Splash's own tile, its stacked marks on coral
   const logo = (engine, x, y, size) => GLYPHS[engine]
     ? `<svg class="board-glyph" x="${x - (engine === "mlxlm" ? size * .35 : 0)}" y="${y}" width="${size * (engine === "mlxlm" ? 1.7 : 1)}" height="${size}" viewBox="${GLYPHS[engine][0]}">${GLYPHS[engine][1]}</svg>`
     : FILES[engine] ? `<image class="board-logo" href="assets/img/engines/${FILES[engine]}" x="${x}" y="${y}" width="${size}" height="${size}"/>` : "";
+  // the same logo as HTML, for the tables (the Engines catalog): an image, or the glyph inline so it takes the label colour
+  Pie.engines.logo = (engine) => (GLYPHS[engine]
+    ? `<svg class="engine-logo is-glyph${engine === "mlxlm" ? " is-wide" : ""}" viewBox="${GLYPHS[engine][0]}" aria-hidden="true">${GLYPHS[engine][1]}</svg>`
+    : FILES[engine] ? `<img class="engine-logo${engine === "splash" ? " is-tile" : ""}" src="assets/img/engines/${FILES[engine]}" alt="" aria-hidden="true">` : "");
   // a shorter name where the engine's own would crowd its neighbours under a bar
   const SHORT = { llamacpp: "Llama" };
   // a row of platform cards pages sideways by two chevrons at its section's right, in the cards' own view switch (its
@@ -553,7 +557,7 @@ window.Pie = window.Pie || {};
   // Efficiency: how close each engine gets to the hardware, a card per platform as Head to head sets its own, a bar per
   // engine at its median share of the machine's roofline limit over every machine (and model, or the one picked) it ran
   const USE = { id: "use", title: "Share of the theoretical maximum" };
-  const USE_CARDS = [["use", "Apple", "mac"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"], ["use-web", "Browser", "web"]];
+  const USE_CARDS = [["use", "Apple", "mac"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"], ["use-android", "Mobile", "android"], ["use-web", "Browser", "web"]];
   const useShares = (rows, platform) => {
     const mode = USE_MODES.find((m) => m.id === useMode);
     const out = {};  // engine -> its shares, one per machine and model at its best run there
@@ -646,10 +650,11 @@ window.Pie = window.Pie || {};
   const BADGES = {
     index:          ["#5E5CE6", '<circle cx="12" cy="12" r="9"/><path d="m12 12 2.6-5.2"/><circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/><path d="M7 15.5h.01M6.5 11h.01M9 7h.01M17.5 11h.01M17 15.5h.01"/>'],  // indigo, a speedometer as SF Symbols draws gauge.with.needle: a dial, its needle just right of upright
     "index-mac":    ["#636366"],
-    use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"], "use-web": ["#8e8e93"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
+    use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"], "use-android": ["#1C1C1E"], "use-web": ["#8e8e93"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
     "index-gpu":    ["#76b900"],
     "index-amd":    ["#ed1c24"],
     "index-tpu":    ["#4285f4"],
+    "index-android": ["#1C1C1E"],  // the phone rows in their sidebar tile's black
     "index-web":    ["#8e8e93"],  // the browser rows in their sidebar tile's grey
     accuracy:       ["#34c759"],  // green: the answers agree
     wins:           ["#FF9F0A", '<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v6M8.5 19h7"/>'],  // orange, a trophy: its stem runs down into its base

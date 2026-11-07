@@ -425,6 +425,7 @@ window.Pie = window.Pie || {};
     return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   };
   let lastAll = null;  // the release's rows, every status, for the hover cards
+  let shownEngine = null;  // the engine a platform's own page stands in for pie, where pie has not run (the bar's menu names it)
   // the engines with no number in a cell, each with why: not supported, does not fit, failed (its error), not measured yet
   const WHY = { unsupported: "Not supported", no_fit: "Does not fit", fail: "Failed", not_run: "Not measured", no_data: "Not measured" };
   const absentRows = (mac, model, mode, order) => {
@@ -901,8 +902,8 @@ window.Pie = window.Pie || {};
           // each view a row with its engines beside it: a click on the view takes it with the default engine (pie), a pick in its
           // list takes it with that engine
           ...(fixedView ? [] : [{ heading: "View" }, ...["engines", "tps", "ceiling"].map((id) => ({ value: id, key: "grid:view", label: COMPARES[id], selected: id === compare, icon: viewIcon(id),
-            detail: Pie.store.names.engine(id === compare ? viewState.platform.engine || Pie.engines.primary : Pie.engines.primary),  // the engine each view takes
-            submenu: Pie.store.tables.engines.map((e) => ({ value: `${id}|${e.id}`, key: "grid:view-engine", label: Pie.store.names.engine(e.id), selected: e.id === (id === compare ? viewState.platform.engine || Pie.engines.primary : Pie.engines.primary), dot: Pie.engines.colorOf(e.id) })) }))]),
+            detail: Pie.store.names.engine(id === compare ? shownEngine || viewState.platform.engine || Pie.engines.primary : Pie.engines.primary),  // the engine each view takes
+            submenu: Pie.store.tables.engines.map((e) => ({ value: `${id}|${e.id}`, key: "grid:view-engine", label: Pie.store.names.engine(e.id), selected: e.id === (id === compare ? shownEngine || viewState.platform.engine || Pie.engines.primary : Pie.engines.primary), dot: Pie.engines.colorOf(e.id) })) }))]),
           // a page with one fixed view keeps the engine as a row of its own
           ...(fixedView ? [{ label: "Engine", detail: Pie.store.names.engine(viewState.platform.engine || Pie.engines.primary), submenu: own("engine", this.menu("engine")) }] : []),
         ];
@@ -968,6 +969,7 @@ window.Pie = window.Pie || {};
       else if (!peeked) compare = chosen;  // a platform's page shows the viewer's pick, whatever page came before
       const all = Pie.store.snapshot(state.release);
       lastAll = all;  // the hover cards name the engines that left a cell empty
+      shownEngine = null;
       const modes = Pie.platform.metrics(state);
       // the viewer's pick is kept as they made it: a page that does not offer it (the TPU has no Peak FLOPs, Spec Decode
       // is the Roofline page's) shows Decode without forgetting it, so the next page that has it opens on it again
@@ -1003,6 +1005,27 @@ window.Pie = window.Pie || {};
           <h2>No ${esc(label)} results yet</h2></div>`;
         return { macs: 0, models: 0, metric };
       }
+      // a platform pie has not run on yet (Mobile today) is set out with the engine that has the most results there,
+      // so its table is not empty; another engine picked in the bar holds everywhere, and pie wherever it has a result
+      // (pie picked, as a click on a view picks it, is the default: a platform without it still gets its stand-in)
+      const measuredAll = all.filter(Pie.store.isMeasured);
+      const platformBase = new Map(), macBase = new Map();
+      for (const g of groups) {
+        let engine = base;
+        if (base === Pie.engines.primary) {
+          const on = measuredAll.filter((r) => g.macs.includes(r.hardware));
+          if (on.length && !on.some((r) => r.engine === base)) {
+            const n = {};
+            for (const r of on) n[r.engine] = (n[r.engine] || 0) + 1;
+            engine = Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b))[0];
+          }
+        }
+        platformBase.set(g.platform.id, engine);
+        for (const mac of g.macs) macBase.set(mac, engine);
+      }
+      const baseOf = (mac) => macBase.get(mac) || base;
+      const standIn = (id) => { const e = platformBase.get(id); return e && e !== base ? e : null; };
+      shownEngine = only ? standIn(only) : null;
       const query = state.query.trim().toLowerCase();
       const noFit = Pie.store.tables.no_fit || {};
       const p = state.platform;
@@ -1029,10 +1052,10 @@ window.Pie = window.Pie || {};
       const fill = {};
       // counted over Raw and Batched, Decode and Prefill together: the columns keep one order whichever setup shows
       const SETUP_WORKLOADS = ["raw", "throughput", "prefill_batch"];
-      const anySetup = all.filter((r) => SETUP_WORKLOADS.includes(r.workload) && Pie.store.isMeasured(r) && r.engine === base && macs.includes(r.hardware) && (r.decode_tok_s || r.prefill_tok_s || r.output_tok_s));
+      const anySetup = all.filter((r) => SETUP_WORKLOADS.includes(r.workload) && Pie.store.isMeasured(r) && r.engine === baseOf(r.hardware) && macs.includes(r.hardware) && (r.decode_tok_s || r.prefill_tok_s || r.output_tok_s));
       for (const r of anySetup) (fill[r.model] ||= new Set()).add(r.hardware);
       // a model that does not fit a machine fills that cell too: the answer is known
-      for (const mac of macs) for (const id of suiteModels) if (noFit[mac]?.[id]?.[base]) (fill[id] ||= new Set()).add(mac);
+      for (const mac of macs) for (const id of suiteModels) if (noFit[mac]?.[id]?.[baseOf(mac)]) (fill[id] ||= new Set()).add(mac);
       const fillOf = (id) => fill[id]?.size || 0;
       // the makers menu offers only makers with a result on this page
       pageMakers = [...new Set(rows.filter((r) => r[metric.key] && macs.includes(r.hardware) && suiteModels.includes(r.model)).map((r) => makerOf(r.model).name || "Cloud"))].sort();
@@ -1071,6 +1094,7 @@ window.Pie = window.Pie || {};
         for (const model of allModels) {
           const id = realOf(model);
           const here = (r) => r.hardware === mac && r.model === id;
+          const base = baseOf(mac);  // pie, or the engine standing in for it on this machine's platform
           let c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base, rival);
           // a model that runs cut down to fit (a miniature) never "does not fit": where its miniature did not run, the cell
           // says that instead of the full model's size
@@ -1164,7 +1188,7 @@ window.Pie = window.Pie || {};
       // a table's miniatures (cut to fit its machines) lead it, then its full models; a maker with both splits its band
       // a slice is read from the runs, not the cell drawn: Tokens per Second and Kernel Efficiency leave a slice's cell
       // empty, and the columns must keep the order Relative Speed gives them
-      const sliced = new Set(all.filter((r) => r.miniature && r.engine === base).map((r) => `${r.hardware}|${r.model}`));
+      const sliced = new Set(all.filter((r) => r.miniature && r.engine === baseOf(r.hardware)).map((r) => `${r.hardware}|${r.model}`));
       const slicedOn = (list, model) => list.some((mac) => sliced.has(`${mac}|${model}`));
       const minisFirst = (list, ms) => {
         const mini = (model) => slicedOn(list, model);

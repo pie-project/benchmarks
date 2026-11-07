@@ -222,6 +222,9 @@
 .board-section-head > .board-title-pick { margin: 0 0 -4px auto; }  /* a 24px button centred on the 16px line */
 .board-section-head > .board-toggle { margin: 0 0 -4px auto; }  /* a 24px one the same */
 .board-title-dot { width: 12px; height: 12px; flex: none; border-radius: 3px; }  /* the card's colour as a plain square before its title, as Artificial Analysis marks its charts */
+/* Mobile's black square keeps a hairline edge on a dark card, where its tile colour is the card's own */
+:root[data-theme="dark"] .board-title-dot[style*="#1C1C1E"] { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .board-title-dot[style*="#1C1C1E"] { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); } }
 /* the page's foot: a quiet band under a hairline, its links small and grey, as a Mac site closes a page */
 .board-footer { margin-top: 0; background: none; font-size: 11px; line-height: 1.4; color: var(--color-label-secondary); }  /* the cards' description type */
 .board-footer-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; max-width: 1080px; margin: 0 auto; padding: 40px var(--edge) 32px; }

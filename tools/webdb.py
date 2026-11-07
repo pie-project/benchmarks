@@ -259,8 +259,8 @@ def phone_hardware(store) -> list[dict]:
             # the site's Mobile platform (Pie.platformOf): every phone, Android or iPhone
             "class": "android", "location": "local", "vendor": p.get("vendor") or fp.get("manufacturer") or None,
             "backend": p.get("backend") or ("metal" if fp.get("os") == "ios" else "vulkan"), "arch": p.get("arch") or fp.get("soc"),
-            "count": 1, "memory_gib": p.get("memory_gib") or fp.get("ram_gib"), "memory_type": None, "bandwidth_gbs": None,
-            "cpu_cores": fp.get("cpu_cores"), "gpu_cores": None, "tflops_fp16": None, "interconnect": "uma", "power_w": None,
+            "count": 1, "memory_gib": p.get("memory_gib") or fp.get("ram_gib"), "memory_type": None, "bandwidth_gbs": p.get("bandwidth_gbs"),
+            "cpu_cores": fp.get("cpu_cores"), "gpu_cores": None, "tflops_fp16": p.get("tflops_fp16"), "interconnect": "uma", "power_w": None,
             "year": str(p["year"]) if p.get("year") else None, "runs": "Phone app", "price_usd": None, "price_hr": None,
         })
     return out

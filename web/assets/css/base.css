@@ -111,6 +111,14 @@ svg {
 .workload-tag .mode-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 7px; color: var(--color-label-secondary); }  /* the name keeps the row's text line */
 .workload-tag .mode-icon + .mode-icon { margin-left: -4px; }  /* Raw's two marks read as one */
 
+.engine-tag.is-logo::before { content: none; }  /* the logo stands in for the colour chip */
+.engine-logo { width: 16px; height: 16px; flex: none; display: block; object-fit: contain; }
+.engine-logo.is-wide { width: 27px; margin: 0 -5.5px; }  /* MLX's wordmark, widened as the charts draw it, in a logo's room */
+.engine-logo.is-tile { border-radius: 22%; }  /* a logo on its own tile (Splash's) gets an app icon's corners */
+.engine-logo.is-glyph { overflow: visible; fill: var(--color-label); }  /* a single-ink logo reads in either theme */
+.engine-logo.is-glyph .is-stroked { fill: none; stroke: var(--color-label); stroke-linecap: round; stroke-linejoin: round; }
+.engine-logo.is-glyph .is-faint { fill: var(--color-label-tertiary); }
+
 .engine-tag::before {
   content: "";
   width: 8px;

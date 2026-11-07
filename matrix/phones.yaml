@@ -12,7 +12,7 @@ phones:
   - {id: galaxy-s25-edge, name: Galaxy S25 Edge, vendor: Samsung, os: android, backend: vulkan, accelerator: Snapdragon 8 Elite for Galaxy, arch: sm8750, memory_gib: 12, year: 2025, device_models: ["SM-S937*"]}
   - {id: galaxy-s25-ultra, name: Galaxy S25 Ultra, vendor: Samsung, os: android, backend: vulkan, accelerator: Snapdragon 8 Elite for Galaxy, arch: sm8750, memory_gib: 12, year: 2025, device_models: ["SM-S938*"]}
   - {id: galaxy-z-fold7, name: Galaxy Z Fold7, vendor: Samsung, os: android, backend: vulkan, accelerator: Snapdragon 8 Elite for Galaxy, arch: sm8750, memory_gib: 12, year: 2025, device_models: ["SM-F966*"]}
-  - {id: galaxy-s26-ultra, name: Galaxy S26 Ultra, vendor: Samsung, os: android, backend: vulkan, accelerator: Snapdragon 8 Elite Gen 5 for Galaxy, arch: sm8850, memory_gib: 12, year: 2026, device_models: ["SM-S948*"]}
+  - {id: galaxy-s26-ultra, name: Galaxy S26 Ultra, vendor: Samsung, os: android, backend: vulkan, accelerator: Snapdragon 8 Elite Gen 5 for Galaxy, arch: sm8850, memory_gib: 12, bandwidth_gbs: 84.8, year: 2026, device_models: ["SM-S948*"]}
   - {id: pixel-8, name: Pixel 8, vendor: Google, os: android, backend: vulkan, accelerator: Google Tensor G3, arch: tensor-g3, memory_gib: 8, year: 2023, device_models: ["Pixel 8"]}
   - {id: pixel-8-pro, name: Pixel 8 Pro, vendor: Google, os: android, backend: vulkan, accelerator: Google Tensor G3, arch: tensor-g3, memory_gib: 12, year: 2023, device_models: ["Pixel 8 Pro"]}
   - {id: pixel-9, name: Pixel 9, vendor: Google, os: android, backend: vulkan, accelerator: Google Tensor G4, arch: tensor-g4, memory_gib: 12, year: 2024, device_models: ["Pixel 9"]}
