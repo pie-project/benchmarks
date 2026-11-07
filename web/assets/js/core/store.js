@@ -64,7 +64,8 @@ window.Pie = window.Pie || {};
   for (const hw of tables.hardware || []) {
     const memory = hw.memory_gib;
     if (!memory) continue;
-    const mac = Pie.platformOf(hw) === "mac";
+    // a browser tab runs the Mac's 4-bit build too, never the GPU release
+    const mac = Pie.platformOf(hw) === "mac" || Pie.platformOf(hw) === "web";
     const holds = memory;
     for (const m of tables.models || []) {
       if (noFit[hw.id]?.[m.id]) continue;
