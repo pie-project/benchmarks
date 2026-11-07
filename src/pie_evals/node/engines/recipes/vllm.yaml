@@ -286,6 +286,19 @@ competitive:
                 At 0.97 vLLM-TPU gives the KV pool every byte its memory check sees free, and then cannot load its
                 step program ("Attempting to reserve 1.11G ... 484.27M free", gpt-oss parity 41995643253;
                 Muse-Glimmer's KV pool the same, 3.05G asked with 483.80M free, 41913871355). 0.80 leaves it the room.
+        # c256 and pf256-512 at 0.97: the KV pool takes all but 25-450M, and the 256-wide step programs cannot load
+        # ("Attempting to reserve 128.12M at the bottom of memory ... 24.94M free", E2B; 13.47M with 447.10M free, E4B;
+        # 82.03M with 180.24M free, Qwen3.5-0.8B; 42327327144)
+        gemma-4-e2b-tpu: *tpu_v5e_compile_room
+        qwen3.5-0.8b-bf16: *tpu_v5e_compile_room
+        gemma-4-e4b-tpu:
+          knobs:
+            gpu_mem_util:
+              value: 0.92
+              rationale: >
+                E4B's 14.32 GiB of weights need more than 0.90 of a v5e, and its 256-wide sampler (513.47M) finds no room
+                past the KV pool at 0.97 (42327327144) or 0.94 (0.48G of KV, 447.10M free, 42346656450); 0.92 leaves it
+                0.76G beside a 0.17G pool.
         qwen3.6-27b-mini8:
           knobs:
             max_num_seqs_cap:

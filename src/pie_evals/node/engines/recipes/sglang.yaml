@@ -86,6 +86,19 @@ competitive:
         disable_hybrid_swa_memory:
           value: false
           rationale: Same split full/SWA pools as gemma4 (global head_dim 512, sliding 256).
+  backend:
+    xla:
+      family:
+        qwen3_5: &gdn_main
+          knobs:
+            pin:
+              value: git-b3e3e16b2
+              rationale: >
+                sglang-jax 0.1.0rc0 copies the whole GDN state pool in prefill: at 256 running requests its extend
+                precompile needs 37.6G (Qwen3.5-0.8B), 43.1G (Qwen3.6-27B mini12) of HLO temporaries on a 31.25G v6e
+                (tpu.yml 42310452107). Main fixes it (#1680, "avoid whole state-pool copies during untracked prefill").
+        qwen3_6: *gdn_main
+        qwen3_6_moe: *gdn_main
   workload_kind:
     prefix_shared:
       knobs:
@@ -139,6 +152,54 @@ competitive:
               rationale: >
                 At 0.97 the KV pool leaves sglang-jax 180.63M for a program that reserves 530.41M at load
                 (RuntimeProgramAllocationFailure, 42116961512); 0.90 leaves it the room.
+    qwen3.6-35b-a3b-mini-e32:
+      platform:
+        tpu-v6e-1:
+          knobs:
+            max_running_requests:
+              value: 128
+              rationale: >
+                sglang-jax keeps one fp32 GDN state slot (30 layers x 2 MiB) per running request beside the 12.9 GiB of
+                weights: 256 slots (15 GiB) leave a 32 GB v6e no KV; 128 seat, the rest of a c256 batch queues.
+    qwen3.6-35b-a3b-mini-e16:
+      knobs:
+        gpu_mem_util: &sglang_v5e_room
+          value: 0.90
+          rationale: >
+            At 0.97 sglang-jax's pools leave a v5e 180-460M, and its 256-wide programs cannot load ("Attempting to
+            reserve 520.34M ... 179.79M free", jit_jitted_sampler, Qwen3-0.6B; "Attempting to allocate 485.00M ...
+            457.73M free", Qwen3.5-0.8B; 42333316224). 0.90, the GLM-5.3 mini's share, leaves them 1.5G.
+        max_running_requests:
+          value: 64
+          rationale: >
+            As on the v6e: at 256 slots the GDN state (60 MiB a request) took all of a v5e's HBM past the 7.5 GiB of
+            weights ("Not enough memory. Please try to increase --mem-fraction-static", 41913877755); 64 seat.
+    qwen3.6-27b-mini8:
+      knobs:
+        gpu_mem_util: *sglang_v5e_room
+        max_running_requests:
+          value: 64
+          rationale: >
+            256 GDN state slots (6 layers x 3 MiB) beside the 9.8 GiB of weights leave a v5e no KV ("Not enough
+            memory. Please try to increase --mem-fraction-static", 42333316224); at 128 its prefill program asks 2.37G
+            with 1.54G free (42337690224). 64 seat; the rest of a c256 batch queues.
+    qwen3-0.6b-tpu:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            gpu_mem_util: *sglang_v5e_room
+    qwen3.5-0.8b-bf16:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            gpu_mem_util: *sglang_v5e_room
+    gemma-4-26b-a4b-mini12-e32:
+      knobs:
+        chunked_prefill_size:
+          value: 2048
+          rationale: >
+            sglang-jax's 4096-token extend precompile needs 15.79G of HLO temporaries for this v5e cut on a 15.75G
+            chip (41957058471; every bucket up to 2048 compiled); 2048 is the chunk vLLM-TPU prefills in.
     gpt-oss-120b-mxfp4-mini:
       platform:
         a40-x1:

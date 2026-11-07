@@ -338,6 +338,8 @@ class SglangTpuEngine(ServedEngine):
 
     def server_cmd(self, port: int, slots: int, context: int) -> list[str]:
         r = self.recipe
+        if r.get("max_running_requests"):  # the recurrent state slots one chip holds (recipe rationale)
+            slots = min(slots, int(r["max_running_requests"]))
         cmd = [
             self.server_python(), "-m", "sgl_jax.launch_server", "--model-path", self.model_arg(),
             "--host", "127.0.0.1", "--port", str(port), "--device", "tpu", "--tp-size", str(max(1, int(self.mode.tp))),
