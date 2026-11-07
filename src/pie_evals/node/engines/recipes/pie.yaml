@@ -483,6 +483,15 @@ default:
             (the XLA engine's own default) the load reserved 128 slots and c256 failed ("this fire wants 255
             recurrent slots", gpt-oss-20b on tpu-v6e-1, #1184).
   artifact:
+    qwen3.8-flash-next-mini:
+      backend:
+        xla:
+          knobs:
+            max_forward_tokens:
+              value: 512
+              rationale: >
+                At the XLA default of 2048 the fire's HLO temporaries (32.50G) exceed a v6e chip's 31.24G;
+                parity's 512-token fires fit.
     hy4-mini6:
       platform:
         tpu-v5e-1:
