@@ -26,9 +26,9 @@ INFERLET = Path(__file__).resolve().parents[3] / "inferlets" / "first-token-topk
 
 def topk_wasm(pie_root: Path, log=print) -> Path:
     """inferlets/first-token-topk built in pie's examples/ (its pinned toolchain and inferlet crate)."""
-    from pie_evals.node.build import wasm_target
-
     import shutil
+
+    from pie_evals.node.build import wasm_target
 
     dst = pie_root / "examples" / INFERLET.name
     shutil.copytree(INFERLET, dst, dirs_exist_ok=True)
