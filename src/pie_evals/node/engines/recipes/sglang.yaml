@@ -194,7 +194,6 @@ competitive:
             gpu_mem_util: *sglang_v5e_room
     gemma-4-26b-a4b-mini12-e32:
       knobs:
-        gpu_mem_util: *sglang_v5e_room
         chunked_prefill_size:
           value: 2048
           rationale: >
