@@ -748,7 +748,12 @@ window.Pie = window.Pie || {};
     // platforms draw them too (LiteRT-LM on Mobile), a dot and a name, in the catalog's order
     const ran = new Set(rows.map((r) => r.engine));
     const legend = engineIds().filter((id) => ran.has(id))
-      .map((id) => `<span class="board-key"><span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}</span>`).join("");
+      .map((id) => {
+        // each name opens the engine's own open-source repo, as the Engines catalog lists it
+        const repo = Pie.store.index.engines[id]?.repo;
+        const key = `<span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}`;
+        return repo ? `<a class="board-key" href="https://github.com/${esc(repo)}" target="_blank" rel="noopener" draggable="false">${key}</a>` : `<span class="board-key">${key}</span>`;
+      }).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     // each section its own colour from the chips' palette: efficiency green, performance orange, by model purple
     const outline = [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"], ["metric", "By Model", "#7a4cf5"]].map(([id, title, tint]) =>

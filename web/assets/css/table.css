@@ -224,6 +224,13 @@
 .data-table .model-name-cell { display: inline-flex; align-items: center; gap: 8px; }
 .data-table .model-name-cell .model-badge { width: 18px; height: 18px; border-radius: 5px; }
 .data-table .model-name-cell .model-badge img { width: 12px; height: 12px; }
+/* an engine's logo on the same white tile, its name as far from it; a single-ink logo takes a dark ink on the white */
+.data-table .engine-tag.is-logo { gap: 8px; }
+.data-table .engine-tag .model-badge { width: 18px; height: 18px; border-radius: 5px; }
+.data-table .engine-tag .model-badge .engine-logo { width: 12px; height: 12px; }
+.data-table .engine-tag .model-badge .engine-logo.is-glyph { fill: #1d1d1f; }
+.data-table .engine-tag .model-badge .engine-logo.is-glyph .is-stroked { stroke: #1d1d1f; }
+.data-table .engine-tag .model-badge .engine-logo.is-glyph .is-faint { fill: #8e8e93; }
 
 /* a Performance row above its theoretical limit, as CI Reports lists it: a light red wash, a shade deeper under the pointer */
 .data-table tbody tr.is-over-limit td { background: color-mix(in srgb, var(--color-negative) 8%, transparent); }
