@@ -798,7 +798,7 @@
 /* a machine's name ends in an ellipsis inside its column instead of running under Overall or up to its edge: narrowed,
    RTX PRO 6000 is the longest that fits whole, a longer one reads "RTX 4090 Chr…" */
 .platform-table tbody th.platform-row { overflow: hidden; }
-.platform-row .platform-chip { display: flex; max-width: 100%; min-width: 0; overflow: hidden; }
+.platform-row .platform-chip { display: flex; max-width: 100%; min-width: 0; }  /* unclipped: the tile sits 2px into the padding */
 .platform-row .platform-chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .platform-row .platform-chip > .platform-mem, .platform-row .platform-chip > .sidebar-glyph { flex: none; }
 /* phones: the platform's tile gives its room to the name */
