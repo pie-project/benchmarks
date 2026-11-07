@@ -28,8 +28,8 @@ SPECS = {
 BACKEND_SPECS = {
     ("vllm", "xla"): lambda v: [f"vllm-tpu=={v}"],
     # a pin "git-<sha>": that commit of sglang-jax's repository (a model its newest release does not have yet)
-    # main loads Qwen3.5's video processor at startup, which Transformers builds on torch: the CPU wheel (below)
-    ("sglang", "xla"): lambda v: [f"sglang-jax[tpu] @ git+https://github.com/sgl-project/sglang-jax@{v[4:]}#subdirectory=python", "torch"]
+    # main loads Qwen3.5's video processor at startup, which Transformers builds on torch and torchvision: the CPU wheels (below)
+    ("sglang", "xla"): lambda v: [f"sglang-jax[tpu] @ git+https://github.com/sgl-project/sglang-jax@{v[4:]}#subdirectory=python", "torch", "torchvision"]
                                  if v.startswith("git-") else [f"sglang-jax[tpu]=={v}"],
     # vLLM's ROCm build: the release's wheel from vLLM's own ROCm index (torch, triton and aiter for
     # the same ROCm beside it), local version `+rocmNNN` (rocm_vllm_spec reads which ROCm it is)
