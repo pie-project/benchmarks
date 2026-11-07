@@ -1435,5 +1435,5 @@
 .welcome-list.is-flows code { justify-self: start; font-size: 12px; }
 @media (max-width: 899px) { .welcome-list.is-flows a { grid-template-columns: 6px minmax(0, 1fr) auto auto; } }
 .method-article .method-pane-body > .welcome-list:first-child { margin-top: 0; }  /* a chapter opening on its rows sits where another opens on its lead */
-.approach-main > .method-article .method-pane-body > .welcome-lead { max-width: 640px; }  /* a chapter's lead on one line where it fits */
+.approach-main > .method-article .method-pane-body > .welcome-lead { max-width: 720px; }  /* a chapter's lead on one line where it fits */
 .approach-main > .method-article .method-pane-body > p { padding-right: 140px; }  /* the text held in as far as the numbered rules, one right edge for both */

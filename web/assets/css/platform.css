@@ -948,3 +948,4 @@ td.is-overall:has(> .roll-ghost) { overflow: hidden; }
 .platform-key-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
 .platform-key-swatch.is-latest { background: var(--color-row-highlight); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 35%, transparent); }
 .platform-key-swatch.is-over-limit { background: color-mix(in srgb, var(--color-negative) 9%, var(--color-background)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-negative) 35%, transparent); }
+.platform-key .platform-nofit { width: 14.5px; height: 14.5px; margin: -2px -2px -2px -2px; vertical-align: -3px; }  /* in a key, its drawn square as large as the swatches beside it (10px) */
