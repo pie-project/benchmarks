@@ -294,10 +294,11 @@ competitive:
         gemma-4-e4b-tpu:
           knobs:
             gpu_mem_util:
-              value: 0.94
+              value: 0.92
               rationale: >
-                E4B's 14.32 GiB of weights need more than 0.90 of a v5e, and at 0.97 its 256-wide step programs find no
-                room past the KV pool (42327327144); 0.94 holds the weights, a small KV pool and the programs.
+                E4B's 14.32 GiB of weights need more than 0.90 of a v5e, and its 256-wide sampler (513.47M) finds no room
+                past the KV pool at 0.97 (42327327144) or 0.94 (0.48G of KV, 447.10M free, 42346656450); 0.92 leaves it
+                0.76G beside a 0.17G pool.
         qwen3.6-27b-mini8:
           knobs:
             max_num_seqs_cap:
