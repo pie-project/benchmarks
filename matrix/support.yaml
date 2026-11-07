@@ -238,6 +238,9 @@ unsupported:
   # pie's XLA forward for gpt-oss-20b needs 17.32 GiB of HLO temporaries; a v5e chip has 15.75 GiB (b5 39699079812)
   - when: {engine: pie, backend: xla, family: gpt_oss, platform: tpu-v5e-1, artifact: [gpt-oss-20b-tpu, gpt-oss-120b-tpu]}
     reason: "doesn't fit: pie's XLA forward needs 17.3 GiB of HLO temporaries for gpt-oss-20b; a v5e chip has 15.75 GiB of HBM"
+  # pie's XLA fire for the Qwen3.8-Flash-Next mini needs 20.35G of HLO temporaries even at 512 tokens (parity tpu 42333232226)
+  - when: {engine: pie, backend: xla, platform: tpu-v5e-1, artifact: qwen3.8-flash-next-mini}
+    reason: "doesn't fit: pie's XLA fire needs 20.35 GiB of HLO temporaries for the Qwen3.8-Flash-Next mini at 512 tokens; a v5e chip has 15.75 GiB of HBM"
   # vLLM-TPU 0.32.0 on the TPU minis, past the MLA flags (NEW_MODEL_DESIGN, DP attention) quality/dist_run.py gives it:
   # it fails at boot on every arch below (parity v6e 41962545036, v5e 41995643253; benchmark 41815002834, 41819942291)
   - when: {engine: vllm, backend: xla, family: deepseek_v41}
@@ -432,5 +435,14 @@ first_token_broken:
   muse-glimmer-30b-mlx4: "pie reports the first token before prefill ends on this model, so its prefill and TTFT are not shown"
   qwen3.8-27b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.47 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
   qwen3.6-35b-a3b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.09 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
+
+# Quality grid cells no run can fill, and why: the site shows the reason on the empty cell
+quality_gaps:
+  - platform: [m2-16g, m3-16g]
+    model: nvidia-nemotron-3-ultra-550b-a55b
+    reason: "No slice fits a 16 GB Mac: the smallest, 16 of 512 experts, is 11.4 GiB of bf16 weights, more than the 10.7 GiB its GPU can use, and there is no MLX 4-bit slice"
+  - platform: [m2-16g, m3-16g]
+    model: muse-spark-open-816b-a42b
+    reason: "No slice fits a 16 GB Mac: the smallest, 2 layers and 8 experts, is 10.7 GiB of bf16 weights, all the GPU can use with no room to run, and there is no MLX 4-bit slice"
 
 fit_factor: 1.25

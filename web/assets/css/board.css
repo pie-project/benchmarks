@@ -515,3 +515,10 @@
 .board-welcome .board-welcome-stats dd { margin: 0; font: 600 12px/1 var(--font-text, inherit); letter-spacing: 0; color: #fff; }
 .board-welcome .board-welcome-actions { position: absolute; right: 0; bottom: 0; margin: 0; flex-direction: column; align-items: flex-end; gap: 8px; }
 .board-welcome .board-welcome-actions > * { justify-content: flex-start; }
+/* Head to Head's one bars-or-grid switch sits before the paddles, as Kernel Efficiency's setup pick does */
+.board-section-head > .board-view:not(.board-carousel-nav) { flex: none; margin: 0 -8px -4px auto; }  /* 8px from the paddles, as the setup pick sits from them */
+.board-section-head > .board-view:not(.board-carousel-nav) + .board-carousel-nav { margin-left: 0; }
+.board-section-head > .board-title-pick + .board-title-pick { margin-left: -8px; }  /* two picks side by side 8px apart, as a pick and its paddles */
+.board-title-pick.is-text { padding: 0 8px 0 10px; }  /* a pick with no mark before its word: the same room at both ends */
+.board-footer-simple { font-size: 12px; color: var(--color-label-secondary); }  /* the update date in the section ledes' size and grey */
+.board-footer-simple { font-size: 11px; }  /* the update date at the cards' subtitle size */

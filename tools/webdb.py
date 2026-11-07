@@ -838,9 +838,11 @@ def gpu_no_fit(store, a2m: dict[str, str], hw_rows: list[dict], gpu_ids: list[st
     weights = {m: min(arts[i]["expected_gib"] for i in ids if arts[i].get("expected_gib"))
                for m, ids in used.items() if any(arts[i].get("expected_gib") for i in ids)}
     factors = {p["id"]: p.get("fit_factor") or factor for p in load("platforms")["platforms"]}
+    # a browser tab (webgpu) runs the Mac's 4-bit weights, or their slice where those do not fit, never these
+    web = {p["id"] for p in load("platforms")["platforms"] if p.get("backend") == "webgpu"}
     out: dict[str, dict] = {}
     for hw in hw_rows:
-        if hw["id"] not in gpu_ids or not hw.get("memory_gib"):
+        if hw["id"] not in gpu_ids or hw["id"] in web or not hw.get("memory_gib"):
             continue
         cap = gpu_gib(hw["memory_gib"], hw.get("interconnect") or "pcie")
         for model, w in weights.items():
@@ -1064,7 +1066,7 @@ def main() -> None:
     busy = sum(r["duration_s"] or 0 for r in store.table().select(["status", "duration_s"]).to_pylist() if r["status"] in ("pass", "noisy", "fail"))
     totals = {"runs": ran + len(store.quality()), "machine_s": round(busy)}
     db = {"updated_at": updated_at, "totals": totals, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
-          "quality_parity": checks["parity"], "quality_kernels": checks["kernels"],
+          "quality_parity": checks["parity"], "quality_kernels": checks["kernels"], "quality_gaps": load("support").get("quality_gaps", []),
           "no_fit": misfits, "suites": suite_ids,
           "hardware": hw_rows,
           # the Engines table lists every engine CI runs, the GPU-only ones (vLLM, SGLang) too; the grids keep to the Mac engines

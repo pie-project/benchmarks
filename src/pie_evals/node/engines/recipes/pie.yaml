@@ -483,6 +483,20 @@ default:
             (the XLA engine's own default) the load reserved 128 slots and c256 failed ("this fire wants 255
             recurrent slots", gpt-oss-20b on tpu-v6e-1, #1184).
   artifact:
+    qwen3.8-flash-next-mini:
+      backend:
+        xla:
+          knobs:
+            max_forward_tokens:
+              value: 512
+              rationale: >
+                At the XLA default of 2048 the fire's HLO temporaries (32.50G) exceed a v6e chip's 31.24G;
+                parity's 512-token fires fit.
+            gpu_mem_util:
+              value: 0.6
+              rationale: >
+                The fire's HLO temporaries count the KV pool: at 0.90 (a 16.97 GiB pool) they came to 35.70G of a v6e's
+                31.24G (tpu 42342560134); 0.60 leaves the program its ~19G with a pool a single stream never fills.
     hy4-mini6:
       platform:
         tpu-v5e-1:
