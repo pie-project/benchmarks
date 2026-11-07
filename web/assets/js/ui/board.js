@@ -238,7 +238,7 @@ window.Pie = window.Pie || {};
     : FILES[engine] ? `<image class="board-logo" href="assets/img/engines/${FILES[engine]}" x="${x}" y="${y}" width="${size}" height="${size}"/>` : "";
   // the same logo as HTML, for the tables (the Engines catalog): an image, or the glyph inline so it takes the label colour
   Pie.engines.logo = (engine) => (GLYPHS[engine]
-    ? `<svg class="engine-logo is-glyph${engine === "mlxlm" ? " is-wide" : ""}" viewBox="${GLYPHS[engine][0]}" aria-hidden="true">${GLYPHS[engine][1]}</svg>`
+    ? `<svg class="engine-logo is-glyph" viewBox="${GLYPHS[engine][0]}" aria-hidden="true">${GLYPHS[engine][1]}</svg>`
     : FILES[engine] ? `<img class="engine-logo${engine === "splash" ? " is-tile" : ""}" src="assets/img/engines/${FILES[engine]}" alt="" aria-hidden="true">` : "");
   // a shorter name where the engine's own would crowd its neighbours under a bar
   const SHORT = { llamacpp: "Llama" };
