@@ -744,9 +744,10 @@ window.Pie = window.Pie || {};
     if (!list.includes(model)) model = list[0] || null;
     if (!model) return `<div class="board-scroll"><div class="board-inner"><p class="board-empty">No runs in this release yet</p></div></div>`;
     const groups = showcase(rows, model);
-    const shown = new Set(rows.filter((r) => r.model === model && groups.some((g) => g.hardware === r.hardware)).map((r) => r.engine));
-    // the engines as a key once for the model's charts: a dot and a name, in the catalog's order
-    const legend = engineIds().filter((id) => shown.has(id))
+    // the engines as a key once for the page: every engine with a result in this release, as the cards across the
+    // platforms draw them too (LiteRT-LM on Mobile), a dot and a name, in the catalog's order
+    const ran = new Set(rows.map((r) => r.engine));
+    const legend = engineIds().filter((id) => ran.has(id))
       .map((id) => `<span class="board-key"><span class="board-dot" style="background: ${Pie.engines.colorOf(id)}"></span>${esc(names().engine(id))}</span>`).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     // each section its own colour from the chips' palette: efficiency green, performance orange, by model purple
