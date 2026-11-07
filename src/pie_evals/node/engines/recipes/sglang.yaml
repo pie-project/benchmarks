@@ -178,10 +178,11 @@ competitive:
       knobs:
         gpu_mem_util: *sglang_v5e_room
         max_running_requests:
-          value: 128
+          value: 64
           rationale: >
             256 GDN state slots (6 layers x 3 MiB) beside the 9.8 GiB of weights leave a v5e no KV ("Not enough
-            memory. Please try to increase --mem-fraction-static", 42333316224); 128 seat, as vLLM-TPU's cap.
+            memory. Please try to increase --mem-fraction-static", 42333316224); at 128 its prefill program asks 2.37G
+            with 1.54G free (42337690224). 64 seat; the rest of a c256 batch queues.
     qwen3-0.6b-tpu:
       platform:
         tpu-v5e-1:
