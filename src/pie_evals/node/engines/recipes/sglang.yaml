@@ -152,6 +152,22 @@ competitive:
               rationale: >
                 At 0.97 the KV pool leaves sglang-jax 180.63M for a program that reserves 530.41M at load
                 (RuntimeProgramAllocationFailure, 42116961512); 0.90 leaves it the room.
+    qwen3.6-35b-a3b-mini-e32:
+      platform:
+        tpu-v6e-1:
+          knobs:
+            max_running_requests:
+              value: 128
+              rationale: >
+                sglang-jax keeps one fp32 GDN state slot (30 layers x 2 MiB) per running request beside the 12.9 GiB of
+                weights: 256 slots (15 GiB) leave a 32 GB v6e no KV; 128 seat, the rest of a c256 batch queues.
+    qwen3.6-35b-a3b-mini-e16:
+      knobs:
+        max_running_requests:
+          value: 64
+          rationale: >
+            As on the v6e: at 256 slots the GDN state (60 MiB a request) took all of a v5e's HBM past the 7.5 GiB of
+            weights ("Not enough memory. Please try to increase --mem-fraction-static", 41913877755); 64 seat.
     gemma-4-26b-a4b-mini12-e32:
       knobs:
         chunked_prefill_size:
