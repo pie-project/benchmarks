@@ -51,10 +51,11 @@ window.Pie = window.Pie || {};
       const [id, s] = platform;
       return `<td class="${classes}"><span class="welcome-cell"><span class="sidebar-glyph" style="--tint: ${s.tint}">${Pie.icon(id)}</span>${format.escape(value)}</span></td>`;
     }
-    // an engine's name after its logo in the Engines catalog, as the charts mark it; one without a logo keeps its colour chip
+    // an engine's name after its logo in the Engines catalog, as the charts mark it, on the white tile a model's maker sits
+    // on in the Models catalog; one without a logo keeps its colour chip
     if (column.type === "reference" && column.table === "engines" && column.key === "id" && !format.isEmpty(value)) {
       const logo = Pie.engines.logo?.(value);
-      if (logo) return `<td class="${classes}"><span class="engine-tag is-logo">${logo}${format.escape(Pie.store.names.engine(value))}</span></td>`;
+      if (logo) return `<td class="${classes}"><span class="engine-tag is-logo"><span class="model-badge" aria-hidden="true">${logo}</span>${format.escape(Pie.store.names.engine(value))}</span></td>`;
     }
     // a model's name after its maker's logo, as the grids head their columns
     if (column.key === "name" && "base_model" in row && Pie.platform?.makerBadge) {

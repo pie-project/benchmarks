@@ -40,6 +40,8 @@
 .board-lede { margin: 0 0 24px; font-size: 12px; color: var(--color-label-secondary); }
 .board-legend { display: inline-flex; flex-wrap: wrap; gap: 16px; padding-left: 14px; font-size: 12px; color: var(--color-label-secondary); }  /* the key starts where the other pages' first label does, inside its control's 2px rim and 12px of padding */
 .board-key { display: inline-flex; align-items: center; gap: 6px; }
+a.board-key { color: inherit; text-decoration: none; }
+a.board-key:hover { color: var(--color-label); text-decoration: underline; text-underline-offset: 2px; }  /* a link to the engine's repo */
 .board-dot { width: 8px; height: 8px; border-radius: 2px; }
 
 .board-grid-cards.is-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 12px; }  /* rows twice as far apart as columns */
