@@ -355,8 +355,6 @@ class SglangTpuEngine(ServedEngine):
             cmd += ["--page-size", str(int(r["page_size"]))]
         if r.get("chunked_prefill_size"):
             cmd += ["--chunked-prefill-size", str(int(r["chunked_prefill_size"]))]
-        if r.get("vision_patch_paddings"):  # the vision tower's warmup shapes (a text bench never sends an image)
-            cmd += ["--precompile-vision-patch-paddings", *(str(int(n)) for n in r["vision_patch_paddings"])]
         return cmd
 
     def version(self) -> str:

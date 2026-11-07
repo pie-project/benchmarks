@@ -181,18 +181,17 @@ competitive:
             client stamped no token and the raw row had no TTFT or decode speed (42337690224, 42352803031).
     qwen3.6-27b-mini8:
       knobs:
-        gpu_mem_util: *sglang_v5e_room
+        gpu_mem_util:
+          value: 0.80
+          rationale: >
+            At 0.90 the vision tower's warmup copies the 2.37G embedding table with 1.55G free (embeddings.py, in
+            precompile_multimodal_encoder, 42357472918); 0.80 leaves it room beside 9.8 GiB of weights and 64 state slots.
         max_running_requests:
           value: 64
           rationale: >
             256 GDN state slots (6 layers x 3 MiB) beside the 9.8 GiB of weights leave a v5e no KV ("Not enough
             memory. Please try to increase --mem-fraction-static", 42333316224); at 128 its prefill program asks 2.37G
             with 1.54G free (42337690224). 64 seat; the rest of a c256 batch queues.
-        vision_patch_paddings:
-          value: [64]
-          rationale: >
-            The 2.37G buffer (1.54G free) is the vision tower's warmup at its default patch counts (precompile_encode,
-            42352803031); the text cells never send an image, so it warms one small shape.
     qwen3-0.6b-tpu:
       platform:
         tpu-v5e-1:
