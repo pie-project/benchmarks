@@ -69,7 +69,7 @@ def test_every_tier1_model_has_pie_llamacpp_and_mlxlm_arms(matrix, config, webdb
     pie_targeted = {str(c.artifact.id) for c in matrix.cells_for(Tier.TARGETED, matrix.expand(platforms=[p for p, s in matrix.platforms.items() if s.os == "macos"])) if str(c.engine) == "pie"}
     arms = {}
     for a in matrix.artifacts.values():
-        if a.baseline_of and a2m[a.id] in TIER1 and "targeted" in a.tiers:
+        if a.baseline_of and a2m[a.id] in TIER1 and "targeted" in a.tiers and not (a.platforms and all(p.startswith("web-") for p in a.platforms)):
             arms.setdefault(a2m[a.id], set()).add(a.baseline_label)
             pie = matrix.artifacts[a.baseline_of]
             assert pie.id in pie_targeted and pie.source_format != "gguf", a.id
