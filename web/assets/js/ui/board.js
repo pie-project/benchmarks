@@ -913,7 +913,7 @@ window.Pie = window.Pie || {};
             ${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${paddlesFor("metric")}
           </div>
           ${modelRow("metric", speed, rows, groups, model)}
-          <div class="board-section-head is-apart" id="board-ttft">
+          <div class="board-section-head" id="board-ttft">
             <div class="board-section-text"><h1 class="board-title">TTFT by Model</h1>
             <p class="board-lede">${esc(TTFT.sub.replace(" · ", ". "))}.</p></div>
             <button class="filter-button board-title-pick is-text" type="button" data-board-pick="ttft-model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(ttftModel))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${paddlesFor("ttft")}
