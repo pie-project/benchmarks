@@ -55,14 +55,14 @@
   color: var(--color-accent);
 }
 
-/* Clear, after the filters: a button as the bar's others are (Download, Report), its mark before its name */
+/* Clear, after the filters: plain text with its mark, the bar's button fill only under the pointer */
 .filter-clear {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   border: 0;
   border-radius: var(--radius-control);
-  background: var(--color-fill);
+  background: none;
   padding: 0 10px;
   height: var(--control-height);
   font: inherit;
@@ -70,7 +70,7 @@
   color: var(--color-label);
   cursor: pointer;
 }
-.filter-clear:hover { background: var(--color-fill-secondary); }
+.filter-clear:hover { background: var(--color-fill); }
 .filter-clear svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 
 .filter.is-set .popup-chevron {
