@@ -292,6 +292,19 @@ unsupported:
   # type for ("fused_dynamic_mx_quant_moe_sort_hip_impl: not support output type: fp4x2", then SIGABRT; mi300x-x1)
   - when: {engine: sglang, family: mimo_v2, arch: cdna3}
     reason: "SGLang 0.5.22 on ROCm runs MXFP4 experts (MiMo) through AITER's fp4 activation MoE, which gfx942 (MI300X) has no fp4 type for"
+  # the image lmsysorg/sglang:v0.5.22-rocm720-mi30x on mi300x-x1 (2026-11-08), every cell of each model failing the same way:
+  - when: {engine: sglang, family: deepseek_v4, arch: cdna3}
+    reason: "SGLang 0.5.22's DeepSeek-V4 TileLang kernels do not compile on ROCm gfx942 (\"Check failed: src_info.order < dst_info.order ... two statements with buffer access dependency in the same scope\")"
+  - when: {engine: sglang, family: deepseek_v41, arch: cdna3}
+    reason: "SGLang 0.5.22's per_token_group_quant_8bit_v2 JIT kernel includes cuda_fp8.h, which the ROCm build cannot compile for gfx942 (\"fatal error: 'cuda_fp8.h' file not found\")"
+  - when: {engine: sglang, family: glm5_next, arch: cdna3}
+    reason: "SGLang 0.5.22's GLM-5.3-Flash sparse attention needs FA3, TileLang or TRT backends: on ROCm TileLang lacks tl.get_lane_idx (\"Unresolved call Op(tl.get_lane_idx)\") and the index_kpool > 1 path is refused"
+  - when: {engine: sglang, family: hy_v4, arch: cdna3}
+    reason: "SGLang 0.5.22's Hy4 requires its sparse MLA attention path, which the ROCm build does not have (\"HYV4 requires the sparse MLA attention path\")"
+  - when: {engine: sglang, family: minimax_m3, arch: cdna3}
+    reason: "SGLang 0.5.22's MiniMax-M3.1 expert loading calls gptq_marlin_repack, a CUDA kernel the ROCm build does not ship (\"NameError: name 'gptq_marlin_repack' is not defined\")"
+  - when: {engine: sglang, family: kimi_k3, arch: cdna3, workload: pf16-512}
+    reason: "SGLang 0.5.22 on ROCm gfx942 dies on Kimi-K3's 16-prompt prefill batch (\"HIP error: the operation cannot be performed in the present state\"); its c1024 runs"
   # SGLang 0.5.22 decodes Qwen3.8-Flash-Next's full-attention layers through qwen_sparse_attn_backend's flash_attn.cute
   # FlashAttentionForwardSm80, which CUDA refuses to launch on sm_86/sm_89 (A40, L40S; the 4090 OOMs in prefill
   # graph capture before it gets there): "CUDA_LAUNCH_INVALID_CONFIG ... cudaErrorInvalidValue" (weekly 40421366253)
