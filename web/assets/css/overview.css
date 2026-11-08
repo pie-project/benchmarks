@@ -1437,3 +1437,19 @@
 .method-article .method-pane-body > .welcome-list:first-child { margin-top: 0; }  /* a chapter opening on its rows sits where another opens on its lead */
 .approach-main > .method-article .method-pane-body > .welcome-lead { max-width: 720px; }  /* a chapter's lead on one line where it fits */
 .approach-main > .method-article .method-pane-body > p { padding-right: 140px; }  /* the text held in as far as the numbered rules, one right edge for both */
+
+/* Model Slices' diagrams: rows of small squares, the full model above its slice, as the chapters' tiles are drawn */
+.slice-fig { margin: 20px 0 8px; padding: 16px 18px; border-radius: 12px; background: var(--color-fill); }
+.slice-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: center; gap: 4px 12px; }
+.slice-row + .slice-row { margin-top: 12px; }
+.slice-label { font-size: 12px; font-weight: 600; color: var(--color-label); }
+.slice-cells { display: flex; flex-wrap: wrap; gap: 3px; }
+.slice-note { grid-column: 2; font-size: 12px; color: var(--color-label-secondary); }
+.slice-fig i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--color-label-tertiary); }
+.slice-fig i.is-active { background: #FF9500; }
+.slice-fig i.is-expert { background: color-mix(in srgb, var(--color-label-tertiary) 70%, transparent); }
+.slice-fig i.is-linear { background: #30B0C7; }
+.slice-fig .slice-cells i.is-full { background: #5E5CE6; margin-right: 4px; }  /* a block ends at its full-attention layer: the gap after it marks the repeat */
+.slice-fig i.is-full { background: #5E5CE6; }
+.slice-fig figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 14px; font-size: 12px; color: var(--color-label-secondary); }
+.slice-fig figcaption i { margin-right: -8px; vertical-align: -1px; }
