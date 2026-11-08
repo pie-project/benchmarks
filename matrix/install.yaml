@@ -1,5 +1,5 @@
 # Install size: the disk an engine needs before any model, its binaries and every library it installs, per platform
-# (the platform ids the site's cards use: mac, nvidia, tpu, web).
+# (the platform ids the site's cards use: mac, nvidia, amd, tpu, web).
 #   Python engines: the venv the harness builds for it, the base Python left out (the venv only links to it).
 #   Native engines: the release or build files it runs.
 #   Browser engines: the JS and wasm the page downloads.
