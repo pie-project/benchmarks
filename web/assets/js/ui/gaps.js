@@ -42,7 +42,7 @@ window.Pie = window.Pie || {};
       <div class="reports-table-wrap">
         <table class="data-table reports-table">
           <thead><tr><th class="row-number" aria-label="Row"></th><th>Model</th><th>Hardware</th><th>Workload</th><th>Fastest</th><th class="is-numeric">Speed</th><th>Slowest</th><th class="is-numeric">Speed</th><th class="is-numeric">Gap</th><th class="is-numeric">Engines</th><th>Date</th><th></th></tr></thead>
-          <tbody>${list.length ? list.map(row).join("") : `<tr><td class="table-empty" colspan="12">No gaps of ${Math.round(least * 100)}% or more</td></tr>`}</tbody>
+          <tbody>${list.length ? list.map(row).join("") : `<tr><td class="table-empty" colspan="12">No reports yet</td></tr>`}</tbody>
         </table>
       </div>`;
   };
