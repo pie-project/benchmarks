@@ -1386,6 +1386,8 @@ window.Pie = window.Pie || {};
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
             <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
             <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
+            <!-- the engine every cell is about, read only: View Options changes it -->
+            <span class="filter platform-setup platform-engine-now" title="Every cell compares ${esc(names().engine(shownEngine || p.engine || Pie.engines.primary))}; View Options changes it"><span class="filter-button">${Pie.engines.logo?.(shownEngine || p.engine || Pie.engines.primary) || ""}<span>${esc(names().engine(shownEngine || p.engine || Pie.engines.primary))}</span></span></span>
 
           </span>
         </div>

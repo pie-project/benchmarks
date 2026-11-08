@@ -755,6 +755,9 @@
 /* the setup pop-up is a plain pop-up, grey as the Results filters are: in this bar blue means only a filter that is on,
    as a macOS toolbar keeps one neutral style and lets state alone take the accent */
 .platform-bar .filter.platform-setup:hover { background: none; }
+/* the engine the grid is about: a label in the pop-ups' shape, read only (no chevron, no pointer) */
+.platform-bar .platform-engine-now { cursor: default; user-select: none; }
+.platform-bar .platform-engine-now .engine-logo { width: 14px; height: 14px; }
 /* a click opens the menu without a focus ring; the keyboard still gets one */
 .platform-bar .filter.platform-setup .filter-button:focus:not(:focus-visible) { outline: none; box-shadow: none; }
 
