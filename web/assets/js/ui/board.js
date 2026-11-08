@@ -798,7 +798,11 @@ window.Pie = window.Pie || {};
     const busy = Pie.store.tables.totals?.machine_s;
     const time = !busy ? null : busy >= 3 * 86400 ? [`Days of compute`, n(Math.round(busy / 86400))] : [`Hours of compute`, n(Math.round(busy / 3600))];
     const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Models", n(rows("models"))], ["Engines", n(rows("engines"))], ["Platforms", n(Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length)], ["Machines", n(Pie.platform?.machines?.() || 0)]].filter((s) => s && s[1] !== "0");
-    return `<dl class="welcome-stats board-welcome-stats">${stats.filter(Boolean).map(([label, v]) => `<div><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
+    // each figure opens the page it counts: the runs and their machine time the results, the rest their catalogs
+    const PAGES = { Runs: ["results", "Performance"], "Days of compute": ["results", "Performance"], "Hours of compute": ["results", "Performance"],
+      Models: ["models", "Models"], Engines: ["engines", "Engines"], Platforms: ["welcome", "Platforms"], Machines: ["hardware", "Hardware"] };
+    const link = (label) => (PAGES[label] ? ` role="link" tabindex="0" data-board-go-page="${PAGES[label][0]}" title="Open ${PAGES[label][1]}"` : "");
+    return `<dl class="welcome-stats board-welcome-stats">${stats.filter(Boolean).map(([label, v]) => `<div${link(label)}><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
   };
 
   const page = () => {
@@ -1099,6 +1103,10 @@ window.Pie = window.Pie || {};
   });
   element.addEventListener("scroll", (event) => { if (event.target.classList?.contains("is-matrices")) paddles(); }, { passive: true, capture: true });
   window.addEventListener("resize", () => paddles());
+  // a figure taken as a link opens its page from the keyboard too
+  element.addEventListener("keydown", (event) => {
+    if ((event.key === "Enter" || event.key === " ") && event.target.matches?.('[role="link"][data-board-go-page]')) { event.preventDefault(); event.target.click(); }
+  });
   element.addEventListener("click", (event) => {
     const go = event.target.closest("[data-board-go-page]");
     if (go) event.preventDefault();
