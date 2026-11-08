@@ -362,10 +362,20 @@ window.Pie = window.Pie || {};
       full: Math.round(base.full * s), sliding: Math.round(base.sliding * s), linear: Math.round(base.linear * s) };
   };
 
+  // the shape a result was measured at: its own benchmark's requests at once, prompt and answer (c1024 is 1,024 requests
+  // of 128 tokens in and 256 out, pf16-512 is 16 prompts of 512), from matrix/workloads.yaml by way of webdb; the
+  // category's own figures where a row names no benchmark the export knows
+  const shapeOf = (workload, benchmark) => {
+    const w = Pie.store.index.workloads?.[workload];
+    const own = benchmark && w?.shapes?.[benchmark];
+    return own ? { ...w, ...own } : w;
+  };
+  Pie.shapeOf = shapeOf;
+
   Pie.ceiling = (row, metric) => {
     const machine = machines().find((m) => m.id === row.hardware);
     const model = models().find((m) => m.id === row.model);
-    const workload = Pie.store.index.workloads[row.workload];
+    const workload = shapeOf(row.workload, row.benchmark);
     const a = row.miniature ? miniArch(row) : archOf(row.model);
     if (!machine?.bw || !model || !workload || !a) return null;
     // the whole machine: the catalog gives one device's bandwidth and FLOPS, and a run splits the model across all of them
@@ -373,7 +383,7 @@ window.Pie = window.Pie || {};
     const tflops = machine.tflops * machine.devices;
     const bits = bitsOf(row.scheme);
     const prompt = workload.prompt_tokens;
-    // Batched Prefill ("pbatch"): the workload's prompts all prefilled in one pass, each its own first answer token
+    // Batched Prefill ("pbatch"): the run's prompts all prefilled in one pass, each its own first answer token
     const batch = metric === "pbatch" ? (workload.concurrency || 1) : 1;
     const prefill = metric === "prefill" || metric === "pbatch";
     const tokens = prefill ? prompt * batch : 1;
@@ -473,10 +483,11 @@ window.Pie = window.Pie || {};
 
   // batched decode on a machine: `requests` decode together, each one token a step with its logits, each with its
   // cache at the middle of its answer; each request's prompt is prefilled once, and its arithmetic is spread over the
-  // steps of its answer, since it counts against the same FLOPS but not as output
-  Pie.batchedCeiling = (hardware, modelId, scheme = "affine_u4_g64") => {
+  // steps of its answer, since it counts against the same FLOPS but not as output. `benchmark` is the run's own
+  // (c8 ... c1024): its requests at once and its answer's length; without one, the category's first (c32)
+  Pie.batchedCeiling = (hardware, modelId, scheme = "affine_u4_g64", benchmark = null) => {
     const machine = machines().find((m) => m.id === hardware);
-    const workload = Pie.store.index.workloads?.throughput;
+    const workload = shapeOf("throughput", benchmark);
     const a = archOf(modelId);
     if (!machine?.bw || !workload || !a) return null;
     const bw = machine.bw * machine.devices;

@@ -287,8 +287,13 @@ def workloads() -> list[dict]:
     for cat, ids, label in CATEGORIES:
         src = next((i for i in ids if i in params), None)
         p = params.get(src, {})
+        # each benchmark's own shape: a row measured at c1024 or pf16-512 (its `benchmark`) is held to the limit of its
+        # own requests at once, prompt and answer, not to the category's first benchmark's
+        shapes = {i: {"concurrency": params[i].get("concurrency") or 1, "prompt_tokens": params[i].get("prefill"),
+                      "output_tokens": params[i].get("decode")} for i in ids if i in params}
         out.append({"id": cat, "label": label, "concurrency": p.get("concurrency") or (32 if cat == "throughput" else 1),
-                    "prompt_tokens": p.get("prefill"), "output_tokens": p.get("decode"), "benchmark": ", ".join(ids)})
+                    "prompt_tokens": p.get("prefill"), "output_tokens": p.get("decode"), "benchmark": ", ".join(ids),
+                    "shapes": shapes})
     return out
 
 
