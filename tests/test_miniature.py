@@ -232,11 +232,12 @@ def test_a_muse_spark_cut_is_quantized_in_place_under_the_release_names(tmp_path
 
     rules = mq.IN_PLACE["muse_spark"]
     quantized = lambda k: any(re.search(p, k) for p in rules["quantize"])  # noqa: E731
-    for k in ("model.language_model.embed_tokens.weight", "lm_head.weight", "model.language_model.layers.1.self_attn.gate_proj.weight",
+    for k in ("model.language_model.embed_tokens.weight", "model.language_model.layers.1.self_attn.gate_proj.weight",
               "model.language_model.layers.0.mlp.pre_expert_proj.weight", "model.language_model.layers.1.mlp.experts.down_proj.weight"):
         assert quantized(k), k
     # the router, the norms, the residual gates and the expert norms stay as released
-    for k in ("model.language_model.layers.0.mlp.gate.weight", "model.language_model.layers.0.input_layernorm.weight",
+    # the head too: mlx-lm casts its input to the head weight's dtype
+    for k in ("lm_head.weight", "model.language_model.layers.0.mlp.gate.weight", "model.language_model.layers.0.input_layernorm.weight",
               "model.language_model.layers.0.post_attention_residual_gate.gate", "model.language_model.layers.0.mlp.experts.post_expert_norm.weight"):
         assert not quantized(k), k
     (split_re, how), = rules["split"].items()
