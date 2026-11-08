@@ -578,7 +578,7 @@ window.Pie = window.Pie || {};
 
   // Install Size: the disk each engine needs before any model (matrix/install.yaml, the export's `install` table), a
   // card per platform as Kernel Efficiency sets its own, a bar per engine at its bytes, the smallest first
-  const INSTALL_CARDS = [["install-mac", "Apple", "mac"], ["install-nvidia", "NVIDIA", "nvidia"], ["install-web", "Browser", "web"]].filter(([, , p]) => !Pie.hiddenPlatforms.has(p));
+  const INSTALL_CARDS = [["install-mac", "Apple", "mac"], ["install-nvidia", "NVIDIA", "nvidia"], ["install-tpu", "TPU", "tpu"], ["install-web", "Browser", "web"]].filter(([, , p]) => !Pie.hiddenPlatforms.has(p));
   const installRows = (platform) => (Pie.store.tables.install || []).filter((r) => r.platform === platform);
   // decimal units, as a disk counts them: 17.4 GB, 359 MB, 31.3 MB
   const bytesLabel = (b) => (b >= 1e9 ? `${(b / 1e9).toFixed(1)} GB` : b >= 1e8 ? `${Math.round(b / 1e6)} MB` : `${(b / 1e6).toFixed(1)} MB`);
@@ -746,7 +746,7 @@ window.Pie = window.Pie || {};
     index:          ["#5E5CE6", '<circle cx="12" cy="12" r="9"/><path d="m12 12 2.6-5.2"/><circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/><path d="M7 15.5h.01M6.5 11h.01M9 7h.01M17.5 11h.01M17 15.5h.01"/>'],  // indigo, a speedometer as SF Symbols draws gauge.with.needle: a dial, its needle just right of upright
     "index-mac":    ["#636366"],
     use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"], "use-android": ["#1C1C1E"], "use-web": ["#8e8e93"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
-    "install-mac": ["#636366"], "install-nvidia": ["#76b900"], "install-web": ["#8e8e93"],  // Install Size's cards the same
+    "install-mac": ["#636366"], "install-nvidia": ["#76b900"], "install-tpu": ["#4285f4"], "install-web": ["#8e8e93"],  // Install Size's cards the same
     support:        ["#FF2D55"],  // pink, as its outline entry
     ...Object.fromEntries(Object.entries(BY_MODEL).flatMap(([p, [, tint]]) => [[`metric-${p}`, [tint]], [`ttft-${p}`, [tint]]])),  // By Model's cards, each in its platform's colour
     "index-gpu":    ["#76b900"],
