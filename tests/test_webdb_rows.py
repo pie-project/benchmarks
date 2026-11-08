@@ -45,3 +45,12 @@ def test_every_install_size_names_its_engine_bytes_and_how_it_was_counted():
         assert r["version"] and r["method"] and r["source"] and r["measured"]
         # the parts name pieces of the figure, never more than all of it
         assert sum(n for _, n in r["parts"]) <= r["bytes"]
+
+
+def test_a_diagnostic_tag_never_reaches_the_site():
+    # profilers and timing A/Bs slow their own tok/s on purpose: their tags are neither releases nor fills
+    assert webdb.is_diag_tag("tpu-diag-c256prof")
+    assert webdb.is_diag_tag("tpu-diag-window-fix")
+    assert not webdb.is_diag_tag("tpu-v6e-green")
+    assert not webdb.is_diag_tag("a40-rerun")
+    assert not webdb.is_diag_tag("0.5.3-b5")

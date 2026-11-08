@@ -767,6 +767,11 @@ def parity_by_tag(store, a2m) -> dict[str, list[dict]]:
     return {t: parity_rows(rs) for t, rs in by_tag.items()}
 
 
+def is_diag_tag(tag: str) -> bool:
+    """A tag of diagnostic runs (tpu-diag-fwd8k, tpu-diag-c256prof, ...): profilers and timing A/Bs, kept off the site."""
+    return "-diag-" in f"-{tag}-"
+
+
 def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, when) -> dict[str, list[dict]]:
     """For each tag, one row per key: the tag's own, else the newest run among the tags not later than it (marked
     stale); never a later tag."""
@@ -989,6 +994,9 @@ def main() -> None:
     meta = dict(qmeta)
     for t, m in rmeta.items():
         meta[t] = {**m, "at": max(m["at"], qmeta[t]["at"])} if t in qmeta else m
+    # a diagnostic run's tag (tpu-diag-*, a profiler or a timing A/B: its tok/s slowed on purpose) never reaches the
+    # site: not as a release, and not as a fill for another tag's cells, where the newest run would otherwise win
+    meta = {t: m for t, m in meta.items() if not is_diag_tag(t)}
     tags = sorted(({"id": t, "kind": m["kind"], "date": tag_date(t, m), "commit": m["commit"]} for t, m in meta.items()),
                   key=lambda x: x["date"] or "", reverse=True)  # the newest tag is the default on the site
     order = [x["id"] for x in tags]
