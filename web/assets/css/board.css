@@ -57,7 +57,19 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-carousel-nav .plain-button:disabled { opacity: .35; cursor: default; }
 .board-grid-cards.is-matrices .board-card { padding-left: 11px; padding-right: 11px; }  /* a little more room for the grids */
 .board-grid-cards.is-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px; }
-.board-stack { display: flex; flex-direction: column; gap: 24px; }
+/* By Model: each measure's small heading, as a card's title and lines, over its row of platform cards, its paddles at
+   the right on the last line, as a section's sit on its description */
+.board-row-head { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 8px; padding: 0 11px; scroll-margin-top: 48px; }
+.board-row-head h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }  /* a size over its cards' titles */
+.board-row-head .board-sub { margin-bottom: 0; }
+.board-row-head > .board-carousel-nav { flex: none; margin-left: auto; }
+.board-carousel + .board-row-head, .board-empty + .board-row-head { margin-top: 24px; }
+.board-row-head + .board-carousel .board-card-body > .board-chart { height: auto; }  /* no grid to share a height with: the bars at their own */
+@media (max-width: 899px) {
+  /* phones: By Model's two picks side by side under its description, not one over the other */
+  .board-section-head:has(> .board-title-pick + .board-title-pick) { flex-flow: row wrap; align-items: center; column-gap: 16px; }  /* 8px apart, the second pulled 8px in */
+  .board-section-head:has(> .board-title-pick + .board-title-pick) > .board-section-text { flex-basis: 100%; }
+}
 .board-card { scroll-margin-top: 48px; padding: 14px 16px 10px; border-radius: 12px; background: none; box-shadow: none; }  /* a card is its content on the page, no outline around it */
 .board-card h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
 .board-badge { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .18); }  /* the sidebar's tile, at its size */
@@ -254,11 +266,6 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 
 /* iPhone: the page as an iOS one reads, the desktop's same parts set for a narrow screen */
 @media (max-width: 899px) {
-  /* a wide chart keeps a size its words can be read at and is swiped across inside its card, as Stocks and Health do;
-     the rankings' three cards, already as wide as the screen, stay as they are */
-  .board-stack .board-card-body { margin: 0 -16px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  .board-stack .board-card-body::-webkit-scrollbar { display: none; }
-  .board-stack .board-card-body > svg.board-chart { min-width: 640px; }
   /* a card's tools and its pick move under its words, the pick first and the tools at the row's end */
   .board-card-head { flex-direction: column; gap: 10px; }
   .board-card-side { flex-direction: row-reverse; align-self: stretch; align-items: center; justify-content: space-between; }
@@ -451,7 +458,6 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .cov-table thead th:last-child { text-align: right; }
 /* Pie's gain, cell by cell: a dot per cell, green where pie is ahead and red where it trails, the row's median a short
    rule with its number; the dot under the pointer stays, the rest fade, as the bars do */
-.board-grid-cards + .board-stack { margin-top: 24px; }
 .board-axis.is-faint { opacity: .5; }
 .board-cell-dot { fill: var(--color-label-tertiary); fill-opacity: .85; }
 /* inside the band (20% slower to 50% faster) green, outside it red; the band's edges dotted */

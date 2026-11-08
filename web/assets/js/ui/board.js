@@ -84,39 +84,6 @@ window.Pie = window.Pie || {};
   // quiet hairlines at a half and the top; every bar carries its number, so the axis needs none
   const lines = (L, R, y, top) => [top / 2, top].map((t) => `<line class="board-grid" x1="${L}" x2="${R}" y1="${y(t)}" y2="${y(t)}"/>`).join("");
 
-  // one model: a group per platform, the engines side by side in it, across the card's full width
-  const chart = (metric, rows, groups) => {
-    const W = 1040, H = 209, L = 8, R = 8, T = 12, B = 46;  // 20px shorter on screen than it was, as every card on the page
-    let cells = groups.map((g) => ({
-      ...g,
-      bars: engineIds()
-        .map((engine) => rows.find((r) => r.workload === metric.workload && r.model === model && r.hardware === g.hardware && r.engine === engine && r[metric.key]))
-        .filter(Boolean),
-    }));
-    // a platform with no run for this card leaves the chart and is named under it instead
-    cells = cells.filter((c) => c.bars.length);
-    const values = cells.flatMap((c) => c.bars.map((r) => r[metric.key]));
-    if (!values.length) return `<p class="board-empty">No ${esc(metric.title.toLowerCase())} runs for this model yet</p>`;
-    const top = niceMax(Math.max(...values));
-    const base = H - B;
-    const y = (v) => T + (base - T) * (1 - v / top);
-    const slot = (W - L - R) / cells.length;
-    const most = Math.max(...cells.map((c) => c.bars.length));
-    const BW = Math.min(28, (slot * 0.6 - (most - 1) * 2) / most);
-    const marks = cells.map((c, i) => {
-      const width = c.bars.length * BW + (c.bars.length - 1) * 2;
-      const left = L + slot * i + (slot - width) / 2;
-      const vals = c.bars.map((r) => r[metric.key]);
-      const lead = metric.higher === false ? Math.min(...vals) : Math.max(...vals);
-      const bars = c.bars.map((r, j) => bar(left + j * (BW + 2), y(r[metric.key]), BW, base, Pie.engines.colorOf(r.engine), compact(r[metric.key]),
-        { top: r[metric.key] === lead, engine: r.engine, head: `${names().engine(r.engine)} on ${machineName(c.hardware)}`, value: full(r[metric.key], metric.unit) }, { x: left + j * (BW + 2) - 1, w: BW + 2 })).join("");
-      const cx = L + slot * i + slot / 2;
-      return `${bars}<text class="board-group" x="${cx}" y="${base + 18}">${esc(Pie.schema[c.platform]?.short || c.platform)}</text>
-        <text class="board-machine" x="${cx}" y="${base + 33}">${esc(machineName(c.hardware))}</text>`;
-    }).join("");
-    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${metric.title} by engine and platform`)}">${lines(L, W - R, y, top)}<line class="board-axis" x1="${L}" x2="${W - R}" y1="${base}" y2="${base}"/>${marks}</svg>`;
-  };
-
   // across every model: each machine and model where two or more engines ran Raw is one setup, and an engine is only
   // ever measured against the others on the same setup, so an engine that skips a platform is not marked down for it
   // the rankings' runs: plain decode (Raw) or speculative decode (Spec), picked over the section and kept per browser;
@@ -250,16 +217,16 @@ window.Pie = window.Pie || {};
     // best first: the highest, or the lowest where less is better (Install Size)
     const list = engineIds().map((engine) => ({ engine, ...summary.value(rows, engine) })).filter((e) => e.v !== undefined && e.v !== null)
       .sort((a, b) => (summary.ascending ? a.v - b.v : b.v - a.v));
-    if (!list.length) return `<p class="board-empty">No runs yet</p>`;
+    if (!list.length) return `<p class="board-empty">${esc(summary.empty || "No runs yet")}</p>`;
     const top = summary.top ? summary.top(list) : summary.id === "coverage" ? niceMax(list[0].v) : 100;
     const base = H - B;
     const y = (v) => T + (base - T) * (1 - v / top);
     const slot = (W - L - R) / list.length;
-    const BW = slot * .86;  // wide bars with a narrow gap between them, as Artificial Analysis sets its rankings
+    const BW = Math.min(slot * .86, summary.widest || Infinity);  // wide bars with a narrow gap between them, as Artificial Analysis sets its rankings; a card may cap them
     const marks = list.map((e, i) => {
       const x = L + slot * i + (slot - BW) / 2;
       const cx = x + BW / 2;
-      const tip = { top: i === 0, engine: e.engine, head: names().engine(e.engine), value: summary.label(e.v),
+      const tip = { top: i === 0, engine: e.engine, head: names().engine(e.engine), value: (summary.tip || summary.label)(e.v),  // the card's value in full where it has a unit
         note: e.detail || `Over ${e.n} ${e.n === 1 ? "setup" : "setups"}`, rows: e.rows };
       return `${bar(x, y(e.v), BW, base, Pie.engines.colorOf(e.engine), summary.label(e.v), tip, { x: L + slot * i, w: slot })}
         ${logo(e.engine, cx - 8, base + 6, 16)}
@@ -425,10 +392,23 @@ window.Pie = window.Pie || {};
     const m = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];
     return `<button class="filter-button board-title-pick is-text" type="button" data-board-pick="metric" aria-haspopup="menu" aria-label="Setup" title="${esc(m.label)}">Setup<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
   };
-  const metricCard = (rows, groups) => {
-    const m = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];
-    return card("metric", "Decode", m.sub, chart(m, rows, groups), "", false);
+  // By Model: a row per measure, its small heading with the paddles at its right, then a card per platform on the
+  // machine showcase() picked, two in view as Install Size sets them; a bar per engine, best first
+  const BY_MODEL = { mac: ["Apple", "#636366"], nvidia: ["NVIDIA", "#76b900"], amd: ["AMD", "#ed1c24"], tpu: ["TPU", "#4285f4"], android: ["Mobile", "#1C1C1E"], web: ["Browser", "#8e8e93"] };  // each platform's name and tile colour, as the other rows' cards wear them
+  const modelSummary = (metric, rows, g) => {
+    const own = rows.filter((r) => r.workload === metric.workload && r.model === model && r.hardware === g.hardware && r[metric.key]);
+    return { id: g.platform, title: `${metric.label} on ${machineName(g.hardware)}`, ascending: metric.higher === false, widest: 92,  // a card of one or two engines keeps four's bars, not a slab
+      top: (list) => niceMax(Math.max(...list.map((e) => e.v))), label: compact, tip: (v) => full(v, metric.unit), empty: "No runs for this model yet",
+      value: (_, engine) => {
+        const r = own.find((x) => x.engine === engine);
+        return r ? { v: r[metric.key], detail: `${names().model(model)} on ${machineName(g.hardware)}` } : {};
+      } };
   };
+  const modelRow = (id, metric, rows, groups) => `<div class="board-row-head" id="board-${id}">
+            <div class="board-card-titles"><h2><i class="board-title-dot" style="background: ${BADGES[id][0]}" aria-hidden="true"></i>${esc(metric.label)}</h2>
+            <p class="board-sub">${metric.sub.split(" · ").map(esc).join("<br>")}</p></div>${paddlesFor(id)}
+          </div>
+          ${groups.length ? `<div class="board-carousel" data-carousel-id="${id}"><div class="board-grid-cards is-matrices">${groups.map((g) => card(`${id}-${g.platform}`, BY_MODEL[g.platform]?.[0] || Pie.schema[g.platform]?.short || g.platform, machineName(g.hardware), ranking(modelSummary(metric, rows, g), rows), "", false)).join("")}</div></div>` : `<p class="board-empty">No runs for this model yet</p>`}`;
   // the two as one card, Decode or Prefill picked in its corner and kept per browser
   const SIZE_KEY = "pieSizeMetric";
   let sizeMetric = (() => { try { const k = localStorage.getItem(SIZE_KEY); return SIZES.some((m) => m.id === k) ? k : SIZES[0].id; } catch { return SIZES[0].id; } })();
@@ -733,6 +713,7 @@ window.Pie = window.Pie || {};
     use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"], "use-android": ["#1C1C1E"], "use-web": ["#8e8e93"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
     "install-mac": ["#636366"], "install-nvidia": ["#76b900"], "install-web": ["#8e8e93"],  // Install Size's cards the same
     support:        ["#FF2D55"],  // pink, as its outline entry
+    ...Object.fromEntries(Object.entries(BY_MODEL).flatMap(([p, [, tint]]) => [[`metric-${p}`, [tint]], [`ttft-${p}`, [tint]]])),  // By Model's cards, each in its platform's colour
     "index-gpu":    ["#76b900"],
     "index-amd":    ["#ed1c24"],
     "index-tpu":    ["#4285f4"],
@@ -883,7 +864,8 @@ window.Pie = window.Pie || {};
             <p class="board-lede">Each platform is shown on the machine where the most engines ran this model.</p></div>
             ${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
           </div>
-          <div class="board-stack">${metricCard(rows, groups)}${card(TTFT.id, TTFT.title, TTFT.sub, chart(TTFT, rows, groups), "", false)}</div>
+          ${modelRow("metric", SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0], rows, groups)}
+          ${modelRow("ttft", TTFT, rows, groups)}
           ${""/* the Coverage section, off for now: coverage2(rows) */}
           ${""/* At datacenter scale, off: the scaling card stays in scaling() */}
           ${""/* Accuracy, off: Pie.checks.accuracyChart still draws it on the Quality page */}
@@ -903,7 +885,9 @@ window.Pie = window.Pie || {};
     unpin();
   }, { passive: true });
   const follow = () => {
-    const sections = [...element.querySelectorAll(".board-card")];
+    // a carousel's row counts once, by its first card: the rest stand beside it, not under it, so By Model's two rows of
+    // platforms take no more of the page's last stretch than its two cards did
+    const sections = [...element.querySelectorAll(".board-card")].filter((s) => !s.closest(".board-carousel") || !s.previousElementSibling);
     const view = scroller();
     // the section being read is the one whose top has passed a line a third of the way down the view, not the bar: a
     // card in sight is marked as it comes up, not only once it has reached the top
@@ -935,7 +919,7 @@ window.Pie = window.Pie || {};
     // the outline names the sections, not every card: the one holding the card in view is marked
     const installFirst = INSTALL_CARDS.find(([, , p]) => installRows(p).length)?.[0];
     const groupOf = (card) => USE_CARDS.some(([u]) => u === card) ? USE_CARDS[0][0] : SUMMARY.some((m) => m.id === card) ? SUMMARY[0].id
-      : INSTALL_CARDS.some(([u]) => u === card) ? installFirst : card === "support" ? "support" : "metric";
+      : INSTALL_CARDS.some(([u]) => u === card) ? installFirst : card === "support" ? "support" : "metric";  // By Model's rows (metric-mac, ttft-web) last
     for (const item of element.querySelectorAll("[data-board-go]")) item.classList.toggle("is-current", item.dataset.boardGo === groupOf(id));
     // one fill that glides from the old section's row to the new, as a sidebar's selection would, instead of jumping
     const outline = element.querySelector(".board-outline"), on = outline?.querySelector(".board-outline-item.is-current");
