@@ -804,7 +804,15 @@ window.Pie = window.Pie || {};
     degree: (id) => `<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id] || ""}</svg>`,
     setCompare(value) {
       peeked = null;
-      compare = chosen = COMPARES[value] ? value : "engines";
+      const next = COMPARES[value] ? value : "engines";
+      // each view keeps its own engine: the one last picked for it, pie until one is. Leaving a view remembers its
+      // engine, coming back to one restores it (the menu, V and a view's link all come through here)
+      if (viewState && next !== compare) {
+        const kept = (viewState.platform.viewEngines ||= {});
+        kept[compare] = viewState.platform.engine || Pie.engines.primary;
+        viewState.platform.engine = kept[next] || Pie.engines.primary;
+      }
+      compare = chosen = next;
       try {
         localStorage.setItem("platformCompare", compare);
       } catch {
@@ -900,12 +908,13 @@ window.Pie = window.Pie || {};
       if (k === "options" && viewState) {
         const own = (key, items) => items.map((o) => (o.separator ? o : { ...o, key: `grid:${key}` }));
         const fixedView = Pie.schema[viewState.table]?.compare;
+        const engineOf = (id) => (id === compare ? shownEngine || viewState.platform.engine : viewState.platform.viewEngines?.[id]) || Pie.engines.primary;
         return [
           // each view a row with its engines beside it: a click on the view takes it with the default engine (pie), a pick in its
           // list takes it with that engine
           ...(fixedView ? [] : [{ heading: "View" }, ...["engines", "tps", "ceiling"].map((id) => ({ value: id, key: "grid:view", label: COMPARES[id], selected: id === compare, icon: viewIcon(id),
-            detail: Pie.store.names.engine(id === compare ? shownEngine || viewState.platform.engine || Pie.engines.primary : Pie.engines.primary),  // the engine each view takes
-            submenu: Pie.store.tables.engines.map((e) => ({ value: `${id}|${e.id}`, key: "grid:view-engine", label: Pie.store.names.engine(e.id), selected: e.id === (id === compare ? shownEngine || viewState.platform.engine || Pie.engines.primary : Pie.engines.primary), dot: Pie.engines.colorOf(e.id) })) }))]),
+            detail: Pie.store.names.engine(engineOf(id)),  // the engine each view takes: its own, kept when another view was picked
+            submenu: Pie.store.tables.engines.map((e) => ({ value: `${id}|${e.id}`, key: "grid:view-engine", label: Pie.store.names.engine(e.id), selected: e.id === engineOf(id), dot: Pie.engines.colorOf(e.id) })) }))]),
           // a page with one fixed view keeps the engine as a row of its own
           ...(fixedView ? [{ label: "Engine", detail: Pie.store.names.engine(viewState.platform.engine || Pie.engines.primary), submenu: own("engine", this.menu("engine")) }] : []),
         ];
@@ -919,18 +928,18 @@ window.Pie = window.Pie || {};
       // a new view or engine redraws every number: it rolls in on the same diagonal wave a setup's turn does, the setup's name staying put
       // the turn's clock starts again too: a setup turning in right behind a picked view would roll the numbers twice
       const wave = (button) => { if (!viewState) return; captureGhosts(button); if (!button) auto.label = null; auto.rolling = true; auto.spent = 0; clearTimeout(auto.timer); };
-      // a view clicked: that view with the default engine; a view's engine picked in its list: both
-      if (k === "view") { if (value !== compare) wave('[data-grid-pick="options"]'); if (viewState) viewState.platform.engine = Pie.engines.primary; Pie.platform.setCompare(value); return; }
+      // a view clicked: that view with its own engine (kept from its last pick, pie until one); a view's engine picked in its list: both
+      if (k === "view") { if (value !== compare) wave('[data-grid-pick="options"]'); Pie.platform.setCompare(value); return; }
       if (k === "view-engine") {
         const [view, engine] = String(value).split("|");
-        if (viewState) viewState.platform.engine = engine;
         if (view !== compare) wave('[data-grid-pick="options"]');
         Pie.platform.setCompare(view);
+        if (viewState) { viewState.platform.engine = engine; (viewState.platform.viewEngines ||= {})[view] = engine; }
         return;
       }
       if (k === "engine" && viewState && value !== (viewState.platform.engine || Pie.engines.primary)) wave();
       if (k === "setup" && viewState) { stopTurns(); auto.rolling = value !== viewState.platform.mode; if (auto.rolling) captureGhosts(); viewState.platform.mode = value; return; }  // a picked setup rolls in as a turn does
-      if (k === "engine" && viewState) viewState.platform.engine = value;
+      if (k === "engine" && viewState) { viewState.platform.engine = value; (viewState.platform.viewEngines ||= {})[compare] = value; }
       if (k === "rival" && viewState) viewState.platform.rival = value || null;
       if (k === "platform" && viewState) {
         const now = viewState.platform.platforms || [];
