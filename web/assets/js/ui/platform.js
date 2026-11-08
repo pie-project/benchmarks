@@ -1372,7 +1372,7 @@ window.Pie = window.Pie || {};
       };
       // each platform under its header bar, which folds it away as a Finder group does; its table scrolls sideways on its own
       const tables = only ? tableOf(sections[0] || { macs: [], models: [] }) : sections.map((g, i) => `<section class="platform-section">
-        <div class="platform-group-row platform-section-bar${folded(g.platform.id) ? " is-collapsed" : ""}" data-group="${g.platform.id}" role="button" aria-expanded="${!folded(g.platform.id)}">
+        <div class="platform-group-row platform-section-bar${folded(g.platform.id) ? " is-collapsed" : ""}" style="--stack: ${i}" data-group="${g.platform.id}" role="button" aria-expanded="${!folded(g.platform.id)}">
           <span class="platform-group-bar">
             <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}, ${g.models.length} ${g.models.length === 1 ? "model" : "models"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
