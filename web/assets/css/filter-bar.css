@@ -55,7 +55,7 @@
   color: var(--color-accent);
 }
 
-/* Clear, after the filters: plain text with its mark, the bar's button fill only under the pointer */
+/* Clear, after the filters: plain text with its mark in the accent blue, as the date picker's Clear, no fill behind it */
 .filter-clear {
   display: inline-flex;
   align-items: center;
@@ -67,10 +67,10 @@
   height: var(--control-height);
   font: inherit;
   font-size: 13px;
-  color: var(--color-label);
+  color: var(--color-accent);
   cursor: pointer;
 }
-.filter-clear:hover { background: var(--color-fill); }
+.filter-clear:hover { opacity: .7; }  /* a link's dim under the pointer, no fill */
 .filter-clear svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 
 .filter.is-set .popup-chevron {
