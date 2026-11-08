@@ -27,7 +27,8 @@ def convert_argv(python: str, src: Path, dst: Path, scheme: str) -> list[str]:
 #: than through ``mlx_lm.convert``. Muse Spark: mlx-lm's recipe quantizes only the middle layers' experts (a two-layer
 #: cut stays bf16), and its conversion stores what pie reads rewritten (gate coefficients for the residual gates, norm
 #: gains, q/k/v/gate fused with their rows re-paired); mlx-lm loads the release's names as it loads a release. The
-#: towers a text cut leaves out are dropped, with their configs, so mlx-lm builds none.
+#: towers a text cut leaves out are dropped, with their configs, so mlx-lm builds none. The head stays bf16: mlx-lm casts
+#: its input to the head weight's dtype (`out.astype(self.lm_head.weight.dtype)`), a quantized head's uint32 codes.
 IN_PLACE = {
     "muse_spark": {
         "drop": [r"^model\.(audio_tower|vision_tower|vision_adapter|vision_projection)\."],
@@ -36,7 +37,6 @@ IN_PLACE = {
         "rename": {r"^(.*mlp\.experts\.down_proj)$": r"\1.weight"},
         "quantize": [
             r"^model\.language_model\.embed_tokens\.weight$",
-            r"^lm_head\.weight$",
             r"^model\.language_model\.layers\.\d+\.self_attn\.(q|k|v|gate|o)_proj\.weight$",
             r"^model\.language_model\.layers\.\d+\.mlp\.(pre|post)_expert_proj\.weight$",
             r"^model\.language_model\.layers\.\d+\.mlp\.experts\.(gate|up|down)_proj\.weight$",
