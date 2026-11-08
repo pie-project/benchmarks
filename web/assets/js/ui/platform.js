@@ -1368,6 +1368,9 @@ window.Pie = window.Pie || {};
           </span>
         </div><div class="platform-section-body"${folded(g.platform.id) ? " hidden" : ""}><div class="platform-section-scroll">${tableOf(g, i === 0)}</div></div></section>`).join("");
 
+      // a pick that leaves no machine with a model to show (an engine with no runs in this setup, say) says so in the
+      // tables' own empty row, never a blank page
+      const nothing = !sections.some((g) => g.macs.length && g.models.length);
       // a redraw keeps the reader where they were: the page's scroll down and each table's scroll across
       const keptPage = element.querySelector(".platform-scroll");
       const kept = keptPage ? { top: keptPage.scrollTop, left: keptPage.scrollLeft, lefts: [...element.querySelectorAll(".platform-section-scroll")].map((x) => x.scrollLeft) } : null;
@@ -1385,7 +1388,7 @@ window.Pie = window.Pie || {};
           </span>
         </div>
         <div class="platform-scroll">
-          ${tables}
+          ${nothing ? '<div class="platform-nothing">Nothing matches these filters</div>' : tables}
         </div>`;
       // the header bar spans what is visible, so its chevron sits at the right edge however wide the table is
       const scroller = element.querySelector(".platform-scroll");
