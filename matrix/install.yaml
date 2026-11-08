@@ -1,5 +1,5 @@
 # Install size: the disk an engine needs before any model, its binaries and every library it installs, per platform
-# (the platform ids the site's cards use: mac, nvidia, web).
+# (the platform ids the site's cards use: mac, nvidia, tpu, web).
 #   Python engines: the venv the harness builds for it, the base Python left out (the venv only links to it).
 #   Native engines: the release or build files it runs.
 #   Browser engines: the JS and wasm the page downloads.
@@ -110,6 +110,39 @@ install:
         LiteRT-LM's macOS arm64 release (litert_lm_macos_arm64.tar.gz): litert_lm_main and the
         libGemmaModelConstraintProvider dylib. LiteRT-LM is benchmarked on phones only; this is its Mac build.
       source: "Measured: the GitHub release asset (google-ai-edge/LiteRT-LM v0.19.1, 13,416,641 bytes packed) streamed and its tar entries summed."
+  # the Cloud TPU VM (Ubuntu 22.04, x86_64) infra/tpu/run-on-vm.sh sets up; it is deleted after each run, so the venvs
+  # are counted from the wheels uv resolves for it
+  tpu:
+    - engine: vllm
+      version: "vllm-tpu 0.32.0"
+      bytes: 4904728694
+      measured: "2026-11-08"
+      method: >-
+        The venv the harness builds for vLLM's TPU build (baselines.ensure_baseline with backend xla, as
+        infra/tpu/run-on-vm.sh calls it: uv venv on Python 3.12, vllm-tpu==0.32.0 with --torch-backend cpu): the 240
+        wheels uv resolves for Linux x86_64, each one's files at their unpacked size. vllm-tpu is vLLM on
+        tpu-inference's JAX backend; it brings its own libtpu, and torch's CPU wheel.
+      source: >-
+        From the published wheels: uv 0.13.7 pip compile (Python 3.12, x86_64-manylinux_2_35, the TPU VM's glibc)
+        resolved the set on 2026-11-08, and each wheel's zip directory (read with HTTP ranges) gives every file's size,
+        as for the Mac's Python engines. Two files both opencensus wheels write (132 bytes) count once.
+      parts: [["Triton (for xgrammar)", 1042558978], ["libtpu", 721683243], ["PyTorch (CPU)", 696031884], ["JAX (jax, jaxlib)", 374351832], ["vLLM TPU (vllm-tpu, tpu-inference)", 54796296]]
+    - engine: sglang
+      version: "sglang-jax 0.1.0rc0"
+      bytes: 2225856638
+      measured: "2026-11-08"
+      method: >-
+        The venv the harness builds for SGLang's TPU build, its own project (baselines.ensure_baseline with backend
+        xla: uv venv on Python 3.12, sglang-jax[tpu]==0.1.0rc0, the engines.yaml pin, with --torch-backend cpu): the
+        140 wheels uv resolves for Linux x86_64, each one's files at their unpacked size. msgpack-python 0.5.6, the one
+        package with no wheel (uv builds it from its sdist on the VM), is left out: it installs into the same msgpack/
+        directory as msgpack 1.2.4, whose wheel is counted. The Qwen3.5/3.6 and MiniMax-M3.1-Flash cells run
+        sglang-jax's main (b3e3e16b2) from a venv of their own, not counted here.
+      source: >-
+        From the published wheels: uv 0.13.7 pip compile (Python 3.12, x86_64-manylinux_2_35, the TPU VM's glibc)
+        resolved the set on 2026-11-08, and each wheel's zip directory (read with HTTP ranges) gives every file's size,
+        as for the Mac's Python engines.
+      parts: [["libtpu", 716373793], ["JAX (jax, jaxlib)", 370147840], ["llvmlite", 179332266], ["imageio-ffmpeg", 172737685], ["SGLang-JAX", 8699452]]
   web:
     - engine: pie
       version: "server-web 0.6.4"
