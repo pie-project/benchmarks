@@ -67,6 +67,21 @@ window.Pie = window.Pie || {};
   const COMPACT = new Set(["board:size", "board:moe", "board:metric", "board:use-engine", "board:scale-engine"]);
   // a long list opens with a field over it that narrows it as one types, as Artificial Analysis sets its model menus
   const SEARCHABLE = new Set(["board:model", "board:scale"]);
+  // any list longer than a few rows takes the search field too: a model, machine or engine list, wherever it opens
+  const SEARCH_FROM = 9;
+  // the open menu's list, under a search field when it is long: the field stays put over it and only the list scrolls.
+  // A redraw (a toggle in a filter or the Models pick) keeps what was typed and where the list was scrolled
+  const searchWrap = (key, query = "", scroll = 0) => {
+    const searchable = SEARCHABLE.has(key) || element.querySelectorAll(".popover-option").length >= SEARCH_FROM;
+    element.classList.toggle("is-searchable", searchable);
+    if (!searchable) return;
+    element.innerHTML = `<label class="popover-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Search…" autocomplete="off" spellcheck="false" aria-label="Search the list"></label><div class="popover-scroll">${element.innerHTML}</div>`;
+    const input = element.querySelector(".popover-search input");
+    if (query) { input.value = query; input.dispatchEvent(new Event("input", { bubbles: true })); }
+    element.querySelector(".popover-scroll").scrollTop = scroll;
+  };
+  const typed = () => element.querySelector(".popover-search input")?.value || "";
+  const scrolled = () => (element.querySelector(".popover-scroll") || element).scrollTop;
   const isLimit = (key) => /^(limit|board|grid|reports|gaps|methods):/.test(String(key));
   // a submenu's row, as a Mac menu shows one: its name, what is picked in it in grey, and a chevron; its list opens to the side on hover
   const sub = Object.assign(document.createElement("div"), { className: "popover popover-sub", hidden: true });
@@ -235,8 +250,7 @@ window.Pie = window.Pie || {};
       // a short menu of a few words (a card's Decode or Prefill) fits its words, not the menus' usual width
       element.classList.toggle("is-compact", COMPACT.has(key));
       // the field stays put over the list, and only the list scrolls under it
-      element.classList.toggle("is-searchable", SEARCHABLE.has(key));
-      if (SEARCHABLE.has(key)) element.innerHTML = `<label class="popover-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Search…" autocomplete="off" spellcheck="false" aria-label="Search the list"></label><div class="popover-scroll">${element.innerHTML}</div>`;
+      searchWrap(key);
       element.scrollTop = 0;
       place(target);
       element.querySelector(".popover-search input")?.focus();
@@ -245,13 +259,16 @@ window.Pie = window.Pie || {};
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
       if (!element.hidden && (owner === "grid:maker" || owner === "grid:platform" || owner === "grid:size" || owner === "grid:model")) {
+        const query = typed(), scroll = scrolled();
         element.innerHTML = limitMenu(owner);
+        searchWrap(owner, query, scroll);
         return;
       }
       if (element.hidden || !owner || isLimit(owner) || owner === RELEASE || owner === SUITE || owner === VIEW || owner === METRIC || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC || owner === HIST_MAC || owner === HIST_MODEL || owner === QUAL_ENGINE) return;
-      const scroll = element.scrollTop;
+      const query = typed(), scroll = scrolled();
       element.innerHTML = filterMenu(state, owner);
-      element.scrollTop = scroll;
+      searchWrap(owner, query, scroll);
+      if (!element.classList.contains("is-searchable")) element.scrollTop = scroll;
     },
 
     close() {
