@@ -22,6 +22,10 @@ window.Pie = window.Pie || {};
 //   hidden                    the model width: the activations multi-GPU runs exchange every layer are tokens x hidden
 //   layers / shared           all layers, and those that reuse an earlier layer's K and V (Gemma's KV sharing): a
 //                             prompt token only fills the cache, so it never needs those layers
+//   routes                    [requests, share] pairs: the share of the routed experts one batched-decode step reads,
+//                             measured on the bench's own cold prompts (tools/moe_routes.py). Without them a step's
+//                             tokens are taken to pick their experts independently and uniformly, 1 - (1 - k)^requests;
+//                             real routes concentrate, and a step reads fewer
 Pie.architectures = {
   "gemma-4-e2b": { total: 4.647, emb: 0.403, tied: true, ple: 2.349, routed: 0, k: 1, full: 7, sliding: 28, window: 512, kvLayer: 1024, kvFull: 2048, linear: 0, state: 0, layers: 35, shared: 20, hidden: 1536 },
   "gemma-4-e4b": { total: 7.518, emb: 0.671, tied: true, ple: 2.819, routed: 0, k: 1, full: 7, sliding: 35, window: 512, kvLayer: 2048, kvFull: 4096, linear: 0, state: 0, layers: 42, shared: 18, hidden: 2560 },
@@ -30,7 +34,10 @@ Pie.architectures = {
   "gemma-4-31b": { total: 30.697, emb: 1.409, tied: true, ple: 0, routed: 0, k: 1, full: 10, sliding: 50, window: 1024, kvLayer: 16384, kvFull: 8192, linear: 0, state: 0, layers: 60, shared: 0, hidden: 5376 },
   "qwen3.5-4b": { total: 4.205, emb: 0.636, tied: true, ple: 0, routed: 0, k: 1, full: 8, sliding: 0, window: 0, kvLayer: 4096, linear: 24, state: 1048576, layers: 32, shared: 0, hidden: 2560 },
   "qwen3.5-9b": { total: 8.954, emb: 1.017, tied: false, ple: 0, routed: 0, k: 1, full: 8, sliding: 0, window: 0, kvLayer: 4096, linear: 24, state: 1048576, layers: 32, shared: 0, hidden: 4096 },
-  "qwen3.6-35b-a3b": { total: 34.661, emb: 0.509, tied: false, ple: 0, routed: 32.212, k: 0.03125, full: 10, sliding: 0, window: 0, kvLayer: 2048, linear: 30, state: 1048576, layers: 40, shared: 0, hidden: 2048 },
+  "qwen3.6-35b-a3b": { total: 34.661, emb: 0.509, tied: false, ple: 0, routed: 32.212, k: 0.03125, full: 10, sliding: 0, window: 0, kvLayer: 2048, linear: 30, state: 1048576, layers: 40, shared: 0, hidden: 2048,
+    // routes: the bench's c256 cold prompts on pro6000-x1 (fair_def 2, 2026-11-08), 256 greedy tokens each from the HF
+    // reference (transformers 5.5.4, bf16), lock-step; uniform picks would read 0.22 / 0.64 / 0.98 / 1.00 at 8 / 32 / 128 / 1024
+    routes: [[1, 0.0313], [2, 0.0541], [4, 0.0987], [8, 0.1615], [16, 0.2485], [32, 0.3482], [64, 0.4436], [128, 0.5391], [256, 0.6282], [512, 0.7009], [1024, 0.757]] },
   "qwen3.8-27b": { total: 26.895, emb: 1.271, tied: false, ple: 0, routed: 0, k: 1, full: 16, sliding: 0, window: 0, kvLayer: 4096, linear: 48, state: 1572864, layers: 64, shared: 0, hidden: 5120 },
   "qwen3.8-flash-next": { total: 176.944, emb: 0.636, tied: false, ple: 51.2, routed: 120.796, k: 0.01953, full: 12, sliding: 0, window: 0, kvLayer: 2048, linear: 36, state: 1572864, layers: 48, shared: 0, hidden: 2560 },  // total without its 2.607 B MTP layer (run only when speculating); ple is its n-gram table (config ple_*: 16 hash heads of ~20M rows of 160, one row from each a token), a lookup like Gemma's; both from the safetensors headers, 2026-11-07
   "gpt-oss-20b": { total: 20.915, emb: 0.579, tied: false, ple: 0, routed: 19.11, k: 0.125, full: 12, sliding: 12, window: 128, kvLayer: 2048, linear: 0, state: 0, layers: 24, shared: 0, hidden: 2880 },
