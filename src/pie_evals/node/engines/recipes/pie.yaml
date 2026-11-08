@@ -268,7 +268,13 @@ default:
             engine_option:
               value: {max_state_slots: 128}
             max_forward_tokens:
-              value: 2240
+              value: 8192
+              rationale: >
+                A c128 cohort's 128 prompts arrive together and prefill before any of them decodes; 8192-row
+                fires (TensorRT-LLM's max_num_tokens) take them in three where 2240 took ten. Qwen3.8-27B
+                mini on a40-x1: c128 1250.7 to 1256.9 tok/s at pie 6168f025d, 1256.8 to 1275.3 with
+                pie-project/pie#1493 (TensorRT-LLM 1297.4); pf64-512 3956 to 3983. 1024- and 512-row fires
+                ran c128 slower (1206, 1168).
         kimi_k3:
           knobs:
             max_forward_tokens:
