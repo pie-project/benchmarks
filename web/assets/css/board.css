@@ -549,7 +549,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 
 /* Platform Support in the head-to-head grids' own tiles, scale and labels (.board-matrix): its frame grows with its rows
    instead of their fixed height, the platform tiles small in the logos' slots, the count of platforms a quiet last column */
-.board-matrix-frame.is-support { height: auto; padding: 4px 28px 22px 0; }
+.board-matrix-frame.is-support { height: auto; padding: 4px 28px 18px 0; }
+#board-support + .board-section-head { margin-top: 32px; }  /* its keys end the card close under the grid, so the line comes sooner */
 .board-support-keys { position: absolute; left: 0; bottom: 1px; display: flex; gap: 12px; font-size: 9px; line-height: 1; color: var(--color-label-secondary); }  /* at the foot's left, as Speculative sits */
 .board-support-keys span { display: inline-flex; align-items: center; gap: 4px; }
 .board-support-keys i { width: 12px; height: 8px; border-radius: 2px; background: var(--color-fill); }
