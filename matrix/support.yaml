@@ -303,6 +303,8 @@ unsupported:
     reason: "SGLang 0.5.22's Hy4 requires its sparse MLA attention path, which the ROCm build does not have (\"HYV4 requires the sparse MLA attention path\")"
   - when: {engine: sglang, family: minimax_m3, arch: cdna3}
     reason: "SGLang 0.5.22's MiniMax-M3.1 expert loading calls gptq_marlin_repack, a CUDA kernel the ROCm build does not ship (\"NameError: name 'gptq_marlin_repack' is not defined\")"
+  - when: {engine: sglang, family: kimi_k3, arch: cdna3, workload: pf16-512}
+    reason: "SGLang 0.5.22 on ROCm gfx942 dies on Kimi-K3's 16-prompt prefill batch (\"HIP error: the operation cannot be performed in the present state\"); its c1024 runs"
   # SGLang 0.5.22 decodes Qwen3.8-Flash-Next's full-attention layers through qwen_sparse_attn_backend's flash_attn.cute
   # FlashAttentionForwardSm80, which CUDA refuses to launch on sm_86/sm_89 (A40, L40S; the 4090 OOMs in prefill
   # graph capture before it gets there): "CUDA_LAUNCH_INVALID_CONFIG ... cudaErrorInvalidValue" (weekly 40421366253)
