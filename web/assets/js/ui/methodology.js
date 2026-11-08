@@ -526,8 +526,11 @@ window.Pie = window.Pie || {};
 
   // batched decode on a machine: `requests` decode together, each one token a step with its logits, each with its
   // cache at the middle of its answer; each request's prompt is prefilled once, and its arithmetic is spread over the
-  // steps of its answer, since it counts against the same FLOPS but not as output. `benchmark` is the run's own
-  // (c8 ... c1024): its requests at once and its answer's length; without one, the category's first (c32)
+  // steps of its answer, since it counts against the same FLOPS but not as output. The prompt's pass writes the answer's
+  // first token, so decode steps make the other D - 1 of its D: per token out, (D - 1) / D of a step's reads and
+  // arithmetic, and the prompt's pass is prefill's own (Gemma's KV-sharing layers run only for its last token).
+  // `benchmark` is the run's own (c8 ... c1024): its requests at once and its answer's length; without one, the
+  // category's first (c32)
   Pie.batchedCeiling = (hardware, modelId, scheme = "affine_u4_g64", benchmark = null) => {
     const machine = machines().find((m) => m.id === hardware);
     const workload = shapeOf("throughput", benchmark);
@@ -536,23 +539,29 @@ window.Pie = window.Pie || {};
     const bw = machine.bw * machine.devices;
     const tflops = machine.tflops * machine.devices;
     const requests = workload.concurrency || 1;
-    const p = pass(a, { bits: bitsOf(scheme), tokens: requests, logits: requests, requests, context: workload.prompt_tokens + workload.output_tokens / 2 });
-    const prefillFlops = requests * 2e9 * p.body * workload.prompt_tokens / workload.output_tokens;
-    const readS = (p.weightGB + p.cacheGB) / bw;
-    // the prompts' arithmetic is all body, so it runs narrow in the same share as the steps' body
+    const bits = bitsOf(scheme);
+    const prompt = workload.prompt_tokens, answer = workload.output_tokens;
+    const p = pass(a, { bits, tokens: requests, logits: requests, requests, context: prompt + answer / 2 });
+    // one request's prompt in its own pass, its last token's logits the answer's first token
+    const pre = pass(a, { bits, tokens: prompt, logits: 1, requests: 1, context: prompt });
+    // the times below are for `requests` tokens out: (D - 1) / D of a decode step, and every request's prompt over its answer
+    const steps = answer > 1 ? (answer - 1) / answer : 1;
+    const readS = ((p.weightGB + p.cacheGB) / bw) * steps;
+    const flops = p.flops * steps + (requests * pre.flops) / answer;
+    // the prompts' arithmetic runs narrow in the same share of their body as the steps' does
     const n = narrow(machine, scheme, p);
     const tflopsNarrow = n.tflops * machine.devices;
-    const mathS = mathTime(p.flops + prefillFlops, p.bodyFlops + prefillFlops, tflops, n.share, tflopsNarrow);
+    const mathS = mathTime(flops, p.bodyFlops * steps + (requests * pre.bodyFlops) / answer, tflops, n.share, tflopsNarrow);
     // several GPUs: each step exchanges the batch's activations, and each prompt's once, spread over its answer
     const link = linkOf(hardware);
-    const linkS = link ? linkTime(a, link, machine.devices, requests) + linkTime(a, link, machine.devices, requests * workload.prompt_tokens / workload.output_tokens) - 2 * a.layers * link.us * 1e-6 * (1 - 1 / workload.output_tokens) : 0;
+    const linkS = link ? linkTime(a, link, machine.devices, requests) * steps + linkTime(a, link, machine.devices, requests * prompt / answer) - 2 * a.layers * link.us * 1e-6 * (1 - 1 / answer) : 0;
     const bandwidth = requests / readS;
     const compute = mathS ? requests / mathS : null;
     const interconnect = linkS ? requests / linkS : null;
     const tps = Math.min(bandwidth, compute || Infinity, interconnect || Infinity);
     const bound = tps === interconnect ? "interconnect" : tps === compute ? "compute" : "bandwidth";
     // `tflops` is the step's own peak, as Pie.ceiling's parts give it
-    const peak = mathS && n.share ? (p.flops + prefillFlops) / mathS / 1e12 : tflops;
+    const peak = mathS && n.share ? flops / mathS / 1e12 : tflops;
     return { tps, bound, compute, bandwidth, interconnect, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, linkS, link, requests, bw,
       tflops: peak, tflops16: tflops, tflopsNarrow, narrow: n.share, devices: machine.devices } };
   };
