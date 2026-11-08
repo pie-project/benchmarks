@@ -262,7 +262,7 @@ window.Pie = window.Pie || {};
     },
     // how the benchmark is run, as prose: the model slices behind the datacenter rows
     approach: {
-      label: "Methodology",
+      label: "Bench Book",  // the benchmark's rule book: how every number is made
       section: "measurements",
       view: "approach",
       filters: [],
