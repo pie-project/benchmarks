@@ -496,6 +496,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-welcome-actions > * { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 0; border-radius: var(--radius-control); font: 400 12px/1 var(--font-text); color: var(--color-label); text-decoration: none; background: var(--color-fill); cursor: pointer; white-space: nowrap; }  /* the sections' pick, "Single Decode" */
 .board-welcome-actions > *:hover { background: var(--color-fill-secondary); }
 .board-welcome-actions svg { width: 12px; height: 12px; fill: currentColor; }
+.board-welcome-secondary svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }  /* the Bench Book's open book, as the sidebar draws it */
 
 
 /* the foot: one line under the cards' grey hairline, on the page's own white */
