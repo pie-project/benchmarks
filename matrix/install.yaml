@@ -50,6 +50,54 @@ install:
         their files as dpkg lists them).
       source: "Measured on b200-x1 (RunPod 9mgmwm085gh644), read-only: /root/.cache/pie-evals/venv-trtllm-1.4.0rc2.post1 and dpkg -L of the packages /var/log/dpkg.log shows installed with Open MPI."
       parts: [["TensorRT-LLM", 3930785064], ["NVIDIA's CUDA libraries", 3371555138], ["PyTorch", 1140315753], ["Open MPI (apt)", 303319714]]
+  # AMD Instinct MI300X on AMD Developer Cloud (a DigitalOcean droplet, ROCm 7.2 on Ubuntu 24.04). On ROCm the Python engines'
+  # PyTorch loads ROCm's libraries from the system (there are no pip ROCm library wheels), so every entry counts its own files
+  # and the ROCm user-space libraries its processes map; the user-mode driver stack (the HSA and HIP runtimes) is left out
+  # with the driver
+  amd:
+    - engine: pie
+      version: "0.6.0 (5871e632)"
+      bytes: 5878892230
+      measured: "2026-11-08"
+      method: >-
+        What pie runs on ROCm in the harness: its engine (the pie_server wheel the --features rocm build installs,
+        pie/_engine.abi3.so and its dist-info, 122,625,978 bytes), the text_completion_bench inferlet (503,189), and the
+        ROCm libraries it loads from the system (5,755,763,063): hipBLASLt and rocBLAS with their whole kernel libraries
+        (hipblaslt/library 4,774,931,924; rocblas/library 670,855,715), comgr, rocRoller and hipRTC. Those are counted
+        because the Python engines load the same ones; RCCL is not loaded on one GPU.
+      source: >-
+        Measured on mi300x-x1 (AMD Developer Cloud droplet 617225162), read-only: /root/.cache/pie-evals/builds/5871e632001c-rocm,
+        venv-pie/lib/python3.12/site-packages/pie, and the /opt/rocm-7.2.0 files the pie process mapped while serving
+        (/proc/<pid>/maps, sampled every 30 s over its runs).
+      parts: [["ROCm libraries (hipBLASLt, rocBLAS, comgr, hipRTC)", 5755763063], ["pie's engine", 122625978], ["Inferlet", 503189]]
+    - engine: vllm
+      version: "0.32.0"
+      bytes: 20082919360
+      measured: "2026-11-08"
+      method: >-
+        The harness's venv (baselines.ensure_baseline: uv venv on Python 3.12, vllm==0.32.0+rocm723 from vLLM's ROCm wheel
+        index, and the fork's Python fixes), every regular file but __pycache__ (10,518,212,625 bytes), and the ROCm
+        libraries its processes map from the system (9,564,706,735: hipBLASLt and rocBLAS with their kernel libraries,
+        MIOpen, rocSOLVER, rocRAND, RCCL, rocSPARSE, comgr and more), since its PyTorch carries none of its own.
+      source: >-
+        Measured on mi300x-x1 (AMD Developer Cloud droplet 617225162), read-only: /root/.cache/pie-evals/venv-vllm-rocm-0.32.0
+        and the /opt/rocm-7.2.0 files vLLM's processes mapped (/proc/<pid>/maps).
+      parts: [["ROCm libraries (system)", 9564706735], ["AITER", 2867017138], ["PyTorch", 1990149658], ["vLLM", 1818072151], ["Triton", 1319994649]]
+    - engine: sglang
+      version: "0.5.22"
+      bytes: 20610844316
+      measured: "2026-11-08"
+      method: >-
+        The Python environment SGLang runs from inside AMD's image (lmsysorg/sglang:v0.5.22-rocm720-mi30x), which the
+        harness uses as it is instead of building a venv: the image's /opt/venv site-packages (7,878,545,786 bytes), the
+        editable installs they point at (SGLang, AITER without its runtime JIT cache, MORI, TileLang: 3,157,820,806),
+        every regular file but __pycache__ and .git, and the ROCm libraries its processes map from the image's /opt/rocm
+        (9,574,477,724).
+      source: >-
+        Measured on mi300x-x1 (AMD Developer Cloud droplet 617225162) inside the image: /opt/venv/lib/python3.10/site-packages,
+        /sgl-workspace/sglang/python, /sgl-workspace/aiter, /sgl-workspace/mori, /opt/tilelang, and the /opt/rocm-7.2.0
+        files SGLang's processes mapped (/proc/<pid>/maps).
+      parts: [["ROCm libraries (image)", 9574477724], ["PyTorch", 3278305759], ["AITER", 1722606772], ["Triton", 1435209029], ["TileLang", 1070092987], ["SGLang", 126305987]]
   mac:
     - engine: pie
       version: "0.5.4"
