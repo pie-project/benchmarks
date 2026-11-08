@@ -59,7 +59,7 @@
 .filter-clear {
   display: inline-flex;
   align-items: center;
-  gap: 4px;  /* with the mark's own inset, the bar's buttons all leave about 6.5px between mark and name */
+  gap: 3px;  /* a small mark close to its name */
   border: 0;
   border-radius: var(--radius-control);
   background: none;
@@ -71,7 +71,7 @@
   cursor: pointer;
 }
 .filter-clear:hover { background: var(--color-fill); }
-.filter-clear svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.filter-clear svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 
 .filter.is-set .popup-chevron {
   stroke: var(--color-accent);
