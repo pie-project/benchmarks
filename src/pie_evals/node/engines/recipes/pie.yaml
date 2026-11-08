@@ -545,11 +545,12 @@ default:
         tpu-v5e-1:
           knobs:
             parity_gpu_mem_util:
-              value: 0.66
+              value: 0.9
               rationale: >
                 Parity on a v5e: the cut's ~9.4 GiB on the chip (its 6 GiB n-gram table, embedding, head and 4 layers)
-                fill 0.60 of the v5e's 15.75 GiB ("0 MiB for the kv pages", tpu 42519154722). 0.66 seats ~1 GiB of KV,
-                enough for parity's one request, and leaves the program the rest.
+                fill 0.60 of the v5e's 15.75 GiB ("0 MiB for the kv pages", tpu 42519154722). pie sizes the KV inside
+                the share after the weights and the fire's temporaries: 0.66 seated it at 64-row fires (tpu 42525007381)
+                but not at 128 (42529251962); 0.90, as the Hy4 and Nemotron cuts' parity on a v5e (0.92).
             parity_max_forward_tokens:
               value: 128
               rationale: >
