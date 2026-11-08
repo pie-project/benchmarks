@@ -223,12 +223,13 @@ window.Pie = window.Pie || {};
     quality: {
       label: "Quality",
       section: "measurements",
-      filters: ["engine", "status", "model", "task"],  // in the order of the columns they filter
+      filters: ["engine", "status", "model", "hardware", "task"],  // in the order of the columns they filter
       numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
         text("status", "Status", "Setup", { status: true }),
         reference("model", "Model", "Setup", "models"),
+        reference("hardware", "Hardware", "Setup", "hardware"),
         text("task", "Task", "Setup"),
         text("release", "Release", "Setup", { code: true }),
         text("version", "Version", "Setup", { code: true }),

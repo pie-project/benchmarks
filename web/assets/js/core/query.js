@@ -61,9 +61,16 @@ window.Pie = window.Pie || {};
   };
 
   // the Quality table's rows: the scores, and every parity check (each one run of both engines on the same prompts: a
-  // row for Pie and a matching one for the reference), so a slice cell's See Runs lands on its first-token check
-  const qualityRows = (release) => [...store.qualitySnapshot(release), ...(store.tables.quality_parity || []).flatMap((r) => (r.ref_engine
-    ? [r, { ...r, engine: r.ref_engine, version: r.ref_version, artifact: r.ref_artifact || r.artifact }] : [r]))];
+  // row for Pie and a matching one for the reference), so a slice cell's See Runs lands on its first-token check. Each
+  // row names its machine (a score without one ran on the quality Mac), and a check is task "parity" whatever the machine
+  const QUALITY_MAC = "m5-max-128g";
+  const qualityRows = (release) => [
+    ...store.qualitySnapshot(release).map((r) => ({ ...r, hardware: r.platform || QUALITY_MAC })),
+    ...(store.tables.quality_parity || []).flatMap((r) => {
+      const check = { ...r, task: "parity", hardware: r.platform || QUALITY_MAC };
+      return r.ref_engine ? [check, { ...check, engine: r.ref_engine, version: r.ref_version, artifact: r.ref_artifact || r.artifact }] : [check];
+    }),
+  ];
 
   const visibleRows = (state) => {
     const schema = Pie.schema[state.table];
@@ -85,7 +92,7 @@ window.Pie = window.Pie || {};
 
   const filterValues = (table, key) => {
     const counts = {};
-    // a filter offers every value the table lists: on Quality, the parity checks' tasks (parity@<machine>) too
+    // a filter offers every value the table lists: on Quality, the parity checks and every machine too
     for (const row of (table === "quality" ? qualityRows(Pie.state.release) : store.rows(table))) {
       if (!format.isEmpty(row[key])) {
         counts[row[key]] = (counts[row[key]] || 0) + 1;

@@ -348,7 +348,7 @@ def quality_tasks() -> list[dict]:
     # the parity check beside the scores (quality/dist_run.py): one row per model and machine, task parity@<machine>,
     # gated as the device evaluation gates it
     gate = load("device-eval")["quality"]
-    parity = {"id": "parity", "task": "parity@<machine>",
+    parity = {"id": "parity", "task": "parity",
               "description": "Pie's next-token distribution against vLLM's on the same weights (mlx-lm on a Mac), "
                              "teacher-forced on the reference's greedy answers",
               "source": f"{PER_TASK} questions each from {', '.join(PARITY_TASKS)}",
