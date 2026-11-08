@@ -756,6 +756,37 @@ window.Pie = window.Pie || {};
   // past a thousand, a count reads to its nearest thousand ("23,000+" for 23,051, "24,000+" for 23,999)
   const atLeast = (n) => (n < 1000 ? String(n) : `${(Math.round(n / 1000) * 1000).toLocaleString("en-US")}+`);
   // the site's counts as the Welcome chapter sets them: small grey words over large figures, hairlines between
+  // the figures' entrance, once a visit, as Apple brings a keynote's numbers on: the pills rise in turn, each count runs
+  // up from zero and settles, and a sheen crosses each pill as it lands; none of it where the viewer asks for less motion
+  let pillsPlayed = false;
+  const calm = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const pillsIn = () => {
+    const list = element.querySelector(".board-welcome-stats.is-waiting");
+    if (!list || pillsPlayed) return;
+    const play = () => {
+      if (pillsPlayed) return;
+      pillsPlayed = true;
+      list.classList.remove("is-waiting");
+      list.classList.add("is-entering");
+      list.querySelectorAll("dd[data-count]").forEach((dd, k) => {
+        const to = Number(dd.dataset.count), suffix = dd.dataset.suffix || "", final = dd.textContent;
+        dd.style.minWidth = `${dd.getBoundingClientRect().width}px`;  // the pill keeps its final width, the others stay put
+        const start = performance.now() + k * 70, span = 1100;
+        const step = (now) => {
+          const t = Math.min(1, Math.max(0, (now - start) / span));
+          const eased = 1 - Math.pow(1 - t, 4);  // fast, then easing into its place
+          dd.textContent = t < 1 ? `${Math.round(to * eased).toLocaleString("en-US")}${suffix}` : final;
+          if (t < 1) requestAnimationFrame(step);
+          else dd.parentElement.classList.add("is-landed");
+        };
+        dd.textContent = `0${suffix}`;
+        requestAnimationFrame(step);
+      });
+    };
+    // when the figures first come into sight: the Overview may open behind another page
+    const watch = new IntersectionObserver((seen) => { if (seen.some((e) => e.isIntersecting)) { watch.disconnect(); play(); } });
+    watch.observe(list);
+  };
   const welcomeStat = () => {
     const n = (v) => v.toLocaleString("en-US");
     const rows = (t) => (Pie.store.rows(t) || []).length;
@@ -763,7 +794,10 @@ window.Pie = window.Pie || {};
     const busy = Pie.store.tables.totals?.machine_s;
     const time = !busy ? null : busy >= 3 * 86400 ? [`Days of compute`, n(Math.round(busy / 86400))] : [`Hours of compute`, n(Math.round(busy / 3600))];
     const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Models", n(rows("models"))], ["Engines", n(rows("engines"))], ["Platforms", n(Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length)], ["Machines", n(Pie.platform?.machines?.() || 0)]].filter((s) => s && s[1] !== "0");
-    return `<dl class="welcome-stats board-welcome-stats">${stats.map(([label, v]) => `<div><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
+    // each figure carries its count for the entrance (pillsIn): written in full, so it reads right before and without it
+    const count = (v) => { const m = /^([\d,]+)(\+?)$/.exec(v); return m ? ` data-count="${m[1].replace(/,/g, "")}" data-suffix="${m[2]}"` : ""; };
+    const waiting = !pillsPlayed && !calm() ? " is-waiting" : "";
+    return `<dl class="welcome-stats board-welcome-stats${waiting}">${stats.filter(Boolean).map(([label, v], i) => `<div style="--i: ${i}"><dt>${label}</dt><dd${count(v)}>${esc(v)}</dd></div>`).join("")}</dl>`;
   };
 
   const page = () => {
@@ -804,7 +838,7 @@ window.Pie = window.Pie || {};
         <div class="board-main">
           <section class="board-welcome" aria-label="About these benchmarks">
             <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title">Inference Engine Benchmarks</h1></div>
+            <div class="board-section-text"><h1 class="board-title board-welcome-title">Inference Engine Benchmarks.<span>Every engine, every platform, measured the same way.</span></h1></div>
             <div class="board-welcome-actions">
               <a class="board-welcome-primary" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Open Source</a>
               <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">See how we measure</button>
@@ -1348,6 +1382,7 @@ window.Pie = window.Pie || {};
         const was = element.querySelector(".board-scroll");
         const at = was ? [was.scrollTop, was.scrollLeft] : null;
         element.innerHTML = page();
+        pillsIn();
         requestAnimationFrame(paddles);
         element.dataset.key = `${model}@${state.release}`;
         const now = element.querySelector(".board-scroll");

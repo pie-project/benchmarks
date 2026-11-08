@@ -527,3 +527,32 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-title-pick.is-text { padding: 0 10px; }  /* a button with only a word: the same room at both ends */
 .board-footer-simple { font-size: 12px; color: var(--color-label-secondary); }  /* the update date in the section ledes' size and grey */
 .board-footer-simple { font-size: 11px; }  /* the update date at the cards' subtitle size */
+
+/* the figures' entrance (pillsIn): each pill rises in turn on a light spring, its count runs up in tabular figures so it
+   never jitters, and one sheen crosses it as it lands; on hover a pill lifts a point over a glow of its own colour */
+.board-welcome .board-welcome-stats > div { position: relative; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; }
+.board-welcome .board-welcome-stats > div:hover { transform: translateY(-1px); box-shadow: 0 4px 12px color-mix(in srgb, var(--chip) 40%, transparent); }
+.board-welcome .board-welcome-stats dd { font-variant-numeric: tabular-nums; text-align: right; }
+.board-welcome .board-welcome-stats.is-waiting > div { opacity: 0; }
+.board-welcome .board-welcome-stats.is-entering > div { animation: pill-in .5s cubic-bezier(.22, 1.2, .36, 1) both; animation-delay: calc(var(--i) * 70ms); }
+.board-welcome .board-welcome-stats > div::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .38) 50%, transparent 65%) no-repeat; background-size: 250% 100%; }
+.board-welcome .board-welcome-stats > div.is-landed::after { animation: pill-sheen .9s ease-out both; }
+@keyframes pill-in { from { opacity: 0; transform: translateY(8px) scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes pill-sheen { from { opacity: 1; background-position: 150% 0; } to { opacity: 1; background-position: -60% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .board-welcome .board-welcome-stats > div, .board-welcome .board-welcome-stats > div::after { animation: none !important; transition: none; }
+}
+
+/* the page's title in two lines, as Apple heads a product page: the name, then what it promises in grey */
+.board-welcome .board-welcome-title { display: block; font-size: 24px; line-height: 1.2; letter-spacing: -.015em; }
+.board-welcome .board-welcome-title span { display: block; color: var(--color-label-secondary); }
+@media (max-width: 599px) { .board-welcome .board-welcome-title { font-size: 21px; } }
+/* on a narrow screen the two links leave the pills' corner for a row of their own under them */
+@media (max-width: 760px) {
+  .board-welcome { display: flex; flex-direction: column; }
+  .board-welcome > .board-section-head { display: contents; }
+  .board-welcome .board-welcome-stats { order: 1; }
+  .board-welcome .board-welcome-actions { order: 2; position: static; flex-direction: row; align-self: flex-start; margin: 16px 0 0 -8px; }
+}
