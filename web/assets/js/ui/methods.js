@@ -222,7 +222,7 @@ window.Pie = window.Pie || {};
         ["Each request's cache is read every step, at the middle of its answer, from the model's real cache shape.", null],
         ["All requests stay in flight for the whole run, so every step carries the full batch.", "up"],
         ["Attention arithmetic is not counted.", "up"],
-        ["A mixture of experts touches more experts the more tokens a step carries, assuming each token picks its experts independently. Tokens that agree on their experts read fewer of them; from 128 requests at once nearly every expert is touched either way.", "down"],
+        ["A mixture of experts touches more experts the more tokens a step carries, assuming each token picks its experts independently. Tokens that agree on their experts read fewer of them, so every batched request has its own prompt: with one prompt for all, every request wrote the same answer and the whole batch read the same few experts.", "down"],
         ["Peak FLOPS is the spec sheet's. On Apple M5 chips it includes the GPU's neural accelerators, which an engine may not use.", "up"],
         NARROW,
       ],
