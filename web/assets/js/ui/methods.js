@@ -58,7 +58,7 @@ window.Pie = window.Pie || {};
   };
   // where each input comes from, in a sentence, and the catalog page that holds its numbers
   const SOURCES = {
-    "Weights read": ["Active parameters × bits per weight: 4.5 for 4-bit, 8.5 for 8-bit, 16 for bf16.", "models"],
+    "Weights read": ["Active parameters × bits per weight: 4.5 for 4-bit, 8.5 for 8-bit, 16 for bf16; in a 2-bit build the experts' own 2-bit size.", "models"],
     "Weights touched": ["As Weights read, with every expert the prompt's tokens reach.", "models"],
     "Cache read": ["KV cache for the prompt plus half the answer, from the model's shape.", "models"],
     "Caches read": ["Cache read for every request in the batch.", "models"],
@@ -133,9 +133,10 @@ window.Pie = window.Pie || {};
         ["Weights are read once per token, with no reuse from cache, and nothing else is read besides the context cache.", "up"],
         ["Attention arithmetic, activations, sampling and kernel launches cost nothing.", "up"],
         ["4-bit weights are 4.5 bits each: 4 bits plus a 16-bit scale and bias per group of 64. 8-bit is 8.5 bits, bf16 16.", null],
+        ["A 2-bit scheme puts only the routed experts in 2 bits. MLX's keeps them at 2.25 bits (a 16-bit scale and bias per 128) and the rest at 4.5; llama.cpp's Q2_K mix keeps their gate and up in Q2_K (2.625 bits) and their down in Q3_K (3.4375), the output head in Q6_K, and nothing below Q2_K.", "up"],
         ["The context is the prompt plus half the answer, the average over the answer's tokens.", null],
         ["Parameter counts, embedding sizes and cache shapes are each model's own, from its config.json and safetensors on Hugging Face.", null],
-        ["The input embedding is only looked up, one row a token, so it is not counted as read; the output head is a full matmul and is. Gemma's per-layer embedding tables are lookups too.", null],
+        ["The input embedding is only looked up, one row a token, so it is not counted as read; the output head is a full matmul and is. Gemma's per-layer embedding tables and Qwen3.8-Flash-Next's n-gram table are lookups too.", null],
         ["The cache read is the model's real one: full-attention layers read every cached token, sliding-window layers their window, and linear-attention layers read and write their fixed state.", null],
       ],
       check: { workload: "raw", metric: "decode", key: "decode_tok_s" },

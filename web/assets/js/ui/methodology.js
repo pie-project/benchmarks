@@ -288,18 +288,29 @@ window.Pie = window.Pie || {};
   };
 
   // bits per weight a result's scheme stores, with its scales: 4-bit affine keeps a 16-bit scale and bias per 64
-  // weights (4.5), Q4_K_M mixes 4- and 6-bit blocks (about 4.85), MXFP4 an 8-bit scale per 32 (4.25)
-  const bitsOf = (scheme = "") => (/bf16|f16/.test(scheme) ? 16 : /mxfp4/.test(scheme) ? 4.25 : /8/.test(scheme) ? 8.5 : /q4_k/.test(scheme) ? 4.85 : 4.5);
+  // weights (4.5), Q4_K_M mixes 4- and 6-bit blocks (about 4.85), MXFP4 an 8-bit scale per 32 (4.25). `bits` is the
+  // body's, `experts` the routed experts', `head` the output head's; they differ only in a 2-bit scheme, which puts only
+  // the experts in 2 bits. MLX's (mlx_2bit) keeps them affine 2-bit with a 16-bit scale and bias per 128 (2.25) and every
+  // other projection 4-bit g64 (4.5, the router's 8 bits counted as 4.5); llama.cpp's Q2_K mix keeps the experts' gate
+  // and up in Q2_K (2.625: a 4-bit scale and min per 16, two 16-bit scales per 256), their down in Q3_K (3.4375), the
+  // output head in Q6_K (6.5625) and nothing below Q2_K (a tensor whose rows Q2_K cannot split falls back to more bits)
+  const bitsOf = (scheme = "") => {
+    if (/mlx_2bit/.test(scheme)) return { bits: 4.5, experts: 2.25, head: 4.5 };
+    if (/q2_k/.test(scheme)) return { bits: 2.625, experts: (2 * 2.625 + 3.4375) / 3, head: 6.5625 };
+    const bits = /bf16|f16/.test(scheme) ? 16 : /mxfp4/.test(scheme) ? 4.25 : /8/.test(scheme) ? 8.5 : /q4_k/.test(scheme) ? 4.85 : 4.5;
+    return { bits, experts: bits, head: bits };
+  };
 
   // one forward pass, from the model's architecture (config/architectures.js): the bytes it reads and the arithmetic
   // it does. `tokens` go through the pass together, `logits` of them need the output head, and `requests` caches of
-  // `context` tokens are read. The input embedding and Gemma's per-layer tables are only looked up, never read whole;
-  // a mixture of experts touches more experts the more tokens the pass carries
+  // `context` tokens are read. The input embedding, Gemma's per-layer tables and Qwen3.8-Flash-Next's n-gram table are
+  // only looked up, never read whole; a mixture of experts touches more experts the more tokens the pass carries.
+  // `bits` is bitsOf's, per part
   const pass = (a, { bits, tokens, logits, requests, context }) => {
     const body = a.total - a.emb * (a.tied ? 1 : 2) - a.ple;
     const activeBody = body - a.routed * (1 - a.k);
-    const touchedBody = body - a.routed + a.routed * (a.k >= 1 ? 1 : 1 - (1 - a.k) ** tokens);
-    const weightGB = ((touchedBody + a.emb) * bits) / 8;
+    const touchedExperts = a.routed * (a.k >= 1 ? 1 : 1 - (1 - a.k) ** tokens);
+    const weightGB = ((body - a.routed) * bits.bits + touchedExperts * bits.experts + a.emb * bits.head) / 8;
     // full attention reads every cached token, sliding attention its window; linear attention reads and writes its state
     const cacheGB = (requests * ((a.full * context + a.sliding * Math.min(context, a.window)) * a.kvLayer + a.linear * a.state * 2)) / 1e9;
     // with KV sharing, the layers that reuse another layer's K and V run only for the tokens that need logits: a prompt
@@ -399,7 +410,8 @@ window.Pie = window.Pie || {};
     const bound = linkS === slowest && linkS ? "interconnect" : memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced";
     // the parts too, for the Methods page's worked examples
     const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, linkS, link, bw, tflops, devices: machine.devices,
-      body: p.body, head: p.head, bits, bytes: bits / 8, tokens, context, flopsPerToken: 2e9 * (p.body + p.head) };
+      body: p.body, head: p.head, bits: bits.bits, expertBits: bits.experts, headBits: bits.head, bytes: bits.bits / 8, tokens, context,
+      flopsPerToken: 2e9 * (p.body + p.head) };
     return { tps: tokens / slowest, bound, bandwidth: tokens / memory, compute: compute ? tokens / compute : null, interconnect: linkS ? tokens / linkS : null, parts };
   };
 
@@ -423,9 +435,10 @@ window.Pie = window.Pie || {};
     if (!plain) return null;
     const a = archOf(row.model);
     const workload = Pie.store.index.workloads[row.workload];
-    const { bw, tflops, bits, context } = plain.parts;
+    const { bw, tflops, context } = plain.parts;
+    const bits = bitsOf(row.scheme);
     const alpha = Math.min(percent, 99) / 100;
-    const draftS = Math.max((DRAFT_B * bits / 8) / bw, tflops ? (2 * DRAFT_B * 1e9) / (tflops * 1e12) : 0);
+    const draftS = Math.max((DRAFT_B * bits.bits / 8) / bw, tflops ? (2 * DRAFT_B * 1e9) / (tflops * 1e12) : 0);
     let best = { tps: plain.tps, k: 0, kept: 1, bound: plain.bound };
     for (let k = 1; k <= WIDEST; k++) {
       const p = pass(a, { bits, tokens: k + 1, logits: k + 1, requests: 1, context });
