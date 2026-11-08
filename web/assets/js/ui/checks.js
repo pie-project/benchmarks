@@ -241,9 +241,9 @@ window.Pie = window.Pie || {};
     .sort((a, b) => byPrefer(platform, (r) => r.ref_engine)(a, b) || String(b.date || "").localeCompare(String(a.date || "")))[0] || null;
   // pass or fail per cell: a slice passes when its first-token distribution stays within 0.15 nats of the reference
   // engine's (kernel and rounding noise sits near 0.001, a wrong layer or template well above 0.15); a full model passes
-  // when Pie's MATH-500 score is within 5 points of the reference engine's. A slice whose first token moves past the line
-  // under the reference's own rounding (first_self_kl: the reference against itself, only its kernels changed) is
-  // checked on its answers instead, against the same line (quality/dist_run.py)
+  // when Pie's MATH-500 score is within 5 points of the reference engine's. A slice whose first-token KL past the line
+  // sits within twice the reference's own spread (first_self_kl: the reference against itself, only its kernels changed)
+  // is checked on its answers instead, against the same line (quality/dist_run.py)
   const KL_PASS = 0.15, MATH_PASS = 5;
   // a cell no run can fill says why (support.yaml quality_gaps)
   const gapOf = (mac, model) => (tables().quality_gaps || []).find((g) => [].concat(g.platform).includes(mac) && [].concat(g.model).includes(model))?.reason || "";

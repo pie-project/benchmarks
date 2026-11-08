@@ -63,5 +63,5 @@ You are an autonomous LLM Benchmark & Engine Engineering Agent: the orchestrator
 - Each agent keeps its scripts in its own scratch folder and checks the pod's hostname before every ssh: a shared script once sent commands to the wrong pod.
 - Move `~/.pie/cache/gemm-algos` aside before final runs: a day-old cache ran 2% slower.
 - Quality: miniatures gate on decisive top-1 (near-flat logits flip ties); DSA models with index_topk < 64 gate on KL only. A double BOS (pie or the reference) fakes KL ~6.
-- A slice whose first token moves past 0.15 under the reference's own rounding (vLLM eager vs graphs) is checked on its answers: Gemma-4-26B-A4B at 24 or 32 of 128 experts moved 0.44 first-token KL from itself, 0.04 on the answers.
+- A first-token KL past 0.15 but within twice the reference's own spread (vLLM eager vs graphs) is checked on the answers: Gemma-4-26B-A4B at 24 or 32 of 128 experts moved 0.44 first-token KL from itself, 0.04 on the answers.
 - Run `cargo fmt --all --check` before merging; profile PRs break `chip::tests`, so keep a CI watcher on pie main.

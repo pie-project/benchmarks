@@ -32,9 +32,18 @@ WORKLOAD = "lc-2k-128"
 #: build gave KL 0.084 to 0.187 as vLLM's answers changed), so the gate read the reference's draw, not pie.
 TEXTS_DIR = "parity-texts"
 #: the site's line for a slice's KL (web/assets/js/ui/checks.js KL_PASS). A first-token run past it also measures the
-#: reference against itself with only its kernels changed; where that spread is past the line too, the slice's first
-#: token moves under rounding alone and cannot tell pie from noise, so the run checks it on the answers instead
+#: reference against itself with only its kernels changed; where pie lands within SELF_TIMES that spread, the slice's
+#: first token cannot tell pie from rounding, so the run checks it on the answers instead (matrix/device-eval.yaml's
+#: ref_self_kl gates a model at twice its reference's spread the same way)
 KL_PASS = 0.15
+SELF_TIMES = 2
+
+
+def first_token_inconclusive(kl_mean: float | None, self_kl: float | None) -> bool:
+    """Whether a first-token KL past the line says nothing about pie: within SELF_TIMES the reference's own spread.
+    Gemma-4-26B-A4B at 32 of 128 experts on rtx5090-x1: vLLM eager against its CUDA graphs 0.155 one run, pie 0.149;
+    a fixed line on that spread would turn on rounding either way."""
+    return kl_mean is not None and self_kl is not None and kl_mean < SELF_TIMES * self_kl
 
 
 def saved_texts(matrix_dir: str, artifact_id: str, rendered: list[str]) -> list[str] | None:
@@ -426,9 +435,9 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
                                   ref_texts, again=True)
             summary.update(reference_spread(ref_scored, again, expect, "vLLM --enforce-eager" if ref_name == "vllm" else "mlx-lm, prompt in two pieces"))
             log(f"first-token {art.id}@{platform_id}: {ref_name} against itself ({summary['ref_self']}): KL {summary['ref_self_kl']}")
-            if summary["ref_self_kl"] is not None and summary["ref_self_kl"] >= KL_PASS:
+            if first_token_inconclusive(summary["kl_mean"], summary["ref_self_kl"]):
                 (out_dir / f"{art.id}-{platform_id}-first-token.json").write_text(json.dumps(summary, indent=1))
-                log(f"first-token {art.id}@{platform_id}: the reference moves past {KL_PASS} by itself; checked on the answers instead")
+                log(f"first-token {art.id}@{platform_id}: pie within {SELF_TIMES}x the reference's own spread; checked on the answers instead")
                 carry = {"first_kl_mean": summary["kl_mean"], "first_top1": summary["top1_agree"], "first_self_kl": summary["ref_self_kl"],
                          "first_self_top1": summary["ref_self_top1"], "first_self": summary["ref_self"]}
                 return run_parity(artifact_id, platform_id, pie_root=pie_root, matrix_dir=matrix_dir, store_dir=store_dir, tag=tag, tag_kind=tag_kind,

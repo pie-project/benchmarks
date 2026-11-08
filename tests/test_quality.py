@@ -195,3 +195,12 @@ def test_a_reference_against_itself_measures_its_first_token_spread():
     assert same == {"ref_self_kl": 0.0, "ref_self_top1": 1.0, "ref_self": "vLLM --enforce-eager"}
     moved = dist_run.reference_spread(a, b, [3, 3], "vLLM --enforce-eager")
     assert moved["ref_self_top1"] == 0.5 and moved["ref_self_kl"] > dist_run.KL_PASS
+
+
+def test_a_first_token_within_twice_the_references_spread_is_inconclusive():
+    from pie_evals.quality.dist_run import first_token_inconclusive
+
+    assert first_token_inconclusive(0.395, 0.444)  # Gemma-4-26B-A4B e24 on rtx4090-x1: pie inside vLLM's own spread
+    assert first_token_inconclusive(0.152, 0.148)  # a spread just under the line still counts
+    assert not first_token_inconclusive(0.190, 0.069)  # pie past twice the reference's spread: the first token decides
+    assert not first_token_inconclusive(0.3, None)
