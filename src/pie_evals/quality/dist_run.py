@@ -396,7 +396,8 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
         # one request at a time: a few recurrent seats (Kimi-K3, Nemotron-3 on a v6e: "one sequence ... beside the
         # state slots takes 6242 MiB") and 512-token fires, whose temporaries fit beside the weights (Qwen3.8-Flash-Next
         # at 2048: "HLO temporaries (32.50G) exceeds available HBM (31.24G)")
-        precipe["max_forward_tokens"] = 512
+        # (a recipe's parity_max_forward_tokens narrows them where even 512 rows' temporaries leave the chip no room)
+        precipe["max_forward_tokens"] = int(precipe.pop("parity_max_forward_tokens", None) or 512)
         precipe["engine_option"] = {**(precipe.get("engine_option") or {}), "max_state_slots": 4}
     pie_engine = get_engine("pie")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=precipe)
     # teacher-forced scoring reads out every prompt position: boot pie wider than the one-lane shape, whose

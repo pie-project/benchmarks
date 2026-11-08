@@ -528,6 +528,20 @@ default:
               rationale: >
                 The fire's HLO temporaries count the KV pool: at 0.90 (a 16.97 GiB pool) they came to 35.70G of a v6e's
                 31.24G (tpu 42342560134); 0.60 leaves the program its ~19G with a pool a single stream never fills.
+      platform:
+        tpu-v5e-1:
+          knobs:
+            parity_gpu_mem_util:
+              value: 0.66
+              rationale: >
+                Parity on a v5e: the cut's ~9.4 GiB on the chip (its 6 GiB n-gram table, embedding, head and 4 layers)
+                fill 0.60 of the v5e's 15.75 GiB ("0 MiB for the kv pages", tpu 42519154722). 0.66 seats ~1 GiB of KV,
+                enough for parity's one request, and leaves the program the rest.
+            parity_max_forward_tokens:
+              value: 64
+              rationale: >
+                The fire's temporaries grow with its rows (32.50G at 2048 on a v6e); parity's first-token prompts are 48
+                tokens (kl.gibberish), so 64-row fires read each in one.
     hy4-mini6:
       platform:
         tpu-v5e-1:
