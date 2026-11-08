@@ -509,21 +509,13 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-welcome .board-welcome-stats > div, .board-welcome .board-welcome-stats > div:first-child {
   display: flex; flex: none; flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 5px;
   height: 24px; padding: 0 10px; border: 0; border-radius: 6px; background: var(--chip); }
-.board-welcome .board-welcome-stats > div:nth-child(1) { --chip: #0A84FF; }
-/* the runs alone in blue, the lead figure; the rest in the buttons' grey with the label's own colours */
-.board-welcome .board-welcome-stats > div:nth-child(n + 2) { --chip: var(--color-fill); }
-.board-welcome .board-welcome-stats > div:nth-child(n + 2) dt { color: var(--color-label-secondary); }
-.board-welcome .board-welcome-stats > div:nth-child(n + 2) dd { color: var(--color-label); }
-/* a grey figure under the pointer turns the runs' blue, its words white, in a short fade */
-.board-welcome .board-welcome-stats > div { transition: background-color .15s ease; }
-.board-welcome .board-welcome-stats > div dt, .board-welcome .board-welcome-stats > div dd { transition: color .15s ease; }
-.board-welcome .board-welcome-stats > div:nth-child(n + 2):hover { --chip: #0A84FF; }
-.board-welcome .board-welcome-stats > div:nth-child(n + 2):hover dt { color: rgba(255, 255, 255, .85); }
-.board-welcome .board-welcome-stats > div:nth-child(n + 2):hover dd { color: #fff; }
-/* one blue pill at a time: while another is under the pointer, the runs' turns grey */
-.board-welcome .board-welcome-stats:has(> div:nth-child(n + 2):hover) > div:first-child { --chip: var(--color-fill); }
-.board-welcome .board-welcome-stats:has(> div:nth-child(n + 2):hover) > div:first-child dt { color: var(--color-label-secondary); }
-.board-welcome .board-welcome-stats:has(> div:nth-child(n + 2):hover) > div:first-child dd { color: var(--color-label); }
+/* one figure in blue at a time, the others in the buttons' grey; the blue moves on to another every few seconds
+   (pillTurn), in a slow fade, and nothing answers the pointer */
+.board-welcome .board-welcome-stats > div { --chip: var(--color-fill); transition: background-color .6s ease; }
+.board-welcome .board-welcome-stats > div dt, .board-welcome .board-welcome-stats > div dd { transition: color .6s ease; }
+.board-welcome .board-welcome-stats > div:not(.is-active) dt { color: var(--color-label-secondary); }
+.board-welcome .board-welcome-stats > div:not(.is-active) dd { color: var(--color-label); }
+.board-welcome .board-welcome-stats > div.is-active { --chip: #0A84FF; }
 .board-welcome .board-welcome-stats > div:nth-child(n + 4) { order: 2; margin-top: 8px; }
 .board-welcome .board-welcome-stats dt { font-size: 12px; line-height: 1; color: rgba(255, 255, 255, .85); text-transform: lowercase; }
 .board-welcome .board-welcome-stats dd { margin: 0; font: 600 12px/1 var(--font-text, inherit); letter-spacing: 0; color: #fff; }
