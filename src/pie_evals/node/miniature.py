@@ -143,7 +143,7 @@ def ensure_miniature(
         from .mlx_quantize import mlx_quantize
 
         shutil.rmtree(cache_dir, ignore_errors=True)  # the raw spans are spent: a 16 GB Mac's disk holds the bf16 cut and its 4-bit copy
-        mlx_quantize(tmp, artifact.miniature.mlx_quantize, timeout_s=timeout_s)
+        mlx_quantize(tmp, artifact.miniature.mlx_quantize, family=artifact.family, timeout_s=timeout_s)
     (tmp / ".miniature.json").write_text(
         json.dumps({"artifact": artifact.id, "recipe": _stamp(artifact), "argv": argv}, indent=2)
     )
