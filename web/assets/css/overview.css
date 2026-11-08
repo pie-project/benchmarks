@@ -1437,3 +1437,22 @@
 .method-article .method-pane-body > .welcome-list:first-child { margin-top: 0; }  /* a chapter opening on its rows sits where another opens on its lead */
 .approach-main > .method-article .method-pane-body > .welcome-lead { max-width: 720px; }  /* a chapter's lead on one line where it fits */
 .approach-main > .method-article .method-pane-body > p { padding-right: 140px; }  /* the text held in as far as the numbered rules, one right edge for both */
+/* Install Size: each figure as a Settings row (logo, engine, version, size at the right end), what it counts and where
+   it came from under it in grey */
+.install-list { margin: 8px 0 0; padding: 0; list-style: none; }
+.install-list li { padding: 12px 0; }
+.install-list li + li { border-top: .5px solid var(--color-separator); }
+.install-head { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.install-head b { font-weight: 500; color: var(--color-label); }
+.install-head span { color: var(--color-label-secondary); }
+.install-head .install-bytes { margin-left: auto; font-variant-numeric: tabular-nums; }
+.method-pane-body .install-list p { max-width: 720px; margin: 6px 0 0 24px; font-size: 12px; line-height: 1.5; color: var(--color-label-secondary); }
+.method-pane-body .install-list p.install-source { color: var(--color-label-tertiary); }
+.method-article .install-list + h3 { margin-top: 40px; }
+@media (max-width: 899px) {
+  .method-pane-body .install-list p { margin-left: 0; }
+  /* on a phone its facts keep their lines, under their names: they are what the chapter says */
+  .welcome-list.is-install .welcome-row { grid-template-columns: 6px minmax(0, 1fr); row-gap: 2px; }
+  .welcome-list.is-install .welcome-row span { display: block; }
+  .welcome-list.is-install .welcome-row span:not(.trust-tile) { grid-column: 2; }
+}

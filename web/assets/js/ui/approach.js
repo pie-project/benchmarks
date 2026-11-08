@@ -24,6 +24,7 @@ window.Pie = window.Pie || {};
       ["workloads", "Workloads", "#30B0C7", "What each setup measures.", () => workloadsPage()],
       ["fairness", "Engine Settings", "#34C759", "What every engine shares, and what each tunes.", () => fairness()],
       ["measurement", "Measurement", "#FF9500", "Rounds, warmup, noise and how a cell's number is chosen.", () => measurement()],
+      ["install", "Install Size", "#30B0C7", "What an engine's install size counts.", () => installPage()],
     ]],
     ["Models", [
       ["slices", "Model Slices", "#5E5CE6", "Single-device architectural proxies.", `
@@ -137,6 +138,26 @@ window.Pie = window.Pie || {};
         ["#FF9500", "Noise", "Over 2% spread adds rounds, up to 5; 5% for a batch"], ["#34C759", "Median", "The middle round is the number"],
         ["var(--color-negative)", "Limit check", "Above the theoretical maximum is a CI Error", "is-check"]])}
       <p>Rounds that still disagree are marked noisy. Macs cool down between rounds.</p>`;
+
+  // Install Size: what the Overview's cards count, then every figure with how it was counted and where it came from
+  // (matrix/install.yaml, exported as the `install` table)
+  const installPage = () => {
+    const esc = (text) => Pie.format.escape(text);
+    const rows = Pie.store.tables.install || [];
+    const size = (b) => (b >= 1e9 ? `${(b / 1e9).toFixed(2)} GB` : `${(b / 1e6).toFixed(1)} MB`);
+    const on = [["mac", "Apple"], ["nvidia", "NVIDIA"], ["web", "Browser"]].filter(([p]) => !Pie.hiddenPlatforms.has(p) && rows.some((r) => r.platform === p));
+    const when = rows[0]?.measured ? new Date(`${rows[0].measured}T12:00`).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
+    const entry = (r) => `<li><div class="install-head">${Pie.engines.logo?.(r.engine) || ""}<b>${esc(Pie.store.names.engine(r.engine))}</b><span>${esc(r.version)}</span><b class="install-bytes">${size(r.bytes)}</b></div>
+        <p>${esc(r.method)}</p><p class="install-source">${esc(r.source)}</p></li>`;
+    return `
+      ${lead("The disk an engine needs before any model: its binaries and every library it installs.")}
+      ${facts([["#3776AB", "Python engines", "The venv the harness builds for it, without the base Python it links to"],
+        ["#636366", "Native engines", "The release or build files it runs, with the system libraries it loads in place of a venv's"],
+        ["#8E8E93", "Browser engines", "The JS and wasm the page downloads"],
+        ["#FF9500", "Left out", "Any model, the GPU driver, and bytecode Python writes on its first run"],
+        ["#34C759", "Measured", `Bytes of regular files, 1 GB being 10⁹ bytes${when ? `, on ${when}` : ""}`]]).replace("is-trust", "is-trust is-install")}
+      ${on.map(([p, title]) => `<h3>${title}</h3><ul class="install-list">${rows.filter((r) => r.platform === p).sort((a, b) => a.bytes - b.bytes).map(entry).join("")}</ul>`).join("")}`;
+  };
 
   const parity = () => `
       ${lead("A fast engine only counts if it computes the same model.")}
