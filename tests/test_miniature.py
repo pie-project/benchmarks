@@ -222,3 +222,44 @@ def test_ensure_miniature_quantizes_the_cut_with_mlx(tmp_path, monkeypatch):
     assert json.loads((d / "config.json").read_text())["quantization"] == {"group_size": 64, "bits": 4}
     assert recipe_from_snapshot(d) == art.miniature
     assert not list(d.parent.glob("*-mlx"))  # the converted copy took the cut's place
+
+
+def test_a_muse_spark_cut_is_quantized_in_place_under_the_release_names(tmp_path, monkeypatch):
+    import re
+    import subprocess
+
+    from pie_evals.node import mlx_quantize as mq
+
+    rules = mq.IN_PLACE["muse_spark"]
+    quantized = lambda k: any(re.search(p, k) for p in rules["quantize"])  # noqa: E731
+    for k in ("model.language_model.embed_tokens.weight", "lm_head.weight", "model.language_model.layers.1.self_attn.gate_proj.weight",
+              "model.language_model.layers.0.mlp.pre_expert_proj.weight", "model.language_model.layers.1.mlp.experts.down_proj.weight"):
+        assert quantized(k), k
+    # the router, the norms, the residual gates and the expert norms stay as released
+    for k in ("model.language_model.layers.0.mlp.gate.weight", "model.language_model.layers.0.input_layernorm.weight",
+              "model.language_model.layers.0.post_attention_residual_gate.gate", "model.language_model.layers.0.mlp.experts.post_expert_norm.weight"):
+        assert not quantized(k), k
+    (split_re, how), = rules["split"].items()
+    assert [re.sub(split_re, leg, "model.language_model.layers.3.mlp.experts.gate_up_proj") for leg in how["legs"]] == [
+        "model.language_model.layers.3.mlp.experts.gate_proj.weight", "model.language_model.layers.3.mlp.experts.up_proj.weight"]
+    assert any(re.search(p, "model.vision_tower.layers.0.attn.q_proj.weight") for p in rules["drop"])
+
+    # the dispatch: Muse Spark through the in-place script, any other family through mlx_lm.convert
+    seen = []
+
+    def run(argv, **_):
+        seen.append(argv)
+        dst = Path(argv[argv.index("--mlx-path") + 1]) if "--mlx-path" in argv else Path(argv[3])
+        dst.mkdir()
+        (dst / "config.json").write_text("{}")
+        if "--mlx-path" not in argv:
+            assert json.loads(Path(argv[4]).read_text())["bits"] == 4
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    monkeypatch.setattr(mq.subprocess, "run", run)
+    for family in ("muse_spark", "nemotron_h"):
+        cut = tmp_path / family
+        cut.mkdir()
+        mq.mlx_quantize(cut, "affine_u4_g64", family=family)
+        assert (cut / "config.json").exists() and not cut.with_name(cut.name + "-mlx").exists()
+    assert seen[0][1].endswith("mlx_quantize_in_place.py") and seen[1][1:4] == ["-m", "mlx_lm", "convert"]
