@@ -810,51 +810,6 @@ window.Pie = window.Pie || {};
   // past a thousand, a count reads to its nearest thousand ("23,000+" for 23,051, "24,000+" for 23,999)
   const atLeast = (n) => (n < 1000 ? String(n) : `${(Math.round(n / 1000) * 1000).toLocaleString("en-US")}+`);
   // the site's counts as the Welcome chapter sets them: small grey words over large figures, hairlines between
-  // the figures' counts run up from zero and settle, once a visit, as Apple brings a keynote's numbers on; the pills
-  // themselves stay put; none of it where the viewer asks for less motion
-  let pillsPlayed = false;
-  const calm = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  // one figure in blue at a time, the runs first: every few seconds the blue moves on to another, picked at random, while
-  // the page is in view; it stays on the runs where the viewer asks for less motion
-  let activePill = 0, pillTimer = null;
-  const pillTurn = () => {
-    if (pillTimer || calm()) return;
-    pillTimer = setInterval(() => {
-      const list = element.querySelector(".board-welcome-stats");
-      if (document.hidden || !list?.offsetParent || list.classList.contains("is-waiting")) return;
-      const pills = [...list.children];
-      if (pills.length < 2) return;
-      let next = Math.floor(Math.random() * (pills.length - 1));
-      if (next >= activePill) next += 1;  // never the one already blue
-      pills.forEach((pill, i) => pill.classList.toggle("is-active", i === next));
-      activePill = next;
-    }, 3500);
-  };
-  const pillsIn = () => {
-    const list = element.querySelector(".board-welcome-stats.is-waiting");
-    if (!list || pillsPlayed) return;
-    const play = () => {
-      if (pillsPlayed) return;
-      pillsPlayed = true;
-      list.querySelectorAll("dd[data-count]").forEach((dd, k) => {
-        const to = Number(dd.dataset.count), suffix = dd.dataset.suffix || "", final = dd.dataset.final;
-        dd.style.minWidth = `${dd.getBoundingClientRect().width}px`;  // the pill keeps its final width, the others stay put
-        const start = performance.now() + k * 70, span = 1100;
-        const step = (now) => {
-          const t = Math.min(1, Math.max(0, (now - start) / span));
-          const eased = 1 - Math.pow(1 - t, 4);  // fast, then easing into its place
-          dd.textContent = t < 1 ? `${Math.round(to * eased).toLocaleString("en-US")}${suffix}` : final;
-          if (t < 1) requestAnimationFrame(step);
-        };
-        dd.textContent = `0${suffix}`;
-        requestAnimationFrame(step);
-      });
-      list.classList.remove("is-waiting");
-    };
-    // when the figures first come into sight: the Overview may open behind another page
-    const watch = new IntersectionObserver((seen) => { if (seen.some((e) => e.isIntersecting)) { watch.disconnect(); play(); } });
-    watch.observe(list);
-  };
   const welcomeStat = () => {
     const n = (v) => v.toLocaleString("en-US");
     const rows = (t) => (Pie.store.rows(t) || []).length;
@@ -862,14 +817,7 @@ window.Pie = window.Pie || {};
     const busy = Pie.store.tables.totals?.machine_s;
     const time = !busy ? null : busy >= 3 * 86400 ? [`Days of compute`, n(Math.round(busy / 86400))] : [`Hours of compute`, n(Math.round(busy / 3600))];
     const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Models", n(rows("models"))], ["Engines", n(rows("engines"))], ["Platforms", n(Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length)], ["Machines", n(Pie.platform?.machines?.() || 0)]].filter((s) => s && s[1] !== "0");
-    // each figure carries its count for the entrance (pillsIn): written in full, so it reads right before and without it
-    // until its count runs, a figure waits unseen at its full width, so no pill changes size
-    const waiting = !pillsPlayed && !calm();
-    const figure = (v) => {
-      const m = /^([\d,]+)(\+?)$/.exec(v);
-      return m && waiting ? `<dd data-count="${m[1].replace(/,/g, "")}" data-suffix="${m[2]}" data-final="${esc(v)}">${esc(v)}</dd>` : `<dd>${esc(v)}</dd>`;
-    };
-    return `<dl class="welcome-stats board-welcome-stats${waiting ? " is-waiting" : ""}">${stats.filter(Boolean).map(([label, v], i) => `<div${i === activePill ? ' class="is-active"' : ""}><dt>${label}</dt>${figure(v)}</div>`).join("")}</dl>`;
+    return `<dl class="welcome-stats board-welcome-stats">${stats.filter(Boolean).map(([label, v]) => `<div><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
   };
 
   const page = () => {
@@ -1456,8 +1404,6 @@ window.Pie = window.Pie || {};
         const was = element.querySelector(".board-scroll");
         const at = was ? [was.scrollTop, was.scrollLeft] : null;
         element.innerHTML = page();
-        pillsIn();
-        pillTurn();
         requestAnimationFrame(paddles);
         element.dataset.key = `${model}@${state.release}`;
         const now = element.querySelector(".board-scroll");
