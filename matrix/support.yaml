@@ -375,6 +375,9 @@ unsupported:
     reason: "vllm-tpu 0.32.0: is_act_and_mul=False (Nemotron's relu2 MLP) is supported only for CUDA, XPU and ROCm"
   - when: {engine: mlxlm, tp: ">1"}
     reason: "mlx-lm is single device"
+  # parity 42520414259 (m2-16g): "Thread group size (1024) is greater than the maximum allowed threads per threadgroup (704)"
+  - when: {engine: mlxlm, platform: m2-16g, family: muse_spark}
+    reason: "mlx-lm 0.32.2's Muse Spark kernels ask for 1024 threads a threadgroup; an M2's GPU allows 704 for them"
   # mlx-lm ships no qwen4_exp model (0.32.2): Qwen3.8-Flash-Next's MLX arm is served by mlx-vlm (recipes/mlxlm.yaml)
   - when: {engine: llamacpp, artifact: qwen3.8-flash-next-q2k-llamacpp, workload: pf256-512}
     reason: "llama.cpp b12096 stalls on a second 256-prompt round of Qwen3.8-Flash-Next: the first round batches (776 tok/s on m5-max-128g), the next runs the prompts one slot at a time (990 s against 19 s on the miniature) and times out"

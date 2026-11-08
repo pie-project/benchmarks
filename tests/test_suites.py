@@ -13,7 +13,8 @@ from pie_evals.schema import Tier
 ROOT = Path(__file__).resolve().parents[1]
 
 TIER1 = {"qwen3.8-flash-next", "qwen3.8-27b", "qwen3.6-27b", "qwen3.6-35b-a3b", "qwen3.5-4b", "gemma-4-26b-a4b", "gemma-4-31b", "muse-glimmer-30b"}
-FULL = TIER1 | {"gemma-4-12b", "gemma-4-e2b", "gemma-4-e4b", "gpt-oss-20b", "qwen3.5-9b"}
+# Nemotron-3-Ultra and Muse Spark: their 4-bit cuts against mlx-lm (and vLLM-Metal), no llama.cpp copy of the cut
+FULL = TIER1 | {"gemma-4-12b", "gemma-4-e2b", "gemma-4-e4b", "gpt-oss-20b", "qwen3.5-9b", "nvidia-nemotron-3-ultra-550b-a55b", "muse-spark-open-816b-a42b"}
 
 
 @pytest.fixture(scope="module")
