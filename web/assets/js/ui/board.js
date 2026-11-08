@@ -402,7 +402,7 @@ window.Pie = window.Pie || {};
   const BY_MODEL = { mac: ["Apple", "#636366"], nvidia: ["NVIDIA", "#76b900"], amd: ["AMD", "#ed1c24"], tpu: ["TPU", "#4285f4"], android: ["Mobile", "#1C1C1E"], web: ["Browser", "#8e8e93"] };  // each platform's name and tile colour, as the other rows' cards wear them
   const modelSummary = (metric, rows, g) => {
     const own = rows.filter((r) => r.workload === metric.workload && r.model === model && r.hardware === g.hardware && r[metric.key]);
-    return { id: g.platform, title: `${metric.label} on ${machineName(g.hardware)}`, ascending: metric.higher === false, widest: 92,  // a card of one or two engines keeps four's bars, not a slab
+    return { id: g.platform, title: `${metric.label} on ${machineName(g.hardware)}`, ascending: metric.higher === false,  // its bars fill their slots, as every other ranking card's do
       top: (list) => niceMax(Math.max(...list.map((e) => e.v))), label: compact, tip: (v) => full(v, metric.unit), empty: "No runs for this model yet",
       value: (_, engine) => {
         const r = own.find((x) => x.engine === engine);
@@ -894,7 +894,7 @@ window.Pie = window.Pie || {};
             <div class="board-section-text"><h1 class="board-title board-welcome-title">Inference Engine Benchmarks</h1><p class="board-welcome-sub">Open, fair, and reproducible results across every platform.</p></div>
             <div class="board-welcome-actions">
               <a class="board-welcome-primary" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Open Source</a>
-              <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">${Pie.icon("approach")}Read the Bench Book</button>
+              <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">${Pie.icon("approach")}Bench Book</button>
             </div>
             </div>
             ${welcomeStat()}
