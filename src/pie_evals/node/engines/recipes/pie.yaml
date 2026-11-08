@@ -538,10 +538,12 @@ default:
                 fill 0.60 of the v5e's 15.75 GiB ("0 MiB for the kv pages", tpu 42519154722). 0.66 seats ~1 GiB of KV,
                 enough for parity's one request, and leaves the program the rest.
             parity_max_forward_tokens:
-              value: 64
+              value: 128
               rationale: >
                 The fire's temporaries grow with its rows (32.50G at 2048 on a v6e); parity's first-token prompts are 48
-                tokens (kl.gibberish), so 64-row fires read each in one.
+                tokens (kl.gibberish). Parity boots pie 64 lanes wide (its scored fires read every position), and the
+                plan needs more rows than lanes: at 64 rows "the budgets admit more lanes than token rows" (tpu
+                42525007381), so 128.
     hy4-mini6:
       platform:
         tpu-v5e-1:
