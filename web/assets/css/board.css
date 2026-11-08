@@ -510,11 +510,10 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
   display: flex; flex: none; flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 5px;
   height: 24px; padding: 0 10px; border: 0; border-radius: 6px; background: var(--chip); }
 .board-welcome .board-welcome-stats > div:nth-child(1) { --chip: #0A84FF; }
-.board-welcome .board-welcome-stats > div:nth-child(2) { --chip: #34C759; }
-.board-welcome .board-welcome-stats > div:nth-child(3) { --chip: #7a4cf5; }
-.board-welcome .board-welcome-stats > div:nth-child(4) { --chip: #FF9500; }
-.board-welcome .board-welcome-stats > div:nth-child(5) { --chip: #FF2D55; }
-.board-welcome .board-welcome-stats > div:nth-child(6) { --chip: var(--color-engine-splash); }
+/* the runs alone in blue, the lead figure; the rest in the buttons' grey with the label's own colours */
+.board-welcome .board-welcome-stats > div:nth-child(n + 2) { --chip: var(--color-fill); }
+.board-welcome .board-welcome-stats > div:nth-child(n + 2) dt { color: var(--color-label-secondary); }
+.board-welcome .board-welcome-stats > div:nth-child(n + 2) dd { color: var(--color-label); }
 .board-welcome .board-welcome-stats > div:nth-child(n + 4) { order: 2; margin-top: 8px; }
 .board-welcome .board-welcome-stats dt { font-size: 12px; line-height: 1; color: rgba(255, 255, 255, .85); text-transform: lowercase; }
 .board-welcome .board-welcome-stats dd { margin: 0; font: 600 12px/1 var(--font-text, inherit); letter-spacing: 0; color: #fff; }
