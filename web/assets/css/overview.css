@@ -1460,31 +1460,6 @@
   .welcome-list.is-install .welcome-row span:not(.trust-tile) { grid-column: 2; }
 }
 
-/* Model Slices' diagrams: one line a row (name, squares, note), the slice square for square under the full model, its
-   cut ones as outlines; a small legend under them */
-.slice-fig { max-width: 520px; margin: 14px 0 4px; padding: 12px 14px 10px; border-radius: 10px; background: var(--color-fill); }
-.slice-row { display: grid; grid-template-columns: 68px auto minmax(0, 1fr); align-items: center; column-gap: 12px; }
-.slice-row + .slice-row { margin-top: 8px; }
-.slice-label { font-size: 12px; font-weight: 600; color: var(--color-label); }
-.slice-cells { display: flex; align-items: center; gap: 3px; }
-.slice-fig.is-layers .slice-cells { gap: 7px; }
-.slice-block { display: inline-flex; gap: 2px; }
-.slice-note { font-size: 11px; color: var(--color-label-secondary); white-space: nowrap; }
-.slice-fig i { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 2.5px; background: var(--color-label-tertiary); }
-.slice-fig i.is-active { background: #FF9500; }
-.slice-fig i.is-expert { background: color-mix(in srgb, var(--color-label-secondary) 55%, transparent); }
-.slice-fig i.is-linear { background: #30B0C7; }
-.slice-fig i.is-full { background: #5E5CE6; }
-.slice-fig i.is-cut { background: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-label-tertiary) 70%, transparent); }
-.slice-fig figcaption { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; padding-left: 80px; font-size: 11px; color: var(--color-label-tertiary); }
-.slice-fig figcaption span { display: inline-flex; align-items: center; gap: 5px; }
-.slice-fig figcaption i { width: 7px; height: 7px; border-radius: 2px; }
-@media (max-width: 599px) {
-  .slice-row { grid-template-columns: 60px minmax(0, 1fr); row-gap: 3px; }  /* the note under the squares */
-  .slice-note { grid-column: 2; white-space: normal; }
-  .slice-fig figcaption { padding-left: 0; }
-}
-
 /* Methodology's step runs as a carousel: each step keeps its width, the row slides and snaps, the Overview's paddles sit
    above it on the right, and the far edge fades while more steps follow */
 .method-article .flow-carousel { display: flex; flex-direction: column; margin-top: 16px; }
