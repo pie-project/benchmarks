@@ -251,6 +251,11 @@ class SglangEngine(Engine):
             # trtllm-gen has no bf16-activation kernel for Kimi-K3's experts ("No kernel found ... mDtypeB: Bfloat16");
             # Marlin keeps them bf16 (W4A16), as the release declares and pie serves (the triton kernels have no SITU)
             moe = "marlin"
+        if moe is None and self.artifact.family == "nemotron_h" and self.platform is not None and str(self.platform.backend) == "rocm":
+            # 0.5.22 resolves NemotronH's auto MoE runner to flashinfer_cutlass, which needs FlashInfer, a CUDA-only
+            # library the ROCm image does not ship ("flashinfer_cutlass MoE runner backend requires flashinfer to be
+            # installed", mi300x-x1); triton is its ROCm runner for these bf16 experts
+            moe = "triton"
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]
         if moe is None and self.artifact.family == "gpt_oss" and blackwell and not rtx_blackwell:
