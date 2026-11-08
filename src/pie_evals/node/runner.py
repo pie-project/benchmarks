@@ -194,6 +194,10 @@ class NodeRunner:
         # MiniMax-M3.1-Flash's miniature took past ten minutes to boot
         if str(getattr(cell, "engine", "")) in ("sglang", "vllm", "trtllm"):
             floor = max(floor, 1200.0)
+        # pie on a TPU boots its server inside the cell (pie_bench) and compiles its batch shapes there first: the
+        # ladder's wait (recipes/pie.yaml server_startup_timeout, 2400 s) and the round after it
+        if floor >= 1800.0 and str(getattr(cell, "engine", "")) == "pie":
+            floor = max(floor, 3600.0)
         if gib >= 100:
             floor = max(floor, 600.0 + gib * 6.0)
         scaled = max(floor, float(cell.workload.est_minutes) * 60.0 * 10.0, float(cell.workload.params.get("round_timeout_s") or 0))
