@@ -1392,7 +1392,7 @@
 .welcome-flow li:last-child::before { display: none; }
 .welcome-flow i { position: relative; display: grid; place-items: center; width: 24px; height: 24px; margin-bottom: 8px; border-radius: 6px; font: 600 12px/1 var(--font-display); font-style: normal; color: #fff; background: var(--step, var(--color-label-secondary)); }
 .welcome-flow b { font-size: 13px; color: var(--color-label); }
-.welcome-flow span { font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }
+.welcome-flow span { max-width: 180px; font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }  /* a step's line in a narrow column under its name */
 .welcome-flow li.is-check b { color: var(--color-negative); }
 /* the workloads as a Settings list: glyph, name, line, hairlines between */
 .welcome-list { margin: 8px 0 0; padding: 0; list-style: none; }
