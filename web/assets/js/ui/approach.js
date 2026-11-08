@@ -326,8 +326,16 @@ window.Pie = window.Pie || {};
     if (!nav || !on) return;
     let thumb = nav.querySelector(":scope > .board-outline-thumb");
     if (!thumb) { thumb = document.createElement("span"); thumb.className = "board-outline-thumb"; thumb.setAttribute("aria-hidden", "true"); nav.prepend(thumb); }
-    thumb.style.transform = `translateY(${on.offsetTop}px)`;
-    thumb.style.height = `${on.offsetHeight}px`;
+    // placed once the page shows: a chapter opened from another page (the Overview's Add Engine) is drawn while the page
+    // is still hidden, where every row reads as at the top, so the fill waits a frame or two for the page to appear
+    const placeFill = (tries) => {
+      const row = nav.querySelector(".is-current");
+      if (!row) return;
+      if (row.offsetParent === null) { if (tries > 0) requestAnimationFrame(() => placeFill(tries - 1)); return; }
+      thumb.style.transform = `translateY(${row.offsetTop}px)`;
+      thumb.style.height = `${row.offsetHeight}px`;
+    };
+    placeFill(120);
     flowPaddles();
   };
 
