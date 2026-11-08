@@ -188,8 +188,9 @@ window.Pie = window.Pie || {};
     const size = (b) => (b >= 1e9 ? `${(b / 1e9).toFixed(2)} GB` : `${(b / 1e6).toFixed(1)} MB`);
     const on = [["mac", "Apple"], ["nvidia", "NVIDIA"], ["web", "Browser"]].filter(([p]) => !Pie.hiddenPlatforms.has(p) && rows.some((r) => r.platform === p));
     const when = rows[0]?.measured ? new Date(`${rows[0].measured}T12:00`).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
-    const entry = (r) => `<li><div class="install-head">${Pie.engines.logo?.(r.engine) || ""}<b>${esc(Pie.store.names.engine(r.engine))}</b><span>${esc(r.version)}</span><b class="install-bytes">${size(r.bytes)}</b></div>
-        <p>${esc(r.method)}</p><p class="install-source">${esc(r.source)}</p></li>`;
+    // one line an engine (logo, name, version, size); what it counts and how it was measured in its hover card
+    const card = (r) => `<div class="tip-title">${esc(Pie.store.names.engine(r.engine))} ${esc(r.version)}</div><div class="tip-sub">${size(r.bytes)} on disk</div><div class="tip-foot">${esc(r.method)}</div><div class="tip-foot install-tip-source">${esc(r.source)}</div>`;
+    const entry = (r) => `<li data-tip-html="${esc(card(r))}"><div class="install-head">${Pie.engines.logo?.(r.engine) || ""}<b>${esc(Pie.store.names.engine(r.engine))}</b><span>${esc(r.version)}</span><b class="install-bytes">${size(r.bytes)}</b></div></li>`;
     return `
       ${lead("The disk an engine needs before any model: its binaries and every library it installs.")}
       ${facts([["#3776AB", "Python engines", "The venv the harness builds for it, without the base Python it links to"],
@@ -318,6 +319,22 @@ window.Pie = window.Pie || {};
 
   element.addEventListener("scroll", (event) => { if (event.target.classList?.contains("welcome-flow")) flowPaddles(); }, { capture: true, passive: true });
   window.addEventListener("resize", () => flowPaddles(), { passive: true });
+
+  // a row's hover card (the Install Size chapter's engines) in the site's chart tooltip, as the other pages show theirs
+  const tooltip = document.getElementById("chart-tooltip");
+  element.addEventListener("mousemove", (event) => {
+    const target = event.target.closest("[data-tip-html]");
+    if (!tooltip) return;
+    if (!target) { tooltip.hidden = true; tooltip.classList.remove("is-card"); return; }
+    tooltip.innerHTML = target.dataset.tipHtml;
+    tooltip.classList.add("is-card");
+    tooltip.hidden = false;
+    const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
+    const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8);
+    tooltip.style.left = `${Math.max(8, x)}px`;
+    tooltip.style.top = `${Math.max(8, y)}px`;
+  });
+  element.addEventListener("mouseleave", () => { if (tooltip) tooltip.hidden = true; });
 
   Pie.approach = {
     element,

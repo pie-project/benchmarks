@@ -1440,8 +1440,11 @@
 /* Install Size: each figure as a Settings row (logo, engine, version, size at the right end), what it counts and where
    it came from under it in grey */
 .install-list { margin: 8px 0 0; padding: 0; list-style: none; }
-.install-list li { padding: 12px 0; }
+.install-list li { padding: 10px 0; cursor: default; }
 .install-list li + li { border-top: .5px solid var(--color-separator); }
+.install-list li:hover .install-head b:first-of-type { color: var(--color-accent); }  /* the row under the pointer, its card beside it */
+#chart-tooltip .install-tip-source { color: var(--color-label-tertiary); }
+#chart-tooltip.is-card .tip-foot { max-width: 340px; }
 .install-head { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .install-head b { font-weight: 500; color: var(--color-label); }
 .install-head span { color: var(--color-label-secondary); }
