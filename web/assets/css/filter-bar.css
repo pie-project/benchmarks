@@ -50,22 +50,28 @@
 
 
 .filter.is-set .engine-tag,
-.filter.is-set .hardware-tag {
+.filter.is-set .hardware-tag,
+.filter.is-set .workload-tag .mode-icon {  /* a picked setup's mark takes the accent with its name */
   color: var(--color-accent);
 }
 
-/* Clear, after the filters: a plain text button in the accent, as a Mac's Clear beside a search */
+/* Clear, after the filters: plain text with its mark, the bar's button fill only under the pointer */
 .filter-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;  /* with the mark's own inset, the bar's buttons all leave about 6.5px between mark and name */
   border: 0;
+  border-radius: var(--radius-control);
   background: none;
-  padding: 0 8px;
+  padding: 0 10px;
   height: var(--control-height);
   font: inherit;
   font-size: 13px;
-  color: var(--color-accent);
+  color: var(--color-label);
   cursor: pointer;
 }
-.filter-clear:hover { text-decoration: underline; }
+.filter-clear:hover { background: var(--color-fill); }
+.filter-clear svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 
 .filter.is-set .popup-chevron {
   stroke: var(--color-accent);
