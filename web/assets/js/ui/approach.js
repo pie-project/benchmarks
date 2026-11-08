@@ -163,7 +163,7 @@ window.Pie = window.Pie || {};
     const esc = (text) => Pie.format.escape(text);
     const rows = Pie.store.tables.install || [];
     const size = (b) => (b >= 1e9 ? `${(b / 1e9).toFixed(2)} GB` : `${(b / 1e6).toFixed(1)} MB`);
-    const on = [["mac", "Apple"], ["nvidia", "NVIDIA"], ["tpu", "TPU"], ["web", "Browser"]].filter(([p]) => !Pie.hiddenPlatforms.has(p) && rows.some((r) => r.platform === p));
+    const on = [["mac", "Apple"], ["nvidia", "NVIDIA"], ["amd", "AMD"], ["tpu", "TPU"], ["web", "Browser"]].filter(([p]) => !Pie.hiddenPlatforms.has(p) && rows.some((r) => r.platform === p));
     const when = rows[0]?.measured ? new Date(`${rows[0].measured}T12:00`).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
     // one line an engine (logo, name, version, size); what it counts and how it was measured in its hover card
     const card = (r) => `<div class="tip-title">${esc(Pie.store.names.engine(r.engine))} ${esc(r.version)}</div><div class="tip-sub">${size(r.bytes)} on disk</div><div class="tip-foot">${esc(r.method)}</div><div class="tip-foot install-tip-source">${esc(r.source)}</div>`;
