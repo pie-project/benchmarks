@@ -29,7 +29,6 @@ window.Pie = window.Pie || {};
       ["slices", "Model Slices", "#5E5CE6", "Single-device architectural proxies.", () => `
         <p>We use single-device model slices to benchmark frontier architectures continuously without the cost and energy of multi-GPU clusters. Frontier models now exceed 400B to 800B parameters and require up to eight datacenter GPUs just to load into memory. Benchmarking these full checkpoints across every engine, hardware SKU, and software release creates a combinatorial matrix that is too expensive and energy-intensive to run continuously.</p>
         <p>A model slice shrinks a model's memory footprint to fit one device while keeping its per-layer execution identical to the full model. A naive alternative is to benchmark a smaller model from the same family, such as an 8B model in place of a 400B model. However, smaller models use narrower hidden dimensions and fewer attention heads, which trigger completely different GPU kernel schedules. Instead, we slice the full model directly under three rules:</p>
-        ${sliceFlow()}
         <ol class="method-list">
           <li><b>Keep layer width unchanged.</b> We preserve the exact hidden dimension, expert intermediate width, attention head layout, active experts per token (top-<i>k</i>), quantization group size, and vocabulary head. Every matrix multiplication and attention kernel runs with the exact tensor shapes of the full model.</li>
           <li><b>Prune inactive experts before cutting layers.</b> In sparse Mixture-of-Experts (MoE) models, each token activates only <i>k</i> out of <i>E</i> experts. We first reduce the stored expert pool (<i>E′</i> &lt; <i>E</i>) while keeping <i>k</i> fixed (for example, keeping all 78 layers and 40B active parameters of GLM-5.3 on 80 GB GPUs). For single-request decoding, this cuts static memory without changing the active parameters, memory reads, or FLOPs per layer. When the model still exceeds device memory, we reduce the number of layers (<i>L′</i> &lt; <i>L</i>, such as 8 of 93 layers for Kimi-K3).${sliceExperts()}</li>
@@ -132,25 +131,33 @@ window.Pie = window.Pie || {};
         ["#FF9500", "Own best settings", "Each engine tuned for its highest throughput, the recipe public"],
         ["#AF52DE", "Latest releases", "The newest release of each engine at run time, every run dated and tagged"]])}`;
 
-  // Model Slices' diagrams, in the chapters' own parts: the cut as numbered steps, then the expert pool and the layer
-  // stack before and after, as rows of small squares in the chapter's colours
-  const sliceFlow = () => steps([["#8E8E93", "Full model", "400B to 800B, up to eight GPUs"], ["#5E5CE6", "Same widths", "Every matmul keeps its shape"],
-    ["#FF9500", "Fewer experts", "E′ < E, top-k unchanged"], ["#30B0C7", "Fewer layers", "L′ < L, in whole blocks"],
-    ["#34C759", "One device", "The same kernels, a fraction of the memory"]]);
-  const cells = (n, cls) => Array.from({ length: n }, (_, i) => `<i class="${typeof cls === "function" ? cls(i) : cls}"></i>`).join("");
+  // Model Slices' diagrams: the expert pool and the layer stack before and after the cut, as rows of small squares
+  // a row: its name, then its squares; the slice's rows keep the full model's positions, the cut ones as outlines,
+  // so the eye reads what was kept and what was taken away
+  const sq = (cls) => `<i class="${cls}"></i>`;
   const sliceRow = (label, squares, note) => `<div class="slice-row"><span class="slice-label">${label}</span><span class="slice-cells">${squares}</span><span class="slice-note">${note}</span></div>`;
-  const sliceExperts = () => `
+  const legend = (items) => `<figcaption>${items.map(([cls, text]) => `<span>${sq(cls)}${text}</span>`).join("")}</figcaption>`;
+  const sliceExperts = () => {
+    const ACTIVE = [2, 5];  // the same k experts active in both rows
+    const row = (kept) => Array.from({ length: 16 }, (_, i) => sq(i >= kept ? "is-cut" : ACTIVE.includes(i) ? "is-active" : "is-expert")).join("");
+    return `
       <figure class="slice-fig" aria-label="Expert pool before and after the cut">
-        ${sliceRow("Full model", cells(16, (i) => (i === 3 || i === 9 ? "is-active" : "is-expert")), "E experts, k active per token")}
-        ${sliceRow("Slice", cells(8, (i) => (i === 3 || i === 5 ? "is-active" : "is-expert")), "E′ experts, the same k active")}
-        <figcaption><i class="is-active"></i>Active for a token <i class="is-expert"></i>Stored expert</figcaption>
+        ${sliceRow("Full model", row(16), "E = 16 experts, k = 2 active per token")}
+        ${sliceRow("Slice", row(8), "E′ = 8 kept, the same k = 2 active")}
+        ${legend([["is-active", "Active for a token"], ["is-expert", "Stored expert"], ["is-cut", "Pruned"]])}
       </figure>`;
-  const sliceLayers = () => `
-      <figure class="slice-fig" aria-label="Layer stack before and after the cut">
-        ${sliceRow("Full model", cells(48, (i) => (i % 4 === 3 ? "is-full" : "is-linear")), "48 layers, 12 blocks")}
-        ${sliceRow("Slice", cells(8, (i) => (i % 4 === 3 ? "is-full" : "is-linear")), "8 of 48, two whole blocks")}
-        <figcaption><i class="is-linear"></i>Linear attention <i class="is-full"></i>Full attention</figcaption>
+  };
+  const sliceLayers = () => {
+    // a block is three linear-attention layers and one full-attention layer; a row wraps between blocks, never inside one
+    const block = (cut) => `<span class="slice-block">${[0, 1, 2, 3].map((i) => sq(cut ? "is-cut" : i === 3 ? "is-full" : "is-linear")).join("")}</span>`;
+    const row = (kept) => Array.from({ length: 12 }, (_, b) => block(b >= kept)).join("");
+    return `
+      <figure class="slice-fig is-layers" aria-label="Layer stack before and after the cut">
+        ${sliceRow("Full model", row(12), "48 layers in 12 blocks")}
+        ${sliceRow("Slice", row(2), "8 of 48 layers: 2 whole blocks")}
+        ${legend([["is-linear", "Linear attention"], ["is-full", "Full attention"], ["is-cut", "Cut"]])}
       </figure>`;
+  };
 
   const measurement = () => `
       ${lead("A cell's number is the median of repeated rounds, taken after warmup.")}
