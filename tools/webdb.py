@@ -181,7 +181,7 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
     catalog = load("hardware")["hardware"]
     by_id = {c["id"]: c for c in catalog}
     by_runpod = {c["runpod_gpu_type"]: c for c in catalog if c.get("runpod_gpu_type")}
-    spec_keys = ("bandwidth_gbs", "tflops_fp16", "power_w", "cpu_cores", "gpu_cores", "year", "memory_type")
+    spec_keys = ("bandwidth_gbs", "tflops_fp16", "tflops_fp8", "tflops_mxfp8", "power_w", "cpu_cores", "gpu_cores", "year", "memory_type")
 
     def row(c: dict, **over) -> dict:
         resource = RESOURCE.get(c["class"], "RunPod cloud" if c.get("runpod_gpu_type") else "")
@@ -193,6 +193,8 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
             "memory_gib": c.get("memory_gib") or max(c.get("memory_options_gb") or [0]) or None,
             "memory_type": c.get("memory_type"), "bandwidth_gbs": c.get("bandwidth_gbs"),
             "cpu_cores": c.get("cpu_cores"), "gpu_cores": c.get("gpu_cores"), "tflops_fp16": c.get("tflops_fp16"),
+            # the narrower tensor peaks the limits use for FP8 and MXFP4 builds, where the chip has them
+            "tflops_fp8": c.get("tflops_fp8"), "tflops_mxfp8": c.get("tflops_mxfp8"),
             "interconnect": None, "power_w": c.get("power_w"), "year": str(c["year"]) if c.get("year") else None,
             "runs": None, "price_usd": None, "price_hr": None, **over,
         }
@@ -231,6 +233,8 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
         if r["class"] == "web" and r.get("name"):
             r["name"] += " Chrome"
             r["vendor"] = f"Chrome ({r.get('vendor') or 'GPU'})"
+            # WebGPU has no FP8 or block-scaled matrix math, so the card's narrower peaks are out of a browser's reach
+            r["tflops_fp8"] = r["tflops_mxfp8"] = None
     return rows
 
 

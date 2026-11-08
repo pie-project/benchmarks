@@ -22,6 +22,10 @@ window.Pie = window.Pie || {};
     // the catalog's fp16 compute where it has one, else, for an Apple GPU only, the per-core estimate; any other chip
     // without a figure has none (its CUDA or stream cores are not Apple GPU cores, and would give a nonsense number)
     tflops: h.tflops_fp16 || (h.vendor === "Apple" || h.class === "mac" ? +(((TFLOPS_PER_CORE[h.arch] || 0.4) * (h.gpu_cores || 0)).toFixed(1)) : 0),
+    // the catalog's dense FP8 peak, on a chip whose tensor cores multiply FP8; and its block-scaled MXFP8 peak, on one
+    // whose tensor cores also take microscaled (MX) operands, MXFP4 weights against MXFP8 activations among them
+    tflops8: h.tflops_fp8 || 0,
+    tflopsMx: h.tflops_mxfp8 || 0,
     mem: h.memory_gib || 0,
     devices: h.count || 1,
     // internal SSD read speed, estimated by chip class: the Max chips read about twice as fast as the Pro, the Pro twice the base
@@ -316,8 +320,28 @@ window.Pie = window.Pie || {};
     // with KV sharing, the layers that reuse another layer's K and V run only for the tokens that need logits: a prompt
     // token's only job is to fill the cache, and those layers add nothing to it
     const skip = a.shared && tokens > logits ? (a.shared / a.layers) * (tokens - logits) : 0;
-    const flops = 2e9 * (activeBody * (tokens - skip) + a.emb * logits);
-    return { weightGB, cacheGB, flops, body: activeBody, head: a.emb };
+    const bodyFlops = 2e9 * activeBody * (tokens - skip);
+    const flops = bodyFlops + 2e9 * a.emb * logits;
+    return { weightGB, cacheGB, flops, bodyFlops, body: activeBody, head: a.emb, experts: a.routed * a.k };
+  };
+
+  // the matmuls a build can run narrower than 16 bits, and the peak they run at: an FP8 build's whole body (its checkpoint
+  // keeps only the embeddings, and so the head, in bf16) on a chip with FP8 tensor cores; an MXFP4 build's experts (gpt-oss
+  // keeps attention, router and head in bf16), against activations quantized to MXFP8, on a chip whose tensor cores take
+  // the MX block scales (TensorRT-LLM's default W4A8_MXFP4_MXFP8 on Blackwell, SM100 and SM120). Without them the 4-bit
+  // experts are widened to 16 bits, as every engine does on Hopper, Ada and older. No build is assumed to quantize its
+  // activations below 8 bits, so FP4 rates are never used. `share` is the part of the body's arithmetic that runs narrow
+  const narrow = (machine, scheme = "", p) => {
+    if (/(^|_)fp8/.test(scheme) && machine.tflops8) return { share: 1, tflops: machine.tflops8 };
+    if (/mxfp4/.test(scheme) && machine.tflopsMx) return { share: p.experts && p.body ? Math.min(1, p.experts / p.body) : 1, tflops: machine.tflopsMx };
+    return { share: 0, tflops: 0 };
+  };
+  // the seconds a pass's arithmetic takes on the whole machine: the narrow share of its body at the narrow peak, the rest
+  // at the 16-bit one. Both peaks are every device's together
+  const mathTime = (flops, bodyFlops, tflops, share = 0, tflopsNarrow = 0) => {
+    if (!tflops) return 0;
+    const fast = share && tflopsNarrow ? bodyFlops * share : 0;
+    return (flops - fast) / (tflops * 1e12) + (fast ? fast / (tflopsNarrow * 1e12) : 0);
   };
 
   // a model's architecture: its own from config/architectures.js, or, for a model not there yet, one built from the
@@ -402,16 +426,20 @@ window.Pie = window.Pie || {};
     const p = pass(a, { bits, tokens, logits: batch, requests: batch, context });
     const memory = (p.weightGB + p.cacheGB) / bw;
     // a chip with no FLOPS figure has no compute bound: only the bandwidth one is drawn
-    const compute = tflops ? p.flops / (tflops * 1e12) : 0;
+    const n = narrow(machine, row.scheme, p);
+    const tflopsNarrow = n.tflops * machine.devices;
+    const compute = mathTime(p.flops, p.bodyFlops, tflops, n.share, tflopsNarrow);
     // several GPUs: the exchange between them is a third bound
     const link = linkOf(row.hardware);
     const linkS = linkTime(a, link, machine.devices, tokens);
     const slowest = Math.max(memory, compute, linkS);
     const bound = linkS === slowest && linkS ? "interconnect" : memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced";
-    // the parts too, for the Methods page's worked examples
-    const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, linkS, link, bw, tflops, devices: machine.devices,
-      body: p.body, head: p.head, bits: bits.bits, expertBits: bits.experts, headBits: bits.head, bytes: bits.bits / 8, tokens, context,
-      flopsPerToken: 2e9 * (p.body + p.head) };
+    // the parts too, for the Methods page's worked examples. `tflops` is this pass's own peak, its FLOPs over its math
+    // time: the 16-bit one (`tflops16`) unless part of it runs narrower (`narrow`, at `tflopsNarrow`)
+    const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, linkS, link, bw,
+      tflops: compute && n.share ? p.flops / compute / 1e12 : tflops, tflops16: tflops, tflopsNarrow, narrow: n.share,
+      devices: machine.devices, body: p.body, head: p.head, bits: bits.bits, expertBits: bits.experts, headBits: bits.head,
+      bytes: bits.bits / 8, tokens, context, flopsPerToken: 2e9 * (p.body + p.head) };
     return { tps: tokens / slowest, bound, bandwidth: tokens / memory, compute: compute ? tokens / compute : null, interconnect: linkS ? tokens / linkS : null, parts };
   };
 
@@ -435,7 +463,7 @@ window.Pie = window.Pie || {};
     if (!plain) return null;
     const a = archOf(row.model);
     const workload = Pie.store.index.workloads[row.workload];
-    const { bw, tflops, context } = plain.parts;
+    const { bw, tflops16: tflops, tflopsNarrow, narrow: share, context } = plain.parts;
     const bits = bitsOf(row.scheme);
     const alpha = Math.min(percent, 99) / 100;
     const draftS = Math.max((DRAFT_B * bits.bits / 8) / bw, tflops ? (2 * DRAFT_B * 1e9) / (tflops * 1e12) : 0);
@@ -443,7 +471,7 @@ window.Pie = window.Pie || {};
     for (let k = 1; k <= WIDEST; k++) {
       const p = pass(a, { bits, tokens: k + 1, logits: k + 1, requests: 1, context });
       const memory = (p.weightGB + p.cacheGB) / bw;
-      const compute = tflops ? p.flops / (tflops * 1e12) : 0;
+      const compute = mathTime(p.flops, p.bodyFlops, tflops, share, tflopsNarrow);
       const kept = (1 - alpha ** (k + 1)) / (1 - alpha);
       const tps = kept / (Math.max(memory, compute) + draftS);
       if (tps > best.tps) best = { tps, k, kept, bound: memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced" };
@@ -509,7 +537,10 @@ window.Pie = window.Pie || {};
     const p = pass(a, { bits: bitsOf(scheme), tokens: requests, logits: requests, requests, context: workload.prompt_tokens + workload.output_tokens / 2 });
     const prefillFlops = requests * 2e9 * p.body * workload.prompt_tokens / workload.output_tokens;
     const readS = (p.weightGB + p.cacheGB) / bw;
-    const mathS = tflops ? (p.flops + prefillFlops) / (tflops * 1e12) : 0;
+    // the prompts' arithmetic is all body, so it runs narrow in the same share as the steps' body
+    const n = narrow(machine, scheme, p);
+    const tflopsNarrow = n.tflops * machine.devices;
+    const mathS = mathTime(p.flops + prefillFlops, p.bodyFlops + prefillFlops, tflops, n.share, tflopsNarrow);
     // several GPUs: each step exchanges the batch's activations, and each prompt's once, spread over its answer
     const link = linkOf(hardware);
     const linkS = link ? linkTime(a, link, machine.devices, requests) + linkTime(a, link, machine.devices, requests * workload.prompt_tokens / workload.output_tokens) - 2 * a.layers * link.us * 1e-6 * (1 - 1 / workload.output_tokens) : 0;
@@ -518,7 +549,10 @@ window.Pie = window.Pie || {};
     const interconnect = linkS ? requests / linkS : null;
     const tps = Math.min(bandwidth, compute || Infinity, interconnect || Infinity);
     const bound = tps === interconnect ? "interconnect" : tps === compute ? "compute" : "bandwidth";
-    return { tps, bound, compute, bandwidth, interconnect, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, linkS, link, requests, bw, tflops, devices: machine.devices } };
+    // `tflops` is the step's own peak, as Pie.ceiling's parts give it
+    const peak = mathS && n.share ? (p.flops + prefillFlops) / mathS / 1e12 : tflops;
+    return { tps, bound, compute, bandwidth, interconnect, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, linkS, link, requests, bw,
+      tflops: peak, tflops16: tflops, tflopsNarrow, narrow: n.share, devices: machine.devices } };
   };
 
   Pie.methodology = {

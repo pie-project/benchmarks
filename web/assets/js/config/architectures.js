@@ -30,4 +30,7 @@ Pie.architectures = {
   "qwen3.5-0.8b": { total: 0.772, emb: 0.254, tied: true, ple: 0, routed: 0, k: 1, full: 6, sliding: 0, window: 0, kvLayer: 2048, linear: 18, state: 1048576, layers: 24, shared: 0, hidden: 1024 },
   "qwen3.6-27b": { total: 27.32, emb: 1.271, tied: false, ple: 0, routed: 0, k: 1, full: 16, sliding: 0, window: 0, kvLayer: 4096, linear: 48, state: 3145728, layers: 64, shared: 0, hidden: 5120 },
   "gpt-oss-120b": { total: 116.829, emb: 0.579, tied: false, ple: 0, routed: 114.662, k: 0.03125, full: 18, sliding: 18, window: 128, kvLayer: 2048, linear: 0, state: 0, layers: 36, shared: 0, hidden: 2880 },
+  // Qwen/Qwen3-0.6B (fetched 2026-11-07): its safetensors hold 0.752 B, the tied 151936 x 1024 head stored a second
+  // time as lm_head.weight; config.json ties it (tie_word_embeddings), so the model has 0.596 B, 0.440 B of them body
+  "qwen3-0.6b": { total: 0.596, emb: 0.156, tied: true, ple: 0, routed: 0, k: 1, full: 28, sliding: 0, window: 0, kvLayer: 4096, linear: 0, state: 0, layers: 28, shared: 0, hidden: 1024 },
 };

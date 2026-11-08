@@ -67,7 +67,7 @@ window.Pie = window.Pie || {};
     "Prompts": [() => `The run's own, ${Pie.store.index.workloads?.prefill_batch?.parallel || "4–1,024"} cold prompts at once: pf16-512 is 16.`, "workloads"],
     "Tokens per prompt": [() => `${Pie.store.index.workloads?.prefill_batch?.prompt_tokens ?? 512} tokens each.`, "workloads"],
     "Memory bandwidth": ["The machine's peak, from its spec sheet.", "hardware"],
-    "Peak FLOPS": ["FP16 peak from the spec sheet. Apple's are estimates.", "hardware"],
+    "Peak FLOPS": ["FP16 peak from the spec sheet, or the FP8 one for the matmuls an 8-bit or MXFP4 build runs there. Apple's are estimates.", "hardware"],
     "Active body": ["Parameters each token runs through, minus embeddings and output head.", "models"],
     "Output head": ["Vocabulary × hidden size, the last matmul.", "models"],
     "Layers": ["Transformer layers, from the model's config.json.", "models"],
@@ -112,6 +112,8 @@ window.Pie = window.Pie || {};
 
   // the effect of a simplification on the limit, as one quiet tag on its row
   const EFFECT = { up: "Raises the limit", down: "Lowers the limit", small: "Under 1%", choice: "Choice" };
+  // which matmuls run at the FP8 peak rather than the 16-bit one, on every compute-bound chapter
+  const NARROW = ["An FP8 build runs its body's matmuls at the chip's FP8 peak. An MXFP4 build runs its experts there too, against 8-bit activations, on chips whose tensor cores take MX block scales (Blackwell, MI350X); elsewhere they run at 16 bits. Attention, router and output head stay at the 16-bit peak, and no build is taken to cut its activations below 8 bits.", "choice"];
 
   const ceilingOf = (metric) => Pie.ceiling?.({ hardware: EXAMPLE.hardware, model: EXAMPLE.model, scheme: EXAMPLE.scheme, workload: "raw" }, metric);
 
@@ -222,6 +224,7 @@ window.Pie = window.Pie || {};
         ["Attention arithmetic is not counted.", "up"],
         ["A mixture of experts touches more experts the more tokens a step carries, assuming each token picks its experts independently.", "up"],
         ["Peak FLOPS is the spec sheet's. On Apple M5 chips it includes the GPU's neural accelerators, which an engine may not use.", "up"],
+        NARROW,
       ],
       check: { workload: "throughput", metric: "throughput", key: "output_tok_s", batched: true },
       example: () => {
@@ -266,6 +269,7 @@ window.Pie = window.Pie || {};
         ["Only the last prompt token needs the output head: the first answer token is all prefill has to produce.", null],
         ["Gemma's KV sharing: layers that reuse an earlier layer's K and V run only for the last prompt token, since the others only fill the cache.", null],
         ["FLOPS is the spec sheet's peak. Apple publishes no FP16 figure, so the catalog's are estimates.", "up"],
+        NARROW,
       ],
       check: { workload: "raw", metric: "prefill", key: "prefill_tok_s" },
       // shown only while results run above the limit: what is known about why, and what is not
@@ -302,6 +306,7 @@ window.Pie = window.Pie || {};
         ["Attention arithmetic, which grows with the square of each prompt, is not counted.", "up"],
         ["Each prompt needs the output head once, for its first answer token.", null],
         ["FLOPS is the spec sheet's peak. Apple publishes no FP16 figure, so the catalog's are estimates.", "up"],
+        NARROW,
       ],
     },
   ];
