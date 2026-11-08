@@ -165,3 +165,60 @@ def test_stale_recipe_snapshot_is_rebuilt(tmp_path, monkeypatch):
     got = mm.ensure_miniature(art, tmp_path / "pie", tmp_path, python="py")
     assert calls, "stale snapshot must be rebuilt"
     assert json.loads((got / ".miniature.json").read_text())["recipe"] == mm._stamp(art)
+
+
+def test_an_mlx_quantized_cut_is_its_own_snapshot():
+    bf16 = MiniatureRecipe(layers="0-8", experts=16)
+    mlx4 = MiniatureRecipe(layers="0-8", experts=16, mlx_quantize="affine_u4_g64")
+    assert mlx4.tag == "mini-l0-8-e16-mlx-affine_u4_g64" and bf16.tag == "mini-l0-8-e16"
+    assert mlx4.recipe_hash != bf16.recipe_hash
+    # the cuts built before the field keep their hash
+    assert bf16.recipe_hash == MiniatureRecipe(layers="0-8", experts=16, mlx_quantize=None).recipe_hash
+
+
+def test_mlx_convert_argv_names_the_scheme():
+    from pie_evals.node.mlx_quantize import convert_argv
+
+    argv = convert_argv("py", Path("cut"), Path("cut-mlx"), "affine_u4_g64")
+    assert argv[:4] == ["py", "-m", "mlx_lm", "convert"]
+    assert argv[argv.index("--q-bits") + 1] == "4" and argv[argv.index("--q-group-size") + 1] == "64"
+    assert argv[argv.index("--q-mode") + 1] == "affine" and argv[argv.index("--dtype") + 1] == "bfloat16"
+    with pytest.raises(ValueError, match="no mlx_lm.convert flags"):
+        convert_argv("py", Path("cut"), Path("cut-mlx"), "nvfp4")
+
+
+def test_ensure_miniature_quantizes_the_cut_with_mlx(tmp_path, monkeypatch):
+    import sys
+
+    art = _mini(mlx_quantize="affine_u4_g64")
+    pie_root = tmp_path / "pie"
+    (pie_root / "scripts/bench").mkdir(parents=True)
+    (pie_root / SHRINK_SCRIPT).write_text(
+        "import argparse, json, pathlib\n"
+        "ap = argparse.ArgumentParser()\n"
+        "for f in ('--repo','--revision','--out','--layers','--repeat','--experts','--cache'): ap.add_argument(f)\n"
+        "a = ap.parse_args()\n"
+        "p = pathlib.Path(a.out); p.mkdir(parents=True, exist_ok=True)\n"
+        "(p / 'config.json').write_text(json.dumps({'num_hidden_layers': 8}))\n"
+    )
+    # a stand-in for `python -m mlx_lm convert`: the cut's config with mlx_lm's quantization block
+    fake = tmp_path / "fake"
+    (fake / "mlx_lm").mkdir(parents=True)
+    (fake / "mlx_lm" / "__main__.py").write_text(
+        "import json, pathlib, sys\n"
+        "a = sys.argv[1:]\n"
+        "assert a[0] == 'convert'\n"
+        "src, dst = pathlib.Path(a[a.index('--hf-path') + 1]), pathlib.Path(a[a.index('--mlx-path') + 1])\n"
+        "assert not dst.exists()\n"
+        "dst.mkdir()\n"
+        "cfg = json.loads((src / 'config.json').read_text())\n"
+        "cfg['quantization'] = {'group_size': int(a[a.index('--q-group-size') + 1]), 'bits': int(a[a.index('--q-bits') + 1])}\n"
+        "(dst / 'config.json').write_text(json.dumps(cfg))\n"
+    )
+    monkeypatch.setenv("PYTHONPATH", str(fake))
+    monkeypatch.setenv("MLX_PY", sys.executable)
+    d = ensure_miniature(art, pie_root, tmp_path / "hf", sys.executable)
+    assert d.name.endswith("-mlx-affine_u4_g64")
+    assert json.loads((d / "config.json").read_text())["quantization"] == {"group_size": 64, "bits": 4}
+    assert recipe_from_snapshot(d) == art.miniature
+    assert not list(d.parent.glob("*-mlx"))  # the converted copy took the cut's place

@@ -798,6 +798,19 @@ artifacts:
     max_context: 4096
     expected_gib: 11.4
     tiers: [weekly]
+  # the 16 GB Macs: no MLX release quantizes Nemotron-3-Ultra, so the e16 cut is quantized where it is built
+  - id: nemotron-3-ultra-mlx4-slice-e16
+    base_model: nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16
+    family: nemotron_h
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-8", experts: 16, period: 1, mlx_quantize: affine_u4_g64, note: "pie's nemotron3-ultra-mini at 16 of 512 experts, mlx_lm.convert to 4 bits in 64-wide groups where it is cut: 3.3 GiB, for 16 GB Macs (the bf16 cut is 11.4 GiB)"}
+    pie_sku: nemotron3-ultra-mini-u4g64-kv-bf16-e16
+    platforms: [m2-16g, m3-16g]
+    max_context: 4096
+    expected_gib: 3.3
+    tiers: [targeted]
   - id: nemotron-3-super-mini22
     base_model: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
     family: nemotron_h

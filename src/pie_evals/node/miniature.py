@@ -69,10 +69,12 @@ def miniature_argv(
 
 
 def _stamp(artifact: ArtifactSpec) -> dict:
-    """The recipe as .miniature.json records it; widen_bf16 only when set, so the cuts built before it are kept."""
+    """The recipe as .miniature.json records it; widen_bf16 and mlx_quantize only when set, so the cuts built before
+    them are kept."""
     r = artifact.miniature.model_dump()
-    if not r.get("widen_bf16"):
-        r.pop("widen_bf16", None)
+    for flag in ("widen_bf16", "mlx_quantize"):
+        if not r.get(flag):
+            r.pop(flag, None)
     return r
 
 
@@ -137,6 +139,11 @@ def ensure_miniature(
         from .widen import widen_bf16
 
         widen_bf16(tmp)
+    if artifact.miniature.mlx_quantize:
+        from .mlx_quantize import mlx_quantize
+
+        shutil.rmtree(cache_dir, ignore_errors=True)  # the raw spans are spent: a 16 GB Mac's disk holds the bf16 cut and its 4-bit copy
+        mlx_quantize(tmp, artifact.miniature.mlx_quantize, timeout_s=timeout_s)
     (tmp / ".miniature.json").write_text(
         json.dumps({"artifact": artifact.id, "recipe": _stamp(artifact), "argv": argv}, indent=2)
     )
