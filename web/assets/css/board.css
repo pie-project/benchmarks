@@ -529,6 +529,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 /* Head to Head's one bars-or-grid switch sits before the paddles, as Kernel Efficiency's setup pick does */
 .board-section-head > .board-view:not(.board-carousel-nav) { flex: none; margin: 0 -8px -4px auto; }  /* 8px from the paddles, as the setup pick sits from them */
 .board-section-head > .board-view:not(.board-carousel-nav) + .board-carousel-nav { margin-left: 0; }
+.board-section-head > .board-view:not(.board-carousel-nav):last-child { margin-right: 0; }  /* with no paddles after it, it meets the edge as they do */
 .board-section-head > .board-title-pick + .board-title-pick { margin-left: -8px; }  /* two picks side by side 8px apart, as a pick and its paddles */
 .board-title-pick.is-text { padding: 0 10px; }  /* a button with only a word: the same room at both ends */
 .board-footer-simple { font-size: 12px; color: var(--color-label-secondary); }  /* the update date in the section ledes' size and grey */
@@ -550,7 +551,9 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 /* Platform Support in the head-to-head grids' own tiles, scale and labels (.board-matrix): its frame grows with its rows
    instead of their fixed height, the platform tiles small in the logos' slots, the count of platforms a quiet last column */
 .board-matrix-frame.is-support { height: auto; padding: 4px 28px 18px 0; }
-#board-support + .board-section-head { margin-top: 32px; }  /* its keys end the card close under the grid, so the line comes sooner */
+#board-support + .board-section-head { margin-top: 32px; }
+.board-matrix.is-support td.is-ran { --tile: var(--color-fill); }  /* a check on the grey tile: ran here */
+.board-support-check { width: 12px; height: 12px; vertical-align: middle; fill: none; stroke: #34C759; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }  /* its keys end the card close under the grid, so the line comes sooner */
 .board-support-keys { position: absolute; left: 0; bottom: 1px; display: flex; gap: 12px; font-size: 9px; line-height: 1; color: var(--color-label-secondary); }  /* at the foot's left, as Speculative sits */
 .board-support-keys span { display: inline-flex; align-items: center; gap: 4px; }
 .board-support-keys i { width: 12px; height: 8px; border-radius: 2px; background: var(--color-fill); }

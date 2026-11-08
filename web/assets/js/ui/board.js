@@ -114,10 +114,12 @@ window.Pie = window.Pie || {};
   const BARS_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V8M8 13V3.5M12 13V6.5"/></svg>';
   const GRID_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg>';
   // the platform pages' setup control in small: symbols on a grey capsule, the picked one in the accent, no thumb
-  const viewToggle = (id) => `<span class="platform-compare board-view" role="group" aria-label="View">
-      <button type="button" class="plain-button${gridCards.has(id) ? "" : " is-active"}" data-board-view="${id}" data-view="bars" aria-label="Bars" title="Bars">${BARS_ICON}</button>
-      <button type="button" class="plain-button${gridCards.has(id) ? " is-active" : ""}" data-board-view="${id}" data-view="grid" aria-label="Head-to-head grid" title="Head-to-head grid">${GRID_ICON}</button>
+  // its first view and its grid, each a symbol: Bars and the head-to-head grid by default, Platform Support's checks and shares
+  const viewToggle = (id, first = [BARS_ICON, "Bars"], grid = "Head-to-head grid") => `<span class="platform-compare board-view" role="group" aria-label="View">
+      <button type="button" class="plain-button${gridCards.has(id) ? "" : " is-active"}" data-board-view="${id}" data-view="bars" aria-label="${first[1]}" title="${first[1]}">${first[0]}</button>
+      <button type="button" class="plain-button${gridCards.has(id) ? " is-active" : ""}" data-board-view="${id}" data-view="grid" aria-label="${grid}" title="${grid}">${GRID_ICON}</button>
     </span>`;
+  const CHECKS_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>';
   // the head-to-heads on a platform folded into one strength per engine by the Bradley–Terry model (Pr(i beats j) =
   // p_i / (p_i + p_j)), fitted by Hunter's MM steps, with half a win and half a loss added to every pair met so an
   // engine that never won still gets a finite strength; shown as the chance of beating an engine of average strength
@@ -653,7 +655,10 @@ window.Pie = window.Pie || {};
   // name upright over its tile), each tile the share of the platform's setups (machine, model and workload any engine
   // ran there) the project ran, a step of green deeper for every quarter; a grey tile where it could run and has not,
   // none where it cannot run at all; the scale at the right, the count of platforms after each row
-  const supportTable = ({ platforms, list, all }) => {
+  // two views, picked at the section's head and kept per browser as the head-to-head cards' are: checks (the default), a
+  // green check where the project ran; or shares, each tile its share of the platform's benchmarks on the green scale
+  const SUPPORT_CHECK = '<svg class="board-support-check" viewBox="0 0 16 16" aria-label="Ran"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+  const supportTable = ({ platforms, list, all }, shares) => {
     const name = (e) => FAMILY_NAMES[e] || names().engine(e);
     const tip = (e, p, value, rows) => `data-tip-engine="${esc(e)}" data-tip-head="${esc(`${name(e)} on ${Pie.schema[p]?.short || p}`)}" data-tip-value="${esc(value)}" data-tip-rows="${esc(JSON.stringify(rows))}"`;
     const mark = (e) => `<svg class="board-matrix-logo" viewBox="0 0 16 16" aria-hidden="true">${e === "splash" ? '<image href="assets/img/engines/splash-glyph.png" width="16" height="16"/>' : logo(e, 0, 0, 16)}</svg>`;
@@ -664,14 +669,15 @@ window.Pie = window.Pie || {};
       if (on) {
         const share = r.share(p), step = share >= .875 ? 4 : share >= .625 ? 3 : share >= .375 ? 2 : 1;
         const builds = [...on.builds].filter((x) => BUILDS[x]);
-        return `<td class="is-win" data-step="${step}" ${tip(r.e, p, `${Math.round(share * 100)}% of ${Pie.schema[p]?.short || p} benchmarks`, [["Ran", `${on.setups.size.toLocaleString("en-US")} of ${all[p].size.toLocaleString("en-US")}`], ["Models", String(on.models.size)], ["Machines", String(on.machines.size)], ...(builds.length ? [["As", builds.map((x) => BUILDS[x]).join(", ")]] : [])])}>${Math.round(share * 100) || "<1"}%</td>`;
+        const card = tip(r.e, p, `${Math.round(share * 100)}% of ${Pie.schema[p]?.short || p} benchmarks`, [["Ran", `${on.setups.size.toLocaleString("en-US")} of ${all[p].size.toLocaleString("en-US")}`], ["Models", String(on.models.size)], ["Machines", String(on.machines.size)], ...(builds.length ? [["As", builds.map((x) => BUILDS[x]).join(", ")]] : [])]);
+        return shares ? `<td class="is-win" data-step="${step}" ${card}>${Math.round(share * 100) || "<1"}%</td>` : `<td class="is-ran" ${card}>${SUPPORT_CHECK}</td>`;
       }
       return r.able.has(p) ? `<td ${tip(r.e, p, "Not measured yet", [["Supported", "no run yet"]])}></td>` : `<td class="is-self" ${tip(r.e, p, "Cannot run", [["Build", "none for this platform"]])}></td>`;
     };
     const key = `<span class="board-matrix-key" aria-hidden="true"><span class="board-matrix-tick">100%</span><span class="board-matrix-bar">${[4, 3, 2, 1].map((k) => `<i class="is-win" data-step="${k}"></i>`).join("")}<i data-step="0"></i></span><span class="board-matrix-tick">0</span></span>`;
     // the two empty kinds keyed under the grid, as the head-to-head cards key their dashed tiles
     const legend = '<span class="board-support-keys"><span><i class="is-grey"></i>Not run yet</span><span><i class="is-blank"></i>Can\'t run</span></span>';
-    return `<div class="board-matrix-frame is-support">${key}${legend}<table class="board-matrix is-support" aria-label="Share of each platform's benchmarks each engine ran">
+    return `<div class="board-matrix-frame is-support">${shares ? key : ""}${legend}<table class="board-matrix is-support" aria-label="Share of each platform's benchmarks each engine ran">
       <thead><tr><th></th>${platforms.map((p) => `<th scope="col">${col(p)}</th>`).join("")}<th scope="col" class="board-matrix-total">Platforms</th></tr></thead>
       <tbody>${list.map((r) => `<tr><th scope="row">${row(r.e)}</th>${platforms.map((p) => cell(r, p)).join("")}<td class="board-matrix-total">${r.on.length}/${platforms.length}</td></tr>`).join("")}</tbody>
     </table></div>`;
@@ -682,8 +688,9 @@ window.Pie = window.Pie || {};
     return `<div class="board-section-head is-apart">
             <div class="board-section-text"><h1 class="board-title">Platform Support</h1>
             <p class="board-lede">Platforms each engine ran on here.</p></div>
+            ${viewToggle("support", [CHECKS_ICON, "Checks"], "Share of benchmarks")}
           </div>
-          ${card("support", "Platforms", "Share of each platform's benchmarks run", supportTable(support), "", false)}`;
+          ${card("support", "Platforms", gridCards.has("support") ? "Share of each platform's benchmarks run" : "Platforms each engine has run on", supportTable(support, gridCards.has("support")), "", false)}`;
   };
 
   // the changelog: each release measured, newest first, read from the runs themselves; development runs are left out
