@@ -406,8 +406,35 @@ platforms:
     runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi35x"
     container_disk_gb: 500   # MiMo-V2.6-Flash: 178 GB of weights, the one datacenter model a single MI350X holds
     tiers: [weekly]
+  # AMD Developer Cloud (DigitalOcean: gpu-mi325x1-256gb, gpu-mi355x1-288gb-spot) rents these two; RunPod does not
+  - id: mi325x-x1
+    catalog: amd-instinct-mi325x
+    os: linux
+    backend: rocm
+    accelerator: AMD Instinct MI325X
+    arch: cdna3
+    count: 1
+    memory_gib: 256
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, mi325x-x1]
+    runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi30x"   # CDNA3, as the MI300X: the same SGLang image
+    container_disk_gb: 500
+    tiers: [weekly]
+  - id: mi355x-x1
+    catalog: amd-instinct-mi355x
+    os: linux
+    backend: rocm
+    accelerator: AMD Instinct MI355X
+    arch: cdna4
+    count: 1
+    memory_gib: 288
+    interconnect: pcie
+    runner_labels: [self-hosted, linux, mi355x-x1]
+    runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi35x"   # CDNA4, as the MI350X
+    container_disk_gb: 500
+    tiers: [weekly]
   # the AMD pods for the datacenter models one MI350X cannot hold, tp = every GPU (Infinity Fabric):
-  # RunPod offers no MI325X/MI355X and no Radeon; 2x MI350X and 8x MI300X are its multi-GPU AMD shapes
+  # RunPod offers no MI325X/MI355X (AMD Developer Cloud does, above) and no Radeon; 2x MI350X and 8x MI300X are its multi-GPU AMD shapes
   - id: mi350x-x2
     catalog: amd-instinct-mi350x
     os: linux

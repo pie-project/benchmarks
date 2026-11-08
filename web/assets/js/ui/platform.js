@@ -996,8 +996,8 @@ window.Pie = window.Pie || {};
           .filter((hw) => !(hw.class === "gpu" && hw.count > 1))
           // not shown: A100 PCIe, H100 PCIe and L4 are not evaluated
           .filter((hw) => !["a100-pcie-x1", "h100-pcie-x1", "l4-x1"].includes(hw.id))
-          // not shown: MI350X and TPU v5p have no stock to rent
-          .filter((hw) => !["mi350x-x1", "tpu-v5p-8"].includes(hw.id))
+          // not shown: TPU v5p has no stock to rent (the MI350X does, on AMD Developer Cloud)
+          .filter((hw) => !["tpu-v5p-8"].includes(hw.id))
           .map((hw) => hw.id) }))
         .filter((g) => !only || g.macs.length);
       const macs = groups.flatMap((g) => g.macs);
