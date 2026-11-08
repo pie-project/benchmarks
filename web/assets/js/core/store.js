@@ -11,9 +11,8 @@ window.Pie = window.Pie || {};
   };
 
   // platforms the site hides for now: their machines belong to no platform, so no page, card or grid lists them
-  // (AMD: no MI300X to rent and no MI350X on RunPod, so its rows would only age; Mobile: one phone so far). Delete an id
-  // to bring it back
-  Pie.hiddenPlatforms = new Set(["amd", "android"]);
+  // (Mobile: one phone so far). Delete an id to bring it back
+  Pie.hiddenPlatforms = new Set(["android"]);
   // the platform a machine belongs to, as the sidebar groups them; the platform pages and the hardware table share it
   Pie.platformOf = (hw) => { const p = platformOfAll(hw); return Pie.hiddenPlatforms.has(p) ? null : p; };
   Pie.platformOfAll = (hw) => platformOfAll(hw);  // a hidden platform too, for the one table that lists them all (Platform Support)
@@ -24,9 +23,10 @@ window.Pie = window.Pie || {};
     : hw.vendor === "AMD" ? "amd"
     : hw.vendor === "Cerebras" ? "cerebras"
     : hw.class === "web" ? "web" : null);
-  // each machine names its platform as the sidebar does, for the hardware table's Platform column and filter
+  // each machine names its platform as the sidebar does, for the Platform column and filter of the hardware and results
+  // tables. A hidden platform's machines (AMD, Mobile) keep their name there: only the platform's page in Compare is hidden
   for (const hw of tables.hardware || []) {
-    const id = Pie.platformOf(hw);
+    const id = platformOfAll(hw);
     if (id) hw.platform = Pie.schema[id]?.short || id;
   }
   // the Mobile and Browser platforms get their pages once a phone (the benchmark app, mobile/) or a browser (WebGPU in
