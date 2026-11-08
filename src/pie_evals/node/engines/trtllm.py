@@ -22,6 +22,12 @@ from .served import ServedEngine
 
 SCRIPT = Path(__file__).resolve().parent / "scripts" / "trtllm_bench.py"
 
+#: what TensorRT-LLM holds beside its weights before it sizes the KV pool (CUDA context, torch, the profiling
+#: forward's activations), GiB: Qwen3.8-27B on an 80 GB H100 at c256 (see ``kv_free_mem_fraction``)
+TRTLLM_RUNTIME_GIB = 3.0
+#: TensorRT-LLM's own ``free_gpu_memory_fraction`` default
+TRTLLM_DEFAULT_FRACTION = 0.9
+
 _KV_DTYPES = {"bf16": "auto", "fp16": "auto", "auto": "auto", "fp8": "fp8", "fp8_e4m3": "fp8"}
 
 
@@ -73,6 +79,25 @@ class TrtllmEngine(ServedEngine):
         env["PATH"] = ":".join([venv_bin] + [d for d in os.environ.get("PATH", "").split(":") if d and d != venv_bin])
         return env
 
+    def kv_free_mem_fraction(self) -> float | None:
+        """``free_gpu_memory_fraction`` for the KV pool. A recipe's ``kv_free_mem_fraction`` stands as it is.
+        Otherwise the fraction that lands TensorRT-LLM's whole use at the share of the card vLLM, SGLang and pie
+        take (``gpu_mem_util``, 0.9): TensorRT-LLM's fraction is of the memory left after its weights and runtime,
+        so its default 0.9 gave it more cache than the others (Qwen3.8-27B on an 80 GB H100: about 21 GiB against
+        pie's 15). With ``f = 1 - (1 - share) * card / left`` and ``left = card - weights - runtime``, its weights,
+        runtime and ``f * left`` of KV add up to ``share * card``. Never past TensorRT-LLM's own default."""
+        r = self.recipe
+        if r.get("kv_free_mem_fraction") is not None:
+            return float(r["kv_free_mem_fraction"])
+        share = r.get("gpu_mem_util", 0.90)
+        count = max(1, int(self.platform.count))
+        card = float(self.platform.memory_gib or 0) / count
+        weights = float(self.artifact.expected_gib or 0) / max(1, int(self.mode.tp))
+        left = card - weights - float(r.get("runtime_gib", TRTLLM_RUNTIME_GIB))
+        if share is None or card <= 0 or weights <= 0 or left <= 0:
+            return None
+        return round(min(TRTLLM_DEFAULT_FRACTION, max(0.05, 1.0 - (1.0 - float(share)) * card / left)), 3)
+
     def llm_api_options(self, slots: int, context: int) -> dict[str, Any]:
         """The LLM API options trtllm-serve reads from ``--extra_llm_api_options``."""
         r = self.recipe
@@ -81,8 +106,9 @@ class TrtllmEngine(ServedEngine):
             "enable_block_reuse": bool(r.get("block_reuse", False)),
             "dtype": str(r.get("kv_cache_dtype") or _KV_DTYPES.get(str(self.artifact.kv_dtype), "auto")),
         }
-        if r.get("kv_free_mem_fraction") is not None:
-            kv["free_gpu_memory_fraction"] = float(r["kv_free_mem_fraction"])
+        fraction = self.kv_free_mem_fraction()
+        if fraction is not None:
+            kv["free_gpu_memory_fraction"] = fraction
         opts: dict[str, Any] = {"kv_cache_config": kv}
         if r.get("cuda_graphs", True):
             # graphs up to the shape's batch, as SGLang's ceiling and vLLM's max_num_seqs; padded so every batch replays one

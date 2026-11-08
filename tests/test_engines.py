@@ -1370,6 +1370,30 @@ def test_trtllm_serves_the_checkpoint_with_graphs_to_the_batch_and_no_block_reus
     assert argv[1].endswith("trtllm_bench.py") and "--url" in argv
 
 
+def test_trtllm_takes_the_same_share_of_the_card_as_the_other_engines():
+    from pie_evals.node.engines.trtllm import TRTLLM_RUNTIME_GIB, TrtllmEngine
+
+    # an 80 GB card, 50 GiB of weights: weights + runtime + f * (what is left) = 0.9 of the card
+    eng = make(TrtllmEngine, plat=platform(count=1).model_copy(update={"memory_gib": 80}), art=artifact(expected_gib=50.0))
+    f = eng.kv_free_mem_fraction()
+    left = 80 - 50 - TRTLLM_RUNTIME_GIB
+    assert abs(50 + TRTLLM_RUNTIME_GIB + f * left - 0.9 * 80) < 0.05
+    assert eng.llm_api_options(32, 768)["kv_cache_config"]["free_gpu_memory_fraction"] == f
+    # per GPU on a multi-GPU platform: two 80 GB cards at tp 2 hold half the weights each
+    two = make(TrtllmEngine, plat=platform(count=2).model_copy(update={"memory_gib": 160}), art=artifact(expected_gib=100.0),
+               mode=Mode(tp=2))
+    assert two.kv_free_mem_fraction() == f
+    # never past TensorRT-LLM's own default, which a share above 0.9 would ask
+    big = make(TrtllmEngine, plat=platform(count=1).model_copy(update={"memory_gib": 180}), art=artifact(expected_gib=2.0))
+    big.recipe["gpu_mem_util"] = 0.95
+    assert big.kv_free_mem_fraction() == 0.9
+    # a recipe's fraction stands
+    eng.recipe["kv_free_mem_fraction"] = 0.6
+    assert eng.kv_free_mem_fraction() == 0.6
+    # weights unknown: TensorRT-LLM's default
+    assert make(TrtllmEngine, plat=platform(count=1), art=artifact(expected_gib=None)).kv_free_mem_fraction() is None
+
+
 def test_trtllm_runs_on_nvidia_gpus_only():
     from pie_evals.plan.matrix import Matrix
 
