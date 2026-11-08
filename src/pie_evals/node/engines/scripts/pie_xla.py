@@ -19,9 +19,13 @@ import sys
 
 
 def rewrite(text: str, port: str | None = None) -> str:
-    # PIE_XLA_PREWARM=1: compile the fire shapes at load, 8 at a time, not one by one under the first requests;
+    # PIE_XLA_PREWARM (on unless "0"): compile the fire ladder at load, 8 at a time, not one by one under the
+    # measured requests, as vLLM-TPU and SGLang-JAX compile their shapes at startup. Without it a batched cell's
+    # rounds stall on each new (rows, lanes) shape its arrivals make: v6e qwen3-0.6b c256 (tpu.yml 42468180591)
+    # spent 122 s compiling against 29.6 s on the device, and its rounds read 740 / 1730 / 1428 / 1658 tok/s.
+    # The load still counts in load_s; the kv pool is sized before the ladder runs, so the memory share holds.
     # PIE_SILENCE_TIMEOUT (e.g. 7200s): how long a lane may wait (on a compile) before the runtime gives up on it
-    prewarm = os.environ.get("PIE_XLA_PREWARM") == "1"
+    prewarm = os.environ.get("PIE_XLA_PREWARM", "1") == "1"
     silence = os.environ.get("PIE_SILENCE_TIMEOUT")
     out, section = [], None
     for line in text.splitlines():
