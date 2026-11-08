@@ -49,7 +49,7 @@ ENGINE_META = {
     "mlxlm":    ("MLX", "MIT", "ml-explore/mlx-lm"),
     "vllm-metal": ("vLLM Metal", "Apache-2.0", "vllm-project/vllm-metal"),
     "webllm":   ("MLC", "Apache-2.0", "mlc-ai/web-llm"),  # MLC's browser engine (WebLLM), named for its project
-    "llamacpp-webgpu": ("llama.cpp WebGPU", "MIT", "ggml-org/llama.cpp"),
+    "llamacpp-webgpu": ("llama.cpp", "MIT", "ggml-org/llama.cpp"),  # its browser build, named as the engine: a browser runs only the WebGPU one
     "splash":   ("Splash", None, "incoai/splash"),
     "litert":   ("LiteRT-LM", "Apache-2.0", "google-ai-edge/LiteRT-LM"),
     "mlc":      ("MLC LLM", "Apache-2.0", "mlc-ai/mlc-llm"),
