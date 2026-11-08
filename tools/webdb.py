@@ -340,7 +340,7 @@ def mismatched_arms() -> dict[str, str]:
 
 
 def quality_tasks() -> list[dict]:
-    from pie_evals.quality.dist_run import ANSWER_TOKENS, PARITY_TASKS, PER_TASK
+    from pie_evals.quality.dist_run import ANSWER_TOKENS, PARITY_TASKS
     from pie_evals.quality.tasks import TASKS
 
     scored = [{"id": t, "task": t, "description": d, "source": src, "scoring": sc, "max_tokens": TASKS[t][2]}
@@ -348,11 +348,10 @@ def quality_tasks() -> list[dict]:
     # the parity check beside the scores (quality/dist_run.py): one row per model and machine, task parity@<machine>,
     # gated as the device evaluation gates it
     gate = load("device-eval")["quality"]
-    parity = {"id": "parity", "task": "parity@<machine>",
-              "description": "Pie's next-token distribution against vLLM's on the same weights (mlx-lm on a Mac), "
-                             "teacher-forced on the reference's greedy answers",
-              "source": f"{PER_TASK} questions each from {', '.join(PARITY_TASKS)}",
-              "scoring": f"mean KL ≤ {gate['max_kl']}, top-1 agreement ≥ {round(gate['min_top1'] * 100)}%",
+    parity = {"id": "parity", "task": "parity",
+              "description": "Pie matches vLLM on the same weights",
+              "source": ", ".join(PARITY_TASKS),
+              "scoring": f"KL ≤ {gate['max_kl']}, top-1 ≥ {round(gate['min_top1'] * 100)}%",
               "max_tokens": ANSWER_TOKENS}
     return scored + [parity]
 

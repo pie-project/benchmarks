@@ -300,7 +300,7 @@ window.Pie = window.Pie || {};
               [r.answer_tokens === 1 ? "First-token KL" : "KL, answer mean", kl(r.kl_mean)], ["Same top token", pct(r.top1_agree)], ["Prompts", `${r.prompts ?? "–"}`, true],
               r.date ? ["Measured", Pie.format.date(r.date), true] : null]);
             const ok = r.kl_mean < KL_PASS;
-            const open = { model: [m], task: [r.task], engine: ["pie", r.ref_engine] };
+            const open = { model: [m], hardware: [mac], task: ["parity"], engine: ["pie", r.ref_engine] };
             return `<td class="is-openable${ok ? "" : " is-over-limit"}" data-col="${esc(m)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${ok ? "is-same" : "is-behind"} is-nofit" data-tip-html="${esc(tip)}">${NOFIT}<span class="platform-main">${MARK[ok ? "pass" : "fail"]}</span></span></td>`;
           }
           if (!g) return `<td data-col="${esc(m)}"><span class="platform-cell is-empty${"kl" in at[`${mac}|${m}`] ? " is-nofit" : ""}"${gapOf(mac, m) ? ` data-tip="${esc(gapOf(mac, m))}"` : ""}>${"kl" in at[`${mac}|${m}`] ? NOFIT : ""}–</span></td>`;
@@ -310,7 +310,7 @@ window.Pie = window.Pie || {};
             ["Difference", `${signed(g.d)} pts`, true], isNum(g.arm.tolerance) ? ["Noise", `±${(g.arm.tolerance * 100).toFixed(1)} pts`, true] : null, ["Release", g.tag, true]],
             off ? `Pie is more than ${allowed(g).toFixed(1)} points from ${engineLabel(g.arm.engine)}, beyond noise` : false);
           // a click opens Quality's runs for this model and task, with the engines this cell compares
-          const open = { model: [m], task: ["math500"], engine: ["pie", g.arm.engine] };
+          const open = { model: [m], hardware: [mac], task: ["math500"], engine: ["pie", g.arm.engine] };
           // a cross sits on the grid's CI Error red, as a cell above its limit does on Performance
           return `<td class="is-openable${off ? " is-over-limit" : ""}" data-col="${esc(m)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${off ? "is-behind" : "is-same"}" data-tip-html="${esc(tip)}"><span class="platform-main">${MARK[off ? "fail" : "pass"]}</span></span></td>`;
         }).join("")}<td class="platform-fill"></td></tr>`;
