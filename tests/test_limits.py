@@ -19,7 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 FILES = [ROOT / "web/assets/js/config/architectures.js", ROOT / "web/assets/js/ui/methodology.js"]
 
 # methodology.js in a bare context: a window, no page, the store's tables from the export. Each case is a row
-# (setup, engine, hardware, model, scheme, benchmark, prompt per request), and comes back as its limit's tok/s and parts
+# (setup, engine, hardware, model, scheme, benchmark, prompt per request), with a slice's cut where the run was one
+# (`extra`, as the export gives a row: webdb.miniature_fields), and comes back as its limit's tok/s and parts
 HARNESS = r"""
 const fs = require("fs"), vm = require("vm");
 const data = JSON.parse(fs.readFileSync(0, "utf8"));
@@ -32,8 +33,8 @@ ctx.Pie = { store: { rows: (t) => data[t], index: { hardware: byId(data.hardware
 for (const f of data.files) vm.runInContext(fs.readFileSync(f, "utf8"), ctx, { filename: f });
 const WORKLOAD = { decode: "raw", prefill: "raw", batching: "throughput", pbatch: "prefill_batch" };
 process.stdout.write(JSON.stringify(data.cases.map(([setup, engine, hardware, model, scheme, benchmark, prompt]) => {
-  const row = { engine, hardware, model, scheme, benchmark, workload: WORKLOAD[setup], prompt_per_request: prompt };
-  const limit = setup === "batching" ? ctx.Pie.batchedCeiling(hardware, model, scheme, benchmark) : ctx.Pie.ceiling(row, setup);
+  const row = { engine, hardware, model, scheme, benchmark, workload: WORKLOAD[setup], prompt_per_request: prompt, ...data.extra };
+  const limit = setup === "batching" ? ctx.Pie.batchedCeiling(hardware, model, scheme, benchmark, row) : ctx.Pie.ceiling(row, setup);
   return limit && { tps: limit.tps, parts: limit.parts };
 })));
 """
@@ -47,12 +48,13 @@ def webdb():
     return webdb
 
 
-def limits(webdb, cases):
+def limits(webdb, cases, artifact=None):
+    """Each case's limit; `artifact` names the run's, so a slice's rows carry its cut as the export's do."""
     if not shutil.which("node"):
         pytest.skip("node is not installed")
     _, models = webdb.artifact_to_model()
     data = {"files": [str(f) for f in FILES], "hardware": webdb.hardware(), "models": models, "workloads": webdb.workloads(),
-            "cases": [list(c[:7]) for c in cases]}
+            "extra": webdb.miniature_fields(artifact) if artifact else {}, "cases": [list(c[:7]) for c in cases]}
     out = subprocess.run(["node", "-e", HARNESS], input=json.dumps(data, default=str), capture_output=True, text=True, check=True)
     return json.loads(out.stdout)
 
@@ -309,4 +311,32 @@ def test_a_fixed_limit_stays_within_its_bounds(webdb, case, lowest, highest):
     got = limits(webdb, [case])[0]
     assert got, case
     assert lowest is None or got["tps"] >= lowest, (got["tps"], lowest)
+    assert highest is None or got["tps"] <= highest, (got["tps"], highest)
+
+
+# GLM-5.3's TPU slice (glm-5.3-mini-tpu): 7 of its 78 layers, 8 of 256 experts, which are its top-8, so a token runs
+# every kept weight: 5.32 B, the 1.90 B embedding and head among them. A decode token reads the 3.42 B body and the
+# 0.95 B head (the input embedding is only looked up), 4.64 GB at FP8's 8.5 bits: at most 353 tok/s on a v6e's 1,638 GB/s
+# and 185 on a v5e's 859. The full model's 40 B active (42.5 GB, 38 tok/s on the v6e) would put pie's 57.5 tok/s above it
+CUT_GB = (5.322 - 1.903 + 1.903 / 2) * 8.5 / 8
+SLICE = [
+    (("decode", "pie", "tpu-v6e-1", "glm-5.3", "fp8", "raw-512-256", 554.0), 57.5, 1638 / CUT_GB),
+    (("decode", "sglang", "tpu-v6e-1", "glm-5.3", "fp8", "raw-512-256", 554.0), 181.45, 1638 / CUT_GB),
+    (("decode", "sglang", "tpu-v5e-1", "glm-5.3", "fp8", "raw-512-256", 554.0), 47.64, 859 / CUT_GB),
+    # c256: the same 4.64 GB read once a step for 256 tokens (255 of each answer's 256 come from a step), the cache on
+    # top. The full model's 753 B, read whole at that batch, gave 519 tok/s on the v6e, under SGLang's 8,711
+    (("batching", "sglang", "tpu-v6e-1", "glm-5.3", "fp8", "c256", None), 8710.65, 256 * 256 / 255 * 1638 / CUT_GB),
+    (("batching", "sglang", "tpu-v5e-1", "glm-5.3", "fp8", "c256", None), 2953.36, 256 * 256 / 255 * 859 / CUT_GB),
+]
+
+
+@pytest.mark.parametrize("case,measured,highest", SLICE, ids=[" ".join(map(str, s[0][:6])) for s in SLICE])
+def test_a_slice_is_held_to_its_cut(webdb, case, measured, highest):
+    cut = webdb.miniature_fields("glm-5.3-mini-tpu")
+    assert cut["miniature"] == "7 of 78 layers" and cut["mini_active_b"] == cut["mini_params_b"] == 5.322, cut
+    got = limits(webdb, [case], artifact="glm-5.3-mini-tpu")[0]
+    full = limits(webdb, [case])[0]
+    assert got and full, case
+    assert got["tps"] > 5 * full["tps"], (got["tps"], full["tps"])  # 7 of 78 layers: never the full model's limit
+    assert got["tps"] > measured, (got["tps"], measured)
     assert highest is None or got["tps"] <= highest, (got["tps"], highest)

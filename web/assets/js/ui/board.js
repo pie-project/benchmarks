@@ -264,7 +264,7 @@ window.Pie = window.Pie || {};
   // the hardware limit for a cell, in its own unit (the Roofline page's): what pie could reach at most, at the requests
   // its own run had at once
   const limitOf = (pie, pick) => (pick.workload === "raw" ? Pie.ceiling?.(pie, pick.id)?.tps
-    : pick.workload === "throughput" ? Pie.batchedCeiling?.(pie.hardware, pie.model, pie.scheme, pie.benchmark)?.tps
+    : pick.workload === "throughput" ? Pie.batchedCeiling?.(pie.hardware, pie.model, pie.scheme, pie.benchmark, pie)?.tps
     : pick.workload === "prefill_batch" ? Pie.ceiling?.(pie, "pbatch")?.tps : null) || null;
   // the engine the Outliers card sets against every other one: pie unless picked, kept per browser
   let gainEngine = (() => { try { const e = localStorage.getItem("pieGainEngine"); return e && Pie.store.tables.engines.some((x) => x.id === e) ? e : "pie"; } catch { return "pie"; } })();

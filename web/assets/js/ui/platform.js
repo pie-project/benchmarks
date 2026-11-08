@@ -370,14 +370,15 @@ window.Pie = window.Pie || {};
     // Spec Decode: the best draft width at the Roofline page's acceptance
     if (mode.id === "spec") return (pie && Pie.specCeiling?.(pie)) || null;
     if (mode.workload !== "throughput") return null;
-    return batchedBound(mac, model, pie?.scheme, pie?.benchmark);
+    return batchedBound(mac, model, pie?.scheme, pie?.benchmark, pie);
   };
   // batched decode: the lower of two bounds, in output tokens per second. Compute: peak FLOPS over the active parameters,
   // shared with the prompt tokens each request prefills at the same cost, so only output / (prompt + output) of it is output.
   // Bandwidth: each step reads the weights once, so the batch's tokens per second are batch x bandwidth / weight bytes.
-  function batchedBound(mac, model, scheme, benchmark) {
-    // the architecture-based bound (methodology.js), the same one the Methods page explains, at the run's own requests
-    return Pie.batchedCeiling?.(mac, model, scheme, benchmark) || null;
+  function batchedBound(mac, model, scheme, benchmark, row) {
+    // the architecture-based bound (methodology.js), the same one the Methods page explains, at the run's own requests;
+    // a slice's is its cut's
+    return Pie.batchedCeiling?.(mac, model, scheme, benchmark, row) || null;
   }
   // pie against the opponent picked in the bar, or the strongest other engine on the cell when none is picked
   const cell = (rows, metric, base, rival) => {
@@ -448,7 +449,7 @@ window.Pie = window.Pie || {};
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
-    const batchBound = !limit && mode.workload === "throughput" ? batchedBound(mac, model, c.pie.scheme, c.pie.benchmark) : null;
+    const batchBound = !limit && mode.workload === "throughput" ? batchedBound(mac, model, c.pie.scheme, c.pie.benchmark, c.pie) : null;
     const batchPeak = batchBound ? batchBound.tps : null;
     // Spec Decode: the limit at the best draft width for this machine and model, at the bar's acceptance
     const specBound = mode.id === "spec" ? Pie.specCeiling?.(c.pie) : null;
@@ -528,7 +529,7 @@ window.Pie = window.Pie || {};
         link: c.parts.linkS ? flops / c.parts.linkS : null };
     }
     // the machine's numbers as the bound used them: the catalog's, or its estimate where the catalog has none
-    const b = Pie.batchedCeiling?.(r.hardware, r.model, r.scheme, r.benchmark);
+    const b = Pie.batchedCeiling?.(r.hardware, r.model, r.scheme, r.benchmark, r);
     if (!b?.parts.tflops) return null;
     const { bw, tflops } = b.parts;
     const flops = b.parts.mathS * tflops * 1e12;

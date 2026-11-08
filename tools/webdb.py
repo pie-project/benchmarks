@@ -413,8 +413,8 @@ MINIATURE = _miniature_labels()
 
 def _miniature_shapes() -> dict[str, dict]:
     """A miniature's own size, for its roofline: the embedding and LM head whole, the kept share of the body's layers,
-    and of the routed experts the kept share (a token still runs through top-k of them). An estimate from the
-    full model's stated sizes: the body is taken as even across layers."""
+    and in them the routed experts it keeps (a token still runs through top-k of them). An estimate from the full
+    model's stated sizes: the body is taken as even across layers."""
     arts = load("models")["artifacts"]
     full = {a["base_model"]: a for a in arts if a.get("kind", "full") == "full" and a.get("layers") and a.get("vocab")}
     out = {}
@@ -427,9 +427,12 @@ def _miniature_shapes() -> dict[str, dict]:
         share = kept / f["layers"]
         emb = 2 * f["vocab"] * f["hidden_size"] / 1e9
         body, active_body = f["params_b"] - emb, (f.get("active_b") or f["params_b"]) - emb
-        experts = min(1.0, (r.get("experts") or f["experts"]) / f["experts"]) if f.get("experts") else 1.0
+        # body - active_body is the E - top_k experts a layer a token does not run; the cut keeps kept - top_k of them,
+        # its top-k being in the active body already (GLM-5.3 at 8 of 256 experts, its top-8: every kept one runs)
+        n, top = f.get("experts"), f.get("top_k") or 0
+        idle = min(1.0, max(0, (r.get("experts") or n) - top) / (n - top)) if n and n > top else 1.0
         out[a["id"]] = {"mini_active_b": round(emb + active_body * share, 3),
-                        "mini_params_b": round(emb + (active_body + (body - active_body) * experts) * share, 3),
+                        "mini_params_b": round(emb + (active_body + (body - active_body) * idle) * share, 3),
                         "mini_emb_b": round(emb, 3), "mini_layers": kept,
                         # the share of its kept experts a token runs through
                         "mini_k": round(min(1.0, f["top_k"] / (r.get("experts") or f["experts"])), 3) if f.get("top_k") and f.get("experts") else 1.0}
@@ -437,6 +440,13 @@ def _miniature_shapes() -> dict[str, dict]:
 
 
 MINI_SHAPE = _miniature_shapes()
+
+
+def miniature_fields(artifact: str) -> dict:
+    """What a row of this artifact says of its cut: its label, and its size for the limits (methodology.js miniArch)."""
+    return {"miniature": MINIATURE.get(artifact, ""), **MINI_SHAPE.get(artifact, {})}
+
+
 # the miniatures of a datacenter model (over 100 GiB as released): those stand in for it, the CI fixtures never do
 _FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("kind", "full") == "full" and (a.get("expected_gib") or 0) > 100}
 # a model that does not fit a device is shown as its miniature there, whatever its size; only the CI's smoke fixtures
@@ -493,8 +503,7 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "benchmark": r["workload"],  # the workload the number came from (c512, pf16-512, raw-512-256): engines compare at the same N
         "prompt_per_request": prompt_per_request(r),
         "status": r["status"], "note": draft_note(r, engine),
-        "miniature": MINIATURE.get(r["artifact"], ""),
-        **MINI_SHAPE.get(r["artifact"], {}),
+        **miniature_fields(r["artifact"]),
     }
 
 
