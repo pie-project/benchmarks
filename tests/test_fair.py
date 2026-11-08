@@ -248,3 +248,13 @@ def test_a_cold_tagged_run_with_a_cached_opening_is_cold():
     assert opening.prefill_tok_s is not None and opening.counters["cold_opening_cached_per_request"] == 15
     warm = perf_from_common_json({"config": {"concurrency": 1, "cached_prompt_tokens": 4000}}, reqs, None, concurrency=1, cold_tags=True)
     assert warm.prefill_tok_s is None
+
+
+def test_each_cold_prompt_has_its_own_body():
+    from pie_evals.node.workloads.synthetic import prompt_words_for_tokens
+
+    prompts = fair.cold_prompts(lambda i: prompt_words_for_tokens(128, salt=f"c256|{i}"), workload_id="c256", seed=fair.COLD_SEED, count=8)
+    bodies = [p.split("] ", 1)[1] for p in prompts]
+    assert len(set(bodies)) == 8  # one answer per lane: a MoE batch routes its requests apart
+    assert {len(b.split()) for b in bodies} == {len(prompt_words_for_tokens(128, salt="c256|0").split())}  # same length every request
+    assert fair.cold_prompts("one body", workload_id="w", seed="s", count=2)[1].endswith("] one body")  # a plain body still works

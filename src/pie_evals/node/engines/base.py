@@ -406,7 +406,9 @@ class Engine(ABC):
 
         if not self.supports_prompts_file:
             raise EngineLaunchError(ErrorClass.INCOMPATIBLE, f"{self.name.value}: cold-cache runs need --prompts-file in the bench script")
-        body = prompt_words_for_tokens(int(workload.params.get("prefill", 128)), salt=workload.id)
+        # each request its own text, so a batch's answers (and a MoE batch's expert routes) differ as real traffic does
+        prefill = int(workload.params.get("prefill", 128))
+        body = lambda i: prompt_words_for_tokens(prefill, salt=f"{workload.id}|{i}")  # noqa: E731
         m = re.fullmatch(r"r(\d+)", out_dir.name)
         seed = COLD_SEED if not m or m.group(1) == "0" else f"{COLD_SEED}|round{m.group(1)}"
         prompts = cold_prompts(body, workload_id=workload.id, seed=seed, count=cold_request_count(workload.params))
