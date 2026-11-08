@@ -410,10 +410,7 @@ window.Pie = window.Pie || {};
         return r ? { v: r[metric.key], detail: `${names().model(m)} on ${machineName(g.hardware)}` } : {};
       } };
   };
-  const modelRow = (id, metric, rows, groups, m = model) => `<div class="board-row-head">
-            <div class="board-card-titles"><h2><i class="board-title-dot" style="background: ${BADGES[id][0]}" aria-hidden="true"></i>${esc(metric.label)}</h2>
-            <p class="board-sub">${metric.sub.split(" · ").map(esc).join("<br>")}</p></div>${paddlesFor(id)}
-          </div>
+  const modelRow = (id, metric, rows, groups, m = model) => `
           ${groups.length ? `<div class="board-carousel" data-carousel-id="${id}"><div class="board-grid-cards is-matrices">${groups.map((g) => card(`${id}-${g.platform}`, BY_MODEL[g.platform]?.[0] || Pie.schema[g.platform]?.short || g.platform, machineName(g.hardware), ranking(modelSummary(metric, rows, g, m), rows), "", false)).join("")}</div></div>` : `<p class="board-empty">No runs for this model yet</p>`}`;
   // the two as one card, Decode or Prefill picked in its corner and kept per browser
   const SIZE_KEY = "pieSizeMetric";
@@ -856,6 +853,7 @@ window.Pie = window.Pie || {};
     const groups = showcase(rows, model);
     if (!list.includes(ttftModel)) ttftModel = model;
     const ttftGroups = showcase(rows, ttftModel);
+    const speed = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];  // the measure the speed section shows, its title
     // the engines as a key once for the page: every engine with a result in this release, as the cards across the
     // platforms draw them too (LiteRT-LM on Mobile), a dot and a name, in the catalog's order
     const ran = new Set(rows.map((r) => r.engine));
@@ -910,15 +908,15 @@ window.Pie = window.Pie || {};
           </div>
           <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has("summary") ? "Head-to-head decode win rate" : m.sub, gridCards.has("summary") ? matrix(m, rows) : ranking(m, rows), "", false)).join("")}</div></div>
           <div class="board-section-head is-apart" id="board-metric">
-            <div class="board-section-text"><h1 class="board-title">Speed by Model</h1>
-            <p class="board-lede">Each platform is shown on the machine where the most engines ran this model.</p></div>
-            ${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+            <div class="board-section-text"><h1 class="board-title">${esc(speed.label)} by Model</h1>
+            <p class="board-lede">${esc(speed.sub.replace(" · ", ". "))}.</p></div>
+            ${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${paddlesFor("metric")}
           </div>
-          ${modelRow("metric", SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0], rows, groups, model)}
+          ${modelRow("metric", speed, rows, groups, model)}
           <div class="board-section-head is-apart" id="board-ttft">
-            <div class="board-section-text"><h1 class="board-title">Time to First Token by Model</h1>
-            <p class="board-lede">Each platform is shown on the machine where the most engines ran this model.</p></div>
-            <button class="filter-button board-title-pick is-text" type="button" data-board-pick="ttft-model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(ttftModel))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>
+            <div class="board-section-text"><h1 class="board-title">TTFT by Model</h1>
+            <p class="board-lede">${esc(TTFT.sub.replace(" · ", ". "))}.</p></div>
+            <button class="filter-button board-title-pick is-text" type="button" data-board-pick="ttft-model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(ttftModel))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${paddlesFor("ttft")}
           </div>
           ${modelRow("ttft", TTFT, rows, ttftGroups, ttftModel)}
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
