@@ -345,13 +345,11 @@ def quality_tasks() -> list[dict]:
 
     scored = [{"id": t, "task": t, "description": d, "source": src, "scoring": sc, "max_tokens": TASKS[t][2]}
               for t, d, src, sc in QUALITY_TASKS if t in TASKS]
-    # the parity check beside the scores (quality/dist_run.py): one row per model and machine, task parity@<machine>,
-    # gated as the device evaluation gates it
-    gate = load("device-eval")["quality"]
+    # the parity check beside the scores (quality/dist_run.py): one row per model and machine
     parity = {"id": "parity", "task": "parity",
               "description": "Pie matches vLLM on the same weights",
               "source": ", ".join(PARITY_TASKS),
-              "scoring": f"KL ≤ {gate['max_kl']}, top-1 ≥ {round(gate['min_top1'] * 100)}%",
+              "scoring": "mean KL, top-1 agreement",
               "max_tokens": ANSWER_TOKENS}
     return scored + [parity]
 

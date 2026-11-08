@@ -128,5 +128,4 @@ def test_a_gap_takes_the_newest_run_not_the_newest_tags(webdb):
 def test_the_benchmarks_catalog_lists_every_scored_task_and_the_parity_check(webdb):
     rows = {r["id"]: r for r in webdb.quality_tasks()}
     assert {"gsm8k", "ifeval", "mmlu", "arc", "math500", "parity"} <= set(rows)
-    gate = webdb.load("device-eval")["quality"]
-    assert str(gate["max_kl"]) in rows["parity"]["scoring"] and rows["parity"]["task"] == "parity"
+    assert rows["parity"]["task"] == "parity" and rows["parity"]["scoring"] == "mean KL, top-1 agreement"
