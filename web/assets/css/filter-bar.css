@@ -50,7 +50,8 @@
 
 
 .filter.is-set .engine-tag,
-.filter.is-set .hardware-tag {
+.filter.is-set .hardware-tag,
+.filter.is-set .workload-tag .mode-icon {  /* a picked setup's mark takes the accent with its name */
   color: var(--color-accent);
 }
 
