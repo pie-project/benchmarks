@@ -59,7 +59,7 @@
 .filter-clear {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;  /* with the mark's own inset, the bar's buttons all leave about 6.5px between mark and name */
   border: 0;
   border-radius: var(--radius-control);
   background: none;

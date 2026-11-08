@@ -242,7 +242,7 @@
 .data-table tbody tr.is-picked td * { color: #fff; }
 
 /* the bar's Report: a plain toolbar button, the filters' grey, dimmed until rows are selected */
-.report-selected { display: inline-flex; align-items: center; gap: 6px; height: var(--control-height); padding: 0 10px; border: 0; border-radius: var(--radius-control); background: var(--color-fill); color: var(--color-label); font: inherit; font-size: 13px; cursor: pointer; }
+.report-selected { display: inline-flex; align-items: center; gap: 4px; height: var(--control-height); padding: 0 10px; border: 0; border-radius: var(--radius-control); background: var(--color-fill); color: var(--color-label); font: inherit; font-size: 13px; cursor: pointer; }
 .report-selected[hidden] { display: none; }
 .report-selected:disabled { color: var(--color-label-tertiary); cursor: default; }
 .report-selected:not(:disabled):hover { background: var(--color-fill-secondary); }

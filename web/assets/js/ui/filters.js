@@ -43,7 +43,7 @@ window.Pie = window.Pie || {};
         // the Results page's dates: a calendar of the days it has results for
         + (["results", "quality"].includes(state.table) && Pie.dates ? Pie.dates.button() : "")
         // once anything is picked, a Clear puts every filter back, the dates too
-        + (Object.keys(state.filters).length || (["results", "quality"].includes(state.table) && Pie.dates?.active()) ? `<button class="filter-clear" type="button" data-filter-clear><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg><span>Clear</span></button>` : "");
+        + (Object.keys(state.filters).length || (["results", "quality"].includes(state.table) && Pie.dates?.active()) ? `<button class="filter-clear" type="button" data-filter-clear><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Clear</span></button>` : "");
       shown = state;
     },
 
