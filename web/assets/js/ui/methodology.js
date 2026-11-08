@@ -411,6 +411,9 @@ window.Pie = window.Pie || {};
       routed: (row.mini_params_b - row.mini_active_b) / (1 - k), k, layers: row.mini_layers, shared: 0,
       full: Math.round(base.full * s), sliding: Math.round(base.sliding * s), linear: Math.round(base.linear * s) };
   };
+  // the architecture a result ran: a slice's own cut, never the full model it was cut from (none where webdb could not
+  // size the cut), else the model's
+  const archOfRow = (row) => (row?.miniature ? miniArch(row) : archOf(row.model));
 
   // the shape a result was measured at: its own benchmark's requests at once, prompt and answer (c1024 is 1,024 requests
   // of 128 tokens in and 256 out, pf16-512 is 16 prompts of 512), from matrix/workloads.yaml by way of webdb; the
@@ -426,7 +429,7 @@ window.Pie = window.Pie || {};
     const machine = machines().find((m) => m.id === row.hardware);
     const model = models().find((m) => m.id === row.model);
     const workload = shapeOf(row.workload, row.benchmark);
-    const a = row.miniature ? miniArch(row) : archOf(row.model);
+    const a = archOfRow(row);
     if (!machine?.bw || !model || !workload || !a) return null;
     const bits = bitsOf(row.scheme);
     // the prompt the run's engine prefilled, the count its tok/s divides by: the shape's 512-token prompt with the chat
@@ -482,7 +485,7 @@ window.Pie = window.Pie || {};
   Pie.specCeiling = (row, percent = Pie.specAlpha) => {
     const plain = Pie.ceiling(row, "decode");
     if (!plain) return null;
-    const a = archOf(row.model);
+    const a = archOfRow(row);
     const workload = Pie.store.index.workloads[row.workload];
     const { bw, tflops16: tflops, tflopsNarrow, narrow: share, context } = plain.parts;
     const bits = bitsOf(row.scheme);
@@ -549,11 +552,11 @@ window.Pie = window.Pie || {};
   // first token, so decode steps make the other D - 1 of its D: per token out, (D - 1) / D of a step's reads and
   // arithmetic, and the prompt's pass is prefill's own (Gemma's KV-sharing layers run only for its last token).
   // `benchmark` is the run's own (c8 ... c1024): its requests at once and its answer's length; without one, the
-  // category's first (c32)
-  Pie.batchedCeiling = (hardware, modelId, scheme = "affine_u4_g64", benchmark = null) => {
+  // category's first (c32). `row` is the result itself: a slice (a miniature) is held to its own cut, as Pie.ceiling holds it
+  Pie.batchedCeiling = (hardware, modelId, scheme = "affine_u4_g64", benchmark = null, row = null) => {
     const machine = machines().find((m) => m.id === hardware);
     const workload = shapeOf("throughput", benchmark);
-    const a = archOf(modelId);
+    const a = row?.miniature ? miniArch(row) : archOf(modelId);
     if (!machine?.bw || !workload || !a) return null;
     const bw = machine.bw * machine.devices;
     const tflops = machine.tflops * machine.devices;
