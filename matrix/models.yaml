@@ -632,7 +632,7 @@ artifacts:
     # MI300X with KV room (raw-512-256: pie 49.3 tok/s decode, 3.8k prefill)
     miniature: {layers: "0-59", experts: 16, period: 1, note: "all 60 layers at full width; 16 of 128 experts; pie imports it at its bf16 deployment on ROCm (no NVFP4 product there)"}
     pie_sku: minimax-m3-mini-bf16-kv-bf16-l60-e16
-    platforms: [mi300x-x1, mi350x-x1]
+    platforms: [mi300x-x1, mi325x-x1, mi350x-x1, mi355x-x1]
     max_context: 4096
     expected_gib: 43.4
     tiers: [weekly]
