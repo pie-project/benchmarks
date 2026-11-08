@@ -167,7 +167,7 @@ window.Pie = window.Pie || {};
     const order = [...ids].sort((a, b) => rate(b) - rate(a));
     // MLX's mark is its wordmark, wider than the square the others fill, so its box widens to hold it
     // Splash's mark alone, in its tile's coral with no tile behind it, as the other logos stand on the page
-    const mark = (e) => `<svg class="board-matrix-logo${e === "mlxlm" ? " is-wide" : ""}" viewBox="${e === "mlxlm" ? "-6 0 28 16" : "0 0 16 16"}" aria-hidden="true">${e === "splash" ? '<image href="assets/img/engines/splash-glyph.png" width="16" height="16"/>' : logo(e, 0, 0, 16)}</svg>`;
+    const mark = (e) => `<svg class="board-matrix-logo${WIDE.has(e) ? " is-wide" : ""}" viewBox="${WIDE.has(e) ? "-6 0 28 16" : "0 0 16 16"}" aria-hidden="true">${e === "splash" ? '<image href="assets/img/engines/splash-glyph.png" width="16" height="16"/>' : logo(e, 0, 0, 16)}</svg>`;
     // the rows by logo and name; the columns by the name standing upright over the logo, as LMArena labels its battles
     const name = (e) => `<span class="board-matrix-name">${esc(SHORT[e] || names().engine(e))}</span>`;
     const head = (e, row) => `<span class="board-matrix-engine${row ? "" : " is-col"}">${name(e)}<span class="board-matrix-slot">${mark(e)}</span></span>`;  // each logo in a square of one size, so they line up down the rows
@@ -199,9 +199,12 @@ window.Pie = window.Pie || {};
     pie: ["0 0 67.89 67.89", '<path class="is-stroked" d="M52.96,11.53l-43.52,6.4c-3.85.57-5.64,5.08-3.22,8.13l27.3,34.49c2.41,3.05,7.22,2.34,8.65-1.27l16.21-40.89c1.43-3.61-1.58-7.42-5.43-6.86Z" stroke-width="8"/>'],  // the sidebar's weight
     mlxlm: ["13 -42 414 224", '<g><path transform="translate(0 139.72)" d="M 13.9375 0 L 42.3125 0 L 42.3125 -91.796875 L 43.671875 -91.796875 L 78.71875 0 L 97.984375 0 L 133.03125 -91.796875 L 134.390625 -91.796875 L 134.390625 0 L 162.765625 0 L 162.765625 -139.71875 L 125.96875 -139.71875 L 88.984375 -42.015625 L 87.8125 -42.015625 L 50.734375 -139.71875 L 13.9375 -139.71875 Z M 13.9375 0"/><path transform="translate(176.682092 139.72)" d="M 13.9375 0 L 106.21875 0 L 106.21875 -26.046875 L 45.984375 -26.046875 L 45.984375 -139.71875 L 13.9375 -139.71875 Z M 13.9375 0"/></g><g class="is-faint"><path transform="translate(290.57 139.72)" d="M 6.296875 0 L 40.5625 0 L 69.515625 -47.34375 L 70.484375 -47.34375 L 99.625 0 L 135.84375 0 L 91.109375 -69.8125 L 91.109375 -70.296875 L 136.328125 -139.71875 L 100.703125 -139.71875 L 73 -90.71875 L 71.84375 -90.71875 L 43.953125 -139.71875 L 6.484375 -139.71875 L 49.96875 -70.6875 L 49.96875 -70.296875 Z M 6.296875 0"/></g>'],  // MLX's wordmark, its X in grey as the project draws it
   };
-  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", "llamacpp-webgpu": "llamacpp.png", webllm: "mlc.svg", splash: "splash.png", litert: "litert.svg" };  // Splash's own tile, its stacked marks on coral
+  GLYPHS["mlx-swift"] = GLYPHS.mlxlm;  // MLX Swift, from the same ml-explore project, in MLX's wordmark
+  // the engines drawn wide: MLX's wordmark, for MLX and MLX Swift
+  const WIDE = new Set(["mlxlm", "mlx-swift"]);
+  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", "llamacpp-webgpu": "llamacpp.png", webllm: "mlc.svg", mlc: "mlc.svg", splash: "splash.png", litert: "litert.svg" };  // Splash's own tile, its stacked marks on coral
   const logo = (engine, x, y, size) => GLYPHS[engine]
-    ? `<svg class="board-glyph" x="${x - (engine === "mlxlm" ? size * .35 : 0)}" y="${y}" width="${size * (engine === "mlxlm" ? 1.7 : 1)}" height="${size}" viewBox="${GLYPHS[engine][0]}">${GLYPHS[engine][1]}</svg>`
+    ? `<svg class="board-glyph" x="${x - (WIDE.has(engine) ? size * .35 : 0)}" y="${y}" width="${size * (WIDE.has(engine) ? 1.7 : 1)}" height="${size}" viewBox="${GLYPHS[engine][0]}">${GLYPHS[engine][1]}</svg>`
     : FILES[engine] ? `<image class="board-logo" href="assets/img/engines/${FILES[engine]}" x="${x}" y="${y}" width="${size}" height="${size}"/>` : "";
   // the same logo as HTML, for the tables (the Engines catalog): an image, or the glyph inline so it takes the label colour
   Pie.engines.logo = (engine) => (GLYPHS[engine]
@@ -369,7 +372,7 @@ window.Pie = window.Pie || {};
   let useMode = kept("pieUseMode", (v) => USE_MODES.some((m) => m.id === v), "decode");
   const useModel = "";  // always every model: each engine's median over all of them, no model to pick
   // MLX's wordmark runs wider than the square the other logos fill: its box widens to hold it, so the pick's padding stays
-  const engineMark = (engine) => engine ? `<svg class="board-pick-logo${engine === "mlxlm" ? " is-wide" : ""}" viewBox="${engine === "mlxlm" ? "-5.6 0 27.2 16" : "0 0 16 16"}" aria-hidden="true">${logo(engine, 0, 0, 16)}</svg>` : "";
+  const engineMark = (engine) => engine ? `<svg class="board-pick-logo${enginWIDE.has(e) ? " is-wide" : ""}" viewBox="${WIDE.has(engine) ? "-5.6 0 27.2 16" : "0 0 16 16"}" aria-hidden="true">${logo(engine, 0, 0, 16)}</svg>` : "";
   const enginePick = (k, engine) => `<button class="filter-button board-card-pick" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="Engine">${engineMark(engine)}${engine === "mlxlm" ? "" : esc(engine ? names().engine(engine) : "Fastest engine")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
   const engineSub = (sub, engine) => (engine ? sub.replace("fastest engine", names().engine(engine)).replace("Decode speed against", `${names().engine(engine)}'s decode speed against`) : sub);
   // the model's speeds as one card, Decode, Prefill or Throughput picked in its corner and kept per browser, each wearing
@@ -982,7 +985,7 @@ window.Pie = window.Pie || {};
   const tipHtml = (g) => {
     if (g.dataset.tipVs) return battleHtml(g);
     const engine = g.dataset.tipEngine;
-    const wide = engine === "mlxlm";
+    const wide = WIDE.has(engine);
     const head = wide ? g.dataset.tipHead.slice(names().engine(engine).length).trim() : g.dataset.tipHead;
     // a platform's own figures, label and value per row as a battle's card lists them, no engine to mark
     if (!engine) return `<div class="board-tip-battle">${JSON.parse(g.dataset.tipRows || "[]").map(([k, v, tone]) => `<div class="board-tip-row"><span>${esc(k)}</span><b${tone ? ` class="${tone}"` : ""}>${esc(v)}</b></div>`).join("")}</div>`;
