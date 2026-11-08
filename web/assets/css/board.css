@@ -545,9 +545,27 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
   .board-welcome .board-welcome-actions { order: 2; position: static; flex-direction: row; align-self: flex-start; margin: 16px 0 0 -8px; }
 }
 /* Platform Support: a segment per platform in its colour, its name in white, an empty slot for each one missing */
-.board-support-name { font-size: 12px; font-weight: 500; fill: var(--color-label); }
-.board-support-count { font-size: 11px; font-weight: 500; text-anchor: end; fill: var(--color-label-secondary); font-variant-numeric: tabular-nums; }
-.board-support-label { font-size: 11px; font-weight: 600; text-anchor: middle; dominant-baseline: central; fill: #fff; pointer-events: none; }
-.board-support-empty { fill: var(--color-fill); }
-.board-support-chart.is-narrow { display: none; }  /* a phone's drawing: the name over its bar */
-@media (max-width: 599px) { .board-support-chart { display: none; } .board-support-chart.is-narrow { display: block; } }
+
+/* Platform Support as a table of checks: the engine at the left, a column per platform under its tile, a green check
+   where it ran and a faint dash where it did not, the count at the right; hairlines between the rows */
+.support-wrap { overflow-x: auto; margin-top: 4px; }
+.support-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.support-table th, .support-table td { padding: 9px 6px; text-align: center; vertical-align: middle; border-bottom: .5px solid var(--color-separator); }
+.support-table tbody tr:last-child > * { border-bottom: 0; }
+.support-table thead th { padding-top: 0; font-size: 11px; font-weight: 500; color: var(--color-label-secondary); }
+.support-table th[scope="row"] { padding-left: 0; text-align: left; font-weight: 500; color: var(--color-label); white-space: nowrap; }
+.support-engine { display: inline-flex; align-items: center; gap: 10px; }
+.support-platform { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
+.support-table .sidebar-glyph { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; background: var(--tint); }
+.support-table .sidebar-glyph svg { width: 12px; height: 12px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.support-table .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
+.support-check { width: 16px; height: 16px; vertical-align: middle; fill: none; stroke: #34C759; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.support-table td.is-off { color: var(--color-label-tertiary); }
+.support-table .support-count { padding-right: 0; text-align: right; font-size: 12px; color: var(--color-label-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.support-table td[data-tip-head] { cursor: default; }
+.support-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@media (max-width: 599px) {
+  .support-table th, .support-table td { padding: 8px 3px; }
+  .support-table .support-count { display: none; }  /* the checks say it on a phone */
+  .support-engine { gap: 8px; }
+}

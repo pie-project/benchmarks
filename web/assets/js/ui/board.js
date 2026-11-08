@@ -602,8 +602,7 @@ window.Pie = window.Pie || {};
   };
 
   // Platform Support: the platforms each engine has a measured run on, out of every platform the site shows (a hidden
-  // one joins once it is shown again); a row per engine, a segment per platform it ran on, so one on all of them fills
-  // its bar
+  // one joins once it is shown again)
   const SUPPORT_TINTS = { mac: "#636366", nvidia: "#76b900", amd: "#ed1c24", tpu: "#4285f4", android: "#1C1C1E", web: "#8e8e93" };  // the platforms' card colours
   const supportOf = (rows) => {
     const ran = {};
@@ -620,29 +619,19 @@ window.Pie = window.Pie || {};
       .sort((a, b) => b.on.length - a.on.length || platforms.indexOf(a.on[0]) - platforms.indexOf(b.on[0]));
     return { platforms, list };
   };
-  // drawn twice: name, bar and count on one line for a desktop, the name over its bar for a phone; CSS shows one
-  const supportChart = ({ platforms, list }, narrow) => {
-    const W = narrow ? 340 : 732, ROW = narrow ? 46 : 32, BAR = narrow ? 18 : 20, GAP = 3;
-    const x0 = narrow ? 0 : 168, x1 = narrow ? W : W - 56;
-    const slot = (x1 - x0 - GAP * (platforms.length - 1)) / platforms.length;
+  // a table of checks, as a comparison chart sets one: a row per engine, a column per platform under its tile, a check
+  // where the engine ran; each check's card counts the models and machines behind it
+  const CHECK = '<svg class="support-check" viewBox="0 0 16 16" aria-label="Yes"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+  const supportTable = ({ platforms, list }) => {
     const many = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
-    const marks = list.map(({ e, on, ran }, i) => {
-      const top = i * ROW, name = narrow ? top + 13 : top + ROW / 2 + 4, bar = narrow ? top + 21 : top + (ROW - BAR) / 2;
-      const count = `${on.length} of ${platforms.length}`;
-      // the hover card names each platform, with the models and machines run there
-      const rows = on.map((p) => [Pie.schema[p]?.label || p, `${many(ran[p].models.size, "model")}, ${many(ran[p].machines.size, "machine")}`]);
-      const slots = platforms.map((_, k) => {
-        const x = x0 + k * (slot + GAP), p = on[k];
-        return p ? `<rect x="${x}" y="${bar}" width="${slot}" height="${BAR}" rx="4" style="fill: ${SUPPORT_TINTS[p] || Pie.schema[p]?.tint}"/>
-          <text class="board-support-label" x="${x + slot / 2}" y="${bar + BAR / 2}">${esc(Pie.schema[p]?.short || p)}</text>`
-          : `<rect class="board-support-empty" x="${x}" y="${bar}" width="${slot}" height="${BAR}" rx="4"/>`;
-      }).join("");
-      return `<g class="board-bar" aria-label="${esc(`${names().engine(e)}: ${count}`)}" data-tip-engine="${esc(e)}" data-tip-head="${esc(names().engine(e))}" data-tip-value="${esc(`${count} platforms`)}" data-tip-rows="${esc(JSON.stringify(rows))}">
-        <rect class="board-band" x="-6" y="${top}" width="${W + 12}" height="${ROW}" rx="6"/>
-        ${logo(e, 0, name - 12, 16)}<text class="board-support-name" x="27" y="${name}">${esc(names().engine(e))}</text>
-        ${slots}<text class="board-support-count" x="${W}" y="${name}">${count}</text></g>`;
-    }).join("");
-    return `<svg class="board-chart board-support-chart${narrow ? " is-narrow" : ""}" viewBox="-6 0 ${W + 12} ${list.length * ROW}" role="img" aria-label="Platforms each engine ran on">${marks}</svg>`;
+    const head = platforms.map((p) => `<th scope="col"><span class="support-platform"><span class="sidebar-glyph" style="--tint: ${SUPPORT_TINTS[p] || Pie.schema[p]?.tint}">${Pie.icon(p)}</span>${esc(Pie.schema[p]?.short || p)}</span></th>`).join("");
+    const body = list.map(({ e, on, ran }) => `<tr>
+        <th scope="row"><span class="support-engine">${Pie.engines.logo(e)}${esc(names().engine(e))}</span></th>
+        ${platforms.map((p) => (ran[p]
+          ? `<td data-tip-engine="${esc(e)}" data-tip-head="${esc(names().engine(e))}" data-tip-value="${esc(Pie.schema[p]?.label || p)}" data-tip-rows="${esc(JSON.stringify([["Ran", `${many(ran[p].models.size, "model")}, ${many(ran[p].machines.size, "machine")}`]]))}">${CHECK}</td>`
+          : '<td class="is-off"><span aria-label="No">–</span></td>')).join("")}
+        <td class="support-count">${on.length} of ${platforms.length}</td></tr>`).join("");
+    return `<div class="support-wrap"><table class="support-table"><thead><tr><th scope="col"><span class="support-hidden">Engine</span></th>${head}<th scope="col" class="support-count">Platforms</th></tr></thead><tbody>${body}</tbody></table></div>`;
   };
   const supportSection = (rows) => {
     const support = supportOf(rows);
@@ -651,7 +640,7 @@ window.Pie = window.Pie || {};
             <div class="board-section-text"><h1 class="board-title">Platform Support</h1>
             <p class="board-lede">Platforms each engine ran on here.</p></div>
           </div>
-          ${card("support", "Platforms", "Platforms with a measured run · Higher is better", supportChart(support, false) + supportChart(support, true), "", false)}`;
+          ${card("support", "Platforms", "Platforms with a measured run", supportTable(support), "", false)}`;
   };
 
   // the changelog: each release measured, newest first, read from the runs themselves; development runs are left out
@@ -996,7 +985,7 @@ window.Pie = window.Pie || {};
   let tipFor = null;
   element.addEventListener("pointermove", (event) => {
     if (Pie.tapCard.isTouch()) return;
-    const g = event.target.closest?.(".board-bar[data-tip-head], .board-matrix td[data-tip-head], .qc-mark[data-tip-html]");  // a bar, a battle in a head-to-head grid, or an accuracy gap
+    const g = event.target.closest?.(".board-bar[data-tip-head], .board-matrix td[data-tip-head], .support-table td[data-tip-head], .qc-mark[data-tip-html]");  // a bar, a battle in a head-to-head grid, or an accuracy gap
     if (!g) {
       if (tipFor) { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board", "is-card"); }
       return;
