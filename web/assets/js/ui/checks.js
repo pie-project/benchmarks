@@ -321,13 +321,19 @@ window.Pie = window.Pie || {};
   // every platform at once, as the compare pages stack theirs: a header bar that folds it, over its own grid; folded
   // or open as on Performance, the one choice for both pages
   const folded = new Proxy({}, { get: (_, id) => Boolean(Pie.state.platform.collapsed?.[id]) });
+  // the Performance page's Models pick, the one choice both grids share: the same button, menu and models
+  const modelPick = () => {
+    const picked = Pie.state.platform.models || [];
+    const label = !picked.length ? "All Models" : picked.length <= 2 ? picked.map((id) => Pie.store.names.model(id)).join(", ") : `${picked.length} Models`;
+    return `<span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`;
+  };
   const gridPage = (state) => {
     const layout = Pie.platform.render(state, true);
     const sections = layout.sections.filter((g) => PLATFORMS.includes(g.platform?.id));
     shown = sections;  // counted under the page's title
     if (!sections.length) return `<div class="platform-scroll">${empty("No accuracy scores to compare yet.")}</div>`;
     // the Performance page's bar, with only its info button: what a cell compares and what passes
-    const bar = `<div class="platform-bar"><button type="button" class="plain-button rules-button" data-rules="quality" aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button><span class="platform-bar-side is-end"><span class="platform-key" title="The full model does not fit one machine; a mark beside a check is a model slice&#39;s">${NOFIT}Does not fit</span></span></div>`;
+    const bar = `<div class="platform-bar"><button type="button" class="plain-button rules-button" data-rules="quality" aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button><span class="platform-bar-side is-end"><span class="platform-key" title="The full model does not fit one machine; a mark beside a check is a model slice&#39;s">${NOFIT}Does not fit</span>${modelPick()}</span></div>`;
     return `${bar}<div class="platform-scroll">${sections.map((g) => {
       const p = g.platform.id;
       return `<section class="platform-section">
@@ -368,6 +374,8 @@ window.Pie = window.Pie || {};
     const wasDrag = Pie.platform.wireColumnDrag(element, () => { Pie.saveView?.(); document.dispatchEvent(new CustomEvent("pie:refresh")); });
     element.addEventListener("click", (event) => {
       if (wasDrag()) return;
+      const pick = event.target.closest("[data-grid-pick]");
+      if (pick) { event.stopPropagation(); Pie.popover.open(pick, `grid:${pick.dataset.gridPick}`, null); return; }
       const eye = event.target.closest(".platform-eye[data-hide-mac]");
       if (eye) {
         const hidden = new Set(Pie.state.platform.hidden || []);
