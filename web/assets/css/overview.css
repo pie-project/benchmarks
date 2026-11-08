@@ -1482,3 +1482,16 @@
   .flow-carousel .welcome-flow li::before { display: block; }
   .flow-carousel .welcome-flow li:last-child::before { display: none; }
 }
+
+/* Methodology turns its page by scrolling (approach.js): the chapter gives a little toward the end being pushed, and
+   beyond that end the chapter it turns to is named in small grey words, fading up as the push builds */
+.approach-main { position: relative; transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+.chapter-turn { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 4px; margin: 0; font-size: 12px; line-height: 16px; color: var(--color-label-secondary); white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+.chapter-turn.is-next { top: calc(100% + 16px); }  /* in the middle of the room under the chapter, above the foot */
+.chapter-turn.is-back { bottom: calc(100% + 16px); }  /* and of the room above its title */
+.chapter-turn svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 899px) {
+  .chapter-turn.is-next { top: calc(100% + 8px); }
+  .chapter-turn.is-back { bottom: calc(100% + 8px); }  /* above the phone's title, shown as the chapter gives */
+}
+#approach.is-turning { overflow: hidden; }  /* the glide that turned the page scrolls nothing: the new chapter opens at its end */
