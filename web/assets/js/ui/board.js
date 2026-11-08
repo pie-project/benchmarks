@@ -618,6 +618,59 @@ window.Pie = window.Pie || {};
           <div class="board-carousel" data-carousel-id="install"><div class="board-grid-cards is-matrices">${cards.map(([id, title, platform]) => card(id, title, "Binaries and libraries on disk · Lower is better", ranking(installSummary(id, title, platform), []), "", false)).join("")}</div></div>`;
   };
 
+  // Platform Support: the platforms each engine has a measured run on, out of every platform the site shows (a hidden
+  // one joins once it is shown again); a row per engine, a segment per platform it ran on, so one on all of them fills
+  // its bar
+  const SUPPORT_TINTS = { mac: "#636366", nvidia: "#76b900", amd: "#ed1c24", tpu: "#4285f4", android: "#1C1C1E", web: "#8e8e93" };  // the platforms' card colours
+  const supportOf = (rows) => {
+    const ran = {};
+    for (const r of rows) {
+      const p = Pie.platformOf(Pie.store.index.hardware[r.hardware] || {});
+      if (!p) continue;
+      const on = ((ran[r.engine] ||= {})[p] ||= { models: new Set(), machines: new Set() });
+      on.models.add(r.model);
+      on.machines.add(r.hardware);
+    }
+    const platforms = PLATFORM_ORDER.filter((p) => Object.values(ran).some((on) => on[p]));
+    // most platforms first; a tie by its first platform, so the engines of one platform sit together
+    const list = engineIds().filter((e) => ran[e]).map((e) => ({ e, on: platforms.filter((p) => ran[e][p]), ran: ran[e] }))
+      .sort((a, b) => b.on.length - a.on.length || platforms.indexOf(a.on[0]) - platforms.indexOf(b.on[0]));
+    return { platforms, list };
+  };
+  // drawn twice: name, bar and count on one line for a desktop, the name over its bar for a phone; CSS shows one
+  const supportChart = ({ platforms, list }, narrow) => {
+    const W = narrow ? 340 : 732, ROW = narrow ? 46 : 32, BAR = narrow ? 18 : 20, GAP = 3;
+    const x0 = narrow ? 0 : 168, x1 = narrow ? W : W - 56;
+    const slot = (x1 - x0 - GAP * (platforms.length - 1)) / platforms.length;
+    const many = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+    const marks = list.map(({ e, on, ran }, i) => {
+      const top = i * ROW, name = narrow ? top + 13 : top + ROW / 2 + 4, bar = narrow ? top + 21 : top + (ROW - BAR) / 2;
+      const count = `${on.length} of ${platforms.length}`;
+      // the hover card names each platform, with the models and machines run there
+      const rows = on.map((p) => [Pie.schema[p]?.label || p, `${many(ran[p].models.size, "model")}, ${many(ran[p].machines.size, "machine")}`]);
+      const slots = platforms.map((_, k) => {
+        const x = x0 + k * (slot + GAP), p = on[k];
+        return p ? `<rect x="${x}" y="${bar}" width="${slot}" height="${BAR}" rx="4" style="fill: ${SUPPORT_TINTS[p] || Pie.schema[p]?.tint}"/>
+          <text class="board-support-label" x="${x + slot / 2}" y="${bar + BAR / 2}">${esc(Pie.schema[p]?.short || p)}</text>`
+          : `<rect class="board-support-empty" x="${x}" y="${bar}" width="${slot}" height="${BAR}" rx="4"/>`;
+      }).join("");
+      return `<g class="board-bar" aria-label="${esc(`${names().engine(e)}: ${count}`)}" data-tip-engine="${esc(e)}" data-tip-head="${esc(names().engine(e))}" data-tip-value="${esc(`${count} platforms`)}" data-tip-rows="${esc(JSON.stringify(rows))}">
+        <rect class="board-band" x="-6" y="${top}" width="${W + 12}" height="${ROW}" rx="6"/>
+        ${logo(e, 0, name - 12, 16)}<text class="board-support-name" x="27" y="${name}">${esc(names().engine(e))}</text>
+        ${slots}<text class="board-support-count" x="${W}" y="${name}">${count}</text></g>`;
+    }).join("");
+    return `<svg class="board-chart board-support-chart${narrow ? " is-narrow" : ""}" viewBox="-6 0 ${W + 12} ${list.length * ROW}" role="img" aria-label="Platforms each engine ran on">${marks}</svg>`;
+  };
+  const supportSection = (rows) => {
+    const support = supportOf(rows);
+    if (!support.list.length) return "";
+    return `<div class="board-section-head is-apart">
+            <div class="board-section-text"><h1 class="board-title">Platform Support</h1>
+            <p class="board-lede">Platforms each engine ran on here.</p></div>
+          </div>
+          ${card("support", "Platforms", "Platforms with a measured run · Higher is better", supportChart(support, false) + supportChart(support, true), "", false)}`;
+  };
+
   // the changelog: each release measured, newest first, read from the runs themselves; development runs are left out
   let log = null;
   const changelog = () => log ||= (Pie.store.tables.tags || [])
@@ -679,6 +732,7 @@ window.Pie = window.Pie || {};
     "index-mac":    ["#636366"],
     use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"], "use-android": ["#1C1C1E"], "use-web": ["#8e8e93"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
     "install-mac": ["#636366"], "install-nvidia": ["#76b900"], "install-web": ["#8e8e93"],  // Install Size's cards the same
+    support:        ["#FF2D55"],  // pink, as its outline entry
     "index-gpu":    ["#76b900"],
     "index-amd":    ["#ed1c24"],
     "index-tpu":    ["#4285f4"],
@@ -821,8 +875,9 @@ window.Pie = window.Pie || {};
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     // each section its own colour from the chips' palette: efficiency green, performance orange, by model purple
     // Install Size teal, between Performance and By Model as the page sets it, where the export carries its sizes
+    // Platform Support pink, after Install Size
     const installed = INSTALL_CARDS.find(([, , p]) => installRows(p).length);
-    const outline = [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"], installed && [installed[0], "Install Size", "#30B0C7"], ["metric", "By Model", "#7a4cf5"]].filter(Boolean).map(([id, title, tint]) =>
+    const outline = [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"], installed && [installed[0], "Install Size", "#30B0C7"], supportOf(rows).list.length && ["support", "Platforms", "#FF2D55"], ["metric", "By Model", "#7a4cf5"]].filter(Boolean).map(([id, title, tint]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${tint}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
     // pie's bars' texture, defined once for every chart on the page: a fine grid of dots, as Freeform and Keynote set a
@@ -856,6 +911,7 @@ window.Pie = window.Pie || {};
           </div>
           <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has("summary") ? "Head-to-head decode win rate" : m.sub, gridCards.has("summary") ? matrix(m, rows) : ranking(m, rows), "", false)).join("")}</div></div>
           ${installSection()}
+          ${supportSection(rows)}
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
           <div class="board-section-head is-apart">
@@ -915,7 +971,7 @@ window.Pie = window.Pie || {};
     // the outline names the sections, not every card: the one holding the card in view is marked
     const installFirst = INSTALL_CARDS.find(([, , p]) => installRows(p).length)?.[0];
     const groupOf = (card) => USE_CARDS.some(([u]) => u === card) ? USE_CARDS[0][0] : SUMMARY.some((m) => m.id === card) ? SUMMARY[0].id
-      : INSTALL_CARDS.some(([u]) => u === card) ? installFirst : "metric";
+      : INSTALL_CARDS.some(([u]) => u === card) ? installFirst : card === "support" ? "support" : "metric";
     for (const item of element.querySelectorAll("[data-board-go]")) item.classList.toggle("is-current", item.dataset.boardGo === groupOf(id));
     // one fill that glides from the old section's row to the new, as a sidebar's selection would, instead of jumping
     const outline = element.querySelector(".board-outline"), on = outline?.querySelector(".board-outline-item.is-current");
