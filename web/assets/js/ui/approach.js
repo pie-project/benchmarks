@@ -32,8 +32,8 @@ window.Pie = window.Pie || {};
         <p>A model slice shrinks a model's memory footprint to fit one device while keeping its per-layer execution identical to the full model. A naive alternative is to benchmark a smaller model from the same family, such as an 8B model in place of a 400B model. However, smaller models use narrower hidden dimensions and fewer attention heads, which trigger completely different GPU kernel schedules. Instead, we slice the full model directly under three rules:</p>
         <ol class="method-list">
           <li><b>Keep layer width unchanged.</b> We preserve the exact hidden dimension, expert intermediate width, attention head layout, active experts per token (top-<i>k</i>), quantization group size, and vocabulary head. Every matrix multiplication and attention kernel runs with the exact tensor shapes of the full model.</li>
-          <li><b>Prune inactive experts before cutting layers.</b> In sparse Mixture-of-Experts (MoE) models, each token activates only <i>k</i> out of <i>E</i> experts. We first reduce the stored expert pool (<i>E′</i> &lt; <i>E</i>) while keeping <i>k</i> fixed (for example, keeping all 78 layers and 40B active parameters of GLM-5.3 on 80 GB GPUs). For single-request decoding, this cuts static memory without changing the active parameters, memory reads, or FLOPs per layer. When the model still exceeds device memory, we reduce the number of layers (<i>L′</i> &lt; <i>L</i>, such as 8 of 93 layers for Kimi-K3).${sliceExperts()}</li>
-          <li><b>Cut layers in multiples of the repeating block.</b> Modern architectures interleave different layer types, such as three linear-attention layers per full-attention layer in Qwen3.8. We retain an integer multiple of this repeating block so that the slice keeps the exact ratio of attention and expert layers.${sliceLayers()}</li>
+          <li><b>Prune inactive experts before cutting layers.</b> In sparse Mixture-of-Experts (MoE) models, each token activates only <i>k</i> out of <i>E</i> experts. We first reduce the stored expert pool (<i>E′</i> &lt; <i>E</i>) while keeping <i>k</i> fixed (for example, keeping all 78 layers and 40B active parameters of GLM-5.3 on 80 GB GPUs). For single-request decoding, this cuts static memory without changing the active parameters, memory reads, or FLOPs per layer. When the model still exceeds device memory, we reduce the number of layers (<i>L′</i> &lt; <i>L</i>, such as 8 of 93 layers for Kimi-K3).</li>
+          <li><b>Cut layers in multiples of the repeating block.</b> Modern architectures interleave different layer types, such as three linear-attention layers per full-attention layer in Qwen3.8. We retain an integer multiple of this repeating block so that the slice keeps the exact ratio of attention and expert layers.</li>
         </ol>
         <p>Model slices accurately capture relative engine speed on a single device. Transformer inference executes repeating layer blocks sequentially. Running <i>L′</i> layers exercises the same kernels, KV-cache paging, and scheduling paths as running <i>L</i> layers. A model slice directly matches the single-device workload of a pipeline-parallel stage and closely approximates the per-device compute and memory regime of a tensor-parallel shard.</p>
         <p>We restrict model slices to workloads where speed does not depend on output quality. Removing layers or experts breaks the model's language quality, which raises two potential issues. First, a sliced model may emit an end-of-sequence token early; we prevent this by disabling early termination (<code>ignore_eos</code>) and forcing every run to generate all 256 tokens. Second, nonsensical outputs invalidate workloads that depend on token probabilities, such as speculative decoding and accuracy benchmarks. We therefore evaluate model slices only on Raw Decode and Prefill, where execution time depends strictly on tensor shapes and sequence length.</p>
@@ -144,34 +144,6 @@ window.Pie = window.Pie || {};
         ["#64D2FF", "One feature at a time", "Each measured alone, against the plain run"],
         ["#FF9500", "Own best settings", "Each engine tuned for its highest throughput, the recipe public"],
         ["#AF52DE", "Latest releases", "The newest release of each engine at run time, every run dated and tagged"]])}`;
-
-  // Model Slices' diagrams: the expert pool and the layer stack before and after the cut, as rows of small squares
-  // a row: its name, then its squares; the slice's rows keep the full model's positions, the cut ones as outlines,
-  // so the eye reads what was kept and what was taken away
-  const sq = (cls) => `<i class="${cls}"></i>`;
-  const sliceRow = (label, squares, note) => `<div class="slice-row"><span class="slice-label">${label}</span><span class="slice-cells">${squares}</span><span class="slice-note">${note}</span></div>`;
-  const legend = (items) => `<figcaption>${items.map(([cls, text]) => `<span>${sq(cls)}${text}</span>`).join("")}</figcaption>`;
-  const sliceExperts = () => {
-    const ACTIVE = [2, 5];  // the same k experts active in both rows
-    const row = (kept) => Array.from({ length: 16 }, (_, i) => sq(i >= kept ? "is-cut" : ACTIVE.includes(i) ? "is-active" : "is-expert")).join("");
-    return `
-      <figure class="slice-fig" aria-label="Expert pool before and after the cut">
-        ${sliceRow("Full model", row(16), "16 experts, 2 active")}
-        ${sliceRow("Slice", row(8), "8 kept, the same 2 active")}
-        ${legend([["is-active", "Active"], ["is-expert", "Stored"], ["is-cut", "Pruned"]])}
-      </figure>`;
-  };
-  const sliceLayers = () => {
-    // a block is three linear-attention layers and one full-attention layer; a row wraps between blocks, never inside one
-    const block = (cut) => `<span class="slice-block">${[0, 1, 2, 3].map((i) => sq(cut ? "is-cut" : i === 3 ? "is-full" : "is-linear")).join("")}</span>`;
-    const row = (kept) => Array.from({ length: 6 }, (_, b) => block(b >= kept)).join("");
-    return `
-      <figure class="slice-fig is-layers" aria-label="Layer stack before and after the cut">
-        ${sliceRow("Full model", row(6), "24 layers, 6 blocks")}
-        ${sliceRow("Slice", row(2), "8 kept, 2 whole blocks")}
-        ${legend([["is-linear", "Linear attention"], ["is-full", "Full attention"], ["is-cut", "Cut"]])}
-      </figure>`;
-  };
 
   const measurement = () => `
       ${lead("A cell's number is the median of repeated rounds, taken after warmup.")}
