@@ -18,7 +18,8 @@ window.Pie = window.Pie || {};
     if (group) picked = { key: keyOf(group), at: performance.now() };
   }, true);
 
-  const keyOf = (group) => `${group.closest("[id]")?.id || ""}|${group.getAttribute("aria-label") || ""}`;
+  // two controls under one id with one label (the Overview's view switches, both "View") are told apart by what they switch
+  const keyOf = (group) => `${group.closest("[id]")?.id || ""}|${group.getAttribute("aria-label") || ""}|${group.querySelector(":scope > [data-board-view]")?.dataset.boardView || ""}`;
   // the thumb's two edges move as one: its left and its width are laid out on the same frame, where a transform on the
   // compositor and a width on the page could land a frame apart and stretch one side ahead of the other
   const frame = (at) => ({ left: `${at.left}px`, width: `${at.width}px` });
@@ -58,7 +59,6 @@ window.Pie = window.Pie || {};
       if (!active || group.offsetParent === null) continue;
       const key = keyOf(group);
       const index = buttonsOf(group).indexOf(active);
-      const rect = { left: active.offsetLeft, width: active.offsetWidth };
       let thumb = group.querySelector(":scope > .seg-thumb");
       const fresh = !thumb;
       if (fresh) {
@@ -68,6 +68,8 @@ window.Pie = window.Pie || {};
         group.prepend(thumb);
         dress(group, thumb, active);
       }
+      // measured once the control holds its thumb (has-thumb places it), so a segment's left is the control's own
+      const rect = { left: active.offsetLeft, width: active.offsetWidth };
       const prev = last.get(key);
       if (!fresh && prev?.index === index && prev.rect.left === rect.left && prev.rect.width === rect.width) continue;
       Object.assign(thumb.style, frame(rect));
