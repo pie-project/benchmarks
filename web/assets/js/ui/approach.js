@@ -26,13 +26,14 @@ window.Pie = window.Pie || {};
       ["measurement", "Measurement", "#FF9500", "Rounds, warmup, noise and how a cell's number is chosen.", () => measurement()],
     ]],
     ["Models", [
-      ["slices", "Model Slices", "#5E5CE6", "Single-device architectural proxies.", `
+      ["slices", "Model Slices", "#5E5CE6", "Single-device architectural proxies.", () => `
         <p>We use single-device model slices to benchmark frontier architectures continuously without the cost and energy of multi-GPU clusters. Frontier models now exceed 400B to 800B parameters and require up to eight datacenter GPUs just to load into memory. Benchmarking these full checkpoints across every engine, hardware SKU, and software release creates a combinatorial matrix that is too expensive and energy-intensive to run continuously.</p>
         <p>A model slice shrinks a model's memory footprint to fit one device while keeping its per-layer execution identical to the full model. A naive alternative is to benchmark a smaller model from the same family, such as an 8B model in place of a 400B model. However, smaller models use narrower hidden dimensions and fewer attention heads, which trigger completely different GPU kernel schedules. Instead, we slice the full model directly under three rules:</p>
+        ${sliceFlow()}
         <ol class="method-list">
           <li><b>Keep layer width unchanged.</b> We preserve the exact hidden dimension, expert intermediate width, attention head layout, active experts per token (top-<i>k</i>), quantization group size, and vocabulary head. Every matrix multiplication and attention kernel runs with the exact tensor shapes of the full model.</li>
-          <li><b>Prune inactive experts before cutting layers.</b> In sparse Mixture-of-Experts (MoE) models, each token activates only <i>k</i> out of <i>E</i> experts. We first reduce the stored expert pool (<i>E′</i> &lt; <i>E</i>) while keeping <i>k</i> fixed (for example, keeping all 78 layers and 40B active parameters of GLM-5.3 on 80 GB GPUs). For single-request decoding, this cuts static memory without changing the active parameters, memory reads, or FLOPs per layer. When the model still exceeds device memory, we reduce the number of layers (<i>L′</i> &lt; <i>L</i>, such as 8 of 93 layers for Kimi-K3).</li>
-          <li><b>Cut layers in multiples of the repeating block.</b> Modern architectures interleave different layer types, such as three linear-attention layers per full-attention layer in Qwen3.8. We retain an integer multiple of this repeating block so that the slice keeps the exact ratio of attention and expert layers.</li>
+          <li><b>Prune inactive experts before cutting layers.</b> In sparse Mixture-of-Experts (MoE) models, each token activates only <i>k</i> out of <i>E</i> experts. We first reduce the stored expert pool (<i>E′</i> &lt; <i>E</i>) while keeping <i>k</i> fixed (for example, keeping all 78 layers and 40B active parameters of GLM-5.3 on 80 GB GPUs). For single-request decoding, this cuts static memory without changing the active parameters, memory reads, or FLOPs per layer. When the model still exceeds device memory, we reduce the number of layers (<i>L′</i> &lt; <i>L</i>, such as 8 of 93 layers for Kimi-K3).${sliceExperts()}</li>
+          <li><b>Cut layers in multiples of the repeating block.</b> Modern architectures interleave different layer types, such as three linear-attention layers per full-attention layer in Qwen3.8. We retain an integer multiple of this repeating block so that the slice keeps the exact ratio of attention and expert layers.${sliceLayers()}</li>
         </ol>
         <p>Model slices accurately capture relative engine speed on a single device. Transformer inference executes repeating layer blocks sequentially. Running <i>L′</i> layers exercises the same kernels, KV-cache paging, and scheduling paths as running <i>L</i> layers. A model slice directly matches the single-device workload of a pipeline-parallel stage and closely approximates the per-device compute and memory regime of a tensor-parallel shard.</p>
         <p>We restrict model slices to workloads where speed does not depend on output quality. Removing layers or experts breaks the model's language quality, which raises two potential issues. First, a sliced model may emit an end-of-sequence token early; we prevent this by disabling early termination (<code>ignore_eos</code>) and forcing every run to generate all 256 tokens. Second, nonsensical outputs invalidate workloads that depend on token probabilities, such as speculative decoding and accuracy benchmarks. We therefore evaluate model slices only on Raw Decode and Prefill, where execution time depends strictly on tensor shapes and sequence length.</p>
@@ -130,6 +131,26 @@ window.Pie = window.Pie || {};
         ["#64D2FF", "One feature at a time", "Each measured alone, against the plain run"],
         ["#FF9500", "Own best settings", "Each engine tuned for its highest throughput, the recipe public"],
         ["#AF52DE", "Latest releases", "The newest release of each engine at run time, every run dated and tagged"]])}`;
+
+  // Model Slices' diagrams, in the chapters' own parts: the cut as numbered steps, then the expert pool and the layer
+  // stack before and after, as rows of small squares in the chapter's colours
+  const sliceFlow = () => steps([["#8E8E93", "Full model", "400B to 800B, up to eight GPUs"], ["#5E5CE6", "Same widths", "Every matmul keeps its shape"],
+    ["#FF9500", "Fewer experts", "E′ < E, top-k unchanged"], ["#30B0C7", "Fewer layers", "L′ < L, in whole blocks"],
+    ["#34C759", "One device", "The same kernels, a fraction of the memory"]]);
+  const cells = (n, cls) => Array.from({ length: n }, (_, i) => `<i class="${typeof cls === "function" ? cls(i) : cls}"></i>`).join("");
+  const sliceRow = (label, squares, note) => `<div class="slice-row"><span class="slice-label">${label}</span><span class="slice-cells">${squares}</span><span class="slice-note">${note}</span></div>`;
+  const sliceExperts = () => `
+      <figure class="slice-fig" aria-label="Expert pool before and after the cut">
+        ${sliceRow("Full model", cells(16, (i) => (i === 3 || i === 9 ? "is-active" : "is-expert")), "E experts, k active per token")}
+        ${sliceRow("Slice", cells(8, (i) => (i === 3 || i === 5 ? "is-active" : "is-expert")), "E′ experts, the same k active")}
+        <figcaption><i class="is-active"></i>Active for a token <i class="is-expert"></i>Stored expert</figcaption>
+      </figure>`;
+  const sliceLayers = () => `
+      <figure class="slice-fig" aria-label="Layer stack before and after the cut">
+        ${sliceRow("Full model", cells(48, (i) => (i % 4 === 3 ? "is-full" : "is-linear")), "48 layers, 12 blocks")}
+        ${sliceRow("Slice", cells(8, (i) => (i % 4 === 3 ? "is-full" : "is-linear")), "8 of 48, two whole blocks")}
+        <figcaption><i class="is-linear"></i>Linear attention <i class="is-full"></i>Full attention</figcaption>
+      </figure>`;
 
   const measurement = () => `
       ${lead("A cell's number is the median of repeated rounds, taken after warmup.")}
