@@ -325,6 +325,19 @@ default:
               value: null
               rationale: >
                 As for Qwen3.8-27B: pf32-512 4.14/3.91 s at four workers, 3.92/3.80 s at ten.
+    h100-sxm-x1:
+      artifact:
+        qwen3.8-27b-bf16:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 120}
+              rationale: >
+                pie states 512 recurrent-state slots for Qwen3.8-27B here (two a lane) and serves them at 88: its kv
+                pages seat 46 sequences at the declared 2048 context, so the slots are cut to half the room, and c256
+                keeps about 78 lanes active (2503 tok/s; TensorRT-LLM 3286). 120 slots keep about 100 active:
+                3012/3009 tok/s (pie 7d642cdc7, fair_def 2). 128 gave 3043 after a slow first round; from 136 the
+                pages run short (136: 2419, 144: 2197, 4096-row fires do not move that). Single-request greedy
+                output is the same with and without it.
     l4-x1:
       family:
         muse_glimmer:
