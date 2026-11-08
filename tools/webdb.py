@@ -295,10 +295,10 @@ def workloads() -> list[dict]:
 # the quality benchmarks: what each task asks, where its questions come from, how an answer is scored
 # the tasks the site lists and expects a score on: MATH-500 only now; the others are no longer run
 QUALITY_TASKS = [
-    # ("gsm8k", "Grade-school math word problems, worked step by step", "openai/gsm8k (test)", "final number matches"),
-    # ("ifeval", "Following explicit instructions (length, format, keywords)", "google/IFEval", "every instruction met"),
-    # ("mmlu", "Multiple-choice knowledge across 57 subjects", "cais/mmlu (test)", "chosen letter matches"),
-    # ("arc", "Grade-school science reasoning, multiple choice", "allenai/ai2_arc (ARC-Challenge test)", "chosen letter matches"),
+    ("gsm8k", "Grade-school math word problems, worked step by step", "openai/gsm8k (test)", "final number matches"),
+    ("ifeval", "Following explicit instructions (length, format, keywords)", "google/IFEval", "every instruction met"),
+    ("mmlu", "Multiple-choice knowledge across 57 subjects", "cais/mmlu (test)", "chosen letter matches"),
+    ("arc", "Grade-school science reasoning, multiple choice", "allenai/ai2_arc (ARC-Challenge test)", "chosen letter matches"),
     ("math500", "Competition math, final answer in boxed form", "HuggingFaceH4/MATH-500", "final answer equivalent"),
 ]
 
@@ -340,10 +340,18 @@ def mismatched_arms() -> dict[str, str]:
 
 
 def quality_tasks() -> list[dict]:
+    from pie_evals.quality.dist_run import ANSWER_TOKENS, PARITY_TASKS
     from pie_evals.quality.tasks import TASKS
 
-    return [{"id": t, "task": t, "description": d, "source": src, "scoring": sc, "max_tokens": TASKS[t][2]}
-            for t, d, src, sc in QUALITY_TASKS if t in TASKS]
+    scored = [{"id": t, "task": t, "description": d, "source": src, "scoring": sc, "max_tokens": TASKS[t][2]}
+              for t, d, src, sc in QUALITY_TASKS if t in TASKS]
+    # the parity check beside the scores (quality/dist_run.py): one row per model and machine
+    parity = {"id": "parity", "task": "parity",
+              "description": "Pie matches vLLM on the same weights",
+              "source": ", ".join(PARITY_TASKS),
+              "scoring": "mean KL, top-1 agreement",
+              "max_tokens": ANSWER_TOKENS}
+    return scored + [parity]
 
 
 # runs measured before the tagged runs live on this Mac: they stay on the site as the fallback

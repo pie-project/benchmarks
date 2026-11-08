@@ -123,3 +123,9 @@ def test_a_gap_takes_the_newest_run_not_the_newest_tags(webdb):
     assert snaps["top"] == [{"v": 2, "stale": {"tag": "dev", "measured": "2026-11-03 00:18"}}]
     assert snaps["old"][0]["v"] == 1 and snaps["old"][0]["stale"] is None  # a tag's own run is always its own
     assert snaps["dev"][0]["v"] == 2 and snaps["dev"][0]["stale"] is None
+
+
+def test_the_benchmarks_catalog_lists_every_scored_task_and_the_parity_check(webdb):
+    rows = {r["id"]: r for r in webdb.quality_tasks()}
+    assert {"gsm8k", "ifeval", "mmlu", "arc", "math500", "parity"} <= set(rows)
+    assert rows["parity"]["task"] == "parity" and rows["parity"]["scoring"] == "mean KL, top-1 agreement"

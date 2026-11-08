@@ -135,7 +135,7 @@ window.Pie = window.Pie || {};
   };
   // the win rate on each platform apart: an engine is held only against the others on that platform's machines
   const onPlatform = (rows, ids) => rows.filter((r) => ids.includes(Pie.platformOf(Pie.store.index.hardware[r.hardware] || {})));
-  const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]], ["index-android", "Mobile", ["android"]], ["index-web", "Browser", ["web"]]].map(([id, title, ids]) => ({
+  const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]], ["index-android", "Mobile", ["android"]], ["index-web", "Browser", ["web"]]].filter(([, , ids]) => !ids.some((p) => Pie.hiddenPlatforms.has(p))).map(([id, title, ids]) => ({
     id, title, ids, sub: "Chance to decode faster than an average engine",  // one line, as the grid's, so the card keeps its height on a switch
     value: (rows, engine) => strengths(rows, ids)[engine] || null,
     label: (v) => `${Math.round(v)}%`,
@@ -557,7 +557,7 @@ window.Pie = window.Pie || {};
   // Efficiency: how close each engine gets to the hardware, a card per platform as Head to head sets its own, a bar per
   // engine at its median share of the machine's roofline limit over every machine (and model, or the one picked) it ran
   const USE = { id: "use", title: "Share of the theoretical maximum" };
-  const USE_CARDS = [["use", "Apple", "mac"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"], ["use-android", "Mobile", "android"], ["use-web", "Browser", "web"]];
+  const USE_CARDS = [["use", "Apple", "mac"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"], ["use-android", "Mobile", "android"], ["use-web", "Browser", "web"]].filter(([, , p]) => !Pie.hiddenPlatforms.has(p));
   const useShares = (rows, platform) => {
     const mode = USE_MODES.find((m) => m.id === useMode);
     const out = {};  // engine -> its shares, one per machine and model at its best run there
@@ -673,7 +673,7 @@ window.Pie = window.Pie || {};
   // of its own; at the far end its tools (link, image, data), and under them the pick of what the card shows
   // coverage: every model down, each platform across, in each cell a square per engine, filled where it measured the
   // model there (any setup, a miniature too); over it, each engine's share of all the model and platform pairs
-  const COVER_PLATFORMS = [["mac", "Mac"], ["nvidia", "NVIDIA"], ["amd", "AMD"], ["tpu", "TPU"]];
+  const COVER_PLATFORMS = [["mac", "Mac"], ["nvidia", "NVIDIA"], ["amd", "AMD"], ["tpu", "TPU"]].filter(([p]) => !Pie.hiddenPlatforms.has(p));
   const coverage2 = (rows) => {
     const ran = new Set();
     for (const r of rows) {
