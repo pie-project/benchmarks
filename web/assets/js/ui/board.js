@@ -756,8 +756,8 @@ window.Pie = window.Pie || {};
   // past a thousand, a count reads to its nearest thousand ("23,000+" for 23,051, "24,000+" for 23,999)
   const atLeast = (n) => (n < 1000 ? String(n) : `${(Math.round(n / 1000) * 1000).toLocaleString("en-US")}+`);
   // the site's counts as the Welcome chapter sets them: small grey words over large figures, hairlines between
-  // the figures' entrance, once a visit, as Apple brings a keynote's numbers on: the pills rise in turn, each count runs
-  // up from zero and settles, and a sheen crosses each pill as it lands; none of it where the viewer asks for less motion
+  // the figures' counts run up from zero and settle, once a visit, as Apple brings a keynote's numbers on; the pills
+  // themselves stay put; none of it where the viewer asks for less motion
   let pillsPlayed = false;
   const calm = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const pillsIn = () => {
@@ -766,10 +766,8 @@ window.Pie = window.Pie || {};
     const play = () => {
       if (pillsPlayed) return;
       pillsPlayed = true;
-      list.classList.remove("is-waiting");
-      list.classList.add("is-entering");
       list.querySelectorAll("dd[data-count]").forEach((dd, k) => {
-        const to = Number(dd.dataset.count), suffix = dd.dataset.suffix || "", final = dd.textContent;
+        const to = Number(dd.dataset.count), suffix = dd.dataset.suffix || "", final = dd.dataset.final;
         dd.style.minWidth = `${dd.getBoundingClientRect().width}px`;  // the pill keeps its final width, the others stay put
         const start = performance.now() + k * 70, span = 1100;
         const step = (now) => {
@@ -777,11 +775,11 @@ window.Pie = window.Pie || {};
           const eased = 1 - Math.pow(1 - t, 4);  // fast, then easing into its place
           dd.textContent = t < 1 ? `${Math.round(to * eased).toLocaleString("en-US")}${suffix}` : final;
           if (t < 1) requestAnimationFrame(step);
-          else dd.parentElement.classList.add("is-landed");
         };
         dd.textContent = `0${suffix}`;
         requestAnimationFrame(step);
       });
+      list.classList.remove("is-waiting");
     };
     // when the figures first come into sight: the Overview may open behind another page
     const watch = new IntersectionObserver((seen) => { if (seen.some((e) => e.isIntersecting)) { watch.disconnect(); play(); } });
@@ -795,9 +793,13 @@ window.Pie = window.Pie || {};
     const time = !busy ? null : busy >= 3 * 86400 ? [`Days of compute`, n(Math.round(busy / 86400))] : [`Hours of compute`, n(Math.round(busy / 3600))];
     const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Models", n(rows("models"))], ["Engines", n(rows("engines"))], ["Platforms", n(Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length)], ["Machines", n(Pie.platform?.machines?.() || 0)]].filter((s) => s && s[1] !== "0");
     // each figure carries its count for the entrance (pillsIn): written in full, so it reads right before and without it
-    const count = (v) => { const m = /^([\d,]+)(\+?)$/.exec(v); return m ? ` data-count="${m[1].replace(/,/g, "")}" data-suffix="${m[2]}"` : ""; };
-    const waiting = !pillsPlayed && !calm() ? " is-waiting" : "";
-    return `<dl class="welcome-stats board-welcome-stats${waiting}">${stats.filter(Boolean).map(([label, v], i) => `<div style="--i: ${i}"><dt>${label}</dt><dd${count(v)}>${esc(v)}</dd></div>`).join("")}</dl>`;
+    // until its count runs, a figure waits unseen at its full width, so no pill changes size
+    const waiting = !pillsPlayed && !calm();
+    const figure = (v) => {
+      const m = /^([\d,]+)(\+?)$/.exec(v);
+      return m && waiting ? `<dd data-count="${m[1].replace(/,/g, "")}" data-suffix="${m[2]}" data-final="${esc(v)}">${esc(v)}</dd>` : `<dd>${esc(v)}</dd>`;
+    };
+    return `<dl class="welcome-stats board-welcome-stats${waiting ? " is-waiting" : ""}">${stats.filter(Boolean).map(([label, v]) => `<div><dt>${label}</dt>${figure(v)}</div>`).join("")}</dl>`;
   };
 
   const page = () => {
