@@ -1392,7 +1392,7 @@
 .welcome-flow li:last-child::before { display: none; }
 .welcome-flow i { position: relative; display: grid; place-items: center; width: 24px; height: 24px; margin-bottom: 8px; border-radius: 6px; font: 600 12px/1 var(--font-display); font-style: normal; color: #fff; background: var(--step, var(--color-label-secondary)); }
 .welcome-flow b { font-size: 13px; color: var(--color-label); }
-.welcome-flow span { font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }
+.welcome-flow span { max-width: 180px; font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }  /* a step's line in a narrow column under its name */
 .welcome-flow li.is-check b { color: var(--color-negative); }
 /* the workloads as a Settings list: glyph, name, line, hairlines between */
 .welcome-list { margin: 8px 0 0; padding: 0; list-style: none; }
@@ -1455,4 +1455,52 @@
   .welcome-list.is-install .welcome-row { grid-template-columns: 6px minmax(0, 1fr); row-gap: 2px; }
   .welcome-list.is-install .welcome-row span { display: block; }
   .welcome-list.is-install .welcome-row span:not(.trust-tile) { grid-column: 2; }
+}
+
+/* Model Slices' diagrams: one line a row (name, squares, note), the slice square for square under the full model, its
+   cut ones as outlines; a small legend under them */
+.slice-fig { max-width: 520px; margin: 14px 0 4px; padding: 12px 14px 10px; border-radius: 10px; background: var(--color-fill); }
+.slice-row { display: grid; grid-template-columns: 68px auto minmax(0, 1fr); align-items: center; column-gap: 12px; }
+.slice-row + .slice-row { margin-top: 8px; }
+.slice-label { font-size: 12px; font-weight: 600; color: var(--color-label); }
+.slice-cells { display: flex; align-items: center; gap: 3px; }
+.slice-fig.is-layers .slice-cells { gap: 7px; }
+.slice-block { display: inline-flex; gap: 2px; }
+.slice-note { font-size: 11px; color: var(--color-label-secondary); white-space: nowrap; }
+.slice-fig i { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 2.5px; background: var(--color-label-tertiary); }
+.slice-fig i.is-active { background: #FF9500; }
+.slice-fig i.is-expert { background: color-mix(in srgb, var(--color-label-secondary) 55%, transparent); }
+.slice-fig i.is-linear { background: #30B0C7; }
+.slice-fig i.is-full { background: #5E5CE6; }
+.slice-fig i.is-cut { background: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-label-tertiary) 70%, transparent); }
+.slice-fig figcaption { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; padding-left: 80px; font-size: 11px; color: var(--color-label-tertiary); }
+.slice-fig figcaption span { display: inline-flex; align-items: center; gap: 5px; }
+.slice-fig figcaption i { width: 7px; height: 7px; border-radius: 2px; }
+@media (max-width: 599px) {
+  .slice-row { grid-template-columns: 60px minmax(0, 1fr); row-gap: 3px; }  /* the note under the squares */
+  .slice-note { grid-column: 2; white-space: normal; }
+  .slice-fig figcaption { padding-left: 0; }
+}
+
+/* Methodology's step runs as a carousel: each step keeps its width, the row slides and snaps, the Overview's paddles sit
+   above it on the right, and the far edge fades while more steps follow */
+.method-article .flow-carousel { display: flex; flex-direction: column; margin-top: 16px; }
+.method-article .flow-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }  /* the title on the left, the paddles on its right */
+.method-article .flow-head > h3, .method-article .flow-head > .welcome-lead { margin: 0; }
+.method-article .flow-head > .flow-nav { flex: none; }
+.method-article .flow-carousel > .welcome-flow { margin-top: 16px; }
+.method-article .flow-head > .welcome-lead + .flow-nav, .method-article .flow-carousel:has(.welcome-lead) > .welcome-flow { margin-top: 0; }
+.method-article .flow-carousel:has(.welcome-lead) > .welcome-flow { margin-top: 24px; }
+.method-article .method-pane-body > .flow-carousel.has-title:not(:first-child) { margin-top: 40px; }  /* as a heading sits under the part before it */
+.flow-carousel > .flow-nav[hidden] { display: none; }
+.flow-carousel > .flow-nav .plain-button:disabled { opacity: .35; cursor: default; }
+.flow-carousel .welcome-flow { display: flex; margin: 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); }
+.flow-carousel .welcome-flow.is-end { -webkit-mask-image: none; mask-image: none; }
+.flow-carousel .welcome-flow::-webkit-scrollbar { display: none; }
+.flow-carousel .welcome-flow li { flex: 0 0 calc(100% / 3); scroll-snap-align: start; }  /* three steps in view, the rest a slide away */
+@media (max-width: 760px) {
+  .flow-carousel .welcome-flow li { flex-basis: 50%; }  /* two on a phone: three would not leave room for the words */
+  .flow-carousel .welcome-flow li::before { display: block; }
+  .flow-carousel .welcome-flow li:last-child::before { display: none; }
 }
