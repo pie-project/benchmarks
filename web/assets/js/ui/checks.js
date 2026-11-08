@@ -340,10 +340,10 @@ window.Pie = window.Pie || {};
     if (!sections.length) return `<div class="platform-scroll">${empty("No accuracy scores to compare yet.")}</div>`;
     // the Performance page's bar, with only its info button: what a cell compares and what passes
     const bar = `<div class="platform-bar"><button type="button" class="plain-button rules-button" data-rules="quality" aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button><span class="platform-bar-side is-end"><span class="platform-key" title="The full model does not fit one machine; a mark beside a check is a model slice&#39;s">${NOFIT}Does not fit</span>${modelPick()}</span></div>`;
-    return `${bar}<div class="platform-scroll">${sections.map((g) => {
+    return `${bar}<div class="platform-scroll">${sections.map((g, i) => {
       const p = g.platform.id;
       return `<section class="platform-section">
-        <div class="platform-group-row platform-section-bar${folded[p] ? " is-collapsed" : ""}" data-qc-fold="${esc(p)}" role="button" aria-expanded="${!folded[p]}">
+        <div class="platform-group-row platform-section-bar${folded[p] ? " is-collapsed" : ""}" style="--stack: ${i}" data-qc-fold="${esc(p)}" role="button" aria-expanded="${!folded[p]}">
           <span class="platform-group-bar">
             <span class="platform-group-name">${Pie.platform.badge(p)}<b>${esc(g.platform.label)}</b><span>${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}, ${g.models.length} ${g.models.length === 1 ? "model" : "models"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>

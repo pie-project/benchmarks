@@ -294,6 +294,11 @@
   border-bottom: .5px solid var(--color-separator);
 }
 .platform-section-bar .platform-group-bar { width: 100%; position: static; }
+/* a platform's bar pins under the setup bar once the page scrolls it up, and each next one stacks under the last, so
+   every platform passed stays in view, a click away from folding (the model rows scroll on under them). The section
+   steps out of the box tree so its bar sticks for the rest of the page, not only within its own platform */
+.platform-scroll > .platform-section { display: contents; }
+.platform-scroll .platform-section-bar { position: sticky; top: calc(var(--stack, 0) * 40px); z-index: 6; }
 .platform-section-bar .sidebar-glyph[style] { width: 20px; height: 20px; border-radius: 5px; }
 .platform-section-bar .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; }
 .platform-section-bar .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
