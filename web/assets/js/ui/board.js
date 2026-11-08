@@ -814,6 +814,22 @@ window.Pie = window.Pie || {};
   // themselves stay put; none of it where the viewer asks for less motion
   let pillsPlayed = false;
   const calm = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // one figure in blue at a time, the runs first: every few seconds the blue moves on to another, picked at random, while
+  // the page is in view; it stays on the runs where the viewer asks for less motion
+  let activePill = 0, pillTimer = null;
+  const pillTurn = () => {
+    if (pillTimer || calm()) return;
+    pillTimer = setInterval(() => {
+      const list = element.querySelector(".board-welcome-stats");
+      if (document.hidden || !list?.offsetParent || list.classList.contains("is-waiting")) return;
+      const pills = [...list.children];
+      if (pills.length < 2) return;
+      let next = Math.floor(Math.random() * (pills.length - 1));
+      if (next >= activePill) next += 1;  // never the one already blue
+      pills.forEach((pill, i) => pill.classList.toggle("is-active", i === next));
+      activePill = next;
+    }, 3500);
+  };
   const pillsIn = () => {
     const list = element.querySelector(".board-welcome-stats.is-waiting");
     if (!list || pillsPlayed) return;
@@ -853,7 +869,7 @@ window.Pie = window.Pie || {};
       const m = /^([\d,]+)(\+?)$/.exec(v);
       return m && waiting ? `<dd data-count="${m[1].replace(/,/g, "")}" data-suffix="${m[2]}" data-final="${esc(v)}">${esc(v)}</dd>` : `<dd>${esc(v)}</dd>`;
     };
-    return `<dl class="welcome-stats board-welcome-stats${waiting ? " is-waiting" : ""}">${stats.filter(Boolean).map(([label, v]) => `<div><dt>${label}</dt>${figure(v)}</div>`).join("")}</dl>`;
+    return `<dl class="welcome-stats board-welcome-stats${waiting ? " is-waiting" : ""}">${stats.filter(Boolean).map(([label, v], i) => `<div${i === activePill ? ' class="is-active"' : ""}><dt>${label}</dt>${figure(v)}</div>`).join("")}</dl>`;
   };
 
   const page = () => {
@@ -1441,6 +1457,7 @@ window.Pie = window.Pie || {};
         const at = was ? [was.scrollTop, was.scrollLeft] : null;
         element.innerHTML = page();
         pillsIn();
+        pillTurn();
         requestAnimationFrame(paddles);
         element.dataset.key = `${model}@${state.release}`;
         const now = element.querySelector(".board-scroll");
