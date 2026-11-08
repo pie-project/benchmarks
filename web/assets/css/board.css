@@ -524,9 +524,11 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-footer-simple { font-size: 12px; color: var(--color-label-secondary); }  /* the update date in the section ledes' size and grey */
 .board-footer-simple { font-size: 11px; }  /* the update date at the cards' subtitle size */
 
-/* the page's title in two lines, as Apple heads a product page: the name, then what it promises in grey */
+/* the page's head as NVIDIA sets one: a small green eyebrow in capitals, the title in bold without a stop, then a
+   plain sentence under it, smaller and lighter */
+.board-welcome .board-welcome-eyebrow { margin: 0 0 6px; font-size: 12px; font-weight: 700; line-height: 1; letter-spacing: .08em; text-transform: uppercase; color: #76B900; }
 .board-welcome .board-welcome-title { display: block; font-size: 24px; line-height: 1.2; letter-spacing: -.015em; }
-.board-welcome .board-welcome-title span { display: block; color: var(--color-label-secondary); }
+.board-welcome .board-welcome-sub { margin: 6px 0 0; font-size: 15px; line-height: 1.4; color: var(--color-label-secondary); }
 @media (max-width: 599px) { .board-welcome .board-welcome-title { font-size: 21px; } }
 /* on a narrow screen the two links leave the pills' corner for a row of their own under them */
 @media (max-width: 760px) {
