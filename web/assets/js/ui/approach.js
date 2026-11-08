@@ -54,6 +54,10 @@ window.Pie = window.Pie || {};
       ["parity", "Parity Checks", "#007AFF", "How we confirm every engine computes the same model.", () => parity()],
       ["accuracy", "Accuracy", "#FFCC00", "Benchmark scores on the same weights and machine.", () => accuracy()],
     ]],
+    ["Contribute", [
+      ["add-engine", "Add an Engine", "#FF2D55", "How a new engine joins the benchmark.", () => addEngine()],
+      ["run-yourself", "Run It Yourself", "#00C7BE", "The same harness and rules, on hardware you rent.", () => runYourself()],
+    ]],
   ];
 
   // Welcome as a landing page, as a vendor's docs open: the live counts, the path a number takes, what is measured, why
@@ -185,6 +189,78 @@ window.Pie = window.Pie || {};
         ["#007AFF", "Decoding", "Greedy, thinking off"],
         ["#8E8E93", "Compared with", "One other engine on the same machine"],
         ["#34C759", "Pass", "Within the run's own noise of the other engine; 5 points where it has none"]])}`;
+
+  // Contribute: the files an engine is added in, each a row that opens it on GitHub (its name in the file column, the
+  // whole path in its title); commands as facts whose lines stay on a phone; links out as the trust rows' links
+  const repoFiles = (rows) => `<ul class="welcome-list is-trust is-flows">${rows.map(([colour, t, path, name, d]) =>
+    `<li><a href="${REPO}/${path.endsWith("/") ? "tree" : "blob"}/main/${path}" target="_blank" rel="noopener" title="${path}"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><code>${name}</code><span>${d}</span></a></li>`).join("")}</ul>`;
+  const commands = (rows) => facts(rows).replace("is-trust", "is-trust is-install");
+  const links = (rows) => `<ul class="welcome-list is-trust">${rows.map(([colour, t, href, d]) =>
+    `<li><a href="${href}" target="_blank" rel="noopener"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><span>${d}</span></a></li>`).join("")}</ul>`;
+
+  const addEngine = () => `
+      ${lead("An engine joins through a pull request: a few files declare it, and the harness runs it with the same prompts and rules as every other engine.")}
+      <h3>What to add</h3>
+      ${repoFiles([["#FF2D55", "Declaration", "matrix/engines.yaml", "engines.yaml", "id, os, backends, formats, tiers, recipe, pin, release_source"],
+        ["#FF9500", "Name", "src/pie_evals/schema/cell.py", "cell.py", "The engine's id in EngineName"],
+        ["#007AFF", "Adapter", "src/pie_evals/node/engines/", "engines/&lt;id&gt;.py", "An Engine subclass with @register, imported in get_engine"],
+        ["#5E5CE6", "Recipe", "src/pie_evals/node/engines/recipes/", "recipes/&lt;id&gt;.yaml", "Its default and competitive settings, each with its reason"],
+        ["#30B0C7", "Install", "src/pie_evals/node/baselines.py", "baselines.py", "A Python engine's pip spec, installed at its pin"],
+        ["#8E8E93", "Known gaps", "matrix/support.yaml", "support.yaml", "What it cannot run, with the error that shows it"],
+        ["#FFCC00", "Quality", "src/pie_evals/quality/engines.py", "quality/engines.py", "How it answers the question sets, if it is scored"],
+        ["#34C759", "Tests", "tests/test_engines.py", "test_engines.py", "Its command line and how its output is read"],
+        ["#AF52DE", "Site", "tools/webdb.py", "webdb.py", "Its name, license, repository and colour"]])}
+      <p>A server that speaks OpenAI's <code>/v1/completions</code> can subclass <code>ServedEngine</code> and say only how to start it, as llama.cpp, mlx-lm, Splash and TensorRT-LLM do.</p>
+      <h3>Test it locally</h3>
+      ${commands([["#30B0C7", "Install", '<code>uv venv &amp;&amp; uv pip install -e ".[dev,orchestrate]"</code>'],
+        ["#5E5CE6", "Matrix", "<code>pie-evals check</code>"],
+        ["#007AFF", "Tests", '<code>pytest -q -m "not slow"</code>'],
+        ["#FF9500", "Plan", "<code>pie-evals jobs --tier nightly --engine &lt;id&gt; --platform &lt;id&gt; --out jobs</code>"],
+        ["#34C759", "Measure", "On a GPU, as the next chapter shows"]])}
+      ${steps([["#FF2D55", "Pull request", "From your fork, with the files above"], ["#007AFF", "CI", "Lint, unit tests and the matrix check"],
+        ["#5E5CE6", "Review", "A maintainer reviews and merges"], ["#FF9500", "Run", "A maintainer starts a tagged run"],
+        ["#34C759", "Site", "The tag's rows, on the next rebuild"]], "<h3>From pull request to the site</h3>")}
+      <h3>Workflows</h3>
+      ${flows([["#007AFF", "Pull request", "ci.yml", "Every pull request that changes code or the matrix"],
+        ["#636366", "Pie release", "pie-eval.yml", "The Macs, under the release's tag"],
+        ["#FF9500", "Nightly", "nightly.yml", "Daily at 09:00 UTC, capped; untagged, so off the site"],
+        ["#5E5CE6", "Weekly", "weekly.yml", "By hand; with a tag, its rows join that release"],
+        ["#30B0C7", "Pod import", "pod-import.yml", "Every 10 minutes, from the project's pods, under their tag"],
+        ["#34C759", "Site", "pages.yml", "Rebuilt every 5 minutes; the newest run wins a cell"]])}
+      <p>Benchmark runs use the repo's secrets and its own machines. GitHub gives a fork's pull request no secrets and lets only people with write access start a workflow, so contributors open a pull request and maintainers schedule the run. A maintainer can try a branch first with <code>gh workflow run pie-eval.yml --ref &lt;branch&gt;</code>, which saves nothing to the database.</p>`;
+
+  const runYourself = () => `
+      ${lead("Measure on a machine you rent, with the same harness and the same rules. You pay the provider for what you rent.")}
+      <h3>Where to rent</h3>
+      ${links([["#76b900", "RunPod", "https://www.runpod.io", "NVIDIA and AMD pods on demand; what this project rents"],
+        ["#76b900", "Lambda", "https://lambda.com", "NVIDIA cloud instances, from one GPU to eight"],
+        ["#76b900", "Vast.ai", "https://vast.ai", "A marketplace of hosts' GPUs, consumer and datacenter"],
+        ["#76b900", "CoreWeave", "https://www.coreweave.com", "Datacenter NVIDIA GPUs, for multi-GPU nodes"],
+        ["#4285F4", "Google Cloud TPU", "https://cloud.google.com/tpu", "TPU v5e and v6e; the project's TPU rows run there"],
+        ["#76b900", "AWS EC2", "https://aws.amazon.com/ec2/", "NVIDIA GPU instances, and EC2 Mac for Apple Silicon"],
+        ["#76b900", "Azure", "https://azure.microsoft.com/en-us/products/virtual-machines/", "NVIDIA and AMD GPU virtual machines"],
+        ["#76b900", "Hyperbolic", "https://www.hyperbolic.ai", "Low-cost GPUs on demand"],
+        ["#76b900", "TensorDock", "https://www.tensordock.com", "Low-cost consumer and datacenter GPUs"],
+        ["#636366", "Scaleway", "https://www.scaleway.com/en/hello-m1/", "Apple Silicon Macs in the cloud"],
+        ["#636366", "MacStadium", "https://www.macstadium.com", "Dedicated Apple Silicon Macs"]])}
+      <h3>Run the harness</h3>
+      ${commands([["#30B0C7", "Install", 'Rust and uv, then in the repo <code>uv venv &amp;&amp; uv pip install -e ".[dev,orchestrate]"</code>'],
+        ["#5E5CE6", "Build", "<code>pie-evals-node build --pie-commit &lt;sha&gt; --features cuda</code>, or <code>rocm</code>"],
+        ["#007AFF", "Plan", "<code>pie-evals jobs --tier nightly --pie-commit &lt;sha&gt; --platform &lt;id&gt; --engine pie --engine &lt;id&gt; --out jobs</code>"],
+        ["#FF9500", "Run", "<code>pie-evals-node run --job jobs/&lt;job&gt;.json --out out/&lt;job&gt; --download</code>"],
+        ["#34C759", "Read", "<code>pie-evals collect --tier nightly out/&lt;job&gt;</code>, then <code>pie-evals report --tier nightly</code>"]])}
+      <p><code>--platform</code> names your machine in <code>matrix/platforms.yaml</code>; add it there if it is new.</p>
+      <h3>Keep it fair</h3>
+      ${facts([["#34C759", "Same checkpoint", "Every engine on the same weights, and on the same cut of a slice"],
+        ["#FFCC00", "Same precision", "Weights, activations and KV cache as the release declares"],
+        ["#007AFF", "Same N", "Same workload and concurrency; sweep N until tok/s grows under 5%"],
+        ["#64D2FF", "Cold prompts", "No prefix-cache hits in a throughput run"],
+        ["#8E8E93", "One engine per GPU", "Nothing else on the device, the same memory share"],
+        ["#5E5CE6", "Slices as ratios", "A slice's tok/s compared between engines, never quoted alone"]])}
+      <h3>Share your results</h3>
+      <p>The numbers are in <code>out/&lt;job&gt;/records.jsonl</code>, the logs beside them. No workflow imports records from outside: <code>pod-import.yml</code> reads only the project's own pods, and <code>collect.yml</code> only this repo's runs. Zip the folder and attach it to an issue or your pull request, with the machine and the commands you ran. A maintainer reviews it and can measure the cells again on the project's machines to publish them.</p>
+      ${links([["#FF2D55", "Open an issue", `${REPO}/issues/new`, "Results, a question or a gap you found"],
+        ["#007AFF", "Open a pull request", `${REPO}/pulls`, "An engine, a recipe or a fix"]])}`;
 
   // Why Trust Us: the safeguards as the workloads' rows, each marked by a small square in its chapter's colour, as the
   // outline marks the chapters; the name and its line, each row opening its chapter
