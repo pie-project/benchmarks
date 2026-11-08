@@ -868,8 +868,13 @@ window.Pie = window.Pie || {};
     // Install Size teal, between Performance and By Model as the page sets it, where the export carries its sizes
     // Platform Support pink, after Install Size
     const installed = INSTALL_CARDS.find(([, , p]) => installRows(p).length);
-    const outline = [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"], installed && [installed[0], "Install Size", "#30B0C7"], supportOf(rows).list.length && ["support", "Platforms", "#FF2D55"], ["metric", "By Model", "#7a4cf5"]].filter(Boolean).map(([id, title, tint]) =>
-      `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${tint}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("");
+    // under small section names, as the Methodology's outline groups its chapters: the speed, where an engine goes, the models
+    const GROUPS = [["Speed", [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"]]],
+      ["Deployment", [installed && [installed[0], "Install Size", "#30B0C7"], supportOf(rows).list.length && ["support", "Platforms", "#FF2D55"]]],
+      ["Models", [["metric", "By Model", "#7a4cf5"]]]];
+    const outline = GROUPS.map(([head, items]) => [head, items.filter(Boolean)]).filter(([, items]) => items.length).map(([head, items]) =>
+      `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title, tint]) =>
+      `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${tint}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
     // pie's bars' texture, defined once for every chart on the page: a fine grid of dots, as Freeform and Keynote set a
     // dotted canvas, faint white over its colour, so its bars read as pie's
