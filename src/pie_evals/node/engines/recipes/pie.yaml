@@ -303,6 +303,15 @@ default:
             48.2k to 60-64k tok/s, MiMo mini 27.4k to 54-57k, DeepSeek-V4.1 mini 27.1k to 46k, Gemma-4-26B c1024
             19.7k to 22.5k (three workers lost lanes to a missed heartbeat there).
       artifact:
+        qwen3.6-27b-bf16:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 512}
+              rationale: >
+                pie states 1024 recurrent-state slots for Qwen3.6-27B here and serves them at 562, and at c512 it
+                kept 341 of the 512 lanes active on average: 7051 tok/s against vLLM's 7221. A slot for each lane
+                keeps 466 active: 7715/7700 tok/s (pie 276ebddb3, fair_def 2); 4096-row fires on top gave
+                7624/7491, so fires stay at the default. Single-request greedy output is the same with and without it.
         qwen3.8-27b-bf16:
           knobs:
             worker_threads:
