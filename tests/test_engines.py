@@ -280,7 +280,9 @@ def test_pie_cuda_tp2(tmp_path):
     eng = make(PieEngine, mode=Mode(id="tp2", tp=2))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
     assert argv[1].endswith("scripts/bench/pie_bench.py") and argv[2] == "tput"
-    assert flag_value(argv, "--engine") == "cuda_native"
+    # pie #1099 renamed pie_bench's cuda_native engine to cuda; the adapter passes the name the checkout's script knows
+    expected = "cuda_native" if '"cuda_native"' in eng.script_path().read_text() else "cuda"
+    assert flag_value(argv, "--engine") == expected
     assert flag_value(argv, "--tp-size") == "2"
     # one --device flag carrying both ranks (pie_bench splits on ",")
     assert argv.count("--device") == 1
