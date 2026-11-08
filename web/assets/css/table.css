@@ -161,6 +161,9 @@
   text-align: center;
   color: var(--color-label-secondary);
 }
+/* the grids' empty row, as a table's reads: its words at the left in grey over a hairline */
+.platform-nothing { display: flex; align-items: center; height: 36px; padding: 0 20px; font-size: 13px; color: var(--color-label-secondary); border-bottom: .5px solid var(--color-separator); }
+.platform-nothing:hover { background: var(--color-row-hover); }  /* grey under the pointer, as every table row */
 
 /* on a phone the table slides sideways inside its own frame, the row numbers and the header held in place */
 @media (max-width: 899px) {
