@@ -113,3 +113,13 @@ def test_the_site_lists_every_model_of_every_suite(config, webdb):
     assert catalog == FULL
     arms = webdb.quality_arms(config)
     assert ("pie", "qwen3.8-flash-next-mlx4") in arms and ("llamacpp", "gpt-oss-20b-llamacpp") in arms
+
+
+def test_a_gap_takes_the_newest_run_not_the_newest_tags(webdb):
+    # "old" was imported into again after "dev" ran, so it sorts first; its pie row is still the older run
+    key = ("h200-x1", "pie", "mimo", "raw")
+    tagged = {"top": {}, "old": {key: {"at": "2026-10-27 01:12", "v": 1}}, "dev": {key: {"at": "2026-11-03 00:18", "v": 2}}}
+    snaps = webdb.stack(["top", "old", "dev"], tagged, [key], lambda item, k, src: {"v": item["v"]}, lambda item: item["at"])
+    assert snaps["top"] == [{"v": 2, "stale": {"tag": "dev", "measured": "2026-11-03 00:18"}}]
+    assert snaps["old"][0]["v"] == 1 and snaps["old"][0]["stale"] is None  # a tag's own run is always its own
+    assert snaps["dev"][0]["v"] == 2 and snaps["dev"][0]["stale"] is None
