@@ -514,6 +514,12 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-welcome .board-welcome-stats > div:nth-child(n + 2) { --chip: var(--color-fill); }
 .board-welcome .board-welcome-stats > div:nth-child(n + 2) dt { color: var(--color-label-secondary); }
 .board-welcome .board-welcome-stats > div:nth-child(n + 2) dd { color: var(--color-label); }
+/* a grey figure under the pointer turns the runs' blue, its words white, in a short fade */
+.board-welcome .board-welcome-stats > div { transition: background-color .15s ease; }
+.board-welcome .board-welcome-stats > div dt, .board-welcome .board-welcome-stats > div dd { transition: color .15s ease; }
+.board-welcome .board-welcome-stats > div:nth-child(n + 2):hover { --chip: #0A84FF; }
+.board-welcome .board-welcome-stats > div:nth-child(n + 2):hover dt { color: rgba(255, 255, 255, .85); }
+.board-welcome .board-welcome-stats > div:nth-child(n + 2):hover dd { color: #fff; }
 .board-welcome .board-welcome-stats > div:nth-child(n + 4) { order: 2; margin-top: 8px; }
 .board-welcome .board-welcome-stats dt { font-size: 12px; line-height: 1; color: rgba(255, 255, 255, .85); text-transform: lowercase; }
 .board-welcome .board-welcome-stats dd { margin: 0; font: 600 12px/1 var(--font-text, inherit); letter-spacing: 0; color: #fff; }
