@@ -552,3 +552,10 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
   .board-welcome .board-welcome-stats { order: 1; }
   .board-welcome .board-welcome-actions { order: 2; position: static; flex-direction: row; align-self: flex-start; margin: 16px 0 0 -8px; }
 }
+/* Platform Support: a segment per platform in its colour, its name in white, an empty slot for each one missing */
+.board-support-name { font-size: 12px; font-weight: 500; fill: var(--color-label); }
+.board-support-count { font-size: 11px; font-weight: 500; text-anchor: end; fill: var(--color-label-secondary); font-variant-numeric: tabular-nums; }
+.board-support-label { font-size: 11px; font-weight: 600; text-anchor: middle; dominant-baseline: central; fill: #fff; pointer-events: none; }
+.board-support-empty { fill: var(--color-fill); }
+.board-support-chart.is-narrow { display: none; }  /* a phone's drawing: the name over its bar */
+@media (max-width: 599px) { .board-support-chart { display: none; } .board-support-chart.is-narrow { display: block; } }
