@@ -978,7 +978,8 @@ window.Pie = window.Pie || {};
       const metric = mode.metric;
       // the engine every cell is about, picked in the bar; pie unless another is picked. The second pick is its
       // opponent: the strongest other engine on each cell unless one is picked
-      const base = state.platform.engine || Pie.engines.primary;
+      // the Quality grid (dry) is always about pie, whatever engine the Performance view has picked, so it shows every platform
+      const base = (!dry && state.platform.engine) || Pie.engines.primary;
       const rival = null;  // every cell is set against the strongest other engine
       const snapshot = all.filter((r) => r.workload === mode.workload);
       const raw = all.filter((r) => r.workload === "raw" && Pie.store.isMeasured(r));
