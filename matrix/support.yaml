@@ -443,12 +443,7 @@ first_token_broken:
   qwen3.6-35b-a3b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.09 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
 
 # Quality grid cells no run can fill, and why: the site shows the reason on the empty cell
-quality_gaps:
-  - platform: [m2-16g, m3-16g]
-    model: nvidia-nemotron-3-ultra-550b-a55b
-    reason: "No slice fits a 16 GB Mac: the smallest, 16 of 512 experts, is 11.4 GiB of bf16 weights, more than the 10.7 GiB its GPU can use, and there is no MLX 4-bit slice"
-  - platform: [m2-16g, m3-16g]
-    model: muse-spark-open-816b-a42b
-    reason: "No slice fits a 16 GB Mac: the smallest, 2 layers and 8 experts, is 10.7 GiB of bf16 weights, all the GPU can use with no room to run, and there is no MLX 4-bit slice"
+# (the 16 GB Macs' Nemotron-3-Ultra and Muse Spark cells are filled by 4-bit cuts quantized where they are built)
+quality_gaps: []
 
 fit_factor: 1.25
