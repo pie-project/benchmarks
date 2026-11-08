@@ -321,12 +321,13 @@ window.Pie = window.Pie || {};
   // one forward pass, from the model's architecture (config/architectures.js): the bytes it reads and the arithmetic
   // it does. `tokens` go through the pass together, `logits` of them need the output head, and `requests` caches of
   // `context` tokens are read. The input embedding, Gemma's per-layer tables and Qwen3.8-Flash-Next's n-gram table are
-  // only looked up, never read whole; a mixture of experts touches more experts the more tokens the pass carries.
+  // only looked up, never read whole; a mixture of experts touches more experts the more tokens the pass carries: as
+  // many as independent, uniform picks would, unless `touched` gives the share its tokens' own routes reach.
   // `bits` is bitsOf's, per part
-  const pass = (a, { bits, tokens, logits, requests, context }) => {
+  const pass = (a, { bits, tokens, logits, requests, context, touched = null }) => {
     const body = a.total - a.emb * (a.tied ? 1 : 2) - a.ple;
     const activeBody = body - a.routed * (1 - a.k);
-    const touchedExperts = a.routed * (a.k >= 1 ? 1 : 1 - (1 - a.k) ** tokens);
+    const touchedExperts = a.routed * (a.k >= 1 ? 1 : touched ?? 1 - (1 - a.k) ** tokens);
     const weightGB = ((body - a.routed) * bits.bits + touchedExperts * bits.experts + a.emb * bits.head) / 8;
     // full attention reads every cached token, at its own layers' geometry where they have one (Gemma 4's global layers),
     // sliding attention its window; linear attention reads and writes its state
@@ -408,13 +409,14 @@ window.Pie = window.Pie || {};
   // Decode is one token at the middle of the answer, its logits included; prefill is the whole prompt in one pass,
   // with logits only for its last token, which is all a first token needs
   // a miniature's own architecture: the full model's attention kinds in the kept share of its layers, and the size
-  // webdb estimates for the cut (the embedding and head whole, the kept layers and experts)
+  // webdb estimates for the cut (the embedding and head whole, the kept layers and experts). The full model's measured
+  // routes are not the cut's: fewer experts in fewer layers route otherwise, so a slice takes the uniform picks
   const miniArch = (row) => {
     const base = archOf(row.model);
     if (!base || !row.mini_params_b) return null;
     const s = row.mini_layers / base.layers;
     const k = row.mini_k < 1 ? row.mini_k : 0;
-    return { ...base, total: row.mini_params_b, emb: row.mini_emb_b / 2, tied: false, ple: 0,
+    return { ...base, routes: null, total: row.mini_params_b, emb: row.mini_emb_b / 2, tied: false, ple: 0,
       routed: (row.mini_params_b - row.mini_active_b) / (1 - k), k, layers: row.mini_layers, shared: 0,
       full: Math.round(base.full * s), sliding: Math.round(base.sliding * s), linear: Math.round(base.linear * s) };
   };
@@ -553,6 +555,21 @@ window.Pie = window.Pie || {};
     });
   };
 
+  // the share of a mixture's routed experts one decode step of `requests` reads, where the model's architecture carries
+  // `routes`: [requests, share] pairs measured on the bench's own cold prompts, the batch decoding in lock-step. Between two
+  // measured batches the share runs straight in log2 of the batch; past the largest it holds there (a larger batch touches
+  // at least as many experts, so the limit errs high, never low). Without routes (a slice too), null: the uniform picks
+  const routeShare = (a, requests) => {
+    const r = a.routes;
+    if (!r?.length || a.k >= 1) return null;
+    if (requests <= r[0][0]) return r[0][1];
+    for (let i = 1; i < r.length; i++) {
+      const [n0, s0] = r[i - 1], [n1, s1] = r[i];
+      if (requests <= n1) return s0 + ((s1 - s0) * Math.log2(requests / n0)) / Math.log2(n1 / n0);
+    }
+    return r[r.length - 1][1];
+  };
+
   // batched decode on a machine: `requests` decode together, each one token a step with its logits, each with its
   // cache at the middle of its answer; each request's prompt is prefilled once, and its arithmetic is spread over the
   // steps of its answer, since it counts against the same FLOPS but not as output. The prompt's pass writes the answer's
@@ -570,7 +587,8 @@ window.Pie = window.Pie || {};
     const requests = workload.concurrency || 1;
     const bits = bitsOf(scheme);
     const prompt = workload.prompt_tokens, answer = workload.output_tokens;
-    const p = pass(a, { bits, tokens: requests, logits: requests, requests, context: prompt + answer / 2 });
+    // a step reads the experts its requests route to: the measured share where the model has one
+    const p = pass(a, { bits, tokens: requests, logits: requests, requests, context: prompt + answer / 2, touched: routeShare(a, requests) });
     // one request's prompt in its own pass, its last token's logits the answer's first token
     const pre = pass(a, { bits, tokens: prompt, logits: 1, requests: 1, context: prompt });
     // the times below are for `requests` tokens out: (D - 1) / D of a decode step, and every request's prompt over its answer
