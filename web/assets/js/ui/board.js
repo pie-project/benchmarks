@@ -604,34 +604,77 @@ window.Pie = window.Pie || {};
   // Platform Support: the platforms each engine has a measured run on, out of every platform the site shows (a hidden
   // one joins once it is shown again)
   const SUPPORT_TINTS = { mac: "#636366", nvidia: "#76b900", amd: "#ed1c24", tpu: "#4285f4", android: "#1C1C1E", web: "#8e8e93" };  // the platforms' card colours
+  // one row a project: its builds for other platforms join it (WebLLM and MLC LLM are MLC's, llama.cpp's WebGPU build
+  // llama.cpp's, vLLM Metal vLLM's, MLX Swift MLX's); each cell's card names the build that ran there
+  const FAMILY = { webllm: "mlc", "llamacpp-webgpu": "llamacpp", "vllm-metal": "vllm", "mlx-swift": "mlxlm" };
+  const FAMILY_NAMES = { mlc: "MLC" };
+  const BUILDS = { webllm: "WebLLM", mlc: "MLC LLM", "llamacpp-webgpu": "llama.cpp WebGPU", "vllm-metal": "vLLM Metal", "mlx-swift": "MLX Swift" };
+  // where an engine can run at all, from the catalog's os and backends (matrix/engines.yaml): a platform's OS, and its
+  // GPU backend where the engine names its backends; a browser tab runs only the builds made for WebGPU
+  const PLATFORM_OS = { mac: ["macos"], nvidia: ["linux"], amd: ["linux"], tpu: ["linux"], android: ["android", "ios"], web: ["linux"] };
+  const PLATFORM_BACKEND = { mac: "metal", nvidia: "cuda", amd: "rocm", tpu: "xla", web: "webgpu" };
+  const canRun = (eng, p) => {
+    const list = (v) => (v || "").split(",").map((x) => x.trim()).filter(Boolean);
+    const os = list(eng.os), backends = list(eng.backends);
+    if (!os.some((o) => PLATFORM_OS[p]?.includes(o))) return false;
+    if (p === "web") return backends.includes("webgpu");
+    return !backends.length || !PLATFORM_BACKEND[p] || backends.includes(PLATFORM_BACKEND[p]);
+  };
   const supportOf = (rows) => {
-    const ran = {};
+    const ran = {}, all = {};
     for (const r of rows) {
-      const p = Pie.platformOf(Pie.store.index.hardware[r.hardware] || {});
+      // every platform here, the hidden ones too (Mobile, AMD): the table is where an engine's reach is read
+      const p = Pie.platformOfAll(Pie.store.index.hardware[r.hardware] || {});
       if (!p) continue;
-      const on = ((ran[r.engine] ||= {})[p] ||= { models: new Set(), machines: new Set() });
+      const setup = `${r.hardware}|${r.model}|${r.workload}`;
+      (all[p] ||= new Set()).add(setup);
+      const on = ((ran[FAMILY[r.engine] || r.engine] ||= {})[p] ||= { setups: new Set(), models: new Set(), machines: new Set(), builds: new Set() });
+      on.setups.add(setup);
       on.models.add(r.model);
       on.machines.add(r.hardware);
+      on.builds.add(r.engine);
     }
-    const platforms = PLATFORM_ORDER.filter((p) => Object.values(ran).some((on) => on[p]));
-    // most platforms first; a tie by its first platform, so the engines of one platform sit together
-    const list = engineIds().filter((e) => ran[e]).map((e) => ({ e, on: platforms.filter((p) => ran[e][p]), ran: ran[e] }))
-      .sort((a, b) => b.on.length - a.on.length || platforms.indexOf(a.on[0]) - platforms.indexOf(b.on[0]));
-    return { platforms, list };
+    // a project can run where any of its builds can; one with no run yet still gets its row
+    const able = {};
+    for (const eng of Pie.store.tables.engines || []) {
+      const fam = FAMILY[eng.id] || eng.id;
+      for (const p of PLATFORM_ORDER) if (canRun(eng, p)) (able[fam] ||= new Set()).add(p);
+      if (able[fam]) ran[fam] ||= {};
+    }
+    const platforms = PLATFORM_ORDER.filter((p) => all[p]);
+    const order = engineIds();
+    const list = Object.keys(ran).filter((e) => order.includes(e)).map((e) => {
+      const share = (p) => (ran[e][p] ? ran[e][p].setups.size / all[p].size : 0);
+      return { e, ran: ran[e], able: able[e] || new Set(), on: platforms.filter((p) => ran[e][p]), reach: platforms.reduce((t, p) => t + share(p), 0), share };
+    }).sort((a, b) => b.on.length - a.on.length || b.reach - a.reach || order.indexOf(a.e) - order.indexOf(b.e));
+    return { platforms, list, all };
   };
-  // a table of checks, as a comparison chart sets one: a row per engine, a column per platform under its tile, a check
-  // where the engine ran; each check's card counts the models and machines behind it
-  const CHECK = '<svg class="support-check" viewBox="0 0 16 16" aria-label="Yes"><path d="M3.5 8.5l3 3 6-7"/></svg>';
-  const supportTable = ({ platforms, list }) => {
-    const many = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
-    const head = platforms.map((p) => `<th scope="col"><span class="support-platform"><span class="sidebar-glyph" style="--tint: ${SUPPORT_TINTS[p] || Pie.schema[p]?.tint}">${Pie.icon(p)}</span>${esc(Pie.schema[p]?.short || p)}</span></th>`).join("");
-    const body = list.map(({ e, on, ran }) => `<tr>
-        <th scope="row"><span class="support-engine">${Pie.engines.logo(e)}${esc(names().engine(e))}</span></th>
-        ${platforms.map((p) => (ran[p]
-          ? `<td data-tip-engine="${esc(e)}" data-tip-head="${esc(names().engine(e))}" data-tip-value="${esc(Pie.schema[p]?.label || p)}" data-tip-rows="${esc(JSON.stringify([["Ran", `${many(ran[p].models.size, "model")}, ${many(ran[p].machines.size, "machine")}`]]))}">${CHECK}</td>`
-          : '<td class="is-off"><span aria-label="No">–</span></td>')).join("")}
-        <td class="support-count">${on.length} of ${platforms.length}</td></tr>`).join("");
-    return `<div class="support-wrap"><table class="support-table"><thead><tr><th scope="col"><span class="support-hidden">Engine</span></th>${head}<th scope="col" class="support-count">Platforms</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  // a grid as the head-to-head ones are drawn: a row per project (its name, then its logo), a column per platform (its
+  // name upright over its tile), each tile the share of the platform's setups (machine, model and workload any engine
+  // ran there) the project ran, a step of green deeper for every quarter; a grey tile where it could run and has not,
+  // none where it cannot run at all; the scale at the right, the count of platforms after each row
+  const supportTable = ({ platforms, list, all }) => {
+    const name = (e) => FAMILY_NAMES[e] || names().engine(e);
+    const tip = (e, p, value, rows) => `data-tip-engine="${esc(e)}" data-tip-head="${esc(`${name(e)} on ${Pie.schema[p]?.short || p}`)}" data-tip-value="${esc(value)}" data-tip-rows="${esc(JSON.stringify(rows))}"`;
+    const mark = (e) => `<svg class="board-matrix-logo" viewBox="0 0 16 16" aria-hidden="true">${e === "splash" ? '<image href="assets/img/engines/splash-glyph.png" width="16" height="16"/>' : logo(e, 0, 0, 16)}</svg>`;
+    const row = (e) => `<span class="board-matrix-engine"><span class="board-matrix-name">${esc(SHORT[e] || name(e))}</span><span class="board-matrix-slot">${mark(e)}</span></span>`;
+    const col = (p) => `<span class="board-matrix-engine is-col"><span class="board-matrix-name">${esc(Pie.schema[p]?.short || p)}</span><span class="board-matrix-slot"><span class="sidebar-glyph" style="--tint: ${SUPPORT_TINTS[p] || Pie.schema[p]?.tint}">${Pie.icon(p)}</span></span></span>`;
+    const cell = (r, p) => {
+      const on = r.ran[p];
+      if (on) {
+        const share = r.share(p), step = share >= .875 ? 4 : share >= .625 ? 3 : share >= .375 ? 2 : 1;
+        const builds = [...on.builds].filter((x) => BUILDS[x]);
+        return `<td class="is-win" data-step="${step}" ${tip(r.e, p, `${Math.round(share * 100)}% of ${Pie.schema[p]?.short || p} benchmarks`, [["Ran", `${on.setups.size.toLocaleString("en-US")} of ${all[p].size.toLocaleString("en-US")}`], ["Models", String(on.models.size)], ["Machines", String(on.machines.size)], ...(builds.length ? [["As", builds.map((x) => BUILDS[x]).join(", ")]] : [])])}>${Math.round(share * 100) || "<1"}%</td>`;
+      }
+      return r.able.has(p) ? `<td ${tip(r.e, p, "Not measured yet", [["Supported", "no run yet"]])}></td>` : `<td class="is-self" ${tip(r.e, p, "Cannot run", [["Build", "none for this platform"]])}></td>`;
+    };
+    const key = `<span class="board-matrix-key" aria-hidden="true"><span class="board-matrix-tick">100%</span><span class="board-matrix-bar">${[4, 3, 2, 1].map((k) => `<i class="is-win" data-step="${k}"></i>`).join("")}<i data-step="0"></i></span><span class="board-matrix-tick">0</span></span>`;
+    // the two empty kinds keyed under the grid, as the head-to-head cards key their dashed tiles
+    const legend = '<span class="board-support-keys"><span><i class="is-grey"></i>Not run yet</span><span><i class="is-blank"></i>Can\'t run</span></span>';
+    return `<div class="board-matrix-frame is-support">${key}${legend}<table class="board-matrix is-support" aria-label="Share of each platform's benchmarks each engine ran">
+      <thead><tr><th></th>${platforms.map((p) => `<th scope="col">${col(p)}</th>`).join("")}<th scope="col" class="board-matrix-total">Platforms</th></tr></thead>
+      <tbody>${list.map((r) => `<tr><th scope="row">${row(r.e)}</th>${platforms.map((p) => cell(r, p)).join("")}<td class="board-matrix-total">${r.on.length}/${platforms.length}</td></tr>`).join("")}</tbody>
+    </table></div>`;
   };
   const supportSection = (rows) => {
     const support = supportOf(rows);
@@ -640,7 +683,7 @@ window.Pie = window.Pie || {};
             <div class="board-section-text"><h1 class="board-title">Platform Support</h1>
             <p class="board-lede">Platforms each engine ran on here.</p></div>
           </div>
-          ${card("support", "Platforms", "Platforms with a measured run", supportTable(support), "", false)}`;
+          ${card("support", "Platforms", "Share of each platform's benchmarks run", supportTable(support), "", false)}`;
   };
 
   // the changelog: each release measured, newest first, read from the runs themselves; development runs are left out

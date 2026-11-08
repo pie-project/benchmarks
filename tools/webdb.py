@@ -282,6 +282,7 @@ def engines() -> list[dict]:
         name, lic, repo = ENGINE_META.get(e["id"], (e["id"], None, None))
         rows.append({"id": e["id"], "name": name, "version": e.get("pin") or "main", "license": lic, "repo": repo,
                      "os": ", ".join(e.get("os", [])), "formats": ", ".join(e.get("formats", [])),
+                     "backends": ", ".join(e.get("backends", [])),  # where it can run at all, for Platform Support
                      **({"color": ENGINE_COLOR[e["id"]]} if e["id"] in ENGINE_COLOR else {}),
                      **dict(zip(("raw", "speculation"), ("Yes" if ok else "No" for ok in DECODING.get(e["id"], (True, False)))))})
     return rows

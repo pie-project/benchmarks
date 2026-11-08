@@ -16,6 +16,7 @@ window.Pie = window.Pie || {};
   Pie.hiddenPlatforms = new Set(["amd", "android"]);
   // the platform a machine belongs to, as the sidebar groups them; the platform pages and the hardware table share it
   Pie.platformOf = (hw) => { const p = platformOfAll(hw); return Pie.hiddenPlatforms.has(p) ? null : p; };
+  Pie.platformOfAll = (hw) => platformOfAll(hw);  // a hidden platform too, for the one table that lists them all (Platform Support)
   const platformOfAll = (hw) => (hw.class === "android" ? "android"  // a phone first: an iPhone's vendor is Apple too
     : hw.class === "mac" || hw.vendor === "Apple" ? "mac"
     : hw.backend === "xla" ? "tpu"

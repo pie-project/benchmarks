@@ -546,26 +546,21 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 }
 /* Platform Support: a segment per platform in its colour, its name in white, an empty slot for each one missing */
 
-/* Platform Support as a table of checks: the engine at the left, a column per platform under its tile, a green check
-   where it ran and a faint dash where it did not, the count at the right; hairlines between the rows */
-.support-wrap { overflow-x: auto; margin-top: 4px; }
-.support-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.support-table th, .support-table td { padding: 9px 6px; text-align: center; vertical-align: middle; border-bottom: .5px solid var(--color-separator); }
-.support-table tbody tr:last-child > * { border-bottom: 0; }
-.support-table thead th { padding-top: 0; font-size: 11px; font-weight: 500; color: var(--color-label-secondary); }
-.support-table th[scope="row"] { padding-left: 0; text-align: left; font-weight: 500; color: var(--color-label); white-space: nowrap; }
-.support-engine { display: inline-flex; align-items: center; gap: 10px; }
-.support-platform { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
-.support-table .sidebar-glyph { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; background: var(--tint); }
-.support-table .sidebar-glyph svg { width: 12px; height: 12px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.support-table .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
-.support-check { width: 16px; height: 16px; vertical-align: middle; fill: none; stroke: #34C759; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.support-table td.is-off { color: var(--color-label-tertiary); }
-.support-table .support-count { padding-right: 0; text-align: right; font-size: 12px; color: var(--color-label-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.support-table td[data-tip-head] { cursor: default; }
-.support-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+/* Platform Support in the head-to-head grids' own tiles, scale and labels (.board-matrix): its frame grows with its rows
+   instead of their fixed height, the platform tiles small in the logos' slots, the count of platforms a quiet last column */
+.board-matrix-frame.is-support { height: auto; padding: 4px 28px 22px 0; }
+.board-support-keys { position: absolute; left: 0; bottom: 1px; display: flex; gap: 12px; font-size: 9px; line-height: 1; color: var(--color-label-secondary); }  /* at the foot's left, as Speculative sits */
+.board-support-keys span { display: inline-flex; align-items: center; gap: 4px; }
+.board-support-keys i { width: 12px; height: 8px; border-radius: 2px; background: var(--color-fill); }
+.board-support-keys i.is-blank { background: none; box-shadow: inset 0 0 0 .5px var(--color-label-tertiary); }
+.board-matrix.is-support .sidebar-glyph { display: inline-grid; place-items: center; width: 14px; height: 14px; border-radius: 4px; background: var(--tint); box-shadow: inset 0 0 0 .5px rgba(128, 128, 128, .4); }  /* a hairline keeps Mobile's black tile on a dark page */
+.board-matrix.is-support .sidebar-glyph svg { width: 9px; height: 9px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.board-matrix.is-support .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
+.board-matrix.is-support td.board-matrix-total { padding-left: 6px; font-weight: 400; color: var(--color-label-secondary); }
+.board-matrix.is-support thead .board-matrix-total { padding-left: 6px; vertical-align: bottom; }
 @media (max-width: 599px) {
-  .support-table th, .support-table td { padding: 8px 3px; }
-  .support-table .support-count { display: none; }  /* the checks say it on a phone */
-  .support-engine { gap: 8px; }
+  /* a phone keeps the tiles and the names: the scale and the count go, the tiles narrow, the grid starts at the left */
+  .board-matrix-frame.is-support { justify-content: flex-start; padding-right: 0; }
+  .board-matrix-frame.is-support .board-matrix-key, .board-matrix.is-support .board-matrix-total { display: none; }
+  .board-matrix.is-support td { width: 34px; min-width: 34px; max-width: 34px; }
 }
