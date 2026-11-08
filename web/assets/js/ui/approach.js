@@ -7,6 +7,13 @@ window.Pie = window.Pie || {};
 
   const REPO = "https://github.com/pie-project/benchmarks";  // the open repository the Welcome chapter points to
   // [outline group, [id, title, colour, summary, body]]
+  // the Limits chapters: one a setup, in the order the grid's setup menu lists them
+  const LIMITS = [
+    ["decode", "Single Decode", "#FF3B30", "One request writing its answer: the ceiling each engine's Single Decode is measured against."],
+    ["prefill", "Single Prefill", "#FF9500", "One request reading its prompt: the ceiling each engine's Single Prefill is measured against."],
+    ["batching", "Batched Decode", "#34C759", "Many requests writing at once: the ceiling each engine's Batched Decode is measured against."],
+    ["pbatch", "Batched Prefill", "#007AFF", "Many prompts read at once: the ceiling each engine's Batched Prefill is measured against."],
+  ];
   const CHAPTERS = [
     ["", [  // Welcome on its own at the top, under no heading, as the sidebar sets Overview
       ["welcome", "Welcome", "#0A84FF", "Open benchmarks for every inference engine.", () => welcome()],
@@ -37,10 +44,10 @@ window.Pie = window.Pie || {};
         ${tables("fit")}`],
     ]],
     ["Limits", [
-      // the former Roofline page: the limit for the workload picked in its bar
-      ["limit", "Theoretical Limit", "#FF3B30", "The roofline ceiling each engine is measured against.", () => `
-        <p>These limits follow the roofline model (Williams et al., 2009): a step can run no faster than its memory traffic at peak bandwidth or its FLOPs at peak compute, whichever takes longer. Kernel Efficiency is an engine's measured throughput as a percentage of this limit. Select a workload to see its derivation.</p>
-        ${tables("limit")}`],
+      // the former Roofline page, one chapter a setup: each draws the limit of its own workload, no setup to pick
+      ...LIMITS.map(([setup, title, colour, summary]) => [`limit-${setup}`, title, colour, summary, () => `
+        <p>These limits follow the roofline model (Williams et al., 2009): a step can run no faster than its memory traffic at peak bandwidth or its FLOPs at peak compute, whichever takes longer. Kernel Efficiency is an engine's measured throughput as a percentage of this limit.</p>
+        ${tables(`limit:${setup}`)}`]),
     ]],
     ["Quality", [
       ["parity", "Parity Checks", "#007AFF", "How we confirm every engine computes the same model.", () => parity()],
@@ -158,7 +165,7 @@ window.Pie = window.Pie || {};
       ["#8E8E93", "Dedicated machines", "Nothing else runs during a benchmark", "setup"],
       ["#FF9500", "Repeated runs", "Warmup, then rounds until the noise is small", "measurement"],
       ["#007AFF", "Same results", "Every engine checked to compute the same model", "parity"],
-      ["#FF3B30", "Limit check", "Above the theoretical maximum is a CI Error", "limit"],
+      ["#FF3B30", "Limit check", "Above the theoretical maximum is a CI Error", "limit-decode"],
       ["#30B0C7", "One database", db(), "measurement"],
       ["#5E5CE6", "Open source", "Harness, recipes and raw data on GitHub", null]];
     const mark = (colour) => `<span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span>`;
@@ -170,7 +177,9 @@ window.Pie = window.Pie || {};
   // a chapter's formula tables, from the Roofline and Memory pages they replace
   let viewState = null;
   const tables = (kind) => (viewState && Pie.methods?.chapter ? Pie.methods.chapter(kind, viewState).html : "");
-  const keyOf = () => (viewState && Pie.methods?.chapter && (current === "limit" || current === "fit") ? Pie.methods.chapter(current, viewState).key : current);
+  // a chapter with formula tables: a Limits one (limit-<setup>) or Memory Fit, the kind its tables are drawn for
+  const kindOf = (id) => (id === "fit" ? "fit" : id.startsWith("limit-") ? `limit:${id.slice(6)}` : null);
+  const keyOf = () => (viewState && Pie.methods?.chapter && kindOf(current) ? Pie.methods.chapter(kindOf(current), viewState).key : current);
 
   // the outline as the overview draws its own: a heading per group, a coloured square and a name per chapter
   const outline = CHAPTERS.map(([head, items]) => `${head ? `<div class="board-outline-head">${head}</div>` : ""}${items.map(([id, title, colour]) =>
@@ -193,7 +202,7 @@ window.Pie = window.Pie || {};
     // a chapter as the Overview sets a section: its title and line above, the text in a card of the Overview's shape
     element.querySelector(".approach-main").innerHTML = `
       <div class="board-section-head"><div class="board-section-text"><h1 class="board-title">${title}</h1>
-        <p class="board-lede">${summary}</p></div>${current === "limit" ? Pie.methods?.setupPick?.() || "" : ""}</div>
+        <p class="board-lede">${summary}</p></div></div>
       <article class="board-card method-article${typeof body === "function" ? " has-tables" : ""}">
         <div class="method-pane-body">${typeof body === "function" ? body() : body}</div>
       </article>
@@ -257,8 +266,8 @@ window.Pie = window.Pie || {};
         element.dataset.ready = "1";
         // Spec Decode's acceptance, typed in the limit's bar, works out its rows again
         // (not while the field is being typed in, which a redraw would take the focus from)
-        Pie.bindSpecField?.(element, () => { if (current === "limit" && !document.activeElement?.matches("[data-alpha]")) draw(); });
-        element.addEventListener("focusout", (event) => { if (event.target.matches("[data-alpha]") && current === "limit") requestAnimationFrame(draw); });
+        Pie.bindSpecField?.(element, () => { if (current.startsWith("limit-") && !document.activeElement?.matches("[data-alpha]")) draw(); });
+        element.addEventListener("focusout", (event) => { if (event.target.matches("[data-alpha]") && current.startsWith("limit-")) requestAnimationFrame(draw); });
         draw();
       } else if (keyOf() !== drawn) draw();
     },

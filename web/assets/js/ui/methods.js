@@ -436,7 +436,7 @@ window.Pie = window.Pie || {};
     // name, linked
     // Memory has no workload to pick, but keeps the bar, empty, so the page sits under the toolbar as the rest do and
     // filters have a place when it grows them
-    return `${c === FIT ? `<div class="platform-bar limit-bar methods-bar" aria-hidden="true"></div>` : bar}
+    return `${c === FIT || kind === "fixed" ? `<div class="platform-bar limit-bar methods-bar" aria-hidden="true"></div>` : bar}
       <div class="lim-tables">
         <table class="data-table lim-table">
           <thead><tr><th class="row-number" aria-label="Row"></th><th>Term</th><th>Definition</th><th class="lim-fill"></th><th class="lim-source">Reference</th></tr></thead>
@@ -493,9 +493,12 @@ window.Pie = window.Pie || {};
     // that changes when they would read differently
     chapter(kind, viewState) {
       state = viewState;
+      // a Limits chapter names its setup (limit:<setup>); it draws that one, with no setup to pick above it
+      const fixed = kind.startsWith("limit:") ? kind.slice(6) : null;
       // no Speculative Decode here: the grid on it opens the first chapter
-      current = CHAPTERS.some((c) => c.id === state.platform.mode && c.id !== "spec") ? state.platform.mode : CHAPTERS[0].id;
-      return { html: doc(kind), key: `${kind === "fit" ? "fit" : current}@${state.release}@${Pie.specAlpha}` };
+      current = fixed && CHAPTERS.some((c) => c.id === fixed) ? fixed
+        : CHAPTERS.some((c) => c.id === state.platform.mode && c.id !== "spec") ? state.platform.mode : CHAPTERS[0].id;
+      return { html: doc(fixed ? "fixed" : kind), key: `${kind === "fit" ? "fit" : current}@${state.release}@${Pie.specAlpha}` };
     },
     render(viewState) {
       state = viewState;
