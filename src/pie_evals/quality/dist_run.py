@@ -31,6 +31,10 @@ WORKLOAD = "lc-2k-128"
 #: the same texts. A fresh greedy pass is not repeatable (MiniMax-M3.1-Flash mini60 on h100-sxm-x1: six runs of one pie
 #: build gave KL 0.084 to 0.187 as vLLM's answers changed), so the gate read the reference's draw, not pie.
 TEXTS_DIR = "parity-texts"
+#: the site's line for a slice's KL (web/assets/js/ui/checks.js KL_PASS). A first-token run past it also measures the
+#: reference against itself with only its kernels changed; where that spread is past the line too, the slice's first
+#: token moves under rounding alone and cannot tell pie from noise, so the run checks it on the answers instead
+KL_PASS = 0.15
 
 
 def saved_texts(matrix_dir: str, artifact_id: str, rendered: list[str]) -> list[str] | None:
@@ -167,12 +171,12 @@ def _free_port() -> int:
     return free_port()
 
 
-def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int = 1) -> Server:
+def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int = 1, extra: list[str] | None = None) -> Server:
     port = _free_port()
     gmu = engine.recipe.get("gpu_mem_util", 0.90) or 0.90
     argv = [engine.python, "-m", "vllm.entrypoints.openai.api_server", "--model", str(snapshot), "--port", str(port), "--host", "127.0.0.1",
             "--tensor-parallel-size", str(tp), "--max-model-len", "4096", "--max-logprobs", str(kl.TOPK), "--gpu-memory-utilization", str(gmu),
-            "--no-enable-prefix-caching", "--trust-remote-code", "--max-num-seqs", str(max_seqs)]
+            "--no-enable-prefix-caching", "--trust-remote-code", "--max-num-seqs", str(max_seqs), *(extra or [])]
     if engine.artifact.kv_dtype and str(engine.artifact.kv_dtype) not in ("bf16", "auto", "fp16"):
         argv += ["--kv-cache-dtype", str(engine.artifact.kv_dtype)]
     if engine.recipe.get("attention_backend"):
@@ -224,12 +228,12 @@ def mlx_python(vlm: bool) -> str:
     return os.environ.get("MLX_VLM_PY" if vlm else "MLX_PY", sys.executable)
 
 
-def mlx_side(snapshot: Path, rendered: list[str], greedy: bool, log_path: Path, vlm: bool = False) -> tuple[list[str], list[list[dict[int, float]]]]:
+def mlx_side(snapshot: Path, rendered: list[str], greedy: bool, log_path: Path, vlm: bool = False, split: bool = False) -> tuple[list[str], list[list[dict[int, float]]]]:
     """mlx-lm (or mlx-vlm) in its own interpreter: greedy answers and teacher-forced top-20 over prompt+answer."""
     script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / ("parity_mlxvlm.py" if vlm else "parity_mlx.py")
     with tempfile.TemporaryDirectory() as tmp:
         inp, out = Path(tmp) / "in.json", Path(tmp) / "out.json"
-        inp.write_text(json.dumps({"prompts": rendered, "max_tokens": ANSWER_TOKENS, "topk": kl.TOPK, "greedy": greedy}))
+        inp.write_text(json.dumps({"prompts": rendered, "max_tokens": ANSWER_TOKENS, "topk": kl.TOPK, "greedy": greedy, "split": split}))
         with log_path.open("w") as fh:
             subprocess.run([mlx_python(vlm), str(script), str(snapshot), str(inp), str(out)], stdout=fh, stderr=subprocess.STDOUT, check=True, timeout=6 * 3600)
         d = json.loads(out.read_text())
@@ -248,7 +252,10 @@ def _reason(e: Exception, out_dir: Path, art_id: str, ref_name: str) -> str:
     return f"{type(e).__name__}: {str(e).strip().splitlines()[-1][:400] if str(e).strip() else ''}"
 
 
-def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log, texts=None):
+def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log, texts=None,
+               again: bool = False):
+    """The reference's answers and teacher-forced top-20s. ``again``: the same model, prompts and texts with only its
+    kernels changed (vLLM eager instead of its CUDA graphs, mlx-lm reading each prompt in two pieces), for its spread."""
     from pie_evals.node.engines import get_engine
     from pie_evals.node.engines.recipes import load_recipe
 
@@ -263,7 +270,7 @@ def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, back
                 ensure_baseline("vllm", pin, backend=backend, log=log)
         ref_engine = get_engine("vllm")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
         summary["ref_version"] = ref_engine.version()
-        srv = vllm_server(ref_engine, snapshot, tp, out_dir / f"{art.id}-vllm.log")
+        srv = vllm_server(ref_engine, snapshot, tp, out_dir / f"{art.id}-vllm{'-eager' if again else ''}.log", extra=["--enforce-eager"] if again else None)
         try:
             model = srv.wait(3600)
             # a render that already opens with BOS: vLLM would prepend a second one, pie does not (pie #1231), and
@@ -280,11 +287,21 @@ def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, back
     version = subprocess.run([mlx_python(vlm), "-c", f"import {pkg}; print({pkg}.__version__)"], capture_output=True, text=True).stdout.strip()
     summary["ref_version"] = f"mlx-vlm {version}" if vlm else version
     ref_texts = texts if texts is not None else mlx_side(snapshot, rendered, True, out_dir / f"{art.id}-mlx-greedy.log", vlm)[0]
-    _, ref_scored = mlx_side(snapshot, [r + t for r, t in zip(rendered, ref_texts, strict=True)], False, out_dir / f"{art.id}-mlx-score.log", vlm)
+    _, ref_scored = mlx_side(snapshot, [r + t for r, t in zip(rendered, ref_texts, strict=True)], False,
+                             out_dir / f"{art.id}-mlx-score{'-split' if again else ''}.log", vlm, split=again)
     return ref_texts, ref_scored
 
+
+def reference_spread(ref_scored, again_scored, expect: list[int], how: str) -> dict:
+    """The reference against itself with only its kernels changed, at each prompt's last position: the KL a correct
+    engine can land at on this slice by rounding alone."""
+    s = kl.last_position(ref_scored, again_scored, expect)
+    return {"ref_self_kl": s["kl_mean"], "ref_self_top1": s["top1_agree"], "ref_self": how}
+
+
 def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir: str = "matrix", store_dir: str | None = None,
-               tag: str | None = None, tag_kind: str | None = None, out_dir: Path = Path("parity-out"), vllm_pin: str | None = None, log=print) -> dict:
+               tag: str | None = None, tag_kind: str | None = None, out_dir: Path = Path("parity-out"), vllm_pin: str | None = None, log=print,
+               first_token: bool | None = None, carry: dict | None = None) -> dict:
     from pie_evals.node.engines import get_engine
     from pie_evals.node.engines.recipes import load_recipe
     from pie_evals.node.importer import ensure_artifact, needs_import
@@ -305,7 +322,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     snapshot = ensure_snapshot(art, hf_cache_dir(), pie_root=pie_root, python=os.environ.get("PIE_PY", "python3"), download=True, log=log)
     tok = _tokenizer(snapshot)
     # PARITY_FIRST_TOKEN=1: word-salad prompts, the same tokens on both engines, one token out: KL of the first-token distribution
-    first = os.environ.get("PARITY_FIRST_TOKEN") == "1"
+    first = os.environ.get("PARITY_FIRST_TOKEN") == "1" if first_token is None else first_token
     rendered = kl.gibberish(tok) if first else _render(snapshot, prompts(log))
     t0 = time.monotonic()
     ref_name = "mlxlm" if backend == "metal" else "vllm"
@@ -315,6 +332,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
                      "prompts": len(rendered), "answer_tokens": 1 if first else ANSWER_TOKENS}
     if first:
         summary["mode"] = "first_token"
+    summary.update(carry or {})  # an answers check the first token handed over: what that pass measured
 
     # 1. the reference: greedy answers, then the teacher-forced distributions over prompt + answer.
     # A reference that cannot run the model is a cell of its own (the site's crossed-out circle); pie still runs.
@@ -394,7 +412,27 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
 
     # 3. compare over the answer positions; first-token mode: the last position of each prompt
     if first:
-        summary.update(kl.last_position(ref_scored, pie_scored, [len(tok.encode(r, add_special_tokens=False)) for r in rendered]))
+        expect = [len(tok.encode(r, add_special_tokens=False)) for r in rendered]
+        summary.update(kl.last_position(ref_scored, pie_scored, expect))
+        # past the line: is it pie, or the slice? The reference against itself with only its kernels changed. A slice
+        # cut so deep that rounding moves its first token past the line (Gemma-4-26B-A4B at 24 of 128 experts on
+        # rtx4090-x1: vLLM eager against its CUDA graphs 0.44, against SGLang 0.35, pie 0.40) is checked on the answers
+        local = "ref_platform" not in summary and (ref_name == "mlxlm" or backend in ("cuda", "rocm"))
+        if local and (summary.get("kl_mean") or 0) >= KL_PASS and os.environ.get("PARITY_REF_SPREAD", "1") == "1":
+            busy = device_idle(backend)
+            if busy:
+                raise RuntimeError(f"device not idle before the reference's second pass: {busy}")
+            _, again = _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, {}, out_dir, log,
+                                  ref_texts, again=True)
+            summary.update(reference_spread(ref_scored, again, expect, "vLLM --enforce-eager" if ref_name == "vllm" else "mlx-lm, prompt in two pieces"))
+            log(f"first-token {art.id}@{platform_id}: {ref_name} against itself ({summary['ref_self']}): KL {summary['ref_self_kl']}")
+            if summary["ref_self_kl"] is not None and summary["ref_self_kl"] >= KL_PASS:
+                (out_dir / f"{art.id}-{platform_id}-first-token.json").write_text(json.dumps(summary, indent=1))
+                log(f"first-token {art.id}@{platform_id}: the reference moves past {KL_PASS} by itself; checked on the answers instead")
+                carry = {"first_kl_mean": summary["kl_mean"], "first_top1": summary["top1_agree"], "first_self_kl": summary["ref_self_kl"],
+                         "first_self_top1": summary["ref_self_top1"], "first_self": summary["ref_self"]}
+                return run_parity(artifact_id, platform_id, pie_root=pie_root, matrix_dir=matrix_dir, store_dir=store_dir, tag=tag, tag_kind=tag_kind,
+                                  out_dir=out_dir, vllm_pin=vllm_pin, log=log, first_token=False, carry=carry)
         if summary.get("first_token_topk"):
             summary["first_token_topk"]["tokens"] = [tok.decode([t]) for t in summary["first_token_topk"]["ids"]]
         summary["score"], summary["n"] = summary["top1_agree"], summary["positions"]

@@ -48,6 +48,7 @@ window.Pie = window.Pie || {};
     `KL p99 ${kl(r.kl_p99)}, max ${kl(r.kl_max)}`,
     `Top-1 agreement ${pct(r.top1_agree)}${r.top1_agree_decisive != null ? `, ${pct(r.top1_agree_decisive)} where ${engineLabel(r.ref_engine)} leads by 0.5 nats (${r.decisive_positions})` : ""}`,
     r.ref_top1_p != null ? `${engineLabel(r.ref_engine)} top-1 holds ${pct(r.ref_top1_p)}, its top-20 ${pct(r.ref_topk_mass)}` : "",
+    isNum(r.first_self_kl) ? `Checked on the answers: first-token KL ${kl(r.first_kl_mean)}, ${engineLabel(r.ref_engine)} against itself ${kl(r.first_self_kl)} (${r.first_self})` : "",
     `Exact match ${pct(r.exact_match, 0)}`,
     `${r.positions ?? "–"} positions over ${r.prompts ?? "–"} prompts${r.misaligned_texts ? `, ${r.misaligned_texts} misaligned` : ""}`,
     `Pie ${short(r.version) || "–"}, ${engineLabel(r.ref_engine)} ${r.ref_version || "–"}`,
@@ -240,7 +241,9 @@ window.Pie = window.Pie || {};
     .sort((a, b) => byPrefer(platform, (r) => r.ref_engine)(a, b) || String(b.date || "").localeCompare(String(a.date || "")))[0] || null;
   // pass or fail per cell: a slice passes when its first-token distribution stays within 0.15 nats of the reference
   // engine's (kernel and rounding noise sits near 0.001, a wrong layer or template well above 0.15); a full model passes
-  // when Pie's MATH-500 score is within 5 points of the reference engine's
+  // when Pie's MATH-500 score is within 5 points of the reference engine's. A slice whose first token moves past the line
+  // under the reference's own rounding (first_self_kl: the reference against itself, only its kernels changed) is
+  // checked on its answers instead, against the same line (quality/dist_run.py)
   const KL_PASS = 0.15, MATH_PASS = 5;
   // a cell no run can fill says why (support.yaml quality_gaps)
   const gapOf = (mac, model) => (tables().quality_gaps || []).find((g) => [].concat(g.platform).includes(mac) && [].concat(g.model).includes(model))?.reason || "";
@@ -296,8 +299,11 @@ window.Pie = window.Pie || {};
           const title = `${Pie.store.names.model(m)} on ${hardwareName(mac)}`;
           if (r) {
             const tip = card(title, [["Compared", `Pie vs ${engineLabel(r.ref_engine)}`], ["Model slice", layersText(r.layers) || "Yes", true],
-              // KL between the two engines' next-token distributions on the same prompts: the first token alone, or older runs' mean over the answer
+              // KL between the two engines' next-token distributions on the same prompts: the first token alone, or the mean over the reference's answers
               [r.answer_tokens === 1 ? "First-token KL" : "KL, answer mean", kl(r.kl_mean)], ["Same top token", pct(r.top1_agree)], ["Prompts", `${r.prompts ?? "–"}`, true],
+              // checked on the answers because the first token moved under the reference's own rounding: both figures
+              isNum(r.first_self_kl) ? ["First-token KL", kl(r.first_kl_mean), true] : null,
+              isNum(r.first_self_kl) ? [`${engineLabel(r.ref_engine)} against itself`, kl(r.first_self_kl), true] : null,
               r.date ? ["Measured", Pie.format.date(r.date), true] : null]);
             const ok = r.kl_mean < KL_PASS;
             const open = { model: [m], hardware: [mac], task: ["parity"], engine: ["pie", r.ref_engine] };
