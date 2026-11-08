@@ -147,6 +147,7 @@ window.Pie = window.Pie || {};
         ["#FF2D55", "Like-for-like drafters", "The same draft model across engines, verified losslessly"],
         ["#64D2FF", "One feature at a time", "Each measured alone, against the plain run"],
         ["#FF9500", "Own best settings", "Each engine tuned for its highest throughput, the recipe public"],
+        ["#FF3B30", "Compiled at load", "Pie on TPU compiles its batch shapes at load, as vLLM-TPU and SGLang-JAX do"],
         ["#AF52DE", "Latest releases", "The newest release of each engine at run time, every run dated and tagged"]])}`;
 
   const measurement = () => `
