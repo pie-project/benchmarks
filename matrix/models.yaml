@@ -518,8 +518,8 @@ artifacts:
     family: gpt_oss
     scheme: mxfp4
     kind: miniature
-    miniature: {layers: "0-35", experts: 64, period: 2, note: "every layer; 64 of 128 experts (mxfp4 is 61 GB)"}
-    expected_gib: 65.8
+    miniature: {layers: "0-35", experts: 64, period: 2, shrink_family: gpt_oss, note: "every layer; 64 of 128 experts (mxfp4 is 61 GB)"}
+    expected_gib: 32.4  # measured: the cut is 32.4 GiB on disk
     tiers: [weekly]
   - id: nemotron-3-ultra-mini
     base_model: nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16
