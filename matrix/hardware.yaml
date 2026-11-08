@@ -1272,6 +1272,8 @@ hardware:
   memory_type: GDDR7
   bandwidth_gbs: 896
   tflops_fp16: 202  # dense: the datasheet's 1,617 AI TOPS are FP4 with sparsity, an eighth of that at FP16; the Server Edition's datasheet lists FP16 | BF16 406 TFLOPS sparse
+  tflops_fp8: 404  # dense: a quarter of the datasheet's 1,617 FP4 AI TOPS with sparsity
+  tflops_mxfp8: 404  # SM120, as the RTX 5090: its tensor cores take MX block-scaled operands at the FP8 rate
   power_w: 200
   gpu_cores: 10496
   year: 2025
@@ -1313,6 +1315,8 @@ hardware:
   memory_type: GDDR7
   bandwidth_gbs: 1597
   tflops_fp16: 500  # dense; the spec page lists FP16 | BF16 Tensor Core 1 PFLOP with sparsity, as its FP4 4 PFLOPS (datasheet: "Peak FP4 AI PFLOPS")
+  tflops_fp8: 1000  # dense; the spec page lists FP8 Tensor Core 2 PFLOPS, with sparsity as its FP16 and FP4 figures
+  tflops_mxfp8: 1000  # SM120, as the RTX 5090: its tensor cores take MX block-scaled operands at the FP8 rate
   power_w: 600
   gpu_cores: 24064
   year: 2025
