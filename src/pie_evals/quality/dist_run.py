@@ -237,12 +237,12 @@ def mlx_python(vlm: bool) -> str:
     return os.environ.get("MLX_VLM_PY" if vlm else "MLX_PY", sys.executable)
 
 
-def mlx_side(snapshot: Path, rendered: list[str], greedy: bool, log_path: Path, vlm: bool = False, split: bool = False) -> tuple[list[str], list[list[dict[int, float]]]]:
+def mlx_side(snapshot: Path, rendered: list[str], greedy: bool, log_path: Path, vlm: bool = False, unfused: bool = False) -> tuple[list[str], list[list[dict[int, float]]]]:
     """mlx-lm (or mlx-vlm) in its own interpreter: greedy answers and teacher-forced top-20 over prompt+answer."""
     script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / ("parity_mlxvlm.py" if vlm else "parity_mlx.py")
     with tempfile.TemporaryDirectory() as tmp:
         inp, out = Path(tmp) / "in.json", Path(tmp) / "out.json"
-        inp.write_text(json.dumps({"prompts": rendered, "max_tokens": ANSWER_TOKENS, "topk": kl.TOPK, "greedy": greedy, "split": split}))
+        inp.write_text(json.dumps({"prompts": rendered, "max_tokens": ANSWER_TOKENS, "topk": kl.TOPK, "greedy": greedy, "unfused": unfused}))
         with log_path.open("w") as fh:
             subprocess.run([mlx_python(vlm), str(script), str(snapshot), str(inp), str(out)], stdout=fh, stderr=subprocess.STDOUT, check=True, timeout=6 * 3600)
         d = json.loads(out.read_text())
@@ -264,7 +264,7 @@ def _reason(e: Exception, out_dir: Path, art_id: str, ref_name: str) -> str:
 def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log, texts=None,
                again: bool = False):
     """The reference's answers and teacher-forced top-20s. ``again``: the same model, prompts and texts with only its
-    kernels changed (vLLM eager instead of its CUDA graphs, mlx-lm reading each prompt in two pieces), for its spread."""
+    kernels changed (vLLM eager instead of its CUDA graphs, mlx-lm with its fused attention and RMSNorm kernels swapped for plain ops), for its spread."""
     from pie_evals.node.engines import get_engine
     from pie_evals.node.engines.recipes import load_recipe
 
@@ -297,7 +297,7 @@ def _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, back
     summary["ref_version"] = f"mlx-vlm {version}" if vlm else version
     ref_texts = texts if texts is not None else mlx_side(snapshot, rendered, True, out_dir / f"{art.id}-mlx-greedy.log", vlm)[0]
     _, ref_scored = mlx_side(snapshot, [r + t for r, t in zip(rendered, ref_texts, strict=True)], False,
-                             out_dir / f"{art.id}-mlx-score{'-split' if again else ''}.log", vlm, split=again)
+                             out_dir / f"{art.id}-mlx-score{'-unfused' if again else ''}.log", vlm, unfused=again)
     return ref_texts, ref_scored
 
 
@@ -433,7 +433,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
                 raise RuntimeError(f"device not idle before the reference's second pass: {busy}")
             _, again = _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, {}, out_dir, log,
                                   ref_texts, again=True)
-            summary.update(reference_spread(ref_scored, again, expect, "vLLM --enforce-eager" if ref_name == "vllm" else "mlx-lm, prompt in two pieces"))
+            summary.update(reference_spread(ref_scored, again, expect, "vLLM --enforce-eager" if ref_name == "vllm" else "mlx-lm, fused kernels off"))
             log(f"first-token {art.id}@{platform_id}: {ref_name} against itself ({summary['ref_self']}): KL {summary['ref_self_kl']}")
             if first_token_inconclusive(summary["kl_mean"], summary["ref_self_kl"]):
                 (out_dir / f"{art.id}-{platform_id}-first-token.json").write_text(json.dumps(summary, indent=1))
