@@ -870,8 +870,8 @@ window.Pie = window.Pie || {};
     const installed = INSTALL_CARDS.find(([, , p]) => installRows(p).length);
     // under small section names, as the Methodology's outline groups its chapters: the speed, where an engine goes, the models
     const GROUPS = [["Speed", [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"]]],
-      ["Deployment", [installed && [installed[0], "Install Size", "#30B0C7"], supportOf(rows).list.length && ["support", "Platforms", "#FF2D55"]]],
-      ["Models", [["metric", "By Model", "#7a4cf5"]]]];
+      ["Models", [["metric", "By Model", "#7a4cf5"]]],
+      ["Deployment", [installed && [installed[0], "Install Size", "#30B0C7"], supportOf(rows).list.length && ["support", "Platforms", "#FF2D55"]]]];
     const outline = GROUPS.map(([head, items]) => [head, items.filter(Boolean)]).filter(([, items]) => items.length).map(([head, items]) =>
       `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title, tint]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${tint}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
@@ -906,10 +906,6 @@ window.Pie = window.Pie || {};
             ${viewToggle("summary")}${paddlesFor("summary")}
           </div>
           <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has("summary") ? "Head-to-head decode win rate" : m.sub, gridCards.has("summary") ? matrix(m, rows) : ranking(m, rows), "", false)).join("")}</div></div>
-          ${installSection()}
-          ${supportSection(rows)}
-          ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
-          ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
           <div class="board-section-head is-apart">
             <div class="board-section-text"><h1 class="board-title">Performance by Model</h1>
             <p class="board-lede">Each platform is shown on the machine where the most engines ran this model.</p></div>
@@ -917,6 +913,10 @@ window.Pie = window.Pie || {};
           </div>
           ${modelRow("metric", SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0], rows, groups)}
           ${modelRow("ttft", TTFT, rows, groups)}
+          ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
+          ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
+          ${installSection()}
+          ${supportSection(rows)}
           ${""/* the Coverage section, off for now: coverage2(rows) */}
           ${""/* At datacenter scale, off: the scaling card stays in scaling() */}
           ${""/* Accuracy, off: Pie.checks.accuracyChart still draws it on the Quality page */}
