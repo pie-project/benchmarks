@@ -453,6 +453,7 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "accuracy": None,
         "commit": (r["pie_commit"] or "")[:9] if engine == "pie" else "",
         "measured": local(r["started_at"]),
+        "benchmark": r["workload"],  # the workload the number came from (c512, pf16-512, raw-512-256): engines compare at the same N
         "status": r["status"], "note": draft_note(r, engine),
         "miniature": MINIATURE.get(r["artifact"], ""),
         **MINI_SHAPE.get(r["artifact"], {}),
