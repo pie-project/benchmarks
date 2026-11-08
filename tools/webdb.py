@@ -181,7 +181,7 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
     catalog = load("hardware")["hardware"]
     by_id = {c["id"]: c for c in catalog}
     by_runpod = {c["runpod_gpu_type"]: c for c in catalog if c.get("runpod_gpu_type")}
-    spec_keys = ("bandwidth_gbs", "tflops_fp16", "tflops_fp8", "tflops_mxfp8", "power_w", "cpu_cores", "gpu_cores", "year", "memory_type")
+    spec_keys = ("bandwidth_gbs", "tflops_fp16", "tflops_fp8", "tflops_mxfp8", "ane_tflops_fp16", "power_w", "cpu_cores", "gpu_cores", "year", "memory_type")
 
     def row(c: dict, **over) -> dict:
         resource = RESOURCE.get(c["class"], "RunPod cloud" if c.get("runpod_gpu_type") else "")
@@ -195,6 +195,8 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
             "cpu_cores": c.get("cpu_cores"), "gpu_cores": c.get("gpu_cores"), "tflops_fp16": c.get("tflops_fp16"),
             # the narrower tensor peaks the limits use for FP8 and MXFP4 builds, where the chip has them
             "tflops_fp8": c.get("tflops_fp8"), "tflops_mxfp8": c.get("tflops_mxfp8"),
+            # the Neural Engine beside an Apple GPU: only an engine that runs prompt matmuls on it has it in its limit
+            "ane_tflops_fp16": c.get("ane_tflops_fp16"),
             "interconnect": None, "power_w": c.get("power_w"), "year": str(c["year"]) if c.get("year") else None,
             "runs": None, "price_usd": None, "price_hr": None, **over,
         }

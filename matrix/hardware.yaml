@@ -1,6 +1,8 @@
 # Every accelerator the site knows, CI'd or not, with datasheet specs. A field is set only when its source states it
 # (vendor datasheets, Apple tech specs, cloud docs); otherwise it is left out. Collected 2026-10-17.
 # short: the name on the site's grids (RunPod's own short name).
+# ane_tflops_fp16: the Apple Neural Engine's dense FP16 throughput, beside the GPU's tflops_fp16 (Apple's TOPS, which
+# count INT8 at twice the FP16 rate from M4 on). The limits use it only for an engine that runs prompt matmuls on it.
 # tflops_fp16: dense FP16/BF16 tensor (matrix) throughput, not sparse. CI machines link here from platforms.yaml (`catalog:`
 # or `runpod_gpu_type`), and only those carry CI-run tags on the site.
 # tflops_fp8: dense FP8 tensor throughput, the chip's fastest FP8 mode (FP16 accumulate on GeForce, where FP32 accumulate
@@ -20,6 +22,7 @@ hardware:
   - 16
   ane_tops: 11
   year: 2020
+  ane_tflops_fp16: 11  # Neural Engine, 16 cores: Apple's 11 TOPS, an FP16 figure (Apple counts INT8 at twice the FP16 rate only from M4 on)
   tflops_fp16: 2.3  # 7 cores x 128 ALUs x 2 (FMA) x 1.278 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111883
 - id: apple-m1-8c
@@ -35,6 +38,7 @@ hardware:
   - 16
   ane_tops: 11
   year: 2020
+  ane_tflops_fp16: 11  # Neural Engine, 16 cores: Apple's 11 TOPS, an FP16 figure (Apple counts INT8 at twice the FP16 rate only from M4 on)
   tflops_fp16: 2.6  # 8 cores x 128 ALUs x 2 (FMA) x 1.278 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   tflops_fp32: 2.6
   source: https://www.apple.com/newsroom/2020/11/apple-unleashes-m1/
@@ -51,6 +55,7 @@ hardware:
   - 16
   - 32
   year: 2021
+  ane_tflops_fp16: 11  # Neural Engine, 16 cores: Apple's 11 TOPS, an FP16 figure (Apple counts INT8 at twice the FP16 rate only from M4 on)
   tflops_fp16: 4.6  # 14 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111902
 - id: apple-m1-pro-10c-14c
@@ -66,6 +71,7 @@ hardware:
   - 16
   - 32
   year: 2021
+  ane_tflops_fp16: 11  # Neural Engine, 16 cores: Apple's 11 TOPS, an FP16 figure (Apple counts INT8 at twice the FP16 rate only from M4 on)
   tflops_fp16: 4.6  # 14 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111902
 - id: apple-m1-pro-16c
@@ -81,6 +87,7 @@ hardware:
   - 16
   - 32
   year: 2021
+  ane_tflops_fp16: 11  # Neural Engine, 16 cores: Apple's 11 TOPS, an FP16 figure (Apple counts INT8 at twice the FP16 rate only from M4 on)
   tflops_fp16: 5.3  # 16 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111901
 - id: apple-m1-max-24c
@@ -96,6 +103,7 @@ hardware:
   - 32
   - 64
   year: 2021
+  ane_tflops_fp16: 11  # Neural Engine, 16 cores: Apple's 11 TOPS, an FP16 figure (Apple counts INT8 at twice the FP16 rate only from M4 on)
   tflops_fp16: 8.0  # 24 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111900
 - id: apple-m1-max-32c
@@ -111,6 +119,7 @@ hardware:
   - 32
   - 64
   year: 2021
+  ane_tflops_fp16: 11  # Neural Engine, 16 cores: Apple's 11 TOPS, an FP16 figure (Apple counts INT8 at twice the FP16 rate only from M4 on)
   tflops_fp16: 10.6  # 32 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111901
 - id: apple-m1-ultra-48c
@@ -127,6 +136,7 @@ hardware:
   - 128
   ane_tops: 22
   year: 2022
+  ane_tflops_fp16: 22  # Neural Engine, 32 cores: twice the M1's 11 TOPS, FP16
   tflops_fp16: 15.9  # 48 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111900
 - id: apple-m1-ultra-64c
@@ -143,6 +153,7 @@ hardware:
   - 128
   ane_tops: 22
   year: 2022
+  ane_tflops_fp16: 22  # Neural Engine, 32 cores: twice the M1's 11 TOPS, FP16
   tflops_fp16: 21.2  # 64 cores x 128 ALUs x 2 (FMA) x 1.296 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://www.apple.com/newsroom/2022/03/apple-unveils-m1-ultra-the-worlds-most-powerful-chip-for-a-personal-computer/
 - id: apple-m2-8c
@@ -160,6 +171,7 @@ hardware:
   - 24
   ane_tops: 15.8
   year: 2022
+  ane_tflops_fp16: 15.8  # Neural Engine, 16 cores: Apple's 15.8 TOPS, FP16
   tflops_fp16: 2.9  # 8 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111867
 - id: apple-m2-10c
@@ -177,6 +189,7 @@ hardware:
   - 24
   ane_tops: 15.8
   year: 2022
+  ane_tflops_fp16: 15.8  # Neural Engine, 16 cores: Apple's 15.8 TOPS, FP16
   tflops_fp16: 3.6  # 10 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111869
 - id: apple-m2-pro-16c
@@ -193,6 +206,7 @@ hardware:
   - 32
   ane_tops: 15.8
   year: 2023
+  ane_tflops_fp16: 15.8  # Neural Engine, 16 cores: Apple's 15.8 TOPS, FP16
   tflops_fp16: 5.7  # 16 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111340
 - id: apple-m2-pro-19c
@@ -209,6 +223,7 @@ hardware:
   - 32
   ane_tops: 15.8
   year: 2023
+  ane_tflops_fp16: 15.8  # Neural Engine, 16 cores: Apple's 15.8 TOPS, FP16
   tflops_fp16: 6.8  # 19 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111838
 - id: apple-m2-max-30c
@@ -225,6 +240,7 @@ hardware:
   - 64
   ane_tops: 15.8
   year: 2023
+  ane_tflops_fp16: 15.8  # Neural Engine, 16 cores: Apple's 15.8 TOPS, FP16
   tflops_fp16: 10.7  # 30 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111835
 - id: apple-m2-max-38c
@@ -242,6 +258,7 @@ hardware:
   - 96
   ane_tops: 15.8
   year: 2023
+  ane_tflops_fp16: 15.8  # Neural Engine, 16 cores: Apple's 15.8 TOPS, FP16
   tflops_fp16: 13.6  # 38 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111838
 - id: apple-m2-ultra-60c
@@ -259,6 +276,7 @@ hardware:
   - 192
   ane_tops: 31.6
   year: 2023
+  ane_tflops_fp16: 31.6  # Neural Engine, 32 cores: Apple's 31.6 TOPS, FP16
   tflops_fp16: 21.5  # 60 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://support.apple.com/en-us/111835
 - id: apple-m2-ultra-76c
@@ -276,6 +294,7 @@ hardware:
   - 192
   ane_tops: 31.6
   year: 2023
+  ane_tflops_fp16: 31.6  # Neural Engine, 32 cores: Apple's 31.6 TOPS, FP16
   tflops_fp16: 27.2  # 76 cores x 128 ALUs x 2 (FMA) x 1.398 GHz; Apple GPUs run FP16 at the FP32 rate (https://github.com/philipturner/metal-benchmarks)
   source: https://www.apple.com/newsroom/2023/06/apple-introduces-m2-ultra/
 - id: apple-m3-8c
@@ -292,6 +311,7 @@ hardware:
   - 16
   - 24
   year: 2023
+  ane_tflops_fp16: 18  # Neural Engine, 16 cores: up to 60% over the M1's 11 TOPS, 17.6, rounded up (https://www.apple.com/newsroom/2023/10/apple-unveils-m3-m3-pro-and-m3-max-the-most-advanced-chips-for-a-personal-computer/), FP16
   source: https://support.apple.com/en-us/118551
 - id: apple-m3-10c
   name: Apple M3 (8-core CPU, 10-core GPU)
@@ -307,6 +327,7 @@ hardware:
   - 16
   - 24
   year: 2023
+  ane_tflops_fp16: 18  # Neural Engine, 16 cores: up to 60% over the M1's 11 TOPS, 17.6, rounded up (https://www.apple.com/newsroom/2023/10/apple-unveils-m3-m3-pro-and-m3-max-the-most-advanced-chips-for-a-personal-computer/), FP16
   source: https://support.apple.com/en-us/117735
 - id: apple-m3-pro-14c
   name: Apple M3 Pro (11-core CPU, 14-core GPU)
@@ -321,6 +342,7 @@ hardware:
   - 18
   - 36
   year: 2023
+  ane_tflops_fp16: 18  # Neural Engine, 16 cores: up to 60% over the M1's 11 TOPS, 17.6, rounded up (https://www.apple.com/newsroom/2023/10/apple-unveils-m3-m3-pro-and-m3-max-the-most-advanced-chips-for-a-personal-computer/), FP16
   source: https://support.apple.com/en-us/117736
 - id: apple-m3-pro-18c
   name: Apple M3 Pro (12-core CPU, 18-core GPU)
@@ -335,6 +357,7 @@ hardware:
   - 18
   - 36
   year: 2023
+  ane_tflops_fp16: 18  # Neural Engine, 16 cores: up to 60% over the M1's 11 TOPS, 17.6, rounded up (https://www.apple.com/newsroom/2023/10/apple-unveils-m3-m3-pro-and-m3-max-the-most-advanced-chips-for-a-personal-computer/), FP16
   source: https://support.apple.com/en-us/117737
 - id: apple-m3-max-30c
   name: Apple M3 Max (14-core CPU, 30-core GPU)
@@ -349,6 +372,7 @@ hardware:
   - 36
   - 96
   year: 2023
+  ane_tflops_fp16: 18  # Neural Engine, 16 cores: up to 60% over the M1's 11 TOPS, 17.6, rounded up (https://www.apple.com/newsroom/2023/10/apple-unveils-m3-m3-pro-and-m3-max-the-most-advanced-chips-for-a-personal-computer/), FP16
   source: https://support.apple.com/en-us/117736
 - id: apple-m3-max-40c
   name: Apple M3 Max (16-core CPU, 40-core GPU)
@@ -364,6 +388,7 @@ hardware:
   - 64
   - 128
   year: 2023
+  ane_tflops_fp16: 18  # Neural Engine, 16 cores: up to 60% over the M1's 11 TOPS, 17.6, rounded up (https://www.apple.com/newsroom/2023/10/apple-unveils-m3-m3-pro-and-m3-max-the-most-advanced-chips-for-a-personal-computer/), FP16
   source: https://support.apple.com/en-us/117737
 - id: apple-m3-ultra-60c
   name: Apple M3 Ultra (28-core CPU, 60-core GPU)
@@ -378,6 +403,7 @@ hardware:
   - 96
   - 256
   year: 2025
+  ane_tflops_fp16: 36  # Neural Engine, 32 cores: twice the M3's 18 TOPS, FP16
   source: https://support.apple.com/en-us/122211
 - id: apple-m3-ultra-80c
   name: Apple M3 Ultra (32-core CPU, 80-core GPU)
@@ -393,6 +419,7 @@ hardware:
   - 256
   - 512
   year: 2025
+  ane_tflops_fp16: 36  # Neural Engine, 32 cores: twice the M3's 18 TOPS, FP16
   source: https://support.apple.com/en-us/122211
 - id: apple-m4-8cpu-8c
   name: Apple M4 (8-core CPU, 8-core GPU)
@@ -408,6 +435,7 @@ hardware:
   - 24
   ane_tops: 38
   year: 2024
+  ane_tflops_fp16: 19  # Neural Engine, Apple's 38 TOPS counts INT8 at twice the FP16 rate; 19 TFLOPS FP16 is the measured peak of its 16 cores (https://maderix.substack.com/p/inside-the-m4-apple-neural-engine-615)
   source: https://support.apple.com/en-us/121556
 - id: apple-m4-8c
   name: Apple M4 (10-core CPU, 8-core GPU)
@@ -424,6 +452,7 @@ hardware:
   - 32
   ane_tops: 38
   year: 2025
+  ane_tflops_fp16: 19  # Neural Engine, Apple's 38 TOPS counts INT8 at twice the FP16 rate; 19 TFLOPS FP16 is the measured peak of its 16 cores (https://maderix.substack.com/p/inside-the-m4-apple-neural-engine-615)
   source: https://support.apple.com/en-us/122209
 - id: apple-m4-10c
   name: Apple M4 (10-core CPU, 10-core GPU)
@@ -440,6 +469,7 @@ hardware:
   - 32
   ane_tops: 38
   year: 2024
+  ane_tflops_fp16: 19  # Neural Engine, Apple's 38 TOPS counts INT8 at twice the FP16 rate; 19 TFLOPS FP16 is the measured peak of its 16 cores (https://maderix.substack.com/p/inside-the-m4-apple-neural-engine-615)
   source: https://support.apple.com/en-us/121552
 - id: apple-m4-pro-16c
   name: Apple M4 Pro (12-core CPU, 16-core GPU)
@@ -455,6 +485,7 @@ hardware:
   - 48
   - 64
   year: 2024
+  ane_tflops_fp16: 19  # Neural Engine: the M4 family's 16 cores (https://www.apple.com/newsroom/2024/10/apple-introduces-m4-pro-and-m4-max/), 19 TFLOPS FP16 as the M4's
   source: https://support.apple.com/en-us/121555
 - id: apple-m4-pro-20c
   name: Apple M4 Pro (14-core CPU, 20-core GPU)
@@ -470,6 +501,7 @@ hardware:
   - 48
   - 64
   year: 2024
+  ane_tflops_fp16: 19  # Neural Engine: the M4 family's 16 cores (https://www.apple.com/newsroom/2024/10/apple-introduces-m4-pro-and-m4-max/), 19 TFLOPS FP16 as the M4's
   source: https://support.apple.com/en-us/121554
 - id: apple-m4-max-32c
   name: Apple M4 Max (14-core CPU, 32-core GPU)
@@ -483,6 +515,7 @@ hardware:
   memory_options_gb:
   - 36
   year: 2024
+  ane_tflops_fp16: 19  # Neural Engine: the M4 family's 16 cores (https://www.apple.com/newsroom/2024/10/apple-introduces-m4-pro-and-m4-max/), 19 TFLOPS FP16 as the M4's
   source: https://support.apple.com/en-us/121553
 - id: apple-m4-max-40c
   name: Apple M4 Max (16-core CPU, 40-core GPU)
@@ -498,6 +531,7 @@ hardware:
   - 64
   - 128
   year: 2024
+  ane_tflops_fp16: 19  # Neural Engine: the M4 family's 16 cores (https://www.apple.com/newsroom/2024/10/apple-introduces-m4-pro-and-m4-max/), 19 TFLOPS FP16 as the M4's
   source: https://support.apple.com/en-us/121554
 - id: apple-m5-8c
   name: Apple M5 (10-core CPU, 8-core GPU)

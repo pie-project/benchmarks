@@ -12,6 +12,15 @@ window.Pie = window.Pie || {};
   const BATCHES = [1, 2, 4, 8, 16, 32, 64, 128, 256];
   const LINKS = { none: ["One device", 0, 0], tb5: ["Thunderbolt 5", 10, 30], pcie5: ["PCIe 5.0 ×16", 64, 15], nvlink: ["NVLink", 900, 15] };
   const USABLE = 0.75;  // the share of unified memory macOS lets the GPU wire by default
+  // engines that run part of a prompt pass on the Apple Neural Engine, beside the GPU, and the GPU families they do it on.
+  // pie's Metal engine splits each dense SwiGLU MLP with affine 4-bit weights (groups of 64) between the two (pie's
+  // crates/engine-metal/src/ane and profiles/: the M4 Pro gives the Neural Engine 74% of the MLP, other Apple7-9 chips 47%
+  // of it and of the wide projections); a mixture-of-experts model and a GELU-gated MLP (Gemma's) stay on the GPU, and
+  // Apple10 (M5) keeps every pass there. Its share runs in int8 (int8 weights and activations), which Apple rates at twice
+  // the fp16 peak from M4 on; the limit counts the Neural Engine's fp16 peak, as it counts every unit at fp16.
+  // No other engine here uses the Neural Engine: MLX, llama.cpp and vllm-metal run on the GPU alone
+  const NEURAL_ENGINE = { pie: ["apple7", "apple8", "apple9"] };
+  const GELU_MLP = /^gemma/;  // Gemma's MLPs gate with GELU (config.json hidden_activation gelu_pytorch_tanh), not SiLU
 
   const kTok = (n) => (n >= 1024 ? `${Math.round(n / 1024)}K` : `${n}`);
 
@@ -26,6 +35,9 @@ window.Pie = window.Pie || {};
     // whose tensor cores also take microscaled (MX) operands, MXFP4 weights against MXFP8 activations among them
     tflops8: h.tflops_fp8 || 0,
     tflopsMx: h.tflops_mxfp8 || 0,
+    // the Neural Engine's fp16 rate beside the GPU (Apple M1 to M4), counted only for an engine that uses it
+    ane: h.ane_tflops_fp16 || 0,
+    arch: h.arch,
     mem: h.memory_gib || 0,
     devices: h.count || 1,
     // internal SSD read speed, estimated by chip class: the Max chips read about twice as fast as the Pro, the Pro twice the base
@@ -52,6 +64,7 @@ window.Pie = window.Pie || {};
       // the residual width the GPUs exchange between them; where the catalog has none, the width a dense model of this
       // size and depth would have (12 x hidden^2 parameters a layer)
       hidden: m.hidden_size || Math.round(Math.sqrt((m.params_b * 1e9) / (12 * layers))),
+      family: m.family || "",
     };
   });
 
@@ -415,14 +428,17 @@ window.Pie = window.Pie || {};
     const workload = shapeOf(row.workload, row.benchmark);
     const a = row.miniature ? miniArch(row) : archOf(row.model);
     if (!machine?.bw || !model || !workload || !a) return null;
-    // the whole machine: the catalog gives one device's bandwidth and FLOPS, and a run splits the model across all of them
-    const bw = machine.bw * machine.devices;
-    const tflops = machine.tflops * machine.devices;
     const bits = bitsOf(row.scheme);
     const prompt = workload.prompt_tokens;
     // Batched Prefill ("pbatch"): the run's prompts all prefilled in one pass, each its own first answer token
     const batch = metric === "pbatch" ? (workload.concurrency || 1) : 1;
     const prefill = metric === "prefill" || metric === "pbatch";
+    // a prompt pass by an engine that splits a dense SwiGLU MLP with the Neural Engine on this chip has the Neural
+    // Engine's fp16 rate beside the GPU's; every other row, and every decode, has the GPU's alone
+    const ane = prefill && machine.ane && NEURAL_ENGINE[row.engine]?.includes(machine.arch) && row.scheme === "affine_u4_g64" && !a.routed && !GELU_MLP.test(model.family) ? machine.ane : 0;
+    // the whole machine: the catalog gives one device's bandwidth and FLOPS, and a run splits the model across all of them
+    const bw = machine.bw * machine.devices;
+    const tflops = (machine.tflops + ane) * machine.devices;
     const tokens = prefill ? prompt * batch : 1;
     const context = prefill ? prompt : prompt + workload.output_tokens / 2;
     const p = pass(a, { bits, tokens, logits: batch, requests: batch, context });
@@ -439,7 +455,7 @@ window.Pie = window.Pie || {};
     // the parts too, for the Methods page's worked examples. `tflops` is this pass's own peak, its FLOPs over its math
     // time: the 16-bit one (`tflops16`) unless part of it runs narrower (`narrow`, at `tflopsNarrow`)
     const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, linkS, link, bw,
-      tflops: compute && n.share ? p.flops / compute / 1e12 : tflops, tflops16: tflops, tflopsNarrow, narrow: n.share,
+      tflops: compute && n.share ? p.flops / compute / 1e12 : tflops, tflops16: tflops, tflopsNarrow, narrow: n.share, ane,
       devices: machine.devices, body: p.body, head: p.head, bits: bits.bits, expertBits: bits.experts, headBits: bits.head,
       bytes: bits.bits / 8, tokens, context, flopsPerToken: 2e9 * (p.body + p.head) };
     return { tps: tokens / slowest, bound, bandwidth: tokens / memory, compute: compute ? tokens / compute : null, interconnect: linkS ? tokens / linkS : null, parts };

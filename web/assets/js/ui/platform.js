@@ -313,6 +313,7 @@ window.Pie = window.Pie || {};
       ["GPU", hw.gpu_cores && `${hw.gpu_cores} cores`],
       ["CPU", hw.cpu_cores && `${hw.cpu_cores} cores`],
       ["Compute", hw.tflops_fp16 && `${hw.tflops_fp16} TFLOPS fp16`],
+      ["Neural Engine", hw.ane_tflops_fp16 && `${hw.ane_tflops_fp16} TFLOPS fp16`],
       ["Devices", hw.count > 1 && `${hw.count}`],
       ["Interconnect", hw.interconnect && (LINKS[hw.interconnect] || hw.interconnect)],
       ["Power", hw.power_w && `${hw.power_w} W at full load`],

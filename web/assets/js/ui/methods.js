@@ -270,6 +270,7 @@ window.Pie = window.Pie || {};
         ["Gemma's KV sharing: layers that reuse an earlier layer's K and V run only for the last prompt token, since the others only fill the cache.", null],
         ["FLOPS is the spec sheet's peak. Apple publishes no FP16 figure, so the catalog's are estimates.", "up"],
         NARROW,
+        ["On Apple M1 to M4 chips pie splits a dense SwiGLU model's MLP between the GPU and the Neural Engine, so pie's limit there adds the Neural Engine's FP16 peak to the GPU's. No other engine uses the Neural Engine, and its peak is far above what a matmul reaches on it. pie runs its share in int8, which Apple rates at twice the FP16 peak from M4 on; the limit counts FP16, as for every unit.", "up"],
       ],
       check: { workload: "raw", metric: "prefill", key: "prefill_tok_s" },
       // shown only while results run above the limit: what is known about why, and what is not
@@ -307,6 +308,7 @@ window.Pie = window.Pie || {};
         ["Each prompt needs the output head once, for its first answer token.", null],
         ["FLOPS is the spec sheet's peak. Apple publishes no FP16 figure, so the catalog's are estimates.", "up"],
         NARROW,
+        ["Single Prefill's Neural Engine share: pie's limit on Apple M1 to M4 chips adds the Neural Engine's FP16 peak for a dense SwiGLU model.", "up"],
       ],
     },
   ];
