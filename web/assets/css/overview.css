@@ -1462,4 +1462,26 @@
   .slice-note { grid-column: 2; white-space: normal; }
   .slice-fig figcaption { padding-left: 0; }
 }
+
+/* Methodology's step runs as a carousel: each step keeps its width, the row slides and snaps, the Overview's paddles sit
+   above it on the right, and the far edge fades while more steps follow */
+.method-article .flow-carousel { display: flex; flex-direction: column; margin-top: 16px; }
+.method-article .flow-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }  /* the title on the left, the paddles on its right */
+.method-article .flow-head > h3, .method-article .flow-head > .welcome-lead { margin: 0; }
+.method-article .flow-head > .flow-nav { flex: none; }
+.method-article .flow-carousel > .welcome-flow { margin-top: 16px; }
+.method-article .flow-head > .welcome-lead + .flow-nav, .method-article .flow-carousel:has(.welcome-lead) > .welcome-flow { margin-top: 0; }
+.method-article .flow-carousel:has(.welcome-lead) > .welcome-flow { margin-top: 24px; }
+.method-article .method-pane-body > .flow-carousel.has-title:not(:first-child) { margin-top: 40px; }  /* as a heading sits under the part before it */
+.flow-carousel > .flow-nav[hidden] { display: none; }
+.flow-carousel > .flow-nav .plain-button:disabled { opacity: .35; cursor: default; }
+.flow-carousel .welcome-flow { display: flex; margin: 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); }
+.flow-carousel .welcome-flow.is-end { -webkit-mask-image: none; mask-image: none; }
+.flow-carousel .welcome-flow::-webkit-scrollbar { display: none; }
+.flow-carousel .welcome-flow li { flex: 0 0 calc(100% / 3); scroll-snap-align: start; }  /* three steps in view, the rest a slide away */
+@media (max-width: 760px) {
+  .flow-carousel .welcome-flow li { flex-basis: 50%; }  /* two on a phone: three would not leave room for the words */
+  .flow-carousel .welcome-flow li::before { display: block; }
+  .flow-carousel .welcome-flow li:last-child::before { display: none; }
 }

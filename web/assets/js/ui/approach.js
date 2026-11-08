@@ -63,14 +63,13 @@ window.Pie = window.Pie || {};
     const chevron = '<svg class="welcome-flow-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
     // the path every number takes; the limit check in the grid's CI Error red, the step that catches a wrong one
     const STEP_COLOURS = ["#007AFF", "#5E5CE6", "#30B0C7", "var(--color-negative)", "#34C759"];  // each step its own system colour
-    const flow = [["Recipe", "An engine's settings, a file in the repository"], ["CI run", "On a dedicated machine, nothing else running"],
-      ["Repeated", "Rounds until the noise is small"], ["Limit check", "Above the theoretical maximum is a CI Error", "is-check"], ["Published", "Here and on GitHub, raw data included"]];
+    const flow = [["Recipe", "Engine settings, public in the repo"], ["CI run", "Dedicated machine, nothing else running"],
+      ["Repeated", "Until the noise is small"], ["Limit check", "Above the limit is a CI error", "is-check"], ["Published", "Here and on GitHub, with raw data"]];
     const workloads = [["decode", "Single Decode", "One request writing its answer"], ["prefill", "Single Prefill", "One request reading its prompt"],
       ["batching", "Batched Decode", "Many requests writing at once"], ["pbatch", "Batched Prefill", "Many prompts read at once"], ["spec", "Speculative Decode", "A draft model guessing ahead"]];
     return `
       <p class="welcome-lead">Every engine is capped by the same hardware limits, so most run within a few percent of each other. We measure the gap and show where it comes from.</p>
-      <h3>How a number is made</h3>
-      <ol class="welcome-flow">${flow.map(([t, d, cls], i) => `<li class="${cls || ""}" style="--step: ${STEP_COLOURS[i]}"><i>${i + 1}</i><b>${t}</b><span>${d}</span></li>`).join("")}</ol>
+      ${flowCarousel(flow.map(([t, d, cls], i) => `<li class="${cls || ""}" style="--step: ${STEP_COLOURS[i]}"><i>${i + 1}</i><b>${t}</b><span>${d}</span></li>`).join(""), "<h3>How a number is made</h3>")}
       <h3>What we measure</h3>
       <ul class="welcome-list">${workloads.map(([id, t, d]) => `<li><button type="button" data-chapter-go="workloads">${Pie.platform.degree(id)}<b>${t}</b><span>${d}</span></button></li>`).join("")}</ul>`;
   };
@@ -80,8 +79,24 @@ window.Pie = window.Pie || {};
   const lead = (text) => `<p class="welcome-lead">${text}</p>`;
   const facts = (rows) => `<ul class="welcome-list is-trust">${rows.map(([colour, t, d]) =>
     `<li><div class="welcome-row"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><span>${d}</span></div></li>`).join("")}</ul>`;
-  const steps = (rows) => `<ol class="welcome-flow" style="grid-template-columns: repeat(${rows.length}, minmax(0, 1fr))">${rows.map(([colour, t, d, cls], i) =>
-    `<li class="${cls || ""}" style="--step: ${colour}"><i>${i + 1}</i><b>${t}</b><span>${d}</span></li>`).join("")}</ol>`;
+  // a run of numbered steps as a carousel: each step keeps its width and the row slides sideways, with the Overview's
+  // paddles above it (shown only when the steps do not fit) and the far edge fading while more steps follow
+  const FLOW_PADDLES = `<span class="platform-compare board-view board-carousel-nav flow-nav" role="group" aria-label="Steps" hidden><button type="button" class="plain-button" data-flow="-1" aria-label="Previous steps" title="Previous"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg></button><button type="button" class="plain-button" data-flow="1" aria-label="Next steps" title="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button></span>`;
+  // its title (a heading or the chapter's lead) on the left of one line, the paddles on its right
+  const flowCarousel = (items, head = "") => `<div class="flow-carousel${head.startsWith("<h3") ? " has-title" : ""}"><div class="flow-head">${head}${FLOW_PADDLES}</div><ol class="welcome-flow">${items}</ol></div>`;
+  const steps = (rows, head = "") => flowCarousel(rows.map(([colour, t, d, cls], i) =>
+    `<li class="${cls || ""}" style="--step: ${colour}"><i>${i + 1}</i><b>${t}</b><span>${d}</span></li>`).join(""), head);
+  // each carousel's paddles: shown only when its steps overflow, each greyed at its end; the fade off at the last step
+  const flowPaddles = () => element.querySelectorAll(".flow-carousel").forEach((box) => {
+    const row = box.querySelector(".welcome-flow"), nav = box.querySelector(".flow-nav");
+    if (!row || !nav) return;
+    const over = row.scrollWidth - row.clientWidth > 2;
+    nav.hidden = !over;
+    const [back, on] = nav.querySelectorAll("[data-flow]");
+    back.disabled = row.scrollLeft <= 2;
+    on.disabled = row.scrollLeft >= row.scrollWidth - row.clientWidth - 2;
+    row.classList.toggle("is-end", !over || on.disabled);
+  });
 
   // each platform's CI workflow, a row each that opens its file on GitHub
   const workflow = (file) => `${REPO}/blob/main/.github/workflows/${file}`;
@@ -102,9 +117,8 @@ window.Pie = window.Pie || {};
       <p>Each run uses the latest release. A fix we need lives in a public fork.</p>
       ${forks([["#E5484D", "vLLM", "pie-project/vllm", "pie-evals/v0.32.0", "Fork of vLLM 0.32.0"],
         ["#34C759", "SGLang", "pie-project/sglang", "pie-evals/v0.5.22", "Fork of SGLang 0.5.22"]])}
-      <h3>Before every run</h3>
-      ${steps([["#007AFF", "Lock", "One job per machine at a time"], ["#5E5CE6", "Clean", "Leftover apps and engines closed"],
-        ["#30B0C7", "Quiet", "The run waits for an idle GPU"], ["#34C759", "Pinned", "Engine versions recorded"]])}`;
+      ${steps([["#007AFF", "Lock", "One job per machine"], ["#5E5CE6", "Clean", "Stray apps and engines closed"],
+        ["#30B0C7", "Quiet", "Waits for an idle GPU"], ["#34C759", "Pinned", "Engine versions recorded"]], "<h3>Before every run</h3>")}`;
 
   const workloadsPage = () => {
     const rows = [["decode", "Single Decode", "512 tokens in, 256 out, one request: output tokens per second"],
@@ -115,9 +129,8 @@ window.Pie = window.Pie || {};
     return `
       ${lead("Five setups, each a single question about an engine.")}
       <ul class="welcome-list">${rows.map(([id, t, d]) => `<li><div class="welcome-row is-icon">${Pie.platform.degree(id)}<b>${t}</b><span>${d}</span></div></li>`).join("")}</ul>
-      <h3>Every workload</h3>
-      ${steps([["#30B0C7", "Seeded", "Byte-identical token ids on every engine"], ["#64D2FF", "Cold", "No prefix-cache hits"],
-        ["#007AFF", "Fixed length", "Every engine writes the same number of tokens"]])}`;
+      ${steps([["#30B0C7", "Seeded", "Same token ids on every engine"], ["#64D2FF", "Cold", "No prefix-cache hits"],
+        ["#007AFF", "Fixed length", "Same output length on every engine"]], "<h3>Every workload</h3>")}`;
   };
 
   const fairness = () => `
@@ -161,15 +174,15 @@ window.Pie = window.Pie || {};
 
   const measurement = () => `
       ${lead("A cell's number is the median of repeated rounds, taken after warmup.")}
-      ${steps([["#8E8E93", "Warmup", "2 to 3 runs, not counted"], ["#007AFF", "Rounds", "3 for one request, 2 for a batch"],
-        ["#FF9500", "Noise", "Over 2% spread adds rounds, up to 5; 5% for a batch"], ["#34C759", "Median", "The middle round is the number"],
-        ["var(--color-negative)", "Limit check", "Above the theoretical maximum is a CI Error", "is-check"]])}
+      ${steps([["#8E8E93", "Warmup", "2–3 runs, not counted"], ["#007AFF", "Rounds", "3 single, 2 batched"],
+        ["#FF9500", "Noise", "Over 2% spread (5% batched) adds rounds, up to 5"], ["#34C759", "Median", "The middle round counts"],
+        ["var(--color-negative)", "Limit check", "Above the limit is a CI error", "is-check"]], "<h3>How a cell is measured</h3>")}
       <p>Rounds that still disagree are marked noisy. Macs cool down between rounds.</p>`;
 
   const parity = () => `
       ${lead("A fast engine only counts if it computes the same model.")}
-      ${steps([["#007AFF", "Same prompts", "Sent to both engines"], ["#5E5CE6", "One token", "Each engine gives exactly one"],
-        ["#30B0C7", "Compare", "KL divergence of the two distributions"], ["#34C759", "Pass", "Under 0.15"]])}
+      ${steps([["#007AFF", "Same prompts", "Sent to both engines"], ["#5E5CE6", "One token", "One from each engine"],
+        ["#30B0C7", "Compare", "KL divergence between them"], ["#34C759", "Pass", "KL under 0.15"]], "<h3>How a check runs</h3>")}
       <p>Two correct engines differ only in kernel order and bf16 rounding, which moves the distribution by about 0.001. A real bug, such as a wrong layer, rotary setting or chat template, lands far above 0.15, so the line sits two orders of magnitude above the noise. The first token comes from one pass through every layer, so it tests the whole model, even on a slice whose answers no longer make sense.</p>`;
 
   const accuracy = () => `
@@ -245,6 +258,7 @@ window.Pie = window.Pie || {};
     if (!thumb) { thumb = document.createElement("span"); thumb.className = "board-outline-thumb"; thumb.setAttribute("aria-hidden", "true"); nav.prepend(thumb); }
     thumb.style.transform = `translateY(${on.offsetTop}px)`;
     thumb.style.height = `${on.offsetHeight}px`;
+    flowPaddles();
   };
 
   const content = `
@@ -266,6 +280,13 @@ window.Pie = window.Pie || {};
     // a term's source opens its catalog page, as the sidebar would
     const source = event.target.closest("[data-go]");
     if (source) { document.querySelector(`.sidebar-item[data-table="${source.dataset.go}"]`)?.click(); return; }
+    // a step carousel's paddle: one step back or on
+    const flow = event.target.closest("[data-flow]");
+    if (flow) {
+      const row = flow.closest(".flow-carousel")?.querySelector(".welcome-flow"), step = row?.firstElementChild;
+      if (step) row.scrollBy({ left: Number(flow.dataset.flow) * step.getBoundingClientRect().width, behavior: "smooth" });
+      return;
+    }
     const go = event.target.closest("[data-chapter-go]");
     if (!go || go.dataset.chapterGo === current) return;
     current = go.dataset.chapterGo;
@@ -273,6 +294,9 @@ window.Pie = window.Pie || {};
     draw();
     element.scrollTop = 0;
   });
+
+  element.addEventListener("scroll", (event) => { if (event.target.classList?.contains("welcome-flow")) flowPaddles(); }, { capture: true, passive: true });
+  window.addEventListener("resize", () => flowPaddles(), { passive: true });
 
   Pie.approach = {
     element,
