@@ -344,10 +344,17 @@ window.Pie = window.Pie || {};
   // keeps only the embeddings, and so the head, in bf16) on a chip with FP8 tensor cores; an MXFP4 build's experts (gpt-oss
   // keeps attention, router and head in bf16), against activations quantized to MXFP8, on a chip whose tensor cores take
   // the MX block scales (TensorRT-LLM's default W4A8_MXFP4_MXFP8 on Blackwell, SM100 and SM120). Without them the 4-bit
-  // experts are widened to 16 bits, as every engine does on Hopper, Ada and older. No build is assumed to quantize its
-  // activations below 8 bits, so FP4 rates are never used. `share` is the part of the body's arithmetic that runs narrow
-  const narrow = (machine, scheme = "", p) => {
+  // experts are widened to 16 bits, as every engine does on Hopper, Ada and older. DeepSeek-V4's releases (V4 and V4.1)
+  // are the exception: they quantize every projection, the experts too, against 8-bit activations (quantization_config
+  // quant_method fp8, activation_scheme dynamic; V4.1's expert_dtype fp4), so their whole body runs narrow on a chip that
+  // multiplies FP8, at the MX rate where its tensor cores take the block scales and at the FP8 rate where the scales are
+  // applied as the products accumulate (on an RTX 4090 SGLang runs the dense planes in Triton w8a8 block-FP8 GEMMs and
+  // pie the experts in FP8 kernels). No build is assumed to quantize its activations below 8 bits, so FP4 rates are never
+  // used. `share` is the part of the body's arithmetic that runs narrow
+  const A8_FAMILY = /^deepseek_v4/;
+  const narrow = (machine, scheme = "", p, family = "") => {
     if (/(^|_)fp8/.test(scheme) && machine.tflops8) return { share: 1, tflops: machine.tflops8 };
+    if (/mxfp4/.test(scheme) && A8_FAMILY.test(family) && (machine.tflopsMx || machine.tflops8)) return { share: 1, tflops: machine.tflopsMx || machine.tflops8 };
     if (/mxfp4/.test(scheme) && machine.tflopsMx) return { share: p.experts && p.body ? Math.min(1, p.experts / p.body) : 1, tflops: machine.tflopsMx };
     return { share: 0, tflops: 0 };
   };
@@ -450,7 +457,7 @@ window.Pie = window.Pie || {};
     const p = pass(a, { bits, tokens, logits: batch, requests: batch, context });
     const memory = (p.weightGB + p.cacheGB) / bw;
     // a chip with no FLOPS figure has no compute bound: only the bandwidth one is drawn
-    const n = narrow(machine, row.scheme, p);
+    const n = narrow(machine, row.scheme, p, model.family);
     const tflopsNarrow = n.tflops * machine.devices;
     const compute = mathTime(p.flops, p.bodyFlops, tflops, n.share, tflopsNarrow);
     // several GPUs: the exchange between them is a third bound
@@ -571,7 +578,7 @@ window.Pie = window.Pie || {};
     const readS = ((p.weightGB + p.cacheGB) / bw) * steps;
     const flops = p.flops * steps + (requests * pre.flops) / answer;
     // the prompts' arithmetic runs narrow in the same share of their body as the steps' does
-    const n = narrow(machine, scheme, p);
+    const n = narrow(machine, scheme, p, models().find((m) => m.id === modelId)?.family);
     const tflopsNarrow = n.tflops * machine.devices;
     const mathS = mathTime(flops, p.bodyFlops * steps + (requests * pre.bodyFlops) / answer, tflops, n.share, tflopsNarrow);
     // several GPUs: each step exchanges the batch's activations, and each prompt's once, spread over its answer
