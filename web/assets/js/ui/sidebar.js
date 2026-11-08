@@ -27,8 +27,8 @@ window.Pie = window.Pie || {};
         ? `<span class="sidebar-count"${machines(schema) ? "" : ' title="No measurements yet"'}>${machines(schema)}</span>`
         // the Platforms list counts its rows, one a platform
         : schema.view === "welcome" ? `<span class="sidebar-count">${Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length}</span>`
-        // Methodology counts its chapters
-        : schema.view === "approach" ? `<span class="sidebar-count">${Pie.approach?.chapters ?? ""}</span>`
+        // the Bench Book is a page to read, as the Overview is: no count beside it
+        : schema.view === "approach" ? ""
         // Reports counts the ones still open
         : schema.view === "reports" ? `<span class="sidebar-count">${Pie.reports?.open() ?? ""}</span>`
         // Engine Gaps counts its cells
