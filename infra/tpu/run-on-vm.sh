@@ -76,6 +76,19 @@ PIE_XLA_PLUGIN=$("$HOME/libtpu/bin/python" -c 'import libtpu, os; print(os.path.
 export PIE_XLA_PLUGIN
 [ -f "$PIE_XLA_PLUGIN" ] || { echo "no libtpu.so at $PIE_XLA_PLUGIN"; exit 1; }
 
+# KERNELS_TEST (tpu.yml `kernels`): engine-xla's kernel tests on this chip instead of a job, the filter as cargo
+# takes it (kernels_attn, or one test's name); every test needs the chip, so they run one at a time, and the run
+# log carries their output
+if [ -n "${KERNELS_TEST:-}" ]; then
+  cd "$PIE_ROOT"
+  set +e
+  cargo test --release -p engine-xla --test engine_xla -- $KERNELS_TEST --test-threads 1 2>&1 | tail -n 400
+  rc=${PIPESTATUS[0]}
+  set -e
+  echo "cargo test -p engine-xla --test engine_xla -- $KERNELS_TEST: exit $rc"
+  exit "$rc"
+fi
+
 cd "$here"
 for p in "${pids[@]}"; do
   engine=${p%%:*}
