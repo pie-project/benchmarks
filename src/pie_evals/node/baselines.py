@@ -261,8 +261,11 @@ def ensure_mpi(log=print) -> bool:
     apt = ["apt-get"] if os.geteuid() == 0 else ["sudo", "-n", "apt-get"]
     env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
     try:
-        subprocess.run(apt + ["update", "-qq"], env=env, check=False, timeout=600, capture_output=True)
-        subprocess.run(apt + ["install", "-y", "-qq", "--no-install-recommends", "libopenmpi-dev", "openmpi-bin"], env=env, check=True, timeout=1200, capture_output=True)
+        # No tty: under tmux the node leads its own process group, and apt setting up the
+        # terminal stopped the whole group (SIGTTOU) for good.
+        quiet = dict(env=env, stdin=subprocess.DEVNULL, capture_output=True)
+        subprocess.run(apt + ["update", "-qq"], check=False, timeout=600, **quiet)
+        subprocess.run(apt + ["install", "-y", "-qq", "--no-install-recommends", "libopenmpi-dev", "openmpi-bin"], check=True, timeout=1200, **quiet)
     except (OSError, subprocess.SubprocessError) as e:
         log(f"baseline: Open MPI install failed ({e}); TensorRT-LLM cannot start")
         return False

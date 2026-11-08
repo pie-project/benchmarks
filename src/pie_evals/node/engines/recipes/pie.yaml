@@ -219,9 +219,19 @@ default:
               value: null
               rationale: >
                 The 80 GB rule (8 GiB of KV, 16 state slots) seats 16 lanes for Qwen3.8-27B bf16 on an A100 SXM: c64
-                400 tok/s against vLLM's 1007. 64 slots (about 6 GB of delta state) and the default KV pool.
+                400 tok/s against vLLM's 1007. The default KV pool beside the slots below.
             engine_option:
-              value: {max_state_slots: 64}
+              value: {max_state_slots: 128}
+              rationale: >
+                A slot for each of c128's lanes, as TensorRT-LLM's state pool holds one for each of its 128
+                (pie keeps stated slots up to the lanes beside the kv pages): Qwen3.8-27B c128 1129 -> 1550
+                tok/s with the fires below (TensorRT-LLM 1574). At 64 slots c128 kept 59 lanes active.
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                4096-row fires halve the activation arena, and the 1.5 GB it gives back holds the kv pages
+                128 lanes grow into: at 8192 rows c128 ran 1366 tok/s with lanes suspended for pages.
+                pf32-512 4255 -> 4231 tok/s (TensorRT-LLM 4453).
         qwen3_6_moe:
           knobs:
             max_forward_tokens:
