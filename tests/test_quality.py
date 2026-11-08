@@ -183,3 +183,15 @@ def test_parity_reads_saved_reference_texts_only_for_their_prompts(tmp_path):
     assert dist_run.saved_texts(str(tmp_path), "m", rendered) == ["a1", "a2"]
     assert dist_run.saved_texts(str(tmp_path), "m", ["q1", "other"]) is None
     assert dist_run.saved_texts(str(tmp_path), "absent", rendered) is None
+
+
+def test_a_reference_against_itself_measures_its_first_token_spread():
+    from pie_evals.quality import dist_run
+
+    # two prompts of three tokens; only the last position counts. The second pass flips the first prompt's top-1
+    a = [[{}, {}, {1: -0.1, 2: -2.5}], [{}, {}, {3: -0.05, 4: -3.0}]]
+    b = [[{}, {}, {1: -2.5, 2: -0.1}], [{}, {}, {3: -0.05, 4: -3.0}]]
+    same = dist_run.reference_spread(a, a, [3, 3], "vLLM --enforce-eager")
+    assert same == {"ref_self_kl": 0.0, "ref_self_top1": 1.0, "ref_self": "vLLM --enforce-eager"}
+    moved = dist_run.reference_spread(a, b, [3, 3], "vLLM --enforce-eager")
+    assert moved["ref_self_top1"] == 0.5 and moved["ref_self_kl"] > dist_run.KL_PASS
