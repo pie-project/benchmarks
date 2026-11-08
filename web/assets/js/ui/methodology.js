@@ -12,6 +12,15 @@ window.Pie = window.Pie || {};
   const BATCHES = [1, 2, 4, 8, 16, 32, 64, 128, 256];
   const LINKS = { none: ["One device", 0, 0], tb5: ["Thunderbolt 5", 10, 30], pcie5: ["PCIe 5.0 ×16", 64, 15], nvlink: ["NVLink", 900, 15] };
   const USABLE = 0.75;  // the share of unified memory macOS lets the GPU wire by default
+  // engines that run part of a prompt pass on the Apple Neural Engine, beside the GPU, and the GPU families they do it on.
+  // pie's Metal engine splits each dense SwiGLU MLP with affine 4-bit weights (groups of 64) between the two (pie's
+  // crates/engine-metal/src/ane and profiles/: the M4 Pro gives the Neural Engine 74% of the MLP, other Apple7-9 chips 47%
+  // of it and of the wide projections); a mixture-of-experts model and a GELU-gated MLP (Gemma's) stay on the GPU, and
+  // Apple10 (M5) keeps every pass there. Its share runs in int8 (int8 weights and activations), which Apple rates at twice
+  // the fp16 peak from M4 on; the limit counts the Neural Engine's fp16 peak, as it counts every unit at fp16.
+  // No other engine here uses the Neural Engine: MLX, llama.cpp and vllm-metal run on the GPU alone
+  const NEURAL_ENGINE = { pie: ["apple7", "apple8", "apple9"] };
+  const GELU_MLP = /^gemma/;  // Gemma's MLPs gate with GELU (config.json hidden_activation gelu_pytorch_tanh), not SiLU
 
   const kTok = (n) => (n >= 1024 ? `${Math.round(n / 1024)}K` : `${n}`);
 
@@ -22,6 +31,13 @@ window.Pie = window.Pie || {};
     // the catalog's fp16 compute where it has one, else, for an Apple GPU only, the per-core estimate; any other chip
     // without a figure has none (its CUDA or stream cores are not Apple GPU cores, and would give a nonsense number)
     tflops: h.tflops_fp16 || (h.vendor === "Apple" || h.class === "mac" ? +(((TFLOPS_PER_CORE[h.arch] || 0.4) * (h.gpu_cores || 0)).toFixed(1)) : 0),
+    // the catalog's dense FP8 peak, on a chip whose tensor cores multiply FP8; and its block-scaled MXFP8 peak, on one
+    // whose tensor cores also take microscaled (MX) operands, MXFP4 weights against MXFP8 activations among them
+    tflops8: h.tflops_fp8 || 0,
+    tflopsMx: h.tflops_mxfp8 || 0,
+    // the Neural Engine's fp16 rate beside the GPU (Apple M1 to M4), counted only for an engine that uses it
+    ane: h.ane_tflops_fp16 || 0,
+    arch: h.arch,
     mem: h.memory_gib || 0,
     devices: h.count || 1,
     // internal SSD read speed, estimated by chip class: the Max chips read about twice as fast as the Pro, the Pro twice the base
@@ -48,6 +64,7 @@ window.Pie = window.Pie || {};
       // the residual width the GPUs exchange between them; where the catalog has none, the width a dense model of this
       // size and depth would have (12 x hidden^2 parameters a layer)
       hidden: m.hidden_size || Math.round(Math.sqrt((m.params_b * 1e9) / (12 * layers))),
+      family: m.family || "",
     };
   });
 
@@ -288,25 +305,58 @@ window.Pie = window.Pie || {};
   };
 
   // bits per weight a result's scheme stores, with its scales: 4-bit affine keeps a 16-bit scale and bias per 64
-  // weights (4.5), Q4_K_M mixes 4- and 6-bit blocks (about 4.85), MXFP4 an 8-bit scale per 32 (4.25)
-  const bitsOf = (scheme = "") => (/bf16|f16/.test(scheme) ? 16 : /mxfp4/.test(scheme) ? 4.25 : /8/.test(scheme) ? 8.5 : /q4_k/.test(scheme) ? 4.85 : 4.5);
+  // weights (4.5), Q4_K_M mixes 4- and 6-bit blocks (about 4.85), MXFP4 an 8-bit scale per 32 (4.25). `bits` is the
+  // body's, `experts` the routed experts', `head` the output head's; they differ only in a 2-bit scheme, which puts only
+  // the experts in 2 bits. MLX's (mlx_2bit) keeps them affine 2-bit with a 16-bit scale and bias per 128 (2.25) and every
+  // other projection 4-bit g64 (4.5, the router's 8 bits counted as 4.5); llama.cpp's Q2_K mix keeps the experts' gate
+  // and up in Q2_K (2.625: a 4-bit scale and min per 16, two 16-bit scales per 256), their down in Q3_K (3.4375), the
+  // output head in Q6_K (6.5625) and nothing below Q2_K (a tensor whose rows Q2_K cannot split falls back to more bits)
+  const bitsOf = (scheme = "") => {
+    if (/mlx_2bit/.test(scheme)) return { bits: 4.5, experts: 2.25, head: 4.5 };
+    if (/q2_k/.test(scheme)) return { bits: 2.625, experts: (2 * 2.625 + 3.4375) / 3, head: 6.5625 };
+    const bits = /bf16|f16/.test(scheme) ? 16 : /mxfp4/.test(scheme) ? 4.25 : /8/.test(scheme) ? 8.5 : /q4_k/.test(scheme) ? 4.85 : 4.5;
+    return { bits, experts: bits, head: bits };
+  };
 
   // one forward pass, from the model's architecture (config/architectures.js): the bytes it reads and the arithmetic
   // it does. `tokens` go through the pass together, `logits` of them need the output head, and `requests` caches of
-  // `context` tokens are read. The input embedding and Gemma's per-layer tables are only looked up, never read whole;
-  // a mixture of experts touches more experts the more tokens the pass carries
+  // `context` tokens are read. The input embedding, Gemma's per-layer tables and Qwen3.8-Flash-Next's n-gram table are
+  // only looked up, never read whole; a mixture of experts touches more experts the more tokens the pass carries.
+  // `bits` is bitsOf's, per part
   const pass = (a, { bits, tokens, logits, requests, context }) => {
     const body = a.total - a.emb * (a.tied ? 1 : 2) - a.ple;
     const activeBody = body - a.routed * (1 - a.k);
-    const touchedBody = body - a.routed + a.routed * (a.k >= 1 ? 1 : 1 - (1 - a.k) ** tokens);
-    const weightGB = ((touchedBody + a.emb) * bits) / 8;
-    // full attention reads every cached token, sliding attention its window; linear attention reads and writes its state
-    const cacheGB = (requests * ((a.full * context + a.sliding * Math.min(context, a.window)) * a.kvLayer + a.linear * a.state * 2)) / 1e9;
+    const touchedExperts = a.routed * (a.k >= 1 ? 1 : 1 - (1 - a.k) ** tokens);
+    const weightGB = ((body - a.routed) * bits.bits + touchedExperts * bits.experts + a.emb * bits.head) / 8;
+    // full attention reads every cached token, at its own layers' geometry where they have one (Gemma 4's global layers),
+    // sliding attention its window; linear attention reads and writes its state
+    const cacheGB = (requests * (a.full * context * (a.kvFull || a.kvLayer) + a.sliding * Math.min(context, a.window) * a.kvLayer
+      + a.linear * a.state * 2)) / 1e9;
     // with KV sharing, the layers that reuse another layer's K and V run only for the tokens that need logits: a prompt
     // token's only job is to fill the cache, and those layers add nothing to it
     const skip = a.shared && tokens > logits ? (a.shared / a.layers) * (tokens - logits) : 0;
-    const flops = 2e9 * (activeBody * (tokens - skip) + a.emb * logits);
-    return { weightGB, cacheGB, flops, body: activeBody, head: a.emb };
+    const bodyFlops = 2e9 * activeBody * (tokens - skip);
+    const flops = bodyFlops + 2e9 * a.emb * logits;
+    return { weightGB, cacheGB, flops, bodyFlops, body: activeBody, head: a.emb, experts: a.routed * a.k };
+  };
+
+  // the matmuls a build can run narrower than 16 bits, and the peak they run at: an FP8 build's whole body (its checkpoint
+  // keeps only the embeddings, and so the head, in bf16) on a chip with FP8 tensor cores; an MXFP4 build's experts (gpt-oss
+  // keeps attention, router and head in bf16), against activations quantized to MXFP8, on a chip whose tensor cores take
+  // the MX block scales (TensorRT-LLM's default W4A8_MXFP4_MXFP8 on Blackwell, SM100 and SM120). Without them the 4-bit
+  // experts are widened to 16 bits, as every engine does on Hopper, Ada and older. No build is assumed to quantize its
+  // activations below 8 bits, so FP4 rates are never used. `share` is the part of the body's arithmetic that runs narrow
+  const narrow = (machine, scheme = "", p) => {
+    if (/(^|_)fp8/.test(scheme) && machine.tflops8) return { share: 1, tflops: machine.tflops8 };
+    if (/mxfp4/.test(scheme) && machine.tflopsMx) return { share: p.experts && p.body ? Math.min(1, p.experts / p.body) : 1, tflops: machine.tflopsMx };
+    return { share: 0, tflops: 0 };
+  };
+  // the seconds a pass's arithmetic takes on the whole machine: the narrow share of its body at the narrow peak, the rest
+  // at the 16-bit one. Both peaks are every device's together
+  const mathTime = (flops, bodyFlops, tflops, share = 0, tflopsNarrow = 0) => {
+    if (!tflops) return 0;
+    const fast = share && tflopsNarrow ? bodyFlops * share : 0;
+    return (flops - fast) / (tflops * 1e12) + (fast ? fast / (tflopsNarrow * 1e12) : 0);
   };
 
   // a model's architecture: its own from config/architectures.js, or, for a model not there yet, one built from the
@@ -362,34 +412,55 @@ window.Pie = window.Pie || {};
       full: Math.round(base.full * s), sliding: Math.round(base.sliding * s), linear: Math.round(base.linear * s) };
   };
 
+  // the shape a result was measured at: its own benchmark's requests at once, prompt and answer (c1024 is 1,024 requests
+  // of 128 tokens in and 256 out, pf16-512 is 16 prompts of 512), from matrix/workloads.yaml by way of webdb; the
+  // category's own figures where a row names no benchmark the export knows
+  const shapeOf = (workload, benchmark) => {
+    const w = Pie.store.index.workloads?.[workload];
+    const own = benchmark && w?.shapes?.[benchmark];
+    return own ? { ...w, ...own } : w;
+  };
+  Pie.shapeOf = shapeOf;
+
   Pie.ceiling = (row, metric) => {
     const machine = machines().find((m) => m.id === row.hardware);
     const model = models().find((m) => m.id === row.model);
-    const workload = Pie.store.index.workloads[row.workload];
+    const workload = shapeOf(row.workload, row.benchmark);
     const a = row.miniature ? miniArch(row) : archOf(row.model);
     if (!machine?.bw || !model || !workload || !a) return null;
-    // the whole machine: the catalog gives one device's bandwidth and FLOPS, and a run splits the model across all of them
-    const bw = machine.bw * machine.devices;
-    const tflops = machine.tflops * machine.devices;
     const bits = bitsOf(row.scheme);
-    const prompt = workload.prompt_tokens;
-    // Batched Prefill ("pbatch"): the workload's prompts all prefilled in one pass, each its own first answer token
+    // the prompt the run's engine prefilled, the count its tok/s divides by: the shape's 512-token prompt with the chat
+    // template, its system prompt and the cold-cache tag (about 554 tokens on Qwen, 605 on gpt-oss), from the row's own
+    // prompt tokens per request; the shape's nominal figure where the row has none
+    const prompt = row.prompt_per_request || workload.prompt_tokens;
+    // Batched Prefill ("pbatch"): the run's prompts all prefilled in one pass, each its own first answer token
     const batch = metric === "pbatch" ? (workload.concurrency || 1) : 1;
     const prefill = metric === "prefill" || metric === "pbatch";
+    // a prompt pass by an engine that splits a dense SwiGLU MLP with the Neural Engine on this chip has the Neural
+    // Engine's fp16 rate beside the GPU's; every other row, and every decode, has the GPU's alone
+    const ane = prefill && machine.ane && NEURAL_ENGINE[row.engine]?.includes(machine.arch) && row.scheme === "affine_u4_g64" && !a.routed && !GELU_MLP.test(model.family) ? machine.ane : 0;
+    // the whole machine: the catalog gives one device's bandwidth and FLOPS, and a run splits the model across all of them
+    const bw = machine.bw * machine.devices;
+    const tflops = (machine.tflops + ane) * machine.devices;
     const tokens = prefill ? prompt * batch : 1;
     const context = prefill ? prompt : prompt + workload.output_tokens / 2;
     const p = pass(a, { bits, tokens, logits: batch, requests: batch, context });
     const memory = (p.weightGB + p.cacheGB) / bw;
     // a chip with no FLOPS figure has no compute bound: only the bandwidth one is drawn
-    const compute = tflops ? p.flops / (tflops * 1e12) : 0;
+    const n = narrow(machine, row.scheme, p);
+    const tflopsNarrow = n.tflops * machine.devices;
+    const compute = mathTime(p.flops, p.bodyFlops, tflops, n.share, tflopsNarrow);
     // several GPUs: the exchange between them is a third bound
     const link = linkOf(row.hardware);
     const linkS = linkTime(a, link, machine.devices, tokens);
     const slowest = Math.max(memory, compute, linkS);
     const bound = linkS === slowest && linkS ? "interconnect" : memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced";
-    // the parts too, for the Methods page's worked examples
-    const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, linkS, link, bw, tflops, devices: machine.devices,
-      body: p.body, head: p.head, bits, bytes: bits / 8, tokens, context, flopsPerToken: 2e9 * (p.body + p.head) };
+    // the parts too, for the Methods page's worked examples. `tflops` is this pass's own peak, its FLOPs over its math
+    // time: the 16-bit one (`tflops16`) unless part of it runs narrower (`narrow`, at `tflopsNarrow`)
+    const parts = { weightGB: p.weightGB, cacheGB: p.cacheGB, readS: memory, mathS: compute, linkS, link, bw,
+      tflops: compute && n.share ? p.flops / compute / 1e12 : tflops, tflops16: tflops, tflopsNarrow, narrow: n.share, ane,
+      devices: machine.devices, body: p.body, head: p.head, bits: bits.bits, expertBits: bits.experts, headBits: bits.head,
+      bytes: bits.bits / 8, tokens, context, flopsPerToken: 2e9 * (p.body + p.head) };
     return { tps: tokens / slowest, bound, bandwidth: tokens / memory, compute: compute ? tokens / compute : null, interconnect: linkS ? tokens / linkS : null, parts };
   };
 
@@ -413,14 +484,15 @@ window.Pie = window.Pie || {};
     if (!plain) return null;
     const a = archOf(row.model);
     const workload = Pie.store.index.workloads[row.workload];
-    const { bw, tflops, bits, context } = plain.parts;
+    const { bw, tflops16: tflops, tflopsNarrow, narrow: share, context } = plain.parts;
+    const bits = bitsOf(row.scheme);
     const alpha = Math.min(percent, 99) / 100;
-    const draftS = Math.max((DRAFT_B * bits / 8) / bw, tflops ? (2 * DRAFT_B * 1e9) / (tflops * 1e12) : 0);
+    const draftS = Math.max((DRAFT_B * bits.bits / 8) / bw, tflops ? (2 * DRAFT_B * 1e9) / (tflops * 1e12) : 0);
     let best = { tps: plain.tps, k: 0, kept: 1, bound: plain.bound };
     for (let k = 1; k <= WIDEST; k++) {
       const p = pass(a, { bits, tokens: k + 1, logits: k + 1, requests: 1, context });
       const memory = (p.weightGB + p.cacheGB) / bw;
-      const compute = tflops ? p.flops / (tflops * 1e12) : 0;
+      const compute = mathTime(p.flops, p.bodyFlops, tflops, share, tflopsNarrow);
       const kept = (1 - alpha ** (k + 1)) / (1 - alpha);
       const tps = kept / (Math.max(memory, compute) + draftS);
       if (tps > best.tps) best = { tps, k, kept, bound: memory > compute * 1.1 ? "bandwidth" : compute > memory * 1.1 ? "compute" : "balanced" };
@@ -473,28 +545,44 @@ window.Pie = window.Pie || {};
 
   // batched decode on a machine: `requests` decode together, each one token a step with its logits, each with its
   // cache at the middle of its answer; each request's prompt is prefilled once, and its arithmetic is spread over the
-  // steps of its answer, since it counts against the same FLOPS but not as output
-  Pie.batchedCeiling = (hardware, modelId, scheme = "affine_u4_g64") => {
+  // steps of its answer, since it counts against the same FLOPS but not as output. The prompt's pass writes the answer's
+  // first token, so decode steps make the other D - 1 of its D: per token out, (D - 1) / D of a step's reads and
+  // arithmetic, and the prompt's pass is prefill's own (Gemma's KV-sharing layers run only for its last token).
+  // `benchmark` is the run's own (c8 ... c1024): its requests at once and its answer's length; without one, the
+  // category's first (c32)
+  Pie.batchedCeiling = (hardware, modelId, scheme = "affine_u4_g64", benchmark = null) => {
     const machine = machines().find((m) => m.id === hardware);
-    const workload = Pie.store.index.workloads?.throughput;
+    const workload = shapeOf("throughput", benchmark);
     const a = archOf(modelId);
     if (!machine?.bw || !workload || !a) return null;
     const bw = machine.bw * machine.devices;
     const tflops = machine.tflops * machine.devices;
     const requests = workload.concurrency || 1;
-    const p = pass(a, { bits: bitsOf(scheme), tokens: requests, logits: requests, requests, context: workload.prompt_tokens + workload.output_tokens / 2 });
-    const prefillFlops = requests * 2e9 * p.body * workload.prompt_tokens / workload.output_tokens;
-    const readS = (p.weightGB + p.cacheGB) / bw;
-    const mathS = tflops ? (p.flops + prefillFlops) / (tflops * 1e12) : 0;
+    const bits = bitsOf(scheme);
+    const prompt = workload.prompt_tokens, answer = workload.output_tokens;
+    const p = pass(a, { bits, tokens: requests, logits: requests, requests, context: prompt + answer / 2 });
+    // one request's prompt in its own pass, its last token's logits the answer's first token
+    const pre = pass(a, { bits, tokens: prompt, logits: 1, requests: 1, context: prompt });
+    // the times below are for `requests` tokens out: (D - 1) / D of a decode step, and every request's prompt over its answer
+    const steps = answer > 1 ? (answer - 1) / answer : 1;
+    const readS = ((p.weightGB + p.cacheGB) / bw) * steps;
+    const flops = p.flops * steps + (requests * pre.flops) / answer;
+    // the prompts' arithmetic runs narrow in the same share of their body as the steps' does
+    const n = narrow(machine, scheme, p);
+    const tflopsNarrow = n.tflops * machine.devices;
+    const mathS = mathTime(flops, p.bodyFlops * steps + (requests * pre.bodyFlops) / answer, tflops, n.share, tflopsNarrow);
     // several GPUs: each step exchanges the batch's activations, and each prompt's once, spread over its answer
     const link = linkOf(hardware);
-    const linkS = link ? linkTime(a, link, machine.devices, requests) + linkTime(a, link, machine.devices, requests * workload.prompt_tokens / workload.output_tokens) - 2 * a.layers * link.us * 1e-6 * (1 - 1 / workload.output_tokens) : 0;
+    const linkS = link ? linkTime(a, link, machine.devices, requests) * steps + linkTime(a, link, machine.devices, requests * prompt / answer) - 2 * a.layers * link.us * 1e-6 * (1 - 1 / answer) : 0;
     const bandwidth = requests / readS;
     const compute = mathS ? requests / mathS : null;
     const interconnect = linkS ? requests / linkS : null;
     const tps = Math.min(bandwidth, compute || Infinity, interconnect || Infinity);
     const bound = tps === interconnect ? "interconnect" : tps === compute ? "compute" : "bandwidth";
-    return { tps, bound, compute, bandwidth, interconnect, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, linkS, link, requests, bw, tflops, devices: machine.devices } };
+    // `tflops` is the step's own peak, as Pie.ceiling's parts give it
+    const peak = mathS && n.share ? flops / mathS / 1e12 : tflops;
+    return { tps, bound, compute, bandwidth, interconnect, parts: { weightGB: p.weightGB, cacheGB: p.cacheGB, readS, mathS, linkS, link, requests, bw,
+      tflops: peak, tflops16: tflops, tflopsNarrow, narrow: n.share, devices: machine.devices } };
   };
 
   Pie.methodology = {

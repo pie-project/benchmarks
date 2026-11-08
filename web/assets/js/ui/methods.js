@@ -58,24 +58,24 @@ window.Pie = window.Pie || {};
   };
   // where each input comes from, in a sentence, and the catalog page that holds its numbers
   const SOURCES = {
-    "Weights read": ["Active parameters × bits per weight: 4.5 for 4-bit, 8.5 for 8-bit, 16 for bf16.", "models"],
+    "Weights read": ["Active parameters × bits per weight: 4.5 for 4-bit, 8.5 for 8-bit, 16 for bf16; in a 2-bit build the experts' own 2-bit size.", "models"],
     "Weights touched": ["As Weights read, with every expert the prompt's tokens reach.", "models"],
     "Cache read": ["KV cache for the prompt plus half the answer, from the model's shape.", "models"],
     "Caches read": ["Cache read for every request in the batch.", "models"],
     "Prompt cache": ["The KV cache the prompt writes, from the model's config.", "models"],
     "Prompt caches": ["The KV cache every prompt writes, from the model's config.", "models"],
-    "Prompts": [() => `${Pie.store.index.workloads?.prefill_batch?.concurrency ?? 256} cold prompts at once.`, "workloads"],
-    "Tokens per prompt": [() => `${Pie.store.index.workloads?.prefill_batch?.prompt_tokens ?? 512} tokens each.`, "workloads"],
+    "Prompts": [() => `The run's own, ${Pie.store.index.workloads?.prefill_batch?.parallel || "4–1,024"} cold prompts at once: pf16-512 is 16.`, "workloads"],
+    "Tokens per prompt": [() => `The run's own: the ${Pie.store.index.workloads?.prefill_batch?.prompt_tokens ?? 512}-token prompt with the chat template and cold-cache tag each engine prefills with it, as its tok/s counts them.`, "workloads"],
     "Memory bandwidth": ["The machine's peak, from its spec sheet.", "hardware"],
-    "Peak FLOPS": ["FP16 peak from the spec sheet. Apple's are estimates.", "hardware"],
+    "Peak FLOPS": ["FP16 peak from the spec sheet, or the FP8 one for the matmuls an 8-bit or MXFP4 build runs there. Apple's are estimates.", "hardware"],
     "Active body": ["Parameters each token runs through, minus embeddings and output head.", "models"],
     "Output head": ["Vocabulary × hidden size, the last matmul.", "models"],
     "Layers": ["Transformer layers, from the model's config.json.", "models"],
     "Link latency": ["30 µs on Thunderbolt 5, 15 µs on PCIe 5.0 and NVLink.", "hardware"],
     "Link bandwidth": ["10 GB/s on Thunderbolt 5, 64 GB/s on PCIe 5.0 ×16, 900 GB/s on NVLink.", "hardware"],
     "Activations exchanged": ["Hidden state per all-reduce: tokens × hidden size × 2 bytes.", "models"],
-    "Prompt tokens": [() => `${Pie.store.index.workloads?.raw?.prompt_tokens ?? 512} tokens, all in one pass.`, "workloads"],
-    "Requests": [() => `${Pie.store.index.workloads?.throughput?.concurrency ?? 32} at once.`, "workloads"],
+    "Prompt tokens": [() => `The run's own, all in one pass: the ${Pie.store.index.workloads?.raw?.prompt_tokens ?? 512}-token prompt with the chat template and cold-cache tag the engine prefills with it (about 554 on Qwen, 605 on gpt-oss), as its tok/s counts them.`, "workloads"],
+    "Requests": [() => `The run's own, ${Pie.store.index.workloads?.throughput?.parallel || "4–1,024"} at once: c1024 is 1,024 requests of 128 tokens in and 256 out.`, "workloads"],
     "Arithmetic per output token": ["2 × (Active body + Output head), plus the prompt's share.", "models"],
     "Acceptance": [() => `${Pie.specAlpha}%, set in the field above. The runs do not record it yet.`, null],
     "Drafts": ["Every width from 1 to 16 is tried; the Limit keeps the fastest.", null],
@@ -112,6 +112,8 @@ window.Pie = window.Pie || {};
 
   // the effect of a simplification on the limit, as one quiet tag on its row
   const EFFECT = { up: "Raises the limit", down: "Lowers the limit", small: "Under 1%", choice: "Choice" };
+  // which matmuls run at the FP8 peak rather than the 16-bit one, on every compute-bound chapter
+  const NARROW = ["An FP8 build runs its body's matmuls at the chip's FP8 peak. An MXFP4 build runs its experts there too, against 8-bit activations, on chips whose tensor cores take MX block scales (Blackwell, MI350X); elsewhere they run at 16 bits. Attention, router and output head stay at the 16-bit peak, and no build is taken to cut its activations below 8 bits.", "choice"];
 
   const ceilingOf = (metric) => Pie.ceiling?.({ hardware: EXAMPLE.hardware, model: EXAMPLE.model, scheme: EXAMPLE.scheme, workload: "raw" }, metric);
 
@@ -133,10 +135,11 @@ window.Pie = window.Pie || {};
         ["Weights are read once per token, with no reuse from cache, and nothing else is read besides the context cache.", "up"],
         ["Attention arithmetic, activations, sampling and kernel launches cost nothing.", "up"],
         ["4-bit weights are 4.5 bits each: 4 bits plus a 16-bit scale and bias per group of 64. 8-bit is 8.5 bits, bf16 16.", null],
+        ["A 2-bit scheme puts only the routed experts in 2 bits. MLX's keeps them at 2.25 bits (a 16-bit scale and bias per 128) and the rest at 4.5; llama.cpp's Q2_K mix keeps their gate and up in Q2_K (2.625 bits) and their down in Q3_K (3.4375), the output head in Q6_K, and nothing below Q2_K.", "up"],
         ["The context is the prompt plus half the answer, the average over the answer's tokens.", null],
         ["Parameter counts, embedding sizes and cache shapes are each model's own, from its config.json and safetensors on Hugging Face.", null],
-        ["The input embedding is only looked up, one row a token, so it is not counted as read; the output head is a full matmul and is. Gemma's per-layer embedding tables are lookups too.", null],
-        ["The cache read is the model's real one: full-attention layers read every cached token, sliding-window layers their window, and linear-attention layers read and write their fixed state.", null],
+        ["The input embedding is only looked up, one row a token, so it is not counted as read; the output head is a full matmul and is. Gemma's per-layer embedding tables and Qwen3.8-Flash-Next's n-gram table are lookups too.", null],
+        ["The cache read is the model's real one: full-attention layers read every cached token, sliding-window layers their window, and linear-attention layers read and write their fixed state, in bf16: the configs ask fp32, but pie and TensorRT-LLM keep bf16, and the limit takes the smallest an engine keeps.", "up"],
       ],
       check: { workload: "raw", metric: "decode", key: "decode_tok_s" },
       example: () => {
@@ -211,7 +214,7 @@ window.Pie = window.Pie || {};
         eq("Interconnect bound", fr(v("Requests"), v("Interconnect time")), ["megatron"]),
         eq("Limit", fn("min", v("Bandwidth bound"), v("Compute bound"), v("Interconnect bound")), ["roofline"]),
       ],
-      symbols: "The arithmetic per output token is 2 × (active body + output head), plus each request's prompt, 2 × active body per prompt token, spread over its answer: the prompt uses the same FLOPS but does not count as output.",
+      symbols: "The arithmetic per output token is 2 × (active body + output head), plus each request's prompt, 2 × active body per prompt token, spread over its answer: the prompt uses the same FLOPS but does not count as output. The prompt's pass writes the answer's first token, so decode steps write all of the answer but that one, and, as in prefill, Gemma's KV-sharing layers run only for the prompt's last token.",
       why: [
         "A batch reads the weights once for all its requests, so speed grows with the batch until it meets the compute roof {pope} {roofline}.",
       ],
@@ -219,8 +222,9 @@ window.Pie = window.Pie || {};
         ["Each request's cache is read every step, at the middle of its answer, from the model's real cache shape.", null],
         ["All requests stay in flight for the whole run, so every step carries the full batch.", "up"],
         ["Attention arithmetic is not counted.", "up"],
-        ["A mixture of experts touches more experts the more tokens a step carries, assuming each token picks its experts independently.", "up"],
+        ["A mixture of experts touches more experts the more tokens a step carries, assuming each token picks its experts independently. Tokens that agree on their experts read fewer of them; from 128 requests at once nearly every expert is touched either way.", "down"],
         ["Peak FLOPS is the spec sheet's. On Apple M5 chips it includes the GPU's neural accelerators, which an engine may not use.", "up"],
+        NARROW,
       ],
       check: { workload: "throughput", metric: "throughput", key: "output_tok_s", batched: true },
       example: () => {
@@ -265,6 +269,8 @@ window.Pie = window.Pie || {};
         ["Only the last prompt token needs the output head: the first answer token is all prefill has to produce.", null],
         ["Gemma's KV sharing: layers that reuse an earlier layer's K and V run only for the last prompt token, since the others only fill the cache.", null],
         ["FLOPS is the spec sheet's peak. Apple publishes no FP16 figure, so the catalog's are estimates.", "up"],
+        NARROW,
+        ["On Apple M1 to M4 chips pie splits a dense SwiGLU model's MLP between the GPU and the Neural Engine, so pie's limit there adds the Neural Engine's FP16 peak to the GPU's. No other engine uses the Neural Engine, and its peak is far above what a matmul reaches on it. pie runs its share in int8, which Apple rates at twice the FP16 peak from M4 on; the limit counts FP16, as for every unit.", "up"],
       ],
       check: { workload: "raw", metric: "prefill", key: "prefill_tok_s" },
       // shown only while results run above the limit: what is known about why, and what is not
@@ -301,6 +307,8 @@ window.Pie = window.Pie || {};
         ["Attention arithmetic, which grows with the square of each prompt, is not counted.", "up"],
         ["Each prompt needs the output head once, for its first answer token.", null],
         ["FLOPS is the spec sheet's peak. Apple publishes no FP16 figure, so the catalog's are estimates.", "up"],
+        NARROW,
+        ["Single Prefill's Neural Engine share: pie's limit on Apple M1 to M4 chips adds the Neural Engine's FP16 peak for a dense SwiGLU model.", "up"],
       ],
     },
   ];

@@ -181,7 +181,7 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
     catalog = load("hardware")["hardware"]
     by_id = {c["id"]: c for c in catalog}
     by_runpod = {c["runpod_gpu_type"]: c for c in catalog if c.get("runpod_gpu_type")}
-    spec_keys = ("bandwidth_gbs", "tflops_fp16", "power_w", "cpu_cores", "gpu_cores", "year", "memory_type")
+    spec_keys = ("bandwidth_gbs", "tflops_fp16", "tflops_fp8", "tflops_mxfp8", "ane_tflops_fp16", "power_w", "cpu_cores", "gpu_cores", "year", "memory_type")
 
     def row(c: dict, **over) -> dict:
         resource = RESOURCE.get(c["class"], "RunPod cloud" if c.get("runpod_gpu_type") else "")
@@ -193,6 +193,10 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
             "memory_gib": c.get("memory_gib") or max(c.get("memory_options_gb") or [0]) or None,
             "memory_type": c.get("memory_type"), "bandwidth_gbs": c.get("bandwidth_gbs"),
             "cpu_cores": c.get("cpu_cores"), "gpu_cores": c.get("gpu_cores"), "tflops_fp16": c.get("tflops_fp16"),
+            # the narrower tensor peaks the limits use for FP8 and MXFP4 builds, where the chip has them
+            "tflops_fp8": c.get("tflops_fp8"), "tflops_mxfp8": c.get("tflops_mxfp8"),
+            # the Neural Engine beside an Apple GPU: only an engine that runs prompt matmuls on it has it in its limit
+            "ane_tflops_fp16": c.get("ane_tflops_fp16"),
             "interconnect": None, "power_w": c.get("power_w"), "year": str(c["year"]) if c.get("year") else None,
             "runs": None, "price_usd": None, "price_hr": None, **over,
         }
@@ -231,6 +235,8 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
         if r["class"] == "web" and r.get("name"):
             r["name"] += " Chrome"
             r["vendor"] = f"Chrome ({r.get('vendor') or 'GPU'})"
+            # WebGPU has no FP8 or block-scaled matrix math, so the card's narrower peaks are out of a browser's reach
+            r["tflops_fp8"] = r["tflops_mxfp8"] = None
     return rows
 
 
@@ -287,8 +293,13 @@ def workloads() -> list[dict]:
     for cat, ids, label in CATEGORIES:
         src = next((i for i in ids if i in params), None)
         p = params.get(src, {})
+        # each benchmark's own shape: a row measured at c1024 or pf16-512 (its `benchmark`) is held to the limit of its
+        # own requests at once, prompt and answer, not to the category's first benchmark's
+        shapes = {i: {"concurrency": params[i].get("concurrency") or 1, "prompt_tokens": params[i].get("prefill"),
+                      "output_tokens": params[i].get("decode")} for i in ids if i in params}
         out.append({"id": cat, "label": label, "concurrency": p.get("concurrency") or (32 if cat == "throughput" else 1),
-                    "prompt_tokens": p.get("prefill"), "output_tokens": p.get("decode"), "benchmark": ", ".join(ids)})
+                    "prompt_tokens": p.get("prefill"), "output_tokens": p.get("decode"), "benchmark": ", ".join(ids),
+                    "shapes": shapes})
     return out
 
 
@@ -462,10 +473,19 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "commit": (r["pie_commit"] or "")[:9] if engine == "pie" else "",
         "measured": local(r["started_at"]),
         "benchmark": r["workload"],  # the workload the number came from (c512, pf16-512, raw-512-256): engines compare at the same N
+        "prompt_per_request": prompt_per_request(r),
         "status": r["status"], "note": draft_note(r, engine),
         "miniature": MINIATURE.get(r["artifact"], ""),
         **MINI_SHAPE.get(r["artifact"], {}),
     }
+
+
+def prompt_per_request(r: dict) -> float | None:
+    """The prompt tokens the engine processed per request, its chat template and cold-cache tag included (about 554 for
+    raw-512-256 on Qwen): the count a row's prefill tok/s divides by, so its limit is held to the same prompt. As
+    report.prompt_length_mismatches counts it: the row's prompt tokens over its completed requests."""
+    done = int(r.get("requests") or 0) - int(r.get("failed") or 0)
+    return round(r["prompt_tokens"] / done, 1) if r.get("prompt_tokens") and done > 0 else None
 
 
 def draft_note(r: dict, engine: str) -> str:
@@ -606,7 +626,8 @@ def measured(r: dict) -> bool:
     return r["status"] in ("pass", "noisy") and any(r.get(m) is not None for m in ("decode_tok_s", "prefill_tok_s", "output_tok_s"))
 
 
-PREFILL = ("prefill_tok_s", "ttft_ms_p50", "ttft_ms_p99")
+# the prompt counts go with the prefill numbers: a prefill rate is the prompt tokens the engine processed over its TTFT
+PREFILL = ("prefill_tok_s", "ttft_ms_p50", "ttft_ms_p99", "prompt_tokens", "requests", "failed")
 
 
 def keep_decode(tag_rows: list[dict], picked: dict[tuple, tuple], a2m: dict[str, str], engine: str, since: datetime) -> None:
@@ -620,8 +641,8 @@ def keep_decode(tag_rows: list[dict], picked: dict[tuple, tuple], a2m: dict[str,
 
 def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
     """The picked run per setup under each tag, and each tag's kind and newest time."""
-    cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind", "counters_json"]
-            + METRICS)
+    cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind", "counters_json",
+             "prompt_tokens", "requests", "failed"] + METRICS)
     rows = [r for r in store.table().select(cols).to_pylist()
             if measured(r) and r["platform"] in hardware_ids and r["engine"] in engine_ids]
     by_tag: dict[str, list[dict]] = {}

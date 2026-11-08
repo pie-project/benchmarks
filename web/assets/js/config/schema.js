@@ -320,6 +320,9 @@ window.Pie = window.Pie || {};
         number("tflops_fp16", "Compute", "Specs", "TFLOPS", 1, {
           info: "Peak fp16 matrix math, GPU only. An estimate, not exact: other units, such as the neural accelerators or the Neural Engine, can add more.",
         }),
+        number("ane_tflops_fp16", "Neural Engine", "Specs", "TFLOPS", 1, {
+          info: "Peak fp16 math of the Apple Neural Engine, beside the GPU. Apple quotes INT8 from M4 on, at twice this rate. Only pie's limits count it.",
+        }),
         number("power_w", "Power", "Specs", "W", 0),
         text("interconnect", "Interconnect", "Specs"),
         text("year", "Year", "Specs"),
