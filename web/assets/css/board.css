@@ -487,6 +487,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-cell.is-over .board-cell-dot { stroke: #FF9500; stroke-width: 1.6; }
 /* On one model is a different reading (one model, not the medians above): a hairline and more room set it apart */
 .board-section-head.is-apart { margin-top: 56px; padding-top: 40px; border-top: .5px solid var(--color-separator); }
+/* TTFT by Model follows Speed by Model as its pair: no rule between the two, only the sections' gap */
+#board-ttft.board-section-head.is-apart { padding-top: 0; border-top: 0; }
 
 /* the welcome over the Overview, set as each section below it: its title and line with the two links at the right as
    the sections' picks, then the site's counts as the Welcome chapter's row of figures across the width */
