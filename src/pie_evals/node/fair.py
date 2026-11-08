@@ -19,17 +19,21 @@ counter on every row):
 
 Cold prompts: every request starts with its own 16-hex tag derived from
 ``(seed, workload id, index)``, so no two requests share a leading token and
-no prefix cache can hit. The same list is written for every engine.
+no prefix cache can hit. Since version 2 each request also has its own body: with
+one body for all, greedy decoding wrote one answer in every lane, so a MoE batch
+routed every request to the same experts and read a fraction of their weights
+(TensorRT-LLM Qwen3.6-35B-A3B c256 on an RTX PRO 6000 ran above the card's
+bandwidth bound). The same list is written for every engine.
 """
 
 from __future__ import annotations
 
 import hashlib
 import statistics
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Any
 
-FAIR_DEFINITION_VERSION = 1
+FAIR_DEFINITION_VERSION = 2
 #: seed of every cold prompt list; changing it changes every cold prompt
 COLD_SEED = "pie-fair-v1"
 PREFILL_TOLERANCE = 0.15
@@ -44,15 +48,17 @@ def cold_tag(seed: str, workload_id: str, index: int) -> str:
     return digest[:TAG_HEX_CHARS]
 
 
-def cold_prompts(body: str, *, workload_id: str, seed: str, count: int) -> list[str]:
+def cold_prompts(body: str | Callable[[int], str], *, workload_id: str, seed: str, count: int) -> list[str]:
     """``count`` prompts that differ from their first character on.
 
     The tag leads the prompt, so no two prompts share a prefix longer than the
-    tokenizer's common opening (and a BOS token at most).
+    tokenizer's common opening (and a BOS token at most). ``body`` is one text for
+    every request, or a function of the request's index giving each its own.
     """
     if count < 1:
         raise ValueError("count must be at least 1")
-    return [f"[{cold_tag(seed, workload_id, i)}] {body}" for i in range(count)]
+    text = body if callable(body) else (lambda i: body)
+    return [f"[{cold_tag(seed, workload_id, i)}] {text(i)}" for i in range(count)]
 
 
 def cold_request_count(params: Mapping[str, Any]) -> int:
