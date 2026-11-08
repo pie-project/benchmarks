@@ -20,6 +20,7 @@ on:
       tag: { description: "a tag for the site (0.5.3-b5); empty: main-<sha>", required: false, default: "" }
       zone: { description: "comma-separated zones to try in order (empty: the platform's tpu.zones; v6e: us-east5-b first)", required: false, default: "" }
       parity: { description: "comma-separated artifact ids: pie vs vLLM-TPU quality parity instead of the benchmark (empty: the benchmark)", required: false, default: "" }
+      kernels: { description: "a cargo test filter: engine-xla's kernel tests on the chip instead of the benchmark (cargo test -p engine-xla --test engine_xla -- <filter>, e.g. kernels_attn); the run log holds their output", required: false, default: "" }
       accuracy: { description: "parity only: comma-separated question sets (gsm8k,mmlu,arc,math500,ifeval): score the models on them, pie and vLLM-TPU, instead of KL parity", required: false, default: "" }
       n: { description: "questions per set in an accuracy run", required: false, default: "100" }
       vllm: { description: "parity only: vllm-tpu release (latest: the newest on PyPI; empty: the engines.yaml pin)", required: false, default: "latest" }
@@ -106,7 +107,7 @@ jobs:
       - run: uv venv && uv pip install -e .
       - name: job spec
         id: jobs
-        if: github.event.inputs.parity == ''
+        if: github.event.inputs.parity == '' && github.event.inputs.kernels == ''
         run: |
           args=()
           for w in $(echo "${{ github.event.inputs.workloads }}" | tr ',' ' '); do args+=(--workload "$w"); done
@@ -128,10 +129,10 @@ jobs:
       - name: wait for the VM
         run: bash infra/tpu/vm.sh wait
       - name: copy the harness and the job
-        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", PARITY: "${{ github.event.inputs.parity }}", VLLM: "${{ github.event.inputs.vllm }}", TAG: "${{ github.event.inputs.tag }}", ACCURACY: "${{ github.event.inputs.accuracy }}", NQ: "${{ github.event.inputs.n }}", LANES: "${{ github.event.inputs.lanes }}", MINUTES: "${{ github.event.inputs.model_minutes }}", ENGINES: "${{ github.event.inputs.engines }}", DONE: "${{ github.event.inputs.done }}", VTP: "${{ github.event.inputs.vllm_tp }}", VMENV: "${{ github.event.inputs.vm_env }}" }
+        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", PARITY: "${{ github.event.inputs.parity }}", VLLM: "${{ github.event.inputs.vllm }}", TAG: "${{ github.event.inputs.tag }}", ACCURACY: "${{ github.event.inputs.accuracy }}", NQ: "${{ github.event.inputs.n }}", LANES: "${{ github.event.inputs.lanes }}", MINUTES: "${{ github.event.inputs.model_minutes }}", ENGINES: "${{ github.event.inputs.engines }}", DONE: "${{ github.event.inputs.done }}", VTP: "${{ github.event.inputs.vllm_tp }}", VMENV: "${{ github.event.inputs.vm_env }}", KERNELS: "${{ github.event.inputs.kernels }}" }
         run: |
           tar czf "$RUNNER_TEMP/pie-evals.tgz" --exclude=.git --exclude=.venv .  # no .git: provenance reads PIE_EVALS_HARNESS_COMMIT
-          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > "$RUNNER_TEMP/vm.env"; [ -n "$PARITY" ] && printf 'export PARITY_ARTIFACTS=%q PARITY_PLATFORM=%q PARITY_TAG=%q\n' "$PARITY" "$PLATFORM" "${TAG:-main-${C:0:9}}" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$ACCURACY" ] && printf 'export PARITY_ACCURACY=%q PARITY_N=%q PARITY_MODEL_MINUTES=%q\n' "$ACCURACY" "${NQ:-100}" "${MINUTES:-150}" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$PARITY" ] && printf 'export PARITY_LANES=%q\n' "${LANES:-1}" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$PARITY" ] && [ -n "$ENGINES" ] && printf 'export PARITY_ENGINES=%q\n' "$ENGINES" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$PARITY" ] && [ -n "$DONE" ] && printf 'export PARITY_DONE=%q\n' "$DONE" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$PARITY" ] && [ -n "$VTP" ] && printf 'export PARITY_VLLM_TP=%q\n' "$VTP" >> "$RUNNER_TEMP/vm.env" || true; for kv in $VMENV; do [[ "$kv" =~ ^(PARITY|PIE)_[A-Z0-9_]+=[A-Za-z0-9._,:/-]*$ ]] && printf 'export %s=%q\n' "${kv%%=*}" "${kv#*=}" >> "$RUNNER_TEMP/vm.env" || true; done; [ "$VLLM" = latest ] && VLLM=$(curl -fsSL https://pypi.org/pypi/vllm-tpu/json | jq -r .info.version); [ -n "$PARITY" ] && [ -n "$VLLM" ] && printf 'export PARITY_VLLM_PIN=%q\n' "$VLLM" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> "$RUNNER_TEMP/vm.env" || true; [ -n "${TPU_ALL_CHIPS:-}" ] && echo "export TPU_ALL_CHIPS=1" >> "$RUNNER_TEMP/vm.env" || true )
+          ( umask 077; echo "export PIE_EVALS_HARNESS_COMMIT=${{ github.sha }}" > "$RUNNER_TEMP/vm.env"; [ -n "$PARITY" ] && printf 'export PARITY_ARTIFACTS=%q PARITY_PLATFORM=%q PARITY_TAG=%q\n' "$PARITY" "$PLATFORM" "${TAG:-main-${C:0:9}}" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$ACCURACY" ] && printf 'export PARITY_ACCURACY=%q PARITY_N=%q PARITY_MODEL_MINUTES=%q\n' "$ACCURACY" "${NQ:-100}" "${MINUTES:-150}" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$PARITY" ] && printf 'export PARITY_LANES=%q\n' "${LANES:-1}" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$PARITY" ] && [ -n "$ENGINES" ] && printf 'export PARITY_ENGINES=%q\n' "$ENGINES" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$PARITY" ] && [ -n "$DONE" ] && printf 'export PARITY_DONE=%q\n' "$DONE" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$PARITY" ] && [ -n "$VTP" ] && printf 'export PARITY_VLLM_TP=%q\n' "$VTP" >> "$RUNNER_TEMP/vm.env" || true; for kv in $VMENV; do [[ "$kv" =~ ^(PARITY|PIE)_[A-Z0-9_]+=[A-Za-z0-9._,:/-]*$ ]] && printf 'export %s=%q\n' "${kv%%=*}" "${kv#*=}" >> "$RUNNER_TEMP/vm.env" || true; done; [ "$VLLM" = latest ] && VLLM=$(curl -fsSL https://pypi.org/pypi/vllm-tpu/json | jq -r .info.version); [ -n "$PARITY" ] && [ -n "$VLLM" ] && printf 'export PARITY_VLLM_PIN=%q\n' "$VLLM" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$HF_TOKEN" ] && printf 'export HF_TOKEN=%q\n' "$HF_TOKEN" >> "$RUNNER_TEMP/vm.env" || true; [ -n "$KERNELS" ] && printf 'export KERNELS_TEST=%q\n' "$KERNELS" >> "$RUNNER_TEMP/vm.env" || true; [ -n "${TPU_ALL_CHIPS:-}" ] && echo "export TPU_ALL_CHIPS=1" >> "$RUNNER_TEMP/vm.env" || true )
           # the first ssh pushes the key; retried while the VM's sshd and the key settle
           for i in 1 2 3 4 5; do
             bash infra/tpu/vm.sh put "$RUNNER_TEMP/pie-evals.tgz" "$RUNNER_TEMP/vm.env" && break
@@ -161,7 +162,7 @@ jobs:
           vm 'tail -n 200 ~/run.log'
           echo "exit $rc"; [ "$rc" = 0 ]
       - name: fetch the records
-        if: always() && (steps.jobs.outputs.job_id != '' || github.event.inputs.parity != '')
+        if: always() && (steps.jobs.outputs.job_id != '' || github.event.inputs.parity != '' || github.event.inputs.kernels != '')
         run: |
           mkdir -p out
           [ -n "${TPU_ZONE:-}" ] || exit 0  # no VM was created
@@ -169,7 +170,7 @@ jobs:
           for j in ${{ steps.jobs.outputs.job_id }}; do bash infra/tpu/vm.sh get --recurse "pie-evals/out/$j" out/ || echo "::warning::no node output for $j on the VM"; done
           bash infra/tpu/vm.sh get run.log out/ || true
       - uses: actions/upload-artifact@v4
-        if: always() && (steps.jobs.outputs.job_id != '' || github.event.inputs.parity != '')
+        if: always() && (steps.jobs.outputs.job_id != '' || github.event.inputs.parity != '' || github.event.inputs.kernels != '')
         with: { name: "out-${{ github.run_id }}", path: "out/", retention-days: 30, if-no-files-found: warn }
       - uses: actions/upload-artifact@v4
         if: always()
