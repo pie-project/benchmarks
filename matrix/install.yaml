@@ -111,8 +111,23 @@ install:
         libGemmaModelConstraintProvider dylib. LiteRT-LM is benchmarked on phones only; this is its Mac build.
       source: "Measured: the GitHub release asset (google-ai-edge/LiteRT-LM v0.19.1, 13,416,641 bytes packed) streamed and its tar entries summed."
   # the Cloud TPU VM (Ubuntu 22.04, x86_64) infra/tpu/run-on-vm.sh sets up; it is deleted after each run, so the venvs
-  # are counted from the wheels uv resolves for it
+  # are counted from the wheels uv resolves for it, and pie from its same build on a Linux machine like it
   tpu:
+    - engine: pie
+      version: "0.6.0 (bb2d6bf43)"
+      bytes: 807796327
+      measured: "2026-11-08"
+      method: >-
+        What pie runs on TPU in the harness: the pie binary as the VM builds it (cargo build --release -p pie --bin pie
+        --features xla: the XLA engine linked in, symbols not stripped, linking nothing beyond glibc and libgcc_s;
+        124,260,920 bytes), the PJRT plugin it dlopens at start, libtpu.so from libtpu 0.0.48, which run-on-vm.sh
+        installs beside it (683,032,200), and the text_completion_bench inferlet (503,207, the b200 build's: one wasm
+        for every platform). libtpu is counted because vLLM-TPU and SGLang-JAX carry their own in their venvs.
+      source: >-
+        Measured from a build on a RunPod CPU pod (nf3neemm8lwj54: Ubuntu 22.04 x86_64, glibc 2.35, gcc 11.4, as the
+        TPU VM), run-on-vm.sh's steps as the VM's user (/home/runner/pie at bb2d6bf43, its rust-toolchain.toml's
+        1.98.1, the builtins' nightly-2026-10-18): target/release/pie. No release ships an XLA build.
+      parts: [["libtpu", 683032200], ["pie binary", 124260920], ["Inferlet", 503207]]
     - engine: vllm
       version: "vllm-tpu 0.32.0"
       bytes: 4904728694
