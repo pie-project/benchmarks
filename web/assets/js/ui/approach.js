@@ -296,8 +296,8 @@ window.Pie = window.Pie || {};
   const outline = CHAPTERS.map(([head, items]) => `${head ? `<div class="board-outline-head">${head}</div>` : ""}${items.map(([id, title, colour]) =>
     `<button type="button" class="board-outline-item" data-chapter-go="${id}"><i class="board-outline-dot" style="background: ${colour}" aria-hidden="true"></i><span>${title}</span></button>`).join("")}`).join("");
 
-  // one chapter at a time, as Apple's documentation shows one article a page: the outline picks it, the links under
-  // it step to the one before and after; the pick is kept across visits
+  // one chapter at a time, as Apple's documentation shows one article a page: the outline picks it, a push past
+  // either end turns to the one before or after; the pick is kept across visits
   const LIST = CHAPTERS.flatMap(([, items]) => items);
   const KEY = "pieChapter";
   let current = (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
@@ -305,6 +305,9 @@ window.Pie = window.Pie || {};
 
 
   const place = () => `Chapter ${LIST.findIndex(([id]) => id === current) + 1} of ${LIST.length}`;
+
+  // the chapter a push past an end turns to, named beyond that end in small grey words as the push builds
+  const turnCue = (at, way) => (LIST[at] ? `<p class="chapter-turn is-${way}" aria-hidden="true">${way === "next" ? "Next" : "Previous"}: ${LIST[at][1]}<svg viewBox="0 0 16 16"><path d="${way === "next" ? "M4 6.5 8 10.5 12 6.5" : "M4 9.5 8 5.5 12 9.5"}"/></svg></p>` : "");
 
   const draw = () => {
     const at = LIST.findIndex(([id]) => id === current);
@@ -316,8 +319,8 @@ window.Pie = window.Pie || {};
         <p class="board-lede">${summary}</p></div></div>
       <article class="board-card method-article${typeof body === "function" ? " has-tables" : ""}">
         <div class="method-pane-body">${typeof body === "function" ? body() : body}</div>
-      </article>
-`;  // no previous and next: the outline beside the chapter is the way between them
+      </article>${turnCue(at - 1, "back")}${turnCue(at + 1, "next")}
+`;  // no previous and next links: the outline beside the chapter, or a push past its end, is the way between them
     for (const item of element.querySelectorAll(".board-outline [data-chapter-go]")) item.classList.toggle("is-current", item.dataset.chapterGo === current);
     // the window's subtitle names the chapter's place, as Books does under a title
     if (Pie.toolbar?.elements?.subtitle) Pie.toolbar.elements.subtitle.textContent = place();
@@ -391,6 +394,134 @@ window.Pie = window.Pie || {};
     tooltip.style.top = `${Math.max(8, y)}px`;
   });
   element.addEventListener("mouseleave", () => { if (tooltip) tooltip.hidden = true; });
+
+  // turning the page by scrolling, as Books turns one: a push on past a chapter's end opens the next at its top, a
+  // push back past its start the one before at its bottom. The gesture that brings the chapter to an end only arrives
+  // there, its glide counting for nothing; a fresh one, TURN pixels past the end, turns the page, the chapter giving a
+  // little and the next one's name showing beyond the end as it builds
+  const TURN = 120;  // px of push past the end, or of a finger's travel on a phone
+  const QUIET = 140;  // ms with no wheel event that end a gesture: a trackpad's glide sends one every frame
+  const GIVE = 24;  // px the chapter gives at the full push, as a rubber band
+  const still = matchMedia("(prefers-reduced-motion: reduce)");
+  let push = 0, way = 0, give = 0;  // the push so far, its way (1 on, -1 back) and how far the chapter has given
+  let turning = false;  // the old chapter leaving and the new one arriving: input waits
+  let relaxing = 0, settling = 0;  // timers: a push left alone springs back; the turn's own glide dies away
+  // the wheel gesture: its last event, whether it counts, when it came to rest at an end and its smallest step since
+  const wheel = { at: -Infinity, spent: false, rest: Infinity, ebb: Infinity };
+
+  const at = () => LIST.findIndex(([id]) => id === current);
+  // the chapter at its end (w 1) or its start (w -1): one shorter than the window is at both
+  const atEdge = (w) => (w > 0 ? element.scrollTop + element.clientHeight >= element.scrollHeight - 2 : element.scrollTop <= 1);
+  // a menu open stays open and text chosen in the chapter stays chosen: no turn under either
+  const busy = () => { const chosen = getSelection(); return Pie.popover?.isOpen() || (chosen && !chosen.isCollapsed && element.contains(chosen.anchorNode)); };
+
+  // the push as it builds: the chapter gives toward the end pushed, easing off as it goes, and the cue there fades up
+  const show = () => {
+    const main = element.querySelector(".approach-main"), p = Math.min(1, push / TURN);
+    give = p ? -way * GIVE * (1 - (1 - p) ** 2) : 0;
+    main.style.transform = give ? `translateY(${give}px)` : "";
+    for (const cue of main.querySelectorAll(".chapter-turn")) cue.style.opacity = cue.classList.contains(way > 0 ? "is-next" : "is-back") ? p : 0;
+  };
+  const relax = () => { clearTimeout(relaxing); if (!push && !give) return; push = 0; show(); };
+  // the push set one way; none where it leads nowhere, the first chapter's start or the last one's end
+  const pushTo = (w, amount) => {
+    clearTimeout(relaxing);
+    if (!LIST[at() + w]) { relax(); return false; }
+    way = w;
+    push = amount;
+    show();
+    return true;
+  };
+
+  // the turn: the old chapter fades and drifts the way of the push as the new one comes in from the other side;
+  // with reduced motion it simply changes
+  const turn = (w) => {
+    const to = LIST[at() + w], main = element.querySelector(".approach-main");
+    clearTimeout(relaxing);
+    push = 0;
+    if (!to) return;
+    turning = true;
+    element.classList.add("is-turning");  // the turn's own glide scrolls nothing
+    if (tooltip) tooltip.hidden = true;  // a row's hover card goes with its chapter
+    // the same way in as a pick in the outline, the new chapter at its top going on and at its bottom going back
+    const open = () => {
+      Pie.approach.open(to[0]);
+      main.style.transition = "none";  // the give goes at once, under the fade
+      give = 0;
+      main.style.transform = "";
+      element.scrollTop = w > 0 ? 0 : element.scrollHeight;
+      void main.offsetWidth;
+      main.style.transition = "";
+    };
+    const done = () => { turning = false; settle(); };
+    if (still.matches) { open(); done(); return; }
+    const leave = main.animate([{ opacity: 1, transform: `translateY(${give}px)` }, { opacity: 0, transform: `translateY(${give - 12 * w}px)` }],
+      { duration: 120, easing: "cubic-bezier(.4, 0, 1, 1)", fill: "forwards" });
+    leave.onfinish = () => {
+      open();
+      main.animate([{ opacity: 0, transform: `translateY(${16 * w}px)` }, { opacity: 1, transform: "none" }],
+        { duration: 180, easing: "cubic-bezier(.22, 1, .36, 1)" }).onfinish = done;
+      leave.cancel();
+    };
+  };
+  // the chapter scrolls again once the glide that turned it has died away: each of its events puts this off again
+  const settle = () => {
+    clearTimeout(settling);
+    settling = setTimeout(() => { if (!turning) element.classList.remove("is-turning"); }, QUIET);
+  };
+
+  element.addEventListener("wheel", (event) => {
+    if (event.ctrlKey || event.shiftKey) return;  // a pinch zooms; Shift scrolls sideways
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? element.clientHeight : 1;
+    const dy = event.deltaY * unit, step = Math.abs(dy), now = event.timeStamp;
+    // a new gesture: after a pause, or a swipe cutting short a glide that has rested at an end a while
+    const fresh = now - wheel.at > QUIET || (now - wheel.rest > 250 && step > 3 * wheel.ebb + 6);
+    wheel.at = now;
+    if (fresh) Object.assign(wheel, { rest: Infinity, ebb: Infinity });
+    else if (wheel.rest < Infinity) wheel.ebb = Math.min(wheel.ebb, step);
+    if (fresh && !turning) element.classList.remove("is-turning");
+    else if (element.classList.contains("is-turning")) settle();
+    if (turning || step <= Math.abs(event.deltaX * unit) || busy()) return;  // sideways is a carousel's
+    const w = Math.sign(dy);
+    if (fresh) wheel.spent = !atEdge(w);  // only a gesture that starts at the end counts
+    if (!atEdge(w)) { wheel.spent = true; relax(); return; }
+    if (wheel.spent) { if (wheel.rest === Infinity) Object.assign(wheel, { rest: now, ebb: step }); return; }  // the gesture that arrived, gliding on
+    if (!pushTo(w, (w === way ? push : 0) + step)) return;
+    if (push < TURN) { relaxing = setTimeout(relax, 600); return; }
+    turn(w);
+    Object.assign(wheel, { spent: true, rest: now, ebb: step });  // the rest of this glide turns nothing more
+  }, { passive: true });
+
+  // a finger: the same push, counted from where it came down and only if the chapter was at that end then; the page
+  // turns as it lifts, and a sideways drag is a carousel's
+  let finger = null;
+  element.addEventListener("touchstart", (event) => {
+    const t = event.touches[0];
+    finger = event.touches.length === 1 && !turning && !busy() ? { x: t.clientX, y: t.clientY, on: atEdge(1), back: atEdge(-1), axis: "" } : null;
+  }, { passive: true });
+  element.addEventListener("touchmove", (event) => {
+    if (!finger) return;
+    const t = event.touches[0], dx = finger.x - t.clientX, dy = finger.y - t.clientY, w = Math.sign(dy);
+    if (!finger.axis && Math.hypot(dx, dy) > 8) finger.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+    if (finger.axis === "x" || event.touches.length > 1) { finger = null; relax(); return; }
+    if (w && (w > 0 ? finger.on : finger.back) && atEdge(w)) pushTo(w, Math.abs(dy));
+    else relax();
+  }, { passive: true });
+  element.addEventListener("touchend", () => { if (finger && push >= TURN) turn(way); else relax(); finger = null; }, { passive: true });
+  element.addEventListener("touchcancel", () => { finger = null; relax(); }, { passive: true });
+
+  // the keys that scroll a page, pressed at an end: the press that reaches the end only arrives, the next one turns,
+  // and a held key's repeats never do
+  const KEYS = { PageDown: 1, ArrowDown: 1, " ": 1, PageUp: -1, ArrowUp: -1 };
+  document.addEventListener("keydown", (event) => {
+    const target = event.target, w = event.key === " " && event.shiftKey ? -1 : KEYS[event.key];
+    if (!w || element.hidden || event.repeat || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || (event.shiftKey && event.key !== " ")) return;
+    if (target !== document.body && !element.contains(target)) return;  // the sidebar's and the bar's own keys
+    if (target.closest("input, textarea, select") || target.isContentEditable || (event.key === " " && target.closest("button, a"))) return;  // typing, or Space pressing a button
+    if (turning || busy() || !atEdge(w) || !LIST[at() + w]) return;
+    event.preventDefault();
+    turn(w);
+  });
 
   Pie.approach = {
     element,
