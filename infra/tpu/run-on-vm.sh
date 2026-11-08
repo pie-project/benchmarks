@@ -155,8 +155,28 @@ if [ -n "${PARITY_ARTIFACTS:-}" ]; then
   fi
   exit $rc
 fi
+# a shard's watchdog kills its own process group, and an engine server it started in a session of its own
+# (engines/lifeline.py) can outlive it holding the chip: every engine of the next shard then fails to open it
+# ("open(/dev/vfio/0): 16: Device or resource busy", tpu.yml 42511693568). Before each shard, whatever still holds
+# the TPU's device files is stopped (TERM, then KILL) and the chip is free when the shard starts.
+free_tpu() {
+  local devs pids i
+  devs=$(ls /dev/vfio/[0-9]* /dev/accel* 2>/dev/null || true)
+  [ -n "$devs" ] || return 0
+  for i in $(seq 1 24); do
+    # shellcheck disable=SC2086
+    pids=$( { sudo lsof -t $devs 2>/dev/null || true; sudo fuser $devs 2>/dev/null || true; } | tr -s ' \t' '\n' | grep -E '^[0-9]+$' | sort -u || true)
+    [ -z "$pids" ] && return 0
+    echo "the TPU is still held by $(echo $pids): stopping it"
+    # shellcheck disable=SC2086
+    if [ "$i" -le 3 ]; then sudo kill -TERM $pids 2>/dev/null || true; else sudo kill -KILL $pids 2>/dev/null || true; fi
+    sleep 5
+  done
+  echo "the TPU is still held after 2 minutes"
+}
 rc=0
 for job in "${jobs[@]}"; do
+  free_tpu
   .venv/bin/pie-evals-node run --job "$job" --pie-root "$PIE_ROOT" --out "out/$(basename "$job" .json)" --download || rc=$?
 done
 exit $rc

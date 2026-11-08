@@ -501,6 +501,12 @@ default:
           rationale: >
             The XLA engine's own default (XlaEngineOptions). The TPU runs through
             pie_bench's metal arm, which always writes this knob, at 10240 unless set.
+        server_startup_timeout:
+          value: 2400
+          rationale: >
+            pie compiles its batch shapes at load (prewarm, on by default since #1507), as vLLM-TPU and SGLang-JAX
+            compile theirs: a c256 server's ladder is ~175 programs, 52-71 s each for Qwen3.5-0.8B's GDN layers,
+            8 at a time. pie_bench's default 300 s wait gave up 32 programs in (tpu.yml 42511693568).
         max_forward_requests:
           value: "$serve_concurrency"
           rationale: >
