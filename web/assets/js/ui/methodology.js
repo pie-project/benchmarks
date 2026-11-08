@@ -315,8 +315,10 @@ window.Pie = window.Pie || {};
     const activeBody = body - a.routed * (1 - a.k);
     const touchedExperts = a.routed * (a.k >= 1 ? 1 : 1 - (1 - a.k) ** tokens);
     const weightGB = ((body - a.routed) * bits.bits + touchedExperts * bits.experts + a.emb * bits.head) / 8;
-    // full attention reads every cached token, sliding attention its window; linear attention reads and writes its state
-    const cacheGB = (requests * ((a.full * context + a.sliding * Math.min(context, a.window)) * a.kvLayer + a.linear * a.state * 2)) / 1e9;
+    // full attention reads every cached token, at its own layers' geometry where they have one (Gemma 4's global layers),
+    // sliding attention its window; linear attention reads and writes its state
+    const cacheGB = (requests * (a.full * context * (a.kvFull || a.kvLayer) + a.sliding * Math.min(context, a.window) * a.kvLayer
+      + a.linear * a.state * 2)) / 1e9;
     // with KV sharing, the layers that reuse another layer's K and V run only for the tokens that need logits: a prompt
     // token's only job is to fill the cache, and those layers add nothing to it
     const skip = a.shared && tokens > logits ? (a.shared / a.layers) * (tokens - logits) : 0;
