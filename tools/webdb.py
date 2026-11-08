@@ -295,10 +295,10 @@ def workloads() -> list[dict]:
 # the quality benchmarks: what each task asks, where its questions come from, how an answer is scored
 # the tasks the site lists and expects a score on: MATH-500 only now; the others are no longer run
 QUALITY_TASKS = [
-    # ("gsm8k", "Grade-school math word problems, worked step by step", "openai/gsm8k (test)", "final number matches"),
-    # ("ifeval", "Following explicit instructions (length, format, keywords)", "google/IFEval", "every instruction met"),
-    # ("mmlu", "Multiple-choice knowledge across 57 subjects", "cais/mmlu (test)", "chosen letter matches"),
-    # ("arc", "Grade-school science reasoning, multiple choice", "allenai/ai2_arc (ARC-Challenge test)", "chosen letter matches"),
+    ("gsm8k", "Grade-school math word problems, worked step by step", "openai/gsm8k (test)", "final number matches"),
+    ("ifeval", "Following explicit instructions (length, format, keywords)", "google/IFEval", "every instruction met"),
+    ("mmlu", "Multiple-choice knowledge across 57 subjects", "cais/mmlu (test)", "chosen letter matches"),
+    ("arc", "Grade-school science reasoning, multiple choice", "allenai/ai2_arc (ARC-Challenge test)", "chosen letter matches"),
     ("math500", "Competition math, final answer in boxed form", "HuggingFaceH4/MATH-500", "final answer equivalent"),
 ]
 
