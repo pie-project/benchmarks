@@ -255,9 +255,12 @@ unsupported:
     reason: "vLLM-TPU 0.32.0's Transformers does not recognize model type muse_spark"
   - when: {engine: vllm, backend: xla, family: nemotron_h}
     reason: "vLLM-TPU 0.32.0: is_act_and_mul=False (Nemotron's relu2 MLP) is supported only for CUDA, XPU and ROCm"
+  # vllm/models/qwen4_exp/__init__.py raises on a TPU, in 0.32.0 and 0.33.0 alike (parity v5e 42519154722)
+  - when: {engine: vllm, backend: xla, family: qwen4_exp}
+    reason: "vLLM-TPU 0.32.0: Qwen4Exp raises NotImplementedError on TPU (\"Qwen4Exp currently supports CUDA and ROCm only\"; 0.33.0 too)"
   # sglang-jax 0.1.0rc0 has no model for these archs: config load fails ("Transformers does not recognize model type"),
   # or its HF fallback imports the checkpoint's PyTorch modeling file (benchmark v5e 41815065818, 41815078603, 41896618915)
-  - when: {engine: sglang, backend: xla, family: [deepseek_v4, deepseek_v41, glm5_next, hy_v4, kimi_k3, muse_glimmer, muse_spark, nemotron_h]}
+  - when: {engine: sglang, backend: xla, family: [deepseek_v4, deepseek_v41, glm5_next, hy_v4, kimi_k3, muse_glimmer, muse_spark, nemotron_h, qwen4_exp]}
     reason: "sglang-jax 0.1.0rc0 has no model for this arch (no native class; the HF fallback needs PyTorch or a Transformers that knows the model type)"
   # MiniMax-M3 is on sglang-jax main (sglang.yaml pins minimax-m3.1-flash-mini-tpu-bf16 to it), in bf16 only
   - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu}
