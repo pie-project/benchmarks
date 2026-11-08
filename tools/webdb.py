@@ -704,7 +704,8 @@ def quality_checks(store, a2m) -> dict[str, list[dict]]:
     """The newest parity and kernel row per (artifact, platform), across tags: {"parity": [...], "kernels": [...]}."""
     newest: dict[tuple, dict] = {}
     for q in store.quality():
-        if not is_check(q):
+        # a diagnostic run's check (a quality-mac-diag kernel swap, say) is not the engine's verdict: never the newest
+        if not is_check(q) or is_diag_tag(q.get("tag") or ""):
             continue
         key = (q["artifact"], q["task"])
         if key not in newest or (q.get("date") or "") > (newest[key].get("date") or ""):
