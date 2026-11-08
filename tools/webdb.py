@@ -287,6 +287,23 @@ def engines() -> list[dict]:
     return rows
 
 
+def install_sizes() -> list[dict]:
+    """matrix/install.yaml as the site's `install` table: one row per platform and engine, its bytes and how they were
+    counted, for the Overview's Install Size cards and the Methodology's chapter."""
+    data = load("install")
+    known = {e["id"] for e in load("engines")["engines"]}
+    rows = []
+    for platform, entries in data["install"].items():
+        for e in entries:
+            if e["engine"] not in known:
+                raise ValueError(f"matrix/install.yaml: {e['engine']} is not an engine in matrix/engines.yaml")
+            rows.append({"platform": platform, "engine": e["engine"], "version": str(e["version"]), "bytes": int(e["bytes"]),
+                         "method": " ".join(e["method"].split()), "source": " ".join(e["source"].split()),
+                         "parts": [[str(label), int(n)] for label, n in e.get("parts") or []],
+                         "measured": str(e.get("measured") or data["measured"])})
+    return rows
+
+
 def workloads() -> list[dict]:
     params = {w["id"]: w.get("params", {}) for w in load("workloads")["workloads"]}
     out = []
@@ -1102,7 +1119,7 @@ def main() -> None:
           "hardware": hw_rows,
           # the Engines table lists every engine CI runs, the GPU-only ones (vLLM, SGLang) too; the grids keep to the Mac engines
           "engines": engines(), "models": [m for m in models if m["id"] in model_ids or m.get("catalog")],
-          "workloads": workloads(), "quality_tasks": quality_tasks(), "quality": quality.get(order[0], []) if order else []}
+          "workloads": workloads(), "install": install_sizes(), "quality_tasks": quality_tasks(), "quality": quality.get(order[0], []) if order else []}
     (WEB / "data").mkdir(parents=True, exist_ok=True)
     # db.js holds what the site draws first; every other tag is a file of its own, fetched when a page asks for it
     split_db.write(db, WEB / "data")

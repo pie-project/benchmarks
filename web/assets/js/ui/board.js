@@ -74,7 +74,7 @@ window.Pie = window.Pie || {};
   // hovered, a grey column fills its slot behind it, as Artificial Analysis marks one, and a card names it; no bar dims
   const bar = (x, top, w, base, color, value, tip, band = { x: x - 4, w: w + 8 }) => {
     const inside = w >= 20 && base - top >= 24;
-    return `<g class="board-bar" aria-label="${esc(`${tip.head}: ${tip.value}`)}" data-tip-engine="${esc(tip.engine)}" data-tip-head="${esc(tip.head)}" data-tip-value="${esc(tip.value)}" data-tip-note="${esc(tip.note || "")}">
+    return `<g class="board-bar" aria-label="${esc(`${tip.head}: ${tip.value}`)}" data-tip-engine="${esc(tip.engine)}" data-tip-head="${esc(tip.head)}" data-tip-value="${esc(tip.value)}" data-tip-note="${esc(tip.note || "")}"${tip.rows?.length ? ` data-tip-rows="${esc(JSON.stringify(tip.rows))}"` : ""}>
       <rect class="board-band" x="${band.x}" y="0" width="${band.w}" height="${base}"/>
       <path d="${column(x, top, w, Math.max(base - top, 1))}" style="fill: ${color}"/>
       ${tip.top ? `<path class="board-sheen" d="${column(x, top, w, Math.max(base - top, 1))}"/>` : ""}
@@ -247,10 +247,11 @@ window.Pie = window.Pie || {};
   const paddlesFor = (row) => `<span class="platform-compare board-view board-carousel-nav" role="group" aria-label="Platforms" data-carousel-nav="${row}"><button type="button" class="plain-button" data-carousel="-1" data-carousel-for="${row}" aria-label="Previous platforms" title="Previous"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg></button><button type="button" class="plain-button" data-carousel="1" data-carousel-for="${row}" aria-label="Next platforms" title="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button></span>`;
   const ranking = (summary, rows) => {
     const W = 456, H = 185, L = 24, R = 4, T = 10, B = 44;  // half the row wide, so the bars keep the height they had at a third; room under them for the logo and name
+    // best first: the highest, or the lowest where less is better (Install Size)
     const list = engineIds().map((engine) => ({ engine, ...summary.value(rows, engine) })).filter((e) => e.v !== undefined && e.v !== null)
-      .sort((a, b) => b.v - a.v);
+      .sort((a, b) => (summary.ascending ? a.v - b.v : b.v - a.v));
     if (!list.length) return `<p class="board-empty">No runs yet</p>`;
-    const top = summary.id === "coverage" ? niceMax(list[0].v) : 100;
+    const top = summary.top ? summary.top(list) : summary.id === "coverage" ? niceMax(list[0].v) : 100;
     const base = H - B;
     const y = (v) => T + (base - T) * (1 - v / top);
     const slot = (W - L - R) / list.length;
@@ -259,7 +260,7 @@ window.Pie = window.Pie || {};
       const x = L + slot * i + (slot - BW) / 2;
       const cx = x + BW / 2;
       const tip = { top: i === 0, engine: e.engine, head: names().engine(e.engine), value: summary.label(e.v),
-        note: e.detail || `Over ${e.n} ${e.n === 1 ? "setup" : "setups"}` };
+        note: e.detail || `Over ${e.n} ${e.n === 1 ? "setup" : "setups"}`, rows: e.rows };
       return `${bar(x, y(e.v), BW, base, Pie.engines.colorOf(e.engine), summary.label(e.v), tip, { x: L + slot * i, w: slot })}
         ${logo(e.engine, cx - 8, base + 6, 16)}
         <text class="board-group" x="${cx}" y="${base + 36}">${esc(SHORT[e.engine] || names().engine(e.engine))}</text>
@@ -592,6 +593,31 @@ window.Pie = window.Pie || {};
           <div class="board-carousel" data-carousel-id="use"><div class="board-grid-cards is-matrices">${USE_CARDS.map(([id, title, platform]) => card(id, title, "Share of the theoretical maximum", ranking(useSummary(id, title, platform, rows), rows), "", false)).join("")}</div></div>`;
   };
 
+  // Install Size: the disk each engine needs before any model (matrix/install.yaml, the export's `install` table), a
+  // card per platform as Kernel Efficiency sets its own, a bar per engine at its bytes, the smallest first
+  const INSTALL_CARDS = [["install-mac", "Apple", "mac"], ["install-nvidia", "NVIDIA", "nvidia"], ["install-web", "Browser", "web"]].filter(([, , p]) => !Pie.hiddenPlatforms.has(p));
+  const installRows = (platform) => (Pie.store.tables.install || []).filter((r) => r.platform === platform);
+  // decimal units, as a disk counts them: 17.4 GB, 359 MB, 31.3 MB
+  const bytesLabel = (b) => (b >= 1e9 ? `${(b / 1e9).toFixed(1)} GB` : b >= 1e8 ? `${Math.round(b / 1e6)} MB` : `${(b / 1e6).toFixed(1)} MB`);
+  const installSummary = (id, title, platform) => {
+    const own = installRows(platform);
+    return { id, title, ascending: true, top: (list) => niceMax(Math.max(...list.map((e) => e.v))), label: bytesLabel,
+      value: (_, engine) => {
+        const r = own.find((x) => x.engine === engine);
+        return r ? { v: r.bytes, detail: `Version ${r.version}`, rows: r.parts.map(([k, n]) => [k, bytesLabel(n)]) } : {};
+      } };
+  };
+  const installSection = () => {
+    const cards = INSTALL_CARDS.filter(([, , p]) => installRows(p).length);
+    if (!cards.length) return "";
+    return `<div class="board-section-head is-apart">
+            <div class="board-section-text"><h1 class="board-title">Install Size</h1>
+            <p class="board-lede">Disk an engine needs before any model.</p></div>
+            <button class="filter-button board-title-pick is-text" type="button" data-board-go-page="approach" data-chapter="install" title="What an install size counts">How we count</button>${paddlesFor("install")}
+          </div>
+          <div class="board-carousel" data-carousel-id="install"><div class="board-grid-cards is-matrices">${cards.map(([id, title, platform]) => card(id, title, "Binaries and libraries on disk · Lower is better", ranking(installSummary(id, title, platform), []), "", false)).join("")}</div></div>`;
+  };
+
   // the changelog: each release measured, newest first, read from the runs themselves; development runs are left out
   let log = null;
   const changelog = () => log ||= (Pie.store.tables.tags || [])
@@ -652,6 +678,7 @@ window.Pie = window.Pie || {};
     index:          ["#5E5CE6", '<circle cx="12" cy="12" r="9"/><path d="m12 12 2.6-5.2"/><circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/><path d="M7 15.5h.01M6.5 11h.01M9 7h.01M17.5 11h.01M17 15.5h.01"/>'],  // indigo, a speedometer as SF Symbols draws gauge.with.needle: a dial, its needle just right of upright
     "index-mac":    ["#636366"],
     use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"], "use-android": ["#1C1C1E"], "use-web": ["#8e8e93"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
+    "install-mac": ["#636366"], "install-nvidia": ["#76b900"], "install-web": ["#8e8e93"],  // Install Size's cards the same
     "index-gpu":    ["#76b900"],
     "index-amd":    ["#ed1c24"],
     "index-tpu":    ["#4285f4"],
@@ -757,7 +784,9 @@ window.Pie = window.Pie || {};
       }).join("");
     // the page's outline down the left, as Artificial Analysis lists its sections: a square each, the one in view filled
     // each section its own colour from the chips' palette: efficiency green, performance orange, by model purple
-    const outline = [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"], ["metric", "By Model", "#7a4cf5"]].map(([id, title, tint]) =>
+    // Install Size teal, between Performance and By Model as the page sets it, where the export carries its sizes
+    const installed = INSTALL_CARDS.find(([, , p]) => installRows(p).length);
+    const outline = [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"], installed && [installed[0], "Install Size", "#30B0C7"], ["metric", "By Model", "#7a4cf5"]].filter(Boolean).map(([id, title, tint]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${tint}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
     // pie's bars' texture, defined once for every chart on the page: a fine grid of dots, as Freeform and Keynote set a
@@ -790,6 +819,7 @@ window.Pie = window.Pie || {};
             ${viewToggle("summary")}${paddlesFor("summary")}
           </div>
           <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has("summary") ? "Head-to-head decode win rate" : m.sub, gridCards.has("summary") ? matrix(m, rows) : ranking(m, rows), "", false)).join("")}</div></div>
+          ${installSection()}
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
           <div class="board-section-head is-apart">
@@ -846,8 +876,10 @@ window.Pie = window.Pie || {};
     for (let k = 0; k < turns.length; k++) if (turns[k] <= view.scrollTop) index = k;
     const current = bottom ? sections[sections.length - 1] : sections[index];
     const id = pinned || current?.id.slice(6);
-    // the outline names three sections, not every card: the one holding the card in view is marked
-    const groupOf = (card) => USE_CARDS.some(([u]) => u === card) ? USE_CARDS[0][0] : SUMMARY.some((m) => m.id === card) ? SUMMARY[0].id : "metric";
+    // the outline names the sections, not every card: the one holding the card in view is marked
+    const installFirst = INSTALL_CARDS.find(([, , p]) => installRows(p).length)?.[0];
+    const groupOf = (card) => USE_CARDS.some(([u]) => u === card) ? USE_CARDS[0][0] : SUMMARY.some((m) => m.id === card) ? SUMMARY[0].id
+      : INSTALL_CARDS.some(([u]) => u === card) ? installFirst : "metric";
     for (const item of element.querySelectorAll("[data-board-go]")) item.classList.toggle("is-current", item.dataset.boardGo === groupOf(id));
     // one fill that glides from the old section's row to the new, as a sidebar's selection would, instead of jumping
     const outline = element.querySelector(".board-outline"), on = outline?.querySelector(".board-outline-item.is-current");

@@ -1,0 +1,133 @@
+# Install size: the disk an engine needs before any model, its binaries and every library it installs, per platform
+# (the platform ids the site's cards use: mac, nvidia, web).
+#   Python engines: the venv the harness builds for it, the base Python left out (the venv only links to it).
+#   Native engines: the release or build files it runs.
+#   Browser engines: the JS and wasm the page downloads.
+# Every number is the bytes of regular files (symlinks and directories count nothing). Bytecode Python writes on its
+# first run (__pycache__) is left out everywhere, and the GPU driver is never counted. A number is measured unless its
+# source says it comes from published sizes. `parts` names the pieces that explain most of a number.
+# tools/webdb.py exports this as the site's `install` table (the Overview's Install Size cards, the Methodology chapter).
+measured: "2026-11-07"
+install:
+  nvidia:
+    - engine: pie
+      version: "0.6.0 (bb2d6bf43)"
+      bytes: 1211855117
+      method: >-
+        What pie runs on CUDA in the harness: its engine (the pie_server wheel the build installs, pie/_engine.abi3.so and
+        its dist-info, 130,838,638 bytes), the text_completion_bench inferlet (503,207), and the CUDA libraries it loads
+        from the system: NVRTC and its builtins, cuBLAS, cuBLASLt and NCCL (1,080,513,272). Those libraries are counted
+        because the Python engines carry the same ones in their venvs.
+      source: >-
+        Measured on b200-x1 (RunPod 9mgmwm085gh644), read-only: /root/.cache/pie-evals/builds/bb2d6bf435fa-cuda,
+        venv-pie/lib/python3.12/site-packages/pie, /usr/local/cuda-13.4/targets/x86_64-linux/lib and
+        /lib/x86_64-linux-gnu/libnccl.so.2.32.3. The 0.6.0 release's stripped CLI for CUDA 13
+        (pie-x86_64-linux-cuda13.0.tar.gz) unpacks to 89,978,136 bytes.
+      parts: [["CUDA libraries (NVRTC, cuBLAS, NCCL)", 1080513272], ["pie's engine", 130838638], ["Inferlet", 503207]]
+    - engine: vllm
+      version: "0.32.0"
+      bytes: 17439741732
+      method: >-
+        The harness's venv (baselines.ensure_baseline: uv venv on Python 3.12, vllm==0.32.0, the fork's Python fixes,
+        and FlashInfer's prebuilt kernels so no kernel compiles with nvcc), every regular file but __pycache__.
+      source: "Measured on b200-x1 (RunPod 9mgmwm085gh644), read-only: /root/.cache/pie-evals/venv-vllm-0.32.0."
+      parts: [["FlashInfer's prebuilt kernels", 9123640923], ["NVIDIA's CUDA libraries", 3222753037], ["PyTorch", 1091091641], ["vLLM", 823842317]]
+    - engine: sglang
+      version: "0.5.22"
+      bytes: 19794395885
+      method: >-
+        The harness's venv (uv venv on Python 3.12, sglang[all]==0.5.22, the fork's Python fixes, pip nvcc at torch's
+        CUDA minor, and FlashInfer's prebuilt kernels), every regular file but __pycache__.
+      source: "Measured on b200-x1 (RunPod 9mgmwm085gh644), read-only: /root/.cache/pie-evals/venv-sglang-0.5.22."
+      parts: [["FlashInfer's prebuilt kernels", 9179573752], ["NVIDIA's CUDA libraries", 3763010233], ["sgl-kernel", 1196214958], ["PyTorch", 1140315022], ["SGLang", 109209831]]
+    - engine: trtllm
+      version: "1.4.0rc2.post1"
+      bytes: 12303455296
+      method: >-
+        The harness's venv (uv venv on Python 3.12, tensorrt-llm==1.4.0rc2.post1 from NVIDIA's index, pip, and pip
+        NVRTC at the toolkit's minor; 12,000,135,582 bytes without __pycache__) and the Open MPI TensorRT-LLM imports
+        at start, which the harness installs with apt (libopenmpi-dev and openmpi-bin, 44 packages: 303,319,714 bytes,
+        their files as dpkg lists them).
+      source: "Measured on b200-x1 (RunPod 9mgmwm085gh644), read-only: /root/.cache/pie-evals/venv-trtllm-1.4.0rc2.post1 and dpkg -L of the packages /var/log/dpkg.log shows installed with Open MPI."
+      parts: [["TensorRT-LLM", 3930785064], ["NVIDIA's CUDA libraries", 3371555138], ["PyTorch", 1140315753], ["Open MPI (apt)", 303319714]]
+  mac:
+    - engine: pie
+      version: "0.5.4"
+      bytes: 102651815
+      method: >-
+        The pie binary as the harness builds it on a Mac (cargo build --release --features metal: the Metal engine
+        linked in, no library beside macOS's own frameworks; 102,148,608 bytes) and the text_completion_bench inferlet
+        (503,207, the b200 build's: one wasm for every platform).
+      source: >-
+        Measured from a local build, ~/workspace/pie/target/release/pie (pie 0.5.4, Metal only, built 2026-10-24), not
+        rebuilt. The 0.6.0 release's binary (pie-aarch64-macos-metal.tar.gz, built with symbols stripped) unpacks to
+        73,623,936 bytes.
+      parts: [["pie binary", 102148608], ["Inferlet", 503207]]
+    - engine: llamacpp
+      version: "b11312"
+      bytes: 31279094
+      method: >-
+        The release archive the harness unpacks (llama-b11312-bin-macos-arm64.tar.gz): llama-server, the other tools
+        and their dylibs, 42 files.
+      source: "Measured: the GitHub release asset (ggml-org/llama.cpp b11312, 11,820,971 bytes packed) streamed and its tar entries summed."
+    - engine: mlxlm
+      version: "0.31.3"
+      bytes: 359261439
+      method: >-
+        The venv the harness builds (uv pip install mlx-lm==0.31.3 transformers on Python 3.12): the 34 wheels pip
+        resolves for macOS arm64, each one's files at their unpacked size.
+      source: >-
+        From the published wheels: pip install --dry-run --report resolved the set on 2026-11-07, and each wheel's own
+        zip directory (read with HTTP ranges) gives every file's size. Checked against the B200 vLLM venv, where the
+        same count of numpy 2.3.5 and transformers 5.19.0 matches the disk within 305 bytes of 107,955,826.
+      parts: [["MLX (mlx, mlx-metal)", 243881430], ["Transformers", 52143652], ["mlx-lm", 1557008]]
+    - engine: vllm-metal
+      version: "0.33.0"
+      bytes: 1909307586
+      method: >-
+        The venv infra/ci/mac-vllm-metal.sh builds: vLLM 0.33.0's macOS arm64 core wheel, the vllm-metal 0.33.0 wheel,
+        and its torch nightly pins (torch 2.16.0.dev20261013, torchvision, torchaudio), 181 packages. Two wheels that
+        write the same files (opencv-python and opencv-python-headless) count once.
+      source: >-
+        From the published wheels: pip install --dry-run --report resolved the set on 2026-11-07 and each wheel's zip
+        directory gives its files' sizes (179 wheels, 1,894,114,095 bytes). mlx-lm and mlx-vlm come from git commits
+        vllm-metal pins, with no wheel: their package directories in the GitHub tree (mlx_lm at 4cfc647, 2,060,193;
+        mlx_vlm at b7bec92 without its tests, 13,133,298).
+      parts: [["PyTorch", 565711631], ["MLX (mlx-metal)", 241595103], ["vLLM core", 98493816], ["vllm-metal", 18139635]]
+    - engine: splash
+      version: "1.1.0"
+      bytes: 171439493
+      method: >-
+        The release archive the harness unpacks (splash-1.1.0-arm64-macos26.tar.gz, 230,045,665 bytes unpacked), less
+        the Python interpreter and standard library it bundles (58,606,172), as the base Python is left out for the
+        Python engines: Splash's engine and Metal library, its server, and the Python packages it ships.
+      source: "Measured: the GitHub release asset (incoai/splash 1.1.0, 70,643,150 bytes packed) streamed and its tar entries summed."
+      parts: [["Bundled Python packages", 152131595], ["Splash engine (binary, Metal library)", 18614010]]
+    - engine: litert
+      version: "v0.19.1"
+      bytes: 38696288
+      method: >-
+        LiteRT-LM's macOS arm64 release (litert_lm_macos_arm64.tar.gz): litert_lm_main and the
+        libGemmaModelConstraintProvider dylib. LiteRT-LM is benchmarked on phones only; this is its Mac build.
+      source: "Measured: the GitHub release asset (google-ai-edge/LiteRT-LM v0.19.1, 13,416,641 bytes packed) streamed and its tar entries summed."
+  web:
+    - engine: pie
+      version: "server-web 0.6.4"
+      bytes: 35175344
+      method: >-
+        What the page downloads: @pie-project/server-web's dist/pie.mjs, dist/worker.mjs and dist/pie_browser_bg.wasm
+        (pie's runtime and WebGPU engine), and the text_completion_bench inferlet each request runs (503,207, the b200
+        build's).
+      source: "Measured: the npm tarball (@pie-project/server-web 0.6.4) streamed and its tar entries summed."
+      parts: [["Engine (pie_browser_bg.wasm)", 34496539], ["JS (pie.mjs, worker.mjs)", 175598], ["Inferlet", 503207]]
+    - engine: webllm
+      version: "0.2.87"
+      bytes: 14486040
+      method: >-
+        What the page downloads: @mlc-ai/web-llm's lib/index.js (the runtime and tokenizers in one module, 6,814,447)
+        and one model library, WebLLM's prebuilt v0_2_87 WebGPU kernels for Qwen3.5-4B (7,671,593). The prebuilt
+        libraries the harness runs are 7.7 to 12.1 MB, one per model.
+      source: >-
+        Measured: the npm tarball (@mlc-ai/web-llm 0.2.87) streamed and its tar entries summed; the model library's
+        size from GitHub (mlc-ai/binary-mlc-llm-libs, web-llm-models/v0_2_87/base/Qwen3.5-4B-q4f16_1_cs1k-webgpu.wasm).
+      parts: [["Model library (Qwen3.5-4B)", 7671593], ["Runtime (index.js)", 6814447]]

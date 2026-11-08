@@ -31,3 +31,17 @@ def test_a_prefill_only_rerun_brings_its_prompt_count_with_its_prefill():
     row = picked[key][1]
     assert row["decode_tok_s"] == 185.0 and row["prefill_tok_s"] == 12823.7
     assert webdb.prompt_per_request(row) == 554.0
+
+
+def test_every_install_size_names_its_engine_bytes_and_how_it_was_counted():
+    rows = webdb.install_sizes()
+    engines = {e["id"] for e in webdb.load("engines")["engines"]}
+    assert {r["platform"] for r in rows} <= {"mac", "nvidia", "web", "amd", "tpu", "android"}
+    # one figure per engine and platform, each with what it counts and where it came from
+    assert len({(r["platform"], r["engine"]) for r in rows}) == len(rows)
+    for r in rows:
+        assert r["engine"] in engines
+        assert isinstance(r["bytes"], int) and r["bytes"] > 0
+        assert r["version"] and r["method"] and r["source"] and r["measured"]
+        # the parts name pieces of the figure, never more than all of it
+        assert sum(n for _, n in r["parts"]) <= r["bytes"]
