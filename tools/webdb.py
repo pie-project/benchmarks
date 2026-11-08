@@ -473,10 +473,19 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "commit": (r["pie_commit"] or "")[:9] if engine == "pie" else "",
         "measured": local(r["started_at"]),
         "benchmark": r["workload"],  # the workload the number came from (c512, pf16-512, raw-512-256): engines compare at the same N
+        "prompt_per_request": prompt_per_request(r),
         "status": r["status"], "note": draft_note(r, engine),
         "miniature": MINIATURE.get(r["artifact"], ""),
         **MINI_SHAPE.get(r["artifact"], {}),
     }
+
+
+def prompt_per_request(r: dict) -> float | None:
+    """The prompt tokens the engine processed per request, its chat template and cold-cache tag included (about 554 for
+    raw-512-256 on Qwen): the count a row's prefill tok/s divides by, so its limit is held to the same prompt. As
+    report.prompt_length_mismatches counts it: the row's prompt tokens over its completed requests."""
+    done = int(r.get("requests") or 0) - int(r.get("failed") or 0)
+    return round(r["prompt_tokens"] / done, 1) if r.get("prompt_tokens") and done > 0 else None
 
 
 def draft_note(r: dict, engine: str) -> str:
@@ -617,7 +626,8 @@ def measured(r: dict) -> bool:
     return r["status"] in ("pass", "noisy") and any(r.get(m) is not None for m in ("decode_tok_s", "prefill_tok_s", "output_tok_s"))
 
 
-PREFILL = ("prefill_tok_s", "ttft_ms_p50", "ttft_ms_p99")
+# the prompt counts go with the prefill numbers: a prefill rate is the prompt tokens the engine processed over its TTFT
+PREFILL = ("prefill_tok_s", "ttft_ms_p50", "ttft_ms_p99", "prompt_tokens", "requests", "failed")
 
 
 def keep_decode(tag_rows: list[dict], picked: dict[tuple, tuple], a2m: dict[str, str], engine: str, since: datetime) -> None:
@@ -631,8 +641,8 @@ def keep_decode(tag_rows: list[dict], picked: dict[tuple, tuple], a2m: dict[str,
 
 def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
     """The picked run per setup under each tag, and each tag's kind and newest time."""
-    cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind", "counters_json"]
-            + METRICS)
+    cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind", "counters_json",
+             "prompt_tokens", "requests", "failed"] + METRICS)
     rows = [r for r in store.table().select(cols).to_pylist()
             if measured(r) and r["platform"] in hardware_ids and r["engine"] in engine_ids]
     by_tag: dict[str, list[dict]] = {}

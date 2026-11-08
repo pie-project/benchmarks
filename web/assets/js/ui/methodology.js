@@ -429,7 +429,10 @@ window.Pie = window.Pie || {};
     const a = row.miniature ? miniArch(row) : archOf(row.model);
     if (!machine?.bw || !model || !workload || !a) return null;
     const bits = bitsOf(row.scheme);
-    const prompt = workload.prompt_tokens;
+    // the prompt the run's engine prefilled, the count its tok/s divides by: the shape's 512-token prompt with the chat
+    // template, its system prompt and the cold-cache tag (about 554 tokens on Qwen, 605 on gpt-oss), from the row's own
+    // prompt tokens per request; the shape's nominal figure where the row has none
+    const prompt = row.prompt_per_request || workload.prompt_tokens;
     // Batched Prefill ("pbatch"): the run's prompts all prefilled in one pass, each its own first answer token
     const batch = metric === "pbatch" ? (workload.concurrency || 1) : 1;
     const prefill = metric === "prefill" || metric === "pbatch";

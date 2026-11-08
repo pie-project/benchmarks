@@ -1271,6 +1271,7 @@ hardware:
   memory_gib: 32
   memory_type: GDDR7
   bandwidth_gbs: 896
+  tflops_fp16: 202  # dense: the datasheet's 1,617 AI TOPS are FP4 with sparsity, an eighth of that at FP16; the Server Edition's datasheet lists FP16 | BF16 406 TFLOPS sparse
   power_w: 200
   gpu_cores: 10496
   year: 2025
@@ -1311,6 +1312,7 @@ hardware:
   memory_gib: 96
   memory_type: GDDR7
   bandwidth_gbs: 1597
+  tflops_fp16: 500  # dense; the spec page lists FP16 | BF16 Tensor Core 1 PFLOP with sparsity, as its FP4 4 PFLOPS (datasheet: "Peak FP4 AI PFLOPS")
   power_w: 600
   gpu_cores: 24064
   year: 2025
