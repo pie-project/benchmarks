@@ -136,7 +136,7 @@ window.Pie = window.Pie || {};
     amd: {
       label: "AMD GPU",
       short: "AMD",  // as the tables name it
-      section: "platforms",
+      section: null,  // hidden for now (Pie.hiddenPlatforms in store.js); "platforms" to bring it back
       view: "platform",
       platform: "amd",
       tint: "#ed1c24",
