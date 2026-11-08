@@ -688,7 +688,7 @@ window.Pie = window.Pie || {};
     return `<div class="board-section-head is-apart">
             <div class="board-section-text"><h1 class="board-title">Platform Support</h1>
             <p class="board-lede">Platforms each engine ran on here.</p></div>
-            ${viewToggle("support", [CHECKS_ICON, "Checks"], "Share of benchmarks")}
+            <button class="filter-button board-title-pick is-text" type="button" data-board-go-page="approach" data-chapter="add-engine" title="How a new engine joins the benchmark">Add Engine</button>${viewToggle("support", [CHECKS_ICON, "Checks"], "Share of benchmarks")}
           </div>
           ${card("support", "Platforms", gridCards.has("support") ? "Share of each platform's benchmarks run" : "Platforms each engine has run on", supportTable(support, gridCards.has("support")), "", false)}`;
   };
