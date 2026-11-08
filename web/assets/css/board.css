@@ -125,10 +125,11 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
   .board-inner { grid-template-columns: minmax(0, 1fr); }
   .board-outline { display: none; }
 }
-/* phones: the engines' key stays one line and scrolls sideways under the model picker, as the grid's bar does */
+/* the engines' key stays one line at every width and scrolls sideways, as the grid's bar does, its scrollbar hidden */
+.platform-bar.board-bar { overflow-x: auto; scrollbar-width: none; }
+.platform-bar.board-bar::-webkit-scrollbar { display: none; }
+.board-bar .board-legend { flex-wrap: nowrap; white-space: nowrap; }
 @media (max-width: 899px) {
-  .board-bar { overflow-x: auto; scrollbar-width: none; }
-  .board-bar .board-legend { flex-wrap: nowrap; white-space: nowrap; }
   .board-inner { padding: 12px var(--edge) 32px; }
 }
 

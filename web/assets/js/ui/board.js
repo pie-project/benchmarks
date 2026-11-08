@@ -1072,7 +1072,9 @@ window.Pie = window.Pie || {};
     // every card's chart the same, but only sideways, and the engine legend too
     const grid = event.target.closest?.(".board-matrix, .board-chart, .board-legend");
     if (!grid || event.button !== 0 || event.target.closest("button, a, input, select")) return;
-    tug = { grid, x: event.clientX, y: event.clientY, id: event.pointerId, flat: !grid.classList.contains("board-matrix") };
+    // the engine key, wider than its bar, scrolls under the pointer and gives only past its ends
+    const bar = grid.classList.contains("board-legend") ? grid.closest(".board-bar") : null;
+    tug = { grid, x: event.clientX, y: event.clientY, id: event.pointerId, flat: !grid.classList.contains("board-matrix"), bar, left: bar?.scrollLeft || 0 };
     grid.setPointerCapture(event.pointerId);
     grid.style.transition = "none";
     grid.classList.add("is-tugged");
@@ -1080,6 +1082,13 @@ window.Pie = window.Pie || {};
   element.addEventListener("pointermove", (event) => {
     if (!tug || event.pointerId !== tug.id) return;
     const give = (d) => Math.sign(d) * 60 * (1 - Math.exp(-Math.abs(d) / 120));  // the farther, the harder it pulls back
+    const max = tug.bar ? tug.bar.scrollWidth - tug.bar.clientWidth : 0;
+    if (max > 1) {
+      const want = tug.left - (event.clientX - tug.x);
+      tug.bar.scrollLeft = Math.max(0, Math.min(max, want));
+      tug.grid.style.transform = `translate(${give(want < 0 ? -want : want > max ? max - want : 0)}px, 0)`;
+      return;
+    }
     tug.grid.style.transform = `translate(${give(event.clientX - tug.x)}px, ${tug.flat ? 0 : give(event.clientY - tug.y)}px)`;
   });
   const letGo = (event) => {
