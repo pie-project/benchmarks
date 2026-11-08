@@ -46,7 +46,9 @@
       "qwen3.5-9b-llamacpp",
       "qwen3.6-27b-splash",
       "qwen3.6-27b-mlxlm",
-      "qwen3.6-27b-llamacpp"
+      "qwen3.6-27b-llamacpp",
+      "nemotron-3-ultra-mlxlm-slice-e16",
+      "muse-spark-mlxlm-slice-l2-e8"
     ]
   },
   "machines": [
