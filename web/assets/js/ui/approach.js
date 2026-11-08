@@ -142,19 +142,19 @@ window.Pie = window.Pie || {};
     const row = (kept) => Array.from({ length: 16 }, (_, i) => sq(i >= kept ? "is-cut" : ACTIVE.includes(i) ? "is-active" : "is-expert")).join("");
     return `
       <figure class="slice-fig" aria-label="Expert pool before and after the cut">
-        ${sliceRow("Full model", row(16), "E = 16 experts, k = 2 active per token")}
-        ${sliceRow("Slice", row(8), "E′ = 8 kept, the same k = 2 active")}
-        ${legend([["is-active", "Active for a token"], ["is-expert", "Stored expert"], ["is-cut", "Pruned"]])}
+        ${sliceRow("Full model", row(16), "16 experts, 2 active")}
+        ${sliceRow("Slice", row(8), "8 kept, the same 2 active")}
+        ${legend([["is-active", "Active"], ["is-expert", "Stored"], ["is-cut", "Pruned"]])}
       </figure>`;
   };
   const sliceLayers = () => {
     // a block is three linear-attention layers and one full-attention layer; a row wraps between blocks, never inside one
     const block = (cut) => `<span class="slice-block">${[0, 1, 2, 3].map((i) => sq(cut ? "is-cut" : i === 3 ? "is-full" : "is-linear")).join("")}</span>`;
-    const row = (kept) => Array.from({ length: 12 }, (_, b) => block(b >= kept)).join("");
+    const row = (kept) => Array.from({ length: 6 }, (_, b) => block(b >= kept)).join("");
     return `
       <figure class="slice-fig is-layers" aria-label="Layer stack before and after the cut">
-        ${sliceRow("Full model", row(12), "48 layers in 12 blocks")}
-        ${sliceRow("Slice", row(2), "8 of 48 layers: 2 whole blocks")}
+        ${sliceRow("Full model", row(6), "24 layers, 6 blocks")}
+        ${sliceRow("Slice", row(2), "8 kept, 2 whole blocks")}
         ${legend([["is-linear", "Linear attention"], ["is-full", "Full attention"], ["is-cut", "Cut"]])}
       </figure>`;
   };
