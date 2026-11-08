@@ -24,9 +24,10 @@ window.Pie = window.Pie || {};
     : hw.vendor === "AMD" ? "amd"
     : hw.vendor === "Cerebras" ? "cerebras"
     : hw.class === "web" ? "web" : null);
-  // each machine names its platform as the sidebar does, for the hardware table's Platform column and filter
+  // each machine names its platform as the sidebar does, for the Platform column and filter of the hardware and results
+  // tables. A hidden platform's machines (AMD, Mobile) keep their name there: only the platform's page in Compare is hidden
   for (const hw of tables.hardware || []) {
-    const id = Pie.platformOf(hw);
+    const id = platformOfAll(hw);
     if (id) hw.platform = Pie.schema[id]?.short || id;
   }
   // the Mobile and Browser platforms get their pages once a phone (the benchmark app, mobile/) or a browser (WebGPU in
