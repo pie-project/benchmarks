@@ -192,6 +192,10 @@ def vllm_server(engine, snapshot: Path, tp: int, log_path: Path, max_seqs: int =
         argv += ["--attention-backend", str(engine.recipe["attention_backend"])]
     engine.recipe.setdefault("snapshot_dir", str(snapshot))  # the vLLM-TPU settings read the model's config there
     env = engine.process_env(*([engine._tpu_env()] if str(engine.platform.backend) == "xla" else []))
+    if str(engine.platform.backend) == "cuda":
+        # parity reads logprobs and greedy answers, never samples: no FlashInfer sampler, whose JIT build needs CUDA's curand
+        # headers a pod image may lack ("curand.h: No such file or directory" on h100-sxm-x1, parity 42565051542)
+        env.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
     cfg = json.loads((snapshot / "config.json").read_text()) if (snapshot / "config.json").exists() else {}
     if "vision_config" in cfg and "hf_overrides" not in env.get("PIE_EVALS_VLLM_ENGINE_ARGS", ""):
         # the cut keeps only the language model: vLLM then builds no vision tower and reads no visual weights
