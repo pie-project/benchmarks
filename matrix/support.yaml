@@ -492,8 +492,7 @@ quality_gaps:
   - platform: [rtx4090-x1, rtx5090-x1, pro4500-x1]
     model: gemma-4-31b
     reason: >-
-      Cannot be checked on this card. A cut that fits (up to 24 of 60 layers) gives a first token too flat to tell
-      engines apart. The check needs 30 layers, which take 31.6 GiB.
+      Not checkable here. Every cut that fits gives a first token too flat to tell engines apart; 30 layers would, at 31.6 GiB.
   # mi350x-x1's MiniMax first-token row (top-1 0.0625) scored pie against that device's own vLLM 0.32.0 ROCm wheel, whose
   # first tokens agree with the H100's saved reference on 7 of 64 prompts (the same cut on mi355x-x1, 2026-11-09): the row
   # measured the reference. The MI355X reruns it against the saved one (PARITY_SAVED_REF=1, #1614); the MI350X is gone
