@@ -170,7 +170,9 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
             import re as _re
 
             ver = _re.search(r'name = "wasm-bindgen"\nversion = "([^"]+)"', lock).group(1)
-            subprocess.run(["cargo", "install", "wasm-bindgen-cli", "--locked", "--version", ver], env=env, check=True, timeout=timeout_s)
+            # from pie's checkout, so its rust-toolchain pins the cargo: a pod's rustup may have no default ("rustup could
+            # not choose a version of cargo to run", parity 42562757717 on web-rtx4090)
+            subprocess.run(["cargo", "install", "wasm-bindgen-cli", "--locked", "--version", ver], cwd=pie_root, env=env, check=True, timeout=timeout_s)
         if shutil.which("rustup"):
             subprocess.run(["rustup", "target", "add", "wasm32-unknown-unknown"], cwd=pie_root, env=env, check=False, timeout=timeout_s)
         wenv = {k: v for k, v in env.items() if k != "CARGO_TARGET_DIR"}
