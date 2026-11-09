@@ -125,6 +125,14 @@ default:
               rationale: >
                 The Nemotron-3-Super cut's c256 and pf256 fires find no HBM for their program at 0.90
                 (RuntimeProgramAllocationFailure, #1184); vLLM-TPU and SGLang-JAX serve no Nemotron-H on a TPU.
+        deepseek_v4:
+          knobs:
+            max_forward_tokens:
+              value: 2176
+              rationale: >
+                At 2048 a fire holds three of pf256-512's 533-token prompts (1599 rows padded to 1792); 2176
+                holds four: pf256-512 32907 -> 34017 tok/s, c256 11709 -> 11792 (pie 2be5ba85). vLLM-TPU
+                prefills 2048 tokens a step.
     tpu-v5e-1:
       family:
         gpt_oss:
