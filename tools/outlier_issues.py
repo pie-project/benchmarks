@@ -76,7 +76,6 @@ def outliers(site: Path) -> list[dict]:
 def body(platform: str, cells: list[dict], reports: list[dict] = (), names: dict | None = None, closed: list[dict] = ()) -> str:
     """A platform's issue description: its outliers in two sections, above the theoretical limit and slower than the
     strongest competitor, each with a table per setup, worst first."""
-    pct = lambda g: f"{'+' if g >= 0 else '−'}{abs(round(g * 100))}%"
     num = lambda v, unit: f"{round(v):,} {unit}"
     parts = []
     # the site's own type names, each with its colour (Pie Reports' Type filter)

@@ -47,12 +47,6 @@ def test_fit_rule_marks_big_models_on_small_gpus(cells):
     assert any("does not fit" in c.declared_unsupported_reason for c in big)
 
 
-def test_miniature_cells_never_accuracy_applicable(cells):
-    for c in cells:
-        if c.artifact.kind.value == "miniature":
-            assert not c.accuracy_applicable()
-
-
 def test_pie_only_programs_have_no_baseline_cells(cells):
     for c in cells:
         if c.program.pie_only:

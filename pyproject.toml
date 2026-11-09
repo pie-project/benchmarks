@@ -15,11 +15,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-accuracy = ["torch; sys_platform != 'darwin'", "mlx-lm; sys_platform == 'darwin'", "transformers>=4.44", "safetensors", "datasets"]
+accuracy = ["torch; sys_platform != 'darwin'", "mlx-lm; sys_platform == 'darwin'", "transformers>=4.44"]
 orchestrate = ["requests>=2.31"]
 quality = ["lm-eval[ifeval]>=0.4", "transformers", "jinja2", "tiktoken", "blobfile"]
 dev = ["pytest>=8.0", "pytest-timeout>=2.3", "ruff>=0.5"]
-web = ["pytz", "pyyaml"]
+web = ["pyyaml"]
 
 [project.scripts]
 pie-evals-node = "pie_evals.node.cli:main"

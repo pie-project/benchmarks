@@ -3,9 +3,9 @@
 common.py builds prompts from words (``--prompt``, ``--shared-prefix-words``,
 ``--mixed-phase`` ...), so a shape defined in tokens is realised as a
 deterministic word block sized by ``WORDS_PER_TOKEN`` and then *checked*:
-after a run, ``check_input_parity`` compares the prompt/output token counts
-every engine reported. If they differ the tok/s column is not a comparison
-and the record is marked INPUT_MISMATCH.
+after a run, the prompt/output token counts every engine reported are
+compared. If they differ the tok/s column is not a comparison and the
+record is marked INPUT_MISMATCH.
 
 TODO(pie): add ``--prompt-tokens-file`` to bench/common.py so shapes can be
 pre-tokenized once and handed to every engine as ids; until then prompts are
@@ -14,12 +14,11 @@ words and parity is verified rather than guaranteed.
 
 from __future__ import annotations
 
-import hashlib
 import random
 
 from pie_evals.schema import WorkloadSpec
 
-WORDS_PER_TOKEN = 1.0  # measured: a 5898-word block of these common words became 5968 tokens on Qwen3.5 (one token per word); verified per run by check_input_parity
+WORDS_PER_TOKEN = 1.0  # measured: a 5898-word block of these common words became 5968 tokens on Qwen3.5 (one token per word); verified per run
 SEED = 20260730  # same as common.py's --arrival-seed default
 
 _WORDS = (
@@ -90,16 +89,3 @@ def common_args_for(workload: WorkloadSpec, warmup: int = 2) -> list[str]:
     if p.get("request_timeout_s"):
         args += ["--request-timeout", str(int(p["request_timeout_s"]))]
     return args
-
-
-def check_input_parity(summaries: dict[str, dict]) -> str | None:
-    """Given engine -> summary, return None if prompt/output token totals agree, else a message."""
-    pt = {e: s.get("prompt_tokens") for e, s in summaries.items()}
-    ot = {e: s.get("output_tokens") for e, s in summaries.items()}
-    if len(set(pt.values())) > 1 or len(set(ot.values())) > 1:
-        return f"input mismatch: prompt_tokens={pt} output_tokens={ot}"
-    return None
-
-
-def workload_fingerprint(workload: WorkloadSpec) -> str:
-    return hashlib.sha256(workload.model_dump_json().encode()).hexdigest()[:12]

@@ -277,15 +277,6 @@ def kernels_cmd(platform_id, matrix_dir, store_dir, pie_root, pie_commit, tag, t
     sys.exit(1 if s.get("failed") or s.get("error") else 0)
 
 
-@main.command("rescore", help="Grade saved quality answers again with the current scorers.")
-@click.argument("files", nargs=-1, type=click.Path(exists=True))
-def rescore_cmd(files):
-    from pie_evals.quality.run import rescore
-
-    for f in files:
-        rescore(Path(f), log=lambda m_: click.echo(m_, err=True))
-
-
 @main.command("preflight")
 def preflight_cmd():
     """Print the hardware fingerprint and machine state checks."""
@@ -293,23 +284,6 @@ def preflight_cmd():
     from . import provenance as prov
 
     click.echo(json.dumps({"fingerprint": prov.hardware_fingerprint(), "versions": prov.versions(), "state": pf.Preflight().before_job(None)}, indent=1, default=str))
-
-
-@main.command("miniature")
-@click.option("--artifact", required=True, help="artifact id from matrix/models.yaml")
-@click.option("--matrix", "matrix_dir", default="matrix")
-@click.option("--pie-root", type=click.Path(exists=True), default=os.environ.get("PIE_ROOT", str(DEFAULT_PIE_ROOT)))
-@click.option("--hf-cache", type=click.Path(), default=None)
-def miniature_cmd(artifact, matrix_dir, pie_root, hf_cache):
-    """Build (or find) a miniature checkpoint in the HF cache."""
-    from pie_evals.plan.matrix import Matrix
-
-    from .miniature import ensure_miniature
-
-    m = Matrix.load(matrix_dir)
-    art = m.artifacts[artifact]
-    cache = Path(hf_cache or os.environ.get("HF_HUB_CACHE") or Path.home() / ".cache/huggingface/hub")
-    click.echo(str(ensure_miniature(art, Path(pie_root), cache, python=os.environ.get("PIE_PY", "python3"))))
 
 
 if __name__ == "__main__":

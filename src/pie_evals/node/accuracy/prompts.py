@@ -11,7 +11,6 @@ same bytes on every node.
 from __future__ import annotations
 
 import random
-from pathlib import Path
 
 _SENTENCES = [
     "The river bent twice before it reached the mill, and the miller counted both turns every morning.",
@@ -61,13 +60,3 @@ T0_PROMPTS: list[tuple[str, str]] = [
 def t0_prompts() -> list[tuple[str, str]]:
     """``[(id, text)]`` — a fresh copy each call."""
     return list(T0_PROMPTS)
-
-
-def tokenize(snapshot_dir: str | Path, text: str, add_special_tokens: bool = True) -> list[int]:
-    """Prompt ids from the checkpoint's own tokenizer (``transformers`` is
-    imported lazily). The same ids are handed to every engine so token
-    parity is measured on identical input."""
-    from transformers import AutoTokenizer  # lazy
-
-    tok = AutoTokenizer.from_pretrained(str(snapshot_dir), trust_remote_code=True)
-    return [int(i) for i in tok.encode(text, add_special_tokens=add_special_tokens)]

@@ -1840,9 +1840,7 @@ dependencies = [
 
 [package.optional-dependencies]
 accuracy = [
-    { name = "datasets" },
     { name = "mlx-lm", marker = "sys_platform == 'darwin'" },
-    { name = "safetensors" },
     { name = "torch", marker = "sys_platform != 'darwin'" },
     { name = "transformers" },
 ]
@@ -1862,7 +1860,6 @@ quality = [
     { name = "transformers" },
 ]
 web = [
-    { name = "pytz" },
     { name = "pyyaml" },
 ]
 
@@ -1870,7 +1867,6 @@ web = [
 requires-dist = [
     { name = "blobfile", marker = "extra == 'quality'" },
     { name = "click", specifier = ">=8.1" },
-    { name = "datasets", marker = "extra == 'accuracy'" },
     { name = "hf-xet", specifier = ">=1.1" },
     { name = "huggingface-hub", specifier = ">=0.24" },
     { name = "jinja2", marker = "extra == 'quality'" },
@@ -1882,12 +1878,10 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-timeout", marker = "extra == 'dev'", specifier = ">=2.3" },
-    { name = "pytz", marker = "extra == 'web'" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "pyyaml", marker = "extra == 'web'" },
     { name = "requests", marker = "extra == 'orchestrate'", specifier = ">=2.31" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
-    { name = "safetensors", marker = "extra == 'accuracy'" },
     { name = "tiktoken", marker = "extra == 'quality'" },
     { name = "torch", marker = "sys_platform != 'darwin' and extra == 'accuracy'" },
     { name = "transformers", marker = "extra == 'accuracy'", specifier = ">=4.44" },
