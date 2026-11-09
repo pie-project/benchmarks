@@ -309,6 +309,9 @@ def create_pod(
             **({"PIE_EVALS_EXEC": exec_script} if exec_script else {}),
             **({"GH_RUNNER_PAT": runner_pat} if runner_pat else {}),
             "RUNPOD_API_KEY": key,  # self-termination only
+            # a browser platform's Chrome runs WebGPU on Dawn's Vulkan backend: the container runtime mounts the driver's
+            # graphics and Vulkan libraries only when asked (else WebGPU falls back to SwiftShader, parity 42563580044)
+            **({"NVIDIA_DRIVER_CAPABILITIES": "all"} if str(platform.backend) == "webgpu" else {}),
         },
     }
     if allowed_cuda_versions:
