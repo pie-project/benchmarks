@@ -1291,7 +1291,6 @@ window.Pie = window.Pie || {};
       const key = own?.id || only || "all";
       const { key: sortKey = null, dir = 1 } = sortFor(key) || {};
       const tight = p.narrowBy?.[key] ?? (p.narrow ?? true);
-      const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
       const shownGroups = [{ platform: null, macs: list }];
       // a model slice's cell carries the slice mark in its top-left corner; its popover says how much of the model ran,
       // as the columns' (i) does
@@ -1376,7 +1375,7 @@ window.Pie = window.Pie || {};
       }
       // each table's corner above Hardware narrows its own pinned column to each machine's mark and name, for room
       // for the models, and back: one button a platform
-      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }, i) =>
+      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner" data-table-key="${esc(key)}"></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }, i) =>
         // the last maker runs on over the filler column, so a grid narrower than its section ends in its band, not a gap
         `<th class="platform-maker" colspan="${n + (i === makers.length - 1 ? 1 : 0)}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${count} ${count === 1 ? "model" : "models"}</span></span></th>`).join("")}${makers.length ? "" : '<th class="platform-fill" aria-hidden="true"></th>'}</tr>`;
       const head = `<tr class="platform-head-row">
@@ -1408,13 +1407,16 @@ window.Pie = window.Pie || {};
       return `<table class="platform-table${tight ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
       };
       // each platform under its header bar, which folds it away as a Finder group does; its table scrolls sideways on its own
-      const tables = only ? tableOf(sections[0] || { macs: [], models: [] }) : sections.map((g, i) => `<section class="platform-section">
+      // a bar down the left edge of each platform's table, its own: a click hides that platform's Overall and memory
+      // column and brings it back, in place of a button in the corner
+      const edge = (key) => { const tight = p.narrowBy?.[key] ?? (p.narrow ?? true); const label = tight ? "Show Overall and memory" : "Hide Overall and memory"; return `<button type="button" class="platform-edge" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${label}" title="${label}"></button>`; };
+      const tables = only ? `<div class="platform-section-body is-only">${edge(only)}<div class="platform-section-scroll">${tableOf(sections[0] || { macs: [], models: [] })}</div></div>` : sections.map((g, i) => `<section class="platform-section">
         <div class="platform-group-row platform-section-bar${folded(g.platform.id) ? " is-collapsed" : ""}" style="--stack: ${i}" data-group="${g.platform.id}" role="button" aria-expanded="${!folded(g.platform.id)}">
           <span class="platform-group-bar">
             <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}, ${g.models.length} ${g.models.length === 1 ? "model" : "models"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
           </span>
-        </div><div class="platform-section-body"${folded(g.platform.id) ? " hidden" : ""}><div class="platform-section-scroll">${tableOf(g, i === 0)}</div></div></section>`).join("");
+        </div><div class="platform-section-body"${folded(g.platform.id) ? " hidden" : ""}>${edge(g.platform.id)}<div class="platform-section-scroll">${tableOf(g, i === 0)}</div></div></section>`).join("");
 
       // a pick that leaves no machine with a model to show (an engine with no runs in this setup, say) says so in the
       // tables' own empty row, never a blank page
@@ -1512,7 +1514,8 @@ window.Pie = window.Pie || {};
         event.stopPropagation();
         if (event.detail) button.blur();  // a click leaves no focus behind, so the arrow keys after it draw no ring
         // this platform's table alone; the others keep theirs
-        const table = button.closest(".platform-table");
+        const table = button.closest(".platform-section-body")?.querySelector(".platform-table") || button.closest(".platform-table");
+        if (!table) return;
         const narrow = !table.classList.contains("is-tight");
         state.platform.narrowBy = { ...state.platform.narrowBy, [button.dataset.narrow]: narrow };
         Pie.saveView?.();
@@ -1598,7 +1601,7 @@ window.Pie = window.Pie || {};
         if (!header) return;
         const key = header.dataset.sort;
         // the table's platform, as its corner button names it: the sort stays in that table
-        const table = header.closest("table")?.querySelector("[data-narrow]")?.dataset.narrow || "all";
+        const table = header.closest("table")?.querySelector("[data-table-key]")?.dataset.tableKey || "all";
         const mine = state.platform.sortBy?.[table];
         state.platform.sortBy = { ...(state.platform.sortBy || {}), [table]: mine?.key !== key ? { key, dir: 1 } : mine.dir > 0 ? { key, dir: -1 } : null };
         onChange();
