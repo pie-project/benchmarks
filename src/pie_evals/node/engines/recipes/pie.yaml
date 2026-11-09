@@ -102,6 +102,14 @@ default:
   platform:
     tpu-v6e-1:
       family:
+        gpt_oss:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                gpt-oss's mxfp4 experts land pre-scaled (e5m2, twice the codes' bytes) where the pool leaves them
+                the room, and at 0.90 the pool beside them seats 95k tokens: c256 asks ~122k (221-token prompts and
+                256 out) and its processes were reclaimed and run again (pool starved). 0.95 seats ~139k.
         kimi_k3:
           knobs:
             gpu_mem_util:
@@ -122,11 +130,24 @@ default:
         gpt_oss:
           knobs:
             gpu_mem_util:
-              value: 0.75
+              value: 0.95
               rationale: >
-                At 0.97 pie's kv pool (11.1 GiB beside the 5-layer cut's 3.5 GiB) leaves the XLA fire no room for
-                its temporaries (15.80 > 15.75 GiB, #1184). vLLM-TPU and SGLang-JAX serve no gpt-oss on a v5e, so
-                no other engine's share moves.
+                The 12-layer cuts' mxfp4 experts land pre-scaled (e5m2, the grouped-matmul kernel's operand) only
+                where the pool leaves them the room: at 0.75 they stayed codes, and decode ran at 78 tok/s against
+                232. The fire's temporaries no longer decode the whole bank to bf16, so 0.95 leaves them room
+                (0.97 overflowed with them, #1184). vLLM-TPU keeps its own share.
+            admission_cap:
+              value: 176
+              rationale: >
+                At 0.95 the pool seats ~87k tokens: c256's 256 lanes of 221-token prompts and 256 out ask ~122k,
+                and pie reclaimed and reran processes the pool starved (941 tok/s). 176 seated at once hold it
+                (2776 tok/s); the client still offers 256, the rest queue for a seat.
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                The 12-layer cuts' fires fit 2048 rows beside the pool at 0.95 once the routed experts' rows go
+                through the grouped-matmul kernel (the 15.8 GiB of temporaries at 2048 were the whole bank
+                decoded to bf16, #1184): pf256's 1792-row fires ran 20.7k tok/s against 16.1k at 1024.
         deepseek_v4:
           knobs:
             gpu_mem_util:

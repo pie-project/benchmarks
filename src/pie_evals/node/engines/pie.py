@@ -369,6 +369,16 @@ class PieEngine(Engine):
             args += ["--engine-option", f"{k}={_scalar(v)}"]
         for k, v in (r.get("extra_input") or {}).items():
             args += ["--extra-input", f"{k}={_scalar(v)}"]
+        # the processes the engine seats at once where its kv pool holds fewer lanes than the shape offers: the
+        # client still holds the shape's requests open, the rest queue for a seat (pie_bench's admission override)
+        cap = r.get("admission_cap")
+        if cap:
+            from pie_evals.node.engines.shape import workload_concurrency
+
+            if (workload_concurrency(workload) or 1) > int(cap):
+                self.env["PIE_BENCH_ADMISSION_CAP"] = str(int(cap))
+            else:
+                self.env.pop("PIE_BENCH_ADMISSION_CAP", None)
         return args
 
     def version(self) -> str:
