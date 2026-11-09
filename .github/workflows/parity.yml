@@ -60,18 +60,20 @@ jobs:
           arts = {a["id"] for a in yaml.safe_load(open("matrix/models.yaml"))["artifacts"]}
           P = [x for x in os.environ["P"].split(",") if x and x != "none"]
           A = [x for x in os.environ["A"].split(",") if x]
-          bad = [x for x in P if x not in plats or not plats[x].get("runpod_gpu_type") or plats[x].get("backend") not in ("cuda", "rocm")] + [x for x in A if x not in arts]
+          bad = [x for x in P if x not in plats or not plats[x].get("runpod_gpu_type") or plats[x].get("backend") not in ("cuda", "rocm", "webgpu")] + [x for x in A if x not in arts]
           if bad:
               raise SystemExit(f"::error::unknown or non-RunPod GPU ids: {bad}")
           S, run = int(os.environ["S"]), os.environ["RUN"]
           shards, kernels = [], []
           for p in P:
-              b = plats[p]["backend"]
+              # a webgpu platform is pie in a browser tab on that GPU, scored against the Mac's saved reference
+              # (quality/browser.py): its build is the wgpu feature (the runtime as wasm, server-web), no kernel tests
+              b = "wgpu" if plats[p]["backend"] == "webgpu" else plats[p]["backend"]
               for s in range(S):
                   part = A[s::S]
                   if part:
                       shards.append({"platform": p, "shard": s, "backend": b, "label": f"qual-{run}-{p}-{s}", "artifacts": " ".join(f"--artifact {a}" for a in part)})
-              if os.environ["K"] == "true":
+              if os.environ["K"] == "true" and b != "wgpu":
                   kernels.append({"platform": p, "backend": b, "label": f"qual-{run}-{p}-k"})
           pods = [{"platform": e["platform"], "label": e["label"], "kill": 420} for e in shards] + [{"platform": e["platform"], "label": e["label"], "kill": 240} for e in kernels]
           print("shards=" + json.dumps({"include": shards}))

@@ -170,7 +170,9 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
             import re as _re
 
             ver = _re.search(r'name = "wasm-bindgen"\nversion = "([^"]+)"', lock).group(1)
-            subprocess.run(["cargo", "install", "wasm-bindgen-cli", "--locked", "--version", ver], env=env, check=True, timeout=timeout_s)
+            # from pie's checkout, so its rust-toolchain pins the cargo: a pod's rustup may have no default ("rustup could
+            # not choose a version of cargo to run", parity 42562757717 on web-rtx4090)
+            subprocess.run(["cargo", "install", "wasm-bindgen-cli", "--locked", "--version", ver], cwd=pie_root, env=env, check=True, timeout=timeout_s)
         if shutil.which("rustup"):
             subprocess.run(["rustup", "target", "add", "wasm32-unknown-unknown"], cwd=pie_root, env=env, check=False, timeout=timeout_s)
         wenv = {k: v for k, v in env.items() if k != "CARGO_TARGET_DIR"}
@@ -218,7 +220,17 @@ def ensure_slangc(pie_root: Path, cache: Path, log=print) -> Path:
         log(f"build: fetching slangc {ver}")
         d.mkdir(parents=True, exist_ok=True)
         tgz = d / "slang.tar.gz"
-        urllib.request.urlretrieve(f"https://github.com/shader-slang/slang/releases/download/v{ver}/slang-{ver}-linux-x86_64.tar.gz", tgz)
+        url = f"https://github.com/shader-slang/slang/releases/download/v{ver}/slang-{ver}-linux-x86_64.tar.gz"
+        # GitHub's release CDN answers a fresh pod with a 504 now and then (parity 42565812228): three tries
+        for attempt in range(3):
+            try:
+                urllib.request.urlretrieve(url, tgz)
+                break
+            except OSError as e:  # urllib.error.URLError and HTTPError are OSErrors
+                if attempt == 2:
+                    raise
+                log(f"build: slangc download failed ({e}), retrying")
+                time.sleep(10 * (attempt + 1))
         with tarfile.open(tgz) as t:
             t.extractall(d)
         tgz.unlink()
