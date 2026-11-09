@@ -466,9 +466,9 @@ window.Pie = window.Pie || {};
       // over the whole cell, its padding too, as on Performance
       const target = event.target.closest("[data-tip], [data-tip-html]") || event.target.closest("td, th")?.querySelector("[data-tip], [data-tip-html]");
       // an HTML card in the platform pages' card format; a plain note as text
-      if (!target) { tooltip.hidden = true; tooltip.classList.remove("is-card"); return; }
-      if (target.dataset.tipHtml) { tooltip.innerHTML = target.dataset.tipHtml; tooltip.classList.add("is-card"); }
-      else { tooltip.textContent = target.dataset.tip; tooltip.classList.remove("is-card"); }
+      if (!target) { tooltip.hidden = true; tooltip.classList.remove("is-card", "is-note"); return; }
+      if (target.dataset.tipHtml) { tooltip.innerHTML = target.dataset.tipHtml; tooltip.classList.add("is-card"); tooltip.classList.remove("is-note"); }
+      else { tooltip.textContent = target.dataset.tip; tooltip.classList.remove("is-card"); tooltip.classList.add("is-note"); }  // a reason reads as a narrow note, tall rather than wide
       tooltip.hidden = false;
       const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
       const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8);
