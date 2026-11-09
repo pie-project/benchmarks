@@ -73,18 +73,6 @@ def outliers(site: Path) -> list[dict]:
     return json.loads(text)
 
 
-def filed(site: Path) -> list[dict]:
-    """The open reports people filed (Supabase), read with the site's own public key."""
-    import urllib.request
-    auth = (site / "assets" / "js" / "config" / "auth.js").read_text()
-    url = re.search(r'url:\s*"([^"]+)"', auth).group(1)
-    key = re.search(r'anonKey:\s*"([^"]+)"', auth).group(1)
-    request = urllib.request.Request(f"{url}/rest/v1/measurement_reports?select=*&status=eq.open&order=created_at.desc",
-                                     headers={"apikey": key, "Authorization": f"Bearer {key}"})
-    with urllib.request.urlopen(request, timeout=30) as response:
-        return json.loads(response.read())
-
-
 def body(platform: str, cells: list[dict], reports: list[dict] = (), names: dict | None = None, closed: list[dict] = ()) -> str:
     """A platform's issue description: its outliers in two sections, above the theoretical limit and slower than the
     strongest competitor, each with a table per setup, worst first."""
@@ -126,37 +114,19 @@ def gh(*args: str) -> str:
     return subprocess.run(["gh", *args], capture_output=True, text=True, check=True).stdout
 
 
-def closed_keys(site: Path) -> set[str]:
-    """The outliers a maintainer closed on the site (outlier_status), left out of the issues."""
-    import urllib.request
-    auth = (site / "assets" / "js" / "config" / "auth.js").read_text()
-    url = re.search(r'url:\s*"([^"]+)"', auth).group(1)
-    key = re.search(r'anonKey:\s*"([^"]+)"', auth).group(1)
-    request = urllib.request.Request(f"{url}/rest/v1/outlier_status?select=key&status=eq.closed", headers={"apikey": key, "Authorization": f"Bearer {key}"})
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            return {row["key"] for row in json.loads(response.read())}
-    except Exception:
-        return set()
-
-
 def sync(site_data: dict, site: Path) -> None:
-    closed = closed_keys(site)
-    shut = lambda c: f"{c['engine']}|{c['hardware']}|{c['model']}|{c['setup']}" in closed
-    all_cells = [c for c in site_data["list"] if not shut(c)]
-    closed_cells = [c for c in site_data["list"] if shut(c)]
-    try:
-        people = filed(site)
-    except Exception as error:  # the database down: the outliers still go out, the filed reports wait for the next run
-        print(f"filed reports unread: {error}")
-        people = None
+    # the site keeps no store (no accounts, no filed reports, no closed outliers): an issue lists what the data flags now,
+    # and a visitor's report is an issue of its own
+    all_cells = site_data["list"]
+    closed_cells = []
+    people = []
     # the issues carry the benchmarks label, made on pie the first time
     if LABEL not in gh("label", "list", "-R", REPO, "--limit", "200", "--json", "name", "--jq", ".[].name").split():
         gh("label", "create", LABEL, "-R", REPO, "--color", "5E5CE6", "--description", "Found by the benchmarks site")
     numbers = {}  # platform -> its issue, for the site's Issue column (data/trackers.json)
     for code, platform in PLATFORMS.items():
         title = f"[{platform}] Benchmarks"
-        mine = [r for r in (people or []) if site_data["hardware"].get(r["hardware"]) == code]
+        mine = [r for r in people if site_data["hardware"].get(r["hardware"]) == code]
         text = body(platform, [c for c in all_cells if c["platform"] == code], mine, site_data,
                     [c for c in closed_cells if c["platform"] == code])
         found = json.loads(gh("issue", "list", "-R", REPO, "--state", "open", "--search", f'in:title "{title}"', "--json", "number,title,body"))
@@ -167,9 +137,7 @@ def sync(site_data: dict, site: Path) -> None:
             print(f"{title}: opened {url}")
             continue
         numbers[code] = issue["number"]
-        if people is None:  # without the filed reports a rewrite would drop them: leave the issue as it is
-            print(f"{title}: kept #{issue['number']} (filed reports unread)")
-        elif issue["body"].strip() != text.strip():
+        if issue["body"].strip() != text.strip():
             gh("issue", "edit", str(issue["number"]), "-R", REPO, "--body", text)
             print(f"{title}: updated #{issue['number']}")
         else:

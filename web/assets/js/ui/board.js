@@ -739,7 +739,7 @@ window.Pie = window.Pie || {};
           <p class="board-banner-sub">Compare cost, hardware and models<br>for the throughput you need to serve</p>
         </div> -->
         <section class="board-log" aria-label="Changelog">
-          <div class="board-log-head"><h2 class="board-log-title">Changelog</h2><form class="board-subscribe" hidden><input type="email" required placeholder="Email" aria-label="Email" value="${esc(Pie.account?.user()?.email || "")}"><button type="submit" aria-label="Notify me" title="Notify me"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M9 4.5 12.5 8 9 11.5"/></svg></button></form>
+          <div class="board-log-head"><h2 class="board-log-title">Changelog</h2><form class="board-subscribe" hidden><input type="email" required placeholder="Email" aria-label="Email"><button type="submit" aria-label="Notify me" title="Notify me"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M9 4.5 12.5 8 9 11.5"/></svg></button></form>
             <button class="board-log-bell${subscribed() ? " is-subscribed" : ""}" type="button" data-board-subscribe aria-label="Email me new releases" title="Email me new releases"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11.5V7a4 4 0 0 1 8 0v4.5l1 1H3zM6.5 14a1.5 1.5 0 0 0 3 0"/></svg></button></div>
           <ol class="board-log-list">${changelog().map(logItem).join("")}</ol>
         </section>
@@ -1070,19 +1070,9 @@ window.Pie = window.Pie || {};
   element.addEventListener("scroll", hideTip, { passive: true, capture: true });
 
 
-  // the Changelog's bell: an email, sent to a subscribers table in the site's Supabase project once one is connected;
-  // until then the reader is thanked all the same and the field cleared
+  // the Changelog's bell (its form hidden): no list to send the email to, so the reader is thanked and the field cleared
   const SUBSCRIBED_KEY = "pieSubscribed";
   const subscribed = () => { try { return localStorage.getItem(SUBSCRIBED_KEY) === "1"; } catch { return false; } };
-  const subscribe = (email) => {
-    const { url, anonKey } = Pie.authConfig || {};
-    if (!url || !anonKey) return;
-    fetch(`${url}/rest/v1/subscribers`, {
-      method: "POST",
-      headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({ email }),
-    }).catch(() => {});
-  };
   // a head-to-head grid, or a platform card's bars, can be pulled about by hand, with a rubber band's give, and springs back to the middle of its
   // card when let go, as a Mac view bounces at its edge
   let tug = null;
@@ -1136,7 +1126,6 @@ window.Pie = window.Pie || {};
     if (!form) return;
     event.preventDefault();
     const input = form.querySelector("input");
-    subscribe(input.value.trim());
     input.value = "";
     // the row says so in words, then gives the title back
     setSubscribe(false);
@@ -1235,11 +1224,10 @@ window.Pie = window.Pie || {};
       }).catch(() => {});
       return;
     }
-    // the data behind a card, as a table: for an account only, so one who is not logged in is asked to
+    // the data behind a card, as a table, for anyone
     const data = event.target.closest("[data-board-data]");
     if (data) {
-      if (!Pie.signedIn()) Pie.account.open();
-      else saveData(element.querySelector(`#board-${data.dataset.boardData}`));
+      saveData(element.querySelector(`#board-${data.dataset.boardData}`));
       return;
     }
     const save = event.target.closest("[data-board-save]");

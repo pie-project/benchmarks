@@ -14,7 +14,7 @@ window.Pie = window.Pie || {};
     { id: "catalog", label: "Catalog" },  // open to everyone for now (login: true closes it again)
     { id: "resources", label: "Resources" },  // how the numbers are worked out, after the data itself
   ];
-  // the sections an account opens: hidden, and their pages closed, until the viewer logs in (ui/account.js)
+  // the sections an account opens: hidden, and their pages closed, (no accounts now: every section is open)
   // everything on the site is public: no page, section or card waits for an account
   Pie.signedIn = () => true;
   Pie.isOpen = (table) => Pie.signedIn() || !Pie.sections.find((s) => s.id === Pie.schema[table]?.section)?.login;

@@ -87,13 +87,12 @@ window.Pie = window.Pie || {};
 
   // Performance and Quality rows are selected as a Mac list's are (click, ⌘-click, ⇧-click), and the bar's Report files
   // the selected ones as wrong
-  const flaggable = (state) => (state.table === "results" || state.table === "quality") && Pie.account?.configured;
+  const flaggable = (state) => state.table === "results" || state.table === "quality";  // Report opens a GitHub issue: no account
   const picked = new Set();  // the selected rows themselves, not a key: two rows alike in every column shown are still two
   // a measurement has no id of its own: a report names it by every field it has, so no other row reads the same
   const keyOf = (row) => Object.keys(row).sort().filter((k) => row[k] == null || typeof row[k] !== "object").map((k) => `${k}=${row[k] ?? ""}`).join("|");
   let pickedOn = null;       // the table they were picked on: another page starts with none
   const reportButton = document.getElementById("report-selected");
-  const submitButton = document.getElementById("submit-result");  // an engine's team sends a better number (off for now)
   const downloadButton = document.getElementById("download-rows");  // the rows the filters show, every column, as a CSV file
   // a CSV of the rows, every column the page has (hidden ones too), in the table's order: the raw values, not as drawn
   const csvOf = (rows, columns) => {
@@ -179,7 +178,6 @@ window.Pie = window.Pie || {};
       this.rows = rows;
       this.source = state.table;
       if (reportButton) reportButton.hidden = !flaggable(state);
-      if (submitButton) submitButton.hidden = !flaggable(state);
       if (downloadButton) downloadButton.hidden = !flaggable(state);
       // the row colours' keys, with the measurement tables only; CI Error tints Performance's rows alone
       const keys = document.getElementById("table-keys");
@@ -284,10 +282,6 @@ window.Pie = window.Pie || {};
         link.download = `${this.source === "results" ? "performance" : this.source}.csv`;
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-      });
-      submitButton?.addEventListener("click", () => {
-        const one = picked.size === 1 ? this.rows.find((r) => picked.has(r)) : null;
-        Pie.reports?.submit(one, this.source, () => { picked.clear(); anchor = null; mark(); });
       });
       reportButton?.addEventListener("click", () => {
         const at = this.rows.flatMap((r, i) => (picked.has(r) ? [i] : []));  // in the table's order, with its row numbers
