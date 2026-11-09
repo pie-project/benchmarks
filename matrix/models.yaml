@@ -511,6 +511,19 @@ artifacts:
     max_context: 4096
     expected_gib: 19.0
     tiers: [weekly]
+  # quality only: mini12 and mini18's first-token distribution is flat (see gemma-4-31b-mlx4-slice-tail12); this cut
+  # keeps the closing period instead, the same 12-layer shape as mini12
+  - id: gemma-4-31b-mini12-tail
+    base_model: google/gemma-4-31B-it
+    family: gemma4
+    scheme: bf16
+    kind: miniature
+    miniature: {layers: "0-5,54-59", period: 6, shrink_family: gemma4, note: "the first and last of 10 sliding/global periods (12 of 60 layers, for 24 GB cards)"}
+    pie_sku: gemma4-31b-bf16-kv-bf16-l12
+    platforms: [rtx4090-x1, rtx5090-x1, pro4500-x1]
+    max_context: 4096
+    expected_gib: 14.8
+    tiers: []
   - id: gpt-oss-120b-mxfp4-mini
     base_model: openai/gpt-oss-120b
     params_b: 117
@@ -2117,6 +2130,32 @@ artifacts:
     expected_gib: 5.34
     platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
+  # quality only: Gemma 4's first 18 layers leave its first-token distribution flat (top 20 tokens hold 1% of the
+  # mass, no position where the reference leads by 0.5 nats), so the slice above passes any engine that is also flat.
+  # These cuts keep the closing period, where the 31B sharpens its prediction; the layers share nothing across
+  # periods (num_kv_shared_layers 0, no per-layer inputs), so a cut renumbers to the same shape as 0-11 or 0-17
+  - id: gemma-4-31b-mlx4-slice-tail12
+    base_model: mlx-community/gemma-4-31b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-5,54-59", period: 6, note: "the first and last of 10 periods (12 of 60 layers)"}
+    pie_sku: gemma4-31b-mini-l30-u4g64-kv-bf16-l12
+    expected_gib: 3.9
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
+    tiers: []
+  - id: gemma-4-31b-mlx4-slice-tail18
+    base_model: mlx-community/gemma-4-31b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-5,48-59", period: 6, note: "the first and last two of 10 periods (18 of 60 layers)"}
+    pie_sku: gemma4-31b-mini-l30-u4g64-kv-bf16-l18
+    expected_gib: 5.34
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
+    tiers: []
   - id: gemma-4-31b-mlxlm-slice
     base_model: mlx-community/gemma-4-31b-it-4bit
     family: gemma4
