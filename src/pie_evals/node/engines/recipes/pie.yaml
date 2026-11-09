@@ -589,6 +589,16 @@ default:
                 At its default kv pool pf8-512 on the 16 GB M2 ran Metal out of memory mid-batch ("waitUntilCompleted refused:
                 Insufficient Memory", 5 of 32 requests, mac-slices 42135629944) while mlx-lm finished it; a
                 smaller kv pool leaves the batch's scratch room; 1 GiB still seats c8's 8 x 768 tokens.
+    gemma-4-31b-mlx4-slice-l30:
+      backend:
+        metal:
+          knobs:
+            device_kv_budget:
+              value: 512MiB
+              rationale: >
+                The 30-layer 4-bit cut's 9.1 GB of weights and its 512-token arena leave 1.15 GB of the 16 GB M3's
+                working set, and the default pool wants 1.85 GB resident ("impossible submission", parity 42557488417);
+                parity's first-token prompts run four at a time at 48 tokens, a few MB of kv.
     gemma-4-26b-a4b-mlx4-slice:
       backend:
         metal:

@@ -424,6 +424,9 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     if first:
         expect = [len(tok.encode(r, add_special_tokens=False)) for r in rendered]
         summary.update(kl.last_position(ref_scored, pie_scored, expect))
+        # diag branch: both engines' last-position top lists, to score them again offline
+        (out_dir / f"{art.id}-{platform_id}-dists.json").write_text(json.dumps(
+            {"ref": [r[-1] if r else {} for r in ref_scored], "pie": [q[-1] if q else {} for q in pie_scored]}))
         # past the line: is it pie, or the slice? The reference against itself with only its kernels changed. A slice
         # cut so deep that rounding moves its first token past the line (Gemma-4-26B-A4B at 24 of 128 experts on
         # rtx4090-x1: vLLM eager against its CUDA graphs 0.44, against SGLang 0.35, pie 0.40) is checked on the answers
