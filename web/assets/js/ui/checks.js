@@ -261,6 +261,13 @@ window.Pie = window.Pie || {};
     // a declared gap outranks a stored row: a row from a cut whose reference is flat (Gemma-4-31B's 0-17 on a 32 GB card)
     // passed without checking anything, so the cell says why it cannot be checked
     for (const mac of macs) for (const model of models) at[`${mac}|${model}`] = nofit(mac, model) ? { kl: gapOf(mac, model) ? null : klOf(mac, model, platform.id) } : { score: gapOf(mac, model) ? null : scoreOf(state, mac, model, platform.id) };
+    // a cell with no check and no reason where pie's own rows say the model does not fit the machine (not even its slice:
+    // Qwen3.8's XLA fire on a v5e) wears the "Does not fit" mark, not a bare dash
+    const fitsNot = new Set((Pie.store.snapshot(state.release) || []).filter((r) => r.engine === "pie" && r.status === "no_fit").map((r) => `${r.hardware}|${r.model}`));
+    for (const mac of macs) for (const model of models) {
+      const cell = at[`${mac}|${model}`];
+      if (!cell.kl && !cell.score && !gapOf(mac, model) && fitsNot.has(`${mac}|${model}`)) at[`${mac}|${model}`] = { kl: undefined };
+    }
     const signed = (d) => `${d > 0.05 ? "+" : d < -0.05 ? "−" : ""}${Math.abs(d).toFixed(1)}`;
     // a maker's slices and its full models are two bands, as the Performance page splits them
     const cut = (model) => macs.some((mac) => layout.sliced.has(`${mac}|${model}`));
