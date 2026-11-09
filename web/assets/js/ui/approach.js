@@ -197,8 +197,18 @@ window.Pie = window.Pie || {};
   const mt = (name, colour) => `<span class="m-tag" data-name="${name}" style="--pill: ${colour}"><span class="m-dot"></span>${name}</span>`;
   const mo = (x) => `<span class="m-op">${x}</span>`;
   const mp = (x) => `<span class="m-paren">(</span>${x}<span class="m-paren">)</span>`;
-  const eqs = (rows) => `<div class="m-doc is-slices"><div class="m-doc-eqs">${rows.map(([result, colour, rel, math]) =>
-    `<div class="m-doc-eq"><span class="m-doc-eq-line">${mt(result, colour)}<span class="op">${rel}</span><span class="m-eq">${math}</span></span></div>`).join("")}</div></div>`;
+  // the works each formula rests on, cited as the limit chapters cite theirs: the most cited statement of each idea
+  const REFS = {
+    vaswani: { authors: "A. Vaswani et al.", title: "Attention Is All You Need", venue: "NeurIPS 2017, arXiv:1706.03762", year: 2017, url: "https://arxiv.org/abs/1706.03762" },
+    shazeer: { authors: "N. Shazeer et al.", title: "Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer", venue: "ICLR 2017, arXiv:1701.06538", year: 2017, url: "https://arxiv.org/abs/1701.06538" },
+    kaplan: { authors: "J. Kaplan et al.", title: "Scaling Laws for Neural Language Models", venue: "arXiv:2001.08361", year: 2020, url: "https://arxiv.org/abs/2001.08361" },
+    pope: { authors: "R. Pope et al.", title: "Efficiently Scaling Transformer Inference", venue: "MLSys 2023, arXiv:2211.05102", year: 2022, url: "https://arxiv.org/abs/2211.05102" },
+    megatron: { authors: "M. Shoeybi et al.", title: "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism", venue: "arXiv:1909.08053", year: 2019, url: "https://arxiv.org/abs/1909.08053" },
+    valiant: { authors: "L. G. Valiant", title: "A Bridging Model for Parallel Computation", venue: "Communications of the ACM 33(8)", year: 1990, url: "https://doi.org/10.1145/79173.79181" },
+  };
+  const cite = (key) => { const r = REFS[key]; const author = r.authors.split(",")[0].replace(/ et al\.?$/, "").split(" ").pop(); return `<a class="cite" href="${r.url}" target="_blank" rel="noopener" title="${r.authors} ${r.title}. ${r.venue}, ${r.year}">${author} ${r.year}</a>`; };
+  const eqs = (rows) => `<div class="m-doc is-slices"><div class="m-doc-eqs">${rows.map(([result, colour, rel, math, cites = []]) =>
+    `<div class="m-doc-eq"><span class="m-doc-eq-line">${mt(result, colour)}<span class="op">${rel}</span><span class="m-eq">${math}</span></span>${cites.length ? `<span class="m-doc-cite">${cites.map(cite).join(", ")}</span>` : ""}</div>`).join("")}</div></div>`;
   const slices = () => `
       ${lead("A slice is a frontier model cut to fit one device, with the full model's layer shapes kept. It has two uses: a fair comparison of engines on one accelerator, which the grid measures, and a baseline for modeling the full model at scale, which it does not.")}
       ${steps([["#5E5CE6", "Fair comparison", "Engines on the same slice, measured on this site"],
@@ -209,20 +219,20 @@ window.Pie = window.Pie || {};
         ["#30B0C7", "Then layers", "Only if it still does not fit, in whole repeating blocks"]])}
       <h3>Claim 1: a fair comparison on one device</h3>
       <p>A layer's cost is set by its hidden size, attention, expert width, active experts per token and quantization. A slice changes none of them, so every engine runs the full model's shapes, kernels and quantization, and the comparison is controlled.</p>
-      ${eqs([["Layer cost", "#5E5CE6", "=", `<span class="m-fn">f</span>${mp([mv("Hidden size", "#5E5CE6", "H"), mv("Attention", "#007AFF", "A"), mv("Expert width", "#FF9500", "E"), mv("Top-k", "#FF9500", "K"), mv("Quantization", "#30B0C7", "Q")].join('<span class="m-comma">,</span>'))}`]])}
+      ${eqs([["Layer cost", "#5E5CE6", "=", `<span class="m-fn">f</span>${mp([mv("Hidden size", "#5E5CE6", "H"), mv("Attention", "#007AFF", "A"), mv("Expert width", "#FF9500", "E"), mv("Top-k", "#FF9500", "K"), mv("Quantization", "#30B0C7", "Q")].join('<span class="m-comma">,</span>'))}`, ["vaswani", "shazeer", "kaplan"]]])}
       ${facts([["#5E5CE6", "Same checkpoint", "Every engine loads the identical cut, unmodified"],
         ["#30B0C7", "Same tokens", "The same token ids in, all 256 tokens out"],
         ["#34C759", "Same model", "Each engine's first token checked against the reference"],
         ["#8E8E93", "Relative Speed", "Shown as each engine against the others on the same slice"]])}
       <h3>Claim 2: a proxy for the full model at scale</h3>
       <p>For a layer cut, the full model's compute is, to first order, the slice's time scaled by the layer ratio, because each kept layer does its full-model work.</p>
-      ${eqs([["Layer ratio", "#5E5CE6", "=", `${mv("Full layers", "#FF9500", "L_full")}${mo("÷")}${mv("Slice layers", "#5E5CE6", "L_slice")}`],
-        ["Full-model compute", "#FF9500", "≈", `${mv("Layer ratio", "#5E5CE6", "C")}${mo("×")}${mv("Slice time", "#5E5CE6", "T_slice")}`]])}
+      ${eqs([["Layer ratio", "#5E5CE6", "=", `${mv("Full layers", "#FF9500", "L_full")}${mo("÷")}${mv("Slice layers", "#5E5CE6", "L_slice")}`, ["kaplan"]],
+        ["Full-model compute", "#FF9500", "≈", `${mv("Layer ratio", "#5E5CE6", "C")}${mo("×")}${mv("Slice time", "#5E5CE6", "T_slice")}`, ["kaplan", "pope"]]])}
       ${facts([["#FF9500", "Expert cuts do not scale", "The same active experts per token, so no inverse expert fraction"],
         ["#007AFF", "Vocabulary head", "Full size on every slice, counted once on its own"],
         ["#8E8E93", "Compute, not latency", "A first-order estimate, not the full model's measured time"]])}
       <p>Across GPUs or nodes, communication and coordination add to that compute, and overlap hides part of them.</p>
-      ${eqs([["Distributed time", "#FF9500", "≈", `${mv("Compute", "#FF9500", "T_compute")}${mo("+")}${mv("Communication", "#30B0C7", "T_comm")}${mo("+")}${mv("Overhead", "#8E8E93", "T_overhead")}${mo("−")}${mv("Overlap", "#34C759", "T_overlap")}`]])}
+      ${eqs([["Distributed time", "#FF9500", "≈", `${mv("Compute", "#FF9500", "T_compute")}${mo("+")}${mv("Communication", "#30B0C7", "T_comm")}${mo("+")}${mv("Overhead", "#8E8E93", "T_overhead")}${mo("−")}${mv("Overlap", "#34C759", "T_overlap")}`, ["valiant", "megatron", "pope"]]])}
       ${facts([["#5E5CE6", "Slice", "The compute baseline, measured here"],
         ["#FF9500", "Layer scaling", "The full model's work, estimated"],
         ["#30B0C7", "Cluster", "Communication, from interconnect bandwidth, latency and topology"],
