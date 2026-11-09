@@ -520,6 +520,13 @@
 .platform-maker-name b { font-weight: 600; color: var(--color-label); }
 .platform-maker-name > span:last-child { font-size: 12px; font-weight: 400; color: var(--color-label-tertiary); }
 .platform-maker-name .model-badge { width: 20px; height: 20px; border-radius: 5px; }
+/* the band folds its models into one column on a click, its chevron turned as a folded platform's: down open, right shut */
+.platform-table thead tr.platform-maker-row th.platform-maker[data-fold-maker] { cursor: pointer; user-select: none; }
+.platform-maker-name .platform-disclosure { width: 7px; height: 12px; margin-left: 4px; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transform: rotate(90deg); transform-origin: 50% 50%; transition: transform .15s; }
+.platform-table th.platform-maker.is-collapsed .platform-maker-name .platform-disclosure { transform: none; }
+.platform-table th.platform-maker:hover .platform-maker-name .platform-disclosure { stroke: var(--color-label-secondary); }
+.platform-table thead th.is-folded { cursor: pointer; }
+.platform-table thead th.is-folded .platform-model, .platform-table td.is-folded .platform-main { font-style: normal; }
 /* the model heads sit under the band, both pinned as the machines scroll */
 .platform-table thead tr.platform-head-row th { top: 40px; }
 .platform-table thead tr.platform-maker-row th.platform-corner { border-bottom: 0; }
