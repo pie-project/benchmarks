@@ -1,22 +1,42 @@
-"""The site's hardware limits (web/assets/js/ui/methodology.js) against the results CI Reports once flagged above them.
+"""The site's hardware limits (assets/js/ui/methodology.js, in pie-project/website's public/benchmarks) against the results CI Reports once flagged above them.
 
 The limits run in node, as the browser runs them, on what tools/webdb.py exports for them: the machines
 (matrix/hardware.yaml), the models (matrix/models.yaml), the workloads with each benchmark's own shape
-(matrix/workloads.yaml), and each model's architecture (web/assets/js/config/architectures.js). HELD is every result
+(matrix/workloads.yaml), and each model's architecture (assets/js/config/architectures.js). HELD is every result
 the site flagged above its limit on 2026-11-07 whose limit was wrong: each must now sit under its limit. BOUNDS keep
 the fixed limits from drifting loose: each is an inequality worked out by hand from the model's config and the chip's
 datasheet.
 """
+import functools
 import json
+import os
 import shutil
 import subprocess
 import sys
+import tempfile
+import urllib.request
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = [ROOT / "web/assets/js/config/architectures.js", ROOT / "web/assets/js/ui/methodology.js"]
+# the page's own files, from a pie-project/website checkout beside this one ($PIE_WEBSITE), else from the published page
+PAGE = "https://pie-project.org/benchmarks"
+NAMES = ["assets/js/config/architectures.js", "assets/js/ui/methodology.js"]
+
+
+@functools.cache
+def files() -> list[Path]:
+    site = Path(os.environ.get("PIE_WEBSITE") or ROOT.parent / "website") / "public/benchmarks"
+    if all((site / n).exists() for n in NAMES):
+        return [site / n for n in NAMES]
+    out = Path(tempfile.mkdtemp())
+    try:
+        for n in NAMES:
+            (out / Path(n).name).write_bytes(urllib.request.urlopen(f"{PAGE}/{n}", timeout=30).read())
+    except OSError as e:
+        pytest.skip(f"the page's files are not reachable: {e}")
+    return [out / Path(n).name for n in NAMES]
 
 # methodology.js in a bare context: a window, no page, the store's tables from the export. Each case is a row
 # (setup, engine, hardware, model, scheme, benchmark, prompt per request), with a slice's cut where the run was one
@@ -53,7 +73,7 @@ def limits(webdb, cases, artifact=None):
     if not shutil.which("node"):
         pytest.skip("node is not installed")
     _, models = webdb.artifact_to_model()
-    data = {"files": [str(f) for f in FILES], "hardware": webdb.hardware(), "models": models, "workloads": webdb.workloads(),
+    data = {"files": [str(f) for f in files()], "hardware": webdb.hardware(), "models": models, "workloads": webdb.workloads(),
             "extra": webdb.miniature_fields(artifact) if artifact else {}, "cases": [list(c[:7]) for c in cases]}
     out = subprocess.run(["node", "-e", HARNESS], input=json.dumps(data, default=str), capture_output=True, text=True, check=True)
     return json.loads(out.stdout)
