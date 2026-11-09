@@ -318,10 +318,12 @@ def import_store(obj, src):
         st._write_table(pq.read_table(f, schema=ARROW_SCHEMA), tier=Tier(f.parts[-3]), run_id=f.stem, when=None)
         if i % 100 == 0 or i == len(files):
             click.echo(f"{i}/{len(files)} runs", err=True)
-    for f in sorted((d.root / "quality").glob("*.json")):
+    # dotfiles are not summaries: a Mac's rsync leaves an AppleDouble "._<name>.json" beside each file it copies
+    summaries = [f for f in sorted((d.root / "quality").glob("*.json")) if not f.name.startswith(".")]
+    for f in summaries:
         q = json.loads(f.read_text())
         st.write_quality(q, tag=q.get("tag"), tag_kind=q.get("tag_kind"))
-    click.echo(f"{len(files)} runs, {len(list((d.root / 'quality').glob('*.json')))} quality summaries")
+    click.echo(f"{len(files)} runs, {len(summaries)} quality summaries")
 
 
 @main.command("report")
