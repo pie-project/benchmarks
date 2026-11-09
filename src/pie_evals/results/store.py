@@ -182,7 +182,8 @@ class DirStore(BaseStore):
 
     def files(self, tier: Tier | None = None) -> list[Path]:
         base = self.records_dir / str(tier) if tier else self.records_dir
-        return sorted(base.rglob("*.parquet")) if base.exists() else []
+        # never a dotfile: a Mac's rsync leaves an AppleDouble "._<name>.parquet" beside each file it copies
+        return sorted(f for f in base.rglob("*.parquet") if not f.name.startswith(".")) if base.exists() else []
 
     def table(self, tier: Tier | None = None) -> pa.Table:
         fs = self.files(tier)
