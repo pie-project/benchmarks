@@ -705,6 +705,8 @@
   backdrop-filter: blur(20px);
 }
 
+.chart-tooltip.is-note { max-width: 190px; padding: 8px 11px; line-height: 1.5; }  /* a cell's reason: half the width, the lines stacked */
+
 .chart-tooltip[hidden] {
   display: none;
 }
