@@ -27,18 +27,7 @@ window.Pie = window.Pie || {};
       ["install", "Install Size", "#30B0C7", "What an engine's install size counts.", () => installPage()],
     ]],
     ["Models", [
-      ["slices", "Model Slices", "#5E5CE6", "Single-device architectural proxies.", () => `
-        <p>We use single-device model slices to benchmark frontier architectures continuously without the cost and energy of multi-GPU clusters. Frontier models now exceed 400B to 800B parameters and require up to eight datacenter GPUs just to load into memory. Benchmarking these full checkpoints across every engine, hardware SKU, and software release creates a combinatorial matrix that is too expensive and energy-intensive to run continuously.</p>
-        <p>A model slice shrinks a model's memory footprint to fit one device while keeping its per-layer execution identical to the full model. A naive alternative is to benchmark a smaller model from the same family, such as an 8B model in place of a 400B model. However, smaller models use narrower hidden dimensions and fewer attention heads, which trigger completely different GPU kernel schedules. Instead, we slice the full model directly under three rules:</p>
-        <ol class="method-list">
-          <li><b>Keep layer width unchanged.</b> We preserve the exact hidden dimension, expert intermediate width, attention head layout, active experts per token (top-<i>k</i>), quantization group size, and vocabulary head. Every matrix multiplication and attention kernel runs with the exact tensor shapes of the full model.</li>
-          <li><b>Prune inactive experts before cutting layers.</b> In sparse Mixture-of-Experts (MoE) models, each token activates only <i>k</i> out of <i>E</i> experts. We first reduce the stored expert pool (<i>E′</i> &lt; <i>E</i>) while keeping <i>k</i> fixed (for example, keeping all 78 layers and 40B active parameters of GLM-5.3 on 80 GB GPUs). For single-request decoding, this cuts static memory without changing the active parameters, memory reads, or FLOPs per layer. When the model still exceeds device memory, we reduce the number of layers (<i>L′</i> &lt; <i>L</i>, such as 8 of 93 layers for Kimi-K3).</li>
-          <li><b>Cut layers in multiples of the repeating block.</b> Modern architectures interleave different layer types, such as three linear-attention layers per full-attention layer in Qwen3.8. We retain an integer multiple of this repeating block so that the slice keeps the exact ratio of attention and expert layers.</li>
-        </ol>
-        <p>Model slices accurately capture relative engine speed on a single device. Transformer inference executes repeating layer blocks sequentially. Running <i>L′</i> layers exercises the same kernels, KV-cache paging, and scheduling paths as running <i>L</i> layers. A model slice directly matches the single-device workload of a pipeline-parallel stage and closely approximates the per-device compute and memory regime of a tensor-parallel shard.</p>
-        <p>We restrict model slices to workloads where speed does not depend on output quality. Removing layers or experts breaks the model's language quality, which raises two potential issues. First, a sliced model may emit an end-of-sequence token early; we prevent this by disabling early termination (<code>ignore_eos</code>) and forcing every run to generate all 256 tokens. Second, nonsensical outputs invalidate workloads that depend on token probabilities, such as speculative decoding and accuracy benchmarks. We therefore evaluate model slices only on Raw Decode and Prefill, where execution time depends strictly on tensor shapes and sequence length.</p>
-        <h3>Limitations</h3>
-        <p>Because model slices run on a single device, they do not measure multi-GPU communication overhead such as tensor-parallel <code>all-reduce</code>. In addition, because we do not scale the vocabulary output head, it accounts for a larger share of total work in a slice than in the full model (our roofline model accounts for this explicitly). Finally, a slice's raw token rate (<code>tok/s</code>) is not the full model's speed. We never report model slices in Best TPS or full-model Kernel Efficiency; we use them strictly for Relative Speed, where all engines run the exact same slice head-to-head.</p>`],
+      ["slices", "Model Slices", "#5E5CE6", "Single-device architectural proxies.", () => slices()],
       // the former Memory page, its formulas drawn by methods.js
       ["fit", "Memory Fit", "#AF52DE", "How we decide whether a model fits a machine.", () => `
         <p>A model runs only where its weights, KV cache and engine buffers fit the GPU's memory. Where it does not, the grid shows a crossed mark <svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>.</p>
@@ -200,6 +189,30 @@ window.Pie = window.Pie || {};
   const commands = (rows) => facts(rows).replace("is-trust", "is-trust is-install");
   const links = (rows) => `<ul class="welcome-list is-trust">${rows.map(([colour, t, href, d]) =>
     `<li><a href="${href}" target="_blank" rel="noopener"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><span>${d}</span></a></li>`).join("")}</ul>`;
+
+  // Model Slices: the cut's rules, real cuts from matrix/models.yaml, how a slice reaches the grid and where it counts
+  const slices = () => `
+      ${lead("A frontier model needs up to eight GPUs just to load. A slice cuts it to fit one and keeps the full model's layer shapes, where a smaller model of the same family has narrower layers and runs different kernels. We use slices only to compare engines with each other.")}
+      <p>Slices show how well each engine runs a frontier model's layers on one device, with the same kernels, shapes and quantization as the full model, on every chip and every release. They do not predict multi-GPU serving, where tensor-parallel <code>all-reduce</code> and expert parallelism decide speed. A slice's vocab head also stays full size and takes a larger share of each step, which the roofline counts.</p>
+      <h3>How a model is cut</h3>
+      ${facts([["#5E5CE6", "Same width", "Hidden size, heads, expert width, top-<i>k</i>, quant groups and vocab head unchanged"],
+        ["#FF9500", "Experts first", "Fewer stored experts, the same active ones per token"],
+        ["#30B0C7", "Then layers", "Only if it still does not fit, in whole repeating blocks"]])}
+      <h3>Real cuts</h3>
+      ${repoFiles([["#5E5CE6", "GLM-5.3", "matrix/models.yaml", "78 of 78 layers", "12 of 256 experts, for 80 GB cards"],
+        ["#FF9500", "MiMo-V2.6-Flash", "matrix/models.yaml", "48 of 48 layers", "128 of 256 experts, for 141 GB cards"],
+        ["#007AFF", "DeepSeek-V4-Flash", "matrix/models.yaml", "43 of 43 layers", "16 of 256 experts"],
+        ["#FF2D55", "Kimi-K3", "matrix/models.yaml", "8 of 93 layers", "Two KDA/MLA blocks, 32 of 896 experts"],
+        ["#30B0C7", "Qwen3.8-Flash-Next", "matrix/models.yaml", "4 layers", "One linear, linear, linear, full block; 16 of 512 experts"],
+        ["#34C759", "Gemma-4-31B", "matrix/models.yaml", "12 of 60 layers", "Two sliding/global blocks, for 24 GB cards"]])}
+      <h3>Why the comparison is fair</h3>
+      ${facts([["#5E5CE6", "Same checkpoint", "Every engine loads the identical cut, unmodified"],
+        ["#30B0C7", "Same tokens", "The same token ids in, all 256 tokens out"],
+        ["#34C759", "Same model", "Each engine's first token checked against the reference"]])}
+      <h3>Shown only as a comparison</h3>
+      ${facts([["#34C759", "Relative Speed", "Shown: each engine against the others on the same slice"],
+        ["#8E8E93", "Absolute speed", "Hidden: raw tok/s, Best TPS and Efficiency describe the full model"],
+        ["#8E8E93", "Accuracy and drafts", "Not run: both need the model's real answers"]])}`;
 
   const addEngine = () => `
       ${lead("An engine joins through a pull request: a few files declare it, and the harness runs it with the same prompts and rules as every other engine.")}
