@@ -447,8 +447,11 @@ window.Pie = window.Pie || {};
       if (!had) absent.set(r.engine, here || { engine: r.engine, status: "not_run" });
       else if (here && (rank[here.status] ?? 9) < (rank[had.status] ?? 9)) absent.set(r.engine, here);
     }
+    // a run that never reached the engine (the checkpoint could not be fetched, the pod ran out of disk, the network
+    // dropped) measured nothing: the engine reads "Not measured", with the cause in its title, not "Failed"
+    const never = (r) => r.status === "fail" && /checkpoint unavailable|HTTP Error|No space left|Connection|timed out|download/i.test(r.note || "");
     return [...absent.values()].map((r) => `<div class="tip-row is-absent"${r.note ? ` title="${esc(r.note)}"` : ""}><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
-      <span class="tip-value">${esc(WHY[r.status] || "Not measured")}</span><span class="tip-when"></span></div>`);
+      <span class="tip-value">${esc(never(r) ? "Not measured" : WHY[r.status] || "Not measured")}</span><span class="tip-when"></span></div>`);
   };
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
