@@ -924,6 +924,8 @@ window.Pie = window.Pie || {};
             submenu: Pie.store.tables.engines.map((e) => ({ value: `${id}|${e.id}`, key: "grid:view-engine", label: Pie.store.names.engine(e.id), selected: e.id === engineOf(id), dot: Pie.engines.colorOf(e.id) })) }))]),
           // a page with one fixed view keeps the engine as a row of its own
           ...(fixedView ? [{ label: "Engine", detail: Pie.store.names.engine(viewState.platform.engine || Pie.engines.primary), submenu: own("engine", this.menu("engine")) }] : []),
+          // Relative Speed only: off, the grid shows full models only, each column where it was
+          ...(compare === "engines" ? [{ separator: true }, { value: "slices", key: "grid:slices", label: "Show Model Slices", selected: viewState.platform.slices !== false, check: true }] : []),
         ];
       }
       if (k !== "engine" || !viewState) return [];
@@ -937,6 +939,7 @@ window.Pie = window.Pie || {};
       const wave = (button) => { if (!viewState) return; captureGhosts(button); if (!button) auto.label = null; auto.rolling = true; auto.spent = 0; clearTimeout(auto.timer); };
       // a view clicked: that view with its own engine (kept from its last pick, pie until one); a view's engine picked in its list: both
       if (k === "view") { if (value !== compare) wave('[data-grid-pick="options"]'); Pie.platform.setCompare(value); return; }
+      if (k === "slices") { if (viewState) viewState.platform.slices = viewState.platform.slices === false; return; }
       if (k === "view-engine") {
         const [view, engine] = String(value).split("|");
         if (view !== compare) wave('[data-grid-pick="options"]');
@@ -985,7 +988,14 @@ window.Pie = window.Pie || {};
       if (fixed) { peeked = null; compare = fixed; }
       else if (dry) compare = "engines";
       else if (!peeked) compare = chosen;  // a platform's page shows the viewer's pick, whatever page came before
-      const all = Pie.store.snapshot(state.release);
+      // Model Slices off: only full models' rows, so a model that fits nowhere shows its does-not-fit mark (Quality keeps them)
+      // (Relative Speed only: Tokens per Second and Kernel Efficiency never show a slice's number anyway)
+      const sliceOn = dry || compare !== "engines" || state.platform.slices !== false;
+      const every = Pie.store.snapshot(state.release);
+      const all = every.filter((r) => sliceOn || !r.miniature);
+      // where each model ran only as a slice: there the full model does not run, whatever the formula says
+      const slicedAt = new Set(), fullAt = new Set();
+      for (const r of every) (r.miniature ? slicedAt : Pie.store.isMeasured(r) ? fullAt : null)?.add(`${r.hardware}|${r.model}`);
       lastAll = all;  // the hover cards name the engines that left a cell empty
       shownEngine = null;
       const modes = Pie.platform.metrics(state);
@@ -1118,20 +1128,23 @@ window.Pie = window.Pie || {};
           // a model that runs cut down to fit (a miniature) never "does not fit": where its miniature did not run, the cell
           // says that instead of the full model's size
           // only where this run measures (or measured) the model cut down: elsewhere the full model's "does not fit" stands
-          const cut = (TODAY.models.has(id) && TODAY.hardware.has(mac)) || snapshot.some((r) => here(r) && r.miniature);
-          let needs = cut ? null : noFit[mac]?.[id]?.[base];
-          // Best TPS and Kernel Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
+          const cut = sliceOn && ((TODAY.models.has(id) && TODAY.hardware.has(mac)) || snapshot.some((r) => here(r) && r.miniature));
+          // does not fit: the Memory Fit formula says so, or only a slice of the model ran on this machine (a slice is cut
+          // only where the full model would not run); no number beside it shows the mark alone
           const fullNeeds = Pie.store.index.models[id]?.needs_gib;
-          if ((compare === "tps" || compare === "ceiling") && cut) { c = null; needs = noFit[mac]?.[id]?.[base] || fullNeeds || 1; }
+          const formula = noFit[mac]?.[id]?.[base];
+          const sliceOnly = !formula && slicedAt.has(`${mac}|${id}`) && !fullAt.has(`${mac}|${id}`);
+          let needs = formula || (sliceOnly ? fullNeeds || 1 : undefined);
+          // Best TPS and Kernel Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
+          if ((compare === "tps" || compare === "ceiling") && cut) c = null;
           const own = snapshot.find((r) => here(r) && r.engine === base);
           // a catalog model (a datacenter release, run in the cloud as a miniature) is never "does not fit" when engines
           // are compared: a machine its miniature has not reached reads "–", and a failed run "–" with the error on hover
           const cloud = Pie.store.index.models[id]?.catalog && compare === "engines";
-          if (cloud) needs = null;
           const failed = own && own.status === "fail";
-          if (cloud && failed && !c) { grid[mac][model] = { c: null, needs: null, failed: true, why: own.note ? `Failed: ${own.note}` : "The run failed" }; continue; }
+          if (cloud && failed && !c) { grid[mac][model] = { c: null, needs, failed: true, why: own.note ? `Failed: ${own.note}` : "The run failed" }; continue; }
           // an empty cell explains itself only when there is something to say: it does not fit, or its run failed
-          grid[mac][model] = { c, needs, failed, why: needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a model slice ran` : `Needs about ${Math.round(needs)} GB`) : own?.note || "" };
+          grid[mac][model] = { c, needs, failed, why: sliceOnly ? "The full model does not run on this machine; only a model slice ran here" : needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a model slice ran` : `Needs about ${Math.round(needs)} GB`) : (compare === "tps" || compare === "ceiling") && cut ? "Only a model slice ran here, which is not the full model's speed" : own?.note || "" };
         }
       }
       // Hide unavailable drops the models and machines with nothing to compare, as the results table does
@@ -1146,7 +1159,8 @@ window.Pie = window.Pie || {};
       // column goes in Tokens per Second, and a model not run in this setup goes until one is picked that has it
       // the Quality grid also keeps a model whose slice has a first-token KL on a machine, though no other engine runs it there
       const checked = new Set(dry ? (Pie.store.tables.quality_parity || []).filter((r) => !r.ref_unsupported && Number.isFinite(r.kl_mean)).map((r) => `${r.platform}|${r.model}`) : []);
-      const hasData = (mac, model) => grid[mac][model].c || awaiting(mac, model) || checked.has(`${mac}|${realOf(model)}`);
+      // Model Slices off: a column only where a full model has a number
+      const hasData = (mac, model) => grid[mac][model].c || (sliceOn && (awaiting(mac, model) || checked.has(`${mac}|${realOf(model)}`)));
       // comparing engines, a model is shown on a machine only where two engines could run it there: an engine the machine
       // runs with a number, not run yet, a failed run or no row at all could still give one; "Not supported" and "Does not
       // fit" never will. A model no machine could compare on has no column; one merely not measured yet keeps it
@@ -1209,9 +1223,14 @@ window.Pie = window.Pie || {};
       // empty, and the columns must keep the order Relative Speed gives them
       const sliced = new Set(all.filter((r) => r.miniature && r.engine === baseOf(r.hardware)).map((r) => `${r.hardware}|${r.model}`));
       const slicedOn = (list, model) => list.some((mac) => sliced.has(`${mac}|${model}`));
+      // the columns keep the order they have with Model Slices on, so the switch only hides, never reshuffles
+      const slicedEvery = new Set(every.filter((r) => r.miniature && r.engine === baseOf(r.hardware)).map((r) => `${r.hardware}|${r.model}`));
       const minisFirst = (list, ms) => {
-        const mini = (model) => slicedOn(list, model);
-        return [...ms.filter(mini), ...ms.filter((m) => !mini(m))];
+        const mini = (model) => list.some((mac) => slicedEvery.has(`${mac}|${model}`));
+        // a maker's models stay together under one head: the makers in the order their first model comes
+        const byMaker = new Map();
+        for (const m of [...ms.filter(mini), ...ms.filter((m) => !mini(m))]) (byMaker.get(makerOf(m).name) || byMaker.set(makerOf(m).name, []).get(makerOf(m).name)).push(m);
+        return [...byMaker.values()].flat();
       };
       const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs), only), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
         // a platform shows a model only where two of its engines could run it, as above
@@ -1341,7 +1360,7 @@ window.Pie = window.Pie || {};
         const maker = makerOf(model);
         const last = makers[makers.length - 1];
         // a speculation column widens the band but is not another model
-        if (last && last.maker.name === maker.name && last.cut === cut(model)) { last.n += 1; last.count += 1; }
+        if (last && last.maker.name === maker.name) { last.n += 1; last.count += 1; }  // one band a maker, slices and full models together
         else makers.push({ maker, n: 1, count: 1, cut: cut(model) });
       }
       // each table's corner above Hardware narrows its own pinned column to each machine's mark and name, for room
