@@ -1333,7 +1333,7 @@
 .reports-empty { font-size: 14px; color: var(--color-label-secondary); margin: 0; }
 .reports-sheet-form .reports-send:disabled { opacity: .5; cursor: default; }
 
-/* the sheet the bar's Report opens: the login sheet itself (account.css), in a dialog that only centres it */
+/* the sheet the bar's Report opens, in a dialog that only centres it */
 .reports-sheet { padding: 0; border: 0; background: none; overflow: visible; }
 .reports-sheet::backdrop { background: rgba(0, 0, 0, .28); }
 .reports-sheet-form .account-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -9,7 +9,9 @@ window.Pie = window.Pie || {};
   const TEXTS = ["methods", "fit", "methodology", "inferlets", "services", "approach", "reports", "profiler", "accuracy"];
   // the page a reload opens, read as app.js reads it: the address first, then the view kept in the browser
   const opening = () => {
-    const [view] = decodeURIComponent(location.hash.slice(1)).split("/");
+    let address = "";
+    try { address = decodeURIComponent(location.hash.slice(1)); } catch { address = ""; }  // a malformed address: the default page
+    const [view] = address.split("/");
     if (view === "board") return "board";
     if (view === "quality") return "checks";
     if (view === "overview" || view === "mac") return "mac";

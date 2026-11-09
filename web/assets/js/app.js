@@ -6,7 +6,10 @@
   // a link to one chart, #board/<card>: Rankings opens on it, scrolled to that card once the page is drawn
   let linkedCard = null;
   const readHash = () => {
-    const [view, hardware, workload, setup] = decodeURIComponent(location.hash.slice(1)).split("/");
+    // a malformed address (a stray "%") opens the default page rather than stopping the site
+    let address = "";
+    try { address = decodeURIComponent(location.hash.slice(1)); } catch { address = ""; }
+    const [view, hardware, workload, setup] = address.split("/");
     // #reports/<machine>/<model>/<setup>: Pie Reports narrowed to that one cell, as a GitHub report's Open link reads
     if (view === "reports" && hardware) Pie.reports?.focus(hardware, workload, setup);
     if (view === "board" && hardware) {
@@ -15,7 +18,7 @@
     }
     if (view === "quality") state.table = "checks";  // #quality opens the Quality checks
     // any other page opens by its name too (#reports, #approach), so a link from outside the site lands on it
-    else if (view && view !== "board" && view !== "overview" && view !== "mac" && Pie.schema[view]) state.table = view;
+    else if (view && view !== "board" && view !== "overview" && view !== "mac" && Object.hasOwn(Pie.schema, view)) state.table = view;  // the site's own pages only, never one of an object's built-ins
     if (view === "overview" || view === "mac") {
       state.table = "mac";
       Object.assign(state.overview, { hardware: hardware || null, workload: workload || "raw" });
@@ -569,7 +572,6 @@
   bindTable();
   bindGlobal();
   // logging in or out shows or hides the sections only an account opens, and leaves a page that closes with them
-  document.addEventListener("pie:account", () => render());
   document.addEventListener("pie:refresh", () => render());
   // a toolbar row wider than the window (a phone, a narrow window) scrolls sideways by dragging it with a mouse, as a
   // finger swipes it; a drag never selects its words or clicks the button it started on

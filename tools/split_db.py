@@ -83,7 +83,9 @@ def replace(path: Path, text: str) -> None:
 def write(db: dict, data: Path) -> None:
     """The split files under data/: tags/<tag>.json first, then db.js, so a core never names a tag file not yet written."""
     core, parts = split(db)
-    dump = lambda v: json.dumps(v, separators=(",", ":"), default=str)  # noqa: E731
+    # the data is public: a machine's home directory in a run's note (/Users/<name>, /home/<name>) is written as ~
+    home = re.compile(r"/(?:Users|home)/[A-Za-z0-9._-]+")
+    dump = lambda v: home.sub("~", json.dumps(v, separators=(",", ":"), default=str))  # noqa: E731
     (data / "tags").mkdir(parents=True, exist_ok=True)
     for tag, part in parts.items():
         replace(data / "tags" / f"{tag}.json", dump(part))
@@ -91,6 +93,8 @@ def write(db: dict, data: Path) -> None:
         if old.stem not in parts:
             old.unlink()
     replace(data / "db.js", "const DB = " + dump(core) + ";\n")
+    # the same core as plain JSON, for anyone to fetch (the tags it lists are data/tags/<tag>.json)
+    replace(data / "db.json", dump(core))
 
 
 def main() -> None:

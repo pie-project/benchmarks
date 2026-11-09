@@ -139,7 +139,9 @@ window.Pie = window.Pie || {};
       try {
         const adapter = await navigator.gpu.requestAdapter();
         if (!adapter) throw new Error("This demo needs a browser with WebGPU (no GPU adapter is available).");
-        const model = new URL(new URLSearchParams(location.search).get("model") || MODEL, document.baseURI).href;
+        // ?model= picks another of the site's own models; a link elsewhere is ignored, so no shared link can make the demo run someone else's weights
+        const asked = (() => { try { return new URL(new URLSearchParams(location.search).get("model") || MODEL, document.baseURI); } catch { return null; } })();
+        const model = (asked && asked.origin === location.origin ? asked : new URL(MODEL, document.baseURI)).href;
         const head = await fetch(model, { method: "HEAD" }).catch(() => null);
         if (!head?.ok) {
           status.textContent = "The model for this demo is not available right now. Try again later.";
