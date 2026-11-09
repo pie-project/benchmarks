@@ -117,6 +117,8 @@ const server = createServer(async (req, res) => {
 await new Promise((ok) => server.listen(port, "127.0.0.1", ok));
 console.log(`bridge: ${engine} on http://127.0.0.1:${port}/ (files ${files})`);
 
+// diag branch: Playwright forwards Chrome's own stderr (its GPU process's log) into this bridge's log
+process.env.DEBUG = process.env.DEBUG || "pw:browser";
 const require = createRequire(join(here, "package.json"));
 const { chromium } = require("playwright");
 // WebGPU on the real GPU: Dawn's Vulkan backend on the NVIDIA driver (its graphics libraries mounted:
@@ -127,7 +129,7 @@ const chromeArgs = [
   "--no-sandbox", "--enable-unsafe-webgpu", "--ignore-gpu-blocklist", "--use-angle=vulkan", "--enable-features=Vulkan",
   "--disable-vulkan-surface", "--enable-dawn-features=allow_unsafe_apis,vulkan_enable_f16_on_nvidia",
   "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
-  ...(process.env.BROWSER_EXTRA_ARGS || "").split(/\s+/).filter(Boolean),
+  ...(process.env.BROWSER_EXTRA_ARGS || "--enable-logging=stderr --v=1").split(/\s+/).filter(Boolean),  // diag default
 ];
 // Playwright's own Chromium build (pinned with it in package.json), unless CHROME_BIN names another. A profile on
 // disk, made fresh for this launch: an in-memory one has no storage quota for the weights WebLLM and pie keep in
@@ -141,6 +143,20 @@ const context = await chromium.launchPersistentContext(profile, {
 });
 const version = context.browser()?.version() ?? (await context.newCDPSession(context.pages()[0] ?? (await context.newPage())).then((s) => s.send("Browser.getVersion")).then((v) => v.product).catch(() => "unknown"));
 page = context.pages()[0] ?? (await context.newPage());
+// diag branch: chrome://gpu says which backends Chrome enabled and why it refused one, before the engine loads
+try {
+  const gpu = await context.newPage();
+  await gpu.goto("chrome://gpu");
+  await gpu.waitForTimeout(3000);
+  const text = await gpu.evaluate(() => {
+    const v = document.querySelector("info-view");
+    return (v && v.shadowRoot ? v.shadowRoot.textContent : document.body.innerText) || "";
+  });
+  console.log(`[gpu] ${text.replace(/\s+/g, " ").slice(0, 12000)}`);
+  await gpu.close();
+} catch (e) {
+  console.log(`[gpu] chrome://gpu unreadable: ${e.message}`);
+}
 const cleanup = () => { try { rmSync(profile, { recursive: true, force: true }); } catch {} };
 page.on("console", (m) => console.log(`[tab] ${m.text()}`));
 page.on("pageerror", (e) => console.log(`[tab] pageerror: ${e.message}`));
