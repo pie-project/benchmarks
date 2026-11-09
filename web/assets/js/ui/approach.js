@@ -172,21 +172,12 @@ window.Pie = window.Pie || {};
       ${steps([["#007AFF", "Same prompts", "Sent to both engines"], ["#5E5CE6", "One token", "One from each engine"],
         ["#30B0C7", "Compare", "KL divergence between them"], ["#34C759", "Pass", "KL under 0.15"]], "<h3>How a check runs</h3>")}
       <h3>Why 0.15</h3>
-      ${facts([["#8E8E93", "Rounding", "Two correct engines differ by about 0.001: kernel order and bf16"],
+      ${facts([["#8E8E93", "Rounding", "Two correct engines differ by about 0.001"],
         ["#FF3B30", "A bug", "A wrong layer, rotary setting or chat template lands far above 0.15"],
         ["#34C759", "Whole model", "The first token passes through every layer, even on a slice"]])}
-      <h3>How the KL is taken</h3>
-      ${facts([["#007AFF", "Top 20", "Each engine reports its 20 likeliest tokens; the rest of the vocabulary is one bucket"],
-        ["#5E5CE6", "Missing token", "A reference token Pie's 20 lack counts at most Pie's 20th probability"],
-        ["#FF3B30", "No overlap", "A list holding none of the reference's likely tokens fails"]])}
-      <h3>When the first token says nothing</h3>
-      ${facts([["#8E8E93", "Flat reference", "A shallow cut can leave the top 20 at 1% of the probability; any flat engine would pass"],
-        ["#30B0C7", "Deeper cut", "The cell runs a cut that sharpens it: Gemma-4-31B at 30 layers, its top 20 at 99.8%"],
-        ["#FF9500", "No cut fits", "The cell is marked as not checkable, never as a pass"]])}
-      <h3>When rounding alone crosses the line</h3>
-      ${facts([["#5E5CE6", "Reference vs itself", "The reference runs again with plain kernels: vLLM eager, mlx-lm unfused"],
-        ["#8E8E93", "Within twice that", "The first token cannot tell Pie from rounding"],
-        ["#34C759", "Answers instead", "Both engines score 40 benchmark answers at every position, under the same 0.15"]])}`;
+      <h3>Two edge cases</h3>
+      ${facts([["#30B0C7", "Flat first token", "A shallow cut can leave nothing to compare: the cell runs a deeper cut, or is marked not checkable"],
+        ["#5E5CE6", "Rounding past the line", "The reference reruns with plain kernels; within twice its own spread, the engines are scored on 40 answers instead"]])}`;
 
   const accuracy = () => `
       ${lead("On a model that fits, Pie and another engine answer the same benchmark on the same weights and machine.")}
