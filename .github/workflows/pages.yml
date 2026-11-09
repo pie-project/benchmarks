@@ -30,26 +30,20 @@ jobs:
         run: |
           inbox="$HOME/.pie-evals/phone-inbox"
           if compgen -G "$inbox/pending/*.jsonl" >/dev/null; then .venv/bin/pie-evals import-phone --spool "$inbox"; fi
-      - name: site at /
+      # the data at the root of data.pie-project.org (db.js, db.json, tags/<tag>.json, trackers.json); the page that
+      # draws it lives in pie-project/website (public/benchmarks, at pie-project.org/benchmarks and benchmarks.pie-project.org)
+      - name: data at /
         run: |
           .venv/bin/python tools/webdb.py
-          mkdir -p site && cp -R web/. site/
-          # a new build gets new links, so browsers never keep an old stylesheet or script
-          python3 - <<'PY'
-          import re, os
-          p = "site/index.html"; v = os.environ.get("GITHUB_SHA", "")[:9] or "1"
-          s = open(p).read()
-          s = re.sub(r'(href|src)="(assets/[^"]+|data/[^"]+)"', lambda m: f'{m.group(1)}="{m.group(2)}?v={v}"', s)
-          open(p, "w").write(s)
-          PY
+          mkdir -p site && cp -R web/data/. site/
       # one open pie issue per platform ("[NVIDIA] Benchmarks") lists Pie Reports: the Outliers card's red dots and the reports
       # people filed, rewritten only when the list changes, and the issue numbers written beside the data for the site's links.
       # Runs with this laptop's gh login and Chrome; a failure never holds the site back
       - name: platform issues
         continue-on-error: true
         run: .venv/bin/python tools/outlier_issues.py site
-      # the operator's localhost preview (a checkout on this laptop) gets the same data the site does
-      - run: '[ -d "$HOME/Desktop/debug/pie-evals-live/web/data" ] && cp -R web/data/. "$HOME/Desktop/debug/pie-evals-live/web/data/" || true'
+      # the operator's localhost preview (the website checkout on this laptop) gets the same data the site does
+      - run: '[ -d "$HOME/Desktop/debug/website/public/benchmarks/data" ] && cp -R site/. "$HOME/Desktop/debug/website/public/benchmarks/data/" || true'
       - uses: actions/upload-artifact@v4
         with: { name: site-files, path: site, retention-days: 1 }  # one deploy every 5 minutes: 3 days of bundles filled the artifact quota
   deploy:
@@ -58,6 +52,7 @@ jobs:
     # a started deploy always finishes: cancelling one mid-way leaves Pages stuck in "updating_pages"
     concurrency: { group: pages-deploy, cancel-in-progress: false }
     permissions: { contents: read, pages: write, id-token: write }
+    env: { CLOUDFLARE_PURGE_TOKEN: "${{ secrets.CLOUDFLARE_PURGE_TOKEN }}" }
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -69,3 +64,13 @@ jobs:
         with: { path: site }
       - id: deploy
         uses: actions/deploy-pages@v4
+      # Cloudflare keeps a data file 10 minutes at its edge (pie-project/website infra/cloudflare); with a token it drops
+      # the files a deploy changes at once. A tag's file is fetched with the data's time in its query, so it never needs it
+      - name: purge the data cache
+        if: env.CLOUDFLARE_PURGE_TOKEN != ''
+        continue-on-error: true
+        run: |
+          auth="Authorization: Bearer $CLOUDFLARE_PURGE_TOKEN"
+          zone=$(curl -sf -H "$auth" "https://api.cloudflare.com/client/v4/zones?name=pie-project.org" | python3 -c 'import json, sys; print(json.load(sys.stdin)["result"][0]["id"])')
+          curl -sf -X POST -H "$auth" -H "Content-Type: application/json" "https://api.cloudflare.com/client/v4/zones/$zone/purge_cache" \
+            --data '{"files": ["https://data.pie-project.org/db.js", "https://data.pie-project.org/db.json", "https://data.pie-project.org/trackers.json"]}'

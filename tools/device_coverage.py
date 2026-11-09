@@ -1,11 +1,11 @@
 """What is still missing from a device evaluation (matrix/device-eval.yaml) on one platform.
 
-Reads the site's data (web/data/db.js, a local path or the published URL) and prints, for each representative
+Reads the site's data (web/data/db.js, a local path or the published URL https://data.pie-project.org/db.js) and prints, for each representative
 model: which variant was measured (full or miniature), every engine x setup cell, and the pie-vs-vLLM quality
 check. Exit status 0 only when every cell is done: a number, or a declared reason the engine cannot run it.
 
     python tools/device_coverage.py --platform l40s-x1 --tag 0.5.3-b5
-    python tools/device_coverage.py --platform l40s-x1 --tag 0.5.3-b5 --db https://benchmarks.pie-project.org/data/db.js
+    python tools/device_coverage.py --platform l40s-x1 --tag 0.5.3-b5 --db https://data.pie-project.org/db.js
     python tools/device_coverage.py --platform l40s-x1 --tag 0.5.3-b5 --json   # machine-readable, for an agent loop
 """
 
