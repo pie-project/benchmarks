@@ -538,8 +538,9 @@ default:
         max_forward_requests:
           value: "$serve_concurrency"
           rationale: >
-            Engine-side admission = the widest concurrency of the shapes the server boots for, as
-            vLLM's max_num_seqs and SGLang's max_running_requests are set. At the script's 512,
+            Engine-side admission = the concurrency of the shape the server boots for, one boot a
+            shape (runner.split_startups), as vLLM's max_num_seqs and SGLang's max_running_requests
+            are set. At the script's 512,
             engine-cuda holds readout rows and guest scratch for 512 lanes: 6.3 GB on the
             gpt-oss-120b miniature, which cut its fires to 1024 tokens on l40s-x1.
     xla:

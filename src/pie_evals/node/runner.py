@@ -52,7 +52,7 @@ from . import provenance as prov
 from .engines import EngineLaunchError, get_engine
 from .engines.base import workload_mode_args
 from .engines.recipes import load_recipe
-from .engines.shape import context_tokens_for, serve_envelope
+from .engines.shape import context_tokens_for, max_model_len_for, serve_envelope, workload_concurrency
 from .metrics.stats import cov, decide_repetition, median
 from .validate import expected_requests, round_problem
 from .workloads import common_args_for
@@ -107,6 +107,28 @@ def split_draft_processes(groups: dict[tuple, list]) -> dict[tuple, list]:
             continue
         out[key] = [c for c in cells if c not in spec]
         out[(engine, artifact, f"{mode}-draft")] = spec
+    return out
+
+
+def split_startups(groups: dict[tuple, list]) -> dict[tuple, list]:
+    """pie's CUDA server boots once per process, for the widest of its cells, while vLLM and SGLang
+    start each cell at its own concurrency: MiniMax-M3.1-Flash mini60's c64 ran on a 1024-lane pie
+    server beside c1024 on an H100 and lost to vLLM's 64-sequence one. Each pie process is split by
+    its cells' own concurrency and context, so every cell runs on a server started for its shape."""
+    out: dict[tuple, list] = {}
+    for key, cells in groups.items():
+        engine, artifact, mode = key
+        if str(engine) != "pie" or cells[0].platform.backend not in (Backend.CUDA, Backend.ROCM):
+            out[key] = cells
+            continue
+        shapes: dict[tuple[int, int], list] = {}
+        for c in cells:
+            shapes.setdefault((workload_concurrency(c.workload), max_model_len_for(c.workload)), []).append(c)
+        if len(shapes) == 1:
+            out[key] = cells
+            continue
+        for (conc, ctx), sub in sorted(shapes.items()):
+            out[(engine, artifact, f"{mode}@c{conc}x{ctx}")] = sub
     return out
 
 
@@ -375,7 +397,8 @@ class NodeRunner:
             self.log(f"disk reclaim skipped: {str(e)[:120]}")
         fingerprint = prov.hardware_fingerprint()
         records: list[Record] = []
-        groups = split_draft_processes(split_heavy_processes(job.cells_by_process()))
+        groups = split_startups(split_draft_processes(split_heavy_processes(job.cells_by_process())))
+        control_failed: set[tuple] = set()  # a process split by shape keeps its control A/A's verdict
         # pie is what we measure: its processes go first, so a job that runs long never drops pie for a competitor
         groups = dict(sorted(groups.items(), key=lambda kv: str(kv[0][0]) != "pie"))
         from .reclaim import cache_root, free_gib
@@ -495,7 +518,7 @@ class NodeRunner:
             if job.repetition.interleave:
                 random.Random(self.run_id).shuffle(order)
             order.sort(key=cell_priority)
-            control_ok = True
+            control_ok = (engine_name, artifact_key, mode_key.split("@")[0]) not in control_failed
             model_state = pre.before_model(self.platform) if hasattr(pre, "before_model") else machine_before
             self._last_state = model_state
             for cell in order:
@@ -547,6 +570,7 @@ class NodeRunner:
                         rec = again
                 if cell.workload.kind.value == "control_aa" and rec.status != CellStatus.PASS:
                     control_ok = False
+                    control_failed.add((engine_name, artifact_key, mode_key.split("@")[0]))
                     self.log("control A/A failed; remaining cells in this process are " + ("NOISY" if job.control_marks_noisy else "HARNESS_INVALID"))
                 records.append(rec)
                 self._done.add(cell.cell_id)

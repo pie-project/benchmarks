@@ -271,6 +271,26 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
             assert keys == sorted(k[2] for k in groups) and not any(k.endswith(("-short", "-long")) for k in keys)
 
 
+def test_pie_cuda_cells_boot_at_their_own_shape_as_vllm_does():
+    from pie_evals.node.engines.shape import max_model_len_for, workload_concurrency
+    from pie_evals.node.runner import split_startups
+    from pie_evals.plan.jobs import make_jobs
+
+    m = Matrix.load(ROOT / "matrix")
+    cells = [c for c in m.expand(artifacts=["minimax-m3.1-flash-mini60-e16"]) if c.program.id == "text-completion-bench"]
+    jobs = make_jobs(m, Tier.WEEKLY, pie_commit="c" * 40, platforms=["h100-sxm-x1"], engines=["pie", "vllm"], cells=cells)
+    groups = {}
+    for j in jobs:
+        groups.update(j.cells_by_process())
+    out = split_startups(groups)
+    assert sum(len(cs) for cs in out.values()) == sum(len(cs) for cs in groups.values())
+    for (engine, _, mode), cs in out.items():
+        if engine == "pie":
+            assert len({(workload_concurrency(c.workload), max_model_len_for(c.workload)) for c in cs}) == 1, mode
+        else:
+            assert "@" not in mode
+
+
 def test_recipe_follows_the_cell_and_keeps_what_the_boot_added(job):
     # SGLang captured graphs to the first cell's concurrency and ran wider shapes eager (nightly 36099862659)
     ss = next(c for c in job.cells if c.workload.id == "ss-128-64")
