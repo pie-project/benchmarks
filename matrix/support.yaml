@@ -458,8 +458,16 @@ first_token_broken:
   qwen3.8-27b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.47 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
   qwen3.6-35b-a3b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.09 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
 
-# Quality grid cells no run can fill, and why: the site shows the reason on the empty cell
-# (the 16 GB Macs' Nemotron-3-Ultra and Muse Spark cells are filled by 4-bit cuts quantized where they are built)
-quality_gaps: []
+# Quality grid cells no run can fill, and why: the site shows the reason on the empty cell, in place of any row stored
+# there (a row from a cut whose reference is flat checked nothing). The 16 GB Macs' Nemotron-3-Ultra and Muse Spark cells
+# are filled by 4-bit cuts quantized where they are built
+quality_gaps:
+  - platform: [rtx4090-x1, rtx5090-x1, pro4500-x1]
+    model: gemma-4-31b
+    reason: >-
+      No cut of Gemma-4-31B that fits this card in bf16 gives a check that can fail. With 18 of its 60 layers, the
+      reference's top 20 tokens hold 1% of the probability and no prompt has a clear favourite, so any engine whose
+      output is also flat passes. 24 layers still leave 23%; the first token sharpens only at 30 layers (99.8% in
+      the top 20), which takes 31.6 GiB. Keeping the last layers instead saturates Gemma's logit softcap.
 
 fit_factor: 1.25
