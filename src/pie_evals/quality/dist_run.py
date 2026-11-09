@@ -33,7 +33,7 @@ WORKLOAD = "lc-2k-128"
 #: the same texts. A fresh greedy pass is not repeatable (MiniMax-M3.1-Flash mini60 on h100-sxm-x1: six runs of one pie
 #: build gave KL 0.084 to 0.187 as vLLM's answers changed), so the gate read the reference's draw, not pie.
 TEXTS_DIR = "parity-texts"
-#: the site's line for a slice's KL (KL_PASS in pie-project/website public/benchmarks/assets/js/ui/checks.js). A first-token run past it also measures the
+#: the site's line for a slice's KL (web/assets/js/ui/checks.js KL_PASS). A first-token run past it also measures the
 #: reference against itself with only its kernels changed; where pie lands within SELF_TIMES that spread, the slice's
 #: first token cannot tell pie from rounding, so the run checks it on the answers instead (matrix/device-eval.yaml's
 #: ref_self_kl gates a model at twice its reference's spread the same way)

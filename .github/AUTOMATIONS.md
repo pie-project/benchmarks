@@ -8,7 +8,7 @@ Every workflow in this repo, when it runs, and what it needs. Update this file w
 | --- | --- | --- | --- |
 | `ci` | every push and pull request | lint, tests, matrix check | none |
 | `pie eval` | a pie release (sent by the pie repo with its tag), or by hand with a tag | measures pie and the competitors' latest releases on the Macs and saves the results to the database under that tag | `PIE_EVALS_DB`, `GH_RUNNER_PAT`, `HF_TOKEN` |
-| `pages` | every push to main and after each eval | builds the site's data (data.pie-project.org) from the database on liszt | `PIE_EVALS_DB` |
+| `pages` | every push to main and after each eval | builds the site from the database on liszt | `PIE_EVALS_DB` |
 | `reap-pods` | hourly, at minute 17 | stops RunPod pods that were left running | `RUNPOD_API_KEY`, `GH_RUNNER_PAT` |
 | `tpu` | daily at 09:00 UTC, or by hand with a pie commit | measures pie main on one Google Cloud TPU v6e chip (`tpu-v6e-1`: pie only, Qwen3.5-0.8B, `ss-512-256` and `c32`). The schedule runs only when a pie commit since the last TPU run changed `crates/engine-xla` or `crates/kernels-xla`; a manual run always runs. It creates a TPU VM, builds pie there, runs the job, deletes the VM even when the run fails, and saves the results to the database as nightly rows tagged `main-<first 9 characters of the commit>`. By hand, `platform` picks another TPU (`tpu-v5e-1`, `tpu-v5p-8`, `tpu-v4-8`, `tpu7x-4`: the smallest single-host slice, reported per chip) for a release's Raw rows (`tier=weekly`), trying the platform's `tpu.zones` (or `zone`) on demand, then spot | `GCP_TPU_SA_KEY`, `PIE_EVALS_DB`, `HF_TOKEN` |
 

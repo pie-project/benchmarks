@@ -1,9 +1,9 @@
 """Keep one open pie issue per platform listing the Outliers card's red dots.
 
-The site works out its outliers in the browser (Pie.board.outliers, in pie-project/website's public/benchmarks); this
-loads the published page on the built data in headless Chrome, asks it for them, and writes each platform's issue on
-pie-project/pie ("[NVIDIA] Benchmarks", labelled benchmarks): opened once, then only its description edited, and only
-when the list changes. Run after the data is built, on the folder data.pie-project.org serves:
+The site works out its outliers in the browser (web/assets/js/ui/board.js, Pie.board.outliers); this loads the built site
+in headless Chrome, asks it for them, and writes each platform's issue on pie-project/pie ("[NVIDIA] Benchmarks", labelled
+benchmarks): opened
+once, then only its description edited, and only when the list changes. Run after the site is built:
 
     python tools/outlier_issues.py site
 """
@@ -20,13 +20,11 @@ import subprocess
 import sys
 import tempfile
 import threading
-import urllib.request
 from pathlib import Path
 
 REPO = "pie-project/pie"
 LABEL = "benchmarks"
 SITE = "https://benchmarks.pie-project.org"
-PAGE = "https://pie-project.org/benchmarks"  # the page itself, in pie-project/website
 # every platform has its issue, those without data yet too, so reports have a home the day they arrive
 PLATFORMS = {"mac": "Apple", "nvidia": "NVIDIA", "amd": "AMD", "tpu": "TPU", "android": "Mobile", "web": "WebGPU", "cerebras": "Cerebras"}
 SETUPS = ["Single Decode", "Single Prefill", "Batched Decode", "Batched Prefill"]
@@ -51,36 +49,12 @@ f.onload = () => setTimeout(() => { try {
 </script>"""
 
 
-class Page(http.server.SimpleHTTPRequestHandler):
-    """The harness and data/ from the built data folder; every other file of the page from the website. On 127.0.0.1
-    the page reads data/ beside it (its boot/data.js), so it draws this build's data."""
-
-    def do_GET(self):
-        if self.path == "/zz-outliers.html":
-            return self.reply(HARNESS.encode(), "text/html")
-        if self.path.startswith("/data/"):
-            self.path = self.path[len("/data"):]
-            return super().do_GET()
-        try:
-            with urllib.request.urlopen(PAGE + self.path.split("?")[0], timeout=60) as r:
-                self.reply(r.read(), r.headers.get("Content-Type", "application/octet-stream"))
-        except Exception:
-            self.send_error(404)
-
-    def reply(self, body: bytes, kind: str) -> None:
-        self.send_response(200)
-        self.send_header("Content-Type", kind)
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
-
-    def log_message(self, *a):
-        pass
-
-
 def outliers(site: Path) -> list[dict]:
     """The site's red dots, read by loading it in headless Chrome."""
-    handler = functools.partial(Page, directory=str(site))
+    harness = site / "zz-outliers.html"
+    harness.write_text(HARNESS)
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(site), )
+    handler.log_message = lambda *a: None
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     profile = tempfile.mkdtemp()
@@ -90,6 +64,7 @@ def outliers(site: Path) -> list[dict]:
                              capture_output=True, text=True, timeout=180).stdout
     finally:
         server.shutdown()
+        harness.unlink(missing_ok=True)
         shutil.rmtree(profile, ignore_errors=True)
     found = re.search(r'<pre id="out">(.*?)</pre>', dom, re.S)
     text = (found.group(1) if found else "").replace("&quot;", '"').replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
@@ -147,7 +122,7 @@ def sync(site_data: dict, site: Path) -> None:
     # the issues carry the benchmarks label, made on pie the first time
     if LABEL not in gh("label", "list", "-R", REPO, "--limit", "200", "--json", "name", "--jq", ".[].name").split():
         gh("label", "create", LABEL, "-R", REPO, "--color", "5E5CE6", "--description", "Found by the benchmarks site")
-    numbers = {}  # platform -> its issue, for the site's Issue column (trackers.json)
+    numbers = {}  # platform -> its issue, for the site's Issue column (data/trackers.json)
     for code, platform in PLATFORMS.items():
         title = f"[{platform}] Benchmarks"
         mine = [r for r in people if site_data["hardware"].get(r["hardware"]) == code]
@@ -166,7 +141,8 @@ def sync(site_data: dict, site: Path) -> None:
             print(f"{title}: updated #{issue['number']}")
         else:
             print(f"{title}: unchanged #{issue['number']}")
-    (site / "trackers.json").write_text(json.dumps(numbers))
+    (site / "data").mkdir(exist_ok=True)
+    (site / "data" / "trackers.json").write_text(json.dumps(numbers))
 
 
 if __name__ == "__main__":

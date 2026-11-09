@@ -12,7 +12,6 @@ Read `docs/design.md` first.
 - `matrix/` what exists: engines, platforms, models, workloads, inferlets, modes, support declarations, tier suites.
 - `src/pie_evals/` the code, one folder per job: `plan/`, `node/`, `results/`, `site/`, `pods/`, `quality/`, `schema/`.
 - Results live in the Postgres database on liszt (`PIE_EVALS_DB`); nothing is committed back to git.
-- The site's data is public at https://data.pie-project.org (`db.js`, `db.json`, `tags/<tag>.json`), rebuilt by `pages.yml` every 5 minutes; the page that draws it, https://benchmarks.pie-project.org, lives in [pie-project/website](https://github.com/pie-project/website) (`public/benchmarks`).
 - `infra/` RunPod and Mac runner setup. `.github/workflows/` the tiers and bookkeeping.
 
 Each folder has a short README. The workflows are listed in [.github/AUTOMATIONS.md](.github/AUTOMATIONS.md).

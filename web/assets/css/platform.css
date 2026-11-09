@@ -1,0 +1,963 @@
+/* A platform page: one full-width table in the results table's style, its own bar above it. */
+.platform {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;  /* the wide table scrolls inside; the page itself never grows past the screen */
+  min-height: 0;
+}
+
+.platform[hidden] { display: none; }
+
+.platform-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  height: var(--filter-bar-height);
+  padding: 0 var(--edge);
+  font-size: 12px;
+  color: var(--color-label-secondary);
+  background: var(--color-chrome);
+  border-bottom: .5px solid var(--color-separator);
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.platform-key { display: inline-flex; align-items: center; gap: 4px; }
+.platform-key i { font-style: normal; font-size: 9px; }
+.platform-key.is-ahead i { color: var(--color-positive); }
+.platform-key.is-behind i { color: var(--color-negative); }
+.platform-summary { margin-left: auto; }
+.platform-summary b { font-weight: 600; color: var(--color-label); }
+
+.platform-scroll { flex: 1; overflow: auto; }
+
+.platform-table {
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.platform-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 6px;
+  text-align: left;
+  vertical-align: bottom;
+  font-weight: 600;
+  background: var(--color-table-header);
+  border-bottom: .5px solid var(--color-separator);
+  backdrop-filter: blur(20px) saturate(1.8);
+}
+
+.platform-model { display: block; font-size: 12px; color: var(--color-label); white-space: nowrap; }
+.platform-sub { display: block; margin-top: 2px; font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); white-space: nowrap; }
+
+.platform-table th:first-child,
+.platform-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-left: var(--edge);
+  background: var(--color-row);
+}
+
+.platform-table thead th:first-child { z-index: 3; background: var(--color-table-header); }
+.platform-corner { font-size: 11px; color: var(--color-label-secondary); }
+
+.platform-row {
+  min-width: 140px;
+  padding-right: 16px;
+  text-align: left;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.platform-table tbody th,
+.platform-table tbody td {
+  height: var(--row-height);
+  padding: 3px 3px;
+  background: var(--color-row);
+  border-bottom: .5px solid var(--color-separator-light);
+}
+
+.platform-table tbody tr:hover th,
+.platform-table tbody tr:hover td { background: var(--color-row-hover); }
+
+/* a cell: neutral, the number carries the meaning; a small arrow says which way so color is not the only cue */
+.platform-cell {
+  display: block;
+  min-width: 88px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-align: right;
+  font-weight: 500;
+  color: var(--color-label);
+  cursor: default;
+  transition: background .12s ease;
+}
+
+.platform-cell i { margin-right: 4px; font-style: normal; font-size: 9px; vertical-align: 1px; }
+.platform-cell.is-ahead { color: var(--color-positive); }
+.platform-cell.is-behind { color: var(--color-negative); }
+.platform-cell.is-even { color: var(--color-label-secondary); }
+.platform-cell.is-empty { color: var(--color-label-quaternary); text-align: center; font-weight: 400; }
+
+
+.platform-nofit { width: 12px; height: 12px; fill: none; stroke: var(--color-label-quaternary); stroke-width: 1.1; stroke-linecap: round; vertical-align: -2px; }  /* as the slice mark: same size, colour and line */
+.platform-key .platform-nofit { margin-right: 6px; }
+.platform-bar .platform-key .platform-nofit { margin-right: 0; vertical-align: 0; }  /* the bar's key: the mark 6px from its word, as CI Error's swatch */
+
+/* the machine column: Apple's mark, the chip, its memory in a quiet mono */
+.platform-row { display: table-cell; }
+.platform-row > * { vertical-align: middle; }
+.platform-logo { width: 13px; height: 13px; margin: -2px 8px 0 0; fill: currentColor; color: var(--color-label-secondary); vertical-align: middle; }
+.platform-chip { display: inline-flex; flex-direction: row; align-items: baseline; gap: 6px; line-height: 1.2; white-space: nowrap; }
+.platform-mem { font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
+
+/* All hardware: a platform column, its name once at the top of its machines */
+.platform-group {
+  min-width: 120px;
+  padding: 10px 16px 10px var(--edge) !important;
+  vertical-align: top;
+  text-align: left;
+  background: var(--color-row);
+  border-bottom: .5px solid var(--color-separator);
+}
+.platform-group-name { display: flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--color-label); }
+.platform-group-name .platform-logo { width: 15px; height: 15px; color: var(--color-label); }
+.platform-group-sub { display: block; margin: 2px 0 0 23px; font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); }
+
+/* grouped: the platform column is the sticky one; the machine column scrolls with the cells */
+.platform-table.is-grouped tbody th { position: static; }
+.platform-table.is-grouped tbody th.platform-row,
+.platform-table.is-grouped thead th.is-second { padding-left: 8px; }
+
+/* a model's maker: a small app-icon squircle with a monogram, above the model's name */
+.model-badge {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 5px;
+  font: 600 10px/1 var(--font-display, -apple-system, system-ui);
+  color: #fff;
+  background: linear-gradient(180deg, var(--from), var(--to));
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .18);
+}
+
+/* the model column head: the badge beside the name and its maker line */
+.platform-col { display: flex; align-items: center; gap: 8px; }
+.model-badge { width: 22px; height: 22px; border-radius: 6px; font-size: 11px; }
+
+/* arrows drawn like SF Symbols: a thin shaft, an open head, round caps */
+.platform-arrow { width: 8px; height: 10px; margin-right: 4px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; vertical-align: -1px; }
+.platform-key .platform-arrow { margin-right: 2px; }
+.platform-key.is-ahead .platform-arrow { color: var(--color-positive); }
+.platform-key.is-behind .platform-arrow { color: var(--color-negative); }
+
+/* a platform with no machines yet: a quiet centered note */
+.platform-empty { margin: auto; padding: 48px 24px; text-align: center; color: var(--color-label-secondary); }
+.platform-empty .sidebar-glyph[style] { width: 48px; height: 48px; border-radius: 11px; }  /* scaled with the 15px title under it */
+.platform-empty .sidebar-glyph[style] svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 1.8; }
+.platform-empty .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }  /* white on the platform's tile, as the sidebar's */
+.platform-empty h2 { margin: 14px 0 6px; font: 700 15px/1.2 var(--font-display); letter-spacing: -.01em; color: var(--color-label); }  /* the toolbar title's type */
+@media (max-width: 899px) { .platform-empty h2 { font-size: 17px; font-weight: 600; } }  /* as the toolbar title on a phone */
+.platform-empty p { margin: 0; font-size: 13px; }
+
+/* the table, settled: even fixed columns, numbers right-aligned under right-aligned heads, a little more air */
+.platform-table { table-layout: fixed; width: max-content; min-width: calc(100% - 1px); font-size: 13px; }  /* a pixel of slack: rounded column widths never tip it into a sideways scroll bar */
+.platform-table col.col-group { width: 150px; }
+.platform-table col.col-machine { width: 190px; }
+.platform-table col.col-model { width: 132px; }
+
+.platform-table thead th { padding: 10px 16px 9px 8px; text-align: right; }
+.platform-table thead th.platform-corner { text-align: left; vertical-align: bottom; }
+.platform-table thead th.is-overall { text-align: right; }
+.platform-col { justify-content: flex-end; text-align: left; }
+.platform-model { font-size: 12px; }
+.platform-sub { font-size: 11px; }
+
+.platform-table tbody th,
+.platform-table tbody td { height: var(--row-height); padding: 0 8px; }  /* the results' row height */
+.platform-cell { min-width: 0; padding: 4px 8px; font-size: 13px; }
+.platform-cell.is-empty { text-align: right; padding-right: 12px; }
+
+/* sortable heads: a pointer, the sort arrow beside the name, the sorted column faintly lit */
+.platform-table th.is-sortable { cursor: pointer; user-select: none; }
+.platform-table th.is-sortable:hover .platform-model,
+.platform-table th.is-sortable:hover { color: var(--color-label); }
+/* the empty band above Hardware and Overall belongs to the header under it: hovering either lights both */
+.platform-table thead:has([data-sort="overall"]:hover) th[data-sort="overall"],
+.platform-table thead:has([data-sort="overall"]:hover) th[data-sort="overall"] .platform-model,
+.platform-table thead:has([data-sort="name"]:hover) th[data-sort="name"] { color: var(--color-label); }
+.platform-table .column-sort { margin-left: 4px; color: var(--color-accent); font-weight: 600; }
+.platform-table td.is-sorted { background: var(--color-row-highlight); }
+.platform-table th.is-sorted { box-shadow: inset 0 -2px 0 var(--color-accent); }
+
+/* Overall: pie's median lead on this machine, set apart by a hairline */
+.platform-table td.is-overall,
+.platform-table th.is-overall { border-right: .5px solid var(--color-separator); }
+.platform-table td.is-overall .platform-cell { font-weight: 600; }
+
+.platform-bar .platform-hide { font-size: 13px; }
+
+/* the platform column carries the sidebar's badge; machine rows need no mark of their own */
+.platform-group-name { gap: 8px; }
+.platform-group .sidebar-glyph[style] { width: 20px; height: 20px; border-radius: 5px; }
+.platform-group .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; }
+.platform-group .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
+.platform-group-sub { margin-left: 28px; }
+
+/* the maker's logo on a white tile with a hairline, as an app icon sits on any background */
+.model-badge { background: #fff; box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .14); }
+.model-badge img { width: 15px; height: 15px; display: block; }
+
+/* the bar: the setup pop-up at its start, Hide unavailable at its end */
+.platform-bar { display: flex; justify-content: space-between; gap: var(--control-gap); }  /* the toolbar's gap, as every bar spaces its buttons */
+.platform-bar-side.is-end { justify-self: end; }
+.platform-switch { height: 28px; }
+.platform-switch button { min-width: 84px; font-size: 13px; }
+
+/* a status line under the table, as Finder counts its items */
+.platform-status {
+  flex: none;
+  padding: 7px var(--edge);
+  font-size: 12px;
+  text-align: center;
+  color: var(--color-label-secondary);
+  background: var(--color-chrome);
+  border-top: .5px solid var(--color-separator);
+}
+.platform-status:empty { display: none; }
+
+/* scrolling sideways keeps Platform, Hardware and Overall pinned; the models slide under them */
+.platform-table.is-grouped tbody th.platform-group,
+.platform-table.is-grouped thead th.platform-group-head { position: sticky; left: 0; z-index: 2; }
+.platform-table.is-grouped tbody th.platform-row,
+.platform-table.is-grouped thead th.is-second { position: sticky; left: 150px; z-index: 2; }
+.platform-table tbody th.platform-row,
+.platform-table thead th.platform-corner:not(.platform-group-head):not(.is-overall) { position: sticky; left: 0; z-index: 2; }
+.platform-table.is-grouped tbody th.platform-row,
+.platform-table.is-grouped thead th.is-second { left: 150px; }
+.platform-table td.is-overall,
+.platform-table th.is-overall { position: sticky; left: 190px; z-index: 2; background: var(--color-row); }
+.platform-table.is-grouped td.is-overall,
+.platform-table.is-grouped th.is-overall { left: 340px; }
+.platform-table thead th.platform-corner,
+.platform-table thead th.is-overall { z-index: 4; background: var(--color-table-header); }
+.platform-table tbody tr:hover td.is-overall,
+.platform-table tbody tr:hover th.platform-row { background: var(--color-row-hover); }
+/* the pinned header cells sit above the model heads sliding under them */
+.platform-table thead th.platform-corner.platform-corner { z-index: 5; }
+.platform-table.is-grouped thead th.platform-corner.is-second:not(.is-overall) { left: 150px; }
+.platform-table thead th.platform-corner:not(.platform-group-head):not(.is-overall),
+.platform-table thead th.platform-corner.platform-group-head,
+.platform-table thead th.platform-corner.is-overall { z-index: 5; background: var(--color-chrome); }
+
+/* a platform's header row: its badge and name, what it is and how many machines; the label stays in view when scrolling sideways */
+.platform-table tbody tr.platform-group-row th {
+  height: 40px;
+  padding: 0;
+  text-align: left;
+  background: var(--color-chrome);
+  border-bottom: .5px solid var(--color-separator);
+}
+.platform-group-row .platform-group-name {
+  position: sticky;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 var(--edge);
+  font-size: 13px;
+}
+.platform-group-row .platform-group-name b { font-weight: 600; color: var(--color-label); }
+.platform-group-row .platform-group-name > span:last-child { font-size: 12px; font-weight: 400; color: var(--color-label-tertiary); }
+.platform-group-row .sidebar-glyph[style] { width: 20px; height: 20px; border-radius: 5px; }
+.platform-group-row .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; }
+.platform-group-row .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
+.platform-table tbody tr.platform-group-row:hover th { background: var(--color-chrome); }
+.platform-table tbody tr.platform-group-row th:first-child { position: static; }
+
+/* All Platforms: each platform a header bar, as the grouped rows had, over its own table that scrolls sideways alone */
+.platform-section-bar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  background: var(--color-chrome);
+  border-bottom: .5px solid var(--color-separator);
+}
+.platform-section-bar .platform-group-bar { width: 100%; position: static; }
+/* a platform's bar pins under the setup bar once the page scrolls it up, and each next one stacks under the last, so
+   every platform passed stays in view, a click away from folding (the model rows scroll on under them). The section
+   steps out of the box tree so its bar sticks for the rest of the page, not only within its own platform */
+.platform-scroll > .platform-section { display: contents; }
+.platform-scroll .platform-section-bar { position: sticky; top: calc(var(--stack, 0) * 40px); z-index: 6; }
+.platform-section-bar .sidebar-glyph[style] { width: 20px; height: 20px; border-radius: 5px; }
+.platform-section-bar .sidebar-glyph[style] svg { width: 13px; height: 13px; fill: none; stroke: #fff; stroke-width: 2; }
+.platform-section-bar .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
+/* the body clips while it slides; the scroller inside keeps its scroll bar, so nothing shifts as it settles */
+.platform-section-body { overflow: hidden; }
+/* no rubber band sideways: a fast swipe into an end would pull the pinned Hardware and Overall columns along with it */
+.platform-section-scroll { overflow-x: scroll; overflow-y: hidden; overscroll-behavior-x: none; }  /* sideways only, the strip kept on every platform so all end alike; the page scrolls down */
+/* the scroll bar in a strip of its own under the last row, never over the numbers: a thin rounded thumb centred in it, as
+   macOS draws an overlay scroller, shown only while the table scrolls (and under the pointer, to be dragged) */
+.platform-section-scroll::-webkit-scrollbar { height: 10px; background: transparent; }
+.platform-section-scroll::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 5px; background-clip: padding-box; background-color: transparent; }
+.platform-section-scroll.is-scrolling::-webkit-scrollbar-thumb { background-color: var(--color-label-tertiary); }
+.platform-section .platform-section-scroll::-webkit-scrollbar-thumb:hover { background-color: var(--color-label-secondary); }
+/* the strip closes with the bar's separator, so it reads as the table's own foot, not part of the next platform's bar */
+.platform-section-body { border-bottom: .5px solid var(--color-separator); }
+/* narrowed from the corner button: the pinned column only the machine's mark and name, Overall and the memory away */
+.platform-table.is-tight col.col-machine { width: 160px; }
+.platform-table.is-tight colgroup col:nth-child(2) { width: 0; }
+.platform-table.is-tight .is-overall { visibility: hidden; padding: 0; border: 0; overflow: hidden; }
+.platform-table.is-tight .platform-mem { display: none; }
+/* narrowed, the machine keeps its full name and its column its width: only the memory and Overall go */
+.platform-short { display: none; }
+/* the machine column takes Overall's dividing line while Overall is away */
+.platform-table.is-tight tr > :first-child { border-right: .5px solid var(--color-separator); }
+/* the corner's button: a double chevron on a grey tile the size of the platforms' marks, drawn as the ⌘K search button is: its grey, its fill, its light line, pointing left to
+   narrow and right to widen again; no focus ring after a click */
+.platform-narrow { display: grid; place-items: center; width: 20px; height: 20px; margin-left: 2px; padding: 0; border: 0; border-radius: 5px; color: var(--color-label-tertiary); background: none; cursor: pointer; opacity: 0; transition: opacity .12s; }  /* bare until the pointer reaches the header, as the eye on a machine's row */
+.platform-narrow:focus:not(:focus-visible) { outline: none; }
+.platform-narrow svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.platform-narrow:hover { color: var(--color-label-secondary); background: var(--color-fill); }
+.platform-table thead:hover .platform-narrow, .platform-narrow:focus-visible, .platform-narrow[aria-pressed="true"] { opacity: 1; }  /* shown under the pointer; while the column is away it stays, pointing right, to bring it back */
+.platform-narrow[aria-pressed="true"] svg { transform: scaleX(-1); }
+@media (hover: none) { .platform-narrow { opacity: 1; } }
+/* a table's last row meets the next platform's bar: the bar's separator there, not the lighter one between rows */
+.platform-section-scroll .platform-table tbody tr:last-child th,
+.platform-section-scroll .platform-table tbody tr:last-child td { border-bottom-color: var(--color-separator); }
+
+/* with the metric in the toolbar, the bar holds only Hide unavailable, at its end */
+.platform-bar { display: flex; justify-content: space-between; align-items: center; padding-left: 8px; }
+
+/* the hover card: a title, a grey line, an aligned row per engine with pie in blue, one closing sentence */
+.chart-tooltip.is-card { min-width: 220px; max-width: 340px; padding: 10px 12px; white-space: normal; }
+.tip-title { font-weight: 600; font-size: 12.5px; }
+.tip-sub { margin-top: 1px; font-size: 11px; color: var(--color-label-secondary); }
+.tip-rows { margin: 8px 0 0; padding-top: 7px; border-top: .5px solid var(--color-separator); }
+.tip-rows:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.tip-row { display: grid; grid-template-columns: 8px 1fr auto 44px; align-items: center; gap: 7px; height: 20px; font-size: 12px; }
+.tip-when { text-align: right; font-weight: 400; color: var(--color-label-secondary); font-variant-numeric: tabular-nums; }
+.tip-row.is-pie { color: var(--color-engine-pie); font-weight: 600; }
+.tip-dot { width: 8px; height: 8px; border-radius: 2px; }  /* square chips, as the engine tags everywhere else */
+.tip-name { display: inline-flex; align-items: center; gap: 6px; }
+.tip-row .tip-name { white-space: nowrap; }  /* a name stays on one line: "Bandwidth bound" never breaks; the card widens instead */
+.tip-tag { padding: 0 5px; border-radius: 4px; font-size: 10px; font-weight: 500; color: var(--color-label-secondary); background: var(--color-fill); }
+.tip-value { font-variant-numeric: tabular-nums; text-align: right; }
+.tip-foot { margin-top: 7px; padding-top: 7px; border-top: .5px solid var(--color-separator); font-size: 11.5px; color: var(--color-label-secondary); }
+.tip-sub + .tip-foot { border-top: 0; padding-top: 0; margin-top: 4px; }
+/* a cell with no number: its card is only the reason (error, does not fit, not run) */
+.tip-foot:first-child { margin-top: 0; padding-top: 0; border-top: 0; font-size: 12px; color: var(--color-label); }
+.platform-bar .filter-button { font-size: 13px; color: var(--color-label); }
+
+/* Overall: a tinted capsule, the result's color at low opacity behind figures in that color, as Apple tags a value */
+.platform-table td.is-overall .platform-cell:not(.is-empty) {
+  display: inline-block;
+  float: right;
+  min-width: 0;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.platform-table td.is-overall .platform-cell.is-ahead { color: var(--color-positive); background: color-mix(in srgb, var(--color-positive) 14%, transparent); }
+.platform-table td.is-overall .platform-cell.is-behind { color: var(--color-negative); background: color-mix(in srgb, var(--color-negative) 14%, transparent); }
+.platform-table td.is-overall .platform-cell.is-even { color: var(--color-label-secondary); background: var(--color-fill); }
+
+/* a platform's header row folds its machines: a chevron that turns down when open */
+.platform-group-row { cursor: pointer; user-select: none; }
+.platform-disclosure { width: 10px; height: 10px; margin-right: -2px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transform: rotate(90deg); transition: transform .25s cubic-bezier(.25, .1, .25, 1); }  /* turns with its table's slide, at AppKit's .25s */
+.platform-group-row.is-collapsed .platform-disclosure { transform: none; }
+
+/* the group header, Apple style: name on the left, the collapse chevron at the right edge of what is visible */
+.platform-group-row .platform-group-bar {
+  position: sticky;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: var(--platform-visible, 100%);
+  padding: 0 var(--edge);
+}
+.platform-group-row .platform-group-name { position: static; padding: 0; }
+.platform-group-row .platform-disclosure { width: 12px; height: 12px; margin: 0; stroke: var(--color-label-tertiary); stroke-width: 1.8; }
+.platform-group-row:hover .platform-disclosure { stroke: var(--color-label-secondary); }
+.platform-group-row.is-empty { cursor: default; } .platform-group-row.is-empty .platform-disclosure { display: none; }
+/* the disclosure as SF Symbols draws chevron.right: tall and narrow, a hairline-weight stroke, round ends */
+.platform-group-row .platform-disclosure { width: 7px; height: 12px; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transform-origin: 50% 50%; }
+
+/* on a phone the pinned Hardware and Overall columns narrow, so the models have room to slide under them */
+@media (max-width: 899px) {
+  .platform-bar {
+    height: 48px;
+    padding: 0 var(--edge);
+  }
+
+  .platform-bar .filter-button {
+    height: 34px;
+    padding: 0 12px 0 14px;
+    border-radius: 999px;
+    font-size: 15px;
+    background: var(--color-fill);
+  }
+
+  .platform-bar .platform-hide {
+    margin-right: -12px;
+    font-size: 15px;
+  }
+
+  .platform-scroll {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .platform-table col.col-machine { width: 116px; }
+  .platform-table col.col-model { width: 112px; }
+  .platform-table col.col-model:nth-child(2) { width: 76px; }
+  .platform-table td.is-overall,
+  .platform-table th.is-overall { left: 116px; }
+  .platform-table thead th { padding: 8px 10px 8px 6px; }
+  .platform-table thead th.is-overall { padding-right: 8px; }
+  .platform-row { min-width: 0; padding-right: 4px; }
+  .platform-table tbody th,
+  .platform-table tbody td { height: var(--row-height); }
+  .platform-col { gap: 6px; }
+  .platform-group-row .platform-group-name > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .platform-table tbody tr.platform-group-row th { height: var(--row-height); }
+  .platform-empty { padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
+}
+
+/* phones: every number column, Overall included, has one width, so the grid reads evenly; long names end in an ellipsis */
+@media (max-width: 899px) {
+  .platform-table col.col-model,
+  .platform-table col.col-model:nth-child(2) { width: 96px; }
+  .platform-table thead th:not(.platform-corner) .platform-col { min-width: 0; }
+  .platform-table thead th:not(.platform-corner) .platform-col > span:last-child { min-width: 0; overflow: hidden; }
+  .platform-table thead .platform-model,
+  .platform-table thead .platform-sub { overflow: hidden; text-overflow: ellipsis; }
+  .platform-table td.is-overall,
+  .platform-table th.is-overall { left: 116px; }
+}
+
+/* phones: Hardware and Overall scroll with the models instead of staying pinned */
+@media (max-width: 899px) {
+  .platform-table th:first-child,
+  .platform-table td:first-child,
+  .platform-table tbody th.platform-row,
+  .platform-table thead th.platform-corner:not(.platform-group-head):not(.is-overall),
+  .platform-table td.is-overall,
+  .platform-table th.is-overall { position: static; left: auto; }
+  .platform-table thead th.platform-corner,
+  .platform-table thead th.is-overall { position: sticky; top: 0; }
+  /* Hardware's head stays pinned to the top with the rest of the header, as Overall's does; it only scrolls sideways */
+  .platform-table thead th.platform-corner:not(.platform-group-head):not(.is-overall) { position: sticky; left: auto; }
+  .platform-table thead tr.platform-head-row th.platform-corner { top: var(--maker-row, 40px); }
+}
+
+/* every number column, Overall included, has one width on desktop too; a long name ends in an ellipsis */
+@media (min-width: 900px) {
+  /* columns share the window up to a cap; past it the rows run on to the edge with no column stretched thin */
+  .platform-table col.col-model { width: var(--col-w, 156px); }
+  .platform-table thead th:not(.platform-corner),
+  .platform-table thead th.is-overall { overflow: hidden; }
+  .platform-table thead th:not(.platform-corner) .platform-col { min-width: 0; }
+  .platform-table thead th:not(.platform-corner) .platform-col > span:last-child { min-width: 0; overflow: hidden; }
+  .platform-table thead .platform-model,
+  .platform-table thead .platform-sub { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+}
+/* the table is exactly as wide as its columns, so no header can stretch one */
+@media (min-width: 900px) {
+  .platform-table { width: max(100%, calc(190px + var(--cols, 1) * 156px)); }
+}
+@media (max-width: 899px) {
+  .platform-table { width: max(100%, calc(116px + var(--cols, 1) * 96px)); }
+}
+
+/* phones: the whole header row, Hardware included, stays on top while rows scroll under it, and it is solid,
+   so no row shows through it (Safari drops the blur on sticky table cells) */
+@media (max-width: 899px) {
+  .platform-table thead tr th,
+  .platform-table thead tr th.platform-corner,
+  .platform-table thead tr th.is-overall,
+  .platform-table thead tr th:first-child {
+    position: sticky;
+    top: 0;
+    left: auto;
+    z-index: 4;
+    background: var(--color-row);
+    backdrop-filter: none;
+  }
+  .platform-table tbody th,
+  .platform-table tbody td { position: static; }
+  .platform-group-row .platform-group-name { position: static; }
+}
+
+/* a maker's band over its models, as a platform's header row heads its machines: the logo tile, the name, a grey count */
+.platform-table thead tr.platform-maker-row th {
+  height: 40px;
+  padding: 0 8px 0 12px;
+  text-align: left;
+  vertical-align: middle;
+  background: var(--color-chrome);
+  border-bottom: .5px solid var(--color-separator);
+}
+.platform-table thead tr.platform-maker-row th.platform-maker { border-left: .5px solid var(--color-separator); }
+.platform-table thead tr.platform-maker-row th.is-overall { border-left: 0; }
+/* the first maker meets Overall's own right edge: one line there, not two */
+.platform-table thead tr.platform-maker-row th.is-overall + th.platform-maker { border-left: 0; }
+.platform-maker-name { position: sticky; left: 0; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 13px; }
+.platform-maker-name b { font-weight: 600; color: var(--color-label); }
+.platform-maker-name > span:last-child { font-size: 12px; font-weight: 400; color: var(--color-label-tertiary); }
+.platform-maker-name .model-badge { width: 20px; height: 20px; border-radius: 5px; }
+/* the model heads sit under the band, both pinned as the machines scroll */
+.platform-table thead tr.platform-head-row th { top: 40px; }
+.platform-table thead tr.platform-maker-row th.platform-corner { border-bottom: 0; }
+.platform-bar-side.is-end { margin-left: auto; }
+
+/* every model column one width, the table as wide as its columns and set at the left */
+.platform-table { --col-w: 200px; min-width: calc(100% - 1px); width: calc(190px + var(--col-w) * var(--cols)); }  /* never short of its section: a grid of few models still spans it */
+@media (max-width: 899px) { .platform-table { width: max(100%, calc(116px + 96px * var(--cols))); } }
+.platform-table col.col-fill { width: auto; }  /* spare width, when a grid is narrower than its section, goes after the last maker, whose band runs on over it; the model columns keep their width */
+.platform-table .platform-fill { padding: 0; border-left: 0; border-right: 0; }  /* its rows' lines run on to the end with the band above */
+
+/* a cell's quiet second line under the comparison on the feature views: what the feature adds over raw */
+.platform-main { display: block; line-height: 16px; }
+.platform-sub-line { display: flex; align-items: center; justify-content: flex-end; gap: 5px; margin-top: 1px; font-size: 10.5px; font-weight: 400; line-height: 13px; font-variant-numeric: tabular-nums; color: var(--color-label-tertiary); }
+.tip-share { display: inline-block; min-width: 34px; margin-left: 6px; color: var(--color-label-secondary); font-weight: 400; }
+/* Spec Decode in Efficiency: what drafting added over the engine's own Raw speed, green, or cost it, red */
+.tip-delta { font-weight: 400; }
+.tip-delta.is-up { color: var(--color-positive); }  /* the grid's own green and red, as its cells read ahead and behind */
+.tip-delta.is-down { color: var(--color-negative); }
+.platform-bar { position: relative; }
+.platform-bar .view-toggle { position: absolute; left: 50%; transform: translateX(-50%); }
+
+/* desktop: the Overall column holds one short number, so it narrows to 92px and the machine column takes the room,
+   enough for "48 GB · 20-core GPU · 273 GB/s" under the chip name without clipping */
+@media (min-width: 900px) {
+  .platform-table col.col-machine { width: 236px; }
+  .platform-table col.col-model:nth-child(2) { width: 92px; }
+  .platform-table td.is-overall,
+  .platform-table th.is-overall { left: 236px; }
+  .platform-table.is-grouped td.is-overall,
+  .platform-table.is-grouped th.is-overall { left: 386px; }
+  .platform-table { width: calc(328px + var(--col-w) * (var(--cols) - 1)); }
+  .platform-table.is-tight { width: calc(160px + var(--col-w) * (var(--cols) - 1)); }  /* the narrowed hardware column (160px, no Overall): the table exactly its columns, no slack for the filler */
+}
+
+
+
+/* the setup pop-up with its info button beside it */
+.platform-bar { justify-content: flex-start; }
+.platform-bar .platform-bar-side.is-end { margin-left: auto; }
+
+/* a column on the move rides above its neighbours as it slides; its cells keep their own backgrounds, so it reads solid */
+.platform-table td.is-moving { position: relative; z-index: 4; }
+.platform-table thead th.is-moving { z-index: 6; }  /* heads stay pinned; they only rise above their neighbours */
+
+/* a machine's spec sheet in its hover card: one line per spec, the value at the end, as the rules menu lists them */
+.spec-rows { margin-top: 6px; padding-top: 5px; border-top: .5px solid var(--color-separator); }
+.spec-row { display: flex; justify-content: space-between; gap: 16px; height: 20px; align-items: center; font-size: 12px; }
+.spec-row span:first-child { color: var(--color-label-secondary); }
+.spec-row span:last-child { font-variant-numeric: tabular-nums; }
+
+/* the hardware limit as the hover card's last row: under a hairline, in the secondary colour, a gauge for its dot */
+.tip-row.is-limit { margin-top: 4px; padding-top: 5px; height: auto; border-top: .5px solid var(--color-separator); color: var(--color-label-secondary); }
+.tip-row.is-limit .tip-tag { white-space: nowrap; }
+.tip-row.is-limit + .tip-row.is-limit { margin-top: 0; padding-top: 0; border-top: 0; height: 20px; }  /* the second bound sits under the first, one group */
+.tip-row.is-slack { color: var(--color-label-tertiary); }  /* the bound that does not set the limit */
+.tip-limit-mark { width: 10px; height: 10px; margin-left: -1px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.6; stroke-linecap: round; }  /* a gauge, for the limit */
+
+
+/* Engines | Ceiling: a segmented control, as on Apple's platforms */
+.platform-compare {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--color-fill);
+}
+.platform-compare .plain-button {
+  height: 24px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label-secondary);
+  background: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+.platform-compare .plain-button:hover { color: var(--color-label); background: none; }
+.platform-compare .plain-button.is-active {
+  color: var(--color-label);
+  background: var(--color-chrome);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18), 0 0 0 .5px rgba(0, 0, 0, .04);
+}
+:root[data-theme="dark"] .platform-compare .plain-button.is-active { background: rgba(255, 255, 255, .16); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .platform-compare .plain-button.is-active { background: rgba(255, 255, 255, .16); box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+}
+
+/* Compare: one button that shows the current mode and swaps to the other */
+.platform-compare-toggle { display: inline-flex; align-items: center; gap: 6px; }
+.platform-compare-toggle svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Engines | Ceiling: plain tabs, the selected one underlined */
+.platform-tabs { display: inline-flex; align-items: stretch; gap: 14px; }
+.platform-tab {
+  position: relative;
+  height: 28px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label-secondary);
+  cursor: pointer;
+}
+.platform-tab:hover { color: var(--color-label); }
+.platform-tab.is-active { color: var(--color-label); }
+.platform-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-accent);
+}
+
+/* narrow columns: a maker's band and a model's head end their text in an ellipsis instead of spilling into the next column */
+.platform-table thead tr.platform-maker-row th.platform-maker { overflow: hidden; }
+.platform-table thead .platform-maker-name { display: flex; align-items: center; min-width: 0; max-width: 100%; overflow: hidden; }
+.platform-table thead .platform-maker-name b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.platform-table thead th:not(.platform-corner) .platform-col { min-width: 0; max-width: 100%; }
+.platform-table thead th:not(.platform-corner) .platform-col > span:last-child { min-width: 0; overflow: hidden; }
+.platform-table thead .platform-model,
+.platform-table thead .platform-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+
+/* Ceiling below 25%: the same green, muted toward the grey text */
+.platform-cell.is-mid { color: color-mix(in srgb, var(--color-positive) 45%, var(--color-label-tertiary)); }
+
+/* Ceiling: the bound that limits a Mac's row, one small grey label under its name */
+.platform-bound { display: block; font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); line-height: 1.2; }
+
+/* Ceiling: a cell bound by the other limit than the rest of the view carries one small grey glyph after its number,
+   hung outside the number so the percentages stay centred in their column */
+.platform-main { position: relative; }
+.platform-exception { position: absolute; top: 50%; width: 11px; height: 11px; margin: -6px 0 0 4px; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* phones only: the setup dropdowns are one full pill; the wrapper around each button has no fill or corners of its own */
+@media (max-width: 899px) {
+  .platform-bar .filter { background: none; border-radius: 0; box-shadow: none; }
+  .platform-bar .filter .filter-button { border-radius: 999px; }
+}
+
+/* Hide unavailable copies the setup dropdown exactly (methods.css and filter-bar.css): same height, padding, corners and type.
+   On (the default), it takes the blue tint a filter in use takes (.filter.is-set); off, it has no fill. */
+.platform-bar .platform-hide,
+.filter-bar #hide-empty {
+  height: var(--control-height);
+  padding: 0 9px;
+  border-radius: var(--radius-control);
+  background: none;
+  font-size: 13px;
+  font-weight: inherit;
+  color: var(--color-label);
+  box-shadow: none;
+  margin: 0;
+}
+.platform-bar .platform-hide:hover,
+.filter-bar #hide-empty:hover { background: var(--color-fill-secondary); }
+.platform-bar .platform-hide.is-active,
+.filter-bar #hide-empty.is-active { background: var(--color-accent-tint); color: var(--color-accent); }
+.platform-bar .platform-hide.is-active:hover,
+.filter-bar #hide-empty.is-active:hover { background: var(--color-accent-tint); }
+
+/* phones: the dropdown is a 34px pill with 15px type, so Hide unavailable is too (no chevron, so even padding) */
+@media (max-width: 899px) {
+  .platform-bar .platform-hide,
+  .filter-bar #hide-empty {
+    flex: none;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 15px;
+    margin: 0;
+  }
+}
+
+/* phones: the same 8px gap between every button in the platform bar; Hide unavailable is not pushed to the end */
+@media (max-width: 899px) {
+  .platform-bar { gap: 8px; justify-content: flex-start; }
+  .platform-bar .platform-bar-side.is-end { margin-left: 0; }
+}
+
+/* the Roofline card, as Apple's Health and Fitness charts read: the pair of bounds on top, the limit tagged; under
+   them the roof as one luminous line, and
+   crisp dots, each ringed in the card's colour so they separate from the line and from each other; pie's name in bold. The roof is white-grey, never a hue, so every colour on the chart is an engine's */
+/* the card is as narrow as its two rows: each name, a small gap, its number; the chart takes that width and
+   adds none of its own (width 0, at least the full width) */
+.rf-card { display: flex; flex-direction: column; gap: 10px; width: max-content; }
+.chart-tooltip.is-card:has(.rf-card) { min-width: 0; }
+.rf-card .tip-roof { width: 0; min-width: 100%; }
+/* Spec Decode's card: the roofline over the usual list, which keeps its dates and its Spec Limit rule; the chart's floor
+   line already parts the two, so the list drops its own rule */
+.rf-move-card .tip-roof { width: 0; min-width: 100%; }
+.rf-move-card > .tip-rows { margin-top: 10px; padding-top: 0; border-top: 0; }
+.rf-card .tip-row.is-limit { margin-top: 0; padding-top: 0; border-top: 0; }  /* the bounds open the card: no rule above them */
+.rf-card .tip-row { grid-template-columns: 8px 1fr auto; column-gap: 7px; }  /* no date column here: the values reach the right edge */
+.rf-card .tip-row .tip-value { padding-left: 14px; }  /* the small gap between a name and its number */
+/* the bound that limits reads as an engine row does: the label colour, regular weight, its gauge too; the other stays grey */
+.rf-card .tip-row.is-limit:not(.is-slack) { color: var(--color-label); font-weight: 400; }
+.rf-card .tip-row.is-limit:not(.is-slack) .tip-limit-mark { stroke: var(--color-label); }
+.rf-card .tip-when { display: none; }
+.rf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rf-stat { display: flex; flex-direction: column; gap: 2px; }
+.rf-stat span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: var(--color-label-tertiary); }
+.rf-stat b { font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
+.rf-stat.is-limit span { color: var(--color-label-secondary); }
+.rf-stat.is-limit b { color: var(--color-label); }
+.rf-tag { padding: 0 6px; border-radius: 6px; background: var(--color-fill); font-size: 10px; font-style: normal; font-weight: 600; line-height: 16px; color: var(--color-label-secondary); }
+.tip-roof { padding: 4px 0 0; }
+.tip-roof svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* the card's chart scales with the card, its marks do not: a line of one weight, 7px dots, names at the card's type */
+.tip-roof { position: relative; padding: 0 !important; margin-top: 4px; }  /* no padding, so the names' percentages land on the chart's own box */
+.tip-roof .rf-roof { fill: none; stroke: var(--color-label); stroke-width: 2.2; opacity: .9; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.tip-roof .rf-link { stroke: var(--color-label-secondary); stroke-width: 1.4; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }  /* the link between GPUs, when it is lower than the roof */
+.tip-roof .rf-tick-name.rf-link-name { transform: translate(calc(-100% - 2px), 4px); }  /* under the dashed line, at its right end, clear of the roof */
+.tip-roof .rf-dot { stroke-width: 7; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.tip-roof .rf-dot.is-other { stroke: var(--color-label-tertiary); }
+.tip-roof .rf-knee { stroke: var(--color-label); stroke-width: 7; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.tip-roof .rf-knee-hole { stroke: var(--color-menu); stroke-width: 3.6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.tip-roof .rf-name, .tip-roof .rf-tick-name { position: absolute; transform: translate(8px, -50%); white-space: nowrap; font-size: 11px; line-height: 1; pointer-events: none; }
+.tip-roof .rf-name.is-pie { font-weight: 700; }
+.tip-roof .rf-name.is-left, .tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 8px), -50%); }
+.tip-roof .rf-tick-name { font-weight: 500; color: var(--color-label-tertiary); transform: translate(6px, calc(-100% - 4px)); }
+.tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 6px), calc(-100% - 4px)); }
+/* zero, as Apple's charts mark their baseline: a hairline in the faintest grey */
+.tip-roof .rf-zero { stroke: var(--color-label-quaternary); stroke-width: .5; vector-effect: non-scaling-stroke; }
+
+/* Roofline: what limits a cell, as a leading symbol before its number, the way Apple sets a symbol before a value: the
+   number's own colour, softer, sized to the figures and centred on them; symbol and number centred together */
+.platform-bound-mark { display: inline-block; width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
+
+/* the setup pop-up is a plain pop-up, grey as the Results filters are: in this bar blue means only a filter that is on,
+   as a macOS toolbar keeps one neutral style and lets state alone take the accent */
+.platform-bar .filter.platform-setup:hover { background: none; }
+/* the engine the grid is about: a label in the pop-ups' shape, read only (no chevron, no pointer) */
+.platform-bar .platform-engine-now { cursor: default; user-select: none; }
+.platform-bar .platform-engine-now .engine-logo { width: 14px; height: 14px; }
+/* a click opens the menu without a focus ring; the keyboard still gets one */
+.platform-bar .filter.platform-setup .filter-button:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+
+/* the view pop-up sits 4px from Hide unavailable, the bar's gap, as Finder keeps its View button with the toolbar's others */
+.platform-bar-side.is-end { display: inline-flex; align-items: center; gap: 4px; }
+
+/* a model head or maker band drags: the open hand over it, the closed one while it moves, as Finder's columns */
+.platform-table thead th[data-drop] { cursor: grab; }  /* already sticky, so it holds its grip */
+:root.is-dragging-column, :root.is-dragging-column * { cursor: grabbing !important; }
+
+/* iPhone: Speedup | Efficiency as an iOS segmented control, a capsule the height of the setup pop-up beside it (34pt),
+   its 15pt labels; the chosen segment a raised capsule, semibold */
+@media (max-width: 899px) {
+  .platform-compare { flex: none; height: 34px; padding: 2px; gap: 0; border-radius: 999px; background: var(--color-fill); box-sizing: border-box; }
+  .platform-compare .plain-button { height: 30px; padding: 0 14px; border-radius: 999px; font-size: 15px; font-weight: 500; }
+  .platform-compare .plain-button.is-active { font-weight: 600; background: #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 3px 1px rgba(0, 0, 0, .04); }
+  :root[data-theme="dark"] .platform-compare .plain-button.is-active { background: #636366; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
+}
+@media (max-width: 899px) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .platform-compare .plain-button.is-active { background: #636366; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
+}
+
+/* Speedup | Efficiency flat, as macOS draws a segmented control now: the chosen segment a lighter fill, no shadow */
+.platform-compare .plain-button.is-active,
+:root[data-theme="dark"] .platform-compare .plain-button.is-active { box-shadow: none !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .platform-compare .plain-button.is-active { box-shadow: none !important; } }
+.model-badge .model-cloud { width: 14px; height: 14px; display: block; fill: none; stroke: #636366; stroke-width: 1.4; stroke-linejoin: round; }
+/* Speedup and Efficiency list every machine in one table: each wears its platform's tile, as the Platforms list does */
+.platform-chip .sidebar-glyph[style] { align-self: center; width: 16px; height: 16px; border-radius: 4px; }
+.platform-chip .sidebar-glyph[style] svg { width: 11px; height: 11px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.platform-chip .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
+/* Speed TPS: the unit after each number, small and grey, as Activity Monitor writes its rates */
+.platform-unit { margin-left: 3px; font-size: .82em; font-weight: 400; color: var(--color-label-tertiary); }
+/* Speed TPS: the fastest machine on a model, a blue capsule like the Overall column's */
+/* a model's best machine: the whole cell tinted, as the Performance table tints a highlighted row */
+.platform-table tbody td:has(> .platform-cell.is-top) { background: var(--color-row-highlight); }
+.platform-table .platform-cell.is-top .platform-main, .platform-table .platform-cell.is-top .platform-unit { color: var(--color-accent); }  /* its number in the accent, at the other cells' weight */
+.platform-table tbody tr:hover td:has(> .platform-cell.is-top) { background: var(--color-row-highlight-hover); }
+.platform-table tbody td.is-openable:hover:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-row-highlight-hover), var(--color-accent) 8%); }  /* the cell under the pointer one step bluer still, as a plain cell's hover is one step greyer */
+.platform-table tbody td.is-openable:hover:has(> .platform-cell.is-top) .platform-open { color: var(--color-accent); }  /* and its See Runs stays blue */
+/* a machine's name ends in an ellipsis inside its column instead of running under Overall or up to its edge: narrowed,
+   RTX PRO 6000 is the longest that fits whole, a longer one reads "RTX 4090 Chr…" */
+.platform-table tbody th.platform-row { overflow: hidden; }
+.platform-row .platform-chip { display: flex; max-width: 100%; min-width: 0; }  /* unclipped: the tile sits 2px into the padding */
+.platform-row .platform-chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.platform-row .platform-chip > .platform-mem, .platform-row .platform-chip > .sidebar-glyph { flex: none; }
+/* phones: the platform's tile gives its room to the name */
+@media (max-width: 899px) {
+  .platform-row .platform-chip .sidebar-glyph[style] { display: none; }
+}
+
+/* the view button: the current view's sidebar icon in the accent, as the sidebar draws it; a click moves to the next */
+.view-cycle { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border-radius: 7px; font-size: 13px; font-weight: 400; color: var(--color-accent); background: none; }
+.view-cycle:hover { background: var(--color-fill); }
+.view-cycle:active { background: color-mix(in srgb, var(--color-label) 16%, transparent); }  /* darker while pressed, as a toolbar button is held */
+.view-cycle svg { width: 16px; height: 16px; fill: none; stroke: var(--color-accent); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }  /* the icon and the name in the sidebar's blue */
+
+/* the setups' segments each lead with their symbol, as Xcode and Finder pair one with a word: decode an arrow out,
+   prefill lines read in, Peak FLOPs requests stacked; the chosen one's symbol in the accent, the rest in the label grey */
+.platform-compare .plain-button:has(.mode-icon) { display: inline-flex; align-items: center; gap: 5px; padding: 0 7px; }
+.platform-compare[aria-label="Setup"] { gap: 0; }  /* with no fill behind the pick, 14px between one label and the next symbol reads as one group */
+.mode-icon { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }  /* the label's colour */
+.mode-icon rect { fill: currentColor; stroke: none; }  /* the degree marks are solid cells */
+/* the chosen setup marked by colour alone, as a toolbar's selected item is: its symbol and word in blue, no fill
+   behind it; a pick switches at once, with no fade or slide */
+.platform-compare[aria-label="Setup"] .plain-button.is-active { color: var(--color-accent); }  /* the same weight as the rest, so no segment changes width as the pick moves */
+.platform-compare[aria-label="Setup"] .plain-button.is-active { background: transparent !important; }
+.platform-compare[aria-label="Setup"] .plain-button { transition: none; }
+
+/* the engine pop-up wears the picked engine's colour, as its dot in the menu does: a pale wash of it behind the name,
+   the name and the chevron in the colour itself */
+.platform-bar .filter-button.is-engine { color: var(--tint); background: color-mix(in srgb, var(--tint) 22%, transparent); }
+.platform-bar .filter-button.is-engine:hover,
+.platform-bar .filter-button.is-engine[aria-expanded="true"] { background: color-mix(in srgb, var(--tint) 30%, transparent); }
+.platform-bar .filter-button.is-engine .popup-chevron { stroke: var(--tint); }
+.view-cycle svg .is-filled { fill: var(--color-accent); stroke: none; }  /* a solid icon in the view button, in the sidebar's blue */
+
+/* the setups' two groups named in small grey type inside the capsule, the second set off by a hairline */
+.setup-group { padding: 0 4px 0 8px; font-size: 10px; font-weight: 500; white-space: nowrap; color: var(--color-label-tertiary); }
+.setup-group.is-second { margin-left: 4px; border-left: 1px solid var(--color-separator); }
+
+/* a datacenter model cut to fit one device: its cells say so, and the page carries a banner */
+.platform-mini { margin-left: 5px; padding: 0 5px; border-radius: 4px; font-size: 9px; font-weight: 500; line-height: 14px; vertical-align: 1px; color: var(--color-label-tertiary); background: none; box-shadow: inset 0 0 0 .5px var(--color-label-tertiary); }  /* a quiet outlined capsule, as System Settings marks a Beta feature: title case, hairline, no fill */
+.mini-banner { margin: 0; padding: 8px 20px; font-size: 13px; color: #8a5a00; background: #fff6e0; border-bottom: 1px solid #f0dca8; }
+:root[data-theme="dark"] .mini-banner { color: #ffd479; background: #2c2412; border-color: #4a3a17; }
+.mini-banner[hidden] { display: none; }
+/* the bars: their words are controls, never text to select; a drag scrolls them (app.js) */
+.platform-bar, .board-bar, .filter-bar { user-select: none; -webkit-user-select: none; scrollbar-width: none; }
+.platform-bar::-webkit-scrollbar, .board-bar::-webkit-scrollbar, .filter-bar::-webkit-scrollbar { display: none; }
+.is-dragging { cursor: grabbing; }
+.is-dragging * { pointer-events: none; }
+.platform-cell .platform-main { white-space: nowrap; }  /* a number, its unit and its Mini tag stay on one line, a phone's narrow column too */
+/* a cell today's miniature run is still measuring: a clock, in the accent colour (local preview) */
+.platform-pending { width: 14px; height: 14px; fill: none; stroke: var(--color-accent); stroke-width: 1.4; stroke-linecap: round; vertical-align: -2px; }
+/* a miniature's number on fine 45-degree lines instead of a tag, as the charts mark pie's bars; its hover card names it */
+.platform-cell:has(> .slice-mark) { position: relative; }
+.platform-cell > .slice-mark { position: absolute; top: 5px; left: 6px; margin: 0; color: var(--color-label-quaternary); }
+.platform-cell > .slice-mark svg { stroke-width: 1.1; }  /* a model slice: the mark in the cell's top-left corner */
+.platform-cell > .slice-mark .column-info-pop { top: calc(100% + 6px); right: auto; left: -8px; text-align: left; }
+.platform-table td > .platform-cell.is-mini { background: none; }
+.tip-row.is-absent { color: var(--color-label-tertiary); }
+.tip-row.is-absent .tip-dot { opacity: .35; }
+.tip-row.is-absent .tip-value { font-weight: 400; color: var(--color-label-tertiary); }
+
+/* a machine's eye, at the right of its cell (the sticky cell holds it): shown on the hover of the Hardware or Overall cell, not the rest of the row; closed, it stays, and the row keeps only the name, dimmed */
+.platform-eye { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 5px; color: var(--color-label-tertiary); background: none; cursor: pointer; opacity: 0; }
+.platform-eye:focus:not(:focus-visible) { outline: none; }
+.platform-eye svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.platform-eye { pointer-events: none; }  /* only a sign: the whole entry, its name to its Overall, hides and shows the machine */
+.platform-table th.platform-row, .platform-table td.is-overall { cursor: pointer; }
+.platform-table tbody tr:has(> th.platform-row:hover, > td.is-overall:hover) .platform-eye,
+.platform-eye:focus-visible,
+.platform-eye[aria-pressed="true"] { opacity: 1; }
+.platform-table tbody tr.is-hidden-row .platform-chip { color: var(--color-label-tertiary); }
+.platform-table tbody tr.is-hidden-row td:not(.is-overall) > *, .platform-table tbody tr.is-hidden-row td.is-overall > .platform-cell { visibility: hidden; }  /* hidden in place: its numbers away, the row kept */
+@media (hover: none) { .platform-eye { opacity: 1; } }
+/* with Overall shown, the eye sits at the row's right end, in Overall's place: the hovered row's Overall gives way to it */
+.platform-table:not(.is-tight) th.platform-row .platform-eye,
+.platform-table.is-tight td.is-overall .platform-eye { display: none; }
+.platform-table:not(.is-tight) tbody tr:has(> th.platform-row:hover, > td.is-overall:hover) td.is-overall .platform-cell,
+.platform-table:not(.is-tight) tbody tr:has(.platform-eye[aria-pressed="true"]) td.is-overall .platform-cell { visibility: hidden; }  /* no hover on a phone: the eye always shows */
+.platform-table tbody th.platform-row { padding-right: 26px; }  /* room for the eye's mark after the name */
+
+/* the two engine pop-ups read as one phrase, as a Finder search rule: [pie] vs [Strongest] */
+.platform-setup .platform-vs { margin: 0 6px; color: var(--color-label-secondary); }
+
+.platform-table td.is-openable, .platform-table td.is-openable * { cursor: pointer; }
+.platform-table td.is-openable { position: relative; }
+.platform-table tbody td.is-openable:hover { background: color-mix(in srgb, var(--color-row-hover), var(--color-label) 4%); }  /* the whole cell is the target: the row's hover a shade deeper, so it reads as one step above it */
+:root[data-theme="dark"] .platform-table tbody td.is-openable:hover { background: color-mix(in srgb, var(--color-row-hover), var(--color-label) 6%); }  /* a measured cell opens its run on the Results page */
+/* hovered, its number gives way to the circled arrow macOS uses to go on to a thing's details: here its runs */
+.platform-open { display: none; position: absolute; top: 50%; right: 14px; transform: translateY(-50%); color: var(--color-label-tertiary); }
+.platform-table td.is-openable:hover .platform-open { display: inline-flex; align-items: center; gap: 3px; color: var(--color-label-secondary); font-size: 11px; font-weight: 500; white-space: nowrap; }  /* where the click goes, with the sidebar's out arrow, as a link to another page */
+.platform-open svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }  /* the sidebar's out arrow as it draws it: its size and line, in the text's grey */
+.platform-table td.is-openable:hover > .platform-cell { background: transparent; }
+.platform-table td.is-openable:hover > .platform-cell > * { visibility: hidden; }  /* the slice mark too: only the chevron */  /* the cell stays, so its card still opens */
+@media (hover: none) { .platform-table td.is-openable:hover .platform-open { display: none; } .platform-table td.is-openable:hover > .platform-cell > * { visibility: visible; } }
+
+.platform-compare .setup-divider { width: .5px; align-self: stretch; margin: 5px 3px; background: var(--color-separator); }  /* one request | many at once */
+
+.platform-bar .platform-bar-side.is-end { display: inline-flex; align-items: center; gap: 8px; }  /* the engines, models and the view together at the right end */
+.filter-button .options-icon { width: 13px; height: 13px; fill: var(--color-background); stroke: var(--color-label-secondary); stroke-width: 1.3; stroke-linecap: round; vertical-align: -2px; }  /* View Options: the sliders symbol before what is set */
+.filter-button.setup-pick .mode-icon { width: 12px; height: 12px; vertical-align: -1px; }  /* the setup's mark before its name, in the pickers' own button */
+/* a turn's new numbers roll up into place, as the Stocks app moves a price */
+.is-rolling .platform-table tbody td .platform-main { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) calc(var(--roll-wait, 0ms) + 320ms) both; }  /* a diagonal wave, top-left first, the new number just behind the old one leaving */
+.platform-cell:has(> .roll-ghost) { position: relative; }
+/* Overall's capsule moves whole, its colour with its number: the old capsule leaves as the new one rises */
+.is-rolling .platform-table tbody td.is-overall .platform-main { animation: none; }
+.is-rolling .platform-table tbody td.is-overall > .platform-cell { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) calc(var(--roll-wait, 0ms) + 320ms) both; }
+.roll-ghost.is-pill { justify-content: flex-end; }  /* in the cell's own padding, so the old capsule sits where the new one does */
+td.is-overall:has(> .roll-ghost) { overflow: hidden; }
+.roll-ghost { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding: inherit; pointer-events: none; animation: setup-out .45s cubic-bezier(.4, 0, 1, 1) var(--roll-wait, 0ms) both; }
+@keyframes setup-out { from { transform: none; opacity: 1; filter: none; } to { transform: translateY(-35%); opacity: 0; filter: blur(2px); } }
+/* a number an earlier wave was still bringing in: it first finishes rising, then leaves on its own wave's beat */
+.roll-ghost.is-chained { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) var(--in-wait, 0ms) both, setup-out .45s cubic-bezier(.4, 0, 1, 1) var(--roll-wait, 0ms) forwards; }
+@keyframes setup-roll { from { transform: translateY(35%); opacity: 0; filter: blur(2px); } to { transform: none; opacity: 1; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .roll-ghost { display: none; } .is-rolling .platform-table tbody td .platform-main { animation: none; } }
+/* the setup button's name changes as a counter does: the old one rolls up and out, the new one up into its place */
+.filter-button.label-rolls { position: relative; overflow: hidden; }
+.label-rolls .label-ghost { position: absolute; inset: 0; display: flex; align-items: center; padding: inherit; pointer-events: none; animation: label-out .8s cubic-bezier(.4, 0, .2, 1) both; }
+.label-rolls.is-relabel > svg:not(.popup-chevron), .label-rolls.is-relabel > span:not(.label-ghost) { animation: label-in .8s cubic-bezier(.4, 0, .2, 1) .12s both; }
+@keyframes label-out { to { transform: translateY(-70%); opacity: 0; filter: blur(1.5px); } }
+@keyframes label-in { from { transform: translateY(70%); opacity: 0; filter: blur(1.5px); } to { transform: none; opacity: 1; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .label-rolls .label-ghost { display: none; } .label-rolls.is-relabel > * { animation: none; } }
+
+.filter-button .view-icon { width: 14px; height: 14px; flex: none; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }  /* the picked view's symbol before its name */
+.filter-button .view-icon .is-filled { fill: var(--color-label-secondary); stroke: none; }
+.platform-cell.is-nofit { position: relative; min-height: 24px; }  /* as tall as a measured cell, so the corner is the same corner */
+.platform-cell.is-nofit > .platform-nofit { position: absolute; top: 5px; left: 6px; }  /* where the slice mark sits: the cell's top-left corner */
+.platform-cell.is-empty.is-nofit > .platform-nofit { top: 50%; left: auto; right: 10px; transform: translateY(-50%); }  /* no slice number beside it: the mark alone where a number would end */
+/* the setups as a row of buttons: the shown one filled grey with its name in full colour, the others plain until hovered */
+.setup-row { display: inline-flex; align-items: center; gap: 2px; }
+.setup-row .filter-button.setup-tab { gap: 6px; border-radius: var(--radius-control); color: var(--color-label-secondary); background: none; }
+.setup-row .filter-button.setup-tab:hover { background: var(--color-hover); color: var(--color-label); }
+.setup-row .filter-button.setup-tab.is-active { background: var(--color-fill); color: var(--color-label); }
+.setup-row .setup-tab:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+.setup-row .mode-icon { width: 12px; height: 12px; }
+/* an empty cell rises on the wave as a number does, and what it held leaves from the cell itself */
+.is-rolling .platform-table tbody td:not(.is-overall) > .platform-cell.is-empty { animation: setup-roll .8s cubic-bezier(.22, 1, .36, 1) calc(var(--roll-wait, 0ms) + 320ms) both; }
+.platform-table tbody td:not(.is-overall):has(> .roll-ghost) { position: relative; }  /* Overall stays sticky */
+@media (prefers-reduced-motion: reduce) { .is-rolling .platform-table tbody td > .platform-cell.is-empty { animation: none; } }
+.platform-table tbody td:not(.is-overall) > .roll-ghost.is-pill > .platform-cell { width: 100%; }  /* an empty cell leaving keeps its own layout, its mark in the corner */
+/* a cell where an engine measured above its theoretical limit: tinted red, as the best machine is tinted blue, and red
+   wins where a cell is both (a number to check outranks a best) */
+.platform-table tbody td.is-over-limit, .platform-table tbody td.is-over-limit:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-negative) 9%, var(--color-background)); }
+.platform-table tbody tr:hover td.is-over-limit, .platform-table tbody tr:hover td.is-over-limit:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-negative) 13%, var(--color-background)); }
+.platform-table tbody td.is-openable.is-over-limit:hover, .platform-table tbody td.is-openable.is-over-limit:hover:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-negative) 17%, var(--color-background)); }
+.platform-table tbody td.is-over-limit .platform-cell .platform-main, .platform-table tbody td.is-over-limit .platform-cell .platform-unit,
+.platform-table tbody td.is-over-limit .platform-cell.is-top .platform-main, .platform-table tbody td.is-over-limit .platform-cell.is-top .platform-unit { color: var(--color-negative); }
+.platform-table tbody td.is-openable.is-over-limit:hover .platform-open { color: var(--color-negative); }
+/* the bar's key for the red cells: their tint as a square, then its name */
+.platform-key { display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; font-size: 12px; color: var(--color-label-secondary); white-space: nowrap; }
+.platform-key-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.platform-key-swatch.is-latest { background: var(--color-row-highlight); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 35%, transparent); }
+.platform-key-swatch.is-over-limit { background: color-mix(in srgb, var(--color-negative) 9%, var(--color-background)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-negative) 35%, transparent); }
+.platform-key .platform-nofit { width: 14.5px; height: 14.5px; margin: -2px -2px -2px -2px; vertical-align: -3px; }  /* in a key, its drawn square as large as the swatches beside it (10px) */
