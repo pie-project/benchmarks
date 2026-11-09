@@ -501,12 +501,6 @@ quality_gaps:
       the top 20), which takes 31.6 GiB. Keeping the last layers instead saturates Gemma's logit softcap.
 
 # Relative Speed grid cells where pie ran and no other engine can: the site gives the reason in the cell's card
-speed_gaps:
-  - platform: m2-16g
-    model: muse-spark-open-816b-a42b
-    reason: >-
-      No other engine runs Muse Spark on an M2. mlx-lm's Muse Spark kernels ask for 1024 threads a threadgroup and an
-      M2's GPU allows 704 for them. They size the threadgroup by the model's width (8192), so no cut avoids them, bf16
-      or 4-bit, and vLLM-Metal runs the same mlx-lm model. mlx-lm 0.32.2 is the newest release.
+speed_gaps: []
 
 fit_factor: 1.25
