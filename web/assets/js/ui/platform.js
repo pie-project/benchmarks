@@ -919,6 +919,8 @@ window.Pie = window.Pie || {};
             submenu: Pie.store.tables.engines.map((e) => ({ value: `${id}|${e.id}`, key: "grid:view-engine", label: Pie.store.names.engine(e.id), selected: e.id === engineOf(id), dot: Pie.engines.colorOf(e.id) })) }))]),
           // a page with one fixed view keeps the engine as a row of its own
           ...(fixedView ? [{ label: "Engine", detail: Pie.store.names.engine(viewState.platform.engine || Pie.engines.primary), submenu: own("engine", this.menu("engine")) }] : []),
+          // Relative Speed only: off, the grid shows full models only, each column where it was
+          ...(compare === "engines" ? [{ separator: true }, { value: "slices", key: "grid:slices", label: "Show Model Slices", selected: viewState.platform.slices !== false, check: true }] : []),
         ];
       }
       if (k !== "engine" || !viewState) return [];
@@ -932,6 +934,7 @@ window.Pie = window.Pie || {};
       const wave = (button) => { if (!viewState) return; captureGhosts(button); if (!button) auto.label = null; auto.rolling = true; auto.spent = 0; clearTimeout(auto.timer); };
       // a view clicked: that view with its own engine (kept from its last pick, pie until one); a view's engine picked in its list: both
       if (k === "view") { if (value !== compare) wave('[data-grid-pick="options"]'); Pie.platform.setCompare(value); return; }
+      if (k === "slices") { if (viewState) viewState.platform.slices = viewState.platform.slices === false; return; }
       if (k === "view-engine") {
         const [view, engine] = String(value).split("|");
         if (view !== compare) wave('[data-grid-pick="options"]');
@@ -1213,7 +1216,10 @@ window.Pie = window.Pie || {};
       const slicedEvery = new Set(every.filter((r) => r.miniature && r.engine === baseOf(r.hardware)).map((r) => `${r.hardware}|${r.model}`));
       const minisFirst = (list, ms) => {
         const mini = (model) => list.some((mac) => slicedEvery.has(`${mac}|${model}`));
-        return [...ms.filter(mini), ...ms.filter((m) => !mini(m))];
+        // a maker's models stay together under one head: the makers in the order their first model comes
+        const byMaker = new Map();
+        for (const m of [...ms.filter(mini), ...ms.filter((m) => !mini(m))]) (byMaker.get(makerOf(m).name) || byMaker.set(makerOf(m).name, []).get(makerOf(m).name)).push(m);
+        return [...byMaker.values()].flat();
       };
       const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs), only), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
         // a platform shows a model only where two of its engines could run it, as above
@@ -1343,7 +1349,7 @@ window.Pie = window.Pie || {};
         const maker = makerOf(model);
         const last = makers[makers.length - 1];
         // a speculation column widens the band but is not another model
-        if (last && last.maker.name === maker.name && last.cut === cut(model)) { last.n += 1; last.count += 1; }
+        if (last && last.maker.name === maker.name) { last.n += 1; last.count += 1; }  // one band a maker, slices and full models together
         else makers.push({ maker, n: 1, count: 1, cut: cut(model) });
       }
       // each table's corner above Hardware narrows its own pinned column to each machine's mark and name, for room
@@ -1401,7 +1407,6 @@ window.Pie = window.Pie || {};
           <span class="platform-bar-side is-end">
             <span class="platform-key" title="An engine on this cell measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>CI Error</span>
             <span class="platform-key" title="The full model does not fit one machine; a number beside the mark is a model slice&#39;s, for comparing engines">${NOFIT}Does not fit</span>
-            <button type="button" class="platform-key platform-toggle" data-slices${compare === "engines" ? "" : " hidden"} role="switch" aria-checked="${state.platform.slices !== false}" title="On: model slices&#39; numbers where the full model does not fit. Off: full models only"><i class="platform-switch" aria-hidden="true"></i>Model Slices</button>
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
             <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
             <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
@@ -1516,11 +1521,6 @@ window.Pie = window.Pie || {};
           if (auto.rolling) captureGhosts();
           state.platform.mode = tab.dataset.mode;
           onChange();
-          return;
-        }
-        if (event.target.closest("[data-slices]")) {
-          state.platform.slices = state.platform.slices === false;
-          inPlace(onChange);
           return;
         }
         const pick = event.target.closest("[data-grid-pick]");
