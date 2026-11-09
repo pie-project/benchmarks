@@ -32,12 +32,8 @@ window.Pie = window.Pie || {};
   const baseName = () => names().engine(base);
   const isPie = (row) => row.engine === base;
 
-  // "Apple M5 Max" + 64 GiB -> "M5 Max 64GB": two Macs share a chip, so the memory tells them apart
-  const macName = (id) => {
-    const hw = Pie.store.index.hardware[id];
-    if (!hw) return id;
-    return `${String(hw.name).replace(/^Apple\s+/, "")}${hw.memory_gib ? ` ${hw.memory_gib}GB` : ""}`;
-  };
+  // "M5 Max 64 GB": two Macs share a chip, so the memory tells them apart
+  const macName = (id) => Pie.platform.machineName(id);
 
   const value = (n) => {
     if (n === null || n === undefined) return "";
