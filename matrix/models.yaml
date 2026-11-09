@@ -996,8 +996,8 @@ artifacts:
     family: glm_moe_dsa
     scheme: fp8
     kind: miniature
-    miniature: {layers: "0-6", experts: 8, period: 1, note: "glm-5.3-mini's cut, at the TPU's bf16 row"}
-    pie_sku: glm53-mini-bf16-kv-bf16
+    miniature: {layers: "0-6", experts: 8, period: 1, note: "glm-5.3-mini's cut, its FP8 read as released"}
+    pie_sku: glm53-mini-e4m3tile128-kv-bf16
     platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
     max_context: 4096
     expected_gib: 6.0
