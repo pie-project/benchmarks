@@ -540,6 +540,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 @media (max-width: 899px) { .board-compare .board-chart { margin-left: 5.26%; width: 94.74%; } }  /* a phone's cards fill the row */
 .board-compare .board-title-dot { display: none; }  /* the platform is named in the head's pick: no colour square to read */
 .board-compare .board-sub:empty { display: none; }
+.board-compare h2 > .board-title-dot { display: none; }  /* the platform tile stands in for the title dot */
+.board-compare h2 > .sidebar-glyph[style] { margin-left: 0; }  /* the platform tile flush with the card edge, the name after it */
 .board-compare-name { display: inline-flex; align-items: center; gap: 6px; text-decoration: underline dotted var(--color-label-tertiary); text-underline-offset: 4px; cursor: help; outline-offset: 2px; }  /* the specs wait on hover */
 .board-compare-info { width: 13px; height: 13px; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.3; stroke-linecap: round; }
 .board-compare .board-card-head { align-items: baseline; margin-bottom: 16px; }  /* the link on the machine name's line */
