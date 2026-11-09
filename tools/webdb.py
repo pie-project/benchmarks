@@ -76,7 +76,8 @@ def load(name: str) -> dict:
 def model_name(base: str) -> str:
     drop = {"4bit", "bf16", "gguf", "mlx", "mxfp4", "q4", "q4km", "mtp", "instruct", "it", "base", "8k", "mini5", "mini8",
             "litert", "lm", "mlc", "q4f16_1", "q4f32_1"}  # the phones' LiteRT-LM and MLC releases (pie_evals.results.phone.model_ids)
-    tail = base.split("/")[-1]
+    # a mirror that names its files after the source org (DevQuasar's "meta-models.Muse-Spark-...") is the same model
+    tail = re.sub(r"^[a-z-]+\.", "", base.split("/")[-1])
     return "-".join(p for p in tail.split("-") if p.lower() not in drop)
 
 
