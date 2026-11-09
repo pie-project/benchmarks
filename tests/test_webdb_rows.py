@@ -69,3 +69,21 @@ def test_off_a_mac_the_released_checkpoint_outranks_a_later_mlx_run():
     mac_bf16 = {**bf16, "platform": "m4-pro-48g"}
     mac_mlx4 = {**mlx4, "platform": "m4-pro-48g"}
     assert webdb.pick([mac_bf16, mac_mlx4], a2m)[("m4-pro-48g", "pie", "gemma-4-31b", "prefill_batch")][1] is mac_mlx4
+
+
+def test_the_newest_run_of_a_cell_shows_whatever_tag_it_ran_under():
+    key = ("tpu-v6e-1", "pie", "qwen3-0.6b", "prefill_batch")
+    # tpu-v6e-fix is the newest tag (imported into again on 11-09) but measured this cell on 11-08; main-a2f02c75a,
+    # dated earlier, measured it again on 11-09 (the site showed 21k over 105k tok/s, 2026-11-09)
+    tagged = {"tpu-v6e-fix": {key: {"at": "2026-11-08 14:31", "pf": 21045.14}},
+              "main-a2f02c75a": {key: {"at": "2026-11-09 04:40", "pf": 104742.73}},
+              "tpu-v6e-full": {key: {"at": "2026-11-04 03:15", "pf": 9000.0}}}
+    order = ["tpu-v6e-fix", "main-a2f02c75a", "tpu-v6e-full"]  # newest first, as main() orders the tags
+    snaps = webdb.stack(order, tagged, [key], lambda item, key, src: {"pf": item["pf"], "release": src}, lambda item: item["at"])
+    # the newest tag shows the cell's newest run, from the other tag and marked as its
+    assert snaps["tpu-v6e-fix"][0]["pf"] == 104742.73
+    assert snaps["tpu-v6e-fix"][0]["stale"] == {"tag": "main-a2f02c75a", "measured": "2026-11-09 04:40"}
+    # a tag whose own run is the newest shows its own
+    assert snaps["main-a2f02c75a"][0]["pf"] == 104742.73 and snaps["main-a2f02c75a"][0]["stale"] is None
+    # never a later tag's run
+    assert snaps["tpu-v6e-full"][0]["pf"] == 9000.0 and snaps["tpu-v6e-full"][0]["stale"] is None

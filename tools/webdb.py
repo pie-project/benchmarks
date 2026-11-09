@@ -788,12 +788,12 @@ def is_diag_tag(tag: str) -> bool:
 
 
 def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, when) -> dict[str, list[dict]]:
-    """For each tag, one row per key: the tag's own, else the newest run among the tags not later than it (marked
-    stale); never a later tag."""
+    """For each tag, one row per key: the newest run among the tags not later than it, its own included (another
+    tag's marked stale); never a later tag."""
     # one pass from the oldest tag to the newest, carrying each key's newest run so far, instead of searching back
-    # through every older tag for every key (66 tags made that the build's slowest step). A gap takes the newest run,
-    # not the newest tag's: a tag's date moves with every import, so an old tag imported into again would otherwise
-    # cover a later tag's runs with its older ones
+    # through every older tag for every key (66 tags made that the build's slowest step). Every cell takes the newest
+    # run, not the newest tag's own: a tag's date moves with every import, so a tag imported into again (tpu-v6e-fix,
+    # rows from 11-08 and 11-09) would otherwise cover a later run of the cell under another tag with its older one
     snaps: dict[str, list[dict]] = {}
     newest: dict = {}
     for t in reversed(order):
@@ -803,7 +803,7 @@ def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, whe
                 newest[key] = t
         out = []
         for key in keys:
-            src = t if key in own else newest.get(key)
+            src = newest.get(key)
             if src is None:
                 continue
             item = tagged[src][key]
