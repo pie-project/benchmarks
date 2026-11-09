@@ -2117,6 +2117,20 @@ artifacts:
     expected_gib: 5.34
     platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
+  # quality only: the 0-17 cut above leaves Gemma-4-31B's first token flat (its top 20 tokens hold 1% of the mass, no
+  # prompt where the reference leads by half a nat), so its check sees nothing; 0-23 is still flat (0.23), 0-29 sharp
+  # (0.997). The front and back periods together (0-5,48-59) drive the logits into the softcap instead
+  - id: gemma-4-31b-mlx4-slice-l30
+    base_model: mlx-community/gemma-4-31b-it-4bit
+    family: gemma4
+    scheme: affine_u4_g64
+    source_format: mlx
+    kind: miniature
+    miniature: {layers: "0-29", period: 6, note: "30 of 60 layers (5 whole periods), pie's gemma4-31b-mini-l30"}
+    pie_sku: gemma4-31b-mini-l30-u4g64-kv-bf16
+    expected_gib: 8.6
+    platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
+    tiers: []
   - id: gemma-4-31b-mlxlm-slice
     base_model: mlx-community/gemma-4-31b-it-4bit
     family: gemma4
