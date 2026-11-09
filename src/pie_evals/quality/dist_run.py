@@ -305,7 +305,8 @@ def reference_spread(ref_scored, again_scored, expect: list[int], how: str) -> d
     """The reference against itself with only its kernels changed, at each prompt's last position: the KL a correct
     engine can land at on this slice by rounding alone."""
     s = kl.last_position(ref_scored, again_scored, expect)
-    return {"ref_self_kl": s["kl_mean"], "ref_self_top1": s["top1_agree"], "ref_self": how}
+    return {"ref_self_kl": s["kl_mean"], "ref_self_top1": s["top1_agree"], "ref_self": how,
+            "ref_self_top1_decisive": s.get("top1_agree_decisive"), "ref_self_decisive_positions": s.get("decisive_positions")}
 
 
 def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir: str = "matrix", store_dir: str | None = None,
@@ -428,14 +429,16 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
         # cut so deep that rounding moves its first token past the line (Gemma-4-26B-A4B at 24 of 128 experts on
         # rtx4090-x1: vLLM eager against its CUDA graphs 0.44, against SGLang 0.35, pie 0.40) is checked on the answers
         local = "ref_platform" not in summary and (ref_name == "mlxlm" or backend in ("cuda", "rocm"))
-        if local and (summary.get("kl_mean") or 0) >= KL_PASS and os.environ.get("PARITY_REF_SPREAD", "1") == "1":
+        if local and os.environ.get("PARITY_REF_SPREAD", "1") == "1":  # diag branch: the spread on every cell, not only past the line
             busy = device_idle(backend)
             if busy:
                 raise RuntimeError(f"device not idle before the reference's second pass: {busy}")
             _, again = _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, {}, out_dir, log,
                                   ref_texts, again=True)
             summary.update(reference_spread(ref_scored, again, expect, "vLLM --enforce-eager" if ref_name == "vllm" else "mlx-lm, fused kernels off"))
-            log(f"first-token {art.id}@{platform_id}: {ref_name} against itself ({summary['ref_self']}): KL {summary['ref_self_kl']}")
+            log(f"first-token {art.id}@{platform_id}: {ref_name} against itself ({summary['ref_self']}): KL {summary['ref_self_kl']}, top-1 {summary['ref_self_top1']}, "
+                f"decisive top-1 {summary['ref_self_top1_decisive']} over {summary['ref_self_decisive_positions']}; pie: KL {summary['kl_mean']}, top-1 {summary['top1_agree']}, "
+                f"decisive top-1 {summary.get('top1_agree_decisive')} over {summary.get('decisive_positions')}")
             if first_token_inconclusive(summary["kl_mean"], summary["ref_self_kl"]):
                 (out_dir / f"{art.id}-{platform_id}-first-token.json").write_text(json.dumps(summary, indent=1))
                 log(f"first-token {art.id}@{platform_id}: pie within {SELF_TIMES}x the reference's own spread; checked on the answers instead")
