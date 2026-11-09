@@ -191,51 +191,47 @@ window.Pie = window.Pie || {};
   const links = (rows) => `<ul class="welcome-list is-trust">${rows.map(([colour, t, href, d]) =>
     `<li><a href="${href}" target="_blank" rel="noopener"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><span>${d}</span></a></li>`).join("")}</ul>`;
 
-  // Model Slices: two claims, each as a card in its colour with a tag that tells measured from modelled, each followed
-  // by its proof (a formula on its own line, then what it rests on), the limits, and real cuts from matrix/models.yaml
-  const claim = (n, colour, tag, title, text) => `<section class="slice-claim" style="--claim: ${colour}"><div class="slice-claim-head"><span class="slice-claim-kicker">Claim ${n}</span><span class="slice-claim-tag">${tag}</span></div><h4>${title}</h4><p>${text}</p></section>`;
-  const math = (lines) => `<div class="slice-math" role="math">${lines.map((l) => `<div>${l}</div>`).join("")}</div>`;
+  // Model Slices: its two claims as numbered steps, each then stated in a line, its formula set as the limit chapters
+  // set theirs (a named result, its terms as coloured pills), and the facts it rests on; real cuts from matrix/models.yaml
+  const mv = (name, colour, sym) => `<span class="m-var" data-name="${name}" title="${sym}" style="--pill: ${colour}">${name}</span>`;
+  const mt = (name, colour) => `<span class="m-tag" data-name="${name}" style="--pill: ${colour}"><span class="m-dot"></span>${name}</span>`;
+  const mo = (x) => `<span class="m-op">${x}</span>`;
+  const mp = (x) => `<span class="m-paren">(</span>${x}<span class="m-paren">)</span>`;
+  const eqs = (rows) => `<div class="m-doc is-slices"><div class="m-doc-eqs">${rows.map(([result, colour, rel, math]) =>
+    `<div class="m-doc-eq"><span class="m-doc-eq-line">${mt(result, colour)}<span class="op">${rel}</span><span class="m-eq">${math}</span></span></div>`).join("")}</div></div>`;
   const slices = () => `
-      ${lead("Model slices serve two purposes: a fair comparison of engines on one accelerator, and a computational foundation for modeling full-model and distributed inference. The grid measures the first. The second is a model, not a measurement.")}
-      <h3>Why model slices?</h3>
-      <p>A frontier model needs up to eight GPUs just to load. A slice cuts it to fit one and keeps the full model's layer shapes, where a smaller model of the same family has narrower layers and runs different kernels. Every engine then runs the same cut, on every chip and every release.</p>
+      ${lead("A slice is a frontier model cut to fit one device, with the full model's layer shapes kept. It has two uses: a fair comparison of engines on one accelerator, which the grid measures, and a baseline for modeling the full model at scale, which it does not.")}
+      ${steps([["#5E5CE6", "Fair comparison", "Engines on the same slice, measured on this site"],
+        ["#FF9500", "Proxy for scale", "Full-model and distributed compute: a model, not a measurement"]], "<h3>Two claims</h3>")}
+      <h3>How a model is cut</h3>
       ${facts([["#5E5CE6", "Same width", "Hidden size, heads, expert width, top-<i>k</i>, quant groups and vocab head unchanged"],
         ["#FF9500", "Experts first", "Fewer stored experts, the same active ones per token"],
         ["#30B0C7", "Then layers", "Only if it still does not fit, in whole repeating blocks"]])}
-      ${claim(1, "#5E5CE6", "Measured on this site", "Fair architectural benchmarking",
-        "A slice keeps the computational character of the full model's layers while fitting one device, so engines are compared on the same architecture, tensor shapes, kernel work and quantization.")}
-      ${facts([["#5E5CE6", "Hidden size", "And the attention dimensions, so every projection and attention kernel keeps its shape"],
-        ["#FF9500", "Expert width", "And top-<i>k</i>, so each token's routed matmuls stay the full model's"],
-        ["#30B0C7", "Quantization", "The same groups and bits, so the same dequant kernels run"],
-        ["#007AFF", "Vocabulary head", "Full size, the same final matmul"],
-        ["#34C759", "Layer structure", "Every retained layer kept whole, in its original order"]])}
-      <h3>Proof 1: preserving computational characteristics</h3>
-      ${math(["<var>F</var><sub>layer</sub> = <var>f</var>(<var>H</var>, <var>A</var>, <var>E</var>, <var>K</var>, <var>Q</var>)"])}
-      <p>A retained layer's cost depends on its hidden size <var>H</var>, attention configuration <var>A</var>, expert width <var>E</var>, active experts per token <var>K</var> and quantization <var>Q</var>. A slice changes none of them, so each retained layer does the work it does in the full model, and comparing engines on the same slice is a controlled architectural comparison.</p>
+      <h3>Claim 1: a fair comparison on one device</h3>
+      <p>A layer's cost is set by its hidden size, attention, expert width, active experts per token and quantization. A slice changes none of them, so every engine runs the full model's shapes, kernels and quantization, and the comparison is controlled.</p>
+      ${eqs([["Layer cost", "#5E5CE6", "=", `<span class="m-fn">f</span>${mp([mv("Hidden size", "#5E5CE6", "H"), mv("Attention", "#007AFF", "A"), mv("Expert width", "#FF9500", "E"), mv("Top-k", "#FF9500", "K"), mv("Quantization", "#30B0C7", "Q")].join('<span class="m-comma">,</span>'))}`]])}
       ${facts([["#5E5CE6", "Same checkpoint", "Every engine loads the identical cut, unmodified"],
         ["#30B0C7", "Same tokens", "The same token ids in, all 256 tokens out"],
-        ["#34C759", "Same model", "Each engine's first token checked against the reference"]])}
-      ${claim(2, "#FF9500", "A model, not yet measured", "A computational proxy for distributed inference",
-        "The same slice can be a baseline for estimating the full model's compute and, together with a model of the cluster, its multi-GPU or multi-node performance. This site does not measure that today.")}
-      <h3>Proof 2: scaling and a distributed performance model</h3>
-      ${math(["<var>C</var><sub>layers</sub> = <var>L</var><sub>full</sub> / <var>L</var><sub>slice</sub>",
-        "<var>T</var><sub>full, compute</sub> ≈ <var>C</var><sub>layers</sub> · <var>T</var><sub>slice</sub>"])}
-      <p>For a layer cut, the full model's compute time is, to first order, the slice's time scaled by the layer ratio, because each retained layer keeps its dimensions. Three qualifications apply.</p>
-      ${facts([["#FF9500", "Expert cuts do not scale", "Fewer stored experts, the same active ones per token: the time is not multiplied by the inverse expert fraction"],
-        ["#007AFF", "The vocabulary head", "Full size on every slice and not proportional to layers, so it is counted once, on its own"],
-        ["#8E8E93", "Not a latency prediction", "A first-order estimate of compute, not the full model's measured latency"]])}
-      ${math(["<var>T</var><sub>distributed</sub> ≈ <var>T</var><sub>compute</sub> + <var>T</var><sub>communication</sub> + <var>T</var><sub>overhead</sub> − <var>T</var><sub>overlap</sub>"])}
-      <p>Running a model across GPUs or nodes adds communication and coordination to its compute, and hides part of them behind it. Each term has its own source.</p>
-      ${facts([["#5E5CE6", "Slice", "The architectural compute baseline, measured here"],
-        ["#FF9500", "Layer scaling", "The full model's computational work, estimated by the ratio above"],
-        ["#30B0C7", "The cluster", "Communication cost, from interconnect bandwidth, latency and topology"],
-        ["#34C759", "The engine", "Parallelization strategy, kernel efficiency, and how much communication it hides behind compute"]])}
-      <p>Slice measurements alone do not establish multi-node performance. The model above is a predictive opportunity: it needs calibration against real multi-GPU and multi-node runs before its estimates can be trusted.</p>
-      <h3>Limitations and what we do not claim</h3>
-      ${facts([["#FF3B30", "Not multi-GPU serving", "A slice does not predict it; tensor-parallel <code>all-reduce</code> and expert parallelism decide that speed"],
-        ["#FF3B30", "Not validated at scale", "No multi-node number on this site comes from a slice"],
-        ["#8E8E93", "Vocab head share", "Full size, so it takes a larger share of each step than in the full model, which the roofline counts"],
-        ["#34C759", "Relative Speed", "Shown: each engine against the others on the same slice"],
+        ["#34C759", "Same model", "Each engine's first token checked against the reference"],
+        ["#8E8E93", "Relative Speed", "Shown as each engine against the others on the same slice"]])}
+      <h3>Claim 2: a proxy for the full model at scale</h3>
+      <p>For a layer cut, the full model's compute is, to first order, the slice's time scaled by the layer ratio, because each kept layer does its full-model work.</p>
+      ${eqs([["Layer ratio", "#5E5CE6", "=", `${mv("Full layers", "#FF9500", "L_full")}${mo("÷")}${mv("Slice layers", "#5E5CE6", "L_slice")}`],
+        ["Full-model compute", "#FF9500", "≈", `${mv("Layer ratio", "#5E5CE6", "C")}${mo("×")}${mv("Slice time", "#5E5CE6", "T_slice")}`]])}
+      ${facts([["#FF9500", "Expert cuts do not scale", "The same active experts per token, so no inverse expert fraction"],
+        ["#007AFF", "Vocabulary head", "Full size on every slice, counted once on its own"],
+        ["#8E8E93", "Compute, not latency", "A first-order estimate, not the full model's measured time"]])}
+      <p>Across GPUs or nodes, communication and coordination add to that compute, and overlap hides part of them.</p>
+      ${eqs([["Distributed time", "#FF9500", "≈", `${mv("Compute", "#FF9500", "T_compute")}${mo("+")}${mv("Communication", "#30B0C7", "T_comm")}${mo("+")}${mv("Overhead", "#8E8E93", "T_overhead")}${mo("−")}${mv("Overlap", "#34C759", "T_overlap")}`]])}
+      ${facts([["#5E5CE6", "Slice", "The compute baseline, measured here"],
+        ["#FF9500", "Layer scaling", "The full model's work, estimated"],
+        ["#30B0C7", "Cluster", "Communication, from interconnect bandwidth, latency and topology"],
+        ["#34C759", "Engine", "Parallelism, kernel efficiency and how much communication it hides"]])}
+      <p>Slices alone do not establish multi-node performance. This model needs calibration against real multi-GPU and multi-node runs.</p>
+      <h3>What we do not claim</h3>
+      ${facts([["#FF3B30", "Multi-GPU serving", "Not predicted: tensor-parallel <code>all-reduce</code> and expert parallelism decide it"],
+        ["#FF3B30", "Validated at scale", "No multi-node number here comes from a slice"],
+        ["#8E8E93", "Vocab head share", "Larger than in the full model, which the roofline counts"],
         ["#8E8E93", "Absolute speed", "Hidden: raw tok/s, Best TPS and Efficiency describe the full model"],
         ["#8E8E93", "Accuracy and drafts", "Not run: both need the model's real answers"]])}
       <h3>Real cuts</h3>
