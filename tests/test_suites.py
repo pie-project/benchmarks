@@ -122,7 +122,7 @@ def test_a_gap_takes_the_newest_run_not_the_newest_tags(webdb):
     tagged = {"top": {}, "old": {key: {"at": "2026-10-27 01:12", "v": 1}}, "dev": {key: {"at": "2026-11-03 00:18", "v": 2}}}
     snaps = webdb.stack(["top", "old", "dev"], tagged, [key], lambda item, k, src: {"v": item["v"]}, lambda item: item["at"])
     assert snaps["top"] == [{"v": 2, "stale": {"tag": "dev", "measured": "2026-11-03 00:18"}}]
-    assert snaps["old"][0]["v"] == 1 and snaps["old"][0]["stale"] is None  # a tag's own run is always its own
+    assert snaps["old"][0]["v"] == 2 and snaps["old"][0]["stale"] == {"tag": "dev", "measured": "2026-11-03 00:18"}  # the newest run, not the tag's own (#1650)
     assert snaps["dev"][0]["v"] == 2 and snaps["dev"][0]["stale"] is None
 
 
