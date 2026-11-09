@@ -881,7 +881,7 @@ window.Pie = window.Pie || {};
         // choices beside it, as Finder's Group By; the groups and their models under them
         const GROUPS = [["maker", "Maker"], ["size", "Size"], ["where", "Local or Cloud"]];
         return [{ value: "", label: "All Models", selected: !picked.length, check: true },
-          { label: "Group by", detail: GROUPS.find(([id]) => id === by)?.[1] || "Maker", submenu: GROUPS.map(([id, label]) => ({ value: `by:${id}`, label, selected: by === id })) },
+          { label: "Group by", detail: GROUPS.find(([id]) => id === by)?.[1] || "Maker", submenu: GROUPS.map(([id, label]) => ({ value: `by:${id}`, key: "grid:model", label, selected: by === id })) },
           ...order.filter((name) => groups[name]).flatMap((name) => {
             const list = groups[name].sort((a, b) => (paramsOf(a) ?? Infinity) - (paramsOf(b) ?? Infinity) || names().model(a).localeCompare(names().model(b)));
             return [{ separator: true },
