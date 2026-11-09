@@ -233,6 +233,12 @@ competitive:
           rationale: >
             FlashInfer and FA3 are CUDA-only; vLLM's ROCm build picks among its own
             ROCm backends (ROCM_ATTN, the AITER ones, TRITON_ATTN). Unset leaves its pick.
+      # gfx950 (MI350X, MI355X): the 0.32.0 ROCm wheel (vllm==0.32.0+rocm723 with its torch 2.13.0+git733fca1) segfaults
+      # replaying its HIP graphs (at::cuda::CUDAGraph::replay, the first raw-512-256 cell of every model, mi350x-x1
+      # 2026-11-09; PIECEWISE-only graphs and VLLM_ROCM_USE_AITER=0 crash the same, eager runs ~3x slower). Those
+      # rows come from AMD's image rocm/vllm:rocm10.1.0_ubuntu24.04_py3.14-pytorch_2.13.0_vllm-0.29.0, whose
+      # vLLM 0.29.1.dev0 (torch 2.13.0+rocm10.1.0) replays them; each row records that version. The pod runs the
+      # node in that image with a vLLM venv that is a wrapper over the image's python (as SGLang's ROCm image is used).
     xla:
       knobs:
         attention_backend:
