@@ -354,6 +354,11 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
     texts = [""] * len(rendered) if first else saved_texts(matrix_dir, art.id, rendered)
     summary["ref_texts"] = "saved" if texts is not None else "greedy"
     try:
+        # PARITY_SAVED_REF=1: score against the saved reference even though this device's runs, for a device whose own
+        # reference is the suspect side (MiniMax-M3.1-Flash on gfx950: the vLLM 0.32.0 ROCm wheel's first tokens agree
+        # with the H100's on 7 of 64 prompts, Nemotron-3 and Qwen3.8-Flash-Next's on 60+)
+        if first and os.environ.get("PARITY_SAVED_REF") == "1" and saved_first_ref(matrix_dir, art.id, rendered):
+            raise RuntimeError("PARITY_SAVED_REF=1: this device's reference is not trusted for this model, the saved one scores it")
         ref_texts, ref_scored = _reference(ref_name, art, plat, workload, mode, snapshot, rendered, tp, backend, pie_root, m, vllm_pin, summary, out_dir, log, texts)
         if texts is None and not first:  # the answers to save under matrix/parity-texts, so the next run scores the same texts
             (out_dir / f"{art.id}.json").write_text(json.dumps({"prompts": kl.texts_hash(rendered), "answer_tokens": ANSWER_TOKENS,
@@ -368,7 +373,7 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
                 log(f"first-token {art.id}@{platform_id}: reference saved, pie not run")
                 return summary
     except Exception as e:  # noqa: BLE001
-        summary["ref_unsupported"] = _reason(e, out_dir, art.id, ref_name)
+        summary["ref_unsupported"] = str(e) if str(e).startswith("PARITY_SAVED_REF=1") else _reason(e, out_dir, art.id, ref_name)
         log(f"parity {art.id}@{platform_id}: {ref_name} cannot run it: {summary['ref_unsupported']}")
         saved = saved_first_ref(matrix_dir, art.id, rendered) if first else None
         if saved:  # the same checkpoint, cut and prompts scored by the reference on another device (vLLM on a GPU)
