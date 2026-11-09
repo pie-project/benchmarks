@@ -77,6 +77,18 @@ competitive:
             answers "head_size not supported, MLA not supported" (every
             Kimi-K3 cell of nightly 35921789513 on the A100). Unset leaves
             vLLM's own MLA pick.
+      platform:
+        b200-x1:
+          knobs:
+            max_num_batched_tokens:
+              value: 32768
+              rationale: >
+                vllm_bench.py builds AsyncLLM, whose engine usage context leaves
+                vLLM's scheduler at 2048 tokens a step, and at c1024 Kimi-K3 queued
+                its prompts behind it (11.2k tok/s, TTFT p50 35 s; 17.8k at c512).
+                c1024 on the B200: 16384 (what `vllm serve` takes on this card)
+                19.4-20.1k, 32768 21.4-22.9k, 65536 22.0k, 131072 faults in
+                FlashAttention (CUDA error 700).
     deepseek_v41:
       knobs:
         attention_backend:
