@@ -8,6 +8,7 @@ on:
       pods: { description: "comma-separated pod ids on the tailnet", required: false, default: "" }
       tag: { description: "site tag the rows are stored under", required: false, default: "" }
       reset: { description: "drop every row of the tag first, so the pods' current /workspace/out is all the tag holds", type: boolean, required: false, default: false }
+      runs_on: { description: "runner labels as JSON (empty: the site laptops; [\"pod-import\"]: liszt-server's runner when they are backed up)", required: false, default: "" }
   schedule:
     - cron: "*/10 * * * *"
 permissions: { contents: read }
@@ -16,7 +17,7 @@ jobs:
   # them empty, each still checking out and installing) outlasted the 10-minute schedule, so imports queued for hours
   tags:
     if: ${{ github.event_name == 'schedule' || inputs.tag != '' }}
-    runs-on: [self-hosted, site]
+    runs-on: ${{ fromJSON(inputs.runs_on || '["self-hosted", "site"]') }}
     outputs: { tags: "${{ steps.list.outputs.tags }}" }
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +35,7 @@ jobs:
       matrix:
         tag: ${{ fromJSON(needs.tags.outputs.tags) }}
     timeout-minutes: 30  # a pod that drops off the tailnet mid-copy must not hold the one import runner (an outage held it 50 minutes)
-    runs-on: [self-hosted, site]  # the site laptop runners, on the tailnet with the pods: liszt-server's one import runner stalled (busy with no job) and imports queued for hours
+    runs-on: ${{ fromJSON(inputs.runs_on || '["self-hosted", "site"]') }}  # the site laptop runners, on the tailnet with the pods: liszt-server's one import runner stalled (busy with no job) and imports queued for hours
     # a dispatch (a reset, a pod list) is its own group: a later run's pending job of the tag never cancels it
     concurrency: { group: "pod-import-${{ matrix.tag }}${{ github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}", cancel-in-progress: false }
     env:
