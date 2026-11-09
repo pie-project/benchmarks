@@ -111,6 +111,12 @@
 .platform-nofit { width: 12px; height: 12px; fill: none; stroke: var(--color-label-quaternary); stroke-width: 1.1; stroke-linecap: round; vertical-align: -2px; }  /* as the slice mark: same size, colour and line */
 .platform-key .platform-nofit { margin-right: 6px; }
 .platform-bar .platform-key .platform-nofit { margin-right: 0; vertical-align: 0; }  /* the bar's key: the mark 6px from its word, as CI Error's swatch */
+/* Model Slices: a small switch beside the keys, green when on, as a Mac's mini switch */
+.platform-toggle { gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.platform-toggle .platform-switch { position: relative; width: 22px; height: 13px; border-radius: 7px; background: var(--color-fill-secondary); transition: background .15s ease; }
+.platform-toggle .platform-switch::after { content: ""; position: absolute; top: 1.5px; left: 1.5px; width: 10px; height: 10px; border-radius: 50%; background: #fff; box-shadow: 0 0.5px 1.5px rgba(0, 0, 0, .3); transition: transform .15s ease; }
+.platform-toggle[aria-checked="true"] .platform-switch { background: var(--color-positive); }
+.platform-toggle[aria-checked="true"] .platform-switch::after { transform: translateX(9px); }
 
 /* the machine column: Apple's mark, the chip, its memory in a quiet mono */
 .platform-row { display: table-cell; }

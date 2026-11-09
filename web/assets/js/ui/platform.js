@@ -980,7 +980,9 @@ window.Pie = window.Pie || {};
       if (fixed) { peeked = null; compare = fixed; }
       else if (dry) compare = "engines";
       else if (!peeked) compare = chosen;  // a platform's page shows the viewer's pick, whatever page came before
-      const all = Pie.store.snapshot(state.release);
+      // Model Slices off: only full models' rows, so a model that fits nowhere shows its does-not-fit mark (Quality keeps them)
+      const sliceOn = dry || state.platform.slices !== false;
+      const all = Pie.store.snapshot(state.release).filter((r) => sliceOn || !r.miniature);
       lastAll = all;  // the hover cards name the engines that left a cell empty
       shownEngine = null;
       const modes = Pie.platform.metrics(state);
@@ -1113,7 +1115,7 @@ window.Pie = window.Pie || {};
           // a model that runs cut down to fit (a miniature) never "does not fit": where its miniature did not run, the cell
           // says that instead of the full model's size
           // only where this run measures (or measured) the model cut down: elsewhere the full model's "does not fit" stands
-          const cut = (TODAY.models.has(id) && TODAY.hardware.has(mac)) || snapshot.some((r) => here(r) && r.miniature);
+          const cut = sliceOn && ((TODAY.models.has(id) && TODAY.hardware.has(mac)) || snapshot.some((r) => here(r) && r.miniature));
           let needs = cut ? null : noFit[mac]?.[id]?.[base];
           // Best TPS and Kernel Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
           const fullNeeds = Pie.store.index.models[id]?.needs_gib;
@@ -1141,7 +1143,8 @@ window.Pie = window.Pie || {};
       // column goes in Tokens per Second, and a model not run in this setup goes until one is picked that has it
       // the Quality grid also keeps a model whose slice has a first-token KL on a machine, though no other engine runs it there
       const checked = new Set(dry ? (Pie.store.tables.quality_parity || []).filter((r) => !r.ref_unsupported && Number.isFinite(r.kl_mean)).map((r) => `${r.platform}|${r.model}`) : []);
-      const hasData = (mac, model) => grid[mac][model].c || awaiting(mac, model) || checked.has(`${mac}|${realOf(model)}`);
+      // Model Slices off: a column only where a full model has a number
+      const hasData = (mac, model) => grid[mac][model].c || (sliceOn && (awaiting(mac, model) || checked.has(`${mac}|${realOf(model)}`)));
       // comparing engines, a model is shown on a machine only where two engines could run it there: an engine the machine
       // runs with a number, not run yet, a failed run or no row at all could still give one; "Not supported" and "Does not
       // fit" never will. A model no machine could compare on has no column; one merely not measured yet keeps it
@@ -1394,6 +1397,7 @@ window.Pie = window.Pie || {};
           <span class="platform-bar-side is-end">
             <span class="platform-key" title="An engine on this cell measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>CI Error</span>
             <span class="platform-key" title="The full model does not fit one machine; a number beside the mark is a model slice&#39;s, for comparing engines">${NOFIT}Does not fit</span>
+            <button type="button" class="platform-key platform-toggle" data-slices role="switch" aria-checked="${state.platform.slices !== false}" title="On: model slices&#39; numbers where the full model does not fit. Off: full models only"><i class="platform-switch" aria-hidden="true"></i>Model Slices</button>
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
             <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
             <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
@@ -1508,6 +1512,11 @@ window.Pie = window.Pie || {};
           if (auto.rolling) captureGhosts();
           state.platform.mode = tab.dataset.mode;
           onChange();
+          return;
+        }
+        if (event.target.closest("[data-slices]")) {
+          state.platform.slices = state.platform.slices === false;
+          inPlace(onChange);
           return;
         }
         const pick = event.target.closest("[data-grid-pick]");
