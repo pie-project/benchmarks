@@ -203,6 +203,14 @@ default:
               rationale: >
                 As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
                 cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        gemma4_moe:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf32-512's 553-token prompts, padded to 640 rows; the
+                12-layer, 32-expert cut's 2048-row fire fits beside its pool and takes three: pf32-512 20.9k ->
+                22.9k tok/s, c32 2490 -> 2577 (pie a2f02c75, pie-moe-v5e-2). vLLM-TPU prefills 2048 tokens a step.
         hy_v4:
           knobs:
             gpu_mem_util:
