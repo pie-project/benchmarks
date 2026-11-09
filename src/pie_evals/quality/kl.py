@@ -86,11 +86,14 @@ def scored(base: str, model: str, texts: list[str], parallel: int = 4, extra: di
 def partition_kl(p: dict[int, float], q: dict[int, float]) -> float:
     """KL(p || q) over the cells {each token in p's top list} + {rest}, from each engine's top-k log-probabilities.
 
-    A token in p's list that q's list lacks holds at most q's smallest listed probability, and all such tokens together
-    at most the mass q leaves unlisted: each gets the lesser of the two. Folding them into the rest instead scores two
+    A token in p's list that q's top ``TOPK`` lack holds at most q's ``TOPK``-th probability, and all such tokens together
+    at most the mass q leaves unlisted: each gets the lesser of the two. The ``TOPK``-th, not q's smallest entry: pie's
+    first-token list carries a 21st token far down (log-probability -35 on Gemma-4-31B's 0-23 cut), and bounding by it
+    put a reference token ranked just outside pie's 20 at 1e-16 (KL 0.071 for lists that score 0.0006). Folding them into the rest instead scores two
     lists that share no token at 0 (each rest then holds everything), so an engine whose top 20 holds none of the
     reference's would pass: the 18-layer Gemma-4-31B cut 0-5,48-59 on m3-16g, the reference's top three at 0.23 each."""
-    q_min = math.exp(min(q.values())) if q else 0.0
+    ranked = sorted(q.values(), reverse=True)
+    q_min = math.exp(ranked[min(len(ranked), TOPK) - 1]) if ranked else 0.0
     missing = [t for t in p if t not in q]
     q_unlisted = max(1.0 - sum(math.exp(v) for v in q.values()), 0.0)
     q_missing = min(q_min, q_unlisted / len(missing)) if missing else 0.0

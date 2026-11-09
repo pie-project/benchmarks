@@ -39,3 +39,12 @@ def test_a_low_ranked_token_missing_moves_it_little():
     ref = lp({1: 0.6, 2: 0.3, 3: 0.004})
     other = lp({1: 0.6, 2: 0.3, 4: 0.005})
     assert partition_kl(ref, other) < 0.01
+
+
+def test_an_extra_entry_far_down_the_list_is_not_the_bound():
+    # pie's list: its top 20 and one more token at log-probability -35; the reference's 20th token sits just outside
+    # pie's 20, at about pie's 20th probability
+    ref = lp({t: 0.01 for t in range(20)})
+    other = lp({**{t: 0.01 for t in range(19)}, 99: 0.0099})
+    other[12345] = -35.0
+    assert partition_kl(ref, other) < 1e-3
