@@ -558,6 +558,25 @@ default:
                 tokens (kl.gibberish). Parity boots pie 64 lanes wide (its scored fires read every position), and the
                 plan needs more rows than lanes: at 64 rows "the budgets admit more lanes than token rows" (tpu
                 42525007381), so 128.
+    qwen3.8-flash-next-mini10:
+      backend:
+        xla:
+          knobs:
+            max_forward_tokens:
+              value: 512
+              rationale: "As qwen3.8-flash-next-mini's: the fire's HLO temporaries grow with its rows."
+            gpu_mem_util:
+              value: 0.6
+              rationale: "As qwen3.8-flash-next-mini's: the temporaries count the KV pool."
+      platform:
+        tpu-v5e-1:
+          knobs:
+            parity_gpu_mem_util:
+              value: 0.9
+              rationale: "As qwen3.8-flash-next-mini's on a v5e (tpu 42519154722, 42525007381)."
+            parity_max_forward_tokens:
+              value: 128
+              rationale: "As qwen3.8-flash-next-mini's on a v5e: 128 rows, wider than parity's 64 lanes."
     hy4-mini6:
       platform:
         tpu-v5e-1:
