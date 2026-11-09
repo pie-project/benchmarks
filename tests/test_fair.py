@@ -258,3 +258,10 @@ def test_each_cold_prompt_has_its_own_body():
     assert len(set(bodies)) == 8  # one answer per lane: a MoE batch routes its requests apart
     assert {len(b.split()) for b in bodies} == {len(prompt_words_for_tokens(128, salt="c256|0").split())}  # same length every request
     assert fair.cold_prompts("one body", workload_id="w", seed="s", count=2)[1].endswith("] one body")  # a plain body still works
+
+
+def test_time_per_output_token_does_not_read_a_batched_stream_as_zero():
+    # 65 tokens over 0.8 s after the first, handed over 4 at a time: most gaps are 0 us
+    chunked = {"ok": True, "latency_s": 1.0, "ttft_s": 0.2, "output_tokens": 65, "prompt_tokens": 512, "intertoken_us": ([50000] + [0] * 3) * 16}
+    perf = perf_from_common_json({"config": {"concurrency": 1}}, [chunked] * 3, None, concurrency=1)
+    assert perf.itl_ms_p50 == pytest.approx(12.5) and perf.itl_ms_p99 == pytest.approx(12.5)
