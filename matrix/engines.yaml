@@ -6,7 +6,7 @@
 # nightly up; the smoke tier compares pie against its own history.
 engines:
   - id: pie
-    os: [linux, macos]
+    os: [linux, macos, android, ios]   # the phones too (mobile/): the benchmark app runs pie under this id, never planned
     formats: [hf_safetensors, gguf, mlx]
     tiers: [smoke, nightly, weekly]
     recipe: default
@@ -37,7 +37,7 @@ engines:
     pin: "1.4.0rc2.post1"   # its PyTorch backend (trtllm-serve on the HF checkpoint); 1.2.1, the last non-rc, predates Gemma-4, Qwen3.5 and gpt-oss on Blackwell RTX
     release_source: pypi:tensorrt-llm
   - id: llamacpp
-    os: [linux, macos]
+    os: [linux, macos, android, ios]   # the phones too, as pie
     backends: [cuda, rocm, metal]   # never in a browser tab (the webgpu platforms run the browser engines)
     formats: [gguf]
     tiers: [nightly, weekly]
