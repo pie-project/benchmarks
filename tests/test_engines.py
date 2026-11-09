@@ -1268,10 +1268,12 @@ def test_the_tpu_runs_pie_vllm_and_sglang_raw_prefill_and_batch_rows():
     tpu = {(str(c.engine), c.artifact.id, c.workload.id) for c in cells}
     assert ("vllm", "qwen3.5-0.8b-bf16", "raw-512-256") in tpu and ("pie", "qwen3.5-0.8b-xla", "raw-512-256") in tpu
     assert {e for e, _, _ in tpu} == {"pie", "vllm", "sglang"}
-    # every arm runs Raw and the 256-prompt prefill, and one batch as large as the chip holds; Qwen3.5-0.8B keeps its own shapes on pie
+    # every arm runs Raw and a prompt batch (256 prompts, or 32 where the chip seats no 256 recurrent states: Qwen3.8-27B's
+    # 20-layer cut, #1578), and one batch as large as the chip holds; Qwen3.5-0.8B keeps its own shapes on pie
     arms = {(e, a) for e, a, _ in tpu}
-    assert all((e, a, "raw-512-256") in tpu and (e, a, "pf256-512") in tpu for e, a in arms)
-    assert {w for e, a, w in tpu if a != "qwen3.5-0.8b-xla"} <= {"raw-512-256", "pf256-512", "c32", "c64", "c256"}
+    assert all((e, a, "raw-512-256") in tpu and {(e, a, "pf256-512"), (e, a, "pf32-512")} & tpu for e, a in arms)
+    assert {a for _, a, w in tpu if w == "pf32-512"} == {"qwen3.8-27b-mini20"}
+    assert {w for e, a, w in tpu if a != "qwen3.5-0.8b-xla"} <= {"raw-512-256", "pf256-512", "pf32-512", "c32", "c64", "c256"}
     # the GPU page's models too, where one 32 GB chip holds them
     more = {"qwen3-0.6b-tpu", "gemma-4-e2b-tpu", "gemma-4-e4b-tpu", "gemma-4-12b-tpu", "gpt-oss-20b-tpu"}
     # vLLM-TPU runs gpt-oss on its int8 requant (#1307); pie runs them all
