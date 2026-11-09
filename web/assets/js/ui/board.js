@@ -444,7 +444,9 @@ window.Pie = window.Pie || {};
       : `<div class="board-compare-empty">${needs ? `${NOFIT}<b>Doesn't fit on this machine</b><span>This model needs about ${Math.round(needs)} GB of memory.</span>` : "<b>Not measured yet</b><span>No results for this model on this machine.</span>"}</div>`;
     // the name opens the machine's specs on hover, or on a tap
     const spec = specRows(c.hw), name = esc(machineName(c.hw));
-    const named = spec.length ? `<span class="board-compare-name" tabindex="0" data-tip-head="${name}" data-tip-rows="${esc(JSON.stringify(spec))}">${name}${INFO}</span></h2>` : `${name}</h2>`;
+    // the platform's tile before the machine's name, as the leaderboard marks its rows
+    const glyph = `<span class="sidebar-glyph" style="--tint: ${Pie.schema[c.p]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(c.p)}</span>`;
+    const named = `${glyph}${spec.length ? `<span class="board-compare-name" tabindex="0" data-tip-head="${name}" data-tip-rows="${esc(JSON.stringify(spec))}">${name}${INFO}</span>` : name}</h2>`;
     return card(`metric-${c.p}`, machineName(c.hw), "", body, "", false).replace('class="board-card"', 'class="board-card board-compare"').replace(`${name}</h2>`, named);
   };
   // the two as one card, Decode or Prefill picked in its corner and kept per browser
