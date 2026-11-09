@@ -53,7 +53,38 @@ def ensure_harness(log=print) -> str:
         log("browser: installing Playwright's Chromium and its system libraries")
         subprocess.run(["npx", "playwright", "install", "--with-deps", "chromium"], cwd=BROWSER, check=True, timeout=3600)
         stamp.write_text("ok\n")
+    _ensure_vulkan(log)
     return node
+
+
+NVIDIA_ICD = {"file_format_version": "1.0.0", "ICD": {"library_path": "libGLX_nvidia.so.0", "api_version": "1.3"}}
+
+
+def _ensure_vulkan(log=print) -> None:
+    """Chrome's WebGPU on Linux runs on Dawn's Vulkan backend: it needs the Vulkan loader, the NVIDIA driver's graphics
+    libraries in the container (NVIDIA_DRIVER_CAPABILITIES with graphics, pods.runpod) and the driver's ICD manifest.
+    Without any of them WebGPU falls back to SwiftShader and the bridge refuses the run. Logs what the machine has, adds
+    the loader and the manifest where they are missing (a container mounts the libraries but not always the manifest)."""
+    import json
+    import platform as _platform
+
+    if _platform.system() != "Linux" or not shutil.which("nvidia-smi"):
+        return
+    libs = subprocess.run(["ldconfig", "-p"], capture_output=True, text=True).stdout
+    has = {name: name in libs for name in ("libvulkan.so.1", "libGLX_nvidia.so.0", "libnvidia-glvkspirv.so", "libnvidia-gpucomp.so")}
+    dirs = [Path(d) for d in ("/usr/share/vulkan/icd.d", "/etc/vulkan/icd.d")]
+    icds = [str(f) for d in dirs if d.is_dir() for f in d.glob("*.json")]
+    log(f"browser: vulkan: NVIDIA_DRIVER_CAPABILITIES={os.environ.get('NVIDIA_DRIVER_CAPABILITIES', '')!r}, libraries {has}, icd manifests {icds}")
+    if not has["libvulkan.so.1"] and shutil.which("apt-get"):
+        log("browser: vulkan: installing the loader (libvulkan1)")
+        subprocess.run(["apt-get", "install", "-y", "-q", "libvulkan1"], check=False, timeout=900)
+    if has["libGLX_nvidia.so.0"] and not any("nvidia" in i for i in icds):
+        d = dirs[0]
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "nvidia_icd.json").write_text(json.dumps(NVIDIA_ICD))
+        log(f"browser: vulkan: wrote {d / 'nvidia_icd.json'}")
+    if not has["libGLX_nvidia.so.0"]:
+        log("browser: vulkan: the driver's graphics libraries are not in this container; WebGPU will be SwiftShader")
 
 
 def _link(dst: Path, src: Path) -> None:
