@@ -5,7 +5,7 @@
 Each phone workload is a matrix workload (raw-512-256, c4, pf4-512). Its prompts come from
 pie_evals.node.workloads.synthetic and pie_evals.node.fair exactly as a Mac run makes them: the same
 seeded word block, the same cold tags per round. Each model's chat template (system + user, thinking off,
-as scripts/bench/common.py renders it) is stored as the text around the user message, with the token
+as bench/common.py renders it) is stored as the text around the user message, with the token
 count every prompt must come to, so a phone engine can check it read the same prompt.
 """
 from __future__ import annotations
@@ -21,7 +21,7 @@ from pie_evals.plan.matrix import Matrix
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "mobile" / "shared" / "workloads.json"
-SYSTEM = "You are a helpful benchmarking assistant."  # scripts/bench/common.py BENCH_SYSTEM
+SYSTEM = "You are a helpful benchmarking assistant."  # bench/common.py BENCH_SYSTEM
 ROUNDS = 3
 PHONE_WORKLOADS = ["raw-512-256", "c4", "pf4-512"]
 # site model id -> the tokenizer whose chat template renders its prompts (the one the Mac rows use)

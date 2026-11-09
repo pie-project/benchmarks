@@ -23,7 +23,7 @@ import time
 from pathlib import Path
 
 PIE_UPSTREAM = "https://github.com/pie-project/pie.git"  # public; pods have no SSH key
-BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2", "tiktoken"]  # pie_client + scripts/bench/common.py (pie_client itself rides on PYTHONPATH); transformers renders chat templates
+BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2", "tiktoken"]  # pie_client + bench/common.py (pie_client itself rides on PYTHONPATH); transformers renders chat templates
 
 
 DEFAULT_CACHE = Path.home() / ".cache/pie-evals"
@@ -35,8 +35,8 @@ def _cache_root(root: Path | None) -> Path:
 
 
 def bench_python(cache_root: Path | None = None, log=print) -> Path:
-    """A venv on the shared cache that runs pie's bench scripts (and this repo's
-    clients, which share their prompt construction): the client deps,
+    """A venv on the shared cache that runs the bench scripts (``bench/`` and the
+    engines' own clients, which share their prompt construction): the client deps,
     transformers for the chat template, plus the embedded-engine wheel.
     Created with uv when present (the runner image ships uv but no pip), else
     python3 -m venv."""
@@ -66,6 +66,15 @@ def _pip_install(py: Path, args: list[str]) -> None:
 def python_dir(pie_root: Path) -> Path:
     """pie's python packages: `packages/python` since pie #838, `python` before."""
     return pie_root / "packages/python" if (pie_root / "packages/python").is_dir() else pie_root / "python"
+
+
+BENCH_DIR = Path(__file__).resolve().parents[3] / "bench"
+
+
+def bench_dir() -> Path:
+    """This repo's bench clients (``bench/``: pie_bench.py, vllm_bench.py, ... over one common.py).
+    PIE_EVALS_BENCH_DIR points at another copy (a test's stand-in script)."""
+    return Path(os.environ.get("PIE_EVALS_BENCH_DIR") or BENCH_DIR)
 
 
 def cache_key(commit: str, features: list[str]) -> str:

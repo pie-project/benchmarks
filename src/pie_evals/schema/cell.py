@@ -134,7 +134,7 @@ class AccuracyStatus(StrEnumBase):
 
 class MiniatureRecipe(BaseModel):
     """Layer/expert truncation recipe, executed by pie's
-    ``scripts/bench/shrink_checkpoint.py`` (HTTP range requests against the HF
+    ``bench/shrink_checkpoint.py`` (HTTP range requests against the HF
     shards; the result is a real checkpoint of the same architecture that
     loads unmodified in pie and vLLM). Width dimensions are always kept;
     ``layers`` selects source layers so that the family's per-layer pattern

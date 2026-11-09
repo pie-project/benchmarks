@@ -1,8 +1,8 @@
-"""vLLM adapter: drives ``scripts/bench/vllm_bench.py``.
+"""vLLM adapter: drives ``bench/vllm_bench.py``.
 
 vllm_bench.py boots the ``LLM`` (or ``AsyncLLM`` under ``--report-timing``)
 in-process, so there is no persistent-server path; each run loads the model.
-Every flag emitted here is parsed by vllm_bench.py or scripts/bench/common.py.
+Every flag emitted here is parsed by vllm_bench.py or bench/common.py.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ _VLLM_KV_DTYPES = {"bf16": "auto", "fp16": "auto", "auto": "auto", "fp8": "fp8",
 @register
 class VllmEngine(Engine):
     name = EngineName.VLLM
-    script = "scripts/bench/vllm_bench.py"
+    script = "vllm_bench.py"
     #: no nvcc on the runner image, so no DeepGEMM JIT (see SglangEngine)
     env_defaults = {"VLLM_USE_DEEP_GEMM": "0"}
 

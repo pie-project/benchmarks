@@ -2,7 +2,7 @@
 
 Measured on 2026-10-08 on a Cloud TPU v6e-1 (one Trillium chip, 32 GB HBM, us-east5-b) at pie `da839689b` with libtpu 0.0.48. Each model ran pie's own device test `crates/engine-xla/tests/a_model_speaks_on_the_device.rs` on an artifact made by `pie model import` (built with `--features xla`). The test prefills "The capital of France is", decodes 16 greedy tokens, replays the prompt one token at a time, and checks that a batch of three lanes answers what each lane answers alone. Every `kernels_*` device test and `pjrt_runs_a_built_module` passed.
 
-Miniatures (a few layers and experts cut from a frontier checkpoint by `scripts/bench/shrink_checkpoint.py`) are expected to print nonsense, so for them "generates" means the test ran and the prefill and token walks agree. It does not mean the text reads well.
+Miniatures (a few layers and experts cut from a frontier checkpoint by `bench/shrink_checkpoint.py`) are expected to print nonsense, so for them "generates" means the test ran and the prefill and token walks agree. It does not mean the text reads well.
 
 | family | variant tested | chips | builds | loads | generates | notes |
 |---|---|---|---|---|---|---|

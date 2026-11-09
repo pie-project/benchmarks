@@ -1,4 +1,4 @@
-"""SGLang adapter: drives ``scripts/bench/sglang_bench.py``.
+"""SGLang adapter: drives ``bench/sglang_bench.py``.
 
 The one flag that must never be left to the engine's default is
 ``--sglang-cuda-graph-max-bs``: SGLang derives its graph ceiling from a
@@ -22,7 +22,7 @@ from .shape import max_model_len_for, workload_concurrency
 @register
 class SglangEngine(Engine):
     name = EngineName.SGLANG
-    script = "scripts/bench/sglang_bench.py"
+    script = "sglang_bench.py"
     #: the runner image has no nvcc: DeepGEMM's JIT (gemma / gpt-oss on
     #: Blackwell, nightly 35921789513) would abort every cell; the FlashInfer
     #: kernels come precompiled (baselines.ensure_flashinfer_aot).
