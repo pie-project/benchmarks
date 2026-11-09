@@ -482,8 +482,12 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
         model = a2m.get(r["artifact"], r["artifact"])
         key = (r["platform"], r["engine"], model, cat)
         shared = r["platform"] in macs and art.get("source_format") == "mlx"
+        # off a Mac the baselines run the released checkpoint, so pie's run of the MLX weights stands in only where
+        # the model has no other row: a job running both lands the later one, whichever that is (the B200 showed
+        # gemma-4-31b at the mlx4 import's 4.7k tok/s over the bf16 one's 18.5k, 2026-11-09)
+        released = r["platform"] in macs or art.get("source_format") != "mlx"
         # the newest run wins: a cell measured again (a fix, a fairer workload, a new saturating N) shows its latest number
-        rank = (r["started_at"], not mini, -pri, shared)
+        rank = (released, r["started_at"], not mini, -pri, shared)
         if key not in best or rank > best[key][0]:
             best[key] = (rank, r)
     return best

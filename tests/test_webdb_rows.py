@@ -54,3 +54,18 @@ def test_a_diagnostic_tag_never_reaches_the_site():
     assert not webdb.is_diag_tag("tpu-v6e-green")
     assert not webdb.is_diag_tag("a40-rerun")
     assert not webdb.is_diag_tag("0.5.3-b5")
+
+
+def test_off_a_mac_the_released_checkpoint_outranks_a_later_mlx_run():
+    t0, t1 = datetime(2026, 11, 9, 15, tzinfo=timezone.utc), datetime(2026, 11, 9, 17, tzinfo=timezone.utc)
+    a2m = {"gemma-4-31b-bf16": "gemma-4-31b", "gemma-4-31b-mlx4": "gemma-4-31b"}
+    base = {"engine": "pie", "workload": "pf32-512", "scheme": "bf16", "status": "pass"}
+    bf16 = {**base, "platform": "b200-x1", "artifact": "gemma-4-31b-bf16", "started_at": t0, "prefill_tok_s": 18509.0}
+    mlx4 = {**base, "platform": "b200-x1", "artifact": "gemma-4-31b-mlx4", "started_at": t1, "prefill_tok_s": 4709.0}
+    picked = webdb.pick([bf16, mlx4], a2m)
+    assert picked[("b200-x1", "pie", "gemma-4-31b", "prefill_batch")][1] is bf16
+    # alone, the mlx run is the model's row; on a Mac it is the comparison and the newest wins as before
+    assert webdb.pick([mlx4], a2m)[("b200-x1", "pie", "gemma-4-31b", "prefill_batch")][1] is mlx4
+    mac_bf16 = {**bf16, "platform": "m4-pro-48g"}
+    mac_mlx4 = {**mlx4, "platform": "m4-pro-48g"}
+    assert webdb.pick([mac_bf16, mac_mlx4], a2m)[("m4-pro-48g", "pie", "gemma-4-31b", "prefill_batch")][1] is mac_mlx4
