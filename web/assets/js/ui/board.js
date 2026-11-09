@@ -20,6 +20,8 @@ window.Pie = window.Pie || {};
   let state = null;
   let model = null;  // the picked model; none picked opens on the one the most engines and platforms ran
   let ttftModel = null;  // TTFT's own model, picked in its own section; it opens on the speed section's
+  const machineFor = { metric: {}, ttft: {} };  // each section's machine per platform, picked in its card's corner; none: the one with most runs
+  const platformsOff = { metric: new Set(), ttft: new Set() };  // each section's platforms unticked in its Platform menu; none: every platform shown
 
   const measured = () => Pie.store.snapshot((state || Pie.state).release).filter(Pie.store.isMeasured);  // the page's release, or the site's before it is drawn
   const engineIds = () => Pie.store.tables.engines.map((e) => e.id);
@@ -38,7 +40,7 @@ window.Pie = window.Pie || {};
 
   // one machine per platform for the model: the one with the most engine and workload pairs, so every card has bars,
   // then the most runs
-  const showcase = (rows, picked) => {
+  const showcase = (rows, picked, sec = "metric") => {
     const raw = rows.filter((r) => r.model === picked && (r.workload === "raw" || r.workload === "throughput" || r.workload === "prefill_batch"));
     const byPlatform = {};
     for (const r of raw) {
@@ -49,7 +51,8 @@ window.Pie = window.Pie || {};
     return PLATFORM_ORDER.filter((p) => byPlatform[p]).map((p) => {
       const [hardware] = Object.entries(byPlatform[p]).sort((a, b) => b[1].size - a[1].size
         || raw.filter((r) => r.hardware === b[0]).length - raw.filter((r) => r.hardware === a[0]).length)[0];
-      return { platform: p, hardware };
+      const own = machineFor[sec]?.[p];
+      return { platform: p, hardware: own && byPlatform[p][own] ? own : hardware, choices: Object.keys(byPlatform[p]).sort((a, b) => machineName(a).localeCompare(machineName(b), undefined, { numeric: true })) };
     });
   };
 
@@ -223,11 +226,12 @@ window.Pie = window.Pie || {};
     // best first: the highest, or the lowest where less is better (Install Size)
     const list = engineIds().map((engine) => ({ engine, ...summary.value(rows, engine) })).filter((e) => e.v !== undefined && e.v !== null)
       .sort((a, b) => (summary.ascending ? a.v - b.v : b.v - a.v));
+    const dashed = engineIds().filter((engine) => summary.value(rows, engine)?.missing);  // engines that ran without this measure, last, a dash for a bar
     if (!list.length) return `<p class="board-empty">${esc(summary.empty || "No runs yet")}</p>`;
     const top = summary.top ? summary.top(list) : summary.id === "coverage" ? niceMax(list[0].v) : 100;
     const base = H - B;
     const y = (v) => T + (base - T) * (1 - v / top);
-    const slot = (W - L - R) / list.length;
+    const slot = (W - L - R) / (list.length + dashed.length);
     const BW = Math.min(slot * .86, summary.widest || Infinity);  // wide bars with a narrow gap between them, as Artificial Analysis sets its rankings; a card may cap them
     const marks = list.map((e, i) => {
       const x = L + slot * i + (slot - BW) / 2;
@@ -238,6 +242,10 @@ window.Pie = window.Pie || {};
         ${logo(e.engine, cx - 8, base + 6, 16)}
         <text class="board-group" x="${cx}" y="${base + 36}">${esc(SHORT[e.engine] || names().engine(e.engine))}</text>
 `;
+    }).join("") + dashed.map((engine, i) => {
+      const cx = L + slot * (list.length + i) + slot / 2;
+      return `<text class="board-group" x="${cx}" y="${base - 8}">–</text>${logo(engine, cx - 8, base + 6, 16)}
+        <text class="board-group" x="${cx}" y="${base + 36}">${esc(SHORT[engine] || names().engine(engine))}</text>`;
     }).join("");
     return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${summary.title} by engine`)}">${lines(L, W - R, y, top)}<line class="board-axis" x1="${L}" x2="${W - R}" y1="${base}" y2="${base}"/>${marks}</svg>`;
   };
@@ -385,6 +393,15 @@ window.Pie = window.Pie || {};
   const METRIC_KEY = "pieModelMetric";
   let modelMetric = (() => { try { const k = localStorage.getItem(METRIC_KEY); return SPEEDS.some((m) => m.id === k) ? k : SPEEDS[0].id; } catch { return SPEEDS[0].id; } })();
   const metricIcon = (m) => Pie.platform.degree(m.setup);
+  // the one-request setups also read as a time, from the run's own latencies (never a tok/s turned over): the first
+  // token's for prefill, each next token's for decode; batched setups stay tok/s
+  const UNIT_KEY = "pieSpeedUnit";
+  let speedUnit = (() => { try { return localStorage.getItem(UNIT_KEY) === "ms" ? "ms" : "tok/s"; } catch { return "tok/s"; } })();
+  const MS = { decode: { key: "itl_ms_p50", sub: "Milliseconds per output token, one request · Lower is better" },
+    prefill: { key: "ttft_ms_p50", sub: "Milliseconds to the first token, 512-token prompt · Lower is better" } };
+  const inUnit = (m) => (speedUnit === "ms" && MS[m.id] ? { ...m, ...MS[m.id], unit: "ms", higher: false } : m);
+  const unitToggle = (m) => `<span class="platform-compare board-view board-unit" role="group" aria-label="Unit"${MS[m.id] ? "" : ' title="Batched setups are shown in tok/s"'}>${["tok/s", "ms"].map((u) =>
+    `<button type="button" class="plain-button${(MS[m.id] ? speedUnit : "tok/s") === u ? " is-active" : ""}" data-board-unit="${u}"${MS[m.id] ? "" : " disabled"}>${u}</button>`).join("")}</span>`;
   const gainPick = () => {
     const g = GAIN_PICKS.find((x) => x.id === gainSetup);
     // beside the setup, the way to Reports: an outlier is where a wrong number shows first, and the open ones are counted
@@ -402,16 +419,22 @@ window.Pie = window.Pie || {};
   // machine showcase() picked, two in view as Install Size sets them; a bar per engine, best first
   const BY_MODEL = { mac: ["Apple", "#636366"], nvidia: ["NVIDIA", "#76b900"], amd: ["AMD", "#ed1c24"], tpu: ["TPU", "#4285f4"], android: ["Mobile", "#1C1C1E"], web: ["Browser", "#8e8e93"] };  // each platform's name and tile colour, as the other rows' cards wear them
   const modelSummary = (metric, rows, g, m = model) => {
-    const own = rows.filter((r) => r.workload === metric.workload && r.model === m && r.hardware === g.hardware && r[metric.key]);
+    const ran = rows.filter((r) => r.workload === metric.workload && r.model === m && r.hardware === g.hardware);
+    const own = ran.filter((r) => r[metric.key]);
     return { id: g.platform, title: `${metric.label} on ${machineName(g.hardware)}`, ascending: metric.higher === false,  // its bars fill their slots, as every other ranking card's do
       top: (list) => niceMax(Math.max(...list.map((e) => e.v))), label: compact, tip: (v) => full(v, metric.unit), empty: "No runs for this model yet",
       value: (_, engine) => {
         const r = own.find((x) => x.engine === engine);
+        if (!r && metric.unit === "ms" && ran.some((x) => x.engine === engine)) return { missing: true };  // ran, without that latency: a dash, not a converted number
         return r ? { v: r[metric.key], detail: `${names().model(m)} on ${machineName(g.hardware)}` } : {};
       } };
   };
+  // a platform's machine, picked in its card's corner where more than one of its machines ran the model
+  const hwPick = (sec, g) => (g.choices?.length > 1 ? `<button class="filter-button board-card-pick" type="button" data-board-pick="hw:${sec}:${g.platform}" aria-haspopup="menu" aria-label="Hardware" title="${esc(machineName(g.hardware))}">Hardware<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>` : "");
+  // the section's platforms, ticked in its head's Platform menu: all at first; two in view, the paddles a platform at a time
+  const platformPick = (sec) => `<button class="filter-button board-title-pick is-text" type="button" data-board-pick="platforms:${sec}" aria-haspopup="menu" aria-label="Platform">Platform<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
   const modelRow = (id, metric, rows, groups, m = model) => `
-          ${groups.length ? `<div class="board-carousel" data-carousel-id="${id}"><div class="board-grid-cards is-matrices">${groups.map((g) => card(`${id}-${g.platform}`, BY_MODEL[g.platform]?.[0] || Pie.schema[g.platform]?.short || g.platform, machineName(g.hardware), ranking(modelSummary(metric, rows, g, m), rows), "", false)).join("")}</div></div>` : `<p class="board-empty">No runs for this model yet</p>`}`;
+          ${groups.length ? `<div class="board-carousel" data-carousel-id="${id}"><div class="board-grid-cards is-matrices">${groups.map((g) => card(`${id}-${g.platform}`, BY_MODEL[g.platform]?.[0] || Pie.schema[g.platform]?.short || g.platform, machineName(g.hardware), ranking(modelSummary(metric, rows, g, m), rows), hwPick(id, g), false).replace('class="board-card"', `class="board-card"${platformsOff[id].has(g.platform) ? " hidden" : ""}`)).join("")}</div></div>` : `<p class="board-empty">No runs for this model yet</p>`}`;
   // the two as one card, Decode or Prefill picked in its corner and kept per browser
   const SIZE_KEY = "pieSizeMetric";
   let sizeMetric = (() => { try { const k = localStorage.getItem(SIZE_KEY); return SIZES.some((m) => m.id === k) ? k : SIZES[0].id; } catch { return SIZES[0].id; } })();
@@ -850,10 +873,9 @@ window.Pie = window.Pie || {};
     const list = models(rows);
     if (!list.includes(model)) model = list[0] || null;
     if (!model) return `<div class="board-scroll"><div class="board-inner"><p class="board-empty">No runs in this release yet</p></div></div>`;
-    const groups = showcase(rows, model);
-    if (!list.includes(ttftModel)) ttftModel = model;
-    const ttftGroups = showcase(rows, ttftModel);
-    const speed = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];  // the measure the speed section shows, its title
+    const groups = showcase(rows, model, "metric");
+    const picked = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];
+    const speed = inUnit(picked);  // the measure the speed section shows, its title
     // the engines as a key once for the page: every engine with a result in this release, as the cards across the
     // platforms draw them too (LiteRT-LM on Mobile), a dot and a name, in the catalog's order
     const ran = new Set(rows.map((r) => r.engine));
@@ -871,10 +893,10 @@ window.Pie = window.Pie || {};
     const installed = INSTALL_CARDS.find(([, , p]) => installRows(p).length);
     // under small section names, as the Methodology's outline groups its chapters: the speed, where an engine goes, the models
     const GROUPS = [["Speed", [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"]]],
-      ["Models", [["metric", "Speed by Model", "#0A84FF"], ["ttft", "TTFT by Model", "#FF375F"]]],
+      ["", [["metric", "Compare", "#0A84FF"]]],
       ["Deployment", [installed && [installed[0], "Install Size", "#30B0C7"], supportOf(rows).list.length && ["support", "Platforms", "#FF2D55"]]]];
     const outline = GROUPS.map(([head, items]) => [head, items.filter(Boolean)]).filter(([, items]) => items.length).map(([head, items]) =>
-      `<div class="board-outline-head">${esc(head)}</div>${items.map(([id, title, tint]) =>
+      `${head ? `<div class="board-outline-head">${esc(head)}</div>` : ""}${items.map(([id, title, tint]) =>
       `<button type="button" class="board-outline-item" data-board-go="${id}"><i class="board-outline-dot" style="background: ${tint}" aria-hidden="true"></i><span>${esc(title)}</span></button>`).join("")}`).join("");
     // the bar under the toolbar, as every page has one: the engines' key; the model is picked in the one section it sets
     // pie's bars' texture, defined once for every chart on the page: a fine grid of dots, as Freeform and Keynote set a
@@ -908,17 +930,12 @@ window.Pie = window.Pie || {};
           </div>
           <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has("summary") ? "Head-to-head decode win rate" : m.sub, gridCards.has("summary") ? matrix(m, rows) : ranking(m, rows), "", false)).join("")}</div></div>
           <div class="board-section-head is-apart" id="board-metric">
-            <div class="board-section-text"><h1 class="board-title">${esc(speed.label)} by Model</h1>
-            <p class="board-lede">${esc(speed.sub.replace(" · ", ". "))}.</p></div>
-            ${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${paddlesFor("metric")}
+            <div class="board-section-text"><h1 class="board-title">Compare</h1>
+            <p class="board-lede">${speed.sub.split(" · ").map((x) => `${esc(x)}.`).join("<br>")}</p></div>
+            <div class="board-head-controls"><div class="board-head-row">${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></div>
+            <div class="board-head-row">${unitToggle(picked)}${platformPick("metric")}${paddlesFor("metric")}</div></div>
           </div>
           ${modelRow("metric", speed, rows, groups, model)}
-          <div class="board-section-head" id="board-ttft">
-            <div class="board-section-text"><h1 class="board-title">TTFT by Model</h1>
-            <p class="board-lede">${esc(TTFT.sub.replace(" · ", ". "))}.</p></div>
-            <button class="filter-button board-title-pick is-text" type="button" data-board-pick="ttft-model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(ttftModel))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${paddlesFor("ttft")}
-          </div>
-          ${modelRow("ttft", TTFT, rows, ttftGroups, ttftModel)}
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
           ${installSection()}
@@ -1142,14 +1159,14 @@ window.Pie = window.Pie || {};
     const row = carousel.querySelector(".board-grid-cards"), nav = element.querySelector(`[data-carousel-nav="${carousel.dataset.carouselId}"]`);
     const [back, on] = nav ? nav.querySelectorAll("[data-carousel]") : [];
     if (!row || !back) return;
-    nav.hidden = row.scrollWidth <= row.clientWidth + 2;  // a row with nothing past it shows none
+    nav.hidden = row.scrollWidth <= row.clientWidth + 2 && !(carousel.dataset.carouselId in platformsOff);  // a row with nothing past it shows none; a Platform-filtered one keeps them, greyed
     back.disabled = row.scrollLeft < 2;
     on.disabled = row.scrollLeft + row.clientWidth > row.scrollWidth - 2;
   });
   element.addEventListener("click", (event) => {
     const paddle = event.target.closest("[data-carousel]");
     if (!paddle) return;
-    const row = element.querySelector(`.board-carousel[data-carousel-id="${paddle.dataset.carouselFor}"] .board-grid-cards`), card = row?.firstElementChild;
+    const row = element.querySelector(`.board-carousel[data-carousel-id="${paddle.dataset.carouselFor}"] .board-grid-cards`), card = row?.querySelector(":scope > :not([hidden])");
     if (card) row.scrollBy({ left: Number(paddle.dataset.carousel) * (card.getBoundingClientRect().width + (parseFloat(getComputedStyle(row).columnGap) || 0)), behavior: "smooth" });
   });
   element.addEventListener("scroll", (event) => { if (event.target.classList?.contains("is-matrices")) paddles(); }, { passive: true, capture: true });
@@ -1182,9 +1199,10 @@ window.Pie = window.Pie || {};
       return;
     }
     // the platform cards' bars or grid, one switch for the whole row at its section's head
-    const view = event.target.closest("[data-board-view]");
+    const view = event.target.closest("[data-board-view], [data-board-unit]");
     if (view) {
-      if (view.dataset.view === "grid") gridCards.add(view.dataset.boardView); else gridCards.delete(view.dataset.boardView);
+      if (view.dataset.boardUnit) { speedUnit = view.dataset.boardUnit; try { localStorage.setItem(UNIT_KEY, speedUnit); } catch { /* private windows can refuse storage */ } }
+      else if (view.dataset.view === "grid") gridCards.add(view.dataset.boardView); else gridCards.delete(view.dataset.boardView);
       try { localStorage.setItem(GRID_KEY, JSON.stringify([...gridCards])); } catch { /* private windows can refuse storage */ }
       delete element.dataset.key;  // the page redraws only when its key changes; this pick changes what it shows
       // each row of cards stays on the card in view through the redraw, not back at its first
@@ -1398,12 +1416,31 @@ window.Pie = window.Pie || {};
       if (k === "size" || k === "moe") return SIZES.map((m) => ({ value: m.id, label: m.label, selected: m.id === (k === "moe" ? moeMetric : sizeMetric), icon: Pie.platform.degree(m.setup) }));
       if (k === "gain-setup") return GAIN_PICKS.map((g) => ({ value: g.id, label: g.label, selected: g.id === gainSetup, icon: Pie.platform.degree(g.id) }));
       if (k === "metric") return SPEEDS.map((m) => ({ value: m.id, label: m.label, selected: m.id === modelMetric, icon: metricIcon(m) }));
+      if (k.startsWith("hw:") && state) {
+        const [, sec, p] = k.split(":");
+        const g = showcase(measured(), sec === "ttft" ? ttftModel : model, sec).find((x) => x.platform === p);
+        return (g?.choices || []).map((id) => ({ value: id, label: machineName(id), selected: id === g.hardware }));
+      }
+      if (k.startsWith("platforms:") && state) {
+        const sec = k.slice(10), off = platformsOff[sec];
+        return showcase(measured(), sec === "ttft" ? ttftModel : model, sec).map((g) => ({ value: g.platform, label: BY_MODEL[g.platform]?.[0] || Pie.schema[g.platform]?.short || g.platform, selected: !off.has(g.platform), check: true }));
+      }
       if ((k !== "model" && k !== "ttft-model") || !state) return [];
       const current = k === "ttft-model" ? ttftModel : model;
       return models(measured()).map((id) => ({ value: id, label: names().model(id), selected: id === current, icon: Pie.platform.makerBadge(id) }));
     },
     pick(k, value) {
       if (k === "model") model = value;
+      if (k.startsWith("hw:")) { const [, sec, p] = k.split(":"); machineFor[sec][p] = value; }
+      if (k.startsWith("platforms:")) {
+        // a tick toggles its platform; the last one shown stays, so the row is never empty
+        const sec = k.slice(10), off = platformsOff[sec], shown = showcase(measured(), sec === "ttft" ? ttftModel : model, sec).filter((g) => !off.has(g.platform));
+        if (off.has(value)) off.delete(value); else if (shown.length > 1) off.add(value);
+        // the cards hide in place, not redrawn, so the open menu stays open for the next tick
+        for (const g of showcase(measured(), sec === "ttft" ? ttftModel : model, sec)) { const c = element.querySelector(`#board-${sec}-${g.platform}`); if (c) c.hidden = off.has(g.platform); }
+        requestAnimationFrame(paddles);
+        return;
+      }
       if (k === "ttft-model") ttftModel = value;
       if (k === "accuracy-platform") Pie.checks?.pick(value);
       if (k === "gain-engine" && Pie.store.tables.engines.some((x) => x.id === value)) { gainEngine = value; try { localStorage.setItem("pieGainEngine", value); } catch { /* private windows can refuse storage */ } }
