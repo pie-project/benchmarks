@@ -61,8 +61,9 @@ FIRST_REF_DIR = "first-token-ref"
 
 
 def saved_first_ref(matrix_dir: str, artifact_id: str, rendered: list[str]) -> dict | None:
-    """The saved first-token reference of ``artifact_id`` (or of the GPU artifact a ``-tpu`` one cuts the same way), for these prompts."""
-    for aid in dict.fromkeys([artifact_id, artifact_id.removesuffix("-tpu")]):
+    """The saved first-token reference of ``artifact_id`` (or of the GPU artifact a ``-tpu`` one cuts the same way, or that a
+    ``-bf16`` one is the same cut of: the ROCm bf16 deployments of NVFP4/FP8 cuts), for these prompts."""
+    for aid in dict.fromkeys([artifact_id, artifact_id.removesuffix("-tpu"), artifact_id.removesuffix("-bf16")]):
         p = Path(matrix_dir) / FIRST_REF_DIR / f"{aid}.json"
         if p.exists():
             d = json.loads(p.read_text())
