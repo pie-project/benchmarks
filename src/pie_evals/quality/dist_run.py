@@ -330,7 +330,9 @@ def _sglang_second_ref(art, plat, workload, mode, snapshot, rendered, ref_scored
     # the token ids vLLM read: a render that opens with BOS gets no second one (as _reference sends it)
     bos = getattr(tok, "bos_token", None)
     special = not (bos and rendered and all(r.startswith(bos) for r in rendered))
-    ids = [tok.encode(r, add_special_tokens=special) for r in rendered]
+    # the reference's last position is its distribution over each salad's closing token (kl.gibberish): SGLang reads the
+    # salad without it and reports its one new token's top-k, the same distribution
+    ids = [tok.encode(r, add_special_tokens=special)[:-1] for r in rendered]
     prompts, first = out_dir / f"{art.id}-sglang-prompts.json", out_dir / f"{art.id}-sglang-first.json"
     prompts.write_text(json.dumps(ids))
     script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "sglang_first_token.py"
