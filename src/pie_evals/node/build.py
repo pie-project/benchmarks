@@ -220,7 +220,17 @@ def ensure_slangc(pie_root: Path, cache: Path, log=print) -> Path:
         log(f"build: fetching slangc {ver}")
         d.mkdir(parents=True, exist_ok=True)
         tgz = d / "slang.tar.gz"
-        urllib.request.urlretrieve(f"https://github.com/shader-slang/slang/releases/download/v{ver}/slang-{ver}-linux-x86_64.tar.gz", tgz)
+        url = f"https://github.com/shader-slang/slang/releases/download/v{ver}/slang-{ver}-linux-x86_64.tar.gz"
+        # GitHub's release CDN answers a fresh pod with a 504 now and then (parity 42565812228): three tries
+        for attempt in range(3):
+            try:
+                urllib.request.urlretrieve(url, tgz)
+                break
+            except OSError as e:  # urllib.error.URLError and HTTPError are OSErrors
+                if attempt == 2:
+                    raise
+                log(f"build: slangc download failed ({e}), retrying")
+                time.sleep(10 * (attempt + 1))
         with tarfile.open(tgz) as t:
             t.extractall(d)
         tgz.unlink()
