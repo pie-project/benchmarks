@@ -140,6 +140,40 @@ window.Pie = window.Pie || {};
   // the table is always drawn, its header at once, as the site's other tables are: while the reports load the body
   // stays empty, and no reports, or none readable, is the one quiet row the other tables show when nothing matches
   const COLUMNS = 12;
+  // a header click sorts by its column, as the site's other tables do: up, then down, then the table's own order
+  let sort = null;
+  const SORTS = [["type", "Type"], ["status", "Status"], ["engine", "Engine"], ["model", "Model"], ["hardware", "Hardware"],
+    ["workload", "Workload"], ["value", "Value", true], ["details", "Details"], ["reporter", "Reported by"], ["date", "Date"]];
+  const sortKey = ({ kind, x }, key) => {
+    const report = kind === "report";
+    switch (key) {
+      case "type": return TYPES[report ? "report" : "limit"].label;
+      case "status": return report ? STATUS[x.status] || x.status : isClosed(x) ? STATUS.fixed || "Fixed" : STATUS.open || "Open";
+      case "engine": return nameOf("engines", x.engine);
+      case "model": return nameOf("models", x.model);
+      case "hardware": return x.hardware === "unknown" ? "" : nameOf("hardware", x.hardware);
+      case "workload": return report ? (x.source === "quality" ? x.workload : nameOf("workloads", x.workload)) : x.label;
+      case "value": { const v = report ? parseFloat(String(x.value || "").replace(/,/g, "")) : x.pie; return Number.isFinite(v) ? v : null; }
+      case "details": return report ? x.note : x.above ? "Above theoretical limit" : "Slower than strongest competitor";
+      case "reporter": return report ? x.reporter : "Auto";
+      case "date": { const t = Date.parse(report ? x.created_at : String(x.measured || "").replace(" ", "T")); return Number.isFinite(t) ? t : null; }
+      default: return null;
+    }
+  };
+  // a stable sort; a row with nothing in the column goes last either way, as on Performance
+  const ordered = (items) => {
+    if (!sort) return items;
+    const numeric = SORTS.find(([key]) => key === sort.key)?.[2];
+    const keyed = items.map((item, at) => ({ item, at, key: sortKey(item, sort.key) }));
+    const empty = (k) => k === null || k === undefined || k === "";
+    keyed.sort((a, b) => {
+      if (empty(a.key) || empty(b.key)) return empty(a.key) - empty(b.key) || a.at - b.at;
+      const order = numeric || typeof a.key === "number" ? a.key - b.key : String(a.key).localeCompare(String(b.key), "en", { numeric: true, sensitivity: "base" });
+      return order * sort.direction || a.at - b.at;
+    });
+    return keyed.map(({ item }) => item);
+  };
+  const sortHead = ([key, label, numeric]) => `<th${numeric ? ' class="is-numeric"' : ""} data-reports-sort="${key}" title="Sort by ${label}">${label}${sort?.key === key ? `<span class="column-sort">${sort.direction > 0 ? "↑" : "↓"}</span>` : ""}</th>`;
   const list = () => {
     const note = (text) => `<tr><td class="table-empty" colspan="${COLUMNS}">${esc(text)}</td></tr>`;
     // the filed reports first, newest first, then the outliers the data shows now
@@ -147,12 +181,13 @@ window.Pie = window.Pie || {};
     const found = outliers().filter((o) => keeps("limit") && inFocus(o));
     shown = reports === null && !found.length ? "" : `${(filed.length + found.length).toLocaleString("en-US")} ${filed.length + found.length === 1 ? "row" : "rows"}`;
     const body = reports === null && !found.length ? ""
-      : filed.length || found.length ? filed.map(row).join("") + found.map((o, i) => outlierRow(o, filed.length + i)).join("")
+      : filed.length || found.length ? ordered([...filed.map((x) => ({ kind: "report", x })), ...found.map((x) => ({ kind: "limit", x }))])
+        .map((it, i) => (it.kind === "report" ? row(it.x, i) : outlierRow(it.x, i))).join("")
       : typeof reports === "string" ? note(reports) : note("No reports yet");
     return `
       <div class="reports-table-wrap">
         <table class="data-table reports-table">
-          <thead><tr><th class="row-number" aria-label="Row"></th><th>Type</th><th>Status</th><th>Engine</th><th>Model</th><th>Hardware</th><th>Workload</th><th class="is-numeric">Value</th><th>Details</th><th>Reported by</th><th>Date</th><th>Issue</th></tr></thead>
+          <thead><tr><th class="row-number" aria-label="Row"></th>${SORTS.map(sortHead).join("")}<th>Issue</th></tr></thead>
           <tbody>${body}</tbody>
         </table>
       </div>`;
@@ -160,6 +195,13 @@ window.Pie = window.Pie || {};
 
   // rows selected as the Performance table's are, in the accent: a click selects one alone (again clears it), ⌘-click
   // adds or drops one, ⇧-click the run from the last one clicked; Engine Gaps selects its rows the same way
+  element.addEventListener("click", (event) => {
+    const head = event.target.closest("[data-reports-sort]");
+    if (!head) return;
+    const key = head.dataset.reportsSort;
+    sort = sort?.key !== key ? { key, direction: 1 } : sort.direction > 0 ? { key, direction: -1 } : null;
+    draw();
+  });
   Pie.pickRows = (root) => {
     let anchor = null;
     root.addEventListener("mousedown", (event) => { if (event.shiftKey && event.target.closest("tr[data-pick]")) event.preventDefault(); });

@@ -1322,6 +1322,7 @@
 .reports-table-wrap { min-width: 100%; }
 #reports .reports-empty { padding: 24px var(--edge); }
 .reports-table td.is-wide { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reports-table thead th[data-reports-sort] { cursor: pointer; user-select: none; }
 .reports-table a { color: var(--color-accent); text-decoration: none; }
 .reports-table a:hover { text-decoration: underline; }
 .reports-none { color: var(--color-label-tertiary); }
