@@ -171,10 +171,22 @@ window.Pie = window.Pie || {};
       ${lead("A fast engine only counts if it computes the same model.")}
       ${steps([["#007AFF", "Same prompts", "Sent to both engines"], ["#5E5CE6", "One token", "One from each engine"],
         ["#30B0C7", "Compare", "KL divergence between them"], ["#34C759", "Pass", "KL under 0.15"]], "<h3>How a check runs</h3>")}
-      <p>Two correct engines differ only in kernel order and bf16 rounding, which moves the distribution by about 0.001. A real bug, such as a wrong layer, rotary setting or chat template, lands far above 0.15, so the line sits two orders of magnitude above the noise. The first token comes from one pass through every layer, so it tests the whole model, even on a slice whose answers no longer make sense.</p>
-      <p>Each engine reports its 20 most likely tokens. The KL runs over the reference's 20 and the rest of the vocabulary. A token the reference lists that Pie's 20 lack is given at most Pie's 20th probability, since Pie ranks it lower. Pie's list then fails the check if it holds none of the reference's likely tokens. Without that bound, such a pair would put all of both distributions in the rest and score zero. One Gemma-4-31B slice did exactly that: the reference put 0.23 on each of its top three tokens and Pie's 20 held none of them.</p>
-      <p>A check can fail only if the reference's first token says something. Some slices leave it nearly flat. With the first 18 of Gemma-4-31B's 60 layers, the reference's 20 likeliest tokens hold 1% of the probability, and no prompt has a token that leads the runner-up by half a nat. Any engine whose output is also flat would pass. Such a cell runs a deeper cut where one fits: Gemma-4-31B sharpens at 30 layers, its top 20 holding 99.8%. Where no deeper cut fits, as on the 24 and 32 GB NVIDIA cards, the cell is marked as unable to be checked on that device instead of shown as a pass. Keeping the first and last layers does not help: feeding layer 5's output to layer 48 drives Gemma's logits into their softcap.</p>
-      <p>A few slices are cut so deep that rounding alone moves their first token past the line. When Pie lands past 0.15, the reference engine runs again with only its kernels changed: vLLM in eager mode instead of its CUDA graphs, mlx-lm with its fused attention and normalization kernels swapped for plain ones. If Pie lands within twice the distance the reference moves from itself, the first token cannot tell Pie from rounding, and the slice is checked on its answers instead: both engines score the reference's greedy answers to 40 benchmark questions at every position, under the same 0.15 line. Gemma-4-26B-A4B with 24 of its 128 experts is one such slice. On an RTX 4090 its first token moves 0.44 when vLLM switches to eager mode and 0.35 between vLLM and SGLang, more than the 0.26 between the slice and one with 32 experts. On the answers vLLM moves 0.04 from itself and Pie 0.06, while the 32-expert slice lands at 0.21.</p>`;
+      <h3>Why 0.15</h3>
+      ${facts([["#8E8E93", "Rounding", "Two correct engines differ by about 0.001: kernel order and bf16"],
+        ["#FF3B30", "A bug", "A wrong layer, rotary setting or chat template lands far above 0.15"],
+        ["#34C759", "Whole model", "The first token passes through every layer, even on a slice"]])}
+      <h3>How the KL is taken</h3>
+      ${facts([["#007AFF", "Top 20", "Each engine reports its 20 likeliest tokens; the rest of the vocabulary is one bucket"],
+        ["#5E5CE6", "Missing token", "A reference token Pie's 20 lack counts at most Pie's 20th probability"],
+        ["#FF3B30", "No overlap", "A list holding none of the reference's likely tokens fails"]])}
+      <h3>When the first token says nothing</h3>
+      ${facts([["#8E8E93", "Flat reference", "A shallow cut can leave the top 20 at 1% of the probability; any flat engine would pass"],
+        ["#30B0C7", "Deeper cut", "The cell runs a cut that sharpens it: Gemma-4-31B at 30 layers, its top 20 at 99.8%"],
+        ["#FF9500", "No cut fits", "The cell is marked as not checkable, never as a pass"]])}
+      <h3>When rounding alone crosses the line</h3>
+      ${facts([["#5E5CE6", "Reference vs itself", "The reference runs again with plain kernels: vLLM eager, mlx-lm unfused"],
+        ["#8E8E93", "Within twice that", "The first token cannot tell Pie from rounding"],
+        ["#34C759", "Answers instead", "Both engines score 40 benchmark answers at every position, under the same 0.15"]])}`;
 
   const accuracy = () => `
       ${lead("On a model that fits, Pie and another engine answer the same benchmark on the same weights and machine.")}
