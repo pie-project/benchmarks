@@ -156,6 +156,10 @@ class BaseStore:
         """Delete every record of a workload; returns how many went."""
         raise NotImplementedError
 
+    def drop_quality(self, artifact: str, task: str, tag: str) -> int:
+        """Delete the quality scores of one artifact, task and tag; returns how many went."""
+        raise NotImplementedError
+
 
 class DirStore(BaseStore):
     def __init__(self, root: Path | str = "store"):
@@ -317,6 +321,11 @@ class PgStore(BaseStore):
     def drop_workload(self, workload: str) -> int:
         with self.connect() as conn, conn.transaction(), conn.cursor() as cur:
             cur.execute("DELETE FROM records WHERE workload = %s", (workload,))
+            return cur.rowcount
+
+    def drop_quality(self, artifact: str, task: str, tag: str) -> int:
+        with self.connect() as conn, conn.transaction(), conn.cursor() as cur:
+            cur.execute("DELETE FROM quality WHERE artifact = %s AND task = %s AND tag = %s", (artifact, task, tag))
             return cur.rowcount
 
     def __init__(self, dsn: str):
