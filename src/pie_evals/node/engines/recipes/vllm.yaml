@@ -121,6 +121,21 @@ competitive:
             The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
             FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
             on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
+      platform:
+        h100-sxm-x1:
+          knobs:
+            max_num_batched_tokens:
+              value: 2048
+              rationale: >
+                The GLM-5.3 mini78 on the H100 at c256 ran 1.6k tok/s at 2048 tokens a step and
+                0.6k at vllm serve's 8192 (pf32-512 level: 6.1k against 6.3k).
+        h200-x1:
+          knobs:
+            max_num_batched_tokens:
+              value: 2048
+              rationale: >
+                The GLM-5.3 mini78 on the H200 read 6.1k prefill tok/s at pf16-512 at 2048 tokens
+                a step and 5.6k at 8192 (c1024 level: 3.83k against 3.83k).
     hy_v4:
       knobs:
         attention_backend:
@@ -137,6 +152,14 @@ competitive:
             The datacenter models attend with MLA, sparse MLA or sinks, which vLLM 0.31's
             FlashInfer backend refuses ("MLA not supported, sparse not supported": GLM-5.3-Flash
             on the pro6000-x4, weekly 39680748696). Unset leaves vLLM's own pick, as it deploys them.
+      platform:
+        h100-sxm-x1:
+          knobs:
+            max_num_batched_tokens:
+              value: 2048
+              rationale: >
+                The MiMo mini on the H100 ran faster at 2048 tokens a step than at vllm serve's
+                8192 (c512 14.7k against 12.6k tok/s, pf16-512 119k against 84k).
     qwen4_exp:
       knobs:
         attention_backend:

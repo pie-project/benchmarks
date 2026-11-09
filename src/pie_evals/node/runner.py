@@ -60,7 +60,7 @@ from .workloads import common_args_for
 # the long-context shapes (lc-8k, lc-32k) size the server's arena and KV rows; when
 # that envelope does not fit the card the short shapes still can (gemma-4-26b on a 4090)
 SHORT_CONTEXT_TOKENS = 8192
-MEMORY_BOUND_MARKS = ("device memory exhausted", "weight residency", "does not hold this deployment")
+MEMORY_BOUND_MARKS = ("device memory exhausted", "weight residency", "does not hold this deployment", "bytes of elastic device memory")
 
 
 HEAVY_FRACTION = 0.35  # weights past this share of the card: the 32k envelope leaves the pool a seat or two
@@ -485,7 +485,8 @@ class NodeRunner:
                     engine, model_path = self._boot(engine, serve_envelope([c.workload for c in cells]), serve_log, cls=cls, first=first, recipe=recipe, num_layers=num_layers, snapshot=snapshot, model_path=model_path)
                 except EngineLaunchError as e:
                     # a cell's own shape can fail where the process's wider one booted: Qwen3.5-9B's pf8-512 on an
-                    # RTX 4090 backed an 8-lane pool the card could not hold, so it runs at the process's envelope
+                    # RTX 4090 backed an 8-lane pool the card could not hold, and the Nemotron-3 Ultra mini's c16 boot
+                    # there reserved no elastic memory for its first fire; such a cell runs at the process's envelope
                     wide = [c.workload for k, cs in groups.items() if k[:2] == (engine_name, artifact_key) and k[2].split("@")[0] == mode_key.split("@")[0] for c in cs]
                     if "@" in mode_key and any(m in str(e) for m in MEMORY_BOUND_MARKS) and len(wide) > len(cells):
                         self.log("engine boot at the cells' own shape failed for memory; retrying at the process's envelope")

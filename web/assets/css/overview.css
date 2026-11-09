@@ -1465,6 +1465,21 @@
   .welcome-list.is-install .welcome-row span:not(.trust-tile) { grid-column: 2; }
 }
 
+/* Model Slices: its two claims as cards in their colours, a tag telling the measured one from the modelled one; its
+   formulas each on a line of their own in the monospace face, on a quiet field */
+.slice-claim { margin: 28px 0 0; padding: 18px 22px; border-left: 3px solid var(--claim); border-radius: 0 12px 12px 0; background: var(--color-fill); }
+.slice-claim-head { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.slice-claim-kicker { font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--claim); }
+.slice-claim-tag { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; color: var(--color-label-secondary); background: var(--color-fill-secondary); }
+.method-article .slice-claim h4 { margin: 8px 0 0; font: 600 17px/1.3 var(--font-display); letter-spacing: -.01em; color: var(--color-label); }
+.method-article .slice-claim p { max-width: 640px; margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: var(--color-label-secondary); }
+.method-article .slice-claim + .welcome-list { margin-top: 16px; }
+.method-article .slice-claim + h3 { margin-top: 32px; }
+.slice-math { margin: 16px 0 0; padding: 14px 20px; border-radius: 10px; background: var(--color-fill); font: 15px/1.9 var(--font-mono); color: var(--color-label); overflow-x: auto; white-space: nowrap; }
+.slice-math var { font-style: italic; }
+.slice-math sub { font-size: .72em; }
+.method-article .slice-math + p, .method-article .welcome-list + .slice-math { margin-top: 16px; }
+
 /* Methodology's step runs as a carousel: each step keeps its width, the row slides and snaps, the Overview's paddles sit
    above it on the right, and the far edge fades while more steps follow */
 .method-article .flow-carousel { display: flex; flex-direction: column; margin-top: 16px; }
