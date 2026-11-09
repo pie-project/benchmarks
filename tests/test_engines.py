@@ -867,6 +867,14 @@ def test_a_pie_that_sizes_its_pool_in_bytes_gets_no_page_count(tmp_path, monkeyp
     assert flag_value(argv_for(eng, MAC_WORKLOADS["c32"], tmp_path), "--device-kv-budget") == "8GiB"
 
 
+def test_pie_cuda_card_cap_never_widens_a_narrow_shape(tmp_path):
+    eng = make(PieEngine, workload=WORKLOADS["c32"])
+    eng.recipe["max_forward_requests"] = 384  # a card's cap for its widest shape
+    assert flag_value(argv_for(eng, WORKLOADS["c32"], tmp_path), "--max-forward-requests") == "32"
+    eng.recipe["max_forward_requests"] = 16
+    assert flag_value(argv_for(eng, WORKLOADS["c32"], tmp_path), "--max-forward-requests") == "16"
+
+
 def test_pie_recipe_passthrough(tmp_path):
     eng = mac_make(PieEngine, art=mac_artifact(family="gemma4"))
     eng.recipe.update({"frame_submit_depth": 4, "max_forward_requests": 32, "engine_option": {"max_state_slots": 128, "sku": "$pie_sku"}})

@@ -52,7 +52,7 @@ from . import provenance as prov
 from .engines import EngineLaunchError, get_engine
 from .engines.base import workload_mode_args
 from .engines.recipes import load_recipe
-from .engines.shape import context_tokens_for, serve_envelope
+from .engines.shape import context_tokens_for, max_model_len_for, serve_envelope, workload_concurrency
 from .metrics.stats import cov, decide_repetition, median
 from .validate import expected_requests, round_problem
 from .workloads import common_args_for
@@ -107,6 +107,28 @@ def split_draft_processes(groups: dict[tuple, list]) -> dict[tuple, list]:
             continue
         out[key] = [c for c in cells if c not in spec]
         out[(engine, artifact, f"{mode}-draft")] = spec
+    return out
+
+
+def split_startups(groups: dict[tuple, list]) -> dict[tuple, list]:
+    """pie's CUDA server boots once per process, for the widest of its cells, while vLLM and SGLang
+    start each cell at its own concurrency: MiniMax-M3.1-Flash mini60's c64 ran on a 1024-lane pie
+    server beside c1024 on an H100 and lost to vLLM's 64-sequence one. Each pie process is split by
+    its cells' own concurrency and context, so every cell runs on a server started for its shape."""
+    out: dict[tuple, list] = {}
+    for key, cells in groups.items():
+        engine, artifact, mode = key
+        if str(engine) != "pie" or cells[0].platform.backend not in (Backend.CUDA, Backend.ROCM):
+            out[key] = cells
+            continue
+        shapes: dict[tuple[int, int], list] = {}
+        for c in cells:
+            shapes.setdefault((workload_concurrency(c.workload), max_model_len_for(c.workload)), []).append(c)
+        if len(shapes) == 1:
+            out[key] = cells
+            continue
+        for (conc, ctx), sub in sorted(shapes.items()):
+            out[(engine, artifact, f"{mode}@c{conc}x{ctx}")] = sub
     return out
 
 
@@ -375,7 +397,8 @@ class NodeRunner:
             self.log(f"disk reclaim skipped: {str(e)[:120]}")
         fingerprint = prov.hardware_fingerprint()
         records: list[Record] = []
-        groups = split_draft_processes(split_heavy_processes(job.cells_by_process()))
+        groups = split_startups(split_draft_processes(split_heavy_processes(job.cells_by_process())))
+        control_failed: set[tuple] = set()  # a process split by shape keeps its control A/A's verdict
         # pie is what we measure: its processes go first, so a job that runs long never drops pie for a competitor
         groups = dict(sorted(groups.items(), key=lambda kv: str(kv[0][0]) != "pie"))
         from .reclaim import cache_root, free_gib
@@ -461,22 +484,34 @@ class NodeRunner:
                 try:
                     engine, model_path = self._boot(engine, serve_envelope([c.workload for c in cells]), serve_log, cls=cls, first=first, recipe=recipe, num_layers=num_layers, snapshot=snapshot, model_path=model_path)
                 except EngineLaunchError as e:
-                    # a 32k envelope does not fit a 24 GB card beside a 16 GiB model
-                    # (nightly 35985312978): give the long shapes up, keep the short ones
-                    short = [c for c in cells if context_tokens_for(c.workload) <= SHORT_CONTEXT_TOKENS]
-                    if not any(m in str(e) for m in MEMORY_BOUND_MARKS) or not short or len(short) == len(cells):
-                        raise
-                    self.log(f"engine boot at the full envelope failed for memory; retrying with the shapes under {SHORT_CONTEXT_TOKENS} tokens ({len(short)} of {len(cells)} cells)")
-                    for c in cells:
-                        if c not in short:
-                            self.emit(self._failed(c, e.error_class, f"does not fit beside the short shapes: {e}", fingerprint))
-                    try:
-                        engine.stop()
-                    except Exception:
-                        pass
-                    engine = cls(pie_root=self.pie_root, artifact=first.artifact, platform=first.platform, mode=first.mode, recipe=recipe, num_layers=num_layers)
-                    cells = short
-                    engine, model_path = self._boot(engine, serve_envelope([c.workload for c in cells]), serve_log, cls=cls, first=first, recipe=recipe, num_layers=num_layers, snapshot=snapshot, model_path=model_path)
+                    # a cell's own shape can fail where the process's wider one booted: Qwen3.5-9B's pf8-512 on an
+                    # RTX 4090 backed an 8-lane pool the card could not hold, so it runs at the process's envelope
+                    wide = [c.workload for k, cs in groups.items() if k[:2] == (engine_name, artifact_key) and k[2].split("@")[0] == mode_key.split("@")[0] for c in cs]
+                    if "@" in mode_key and any(m in str(e) for m in MEMORY_BOUND_MARKS) and len(wide) > len(cells):
+                        self.log("engine boot at the cells' own shape failed for memory; retrying at the process's envelope")
+                        try:
+                            engine.stop()
+                        except Exception:
+                            pass
+                        engine = cls(pie_root=self.pie_root, artifact=first.artifact, platform=first.platform, mode=first.mode, recipe=recipe, num_layers=num_layers)
+                        engine, model_path = self._boot(engine, serve_envelope(wide), serve_log, cls=cls, first=first, recipe=recipe, num_layers=num_layers, snapshot=snapshot, model_path=model_path)
+                    else:
+                        # a 32k envelope does not fit a 24 GB card beside a 16 GiB model
+                        # (nightly 35985312978): give the long shapes up, keep the short ones
+                        short = [c for c in cells if context_tokens_for(c.workload) <= SHORT_CONTEXT_TOKENS]
+                        if not any(m in str(e) for m in MEMORY_BOUND_MARKS) or not short or len(short) == len(cells):
+                            raise
+                        self.log(f"engine boot at the full envelope failed for memory; retrying with the shapes under {SHORT_CONTEXT_TOKENS} tokens ({len(short)} of {len(cells)} cells)")
+                        for c in cells:
+                            if c not in short:
+                                self.emit(self._failed(c, e.error_class, f"does not fit beside the short shapes: {e}", fingerprint))
+                        try:
+                            engine.stop()
+                        except Exception:
+                            pass
+                        engine = cls(pie_root=self.pie_root, artifact=first.artifact, platform=first.platform, mode=first.mode, recipe=recipe, num_layers=num_layers)
+                        cells = short
+                        engine, model_path = self._boot(engine, serve_envelope([c.workload for c in cells]), serve_log, cls=cls, first=first, recipe=recipe, num_layers=num_layers, snapshot=snapshot, model_path=model_path)
                 if getattr(engine, "server_url", None):
                     self.log(f"serving {artifact_key} at {engine.server_url}")
             except EngineLaunchError as e:
@@ -495,7 +530,7 @@ class NodeRunner:
             if job.repetition.interleave:
                 random.Random(self.run_id).shuffle(order)
             order.sort(key=cell_priority)
-            control_ok = True
+            control_ok = (engine_name, artifact_key, mode_key.split("@")[0]) not in control_failed
             model_state = pre.before_model(self.platform) if hasattr(pre, "before_model") else machine_before
             self._last_state = model_state
             for cell in order:
@@ -547,6 +582,7 @@ class NodeRunner:
                         rec = again
                 if cell.workload.kind.value == "control_aa" and rec.status != CellStatus.PASS:
                     control_ok = False
+                    control_failed.add((engine_name, artifact_key, mode_key.split("@")[0]))
                     self.log("control A/A failed; remaining cells in this process are " + ("NOISY" if job.control_marks_noisy else "HARNESS_INVALID"))
                 records.append(rec)
                 self._done.add(cell.cell_id)

@@ -343,6 +343,12 @@ class PieEngine(Engine):
                 from pie_evals.node.engines.shape import workload_concurrency
 
                 v = workload_concurrency(workload)
+            elif knob == "max_forward_requests" and v is not None and self.platform.backend == Backend.CUDA:
+                # a card's cap holds a wide shape's lanes down; a narrower shape still boots at its own,
+                # as vLLM's max_num_seqs is each cell's (Qwen3.8-27B's 384 on b200-x1 booted pf32-512 at 384)
+                from pie_evals.node.engines.shape import workload_concurrency
+
+                v = min(int(v), workload_concurrency(workload))
             if v is not None:
                 args += [flag, str(v)]
         for knob, flag in _BOOL_OPTIONAL_FLAGS:
