@@ -212,6 +212,8 @@ def quality_cmd(artifacts, tasks, n, matrix_dir, store_dir, pie_root, tag, tag_k
 def parity_cmd(artifacts, platform_id, matrix_dir, store_dir, pie_root, tag, tag_kind, out_dir, pie_commit, features, accuracy_tasks, n, first_token):
     from pie_evals.quality.dist_run import run_accuracy, run_parity
 
+    # the parity workflow says first-token through the environment: the browser path reads the flag
+    first_token = first_token or os.environ.get("PARITY_FIRST_TOKEN") == "1"
     if first_token:
         os.environ["PARITY_FIRST_TOKEN"] = "1"
 
