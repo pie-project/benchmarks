@@ -21,7 +21,7 @@ window.Pie = window.Pie || {};
   let model = null;  // the picked model; none picked opens on the one the most engines and platforms ran
   let ttftModel = null;  // TTFT's own model, picked in its own section; it opens on the speed section's
   const machineFor = { metric: {}, ttft: {} };  // each section's machine per platform, picked in its card's corner; none: the one with most runs
-  const platformsOff = { metric: new Set(), ttft: new Set() };  // each section's platforms unticked in its Platform menu; none: every platform shown
+  let cmpPlatform = null;  // the Compare block's platform, picked in its head; none: the one its model ran on first
 
   const measured = () => Pie.store.snapshot((state || Pie.state).release).filter(Pie.store.isMeasured);  // the page's release, or the site's before it is drawn
   const engineIds = () => Pie.store.tables.engines.map((e) => e.id);
@@ -58,10 +58,7 @@ window.Pie = window.Pie || {};
 
   const compact = (v) => (v === 0 ? "0" : v >= 10000 ? `${Math.round(v / 1000)}K` : v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v >= 100 ? Math.round(v) : v >= 10 ? v.toFixed(0) : v.toFixed(1));
   const full = (v, unit) => `${v >= 100 ? Math.round(v).toLocaleString() : v.toFixed(1)} ${unit}`;
-  const machineName = (id) => {
-    const hw = Pie.store.index.hardware[id];
-    return hw ? `${String(hw.name || id).replace(/^Apple\s+/, "")}${hw.memory_gib ? ` ${hw.memory_gib} GB` : ""}` : id;
-  };
+  const machineName = (id) => Pie.platform.machineName(id);
   // a clean top for the axis: 1, 2 or 5 times a power of ten, at or above the largest bar
   const niceMax = (v) => {
     const p = 10 ** Math.floor(Math.log10(v));
@@ -222,7 +219,7 @@ window.Pie = window.Pie || {};
   // grey group of icon buttons), as a Mac pages a row with a pair of arrows in its toolbar
   const paddlesFor = (row) => `<span class="platform-compare board-view board-carousel-nav" role="group" aria-label="Platforms" data-carousel-nav="${row}"><button type="button" class="plain-button" data-carousel="-1" data-carousel-for="${row}" aria-label="Previous platforms" title="Previous"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg></button><button type="button" class="plain-button" data-carousel="1" data-carousel-for="${row}" aria-label="Next platforms" title="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button></span>`;
   const ranking = (summary, rows) => {
-    const W = 456, H = 185, L = 24, R = 4, T = 10, B = 44;  // half the row wide, so the bars keep the height they had at a third; room under them for the logo and name
+    const W = summary.width || 456, H = 185, L = summary.left ?? 24, R = 4, T = 10, B = 44;  // half the row wide, so the bars keep the height they had at a third; room under them for the logo and name
     // best first: the highest, or the lowest where less is better (Install Size)
     const list = engineIds().map((engine) => ({ engine, ...summary.value(rows, engine) })).filter((e) => e.v !== undefined && e.v !== null)
       .sort((a, b) => (summary.ascending ? a.v - b.v : b.v - a.v));
@@ -413,12 +410,43 @@ window.Pie = window.Pie || {};
         return r ? { v: r[metric.key], detail: `${names().model(m)} on ${machineName(g.hardware)}` } : {};
       } };
   };
-  // a platform's machine, picked in its card's corner where more than one of its machines ran the model
-  const hwPick = (sec, g) => (g.choices?.length > 1 ? `<button class="filter-button board-card-pick" type="button" data-board-pick="hw:${sec}:${g.platform}" aria-haspopup="menu" aria-label="Hardware" title="${esc(machineName(g.hardware))}">Hardware<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>` : "");
-  // the section's platforms, ticked in its head's Platform menu: all at first; two in view, the paddles a platform at a time
-  const platformPick = (sec) => `<button class="filter-button board-title-pick is-text" type="button" data-board-pick="platforms:${sec}" aria-haspopup="menu" aria-label="Platform">Platform<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-  const modelRow = (id, metric, rows, groups, m = model) => `
-          ${groups.length ? `<div class="board-carousel" data-carousel-id="${id}"><div class="board-grid-cards is-matrices">${groups.map((g) => card(`${id}-${g.platform}`, BY_MODEL[g.platform]?.[0] || Pie.schema[g.platform]?.short || g.platform, machineName(g.hardware), ranking(modelSummary(metric, rows, g, m), rows), hwPick(id, g), false).replace('class="board-card"', `class="board-card"${platformsOff[id].has(g.platform) ? " hidden" : ""}`)).join("")}</div></div>` : `<p class="board-empty">No runs for this model yet</p>`}`;
+  // Compare: one platform, one of its machines, one model and one setup, a bar per engine; full models only, never a slice
+  const fullRows = (rows) => rows.filter((r) => !r.miniature);
+  const machinesOf = (rows, p) => [...new Set(fullRows(rows).filter((r) => Pie.platformOf(Pie.store.index.hardware[r.hardware] || {}) === p).map((r) => r.hardware))]
+    .sort((a, b) => machineName(a).localeCompare(machineName(b), undefined, { numeric: true }));
+  // the platform and machine shown: the picked ones, else where the model ran with the most engines (showcase)
+  const comparePick = (rows) => {
+    const list = PLATFORM_ORDER.filter((p) => machinesOf(rows, p).length);
+    const best = showcase(fullRows(rows), model, "metric");
+    const p = list.includes(cmpPlatform) ? cmpPlatform : best[0]?.platform || list[0];
+    const machines = machinesOf(rows, p), own = machineFor.metric[p];
+    return { list, p, machines, hw: machines.includes(own) ? own : best.find((g) => g.platform === p)?.hardware || machines[0] };
+  };
+  // the machine's specs from the catalog, those it has: chip, memory, bandwidth, FP16 compute, for the name's hover card
+  const specRows = (id) => {
+    const hw = Pie.store.index.hardware[id];
+    if (!hw) return [];
+    const n = (v) => (v >= 100 ? Math.round(v).toLocaleString("en-US") : String(v));
+    const chip = String(hw.name || id).replace(/^Apple\s+/, "");
+    return [["Chip", hw.count > 1 ? `${hw.count}× ${chip}` : chip], hw.memory_gib && ["Memory", `${hw.memory_gib} GB${hw.interconnect === "uma" ? " unified" : hw.memory_type ? ` ${hw.memory_type}` : ""}`],
+      hw.bandwidth_gbs && ["Bandwidth", `${n(hw.bandwidth_gbs)} GB/s`], hw.tflops_fp16 && ["Compute", `${n(hw.tflops_fp16)} FP16 TFLOPS`]].filter(Boolean);
+  };
+  const INFO = '<svg class="board-compare-info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>';  // the Test Conditions button's glyph
+  const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>';  // the platform grids' mark
+  const headPick = (k, label, title) => `<button class="filter-button board-title-pick is-text" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="${label}" title="${esc(title)}">${label}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
+  const compareBlock = (metric, rows, c) => {
+    if (!c.p) return `<p class="board-empty">No runs for this model yet</p>`;
+    const full = fullRows(rows), g = { platform: c.p, hardware: c.hw };
+    const ran = full.some((r) => r.workload === metric.workload && r.model === model && r.hardware === c.hw && r[metric.key]);
+    const needs = !ran && Object.values(Pie.store.tables.no_fit?.[c.hw]?.[model] || {}).find(Boolean);
+    // a wide chart beside the page's width, the half-card one on a phone
+    const body = ran ? `${ranking({ ...modelSummary(metric, full, g, model), width: 912, widest: 96, left: 0 }, full).replace('class="board-chart"', 'class="board-chart is-wide"')}${ranking({ ...modelSummary(metric, full, g, model), widest: 72, left: 0 }, full).replace('class="board-chart"', 'class="board-chart is-narrow"')}`
+      : `<div class="board-compare-empty">${needs ? `${NOFIT}<b>Doesn't fit on this machine</b><span>This model needs about ${Math.round(needs)} GB of memory.</span>` : "<b>Not measured yet</b><span>No results for this model on this machine.</span>"}</div>`;
+    // the name opens the machine's specs on hover, or on a tap
+    const spec = specRows(c.hw), name = esc(machineName(c.hw));
+    const named = spec.length ? `<span class="board-compare-name" tabindex="0" data-tip-head="${name}" data-tip-rows="${esc(JSON.stringify(spec))}">${name}${INFO}</span></h2>` : `${name}</h2>`;
+    return card(`metric-${c.p}`, machineName(c.hw), "", body, "", false).replace('class="board-card"', 'class="board-card board-compare"').replace(`${name}</h2>`, named);
+  };
   // the two as one card, Decode or Prefill picked in its corner and kept per browser
   const SIZE_KEY = "pieSizeMetric";
   let sizeMetric = (() => { try { const k = localStorage.getItem(SIZE_KEY); return SIZES.some((m) => m.id === k) ? k : SIZES[0].id; } catch { return SIZES[0].id; } })();
@@ -857,7 +885,7 @@ window.Pie = window.Pie || {};
     const list = models(rows);
     if (!list.includes(model)) model = list[0] || null;
     if (!model) return `<div class="board-scroll"><div class="board-inner"><p class="board-empty">No runs in this release yet</p></div></div>`;
-    const groups = showcase(rows, model, "metric");
+    const cmp = comparePick(rows);
     const speed = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];  // the measure the speed section shows, its title
     // the engines as a key once for the page: every engine with a result in this release, as the cards across the
     // platforms draw them too (LiteRT-LM on Mobile), a dot and a name, in the catalog's order
@@ -876,7 +904,7 @@ window.Pie = window.Pie || {};
     const installed = INSTALL_CARDS.find(([, , p]) => installRows(p).length);
     // under small section names, as the Methodology's outline groups its chapters: the speed, where an engine goes, the models
     const GROUPS = [["Speed", [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"]]],
-      ["", [["metric", "Compare", "#0A84FF"]]],
+      ["", [["metric", "Find Your Speed", "#0A84FF"]]],
       ["Deployment", [installed && [installed[0], "Install Size", "#30B0C7"], supportOf(rows).list.length && ["support", "Platforms", "#FF2D55"]]]];
     const outline = GROUPS.map(([head, items]) => [head, items.filter(Boolean)]).filter(([, items]) => items.length).map(([head, items]) =>
       `${head ? `<div class="board-outline-head">${esc(head)}</div>` : ""}${items.map(([id, title, tint]) =>
@@ -912,11 +940,12 @@ window.Pie = window.Pie || {};
             ${viewToggle("summary")}${paddlesFor("summary")}
           </div>
           <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has("summary") ? "Head-to-head decode win rate" : m.sub, gridCards.has("summary") ? matrix(m, rows) : ranking(m, rows), "", false)).join("")}</div></div>
-          <div class="board-section-head is-apart" id="board-metric">
-            <div class="board-section-text"><p class="board-lede">${speed.sub.split(" · ").map((x) => `${esc(x)}.`).join("<br>")}</p></div>
-            ${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${platformPick("metric")}${paddlesFor("metric")}
+          <div class="board-section-head" id="board-metric">
+            <div class="board-section-text"><h1 class="board-title">Find Your Speed</h1>
+            <p class="board-lede">${speed.sub.split(" · ").map((x) => `${esc(x)}.`).join("<br>")}</p></div>
+            ${headPick("cmp-platform", "Platform", BY_MODEL[cmp.p]?.[0] || cmp.p || "")}${headPick("cmp-hw", "Hardware", cmp.hw ? machineName(cmp.hw) : "")}${headPick("model", "Model", names().model(model))}${metricPick()}
           </div>
-          ${modelRow("metric", speed, rows, groups, model)}
+          ${compareBlock(speed, rows, cmp)}
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
           ${installSection()}
@@ -1044,7 +1073,7 @@ window.Pie = window.Pie || {};
   let tipFor = null;
   element.addEventListener("pointermove", (event) => {
     if (Pie.tapCard.isTouch()) return;
-    const g = event.target.closest?.(".board-bar[data-tip-head], .board-matrix td[data-tip-head], .support-table td[data-tip-head], .qc-mark[data-tip-html]");  // a bar, a battle in a head-to-head grid, or an accuracy gap
+    const g = event.target.closest?.(".board-bar[data-tip-head], .board-matrix td[data-tip-head], .support-table td[data-tip-head], .qc-mark[data-tip-html], .board-compare-name[data-tip-head]");  // a bar, a battle in a head-to-head grid, an accuracy gap, or Compare's machine
     if (!g) {
       if (tipFor) { tipFor = null; tooltip.hidden = true; tooltip.classList.remove("is-board", "is-card"); }
       return;
@@ -1140,7 +1169,7 @@ window.Pie = window.Pie || {};
     const row = carousel.querySelector(".board-grid-cards"), nav = element.querySelector(`[data-carousel-nav="${carousel.dataset.carouselId}"]`);
     const [back, on] = nav ? nav.querySelectorAll("[data-carousel]") : [];
     if (!row || !back) return;
-    nav.hidden = row.scrollWidth <= row.clientWidth + 2 && !(carousel.dataset.carouselId in platformsOff);  // a row with nothing past it shows none; a Platform-filtered one keeps them, greyed
+    nav.hidden = row.scrollWidth <= row.clientWidth + 2;  // a row with nothing past it shows none
     back.disabled = row.scrollLeft < 2;
     on.disabled = row.scrollLeft + row.clientWidth > row.scrollWidth - 2;
   });
@@ -1180,6 +1209,9 @@ window.Pie = window.Pie || {};
       return;
     }
     // the platform cards' bars or grid, one switch for the whole row at its section's head
+    // a finger has no hover: a tap on Compare's machine name shows its specs, a second tap or one elsewhere hides them
+    const specs = event.target.closest(".board-compare-name");
+    if (specs && Pie.tapCard.isTouch()) { tooltip.classList.add("is-board"); Pie.tapCard.toggle(specs, tipHtml(specs)); return; }
     const view = event.target.closest("[data-board-view]");
     if (view) {
       if (view.dataset.view === "grid") gridCards.add(view.dataset.boardView); else gridCards.delete(view.dataset.boardView);
@@ -1396,31 +1428,16 @@ window.Pie = window.Pie || {};
       if (k === "size" || k === "moe") return SIZES.map((m) => ({ value: m.id, label: m.label, selected: m.id === (k === "moe" ? moeMetric : sizeMetric), icon: Pie.platform.degree(m.setup) }));
       if (k === "gain-setup") return GAIN_PICKS.map((g) => ({ value: g.id, label: g.label, selected: g.id === gainSetup, icon: Pie.platform.degree(g.id) }));
       if (k === "metric") return SPEEDS.map((m) => ({ value: m.id, label: m.label, selected: m.id === modelMetric, icon: metricIcon(m) }));
-      if (k.startsWith("hw:") && state) {
-        const [, sec, p] = k.split(":");
-        const g = showcase(measured(), sec === "ttft" ? ttftModel : model, sec).find((x) => x.platform === p);
-        return (g?.choices || []).map((id) => ({ value: id, label: machineName(id), selected: id === g.hardware }));
-      }
-      if (k.startsWith("platforms:") && state) {
-        const sec = k.slice(10), off = platformsOff[sec];
-        return showcase(measured(), sec === "ttft" ? ttftModel : model, sec).map((g) => ({ value: g.platform, label: BY_MODEL[g.platform]?.[0] || Pie.schema[g.platform]?.short || g.platform, selected: !off.has(g.platform), check: true }));
-      }
+      if (k === "cmp-platform" && state) { const c = comparePick(measured()); return c.list.map((p) => ({ value: p, label: BY_MODEL[p]?.[0] || Pie.schema[p]?.short || p, selected: p === c.p })); }
+      if (k === "cmp-hw" && state) { const c = comparePick(measured()); return c.machines.map((id) => ({ value: id, label: machineName(id), selected: id === c.hw })); }
       if ((k !== "model" && k !== "ttft-model") || !state) return [];
       const current = k === "ttft-model" ? ttftModel : model;
       return models(measured()).map((id) => ({ value: id, label: names().model(id), selected: id === current, icon: Pie.platform.makerBadge(id) }));
     },
     pick(k, value) {
       if (k === "model") model = value;
-      if (k.startsWith("hw:")) { const [, sec, p] = k.split(":"); machineFor[sec][p] = value; }
-      if (k.startsWith("platforms:")) {
-        // a tick toggles its platform; the last one shown stays, so the row is never empty
-        const sec = k.slice(10), off = platformsOff[sec], shown = showcase(measured(), sec === "ttft" ? ttftModel : model, sec).filter((g) => !off.has(g.platform));
-        if (off.has(value)) off.delete(value); else if (shown.length > 1) off.add(value);
-        // the cards hide in place, not redrawn, so the open menu stays open for the next tick
-        for (const g of showcase(measured(), sec === "ttft" ? ttftModel : model, sec)) { const c = element.querySelector(`#board-${sec}-${g.platform}`); if (c) c.hidden = off.has(g.platform); }
-        requestAnimationFrame(paddles);
-        return;
-      }
+      if (k === "cmp-platform") { cmpPlatform = value; delete machineFor.metric[value]; }  // a platform opens on its own best machine
+      if (k === "cmp-hw") machineFor.metric[comparePick(measured()).p] = value;
       if (k === "ttft-model") ttftModel = value;
       if (k === "accuracy-platform") Pie.checks?.pick(value);
       if (k === "gain-engine" && Pie.store.tables.engines.some((x) => x.id === value)) { gainEngine = value; try { localStorage.setItem("pieGainEngine", value); } catch { /* private windows can refuse storage */ } }
@@ -1459,14 +1476,14 @@ window.Pie = window.Pie || {};
     render(viewState) {
       state = viewState;
       element.hidden = state.table !== "board";
-      const key = `${model}|${ttftModel}@${state.release}`;
+      const key = `${model}|${ttftModel}|${cmpPlatform}|${JSON.stringify(machineFor.metric)}@${state.release}`;
       if (!element.hidden && element.dataset.key !== key) {
         // a pick on the page (Decode or Prefill, the model) redraws it where the viewer is, not back at its top
         const was = element.querySelector(".board-scroll");
         const at = was ? [was.scrollTop, was.scrollLeft] : null;
         element.innerHTML = page();
         requestAnimationFrame(paddles);
-        element.dataset.key = `${model}|${ttftModel}@${state.release}`;
+        element.dataset.key = key;
         const now = element.querySelector(".board-scroll");
         if (at && now) [now.scrollTop, now.scrollLeft] = at;
         follow();
