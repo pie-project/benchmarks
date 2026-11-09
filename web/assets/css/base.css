@@ -1,0 +1,254 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  /* a two-finger swipe sideways scrolls the grids, never the browser back or forward a page; and a fast
+     scroll past either end never pulls the whole window, sidebar and toolbar with it */
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  font: 13px/1.38 var(--font-text);
+  letter-spacing: -.003em;
+  color: var(--color-label);
+  background: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  transition: grid-template-columns .25s ease;
+}
+
+:root[data-sidebar="hidden"] body {
+  grid-template-columns: 0 1fr;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  cursor: default;
+}
+
+svg {
+  flex: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+}
+
+/* a page's own scroller stops dead at its ends: a fast scroll past the content never pulls the toolbar along */
+.platform-scroll, .table-container, .overview, .method { overscroll-behavior-y: none; }
+
+.spacer {
+  flex: 1;
+}
+
+.muted {
+  color: var(--color-label-secondary);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.plain-button {
+  height: var(--control-height);
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--color-label);
+}
+
+.plain-button:hover {
+  background: var(--color-hover);
+}
+
+/* a toggle that is on is a filled button, as a toolbar toggle in Finder: not a coloured word that reads as a link */
+.plain-button.is-active {
+  background: var(--color-selection);
+}
+
+.popup-chevron {
+  width: 8px;
+  height: 12px;
+  margin-left: 1px;
+  fill: none;
+  stroke: var(--color-label-secondary);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.engine-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 500;
+}
+
+.swept-tag { color: var(--color-label-tertiary); cursor: help; }
+.swept-tag svg { width: 14px; height: 14px; vertical-align: -2px; fill: var(--color-background); stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }  /* on the digits' line, in the (i)'s grey */
+
+.workload-tag .mode-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 7px; color: var(--color-label-secondary); }  /* the name keeps the row's text line */
+.workload-tag .mode-icon + .mode-icon { margin-left: -4px; }  /* Raw's two marks read as one */
+
+.engine-tag.is-logo::before { content: none; }  /* the logo stands in for the colour chip */
+.engine-logo { width: 16px; height: 16px; flex: none; display: block; object-fit: contain; }  /* every logo in one square, so the names line up */
+.engine-logo.is-tile { border-radius: 22%; }  /* a logo on its own tile (Splash's) gets an app icon's corners */
+.engine-logo.is-glyph { overflow: visible; fill: var(--color-label); }  /* a single-ink logo reads in either theme */
+.engine-logo.is-glyph .is-stroked { fill: none; stroke: var(--color-label); stroke-linecap: round; stroke-linejoin: round; }
+.engine-logo.is-glyph .is-faint { fill: var(--color-label-tertiary); }
+
+.engine-tag::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;  /* square chips, as the Rankings key */
+  background: var(--engine-color, var(--color-engine-default));
+}
+
+.hardware-tag {
+  font: 12px var(--font-mono);
+  color: var(--color-label-secondary);
+}
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-label-secondary);
+}
+
+.status-tag::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--color-label-quaternary);
+}
+
+.status-tag.is-pass::before {
+  background: var(--color-status-pass);
+}
+
+.status-tag.is-noisy::before {
+  background: var(--color-status-noisy);
+}
+
+.status-tag.is-fail::before {
+  background: var(--color-negative);
+}
+
+.status-tag.is-not_run::before,
+.status-tag.is-unsupported::before,
+.status-tag.is-no_fit::before,
+.status-tag.is-no_data::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--color-label-tertiary);
+}
+
+.is-positive {
+  color: var(--color-positive);
+}
+
+.is-negative {
+  color: var(--color-negative);
+}
+
+/* phones and iPads in portrait: one column; the page never scrolls sideways or out from under its toolbar */
+@media (max-width: 899px) {
+  body,
+  :root[data-sidebar] body {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: hidden;
+    overscroll-behavior: none;
+    font-size: 15px;
+  }
+
+  .content {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* a finger needs more than a pointer: plain buttons grow to 44 points, as Apple asks */
+  .plain-button {
+    height: 44px;
+    padding: 0 12px;
+    font-size: 15px;
+  }
+}
+
+/* phones: a sideways swipe never moves the page. The page is locked to the screen's width, and a table that
+   reaches its end stops hard instead of bouncing or handing the swipe on to the page. */
+@media (max-width: 899px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+  }
+  .table-container,
+  .platform-scroll,
+  .filter-list,
+  .store-list,
+  .term-body {
+    overscroll-behavior: none;
+  }
+}
+@media (max-width: 899px) {
+  .content,
+  .content > * { max-width: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
+  .content .table-container,
+  .content .platform-scroll { overflow-x: auto; }
+}
+/* phones: a page still stops hard sideways, but bounces at its top and bottom, as iOS scrolls; the bounce stays in its own scroller */
+@media (max-width: 899px) {
+  .content,
+  .content > *,
+  .method,
+  .platform,
+  .platform-scroll,
+  .table-container,
+  .sidebar,
+  .sidebar-nav { overscroll-behavior-x: none; overscroll-behavior-y: contain; }
+}
+
+
+/* a click opens a button's menu without a focus ring, as on macOS; the keyboard still gets one */
+button:focus:not(:focus-visible) { outline: none; }
+
+/* iPhone: no scroll bars anywhere, as iOS shows none at rest; the content scrolls by touch, and no gutter is kept */
+@media (max-width: 899px) {
+  * { scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
+  .method { scrollbar-gutter: auto; }
+}
+
+/* a segmented control's selection as one thumb that glides between segments, as iOS moves it (ui/segmented.js):
+   the thumb wears the chosen segment's fill and sits under the labels, and the chosen segment gives its own fill up */
+.has-thumb { position: relative; isolation: isolate; }
+.seg-thumb { position: absolute; top: 2px; bottom: 2px; left: 0; z-index: -1; pointer-events: none; }
+.has-thumb > .is-active { background: none !important; box-shadow: none !important; }
+/* the hand-off is instant: a segment that faded its own fill out would show under the thumb for a moment, the two fills
+   stacked one shade brighter; only the label's colour still eases */
+.has-thumb > button { transition-property: color !important; }

@@ -1,0 +1,316 @@
+/* Methods: each chapter a short paper in one reading column, as Apple's platform guides read: the site's headline and
+   lede, then sections under plain headings: the numbered formulas, why they hold, the assumptions, the check against
+   the measurements, a worked example and the references. */
+#methods[hidden] { display: none; }
+
+
+.book-page { max-width: 720px; margin: 0 auto; padding: 56px var(--edge) 96px; color: var(--color-label); }
+
+.book-title {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+}
+
+.book-lede { margin: 0; font-size: 17px; line-height: 1.55; color: var(--color-label-secondary); }
+
+/* a section: a plain heading over a hairline, the body at reading size */
+.book-section { margin-top: 56px; }
+.book-page > .book-section:first-child { margin-top: 0; }  /* the page opens on its first section: no title above it */
+.book-section h2 {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+.book-plain { margin: 14px 0 0; font-size: 15px; line-height: 1.55; color: var(--color-label-secondary); }
+.book-section h2 + .book-plain { margin: 0 0 16px; }
+.book-section h2 + :not(.book-plain) { margin-top: 14px; }
+.book-prose p { margin: 0; font-size: 17px; line-height: 1.6; }
+.book-prose p + p { margin-top: 14px; }
+.book-prose a { color: var(--color-accent); text-decoration: none; }
+.book-prose a:hover { text-decoration: underline; }
+
+/* a citation: its number in the accent colour, as a link to the reference below */
+.cite { display: inline; margin: 0 0 0 3px; padding: 0; border: 0; background: none; color: var(--color-accent); font: inherit; font-size: .82em; font-variant-numeric: tabular-nums; cursor: pointer; }
+.cite:hover { text-decoration: underline; }
+
+/* the calculation: one tile, a row per equation in words, the equals signs aligned, each ending in its value for the
+   worked example; the last row is the limit, its value in the accent colour */
+.eqns { display: grid; grid-template-columns: max-content max-content minmax(0, 1fr); align-items: baseline; gap: 14px 12px; padding: 22px 24px; border-radius: 18px; background: var(--color-card); }
+.eqn { display: contents; }
+.eqn-result { font-size: 15px; font-weight: 600; white-space: nowrap; }
+.eqn-sign, .eqn-op { color: var(--color-label-tertiary); }
+.eqn-terms { font-size: 15px; line-height: 1.45; }
+.eqn-terms sup { font-size: .7em; line-height: 0; }
+.eqn-tail { white-space: nowrap; }  /* the last term keeps its citations on its line */
+.eqn-cites { margin-left: 2px; }
+
+/* the inputs of the example: two columns of quiet rows, each with where its number comes from */
+.inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; margin-top: 16px; }
+.input { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; padding: 9px 0; border-bottom: .5px solid var(--color-separator); }
+.input-label { font-size: 13px; color: var(--color-label-secondary); }
+.input-value { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.input-source { grid-column: 1 / -1; font-size: 11px; color: var(--color-label-tertiary); }
+
+/* the assumptions: a row each, its effect on the limit as a small tag at the end */
+.assumptions { margin: 14px 0 0; padding: 0; list-style: none; }
+.assumptions li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 20px; padding: 12px 0; border-bottom: .5px solid var(--color-separator); font-size: 15px; line-height: 1.5; }
+.assumptions li:last-child { border-bottom: 0; }
+.effect { padding: 1px 8px; border-radius: 10px; background: var(--color-fill); color: var(--color-label-secondary); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.effect.is-down { background: var(--color-accent-tint); color: var(--color-accent); }
+.effect.is-choice { background: none; box-shadow: inset 0 0 0 .5px var(--color-separator); }
+
+/* the check: four figures in a row, large and unboxed as Apple sets specs, then one sentence */
+.check-figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.check-figures > div { display: flex; flex-direction: column; gap: 4px; }
+.check-value { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.check-label { font-size: 13px; color: var(--color-label-secondary); }
+.check-figures .is-pass .check-value { color: var(--color-positive); }
+.check-figures .is-fail .check-value { color: var(--color-negative); }
+
+/* the results above the limit, in the example's rows, the share in the red of a failed check; then what is known */
+.check-over .example-row { grid-template-columns: minmax(0, 1fr) 0 auto; }
+.check-over .example-value { color: var(--color-negative); }
+.open-question { margin-top: 20px; padding: 18px 20px; border-radius: 14px; background: var(--color-card); }
+.open-question h3 { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
+.open-question p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--color-label-secondary); }
+
+/* the worked example: label, where the number comes from, and the number; the limit last and bold */
+.example-rows { margin-top: 14px; }
+.example-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(96px, auto); align-items: baseline; gap: 16px; padding: 11px 0; border-bottom: .5px solid var(--color-separator); font-size: 15px; }
+.example-source { font-size: 12px; color: var(--color-label-tertiary); }
+.example-value { text-align: right; font-variant-numeric: tabular-nums; }
+.example-row.is-total { border-bottom: 0; font-weight: 600; }
+.example-row.is-total .example-value { color: var(--color-accent); }
+
+/* the roofline: hairline grid, the two bounds quiet, the limit in the accent colour */
+.roofline { margin: 28px 0 0; }
+.roofline svg { display: block; width: 100%; height: auto; overflow: visible; }
+.roof-grid { stroke: var(--color-separator-light); stroke-width: 1; }
+.roof-tick { fill: var(--color-label-tertiary); font-size: 11px; text-anchor: middle; font-variant-numeric: tabular-nums; }
+.roof-other { fill: none; stroke: var(--color-label-quaternary); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.roof-limit { fill: none; stroke: var(--color-accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.roof-dot { fill: var(--color-accent); stroke: var(--color-background); stroke-width: 2; }
+.roof-label { fill: var(--color-label-secondary); font-size: 12px; }
+.roof-label.is-dot { fill: var(--color-accent); font-weight: 600; }
+.roofline figcaption { margin-top: 10px; font-size: 13px; line-height: 1.45; color: var(--color-label-secondary); }
+
+/* the references, numbered as the citations number them; one flashes when its citation is followed */
+.refs { margin: 0; padding-left: 26px; font-size: 15px; line-height: 1.55; color: var(--color-label-secondary); }
+.refs li { padding: 6px 8px; margin-left: -8px; border-radius: 8px; }
+.refs li::marker { color: var(--color-label-tertiary); font-variant-numeric: tabular-nums; }
+.refs a { color: var(--color-label); text-decoration: none; }
+.refs a:hover { color: var(--color-accent); text-decoration: underline; }
+.refs li.is-flash { animation: ref-flash 1.6s ease; }
+@keyframes ref-flash { 0%, 40% { background: var(--color-accent-tint); } 100% { background: transparent; } }
+
+
+/* phones: the page takes the phone edge, the formulas stack */
+@media (max-width: 899px) {
+  .book-page { padding: 28px var(--edge) 64px; }
+  .book-title { font-size: 32px; }
+  .book-lede { font-size: 17px; }
+  .book-section { margin-top: 40px; }
+  .eqns { grid-template-columns: minmax(0, 1fr); gap: 2px 12px; padding: 18px; }
+  .eqn-sign { display: none; }
+  .eqn-result { grid-column: 1; }
+  .eqn-terms { grid-column: 1; margin-bottom: 12px; color: var(--color-label-secondary); }
+  .eqn:last-child .eqn-terms { margin-bottom: 0; }
+  .inputs { grid-template-columns: minmax(0, 1fr); }
+  .check-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 20px; }
+  .assumptions li { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .assumptions .effect { justify-self: start; }
+  .example-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .example-source { display: none; }
+}
+
+/* Methods at the site's measure: the welcome and inferlets pages' 1080px, set as Apple sets a feature page. Big plain
+   headings, the formulas in one large tile, the check as four spec tiles, and the reason as a single display line. */
+@media (min-width: 900px) {
+  .book-page { max-width: calc(1080px + 2 * 22px); padding: 56px 22px 96px; }
+}
+.book-section { margin-top: 72px; }
+.book-section h2 { margin: 0 0 20px; font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+.book-section h2 + :not(.book-plain) { margin-top: 0; }
+.eqns { gap: 22px 16px; padding: 34px 40px; border-radius: 22px; }
+.eqn-result, .eqn-terms { font-size: 19px; }
+.eqn.is-total .eqn-result { color: var(--color-accent); }
+.check-figures > div { gap: 6px; padding: 24px 26px; border-radius: 22px; background: var(--color-card); }
+.check-value { font-size: 44px; font-weight: 700; letter-spacing: -.025em; line-height: 1.05; }
+.check-label { font-size: 14px; }
+.book-plain { font-size: 15px; }
+.book-prose p { max-width: 900px; font-family: var(--font-display); font-size: 28px; font-weight: 600; letter-spacing: -.015em; line-height: 1.28; }
+.book-prose .cite { font-family: var(--font-text, inherit); font-size: .5em; font-weight: 500; vertical-align: super; }
+.refs { font-size: 13px; }
+@media (max-width: 899px) {
+  .book-section { margin-top: 48px; }
+  .book-section h2 { font-size: 24px; margin-bottom: 14px; }
+  .eqns { padding: 20px; }
+  .eqn-result, .eqn-terms { font-size: 16px; }
+  .check-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .check-value { font-size: 34px; }
+  .book-prose p { font-size: 22px; }
+}
+/* the references close the page quietly: a small heading, not a chapter */
+.book-page > .book-section:last-child h2 { font-size: 15px; font-weight: 600; letter-spacing: 0; color: var(--color-label-secondary); }
+
+/* Limits, in the welcome page's language: its gradient banner carries the headline, each formula is a tile under an
+   app-icon glyph, and the check is one ring and three figures */
+.book-page:has(.lim-banner) { padding-top: 56px; }  /* the welcome page's 56px above its banner */
+.lim-banner { display: grid; height: auto; min-height: 0; margin: 0 0 32px; padding: 28px 32px; }  /* the card fits its formulas, an even inset all round, as Apple sizes a card to what it holds */
+.lim-banner.is-decode { background: radial-gradient(60% 90% at 12% 20%, rgba(64, 132, 255, .95), transparent 70%), radial-gradient(45% 80% at 40% 90%, rgba(34, 211, 238, .85), transparent 70%), radial-gradient(50% 90% at 92% 20%, rgba(110, 231, 183, .75), transparent 70%), linear-gradient(120deg, #2563eb, #0ea5e9); }
+.lim-banner.is-batching { background: radial-gradient(60% 90% at 12% 20%, rgba(52, 199, 89, .9), transparent 70%), radial-gradient(45% 80% at 45% 90%, rgba(34, 211, 238, .8), transparent 70%), radial-gradient(50% 90% at 92% 20%, rgba(64, 132, 255, .85), transparent 70%), linear-gradient(120deg, #059669, #2563eb); }
+.lim-banner.is-prefill { background: radial-gradient(60% 90% at 12% 20%, rgba(168, 85, 247, .95), transparent 70%), radial-gradient(45% 80% at 45% 90%, rgba(236, 72, 153, .85), transparent 70%), radial-gradient(50% 90% at 92% 20%, rgba(253, 186, 116, .85), transparent 70%), linear-gradient(120deg, #7c3aed, #ec4899); }
+.lim-banner-copy { position: static; padding: 28px 30px; }
+
+.lim-section { margin-top: 48px; padding-top: 40px; border-top: .5px solid var(--color-separator); }  /* unboxed, a hairline between, as the welcome page separates its sections */
+.lim-section h2 { margin: 0 0 20px; font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
+
+/* the formulas: a row each, the equals signs aligned, every formula on one line, as a textbook sets them */
+.lim-tiles { display: grid; justify-content: center; align-content: center; grid-template-columns: max-content max-content max-content; align-items: center; column-gap: 16px; }
+.lim-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; padding: 8px 0; border-bottom: .5px solid var(--color-separator); }  /* one unbroken hairline a row */
+.lim-row:last-child { border-bottom: 0; }
+.lim-name { font-size: 13px; font-weight: 400; white-space: nowrap; }
+.lim-eq { font-size: 13px; color: var(--color-label-tertiary); }
+.lim-formula { font-size: 13px; line-height: 1.4; color: var(--color-label); white-space: nowrap; }
+.lim-formula .eqn-op { color: var(--color-label-tertiary); }
+
+.lim-figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.lim-figures div { display: flex; flex-direction: column; gap: 4px; }
+.lim-figures b { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.lim-figures span { font-size: 14px; color: var(--color-label-secondary); }
+.lim-figures .is-fail b { color: var(--color-negative); }
+.lim-note { margin: 0; font-size: 15px; color: var(--color-label-secondary); }
+
+
+@media (max-width: 899px) {
+  .lim-tiles { grid-template-columns: minmax(0, 1fr); }
+  .lim-eq { display: none; }
+  .lim-formula { grid-column: 1; white-space: normal; }  /* a phone wraps a formula under its name, at the same 13px */
+}
+.lim-banner + .lim-section { margin-top: 0; padding-top: 0; border-top: 0; }  /* the banner already closes the head: no rule under it */
+
+/* the formulas on the banner: white on its artwork, the operators and hairlines in white at lower opacity */
+.lim-banner .lim-name, .lim-banner .lim-formula { color: #fff; }
+.lim-banner .lim-row.is-limit .lim-name { color: #fff; }
+.lim-banner .lim-eq, .lim-banner .lim-formula .eqn-op { color: rgba(255, 255, 255, .6); }
+.lim-banner .lim-row { border-bottom-color: rgba(255, 255, 255, .25); }
+.lim-banner .lim-row:last-child { border-bottom: 0; }
+.lim-banner .cite { color: rgba(255, 255, 255, .75); }
+/* a dark veil over the artwork so the white formulas read clearly on every colour of it */
+.lim-banner { position: relative; isolation: isolate; }
+.lim-banner::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: rgba(0, 0, 0, .2); }
+
+/* under the banner, two small groups as Apple sets a list under a caption: the results above the limit, then the
+   references; the same 40px above each, rows flush with the banner's edges, hairlines only between rows */
+.lim-section { margin-top: 40px; padding-top: 0; border-top: 0; }
+.lim-banner + .lim-section { margin-top: 0; }  /* the banner's own 32px is the gap, as under the welcome banner */
+.lim-caption, .lim-section h2.lim-caption { margin: 0 0 8px; font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--color-label-secondary); }
+.lim-over div { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; font-size: 13px; border-bottom: .5px solid var(--color-separator); }
+.lim-over div:last-child { border-bottom: 0; }
+.lim-over div { align-items: center; }
+/* over the limit: a tinted capsule, as the Overall column tags a value */
+.lim-over .lim-pill { padding: 2px 7px; border-radius: 5px; font-size: 12px; font-weight: 600; line-height: 16px; color: var(--color-negative); background: color-mix(in srgb, var(--color-negative) 14%, transparent); font-variant-numeric: tabular-nums; }
+.lim-refs { margin-top: 40px; }
+.lim-banner + .lim-refs { margin-top: 0; }
+.lim-refs .refs { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+.lim-refs .refs li { padding: 3px 0 3px 4px; margin-left: 0; }
+/* a citation clicked with the pointer leaves no focus ring, as on Apple's pages; the keyboard still gets one. The
+   reference it leads to fades in and out once, the whole line with its number */
+.cite:focus { outline: none; }
+.cite:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+.lim-refs .refs { padding-left: 0; list-style-position: inside; }
+.lim-refs .refs li { margin: 0 -8px; padding: 4px 8px; border-radius: 8px; }
+/* Limits carries the workload bar inside its scroller: a reserved scrollbar gutter would leave a strip at the right of
+   the bar when there is nothing to scroll, so this page takes the gutter only when it scrolls */
+#methods.method { scrollbar-gutter: auto; }
+
+/* the banner is the welcome page's, the workload its title; the formulas sit under it as rows, like the results above the limit */
+.lim-banner { display: block; height: 120px; margin-bottom: 56px; padding: 0; }  /* pure colour, no words: a short band tints the workload without pushing the formulas down */
+@media (max-width: 899px) { .lim-banner { height: 88px; } }
+.lim-banner::before { content: none; }
+.lim-formulas .lim-formula { white-space: normal; text-align: right; }
+.lim-formulas .cite { margin-left: 2px; }
+/* formulas and results above the limit read at the welcome page's lede size; citations stay small, raised as footnote marks */
+.lim-over div, .lim-formulas .lim-formula { font-size: 17px; line-height: 1.45; }
+.lim-over div { padding: 12px 0; }
+.lim-over .lim-pill { padding: 2px 8px; border-radius: 6px; font-size: 14px; line-height: 19px; }
+.lim-formulas .cite { font-size: 12px; vertical-align: super; line-height: 0; }
+#methods .book-page > .lim-section:first-child { margin-top: 0; }
+/* formulas as Apple's tech specs: the name grey in a fixed column, its formula left-aligned beside it */
+.lim-formulas div { display: grid; grid-template-columns: 160px minmax(0, 1fr); justify-content: start; gap: 16px; }
+.lim-formulas .lim-name { color: var(--color-label-secondary); white-space: nowrap; }
+.lim-formulas .lim-formula { text-align: left; }
+@media (max-width: 599px) { .lim-formulas div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+/* every row, both ends, at the references' 13px */
+.lim-over div, .lim-over .lim-pill, .lim-formulas .lim-formula { font-size: 13px; }
+.lim-formulas .cite { font-size: 10px; }
+.lim-over .lim-pill { padding: 1px 6px; border-radius: 5px; font-weight: 400; line-height: 18px; }  /* the pill reads as the row's own text, only tinted */
+/* where the inputs come from: a quiet line under the formulas, its links in the accent as Apple writes "Learn more" */
+.lim-note-link { margin: 12px 0 0; font-size: 13px; line-height: 1.5; color: var(--color-label-secondary); }
+.lim-go { padding: 0; border: 0; background: none; font: inherit; color: var(--color-accent); cursor: pointer; }
+.lim-go:hover { text-decoration: underline; }
+.lim-go:focus { outline: none; }
+.lim-go:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+.lim-note-link { display: flex; gap: 20px; }
+.lim-go { display: inline-flex; align-items: center; gap: 3px; }
+.lim-go svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+/* the page opens on its workload, set as the Inferlets page opens */
+#methods .lim-hero { margin: 0 0 48px; }
+#methods .lim-hero + .lim-section { margin-top: 0; }
+.lim-over .lim-pill { padding: 0 6px; border-radius: 4px; line-height: 18px; background: color-mix(in srgb, var(--color-negative) 10%, transparent); }  /* a slim tag, the text's own height, lightly tinted */
+.lim-over .lim-pill { padding: 0 5px; font-size: 12px; line-height: 16px; }  /* a tag runs a step under its row, as Apple sets a badge */
+/* phones, by Apple's rules: no line ends on a lone citation or word, and every link is a 44-point target */
+.lim-tail { white-space: nowrap; }
+.lim-over span, .lim-refs .refs li { text-wrap: pretty; }
+@media (max-width: 899px) {
+  .lim-note-link { gap: 24px; margin-top: 4px; }
+  .lim-go { min-height: 44px; }
+  .lim-formulas .cite { position: relative; }
+  .lim-formulas .cite::after { content: ""; position: absolute; inset: -14px -8px; }
+}
+/* phones: twice the air under the toolbar before a page's banner or title */
+@media (max-width: 899px) {
+  .method > .method-inner { padding-top: 32px; }
+  #methods .book-page { padding-top: 56px; }
+}
+.method-inner > .inf-hero:first-child { margin-top: 0; }  /* every page starts the same distance under its bar: 56px on a desktop, 32px on a phone */
+/* a long formula wraps before an operator and hangs the rest under its first term */
+.lim-formulas span.lim-unit, .lim-formulas .lim-unit span { white-space: nowrap; }
+.lim-formulas .lim-formula { padding-left: .85em; text-indent: -.85em; }  /* a turned line's operator sits under the × of "2 ×" */
+/* the turn before a formula's last operator: taken on a phone only */
+.lim-turn { display: none; }
+@media (max-width: 899px) { .lim-turn { display: inline; } }
+/* phones: one rhythm on Limits, 32px under the bar and between every block, as on the other pages */
+@media (max-width: 899px) {
+  #methods .book-page { padding-top: 32px; }
+  #methods .lim-hero { margin-bottom: 32px; }
+  #methods .lim-section, #methods .lim-refs { margin-top: 32px; }
+  #methods .lim-hero + .lim-section { margin-top: 0; }
+}
+/* try: the formulas at the welcome lede's 17px */
+.lim-formulas div, .lim-formulas .lim-formula { font-size: 17px; }
+.lim-formulas .cite { font-size: 11px; }
+.lim-note-link { font-size: 17px; }
+.lim-go svg { width: 13px; height: 13px; }
+.lim-formulas .lim-name { font-size: 17px; }
+/* the label column fits its longest label, then 24px before the value, as Apple sets a spec row */
+.lim-formulas { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 24px; }
+.lim-formulas > div { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; column-gap: 24px; }
+@media (max-width: 599px) { .lim-formulas { grid-template-columns: minmax(0, 1fr); } .lim-formulas > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+/* a function's arguments: inline on a wide screen, a column after its bracket on a phone */
+.lim-args, .lim-arg { white-space: nowrap; }
+@media (max-width: 899px) {
+  .lim-formulas .lim-args { display: inline-flex; flex-direction: column; vertical-align: top; text-indent: 0; }
+}
+/* the results above the limit at the formulas' 17px; the tag a step under, as before */
+.lim-over:not(.lim-formulas) > div { font-size: 17px; }
+.lim-over .lim-pill { padding: 1px 6px; font-size: 15px; line-height: 20px; border-radius: 5px; }
+/* Methodology keeps its scrollbar's room whether a chapter scrolls or not, so a long chapter does not shift the
+   centred page left by half a scrollbar against a short one */
+#approach.method { scrollbar-gutter: stable; }

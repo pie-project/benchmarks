@@ -7,7 +7,7 @@ answers start alike, and a step reads fewer. This measures it: it renders a fini
 bench did (bench/common.py: system prompt, chat template, --no-think), decodes greedy answers with the model's
 Hugging Face reference (EOS held off, as --ignore-eos does) in lock-step groups, and records the top-k experts each
 request picks at each MoE layer in each decode step. A step of n requests reads the union of their picks; groups
-decoded side by side are unioned step by step. It prints the `routes` pairs for architectures.js (pie-project/website public/benchmarks/assets/js/config):
+decoded side by side are unioned step by step. It prints the `routes` pairs for web/assets/js/config/architectures.js:
 the share averaged over every layer and decode step, at 1 to the largest power of two of requests it was given.
 
 Run it on a GPU pod from a checkout of this repo (for bench/common.py) with a Python that has torch and a transformers
