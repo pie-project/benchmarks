@@ -440,7 +440,7 @@ window.Pie = window.Pie || {};
     const ran = full.some((r) => r.workload === metric.workload && r.model === model && r.hardware === c.hw && r[metric.key]);
     const needs = !ran && Object.values(Pie.store.tables.no_fit?.[c.hw]?.[model] || {}).find(Boolean);
     // a wide chart beside the page's width, the half-card one on a phone
-    const body = ran ? `${ranking({ ...modelSummary(metric, full, g, model), width: 912, widest: 96, left: 0 }, full).replace('class="board-chart"', 'class="board-chart is-wide"')}${ranking({ ...modelSummary(metric, full, g, model), widest: 72, left: 0 }, full).replace('class="board-chart"', 'class="board-chart is-narrow"')}`
+    const body = ran ? `${ranking({ ...modelSummary(metric, full, g, model), width: 912, left: 0 }, full).replace('class="board-chart"', 'class="board-chart is-wide"')}${ranking({ ...modelSummary(metric, full, g, model), widest: 72, left: 0 }, full).replace('class="board-chart"', 'class="board-chart is-narrow"')}`
       : `<div class="board-compare-empty">${needs ? `${NOFIT}<b>Doesn't fit on this machine</b><span>This model needs about ${Math.round(needs)} GB of memory.</span>` : "<b>Not measured yet</b><span>No results for this model on this machine.</span>"}</div>`;
     // the name opens the machine's specs on hover, or on a tap
     const spec = specRows(c.hw), name = esc(machineName(c.hw));
