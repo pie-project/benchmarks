@@ -988,6 +988,9 @@ window.Pie = window.Pie || {};
       const sliceOn = dry || compare !== "engines" || state.platform.slices !== false;
       const every = Pie.store.snapshot(state.release);
       const all = every.filter((r) => sliceOn || !r.miniature);
+      // where each model ran only as a slice: there the full model does not run, whatever the formula says
+      const slicedAt = new Set(), fullAt = new Set();
+      for (const r of every) (r.miniature ? slicedAt : Pie.store.isMeasured(r) ? fullAt : null)?.add(`${r.hardware}|${r.model}`);
       lastAll = all;  // the hover cards name the engines that left a cell empty
       shownEngine = null;
       const modes = Pie.platform.metrics(state);
@@ -1121,19 +1124,22 @@ window.Pie = window.Pie || {};
           // says that instead of the full model's size
           // only where this run measures (or measured) the model cut down: elsewhere the full model's "does not fit" stands
           const cut = sliceOn && ((TODAY.models.has(id) && TODAY.hardware.has(mac)) || snapshot.some((r) => here(r) && r.miniature));
-          let needs = cut ? null : noFit[mac]?.[id]?.[base];
-          // Best TPS and Kernel Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
+          // does not fit: the Memory Fit formula says so, or only a slice of the model ran on this machine (a slice is cut
+          // only where the full model would not run); no number beside it shows the mark alone
           const fullNeeds = Pie.store.index.models[id]?.needs_gib;
-          if ((compare === "tps" || compare === "ceiling") && cut) { c = null; needs = noFit[mac]?.[id]?.[base] || fullNeeds || 1; }
+          const formula = noFit[mac]?.[id]?.[base];
+          const sliceOnly = !formula && slicedAt.has(`${mac}|${id}`) && !fullAt.has(`${mac}|${id}`);
+          let needs = formula || (sliceOnly ? fullNeeds || 1 : undefined);
+          // Best TPS and Kernel Efficiency are the real model's speed and its share of the hardware, which a miniature is not: there the full model does not fit, whatever ran
+          if ((compare === "tps" || compare === "ceiling") && cut) c = null;
           const own = snapshot.find((r) => here(r) && r.engine === base);
           // a catalog model (a datacenter release, run in the cloud as a miniature) is never "does not fit" when engines
           // are compared: a machine its miniature has not reached reads "–", and a failed run "–" with the error on hover
           const cloud = Pie.store.index.models[id]?.catalog && compare === "engines";
-          if (cloud) needs = null;
           const failed = own && own.status === "fail";
-          if (cloud && failed && !c) { grid[mac][model] = { c: null, needs: null, failed: true, why: own.note ? `Failed: ${own.note}` : "The run failed" }; continue; }
+          if (cloud && failed && !c) { grid[mac][model] = { c: null, needs, failed: true, why: own.note ? `Failed: ${own.note}` : "The run failed" }; continue; }
           // an empty cell explains itself only when there is something to say: it does not fit, or its run failed
-          grid[mac][model] = { c, needs, failed, why: needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a model slice ran` : `Needs about ${Math.round(needs)} GB`) : own?.note || "" };
+          grid[mac][model] = { c, needs, failed, why: sliceOnly ? "The full model does not run on this machine; only a model slice ran here" : needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a model slice ran` : `Needs about ${Math.round(needs)} GB`) : (compare === "tps" || compare === "ceiling") && cut ? "Only a model slice ran here, which is not the full model's speed" : own?.note || "" };
         }
       }
       // Hide unavailable drops the models and machines with nothing to compare, as the results table does
