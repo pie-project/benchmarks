@@ -552,6 +552,11 @@ default:
       platform:
         tpu-v5e-1:
           knobs:
+            gpu_mem_util:
+              value: 0.9
+              rationale: >
+                The cut's ~9.5 GiB fill 0.60 of a v5e. With its n-gram table folded (pie #1529) the fire no longer
+                relayouts the 6 GiB table (9.54 GiB of temporaries): at 0.90 a 3.6 GiB pool seats and raw-512-256 runs.
             parity_gpu_mem_util:
               value: 0.9
               rationale: >
