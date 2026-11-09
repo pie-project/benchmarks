@@ -265,6 +265,11 @@ unsupported:
   # MiniMax-M3 is on sglang-jax main (sglang.yaml pins minimax-m3.1-flash-mini-tpu-bf16 to it), in bf16 only
   - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu}
     reason: "sglang-jax loads MiniMax-M3 in bf16 only (no MXFP8 or NVFP4): it runs minimax-m3.1-flash-mini-tpu-bf16, the same cut read out to bf16"
+  # Qwen3.8-27B's 8-layer v5e cut (11.3 GiB): sglang-jax main runs out of HBM as its server starts, at c32 as at c256
+  # (tpu 42536287573 "Not enough memory. Please try to increase --mem-fraction-static", 42556218004 pjrt.OOM, error_0101;
+  # both at the v5e's 0.97 share)
+  - when: {engine: sglang, backend: xla, artifact: qwen3.8-27b-mini8, platform: tpu-v5e-1}
+    reason: "doesn't fit: sglang-jax (main b3e3e16b2) runs out of HBM starting its server for this 11.3 GiB cut on a 16 GB v5e, even at c32 (pjrt OOM)"
   # on one chip sglang-jax main's MSA backend refuses it: its per-head block selection needs one KV group per tensor rank
   # (tpu.yml v6e 42162051016)
   - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu-bf16, platform: [tpu-v6e-1, tpu-v5e-1]}
