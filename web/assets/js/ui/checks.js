@@ -307,7 +307,7 @@ window.Pie = window.Pie || {};
           const { score: g, kl: r } = at[`${mac}|${m}`];
           const title = `${Pie.store.names.model(m)} on ${hardwareName(mac)}`;
           if (r) {
-            const tip = card(title, [["Compared", `Pie vs ${engineLabel(r.ref_engine)}${r.ref_platform && r.ref_platform !== mac ? ` on ${hardwareName(r.ref_platform)}` : ""}`], ["Model slice", layersText(r.layers) || "Yes", true],
+            const tip = card(title, [["Compared", `Pie vs ${engineLabel(r.ref_engine)}`], ...(r.ref_platform && r.ref_platform !== mac ? [["Reference on", hardwareName(r.ref_platform), true]] : []), ["Model slice", layersText(r.layers) || "Yes", true],
               // KL between the two engines' next-token distributions on the same prompts: the first token alone, or the mean over the reference's answers
               [r.answer_tokens === 1 ? "First-token KL" : "KL, answer mean", kl(r.kl_mean)], ["Same top token", pct(r.top1_agree)], ["Prompts", `${r.prompts ?? "–"}`, true],
               // checked on the answers because the first token moved under the reference's own rounding: both figures
