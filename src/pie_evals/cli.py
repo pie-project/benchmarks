@@ -302,6 +302,16 @@ def drop_workload(obj, workload):
     click.echo(f"{workload}: {obj['store'].drop_workload(workload)} records deleted")
 
 
+@main.command("drop-quality")
+@click.argument("artifact")
+@click.argument("task")
+@click.argument("tag")
+@click.pass_obj
+def drop_quality(obj, artifact, task, tag):
+    """Delete the quality scores of one artifact, task and tag (a failed run's row)."""
+    click.echo(f"{artifact} {task} {tag}: {obj['store'].drop_quality(artifact, task, tag)} quality scores deleted")
+
+
 @main.command("import-store")
 @click.argument("src", type=click.Path(exists=True))
 @click.pass_obj

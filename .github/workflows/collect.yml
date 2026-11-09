@@ -13,6 +13,7 @@ on:
       drop_tags: { description: "comma-separated manual tags to delete from the database instead of importing", required: false, default: "" }
       drop_engines: { description: "comma-separated engines whose results and quality scores to delete instead of importing", required: false, default: "" }
       drop_workloads: { description: "comma-separated workloads whose results to delete instead of importing", required: false, default: "" }
+      drop_quality: { description: "comma-separated artifact:task:tag quality scores to delete instead of importing", required: false, default: "" }
       move_tags: { description: "comma-separated src:dst tag pairs: move src's good rows into dst instead of importing", required: false, default: "" }
       runner: { description: "runner label to import on (site; or an idle Mac like m5-max-64g when the site laptop is backed up)", required: false, default: "site" }
 
@@ -33,16 +34,20 @@ jobs:
       - name: drop workloads
         if: inputs.drop_workloads != ''
         run: for w in $(echo "${{ inputs.drop_workloads }}" | tr ',' ' '); do .venv/bin/pie-evals drop-workload "$w"; done
+      - name: drop quality scores
+        if: inputs.drop_quality != ''
+        run: |
+          for q in $(echo "${{ inputs.drop_quality }}" | tr ',' ' '); do IFS=: read -r a t g <<< "$q"; .venv/bin/pie-evals drop-quality "$a" "$t" "$g"; done
       - name: move tags
         if: inputs.move_tags != ''
         run: for p in $(echo "${{ inputs.move_tags }}" | tr ',' ' '); do .venv/bin/pie-evals move-tag "${p%%:*}" "${p#*:}"; done
       - uses: actions/download-artifact@v4
-        if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == '' && inputs.move_tags == ''
+        if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == '' && inputs.drop_quality == '' && inputs.move_tags == ''
         with: { pattern: "out-*", path: out, run-id: "${{ inputs.run_id || github.run_id }}", github-token: "${{ github.token }}" }
       - name: check the database
         run: .venv/bin/pie-evals store-status
       - name: import into the database
-        if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == '' && inputs.move_tags == ''
+        if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == '' && inputs.drop_quality == '' && inputs.move_tags == ''
         run: |
           shopt -s nullglob
           # a node's outputs, or (a tpu.yml run) one directory a shard inside them

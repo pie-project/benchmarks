@@ -250,7 +250,7 @@ jobs:
 
   collect:
     needs: [plan, parity, kernels, mac]
-    if: always() && needs.plan.result == 'success'
+    if: always() && needs.plan.result == 'success' && !inputs.ref_only  # a reference-only run saves no rows
     runs-on: [self-hosted, site]  # the site laptop: bookkeeping never shares a benchmark Mac
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
