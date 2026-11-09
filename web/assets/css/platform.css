@@ -323,13 +323,18 @@
 .platform-short { display: none; }
 /* the machine column takes Overall's dividing line while Overall is away */
 .platform-table.is-tight tr > :first-child { border-right: .5px solid var(--color-separator); }
-/* the corner's button: a double chevron on a grey tile the size of the platforms' marks, drawn as the ⌘K search button is: its grey, its fill, its light line, pointing left to
-   narrow and right to widen again; no focus ring after a click */
-.platform-narrow { display: grid; place-items: center; width: 20px; height: 20px; margin-left: 2px; padding: 0; border: 0; border-radius: 5px; color: var(--color-label-tertiary); background: var(--color-fill); cursor: pointer; }  /* the grey of the setup bar's "Latency" */
-.platform-narrow:focus:not(:focus-visible) { outline: none; }
-.platform-narrow svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
-.platform-narrow:hover { color: var(--color-label-secondary); background: var(--color-fill-secondary); }
-.platform-narrow[aria-pressed="true"] svg { transform: scaleX(-1); }
+/* the Overall column hides from its own header, as a column in Finder's list view: a double chevron in the header's
+   corner, shown under the pointer, pointing left to narrow; while the column is away the Hardware header holds the
+   chevron pointing right that brings it back */
+.platform-collapse, .platform-expand { position: absolute; right: 4px; bottom: 7px; display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 5px; color: var(--color-label-tertiary); background: none; cursor: pointer; }
+.platform-collapse svg, .platform-expand svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.platform-collapse:hover, .platform-expand:hover { color: var(--color-label-secondary); background: var(--color-fill); }
+.platform-collapse:focus:not(:focus-visible), .platform-expand:focus:not(:focus-visible) { outline: none; }
+.platform-collapse { opacity: 0; transition: opacity .12s; }
+.platform-table thead th.is-overall:hover .platform-collapse, .platform-collapse:focus-visible { opacity: 1; }
+.platform-expand { display: none; }
+.platform-table.is-tight .platform-expand { display: grid; }
+@media (hover: none) { .platform-collapse { opacity: 1; } }
 /* a table's last row meets the next platform's bar: the bar's separator there, not the lighter one between rows */
 .platform-section-scroll .platform-table tbody tr:last-child th,
 .platform-section-scroll .platform-table tbody tr:last-child td { border-bottom-color: var(--color-separator); }

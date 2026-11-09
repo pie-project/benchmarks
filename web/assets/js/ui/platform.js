@@ -1376,12 +1376,12 @@ window.Pie = window.Pie || {};
       }
       // each table's corner above Hardware narrows its own pinned column to each machine's mark and name, for room
       // for the models, and back: one button a platform
-      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }, i) =>
+      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }, i) =>
         // the last maker runs on over the filler column, so a grid narrower than its section ends in its band, not a gap
         `<th class="platform-maker" colspan="${n + (i === makers.length - 1 ? 1 : 0)}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${count} ${count === 1 ? "model" : "models"}</span></span></th>`).join("")}${makers.length ? "" : '<th class="platform-fill" aria-hidden="true"></th>'}</tr>`;
       const head = `<tr class="platform-head-row">
-        <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
-        <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
+        <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}<button type="button" class="platform-expand" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="Show Overall and memory" title="Show Overall and memory"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8.5 4l4 4-4 4M3.5 4l4 4-4 4"/></svg></button></th>
+        <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span><button type="button" class="platform-collapse" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th>${models.map((model) => {
         const m = Pie.store.index.models[realOf(model)] || {};
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B` : ""}` : "";
         // the precision pie ran the model at on this table's machines, after its size
@@ -1519,7 +1519,8 @@ window.Pie = window.Pie || {};
         const label = narrow ? "Show Overall and memory" : "Hide Overall and memory";
         table.classList.toggle("is-tight", narrow);
         stripes(element);  // the columns moved
-        button.setAttribute("aria-pressed", String(narrow)); button.title = label; button.setAttribute("aria-label", label);
+        for (const b of table.querySelectorAll("[data-narrow]")) b.setAttribute("aria-pressed", String(narrow));
+        const hide = table.querySelector(".platform-collapse"); if (hide) { hide.title = label; hide.setAttribute("aria-label", label); }
       }, true);
 
       // drag a maker's band among the makers, or a model's head among its maker's models, as a column moves in Finder's
@@ -1594,6 +1595,7 @@ window.Pie = window.Pie || {};
           return;
         }
         // a header cycles its column: ascending, then descending, then back to no sort
+        if (event.target.closest("[data-narrow]")) return;  // the Overall column's hide and show buttons, not a sort
         const header = event.target.closest("[data-sort]");
         if (!header) return;
         const key = header.dataset.sort;
