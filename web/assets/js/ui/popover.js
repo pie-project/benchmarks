@@ -260,8 +260,11 @@ window.Pie = window.Pie || {};
     refresh(state) {
       if (!element.hidden && (owner === "grid:maker" || owner === "grid:platform" || owner === "grid:size" || owner === "grid:model")) {
         const query = typed(), scroll = scrolled();
+        // a side list left open (Group by) is drawn again on its new row, so its checkmark moves with the pick
+        const openSub = sub.hidden ? -1 : [...element.querySelectorAll(".popover-parent")].findIndex((r) => r.classList.contains("is-open"));
         element.innerHTML = limitMenu(owner);
         searchWrap(owner, query, scroll);
+        if (openSub >= 0) { const row = element.querySelectorAll(".popover-parent")[openSub]; if (row) showSub(row); else hideSub(); }
         return;
       }
       if (element.hidden || !owner || isLimit(owner) || owner === RELEASE || owner === SUITE || owner === VIEW || owner === METRIC || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC || owner === HIST_MAC || owner === HIST_MODEL || owner === QUAL_ENGINE) return;

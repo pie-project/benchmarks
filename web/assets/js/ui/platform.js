@@ -877,8 +877,11 @@ window.Pie = window.Pie || {};
         const groups = {};
         for (const id of ids) (groups[groupOf(id, by)] ||= []).push(id);
         const order = by === "maker" ? Object.keys(groups).sort() : by === "size" ? [...SIZES.map((sz) => sz.label), "Unknown size"] : ["Local", "Cloud"];
-        // how the list groups, as Finder's Group By: one pick, the rest of the menu under it
-        return [...[["maker", "By Maker"], ["size", "By Size"], ["where", "Local and Cloud"]].map(([id, label]) => ({ value: `by:${id}`, label, selected: by === id })),
+        // All Models first, as the Makers menu opens; then how the list groups, one row with the pick in grey and the
+        // choices beside it, as Finder's Group By; the groups and their models under them
+        const GROUPS = [["maker", "Maker"], ["size", "Size"], ["where", "Local or Cloud"]];
+        return [{ value: "", label: "All Models", selected: !picked.length, check: true },
+          { label: "Group by", detail: GROUPS.find(([id]) => id === by)?.[1] || "Maker", submenu: GROUPS.map(([id, label]) => ({ value: `by:${id}`, key: "grid:model", label, selected: by === id })) },
           ...order.filter((name) => groups[name]).flatMap((name) => {
             const list = groups[name].sort((a, b) => (paramsOf(a) ?? Infinity) - (paramsOf(b) ?? Infinity) || names().model(a).localeCompare(names().model(b)));
             return [{ separator: true },
@@ -964,6 +967,7 @@ window.Pie = window.Pie || {};
       }
       if (k === "model" && viewState) {
         if (value.startsWith("by:")) { viewState.platform.modelGroup = value.slice(3); return; }
+        if (!value) { viewState.platform.models = []; return; }  // All Models: no pick at all
         const now = viewState.platform.models?.length ? viewState.platform.models : pageModels;
         const by = viewState.platform.modelGroup || "maker";
         const own = value.startsWith("group:") ? pageModels.filter((id) => groupOf(id, by) === value.slice(6)) : [value];
