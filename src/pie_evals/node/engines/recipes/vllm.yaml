@@ -89,6 +89,14 @@ competitive:
                 c1024 on the B200: 16384 (what `vllm serve` takes on this card)
                 19.4-20.1k, 32768 21.4-22.9k, 65536 22.0k, 131072 faults in
                 FlashAttention (CUDA error 700).
+            moe_backend:
+              value: humming
+              rationale: >
+                0.32.0's pick on SM100, FLASHINFER_TRTLLM_MXFP4_MXFP8, quantizes the
+                experts' activations to MXFP8 (W4A8); the release and pie serve them
+                bf16 (W4A16), as SGLang's Marlin pin does. Its W4A16 runners on the
+                B200 at c1024: humming 19.4k tok/s, marlin 12.7k; trtllm-gen and
+                CUTLASS have no bf16-activation kernel for Kimi-K3's SITU experts.
     deepseek_v41:
       knobs:
         attention_backend:
