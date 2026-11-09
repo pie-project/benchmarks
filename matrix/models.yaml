@@ -678,7 +678,7 @@ artifacts:
     kind: miniature
     miniature: {layers: "0-1", experts: 8, period: 1, mlx_quantize: affine_u4_g64, note: "2 layers (one sliding, one full), 8 experts, quantized by mlx in place where it is cut (4 bits in 64-wide groups: the embedding, every projection and expert; the head bf16), its towers dropped: 4.7 GiB, for 16 GB Macs (the bf16 cut is 10.7 GiB)"}
     pie_sku: muse-spark-open-mini-l4-u4g64-kv-bf16-l2-e8
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, m5-max-128g]
     max_context: 4096
     expected_gib: 4.7
     tiers: [targeted]
@@ -691,7 +691,7 @@ artifacts:
     miniature: {layers: "0-1", experts: 8, period: 1, mlx_quantize: affine_u4_g64, note: "2 layers (one sliding, one full), 8 experts, quantized by mlx in place where it is cut (4 bits in 64-wide groups: the embedding, every projection and expert; the head bf16), its towers dropped: 4.7 GiB, for 16 GB Macs (the bf16 cut is 10.7 GiB)"}
     baseline_of: muse-spark-mlx4-slice-l2-e8
     baseline_label: mlx-lm
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, m5-max-128g]
     max_context: 4096
     expected_gib: 4.7
     tiers: [targeted]
@@ -833,7 +833,7 @@ artifacts:
     kind: miniature
     miniature: {layers: "0-8", experts: 16, period: 1, mlx_quantize: affine_u4_g64, note: "pie's nemotron3-ultra-mini at 16 of 512 experts, mlx_lm.convert to 4 bits in 64-wide groups where it is cut: 3.3 GiB, for 16 GB Macs (the bf16 cut is 11.4 GiB)"}
     pie_sku: nemotron3-ultra-mini-u4g64-kv-bf16-e16
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, m5-max-128g]
     max_context: 4096
     expected_gib: 3.3
     tiers: [targeted]
@@ -846,7 +846,7 @@ artifacts:
     miniature: {layers: "0-8", experts: 16, period: 1, mlx_quantize: affine_u4_g64, note: "pie's nemotron3-ultra-mini at 16 of 512 experts, mlx_lm.convert to 4 bits in 64-wide groups where it is cut: 3.3 GiB, for 16 GB Macs (the bf16 cut is 11.4 GiB)"}
     baseline_of: nemotron-3-ultra-mlx4-slice-e16
     baseline_label: mlx-lm
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, m5-max-128g]
     max_context: 4096
     expected_gib: 3.3
     tiers: [targeted]
