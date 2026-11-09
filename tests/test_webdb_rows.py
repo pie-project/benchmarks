@@ -87,3 +87,29 @@ def test_the_newest_run_of_a_cell_shows_whatever_tag_it_ran_under():
     assert snaps["main-a2f02c75a"][0]["pf"] == 104742.73 and snaps["main-a2f02c75a"][0]["stale"] is None
     # never a later tag's run
     assert snaps["tpu-v6e-full"][0]["pf"] == 9000.0 and snaps["tpu-v6e-full"][0]["stale"] is None
+
+
+def test_a_run_of_a_ci_fixture_never_takes_a_cell_and_the_build_says_why(capsys):
+    # #1514: a40-rerun ran pie on deepseek-v4-flash-mini5 (the smoke fixture, its cut in bf16 MLX layout), a40-full on
+    # deepseek-v4-flash-mini (the same cut from the released checkpoint, the weights vLLM and SGLang run there)
+    t0, t1 = datetime(2026, 11, 3, 12, tzinfo=timezone.utc), datetime(2026, 11, 8, 14, 46, tzinfo=timezone.utc)
+    a2m, _ = webdb.artifact_to_model()
+    base = {"platform": "a40-x1", "engine": "pie", "engine_version": "", "workload": "c512", "scheme": None, "status": "pass",
+            "pie_commit": "ba82f3425", "tag_kind": "manual", "decode_tok_s": 27.4}
+    released = {**base, "artifact": "deepseek-v4-flash-mini", "tag": "a40-full", "started_at": t0, "output_tok_s": 11947.3}
+    fixture = {**base, "artifact": "deepseek-v4-flash-mini5", "tag": "a40-rerun", "started_at": t1, "output_tok_s": 11798.6}
+
+    class Store:
+        def table(self):
+            return self
+
+        def select(self, cols):
+            return self
+
+        def to_pylist(self):
+            return [{**dict.fromkeys(webdb.METRICS), **r} for r in (released, fixture)]
+
+    tagged, _ = webdb.results_by_tag(Store(), a2m, ["a40-x1"], ["pie"])
+    key = ("a40-x1", "pie", "deepseek-v4-flash", "throughput")
+    assert tagged["a40-full"][key][1]["output_tok_s"] == 11947.3 and key not in tagged["a40-rerun"]
+    assert "[webdb] a40-rerun: pie deepseek-v4-flash-mini5 on a40-x1 not shown: a CI fixture" in capsys.readouterr().err

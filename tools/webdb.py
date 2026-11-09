@@ -454,7 +454,7 @@ _FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("ki
 SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and (a["base_model"] in _FULL_BASES or "smoke" not in a.get("tiers", []))}
 
 
-def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
+def pick(rows: list[dict], a2m: dict[str, str], skipped: dict | None = None) -> dict[tuple, tuple]:
     """The row to show for each (hardware, engine, model, workload category): the newest run, then the best-matching
     workload, then on a Mac the MLX weights every Mac engine shares. A miniature (a few layers of the real shape) stands in only
     where the model has no full-checkpoint row, and its row says so (``miniature``)."""
@@ -469,6 +469,8 @@ def pick(rows: list[dict], a2m: dict[str, str]) -> dict[tuple, tuple]:
         mini = art.get("kind") == "miniature"
         # a CI fixture is never a model's number; a datacenter model cut to fit one device is, marked as such
         if mini and r["artifact"] not in SHOWN_MINIATURES:
+            if skipped is not None:  # the build says so: a40-rerun's pie run of deepseek-v4-flash-mini5 vanished without a word (#1514)
+                skipped[(r.get("tag"), r["platform"], r["engine"], r["artifact"])] = "a CI fixture, never a model's number"
             continue
         # Splash always drafts; its Raw and Batched rows (older runs among them) were never plain decoding
         if r["engine"] == "splash" and WL_PRIORITY[r["workload"]][0] in ("raw", "throughput"):
@@ -680,7 +682,10 @@ def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
     for r in rows:
         if r["tag"] and not r["tag"].startswith("test-"):  # untagged runs are not shown: every release is a tag; a test-* tag never shows
             by_tag.setdefault(r["tag"], []).append(r)
-    tagged = {t: pick(rs, a2m) for t, rs in by_tag.items()}
+    skipped: dict[tuple, str] = {}
+    tagged = {t: pick(rs, a2m, skipped) for t, rs in by_tag.items()}
+    for (t, hw, engine, art), why in sorted(skipped.items()):
+        print(f"[webdb] {t}: {engine} {art} on {hw} not shown: {why}", file=sys.stderr)
     # config.json "prefill_only": {tag: {"engine": e, "since": ISO time}} reruns that may change only prefill
     for t, p in (prefill_only or {}).items():
         if t in tagged:
