@@ -58,10 +58,7 @@ window.Pie = window.Pie || {};
 
   const compact = (v) => (v === 0 ? "0" : v >= 10000 ? `${Math.round(v / 1000)}K` : v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v >= 100 ? Math.round(v) : v >= 10 ? v.toFixed(0) : v.toFixed(1));
   const full = (v, unit) => `${v >= 100 ? Math.round(v).toLocaleString() : v.toFixed(1)} ${unit}`;
-  const machineName = (id) => {
-    const hw = Pie.store.index.hardware[id];
-    return hw ? `${String(hw.name || id).replace(/^Apple\s+/, "")}${hw.memory_gib ? ` ${hw.memory_gib} GB` : ""}` : id;
-  };
+  const machineName = (id) => Pie.platform.machineName(id);
   // a clean top for the axis: 1, 2 or 5 times a power of ten, at or above the largest bar
   const niceMax = (v) => {
     const p = 10 ** Math.floor(Math.log10(v));

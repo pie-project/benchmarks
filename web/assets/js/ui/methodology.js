@@ -26,7 +26,7 @@ window.Pie = window.Pie || {};
 
   const machines = () => (Pie.store.rows("hardware") || []).map((h) => ({
     id: h.id,
-    label: `${h.name} · ${h.memory_gib} GB`,
+    label: Pie.platform.machineName(h.id),
     bw: h.bandwidth_gbs || 0,
     // the catalog's fp16 compute where it has one, else, for an Apple GPU only, the per-core estimate; any other chip
     // without a figure has none (its CUDA or stream cores are not Apple GPU cores, and would give a nonsense number)

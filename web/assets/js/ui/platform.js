@@ -297,9 +297,13 @@ window.Pie = window.Pie || {};
   const badge = (maker) => `<span class="model-badge" aria-hidden="true">${maker.logo ? `<img src="assets/img/models/${maker.logo}.svg" alt="">` : CLOUD}</span>`;
 
   const chipName = (id) => String(Pie.store.index.hardware[id]?.name || id).replace(/^Apple\s+/, "");
+  // a machine as About This Mac names it, the chip and then its memory: "M5 Max 64 GB"; a catalog variant's cores
+  // follow ("M1 Pro 32 GB · 16-core GPU"). Every page names a machine this way
   const macName = (id) => {
     const hw = Pie.store.index.hardware[id];
-    return hw ? `${chipName(id)}${hw.memory_gib ? ` ${hw.memory_gib} GB` : ""}` : id;
+    if (!hw) return id;
+    const [chip, ...rest] = chipName(id).split(" · ");
+    return [`${chip}${hw.memory_gib ? ` ${hw.memory_gib} GB` : ""}`, ...rest].join(" · ");
   };
   // "48 GB · 20-core GPU · 273 GB/s" on a quiet second line under the chip, the specs that set LLM speed; the CPU waits for the hover
   // a machine's row says only what tells it from its namesakes, its memory, as Apple lists a Mac; the full spec sheet
@@ -752,6 +756,7 @@ window.Pie = window.Pie || {};
     root.waveTimer = setTimeout(() => { root.classList.remove("is-rolling"); root.querySelectorAll(".roll-ghost").forEach((g) => g.remove()); }, end + RISE + 200 - now);
   };
   Pie.platform = {
+    machineName: macName,
     wireColumnDrag,
     waveIn,
     wave: WAVE,
