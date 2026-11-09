@@ -226,12 +226,11 @@ window.Pie = window.Pie || {};
     // best first: the highest, or the lowest where less is better (Install Size)
     const list = engineIds().map((engine) => ({ engine, ...summary.value(rows, engine) })).filter((e) => e.v !== undefined && e.v !== null)
       .sort((a, b) => (summary.ascending ? a.v - b.v : b.v - a.v));
-    const dashed = engineIds().filter((engine) => summary.value(rows, engine)?.missing);  // engines that ran without this measure, last, a dash for a bar
     if (!list.length) return `<p class="board-empty">${esc(summary.empty || "No runs yet")}</p>`;
     const top = summary.top ? summary.top(list) : summary.id === "coverage" ? niceMax(list[0].v) : 100;
     const base = H - B;
     const y = (v) => T + (base - T) * (1 - v / top);
-    const slot = (W - L - R) / (list.length + dashed.length);
+    const slot = (W - L - R) / list.length;
     const BW = Math.min(slot * .86, summary.widest || Infinity);  // wide bars with a narrow gap between them, as Artificial Analysis sets its rankings; a card may cap them
     const marks = list.map((e, i) => {
       const x = L + slot * i + (slot - BW) / 2;
@@ -242,10 +241,6 @@ window.Pie = window.Pie || {};
         ${logo(e.engine, cx - 8, base + 6, 16)}
         <text class="board-group" x="${cx}" y="${base + 36}">${esc(SHORT[e.engine] || names().engine(e.engine))}</text>
 `;
-    }).join("") + dashed.map((engine, i) => {
-      const cx = L + slot * (list.length + i) + slot / 2;
-      return `<text class="board-group" x="${cx}" y="${base - 8}">–</text>${logo(engine, cx - 8, base + 6, 16)}
-        <text class="board-group" x="${cx}" y="${base + 36}">${esc(SHORT[engine] || names().engine(engine))}</text>`;
     }).join("");
     return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${summary.title} by engine`)}">${lines(L, W - R, y, top)}<line class="board-axis" x1="${L}" x2="${W - R}" y1="${base}" y2="${base}"/>${marks}</svg>`;
   };
@@ -393,15 +388,6 @@ window.Pie = window.Pie || {};
   const METRIC_KEY = "pieModelMetric";
   let modelMetric = (() => { try { const k = localStorage.getItem(METRIC_KEY); return SPEEDS.some((m) => m.id === k) ? k : SPEEDS[0].id; } catch { return SPEEDS[0].id; } })();
   const metricIcon = (m) => Pie.platform.degree(m.setup);
-  // the one-request setups also read as a time, from the run's own latencies (never a tok/s turned over): the first
-  // token's for prefill, each next token's for decode; batched setups stay tok/s
-  const UNIT_KEY = "pieSpeedUnit";
-  let speedUnit = (() => { try { return localStorage.getItem(UNIT_KEY) === "ms" ? "ms" : "tok/s"; } catch { return "tok/s"; } })();
-  const MS = { decode: { key: "itl_ms_p50", sub: "Milliseconds per output token, one request · Lower is better" },
-    prefill: { key: "ttft_ms_p50", sub: "Milliseconds to the first token, 512-token prompt · Lower is better" } };
-  const inUnit = (m) => (speedUnit === "ms" && MS[m.id] ? { ...m, ...MS[m.id], unit: "ms", higher: false } : m);
-  const unitToggle = (m) => `<span class="platform-compare board-view board-unit" role="group" aria-label="Unit"${MS[m.id] ? "" : ' title="Batched setups are shown in tok/s"'}>${["tok/s", "ms"].map((u) =>
-    `<button type="button" class="plain-button${(MS[m.id] ? speedUnit : "tok/s") === u ? " is-active" : ""}" data-board-unit="${u}"${MS[m.id] ? "" : " disabled"}>${u}</button>`).join("")}</span>`;
   const gainPick = () => {
     const g = GAIN_PICKS.find((x) => x.id === gainSetup);
     // beside the setup, the way to Reports: an outlier is where a wrong number shows first, and the open ones are counted
@@ -419,13 +405,11 @@ window.Pie = window.Pie || {};
   // machine showcase() picked, two in view as Install Size sets them; a bar per engine, best first
   const BY_MODEL = { mac: ["Apple", "#636366"], nvidia: ["NVIDIA", "#76b900"], amd: ["AMD", "#ed1c24"], tpu: ["TPU", "#4285f4"], android: ["Mobile", "#1C1C1E"], web: ["Browser", "#8e8e93"] };  // each platform's name and tile colour, as the other rows' cards wear them
   const modelSummary = (metric, rows, g, m = model) => {
-    const ran = rows.filter((r) => r.workload === metric.workload && r.model === m && r.hardware === g.hardware);
-    const own = ran.filter((r) => r[metric.key]);
+    const own = rows.filter((r) => r.workload === metric.workload && r.model === m && r.hardware === g.hardware && r[metric.key]);
     return { id: g.platform, title: `${metric.label} on ${machineName(g.hardware)}`, ascending: metric.higher === false,  // its bars fill their slots, as every other ranking card's do
       top: (list) => niceMax(Math.max(...list.map((e) => e.v))), label: compact, tip: (v) => full(v, metric.unit), empty: "No runs for this model yet",
       value: (_, engine) => {
         const r = own.find((x) => x.engine === engine);
-        if (!r && metric.unit === "ms" && ran.some((x) => x.engine === engine)) return { missing: true };  // ran, without that latency: a dash, not a converted number
         return r ? { v: r[metric.key], detail: `${names().model(m)} on ${machineName(g.hardware)}` } : {};
       } };
   };
@@ -874,8 +858,7 @@ window.Pie = window.Pie || {};
     if (!list.includes(model)) model = list[0] || null;
     if (!model) return `<div class="board-scroll"><div class="board-inner"><p class="board-empty">No runs in this release yet</p></div></div>`;
     const groups = showcase(rows, model, "metric");
-    const picked = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];
-    const speed = inUnit(picked);  // the measure the speed section shows, its title
+    const speed = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];  // the measure the speed section shows, its title
     // the engines as a key once for the page: every engine with a result in this release, as the cards across the
     // platforms draw them too (LiteRT-LM on Mobile), a dot and a name, in the catalog's order
     const ran = new Set(rows.map((r) => r.engine));
@@ -930,10 +913,8 @@ window.Pie = window.Pie || {};
           </div>
           <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has("summary") ? "Head-to-head decode win rate" : m.sub, gridCards.has("summary") ? matrix(m, rows) : ranking(m, rows), "", false)).join("")}</div></div>
           <div class="board-section-head is-apart" id="board-metric">
-            <div class="board-section-text"><h1 class="board-title">Compare</h1>
-            <p class="board-lede">${speed.sub.split(" · ").map((x) => `${esc(x)}.`).join("<br>")}</p></div>
-            <div class="board-head-controls"><div class="board-head-row">${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></div>
-            <div class="board-head-row">${unitToggle(picked)}${platformPick("metric")}${paddlesFor("metric")}</div></div>
+            <div class="board-section-text"><p class="board-lede">${speed.sub.split(" · ").map((x) => `${esc(x)}.`).join("<br>")}</p></div>
+            ${metricPick()}<button class="filter-button board-title-pick is-text" type="button" data-board-pick="model" aria-haspopup="menu" aria-label="Model" title="${esc(names().model(model))}">Model<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>${platformPick("metric")}${paddlesFor("metric")}
           </div>
           ${modelRow("metric", speed, rows, groups, model)}
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
@@ -1199,10 +1180,9 @@ window.Pie = window.Pie || {};
       return;
     }
     // the platform cards' bars or grid, one switch for the whole row at its section's head
-    const view = event.target.closest("[data-board-view], [data-board-unit]");
+    const view = event.target.closest("[data-board-view]");
     if (view) {
-      if (view.dataset.boardUnit) { speedUnit = view.dataset.boardUnit; try { localStorage.setItem(UNIT_KEY, speedUnit); } catch { /* private windows can refuse storage */ } }
-      else if (view.dataset.view === "grid") gridCards.add(view.dataset.boardView); else gridCards.delete(view.dataset.boardView);
+      if (view.dataset.view === "grid") gridCards.add(view.dataset.boardView); else gridCards.delete(view.dataset.boardView);
       try { localStorage.setItem(GRID_KEY, JSON.stringify([...gridCards])); } catch { /* private windows can refuse storage */ }
       delete element.dataset.key;  // the page redraws only when its key changes; this pick changes what it shows
       // each row of cards stays on the card in view through the redraw, not back at its first

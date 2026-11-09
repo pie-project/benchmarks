@@ -534,12 +534,6 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-section-head > .board-title-pick + .board-view:not(.board-carousel-nav) { margin-left: -8px; }  /* a pick then the view switch, 8px apart, as How we count sits from its paddles */  /* with no paddles after it, it meets the edge as they do */
 .board-section-head > .board-title-pick + .board-title-pick { margin-left: -8px; }  /* two picks side by side 8px apart, as a pick and its paddles */
 .board-title-pick.is-text { padding: 0 10px; }  /* a button with only a word: the same room at both ends */
-.board-head-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; margin: 0 0 -2px auto; }  /* Setup and Model over the unit, Platform and paddles, both rows at the right, beside the two lines of description */
-.board-head-row { display: flex; align-items: center; gap: 8px; }
-.board-head-row > .board-title-pick, .board-head-row > .board-view { margin: 0; }
-@media (max-width: 899px) { .board-head-controls { align-items: flex-start; margin: 0; } }  /* phones: under the description, at its left */
-.board-unit .plain-button { padding: 0 10px; font-size: 12px; }
-.board-unit .plain-button:disabled { opacity: .35; cursor: default; }  /* batched setups: tok/s only */
 .board-footer-simple { font-size: 12px; color: var(--color-label-secondary); }  /* the update date in the section ledes' size and grey */
 .board-footer-simple { font-size: 11px; }  /* the update date at the cards' subtitle size */
 
