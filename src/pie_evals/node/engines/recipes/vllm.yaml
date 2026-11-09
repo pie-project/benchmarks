@@ -225,6 +225,26 @@ competitive:
                 datacenter models, as it deploys them.
     apple9:
       knobs: {}
+    cdna4:
+      knobs: {}
+      family:
+        nemotron_h:
+          knobs:
+            moe_backend:
+              value: triton
+              rationale: >
+                On gfx950 the rows run AMD's vLLM 0.29.1 image with AITER on, and its unquantized-MoE
+                oracle then names AITER and refuses Nemotron-H's relu2 experts rather than falling back
+                ("ROCm AITER does not support ... no act_and_mul MLP layer", every Nemotron-3 cell on
+                mi350x-x1, 2026-11-09). Triton's fused MoE serves them, as it does on NVIDIA.
+        gemma4_moe:
+          knobs:
+            moe_backend:
+              value: triton
+              rationale: >
+                The same oracle refuses Gemma-4-26B-A4B's GELU-tanh experts on gfx950 ("ROCm AITER does
+                not support ... MoEActivation.GELU_TANH activation", mi350x-x1, 2026-11-09); Triton's
+                fused MoE serves them.
   backend:
     rocm:
       knobs:
