@@ -168,6 +168,8 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
     ttft = [r["ttft_s"] * 1000.0 for r in completed if r.get("ttft_s") is not None]
     # decode tok/s for a lane = output tokens / (latency - ttft)
     decode_lane = []
+    # time per output token, one value per request for every engine: a stream that hands over
+    # several tokens at once (pie on Metal) has 0 us gaps inside each batch, so a pool of gaps reads 0
     itl_all: list[float] = []
     for r in completed:
         lat = r.get("latency_s")
@@ -175,9 +177,7 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
         n = r.get("output_tokens") or 0
         if lat and tt is not None and n > 1 and lat > tt:
             decode_lane.append((n - 1) / (lat - tt))
-        it = r.get("intertoken_us") or []
-        if isinstance(it, list):
-            itl_all.extend(float(x) / 1000.0 for x in it)
+            itl_all.append((lat - tt) * 1000.0 / (n - 1))
     counters = {}
     for k, v in (summary.get("config") or {}).items():
         if isinstance(v, (int, float)) and not isinstance(v, bool):
@@ -220,8 +220,8 @@ def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]
         output_tok_s=output_tok_s or None,
         ttft_ms_p50=_pct(ttft, 50) if ttft else (summary.get("ttft_p50_ms") or None),
         ttft_ms_p99=_pct(ttft, 99) if ttft else (summary.get("ttft_p99_ms") or None),
-        itl_ms_p50=_pct(itl_all, 50) if itl_all else (summary.get("intertoken_p50_ms") or None),
-        itl_ms_p99=_pct(itl_all, 99) if itl_all else (summary.get("intertoken_p99_ms") or None),
+        itl_ms_p50=_pct(itl_all, 50),
+        itl_ms_p99=_pct(itl_all, 99),
         latency_ms_p50=summary.get("latency_p50_ms"),
         latency_ms_p99=summary.get("latency_p99_ms"),
         prompt_tokens=prompt_tok,
