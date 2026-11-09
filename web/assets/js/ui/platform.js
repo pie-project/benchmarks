@@ -1171,6 +1171,8 @@ window.Pie = window.Pie || {};
       }
       const comparable = (mac, model) => {
         if (checked.has(`${mac}|${realOf(model)}`)) return true;
+        // a TPU keeps a model only pie runs there: pie's cell, the other engines' reasons in its card
+        if (grid[mac][model].c && Pie.platformOf(Pie.store.index.hardware[mac] || {}) === "tpu") return true;
         const statuses = modelRows.get(`${mac}|${realOf(model)}`) || new Map();
         return [...(engineRuns.get(mac) || [])].filter((e) => !["unsupported", "no_fit"].includes(statuses.get(e))).length >= 2;
       };
