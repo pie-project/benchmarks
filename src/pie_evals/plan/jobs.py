@@ -31,12 +31,21 @@ def process_key(c: Cell) -> tuple:
 ENGINE_CELL_MINUTES = {"vllm": 4.0, "sglang": 3.5}  # measured: 12 vLLM Qwen3.5-0.8B cells took 3860 s on an L40S (nightly 35935510089)
 
 
+#: pie on a TPU boots its server inside each cell (pie_bench) and compiles its batch-shape ladder before it serves
+#: (prewarm, #1507): 7 min of it for Qwen3-0.6B, 20 for Qwen3.5-0.8B's GDN layers on a v6e (tpu.yml 42528607059).
+#: Packed on workload time alone, TPU shards ran into their 7200 s kill with cells left (42528607059, 42556218004).
+PIE_XLA_BOOT_MINUTES = 15.0
+
+
 def cell_minutes(c: Cell, measured: dict[str, float] | None = None) -> float:
     """The cell's median recorded duration where the store has one (the static
     estimate left s00 shards' last cells not_run on every platform), else the estimate."""
     if measured and c.cell_id in measured:
         return measured[c.cell_id]
-    return float(c.workload.est_minutes) + ENGINE_CELL_MINUTES.get(str(c.engine), 0.0)
+    extra = ENGINE_CELL_MINUTES.get(str(c.engine), 0.0)
+    if str(c.engine) == "pie" and str(getattr(c.platform.backend, "value", c.platform.backend)) == "xla":
+        extra += PIE_XLA_BOOT_MINUTES
+    return float(c.workload.est_minutes) + extra
 
 def load_minutes(c: Cell) -> float:
     """Minutes a process group spends before its first cell on a checkpoint of hundreds of GiB (the datacenter
