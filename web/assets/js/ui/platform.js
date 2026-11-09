@@ -511,8 +511,10 @@ window.Pie = window.Pie || {};
       const moved = specMove(order, raw, specBound);
       if (moved) return `<div class="rf-move-card">${roofCard(moved, { move: true })}${card("", "", lines)}</div>`;
     }
+    // a cell where no other engine can run says why at its foot (support.yaml speed_gaps)
+    const gap = order.length > 1 ? "" : (Pie.store.tables.speed_gaps || []).find((g) => [].concat(g.platform).includes(mac) && [].concat(g.model).includes(model))?.reason || "";
     // a miniature's card says so at its head, in place of the browser's own tooltip that would cover it
-    return mini ? card("Model slice", c.pie.miniature, lines) : card("", "", lines);
+    return mini ? card("Model slice", c.pie.miniature, lines, gap) : card("", "", lines, gap);
   };
 
   // a result on the roofline model (Williams et al., 2009): its pass's arithmetic intensity, the FLOPs it does per byte

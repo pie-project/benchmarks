@@ -1134,6 +1134,7 @@ def main() -> None:
     totals = {"runs": ran + len(store.quality()), "machine_s": round(busy)}
     db = {"updated_at": updated_at, "totals": totals, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
           "quality_parity": checks["parity"], "quality_kernels": checks["kernels"], "quality_gaps": load("support").get("quality_gaps", []),
+          "speed_gaps": load("support").get("speed_gaps", []),
           "no_fit": misfits, "suites": suite_ids,
           "hardware": hw_rows,
           # the Engines table lists every engine CI runs, the GPU-only ones (vLLM, SGLang) too; the grids keep to the Mac engines
