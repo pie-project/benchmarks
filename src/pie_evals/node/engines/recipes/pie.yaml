@@ -110,6 +110,14 @@ default:
                 gpt-oss's mxfp4 experts land pre-scaled (e5m2, twice the codes' bytes) where the pool leaves them
                 the room, and at 0.90 the pool beside them seats 95k tokens: c256 asks ~122k (221-token prompts and
                 256 out) and its processes were reclaimed and run again (pool starved). 0.95 seats ~139k.
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                A fire streams every expert's weights once (19 GB of e5m2 at the 20B's 32 experts), so 4096-row
+                fires stream them half as often per prompt token: pf256 +15% (the 4096-row fire 119 ms against
+                two 2048-row ones at 65), and c256 seats its prompts in a third as many mixed fires (5.2k -> 6.2k
+                tok/s; v6e, pie 358636825). The fire's temporaries still fit beside the pool at 0.95, and Raw
+                decode is unchanged (177 tok/s either way).
         kimi_k3:
           knobs:
             gpu_mem_util:
