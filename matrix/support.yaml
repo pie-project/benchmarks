@@ -306,7 +306,7 @@ unsupported:
     reason: "SGLang 0.5.22's GLM-5.3-Flash sparse attention needs FA3, TileLang or TRT backends: on ROCm TileLang lacks tl.get_lane_idx (\"Unresolved call Op(tl.get_lane_idx)\") and the index_kpool > 1 path is refused"
   - when: {engine: sglang, family: hy_v4, arch: [cdna3, cdna4]}   # the -mi35x image on mi350x-x1 the same (2026-11-09)
     reason: "SGLang 0.5.22's Hy4 requires its sparse MLA attention path, which the ROCm build does not have (\"HYV4 requires the sparse MLA attention path\")"
-  - when: {engine: sglang, family: minimax_m3, arch: cdna3}
+  - when: {engine: sglang, family: minimax_m3, arch: [cdna3, cdna4]}   # the -mi35x image on mi350x-x1 the same (2026-11-09)
     reason: "SGLang 0.5.22's MiniMax-M3.1 expert loading calls gptq_marlin_repack, a CUDA kernel the ROCm build does not ship (\"NameError: name 'gptq_marlin_repack' is not defined\")"
   - when: {engine: sglang, family: kimi_k3, arch: cdna3, workload: pf16-512}
     reason: "SGLang 0.5.22 on ROCm gfx942 dies on Kimi-K3's 16-prompt prefill batch (\"HIP error: the operation cannot be performed in the present state\"); its c1024 runs"
@@ -325,6 +325,12 @@ unsupported:
     reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950) has no GLM-5.3-Flash model: its Transformers fallback finds no k_conv1d parameter (\"no module or parameter named 'model.language_model.layers.0.self_attn.k_conv1d'\")"
   - when: {engine: vllm, arch: cdna4, family: kimi_k3}
     reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950): Kimi-K3's FlyDSL kernels do not compile (\"MLIRError: Failure while executing pass pipeline: lld invocation failed\")"
+  - when: {engine: vllm, arch: cdna4, family: minimax_m3}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950) cannot load MiniMax-M3.1-Flash's expert weights (\"The size of tensor a (192) must match the size of tensor b (384)\" in routed_experts._load_w13)"
+  - when: {engine: vllm, arch: cdna4, family: mimo_v2}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950) cannot shard MiMo-V2.6-Flash's FP8 qkv projection (\"The size of tensor a (1856) must match the size of tensor b (1792)\" in mimo_v2._shard_fp8_qkv_proj)"
+  - when: {engine: vllm, arch: cdna4, family: glm_moe_dsa}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950): GLM-5.3's DSA indexer faults the GPU in prefill (\"Memory access fault by GPU\" in vllm::topKPerRowPrefill<512>)"
   # SGLang 0.5.22 decodes Qwen3.8-Flash-Next's full-attention layers through qwen_sparse_attn_backend's flash_attn.cute
   # FlashAttentionForwardSm80, which CUDA refuses to launch on sm_86/sm_89 (A40, L40S; the 4090 OOMs in prefill
   # graph capture before it gets there): "CUDA_LAUNCH_INVALID_CONFIG ... cudaErrorInvalidValue" (weekly 40421366253)
