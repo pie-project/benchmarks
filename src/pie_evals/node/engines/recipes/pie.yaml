@@ -134,6 +134,12 @@ default:
               rationale: >
                 The DSV4-Flash cut's c256 at 0.97: a failed fire kept a pool plane and every later fire found no
                 seat for it (#1184); vLLM-TPU and SGLang-JAX serve no DeepSeek-V4 on a v5e.
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf256-512's 533-token prompts, padded to 1024 rows; the
+                3.7 GiB cut's 2048-row fire fits beside its pool and takes three: pf256-512 5166 -> 7301 tok/s,
+                c256 2730 -> 2838, Raw unchanged (pie 311beae7). vLLM-TPU prefills 2048 tokens a step.
         deepseek_v41:
           knobs:
             gpu_mem_util:
