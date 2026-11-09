@@ -147,7 +147,7 @@ jobs:
           # the launch returns at once; capped, as an ssh that never returns would otherwise hold the job
           # the boot it starts on: a VM restarted under the run (a maintenance event) loses the process and never writes run.done
           timeout 300 bash infra/tpu/vm.sh ssh "cat /proc/sys/kernel/random/boot_id > ~/run.boot; cd ~/pie-evals && setsid nohup bash -c 'set -a; . ~/vm.env; set +a; bash infra/tpu/run-on-vm.sh $C $([ -z "$JOB_ID" ] || printf 'jobs/%s.json ' $JOB_ID); echo \$? > ~/run.done' > ~/run.log 2>&1 < /dev/null &" || true
-          while ! rc=$(timeout 300 bash infra/tpu/vm.sh ssh 'cat ~/run.done 2>/dev/null || cmp -s ~/run.boot /proc/sys/kernel/random/boot_id || echo restarted' 2>/dev/null) || [ -z "$rc" ]; do
+          while ! rc=$(timeout 300 bash infra/tpu/vm.sh ssh 'cat ~/run.done 2>/dev/null || [ "$(cat ~/run.boot)" = "$(cat /proc/sys/kernel/random/boot_id)" ] || echo restarted' 2>/dev/null) || [ -z "$rc" ]; do
             # a spot VM taken back mid-run never writes run.done
             st=$(bash infra/tpu/vm.sh state 2>/dev/null || echo unknown)
             case "$st" in READY|RUNNING) ;; *) echo "::error::the VM is $st"; exit 1 ;; esac
