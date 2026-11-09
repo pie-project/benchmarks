@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from pie_evals.node.build import bench_dir
 from pie_evals.node.miniature import (
     SHRINK_SCRIPT,
     ensure_miniature,
@@ -71,7 +72,7 @@ def test_snapshot_dir_is_an_hf_cache_snapshot(tmp_path):
 def test_miniature_argv_matches_script_flags(tmp_path):
     art = _mini(text_only=True)
     argv = miniature_argv(art, Path("/pie"), tmp_path / "out", "/venv/bin/python", cache_dir=tmp_path / "c")
-    assert argv[:2] == ["/venv/bin/python", "/pie/" + SHRINK_SCRIPT]
+    assert argv[:2] == ["/venv/bin/python", str(bench_dir() / SHRINK_SCRIPT)]
     rest = [x for x in argv[2:] if x != "--text-only"]
     flags = dict(zip(rest[0::2], rest[1::2]))
     assert flags["--repo"] == "Qwen/Qwen3.6-35B-A3B"
@@ -95,12 +96,14 @@ def test_ensure_miniature_short_circuits_on_existing(tmp_path):
     assert ensure_miniature(art, Path("/nonexistent/pie"), tmp_path, "/nonexistent/python") == d
 
 
-def test_ensure_miniature_runs_script_and_records_recipe(tmp_path):
+def test_ensure_miniature_runs_script_and_records_recipe(tmp_path, monkeypatch):
     art = _mini()
     pie_root = tmp_path / "pie"
-    (pie_root / "scripts/bench").mkdir(parents=True)
+    bench = tmp_path / "bench"
+    bench.mkdir()
+    monkeypatch.setenv("PIE_EVALS_BENCH_DIR", str(bench))
     # a stand-in for shrink_checkpoint.py that writes config.json into --out
-    (pie_root / SHRINK_SCRIPT).write_text(
+    (bench / SHRINK_SCRIPT).write_text(
         "import argparse, json, pathlib\n"
         "ap = argparse.ArgumentParser()\n"
         "for f in ('--repo','--revision','--out','--layers','--repeat','--experts','--cache'): ap.add_argument(f)\n"
@@ -119,11 +122,13 @@ def test_ensure_miniature_runs_script_and_records_recipe(tmp_path):
     assert recipe_from_snapshot(d) == art.miniature
 
 
-def test_ensure_miniature_failure_raises(tmp_path):
+def test_ensure_miniature_failure_raises(tmp_path, monkeypatch):
     art = _mini()
     pie_root = tmp_path / "pie"
-    (pie_root / "scripts/bench").mkdir(parents=True)
-    (pie_root / SHRINK_SCRIPT).write_text("import sys; sys.stderr.write('boom\\n'); sys.exit(3)\n")
+    bench = tmp_path / "bench"
+    bench.mkdir()
+    monkeypatch.setenv("PIE_EVALS_BENCH_DIR", str(bench))
+    (bench / SHRINK_SCRIPT).write_text("import sys; sys.stderr.write('boom\\n'); sys.exit(3)\n")
     import sys
 
     with pytest.raises(RuntimeError, match="boom"):
@@ -192,8 +197,10 @@ def test_ensure_miniature_quantizes_the_cut_with_mlx(tmp_path, monkeypatch):
 
     art = _mini(mlx_quantize="affine_u4_g64")
     pie_root = tmp_path / "pie"
-    (pie_root / "scripts/bench").mkdir(parents=True)
-    (pie_root / SHRINK_SCRIPT).write_text(
+    bench = tmp_path / "bench"
+    bench.mkdir()
+    monkeypatch.setenv("PIE_EVALS_BENCH_DIR", str(bench))
+    (bench / SHRINK_SCRIPT).write_text(
         "import argparse, json, pathlib\n"
         "ap = argparse.ArgumentParser()\n"
         "for f in ('--repo','--revision','--out','--layers','--repeat','--experts','--cache'): ap.add_argument(f)\n"

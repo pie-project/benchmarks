@@ -7,7 +7,7 @@ def test_a_commit_of_docs_and_ci_files_is_docs_only():
 
 def test_one_code_file_makes_it_worth_measuring():
     assert not docs_only(["README.md", "crates/engine-metal/src/serve.rs"])
-    assert not docs_only(["scripts/bench/common.py"])
+    assert not docs_only(["packages/python/client/src/pie_client/client.py"])
 
 
 def test_an_unknown_change_list_is_measured():

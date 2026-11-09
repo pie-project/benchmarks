@@ -3,7 +3,7 @@
 No GPU, no pie run. Every adapter is built against /root/pie and dummy specs;
 ``build_argv`` is checked for the flags a fair comparison needs, and every
 ``--flag`` it emits is checked against the set of option strings the
-corresponding script (plus scripts/bench/common.py) actually registers with
+corresponding script (plus bench/common.py) actually registers with
 argparse - parsed from source with ``ast`` so a renamed flag in pie fails here
 rather than at 3am on a runner.
 """
@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pytest
 
+from pie_evals.node.build import bench_dir
 from pie_evals.node.engines import get_engine
 from pie_evals.node.engines.base import Engine
 from pie_evals.node.engines.llamacpp import LlamacppEngine
@@ -43,16 +44,7 @@ def _default_pie_root() -> str:
 
 
 PIE_ROOT = Path(os.environ.get("PIE_ROOT") or _default_pie_root())
-BENCHES = PIE_ROOT / "scripts/bench"
-
-def _has_benches() -> bool:
-    try:
-        return BENCHES.is_dir()
-    except OSError:  # e.g. PermissionError on a CI runner where /root is closed
-        return False
-
-
-pytestmark = pytest.mark.skipif(not _has_benches(), reason=f"pie checkout not at {PIE_ROOT}")
+BENCHES = bench_dir()
 
 
 # ---- argparse flag extraction (the drift guard) -------------------------------
@@ -141,7 +133,7 @@ def argparse_flags(path: Path) -> set[str]:
 
 
 def accepted_flags(script: str) -> set[str]:
-    return argparse_flags(PIE_ROOT / script)
+    return argparse_flags(BENCHES / script)
 
 
 _FLAG_RE = re.compile(r"^--[a-z0-9][a-z0-9-]*$")
@@ -279,8 +271,8 @@ def test_shape_helpers():
 def test_pie_cuda_tp2(tmp_path):
     eng = make(PieEngine, mode=Mode(id="tp2", tp=2))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
-    assert argv[1].endswith("scripts/bench/pie_bench.py") and argv[2] == "tput"
-    # pie #1099 renamed pie_bench's cuda_native engine to cuda; the adapter passes the name the checkout's script knows
+    assert argv[1].endswith("bench/pie_bench.py") and argv[2] == "tput"
+    # pie #1099 renamed pie_bench's cuda_native engine to cuda; the adapter passes the name the script knows
     expected = "cuda_native" if '"cuda_native"' in eng.script_path().read_text() else "cuda"
     assert flag_value(argv, "--engine") == expected
     assert flag_value(argv, "--tp-size") == "2"
@@ -351,6 +343,7 @@ def test_pie_counters_from_summary():
     assert c["batches"] == 10 and c["device_idle_pct"] == pytest.approx(10.0)
 
 
+@pytest.mark.skipif(not (PIE_ROOT / ".git").exists(), reason=f"no pie checkout at {PIE_ROOT}")
 def test_pie_version_is_git_short_sha():
     v = make(PieEngine).version()
     assert re.fullmatch(r"[0-9a-f]{7,12}", v), v
@@ -366,8 +359,10 @@ def test_pie_serve_parses_url_and_stop(tmp_path, monkeypatch):
     """Drive serve() against a stand-in script that behaves like pie_bench
     under PIE_BENCH_SERVE_ONLY=1: announce the URL, then park."""
     fake_root = tmp_path / "pie"
-    (fake_root / "scripts/bench").mkdir(parents=True)
-    (fake_root / "scripts/bench" / "pie_bench.py").write_text(
+    bench = tmp_path / "bench"
+    bench.mkdir()
+    monkeypatch.setenv("PIE_EVALS_BENCH_DIR", str(bench))
+    (bench / "pie_bench.py").write_text(
         "import os, sys, time\n"
         "assert os.environ.get('PIE_BENCH_SERVE_ONLY') == '1'\n"
         "assert 'PIE_BENCH_SERVER_URL' not in os.environ\n"
@@ -391,7 +386,7 @@ def test_pie_serve_parses_url_and_stop(tmp_path, monkeypatch):
 def test_vllm_args(tmp_path):
     eng = make(VllmEngine, mode=Mode(id="tp2", tp=2))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
-    assert argv[1].endswith("scripts/bench/vllm_bench.py")
+    assert argv[1].endswith("bench/vllm_bench.py")
     assert flag_value(argv, "--model") == "Qwen/Qwen3-8B"
     assert flag_value(argv, "--tp-size") == "2"
     assert flag_value(argv, "--gpu-mem-util") == "0.9"
@@ -658,7 +653,7 @@ def test_every_emitted_flag_is_parsed_by_the_script(label, cls, wl, over, tmp_pa
 
 
 def test_argparse_flag_extraction_sees_loop_registered_and_boolean_optional_flags():
-    flags = argparse_flags(PIE_ROOT / "scripts/bench/pie_bench.py")
+    flags = argparse_flags(BENCHES / "pie_bench.py")
     assert {"--inferlet-dir", "--engine", "--wasm-warm-slots", "--frame-submit-depth", "--pretokenized-prompts", "--no-pretokenized-prompts"} <= flags
     common = argparse_flags(BENCHES / "common.py")
     assert {"--model", "--ignore-eos", "--no-ignore-eos", "--tp-size", "--sglang-cuda-graph-max-bs", "--json-out"} <= common
@@ -826,7 +821,7 @@ def test_pie_metal_args(tmp_path, monkeypatch):
     _a_page_count_pie(monkeypatch)
     eng = mac_make(PieEngine)
     argv = argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
-    assert argv[1].endswith("scripts/bench/pie_bench.py") and argv[2] == "tput"
+    assert argv[1].endswith("bench/pie_bench.py") and argv[2] == "tput"
     assert flag_value(argv, "--engine") == "metal"
     assert flag_value(argv, "--max-model-len") == "2048"
     assert flag_value(argv, "--concurrency") == "32"
@@ -1067,7 +1062,6 @@ def test_a_shape_can_score_on_prefill(tmp_path):
         "json.dump({'summary': {'wall_s': 0.2, 'output_tokens': 1, 'prompt_tokens': 512}, 'requests': [req]}, open(out, 'w'))\n"
     )
     root = tmp_path / "pie"
-    (root / "scripts" / "bench").mkdir(parents=True)
 
     class Stub(Engine):
         name = "pie"
@@ -1154,12 +1148,13 @@ def test_a_busy_bench_is_left_to_finish():
     assert (rc, timed_out, stalled) == (0, False, False)
 
 
-def test_pie_prefills_cold_when_its_bench_can_turn_the_prefix_cache_off(tmp_path):
+def test_pie_prefills_cold_when_its_bench_can_turn_the_prefix_cache_off(tmp_path, monkeypatch):
     for script, cold in (("p.add_argument('--no-prefix-cache')\n", True), ("# an older bench\n", False)):
-        root = tmp_path / str(cold)
-        (root / "scripts/bench").mkdir(parents=True)
-        (root / "scripts/bench/pie_bench.py").write_text(script)
-        eng = PieEngine(pie_root=root, artifact=artifact(), platform=platform(), mode=Mode(), recipe={})
+        bench = tmp_path / str(cold)
+        bench.mkdir()
+        monkeypatch.setenv("PIE_EVALS_BENCH_DIR", str(bench))
+        (bench / "pie_bench.py").write_text(script)
+        eng = PieEngine(pie_root=tmp_path, artifact=artifact(), platform=platform(), mode=Mode(), recipe={})
         assert ("--no-prefix-cache" in argv_for(eng, WORKLOADS["c32"], tmp_path)) is cold
 
 

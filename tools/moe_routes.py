@@ -4,17 +4,17 @@ The site's batched-decode limit (Pie.batchedCeiling) charges a step for every ex
 measurement it takes each request's k picks as independent and uniform, 1 - (1 - k)^requests: at 256 requests of
 Qwen3.6-35B-A3B (8 of 256 experts) that is 99.97% of the experts. Real routes concentrate, the more so when the
 answers start alike, and a step reads fewer. This measures it: it renders a finished c-cell round's cold prompts as the
-bench did (scripts/bench/common.py: system prompt, chat template, --no-think), decodes greedy answers with the model's
+bench did (bench/common.py: system prompt, chat template, --no-think), decodes greedy answers with the model's
 Hugging Face reference (EOS held off, as --ignore-eos does) in lock-step groups, and records the top-k experts each
 request picks at each MoE layer in each decode step. A step of n requests reads the union of their picks; groups
 decoded side by side are unioned step by step. It prints the `routes` pairs for web/assets/js/config/architectures.js:
 the share averaged over every layer and decode step, at 1 to the largest power of two of requests it was given.
 
-Run it on a GPU pod with a pie checkout (for common.py) and a Python that has torch and a transformers that knows the
-model, e.g. a competitor baseline's venv:
+Run it on a GPU pod from a checkout of this repo (for bench/common.py) with a Python that has torch and a transformers
+that knows the model, e.g. a competitor baseline's venv:
 
     python tools/moe_routes.py <model dir> <cell round dir with cold_prompts.json> <out.json> \
-        [--requests 1024] [--group 128] [--steps 256] [--pie-root /root/pie-build]
+        [--requests 1024] [--group 128] [--steps 256]
 """
 
 from __future__ import annotations
@@ -34,12 +34,11 @@ def main() -> None:
     ap.add_argument("--requests", type=int, default=1024)
     ap.add_argument("--group", type=int, default=128, help="requests decoded at once (the GPU's memory sets it)")
     ap.add_argument("--steps", type=int, default=256, help="answer tokens a request decodes (the shape's output)")
-    ap.add_argument("--pie-root", default="/root/pie-build")
     args = ap.parse_args()
 
     import torch
 
-    sys.path.insert(0, f"{args.pie_root}/scripts/bench")
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bench"))
     import common  # the bench's own prompt rendering
     from transformers import (
         AutoConfig,

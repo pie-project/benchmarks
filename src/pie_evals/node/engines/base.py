@@ -1,9 +1,9 @@
 """Engine adapter contract.
 
-All adapters drive the bench scripts under the pinned pie checkout's
-``scripts/bench/`` (``pie_bench.py``, ``vllm_bench.py``, ``sglang_bench.py``,
-``llamacpp_bench.py``, ``mlx_bench.py``), or this repo's ``openai_bench.py``
-for the OpenAI-compatible servers. Those scripts share ``scripts/bench/common.py`` — one
+All adapters drive the bench scripts under this repo's ``bench/``
+(``pie_bench.py``, ``vllm_bench.py``, ``sglang_bench.py``, ``llamacpp_bench.py``,
+``mlx_bench.py``), or ``engines/scripts/openai_bench.py`` for the
+OpenAI-compatible servers. Those scripts share ``bench/common.py`` — one
 client, one prompt construction, one JSON envelope — which is what makes a
 cross-engine number a comparison at all.
 The adapter's job is therefore: build the argv for a (artifact, mode,
@@ -35,6 +35,7 @@ from typing import Any
 
 import numpy as np
 
+from pie_evals.node.build import bench_dir
 from pie_evals.node.fair import (
     COLD_SEED,
     FAIR_DEFINITION_VERSION,
@@ -157,7 +158,7 @@ def serial_clock(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def perf_from_common_json(summary: dict[str, Any], requests: list[dict[str, Any]], num_layers: int | None, concurrency: int | None = None, *, cold_tags: bool = False) -> PerfMetrics:
-    """Lift ``scripts/bench/common.py``'s BenchSummary + RequestResult rows."""
+    """Lift ``bench/common.py``'s BenchSummary + RequestResult rows."""
     completed = [r for r in requests if r.get("ok")]
     if concurrency == 1:
         completed = serial_clock(completed)
@@ -237,7 +238,7 @@ class Engine(ABC):
     """One adapter per engine. Instances are per (artifact, mode, platform)."""
 
     name: EngineName
-    #: bench script under the pie checkout, e.g. "scripts/bench/pie_bench.py"
+    #: bench script under this repo's ``bench/``, e.g. "pie_bench.py"
     script: str
     #: environment the engine's processes get unless the caller set the key
     env_defaults: dict[str, str] = {}
@@ -263,6 +264,7 @@ class Engine(ABC):
         self.env = dict(env or {})
         for k, v in {**self.env_defaults, **self.default_env()}.items():
             self.env.setdefault(k, v)
+        self.env.setdefault("PIE_ROOT", str(self.pie_root))  # the bench scripts' common.py finds the pie checkout by it
         self.num_layers = num_layers
         self.server_url: str | None = None
         self._server_proc: subprocess.Popen | None = None
@@ -378,8 +380,8 @@ class Engine(ABC):
 
     # ---- the run -------------------------------------------------------------
     def script_path(self) -> Path:
-        """The bench script this adapter runs (a path under the pie checkout by default)."""
-        return self.pie_root / self.script
+        """The bench script this adapter runs (under this repo's ``bench/`` by default)."""
+        return bench_dir() / self.script
 
     def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
         mode_sub, mode_args = workload_mode_args(workload)
@@ -391,7 +393,7 @@ class Engine(ABC):
         argv += ["--json-out", str(json_out), "--dump-all-token-ids"]
         return argv
 
-    #: True when the bench script reads ``--prompts-file`` (scripts/bench/common.py's
+    #: True when the bench script reads ``--prompts-file`` (bench/common.py's
     #: ``make_prompts``). Cold-cache workloads need it; an adapter without it refuses them.
     supports_prompts_file: bool = True
 
@@ -431,7 +433,7 @@ class Engine(ABC):
         (out_dir / "argv.txt").write_text(shlex.join(argv) + "\n")
         t0 = time.monotonic()
         with open(out_dir / "stdout.txt", "w") as so, open(out_dir / "stderr.txt", "w") as se:
-            proc = subprocess.Popen(argv, cwd=str(self.pie_root / "scripts/bench"), env=env, stdout=so, stderr=se, text=True)
+            proc = subprocess.Popen(argv, cwd=str(bench_dir()), env=env, stdout=so, stderr=se, text=True)
             rc, timed_out, stalled = wait_with_stall_check(
                 proc, timeout_s, self.stall_s(), self.watch_pids,
                 on_stall=lambda pids: (out_dir / "stall-dump.txt").write_text(stall_dump(pids)),

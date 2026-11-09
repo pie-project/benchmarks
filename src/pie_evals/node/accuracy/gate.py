@@ -11,6 +11,7 @@ from typing import Any
 
 import numpy as np
 
+from pie_evals.node.build import bench_dir
 from pie_evals.schema import AccuracyMetrics, AccuracyStatus, ArtifactKind, Cell, QuantScheme
 
 from .parity import BF16_ULP, adjudicate_divergence, first_divergence, t0_verdict
@@ -137,12 +138,12 @@ BENCH_SYSTEM_DEFAULT = "You are a helpful benchmarking assistant."
 
 
 def bench_system_prompt(pie_root: str | Path) -> str:
-    """The system prompt scripts/bench/common.py renders; read from the pinned tree
-    so the reference tokenizes exactly what the engine saw."""
+    """The system prompt bench/common.py renders; read from the source so the
+    reference tokenizes exactly what the engine saw."""
     import re
 
     try:
-        src = (Path(pie_root) / "scripts/bench" / "common.py").read_text()
+        src = (bench_dir() / "common.py").read_text()
         m = re.search(r'^BENCH_SYSTEM\s*=\s*"([^"]*)"', src, re.M)
         return m.group(1) if m else BENCH_SYSTEM_DEFAULT
     except OSError:
@@ -189,7 +190,7 @@ def _tokenizer_eos(snap: Path) -> set[int]:
 
 
 def render_like_bench(snapshot_dir: str | Path, system: str, prompt: str, enable_thinking: bool | None = False) -> list[int]:
-    """Mirror ``scripts/bench/common.py::_render_chat`` + tokenize: chat template
+    """Mirror ``bench/common.py::_render_chat`` + tokenize: chat template
     when the tokenizer has one (Qwen3-family ``enable_thinking`` switch
     honoured), plain ``system\\n\\nprompt`` otherwise."""
     from transformers import AutoTokenizer
@@ -228,7 +229,7 @@ def t0_engine_outputs(
     """Run the fixed T0 prompt set through the engine adapter (greedy,
     ``ignore_eos``, one request per prompt).
 
-    The engine renders prompts through scripts/bench/common.py's chat template;
+    The engine renders prompts through bench/common.py's chat template;
     the reference tokenizes the same rendering and the prompt-token count the
     engine reported is checked against it. A count mismatch, or no count at
     all, means the two may have seen different inputs: the gate then returns

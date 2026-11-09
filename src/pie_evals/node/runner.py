@@ -32,6 +32,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pie_evals.node.build import bench_dir
 from pie_evals.schema import (
     AccuracyMetrics,
     AccuracyStatus,
@@ -52,7 +53,12 @@ from . import provenance as prov
 from .engines import EngineLaunchError, get_engine
 from .engines.base import workload_mode_args
 from .engines.recipes import load_recipe
-from .engines.shape import context_tokens_for, max_model_len_for, serve_envelope, workload_concurrency
+from .engines.shape import (
+    context_tokens_for,
+    max_model_len_for,
+    serve_envelope,
+    workload_concurrency,
+)
 from .metrics.stats import cov, decide_repetition, median
 from .validate import expected_requests, round_problem
 from .workloads import common_args_for
@@ -172,7 +178,7 @@ class NodeRunner:
         self.download = download or not os.environ.get("PIE_EVALS_VOLUME", "") and bool(os.environ.get("RUNPOD_POD_ID"))
         self.pie_root = Path(pie_root).resolve()
         # absolute: cell output paths are handed to bench subprocesses that run
-        # with their own cwd (scripts/bench), and a relative --out made them
+        # with their own cwd (bench/), and a relative --out made them
         # write bench.json somewhere the runner never looked
         self.out = Path(out_dir).resolve()
         self.out.mkdir(parents=True, exist_ok=True)
@@ -453,7 +459,7 @@ class NodeRunner:
                             # pie reads Engram's tokenizer-compressed id map from beside the weights, which the release does not
                             # ship ("this checkpoint carries no `engram.token_map`", h200-x4 weekly 40014471810)
                             self.log(f"engram: writing the token map beside {snapshot}")
-                            subprocess.run([os.environ.get("PIE_PY", "python3"), str(self.pie_root / "scripts/bench/engram_token_map.py"), str(snapshot)], check=True, timeout=1800)
+                            subprocess.run([os.environ.get("PIE_PY", "python3"), str(bench_dir() / "engram_token_map.py"), str(snapshot)], check=True, timeout=1800)
                         model_path = ensure_artifact(first.artifact, snapshot, self.pie_root / "target/release/pie", self.job.pie_commit, log=self.log)
                     except Exception as e:
                         for c in cells:

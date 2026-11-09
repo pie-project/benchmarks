@@ -4,7 +4,7 @@ Definitions (version ``FAIR_DEFINITION_VERSION``, stored as the ``fair_def``
 counter on every row):
 
 * TTFT (client): seconds from the client sending the request to the client
-  receiving the first generated token. Measured by ``scripts/bench/common.py``
+  receiving the first generated token. Measured by ``bench/common.py``
   for every engine; pie's stamp is its ``t0`` message, sent when the first
   sampled token reaches guest code.
 * Prefill time: the single-stream TTFT, i.e. the same client stamp. Under

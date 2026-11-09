@@ -20,6 +20,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any
 
+from pie_evals.node.build import bench_dir
 from pie_evals.schema import ErrorClass, WorkloadKind, WorkloadSpec
 
 from .base import Engine, EngineLaunchError
@@ -54,7 +55,7 @@ class ServedEngine(Engine):
         #: the running server drafts with the artifact's ``draft_model`` (set at boot)
         self.drafting = False
         existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
-        self.env["PYTHONPATH"] = ":".join([str(self.pie_root / "scripts" / "bench")] + ([existing] if existing else []))
+        self.env["PYTHONPATH"] = ":".join([str(bench_dir())] + ([existing] if existing else []))
 
     # ---- to implement per engine ---------------------------------------------
     @abstractmethod

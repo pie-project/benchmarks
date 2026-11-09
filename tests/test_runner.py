@@ -31,7 +31,7 @@ def _asked(workload):
 
 class FakeEngine(Engine):
     name = "pie"
-    script = "scripts/bench/fake.py"
+    script = "fake.py"
     calls: list[str] = []
     common: dict[str, list[str]] = {}
     behaviour: dict[str, object] = {}

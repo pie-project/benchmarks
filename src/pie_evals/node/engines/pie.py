@@ -1,6 +1,6 @@
-"""pie adapter: drives ``scripts/bench/pie_bench.py``.
+"""pie adapter: drives ``bench/pie_bench.py``.
 
-Everything emitted here is a flag ``pie_bench.py`` (or ``scripts/bench/common.py``)
+Everything emitted here is a flag ``pie_bench.py`` (or ``bench/common.py``)
 parses; knobs the script has no flag for are noted with ``TODO(pie/benches)``
 rather than invented. The bench inferlet (``text-completion-bench`` by
 default) is pointed at through ``PIE_BENCH_INFERLET_DIR`` and ``--inferlet-dir``.
@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from pie_evals.node.build import bench_dir
 from pie_evals.schema import Backend, EngineName, ErrorClass, WorkloadKind, WorkloadSpec
 
 from .base import Engine, EngineLaunchError, classify_failure, register
@@ -170,7 +171,7 @@ def _num(cfg: dict[str, Any], *keys: str) -> float | None:
 @register
 class PieEngine(Engine):
     name = EngineName.PIE
-    script = "scripts/bench/pie_bench.py"
+    script = "pie_bench.py"
 
     #: path under the pie tree of the bench inferlet project (a built
     #: ``Pie.toml`` + ``target/wasm32-wasip{2,3}/release/*.wasm``).
@@ -492,7 +493,7 @@ class PieEngine(Engine):
         env.pop("PIE_BENCH_SERVER_URL", None)
         log = log_path.open("w", encoding="utf-8")
         proc = subprocess.Popen(
-            argv, cwd=str(self.pie_root / "scripts/bench"), env=env,
+            argv, cwd=str(bench_dir()), env=env,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1,
         )
         lines: queue.Queue[str | None] = queue.Queue()

@@ -17,6 +17,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pie_evals.node.build import bench_dir
+
 from . import kl
 from .run import _render, _tokenizer
 from .tasks import TASKS
@@ -228,13 +230,13 @@ def pie_server(engine, workload, log_path: Path, prewarm: bool = True) -> Server
     i = next(k for k, a in enumerate(argv) if a.endswith("pie_bench.py"))
     argv = [argv[0], str(script), *argv[i + 1:]]
     env = engine.process_env()
-    env["PYTHONPATH"] = ":".join([str(engine.pie_root / "scripts/bench"), env.get("PYTHONPATH", "")])
+    env["PYTHONPATH"] = ":".join([str(bench_dir()), env.get("PYTHONPATH", "")])
     if str(engine.platform.backend) == "xla":
         # the XLA engine compiles a program per new fire shape (up to a minute each on a hybrid model): at load,
         # 8 at a time, and lanes waiting on one are not abandoned
         env["PIE_XLA_PREWARM"] = "1" if prewarm and os.environ.get("PARITY_PIE_PREWARM", "1") == "1" else "0"
         env.setdefault("PIE_SILENCE_TIMEOUT", "7200s")
-    return Server(argv, env, str(engine.pie_root / "scripts/bench"), log_path)
+    return Server(argv, env, str(bench_dir()), log_path)
 
 
 def mlx_python(vlm: bool) -> str:

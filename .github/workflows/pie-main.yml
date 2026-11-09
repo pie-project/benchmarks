@@ -1,0 +1,34 @@
+name: pie main
+# Every new commit on pie's main sends this repo (and the stats repo) the `pie-eval` dispatch pie's own CI sent
+# until pie carried nothing of the harness; the pie repo knows nothing of this one, so this polls. pie-eval.yml and
+# quality.yml measure a release tag; a bare commit is noted there and skipped, as before.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions: { contents: write, actions: write }  # the dispatch, and the PIE_MAIN_SHA variable that remembers the last commit sent
+concurrency: { group: pie-main, cancel-in-progress: false }
+env:
+  PIE_REPO: ${{ vars.PIE_REPO || 'pie-project/pie' }}
+jobs:
+  poll:
+    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
+    timeout-minutes: 5
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GH_RUNNER_PAT || github.token }}
+          LAST: ${{ vars.PIE_MAIN_SHA }}
+          STATS_TOKEN: ${{ secrets.STATS_DISPATCH_TOKEN }}
+        run: |
+          sha=$(gh api "repos/$PIE_REPO/commits/main" --jq .sha)
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::no sha for $PIE_REPO main: '$sha'"; exit 1; }
+          if [ "$sha" = "$LAST" ]; then echo "pie main still at $sha"; exit 0; fi
+          echo "pie main moved ${LAST:-(unknown)} -> $sha" | tee -a "$GITHUB_STEP_SUMMARY"
+          # remembered first: a poll that cannot remember must not send (the next one would send again)
+          gh variable set PIE_MAIN_SHA --body "$sha" --repo "${{ github.repository }}"
+          gh api "repos/${{ github.repository }}/dispatches" -f event_type=pie-eval -f "client_payload[pie_commit]=$sha"
+          if [ -n "$STATS_TOKEN" ]; then
+            GH_TOKEN=$STATS_TOKEN gh api repos/anton-mel/stats/dispatches -f event_type=pie-eval -f "client_payload[pie_commit]=$sha"
+          else
+            echo "::notice::STATS_DISPATCH_TOKEN is not set; anton-mel/stats was not told"
+          fi
