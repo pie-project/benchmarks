@@ -1171,8 +1171,7 @@ window.Pie = window.Pie || {};
       }
       const comparable = (mac, model) => {
         if (checked.has(`${mac}|${realOf(model)}`)) return true;
-        // a TPU keeps a model only pie runs there: pie's cell, the other engines' reasons in its card
-        if (grid[mac][model].c && Pie.platformOf(Pie.store.index.hardware[mac] || {}) === "tpu") return true;
+        // a model only pie runs on every machine of the platform has no column here: a comparison alone says nothing
         const statuses = modelRows.get(`${mac}|${realOf(model)}`) || new Map();
         return [...(engineRuns.get(mac) || [])].filter((e) => !["unsupported", "no_fit"].includes(statuses.get(e))).length >= 2;
       };
@@ -1327,6 +1326,9 @@ window.Pie = window.Pie || {};
             const PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
             const open = { hardware: [mac], model: [realOf(model)], workload: [PHASE[modeOf(c).id] || modeOf(c).workload],
               engine: compare === "engines" ? [...new Set((c.all || [c.pie]).map((r) => r.engine))] : [c.pie.engine] };
+            // a slice no other engine ran on this machine has nothing to compare: the cell reads as the full model's
+            // "does not fit", the mark alone at the right, the engines' reasons in its card
+            if (compare === "engines" && c.gain === null && c.pie.miniature) return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty is-nofit" data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}">${NOFIT}</span>${eye(mac)}</td>`;
             // an engine here measured above its own theoretical limit (a full model, not a slice): the cell tinted red,
             // in every view, as the best machine is tinted blue
             const overLimit = (c.all || [c.pie]).some((r) => {
