@@ -18,7 +18,7 @@ jobs:
         run: |
           set -euo pipefail
           D=$(command -v gdate || echo date)  # the site laptops' BSD date has no -d
-          cutoff=$($D -u -d '-4 hours' +%s)
+          cutoff=$($D -u -d '-7 hours' +%s)  # past tpu.yml's 340-minute bench cap plus create and teardown
           dev_cutoff=$($D -u -d '-24 hours' +%s)  # agents' dev VMs (not pie-evals-*) run long profiling sessions
           # name is projects/<p>/locations/<zone>/nodes/<name>: the list has no zone column of its own
           gcloud compute tpus tpu-vm list --zone=- --project pie-project-510103 --format=json |
