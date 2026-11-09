@@ -99,3 +99,13 @@ competitive:
             server_extra:
               value: ["--batch-size", "2048", "--ubatch-size", "512", "--cont-batching"]
               rationale: *q38kv
+    muse-spark-llamacpp-slice-l2-e8:
+      backend:
+        metal:
+          knobs:
+            server_extra:
+              value: ["--batch-size", "2048", "--ubatch-size", "512", "--cont-batching"]
+              rationale: >
+                No --kv-unified: llama.cpp's Muse Spark graph spans the whole shared buffer, and 32 slots of
+                2048 in one asked a 9.2 GB compute buffer on the M2 (Metal out of memory, every request a
+                "Compute error", pie-eval 42584771302). Per-slot buffers ask 1.0 GB at the same batch sizes.
