@@ -258,7 +258,7 @@ window.Pie = window.Pie || {};
 
     // Redraw the open filter menu in place after a toggle, keeping its scroll position.
     refresh(state) {
-      if (!element.hidden && (owner === "grid:maker" || owner === "grid:platform" || owner === "grid:size" || owner === "grid:model" || String(owner).startsWith("board:platforms:"))) {
+      if (!element.hidden && (owner === "grid:maker" || owner === "grid:platform" || owner === "grid:size" || owner === "grid:model")) {
         const query = typed(), scroll = scrolled();
         element.innerHTML = limitMenu(owner);
         searchWrap(owner, query, scroll);
@@ -309,7 +309,7 @@ window.Pie = window.Pie || {};
         if (!target || target.disabled) return;
         const key = target.closest("[data-key]")?.dataset.key || owner;
         // a menu that checks several (the makers) stays open between picks, as a filter menu does
-        const several = key === "grid:maker" || key === "grid:platform" || key === "grid:size" || key === "grid:model" || String(key).startsWith("board:platforms:");
+        const several = key === "grid:maker" || key === "grid:platform" || key === "grid:size" || key === "grid:model";
         if (!several && (isLimit(key) || key === RELEASE || key === SUITE || key === METRIC || key === COMPARE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === HIST_MAC || key === HIST_MODEL || key === QUAL_ENGINE)) this.close();
         onPick(key, target.dataset.value);
       };

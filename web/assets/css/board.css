@@ -27,7 +27,7 @@
 .board-outline-item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* a section: a large title after a square, as the outline marks it */
-.board-title { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; color: var(--color-label); }
+.board-title { display: flex; align-items: center; gap: 8px; margin: 0 0 1px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; color: var(--color-label); }
 .board-title:not(:first-child) { margin-top: 32px; }  /* a section's room above its title */
 /* the model, picked after its section's title in the site's own pop-up button: the maker's tile, the name, the chevrons,
    as the bar's Engine and Makers buttons read, centred on the title */
@@ -51,7 +51,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-grid-cards.is-matrices::-webkit-scrollbar { display: none; }
 .board-grid-cards.is-matrices > * { scroll-snap-align: start; }
 /* the rows' paddles: the cards' view switch at the section head's right, after its pick where it has one */
-.board-section-head > .board-carousel-nav { flex: none; margin: 0 0 -4px auto; }  /* a 24px group centred on the line, as the pick beside it */
+.board-section-head > .board-carousel-nav { flex: none; margin: 0 0 0 auto; }  /* a 24px group centred on the line, as the pick beside it */
 .board-section-head > .board-title-pick + .board-carousel-nav { margin-left: -10px; }  /* 6px from the pick (the head's 16px gap less 10), as the page pairs its pills */
 .board-carousel-nav[hidden] { display: none; }
 .board-carousel-nav .plain-button:disabled { opacity: .35; cursor: default; }
@@ -229,13 +229,13 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-toggle:focus:not(:focus-visible) { outline: none; }
 /* a section's head with a control: its title and description on the left, the control at the right end on the
    description's line, centred on it, so the title reads alone */
-.board-section-head { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
-.board-section-head:not(:first-child) { margin-top: 32px; }
+.board-section-head { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }  /* the controls centred on the title and its lines */
+.board-section-head:not(:first-child) { margin-top: 48px; }  /* 64px seen: the cards above end 16px under their last words */
 .board-section-text { flex: 1; min-width: 0; }
 .board-section-text .board-title { margin-top: 0; }
 .board-section-text .board-lede { margin-bottom: 0; }
-.board-section-head > .board-title-pick { margin: 0 0 -4px auto; }  /* a 24px button centred on the 16px line */
-.board-section-head > .board-toggle { margin: 0 0 -4px auto; }  /* a 24px one the same */
+.board-section-head > .board-title-pick { margin: 0 0 0 auto; }  /* a 24px button centred on the 16px line */
+.board-section-head > .board-toggle { margin: 0 0 0 auto; }  /* a 24px one the same */
 .board-title-dot { width: 12px; height: 12px; flex: none; border-radius: 3px; }  /* the card's colour as a plain square before its title, as Artificial Analysis marks its charts */
 /* Mobile's black square keeps a hairline edge on a dark card, where its tile colour is the card's own */
 :root[data-theme="dark"] .board-title-dot[style*="#1C1C1E"] { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
@@ -272,7 +272,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
   .board-card-side { flex-direction: row-reverse; align-self: stretch; align-items: center; justify-content: space-between; }
   .board-card-tools { margin: 0; }
   /* a section's pick or toggle goes under its description, at the start of the line */
-  .board-section-head { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .board-section-head { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .board-section-head > .board-title-pick + .board-carousel-nav, .board-section-head > .board-view:not(.board-carousel-nav) { margin-left: 0; }  /* each control on its own line from the same edge */
   .board-section-head > .board-title-pick, .board-section-head > .board-toggle { margin: 0; }
   /* the banner, the recommender and the changelog stacked, each a phone's size */
   .board-hero .board-banner { height: 200px; }
@@ -343,7 +344,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-matrix.is-tugged, .board-chart.is-tugged, .board-legend.is-tugged { cursor: grabbing; user-select: none; }
 .board-matrix.is-tugged td, .board-chart.is-tugged .board-bar { pointer-events: none; }  /* no hover card while it is held */
 /* a platform card is one height whichever view it shows: the bars sit in the grid's 200px, scaled to fit */
-.is-matrices .board-card-body > .board-chart { height: 200px; }
+.is-matrices .board-card-body > .board-chart { height: auto; margin-top: 7px; }  /* the bars at their own height: no letterbox above or below them */
 .board-card-pick:focus:not(:focus-visible) { outline: none; }  /* no ring after a click, only for the keyboard */
 /* the footer's last line, as OpenAI sets its own: the name and year, then a few links spaced apart with no dots, an icon at
    the right; the data's date sits under the brand */
@@ -486,11 +487,11 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 /* Spread: each dot in its engine's colour; one above the theoretical limit ringed in orange, a measurement to check */
 .board-cell.is-over .board-cell-dot { stroke: #FF9500; stroke-width: 1.6; }
 /* On one model is a different reading (one model, not the medians above): a hairline and more room set it apart */
-.board-section-head.is-apart { margin-top: 56px; padding-top: 40px; border-top: .5px solid var(--color-separator); }
+.board-section-head.is-apart { margin-top: 18px; padding-top: 28.5px; border-top: .5px solid var(--color-separator); }  /* a divider centred in the 64px seen between sections: 32px of space on each side */
 
 /* the welcome over the Overview, set as each section below it: its title and line with the two links at the right as
    the sections' picks, then the site's counts as the Welcome chapter's row of figures across the width */
-.board-welcome { margin: 0 0 48px; }
+.board-welcome { margin: 0 0 32px; }  /* 32px seen above the divider under it */
 .board-welcome .board-welcome-stats { margin: 0; }
 .board-welcome-actions { display: flex; flex: none; gap: 6px; margin: 0 0 -4px auto; }  /* 24px pills centred on the line, as a section's pick */
 .board-welcome-actions > * { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 0; border-radius: var(--radius-control); font: 400 12px/1 var(--font-text); color: var(--color-label); text-decoration: none; background: var(--color-fill); cursor: pointer; white-space: nowrap; }  /* the sections' pick, "Single Decode" */
@@ -528,12 +529,28 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-welcome .board-welcome-actions { position: absolute; right: 0; bottom: 0; margin: 0; flex-direction: column; align-items: flex-end; gap: 8px; }
 .board-welcome .board-welcome-actions > * { justify-content: flex-start; }
 /* Head to Head's one bars-or-grid switch sits before the paddles, as Kernel Efficiency's setup pick does */
-.board-section-head > .board-view:not(.board-carousel-nav) { flex: none; margin: 0 -8px -4px auto; }  /* 8px from the paddles, as the setup pick sits from them */
+.board-section-head > .board-view:not(.board-carousel-nav) { flex: none; margin: 0 -8px 0 auto; }  /* 8px from the paddles, as the setup pick sits from them */
 .board-section-head > .board-view:not(.board-carousel-nav) + .board-carousel-nav { margin-left: 0; }
 .board-section-head > .board-view:not(.board-carousel-nav):last-child { margin-right: 0; }
 .board-section-head > .board-title-pick + .board-view:not(.board-carousel-nav) { margin-left: -8px; }  /* a pick then the view switch, 8px apart, as How we count sits from its paddles */  /* with no paddles after it, it meets the edge as they do */
 .board-section-head > .board-title-pick + .board-title-pick { margin-left: -8px; }  /* two picks side by side 8px apart, as a pick and its paddles */
 .board-title-pick.is-text { padding: 0 10px; }  /* a button with only a word: the same room at both ends */
+.board-card.board-compare, #board-support { padding-left: 11px; padding-right: 11px; }  /* inset as the other sections' platform cards */
+.board-compare .board-chart { margin-left: calc(2.63% - 1.2px); width: calc(97.37% + 1.2px); }  /* its axis where theirs is: 24 of 456 units of a half-row card */
+@media (max-width: 899px) { .board-compare .board-chart { margin-left: 5.26%; width: 94.74%; } }  /* a phone's cards fill the row */
+.board-compare .board-title-dot { display: none; }  /* the platform is named in the head's pick: no colour square to read */
+.board-compare .board-sub:empty { display: none; }
+.board-compare-name { display: inline-flex; align-items: center; gap: 6px; text-decoration: underline dotted var(--color-label-tertiary); text-underline-offset: 4px; cursor: help; outline-offset: 2px; }  /* the specs wait on hover */
+.board-compare-info { width: 13px; height: 13px; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.3; stroke-linecap: round; }
+.board-compare .board-card-head { align-items: baseline; margin-bottom: 16px; }  /* the link on the machine name's line */
+.board-compare .board-card-side { align-self: baseline; }
+.board-compare .board-chart.is-narrow { display: none; }
+@media (max-width: 899px) { .board-compare .board-chart.is-wide { display: none; } .board-compare .board-chart.is-narrow { display: block; } }  /* a phone draws the half-card chart, its words at their size */
+.board-compare-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 160px; text-align: center; }  /* a headline and one plain line, centred in the card */
+.board-compare-empty b { font-size: 13px; font-weight: 600; color: var(--color-label); }
+.board-compare-empty span { font-size: 13px; color: var(--color-label-secondary); }
+.board-compare-empty .platform-nofit { width: 20px; height: 20px; margin-bottom: 4px; stroke: var(--color-label-tertiary); }
+@media (max-width: 899px) { .board-section-head:has(> .board-title-pick + .board-title-pick) { column-gap: 8px; row-gap: 8px; } .board-section-head:has(> .board-title-pick + .board-title-pick) > .board-title-pick + .board-title-pick { margin-left: 0; } }  /* phones: Compare's four picks wrap 8px apart, each line from the same edge */
 .board-footer-simple { font-size: 12px; color: var(--color-label-secondary); }  /* the update date in the section ledes' size and grey */
 .board-footer-simple { font-size: 11px; }  /* the update date at the cards' subtitle size */
 
