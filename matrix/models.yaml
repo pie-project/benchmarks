@@ -968,14 +968,15 @@ artifacts:
     tiers: [weekly]
   # the TPU's rows of the activation-quantized releases (#1184): engine-xla has no product that quantizes its
   # activations (fp8 a8, nvfp4 a4 are CUDA's tcgen05 GEMMs), so pie lands the same checkpoint at a row it serves on
-  # a TPU, its fp8 planes dequantized to bf16 at import (vLLM-TPU and SGLang-JAX dequantize fp8 on these chips too)
+  # a TPU: deepseek-v4-flash-mini reads its fp8 planes as released at bf16 activations (as vLLM-TPU does), the
+  # others dequantize them to bf16 at import
   - id: deepseek-v4-flash-mini-tpu
     base_model: deepseek-ai/DeepSeek-V4-Flash
     family: deepseek_v4
     scheme: mxfp4
     kind: miniature
-    miniature: {layers: "0-3,42", experts: 16, period: 1, note: "deepseek-v4-flash-mini's cut, at the TPU's bf16 dense row"}
-    pie_sku: dsv4-flash-mini-bf16-mxfp4-kv-bf16
+    miniature: {layers: "0-3,42", experts: 16, period: 1, note: "deepseek-v4-flash-mini's cut, its FP8 read as released"}
+    pie_sku: dsv4-flash-mini-e4m3tile128-mxfp4-kv-bf16
     platforms: [tpu-v6e-1, tpu-v5e-1, tpu-v5p-8, tpu-v4-8, tpu7x-4]
     max_context: 4096
     expected_gib: 3.7
