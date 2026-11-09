@@ -308,6 +308,51 @@ def reference_spread(ref_scored, again_scored, expect: list[int], how: str) -> d
     return {"ref_self_kl": s["kl_mean"], "ref_self_top1": s["top1_agree"], "ref_self": how}
 
 
+def _sglang_second_ref(art, plat, workload, mode, snapshot, rendered, ref_scored, pie_scored, pie_root, m, out_dir, log) -> dict:
+    """diag: SGLang's first-token top-20 on the same prompts, against the reference and against pie: a second
+    reference engine, whose distance from the first says what two correct engines differ by on this slice."""
+    from pie_evals.node.baselines import ensure_baseline
+    from pie_evals.node.engines import get_engine
+    from pie_evals.node.engines.recipes import load_recipe
+
+    busy = device_idle("cuda")
+    if busy:
+        raise RuntimeError(f"device not idle before SGLang: {busy}")
+    recipe = load_recipe("sglang", "competitive", plat, workload, family=art.family)
+    pin = recipe.get("pin") or m.engines["sglang"].pin
+    if pin:
+        recipe["pin"] = pin
+        ensure_baseline("sglang", pin, backend="cuda", log=log)
+    recipe["snapshot_dir"] = str(snapshot)
+    eng = get_engine("sglang")(pie_root=pie_root, artifact=art, platform=plat, mode=mode, recipe=recipe)
+    one = workload.model_copy(update={"params": {**workload.params, "concurrency": 1}})
+    tok = _tokenizer(snapshot)
+    # the token ids vLLM read: a render that opens with BOS gets no second one (as _reference sends it)
+    bos = getattr(tok, "bos_token", None)
+    special = not (bos and rendered and all(r.startswith(bos) for r in rendered))
+    ids = [tok.encode(r, add_special_tokens=special) for r in rendered]
+    prompts, first = out_dir / f"{art.id}-sglang-prompts.json", out_dir / f"{art.id}-sglang-first.json"
+    prompts.write_text(json.dumps(ids))
+    script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "sglang_first_token.py"
+    argv = [eng.python, str(script), str(pie_root), str(prompts), str(first), str(kl.TOPK), "--", "--model", str(snapshot), *eng.engine_args(one)]
+    log(f"first-token {art.id}@{plat.id}: SGLang {eng.version()} as a second reference")
+    with open(out_dir / f"{art.id}-sglang.log", "w") as lf:
+        subprocess.run(argv, stdout=lf, stderr=subprocess.STDOUT, check=True, timeout=3600, env=eng.process_env())
+    sg = [{int(k): v for k, v in x.items()} for x in json.loads(first.read_text())["last"]]
+    one_pos = [0] * len(sg)
+    vs_ref = kl.compare([[r[-1] if r else {}] for r in ref_scored], [[x] for x in sg], one_pos)
+    vs_pie = kl.compare([[x] for x in sg], [[q[-1] if q else {}] for q in pie_scored], one_pos)
+    out = {"second_ref": "sglang", "second_ref_version": eng.version(),
+           "second_vs_ref_kl": vs_ref["kl_mean"], "second_vs_ref_top1": vs_ref["top1_agree"],
+           "second_vs_ref_top1_decisive": vs_ref["top1_agree_decisive"], "second_vs_ref_decisive": vs_ref["decisive_positions"],
+           "pie_vs_second_kl": vs_pie["kl_mean"], "pie_vs_second_top1": vs_pie["top1_agree"],
+           "pie_vs_second_top1_decisive": vs_pie["top1_agree_decisive"], "pie_vs_second_decisive": vs_pie["decisive_positions"]}
+    log(f"first-token {art.id}@{plat.id}: SGLang against vLLM: KL {out['second_vs_ref_kl']}, top-1 {out['second_vs_ref_top1']}, decisive top-1 "
+        f"{out['second_vs_ref_top1_decisive']} over {out['second_vs_ref_decisive']}; pie against SGLang: KL {out['pie_vs_second_kl']}, top-1 "
+        f"{out['pie_vs_second_top1']}, decisive top-1 {out['pie_vs_second_top1_decisive']} over {out['pie_vs_second_decisive']}")
+    return out
+
+
 def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir: str = "matrix", store_dir: str | None = None,
                tag: str | None = None, tag_kind: str | None = None, out_dir: Path = Path("parity-out"), vllm_pin: str | None = None, log=print,
                first_token: bool | None = None, carry: dict | None = None) -> dict:
@@ -443,6 +488,8 @@ def run_parity(artifact_id: str, platform_id: str, *, pie_root: Path, matrix_dir
                          "first_self_top1": summary["ref_self_top1"], "first_self": summary["ref_self"]}
                 return run_parity(artifact_id, platform_id, pie_root=pie_root, matrix_dir=matrix_dir, store_dir=store_dir, tag=tag, tag_kind=tag_kind,
                                   out_dir=out_dir, vllm_pin=vllm_pin, log=log, first_token=False, carry=carry)
+        if os.environ.get("PARITY_SECOND_REF", "sglang") == "sglang" and backend == "cuda":  # diag branch: on by default
+            summary.update(_sglang_second_ref(art, plat, workload, mode, snapshot, rendered, ref_scored, pie_scored, pie_root, m, out_dir, log))
         if summary.get("first_token_topk"):
             summary["first_token_topk"]["tokens"] = [tok.decode([t]) for t in summary["first_token_topk"]["ids"]]
         summary["score"], summary["n"] = summary["top1_agree"], summary["positions"]
