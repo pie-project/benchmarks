@@ -69,3 +69,4 @@ jobs:
         with: { path: site }
       - id: deploy
         uses: actions/deploy-pages@v4
+        with: { timeout: 1800000 }  # the data is over 500 MB: Pages' default 10 minutes timed out the deploys of 11-09
