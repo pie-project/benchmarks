@@ -184,7 +184,10 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
     devrt = Path("/usr/local/cuda/lib64/libcudadevrt.a")
     # FlashInfer's trtllm-gen FMHA JIT includes cublasLt.h (SGLang GLM-5.3-Flash on pro6000-x4, weekly 39890605647)
     blas = Path("/usr/local/cuda/include/cublasLt.h")
-    if nvcc.exists() and header.exists() and devrt.exists() and blas.exists():
+    # FlashInfer 0.7.1's trtllm MoE JIT (SGLang 0.5.22's auto runner for bf16 experts on SM100) includes curand_kernel.h
+    # ("fatal error: curand_kernel.h: No such file", GLM-5.3 mini78 on b200-x1, parity 42566505027)
+    rand = Path("/usr/local/cuda/include/curand_kernel.h")
+    if nvcc.exists() and header.exists() and devrt.exists() and blas.exists() and rand.exists():
         return True
     ver = cuda_toolkit_version(py)
     if ver is None:
@@ -218,6 +221,15 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
                 if not (lib / name).exists() and found:
                     (lib / name).symlink_to(found[0].name)
         log(f"baseline: cublasLt.h {blas.exists()}" + ("" if r.returncode == 0 else f" (apt: {(r.stderr or r.stdout).strip().splitlines()[-1:]})"))
+    if not rand.exists():
+        r = subprocess.run(apt + ["install", "-y", "-qq", "--no-install-recommends", "--allow-change-held-packages", f"libcurand-dev-{major}-{minor}"], env=env, check=False, timeout=1200, capture_output=True, text=True)
+        if not rand.exists() and py is not None:
+            # as cuBLAS above: the venv's pip cuRAND carries the headers
+            for inc in Path(py).absolute().parent.parent.glob("lib/python3*/site-packages/nvidia/cu*/include"):
+                for h in inc.glob("curand*.h"):
+                    if not (rand.parent / h.name).exists():
+                        (rand.parent / h.name).symlink_to(h)
+        log(f"baseline: curand_kernel.h {rand.exists()}" + ("" if r.returncode == 0 else f" (apt: {(r.stderr or r.stdout).strip().splitlines()[-1:]})"))
     ok = nvcc.exists() and header.exists() and devrt.exists()
     log(f"baseline: nvcc {nvcc.exists()}, cuda_runtime.h {header.exists()}, libcudadevrt.a {devrt.exists()}")
     return ok
