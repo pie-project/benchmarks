@@ -981,8 +981,10 @@ window.Pie = window.Pie || {};
       else if (dry) compare = "engines";
       else if (!peeked) compare = chosen;  // a platform's page shows the viewer's pick, whatever page came before
       // Model Slices off: only full models' rows, so a model that fits nowhere shows its does-not-fit mark (Quality keeps them)
-      const sliceOn = dry || state.platform.slices !== false;
-      const all = Pie.store.snapshot(state.release).filter((r) => sliceOn || !r.miniature);
+      // (Relative Speed only: Tokens per Second and Kernel Efficiency never show a slice's number anyway)
+      const sliceOn = dry || compare !== "engines" || state.platform.slices !== false;
+      const every = Pie.store.snapshot(state.release);
+      const all = every.filter((r) => sliceOn || !r.miniature);
       lastAll = all;  // the hover cards name the engines that left a cell empty
       shownEngine = null;
       const modes = Pie.platform.metrics(state);
@@ -1207,8 +1209,10 @@ window.Pie = window.Pie || {};
       // empty, and the columns must keep the order Relative Speed gives them
       const sliced = new Set(all.filter((r) => r.miniature && r.engine === baseOf(r.hardware)).map((r) => `${r.hardware}|${r.model}`));
       const slicedOn = (list, model) => list.some((mac) => sliced.has(`${mac}|${model}`));
+      // the columns keep the order they have with Model Slices on, so the switch only hides, never reshuffles
+      const slicedEvery = new Set(every.filter((r) => r.miniature && r.engine === baseOf(r.hardware)).map((r) => `${r.hardware}|${r.model}`));
       const minisFirst = (list, ms) => {
-        const mini = (model) => slicedOn(list, model);
+        const mini = (model) => list.some((mac) => slicedEvery.has(`${mac}|${model}`));
         return [...ms.filter(mini), ...ms.filter((m) => !mini(m))];
       };
       const sections = only ? [{ platform: null, macs: order(grouped.flatMap((g) => g.macs), only), models: minisFirst(grouped.flatMap((g) => g.macs), models) }]
@@ -1397,7 +1401,7 @@ window.Pie = window.Pie || {};
           <span class="platform-bar-side is-end">
             <span class="platform-key" title="An engine on this cell measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>CI Error</span>
             <span class="platform-key" title="The full model does not fit one machine; a number beside the mark is a model slice&#39;s, for comparing engines">${NOFIT}Does not fit</span>
-            <button type="button" class="platform-key platform-toggle" data-slices role="switch" aria-checked="${state.platform.slices !== false}" title="On: model slices&#39; numbers where the full model does not fit. Off: full models only"><i class="platform-switch" aria-hidden="true"></i>Model Slices</button>
+            <button type="button" class="platform-key platform-toggle" data-slices${compare === "engines" ? "" : " hidden"} role="switch" aria-checked="${state.platform.slices !== false}" title="On: model slices&#39; numbers where the full model does not fit. Off: full models only"><i class="platform-switch" aria-hidden="true"></i>Model Slices</button>
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
             <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
             <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
