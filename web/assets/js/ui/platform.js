@@ -1298,36 +1298,13 @@ window.Pie = window.Pie || {};
         const how = (kept && all ? `${kept} of ${all} layers kept (${Math.round((kept / all) * 100)}%)` : String(cut).replace(/, \d+ experts$/, "")) + (experts ? `, the first ${experts} experts` : "");
         return `<span class="column-info slice-mark" tabindex="0" role="button" aria-label="Model slice"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg><span class="column-info-pop" role="tooltip">${esc(`Model slice: ${how}, to fit one device. For engine-to-engine comparison only, not the full model's speed.`)}</span></span>`;
       };
-      // a maker's band folds its models into one column, as a platform's bar folds its machines: the column carries the
-      // maker's median on each machine, and the band's chevron opens it again
-      const foldedMakers = p.foldedMakers || {};
-      const columns = [];
-      for (const model of models) {
-        const name = makerOf(model).name;
-        const last = columns[columns.length - 1];
-        if (!foldedMakers[name]) columns.push({ model });
-        else if (last?.maker === name) last.models.push(model);
-        else columns.push({ maker: name, models: [model], key: `maker:${name}` });
-      }
-      const foldedCell = (mac, col) => {
-        const vals = col.models.map((model) => (compare === "tps" ? grid[mac][model].c?.pie[metric.key] : grid[mac][model].c?.gain));
-        const o = median(vals), n = vals.filter((v) => v !== undefined && v !== null).length;
-        if (o === null) return `<td class="is-folded" data-col="${esc(col.key)}"><span class="platform-cell is-empty">–</span></td>`;
-        const tipText = card(col.maker || "Cloud", `Median of ${n} ${n === 1 ? "model" : "models"} on ${macName(mac)}`);
-        const inner = compare === "tps" ? `<span class="platform-cell is-even"><span class="platform-main">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span></span>`
-          : (() => { const k = number(o); return `<span class="platform-cell ${k.kind}"><span class="platform-main">${k.html}</span></span>`; })();
-        return `<td class="is-folded" data-col="${esc(col.key)}" data-tip="${esc(tipText)}">${inner}</td>`;
-      };
-      const foldedHead = (col) => `<th class="is-folded" scope="col" data-col="${esc(col.key)}" data-fold-maker="${esc(col.maker)}" title="Show its models"><span class="platform-col"><span><span class="platform-model">${esc(col.maker || "Cloud")}</span><span class="platform-sub">${col.models.length} models · median</span></span></span></th>`;
       const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
-        if (hidden.has(mac)) return `<tr class="is-hidden-row" data-empty="1">${machine(mac, g.platform)}<td class="is-overall" data-hide-mac="${esc(mac)}">${eye(mac)}</td>${columns.map((col) => `<td data-col="${esc(col.key || col.model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
+        if (hidden.has(mac)) return `<tr class="is-hidden-row" data-empty="1">${machine(mac, g.platform)}<td class="is-overall" data-hide-mac="${esc(mac)}">${eye(mac)}</td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-empty">–</span>${eye(mac)}</td>`
           : compare === "tps" ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-even"><span class="platform-main">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span></span>${eye(mac)}</td>`
           : (() => { const n = number(o); n.html = Math.round(o * 100) ? signed(o) : "0%"; return `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}"><span class="platform-main">${n.html}</span></span>${eye(mac)}</td>`; })();
-        return `<tr>${machine(mac, g.platform)}${overallCell}${columns.map((col) => {
-          if (col.maker !== undefined) return foldedCell(mac, col);
-          const model = col.model;
+        return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
           if (c) {
@@ -1386,25 +1363,21 @@ window.Pie = window.Pie || {};
       const makers = [];
       // a maker's miniatures and its full models are two bands, as the miniatures lead the table
       const cut = (model) => slicedOn(list, model);
-      for (const col of columns) {
-        const model = col.model ?? col.models[0];
+      for (const model of models) {
         const maker = makerOf(model);
         const last = makers[makers.length - 1];
-        const count = col.models ? col.models.length : 1;
         // a speculation column widens the band but is not another model
-        if (last && last.maker.name === maker.name) { last.n += 1; last.count += count; }  // one band a maker, slices and full models together
-        else makers.push({ maker, n: 1, count, cut: cut(model), folded: col.maker !== undefined });
+        if (last && last.maker.name === maker.name) { last.n += 1; last.count += 1; }  // one band a maker, slices and full models together
+        else makers.push({ maker, n: 1, count: 1, cut: cut(model) });
       }
       // each table's corner above Hardware narrows its own pinned column to each machine's mark and name, for room
       // for the models, and back: one button a platform
-      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count, folded: shut }, i) =>
+      const makerRow = `<tr class="platform-maker-row"><th class="platform-corner"><button type="button" class="platform-narrow" data-narrow="${esc(key)}" aria-pressed="${tight}" aria-label="${narrowLabel}" title="${narrowLabel}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.5 4 3.5 8l4 4M12.5 4l-4 4 4 4"/></svg></button></th><th class="platform-corner is-sortable is-overall" data-sort="overall" aria-hidden="true"></th>${makers.map(({ maker, n, count }, i) =>
         // the last maker runs on over the filler column, so a grid narrower than its section ends in its band, not a gap
-        `<th class="platform-maker${shut ? " is-collapsed" : ""}" colspan="${n + (i === makers.length - 1 ? 1 : 0)}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}" data-fold-maker="${esc(maker.name)}" aria-expanded="${!shut}" title="${shut ? "Show" : "Fold"} its models"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${count} ${count === 1 ? "model" : "models"}</span><svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg></span></th>`).join("")}${makers.length ? "" : '<th class="platform-fill" aria-hidden="true"></th>'}</tr>`;
+        `<th class="platform-maker" colspan="${n + (i === makers.length - 1 ? 1 : 0)}" scope="colgroup" data-drop="maker" data-id="${esc(maker.name)}"><span class="platform-maker-name">${badge(maker)}<b>${esc(maker.name || "Cloud")}</b><span>${count} ${count === 1 ? "model" : "models"}</span></span></th>`).join("")}${makers.length ? "" : '<th class="platform-fill" aria-hidden="true"></th>'}</tr>`;
       const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
-        <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${columns.map((col) => {
-        if (col.maker !== undefined) return foldedHead(col);
-        const model = col.model;
+        <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
         const m = Pie.store.index.models[realOf(model)] || {};
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B` : ""}` : "";
         // the precision pie ran the model at on this table's machines, after its size
@@ -1427,8 +1400,8 @@ window.Pie = window.Pie || {};
           <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       // the columns keep their width; a last empty column takes what is left, so rows and bars reach the edge as in Finder
-      const cols = `<colgroup><col class="col-machine"><col class="col-model">${columns.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
-      return `<table class="platform-table${tight ? " is-tight" : ""}" style="--cols: ${columns.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
+      const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
+      return `<table class="platform-table${tight ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
       };
       // each platform under its header bar, which folds it away as a Finder group does; its table scrolls sideways on its own
       const tables = only ? tableOf(sections[0] || { macs: [], models: [] }) : sections.map((g, i) => `<section class="platform-section">
@@ -1584,15 +1557,6 @@ window.Pie = window.Pie || {};
         if (picker) {
           event.stopPropagation();
           Pie.popover.open(picker, Pie.popover.METRIC, state);
-          return;
-        }
-        // a maker's band folds its models into one column and back, as the platform bars fold their machines
-        const band = event.target.closest("[data-fold-maker]");
-        if (band) {
-          const name = band.dataset.foldMaker;
-          state.platform.foldedMakers = { ...(state.platform.foldedMakers || {}), [name]: !state.platform.foldedMakers?.[name] };
-          Pie.saveView?.();
-          onChange();
           return;
         }
         // a platform's header row folds its machines away and back, as a Finder group does
