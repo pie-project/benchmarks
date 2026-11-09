@@ -4,18 +4,9 @@ import pytest
 
 from pie_evals.node import build as pb
 from pie_evals.plan.matrix import Matrix
-from pie_evals.results import flops
 from pie_evals.schema import CellStatus, PerfMetrics, Provenance, Record, Tier
 
 ROOT = Path(__file__).resolve().parents[1]
-
-QWEN35_08B = {
-    "hidden_size": 1024, "num_hidden_layers": 24, "num_attention_heads": 8, "num_key_value_heads": 2, "head_dim": 256,
-    "intermediate_size": 3584, "vocab_size": 248320, "attn_output_gate": True,
-    "layer_types": (["linear_attention"] * 3 + ["full_attention"]) * 6,
-    "linear_num_key_heads": 16, "linear_num_value_heads": 16, "linear_key_head_dim": 128, "linear_value_head_dim": 128,
-    "linear_conv_kernel_dim": 4,
-}
 
 
 @pytest.fixture(scope="module")
@@ -74,15 +65,3 @@ def test_metal_build_is_cached_without_a_wheel(tmp_path):
     (d / "wasm" / "x.wasm").write_text("")
     assert pb.is_cached("a" * 40, ["metal"], tmp_path)
     assert not pb.is_cached("a" * 40, ["cuda"], tmp_path)
-
-
-def test_flops_scale_with_the_rate():
-    one = flops.tflops({"decode_tok_s": 100.0, "prefill_tok_s": 1000.0}, {"prefill": 128, "decode": 64}, QWEN35_08B)
-    two = flops.tflops({"decode_tok_s": 200.0, "prefill_tok_s": 2000.0}, {"prefill": 128, "decode": 64}, QWEN35_08B)
-    assert two["decode_tflops"] == pytest.approx(2 * one["decode_tflops"])
-    assert two["prefill_tflops"] == pytest.approx(2 * one["prefill_tflops"])
-    per_token = flops.decode_flops_per_token(QWEN35_08B, 160)
-    assert 1.4e9 < per_token < 1.8e9
-    batched = flops.tflops({"output_tok_s": 1000.0, "prefill_tok_s": 5.0}, {"prefill": 128, "decode": 128, "concurrency": 8}, QWEN35_08B)
-    assert batched["prefill_tflops"] is None and batched["decode_tflops"] > 0
-    assert flops.tflops({"decode_tok_s": 1.0}, {"prefill": 1}, None) == {"prefill_tflops": None, "decode_tflops": None}

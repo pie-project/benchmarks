@@ -331,10 +331,3 @@ class Cell(BaseModel):
     @property
     def cell_id(self) -> str:
         return hashlib.sha256(self.cell_key.encode()).hexdigest()[:16]
-
-    @property
-    def is_baseline(self) -> bool:
-        return self.engine != EngineName.PIE
-
-    def accuracy_applicable(self) -> bool:
-        return self.artifact.kind == ArtifactKind.FULL and self.program.accuracy_gate != "none"

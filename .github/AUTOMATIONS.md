@@ -25,7 +25,7 @@ A commit without a tag is not measured. Each run is stored with its tag (a relea
 | `collect` | imports the results of an earlier run into the database, or deletes tags, engines or workloads from it | `PIE_EVALS_DB` |
 | `runpod-check` | rents one pod for a few minutes to check the RunPod setup | `RUNPOD_API_KEY`, `GH_RUNNER_PAT` |
 
-`smoke` can also be started by the pie repo with a `pie-commit` dispatch. The `nightly` and `weekly` schedules are switched off until their cost is known.
+The `nightly` and `weekly` schedules are switched off until their cost is known.
 
 ## Google Cloud TPU
 

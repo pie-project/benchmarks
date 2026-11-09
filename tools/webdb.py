@@ -182,7 +182,6 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
     catalog = load("hardware")["hardware"]
     by_id = {c["id"]: c for c in catalog}
     by_runpod = {c["runpod_gpu_type"]: c for c in catalog if c.get("runpod_gpu_type")}
-    spec_keys = ("bandwidth_gbs", "tflops_fp16", "tflops_fp8", "tflops_mxfp8", "ane_tflops_fp16", "power_w", "cpu_cores", "gpu_cores", "year", "memory_type")
 
     def row(c: dict, **over) -> dict:
         resource = RESOURCE.get(c["class"], "RunPod cloud" if c.get("runpod_gpu_type") else "")

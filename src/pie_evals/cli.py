@@ -610,21 +610,6 @@ def runpod_gpus():
         click.echo(f"{g.get('id', ''):55s} {g.get('memoryInGb') or '':>4} GB  {g.get('displayName', '')}")
 
 
-@main.command("runpod-stock")
-@click.pass_obj
-def runpod_stock(obj):
-    """Secure-cloud stock per (platform GPU × volume data center) right now."""
-    from pie_evals.pods import runpod
-
-    m: Matrix = obj["matrix"]
-    dcs = list((m.runpod.get("volumes") or {}).keys()) or [d["id"] for d in runpod.data_centers() if d.get("storageSupport")]
-    click.echo("platform".ljust(16) + "".join(dc.ljust(10) for dc in dcs))
-    for p in m.platforms.values():
-        if not p.runpod_gpu_type:
-            continue
-        click.echo(p.id.ljust(16) + "".join(runpod.stock(p.runpod_gpu_type, dc, p.count)[:8].ljust(10) for dc in dcs))
-
-
 @main.command("runpod-volume")
 @click.argument("action", type=click.Choice(["list", "create"]))
 @click.argument("data_center", required=False)
