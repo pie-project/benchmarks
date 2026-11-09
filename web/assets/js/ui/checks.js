@@ -258,7 +258,9 @@ window.Pie = window.Pie || {};
     // a model slice is what the Performance page marks so: a slice ran there, or the model does not fit
     const nofit = (mac, model) => layout.sliced.has(`${mac}|${model}`) || Boolean(layout.grid[mac]?.[model]?.needs) || Boolean(klOf(mac, model, platform.id)?.miniature);
     const at = {};
-    for (const mac of macs) for (const model of models) at[`${mac}|${model}`] = nofit(mac, model) ? { kl: klOf(mac, model, platform.id) } : { score: scoreOf(state, mac, model, platform.id) };
+    // a declared gap outranks a stored row: a row from a cut whose reference is flat (Gemma-4-31B's 0-17 on a 32 GB card)
+    // passed without checking anything, so the cell says why it cannot be checked
+    for (const mac of macs) for (const model of models) at[`${mac}|${model}`] = nofit(mac, model) ? { kl: gapOf(mac, model) ? null : klOf(mac, model, platform.id) } : { score: gapOf(mac, model) ? null : scoreOf(state, mac, model, platform.id) };
     const signed = (d) => `${d > 0.05 ? "+" : d < -0.05 ? "−" : ""}${Math.abs(d).toFixed(1)}`;
     // a maker's slices and its full models are two bands, as the Performance page splits them
     const cut = (model) => macs.some((mac) => layout.sliced.has(`${mac}|${model}`));
