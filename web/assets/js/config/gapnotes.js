@@ -10,44 +10,44 @@ Pie.gapNotes = {
   "llama.cpp WebGPU's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "web-rtx4090|gemma-4-e4b|prefill": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx5090|gemma-4-e4b|pbatch": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx4090|gemma-4-e4b|pbatch": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx4090|gemma-4-e2b|pbatch": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx5090|gemma-4-e2b|pbatch": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx5090|gemma-4-e4b|batching": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "plausible",
+  "llama.cpp WebGPU lacks fused kernels",
+  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "web-rtx4090|gemma-4-e4b|batching": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "plausible",
+  "llama.cpp WebGPU lacks fused kernels",
+  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "web-rtx5090|gemma-4-e2b|batching": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "plausible",
+  "llama.cpp WebGPU lacks fused kernels",
+  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "h200-x1|glm-5.3|pbatch": [
   "rerun",
@@ -60,9 +60,9 @@ Pie.gapNotes = {
   "Our bench sent seed 0 with every request, and mlx-lm 0.32's server runs any seeded request alone, so these 32 requests ran one at a time. Without a seed mlx-lm reaches 4.7x more (Qwen3.5-4B, M5 Max: 138 to 600-653 tok/s). Fixed in benchmarks #1672; needs a rerun."
  ],
  "web-rtx4090|gemma-4-e2b|batching": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "plausible",
+  "llama.cpp WebGPU lacks fused kernels",
+  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "mi300x-x1|mimo-v2.6-flash-rl|decode": [
   "rerun",
@@ -95,14 +95,14 @@ Pie.gapNotes = {
   "Our bench sent seed 0 with every request, and mlx-lm 0.32's server runs any seeded request alone, so these 32 requests ran one at a time. Without a seed mlx-lm reaches 4.7x more (Qwen3.5-4B, M5 Max: 138 to 600-653 tok/s). Fixed in benchmarks #1672; needs a rerun."
  ],
  "web-rtx4090|gemma-4-e2b|prefill": [
-  "rerun",
-  "WebLLM's Gemma-4 E2B build is slow",
-  "WebLLM's prebuilt Gemma-4 E2B library is slower than its own Qwen3.5-9B build (TTFT 1.1-1.2 s vs 0.6-0.8 s, decode 39 tok/s). No harness setting explains it; needs a profile."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "web-rtx5090|gemma-4-e2b|prefill": [
-  "rerun",
-  "WebLLM's Gemma-4 E2B build is slow",
-  "WebLLM's prebuilt Gemma-4 E2B library is slower than its own Qwen3.5-9B build (TTFT 1.1-1.2 s vs 0.6-0.8 s, decode 39 tok/s). No harness setting explains it; needs a profile."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|deepseek-v4-flash|batching": [
   "explained",
@@ -110,9 +110,9 @@ Pie.gapNotes = {
   "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
  ],
  "web-rtx4090|gemma-4-e4b|decode": [
-  "explained",
-  "Gemma-4 embeddings on the CPU in wasm",
-  "llama.cpp computes Gemma-4 E2B/E4B's per-layer embedding projection in its CPU input layer, and this browser build is single-threaded wasm, so every token pays a slow CPU matmul (TTFT 16 s vs 0.26 s)."
+  "plausible",
+  "llama.cpp WebGPU lacks fused kernels",
+  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "tpu-v6e-1|deepseek-v4-flash|decode": [
   "plausible",
@@ -170,14 +170,14 @@ Pie.gapNotes = {
   "Our bench sent seed 0 with every request, and mlx-lm 0.32's server runs any seeded request alone, so these 32 requests ran one at a time. Without a seed mlx-lm reaches 4.7x more (Qwen3.5-4B, M5 Max: 138 to 600-653 tok/s). Fixed in benchmarks #1672; needs a rerun."
  ],
  "web-rtx4090|gemma-4-26b-a4b|prefill": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx4090|gemma-4-12b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx4090|gemma-4-26b-a4b|batching": [
   "plausible",
@@ -220,9 +220,9 @@ Pie.gapNotes = {
   "On sm_8x vLLM 0.32 serves GLM-5.3's sparse MLA with XPU_MLA_SPARSE, a portable backend with no full CUDA graph support: the A100 runs the whole model eager, the A40 piecewise."
  ],
  "web-rtx4090|gemma-4-31b|prefill": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "b200-x1|gemma-4-26b-a4b|prefill": [
   "explained",
@@ -240,9 +240,9 @@ Pie.gapNotes = {
   "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "web-rtx4090|gemma-4-26b-a4b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "mi355x-x1|deepseek-v4.1-flash|prefill": [
   "rerun",
@@ -260,9 +260,9 @@ Pie.gapNotes = {
   "llama.cpp WebGPU's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "mi300x-x1|mimo-v2.6-flash-rl|prefill": [
-  "rerun",
-  "vLLM MiMo decode at 6 tok/s",
-  "vLLM 0.32.0 decodes this MiMo slice at 6 tok/s on MI300X (pie 94; SGLang reaches 160 on MI350X). Likely a slow fallback kernel in vLLM's ROCm path; not confirmed."
+  "plausible",
+  "Rivals add per-request overhead",
+  "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "rtx5090-x1|qwen3.5-0.8b|prefill": [
   "plausible",
@@ -275,9 +275,9 @@ Pie.gapNotes = {
   "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "web-rtx4090|gemma-4-31b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "b200-x1|nvidia-nemotron-3-super-120b-a12b|prefill": [
   "plausible",
@@ -315,24 +315,24 @@ Pie.gapNotes = {
   "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "web-rtx4090|muse-glimmer-30b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "m3-16g|qwen3.8-27b|pbatch": [
   "plausible",
-  "llama.cpp Q4_K Metal kernels slower",
-  "Mostly MoE and 27B slices on 16 GB Macs, where llama.cpp's Metal Q4_K kernels run 1.3-2.2x slower than pie's; TTFT and decode trail by similar factors."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi300x-x1|deepseek-v4.1-flash|pbatch": [
   "plausible",
-  "vLLM ROCm: Triton sparse MLA",
-  "ROCm has no FlashMLA or DeepGEMM, so vLLM runs DeepSeek-V4's sparse MLA and indexer logits through its Triton fallbacks; decode trails pie 2x."
+  "Rivals on generic ROCm Triton paths",
+  "On ROCm the rivals serve these MoE, MLA and sparse-attention slices through generic Triton paths (vLLM 0.32.0 on MI300X, SGLang 0.5.22), and seat fewer requests at once."
  ],
  "web-rtx4090|qwen3.5-9b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "a40-x1|deepseek-v4.1-flash|batching": [
   "explained",
@@ -340,9 +340,9 @@ Pie.gapNotes = {
   "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
  ],
  "mi300x-x1|mimo-v2.6-flash-rl|pbatch": [
-  "rerun",
-  "vLLM MiMo decode at 6 tok/s",
-  "vLLM 0.32.0 decodes this MiMo slice at 6 tok/s on MI300X (pie 94; SGLang reaches 160 on MI350X). Likely a slow fallback kernel in vLLM's ROCm path; not confirmed."
+  "plausible",
+  "Rivals on generic ROCm Triton paths",
+  "On ROCm the rivals serve these MoE, MLA and sparse-attention slices through generic Triton paths (vLLM 0.32.0 on MI300X, SGLang 0.5.22), and seat fewer requests at once."
  ],
  "mi300x-x1|qwen3.5-0.8b|prefill": [
   "explained",
@@ -350,9 +350,9 @@ Pie.gapNotes = {
   "SGLang 0.5.22 turns breakable prefill CUDA graphs on only for CUDA; on ROCm every prefill runs eager, so its TTFT for the 555-token prompt runs 7-37 ms above pie's."
  ],
  "web-rtx4090|qwen3.8-27b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "m5-max-64g|qwen3.8-flash-next|batching": [
   "rerun",
@@ -360,29 +360,29 @@ Pie.gapNotes = {
   "Our bench sent seed 0 with every request, and mlx-lm 0.32's server runs any seeded request alone, so these 32 requests ran one at a time. Without a seed mlx-lm reaches 4.7x more (Qwen3.5-4B, M5 Max: 138 to 600-653 tok/s). Fixed in benchmarks #1672; needs a rerun."
  ],
  "web-rtx5090|gemma-4-26b-a4b|prefill": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "m5-max-64g|nvidia-nemotron-3-ultra-550b-a55b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi300x-x1|deepseek-v4-flash|pbatch": [
   "plausible",
-  "vLLM ROCm: Triton sparse MLA",
-  "ROCm has no FlashMLA or DeepGEMM, so vLLM runs DeepSeek-V4's sparse MLA and indexer logits through its Triton fallbacks; decode trails pie 2x."
+  "Rivals on generic ROCm Triton paths",
+  "On ROCm the rivals serve these MoE, MLA and sparse-attention slices through generic Triton paths (vLLM 0.32.0 on MI300X, SGLang 0.5.22), and seat fewer requests at once."
  ],
  "web-rtx4090|gpt-oss-120b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx4090|gpt-oss-120b|prefill": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "m4-pro-48g|qwen3.8-flash-next|batching": [
   "rerun",
@@ -390,9 +390,9 @@ Pie.gapNotes = {
   "Our bench sent seed 0 with every request, and mlx-lm 0.32's server runs any seeded request alone, so these 32 requests ran one at a time. Without a seed mlx-lm reaches 4.7x more (Qwen3.5-4B, M5 Max: 138 to 600-653 tok/s). Fixed in benchmarks #1672; needs a rerun."
  ],
  "web-rtx4090|qwen3.6-27b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "m5-max-128g|gemma-4-e2b|batching": [
   "plausible",
@@ -400,9 +400,9 @@ Pie.gapNotes = {
   "llama-server batches the 32 slots, but its Metal Q4_K decode scales poorly with batch: per-request decode is 2-24 tok/s vs pie's 10-68 on the same Macs."
  ],
  "web-rtx4090|qwen3.5-4b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "m3-16g|qwen3.8-27b|batching": [
   "rerun",
@@ -430,14 +430,14 @@ Pie.gapNotes = {
   "Our bench sent seed 0 with every request, and mlx-lm 0.32's server runs any seeded request alone, so these 32 requests ran one at a time. Without a seed mlx-lm reaches 4.7x more (Qwen3.5-4B, M5 Max: 138 to 600-653 tok/s). Fixed in benchmarks #1672; needs a rerun."
  ],
  "web-rtx4090|gpt-oss-20b|prefill": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx4090|gpt-oss-20b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "m3-16g|qwen3.6-27b|batching": [
   "plausible",
@@ -465,9 +465,9 @@ Pie.gapNotes = {
   "SGLang 0.5.22 turns its prefill CUDA graph off for DeepSeek-V4 (capture-pool memory), so the 555-token prompt runs eager: TTFT 23-53 ms vs pie's 8-22 ms."
  ],
  "tpu-v5e-1|glm-5.3|pbatch": [
-  "rerun",
-  "sglang-jax GLM prefill slow, unknown",
-  "sglang-jax 0.1.0rc0 takes 97-228 ms for the 555-token prompt vs pie's 21-50 ms. Its GLM-5 path runs with DSA off by default, which does not matter at this length; cause not found."
+  "plausible",
+  "sglang-jax: early TPU port",
+  "sglang-jax is an early TPU port (0.1.0rc0, or main for Gated DeltaNet models) and pays more per request; its TTFT runs 6x pie's on this cell."
  ],
  "h100-pcie-x1|gemma-4-e4b|prefill": [
   "plausible",
@@ -485,9 +485,9 @@ Pie.gapNotes = {
   "A v5e has no SparseCore, so DeepSeek-V4's sparse-attention gather runs as a plain XLA gather and its compressor as tpu-inference's reference code, at a 0.65 HBM share."
  ],
  "web-rtx5090|gemma-4-12b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "b200-x1|qwen3.8-flash-next|prefill": [
   "plausible",
@@ -510,9 +510,9 @@ Pie.gapNotes = {
   "On sm_8x vLLM 0.32 serves GLM-5.3's sparse MLA with XPU_MLA_SPARSE, a portable backend with no full CUDA graph support: the A100 runs the whole model eager, the A40 piecewise."
  ],
  "web-rtx5090|gemma-4-12b|prefill": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "m5-max-128g|qwen3.5-9b|batching": [
   "plausible",
@@ -561,8 +561,8 @@ Pie.gapNotes = {
  ],
  "h100-sxm-x1|deepseek-v4-flash|prefill": [
   "plausible",
-  "vLLM runs without decoder CUDA graphs",
-  "On Hopper the harness's vLLM runs DeepSeek-V4.1 without its decoder-replay CUDA graphs and caps V4 graphs at 128 tokens, and the 555-token single prefill is not graphed."
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "mi300x-x1|qwen3-0.6b|prefill": [
   "rerun",
@@ -581,18 +581,18 @@ Pie.gapNotes = {
  ],
  "tpu-v5e-1|gpt-oss-20b|decode": [
   "plausible",
-  "vLLM-TPU seats fewer requests",
-  "vLLM-TPU seats fewer of the offered requests (TTFT p50 64-68 s vs 0.7-0.8 s, per-request decode faster): its KV pool is held to 0.85 of HBM to leave room for the step program."
+  "vLLM-TPU per-step host work",
+  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
  ],
  "m3-16g|qwen3.8-27b|prefill": [
   "plausible",
-  "llama.cpp Q4_K Metal kernels slower",
-  "Mostly MoE and 27B slices on 16 GB Macs, where llama.cpp's Metal Q4_K kernels run 1.3-2.2x slower than pie's; TTFT and decode trail by similar factors."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v5e-1|gpt-oss-120b|decode": [
   "plausible",
-  "vLLM-TPU seats fewer requests",
-  "vLLM-TPU seats fewer of the offered requests (TTFT p50 64-68 s vs 0.7-0.8 s, per-request decode faster): its KV pool is held to 0.85 of HBM to leave room for the step program."
+  "vLLM-TPU per-step host work",
+  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
  ],
  "mi300x-x1|deepseek-v4.1-flash|batching": [
   "plausible",
@@ -611,13 +611,13 @@ Pie.gapNotes = {
  ],
  "tpu-v5e-1|gpt-oss-20b|batching": [
   "plausible",
-  "vLLM-TPU seats fewer requests",
-  "vLLM-TPU seats fewer of the offered requests (TTFT p50 64-68 s vs 0.7-0.8 s, per-request decode faster): its KV pool is held to 0.85 of HBM to leave room for the step program."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v5e-1|gpt-oss-120b|batching": [
   "plausible",
-  "vLLM-TPU seats fewer requests",
-  "vLLM-TPU seats fewer of the offered requests (TTFT p50 64-68 s vs 0.7-0.8 s, per-request decode faster): its KV pool is held to 0.85 of HBM to leave room for the step program."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi300x-x1|deepseek-v4.1-flash|decode": [
   "plausible",
@@ -625,9 +625,9 @@ Pie.gapNotes = {
   "ROCm has no FlashMLA or DeepGEMM, so vLLM runs DeepSeek-V4's sparse MLA and indexer logits through its Triton fallbacks; decode trails pie 2x."
  ],
  "tpu-v5e-1|glm-5.3|batching": [
-  "rerun",
-  "sglang-jax GLM prefill slow, unknown",
-  "sglang-jax 0.1.0rc0 takes 97-228 ms for the 555-token prompt vs pie's 21-50 ms. Its GLM-5 path runs with DSA off by default, which does not matter at this length; cause not found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m5-max-128g|qwen3.6-27b|batching": [
   "plausible",
@@ -636,13 +636,13 @@ Pie.gapNotes = {
  ],
  "m4-pro-48g|nvidia-nemotron-3-ultra-550b-a55b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "web-rtx4090|gemma-4-e2b|decode": [
-  "rerun",
-  "WebLLM's Gemma-4 E2B build is slow",
-  "WebLLM's prebuilt Gemma-4 E2B library is slower than its own Qwen3.5-9B build (TTFT 1.1-1.2 s vs 0.6-0.8 s, decode 39 tok/s). No harness setting explains it; needs a profile."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro4500-x1|qwen3.5-0.8b|prefill": [
   "plausible",
@@ -651,8 +651,8 @@ Pie.gapNotes = {
  ],
  "m5-max-128g|qwen3.6-35b-a3b|pbatch": [
   "plausible",
-  "llama.cpp Q4_K Metal kernels slower",
-  "Mostly MoE and 27B slices on 16 GB Macs, where llama.cpp's Metal Q4_K kernels run 1.3-2.2x slower than pie's; TTFT and decode trail by similar factors."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m3-16g|qwen3.5-9b|pbatch": [
   "rerun",
@@ -730,9 +730,9 @@ Pie.gapNotes = {
   "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "web-rtx5090|gemma-4-26b-a4b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "b200-x1|mimo-v2.6-flash-rl|pbatch": [
   "plausible",
@@ -751,8 +751,8 @@ Pie.gapNotes = {
  ],
  "h200-x1|deepseek-v4.1-flash|prefill": [
   "plausible",
-  "vLLM runs without decoder CUDA graphs",
-  "On Hopper the harness's vLLM runs DeepSeek-V4.1 without its decoder-replay CUDA graphs and caps V4 graphs at 128 tokens, and the 555-token single prefill is not graphed."
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "pro6000-x1|qwen3.5-0.8b|prefill": [
   "plausible",
@@ -770,9 +770,9 @@ Pie.gapNotes = {
   "llama.cpp's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "web-rtx5090|gemma-4-e2b|decode": [
-  "rerun",
-  "WebLLM's Gemma-4 E2B build is slow",
-  "WebLLM's prebuilt Gemma-4 E2B library is slower than its own Qwen3.5-9B build (TTFT 1.1-1.2 s vs 0.6-0.8 s, decode 39 tok/s). No harness setting explains it; needs a profile."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "web-rtx5090|gemma-4-31b|prefill": [
   "rerun",
@@ -785,9 +785,9 @@ Pie.gapNotes = {
   "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
  ],
  "web-rtx5090|gpt-oss-120b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "h200-x1|qwen3.8-flash-next|prefill": [
   "plausible",
@@ -805,9 +805,9 @@ Pie.gapNotes = {
   "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
  ],
  "web-rtx5090|muse-glimmer-30b|prefill": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx5090|gpt-oss-20b|prefill": [
   "rerun",
@@ -816,8 +816,8 @@ Pie.gapNotes = {
  ],
  "m3-16g|qwen3.8-27b|decode": [
   "plausible",
-  "llama.cpp Q4_K Metal kernels slower",
-  "Mostly MoE and 27B slices on 16 GB Macs, where llama.cpp's Metal Q4_K kernels run 1.3-2.2x slower than pie's; TTFT and decode trail by similar factors."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m3-16g|qwen3.6-35b-a3b|batching": [
   "rerun",
@@ -881,13 +881,13 @@ Pie.gapNotes = {
  ],
  "m2-16g|qwen3.8-27b|pbatch": [
   "plausible",
-  "llama.cpp Q4_K Metal kernels slower",
-  "Mostly MoE and 27B slices on 16 GB Macs, where llama.cpp's Metal Q4_K kernels run 1.3-2.2x slower than pie's; TTFT and decode trail by similar factors."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi300x-x1|deepseek-v4-flash|prefill": [
   "plausible",
-  "vLLM ROCm: Triton sparse MLA",
-  "ROCm has no FlashMLA or DeepGEMM, so vLLM runs DeepSeek-V4's sparse MLA and indexer logits through its Triton fallbacks; decode trails pie 2x."
+  "Rivals add per-request overhead",
+  "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "a40-x1|glm-5.3-flash|decode": [
   "rerun",
@@ -895,14 +895,14 @@ Pie.gapNotes = {
   "vLLM's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "web-rtx5090|qwen3.6-27b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx5090|gemma-4-31b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "b200-x1|mimo-v2.6-flash-rl|decode": [
   "plausible",
@@ -910,14 +910,14 @@ Pie.gapNotes = {
   "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
  ],
  "web-rtx5090|qwen3.5-9b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "web-rtx5090|qwen3.8-27b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "m5-max-128g|qwen3.6-35b-a3b|batching": [
   "plausible",
@@ -925,9 +925,9 @@ Pie.gapNotes = {
   "llama-server batches the 32 slots, but its Metal Q4_K decode scales poorly with batch: per-request decode is 2-24 tok/s vs pie's 10-68 on the same Macs."
  ],
  "web-rtx5090|gpt-oss-20b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "l40s-x1|qwen3.5-0.8b|prefill": [
   "plausible",
@@ -940,14 +940,14 @@ Pie.gapNotes = {
   "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
  ],
  "rtx5090-x1|deepseek-v4.1-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "m2-16g|nvidia-nemotron-3-ultra-550b-a55b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "b200-x1|glm-5.3-flash|prefill": [
   "plausible",
@@ -956,13 +956,13 @@ Pie.gapNotes = {
  ],
  "mi300x-x1|deepseek-v4.1-flash|prefill": [
   "plausible",
-  "vLLM ROCm: Triton sparse MLA",
-  "ROCm has no FlashMLA or DeepGEMM, so vLLM runs DeepSeek-V4's sparse MLA and indexer logits through its Triton fallbacks; decode trails pie 2x."
+  "Rivals add per-request overhead",
+  "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "web-rtx5090|muse-glimmer-30b|pbatch": [
-  "plausible",
-  "llama.cpp WebGPU lacks fused kernels",
-  "llama.cpp's WebGPU backend lacks the fused, tuned kernels its CUDA and Metal backends have, so the same Q4_K_M GGUF runs 1.3-4x slower in the tab than pie's WebGPU runtime."
+  "rerun",
+  "Harness bug: llama.cpp ran single-threaded",
+  "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "b200-x1|deepseek-v4-flash|decode": [
   "plausible",
@@ -1021,13 +1021,13 @@ Pie.gapNotes = {
  ],
  "m3-16g|qwen3.6-35b-a3b|decode": [
   "plausible",
-  "llama.cpp Q4_K Metal kernels slower",
-  "Mostly MoE and 27B slices on 16 GB Macs, where llama.cpp's Metal Q4_K kernels run 1.3-2.2x slower than pie's; TTFT and decode trail by similar factors."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v5p-8|qwen3.5-0.8b|decode": [
-  "rerun",
-  "Stale v5p rows from Oct 21",
-  "These v5p-8 rows date from Oct 21 (pie bea673037, vLLM-TPU 0.30.0). On v5e and v6e today pie leads vLLM-TPU in prefill by 30-80%, so rerun on v5p."
+  "plausible",
+  "vLLM-TPU per-step host work",
+  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
  ],
  "mi350x-x1|qwen3.5-9b|prefill": [
   "plausible",
@@ -1040,9 +1040,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "tpu-v5e-1|glm-5.3|decode": [
-  "rerun",
-  "sglang-jax GLM prefill slow, unknown",
-  "sglang-jax 0.1.0rc0 takes 97-228 ms for the 555-token prompt vs pie's 21-50 ms. Its GLM-5 path runs with DSA off by default, which does not matter at this length; cause not found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h200-x1|qwen3-0.6b|prefill": [
   "plausible",
@@ -1060,9 +1060,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
  ],
  "l40s-x1|deepseek-v4-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "web-rtx4090|qwen3.5-9b|decode": [
   "plausible",
@@ -1131,18 +1131,18 @@ Pie.gapNotes = {
  ],
  "mi300x-x1|minimax-m3.1-flash|decode": [
   "plausible",
-  "Rivals on generic ROCm Triton paths",
-  "On ROCm the rivals serve these MoE, MLA and sparse-attention slices through generic Triton paths (vLLM 0.32.0 on MI300X, SGLang 0.5.22), and seat fewer requests at once."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "web-rtx4090|qwen3.5-9b|prefill": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v5e-1|gpt-oss-20b|prefill": [
-  "plausible",
-  "vLLM-TPU seats fewer requests",
-  "vLLM-TPU seats fewer of the offered requests (TTFT p50 64-68 s vs 0.7-0.8 s, per-request decode faster): its KV pool is held to 0.85 of HBM to leave room for the step program."
+  "explained",
+  "vLLM-TPU pads 555 to 1024 tokens",
+  "vLLM-TPU pads each step to a power-of-two token bucket, so the 555-token prompt runs as 1024 tokens, about 1.8x the work; TTFT trails pie's by 30-80%."
  ],
  "h100-sxm-x1|qwen3.8-flash-next|prefill": [
   "plausible",
@@ -1155,14 +1155,14 @@ Pie.gapNotes = {
   "Few cells: TRT-LLM's single-request TTFT runs 5-40 ms above pie's (PyTorch-backend host path), most on the Nemotron-3 hybrid Mamba slices."
  ],
  "pro4500-x1|deepseek-v4.1-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "m3-16g|qwen3.6-35b-a3b|pbatch": [
   "plausible",
-  "llama.cpp Q4_K Metal kernels slower",
-  "Mostly MoE and 27B slices on 16 GB Macs, where llama.cpp's Metal Q4_K kernels run 1.3-2.2x slower than pie's; TTFT and decode trail by similar factors."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "web-rtx5090|muse-glimmer-30b|batching": [
   "plausible",
@@ -1180,9 +1180,9 @@ Pie.gapNotes = {
   "llama-server batches the 32 slots, but its Metal Q4_K decode scales poorly with batch: per-request decode is 2-24 tok/s vs pie's 10-68 on the same Macs."
  ],
  "tpu-v5e-1|gpt-oss-120b|prefill": [
-  "plausible",
-  "vLLM-TPU seats fewer requests",
-  "vLLM-TPU seats fewer of the offered requests (TTFT p50 64-68 s vs 0.7-0.8 s, per-request decode faster): its KV pool is held to 0.85 of HBM to leave room for the step program."
+  "explained",
+  "vLLM-TPU pads 555 to 1024 tokens",
+  "vLLM-TPU pads each step to a power-of-two token bucket, so the 555-token prompt runs as 1024 tokens, about 1.8x the work; TTFT trails pie's by 30-80%."
  ],
  "b200-x1|muse-spark-open-816b-a42b|batching": [
   "rerun",
@@ -1196,8 +1196,8 @@ Pie.gapNotes = {
  ],
  "rtx5090-x1|glm-5.3-flash|pbatch": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx4090-x1|glm-5.3|batching": [
   "explained",
@@ -1215,9 +1215,9 @@ Pie.gapNotes = {
   "Below sm_90 and on sm_120 the harness's SGLang runs GLM-5.3's DSA sparse MLA, indexer logits and top-k through Triton, TileLang and torch fallbacks instead of FlashMLA and DeepGEMM."
  ],
  "tpu-v6e-1|deepseek-v4-flash|prefill": [
-  "plausible",
-  "vLLM-TPU experimental V4 kernels",
-  "vLLM-TPU serves DeepSeek-V4 through tpu-inference's experimental kernels and a 0.75 HBM share on v6e; decode runs 78 vs pie's 387 tok/s."
+  "explained",
+  "vLLM-TPU pads 555 to 1024 tokens",
+  "vLLM-TPU pads each step to a power-of-two token bucket, so the 555-token prompt runs as 1024 tokens, about 1.8x the work; TTFT trails pie's by 30-80%."
  ],
  "web-rtx5090|gemma-4-31b|batching": [
   "plausible",
@@ -1245,9 +1245,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "tpu-v6e-1|glm-5.3|pbatch": [
-  "rerun",
-  "sglang-jax GLM prefill slow, unknown",
-  "sglang-jax 0.1.0rc0 takes 97-228 ms for the 555-token prompt vs pie's 21-50 ms. Its GLM-5 path runs with DSA off by default, which does not matter at this length; cause not found."
+  "plausible",
+  "sglang-jax: early TPU port",
+  "sglang-jax is an early TPU port (0.1.0rc0, or main for Gated DeltaNet models) and pays more per request; its TTFT runs 6x pie's on this cell."
  ],
  "a100-sxm-x1|glm-5.3|pbatch": [
   "explained",
@@ -1305,9 +1305,9 @@ Pie.gapNotes = {
   "The gap scales with prompt compute (E2B on M5 Max 26 vs 34 ms, 12B on M2 4.9 vs 6.7 s): pie's 4-bit Metal matmuls run nearer the compute bound (median 47%) than mlx-lm's quantized matmul."
  ],
  "l40s-x1|deepseek-v4.1-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "b200-x1|nvidia-nemotron-3-ultra-550b-a55b|prefill": [
   "plausible",
@@ -1335,14 +1335,14 @@ Pie.gapNotes = {
   "mlx-lm's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "a40-x1|deepseek-v4-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "a100-sxm-x1|deepseek-v4.1-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "b200-x1|muse-glimmer-30b|prefill": [
   "plausible",
@@ -1351,13 +1351,13 @@ Pie.gapNotes = {
  ],
  "m5-max-128g|muse-glimmer-30b|prefill": [
   "plausible",
-  "llama.cpp Q4_K Metal kernels slower",
-  "Mostly MoE and 27B slices on 16 GB Macs, where llama.cpp's Metal Q4_K kernels run 1.3-2.2x slower than pie's; TTFT and decode trail by similar factors."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi300x-x1|kimi-k3|decode": [
   "plausible",
-  "Rivals on generic ROCm Triton paths",
-  "On ROCm the rivals serve these MoE, MLA and sparse-attention slices through generic Triton paths (vLLM 0.32.0 on MI300X, SGLang 0.5.22), and seat fewer requests at once."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx4090-x1|glm-5.3|pbatch": [
   "explained",
@@ -1385,19 +1385,19 @@ Pie.gapNotes = {
   "pie's ROCm Mamba-2 prefill walks the prompt token by token (CUDA uses 16-token chunks), so Nemotron-3 prefill is 2-6x slower than vLLM or SGLang on AMD."
  ],
  "pro4500-x1|deepseek-v4-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "tpu-v6e-1|glm-5.3|batching": [
-  "rerun",
-  "sglang-jax GLM prefill slow, unknown",
-  "sglang-jax 0.1.0rc0 takes 97-228 ms for the 555-token prompt vs pie's 21-50 ms. Its GLM-5 path runs with DSA off by default, which does not matter at this length; cause not found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "b200-x1|glm-5.3-flash|pbatch": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi355x-x1|gpt-oss-120b|pbatch": [
   "real",
@@ -1410,9 +1410,9 @@ Pie.gapNotes = {
   "pie's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "rtx4090-x1|deepseek-v4-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "h100-sxm-x4|gpt-oss-120b|prefill": [
   "real",
@@ -1436,13 +1436,13 @@ Pie.gapNotes = {
  ],
  "m3-16g|qwen3.6-27b|prefill": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx4090-x1|deepseek-v4.1-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "web-rtx4090|gemma-4-26b-a4b|decode": [
   "plausible",
@@ -1456,8 +1456,8 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|qwen3.6-27b|prefill": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v5e-1|gemma-4-26b-a4b|decode": [
   "plausible",
@@ -1471,8 +1471,8 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|qwen3.8-27b|prefill": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m3-16g|qwen3.5-4b|pbatch": [
   "rerun",
@@ -1501,8 +1501,8 @@ Pie.gapNotes = {
  ],
  "b200-x1|qwen3-0.6b|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a40-x1|glm-5.3|batching": [
   "explained",
@@ -1525,9 +1525,9 @@ Pie.gapNotes = {
   "Below sm_90 and on sm_120 the harness's SGLang runs GLM-5.3's DSA sparse MLA, indexer logits and top-k through Triton, TileLang and torch fallbacks instead of FlashMLA and DeepGEMM."
  ],
  "pro6000-x1|deepseek-v4.1-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "mi300x-x1|nvidia-nemotron-3-ultra-550b-a55b|prefill": [
   "real",
@@ -1546,8 +1546,8 @@ Pie.gapNotes = {
  ],
  "mi300x-x1|muse-spark-open-816b-a42b|decode": [
   "plausible",
-  "Rivals on generic ROCm Triton paths",
-  "On ROCm the rivals serve these MoE, MLA and sparse-attention slices through generic Triton paths (vLLM 0.32.0 on MI300X, SGLang 0.5.22), and seat fewer requests at once."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m4-pro-48g|qwen3.6-27b|batching": [
   "plausible",
@@ -1580,9 +1580,9 @@ Pie.gapNotes = {
   "Below sm_90 and on sm_120 the harness's SGLang runs GLM-5.3's DSA sparse MLA, indexer logits and top-k through Triton, TileLang and torch fallbacks instead of FlashMLA and DeepGEMM."
  ],
  "a100-sxm-x1|deepseek-v4-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "pro4500-x1|muse-spark-open-816b-a42b|prefill": [
   "explained",
@@ -1596,8 +1596,8 @@ Pie.gapNotes = {
  ],
  "m5-max-64g|gemma-4-26b-a4b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx4090-x1|qwen3-0.6b|prefill": [
   "plausible",
@@ -1626,8 +1626,8 @@ Pie.gapNotes = {
  ],
  "b200-x1|qwen3.8-flash-next|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v5e-1|gemma-4-e4b|prefill": [
   "explained",
@@ -1636,8 +1636,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|qwen3.5-9b|prefill": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "b200-x1|hy4-preview|prefill": [
   "plausible",
@@ -1651,8 +1651,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|qwen3.6-27b|decode": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|kimi-k3|prefill": [
   "plausible",
@@ -1686,8 +1686,8 @@ Pie.gapNotes = {
  ],
  "b200-x1|qwen3.5-0.8b|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "b200-x1|qwen3-0.6b|decode": [
   "plausible",
@@ -1721,8 +1721,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|qwen3.5-4b|prefill": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|mimo-v2.6-flash-rl|batching": [
   "rerun",
@@ -1751,8 +1751,8 @@ Pie.gapNotes = {
  ],
  "h100-sxm-x1|deepseek-v4.1-flash|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro6000-x1|gemma-4-e4b|prefill": [
   "plausible",
@@ -1835,9 +1835,9 @@ Pie.gapNotes = {
   "SGLang's AITER MLA decode on MI350X/MI355X beats pie's ROCm decode for these MLA slices (537-750 vs 279-467 tok/s)."
  ],
  "h100-sxm-x1|gemma-4-31b|batching": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v6e-1|qwen3.6-35b-a3b|prefill": [
   "explained",
@@ -1861,8 +1861,8 @@ Pie.gapNotes = {
  ],
  "rtx5090-x1|qwen3.8-flash-next|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m2-16g|gemma-4-e2b|pbatch": [
   "rerun",
@@ -1896,18 +1896,18 @@ Pie.gapNotes = {
  ],
  "h200-x1|deepseek-v4.1-flash|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "web-rtx5090|qwen3.5-9b|decode": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro4500-x1|qwen3.8-27b|batching": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi355x-x1|qwen3.8-flash-next|pbatch": [
   "rerun",
@@ -1916,8 +1916,8 @@ Pie.gapNotes = {
  ],
  "h100-sxm-x1|deepseek-v4-flash|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m2-16g|qwen3.6-27b|prefill": [
   "rerun",
@@ -1931,18 +1931,18 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|qwen3.5-4b|decode": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "l4-x1|deepseek-v4-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "h200-x1|deepseek-v4.1-flash|decode": [
   "plausible",
-  "vLLM runs without decoder CUDA graphs",
-  "On Hopper the harness's vLLM runs DeepSeek-V4.1 without its decoder-replay CUDA graphs and caps V4 graphs at 128 tokens, and the 555-token single prefill is not graphed."
+  "vLLM per-step host work at batch 1",
+  "Batch-1 decode at 15-30% of the bandwidth bound: the gap is per-step host work (AsyncLLM's engine-core IPC, scheduling, sampling, streaming) rather than kernel speed."
  ],
  "m3-16g|gemma-4-12b|pbatch": [
   "rerun",
@@ -1951,8 +1951,8 @@ Pie.gapNotes = {
  ],
  "m2-16g|gemma-4-e2b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro4500-x1|muse-spark-open-816b-a42b|batching": [
   "explained",
@@ -1961,8 +1961,8 @@ Pie.gapNotes = {
  ],
  "b200-x1|mimo-v2.6-flash-rl|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|glm-5.3-flash|batching": [
   "explained",
@@ -1970,24 +1970,24 @@ Pie.gapNotes = {
   "On sm_8x vLLM 0.32 serves GLM-5.3's sparse MLA with XPU_MLA_SPARSE, a portable backend with no full CUDA graph support: the A100 runs the whole model eager, the A40 piecewise."
  ],
  "a40-x1|deepseek-v4.1-flash|prefill": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "vLLM prefill runs ungraphed",
+  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "pro4500-x1|glm-5.3-flash|pbatch": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|mimo-v2.6-flash-rl|pbatch": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx4090-x1|deepseek-v4-flash|pbatch": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "b200-x1|qwen3.8-flash-next|pbatch": [
   "plausible",
@@ -1995,19 +1995,19 @@ Pie.gapNotes = {
   "SGLang reads the 256 cold prompts 25-120% slower than pie (TTFT p50 2.5-3.5x pie's) on these Blackwell and Ada cells; no hobbling setting found, so this reads as kernel and scheduling speed."
  ],
  "l40s-x1|deepseek-v4-flash|pbatch": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx4090-x1|deepseek-v4.1-flash|pbatch": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h200-x1|mimo-v2.6-flash-rl|pbatch": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi355x-x1|gpt-oss-120b|prefill": [
   "real",
@@ -2016,8 +2016,8 @@ Pie.gapNotes = {
  ],
  "h200-x1|qwen3.5-0.8b|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|hy4-preview|prefill": [
   "plausible",
@@ -2050,9 +2050,9 @@ Pie.gapNotes = {
   "llama.cpp WebGPU's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "rtx4090-x1|qwen3.5-9b|batching": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m3-16g|gemma-4-e4b|pbatch": [
   "rerun",
@@ -2070,9 +2070,9 @@ Pie.gapNotes = {
   "pie's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "tpu-v5p-8|qwen3-0.6b|decode": [
-  "rerun",
-  "Stale v5p rows from Oct 21",
-  "These v5p-8 rows date from Oct 21 (pie bea673037, vLLM-TPU 0.30.0). On v5e and v6e today pie leads vLLM-TPU in prefill by 30-80%, so rerun on v5p."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-pcie-x1|qwen3-0.6b|prefill": [
   "plausible",
@@ -2086,8 +2086,8 @@ Pie.gapNotes = {
  ],
  "b200-x1|muse-spark-open-816b-a42b|pbatch": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi355x-x1|gpt-oss-20b|prefill": [
   "real",
@@ -2106,13 +2106,13 @@ Pie.gapNotes = {
  ],
  "h100-sxm-x1|muse-spark-open-816b-a42b|batching": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m3-16g|nvidia-nemotron-3-ultra-550b-a55b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi350x-x1|gpt-oss-20b|prefill": [
   "real",
@@ -2121,8 +2121,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|qwen3.8-27b|decode": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a40-x1|minimax-m3.1-flash|batching": [
   "plausible",
@@ -2180,24 +2180,24 @@ Pie.gapNotes = {
   "On Hopper vLLM's FlashMLA sparse and DeepGEMM FP8 path prefills a 256-prompt batch of DeepSeek-V4.1 30-40% faster than pie."
  ],
  "a40-x1|deepseek-v4.1-flash|pbatch": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|qwen3.8-flash-next|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|deepseek-v4.1-flash|pbatch": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|qwen3.5-0.8b|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro6000-x4|qwen3.5-0.8b|decode": [
   "plausible",
@@ -2206,8 +2206,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|qwen3.8-27b|prefill": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-pcie-x1|gpt-oss-120b|prefill": [
   "real",
@@ -2220,9 +2220,9 @@ Pie.gapNotes = {
   "SGLang reads the 256 cold prompts 25-120% slower than pie (TTFT p50 2.5-3.5x pie's) on these Blackwell and Ada cells; no hobbling setting found, so this reads as kernel and scheduling speed."
  ],
  "h100-sxm-x1|kimi-k3|pbatch": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro4500-x1|mimo-v2.6-flash-rl|prefill": [
   "plausible",
@@ -2235,9 +2235,9 @@ Pie.gapNotes = {
   "SGLang's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "l4-x1|deepseek-v4-flash|pbatch": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a40-x1|muse-spark-open-816b-a42b|prefill": [
   "plausible",
@@ -2261,8 +2261,8 @@ Pie.gapNotes = {
  ],
  "m3-16g|muse-glimmer-30b|decode": [
   "plausible",
-  "llama.cpp Q4_K Metal kernels slower",
-  "Mostly MoE and 27B slices on 16 GB Macs, where llama.cpp's Metal Q4_K kernels run 1.3-2.2x slower than pie's; TTFT and decode trail by similar factors."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro6000-x1|glm-5.3-flash|prefill": [
   "plausible",
@@ -2276,13 +2276,13 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|qwen3.6-27b|prefill": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h200-x1|kimi-k3|pbatch": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "l4-x1|mimo-v2.6-flash-rl|prefill": [
   "plausible",
@@ -2301,8 +2301,8 @@ Pie.gapNotes = {
  ],
  "pro4500-x1|nvidia-nemotron-3-ultra-550b-a55b|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "b200-x1|glm-5.3|pbatch": [
   "rerun",
@@ -2341,8 +2341,8 @@ Pie.gapNotes = {
  ],
  "l4-x1|mimo-v2.6-flash-rl|pbatch": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx4090-x1|muse-spark-open-816b-a42b|prefill": [
   "plausible",
@@ -2351,8 +2351,8 @@ Pie.gapNotes = {
  ],
  "mi300x-x1|qwen3.8-flash-next|decode": [
   "plausible",
-  "Rivals on generic ROCm Triton paths",
-  "On ROCm the rivals serve these MoE, MLA and sparse-attention slices through generic Triton paths (vLLM 0.32.0 on MI300X, SGLang 0.5.22), and seat fewer requests at once."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|gemma-4-26b-a4b|prefill": [
   "plausible",
@@ -2365,9 +2365,9 @@ Pie.gapNotes = {
   "TensorRT-LLM 1.4's fused MXFP4 MoE kernels beat pie's W4A16 experts at batch on Blackwell RTX/PRO and H100 (25-37% faster)."
  ],
  "pro6000-x1|kimi-k3|pbatch": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx5090-x1|glm-5.3-flash|prefill": [
   "plausible",
@@ -2385,9 +2385,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "a40-x1|deepseek-v4-flash|pbatch": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi355x-x1|qwen3.6-35b-a3b|batching": [
   "real",
@@ -2400,9 +2400,9 @@ Pie.gapNotes = {
   "pie's row is from Oct 27 with a 1.64 s TTFT against TRT-LLM's 0.23 s; it predates later pie batched-prefill work and should be rerun."
  ],
  "a40-x1|gpt-oss-120b|batching": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v6e-1|gemma-4-e2b|prefill": [
   "explained",
@@ -2446,8 +2446,8 @@ Pie.gapNotes = {
  ],
  "a100-sxm-x1|qwen3.5-0.8b|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h200-x1|gpt-oss-120b|decode": [
   "plausible",
@@ -2455,14 +2455,14 @@ Pie.gapNotes = {
   "Batch-1 decode at 15-30% of the bandwidth bound: the gap is per-step host work (AsyncLLM's engine-core IPC, scheduling, sampling, streaming) rather than kernel speed."
  ],
  "pro6000-x1|qwen3.8-flash-next|pbatch": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h200-x1|deepseek-v4-flash|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-x2|gpt-oss-120b|prefill": [
   "real",
@@ -2516,13 +2516,13 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|qwen3.8-27b|decode": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m5-max-64g|muse-glimmer-30b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|glm-5.3-flash|prefill": [
   "explained",
@@ -2560,9 +2560,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "b200-x1|minimax-m3.1-flash|decode": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|qwen3-0.6b|prefill": [
   "plausible",
@@ -2586,8 +2586,8 @@ Pie.gapNotes = {
  ],
  "l40s-x1|muse-spark-open-816b-a42b|batching": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|deepseek-v4.1-flash|pbatch": [
   "real",
@@ -2601,8 +2601,8 @@ Pie.gapNotes = {
  ],
  "a40-x1|qwen3.5-0.8b|batching": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi300x-x1|hy4-preview|pbatch": [
   "plausible",
@@ -2621,13 +2621,13 @@ Pie.gapNotes = {
  ],
  "rtx4090-x1|hy4-preview|batching": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|deepseek-v4-flash|pbatch": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v5e-1|gemma-4-e2b|prefill": [
   "explained",
@@ -2636,13 +2636,13 @@ Pie.gapNotes = {
  ],
  "l40s-x1|qwen3.6-35b-a3b|batching": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro6000-x1|glm-5.3-flash|pbatch": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro4500-x1|qwen3.6-27b|prefill": [
   "plausible",
@@ -2655,14 +2655,14 @@ Pie.gapNotes = {
   "The gap scales with prompt compute (E2B on M5 Max 26 vs 34 ms, 12B on M2 4.9 vs 6.7 s): pie's 4-bit Metal matmuls run nearer the compute bound (median 47%) than mlx-lm's quantized matmul."
  ],
  "l40s-x1|deepseek-v4.1-flash|pbatch": [
-  "explained",
-  "vLLM: no FlashMLA/DeepGEMM below sm_90",
-  "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h200-x4|qwen3.8-flash-next|decode": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi350x-x1|gemma-4-26b-a4b|prefill": [
   "plausible",
@@ -2681,8 +2681,8 @@ Pie.gapNotes = {
  ],
  "m5-max-64g|gemma-4-31b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro6000-x1|gpt-oss-120b|batching": [
   "real",
@@ -2701,8 +2701,8 @@ Pie.gapNotes = {
  ],
  "l40s-x1|gpt-oss-120b|pbatch": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "web-rtx4090|gpt-oss-20b|decode": [
   "plausible",
@@ -2711,13 +2711,13 @@ Pie.gapNotes = {
  ],
  "h200-x1|qwen3.5-0.8b|decode": [
   "plausible",
-  "TRT-LLM host path at one request",
-  "Few cells: TRT-LLM's single-request TTFT runs 5-40 ms above pie's (PyTorch-backend host path), most on the Nemotron-3 hybrid Mamba slices."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m5-max-64g|qwen3.8-27b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m5-max-128g|gpt-oss-20b|pbatch": [
   "rerun",
@@ -2731,8 +2731,8 @@ Pie.gapNotes = {
  ],
  "m5-max-64g|qwen3.6-27b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a40-x1|glm-5.3-flash|pbatch": [
   "explained",
@@ -2790,9 +2790,9 @@ Pie.gapNotes = {
   "TensorRT-LLM 1.4's fused MXFP4 MoE kernels beat pie's W4A16 experts at batch on Blackwell RTX/PRO and H100 (25-37% faster)."
  ],
  "h100-pcie-x1|gpt-oss-20b|pbatch": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m2-16g|muse-glimmer-30b|prefill": [
   "rerun",
@@ -2811,8 +2811,8 @@ Pie.gapNotes = {
  ],
  "m5-max-64g|qwen3.5-9b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|gpt-oss-120b|batching": [
   "real",
@@ -2820,9 +2820,9 @@ Pie.gapNotes = {
   "TensorRT-LLM 1.4's fused MXFP4 MoE kernels beat pie's W4A16 experts at batch on Blackwell RTX/PRO and H100 (25-37% faster)."
  ],
  "b200-x1|gpt-oss-120b|batching": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi355x-x1|qwen3.5-0.8b|batching": [
   "real",
@@ -2846,8 +2846,8 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|qwen3.6-27b|decode": [
   "plausible",
-  "WebLLM TVM kernels trail pie's",
-  "WebLLM 0.2.87's TVM-compiled WebGPU kernels for these q4f16 builds trail pie's hand-written WebGPU kernels by 1.3-2x in TTFT and decode; the harness runs both with the same prompts and no cache."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "m2-16g|qwen3.8-flash-next|pbatch": [
   "rerun",
@@ -2856,13 +2856,13 @@ Pie.gapNotes = {
  ],
  "a40-x1|hy4-preview|batching": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h200-x1|muse-spark-open-816b-a42b|batching": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi350x-x1|mimo-v2.6-flash-rl|decode": [
   "real",
@@ -2876,8 +2876,8 @@ Pie.gapNotes = {
  ],
  "pro4500-x1|qwen3.6-27b|batching": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi300x-x1|qwen3.5-0.8b|batching": [
   "plausible",
@@ -2956,13 +2956,13 @@ Pie.gapNotes = {
  ],
  "tpu-v5e-1|gpt-oss-20b|pbatch": [
   "plausible",
-  "vLLM-TPU seats fewer requests",
-  "vLLM-TPU seats fewer of the offered requests (TTFT p50 64-68 s vs 0.7-0.8 s, per-request decode faster): its KV pool is held to 0.85 of HBM to leave room for the step program."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|gemma-4-31b|batching": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx5090-x1|gpt-oss-20b|batching": [
   "real",
@@ -2971,8 +2971,8 @@ Pie.gapNotes = {
  ],
  "m5-max-64g|gemma-4-12b|batching": [
   "plausible",
-  "vllm-metal runs a CPU-build scheduler",
-  "vllm-metal 0.33.0 runs MLX models under vLLM's CPU-build scheduler (vllm 0.33.0+cpu); its per-request decode at c32 is 1.5-3x below pie's and its prefill trails similarly."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro6000-x1|mimo-v2.6-flash-rl|prefill": [
   "plausible",
@@ -3006,8 +3006,8 @@ Pie.gapNotes = {
  ],
  "tpu-v6e-1|qwen3.6-35b-a3b|decode": [
   "plausible",
-  "sglang-jax: early TPU port",
-  "sglang-jax is an early TPU port (0.1.0rc0, or main for Gated DeltaNet models) and pays more per request; its TTFT runs 6x pie's on this cell."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro6000-x1|gemma-4-26b-a4b|prefill": [
   "plausible",
@@ -3015,9 +3015,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "tpu-v5p-8|gemma-4-12b|decode": [
-  "rerun",
-  "Stale v5p rows from Oct 21",
-  "These v5p-8 rows date from Oct 21 (pie bea673037, vLLM-TPU 0.30.0). On v5e and v6e today pie leads vLLM-TPU in prefill by 30-80%, so rerun on v5p."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "mi300x-x1|qwen3.8-flash-next|pbatch": [
   "plausible",
@@ -3036,8 +3036,8 @@ Pie.gapNotes = {
  ],
  "tpu-v5e-1|gpt-oss-120b|pbatch": [
   "plausible",
-  "vLLM-TPU seats fewer requests",
-  "vLLM-TPU seats fewer of the offered requests (TTFT p50 64-68 s vs 0.7-0.8 s, per-request decode faster): its KV pool is held to 0.85 of HBM to leave room for the step program."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v5e-1|gemma-4-e2b|pbatch": [
   "real",
@@ -3056,8 +3056,8 @@ Pie.gapNotes = {
  ],
  "l40s-x1|hy4-preview|pbatch": [
   "plausible",
-  "vLLM seats fewer requests",
-  "vLLM seats fewer requests at once (TTFT p50 10-50x pie's) and its per-request decode trails, mostly on MLA, sparse-attention and MoE slices served through generic kernels."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "web-rtx5090|muse-glimmer-30b|decode": [
   "plausible",
@@ -3076,8 +3076,8 @@ Pie.gapNotes = {
  ],
  "a100-sxm-x1|qwen3.8-flash-next|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "tpu-v6e-1|gemma-4-31b|pbatch": [
   "real",
@@ -3096,8 +3096,8 @@ Pie.gapNotes = {
  ],
  "a40-x1|muse-spark-open-816b-a42b|batching": [
   "plausible",
-  "SGLang seats requests later",
-  "SGLang seats requests later (TTFT p50 2-44 s vs pie's 0.1-1.6 s) and its per-request decode trails by 10-40%, so its batch throughput lands 25-80% lower."
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h200-x4|glm-5.3-flash|prefill": [
   "real",
@@ -3110,9 +3110,9 @@ Pie.gapNotes = {
   "On sm_8x vLLM 0.32 serves GLM-5.3's sparse MLA with XPU_MLA_SPARSE, a portable backend with no full CUDA graph support: the A100 runs the whole model eager, the A40 piecewise."
  ],
  "rtx4090-x1|gemma-4-31b|batching": [
-  "real",
-  "vLLM faster here",
-  "vLLM beats pie here: dense Gemma-4-31B and Qwen3.5-9B batched decode, gpt-oss, MiniMax decode on B200, Kimi/MiMo/Qwen3.8 batched prefill on Hopper and PRO 6000. No harness issue found."
+  "plausible",
+  "Not traced yet",
+  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "l40s-x1|minimax-m3.1-flash|pbatch": [
   "plausible",
