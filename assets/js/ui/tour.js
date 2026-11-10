@@ -6,7 +6,6 @@ window.Pie = window.Pie || {};
   const KEY = "pieTourSeen";
   const seen = () => { try { return localStorage.getItem(KEY) === "1"; } catch { return true; } };
   const remember = () => { try { localStorage.setItem(KEY, "1"); } catch { /* private windows can refuse storage */ } };
-  const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const nav = (id) => document.querySelector(`.sidebar-item[data-table="${id}"]`);
   const go = async (id) => { if (Pie.state?.table !== id) { nav(id)?.click(); await sleep(400); } };
@@ -24,20 +23,21 @@ window.Pie = window.Pie || {};
     { target: () => find('.sidebar-item[data-table="speedups"]'), title: "Performance",
       text: "Pie vs. the fastest other engine on identical hardware, model and workload." },
     { target: () => find('.sidebar-item[data-table="checks"]'), title: "Quality",
-      text: "Pie's outputs checked against a reference engine." },
+      text: "KL divergence and task scores verified against a reference engine." },
     { target: async () => {
         await go("speedups");
         if (Pie.platform?.setCompare) { Pie.platform.setCompare("engines"); document.dispatchEvent(new CustomEvent("pie:refresh")); }
         return find(".platform-table td.is-gap");
-      }, title: "Large gaps are yellow",
-      text: "Engines 25%+ apart. Click one for its reviewed note." },
-    { target: async () => { await go("gaps"); return (await find('#gaps .gaps-note[data-tip-kind="explained"]')) || find("#gaps .gaps-note[data-tip]"); }, title: "Every gap has a note",
-      text: (note) => `The measured cause and conclusion for each gap.${note.textContent.trim()
-        ? ` <span class="tour-quote"><b>${esc(note.dataset.tipVs || "Note")} ${esc(note.dataset.tipGap || "")}</b><br>${esc(note.dataset.tip || note.textContent.trim())}</span>` : ""}` },
+      }, title: "Highlighted Gaps",
+      text: "We highlight and comment on significant engine performance gaps." },
+    { target: async () => { await go("gaps"); return (await find('#gaps .gaps-note[data-tip-kind="explained"]')) || find("#gaps .gaps-note[data-tip]"); }, title: "Root Cause",
+      text: "Hover over a note for the full explanation." },
     { target: () => find('.sidebar-item[data-table="reports"]'), title: "CI Errors",
       text: "Numbers above the hardware's theoretical limit turn red and are listed here." },
     { target: async () => { await go("board"); return find(".board-welcome-primary"); }, title: "Open Source",
-      text: "Open CI: every number is reproducible. pie-bench for self-hosted runs is coming soon." },
+      text: "Open CI: every number is reproducible. Use pie-bench to run the suite." },
+    { target: async () => { await go("board"); return find('.board-welcome-secondary[data-board-go-page="approach"]'); }, title: "Bench Book",
+      text: "The measurement methodology, and how every engine gets a fair setup." },
   ];
 
   const sheet = () => `
@@ -45,13 +45,13 @@ window.Pie = window.Pie || {};
       <section class="tour-sheet" role="dialog" aria-modal="true" aria-labelledby="tour-title">
         <div class="tour-body">
           <span class="tour-mark">${MARK}</span>
-          <h2 class="tour-title" id="tour-title">Welcome</h2>
-          <p class="tour-lead">Open, reproducible benchmarks of LLM inference engines on every major platform.</p>
+          <h2 class="tour-title" id="tour-title">Welcome!</h2>
+          <p class="tour-lead">Pie Benchmarks is open, reproducible benchmarking of LLM inference engines on every major platform.</p>
         </div>
         <div class="tour-actions">
-          <a class="tour-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">Open Source</a>
-          <!-- the pip package for self-hosted runs that add data; it links to PyPI once it ships -->
-          <button type="button" class="tour-button" disabled title="pip install pie-bench: run the benchmarks on your own machine and add the data. Coming soon"><svg class="tour-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>pie-bench</button>
+          <a class="tour-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg class="tour-button-icon is-filled" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Open Source</a>
+          <!-- the pip package for self-hosted runs that add data -->
+          <a class="tour-button" href="https://pypi.org/project/pie-bench/" target="_blank" rel="noopener" title="pip install pie-bench"><svg class="tour-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>pie-bench</a>
           <span class="tour-spacer"></span>
           <button type="button" class="tour-button is-default" data-tour-next>Take the Tour</button>
         </div>
@@ -73,7 +73,11 @@ window.Pie = window.Pie || {};
     }
     Object.assign(tip.style, { left: `${left}px`, top: `${Math.min(Math.max(12, top), innerHeight - h - 12)}px` });
   };
-  const close = () => { document.querySelector("[data-tour]")?.remove(); layer()?.remove(); lit = null; step = -1; token++; remember(); };
+  const close = () => {
+    const walked = !!layer();
+    document.querySelector("[data-tour]")?.remove(); layer()?.remove(); lit = null; step = -1; token++; remember();
+    if (walked) go("board");  // the tour ends where it began, on the Overview
+  };
   const show = async (i) => {
     const mine = ++token;
     document.querySelector("[data-tour]")?.remove();

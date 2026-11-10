@@ -121,7 +121,7 @@ window.Pie = window.Pie || {};
     if (state.table === "results" && !store.isMeasured(row)) classes.push("is-unmeasured");
     // a measurement above its theoretical limit, as CI Reports lists it: the row tinted red
     if (state.table === "results" && !row.miniature && overLimit().has(`${row.engine}|${row.hardware}|${row.model}|${OVER_SETUP[row.workload]}`)) classes.push("is-over-limit");
-    // an engine 25% or more ahead of or behind its strongest competitor on the same machine, model and workload: the row tinted yellow
+    // pie 25% or more ahead of its strongest competitor on the same machine, model and workload: the row tinted yellow
     else if (state.table === "results" && Pie.behind?.(row)) classes.push("is-gap");
     if (row.stale) {
       classes.push("is-stale");
@@ -152,8 +152,8 @@ window.Pie = window.Pie || {};
     return overKeys;
   };
 
-  // the best number each machine, model and workload has, by engine, worked out once a data load: a row 25% or more
-  // ahead of or behind the strongest other engine on its setup is tinted yellow
+  // the best number each machine, model and workload has, by engine, worked out once a data load: a pie row 25% or more
+  // ahead of the strongest other engine on its setup is tinted yellow
   const GAP_KEY = { raw_decode: "decode_tok_s", raw_prefill: "prefill_tok_s", throughput: "output_tok_s", prefill_batch: "prefill_tok_s" };
   let behindFor = null, bestBy = new Map();
   Pie.behind = (row) => {
@@ -174,7 +174,7 @@ window.Pie = window.Pie || {};
     const by = bestBy.get(`${row.hardware}|${row.model}|${row.workload}`);
     if (!by) return false;
     const rival = Math.max(0, ...[...by].filter(([e]) => e !== row.engine).map(([, v]) => v));
-    return rival > 0 && Math.abs(row[key] / rival - 1) >= 0.25;
+    return row.engine === "pie" && rival > 0 && row[key] / rival - 1 >= 0.25;
   };
 
   Pie.table = {

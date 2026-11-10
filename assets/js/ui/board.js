@@ -1417,7 +1417,7 @@ window.Pie = window.Pie || {};
           if (!pie || !others.length) return [];
           const rival = others.reduce((a, b) => (b[pick.key] > a[pick.key] ? b : a));
           const gap = pie[pick.key] / rival[pick.key] - 1;
-          if (Math.abs(gap) < least) return [];
+          if (gap < least) return [];  // pie behind is pie's own work, not a gap to explain
           return [{ setup: pick.id, label: pick.label, hardware: pie.hardware, model: pie.model, miniature: pie.miniature || null, engines: list.length,
             pieValue: pie[pick.key], pieAt: pie.measured || null, pieNoisy: pie.status === "noisy",
             rival: rival.engine, rivalValue: rival[pick.key], rivalAt: rival.measured || null, rivalNoisy: rival.status === "noisy",

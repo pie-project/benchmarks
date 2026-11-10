@@ -18,6 +18,7 @@
 .tour-button.is-default:hover { filter: brightness(1.08); }
 .tour-button:disabled { color: var(--color-label-tertiary); background: var(--color-fill); cursor: default; }
 .tour-button-icon { width: 15px; height: 15px; margin-right: 6px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.tour-button-icon.is-filled { width: 14px; height: 14px; fill: currentColor; stroke: none; }
 .tour-spacer { flex: 1; }
 .tour-button:not(:disabled):active { transform: scale(.98); }
 .tour-button:focus-visible { outline: 3px solid var(--color-accent-tint); outline-offset: 1px; }
@@ -30,7 +31,6 @@
 .tour-tip-count { font-size: 11px; font-weight: 600; color: var(--color-accent); }
 .tour-tip h3 { margin: 2px 0 4px; font-size: 14px; font-weight: 600; }
 .tour-tip p { margin: 0; font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }
-.tour-quote { display: block; margin-top: 8px; padding: 6px 8px; border-radius: 6px; background: var(--color-fill); color: var(--color-label); }
 .tour-tip-actions { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
 .tour-tip-actions .tour-button { height: 24px; padding: 0 10px; font-size: 12px; }
 .tour-tip-actions .tour-button.is-default { min-width: 0; }
