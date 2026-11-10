@@ -959,5 +959,12 @@ td.is-overall:has(> .roll-ghost) { overflow: hidden; }
 .platform-key { display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; font-size: 12px; color: var(--color-label-secondary); white-space: nowrap; }
 .platform-key-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
 .platform-key-swatch.is-latest { background: var(--color-row-highlight); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 35%, transparent); }
+.platform-table tbody td.is-gap, .platform-table tbody td.is-gap:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-status-noisy) 14%, var(--color-background)); }
+.platform-table tbody tr:hover td.is-gap, .platform-table tbody tr:hover td.is-gap:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-status-noisy) 19%, var(--color-background)); }
+.platform-table tbody td.is-openable.is-gap:hover, .platform-table tbody td.is-openable.is-gap:hover:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-status-noisy) 24%, var(--color-background)); }
+:root .platform-table tbody td.is-openable.is-gap:hover, :root .platform-table tbody td.is-openable.is-gap:hover:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-status-noisy) 26%, var(--color-background)); }  /* the cell under the pointer one step yellower, over the plain cell's grey hover in both themes */
+:root .platform-table tbody td.is-openable.is-gap:hover .platform-open { color: color-mix(in srgb, var(--color-status-noisy) 70%, var(--color-label)); }
+:root .platform-table tbody td.is-openable.is-over-limit:hover, :root .platform-table tbody td.is-openable.is-over-limit:hover:has(> .platform-cell.is-top) { background: color-mix(in srgb, var(--color-negative) 17%, var(--color-background)); }  /* red likewise, over the dark theme's grey */
+.platform-key-swatch.is-gap { background: color-mix(in srgb, var(--color-status-noisy) 14%, var(--color-background)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-status-noisy) 45%, transparent); }
 .platform-key-swatch.is-over-limit { background: color-mix(in srgb, var(--color-negative) 9%, var(--color-background)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-negative) 35%, transparent); }
 .platform-key .platform-nofit { width: 14.5px; height: 14.5px; margin: -2px -2px -2px -2px; vertical-align: -3px; }  /* in a key, its drawn square as large as the swatches beside it (10px) */

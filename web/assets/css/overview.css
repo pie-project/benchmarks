@@ -706,6 +706,13 @@
 }
 
 .chart-tooltip.is-note { max-width: 190px; padding: 8px 11px; line-height: 1.5; }  /* a cell's reason: half the width, the lines stacked */
+.chart-tooltip.is-note.is-gap-note { max-width: 300px; padding: 10px 12px; }  /* an Engine Gaps reason runs longer: wider, fewer lines */
+.gap-tip-title { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--color-label); margin-bottom: 5px; }  /* the popover's title: the conclusion and the short note */
+.gap-tip-title .gaps-tag { font-weight: 500; color: var(--color-label-secondary); }
+.gap-tip-gap { color: var(--color-label-secondary); font-weight: 500; }
+.gap-tip-end { margin-left: auto; padding-left: 12px; }  /* the conclusion at the title's right end */
+.gap-tip-at { margin-top: 7px; font-size: 11px; color: var(--color-label-tertiary, var(--color-label-secondary)); }  /* the competitor's run the note was written against */
+.gap-tip-body { font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }  /* the reasoning, a step quieter under it */
 
 .chart-tooltip[hidden] {
   display: none;

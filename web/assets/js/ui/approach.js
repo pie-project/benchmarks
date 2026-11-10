@@ -189,7 +189,7 @@ window.Pie = window.Pie || {};
   // Contribute: the files an engine is added in, each a row that opens it on GitHub (its name in the file column, the
   // whole path in its title); commands as facts whose lines stay on a phone; links out as the trust rows' links
   const repoFiles = (rows) => `<ul class="welcome-list is-trust is-flows">${rows.map(([colour, t, path, name, d]) =>
-    `<li><a href="${REPO}/${path.endsWith("/") ? "tree" : "blob"}/main/${path}" target="_blank" rel="noopener" title="${path}"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><code>${name}</code><span>${d}</span></a></li>`).join("")}</ul>`;
+    `<li><a href="${path.startsWith("https://") ? path : `${REPO}/${path.endsWith("/") ? "tree" : "blob"}/main/${path}`}" target="_blank" rel="noopener" title="${path}"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><code>${name}</code><span>${d}</span></a></li>`).join("")}</ul>`;
   const commands = (rows) => facts(rows).replace("is-trust", "is-trust is-install");
   const links = (rows) => `<ul class="welcome-list is-trust">${rows.map(([colour, t, href, d]) =>
     `<li><a href="${href}" target="_blank" rel="noopener"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><span>${d}</span></a></li>`).join("")}</ul>`;
@@ -263,7 +263,7 @@ window.Pie = window.Pie || {};
         ["#8E8E93", "Known gaps", "matrix/support.yaml", "support.yaml", "What it cannot run, with the error that shows it"],
         ["#FFCC00", "Quality", "src/pie_evals/quality/engines.py", "quality/engines.py", "How it answers the question sets, if it is scored"],
         ["#34C759", "Tests", "tests/test_engines.py", "test_engines.py", "Its command line and how its output is read"],
-        ["#AF52DE", "Site", "tools/webdb.py", "webdb.py", "Its name, license, repository and colour"]])}
+        ["#AF52DE", "Site", "https://github.com/pie-project/website/tree/main/public/benchmarks/", "website", "The page, in pie-project/website; webdb.py names the engine, its license, repository and colour"]])}
       <p>A server that speaks OpenAI's <code>/v1/completions</code> can subclass <code>ServedEngine</code> and say only how to start it, as llama.cpp, mlx-lm, Splash and TensorRT-LLM do.</p>
       <h3>Test it locally</h3>
       ${commands([["#30B0C7", "Install", '<code>uv venv &amp;&amp; uv pip install -e ".[dev,orchestrate]"</code>'],

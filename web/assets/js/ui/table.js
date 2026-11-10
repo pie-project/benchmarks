@@ -121,6 +121,12 @@ window.Pie = window.Pie || {};
     if (state.table === "results" && !store.isMeasured(row)) classes.push("is-unmeasured");
     // a measurement above its theoretical limit, as CI Reports lists it: the row tinted red
     if (state.table === "results" && !row.miniature && overLimit().has(`${row.engine}|${row.hardware}|${row.model}|${OVER_SETUP[row.workload]}`)) classes.push("is-over-limit");
+    // an engine 25% or more ahead of or behind its strongest competitor on the same machine, model and workload: the row tinted yellow
+    else if (state.table === "results" && Pie.behind?.(row)) {
+      // a gap Engine Gaps concludes needs a rerun reads red, as a CI error; a reviewed gap yellow
+      const SETUP = { raw_decode: "decode", raw_prefill: "prefill", throughput: "batching", prefill_batch: "pbatch" };
+      classes.push(((Pie.gapNotes || {})[`${row.hardware}|${row.model}|${SETUP[row.workload]}`] || [])[0] === "rerun" ? "is-over-limit" : "is-gap");
+    }
     if (row.stale) {
       classes.push("is-stale");
       const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";
@@ -148,6 +154,31 @@ window.Pie = window.Pie || {};
       try { overKeys = new Set((Pie.board?.outliers?.() || []).map((o) => `${o.engine}|${o.hardware}|${o.model}|${o.setup}`)); } catch { overKeys = new Set(); }
     }
     return overKeys;
+  };
+
+  // the best number each machine, model and workload has, by engine, worked out once a data load: a row 25% or more
+  // ahead of or behind the strongest other engine on its setup is tinted yellow
+  const GAP_KEY = { raw_decode: "decode_tok_s", raw_prefill: "prefill_tok_s", throughput: "output_tok_s", prefill_batch: "prefill_tok_s" };
+  let behindFor = null, bestBy = new Map();
+  Pie.behind = (row) => {
+    const key = GAP_KEY[row.workload];
+    if (!key || !row[key]) return false;
+    if (behindFor !== Pie.store.tables) {
+      behindFor = Pie.store.tables;
+      bestBy = new Map();
+      for (const r of Pie.store.rows("results") || []) {
+        const k = GAP_KEY[r.workload];
+        if (!k || !r[k] || !Pie.store.isMeasured(r)) continue;
+        const at = `${r.hardware}|${r.model}|${r.workload}`;
+        const by = bestBy.get(at) || new Map();
+        by.set(r.engine, Math.max(by.get(r.engine) || 0, r[k]));
+        bestBy.set(at, by);
+      }
+    }
+    const by = bestBy.get(`${row.hardware}|${row.model}|${row.workload}`);
+    if (!by) return false;
+    const rival = Math.max(0, ...[...by].filter(([e]) => e !== row.engine).map(([, v]) => v));
+    return rival > 0 && Math.abs(row[key] / rival - 1) >= 0.25;
   };
 
   Pie.table = {

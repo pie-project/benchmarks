@@ -59,7 +59,7 @@ window.Pie = window.Pie || {};
   const PLATFORM_NAME = { mac: "Apple", nvidia: "NVIDIA", amd: "AMD", tpu: "TPU", android: "Mobile", web: "WebGPU", cerebras: "Cerebras" };
   // each platform's issue number, written beside the data by tools/outlier_issues.py; until it is there the link says GitHub
   let trackers = {};
-  fetch("data/trackers.json").then((r) => (r.ok ? r.json() : {})).then((t) => { trackers = t || {}; if (!element.hidden) draw(); }).catch(() => {});
+  fetch(`${Pie.dataBase}trackers.json`).then((r) => (r.ok ? r.json() : {})).then((t) => { trackers = t || {}; if (!element.hidden) draw(); }).catch(() => {});
   const issueLinks = (o) => {
     const code = Pie.platformOf(Pie.store.index.hardware[o.hardware] || {});
     const platform = PLATFORM_NAME[code] || "";

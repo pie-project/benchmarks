@@ -139,7 +139,7 @@ window.Pie = window.Pie || {};
   const loading = new Map();
   const load = (tag) => {
     if (!apart(tag) || loading.has(tag)) return;
-    loading.set(tag, fetch(`data/tags/${encodeURIComponent(tag)}.json?v=${encodeURIComponent(tables.updated_at || "")}`)
+    loading.set(tag, fetch(`${Pie.dataBase}tags/${encodeURIComponent(tag)}.json?v=${encodeURIComponent(tables.updated_at || "")}`)
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error(`data/tags/${tag}.json: ${response.status}`))))
       .catch((error) => { console.warn(error); return {}; })  // a missing file leaves the tag empty, not loading for good
       .then((part) => {

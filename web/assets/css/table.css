@@ -238,6 +238,8 @@
 /* a Performance row above its theoretical limit, as CI Reports lists it: a light red wash, a shade deeper under the pointer */
 .data-table tbody tr.is-over-limit td { background: color-mix(in srgb, var(--color-negative) 8%, transparent); }
 .data-table tbody tr.is-over-limit:hover td { background: color-mix(in srgb, var(--color-negative) 14%, transparent); }
+.data-table tbody tr.is-gap td { background: color-mix(in srgb, var(--color-status-noisy) 12%, transparent); }
+.data-table tbody tr.is-gap:hover td { background: color-mix(in srgb, var(--color-status-noisy) 18%, transparent); }
 
 /* a selected Performance or Quality row, as a Mac list fills its selection: the accent, its text in white */
 .data-table tbody tr[data-pick] { user-select: none; -webkit-user-select: none; }
@@ -269,3 +271,20 @@
 #table-container .data-table th, #table-container .data-table td { width: 1%; white-space: nowrap; text-align: left; }
 #table-container .data-table th:last-child, #table-container .data-table td:last-child { width: auto; }
 #table-container .data-table .col-fill { width: 100%; }  /* a catalog table keeps its fill before the Results count */
+
+/* Engine Gaps: the note sits at the row's right end, the gap signed in green or red */
+.reports-table th.gaps-note, .reports-table td.gaps-note { text-align: right; color: var(--color-label-secondary); white-space: normal; min-width: 260px; max-width: 440px; }
+.reports-table td.is-positive { color: var(--color-positive); }
+.reports-table td.is-negative { color: var(--color-negative); }
+/* Engine Gaps: every column as narrow as its content, left-aligned; the note takes the rest of the row, right-aligned */
+#gaps .reports-table th, #gaps .reports-table td { width: 1%; white-space: nowrap; text-align: left; }
+#gaps .reports-table th.gaps-note, #gaps .reports-table td.gaps-note { width: auto; min-width: 0; max-width: none; white-space: normal; text-align: right; }
+/* Engine Gaps' conclusion: one tag per row, tinted by what the gap turned out to be */
+.gaps-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 400; color: var(--color-label); white-space: nowrap; }
+.gaps-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--tag); flex: none; }  /* a Finder-tag dot beside plain text, as macOS marks status in a list */
+.gaps-tag.is-explained { --tag: var(--color-positive); }
+.gaps-tag.is-plausible { --tag: var(--color-accent); }
+.gaps-tag.is-rerun { --tag: var(--color-warning); }
+.gaps-tag.is-real { --tag: var(--color-negative); }
+.gaps-tag.is-slice { --tag: var(--color-label-secondary); }
+#gaps .reports-table th.gaps-end, #gaps .reports-table td.gaps-end { text-align: left; padding-left: 20px; }  /* the dots in one line down the column */
