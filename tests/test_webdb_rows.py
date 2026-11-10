@@ -113,3 +113,18 @@ def test_a_run_of_a_ci_fixture_never_takes_a_cell_and_the_build_says_why(capsys)
     key = ("a40-x1", "pie", "deepseek-v4-flash", "throughput")
     assert tagged["a40-full"][key][1]["output_tok_s"] == 11947.3 and key not in tagged["a40-rerun"]
     assert "[webdb] a40-rerun: pie deepseek-v4-flash-mini5 on a40-x1 not shown: a CI fixture" in capsys.readouterr().err
+
+
+def test_engines_are_compared_on_the_workload_they_share():
+    t0, t1 = datetime(2026, 11, 9, 15, tzinfo=timezone.utc), datetime(2026, 11, 10, 9, tzinfo=timezone.utc)
+    a2m = {"qwen3.5-0.8b-xla": "qwen3.5-0.8b"}
+    base = {"platform": "tpu-v5e-1", "artifact": "qwen3.5-0.8b-xla", "scheme": "bf16", "status": "pass"}
+    pie256 = {**base, "engine": "pie", "workload": "c256", "started_at": t0, "decode_tok_s": 7023.0}
+    pie32 = {**base, "engine": "pie", "workload": "c32", "started_at": t1, "decode_tok_s": 5028.0}
+    vllm256 = {**base, "engine": "vllm", "workload": "c256", "started_at": t0, "decode_tok_s": 8759.0}
+    picked = webdb.pick([pie256, pie32, vllm256], a2m)
+    (pie_key,) = [k for k in picked if k[1] == "pie"]
+    # pie's newer c32 row never stands against vLLM's c256 (the v5e showed 5028 against 8759, 2026-11-10)
+    assert picked[pie_key][1] is pie256
+    # alone, the newest row wins as before
+    assert webdb.pick([pie256, pie32], a2m)[pie_key][1] is pie32
