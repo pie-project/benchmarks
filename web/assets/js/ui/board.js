@@ -273,8 +273,8 @@ window.Pie = window.Pie || {};
     const cells = [];
     for (const s of GAIN_SETUPS.filter((g) => !only || (g.workload === only.workload && g.key === only.key))) {
       const by = {};
-      // a model slice is held only against the same slice, a workload only against the same workload (c32 not with c8)
-      for (const r of rows) if (r.workload === s.workload && r[s.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}|${r.benchmark || ""}`] ||= []).push(r);
+      // a model slice is held only against the same slice
+      for (const r of rows) if (r.workload === s.workload && r[s.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}`] ||= []).push(r);
       for (const list of Object.values(by)) {
         const pie = list.find((r) => r.engine === subject);  // the picked engine (pie by default), named pie below
         const others = list.filter((r) => r.engine !== subject);
@@ -303,7 +303,7 @@ window.Pie = window.Pie || {};
   const gains = (rows) => {
     const pick = GAIN_PICKS.find((g) => g.id === gainSetup);
     const by = {};
-    for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}|${r.benchmark || ""}`] ||= []).push(r);
+    for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}`] ||= []).push(r);
     const dots = [];
     for (const list of Object.values(by)) {
       if (list.length < 2) continue;  // a cell one engine ran has nothing to sit beside
@@ -1394,7 +1394,7 @@ window.Pie = window.Pie || {};
       const rows = measured();
       return GAIN_PICKS.flatMap((pick) => {
         const by = {};
-        for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}|${r.benchmark || ""}`] ||= []).push(r);
+        for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}`] ||= []).push(r);
         return Object.values(by).filter((list) => new Set(list.map((r) => r.engine)).size > 1).map((list) => {
           const fast = list.reduce((a, b) => (b[pick.key] > a[pick.key] ? b : a));
           const slow = list.reduce((a, b) => (b[pick.key] < a[pick.key] ? b : a));
@@ -1410,7 +1410,7 @@ window.Pie = window.Pie || {};
       const rows = measured();
       return GAIN_PICKS.flatMap((pick) => {
         const by = {};
-        for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}|${r.benchmark || ""}`] ||= []).push(r);
+        for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}`] ||= []).push(r);
         return Object.values(by).flatMap((list) => {
           const pie = list.find((r) => r.engine === "pie");
           const others = list.filter((r) => r.engine !== "pie");
