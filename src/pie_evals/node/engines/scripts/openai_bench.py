@@ -172,6 +172,10 @@ async def run(args: argparse.Namespace):
 
     for i in range(args.warmup):
         await loop.run_in_executor(pool, run_one, args, endpoint, prompts[i], counts[i], budgets[i], [], retries)
+    if not latency and batch > 1 and args.warmup:
+        # one batch at the cell's concurrency, as pie warms its whole ladder: first-use JIT of the batched kernels stays out of the measurement
+        await asyncio.gather(*(loop.run_in_executor(pool, run_one, args, endpoint, prompts[k % args.warmup], counts[k % args.warmup], 8, [], retries)
+                               for k in range(batch)))
 
     gate = asyncio.Semaphore(batch)
     cooled = [0.0]  # seconds a single-stream round waited for the Mac to cool, kept out of its wall

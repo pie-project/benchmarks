@@ -266,6 +266,10 @@ def run(args: argparse.Namespace):
             llm.generate(prompts[: args.warmup], warmup_sampling)
 
         warmup_pass()
+        if args.mode == "tput" and max_num_seqs > 1:
+            # one batch at the cell's concurrency, as pie warms its whole ladder: first-use JIT of the batched kernels stays out of the measurement
+            llm.generate([prompts[k % args.warmup] for k in range(max_num_seqs)], SamplingParams(
+                temperature=args.temperature, top_p=args.top_p, max_tokens=8, ignore_eos=args.ignore_eos))
         # Optional duration-based extension of the warmup; see common.py.
         run_timed_warmup_sync(
             warmup_pass, args.warmup_seconds, label="vllm")
@@ -551,6 +555,11 @@ def run_streaming(args: argparse.Namespace):
         if args.warmup:
             for j, p in enumerate(prompts[: args.warmup]):
                 await stream_one(f"warmup-{j}", p, prompt_counts[j])
+            if max_num_seqs > 1:
+                # one batch at the cell's concurrency, as pie warms its whole ladder: first-use JIT of the batched kernels stays out of the measurement
+                short = SamplingParams(temperature=args.temperature, top_p=args.top_p, max_tokens=8, ignore_eos=args.ignore_eos)
+                await asyncio.gather(*(stream_one(f"warmup-batch-{k}", prompts[k % args.warmup], prompt_counts[k % args.warmup], short)
+                                       for k in range(max_num_seqs)))
 
         # Submit ALL requests at t=0 — concurrency is enforced engine-side by
         # max_num_seqs, exactly like pie's tput client (all launch_process at
