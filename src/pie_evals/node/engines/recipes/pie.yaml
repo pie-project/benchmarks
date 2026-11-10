@@ -268,6 +268,14 @@ default:
                 three (1792 rows): Qwen3-0.6B pf256-512 68.7k -> 88.9k tok/s, c256 6.7k both, Raw decode 369 -> 367
                 (pie e9a6f525 with #1588). At 2304 pf256 reads 94.7k but c256 falls to 6.3k: the host holds fewer
                 of the ladder's programs.
+        muse_glimmer:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf32-512's 553-token prompts (640 rows); 2048 holds three:
+                the 4-layer cut's pf32-512 25.7k -> 34.9k tok/s, c32 2.49k -> 2.56k warm (1.31k -> 1.29k on a fresh
+                cache; pie e9a6f525 with #1588). vLLM-TPU prefills 2048 tokens a step.
       knobs:
         max_forward_tokens:
           value: 1024
