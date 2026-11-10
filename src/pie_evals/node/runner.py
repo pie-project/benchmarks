@@ -120,10 +120,18 @@ def split_startups(groups: dict[tuple, list]) -> dict[tuple, list]:
     """pie's CUDA server boots once per process, for the widest of its cells, while vLLM and SGLang
     start each cell at its own concurrency: MiniMax-M3.1-Flash mini60's c64 ran on a 1024-lane pie
     server beside c1024 on an H100 and lost to vLLM's 64-sequence one. Each pie process is split by
-    its cells' own concurrency and context, so every cell runs on a server started for its shape."""
+    its cells' own concurrency and context, so every cell runs on a server started for its shape.
+    A served engine with ``one_request_server`` set (llama.cpp, vllm-metal) gives its one-request cells a
+    server of one slot, as vLLM and SGLang run them at max_num_seqs=1: llama-server booted for 32 slots
+    stops skipping Gemma 4's KV-shared layers on a prompt and prefilled E2B/E4B about 2.75x slower."""
     out: dict[tuple, list] = {}
     for key, cells in groups.items():
         engine, artifact, mode = key
+        one = [c for c in cells if workload_concurrency(c.workload) == 1]
+        if getattr(get_engine(cells[0].engine, str(cells[0].platform.backend)), "one_request_server", False) and 0 < len(one) < len(cells):
+            out[(engine, artifact, f"{mode}@c1")] = one  # first: a control A/A runs before the rows it vouches for
+            out[key] = [c for c in cells if c not in one]
+            continue
         if str(engine) != "pie" or cells[0].platform.backend not in (Backend.CUDA, Backend.ROCM):
             out[key] = cells
             continue
