@@ -12,7 +12,7 @@ from common import (
     add_output_dump_args,
     arrival_schedule,
     finish,
-    hf_chat_prompts_and_counts,
+    hf_chat_token_ids_and_counts,
     make_prompts,
     maybe_set_cpu_affinity,
     print_first_output,
@@ -131,7 +131,8 @@ def build_engine(args: argparse.Namespace, max_running_requests: int):
 def run(args: argparse.Namespace):
     cpu_affinity = maybe_set_cpu_affinity(args, visible_cuda_devices(args.tp_size))
     n = args.requests if args.mode == "latency" else args.num_requests
-    prompts, prompt_counts = hf_chat_prompts_and_counts(
+    # the token ids pie prefills (pie_bench --pretokenized-prompts): tokenizing stays outside the clock for every engine
+    prompts, prompt_counts = hf_chat_token_ids_and_counts(
         args.model, args.system, make_prompts(args, n + args.warmup), getattr(args, "think", None)
     )
     if args.mode == "latency":
@@ -193,7 +194,7 @@ def run(args: argparse.Namespace):
             # harness's per-token IPC.
             try:
                 out = await engine.async_generate(
-                    prompt=prompt, sampling_params=params, stream=False
+                    input_ids=prompt, sampling_params=params, stream=False
                 )
                 meta = out.get("meta_info") or {}
                 return RequestResult(
@@ -221,7 +222,7 @@ def run(args: argparse.Namespace):
         text: str | None = None
         try:
             generator = await engine.async_generate(
-                prompt=prompt, sampling_params=params, stream=True
+                input_ids=prompt, sampling_params=params, stream=True
             )
             async for out in generator:
                 now = time.perf_counter()
