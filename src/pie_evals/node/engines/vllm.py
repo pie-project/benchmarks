@@ -229,8 +229,14 @@ class VllmEngine(Engine):
             args += ["--block-size", str(int(r["block_size"]))]
         if r.get("enforce_eager"):
             args.append("--enforce-eager")
-        if r.get("compilation_config"):
-            cfg = r["compilation_config"]
+        cfg = r.get("compilation_config")
+        # vLLM captures decode graphs up to min(2 x max_num_seqs, 512) (1024 on sm_100): past 512 sequences every step
+        # ran eager, 41% below graphed (qwen3.5-0.8b c1024 on an H200: 31.0k vs 43.6k tok/s, 2026-11-10). SGLang's
+        # adapter already raises its ceiling to the concurrency; vLLM gets the same.
+        c = workload_concurrency(workload)
+        if c > 512 and not r.get("enforce_eager") and not isinstance(cfg, str):
+            cfg = {**(cfg or {}), "max_cudagraph_capture_size": int(max((cfg or {}).get("max_cudagraph_capture_size", 0), c))}
+        if cfg:
             args += ["--compilation-config", cfg if isinstance(cfg, str) else json.dumps(cfg)]
         if r.get("language_model_only"):
             args.append("--language-model-only")
@@ -260,8 +266,6 @@ class VllmEngine(Engine):
             args += ["--cpu-affinity", str(r["cpu_affinity"])]
         if r.get("request_timeout"):
             args += ["--request-timeout", str(r["request_timeout"])]
-        # TODO(pie/benches): no flag for torch.compile / cudagraph capture
-        # sizes (vLLM compilation_config); vLLM's defaults apply.
         return args
 
     def _script_text(self) -> str:
