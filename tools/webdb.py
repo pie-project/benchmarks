@@ -393,18 +393,35 @@ def local(ts) -> str:
 
 
 # a miniature row's label: how much of the model it keeps ("8 of 78 layers")
+def _cut(a: dict) -> tuple:
+    """What of the model a row ran: the whole checkpoint, or a miniature's kept layers and experts, whatever weights
+    format an engine reads it in (each Mac engine has its own artifact of one cut)."""
+    m = a.get("miniature") if a.get("kind") == "miniature" else None
+    return (str(m["layers"]), m.get("experts")) if m else ("full",)
+
+
+CUT = {a["id"]: _cut(a) for a in load("models")["artifacts"]}
+
+
 def _miniature_labels() -> dict[str, str]:
+    """One label per cut of a model, so the engines that ran one cut read alike (pie's Mac slice of gpt-oss-120b, which
+    the browser runs too, read "36 layers" and MLX's of the same cut "36 layers, 10 experts")."""
     arts = load("models")["artifacts"]
-    full = {a["base_model"]: a["layers"] for a in arts if a.get("layers") and a.get("kind", "full") == "full"}
+    a2m = artifact_to_model()[0]
+    full = {a2m[a["id"]]: a["layers"] for a in arts if a.get("layers") and a.get("kind", "full") == "full"}
     macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
+    # a Mac slice may keep every layer and cut only experts: its cut names them, whichever artifact ran it
+    experts = {(a2m[a["id"]], CUT[a["id"]]) for a in arts if a.get("kind") == "miniature" and a.get("miniature")
+               and a.get("platforms") and set(a["platforms"]) <= macs and a["miniature"].get("experts")}
     out = {}
     for a in arts:
         if a.get("kind") != "miniature" or not a.get("miniature"):
             continue
+        model = a2m[a["id"]]
         kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(a["miniature"]["layers"]).split(","))
-        out[a["id"]] = f"{kept} of {full[a['base_model']]} layers" if a["base_model"] in full else f"{kept} layers"
-        if a.get("platforms") and set(a["platforms"]) <= macs and a["miniature"].get("experts"):
-            out[a["id"]] += f", {a['miniature']['experts']} experts"  # a Mac slice may keep every layer and cut only experts
+        out[a["id"]] = f"{kept} of {full[model]} layers" if model in full else f"{kept} layers"
+        if (model, CUT[a["id"]]) in experts:
+            out[a["id"]] += f", {a['miniature']['experts']} experts"
     return out
 
 
@@ -452,6 +469,50 @@ _FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("ki
 # a model that does not fit a device is shown as its miniature there, whatever its size; only the CI's smoke fixtures
 # (tiny cuts in the smoke tier) are never a model's number
 SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and (a["base_model"] in _FULL_BASES or "smoke" not in a.get("tiers", []))}
+
+
+def _cut_size(c: tuple) -> tuple:
+    if c == ("full",):
+        return (1, 0, 0)
+    kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in c[0].split(","))
+    return (0, kept, c[1] or 0)
+
+
+def share_cut(rows: list[dict], a2m: dict[str, str]) -> list[dict]:
+    """Engines are compared on one cut of a model: for each (hardware, model, category) only the rows of the cut most
+    engines' newest rows are of (then the cut most engines ran at all, then the larger one) are kept. The B200 set pie's
+    GLM-5.3 slice of 12 experts against vLLM's, SGLang's and TensorRT-LLM's of 16, both reading "78 of 78 layers" (2026-11-10).
+    Rows the site never shows (a CI fixture, pie's non-MLX run on a Mac) have no say and pass through."""
+    arts = {a["id"]: a for a in load("models")["artifacts"]}
+    macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
+
+    def counted(r):
+        art = arts.get(r["artifact"], {})
+        if art.get("kind") == "miniature" and r["artifact"] not in SHOWN_MINIATURES:
+            return False
+        return not (r["platform"] in macs and r["engine"] == "pie" and art and art.get("source_format") != "mlx")
+
+    groups: dict[tuple, dict[str, list[dict]]] = {}
+    for r in rows:
+        cp = WL_PRIORITY.get(r["workload"])
+        if cp and counted(r):
+            groups.setdefault((r["platform"], a2m.get(r["artifact"], r["artifact"]), cp[0]), {}).setdefault(r["engine"], []).append(r)
+    target = {}
+    for g, by in groups.items():
+        cuts = {CUT.get(r["artifact"], ("full",)) for rs in by.values() for r in rs}
+        if len(cuts) < 2:
+            continue
+        newest = [CUT.get(max(rs, key=lambda r: r["started_at"])["artifact"], ("full",)) for rs in by.values()]
+        ran = [{CUT.get(r["artifact"], ("full",)) for r in rs} for rs in by.values()]
+        target[g] = max(cuts, key=lambda c: (newest.count(c), sum(c in s for s in ran), _cut_size(c)))
+    out = []
+    for r in rows:
+        cp = WL_PRIORITY.get(r["workload"])
+        t = target.get((r["platform"], a2m.get(r["artifact"], r["artifact"]), cp[0])) if cp and counted(r) else None
+        if t and CUT.get(r["artifact"], ("full",)) != t:
+            continue
+        out.append(r)
+    return out
 
 
 def share_workload(rows: list[dict], a2m: dict[str, str]) -> list[dict]:
@@ -719,7 +780,7 @@ def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
              "prompt_tokens", "requests", "failed"] + METRICS)
     rows = [r for r in store.table().select(cols).to_pylist()
             if measured(r) and r["platform"] in hardware_ids and r["engine"] in engine_ids]
-    rows = share_workload(rows, a2m)
+    rows = share_workload(share_cut(rows, a2m), a2m)
     by_tag: dict[str, list[dict]] = {}
     for r in rows:
         if r["tag"] and not r["tag"].startswith("test-"):  # untagged runs are not shown: every release is a tag; a test-* tag never shows
