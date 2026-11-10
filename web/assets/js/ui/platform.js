@@ -374,6 +374,8 @@ window.Pie = window.Pie || {};
     if (mode.limit) return Pie.ceiling?.(pie, metric.id) || null;
     // Spec Decode: the best draft width at the Roofline page's acceptance
     if (mode.id === "spec") return (pie && Pie.specCeiling?.(pie)) || null;
+    // Batched Prefill: the run's prompts in one pass, the same bound CI Errors and the Overview use
+    if (mode.id === "pbatch") return (pie && Pie.ceiling?.(pie, "pbatch")) || null;
     if (mode.workload !== "throughput") return null;
     return batchedBound(mac, model, pie?.scheme, pie?.benchmark, pie);
   };
@@ -457,7 +459,8 @@ window.Pie = window.Pie || {};
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
-    const batchBound = !limit && mode.workload === "throughput" ? batchedBound(mac, model, c.pie.scheme, c.pie.benchmark, c.pie) : null;
+    const batchBound = limit ? null : mode.workload === "throughput" ? batchedBound(mac, model, c.pie.scheme, c.pie.benchmark, c.pie)
+      : mode.id === "pbatch" ? Pie.ceiling?.(c.pie, "pbatch") || null : null;
     const batchPeak = batchBound ? batchBound.tps : null;
     // Spec Decode: the limit at the best draft width for this machine and model, at the bar's acceptance
     const specBound = mode.id === "spec" ? Pie.specCeiling?.(c.pie) : null;
@@ -529,8 +532,9 @@ window.Pie = window.Pie || {};
   // it reads, and the FLOPs a second it achieved; and its machine's roof, memory bandwidth and peak FLOPS
   const roofPoint = (r, mode, metric) => {
     if (!r?.[metric.key] || mode.id === "spec") return null;
-    if (mode.limit) {
-      const c = Pie.ceiling?.(r, metric.id);
+    // a single pass and Batched Prefill (all the run's prompts in one pass) take their point from the same pass bound
+    if (mode.limit || mode.id === "pbatch") {
+      const c = Pie.ceiling?.(r, mode.limit ? metric.id : "pbatch");
       if (!c?.parts.tflops) return null;  // a machine without a FLOPS figure has no intensity to place it at
       const flops = c.parts.mathS * c.parts.tflops * 1e12;
       const bytes = (c.parts.weightGB + c.parts.cacheGB) * 1e9;
