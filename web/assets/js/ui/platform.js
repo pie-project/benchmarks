@@ -1441,7 +1441,7 @@ window.Pie = window.Pie || {};
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             <span class="platform-key" title="An engine on this cell measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>Above Limit</span>
-            <span class="platform-key" title="Pie is 25% or more ahead of the strongest other engine on this cell; Engine Gaps notes why"><i class="platform-key-swatch is-gap" aria-hidden="true"></i>Reviewed Gap</span>
+            <span class="platform-key" title="Pie is 25% or more ahead of the strongest other engine on this cell; Why Pie Leads notes the reason"><i class="platform-key-swatch is-gap" aria-hidden="true"></i>Reviewed Gap</span>
             <span class="platform-key" title="The full model does not fit one machine; a number beside the mark is a model slice&#39;s, for comparing engines">${NOFIT}Does not fit</span>
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
             <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>

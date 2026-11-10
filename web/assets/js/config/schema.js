@@ -254,7 +254,7 @@ window.Pie = window.Pie || {};
     },
     // the cells where engines sit far apart: the fastest at least twice the slowest, a run worth a second look
     gaps: {
-      label: "Engine Gaps",
+      label: "Why Pie Leads",
       section: "reports",
       view: "gaps",
       filters: [],

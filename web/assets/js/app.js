@@ -137,6 +137,8 @@
         document.getElementById("report-selected").hidden = true;  // the Report button belongs to the measurement tables
         document.getElementById("download-rows").hidden = true;  // and so does Download
         document.getElementById("table-keys").hidden = true;  // and the row colours' keys
+        // Theoretical Limit has no filter of its own: its bar shows only when a link narrowed it to one cell
+        if (state.table === "reports") filterBar.hidden = !document.getElementById("filter-list").children.length;
       }
       // Quality counts its machines and models under its title, as a grid page does
       toolbar.elements.subtitle.textContent = state.table === "board" ? "Engine Analysis" : state.table === "approach" ? Pie.approach.place()
