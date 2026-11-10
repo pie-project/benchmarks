@@ -92,7 +92,7 @@ jobs:
   bench:
     needs: decide
     if: needs.decide.outputs.run == 'true'
-    runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
+    runs-on: [self-hosted, site, handoff]  # the laptop that also runs collect: records pass through ~/pie-evals-handoff when artifacts fail
     timeout-minutes: 340  # a plan of several shards runs them one after another
     env: { C: "${{ needs.decide.outputs.commit }}" }
     outputs:
@@ -210,7 +210,7 @@ jobs:
   collect:
     needs: [decide, bench]
     if: always() && needs.decide.outputs.run == 'true' && (needs.bench.outputs.job_id != '' || github.event.inputs.parity != '') && needs.bench.outputs.created == 'true'  # no VM: nothing to import
-    runs-on: [self-hosted, site]  # the site laptop's runners, on the tailnet with liszt: a benchmark Mac busy benching held finished TPU runs' imports for hours
+    runs-on: [self-hosted, site, handoff]  # the site laptop that ran bench (see bench); a benchmark Mac busy benching held finished TPU runs' imports for hours
     # no concurrency group: a group keeps one pending job and cancels the one before it
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}", C: "${{ needs.decide.outputs.commit }}" }
     steps:
