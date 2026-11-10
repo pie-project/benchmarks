@@ -305,7 +305,7 @@ with only outbound connectivity:
   validate-platforms` checks every `runpod_gpu_type` against the live GPU
   list before anything launches. `runpod-check.yml` is the cheap first run:
   one pod on a stock image, preflight only, ~10 GPU-minutes.
-- Bookkeeping is git: node outputs come back as job artifacts, `collect`
+- Bookkeeping is git: node records come back in the jobs' logs (`infra/ci/handoff.py`; never GitHub's artifact storage), `collect`
   lifts them into the Postgres database on liszt, one row per cell, under
   the run's tag; nothing is committed. Provenance is mandatory — a record that
   cannot say what it measured is refused by the store.

@@ -98,6 +98,9 @@ jobs:
           for f in $(grep -rl "kernels: fire" out/profile | sort); do
             if grep -q "kernels: fire" "$f"; then echo "== $f"; python3 .github/profile/kprof.py "$f" | head -150; fi
           done
-      - uses: actions/upload-artifact@v4
+      - name: keep the profile on this Mac  # never GitHub's artifact storage; the summary above is in the log
         if: always()
-        with: { name: "profile-${{ inputs.engine }}-${{ github.run_id }}", path: "out/profile", retention-days: 30 }
+        run: |
+          k="$HOME/pie-evals-profiles"; mkdir -p "$k"
+          [ -d out/profile ] && cp -R out/profile "$k/profile-${{ inputs.engine }}-${{ github.run_id }}" && echo "kept in $k/profile-${{ inputs.engine }}-${{ github.run_id }}"
+          find "$k" -mindepth 1 -maxdepth 1 -mtime +14 -exec rm -rf {} + 2>/dev/null || true
