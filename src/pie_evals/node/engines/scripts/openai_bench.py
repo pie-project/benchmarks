@@ -77,8 +77,12 @@ def payload_for(args: argparse.Namespace, prompt: str, max_tokens: int) -> dict[
     words, which the server then renders itself."""
     payload: dict[str, Any] = {
         "max_tokens": max_tokens, "temperature": args.temperature, "top_p": args.top_p,
-        "seed": args.seed, "stream": True, "stream_options": {"include_usage": True},
+        "stream": True, "stream_options": {"include_usage": True},
     }
+    # a seed only where sampling is random: greedy output needs none, and mlx-lm's server serves any request that
+    # carries one alone, so every mlx-lm batched row ran its requests one at a time (2026-11-10)
+    if args.temperature > 0:
+        payload["seed"] = args.seed
     if args.chat:
         payload["messages"] = [{"role": "system", "content": args.system}, {"role": "user", "content": prompt}]
     else:
