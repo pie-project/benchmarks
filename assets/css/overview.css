@@ -1,0 +1,1516 @@
+/* The overview: four quiet sections, each answering one question about where pie stands. */
+.overview {
+  flex: 1;
+  overflow: auto;
+}
+
+/* panels are drawn, not filled: a hairline rounded outline on the plain page */
+.model-card,
+.heat-table {
+  border: 1px solid var(--color-panel-outline);
+  background: none;
+}
+
+.overview[hidden],
+.filter-bar[hidden],
+.table-container[hidden] {
+  display: none;
+}
+
+.overview-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px var(--edge) 48px;
+}
+
+/* the pop-ups as one row on the left: Mac, then workload */
+.overview-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-left: -8px;
+}
+
+/* the pop-ups are the release picker; they keep their label even where the toolbar's hides it */
+.overview-popup {
+  color: var(--color-label);
+  font: inherit;
+  font-size: 13px;
+}
+
+.overview-popup .release-picker-label {
+  display: inline;
+}
+
+/* a section: a bold title, a grey caption, then the chart */
+.overview-section {
+  margin-top: 48px;
+}
+
+.overview-controls + .overview-section {
+  margin-top: 28px;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -.015em;
+}
+
+.section-caption,
+.figure-caption {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--color-label-secondary);
+}
+
+/* 1. where we stand: an activity ring, and beside it the median advantage and its trend, centred as one unit */
+.standing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 56px;
+}
+
+.ring {
+  position: relative;
+  flex: none;
+  width: 220px;
+  height: 220px;
+}
+
+.ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* the Fitness rings: a faint track of each ring's own hue under its arc */
+.fit-track,
+.fit-arc {
+  fill: none;
+}
+
+.fit-track {
+  opacity: .16;
+}
+
+.fit-arc {
+  stroke-linecap: round;
+}
+
+.fit-arc.is-lap {
+  filter: url(#fit-shadow);
+}
+
+.fit-track.fit-leads { stroke: var(--color-engine-pie); }
+.fit-track.fit-decode { stroke: var(--color-ring-decode); }
+.fit-track.fit-prefill { stroke: var(--color-ring-prefill); }
+.fit-track.is-behind { stroke: var(--color-negative); }
+.fit-arc.fit-leads { stroke: url(#fit-leads); }
+.fit-arc.fit-decode { stroke: url(#fit-decode); }
+.fit-arc.fit-prefill { stroke: url(#fit-prefill); }
+.fit-arc.is-behind { stroke: url(#fit-behind); }
+
+.stand-side {
+  display: grid;
+  flex: none;
+  gap: 22px;
+}
+
+.stand-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label-secondary);
+}
+
+.stand-value {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+
+.stand-value span {
+  color: var(--color-label-tertiary);
+}
+
+.stand-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+
+.stand-dot.fit-leads { background: var(--color-engine-pie); }
+.stand-dot.fit-decode { background: var(--color-ring-decode); }
+.stand-dot.fit-prefill { background: var(--color-ring-prefill); }
+.stand-dot.is-behind { background: var(--color-negative); }
+
+.figure.is-ahead {
+  color: var(--color-positive);
+}
+
+.figure.is-behind {
+  color: var(--color-negative);
+}
+
+.figure.is-empty {
+  color: var(--color-label-tertiary);
+}
+
+.stand-value.is-empty {
+  color: var(--color-label-tertiary);
+}
+
+/* the release trend: its own block, as tall as the ring, as wide as the content column */
+.trend-block {
+  width: 100%;
+}
+
+.figure {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+
+.figure {
+  font-size: 30px;
+}
+
+/* 2. against each engine: a grid of small activity rings, centred, the Decode | Prefill switch above */
+.heatmap {
+  display: grid;
+  gap: 28px;
+}
+
+.heat-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* an Apple inset table: a small grey group title, then a rounded card of rows */
+.heat-group-title {
+  margin: 0 0 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-label-secondary);
+}
+
+.heat-table {
+  padding: 4px 16px;
+  border-radius: 12px;
+}
+
+/* every row shares the columns: the model name flush left, then one even column per engine */
+.heat-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.4fr) repeat(var(--engines), minmax(0, 1fr));
+  align-items: center;
+  column-gap: 8px;
+}
+
+.heat-row + .heat-row {
+  border-top: .5px solid var(--color-separator);
+}
+
+/* side by side: Decode and Prefill share the model names, a hairline between the two groups */
+.heat-group-row + .heat-head-row {
+  border-top: 0;
+}
+
+.heat-group-head {
+  padding-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-label-secondary);
+  text-align: center;
+}
+
+.is-wide .heat-row {
+  column-gap: 0;
+}
+
+.is-wide .is-group-start {
+  border-left: .5px solid var(--color-separator);
+}
+
+.is-wide .heat-head-row {
+  min-height: 30px;
+}
+
+/* the wide table on roomy screens; the two stacked tables where eight columns would crowd */
+.heat-stacked {
+  display: none;
+}
+
+.heat-stacked {
+  gap: 28px;
+}
+
+@media (max-width: 760px) {
+  .heat-wide {
+    display: none;
+  }
+
+  .heat-stacked {
+    display: grid;
+  }
+}
+
+.heat-head-row {
+  min-height: 36px;
+}
+
+.heat-head {
+  font-size: 12px;
+  color: var(--color-label-secondary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.heat-label {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heat-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+}
+
+.heat-cell-svg {
+  display: block;
+  overflow: visible;
+}
+
+.heat-row-nofit {
+  grid-column: 2 / -1;
+  gap: 8px;
+}
+
+.heat-empty {
+  fill: var(--color-label-quaternary);
+}
+
+/* a setup too big for this Mac: a hairline "no entry" mark, never a colour */
+.nofit-mark {
+  fill: none;
+  stroke: var(--color-label-tertiary);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.nofit-text {
+  font-size: 13px;
+  color: var(--color-label-secondary);
+}
+
+.mini-track,
+.mini-arc {
+  fill: none;
+}
+
+.mini-track {
+  stroke: var(--color-label-quaternary);
+  opacity: .6;
+}
+
+.mini-track.is-ahead {
+  stroke: var(--color-positive);
+  opacity: .16;
+}
+
+.mini-track.is-behind {
+  stroke: var(--color-negative);
+  opacity: .16;
+}
+
+.mini-arc {
+  stroke-linecap: round;
+}
+
+.mini-arc.is-ahead {
+  stroke: url(#heat-ahead);
+}
+
+.mini-arc.is-behind {
+  stroke: url(#heat-behind);
+}
+
+.heat-stop-ahead-start {
+  stop-color: var(--color-heat-ahead-start);
+}
+
+.heat-stop-ahead-end {
+  stop-color: var(--color-positive);
+}
+
+.heat-stop-behind-start {
+  stop-color: var(--color-heat-behind-start);
+}
+
+.heat-stop-behind-end {
+  stop-color: var(--color-negative);
+}
+
+.mini-value {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  fill: var(--color-label);
+  pointer-events: none;
+}
+
+.mini-value.is-even {
+  fill: var(--color-label-secondary);
+}
+
+/* 3. by model: calm cards, one big number each, lollipops */
+/* the model gallery: one card in full view, the next peeking in, snapping card to card */
+.carousel-track {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  outline: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-track > .model-card {
+  flex: 0 0 min(620px, 86%);
+  scroll-snap-align: start;
+}
+
+.carousel-track:focus-visible > .model-card {
+  box-shadow: 0 0 0 2px var(--color-accent-tint);
+}
+
+/* page dots in the middle, round paddles on the right, like an Apple gallery */
+.carousel-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  margin-top: 18px;
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--color-fill);
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-label-tertiary);
+  transition: width .25s ease, background-color .25s ease;
+}
+
+.carousel-dot.is-current {
+  width: 24px;
+  background: var(--color-label);
+}
+
+.carousel-paddles {
+  position: absolute;
+  right: 0;
+  display: flex;
+  gap: 10px;
+}
+
+.carousel-paddle {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-fill);
+  color: var(--color-label);
+}
+
+.carousel-paddle:disabled {
+  color: var(--color-label-quaternary);
+}
+
+.carousel-paddle svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.carousel-dot:focus-visible,
+.carousel-paddle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.model-card {
+  padding: 20px 22px 22px;
+  border-radius: 16px;
+}
+
+.model-card h3 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label-secondary);
+}
+
+.model-card-charts {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.model-card-charts:empty {
+  display: none;
+}
+
+.lollipop-chart {
+  margin: 0;
+}
+
+.lollipop-chart figcaption {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.lollipop-chart figcaption span {
+  font-weight: 400;
+  color: var(--color-label-tertiary);
+}
+
+/* one engine per row: name, a thin stem ending in a dot from a shared baseline, the value right-aligned */
+.lollipop-row {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 12px;
+  height: 22px;
+}
+
+.lollipop-label {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--color-label-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lollipop-row.is-primary .lollipop-label,
+.lollipop-row.is-primary .lollipop-value {
+  color: var(--color-label);
+}
+
+.lollipop {
+  display: block;
+  overflow: visible;
+}
+
+.lollipop line {
+  stroke: var(--color-lollipop-other);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.lollipop circle {
+  fill: var(--color-lollipop-other);
+}
+
+.lollipop-row.is-primary line {
+  stroke: var(--color-engine-pie);
+}
+
+.lollipop-row.is-primary circle {
+  fill: var(--color-engine-pie);
+}
+
+.lollipop-row.is-stale .lollipop {
+  opacity: .45;
+}
+
+.lollipop-nofit {
+  font-size: 12px;
+  color: var(--color-label-tertiary);
+}
+
+.lollipop-row.is-nofit .lollipop-label {
+  color: var(--color-label-tertiary);
+}
+
+.lollipop-value {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-label-secondary);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* the release trend beside the ring: one thin line, a dot per tag */
+.trend {
+  display: block;
+  overflow: visible;
+}
+
+.trend-parity {
+  stroke: var(--color-separator);
+  stroke-width: 1;
+}
+
+.trend-tag {
+  font-size: 12px;
+  fill: var(--color-label-secondary);
+}
+
+.trend-line {
+  stroke: var(--color-engine-pie);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.trend-hit {
+  fill: transparent;
+}
+
+.trend-dot {
+  fill: var(--color-engine-pie);
+  stroke: var(--color-background);
+  stroke-width: 2;
+}
+
+.trend-value {
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--color-label);
+}
+
+.overview-footnote,
+.overview-empty,
+.overview-none {
+  margin: 24px 2px 0;
+  font-size: 12px;
+  color: var(--color-label-tertiary);
+}
+
+.overview-none {
+  margin-top: 40px;
+  font-size: 15px;
+}
+
+.overview-empty {
+  padding: 60px var(--edge);
+  font-size: 15px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .standing {
+    gap: 28px;
+  }
+
+  .ring {
+    width: 168px;
+    height: 168px;
+  }
+
+  .stand-value {
+    font-size: 34px;
+  }
+}
+
+@media (max-width: 480px) {
+  .overview-popup .release-picker-label {
+    display: none;
+  }
+
+  .model-card {
+    padding: 18px 18px 20px;
+  }
+
+  .carousel-paddles {
+    display: none;
+  }
+
+  .heat-table {
+    padding: 4px 10px;
+  }
+
+  .heat-row {
+    grid-template-columns: minmax(96px, 1.3fr) repeat(var(--engines), minmax(0, 1fr));
+    column-gap: 2px;
+  }
+
+  .heat-label {
+    font-size: 12px;
+  }
+}
+
+.chart-tooltip {
+  position: fixed;
+  z-index: 20;
+  max-width: 320px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--color-menu);
+  box-shadow: var(--shadow-menu);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-label);
+  white-space: pre-line;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.chart-tooltip.is-note { max-width: 190px; padding: 8px 11px; line-height: 1.5; }  /* a cell's reason: half the width, the lines stacked */
+.chart-tooltip.is-note.is-gap-note { max-width: 300px; padding: 10px 12px; }  /* an Engine Gaps reason runs longer: wider, fewer lines */
+.gap-tip-title { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--color-label); margin-bottom: 5px; }  /* the popover's title: the conclusion and the short note */
+.gap-tip-title .gaps-tag { font-weight: 500; color: var(--color-label-secondary); }
+.gap-tip-gap { color: var(--color-label-secondary); font-weight: 500; }
+.gap-tip-end { margin-left: auto; padding-left: 12px; }  /* the conclusion at the title's right end */
+.gap-tip-at { margin-top: 7px; font-size: 11px; color: var(--color-label-tertiary, var(--color-label-secondary)); }  /* the competitor's run the note was written against */
+.gap-tip-body { font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }  /* the reasoning, a step quieter under it */
+
+.chart-tooltip[hidden] {
+  display: none;
+}
+
+/* the method page: one outlined card per topic, drawn like the overview panels, never filled */
+.method {
+  flex: 1;
+  overflow: auto;
+  scrollbar-gutter: stable;  /* a page with a scrollbar and one without center their content at the same place */
+}
+
+.method[hidden] { display: none; }
+
+.method-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px var(--edge) 96px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+
+.method-head { grid-column: 1 / -1; margin: 0 0 20px; }
+
+/* Two columns that stack independently: each card follows the one above it in its own column */
+.method-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.method-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.method-head h1 {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+  margin: 0 0 14px;
+  color: var(--color-label);
+}
+
+.method-lede {
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--color-label-secondary);
+  margin: 0;
+  max-width: 680px;
+}
+
+.method-lede + .method-lede { margin-top: 12px; }
+
+.method-pane {
+  border: 1px solid var(--color-panel-outline);
+  border-radius: 14px;
+  background: none;
+  padding: 28px 32px 30px;
+  margin: 0;
+}
+
+.method-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 0 0 14px;
+  fill: none;
+  stroke: var(--color-label-secondary);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.method-pane h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -.015em;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--color-label);
+}
+
+.method-summary {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-label-secondary);
+  margin: 8px 0 0;
+  max-width: 560px;
+}
+
+.method-pane-body { margin: 22px 0 0; }
+
+.method-pane-body p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-label-secondary);
+}
+
+.method-pane-body > * { margin: 0; }
+.method-pane-body > * + * { margin-top: 18px; }
+.method-pane-body > .method-subhead + * { margin-top: 4px; }
+
+.method-formula {
+  padding: 14px 0;
+  text-align: center;
+}
+
+/* a code-editor strip: dark whatever the theme, monospaced, sized to the formula */
+.method-formula-text {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: #111214;
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .1);
+  color: #d4d4d4;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.method-formula-text .op {
+  color: #808080;
+  padding: 0 .15em;
+}
+
+.method-formula-note {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-label-secondary);
+  margin-top: 6px;
+}
+
+.method-subhead {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label-secondary);
+}
+
+.method-rows {
+  list-style: none;
+  padding: 0;
+}
+
+.method-rows li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px 0;
+}
+
+.method-rows li + li { border-top: .5px solid var(--color-separator); }
+.method-rows li:first-child { padding-top: 0; }
+.method-rows li:last-child { padding-bottom: 0; }
+
+.method-row-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.method-row-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-label-secondary);
+}
+
+.method-pane-body .method-footnote { font-size: 13px; }
+
+/* a page of prose (Methodology): one card at reading width, its numbered rules and code as the text around them */
+.approach-main { display: flex; flex-direction: column; gap: 24px; }  /* the chapters down the page as the overview stacks its cards, its outline beside them */
+/* previous and next under the chapter, as Apple's documentation closes an article: the chapter's name under a small label */
+.approach-empty { color: var(--color-label-secondary); }  /* a chapter named but not yet written */
+.approach-main > .method-article { scroll-margin-top: 48px; border: 0; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--color-separator); }  /* the overview card's outline and corners */
+@media (max-width: 760px) { .approach-main > .method-article { padding: 28px 22px 32px; } }
+.method-article .method-pane-body p,
+.method-article .method-list { font-size: 15px; line-height: 1.6; }
+.method-list { padding-left: 22px; color: var(--color-label-secondary); }
+.method-list li + li { margin-top: 10px; }
+.method-article b { color: var(--color-label); font-weight: 600; }
+.method-article h3 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--color-label);
+  margin-top: 30px;
+}
+.method-article code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: .9em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--color-fill-secondary);
+}
+
+
+@media (max-width: 760px) {
+  .method-inner { padding: 32px var(--edge) 64px; }
+  /* one column: the cards return to reading order */
+  .method-cols { display: flex; flex-direction: column; }
+  .method-col { display: contents; }
+  .method-head h1 { font-size: 32px; }
+  .method-pane { padding: 22px 20px 24px; }
+  .method-pane h2 { font-size: 23px; }
+}
+
+.welcome-banner {
+  position: relative;
+  height: 280px;
+  margin: 0 0 32px;
+  border-radius: 18px;
+  background:
+    radial-gradient(60% 90% at 12% 20%, rgba(64, 132, 255, .95), transparent 70%),
+    radial-gradient(45% 80% at 38% 85%, rgba(34, 211, 238, .85), transparent 70%),
+    radial-gradient(40% 70% at 58% 30%, rgba(110, 231, 183, .8), transparent 70%),
+    radial-gradient(45% 80% at 78% 75%, rgba(253, 186, 116, .85), transparent 70%),
+    radial-gradient(50% 90% at 95% 15%, rgba(232, 121, 249, .9), transparent 70%),
+    linear-gradient(120deg, #3b5bfd, #a855f7);
+}
+
+.welcome-intro { margin-bottom: 40px; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+
+/* the intro's call to action: Apple's blue pill, a chevron after the words */
+.welcome-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 44px;
+  padding: 0 18px 0 22px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 500;
+  color: #fff;
+  background: #0071e3;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.welcome-cta:hover { background: #0077ed; }
+.welcome-cta:active { background: #006edb; }
+.welcome-cta:focus-visible { outline: 3px solid rgba(0, 113, 227, .4); outline-offset: 2px; }
+.welcome-cta svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (max-width: 760px) {
+  .welcome-intro { flex-direction: column; align-items: flex-start; gap: 20px; }
+}
+
+.welcome-tagline {
+  margin: -4px 0 16px;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.welcome-trust h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+  margin: 0 0 12px;
+}
+
+
+/* Apple-style pair: a filled primary pill and a frosted secondary one */
+.welcome-banner-actions {
+  position: absolute;
+  left: 28px;
+  bottom: 24px;
+  display: flex;
+  gap: 10px;
+}
+
+.welcome-banner-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -.005em;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(255, 255, 255, .16);
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .45);
+  backdrop-filter: blur(14px) saturate(1.6);
+  transition: background .15s ease, transform .15s ease;
+}
+
+.welcome-banner-link svg { width: 14px; height: 14px; fill: currentColor; }
+.welcome-banner-link:hover { background: rgba(255, 255, 255, .28); }
+.welcome-banner-link:active { transform: scale(.97); }
+
+.welcome-banner-link.is-primary {
+  color: #1d1d1f;
+  background: #fff;
+  box-shadow: none;
+}
+
+.welcome-banner-link.is-primary:hover { background: rgba(255, 255, 255, .88); }
+
+/* the banner's message, above its buttons: an eyebrow, a headline, one line */
+.welcome-banner-copy {
+  position: absolute;
+  left: 28px;
+  top: 26px;
+  color: #fff;
+}
+
+.welcome-banner-eyebrow {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  background: rgba(255, 255, 255, .2);
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .4);
+}
+
+.welcome-banner-title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+  text-shadow: 0 1px 12px rgba(30, 20, 90, .25);
+}
+
+.welcome-banner-sub {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  opacity: .9;
+}
+
+.welcome-banner-link svg.is-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.welcome-sign {
+  margin: 12px 0 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--color-label-secondary);
+}
+
+/* the welcome's message and Pie sections read wider than the method page's lede */
+.welcome-trust .method-lede { max-width: 920px; }
+
+.welcome-pie { margin-top: 20px; }
+
+.welcome-version {
+  margin-left: 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #6e6e73;
+  background: #f2f2f7;
+}
+
+/* a section's mark beside its title */
+.section-heading { display: flex; align-items: center; gap: 12px; }
+
+.section-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--tint);
+}
+
+.section-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* a section's tools: the view switch beside its picker */
+.section-tools { display: flex; align-items: center; gap: 14px; }
+
+.view-toggle {
+  display: inline-flex;
+  height: 24px;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--color-fill);
+}
+
+.view-toggle button {
+  position: relative;
+  min-width: 56px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 5px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-label);
+  background: transparent;
+  cursor: pointer;
+}
+
+/* a hairline between two unselected segments, as AppKit draws it */
+.view-toggle button + button:not(.is-active)::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--color-separator);
+}
+
+.view-toggle button.is-active + button::before,
+.view-toggle button.is-active::before { display: none; }
+
+.view-toggle button.is-active {
+  background: var(--color-card);
+  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .15);
+}
+
+/* the bars view: a row per model or Mac, Decode and Prefill side by side */
+.bars-table {
+  border: .5px solid var(--color-panel-outline);
+  border-radius: 14px;
+  padding: 4px 20px;
+}
+
+.bars-row {
+  display: grid;
+  grid-template-columns: 170px 1fr 1fr;
+  gap: 28px;
+  padding: 16px 0;
+}
+
+.bars-row + .bars-row { border-top: .5px solid var(--color-separator); }
+
+.bars-label { font-size: 13px; color: var(--color-label); padding-top: 18px; }
+.bars-note, .bars-empty { font-size: 13px; color: var(--color-label-tertiary); align-self: center; }
+.bars-note { grid-column: 2 / -1; }
+
+.bars-head {
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-label-secondary);
+}
+
+.bars-head span { font-weight: 400; color: var(--color-label-tertiary); }
+
+.bars-line {
+  display: grid;
+  grid-template-columns: 64px 1fr 52px;
+  align-items: center;
+  gap: 10px;
+  height: 20px;
+  font-size: 12px;
+  color: var(--color-label-secondary);
+}
+
+.bars-track { height: 6px; border-radius: 3px; background: var(--color-fill); overflow: hidden; }
+.bars-fill { display: block; height: 100%; border-radius: 3px; background: var(--color-lollipop-other); }
+.bars-value { text-align: right; font-variant-numeric: tabular-nums; }
+.bars-line.is-primary { color: var(--color-label); font-weight: 600; }
+.bars-line.is-primary .bars-fill { background: var(--color-engine-pie); }
+
+@media (max-width: 760px) {
+  .bars-row { grid-template-columns: 1fr; gap: 12px; }
+  .bars-label { padding-top: 0; }
+}
+
+/* the data's age, quiet on the far side of the pickers */
+.overview-updated {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--color-label-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* quality ranking: one column per model, its mean accuracy, best first */
+.rank-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 28px;
+  height: 280px;
+  padding: 24px 28px 16px;
+  border: .5px solid var(--color-panel-outline);
+  border-radius: 14px;
+}
+
+.rank-col {
+  flex: 1;
+  max-width: 120px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.rank-value { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-label); }
+.rank-chart { position: relative; padding-left: 52px; }
+.rank-axis { position: absolute; left: 16px; font-size: 11px; color: var(--color-label-tertiary, var(--color-label-secondary)); font-variant-numeric: tabular-nums; }
+.rank-axis-top { top: 48px; }
+.rank-axis-bottom { bottom: 50px; }
+.rank-bar { position: relative; flex: 1; width: 44px; border-radius: 8px; background: var(--color-fill); }
+.rank-fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 8px; background: linear-gradient(180deg, rgba(90, 200, 250, .55), rgba(10, 132, 255, .55)); }
+.rank-range { position: absolute; left: 50%; width: 2px; margin-left: -1px; background: var(--color-label); z-index: 1; }
+.rank-range::before, .rank-range::after { content: ""; position: absolute; left: -6px; width: 14px; height: 2px; background: var(--color-label); }
+.rank-range::before { top: 0; }
+.rank-range::after { bottom: 0; }
+.rank-mark { position: absolute; left: -8px; right: -8px; height: 3px; margin-bottom: -1.5px; border-radius: 2px; background: var(--color-engine-pie); box-shadow: 0 0 0 2px var(--color-background); }
+.rank-value.is-quiet { color: var(--color-label-secondary); }
+.rank-value { color: var(--color-engine-pie); }
+.rank-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 22px; margin-top: 12px; font-size: 12px; color: var(--color-label-secondary); }
+.rank-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.rank-legend i { display: inline-block; }
+.rank-legend .is-bar { width: 10px; height: 10px; border-radius: 3px; background: rgba(10, 132, 255, .55); }
+.rank-legend .is-range { width: 2px; height: 12px; background: var(--color-label); }
+.rank-legend .is-mark { width: 14px; height: 4px; border-radius: 2px; background: var(--color-engine-pie); }
+.rank-name { font-size: 12px; color: var(--color-label-secondary); text-align: center; line-height: 1.3; }
+
+/* release history: a quiet disclosure at the foot of the overview */
+.history-details { margin-top: 32px; }
+
+.history-details > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-accent);
+  user-select: none;
+}
+
+.history-details > summary::-webkit-details-marker { display: none; }
+
+.history-details > summary::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform .15s ease;
+}
+
+.history-details[open] > summary::after { transform: rotate(45deg); }
+.history-details[open] > .overview-section { margin-top: 20px; }
+
+/* release history: a legend of Macs above their lines */
+.trend-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 12px; font-size: 12px; color: var(--color-label-secondary); }
+.trend-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.trend-legend i { width: 8px; height: 8px; border-radius: 50%; }
+.trend-end { font-size: 12px; font-weight: 600; }
+
+/* against the best: a bar per Mac, half the track is parity, green past it and red short of it */
+.best-bars .best-line .bars-track { position: relative; }
+.best-bars .best-line .bars-track::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--color-separator); }
+.best-bars .best-line.is-ahead .bars-fill { background: var(--color-ahead, #30d158); }
+.best-bars .best-line.is-behind .bars-fill { background: var(--color-behind, #ff453a); }
+.best-bars .best-line.is-ahead .bars-value { color: var(--color-ahead, #30d158); }
+.best-bars .best-line.is-behind .bars-value { color: var(--color-behind, #ff453a); }
+.best-head { line-height: 1.25; white-space: nowrap; }
+.best-head span { color: var(--color-label-tertiary, var(--color-label-secondary)); }
+.best-bars .best-line { grid-template-columns: 112px 1fr 48px; }
+.best-bars .best-line .bars-name { white-space: nowrap; }
+
+/* every page of prose shares pie-project.org's measure: 1080px of content inside 22px margins */
+@media (min-width: 900px) {
+  #welcome .method-inner,
+  #inferlets .method-inner,
+  #services .method-inner,
+  #profiler .method-inner,
+  #fairness .method-inner,
+  #methodology .method-inner { max-width: calc(1080px + 2 * 22px); padding-left: 22px; padding-right: 22px; }
+}
+
+
+/* Reports: a title and a line under it, then every report as a row of the site's table */
+#reports.method, #gaps.method { overflow: auto; }  /* the table scrolls both ways in the page, as Performance's does */
+.reports-table-wrap { min-width: 100%; }
+#reports .reports-empty { padding: 24px var(--edge); }
+.reports-table td.is-wide { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reports-table thead th[data-reports-sort] { cursor: pointer; user-select: none; }
+.reports-table a { color: var(--color-accent); text-decoration: none; }
+.reports-table a:hover { text-decoration: underline; }
+.reports-none { color: var(--color-label-tertiary); }
+.reports-fix { display: flex; gap: 6px; align-items: center; }
+.reports-fix input, .reports-fix select { height: 24px; padding: 0 8px; border: 0; border-radius: var(--radius-control); font: inherit; font-size: 12px; color: var(--color-label); background: var(--color-fill); }
+.reports-fix input { width: 220px; }
+.reports-fix button { height: 24px; padding: 0 10px; border: 0; border-radius: var(--radius-control); font: inherit; font-size: 12px; font-weight: 500; background: var(--color-accent); color: #fff; cursor: pointer; }
+.reports-empty { font-size: 14px; color: var(--color-label-secondary); margin: 0; }
+.reports-sheet-form .reports-send:disabled { opacity: .5; cursor: default; }
+
+/* the sheet the bar's Report opens, in a dialog that only centres it */
+.reports-sheet { padding: 0; border: 0; background: none; overflow: visible; }
+.reports-sheet::backdrop { background: rgba(0, 0, 0, .28); }
+.reports-sheet-form .account-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.account-email textarea { min-height: 64px; padding: 7px 10px; border: 0; border-radius: var(--radius-field); font: inherit; font-size: 13px; line-height: 1.4; color: var(--color-label); background: var(--color-fill); outline: none; resize: vertical; }
+.account-email textarea:focus { box-shadow: 0 0 0 3px var(--color-accent-tint), 0 0 0 1px var(--color-accent); }
+.reports-sheet-form .account-primary:disabled { opacity: .5; cursor: default; }
+
+/* a Methodology chapter carrying a limit's formulas (Theoretical Limit, Memory Fit): a little more width for them */
+/* the submit sheet's pickers, drawn as the login sheet's fields */
+.account-email select { height: 30px; padding: 0 8px; border: 0; border-radius: var(--radius-field); font: inherit; font-size: 13px; color: var(--color-label); background: var(--color-fill); outline: none; }
+.account-email select:focus { box-shadow: 0 0 0 3px var(--color-accent-tint), 0 0 0 1px var(--color-accent); }
+.account-email select:invalid { color: var(--color-label-tertiary); }
+/* an outlier's issue: plain grey text with the site's outward arrow, as See Runs reads; the label's colour under the pointer */
+.reports-table a.reports-issue { display: inline-flex; align-items: center; gap: 3px; color: var(--color-label-secondary); text-decoration: none; white-space: nowrap; }
+.reports-table a.reports-issue:hover { color: var(--color-label); text-decoration: none; }
+.reports-issue svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.reports-table td.reports-auto { color: var(--color-label-secondary); }  /* found by the site, not filed by a person: grey */
+
+/* Methodology in the Overview's shape: a section head over each chapter, the text in a board card at the Overview's
+   padding, its lines held to a reading width; the chapters before and after as small picks */
+.approach-main { gap: 0; }
+#approach.method, #gaps.method { scrollbar-gutter: auto; }  /* no strip kept at the right for a scroll bar that is not there, as the other pages */
+.approach-main > .board-section-head { margin-bottom: 24px; }
+.approach-main > .method-article { padding: 24px 28px 28px; }
+/* every chapter straight on the page, no outline around it, as Apple's documentation sets an article */
+.approach-main > .method-article { padding: 0; box-shadow: none; }
+.approach-main > .method-article .method-pane-body { margin: 0; }
+.approach-main > .method-article .method-pane-body > p, .approach-main > .method-article .method-list { max-width: 720px; font-size: 14px; line-height: 1.6; }
+.approach-main > .method-article .method-list { padding-right: 140px; }  /* the numbered rules held in from the right, narrower than the text around them */
+.approach-main > .method-article h3 { font-size: 15px; margin-top: 24px; }
+.approach-steps { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.approach-step.is-next { margin-left: auto; }
+.approach-steps .approach-step { height: 28px; padding: 0 12px; border-radius: var(--radius-field); font-size: 13px; color: var(--color-label); }  /* the toolbar's search button's size */
+/* a closed outlier stays listed, quieter; a maintainer's status pick is the filters' small pop-up */
+.reports-table tr.is-closed td { color: var(--color-label-tertiary); }
+.reports-status-pick { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; }
+.reports-status-pick .popup-chevron { width: 7px; height: 10px; opacity: 0; transition: opacity .12s; }
+.reports-table tr:hover .reports-status-pick .popup-chevron, .reports-status-pick[aria-expanded="true"] .popup-chevron { opacity: .6; }
+/* the Reports table: each column as wide as what it holds, the room left over taken by the last, its issue link at the far right */
+.reports-table { width: 100%; table-layout: auto; }
+.reports-table th, .reports-table td { width: 1%; white-space: nowrap; }
+.reports-table th:last-child, .reports-table td.reports-fix-cell { width: auto; text-align: right; }
+.reports-table td.is-wide { max-width: none; }
+
+/* Welcome as a landing page: few boxes, hairlines between, the numbers and the path a number takes as plain diagrams */
+.approach-main > .method-article .method-pane-body > .welcome-lead { max-width: 420px; margin-top: 0; font-size: 15px; line-height: 1.55; color: var(--color-label); }
+.welcome-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 28px 0 0; padding: 0; }
+.welcome-stats > div { padding: 0 20px; border-left: .5px solid var(--color-separator); }
+.welcome-stats > div:first-child { padding-left: 0; border-left: 0; }
+.welcome-stats dt { font-size: 12px; color: var(--color-label-secondary); }
+.welcome-stats dd { margin: 2px 0 0; font: 600 28px/1.15 var(--font-display); letter-spacing: -.02em; color: var(--color-label); font-variant-numeric: tabular-nums; }
+.method-article .welcome-stats + h3, .method-article .welcome-flow + h3, .method-article .welcome-list + h3, .method-article .welcome-cards + h3 { margin-top: 40px; }
+/* the path: numbered dots on one line, each step's name and line under its dot; the limit check in the CI Error red */
+.welcome-flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 16px 0 0; padding: 0; list-style: none; counter-reset: none; }
+.welcome-flow li { position: relative; display: flex; flex-direction: column; gap: 4px; padding-right: 16px; }
+.welcome-flow li::before { content: ""; position: absolute; top: 12px; left: 26px; right: 0; height: 1px; background: var(--color-separator); }
+.welcome-flow li:last-child::before { display: none; }
+.welcome-flow i { position: relative; display: grid; place-items: center; width: 24px; height: 24px; margin-bottom: 8px; border-radius: 6px; font: 600 12px/1 var(--font-display); font-style: normal; color: #fff; background: var(--step, var(--color-label-secondary)); }
+.welcome-flow b { font-size: 13px; color: var(--color-label); }
+.welcome-flow span { max-width: 180px; font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }  /* a step's line in a narrow column under its name */
+.welcome-flow li.is-check b { color: var(--color-negative); }
+/* the workloads as a Settings list: glyph, name, line, hairlines between */
+.welcome-list { margin: 8px 0 0; padding: 0; list-style: none; }
+.welcome-list li + li { border-top: .5px solid var(--color-separator); }
+.welcome-list button, .welcome-list a { display: grid; grid-template-columns: 20px 160px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; padding: 10px 0; border: 0; background: none; font: inherit; color: inherit; text-decoration: none; text-align: left; cursor: pointer; }
+.welcome-list button::after, .welcome-list a::after { content: "›"; color: var(--color-label-tertiary); }
+.welcome-list button:hover b, .welcome-list a:hover b { color: var(--color-accent); }
+.welcome-list .mode-icon { width: 16px; height: 16px; color: var(--color-label-secondary); }
+.welcome-list b { font-size: 13px; font-weight: 500; color: var(--color-label); }
+.welcome-list span { font-size: 13px; color: var(--color-label-secondary); }
+/* Why Trust Us: the workloads' rows, each reason marked by a small square in its chapter's colour */
+.welcome-list.is-trust { margin-top: 0; }
+.welcome-list.is-trust button, .welcome-list.is-trust a { grid-template-columns: 6px 160px minmax(0, 1fr) auto; }
+.welcome-list .trust-tile { width: 6px; height: 6px; border-radius: 1.5px; background: var(--tile); }
+.welcome-link { align-self: flex-start; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--color-accent); text-decoration: none; cursor: pointer; }
+.welcome-link:hover { text-decoration: underline; }
+.welcome-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; margin-top: 12px; }
+.welcome-action { display: inline-flex; align-items: center; height: 28px; padding: 0 14px; border-radius: 10px; font-size: 13px; font-weight: 500; text-decoration: none; }
+.welcome-action.is-primary { background: var(--color-accent); color: #fff; }
+.welcome-action.is-primary:hover { opacity: .9; }
+.method-article .welcome-foot { margin-top: 32px; font-size: 12px; color: var(--color-label-tertiary); }
+@media (max-width: 899px) {
+  .welcome-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 16px; }
+  .welcome-stats > div:nth-child(3) { padding-left: 0; border-left: 0; }
+  .welcome-flow { grid-template-columns: 1fr; gap: 16px; }
+  .welcome-flow li::before { display: none; }
+  .welcome-list button, .welcome-list a { grid-template-columns: 20px minmax(0, 1fr) auto; }
+  .welcome-list span { display: none; }
+  .welcome-list.is-trust button, .welcome-list.is-trust a { grid-template-columns: 6px minmax(0, 1fr) auto; }
+}
+/* a chapter's facts: the trust rows' layout without the link (no chevron, no hover) */
+.welcome-list .welcome-row { display: grid; grid-template-columns: 6px 160px minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px 0; }
+.welcome-list .welcome-row.is-icon { grid-template-columns: 20px 160px minmax(0, 1fr); }
+/* a command row keeps its command on one line: one too long for the row scrolls sideways in its cell, never wraps */
+.welcome-list.is-install .welcome-row span:not(.trust-tile) { min-width: 0; white-space: nowrap; overflow-x: auto; scrollbar-width: thin; }
+@media (max-width: 899px) { .welcome-list .welcome-row, .welcome-list .welcome-row.is-icon { grid-template-columns: 20px minmax(0, 1fr); } .welcome-list .welcome-row span:not(.trust-tile) { display: none; } }
+/* a chapter's lead line, then its rows or steps: the same 28px the Welcome page leaves under its lead */
+.method-article .welcome-lead + .welcome-list, .method-article .welcome-lead + .welcome-flow { margin-top: 28px; }
+/* a paragraph then its rows (Share your results): the rows sit 16px under the text, not on it */
+.method-article p + .welcome-list { margin-top: 16px; }
+.method-article .method-pane-body > h3:first-child { margin-top: 0; }  /* a chapter opening on a heading sits where another opens on its lead */
+/* the workflows' rows: the file a column of its own between the platform and its line */
+.welcome-list.is-flows a { grid-template-columns: 6px 160px 140px minmax(0, 1fr) auto; }
+.welcome-list.is-flows code { justify-self: start; font-size: 12px; }
+@media (max-width: 899px) { .welcome-list.is-flows a { grid-template-columns: 6px minmax(0, 1fr) auto auto; } }
+.method-article .method-pane-body > .welcome-list:first-child { margin-top: 0; }  /* a chapter opening on its rows sits where another opens on its lead */
+.approach-main > .method-article .method-pane-body > .welcome-lead { max-width: 720px; }  /* a chapter's lead on one line where it fits */
+.approach-main > .method-article .method-pane-body > p { padding-right: 140px; }  /* the text held in as far as the numbered rules, one right edge for both */
+/* Install Size: each figure as a Settings row (logo, engine, version, size at the right end), what it counts and where
+   it came from under it in grey */
+.install-list { margin: 8px 0 0; padding: 0; list-style: none; }
+.install-list li { padding: 10px 0; cursor: default; }
+.install-list li + li { border-top: .5px solid var(--color-separator); }
+.install-list li:hover .install-head b:first-of-type { color: var(--color-accent); }  /* the row under the pointer, its card beside it */
+#chart-tooltip .install-tip-source { color: var(--color-label-tertiary); }
+#chart-tooltip.is-card .tip-foot { max-width: 340px; }
+.install-head { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.install-head b { font-weight: 500; color: var(--color-label); }
+.install-head span { color: var(--color-label-secondary); }
+.install-head .install-bytes { margin-left: auto; font-variant-numeric: tabular-nums; }
+.method-pane-body .install-list p { max-width: 720px; margin: 6px 0 0 24px; font-size: 12px; line-height: 1.5; color: var(--color-label-secondary); }
+.method-pane-body .install-list p.install-source { color: var(--color-label-tertiary); }
+.method-article .install-list + h3 { margin-top: 40px; }
+@media (max-width: 899px) {
+  .method-pane-body .install-list p { margin-left: 0; }
+  /* on a phone its facts keep their lines, under their names: they are what the chapter says */
+  .welcome-list.is-install .welcome-row { grid-template-columns: 6px minmax(0, 1fr); row-gap: 2px; }
+  .welcome-list.is-install .welcome-row span { display: block; }
+  .welcome-list.is-install .welcome-row span:not(.trust-tile) { grid-column: 2; }
+}
+
+/* Model Slices: its formulas set as the limit chapters set theirs, each under the line that states it */
+.method-article .method-pane-body > .m-doc.is-slices { margin-top: 12px; }
+.method-article .m-doc.is-slices > .m-doc-eqs { margin-top: 0; }
+.method-article .m-doc.is-slices + .welcome-list, .method-article .m-doc.is-slices + p { margin-top: 16px; }
+
+/* Methodology's step runs as a carousel: each step keeps its width, the row slides and snaps, the Overview's paddles sit
+   above it on the right, and the far edge fades while more steps follow */
+.method-article .flow-carousel { display: flex; flex-direction: column; margin-top: 16px; }
+.method-article .flow-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }  /* the title on the left, the paddles on its right */
+.method-article .flow-head > h3, .method-article .flow-head > .welcome-lead { margin: 0; }
+.method-article .flow-head > .flow-nav { flex: none; }
+.method-article .flow-carousel > .welcome-flow { margin-top: 16px; }
+.method-article .flow-head > .welcome-lead + .flow-nav, .method-article .flow-carousel:has(.welcome-lead) > .welcome-flow { margin-top: 0; }
+.method-article .flow-carousel:has(.welcome-lead) > .welcome-flow { margin-top: 24px; }
+.method-article .method-pane-body > .flow-carousel.has-title:not(:first-child) { margin-top: 40px; }  /* as a heading sits under the part before it */
+.flow-carousel > .flow-nav[hidden] { display: none; }
+.flow-carousel > .flow-nav .plain-button:disabled { opacity: .35; cursor: default; }
+.flow-carousel .welcome-flow { display: flex; margin: 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); }
+.flow-carousel .welcome-flow.is-end { -webkit-mask-image: none; mask-image: none; }
+.flow-carousel .welcome-flow::-webkit-scrollbar { display: none; }
+.flow-carousel .welcome-flow li { flex: 0 0 calc(100% / 3); scroll-snap-align: start; }  /* three steps in view, the rest a slide away */
+@media (max-width: 760px) {
+  .flow-carousel .welcome-flow li { flex-basis: 50%; }  /* two on a phone: three would not leave room for the words */
+  .flow-carousel .welcome-flow li::before { display: block; }
+  .flow-carousel .welcome-flow li:last-child::before { display: none; }
+}
+
+/* Methodology turns its page by scrolling (approach.js): the chapter gives a little toward the end being pushed, and
+   beyond that end the chapter it turns to is named in small grey words, fading up as the push builds */
+.approach-main { position: relative; transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+.chapter-turn { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 4px; margin: 0; font-size: 12px; line-height: 16px; color: var(--color-label-secondary); white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+.chapter-turn.is-next { top: calc(100% + 16px); }  /* in the middle of the room under the chapter, above the foot */
+.chapter-turn.is-back { bottom: calc(100% + 16px); }  /* and of the room above its title */
+.chapter-turn svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 899px) {
+  .chapter-turn.is-next { top: calc(100% + 8px); }
+  .chapter-turn.is-back { bottom: calc(100% + 8px); }  /* above the phone's title, shown as the chapter gives */
+}
+#approach.is-turning { overflow: hidden; }  /* the glide that turned the page scrolls nothing: the new chapter opens at its end */
