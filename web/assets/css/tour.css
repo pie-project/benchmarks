@@ -17,7 +17,6 @@
 .tour-button.is-default { min-width: 88px; justify-content: center; color: var(--color-on-accent); background: var(--color-accent); }
 .tour-button.is-default:hover { filter: brightness(1.08); }
 .tour-button:disabled { color: var(--color-label-tertiary); background: var(--color-fill); cursor: default; }
-.tour-soon { margin-left: 6px; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 600; color: var(--color-label-secondary); background: var(--color-fill-secondary); }
 .tour-button-icon { width: 15px; height: 15px; margin-right: 6px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
 .tour-spacer { flex: 1; }
 .tour-button:not(:disabled):active { transform: scale(.98); }
