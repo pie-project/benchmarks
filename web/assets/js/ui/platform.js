@@ -1348,9 +1348,9 @@ window.Pie = window.Pie || {};
               const b = modeOf(c).id === "pbatch" ? Pie.ceiling?.(r, "pbatch") : boundOf(mac, realOf(model), modeOf(c), metric, r);
               return b?.tps && r[metric.key] > b.tps;
             });
-            // the engine shown 25% or more ahead of or behind its strongest competitor on this cell: one engine needs an
-            // explanation, so the cell is tinted yellow
-            const gapped = !overLimit && compare === "engines" && c.gain !== null && Math.abs(c.gain) >= 0.25;
+            // pie 25% or more ahead of its strongest competitor on this cell: the lead needs an explanation, so the cell is
+            // tinted yellow; pie behind is pie's own work to do, not a gap to explain
+            const gapped = !overLimit && compare === "engines" && c.gain !== null && c.gain >= 0.25;
             const gapAt = gapped ? ` data-gap="${esc(JSON.stringify({ hardware: mac, model: realOf(model), setup: modeOf(c).id }))}"` : "";
             return `<td class="${sorted} is-openable${overLimit ? " is-over-limit" : gapped ? " is-gap" : ""}"${gapAt} data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">${gapped ? "See Gap" : "See Runs"}<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && topIn(g.macs.filter((m) => !hidden.has(m)), model) === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
@@ -1437,7 +1437,7 @@ window.Pie = window.Pie || {};
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
             <span class="platform-key" title="An engine on this cell measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>CI Error</span>
-            <span class="platform-key" title="The engines on this cell sit 25% or more apart; we reviewed the gap by hand, and Engine Gaps notes why"><i class="platform-key-swatch is-gap" aria-hidden="true"></i>Reviewed Gap</span>
+            <span class="platform-key" title="Pie is 25% or more ahead of the strongest other engine on this cell; Engine Gaps notes why"><i class="platform-key-swatch is-gap" aria-hidden="true"></i>Reviewed Gap</span>
             <span class="platform-key" title="The full model does not fit one machine; a number beside the mark is a model slice&#39;s, for comparing engines">${NOFIT}Does not fit</span>
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
             <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>

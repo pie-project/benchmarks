@@ -36,23 +36,23 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|gemma-4-e4b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "web-rtx4090|gemma-4-e4b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "web-rtx5090|gemma-4-e2b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "h200-x1|glm-5.3|pbatch": [
   "rerun",
-  "pie row above the card's limit",
-  "pie's 1.6M tok/s is 5.6x above this card's compute bound (289k), with a 74 ms TTFT for 256 prompts. The pie row cannot be right; rerun it."
+  "Old pie row was 15x too high",
+  "Bad old run: rerun on an H200 at pie main a7f0f7215, the cell reads 108k prompt tok/s (TTFT p50 2.58 s), not 1.6M; SGLang 89k on the same pod. pie leads by 22%, under the 289k bound. Replace the row."
  ],
  "m5-max-128g|muse-spark-open-816b-a42b|batching": [
   "rerun",
@@ -61,8 +61,8 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|gemma-4-e2b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "mi300x-x1|mimo-v2.6-flash-rl|decode": [
   "rerun",
@@ -125,14 +125,14 @@ Pie.gapNotes = {
   "On sm_8x vLLM 0.32 serves GLM-5.3's sparse MLA with XPU_MLA_SPARSE, a portable backend with no full CUDA graph support: the A100 runs the whole model eager, the A40 piecewise."
  ],
  "tpu-v6e-1|glm-5.3|prefill": [
-  "rerun",
-  "sglang-jax GLM prefill slow, unknown",
-  "sglang-jax 0.1.0rc0 takes 97-228 ms for the 555-token prompt vs pie's 21-50 ms. Its GLM-5 path runs with DSA off by default, which does not matter at this length; cause not found."
+  "explained",
+  "sglang-jax slow FP8 block-scaled matmul",
+  "sglang-jax runs GLM-5.3's FP8 projections through a block-scaled matmul at 27 TFLOP/s on v5e and 71 on v6e (14% and 8% of bf16 peak), on 546 prompt tokens padded to 1024: 70% and 62% of the prefill."
  ],
  "tpu-v5e-1|glm-5.3|prefill": [
-  "rerun",
-  "sglang-jax GLM prefill slow, unknown",
-  "sglang-jax 0.1.0rc0 takes 97-228 ms for the 555-token prompt vs pie's 21-50 ms. Its GLM-5 path runs with DSA off by default, which does not matter at this length; cause not found."
+  "explained",
+  "sglang-jax slow FP8 block-scaled matmul",
+  "sglang-jax runs GLM-5.3's FP8 projections through a block-scaled matmul at 27 TFLOP/s on v5e and 71 on v6e (14% and 8% of bf16 peak), on 546 prompt tokens padded to 1024: 70% and 62% of the prefill."
  ],
  "a100-pcie-x1|glm-5.3-flash|decode": [
   "explained",
@@ -181,8 +181,8 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|gemma-4-26b-a4b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "mi300x-x1|mimo-v2.6-flash-rl|batching": [
   "rerun",
@@ -236,8 +236,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|qwen3.5-4b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "web-rtx4090|gemma-4-26b-a4b|pbatch": [
   "rerun",
@@ -251,8 +251,8 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|qwen3.5-9b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "web-rtx4090|muse-glimmer-30b|prefill": [
   "rerun",
@@ -265,14 +265,14 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "rtx5090-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "web-rtx5090|gemma-4-26b-a4b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "web-rtx4090|gemma-4-31b|pbatch": [
   "rerun",
@@ -286,13 +286,13 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|gemma-4-12b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "web-rtx4090|qwen3.5-4b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "mi355x-x1|qwen3.5-0.8b|prefill": [
   "plausible",
@@ -311,8 +311,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|qwen3.5-9b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "web-rtx4090|muse-glimmer-30b|pbatch": [
   "rerun",
@@ -446,18 +446,18 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|gemma-4-12b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "b200-x1|mimo-v2.6-flash-rl|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "web-rtx4090|muse-glimmer-30b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "h200-x1|deepseek-v4-flash|prefill": [
   "explained",
@@ -475,9 +475,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "h200-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "tpu-v5e-1|deepseek-v4-flash|prefill": [
   "explained",
@@ -490,14 +490,14 @@ Pie.gapNotes = {
   "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "b200-x1|qwen3.8-flash-next|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "web-rtx4090|qwen3.8-27b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "mi350x-x1|qwen3.8-flash-next|prefill": [
   "explained",
@@ -520,9 +520,9 @@ Pie.gapNotes = {
   "At 17-32 sequences ggml-metal leaves its few-row MMA matmuls for kernel_mul_mm (64x32 tiles); a step costs 1.5-2.5x the 16-row step, so 32 slots decode no faster than 16 (Qwen3.5-4B, M4 Pro: 62.8 vs 122.6 ms)."
  ],
  "h100-sxm-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "b200-x1|minimax-m3.1-flash|prefill": [
   "plausible",
@@ -530,14 +530,14 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
  ],
  "b200-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "web-rtx4090|qwen3.6-27b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "mi300x-x1|gpt-oss-20b|pbatch": [
   "plausible",
@@ -546,8 +546,8 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|gemma-4-31b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "m3-16g|qwen3.6-27b|pbatch": [
   "rerun",
@@ -605,19 +605,19 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "b200-x1|qwen3.8-flash-next|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "tpu-v5e-1|gpt-oss-20b|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "int8 experts leave KV for ~50 seats",
+  "vLLM-TPU holds gpt-oss's MXFP4 experts as int8 (the harness's lossless 32-wide requant): 13.03 GiB vs a 7.49 GiB checkpoint. Its 0.85 cap leaves 15,018 KV tokens: about 50 of 256 requests run, TTFT p50 65 s."
  ],
  "tpu-v5e-1|gpt-oss-120b|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "int8 experts leave KV for ~50 seats",
+  "vLLM-TPU holds gpt-oss's MXFP4 experts as int8 (the harness's lossless 32-wide requant): 13.03 GiB vs a 7.49 GiB checkpoint. Its 0.85 cap leaves 15,018 KV tokens: about 50 of 256 requests run, TTFT p50 65 s."
  ],
  "mi300x-x1|deepseek-v4.1-flash|decode": [
   "plausible",
@@ -645,9 +645,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro4500-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m5-max-128g|qwen3.6-35b-a3b|pbatch": [
   "real",
@@ -666,8 +666,8 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|gpt-oss-120b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "web-rtx4090|qwen3.5-4b|decode": [
   "explained",
@@ -711,13 +711,13 @@ Pie.gapNotes = {
  ],
  "web-rtx4090|gpt-oss-20b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "rtx4090-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "mi350x-x1|qwen3.6-35b-a3b|prefill": [
   "explained",
@@ -755,14 +755,14 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "pro6000-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "web-rtx5090|qwen3.6-27b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "m3-16g|qwen3.5-9b|batching": [
   "rerun",
@@ -781,8 +781,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|gpt-oss-120b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "web-rtx5090|gpt-oss-120b|pbatch": [
   "rerun",
@@ -790,9 +790,9 @@ Pie.gapNotes = {
   "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "h200-x1|qwen3.8-flash-next|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "mi300x-x1|deepseek-v4-flash|decode": [
   "plausible",
@@ -830,19 +830,19 @@ Pie.gapNotes = {
   "SGLang 0.5.22 turns breakable prefill CUDA graphs on only for CUDA; on ROCm every prefill runs eager, so its TTFT for the 555-token prompt runs 7-37 ms above pie's."
  ],
  "a100-x2|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "rtx4090-x1|qwen3.8-flash-next|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "h100-sxm-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m3-16g|gemma-4-31b|pbatch": [
   "rerun",
@@ -865,9 +865,9 @@ Pie.gapNotes = {
   "SGLang 0.5.22 turns breakable prefill CUDA graphs on only for CUDA; on ROCm every prefill runs eager, so its TTFT for the 555-token prompt runs 7-37 ms above pie's."
  ],
  "a100-sxm-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "b200-x1|glm-5.3|prefill": [
   "plausible",
@@ -905,9 +905,9 @@ Pie.gapNotes = {
   "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "b200-x1|mimo-v2.6-flash-rl|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "web-rtx5090|qwen3.5-9b|pbatch": [
   "rerun",
@@ -930,14 +930,14 @@ Pie.gapNotes = {
   "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "l40s-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "tpu-v6e-1|qwen3.5-0.8b|decode": [
-  "plausible",
-  "vLLM-TPU per-step host work",
-  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
+  "explained",
+  "vLLM-TPU host loop slower than chip",
+  "Host-bound: per token vLLM-TPU spends 2.0-3.0 ms in Python (7 input puts, 7 program launches, token substitution) while the chip works 1.2-1.5 ms on v6e and 2.3-2.6 ms on v5e, so it idles 0.8-1.8 ms each step."
  ],
  "rtx5090-x1|deepseek-v4.1-flash|prefill": [
   "plausible",
@@ -965,9 +965,9 @@ Pie.gapNotes = {
   "Our browser build of llama.cpp ran on one CPU thread (no pthreads, n_threads 1), and llama.cpp keeps some work on the CPU, e.g. Gemma-4's per-layer embeddings. Threaded it is 3.6x faster on TTFT. Fixed in benchmarks #1678; rerun 42897252344."
  ],
  "b200-x1|deepseek-v4-flash|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "tpu-v6e-1|gpt-oss-20b|decode": [
   "plausible",
@@ -1000,9 +1000,9 @@ Pie.gapNotes = {
   "llama.cpp WebGPU's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "b200-x1|qwen3.6-35b-a3b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m5-max-128g|gemma-4-31b|batching": [
   "explained",
@@ -1025,9 +1025,9 @@ Pie.gapNotes = {
   "The unsloth UD-Q4_K_M GGUF keeps attention/SSM in Q8_0: 2.56 GB per token vs 1.65 GB for pie's MLX 4-bit. Requantized to pure Q4_K, llama.cpp goes 24.5 -> 36.3 tok/s; pie's 44.8 leaves a real 1.24x."
  ],
  "tpu-v5p-8|qwen3.5-0.8b|decode": [
-  "plausible",
-  "vLLM-TPU per-step host work",
-  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
+  "explained",
+  "vLLM-TPU host loop slower than chip",
+  "Host-bound: per token vLLM-TPU spends 2.0-3.0 ms in Python (7 input puts, 7 program launches, token substitution) while the chip works 1.2-1.5 ms on v6e and 2.3-2.6 ms on v5e, so it idles 0.8-1.8 ms each step."
  ],
  "mi350x-x1|qwen3.5-9b|prefill": [
   "plausible",
@@ -1040,14 +1040,14 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "tpu-v5e-1|glm-5.3|decode": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "sglang-jax FP8 weights read at 116 GB/s",
+  "At batch 1 sglang-jax's FP8 block-scaled matmul streams GLM-5.3's weights at 116 GB/s, 14% of v5e HBM: 16.0 of its 20.9 ms step. pie's token is 11.3 ms."
  ],
  "h200-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "rtx5090-x1|deepseek-v4.1-flash|batching": [
   "explained",
@@ -1055,9 +1055,9 @@ Pie.gapNotes = {
   "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
  ],
  "b200-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "l40s-x1|deepseek-v4-flash|prefill": [
   "plausible",
@@ -1095,9 +1095,9 @@ Pie.gapNotes = {
   "SGLang's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "h100-sxm-x1|mimo-v2.6-flash-rl|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "rtx5090-x1|glm-5.3|batching": [
   "explained",
@@ -1141,13 +1141,13 @@ Pie.gapNotes = {
  ],
  "tpu-v5e-1|gpt-oss-20b|prefill": [
   "explained",
-  "vLLM-TPU pads 555 to 1024 tokens",
-  "vLLM-TPU pads each step to a power-of-two token bucket, so the 555-token prompt runs as 1024 tokens, about 1.8x the work; TTFT trails pie's by 30-80%."
+  "vLLM-TPU int8 MoE kernel + embed copy",
+  "Chip-bound: per token vLLM-TPU spends 4.5 ms in its int8 32-block MoE matmul and 2.1 ms copying the whole 1.16 GB embedding table to a new layout (v5e: 4.5, 3.6 of 11 ms). pie's v6e token is 4.7 ms. Prefill: 54-71% MoE."
  ],
  "h100-sxm-x1|qwen3.8-flash-next|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "h100-sxm-x1|nvidia-nemotron-3-super-120b-a12b|prefill": [
   "plausible",
@@ -1166,8 +1166,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|muse-glimmer-30b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "l40s-x1|glm-5.3|batching": [
   "explained",
@@ -1181,8 +1181,8 @@ Pie.gapNotes = {
  ],
  "tpu-v5e-1|gpt-oss-120b|prefill": [
   "explained",
-  "vLLM-TPU pads 555 to 1024 tokens",
-  "vLLM-TPU pads each step to a power-of-two token bucket, so the 555-token prompt runs as 1024 tokens, about 1.8x the work; TTFT trails pie's by 30-80%."
+  "vLLM-TPU int8 MoE kernel + embed copy",
+  "Chip-bound: per token vLLM-TPU spends 4.5 ms in its int8 32-block MoE matmul and 2.1 ms copying the whole 1.16 GB embedding table to a new layout (v5e: 4.5, 3.6 of 11 ms). pie's v6e token is 4.7 ms. Prefill: 54-71% MoE."
  ],
  "b200-x1|muse-spark-open-816b-a42b|batching": [
   "rerun",
@@ -1221,8 +1221,8 @@ Pie.gapNotes = {
  ],
  "web-rtx5090|gemma-4-31b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "pro4500-x1|glm-5.3|batching": [
   "explained",
@@ -1230,9 +1230,9 @@ Pie.gapNotes = {
   "Below sm_90 and on sm_120 the harness's SGLang runs GLM-5.3's DSA sparse MLA, indexer logits and top-k through Triton, TileLang and torch fallbacks instead of FlashMLA and DeepGEMM."
  ],
  "tpu-v5e-1|qwen3.5-0.8b|decode": [
-  "plausible",
-  "vLLM-TPU per-step host work",
-  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
+  "explained",
+  "vLLM-TPU host loop slower than chip",
+  "Host-bound: per token vLLM-TPU spends 2.0-3.0 ms in Python (7 input puts, 7 program launches, token substitution) while the chip works 1.2-1.5 ms on v6e and 2.3-2.6 ms on v5e, so it idles 0.8-1.8 ms each step."
  ],
  "pro4500-x1|deepseek-v4.1-flash|batching": [
   "explained",
@@ -1245,9 +1245,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "tpu-v6e-1|glm-5.3|pbatch": [
-  "plausible",
-  "sglang-jax: early TPU port",
-  "sglang-jax is an early TPU port (0.1.0rc0, or main for Gated DeltaNet models) and pays more per request; its TTFT runs 6x pie's on this cell."
+  "explained",
+  "sglang-jax FP8 matmul at 8% of peak",
+  "Batched prefill runs the same FP8 block-scaled matmul: GLM-5.3's 3.6 GFLOP a token at sglang-jax's 19.1k tok/s is 69 TFLOP/s, the 71 its kernel reached in the traced prefill (8% of v6e's bf16 peak)."
  ],
  "a100-sxm-x1|glm-5.3|pbatch": [
   "explained",
@@ -1270,9 +1270,9 @@ Pie.gapNotes = {
   "FlashMLA's sparse kernels and DeepGEMM need sm_90/sm_100, so here vLLM runs DeepSeek-V4's sparse MLA and indexer on Triton and torch fallbacks without its decoder CUDA graphs."
  ],
  "pro4500-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "tpu-v5p-8|qwen3.5-0.8b|prefill": [
   "rerun",
@@ -1285,9 +1285,9 @@ Pie.gapNotes = {
   "llama.cpp's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "tpu-v5e-1|qwen3-0.6b|decode": [
-  "plausible",
-  "vLLM-TPU per-step host work",
-  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
+  "explained",
+  "vLLM-TPU host loop slower than chip",
+  "Host-bound: per token vLLM-TPU spends 2.0-3.0 ms in Python (7 input puts, 7 program launches, token substitution) while the chip works 1.2-1.5 ms on v6e and 2.3-2.6 ms on v5e, so it idles 0.8-1.8 ms each step."
  ],
  "m2-16g|muse-glimmer-30b|decode": [
   "rerun",
@@ -1310,9 +1310,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
  ],
  "b200-x1|nvidia-nemotron-3-ultra-550b-a55b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "mi350x-x1|deepseek-v4.1-flash|prefill": [
   "explained",
@@ -1320,9 +1320,9 @@ Pie.gapNotes = {
   "SGLang 0.5.22 turns breakable prefill CUDA graphs on only for CUDA; on ROCm every prefill runs eager, so its TTFT for the 555-token prompt runs 7-37 ms above pie's."
  ],
  "tpu-v6e-1|gemma-4-26b-a4b|decode": [
-  "plausible",
-  "vLLM-TPU per-step host work",
-  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
+  "explained",
+  "vLLM-TPU bf16 MoE matmul, 16-row pad",
+  "Chip-bound: vLLM-TPU runs gemma-4-26B-A4B's bf16 experts through a grouped matmul on a 1-token batch padded to 16 rows: 7.9 of 12.5 ms a token on v6e, 4.9 of 9.1 on v5e. pie's whole token: 7.4 and 5.7 ms."
  ],
  "mi300x-x1|qwen3.6-35b-a3b|pbatch": [
   "plausible",
@@ -1365,9 +1365,9 @@ Pie.gapNotes = {
   "Below sm_90 and on sm_120 the harness's SGLang runs GLM-5.3's DSA sparse MLA, indexer logits and top-k through Triton, TileLang and torch fallbacks instead of FlashMLA and DeepGEMM."
  ],
  "a100-sxm-x1|qwen3.8-flash-next|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "rtx5090-x1|deepseek-v4-flash|prefill": [
   "explained",
@@ -1375,9 +1375,9 @@ Pie.gapNotes = {
   "SGLang 0.5.22 turns its prefill CUDA graph off for DeepSeek-V4 (capture-pool memory), so the 555-token prompt runs eager: TTFT 23-53 ms vs pie's 8-22 ms."
  ],
  "tpu-v6e-1|qwen3-0.6b|decode": [
-  "plausible",
-  "vLLM-TPU per-step host work",
-  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
+  "explained",
+  "vLLM-TPU host loop slower than chip",
+  "Host-bound: per token vLLM-TPU spends 2.0-3.0 ms in Python (7 input puts, 7 program launches, token substitution) while the chip works 1.2-1.5 ms on v6e and 2.3-2.6 ms on v5e, so it idles 0.8-1.8 ms each step."
  ],
  "mi300x-x1|nvidia-nemotron-3-super-120b-a12b|prefill": [
   "real",
@@ -1460,9 +1460,9 @@ Pie.gapNotes = {
   "MLC compiles Qwen3.5's gated delta net (75% of layers) as a loop over every prompt token, one workgroup per head (32 on 9B), state in global memory. 9B prefill 658/863 tok/s vs pie 1180/1327 (4090/5090)."
  ],
  "tpu-v5e-1|gemma-4-26b-a4b|decode": [
-  "plausible",
-  "vLLM-TPU per-step host work",
-  "Batch-1 decode well below the bandwidth bound: vLLM-TPU's per-step host work (Python scheduler, input prep, JAX dispatch) is not hidden at one request."
+  "explained",
+  "vLLM-TPU bf16 MoE matmul, 16-row pad",
+  "Chip-bound: vLLM-TPU runs gemma-4-26B-A4B's bf16 experts through a grouped matmul on a 1-token batch padded to 16 rows: 7.9 of 12.5 ms a token on v6e, 4.9 of 9.1 on v5e. pie's whole token: 7.4 and 5.7 ms."
  ],
  "m5-max-128g|gemma-4-e2b|pbatch": [
   "rerun",
@@ -1535,9 +1535,9 @@ Pie.gapNotes = {
   "pie's ROCm Mamba-2 prefill walks the prompt token by token (CUDA uses 16-token chunks), so Nemotron-3 prefill is 2-6x slower than vLLM or SGLang on AMD."
  ],
  "h200-x1|deepseek-v4-flash|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "mi300x-x1|gpt-oss-20b|prefill": [
   "plausible",
@@ -1565,14 +1565,14 @@ Pie.gapNotes = {
   "These v5p-8 rows date from Oct 21 (pie bea673037, vLLM-TPU 0.30.0). On v5e and v6e today pie leads vLLM-TPU in prefill by 30-80%, so rerun on v5p."
  ],
  "h100-sxm-x4|qwen3.6-27b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "pro4500-x1|qwen3.8-flash-next|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "rtx4090-x1|glm-5.3-flash|prefill": [
   "explained",
@@ -1600,9 +1600,9 @@ Pie.gapNotes = {
   "Step 55.2 ms vs pie's 35.8: mlx-lm's own 32-row forward is 48.7. Its 30 MoE layers touch 117/128 experts and read them at 358 GB/s (32.8 ms); dense linears take MLX's non-NAX split-K (11.1 vs 5.7 ms)."
  ],
  "rtx4090-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "pro6000-x4|glm-5.3-flash|prefill": [
   "real",
@@ -1620,9 +1620,9 @@ Pie.gapNotes = {
   "On gfx950 the rivals use AITER's MXFP4 MoE kernels (vLLM rows are AMD's 0.29.1 image), while pie runs MXFP4 experts on bf16 matrix cores."
  ],
  "b200-x1|muse-spark-open-816b-a42b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "b200-x1|qwen3.8-flash-next|batching": [
   "plausible",
@@ -1640,9 +1640,9 @@ Pie.gapNotes = {
   "MLC compiles Qwen3.5's gated delta net (75% of layers) as a loop over every prompt token, one workgroup per head (32 on 9B), state in global memory. 9B prefill 658/863 tok/s vs pie 1180/1327 (4090/5090)."
  ],
  "b200-x1|hy4-preview|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "b200-x1|gemma-4-31b|prefill": [
   "explained",
@@ -1655,9 +1655,9 @@ Pie.gapNotes = {
   "WebLLM syncs the GPU every token and samples on the GPU with a full-vocab argsort even at temperature 0 (248k tokens). Qwen3.5-9B 60 vs pie 88 tok/s on the 5090; 27B slices 41-60 vs 55-91."
  ],
  "h100-sxm-x1|kimi-k3|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "l40s-x1|glm-5.3|prefill": [
   "explained",
@@ -1680,9 +1680,9 @@ Pie.gapNotes = {
   "These v5p-8 rows date from Oct 21 (pie bea673037, vLLM-TPU 0.30.0). On v5e and v6e today pie leads vLLM-TPU in prefill by 30-80%, so rerun on v5p."
  ],
  "rtx5090-x1|qwen3.6-35b-a3b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "b200-x1|qwen3.5-0.8b|batching": [
   "plausible",
@@ -1690,14 +1690,14 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "b200-x1|qwen3-0.6b|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "web-rtx5090|gpt-oss-20b|batching": [
   "explained",
-  "llama.cpp tab: 32-row steps in tile GEMM",
-  "c32 decode steps take 250-400 ms (Gemma-4-12B 397 vs 22.7 ms for one): 32 rows miss the 4-row mat-vec path, so each step is a low-occupancy tile GEMM plus 32 full-vocab samples on one wasm thread."
+  "llama.cpp web: slow 32-request batches",
+  "llama.cpp's browser build takes 250-400 ms per decode step with 32 requests vs 23 ms with 1 (Gemma-4-12B, RTX 4090). Above 4 rows it leaves its fast matrix-vector kernel for an under-filled tiled matmul, then copies every row's logits to the CPU and samples all 32 on one thread."
  ],
  "m3-16g|gemma-4-12b|prefill": [
   "explained",
@@ -1750,14 +1750,14 @@ Pie.gapNotes = {
   "Below sm_90 and on sm_120 the harness's SGLang runs GLM-5.3's DSA sparse MLA, indexer logits and top-k through Triton, TileLang and torch fallbacks instead of FlashMLA and DeepGEMM."
  ],
  "h100-sxm-x1|deepseek-v4.1-flash|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "SGLang: prefill chunks stall decode",
+  "Not seating: the 2-44 s TTFT p50 is the clock (pie's client starts it at the seat). SGLang runs new prompts as separate 8k-token prefill batches that halt decode (ITL p99 64-375 ms) and reaches the GPU 0.7 s late."
  ],
  "pro6000-x1|gemma-4-e4b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "a40-x1|glm-5.3|prefill": [
   "rerun",
@@ -1785,9 +1785,9 @@ Pie.gapNotes = {
   "Single prefill is 555 tokens over client TTFT, far below the compute bound; the rivals' TTFT runs 7-200 ms above pie's. gfx950 vLLM rows are AMD's 0.29.1 image."
  ],
  "pro6000-x4|gpt-oss-120b|decode": [
-  "plausible",
-  "vLLM per-step host work at batch 1",
-  "Batch-1 decode at 15-30% of the bandwidth bound: the gap is per-step host work (AsyncLLM's engine-core IPC, scheduling, sampling, streaming) rather than kernel speed."
+  "explained",
+  "vLLM: MXFP4 MoE GEMM at batch 1",
+  "GPU-bound, not host: vLLM's decode graph keeps the H200 busy 2.88 of 3.07 ms per token (gpt-oss-20b). Its Triton matmul_ogs MXFP4 expert GEMMs take 1.20 ms of that, about 1 TB/s of 4.8. pie's step is 2.28 ms."
  ],
  "tpu-v6e-1|gemma-4-e4b|prefill": [
   "explained",
@@ -1795,9 +1795,9 @@ Pie.gapNotes = {
   "vLLM-TPU pads each step to a power-of-two token bucket, so the 555-token prompt runs as 1024 tokens, about 1.8x the work; TTFT trails pie's by 30-80%."
  ],
  "h200-x1|gemma-4-e4b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "mi355x-x1|gpt-oss-20b|batching": [
   "real",
@@ -1880,9 +1880,9 @@ Pie.gapNotes = {
   "Our bench sent seed 0 with every request, and mlx-lm 0.32's server runs any seeded request alone, so these 32 prompts were prefilled one at a time. Fixed in benchmarks #1672; needs a rerun."
  ],
  "h100-sxm-x1|deepseek-v4-flash|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "tpu-v5e-1|gemma-4-26b-a4b|prefill": [
   "explained",
@@ -1895,9 +1895,9 @@ Pie.gapNotes = {
   "vLLM's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "h200-x1|deepseek-v4.1-flash|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "SGLang: prefill chunks stall decode",
+  "Not seating: the 2-44 s TTFT p50 is the clock (pie's client starts it at the seat). SGLang runs new prompts as separate 8k-token prefill batches that halt decode (ITL p99 64-375 ms) and reaches the GPU 0.7 s late."
  ],
  "web-rtx5090|qwen3.5-9b|decode": [
   "explained",
@@ -1915,9 +1915,9 @@ Pie.gapNotes = {
   "SGLang's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "h100-sxm-x1|deepseek-v4-flash|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "SGLang: prefill chunks stall decode",
+  "Not seating: the 2-44 s TTFT p50 is the clock (pie's client starts it at the seat). SGLang runs new prompts as separate 8k-token prefill batches that halt decode (ITL p99 64-375 ms) and reaches the GPU 0.7 s late."
  ],
  "m2-16g|qwen3.6-27b|prefill": [
   "rerun",
@@ -1925,9 +1925,9 @@ Pie.gapNotes = {
   "pie's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "b200-x1|kimi-k3|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "web-rtx5090|qwen3.5-4b|decode": [
   "explained",
@@ -2015,14 +2015,14 @@ Pie.gapNotes = {
   "On gfx950 the rivals use AITER's MXFP4 MoE kernels (vLLM rows are AMD's 0.29.1 image), while pie runs MXFP4 experts on bf16 matrix cores."
  ],
  "h200-x1|qwen3.5-0.8b|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "SGLang: prefill chunks stall decode",
+  "Not seating: the 2-44 s TTFT p50 is the clock (pie's client starts it at the seat). SGLang runs new prompts as separate 8k-token prefill batches that halt decode (ITL p99 64-375 ms) and reaches the GPU 0.7 s late."
  ],
  "h100-sxm-x1|hy4-preview|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m2-16g|gemma-4-e4b|batching": [
   "rerun",
@@ -2075,9 +2075,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-pcie-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m5-max-128g|gemma-4-26b-a4b|pbatch": [
   "rerun",
@@ -2100,9 +2100,9 @@ Pie.gapNotes = {
   "Same cut (2 layers, 8 experts), but pie's MLX slice keeps a bf16 lm_head (3157 MiB) where the GGUF has Q6_K (1295 MiB): 4.08 vs 2.34 GB per token, both near 90 GB/s. With a bf16 head llama.cpp gets 17-20 tok/s."
  ],
  "h200-x1|gemma-4-26b-a4b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "h100-sxm-x1|muse-spark-open-816b-a42b|batching": [
   "plausible",
@@ -2165,9 +2165,9 @@ Pie.gapNotes = {
   "On gfx950 the rivals use AITER's MXFP4 MoE kernels (vLLM rows are AMD's 0.29.1 image), while pie runs MXFP4 experts on bf16 matrix cores."
  ],
  "l40s-x1|glm-5.3-flash|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "m5-max-128g|gpt-oss-120b|pbatch": [
   "rerun",
@@ -2185,9 +2185,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|qwen3.8-flash-next|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "SGLang: prefill chunks stall decode",
+  "Not seating: the 2-44 s TTFT p50 is the clock (pie's client starts it at the seat). SGLang runs new prompts as separate 8k-token prefill batches that halt decode (ITL p99 64-375 ms) and reaches the GPU 0.7 s late."
  ],
  "a100-sxm-x1|deepseek-v4.1-flash|pbatch": [
   "plausible",
@@ -2195,14 +2195,14 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h100-sxm-x1|qwen3.5-0.8b|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "SGLang: prefill chunks stall decode",
+  "Not seating: the 2-44 s TTFT p50 is the clock (pie's client starts it at the seat). SGLang runs new prompts as separate 8k-token prefill batches that halt decode (ITL p99 64-375 ms) and reaches the GPU 0.7 s late."
  ],
  "pro6000-x4|qwen3.5-0.8b|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "web-rtx5090|qwen3.8-27b|prefill": [
   "explained",
@@ -2225,9 +2225,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro4500-x1|mimo-v2.6-flash-rl|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "a100-pcie-x1|qwen3.5-0.8b|prefill": [
   "rerun",
@@ -2240,9 +2240,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a40-x1|muse-spark-open-816b-a42b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "mi300x-x1|qwen3.8-flash-next|batching": [
   "plausible",
@@ -2250,9 +2250,9 @@ Pie.gapNotes = {
   "On ROCm the rivals serve these MoE, MLA and sparse-attention slices through generic Triton paths (vLLM 0.32.0 on MI300X, SGLang 0.5.22), and seat fewer requests at once."
  ],
  "l40s-x1|qwen3.8-flash-next|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m2-16g|gemma-4-12b|prefill": [
   "rerun",
@@ -2265,9 +2265,9 @@ Pie.gapNotes = {
   "The fanless Air throttles after ~95 s of load. llama.cpp's longer round crosses that at request 3 of 6, so its median is the throttled 7.1 tok/s. Cold: pie 15.0, llama.cpp 13.5 (14.6 at pie's bytes)."
  ],
  "pro6000-x1|glm-5.3-flash|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "m3-16g|gemma-4-e2b|pbatch": [
   "rerun",
@@ -2285,9 +2285,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "l4-x1|mimo-v2.6-flash-rl|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "mi355x-x1|deepseek-v4-flash|decode": [
   "real",
@@ -2295,9 +2295,9 @@ Pie.gapNotes = {
   "SGLang's AITER MLA decode on MI350X/MI355X beats pie's ROCm decode for these MLA slices (537-750 vs 279-467 tok/s)."
  ],
  "h100-sxm-x1|muse-spark-open-816b-a42b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "pro4500-x1|nvidia-nemotron-3-ultra-550b-a55b|batching": [
   "plausible",
@@ -2345,9 +2345,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx4090-x1|muse-spark-open-816b-a42b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "mi300x-x1|qwen3.8-flash-next|decode": [
   "plausible",
@@ -2355,9 +2355,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|gemma-4-26b-a4b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "rtx5090-x1|gpt-oss-120b|pbatch": [
   "real",
@@ -2370,9 +2370,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "rtx5090-x1|glm-5.3-flash|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "web-rtx5090|gpt-oss-120b|decode": [
   "rerun",
@@ -2380,9 +2380,9 @@ Pie.gapNotes = {
   "pie's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "h200-x1|nvidia-nemotron-3-super-120b-a12b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "a40-x1|deepseek-v4-flash|pbatch": [
   "plausible",
@@ -2410,9 +2410,9 @@ Pie.gapNotes = {
   "vLLM-TPU pads each step to a power-of-two token bucket, so the 555-token prompt runs as 1024 tokens, about 1.8x the work; TTFT trails pie's by 30-80%."
  ],
  "rtx5090-x1|muse-spark-open-816b-a42b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "tpu-v6e-1|gemma-4-31b|prefill": [
   "explained",
@@ -2425,9 +2425,9 @@ Pie.gapNotes = {
   "SGLang 0.5.22 turns breakable prefill CUDA graphs on only for CUDA; on ROCm every prefill runs eager, so its TTFT for the 555-token prompt runs 7-37 ms above pie's."
  ],
  "rtx5090-x1|qwen3.8-flash-next|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "mi300x-x1|gemma-4-e4b|pbatch": [
   "plausible",
@@ -2440,19 +2440,19 @@ Pie.gapNotes = {
   "vLLM's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "pro6000-x4|gpt-oss-20b|decode": [
-  "plausible",
-  "vLLM per-step host work at batch 1",
-  "Batch-1 decode at 15-30% of the bandwidth bound: the gap is per-step host work (AsyncLLM's engine-core IPC, scheduling, sampling, streaming) rather than kernel speed."
+  "explained",
+  "vLLM: MXFP4 MoE GEMM at batch 1",
+  "GPU-bound, not host: vLLM's decode graph keeps the H200 busy 2.88 of 3.07 ms per token (gpt-oss-20b). Its Triton matmul_ogs MXFP4 expert GEMMs take 1.20 ms of that, about 1 TB/s of 4.8. pie's step is 2.28 ms."
  ],
  "a100-sxm-x1|qwen3.5-0.8b|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "SGLang: prefill chunks stall decode",
+  "Not seating: the 2-44 s TTFT p50 is the clock (pie's client starts it at the seat). SGLang runs new prompts as separate 8k-token prefill batches that halt decode (ITL p99 64-375 ms) and reaches the GPU 0.7 s late."
  ],
  "h200-x1|gpt-oss-120b|decode": [
-  "plausible",
-  "vLLM per-step host work at batch 1",
-  "Batch-1 decode at 15-30% of the bandwidth bound: the gap is per-step host work (AsyncLLM's engine-core IPC, scheduling, sampling, streaming) rather than kernel speed."
+  "explained",
+  "vLLM: MXFP4 MoE GEMM at batch 1",
+  "GPU-bound, not host: vLLM's decode graph keeps the H200 busy 2.88 of 3.07 ms per token (gpt-oss-20b). Its Triton matmul_ogs MXFP4 expert GEMMs take 1.20 ms of that, about 1 TB/s of 4.8. pie's step is 2.28 ms."
  ],
  "pro6000-x1|qwen3.8-flash-next|pbatch": [
   "plausible",
@@ -2460,9 +2460,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "h200-x1|deepseek-v4-flash|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "SGLang: prefill chunks stall decode",
+  "Not seating: the 2-44 s TTFT p50 is the clock (pie's client starts it at the seat). SGLang runs new prompts as separate 8k-token prefill batches that halt decode (ITL p99 64-375 ms) and reaches the GPU 0.7 s late."
  ],
  "a100-x2|gpt-oss-120b|prefill": [
   "real",
@@ -2470,9 +2470,9 @@ Pie.gapNotes = {
   "pie's gpt-oss MXFP4 prefill trails vLLM on A40, A100 x2 and H100 PCIe (TTFT 70-168 ms vs 52-120 ms). pie serves the experts W4A16."
  ],
  "pro4500-x1|hy4-preview|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "m5-max-128g|gemma-4-e4b|pbatch": [
   "rerun",
@@ -2480,9 +2480,9 @@ Pie.gapNotes = {
   "Our bench sent seed 0 with every request, and mlx-lm 0.32's server runs any seeded request alone, so these 32 prompts were prefilled one at a time. Fixed in benchmarks #1672; needs a rerun."
  ],
  "b200-x1|muse-spark-open-816b-a42b|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "tpu-v5e-1|qwen3.5-0.8b|prefill": [
   "explained",
@@ -2495,24 +2495,24 @@ Pie.gapNotes = {
   "On sm_8x vLLM 0.32 serves GLM-5.3's sparse MLA with XPU_MLA_SPARSE, a portable backend with no full CUDA graph support: the A100 runs the whole model eager, the A40 piecewise."
  ],
  "h200-x1|qwen3-0.6b|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "h200-x1|gpt-oss-20b|decode": [
-  "plausible",
-  "vLLM per-step host work at batch 1",
-  "Batch-1 decode at 15-30% of the bandwidth bound: the gap is per-step host work (AsyncLLM's engine-core IPC, scheduling, sampling, streaming) rather than kernel speed."
+  "explained",
+  "vLLM: MXFP4 MoE GEMM at batch 1",
+  "GPU-bound, not host: vLLM's decode graph keeps the H200 busy 2.88 of 3.07 ms per token (gpt-oss-20b). Its Triton matmul_ogs MXFP4 expert GEMMs take 1.20 ms of that, about 1 TB/s of 4.8. pie's step is 2.28 ms."
  ],
  "rtx5090-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "h200-x1|hy4-preview|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "web-rtx4090|qwen3.8-27b|decode": [
   "explained",
@@ -2546,8 +2546,8 @@ Pie.gapNotes = {
  ],
  "tpu-v6e-1|gpt-oss-20b|prefill": [
   "explained",
-  "vLLM-TPU pads 555 to 1024 tokens",
-  "vLLM-TPU pads each step to a power-of-two token bucket, so the 555-token prompt runs as 1024 tokens, about 1.8x the work; TTFT trails pie's by 30-80%."
+  "vLLM-TPU int8 MoE kernel + embed copy",
+  "Chip-bound: per token vLLM-TPU spends 4.5 ms in its int8 32-block MoE matmul and 2.1 ms copying the whole 1.16 GB embedding table to a new layout (v5e: 4.5, 3.6 of 11 ms). pie's v6e token is 4.7 ms. Prefill: 54-71% MoE."
  ],
  "tpu-v5p-8|gemma-4-e2b|prefill": [
   "rerun",
@@ -2555,9 +2555,9 @@ Pie.gapNotes = {
   "These v5p-8 rows date from Oct 21 (pie bea673037, vLLM-TPU 0.30.0). On v5e and v6e today pie leads vLLM-TPU in prefill by 30-80%, so rerun on v5p."
  ],
  "a40-x1|mimo-v2.6-flash-rl|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "b200-x1|minimax-m3.1-flash|decode": [
   "plausible",
@@ -2565,9 +2565,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "a100-sxm-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "h100-sxm-x1|minimax-m3.1-flash|prefill": [
   "plausible",
@@ -2595,14 +2595,14 @@ Pie.gapNotes = {
   "On Hopper vLLM's FlashMLA sparse and DeepGEMM FP8 path prefills a 256-prompt batch of DeepSeek-V4.1 30-40% faster than pie."
  ],
  "pro6000-x1|qwen3.8-flash-next|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "a40-x1|qwen3.5-0.8b|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "vLLM: host-bound step, fp32 GDN state",
+  "Not seating: vLLM seats every request from 0.6 s. At c256 on H200 its step is host-bound (6.5 ms period, GPU idle a third); the fp32 GDN state kernel is 2.4 ms of it. pie keeps that state bf16, half the bytes."
  ],
  "mi300x-x1|hy4-preview|pbatch": [
   "plausible",
@@ -2610,9 +2610,9 @@ Pie.gapNotes = {
   "On ROCm the rivals serve these MoE, MLA and sparse-attention slices through generic Triton paths (vLLM 0.32.0 on MI300X, SGLang 0.5.22), and seat fewer requests at once."
  ],
  "rtx5090-x1|gemma-4-26b-a4b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "m2-16g|nvidia-nemotron-3-ultra-550b-a55b|prefill": [
   "explained",
@@ -2675,9 +2675,9 @@ Pie.gapNotes = {
   "On M2-M4 pie offloads 47-74% of dense prefill matmuls to the Neural Engine. mlx-lm stays on the GPU at ~80% of peak (M3 2.72 of 3.4 TFLOPS, M4 Pro 6.49 of 7.9); pie's TTFT implies 3.7 and 8.6, above the GPU alone."
  ],
  "pro4500-x1|glm-5.3-flash|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "m5-max-64g|gemma-4-31b|batching": [
   "explained",
@@ -2690,9 +2690,9 @@ Pie.gapNotes = {
   "TensorRT-LLM 1.4's fused MXFP4 MoE kernels beat pie's W4A16 experts at batch on Blackwell RTX/PRO and H100 (25-37% faster)."
  ],
  "h200-x1|mimo-v2.6-flash-rl|prefill": [
-  "rerun",
-  "Both engines slow on this H200 run",
-  "Both engines are 6-11x slower here than on the H100 (pie TTFT 113 ms vs 10 ms there), and pie leads by 82% on the H100. Something in this H200 run is off."
+  "real",
+  "48-layer MiMo cut: pie prefill slower",
+  "Not a bad run: the h200-x1 row is the 48-layer MiMo cut (mini48); the H100 and other x1 rows are the 6-layer cut. With 8x the layers pie's 552-token prefill takes 113 ms against vLLM's 78 ms."
  ],
  "m5-max-128g|gemma-4-e2b|prefill": [
   "explained",
@@ -2740,9 +2740,9 @@ Pie.gapNotes = {
   "On sm_8x vLLM 0.32 serves GLM-5.3's sparse MLA with XPU_MLA_SPARSE, a portable backend with no full CUDA graph support: the A100 runs the whole model eager, the A40 piecewise."
  ],
  "a40-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m4-pro-48g|qwen3.8-flash-next|decode": [
   "explained",
@@ -2765,14 +2765,14 @@ Pie.gapNotes = {
   "SGLang 0.5.22 turns breakable prefill CUDA graphs on only for CUDA; on ROCm every prefill runs eager, so its TTFT for the 555-token prompt runs 7-37 ms above pie's."
  ],
  "h100-sxm-x1|glm-5.3-flash|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "pro4500-x1|qwen3.5-9b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m5-max-64g|qwen3.6-35b-a3b|decode": [
   "explained",
@@ -2800,14 +2800,14 @@ Pie.gapNotes = {
   "pie's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "pro4500-x1|gemma-4-e4b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "a40-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m5-max-64g|qwen3.5-9b|batching": [
   "explained",
@@ -2886,23 +2886,23 @@ Pie.gapNotes = {
  ],
  "tpu-v6e-1|gpt-oss-120b|prefill": [
   "explained",
-  "vLLM-TPU pads 555 to 1024 tokens",
-  "vLLM-TPU pads each step to a power-of-two token bucket, so the 555-token prompt runs as 1024 tokens, about 1.8x the work; TTFT trails pie's by 30-80%."
+  "vLLM-TPU int8 MoE kernel + embed copy",
+  "Chip-bound: per token vLLM-TPU spends 4.5 ms in its int8 32-block MoE matmul and 2.1 ms copying the whole 1.16 GB embedding table to a new layout (v5e: 4.5, 3.6 of 11 ms). pie's v6e token is 4.7 ms. Prefill: 54-71% MoE."
  ],
  "pro4500-x1|nvidia-nemotron-3-ultra-550b-a55b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "b200-x1|qwen3.8-27b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "b200-x1|qwen3.5-9b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "m2-16g|gemma-4-31b|prefill": [
   "rerun",
@@ -2910,9 +2910,9 @@ Pie.gapNotes = {
   "pie's repeat rounds differ by more than the 2% noise bar, so the number is not stable. Rerun before reading this gap."
  ],
  "l40s-x1|qwen3-0.6b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "pro6000-x1|muse-spark-open-816b-a42b|pbatch": [
   "explained",
@@ -2945,9 +2945,9 @@ Pie.gapNotes = {
   "On sm_120 the harness's vLLM runs Muse Spark's BF16 MoE through the generic Triton path, not a tuned kernel."
  ],
  "h100-pcie-x1|qwen3.5-0.8b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "rtx5090-x1|muse-spark-open-816b-a42b|batching": [
   "explained",
@@ -2955,9 +2955,9 @@ Pie.gapNotes = {
   "On sm_120 the harness's vLLM runs Muse Spark's BF16 MoE through the generic Triton path, not a tuned kernel."
  ],
  "tpu-v5e-1|gpt-oss-20b|pbatch": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "vLLM-TPU int8 MoE kernel + embed copy",
+  "Chip-bound: per token vLLM-TPU spends 4.5 ms in its int8 32-block MoE matmul and 2.1 ms copying the whole 1.16 GB embedding table to a new layout (v5e: 4.5, 3.6 of 11 ms). pie's v6e token is 4.7 ms. Prefill: 54-71% MoE."
  ],
  "a100-sxm-x1|gemma-4-31b|batching": [
   "plausible",
@@ -2975,19 +2975,19 @@ Pie.gapNotes = {
   "vllm-metal's c32 step is plain MLX (Qwen3.5-9B 38.7 ms = mlx-lm's own 32-row forward). MLX 0.32.4 runs 32-row 4-bit matmuls with N under 16K as qmm_splitk, which skips M5's NAX units: about 10 of 38.7 ms."
  ],
  "pro6000-x1|mimo-v2.6-flash-rl|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "a100-pcie-x1|hy4-preview|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "a100-pcie-x1|gemma-4-e4b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "pro6000-x1|muse-spark-open-816b-a42b|batching": [
   "explained",
@@ -2995,14 +2995,14 @@ Pie.gapNotes = {
   "On sm_120 the harness's vLLM runs Muse Spark's BF16 MoE through the generic Triton path, not a tuned kernel."
  ],
  "h200-x1|glm-5.3-flash|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ],
  "h100-sxm-x1|gpt-oss-20b|decode": [
-  "plausible",
-  "vLLM per-step host work at batch 1",
-  "Batch-1 decode at 15-30% of the bandwidth bound: the gap is per-step host work (AsyncLLM's engine-core IPC, scheduling, sampling, streaming) rather than kernel speed."
+  "explained",
+  "vLLM: MXFP4 MoE GEMM at batch 1",
+  "GPU-bound, not host: vLLM's decode graph keeps the H200 busy 2.88 of 3.07 ms per token (gpt-oss-20b). Its Triton matmul_ogs MXFP4 expert GEMMs take 1.20 ms of that, about 1 TB/s of 4.8. pie's step is 2.28 ms."
  ],
  "tpu-v6e-1|qwen3.6-35b-a3b|decode": [
   "plausible",
@@ -3010,9 +3010,9 @@ Pie.gapNotes = {
   "The cause of this gap has not been traced yet; it is being profiled on the hardware."
  ],
  "pro6000-x1|gemma-4-26b-a4b|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "tpu-v5p-8|gemma-4-12b|decode": [
   "plausible",
@@ -3035,9 +3035,9 @@ Pie.gapNotes = {
   "Few cells: TRT-LLM's single-request TTFT runs 5-40 ms above pie's (PyTorch-backend host path), most on the Nemotron-3 hybrid Mamba slices."
  ],
  "tpu-v5e-1|gpt-oss-120b|pbatch": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "vLLM-TPU int8 MoE kernel + embed copy",
+  "Chip-bound: per token vLLM-TPU spends 4.5 ms in its int8 32-block MoE matmul and 2.1 ms copying the whole 1.16 GB embedding table to a new layout (v5e: 4.5, 3.6 of 11 ms). pie's v6e token is 4.7 ms. Prefill: 54-71% MoE."
  ],
  "tpu-v5e-1|gemma-4-e2b|pbatch": [
   "real",
@@ -3070,14 +3070,14 @@ Pie.gapNotes = {
   "The rival is faster than pie on these AMD cells; no harness issue found."
  ],
  "a100-pcie-x1|mimo-v2.6-flash-rl|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "a100-sxm-x1|qwen3.8-flash-next|batching": [
-  "plausible",
-  "Not traced yet",
-  "The cause of this gap has not been traced yet; it is being profiled on the hardware."
+  "explained",
+  "SGLang: prefill chunks stall decode",
+  "Not seating: the 2-44 s TTFT p50 is the clock (pie's client starts it at the seat). SGLang runs new prompts as separate 8k-token prefill batches that halt decode (ITL p99 64-375 ms) and reaches the GPU 0.7 s late."
  ],
  "tpu-v6e-1|gemma-4-31b|pbatch": [
   "real",
@@ -3090,9 +3090,9 @@ Pie.gapNotes = {
   "MiniMax-M3's sparse attention (MSA) runs on vLLM's Triton path below sm_100, and the MXFP8 weights need fallbacks on these cards."
  ],
  "pro4500-x1|kimi-k3|prefill": [
-  "plausible",
-  "vLLM prefill runs ungraphed",
-  "Single prefill is 555 tokens over client TTFT. With max_num_seqs=1 vLLM graphs at most 2 tokens, so the prompt runs ungraphed; its TTFT sits 2-25 ms (median 12) above pie's, well below the compute bound."
+  "explained",
+  "vLLM: 555-token prefill runs eager",
+  "vLLM graphs only up to min(2*max_num_seqs, 512) tokens, so the 555-token prompt and every GDN layer launch eagerly: 3 ms of kernels in a 18 ms TTFT (H200 Qwen3-0.6B). Graphs to 1024 give 12.4 ms, async off 8.6 ms."
  ],
  "a40-x1|muse-spark-open-816b-a42b|batching": [
   "plausible",
@@ -3120,9 +3120,9 @@ Pie.gapNotes = {
   "SGLang reads the 256 cold prompts 25-120% slower than pie (TTFT p50 2.5-3.5x pie's) on these Blackwell and Ada cells; no hobbling setting found, so this reads as kernel and scheduling speed."
  ],
  "h200-x1|gemma-4-26b-a4b|decode": [
-  "plausible",
-  "SGLang streams tokens via ZMQ",
-  "Batch-1 steps of 1-2 ms where host work dominates: SGLang streams every token through a separate detokenizer process over ZMQ, which pie does not."
+  "explained",
+  "SGLang: kernel-bound batch-1 step",
+  "Not ZMQ or host: SGLang's decode graph keeps the GPU busy 1.42 of every 1.56 ms (H200 Qwen3-0.6B) and each token reaches the client inside the next step. The step is 384 small kernels; pie's whole step is 1.12 ms."
  ],
  "pro4500-x1|gpt-oss-20b|pbatch": [
   "real",
@@ -3135,8 +3135,8 @@ Pie.gapNotes = {
   "TensorRT-LLM 1.4's fused MXFP4 MoE kernels beat pie's W4A16 experts at batch on Blackwell RTX/PRO and H100 (25-37% faster)."
  ],
  "b200-x1|qwen3.6-27b|prefill": [
-  "plausible",
-  "SGLang adds per-request IPC",
-  "Single prefill is 555 tokens over client TTFT, far below the compute bound. SGLang's TTFT runs 2-85 ms (median 12) above pie's: each request crosses its tokenizer, scheduler and detokenizer processes."
+  "explained",
+  "SGLang: eager attention between graphs",
+  "SGLang's breakable prefill graph replays each layer's GEMMs but launches attention and GDN eagerly in between: 2.7 ms of kernels over 6.9 ms (H200 Qwen3-0.6B). A full prefill graph cuts TTFT 10.5 to 8.0 ms."
  ]
 };
