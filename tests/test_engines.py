@@ -1013,6 +1013,38 @@ def test_openai_bench_single_stream_ttft_is_its_own_request(monkeypatch):
     assert max(r.ttft_s for r in results) > 0.1
 
 
+def test_a_single_stream_request_starts_on_a_cool_mac(monkeypatch):
+    """A fanless Air throttles mid-round: every single-stream request waits for nominal first, out of the round's wall."""
+    import asyncio
+
+    ob = _openai_bench()
+    cool = ob.cool_before_request
+    common = cool.__globals__  # bench/common.py as openai_bench imported it (another test may own sys.modules["common"])
+    monkeypatch.delenv("PIE_EVALS_SETTLE", raising=False)  # an earlier test may leave the runner's switch off
+    states = iter(["fair", "fair", "nominal"] + ["nominal"] * 10)
+    monkeypatch.setitem(common, "mac_thermal_state", lambda: next(states))
+    monkeypatch.setattr(common["time"], "sleep", lambda s: None)
+    assert cool() >= 0 and next(states) == "nominal"
+    monkeypatch.setenv("PIE_EVALS_SETTLE", "0")
+    monkeypatch.setitem(common, "mac_thermal_state", lambda: "serious")
+    assert cool() == 0.0
+    monkeypatch.delenv("PIE_EVALS_SETTLE")
+    calls = []
+    monkeypatch.setattr(ob, "cool_before_request", lambda: calls.append(1) or 30.0)
+    monkeypatch.setattr(ob, "make_prompts", lambda args, n: ["p"] * n)
+    monkeypatch.setattr(ob, "hf_chat_prompts_and_counts", lambda model, system, raw, think: (raw, [1] * len(raw)))
+    monkeypatch.setattr(ob, "summarize", lambda **kw: kw)
+    monkeypatch.setattr(ob, "run_one", lambda *a, **k: ob.RequestResult(True, 0.01, 1, 1, ttft_s=0.01))
+    base = ["--model", "X", "--url", "http://h", "--prompt", "p", "--max-tokens", "4", "--no-ignore-eos", "--warmup", "0",
+            "--json-out", "f", "--no-flush-cache"]
+    summary, results = asyncio.run(ob.run(ob.build_parser().parse_args(["latency", *base, "--requests", "3"])))
+    assert len(calls) == 3 and summary["config"]["cooled_s"] == 90.0 and summary["wall_s"] < 1
+    assert [r.ttft_s for r in results] == [0.01] * 3
+    calls.clear()
+    asyncio.run(ob.run(ob.build_parser().parse_args(["tput", *base, "--num-requests", "4", "--concurrency", "2"])))
+    assert not calls  # a batch is not paused mid-flight
+
+
 def test_openai_bench_sends_token_ids_so_the_bos_is_not_doubled(monkeypatch):
     import asyncio
     import types

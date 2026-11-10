@@ -23,6 +23,7 @@ from common import (
     RequestResult,
     add_mode_subcommands,
     arrival_schedule,
+    cool_before_request,
     hash_output_tokens,
     cuda_profiler_start,
     cuda_profiler_stop,
@@ -1268,15 +1269,19 @@ async def run(args: argparse.Namespace):
             start = measured_epoch
         else:
             start = time.perf_counter()
+        cooled = 0.0  # seconds a single-stream round waited for the Mac to cool, kept out of its wall
         try:
             if args.mode == "latency":
-                results = [await one(start_idx + i) for i in range(n)]
+                results = []
+                for i in range(n):
+                    cooled += await asyncio.to_thread(cool_before_request)  # each request starts on a cool Mac
+                    results.append(await one(start_idx + i))
             elif pacer.enabled:
                 results = await many_paced(range(start_idx, start_idx + n))
             else:
                 results = await many(range(start_idx, start_idx + n))
         finally:
-            wall = time.perf_counter() - start
+            wall = time.perf_counter() - start - cooled
             if profiler_task is None:
                 cuda_profiler_stop(args.cuda_profiler_capture)
             else:
@@ -1525,6 +1530,7 @@ async def run(args: argparse.Namespace):
             "cuda profiler capture": args.cuda_profiler_capture,
             "arrival_rate": args.arrival_rate,
             "arrival_process": args.arrival_process,
+            "cooled_s": round(cooled, 1),
             **pacer.stats(),
             **(
                 {

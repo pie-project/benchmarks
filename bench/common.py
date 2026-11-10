@@ -11,6 +11,7 @@ import random
 import re
 import statistics
 import subprocess
+import sys
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -207,6 +208,38 @@ class ArrivalPacer:
             "arrival_lag_max_ms": max(self.lag_s) * 1e3,
             "arrival_span_s": self._offsets[-1] if self._offsets else 0.0,
         }
+
+
+def mac_thermal_state() -> str | None:
+    """macOS's own thermal pressure (``NSProcessInfo.thermalState``), as preflight.mac_thermal_state reads it."""
+    if sys.platform != "darwin":
+        return None
+    try:
+        objc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("objc"))
+        ctypes.cdll.LoadLibrary("/System/Library/Frameworks/Foundation.framework/Foundation")
+        objc.objc_getClass.restype = ctypes.c_void_p
+        objc.objc_getClass.argtypes = [ctypes.c_char_p]
+        objc.sel_registerName.restype = ctypes.c_void_p
+        objc.sel_registerName.argtypes = [ctypes.c_char_p]
+        obj = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)(("objc_msgSend", objc))
+        num = ctypes.CFUNCTYPE(ctypes.c_long, ctypes.c_void_p, ctypes.c_void_p)(("objc_msgSend", objc))
+        info = obj(objc.objc_getClass(b"NSProcessInfo"), objc.sel_registerName(b"processInfo"))
+        return ("nominal", "fair", "serious", "critical")[num(info, objc.sel_registerName(b"thermalState"))]
+    except Exception:
+        return None
+
+
+def cool_before_request(timeout_s: float = 600, poll_s: float = 5) -> float:
+    """Before each single-stream request on a Mac: wait while the chip is past nominal, and return the seconds waited.
+    A fanless Air throttles after ~95 s of load, so a cool-down only between rounds charged the slower engine for its
+    longer round (m3-16g Qwen3.8-27B: llama.cpp's requests fell 13.0 -> 7.1 tok/s from the third on, pie's from the
+    fifth). Each request now starts as cool as every other engine's. PIE_EVALS_SETTLE=0 turns it off, as the runner's."""
+    if os.environ.get("PIE_EVALS_SETTLE", "1") == "0":
+        return 0.0
+    t0 = time.monotonic()
+    while mac_thermal_state() not in (None, "nominal") and time.monotonic() - t0 < timeout_s:
+        time.sleep(poll_s)
+    return time.monotonic() - t0
 
 
 def summarize(
