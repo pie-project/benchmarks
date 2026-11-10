@@ -46,7 +46,7 @@ window.Pie = window.Pie || {};
         <div class="tour-body">
           <span class="tour-mark">${MARK}</span>
           <h2 class="tour-title" id="tour-title">Welcome</h2>
-          <p class="tour-lead">Open, reproducible benchmarks of LLM inference engines on every major platform. The tour shows how to read them.</p>
+          <p class="tour-lead">Open, reproducible benchmarks of LLM inference engines on every major platform.</p>
         </div>
         <div class="tour-actions">
           <a class="tour-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">View CI on GitHub</a>
