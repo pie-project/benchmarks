@@ -122,11 +122,7 @@ window.Pie = window.Pie || {};
     // a measurement above its theoretical limit, as CI Reports lists it: the row tinted red
     if (state.table === "results" && !row.miniature && overLimit().has(`${row.engine}|${row.hardware}|${row.model}|${OVER_SETUP[row.workload]}`)) classes.push("is-over-limit");
     // an engine 25% or more ahead of or behind its strongest competitor on the same machine, model and workload: the row tinted yellow
-    else if (state.table === "results" && Pie.behind?.(row)) {
-      // a gap Engine Gaps concludes needs a rerun reads red, as a CI error; a reviewed gap yellow
-      const SETUP = { raw_decode: "decode", raw_prefill: "prefill", throughput: "batching", prefill_batch: "pbatch" };
-      classes.push(((Pie.gapNotes || {})[`${row.hardware}|${row.model}|${SETUP[row.workload]}`] || [])[0] === "rerun" ? "is-over-limit" : "is-gap");
-    }
+    else if (state.table === "results" && Pie.behind?.(row)) classes.push("is-gap");
     if (row.stale) {
       classes.push("is-stale");
       const when = row.stale.measured ? `, ${format.date(row.stale.measured)}` : "";
