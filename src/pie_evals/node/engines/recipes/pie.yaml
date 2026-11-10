@@ -294,6 +294,14 @@ default:
                 LM head for it; 2048 holds three: the 12-layer cut's pf32-512 22.7k -> 26.6k tok/s, c32 2.13k ->
                 2.26k, Raw equal (96.4 tok/s), every ladder program held (162, none parked; pie bb3c19f3).
                 vLLM-TPU prefills 2048 tokens a step.
+        qwen3.8-27b-mini8:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                As the 12B cut's: one 553-token prompt a fire at 1024, three at 2048. The 8-layer cut's pf32-512
+                18.4k -> 21.1k tok/s, c32 1.98k -> 2.05k, Raw equal (85.0 tok/s), the ladder's 216 programs all
+                held (pie bb3c19f3).
       knobs:
         max_forward_tokens:
           value: 1024
