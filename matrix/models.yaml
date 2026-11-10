@@ -1757,17 +1757,17 @@ artifacts:
 
   # ---------------- targeted: llama.cpp, on a Q4_K_M GGUF ----------------
   - id: gemma-4-26b-a4b-llamacpp
-    base_model: unsloth/gemma-4-26B-A4B-it-GGUF
+    base_model: lmstudio-community/gemma-4-26B-A4B-it-GGUF   # plain Q4_K_M: unsloth's UD-Q4_K_M keeps attention at 6-8 bits and read 1.6x pie's bytes per token
     family: gemma4_moe
     scheme: gguf_q4_k_m
     source_format: gguf
-    gguf_file: gemma-4-26B-A4B-it-UD-Q4_K_M.gguf
+    gguf_file: gemma-4-26B-A4B-it-Q4_K_M.gguf
     tokenizer_from: mlx-community/gemma-4-26b-a4b-it-4bit
     draft_model: unsloth/gemma-4-E2B-it-GGUF   # drafts the rows pie speculates; same vocabulary (262144, ids, specials)
     draft_gguf_file: gemma-4-E2B-it-Q4_K_M.gguf
     baseline_of: gemma-4-26b-a4b-mlx4
     baseline_label: llama.cpp
-    expected_gib: 15.78
+    expected_gib: 15.64
     tiers: [targeted]
   - id: muse-glimmer-30b-llamacpp
     base_model: meta-models/Muse-Glimmer-30B-GGUF
@@ -1807,17 +1807,17 @@ artifacts:
     expected_gib: 15.6
     tiers: [targeted]
   - id: qwen3.6-35b-a3b-llamacpp
-    base_model: unsloth/Qwen3.6-35B-A3B-GGUF
+    base_model: lmstudio-community/Qwen3.6-35B-A3B-GGUF   # plain Q4_K_M: unsloth's UD-Q4_K_M keeps attention at 6-8 bits and read 1.6x pie's bytes per token
     family: qwen3_6_moe
     scheme: gguf_q4_k_m
     source_format: gguf
-    gguf_file: Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
+    gguf_file: Qwen3.6-35B-A3B-Q4_K_M.gguf
     tokenizer_from: mlx-community/Qwen3.6-35B-A3B-4bit
     draft_model: unsloth/Qwen3.5-0.8B-GGUF   # drafts the rows pie speculates; same vocabulary (248320, ids, merges, specials)
     draft_gguf_file: Qwen3.5-0.8B-Q4_K_M.gguf
     baseline_of: qwen3.6-35b-a3b-mlx4
     baseline_label: llama.cpp
-    expected_gib: 20.61
+    expected_gib: 19.71
     tiers: [targeted]
   - id: gemma-4-31b-llamacpp
     base_model: unsloth/gemma-4-31B-it-GGUF
@@ -1938,17 +1938,17 @@ artifacts:
     platforms: [m2-16g, m3-16g, m5-16g]
     tiers: [targeted]
   - id: qwen3.6-35b-a3b-llamacpp-slice
-    base_model: unsloth/Qwen3.6-35B-A3B-GGUF
+    base_model: lmstudio-community/Qwen3.6-35B-A3B-GGUF
     family: qwen3_6_moe
     scheme: gguf_q4_k_m
     source_format: gguf
-    gguf_file: Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
+    gguf_file: Qwen3.6-35B-A3B-Q4_K_M.gguf
     tokenizer_from: mlx-community/Qwen3.6-35B-A3B-4bit
     kind: miniature
     miniature: {layers: "0-39", experts: 56, period: 4, note: "every layer, 56 of 256 experts"}
     baseline_of: qwen3.6-35b-a3b-mlx4-slice
     baseline_label: llama.cpp
-    expected_gib: 6.31
+    expected_gib: 5.52
     platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: qwen3.6-35b-a3b-splash-slice
@@ -1987,17 +1987,17 @@ artifacts:
     platforms: [m2-16g, m3-16g, m5-16g]
     tiers: [targeted]
   - id: gemma-4-26b-a4b-llamacpp-slice
-    base_model: unsloth/gemma-4-26B-A4B-it-GGUF
+    base_model: lmstudio-community/gemma-4-26B-A4B-it-GGUF
     family: gemma4_moe
     scheme: gguf_q4_k_m
     source_format: gguf
-    gguf_file: gemma-4-26B-A4B-it-UD-Q4_K_M.gguf
+    gguf_file: gemma-4-26B-A4B-it-Q4_K_M.gguf
     tokenizer_from: mlx-community/gemma-4-26b-a4b-it-4bit
     kind: miniature
     miniature: {layers: "0-29", experts: 36, period: 6, note: "every layer, 36 of 128 experts"}
     baseline_of: gemma-4-26b-a4b-mlx4-slice
     baseline_label: llama.cpp
-    expected_gib: 6.13
+    expected_gib: 5.5
     platforms: [m2-16g, m3-16g, m5-16g, web-rtx4090, web-rtx5090]
     tiers: [targeted]
   - id: gpt-oss-20b-mlx4-slice
