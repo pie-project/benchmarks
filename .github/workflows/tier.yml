@@ -97,6 +97,9 @@ jobs:
         # (the bench starts only after every launch). A run on its own pods (one pod per shard, a one-GPU part whose
         # stock reads "Low" for minutes at a time) retries a no-instance answer every 5 minutes for up to 45
         run: |
+          # tee answered for launch-pod: a launch that found no instance passed with no pod, and its shard's bench was
+          # skipped without a word (weekly 42907071876, b200-x1)
+          set -o pipefail
           for try in 1 2 3 4 5 6 7 8 9 10; do
             .venv/bin/pie-evals launch-pod --platform "${{ join(matrix.fallback, ',') }}" --labels "${{ join(matrix.labels, ',') }}" --repo "${{ github.repository }}" --image "${{ vars.RUNPOD_IMAGE || 'pieproject/runpod-ci-runner:latest' }}" --kill-minutes 1440 ${{ inputs.own_pods && '' || '--reuse' }} --wait-runner 600 --debug 2>&1 | tee launch.log && exit 0
             [ "${{ inputs.own_pods }}" = "true" ] && grep -q "no instance" launch.log || exit 1
