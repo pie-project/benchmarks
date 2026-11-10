@@ -94,6 +94,13 @@ def _get(url: str, token: str, tries: int = 3) -> bytes:
     raise AssertionError
 
 
+def own_name(name: str) -> str:
+    """ "run / bench (weekly-..., h100, ...)": the job's own name, the caller's and the matrix values aside. GitHub cuts a
+    long name short without its closing parenthesis ("run / launch (h200-x1-0, ..., weekly-h200-x1-s0..."): every
+    launch marker of weekly 42904348524 went unread, and its gate ran no bench."""
+    return re.sub(r" \(.*$", "", name).split(" / ")[-1]
+
+
 def recv(run_id: str, job: str, merge: bool, dest: str) -> None:
     api = os.environ.get("GITHUB_API_URL", "https://api.github.com")
     repo = os.environ["GITHUB_REPOSITORY"]
@@ -107,9 +114,7 @@ def recv(run_id: str, job: str, merge: bool, dest: str) -> None:
         page += 1
     found = 0
     for j in jobs:
-        # "run / bench (weekly-..., h100, ...)": the caller's job name and the matrix values aside
-        own = re.sub(r" \(.*\)$", "", j["name"]).split(" / ")[-1]
-        if not re.fullmatch(job, own) or j.get("status") != "completed" or j.get("conclusion") == "skipped":
+        if not re.fullmatch(job, own_name(j["name"])) or j.get("status") != "completed" or j.get("conclusion") == "skipped":
             continue
         try:
             log = _get(f"{api}/repos/{repo}/actions/jobs/{j['id']}/logs", token).decode("utf-8", "replace")
