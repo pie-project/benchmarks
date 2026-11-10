@@ -141,6 +141,30 @@ default:
                 At 2048 a fire holds three of pf256-512's 533-token prompts (1599 rows padded to 1792); 2176
                 holds four: pf256-512 32907 -> 34017 tok/s, c256 11709 -> 11792 (pie 2be5ba85). vLLM-TPU
                 prefills 2048 tokens a step.
+        qwen3:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                At 2048 a fire holds three of pf256-512's 533-token prompts (1599 rows padded to 1792); 2304 holds
+                four: Qwen3-0.6B pf256-512 161k -> 180k tok/s, c256 9.9k -> 10.3k, Raw decode unchanged (444 tok/s;
+                pie e9a6f525). At 4096 pf256 reads 187k but c256 compiles mixed fires mid-run (9.9k -> 2.2k).
+        gemma4:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                As qwen3's: four of pf256-512's prompts a fire. E2B pf256-512 76.3k -> 83.5k tok/s, E4B 50.3k -> 53.8k,
+                the 31B cut 19.8k -> 21.0k; c256 (E2B 11.4k -> 11.7k, E4B 7.2k both) and c32 (31B 1.31k both) and Raw
+                decode (E2B 209 tok/s) unchanged (pie e9a6f525).
+      artifact:
+        gemma-4-12b-tpu:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                The full 12B gains little from gemma4's 2304 (pf256-512 19.9k -> 20.5k tok/s) and its c32 compiled
+                mixed fires mid-run on a fresh cache there (1.07k -> 0.34k tok/s; 1.09k once warm; pie e9a6f525).
     tpu-v5e-1:
       family:
         gpt_oss:
@@ -235,6 +259,15 @@ default:
                 Hy4's 6-layer cut (11 GiB): its fire's temporaries overflow a v5e at 0.97 (15.84 GiB), at 0.85 no
                 sequence's KV fits beside the weights (#1184); vLLM-TPU and
                 SGLang-JAX serve no Hy4, so no other engine's share moves.
+        qwen3:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf256-512's 533-token prompts, padded to 640 rows; 2048 holds
+                three (1792 rows): Qwen3-0.6B pf256-512 68.7k -> 88.9k tok/s, c256 6.7k both, Raw decode 369 -> 367
+                (pie e9a6f525 with #1588). At 2304 pf256 reads 94.7k but c256 falls to 6.3k: the host holds fewer
+                of the ladder's programs.
       knobs:
         max_forward_tokens:
           value: 1024
