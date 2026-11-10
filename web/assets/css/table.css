@@ -281,7 +281,7 @@
 #gaps .reports-table th.gaps-note, #gaps .reports-table td.gaps-note { width: auto; min-width: 0; max-width: none; white-space: normal; text-align: right; }
 /* Engine Gaps' conclusion: one tag per row, tinted by what the gap turned out to be */
 .gaps-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 400; color: var(--color-label); white-space: nowrap; }
-.gaps-tag::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--tag); flex: none; }  /* a Finder-tag dot beside plain text, as macOS marks status in a list */
+.gaps-tag::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--tag); flex: none; }  /* a square chip beside plain text, as the site's keys mark a colour */
 .gaps-tag.is-explained { --tag: var(--color-positive); }
 .gaps-tag.is-plausible { --tag: var(--color-accent); }
 .gaps-tag.is-rerun { --tag: var(--color-warning); }
