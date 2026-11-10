@@ -454,6 +454,28 @@ _FULL_BASES = {a["base_model"] for a in load("models")["artifacts"] if a.get("ki
 SHOWN_MINIATURES = {a["id"] for a in load("models")["artifacts"] if a["id"] in MINIATURE and (a["base_model"] in _FULL_BASES or "smoke" not in a.get("tiers", []))}
 
 
+def share_workload(rows: list[dict], a2m: dict[str, str]) -> list[dict]:
+    """Engines are compared on one workload across every tag: for each (hardware, model, category) the workload most
+    engines measured, the higher priority on a tie; an engine with a row of it shows no other. Per-tag picking alone
+    paired pie's c32 (one tag) with vLLM's c256 (another) on the v5e (qwen3.5-0.8b, 2026-11-10)."""
+    have: dict[tuple, dict[str, set]] = {}
+    for r in rows:
+        cp = WL_PRIORITY.get(r["workload"])
+        if cp:
+            g = (r["platform"], a2m.get(r["artifact"], r["artifact"]), cp[0])
+            have.setdefault(g, {}).setdefault(r["workload"], set()).add(r["engine"])
+    target = {g: max(ws, key=lambda w: (len(ws[w]), -WL_PRIORITY[w][1])) for g, ws in have.items() if len(ws) > 1}
+    out = []
+    for r in rows:
+        cp = WL_PRIORITY.get(r["workload"])
+        g = cp and (r["platform"], a2m.get(r["artifact"], r["artifact"]), cp[0])
+        t = target.get(g) if g else None
+        if t and r["workload"] != t and r["engine"] in have[g][t]:
+            continue
+        out.append(r)
+    return out
+
+
 def pick(rows: list[dict], a2m: dict[str, str], skipped: dict | None = None) -> dict[tuple, tuple]:
     """The row to show for each (hardware, engine, model, workload category): the newest run, then the best-matching
     workload, then on a Mac the MLX weights every Mac engine shares. A miniature (a few layers of the real shape) stands in only
@@ -697,6 +719,7 @@ def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
              "prompt_tokens", "requests", "failed"] + METRICS)
     rows = [r for r in store.table().select(cols).to_pylist()
             if measured(r) and r["platform"] in hardware_ids and r["engine"] in engine_ids]
+    rows = share_workload(rows, a2m)
     by_tag: dict[str, list[dict]] = {}
     for r in rows:
         if r["tag"] and not r["tag"].startswith("test-"):  # untagged runs are not shown: every release is a tag; a test-* tag never shows

@@ -128,3 +128,17 @@ def test_engines_are_compared_on_the_workload_they_share():
     assert picked[pie_key][1] is pie256
     # alone, the newest row wins as before
     assert webdb.pick([pie256, pie32], a2m)[pie_key][1] is pie32
+
+
+def test_engines_share_a_workload_across_tags():
+    t0, t1 = datetime(2026, 11, 9, 15, tzinfo=timezone.utc), datetime(2026, 11, 10, 9, tzinfo=timezone.utc)
+    a2m = {"qwen3.5-0.8b-xla": "qwen3.5-0.8b"}
+    base = {"platform": "tpu-v5e-1", "artifact": "qwen3.5-0.8b-xla", "scheme": "bf16", "status": "pass"}
+    pie256 = {**base, "engine": "pie", "workload": "c256", "started_at": t0, "tag": "main-9e94273f0"}
+    pie32 = {**base, "engine": "pie", "workload": "c32", "started_at": t1, "tag": "main-9e94273f0"}
+    vllm256 = {**base, "engine": "vllm", "workload": "c256", "started_at": t0, "tag": "tpu-v5e-full"}
+    kept = webdb.share_workload([pie256, pie32, vllm256], a2m)
+    # pie's c32 (its tag holds no vLLM row) never reaches the cell vLLM's c256 shows in (2026-11-10)
+    assert pie32 not in kept and pie256 in kept and vllm256 in kept
+    # a workload only one engine measured stays where nothing is shared
+    assert webdb.share_workload([pie32], a2m) == [pie32]
