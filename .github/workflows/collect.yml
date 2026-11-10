@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tier: { type: string, required: true, default: targeted }
-      run_id: { description: "run whose out-* artifacts to import (empty: this run)", required: false, default: "" }
+      run_id: { description: "run whose records to import: a tpu.yml run's from ~/pie-evals-handoff/out-<run_id>, a tier run's from its bench job logs (empty: this run)", required: false, default: "" }
       tag: { description: "tag the rows belong to (0.5.3-b1); empty: untagged", required: false, default: "" }
       tag_kind: { description: "release or manual (empty: from the tag)", required: false, default: "" }
       drop_tags: { description: "comma-separated manual tags to delete from the database instead of importing", required: false, default: "" }
@@ -15,7 +15,7 @@ on:
       drop_workloads: { description: "comma-separated workloads whose results to delete instead of importing", required: false, default: "" }
       drop_quality: { description: "comma-separated artifact:task:tag quality scores to delete instead of importing", required: false, default: "" }
       move_tags: { description: "comma-separated src:dst tag pairs: move src's good rows into dst instead of importing", required: false, default: "" }
-      host_dir: { description: "import shard dirs from this folder under ~/pie-evals-handoff on the runner host instead of artifacts (when artifact uploads failed)", required: false, default: "" }
+      host_dir: { description: "import shard dirs from this folder under ~/pie-evals-handoff on the runner host instead of the run's", required: false, default: "" }
       runner: { description: "runner label to import on (site; or an idle Mac like m5-max-64g when the site laptop is backed up)", required: false, default: "site" }
 
 jobs:
@@ -42,9 +42,14 @@ jobs:
       - name: move tags
         if: inputs.move_tags != ''
         run: for p in $(echo "${{ inputs.move_tags }}" | tr ',' ' '); do .venv/bin/pie-evals move-tag "${p%%:*}" "${p#*:}"; done
-      - uses: actions/download-artifact@v4
+      - name: take the run's shard dirs
         if: inputs.host_dir == '' && inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == '' && inputs.drop_quality == '' && inputs.move_tags == ''
-        with: { pattern: "out-*", path: out, run-id: "${{ inputs.run_id || github.run_id }}", github-token: "${{ github.token }}" }
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          # never GitHub's artifact storage: a tpu.yml run leaves its records on this host, a tier run's bench jobs in their logs
+          r="${{ inputs.run_id || github.run_id }}"; h="$HOME/pie-evals-handoff/out-$r"
+          if [ -d "$h" ]; then mkdir -p out/out-host && cp -R "$h"/. out/out-host/
+          else python3 infra/ci/handoff.py recv --run-id "$r" --job bench out; fi
       - name: take shard dirs from the host
         if: inputs.host_dir != ''
         run: |

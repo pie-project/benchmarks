@@ -1,6 +1,7 @@
 name: tune
 # `pie tune cuda` (the quick grid) on one RunPod GPU per platform: each pod builds pie at the commit, tunes,
-# and uploads the profile it wrote (profile-<platform>), to be checked into pie's crates/engine-cuda/profiles.
+# and prints the profile it wrote into its log (profile-<platform>), to be checked into pie's crates/engine-cuda/profiles:
+# python3 infra/ci/handoff.py recv --run-id <run> --job tune <dir> (GH_TOKEN, GITHUB_REPOSITORY=pie-project/benchmarks) unpacks them.
 run-name: tune ${{ inputs.platforms }}
 permissions: { contents: read, actions: read }
 on:
@@ -68,6 +69,8 @@ jobs:
           mkdir -p profile && cp tune.log profile/
           find / -path '*/profiles/cuda/user/*.toml' 2>/dev/null | while read -r f; do cp "$f" profile/; done
           ls -la profile
-      - uses: actions/upload-artifact@v4
+      - name: hand the profile over in this job's log  # never GitHub's artifact storage; tune.log is in the log above
         if: always()
-        with: { name: "profile-${{ matrix.platform }}", path: profile/, if-no-files-found: warn }
+        run: |
+          t=$(cd profile 2>/dev/null && ls *.toml 2>/dev/null) || true
+          if [ -n "$t" ]; then python3 infra/ci/handoff.py send "profile-${{ matrix.platform }}" profile $t; else echo "::warning::no profile written"; fi

@@ -11,7 +11,7 @@ before=$(free_gib)
 echo "disk: ${before} GiB free (low-water ${LOW_GIB})"
 [ "$before" -ge "$LOW_GIB" ] && exit 0
 cache=${PIE_EVALS_CACHE:-$HOME/.cache/pie-evals}
-for d in "$cache/artifacts" "$cache/builds" "$cache/shrink" "$cache/_work" /tmp/pie-evals-*; do drop "$d"; done
+for d in "$cache/artifacts" "$cache/builds" "$cache/shrink" "$cache/_work" "$HOME/pie-evals-out" /tmp/pie-evals-*; do drop "$d"; done
 command -v uv >/dev/null && uv cache prune >/dev/null 2>&1 || true
 drop "$HOME/Library/Caches/pip"
 hub=${HF_HUB_CACHE:-${HF_HOME:-$HOME/.cache/huggingface}/hub}

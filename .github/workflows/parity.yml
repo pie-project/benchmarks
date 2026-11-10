@@ -99,9 +99,9 @@ jobs:
           GH_RUNNER_PAT: ${{ secrets.GH_RUNNER_PAT }}
           RUNPOD_NETWORK_VOLUME_ID: ${{ vars.RUNPOD_NETWORK_VOLUME_ID }}
       - name: launched marker
-        run: mkdir -p launched && echo "${{ steps.pod.outputs.pod_id }}" > "launched/${{ matrix.label }}.txt"
-      - uses: actions/upload-artifact@v4
-        with: { name: "launched-${{ matrix.label }}", path: launched/ }
+        run: |
+          mkdir -p launched && echo "${{ steps.pod.outputs.pod_id }}" > "launched/${{ matrix.label }}.txt"
+          python3 infra/ci/handoff.py send "launched-${{ matrix.label }}" launched  # gate and teardown read it from this job's log
 
   # only the shards whose pod came up: a label no pod carries would queue for a day and hold collect
   gate:
@@ -110,8 +110,11 @@ jobs:
     runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     outputs: { shards: "${{ steps.g.outputs.shards }}", kernels: "${{ steps.g.outputs.kernels }}" }
     steps:
-      - uses: actions/download-artifact@v4
-        with: { pattern: "launched-*", path: launched, merge-multiple: true }
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: infra/ci }
+      - name: the launch markers
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: python3 infra/ci/handoff.py recv --job launch --merge launched
       - id: g
         env: { SHARDS: "${{ needs.plan.outputs.shards }}", KERNELS: "${{ needs.plan.outputs.kernels }}" }
         run: |
@@ -148,9 +151,9 @@ jobs:
           .venv/bin/pie-evals-node parity ${{ matrix.artifacts }} --platform "${{ matrix.platform }}" --pie-root "${PIE_ROOT:-/tmp/pie}" \
             --pie-commit "$C" --features "$F" --store parity-out/store --tag "${{ inputs.tag }}" --tag-kind manual --out parity-out \
             ${{ inputs.accuracy != '' && format('--accuracy {0} --n {1}', inputs.accuracy, inputs.n) || '' }}
-      - uses: actions/upload-artifact@v4
+      - name: hand the store to collect  # in this job's log, never GitHub's artifact storage; the run logs are not handed over
         if: always()
-        with: { name: "parity-${{ matrix.platform }}-${{ matrix.shard }}", path: parity-out/, if-no-files-found: warn, retention-days: 30 }
+        run: python3 infra/ci/handoff.py send "parity-${{ matrix.platform }}-${{ matrix.shard }}" parity-out store failed.json
       - name: free the Mac's disk
         # the last step, pass or fail: a Mac's disk fills over a night of jobs, and the next one must not start on a full disk
         if: always() && runner.os == 'macOS'
@@ -175,9 +178,9 @@ jobs:
           nvidia-smi 2>/dev/null || rocm-smi 2>/dev/null || echo "no smi"
           .venv/bin/pie-evals-node kernels --platform "${{ matrix.platform }}" --pie-root "${PIE_ROOT:-/tmp/pie}" --pie-commit "$KC" \
             --store kernels-out/store --tag "${{ inputs.tag }}" --tag-kind manual --out kernels-out
-      - uses: actions/upload-artifact@v4
+      - name: hand the store to collect  # in this job's log, never GitHub's artifact storage; the run logs are not handed over
         if: always()
-        with: { name: "kernels-${{ matrix.platform }}", path: kernels-out/, if-no-files-found: warn, retention-days: 30 }
+        run: python3 infra/ci/handoff.py send "kernels-${{ matrix.platform }}" kernels-out store failed.json
 
   # the Mac: pie on Metal against mlx-lm (vLLM has no Mac build), every model one after another on one runner
   mac:
@@ -211,18 +214,18 @@ jobs:
           .venv/bin/pie-evals-node parity $args --platform "${{ inputs.mac }}" --pie-root "$PIE_ROOT" --pie-commit "$C" --features metal \
             --store parity-out/store --tag "${{ inputs.tag }}" --tag-kind manual --out parity-out || echo "::warning::some models failed"
       # the parity rows leave the Mac before the kernel build can fill its disk and take the runner down
-      - uses: actions/upload-artifact@v4
+      - name: hand the store to collect  # in this job's log, never GitHub's artifact storage; the run logs stay on the Mac
         if: always()
-        with: { name: "parity-${{ inputs.mac }}-mac-models", path: parity-out/, if-no-files-found: warn, retention-days: 30 }
+        run: python3 infra/ci/handoff.py send "parity-${{ inputs.mac }}-mac-models" parity-out store failed.json
       - name: kernel tests
         if: inputs.kernels
         env: { PIE_KERNEL_ERR: "1" }
         run: |
           .venv/bin/pie-evals-node kernels --platform "${{ inputs.mac }}" --pie-root "$HOME/qual/pie-k" --pie-commit "$KC" \
             --store parity-out/store --tag "${{ inputs.tag }}" --tag-kind manual --out kernels-out || echo "::warning::kernel tests failed"
-      - uses: actions/upload-artifact@v4
+      - name: hand the store to collect
         if: always()
-        with: { name: "parity-${{ inputs.mac }}-mac", path: parity-out/, if-no-files-found: warn, retention-days: 30 }
+        run: python3 infra/ci/handoff.py send "parity-${{ inputs.mac }}-mac" parity-out store failed.json
 
   # the pods are this run's alone: end them now rather than at their 10-minute idle watchdog
       - name: free the Mac's disk
@@ -234,10 +237,11 @@ jobs:
     if: always()
     runs-on: ${{ fromJSON(vars.HOSTED_RUNS_ON || '"ubuntu-latest"') }}
     steps:
-      - uses: actions/download-artifact@v4
-        with: { pattern: "launched-*", path: launched, merge-multiple: true }
       - uses: actions/checkout@v4
         with: { path: src }
+      - name: the launch markers
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: rm -rf launched && python3 src/infra/ci/handoff.py recv --job launch --merge launched  # a self-hosted runner keeps its workspace
       - uses: astral-sh/setup-uv@v3
       - name: release pods
         working-directory: src
@@ -259,10 +263,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
-      - uses: actions/download-artifact@v4
-        with: { pattern: "parity-*", path: out }
-      - uses: actions/download-artifact@v4
-        with: { pattern: "kernels-*", path: out }
+      - name: the stores from the parity, kernels and mac jobs' logs
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: python3 infra/ci/handoff.py recv --job 'parity|kernels|mac' out
       - name: import into the database
         run: |
           shopt -s nullglob
