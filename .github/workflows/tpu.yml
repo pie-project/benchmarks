@@ -170,11 +170,19 @@ jobs:
           [ -z "${{ github.event.inputs.parity }}" ] || bash infra/tpu/vm.sh get --recurse pie-evals/out/parity out/ || echo "::warning::no parity output on the VM"
           for j in ${{ steps.jobs.outputs.job_id }}; do bash infra/tpu/vm.sh get --recurse "pie-evals/out/$j" out/ || echo "::warning::no node output for $j on the VM"; done
           bash infra/tpu/vm.sh get run.log out/ || true
+      - name: hand the records to collect on this host  # artifacts fail when the org storage quota is hit
+        if: always() && (steps.jobs.outputs.job_id != '' || github.event.inputs.parity != '' || github.event.inputs.kernels != '')
+        run: |
+          h="$HOME/pie-evals-handoff/out-${{ github.run_id }}"
+          mkdir -p "$h" && cp -R out/. "$h/"
+          find "$HOME/pie-evals-handoff" -mindepth 1 -maxdepth 1 -mtime +3 -exec rm -rf {} +
       - uses: actions/upload-artifact@v4
         if: always() && (steps.jobs.outputs.job_id != '' || github.event.inputs.parity != '' || github.event.inputs.kernels != '')
+        continue-on-error: true
         with: { name: "out-${{ github.run_id }}", path: "out/", retention-days: 30, if-no-files-found: warn }
       - uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with: { name: tpu-run-log, path: out/run.log, retention-days: 30, if-no-files-found: ignore }
 
   # its own job, so the VM is deleted even when the bench job's runner is lost or the job times out
@@ -210,7 +218,12 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - run: uv venv && uv pip install -e ".[orchestrate]"
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with: { pattern: "out-*", path: out }
+      - name: take the records from this host when there is no artifact
+        run: |
+          h="$HOME/pie-evals-handoff/out-${{ github.run_id }}"
+          if [ ! -d "out/out-${{ github.run_id }}" ] && [ -d "$h" ]; then mkdir -p out && cp -R "$h" out/; fi
       - name: import into the database
         id: import
         run: |
