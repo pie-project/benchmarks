@@ -22,22 +22,22 @@ window.Pie = window.Pie || {};
 
   const STEPS = [
     { target: () => find('.sidebar-item[data-table="speedups"]'), title: "Performance",
-      text: "Relative Speed: pie against the fastest other engine on the same hardware, model and workload." },
+      text: "Pie vs. the fastest other engine on identical hardware, model and workload." },
     { target: () => find('.sidebar-item[data-table="checks"]'), title: "Quality",
-      text: "pie's outputs checked against a reference engine, so speed never costs accuracy." },
+      text: "Pie's outputs checked against a reference engine." },
     { target: async () => {
         await go("speedups");
         if (Pie.platform?.setCompare) { Pie.platform.setCompare("engines"); document.dispatchEvent(new CustomEvent("pie:refresh")); }
         return find(".platform-table td.is-gap");
       }, title: "Large gaps are yellow",
-      text: "Engines 25% or more apart are marked yellow. Every one is reviewed, and a click opens its note." },
+      text: "Engines 25%+ apart. Click one for its reviewed note." },
     { target: async () => { await go("gaps"); return (await find('#gaps .gaps-note[data-tip-kind="explained"]')) || find("#gaps .gaps-note[data-tip]"); }, title: "Every gap has a note",
-      text: (note) => `Each gap gets its measured cause and a conclusion. Hover a row for the full note.${note.textContent.trim()
+      text: (note) => `The measured cause and conclusion for each gap.${note.textContent.trim()
         ? ` <span class="tour-quote"><b>${esc(note.dataset.tipVs || "Note")} ${esc(note.dataset.tipGap || "")}</b><br>${esc(note.dataset.tip || note.textContent.trim())}</span>` : ""}` },
     { target: () => find('.sidebar-item[data-table="reports"]'), title: "CI Errors",
-      text: "Every number is checked against the hardware's theoretical limit. One above it turns red and is listed here." },
+      text: "Numbers above the hardware's theoretical limit turn red and are listed here." },
     { target: async () => { await go("board"); return find(".board-welcome-primary"); }, title: "Open Source",
-      text: "The benchmark CI is open, so every number can be reproduced. pie-bench, for runs on your own machine, is coming soon." },
+      text: "Open CI: every number is reproducible. pie-bench for self-hosted runs is coming soon." },
   ];
 
   const sheet = () => `
@@ -45,13 +45,13 @@ window.Pie = window.Pie || {};
       <section class="tour-sheet" role="dialog" aria-modal="true" aria-labelledby="tour-title">
         <div class="tour-body">
           <span class="tour-mark">${MARK}</span>
-          <h2 class="tour-title" id="tour-title">Welcome to Pie Benchmarks</h2>
-          <p class="tour-lead">A quick look at how to read these numbers.</p>
+          <h2 class="tour-title" id="tour-title">Welcome</h2>
+          <p class="tour-lead">Open, reproducible benchmarks of LLM inference engines on every major platform.</p>
         </div>
         <div class="tour-actions">
           <a class="tour-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">View CI on GitHub</a>
           <!-- the pip package for self-hosted runs that add data; it links to PyPI once it ships -->
-          <button type="button" class="tour-button" disabled title="pip install pie-bench: run the benchmarks on your own machine and add the data. Coming soon"><svg class="tour-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>pie-bench <span class="tour-soon">Soon</span></button>
+          <button type="button" class="tour-button" disabled title="pip install pie-bench: run the benchmarks on your own machine and add the data. Coming soon"><svg class="tour-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>pie-bench</button>
           <span class="tour-spacer"></span>
           <button type="button" class="tour-button is-default" data-tour-next>Take the Tour</button>
         </div>
