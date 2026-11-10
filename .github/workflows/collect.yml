@@ -15,6 +15,7 @@ on:
       drop_workloads: { description: "comma-separated workloads whose results to delete instead of importing", required: false, default: "" }
       drop_quality: { description: "comma-separated artifact:task:tag quality scores to delete instead of importing", required: false, default: "" }
       move_tags: { description: "comma-separated src:dst tag pairs: move src's good rows into dst instead of importing", required: false, default: "" }
+      host_dir: { description: "import shard dirs from this folder under ~/pie-evals-handoff on the runner host instead of artifacts (when artifact uploads failed)", required: false, default: "" }
       runner: { description: "runner label to import on (site; or an idle Mac like m5-max-64g when the site laptop is backed up)", required: false, default: "site" }
 
 jobs:
@@ -42,8 +43,14 @@ jobs:
         if: inputs.move_tags != ''
         run: for p in $(echo "${{ inputs.move_tags }}" | tr ',' ' '); do .venv/bin/pie-evals move-tag "${p%%:*}" "${p#*:}"; done
       - uses: actions/download-artifact@v4
-        if: inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == '' && inputs.drop_quality == '' && inputs.move_tags == ''
+        if: inputs.host_dir == '' && inputs.drop_tags == '' && inputs.drop_engines == '' && inputs.drop_workloads == '' && inputs.drop_quality == '' && inputs.move_tags == ''
         with: { pattern: "out-*", path: out, run-id: "${{ inputs.run_id || github.run_id }}", github-token: "${{ github.token }}" }
+      - name: take shard dirs from the host
+        if: inputs.host_dir != ''
+        run: |
+          h="$HOME/pie-evals-handoff/${{ inputs.host_dir }}"
+          [ -d "$h" ] || { echo "::error::no $h on this host"; exit 1; }
+          mkdir -p out/out-host && cp -R "$h"/. out/out-host/
       - name: check the database
         run: .venv/bin/pie-evals store-status
       - name: import into the database
