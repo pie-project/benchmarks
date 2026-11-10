@@ -1390,7 +1390,7 @@ window.Pie = window.Pie || {};
     },
     // every cell where the fastest and slowest engine sit at least half the theoretical maximum apart, widest first, for
     // Engine Gaps; a cell above its limit is CI Reports' to list, and one with no limit cannot be measured this way
-    gaps(least = 0.5) {
+    gaps(least = 0.5, all = false) {
       const rows = measured();
       return GAIN_PICKS.flatMap((pick) => {
         const by = {};
@@ -1401,8 +1401,29 @@ window.Pie = window.Pie || {};
           return { setup: pick.id, label: pick.label, hardware: fast.hardware, model: fast.model, miniature: fast.miniature || null, engines: list.length,
             fast: fast.engine, fastValue: fast[pick.key], slow: slow.engine, slowValue: slow[pick.key], gap: fast[pick.key] / slow[pick.key] - 1,
             limit: limitOf(fast, pick), measured: fast.measured || null };
-        }).map((g) => ({ ...g, spread: g.limit ? (g.fastValue - g.slowValue) / g.limit : null })).filter((g) => g.spread >= least && g.fastValue <= g.limit);
+        }).map((g) => ({ ...g, spread: g.limit ? (g.fastValue - g.slowValue) / g.limit : null })).filter((g) => all || (g.spread >= least && g.fastValue <= g.limit));
       }).sort((a, b) => b.spread - a.spread);
+    },
+    // every cell where pie and the strongest other engine sit at least `least` apart, either way (pie/rival − 1), widest
+    // first: Engine Gaps' rows and the grid's yellow cells, each with both runs' dates
+    pieGaps(least = 0.25) {
+      const rows = measured();
+      return GAIN_PICKS.flatMap((pick) => {
+        const by = {};
+        for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}`] ||= []).push(r);
+        return Object.values(by).flatMap((list) => {
+          const pie = list.find((r) => r.engine === "pie");
+          const others = list.filter((r) => r.engine !== "pie");
+          if (!pie || !others.length) return [];
+          const rival = others.reduce((a, b) => (b[pick.key] > a[pick.key] ? b : a));
+          const gap = pie[pick.key] / rival[pick.key] - 1;
+          if (Math.abs(gap) < least) return [];
+          return [{ setup: pick.id, label: pick.label, hardware: pie.hardware, model: pie.model, miniature: pie.miniature || null, engines: list.length,
+            pieValue: pie[pick.key], pieAt: pie.measured || null, pieNoisy: pie.status === "noisy",
+            rival: rival.engine, rivalValue: rival[pick.key], rivalAt: rival.measured || null, rivalNoisy: rival.status === "noisy",
+            gap, limit: limitOf(pie, pick) }];
+        });
+      }).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
     },
     // the model menu: every model this release measured, the widest coverage first
     menu(k) {

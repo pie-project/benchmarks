@@ -476,6 +476,7 @@
     Pie.platform.onChange(render);
     // an empty cell's runs are the unavailable rows Performance hides: they show, as U would show them
     Pie.platform.onOpenResults(({ _unavailable, ...filters }) => { if (_unavailable) state.hideEmpty = false; navigate("results", filters); });
+    Pie.platform.onOpenGap((cell) => { Pie.gaps.focus(cell); navigate("gaps"); });
     Pie.checks.onOpenRuns((filters) => navigate("quality", filters));
     overview.bind(state);
     overview.onChange(render);
