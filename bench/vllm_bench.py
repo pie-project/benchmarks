@@ -20,7 +20,7 @@ from common import (
     finish,
     gpu_clock_state,
     hash_output_tokens,
-    hf_chat_prompts_and_counts,
+    hf_chat_token_ids_and_counts,
     make_prompts,
     maybe_set_cpu_affinity,
     print_first_output,
@@ -118,9 +118,11 @@ def run(args: argparse.Namespace):
 
     cpu_affinity = maybe_set_cpu_affinity(args, visible_cuda_devices(args.tp_size))
     n = args.requests if args.mode == "latency" else args.num_requests
-    prompts, prompt_counts = hf_chat_prompts_and_counts(
+    # the token ids pie prefills (pie_bench --pretokenized-prompts): tokenizing stays outside the clock for every engine
+    token_ids, prompt_counts = hf_chat_token_ids_and_counts(
         args.model, args.system, make_prompts(args, n + args.warmup), getattr(args, "think", None)
     )
+    prompts = [{"prompt_token_ids": ids} for ids in token_ids]
     # Concurrency 0 means "no batch cap" — match pie's --concurrency 0 path.
     if args.mode == "latency":
         max_num_seqs = 1
@@ -369,9 +371,11 @@ def run_streaming(args: argparse.Namespace):
 
     cpu_affinity = maybe_set_cpu_affinity(args, visible_cuda_devices(args.tp_size))
     n = args.num_requests
-    prompts, prompt_counts = hf_chat_prompts_and_counts(
+    # the token ids pie prefills (pie_bench --pretokenized-prompts): tokenizing stays outside the clock for every engine
+    token_ids, prompt_counts = hf_chat_token_ids_and_counts(
         args.model, args.system, make_prompts(args, n + args.warmup), getattr(args, "think", None)
     )
+    prompts = [{"prompt_token_ids": ids} for ids in token_ids]
     if args.concurrency == 0:
         max_num_seqs = max(1, args.num_requests)
     else:
