@@ -180,12 +180,12 @@ window.Pie = window.Pie || {};
 
   Pie.reports = {
     element,
-    // the bar's Type filter, as the tables' filters read: its name, or the type picked, in the accent
+    // the bar: only the chip of a cell a link narrowed the page to
     focus(hardware, model, setup) { focused = { hardware, model, setup: setup || null }; if (!element.hidden) draw(); },
     bar() {
       const chip = focused ? `<span class="filter is-set"><button class="filter-button" type="button" data-reports-unfocus title="Show every report">${esc([nameOf("hardware", focused.hardware), nameOf("models", focused.model), focused.setup && { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" }[focused.setup]].filter(Boolean).join(" · "))}<svg class="popup-chevron" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></button></span>` : "";
-      const chevron = '<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>';
-      return chip + `<span class="filter${typeFilter ? " is-set" : ""}"><button class="filter-button" type="button" data-reports-pick="type" aria-haspopup="menu">${typeFilter ? esc(TYPES[typeFilter].label) : "Type"}${chevron}</button></span>`;
+      // no Type filter: every row on this page is one type, a measurement above its theoretical limit
+      return chip;
     },
     menu(k) {
       if (k !== "type") return [];
