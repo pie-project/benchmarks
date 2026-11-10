@@ -23,7 +23,7 @@ from pie_evals.node.build import bench_dir
 from pie_evals.schema import Backend, EngineName, ErrorClass, WorkloadKind, WorkloadSpec
 
 from .base import Engine, EngineLaunchError, classify_failure, register
-from .shape import max_model_len_for
+from .shape import CHAT_TEMPLATE_MARGIN_TOKENS, context_tokens_for, max_model_len_for
 
 #: the sonames pie's loader (cudarc) tries for NCCL: the unversioned dev link
 #: and the CUDA-major-numbered ones — never the ``.so.2`` that ``libnccl2``
@@ -248,6 +248,13 @@ class PieEngine(Engine):
     def pie_engine_name(self) -> str:
         return _BACKEND_TO_ENGINE[self.platform.backend]
 
+    def _pie_has(self, text: str) -> bool:
+        """Whether the pie checkout's XLA engine options declare `text` (a key an older pie refuses to boot on)."""
+        try:
+            return text in (self.pie_root / "crates/worker/src/config/backend.rs").read_text()
+        except OSError:
+            return False
+
     def _bench_has(self, flag: str) -> bool:
         try:
             return flag in self.script_path().read_text()
@@ -309,6 +316,10 @@ class PieEngine(Engine):
             args += ["--device", str(r["device"])]
 
         args += ["--max-model-len", str(max_model_len_for(workload))]
+        # a hybrid's state slots seat the shape's own sequences (prompt, output, template), not 2048-token ones:
+        # Qwen3.6-35B-A3B's v6e pool seated 180 of c256's 256 lanes at the context (a pie that knows the key)
+        if self.platform.backend == Backend.XLA and self._pie_has("pub seat_tokens"):
+            args += ["--engine-option", f"seat_tokens={context_tokens_for(workload) + CHAT_TEMPLATE_MARGIN_TOKENS}"]
 
         # A pie that sizes its pool in bytes (`[model] device_kv_budget`, pie
         # #929) has no page-count key, and its `device_memory_share` holds on
