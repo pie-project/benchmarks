@@ -142,3 +142,27 @@ def test_engines_share_a_workload_across_tags():
     assert pie32 not in kept and pie256 in kept and vllm256 in kept
     # a workload only one engine measured stays where nothing is shared
     assert webdb.share_workload([pie32], a2m) == [pie32]
+
+
+def test_engines_share_a_cut_of_the_model():
+    t0, t1 = datetime(2026, 11, 8, tzinfo=timezone.utc), datetime(2026, 11, 9, tzinfo=timezone.utc)
+    a2m = {"glm-5.3-mini78": "glm-5.3", "glm-5.3-mini78-e12": "glm-5.3"}
+    base = {"platform": "b200-x1", "workload": "pf128-512", "scheme": "fp8", "status": "pass"}
+    pie12 = {**base, "engine": "pie", "artifact": "glm-5.3-mini78-e12", "started_at": t1}
+    rivals = [{**base, "engine": e, "artifact": "glm-5.3-mini78", "started_at": t0} for e in ("vllm", "sglang", "trtllm")]
+    # pie's 12-expert cut never stands against the 16-expert one the others ran, though both read "78 of 78 layers"
+    assert webdb.share_cut([pie12, *rivals], a2m) == rivals
+    # once pie runs the shared cut, that row is the one kept
+    pie16 = {**base, "engine": "pie", "artifact": "glm-5.3-mini78", "started_at": t0}
+    assert webdb.share_cut([pie12, pie16, *rivals], a2m) == [pie16, *rivals]
+    # one cut alone, or other platforms and categories, pass through
+    assert webdb.share_cut([pie12], a2m) == [pie12]
+    raw = {**rivals[0], "workload": "raw-512-256", "artifact": "glm-5.3-mini78-e12"}
+    assert webdb.share_cut([raw, *rivals], a2m) == [raw, *rivals]
+
+
+def test_one_cut_reads_alike_whichever_artifact_ran_it():
+    # pie's Mac slice of gpt-oss-120b also runs in the browser; MLX's runs on Macs only: one cut, one label
+    assert webdb.MINIATURE["gpt-oss-120b-mlx-mxfp4-slice-e10"] == webdb.MINIATURE["gpt-oss-120b-mlxlm-slice-e10"] == "36 layers, 10 experts"
+    assert webdb.CUT["glm-5.3-mini"] == webdb.CUT["glm-5.3-mini-tpu"] != webdb.CUT["glm-5.3-mini78"] != webdb.CUT["glm-5.3-mini78-e12"]
+    assert webdb.MINIATURE["glm-5.3-mini"] == "7 of 78 layers"
