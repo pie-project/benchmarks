@@ -49,7 +49,7 @@ window.Pie = window.Pie || {};
           <p class="tour-lead">Open, reproducible benchmarks of LLM inference engines on every major platform.</p>
         </div>
         <div class="tour-actions">
-          <a class="tour-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">View CI on GitHub</a>
+          <a class="tour-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">Open Source</a>
           <!-- the pip package for self-hosted runs that add data; it links to PyPI once it ships -->
           <button type="button" class="tour-button" disabled title="pip install pie-bench: run the benchmarks on your own machine and add the data. Coming soon"><svg class="tour-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>pie-bench</button>
           <span class="tour-spacer"></span>
