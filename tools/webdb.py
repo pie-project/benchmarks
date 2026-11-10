@@ -600,7 +600,7 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
     """``release`` is the tag the run belongs to; ``version`` is what actually ran (pie commit or engine release)."""
     hw, engine, model, cat = key
     version = (r["pie_commit"] or "")[:9] if engine == "pie" else r["engine_version"]
-    return {
+    row = {
         "hardware": hw, "engine": engine,
         "release": tag, "group": tag, "version": version or "",
         "model": model, "scheme": r["scheme"], "workload": cat,
@@ -613,6 +613,59 @@ def as_row(r: dict, key: tuple, tag: str) -> dict:
         "status": r["status"], "note": draft_note(r, engine),
         **miniature_fields(r["artifact"]),
     }
+    return withhold_seat_ttft(row, r, hw, engine, cat)
+
+
+# pie's client and openai_bench started a request's TTFT when it took a seat, vLLM's and SGLang's own clients when it
+# was submitted (benchmarks #1673, 2026-11-10 19:54 UTC); #1673 then counted a single-stream request's wait on the
+# one before it in openai_bench, until #1685 (21:12 UTC). Rows timed either way keep their speeds, not those timings.
+SEAT_FIX, SEAT_FIX_AT = "434fc3a158dd788ac7b1f62307c6d2eda0c69642", datetime(2026, 11, 10, 19, 54, 25, tzinfo=ZoneInfo("UTC"))
+SOLO_FIX, SOLO_FIX_AT = "d6163483c48bfc00ab7e82236ab5f7012ba2c6e1", datetime(2026, 11, 10, 21, 12, 19, tzinfo=ZoneInfo("UTC"))
+SEAT_ENGINES = {"pie", "trtllm", "llamacpp", "mlxlm", "vllm-metal", "splash"}  # the clients #1673 changed (SGLang's on a TPU too)
+BACKEND = {p["id"]: p.get("backend") for p in load("platforms")["platforms"]}
+# a shape with more requests than seats queues its requests on the client (c4 sends its 4 at once)
+QUEUES = {w["id"] for w in load("workloads")["workloads"]
+          if (w.get("params") or {}).get("num_requests", 0) > ((w.get("params") or {}).get("concurrency") or 0)}
+TIMINGS = ("ttft_ms_p50", "ttft_ms_p99", "latency_ms_p50", "latency_ms_p99")
+
+
+@functools.cache
+def harness_has(fix: str, sha: str) -> bool | None:
+    """Whether the benchmarks commit ``sha`` holds ``fix`` (None: GitHub cannot say)."""
+    try:
+        out = subprocess.run(["gh", "api", f"repos/pie-project/benchmarks/compare/{fix}...{sha}", "--jq", ".status"],
+                             capture_output=True, text=True, timeout=30).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        out = ""
+    return {"ahead": True, "identical": True, "behind": False, "diverged": False}.get(out)
+
+
+def timed_with(fix: str, at: datetime, r: dict) -> bool:
+    """A row's harness held the fix: a run that started before the fix merged did not; a later one ran the harness
+    it checked out, which may predate it (a run dispatched before the merge); a commit GitHub does not know counts as fixed."""
+    started = r["started_at"] if r["started_at"].tzinfo else r["started_at"].replace(tzinfo=ZoneInfo("UTC"))
+    if started < at:
+        return False
+    sha = r.get("harness_commit") or ""
+    return harness_has(fix, sha) is not False if re.fullmatch(r"[0-9a-f]{7,40}", sha) else True
+
+
+def withhold_seat_ttft(row: dict, r: dict, hw: str, engine: str, cat: str) -> dict:
+    """A row whose TTFT and whole-request latency the seat clock timed shows its speeds and withholds those timings."""
+    seat = engine in SEAT_ENGINES or (engine == "sglang" and BACKEND.get(hw) == "xla")
+    if not seat or BACKEND.get(hw) == "webgpu":  # a browser tab times every engine there with its own clock
+        return row
+    if cat in ("throughput", "prefill_batch") and r["workload"] in QUEUES and not timed_with(SEAT_FIX, SEAT_FIX_AT, r):
+        note = "TTFT and latency withheld: this run started each request's clock when it took a seat, not when it was sent, so they leave out the queue (rerun pending)"
+    elif cat in ("raw", "spec") and engine != "pie" and timed_with(SEAT_FIX, SEAT_FIX_AT, r) and not timed_with(SOLO_FIX, SOLO_FIX_AT, r):
+        note = "Prefill, TTFT and latency withheld: this run counted each request's wait on the one before it (rerun pending)"
+        row["prefill_tok_s"] = None
+    else:
+        return row
+    for m in TIMINGS:
+        row[m] = None
+    row["note"] = "; ".join(n for n in (row["note"], note) if n)
+    return row
 
 
 def prompt_per_request(r: dict) -> float | None:
@@ -777,7 +830,7 @@ def keep_decode(tag_rows: list[dict], picked: dict[tuple, tuple], a2m: dict[str,
 def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
     """The picked run per setup under each tag, and each tag's kind and newest time."""
     cols = (["platform", "engine", "engine_version", "artifact", "scheme", "workload", "status", "pie_commit", "started_at", "tag", "tag_kind", "counters_json",
-             "prompt_tokens", "requests", "failed"] + METRICS)
+             "prompt_tokens", "requests", "failed", "harness_commit"] + METRICS)
     rows = [r for r in store.table().select(cols).to_pylist()
             if measured(r) and r["platform"] in hardware_ids and r["engine"] in engine_ids]
     rows = share_workload(share_cut(rows, a2m), a2m)
