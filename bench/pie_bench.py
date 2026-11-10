@@ -1125,8 +1125,17 @@ async def run(args: argparse.Namespace):
                 seats = asyncio.Semaphore(args.concurrency)
 
                 async def seated(i: int) -> RequestResult:
+                    # the clock starts at t=0 as vLLM's and SGLang's clients start it (they submit every request at
+                    # once and the server queues them): a request's wait for a seat counts in its TTFT and latency
+                    queued = time.perf_counter()
                     async with seats:
-                        return await one(i, max_tokens=max_tokens)
+                        waited = time.perf_counter() - queued
+                        result = await one(i, max_tokens=max_tokens)
+                    if isinstance(result, RequestResult):
+                        result.latency_s += waited
+                        if result.ttft_s is not None:
+                            result.ttft_s += waited
+                    return result
 
                 return await asyncio.gather(*(seated(i) for i in indices))
             launched = await asyncio.gather(
