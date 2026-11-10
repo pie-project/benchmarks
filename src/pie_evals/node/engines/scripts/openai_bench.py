@@ -175,8 +175,15 @@ async def run(args: argparse.Namespace):
     gate = asyncio.Semaphore(batch)
 
     async def one(p: str, c: int, m: int) -> RequestResult:
+        # the clock starts at t=0, as vLLM's and SGLang's own clients start it: a wait for a seat counts in latency
+        queued = time.perf_counter()
         async with gate:
-            return await loop.run_in_executor(pool, run_one, args, endpoint, p, c, m, server, retries)
+            waited = time.perf_counter() - queued
+            result = await loop.run_in_executor(pool, run_one, args, endpoint, p, c, m, server, retries)
+        result.latency_s += waited
+        if result.ttft_s is not None:
+            result.ttft_s += waited
+        return result
 
     t0 = time.perf_counter()
     try:
