@@ -581,6 +581,18 @@ default:
             (the XLA engine's own default) the load reserved 128 slots and c256 failed ("this fire wants 255
             recurrent slots", gpt-oss-20b on tpu-v6e-1, #1184).
   artifact:
+    gemma-4-e4b-tpu:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            engine_option:
+              value: {device_headroom: 880MiB}
+              rationale: >
+                At the XLA engine's 1 GiB reserve (1/16 of the HBM) E4B's 14.3 GiB of weights leave the kv pool 331 MiB
+                of the 0.97 share and c256 seats ~17 lanes (1028 tok/s, pie 5c1c24a5). Past the weights and pool the
+                device holds the code of the fire programs that ran (13-50 MiB each, loaded at their first run), the
+                kept readout planes and the temporaries. At 880 MiB the pool takes 474 MiB, c256 seats ~24 lanes (1341
+                tok/s) and peaks at 15404 MiB, inside the share's 15642; pf256-512 15.7k (15.5k).
     qwen3.8-flash-next-mini:
       backend:
         xla:
