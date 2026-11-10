@@ -243,4 +243,5 @@ jobs:
       # what the next scheduled run compares against
       - uses: actions/upload-artifact@v4
         if: steps.import.outcome == 'success' && env.PLATFORM == 'tpu-v6e-1' && github.event.inputs.parity == ''  # the schedule measures the v6e only
+        continue-on-error: true  # artifact quota must not fail an import that succeeded
         with: { name: tpu-last-commit, path: last/commit.txt, retention-days: 90 }
