@@ -292,6 +292,11 @@ def run(args: argparse.Namespace):
                 if warmup_budget is not None:
                     params = {**params, "max_new_tokens": warmup_budget}
                 await stream_one(p, prompt_counts[j], params)
+            if args.mode != "latency" and max_running_requests > 1:
+                # one batch at the cell's concurrency, as pie warms its whole ladder: first-use JIT of the batched kernels stays out of the measurement
+                short = {**base_sampling, "max_new_tokens": 8}
+                await asyncio.gather(*(stream_one(prompts[k % args.warmup], prompt_counts[k % args.warmup], short)
+                                       for k in range(max_running_requests)))
 
         if args.mode == "latency":
             out: list[RequestResult] = []
