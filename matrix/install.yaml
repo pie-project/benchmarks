@@ -227,3 +227,13 @@ install:
         Measured: the npm tarball (@mlc-ai/web-llm 0.2.87) streamed and its tar entries summed; the model library's
         size from GitHub (mlc-ai/binary-mlc-llm-libs, web-llm-models/v0_2_87/base/Qwen3.5-4B-q4f16_1_cs1k-webgpu.wasm).
       parts: [["Model library (Qwen3.5-4B)", 7671593], ["Runtime (index.js)", 6814447]]
+    - engine: llamacpp-webgpu
+      version: "b11312"
+      bytes: 4941574
+      method: >-
+        What the page downloads: the harness's browser build of llama.cpp b11312 (ggml-webgpu over emdawnwebgpu, with
+        pthreads), lw.mjs (the emscripten loader, 133,953) and lw.wasm (llama.cpp and the harness's driver, 4,807,621).
+      source: >-
+        Measured: built on the laptop with the harness's own src/pie_evals/node/engines/browser/llamacpp/build.sh at
+        b11312 (emcc 7.0.0, Dawn v20260908.214631) and the two files' sizes read.
+      parts: [["Engine (lw.wasm)", 4807621], ["Loader (lw.mjs)", 133953]]
