@@ -48,7 +48,7 @@ ENGINE_META = {
     "llamacpp": ("llama.cpp", "MIT", "ggml-org/llama.cpp"),
     "mlxlm":    ("MLX", "MIT", "ml-explore/mlx-lm"),
     "vllm-metal": ("vLLM Metal", "Apache-2.0", "vllm-project/vllm-metal"),
-    "webllm":   ("MLC", "Apache-2.0", "mlc-ai/web-llm"),  # MLC's browser engine (WebLLM), named for its project
+    "webllm":   ("WebLLM", "Apache-2.0", "mlc-ai/web-llm"),  # MLC's browser engine, by its own name (the user, 2026-11-10)
     "llamacpp-webgpu": ("llama.cpp", "MIT", "ggml-org/llama.cpp"),  # its browser build, named as the engine: a browser runs only the WebGPU one
     "splash":   ("Splash", None, "incoai/splash"),
     "litert":   ("LiteRT-LM", "Apache-2.0", "google-ai-edge/LiteRT-LM"),
