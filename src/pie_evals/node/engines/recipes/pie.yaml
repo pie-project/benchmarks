@@ -157,6 +157,14 @@ default:
                 As qwen3's: four of pf256-512's prompts a fire. E2B pf256-512 76.3k -> 83.5k tok/s, E4B 50.3k -> 53.8k,
                 the 31B cut 19.8k -> 21.0k; c256 (E2B 11.4k -> 11.7k, E4B 7.2k both) and c32 (31B 1.31k both) and Raw
                 decode (E2B 209 tok/s) unchanged (pie e9a6f525).
+        gemma4_moe:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                As gemma4's: four of pf256-512's prompts a fire. The 32-expert 26B-A4B cut's pf256-512 30.5k -> 31.8k
+                tok/s; Raw decode 127 both, c256 2.34k -> 2.36k (cold and warm averaged; pie ec981e03). Qwen3.6-35B-A3B
+                (qwen3_6_moe) stays at 2048: its pf256-512 is 24.6k -> 23.3k at 2304.
       artifact:
         gemma-4-12b-tpu:
           knobs:
