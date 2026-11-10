@@ -6,16 +6,13 @@ window.Pie = window.Pie || {};
   const KEY = "pieTourSeen";
   const seen = () => { try { return localStorage.getItem(KEY) === "1"; } catch { return true; } };
   const remember = () => { try { localStorage.setItem(KEY, "1"); } catch { /* private windows can refuse storage */ } };
-  const icon = (path) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${path}"/></svg>`;
+  // the sidebar's own symbols, drawn the same way: Performance's chevrons, the gauge of the hardware limit, Engine Gaps' flag
+  const CODE = '<path d="M8.5 7 3.5 12l5 5M15.5 7l5 5-5 5"/>';
   const ROWS = [
-    ["#007AFF", "M4 19V9M10 19V5M16 19v-7M22 19H2", "Relative Speed",
-      "Pie vs the fastest other engine on the same setup."],
-    ["#FF9500", "M12 3v12M12 19v.5M4 21h16L12 3z", "Gaps Reviewed",
-      "Every gap of 25% or more is yellow and has a note."],
-    ["#FF3B30", "M12 8v5M12 16v.5M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0", "CI Errors Watched",
-      "A number above the hardware's limit turns red."],
-    ["#34C759", "M9 18l-6-6 6-6M15 6l6 6-6 6", "Open Source",
-      "Every number can be reproduced from the open CI."],
+    [Pie.icon("speedups"), "Relative Speed", "Pie vs the fastest other engine on the same setup."],
+    [Pie.icon("gaps"), "Gaps Reviewed", "Every gap of 25% or more is yellow and has a note."],
+    [Pie.icon("methodology"), "CI Errors Watched", "A number above the hardware's limit turns red."],
+    [`<svg viewBox="0 0 24 24" aria-hidden="true">${CODE}</svg>`, "Open Source", "Every number can be reproduced from the open CI."],
   ];
   // the sidebar's mark: a model's weights on top, the hardware below, the engine between
   const MARK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.75 21 5.25V7.75L12 10.25 3 7.75V5.25Z"/>
@@ -26,13 +23,16 @@ window.Pie = window.Pie || {};
         <div class="tour-body">
           <span class="tour-mark">${MARK}</span>
           <h2 class="tour-title" id="tour-title">Welcome to Pie Benchmarks</h2>
-                    <ul class="tour-rows">${ROWS.map(([tint, path, head, line]) => `
-            <li class="tour-row"><span class="tour-icon" style="--tint:${tint}">${icon(path)}</span>
+                    <ul class="tour-rows">${ROWS.map(([glyph, head, line]) => `
+            <li class="tour-row"><span class="tour-icon">${glyph}</span>
               <div><h3>${head}</h3><p>${line}</p></div></li>`).join("")}
           </ul>
         </div>
         <div class="tour-actions">
           <a class="tour-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">View CI on GitHub</a>
+          <!-- the pip package for self-hosted runs that add data; it links to PyPI once it ships -->
+          <button type="button" class="tour-button" disabled title="pip install pie-bench: run the benchmarks on your own machine and add the data. Coming soon">pie-bench <span class="tour-soon">Soon</span></button>
+          <span class="tour-spacer"></span>
           <button type="button" class="tour-button is-default" data-tour-close>Continue</button>
         </div>
       </section>
