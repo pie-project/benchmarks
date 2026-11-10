@@ -461,6 +461,7 @@ def pick(rows: list[dict], a2m: dict[str, str], skipped: dict | None = None) -> 
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
     best: dict[tuple, tuple] = {}
+    cands: dict[tuple, list[tuple]] = {}
     for r in rows:
         cat_pri = WL_PRIORITY.get(r["workload"])
         if not cat_pri:
@@ -489,8 +490,26 @@ def pick(rows: list[dict], a2m: dict[str, str], skipped: dict | None = None) -> 
         released = r["platform"] in macs or art.get("source_format") != "mlx"
         # the newest run wins: a cell measured again (a fix, a fairer workload, a new saturating N) shows its latest number
         rank = (released, r["started_at"], not mini, -pri, shared)
+        cands.setdefault(key, []).append((rank, r))
         if key not in best or rank > best[key][0]:
             best[key] = (rank, r)
+    # engines are compared on one workload: where the newest rows differ (pie's c32 against vLLM's c256 on the v5e,
+    # 2026-11-10), each engine shows its newest row of the workload most of them have, the higher priority on a tie
+    groups: dict[tuple, list[tuple]] = {}
+    for key in best:
+        groups.setdefault((key[0], key[2], key[3]), []).append(key)
+    for keys in groups.values():
+        if len({best[k][1]["workload"] for k in keys}) < 2:
+            continue
+        have: dict[str, int] = {}
+        for k in keys:
+            for w in {r["workload"] for _, r in cands[k]}:
+                have[w] = have.get(w, 0) + 1
+        target = max(have, key=lambda w: (have[w], -WL_PRIORITY[w][1]))
+        for k in keys:
+            same = [c for c in cands[k] if c[1]["workload"] == target]
+            if same:
+                best[k] = max(same, key=lambda c: c[0])
     return best
 
 
