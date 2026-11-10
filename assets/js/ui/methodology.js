@@ -15,12 +15,11 @@ window.Pie = window.Pie || {};
   // engines that run part of a prompt pass on the Apple Neural Engine, beside the GPU, and the GPU families they do it on.
   // pie's Metal engine splits each dense SwiGLU MLP with affine 4-bit weights (groups of 64) between the two (pie's
   // crates/engine-metal/src/ane and profiles/: the M4 Pro gives the Neural Engine 74% of the MLP, other Apple7-9 chips 47%
-  // of it and of the wide projections); a mixture-of-experts model and a GELU-gated MLP (Gemma's) stay on the GPU, and
-  // Apple10 (M5) keeps every pass there. Its share runs in int8 (int8 weights and activations), which Apple rates at twice
+  // of it and of the wide projections, a GELU-gated MLP's unfused matmuls among them, Gemma's); a mixture-of-experts
+  // model stays on the GPU, and Apple10 (M5) keeps every pass there. Its share runs in int8 (int8 weights and activations), which Apple rates at twice
   // the fp16 peak from M4 on; the limit counts the Neural Engine's fp16 peak, as it counts every unit at fp16.
   // No other engine here uses the Neural Engine: MLX, llama.cpp and vllm-metal run on the GPU alone
   const NEURAL_ENGINE = { pie: ["apple7", "apple8", "apple9"] };
-  const GELU_MLP = /^gemma/;  // Gemma's MLPs gate with GELU (config.json hidden_activation gelu_pytorch_tanh), not SiLU
 
   const kTok = (n) => (n >= 1024 ? `${Math.round(n / 1024)}K` : `${n}`);
 
@@ -448,9 +447,9 @@ window.Pie = window.Pie || {};
     // Batched Prefill ("pbatch"): the run's prompts all prefilled in one pass, each its own first answer token
     const batch = metric === "pbatch" ? (workload.concurrency || 1) : 1;
     const prefill = metric === "prefill" || metric === "pbatch";
-    // a prompt pass by an engine that splits a dense SwiGLU MLP with the Neural Engine on this chip has the Neural
+    // a prompt pass by an engine that splits a dense model's matmuls with the Neural Engine on this chip has the Neural
     // Engine's fp16 rate beside the GPU's; every other row, and every decode, has the GPU's alone
-    const ane = prefill && machine.ane && NEURAL_ENGINE[row.engine]?.includes(machine.arch) && row.scheme === "affine_u4_g64" && !a.routed && !GELU_MLP.test(model.family) ? machine.ane : 0;
+    const ane = prefill && machine.ane && NEURAL_ENGINE[row.engine]?.includes(machine.arch) && row.scheme === "affine_u4_g64" && !a.routed ? machine.ane : 0;
     // the whole machine: the catalog gives one device's bandwidth and FLOPS, and a run splits the model across all of them
     const bw = machine.bw * machine.devices;
     const tflops = (machine.tflops + ane) * machine.devices;

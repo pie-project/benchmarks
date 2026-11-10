@@ -374,6 +374,8 @@ window.Pie = window.Pie || {};
     if (mode.limit) return Pie.ceiling?.(pie, metric.id) || null;
     // Spec Decode: the best draft width at the Roofline page's acceptance
     if (mode.id === "spec") return (pie && Pie.specCeiling?.(pie)) || null;
+    // Batched Prefill: the run's prompts in one pass, the same bound CI Errors and the Overview use
+    if (mode.id === "pbatch") return (pie && Pie.ceiling?.(pie, "pbatch")) || null;
     if (mode.workload !== "throughput") return null;
     return batchedBound(mac, model, pie?.scheme, pie?.benchmark, pie);
   };
@@ -457,7 +459,8 @@ window.Pie = window.Pie || {};
   const tip = (mac, model, metric, c, mode, raw) => {
     const limit = mode.limit;
     const ceiling = limit ? Pie.ceiling?.(c.pie, metric.id) : null;
-    const batchBound = !limit && mode.workload === "throughput" ? batchedBound(mac, model, c.pie.scheme, c.pie.benchmark, c.pie) : null;
+    const batchBound = limit ? null : mode.workload === "throughput" ? batchedBound(mac, model, c.pie.scheme, c.pie.benchmark, c.pie)
+      : mode.id === "pbatch" ? Pie.ceiling?.(c.pie, "pbatch") || null : null;
     const batchPeak = batchBound ? batchBound.tps : null;
     // Spec Decode: the limit at the best draft width for this machine and model, at the bar's acceptance
     const specBound = mode.id === "spec" ? Pie.specCeiling?.(c.pie) : null;
@@ -529,8 +532,9 @@ window.Pie = window.Pie || {};
   // it reads, and the FLOPs a second it achieved; and its machine's roof, memory bandwidth and peak FLOPS
   const roofPoint = (r, mode, metric) => {
     if (!r?.[metric.key] || mode.id === "spec") return null;
-    if (mode.limit) {
-      const c = Pie.ceiling?.(r, metric.id);
+    // a single pass and Batched Prefill (all the run's prompts in one pass) take their point from the same pass bound
+    if (mode.limit || mode.id === "pbatch") {
+      const c = Pie.ceiling?.(r, mode.limit ? metric.id : "pbatch");
       if (!c?.parts.tflops) return null;  // a machine without a FLOPS figure has no intensity to place it at
       const flops = c.parts.mathS * c.parts.tflops * 1e12;
       const bytes = (c.parts.weightGB + c.parts.cacheGB) * 1e9;
@@ -1436,7 +1440,7 @@ window.Pie = window.Pie || {};
           ${setupControl(mode.id, modes)}${mode.id === "spec" && compare === "ceiling" ? `${Pie.specField?.() || ""}` : ""}
           <button type="button" class="plain-button rules-button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
           <span class="platform-bar-side is-end">
-            <span class="platform-key" title="An engine on this cell measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>CI Error</span>
+            <span class="platform-key" title="An engine on this cell measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>Above Limit</span>
             <span class="platform-key" title="Pie is 25% or more ahead of the strongest other engine on this cell; Engine Gaps notes why"><i class="platform-key-swatch is-gap" aria-hidden="true"></i>Reviewed Gap</span>
             <span class="platform-key" title="The full model does not fit one machine; a number beside the mark is a model slice&#39;s, for comparing engines">${NOFIT}Does not fit</span>
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
