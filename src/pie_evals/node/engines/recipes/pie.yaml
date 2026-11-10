@@ -284,6 +284,16 @@ default:
                 At the v5e's 1024 a fire holds one of pf32-512's 553-token prompts (640 rows); 2048 holds three:
                 the 4-layer cut's pf32-512 25.7k -> 34.9k tok/s, c32 2.49k -> 2.56k warm (1.31k -> 1.29k on a fresh
                 cache; pie e9a6f525 with #1588). vLLM-TPU prefills 2048 tokens a step.
+      artifact:
+        gemma-4-12b-mini12:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf32-512's 553-token prompts (640 rows) and reads the 262k-row
+                LM head for it; 2048 holds three: the 12-layer cut's pf32-512 22.7k -> 26.6k tok/s, c32 2.13k ->
+                2.26k, Raw equal (96.4 tok/s), every ladder program held (162, none parked; pie bb3c19f3).
+                vLLM-TPU prefills 2048 tokens a step.
       knobs:
         max_forward_tokens:
           value: 1024
