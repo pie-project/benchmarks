@@ -989,6 +989,30 @@ def test_openai_bench_keeps_the_whole_batch_in_flight_on_a_small_mac(monkeypatch
     assert all(r.ok for r in results) and summary["config"]["client_in_flight"] == 32
 
 
+def test_openai_bench_single_stream_ttft_is_its_own_request(monkeypatch):
+    """A single-stream round sends one request after another: no request's TTFT holds the ones before it, while a
+    concurrent shape's request still counts its wait for a seat."""
+    import asyncio
+    import time
+
+    ob = _openai_bench()
+    monkeypatch.setattr(ob, "make_prompts", lambda args, n: ["p"] * n)
+    monkeypatch.setattr(ob, "hf_chat_prompts_and_counts", lambda model, system, raw, think: (raw, [1] * len(raw)))
+    monkeypatch.setattr(ob, "summarize", lambda **kw: kw)
+
+    def run_one(args, endpoint, prompt, count, max_tokens, server, retries=None):
+        time.sleep(0.05)
+        return ob.RequestResult(True, 0.05, 1, 1, ttft_s=0.01)
+
+    monkeypatch.setattr(ob, "run_one", run_one)
+    base = ["--model", "X", "--url", "http://h", "--prompt", "p", "--max-tokens", "4", "--no-ignore-eos", "--warmup", "0",
+            "--json-out", "f", "--no-flush-cache"]
+    _, results = asyncio.run(ob.run(ob.build_parser().parse_args(["latency", *base, "--requests", "4"])))
+    assert [r.ttft_s for r in results] == [0.01] * 4
+    _, results = asyncio.run(ob.run(ob.build_parser().parse_args(["tput", *base, "--num-requests", "4", "--concurrency", "1"])))
+    assert max(r.ttft_s for r in results) > 0.1
+
+
 def test_openai_bench_sends_token_ids_so_the_bos_is_not_doubled(monkeypatch):
     import asyncio
     import types
