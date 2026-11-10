@@ -40,8 +40,9 @@ void log_cb(ggml_log_level level, const char * text, void *) {
 
 extern "C" {
 
-// load a GGUF from the virtual file system (the worker mounts the fetched file there); every layer on the GPU
-EMSCRIPTEN_KEEPALIVE int lw_load(const char * path, int n_ctx, int n_slots, int n_batch, int n_ubatch, int flash_attn) {
+// load a GGUF from the virtual file system (the worker mounts the fetched file there); every layer on the GPU, and
+// what llama.cpp keeps on the CPU on n_threads threads (the worker's pthread pool)
+EMSCRIPTEN_KEEPALIVE int lw_load(const char * path, int n_ctx, int n_slots, int n_batch, int n_ubatch, int flash_attn, int n_threads) {
     llama_log_set(log_cb, nullptr);
     llama_backend_init();
     llama_model_params mp = llama_model_default_params();
@@ -56,8 +57,8 @@ EMSCRIPTEN_KEEPALIVE int lw_load(const char * path, int n_ctx, int n_slots, int 
     cp.n_seq_max = n_slots;
     cp.n_batch = n_batch;
     cp.n_ubatch = n_ubatch;
-    cp.n_threads = 1;
-    cp.n_threads_batch = 1;
+    cp.n_threads = n_threads > 0 ? n_threads : 1;
+    cp.n_threads_batch = cp.n_threads;
     cp.no_perf = true;
     cp.kv_unified = false;  // llama-server with --parallel N (as the native rows run it): a KV of its own per slot
     cp.flash_attn_type = flash_attn > 0 ? LLAMA_FLASH_ATTN_TYPE_ENABLED : (flash_attn == 0 ? LLAMA_FLASH_ATTN_TYPE_DISABLED : LLAMA_FLASH_ATTN_TYPE_AUTO);

@@ -10,17 +10,20 @@ const pending = new Map(); // slot -> true while generating
 
 async function load(o) {
   const { default: createLw } = await import(new URL(o.module_url, location.href).href);
-  M = await createLw({ print: (s) => console.log(`llama.cpp: ${s}`), printErr: (s) => console.log(`llama.cpp: ${s}`) });
+  // the CPU's share of llama.cpp on threads as wllama (llama.cpp's own browser build) sizes them: half the cores the
+  // browser reports, one pthread worker started ahead for each (a thread asked for later would wait on this one)
+  const threads = o.n_threads || Math.max(1, Math.floor((navigator.hardwareConcurrency || 1) / 2));
+  M = await createLw({ pthreadPoolSize: threads, print: (s) => console.log(`llama.cpp: ${s}`), printErr: (s) => console.log(`llama.cpp: ${s}`) });
   const blob = await (await fetch(new URL(o.model_url, location.href))).blob();
   // an out-of-range slot is refused before the pointer is read: the call only shows which pointer type the build takes
   try { M._lw_submit(-1, 0n, 0, 0, 0, 0, 0); P = (v) => BigInt(v); } catch { P = (v) => Number(v); }
   M.FS.mkdir("/m");
   M.FS.mount(M.WORKERFS, { blobs: [{ name: "model.gguf", data: blob }] }, "/m");
   const t0 = performance.now();
-  const rc = await M.ccall("lw_load", "number", ["string", "number", "number", "number", "number", "number"],
-    ["/m/model.gguf", o.n_ctx, o.n_slots, o.n_batch, o.n_ubatch, o.flash_attn ?? -1], { async: true });
+  const rc = await M.ccall("lw_load", "number", ["string", "number", "number", "number", "number", "number", "number"],
+    ["/m/model.gguf", o.n_ctx, o.n_slots, o.n_batch, o.n_ubatch, o.flash_attn ?? -1, threads], { async: true });
   if (rc !== 0) throw new Error(`llama.cpp could not load the model (lw_load ${rc})`);
-  return { load_ms: performance.now() - t0, gguf_bytes: blob.size };
+  return { load_ms: performance.now() - t0, gguf_bytes: blob.size, n_threads: threads, cross_origin_isolated: self.crossOriginIsolated };
 }
 
 async function loop() {
