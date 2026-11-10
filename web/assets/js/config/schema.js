@@ -246,7 +246,7 @@ window.Pie = window.Pie || {};
 
     // a measurement that looks wrong, reported by a visitor and closed by a maintainer with its fix
     reports: {
-      label: "CI Errors",
+      label: "Theoretical Limit",
       section: "reports",
       view: "reports",
       filters: [],
