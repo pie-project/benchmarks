@@ -17,6 +17,7 @@ jobs:
     # a started build always finishes; only the newest waiting build is kept (GitHub drops older pending ones). Cancelling
     # in-flight builds starved the site while results and merges arrived every few minutes: no build finished for an hour
     concurrency: { group: pages-build-2, cancel-in-progress: false }
+    permissions: { contents: write }  # pushes the built site to the gh-pages branch
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
@@ -50,23 +51,16 @@ jobs:
         run: .venv/bin/python tools/outlier_issues.py site
       # the operator's localhost preview (a checkout on this laptop) gets the same data the site does
       - run: '[ -d "$HOME/Desktop/debug/pie-evals-live/web/data" ] && cp -R web/data/. "$HOME/Desktop/debug/pie-evals-live/web/data/" || true'
-      - uses: actions/upload-artifact@v4
-        with: { name: site-files, path: site, retention-days: 1 }  # one deploy every 5 minutes: 3 days of bundles filled the artifact quota
-  deploy:
-    needs: build
-    runs-on: [self-hosted, laptop-pages]  # GitHub's own runners fill up with CI and TPU waits: a deploy queued 10+ minutes behind them
-    # a started deploy always finishes: cancelling one mid-way leaves Pages stuck in "updating_pages"
-    concurrency: { group: pages-deploy, cancel-in-progress: false }
-    permissions: { contents: read, pages: write, id-token: write }
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with: { name: site-files, path: site }
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with: { path: site }
-      - id: deploy
-        uses: actions/deploy-pages@v4
-        with: { timeout: 1800000 }  # the data is over 500 MB: Pages' default 10 minutes timed out the deploys of 11-09
+      # published as the gh-pages branch, which Pages serves: no Actions artifacts, whose org storage quota blocked every
+      # deploy from 11-09 20:44 to 11-10 20:00 (the user: never use GitHub's quota). Only what changed is pushed.
+      - name: publish to the gh-pages branch
+        env: { TOKEN: "${{ github.token }}" }
+        run: |
+          echo benchmarks.pie-project.org > site/CNAME && touch site/.nojekyll
+          P="$RUNNER_TEMP/ghpages"; rm -rf "$P"
+          git clone -q --depth 1 --branch gh-pages "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$P"
+          rsync -a --delete --exclude .git site/ "$P/"
+          cd "$P" && git add -A
+          if git diff --cached --quiet; then echo "the site is unchanged"; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "site ${GITHUB_SHA::9}"
+          git push -q origin gh-pages
