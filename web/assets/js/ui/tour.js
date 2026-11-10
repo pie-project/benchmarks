@@ -45,8 +45,8 @@ window.Pie = window.Pie || {};
       <section class="tour-sheet" role="dialog" aria-modal="true" aria-labelledby="tour-title">
         <div class="tour-body">
           <span class="tour-mark">${MARK}</span>
-          <h2 class="tour-title" id="tour-title">Welcome to Pie Benchmarks</h2>
-          <p class="tour-lead">A quick look at how to read these numbers.</p>
+          <h2 class="tour-title" id="tour-title">Welcome</h2>
+          <p class="tour-lead">Open, reproducible benchmarks of LLM inference engines on every major platform. The tour shows how to read them.</p>
         </div>
         <div class="tour-actions">
           <a class="tour-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener">View CI on GitHub</a>
