@@ -22,6 +22,7 @@ from common import (
     RequestResult,
     add_mode_subcommands,
     add_output_dump_args,
+    cool_before_request,
     finish,
     hf_chat_prompts_and_counts,
     make_prompts,
@@ -173,12 +174,15 @@ async def run(args: argparse.Namespace):
         await loop.run_in_executor(pool, run_one, args, endpoint, prompts[i], counts[i], budgets[i], [], retries)
 
     gate = asyncio.Semaphore(batch)
+    cooled = [0.0]  # seconds a single-stream round waited for the Mac to cool, kept out of its wall
 
     async def one(p: str, c: int, m: int) -> RequestResult:
         # the clock starts at t=0, as vLLM's and SGLang's own clients start it: a wait for a seat counts in latency;
         # a single-stream round sends one request after another, so no request waits on the one before it
         queued = time.perf_counter()
         async with gate:
+            if latency:
+                cooled[0] += await loop.run_in_executor(pool, cool_before_request)
             waited = 0.0 if latency else time.perf_counter() - queued
             result = await loop.run_in_executor(pool, run_one, args, endpoint, p, c, m, server, retries)
         result.latency_s += waited
@@ -191,7 +195,7 @@ async def run(args: argparse.Namespace):
         results = await asyncio.gather(*(one(p, c, m) for p, c, m in zip(prompts[args.warmup:], counts[args.warmup:], budgets[args.warmup:])))
     finally:
         pool.shutdown(wait=False)
-    wall = time.perf_counter() - t0
+    wall = time.perf_counter() - t0 - cooled[0]
 
     cached = sum(s["cached_tokens"] for s in server)
     evaluated = sum(s["prompt_tokens"] for s in server)
@@ -199,6 +203,7 @@ async def run(args: argparse.Namespace):
         "api_model": args.api_model or "",
         "client_in_flight": batch,
         "connect_retries": len(retries),
+        "cooled_s": round(cooled[0], 1),
         "raw_prompt": not args.chat,
         "flush_cache": bool(args.flush_cache),
         "prompt_shuffled": bool(args.flush_cache),
