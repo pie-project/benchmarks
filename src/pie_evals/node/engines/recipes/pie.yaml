@@ -259,6 +259,15 @@ default:
                 Hy4's 6-layer cut (11 GiB): its fire's temporaries overflow a v5e at 0.97 (15.84 GiB), at 0.85 no
                 sequence's KV fits beside the weights (#1184); vLLM-TPU and
                 SGLang-JAX serve no Hy4, so no other engine's share moves.
+        qwen3:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf256-512's 533-token prompts, padded to 640 rows; 2048 holds
+                three (1792 rows): Qwen3-0.6B pf256-512 68.7k -> 88.9k tok/s, c256 6.7k both, Raw decode 369 -> 367
+                (pie e9a6f525 with #1588). At 2304 pf256 reads 94.7k but c256 falls to 6.3k: the host holds fewer
+                of the ladder's programs.
         muse_glimmer:
           knobs:
             max_forward_tokens:
@@ -273,9 +282,7 @@ default:
           rationale: >
             pie's XLA fire at the backend's 2048 rows (2176 with the padding room) needs 15.8 GiB of HLO
             temporaries for gpt-oss-20b's 5-layer cut and Hy4's 6-layer one, past a v5e's 15.75 GiB (#1184);
-            1024 rows still hold a Raw prompt in one fire. Qwen3-0.6B at 2048 reads pf256-512 88.9k tok/s against
-            68.7k, but its 205-program warm ladder outgrows a v5e host (14 parked, 39 GiB RSS, 5 GiB free) and
-            c256 loses 3-5% to their loads: 6791 -> 6476 cold, 6906 -> 6706 warm (pie ec981e03).
+            1024 rows still hold a Raw prompt in one fire.
     mi300x-x1:
       family:
         qwen3_5:
