@@ -32,7 +32,7 @@ window.Pie = window.Pie || {};
       text: "We highlight and comment on significant engine performance gaps." },
     { target: async () => { await go("gaps"); return (await find('#gaps .gaps-note[data-tip-kind="explained"]')) || find("#gaps .gaps-note[data-tip]"); }, title: "Root Cause",
       text: "Hover over a note for the full explanation." },
-    { target: () => find('.sidebar-item[data-table="reports"]'), title: "CI Errors",
+    { target: () => find('.sidebar-item[data-table="reports"]'), title: "Theoretical Limit",
       text: "Numbers above the hardware's theoretical limit turn red and are listed here." },
     { target: async () => { await go("board"); return find(".board-welcome-primary"); }, title: "Open Source",
       text: "Open CI: every number is reproducible. Use pie-bench to run the suite." },
