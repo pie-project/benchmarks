@@ -48,6 +48,8 @@ class ServedEngine(Engine):
     chat = False
     #: send the rendered prompt as token ids (a server that adds BOS to the text would prefill it twice)
     token_ids = False
+    #: one-request rows get a server of their own with one slot (runner.split_startups)
+    one_request_server = False
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)

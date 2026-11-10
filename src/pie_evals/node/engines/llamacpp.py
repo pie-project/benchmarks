@@ -31,6 +31,8 @@ class LlamacppEngine(ServedEngine):
     exact_length = "ignore_eos"
     # llama-server adds BOS to a text prompt that already starts with the template's BOS
     token_ids = True
+    # a slot count above 1 turns Gemma 4's KV-shared prompt skip off (src/models/gemma4.cpp needs n_seq_max == 1)
+    one_request_server = True
 
     # ---- inputs ------------------------------------------------------------
     def server_bin(self) -> str:

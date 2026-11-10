@@ -20,6 +20,7 @@ class VllmMetalEngine(MlxlmEngine):
     name = EngineName.VLLM_METAL
     exact_length = "ignore_eos"
     token_ids = True  # vLLM adds BOS to a text prompt too (Muse-Glimmer c32: 1 token more per request than pie)
+    one_request_server = True  # vLLM's own raw rows run at max_num_seqs=1; its pools size to max_num_seqs
 
     def vlm(self) -> bool:
         return False

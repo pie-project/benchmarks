@@ -291,6 +291,33 @@ def test_pie_cuda_cells_boot_at_their_own_shape_as_vllm_does():
             assert "@" not in mode
 
 
+def test_mac_rivals_serve_one_request_rows_on_one_slot():
+    # llama-server booted for 32 slots ran the single-stream rows too: Gemma 4 E2B/E4B prefilled ~2.75x slower
+    from pie_evals.node.engines.llamacpp import LlamacppEngine
+    from pie_evals.node.engines.shape import workload_concurrency
+    from pie_evals.node.runner import serve_envelope, split_startups
+    from pie_evals.plan.jobs import process_key
+
+    m = Matrix.load(ROOT / "matrix")
+    for aid, split in (("gemma-4-e2b-llamacpp", True), ("gemma-4-e2b-mlxlm", False)):
+        cells = [c for c in m.runnable(Tier.TARGETED, m.expand(platforms=["m5-max-64g"], artifacts=[aid])) if c.artifact.id == aid and c.platform.id == "m5-max-64g"]
+        assert {workload_concurrency(c.workload) for c in cells} >= {1, 32}, aid
+        groups = {process_key(cells[0]): cells}
+        out = split_startups(groups)
+        assert sum(len(cs) for cs in out.values()) == len(cells)
+        if not split:
+            assert out == groups
+            continue
+        (one_key, one), (wide_key, wide) = out.items()  # the one-slot process first
+        assert one_key[2].endswith("@c1") and wide_key == process_key(cells[0])
+        assert {workload_concurrency(c.workload) for c in one} == {1} and 1 not in {workload_concurrency(c.workload) for c in wide}
+        eng = LlamacppEngine(pie_root=ROOT, artifact=one[0].artifact, platform=one[0].platform, mode=one[0].mode, recipe={"gguf": "x"})
+        eng.gguf_path = lambda: Path("/m.gguf")
+        cmd = eng.server_cmd(1, 1, 2048)
+        shape = serve_envelope([c.workload for c in one])
+        assert workload_concurrency(shape) == 1 and cmd[cmd.index("--parallel") + 1] == "1" and cmd[cmd.index("--ctx-size") + 1] == "2048"
+
+
 def test_recipe_follows_the_cell_and_keeps_what_the_boot_added(job):
     # SGLang captured graphs to the first cell's concurrency and ran wider shapes eager (nightly 36099862659)
     ss = next(c for c in job.cells if c.workload.id == "ss-128-64")
