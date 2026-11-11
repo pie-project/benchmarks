@@ -15,7 +15,4 @@ def blobs(dsn: str, contributed: dict[str, dict]) -> dict[str, bytes]:
     newest = {latest: json.loads(split.rows_json(sealed[latest]))} if latest else {}
     out = {"catalog": split.gz(catalog), "head-to-head": split.gz(headline.head_to_head({**db, "snapshots": newest}))}
     out.update({f"release:{t}": b for t, b in releases.items()})
-    core, parts, _ = split.split_sealed(db, sealed, quality)
-    out["db.js"] = split.gz(core, "const DB = ", ";\n")
-    out.update({f"tag:{t}": b for t, b in parts.items()})
     return out

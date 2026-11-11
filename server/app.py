@@ -145,16 +145,6 @@ def head_to_head(request: Request):
     return _cached(request, "head-to-head", "application/json")
 
 
-@app.api_route("/v1/db.js", methods=["GET", "HEAD"])
-def db_js(request: Request):
-    return _cached(request, "db.js", "application/javascript")
-
-
-@app.api_route("/v1/tags/{name}", methods=["GET", "HEAD"])
-def tag_file(name: str, request: Request):
-    return _cached(request, f"tag:{name.removesuffix('.json')}", "application/json")
-
-
 @app.post("/v1/tokens")
 def create_token(request: Request, body: dict = Body(default={})):
     admin = auth.is_admin(request)
