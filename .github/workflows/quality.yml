@@ -85,7 +85,7 @@ jobs:
     env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
-        with: { ref: main }
+        with: { ref: legacy-pipeline }
       - name: install harness
         run: |
           # the runner's service PATH may lack uv, cargo and Homebrew: add them for this step and every later one

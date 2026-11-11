@@ -21,7 +21,7 @@ jobs:
     env: { PIE_EVALS_DB: "${{ secrets.PIE_EVALS_DB }}" }
     steps:
       - uses: actions/checkout@v4
-        with: { ref: main }
+        with: { ref: legacy-pipeline }
       - uses: astral-sh/setup-uv@v5
       - run: uv venv && uv pip install -e ".[web]"
       # phone rows the tailnet ingest left in this laptop's inbox (mobile/, pie-evals phone-ingest) go into the database
