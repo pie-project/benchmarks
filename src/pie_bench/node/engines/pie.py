@@ -133,7 +133,7 @@ def _num(cfg: dict[str, Any], *keys: str) -> float | None:
 @register
 class PieEngine(Engine):
     name = EngineName.PIE
-    script = "pie_client.py"
+    script = "bench_pie.py"
 
     DEFAULT_PROGRAM_PATH = "examples/text-completion-bench"
 

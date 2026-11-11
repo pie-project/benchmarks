@@ -86,3 +86,19 @@ def test_trust_checks_refuse_bad_submissions(client):
     assert client.post("/v1/submissions", content=_submission("run-d", pie_commit="b" * 40), headers=auth).status_code == 422
     assert client.post("/v1/submissions", content=_submission("run-d", records=[], quality=[]), headers=auth).status_code == 422
     assert client.post("/v1/submissions", content=_submission("run-1"), headers=auth).status_code == 409
+
+
+def test_a_machine_new_to_the_catalog_shows_on_the_site(client):
+    tok = client.post("/v1/tokens", json={}, headers={"Authorization": "Bearer admin-secret"}).json()
+    rec = _record("run-new")
+    rec["cell"]["platform"] = {**rec["cell"]["platform"], "id": "m9-ultra-512g", "accelerator": "Apple M9 Ultra", "memory_gib": 512}
+    body = gzip.compress(json.dumps({"format": 1, "run_id": "run-new", "tier": "targeted", "tag": "manual-test", "tag_kind": "manual",
+                                     "pie_commit": "a" * 40, "platform": rec["cell"]["platform"], "records": [rec]}).encode())
+    assert client.post("/v1/submissions", content=body, headers={"Authorization": f"Bearer {tok['token']}"}).status_code == 200
+    deadline = time.time() + 60
+    while time.time() < deadline:
+        hardware = {h["id"]: h for h in client.get("/v1/catalog").json()["hardware"]}
+        if "m9-ultra-512g" in hardware:
+            break
+        time.sleep(0.5)
+    assert hardware["m9-ultra-512g"]["resource"] == "Community"

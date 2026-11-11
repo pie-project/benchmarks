@@ -31,6 +31,7 @@ class Views:
         self.db = db
         self.lock = threading.Lock()
         self.dirty = threading.Event()
+        self.stopped = threading.Event()
         self.core: dict = {}
         self.parts: dict[str, dict] = {}
         self.blobs: dict[str, tuple[bytes, str]] = {}
@@ -40,7 +41,11 @@ class Views:
         from server import views
 
         t0 = time.monotonic()
-        core, parts = views.build(self.db.store)
+        with self.db.tx() as cur:
+            cur.execute("SELECT DISTINCT ON (platform) platform, machine->'platform' FROM runs "
+                        "WHERE platform IS NOT NULL AND jsonb_typeof(machine->'platform') = 'object' ORDER BY platform, submitted_at DESC")
+            contributed = {pid: spec for pid, spec in cur.fetchall()}
+        core, parts = views.build(self.db.store, contributed)
         everything = {**core, "snapshots": {**core.get("snapshots", {}), **{t: p["snapshots"] for t, p in parts.items()}}}
         if "quality_snapshots" in core:
             everything["quality_snapshots"] = {**core["quality_snapshots"], **{t: p.get("quality_snapshots", []) for t, p in parts.items()}}
@@ -64,8 +69,12 @@ class Views:
             raise HTTPException(404, "not found")
         return hit
 
+    def stop(self) -> None:
+        self.stopped.set()
+        self.dirty.set()
+
     def loop(self) -> None:
-        while True:
+        while not self.stopped.is_set():
             try:
                 self.build()
             except Exception:
@@ -95,6 +104,7 @@ async def lifespan(app: FastAPI):
     app.state.views = Views(app.state.db)
     threading.Thread(target=app.state.views.loop, daemon=True, name="views").start()
     yield
+    app.state.views.stop()
     app.state.db.close()
 
 

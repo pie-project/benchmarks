@@ -191,7 +191,7 @@ def pie_server(engine, workload, log_path: Path, prewarm: bool = True) -> Server
 
     argv = engine.build_argv(workload, common_args_for(workload), log_path.with_suffix(".json"))
     script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "parity_pie_serve.py"
-    i = next(k for k, a in enumerate(argv) if a.endswith("pie_client.py"))
+    i = next(k for k, a in enumerate(argv) if a.endswith("bench_pie.py"))
     argv = [argv[0], str(script), *argv[i + 1:]]
     env = engine.process_env()
     env["PYTHONPATH"] = ":".join([str(bench_dir()), env.get("PYTHONPATH", "")])

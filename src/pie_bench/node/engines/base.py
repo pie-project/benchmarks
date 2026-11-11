@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import os
 import re
@@ -525,6 +526,10 @@ def register(cls: type[Engine]) -> type[Engine]:
     return cls
 
 
-def get_engine(name: str | EngineName, backend: str | None = None) -> type[Engine]:
+ADAPTERS = ("browser", "llamacpp", "mlxlm", "pie", "sglang", "splash", "trtllm", "vllm", "vllm_metal")
 
+
+def get_engine(name: str | EngineName, backend: str | None = None) -> type[Engine]:
+    for module in ADAPTERS:
+        importlib.import_module(f"{__package__}.{module}")
     return _REGISTRY.get(f"{name}@{backend}") or _REGISTRY[str(name)]
