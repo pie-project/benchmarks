@@ -293,6 +293,14 @@ default:
                 At the v5e's 1024 a fire holds one of pf256-512's 549-token prompts (640 rows); 2048 holds three. With
                 the shared tail on readout rows only (pie #1618): pf256-512 43.2k -> 60.4k tok/s, c256 7.2k/7.4k at 2048
                 against main's 6.7k at 1024, Raw the same programs (pie 9d9bc55e, pie-g3-v5e-b).
+        gemma-4-e4b-tpu:
+          knobs:
+            max_forward_tokens:
+              value: 1280
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf256-512's 549-token prompts (640 rows); 1280 holds two in a
+                1280-row fire beside the pool its 880 MiB reserve leaves: pf256-512 19.8k -> 22.3k tok/s (1536 the
+                same), c256 1328 both (pie with the shared tail on readout rows, #1618; pie-g3-v5e-a).
         gemma-4-31b-mini6:
           knobs:
             max_forward_tokens:
