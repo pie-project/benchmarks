@@ -10,14 +10,14 @@ BENCH = Path(__file__).resolve().parents[1] / "src" / "pie_bench" / "clients"
 if str(BENCH) not in sys.path:
     sys.path.insert(0, str(BENCH))
 
-import pie_client
+import bench_pie
 
-pytestmark = pytest.mark.skipif(not pie_client.SERVER_PY.is_dir(), reason=f"no pie checkout at {pie_client.ROOT} (PIE_ROOT)")
+pytestmark = pytest.mark.skipif(not bench_pie.SERVER_PY.is_dir(), reason=f"no pie checkout at {bench_pie.ROOT} (PIE_ROOT)")
 
 
 def _table(argv: list[str], name: str) -> dict:
-    args = pie_client.build_parser().parse_args(argv)
-    cfg, _ = pie_client.build_config(args)
+    args = bench_pie.build_parser().parse_args(argv)
+    cfg, _ = bench_pie.build_config(args)
     return tomllib.loads(cfg.to_toml())[name]
 
 

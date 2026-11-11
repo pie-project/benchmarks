@@ -866,7 +866,7 @@ competitive:
       rationale: >
         Pass-through to [model.engine.options]. A value of "$pie_sku" is
         replaced by the artifact's pie_sku, but note the worker takes the SKU
-        as [model] sku, not as an engine option, and pie_client.py has no flag
+        as [model] sku, not as an engine option, and bench_pie.py has no flag
         for it (see the TODO in PieEngine.engine_args) - so leave this empty
         until the script grows --sku.
   backend:

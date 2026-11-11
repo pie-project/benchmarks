@@ -51,8 +51,19 @@ BYTES_PER_WEIGHT = {"bf16": 2, "fp8": 1, "mxfp8": 1, "mxfp4": 0.53, "int4": 0.56
 NODE_GB = {"GPU": 8 * 288, "AMD": 8 * 192, "TPU": 4 * 95}
 
 
+CONTRIBUTED: dict[str, dict] = {}
+
+
 def load(name: str) -> dict:
-    return yaml.safe_load((MATRIX / f"{name}.yaml").read_text())
+    data = yaml.safe_load((MATRIX / f"{name}.yaml").read_text())
+    if name == "platforms":
+        known = {p["id"] for p in data["platforms"]}
+        data["platforms"] += [p for pid, p in CONTRIBUTED.items() if pid not in known]
+    return data
+
+
+def contributed_platform(spec: dict) -> dict:
+    return {**spec, "tiers": ["community"], "contributed": True}
 
 
 def model_name(base: str) -> str:
@@ -173,7 +184,7 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
         rows.append({
             **base,
             "id": p["id"],
-            "resource": "Pie self-hosted" if mac else ("Google Cloud" if p.get("backend") == "xla" else "RunPod cloud"),
+            "resource": "Community" if p.get("contributed") else "Pie self-hosted" if mac else ("Google Cloud" if p.get("backend") == "xla" else "RunPod cloud"),
             "name": (p["accelerator"] if mac else c.get("short") or p["accelerator"].replace("NVIDIA ", ""))
                     + (f" ×{p['count']}" if p.get("count", 1) > 1 else ""),
             "class": "mac" if mac else ("tpu" if p.get("backend") == "xla" else "web" if p.get("backend") == "webgpu" else "gpu"), "location": "local" if mac else "cloud",
@@ -963,14 +974,18 @@ class ReadOnce:
         return getattr(self.store, name)
 
 
-def build(store) -> tuple[dict, dict[str, dict]]:
+def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict[str, dict]]:
+    CONTRIBUTED.clear()
+    CONTRIBUTED.update({pid: contributed_platform(spec) for pid, spec in (contributed or {}).items()})
     import time
     t0 = time.monotonic()
     lap = lambda what: print(f"[webdb] {what}: {time.monotonic() - t0:.0f}s", file=sys.stderr, flush=True)
     store = ReadOnce(store)
     a2m, models = artifact_to_model()
     config = json.loads(CONFIG.read_text())
-    hardware_ids = config["machines"]
+    macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
+    seen = {r["platform"] for r in store.table().select(["platform", "status"]).to_pylist() if r["status"] in ("pass", "noisy")}
+    hardware_ids = list(config["machines"]) + sorted((seen & macs) - set(config["machines"]))
     mac_engines = [e for e in engines() if "macos" in e["os"]]
     suite_ids = suite_model_ids(config, a2m)
     model_ids = sorted({m for ids in suite_ids.values() for m in ids})

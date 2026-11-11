@@ -239,7 +239,7 @@ def test_shape_helpers():
 def test_pie_cuda_tp2(tmp_path):
     eng = make(PieEngine, mode=Mode(id="tp2", tp=2))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
-    assert argv[1].endswith("clients/pie_client.py") and argv[2] == "tput"
+    assert argv[1].endswith("clients/bench_pie.py") and argv[2] == "tput"
     expected = "cuda_native" if '"cuda_native"' in eng.script_path().read_text() else "cuda"
     assert flag_value(argv, "--engine") == expected
     assert flag_value(argv, "--tp-size") == "2"
@@ -325,7 +325,7 @@ def test_pie_serve_parses_url_and_stop(tmp_path, monkeypatch):
     bench = tmp_path / "bench"
     bench.mkdir()
     monkeypatch.setenv("PIE_BENCH_BENCH_DIR", str(bench))
-    (bench / "pie_client.py").write_text(
+    (bench / "bench_pie.py").write_text(
         "import os, sys, time\n"
         "assert os.environ.get('PIE_BENCH_SERVE_ONLY') == '1'\n"
         "assert 'PIE_BENCH_SERVER_URL' not in os.environ\n"
@@ -589,7 +589,7 @@ def test_every_emitted_flag_is_parsed_by_the_script(label, cls, wl, over, tmp_pa
 
 
 def test_argparse_flag_extraction_sees_loop_registered_and_boolean_optional_flags():
-    flags = argparse_flags(BENCHES / "pie_client.py")
+    flags = argparse_flags(BENCHES / "bench_pie.py")
     assert {"--inferlet-dir", "--engine", "--wasm-warm-slots", "--frame-submit-depth", "--pretokenized-prompts", "--no-pretokenized-prompts"} <= flags
     common = argparse_flags(BENCHES / "common.py")
     assert {"--model", "--ignore-eos", "--no-ignore-eos", "--tp-size", "--sglang-cuda-graph-max-bs", "--json-out"} <= common
@@ -748,7 +748,7 @@ def test_pie_metal_args(tmp_path, monkeypatch):
     _a_page_count_pie(monkeypatch)
     eng = mac_make(PieEngine)
     argv = argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
-    assert argv[1].endswith("clients/pie_client.py") and argv[2] == "tput"
+    assert argv[1].endswith("clients/bench_pie.py") and argv[2] == "tput"
     assert flag_value(argv, "--engine") == "metal"
     assert flag_value(argv, "--max-model-len") == "2048"
     assert flag_value(argv, "--concurrency") == "32"
@@ -1131,7 +1131,7 @@ def test_pie_prefills_cold_when_its_bench_can_turn_the_prefix_cache_off(tmp_path
         bench = tmp_path / str(cold)
         bench.mkdir()
         monkeypatch.setenv("PIE_BENCH_BENCH_DIR", str(bench))
-        (bench / "pie_client.py").write_text(script)
+        (bench / "bench_pie.py").write_text(script)
         eng = PieEngine(pie_root=tmp_path, artifact=artifact(), platform=platform(), mode=Mode(), recipe={})
         assert ("--no-prefix-cache" in argv_for(eng, WORKLOADS["c32"], tmp_path)) is cold
 
@@ -1448,3 +1448,11 @@ def test_the_webgpu_platforms_run_the_browser_engines_only():
     assert engines == {"pie", "webllm", "llamacpp-webgpu"}
     assert {c.workload.id for c in cells if str(c.engine) == "webllm"} == {"raw-512-256"}
     assert len({c.artifact.id for c in cells if str(c.engine) == "pie"}) == 12
+
+
+def test_every_engine_resolves_without_importing_its_module_first():
+    import subprocess
+    import sys
+
+    code = "from pie_bench.node.engines import get_engine; [get_engine(e, 'metal') for e in ('pie', 'llamacpp', 'mlxlm', 'splash', 'vllm', 'sglang')]"
+    assert subprocess.run([sys.executable, "-c", code]).returncode == 0

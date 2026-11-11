@@ -32,7 +32,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_TOKEN
-        sync: false
+        generateValue: true
       - key: CORS_ORIGINS
         value: https://pie-project.org,https://benchmarks.pie-project.org,https://www.pie-project.org
       - key: DEFAULT_QUOTA

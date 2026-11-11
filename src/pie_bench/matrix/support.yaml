@@ -304,15 +304,15 @@ unsupported:
   - when: {program_category: diffusion, engine: mlxlm}
     reason: "not an LLM serving workload"
   - when: {program: prefill-rows}
-    reason: "prefill-rows takes its own input (`ids`); pie_client.py cannot drive it"
+    reason: "prefill-rows takes its own input (`ids`); bench_pie.py cannot drive it"
   - when: {program: prefix-tree-kv-cache, engine: pie}
-    reason: "returns non-JSON to pie_client.py (JSONDecodeError); on hybrid models also needs forward-hybrid"
+    reason: "returns non-JSON to bench_pie.py (JSONDecodeError); on hybrid models also needs forward-hybrid"
   - when: {program: mtp-speculative-decoding, engine: pie}
-    reason: "return envelope lacks num_output_tokens (pie_client.py KeyError); on hybrid models also needs forward-hybrid"
+    reason: "return envelope lacks num_output_tokens (bench_pie.py KeyError); on hybrid models also needs forward-hybrid"
   - when: {program: lora-probe, engine: pie}
     reason: "seeds a fixed-size adapter bank (1572864 bytes) that must match the model's layer count; needs a per-model input contract"
   - when: {program: cacheback-speculative-decoding, engine: pie}
-    reason: "return envelope lacks num_output_tokens (pie_client.py KeyError)"
+    reason: "return envelope lacks num_output_tokens (bench_pie.py KeyError)"
   - when: {artifact: nemotron-h-mini8}
     reason: "shrink_checkpoint.py has no nemotron_h reader (supported: deepseek_v4, deepseek_v41, glm_moe_dsa, gpt_oss, kimi, muse_glimmer, qwen3_5_moe, qwen4_exp)"
   - when: {artifact: mini-dit}
