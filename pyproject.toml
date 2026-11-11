@@ -1,6 +1,6 @@
 [project]
 name = "pie-bench"
-version = "0.1.0"
+version = "0.1.1"
 description = "Measure pie against other inference engines on your own machine and publish the results."
 readme = "README.md"
 license = "Apache-2.0"
