@@ -1,7 +1,7 @@
 import json
 import subprocess
 
-from pie_evals.node.provenance import (
+from pie_bench.node.provenance import (
     build_provenance,
     checkpoint_revision,
     git_commit,
@@ -9,7 +9,7 @@ from pie_evals.node.provenance import (
     quant_block_hash,
     relevant_env,
 )
-from pie_evals.schema import Provenance
+from pie_bench.schema import Provenance
 
 
 def _write_cfg(d, cfg):
@@ -35,7 +35,7 @@ def test_quant_block_hash_covers_per_tensor_overrides(tmp_path):
     b.mkdir()
     _write_cfg(a, MLX_CFG)
     cfg_b = json.loads(json.dumps(MLX_CFG))
-    cfg_b["quantization"]["model.layers.3.mlp.experts.gate_proj"]["bits"] = 2  # same top-level bits/group_size
+    cfg_b["quantization"]["model.layers.3.mlp.experts.gate_proj"]["bits"] = 2
     _write_cfg(b, cfg_b)
     ha, hb = quant_block_hash(a), quant_block_hash(b)
     assert ha and hb and len(ha) == 64
@@ -131,10 +131,10 @@ def test_build_provenance_fills_record_fields(tmp_path):
     assert pv.hardware_fingerprint.get("hostname")
     assert pv.os_version
     assert pv.machine_state == {"gpu_drain_wait_s": 0.0}
-    assert pv.pie_commit is None  # no checkout there
+    assert pv.pie_commit is None
 
 
 def test_gpu_links_reads_the_matrix_not_the_legend():
-    from pie_evals.node.provenance import gpu_links
+    from pie_bench.node.provenance import gpu_links
     topo = "\tGPU0\tGPU1\tCPU Affinity\tNUMA Affinity\nGPU0\t X \tSYS\t0-31\t0\nGPU1\tSYS\t X \t32-63\t1\n\nLegend:\n  X    = Self\n  SYS  = ...\n  NODE = ...\n  PIX  = ...\n"
     assert gpu_links(topo) == "GPU0-GPU1:SYS"

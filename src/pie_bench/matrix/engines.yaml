@@ -1,0 +1,94 @@
+engines:
+  - id: pie
+    os: [linux, macos, android, ios]
+    formats: [hf_safetensors, gguf, mlx]
+    tiers: [smoke, nightly, weekly]
+    recipe: default
+  - id: vllm
+    os: [linux]
+    backends: [cuda, rocm, xla]
+    formats: [hf_safetensors]
+    tiers: [nightly, weekly]
+    recipe: competitive
+    pin: "0.32.0"
+    release_source: pypi:vllm
+  - id: sglang
+    os: [linux]
+    backends: [cuda, rocm, xla]
+    formats: [hf_safetensors]
+    tiers: [nightly, weekly]
+    recipe: competitive
+    pin: "0.5.22"
+    backend_pins: {xla: "0.1.0rc0"}
+    release_source: pypi:sglang
+  - id: trtllm
+    os: [linux]
+    backends: [cuda]
+    formats: [hf_safetensors]
+    tiers: [nightly, weekly]
+    recipe: competitive
+    pin: "1.4.0rc2.post1"
+    release_source: pypi:tensorrt-llm
+  - id: llamacpp
+    os: [linux, macos, android, ios]
+    backends: [cuda, rocm, metal]
+    formats: [gguf]
+    tiers: [nightly, weekly]
+    recipe: competitive
+    pin: "b11312"
+    release_source: github:ggml-org/llama.cpp
+  - id: webllm
+    os: [linux]
+    backends: [webgpu]
+    formats: [mlc]
+    tiers: [targeted]
+    recipe: competitive
+    pin: "0.2.87"
+    release_source: github:mlc-ai/web-llm
+  - id: llamacpp-webgpu
+    os: [linux]
+    backends: [webgpu]
+    formats: [gguf]
+    tiers: [targeted]
+    recipe: competitive
+    pin: "b11312"
+    release_source: github:ggml-org/llama.cpp
+  - id: mlxlm
+    os: [macos]
+    formats: [mlx]
+    tiers: [nightly, weekly]
+    recipe: competitive
+    pin: "0.31.3"
+    release_source: pypi:mlx-lm
+  - id: vllm-metal
+    os: [macos]
+    formats: [mlx]
+    tiers: [targeted]
+    recipe: competitive
+    pin: "0.33.0"
+    release_source: github:vllm-project/vllm-metal
+  - id: splash
+    os: [macos]
+    formats: [splash]
+    tiers: [targeted]
+    recipe: competitive
+    pin: "1.1.0"
+    release_source: github:incoai/splash
+  - id: litert
+    os: [android]
+    formats: [litert]
+    tiers: []
+    recipe: default
+    release_source: github:google-ai-edge/LiteRT-LM
+  - id: mlc
+    os: [android, ios]
+    formats: [mlc]
+    tiers: []
+    recipe: default
+    release_source: github:mlc-ai/mlc-llm
+  - id: mlx-swift
+    os: [ios]
+    formats: [mlx]
+    tiers: []
+    recipe: default
+    release_source: github:ml-explore/mlx-swift-lm

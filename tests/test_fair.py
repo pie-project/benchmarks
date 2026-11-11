@@ -1,5 +1,3 @@
-"""Fair prefill/TTFT formulas and the cold-cache prompt generator."""
-
 from __future__ import annotations
 
 import json
@@ -7,10 +5,10 @@ import types
 
 import pytest
 
-from pie_evals.node import fair
-from pie_evals.node.engines.base import Engine, EngineLaunchError, perf_from_common_json
-from pie_evals.node.workloads.synthetic import prompt_words_for_tokens
-from pie_evals.schema import ErrorClass, WorkloadSpec
+from pie_bench.node import fair
+from pie_bench.node.engines.base import Engine, EngineLaunchError, perf_from_common_json
+from pie_bench.node.workloads.synthetic import prompt_words_for_tokens
+from pie_bench.schema import ErrorClass, WorkloadSpec
 
 
 def req(prompt_tokens: int, ttft_s: float, cached: int | None = 0, ok: bool = True, output_tokens: int = 200, latency_s: float = 1.3) -> dict:
@@ -19,8 +17,6 @@ def req(prompt_tokens: int, ttft_s: float, cached: int | None = 0, ok: bool = Tr
         r["cached_prompt_tokens"] = cached
     return r
 
-
-# ---- prefill formula -------------------------------------------------------
 
 def test_prefill_one_is_prompt_over_ttft():
     assert fair.prefill_tok_s_one(3234, 0.25) == pytest.approx(12936.0)
@@ -32,7 +28,7 @@ def test_prefill_one_none_when_undefined(prompt, ttft):
 
 
 def test_fair_prefill_is_median_of_cold_single_stream_rates():
-    rows = [req(1000, 0.5), req(1000, 0.25), req(1000, 0.2)]  # 2000, 4000, 5000 tok/s
+    rows = [req(1000, 0.5), req(1000, 0.25), req(1000, 0.2)]
     assert fair.fair_prefill_tok_s(rows, concurrency=1) == pytest.approx(4000.0)
 
 
@@ -68,27 +64,22 @@ def test_cache_verdict_cold_when_all_zero():
     assert fair.cache_verdict([req(512, 0.1, cached=0), req(512, 0.1, cached=0)]) == "cold"
 
 
-# ---- consistency check -----------------------------------------------------
-
 def test_consistent_row_is_not_flagged():
-    # 539 tokens per request at 41 ms TTFT is 13,100 tok/s; the row agrees with itself
     assert fair.prefill_mismatch(13100.0, 41.0, 3234, 6) is False
 
 
 def test_stored_pie_row_agrees_when_prompt_is_per_request():
-    # m5-max-128g qwen3.6 ob-512-200: the row's prompt_tokens (3234) is the total over 6 requests
     ratio = fair.prefill_consistency(13096.43, 41.156, 3234, 6)
     assert ratio == pytest.approx(1.0, abs=1e-3)
     assert fair.prefill_mismatch(13096.43, 41.156, 3234, 6) is False
 
 
 def test_total_prompt_read_as_per_request_is_flagged():
-    # the same row compared against the total instead of the per-request prompt is off by the request count
     assert fair.prefill_mismatch(13096.43, 41.156, 3234, 1) is True
 
 
 def test_tolerance_boundary():
-    assert fair.prefill_mismatch(1.15 * 1000, 1000.0, 1000, 1) is False  # ratio 1.15 exactly
+    assert fair.prefill_mismatch(1.15 * 1000, 1000.0, 1000, 1) is False
     assert fair.prefill_mismatch(1.16 * 1000, 1000.0, 1000, 1) is True
 
 
@@ -97,8 +88,6 @@ def test_consistency_none_without_inputs():
     assert fair.prefill_consistency(100.0, None, 3234, 6) is None
     assert fair.prefill_consistency(100.0, 41.0, 3234, None) is None
 
-
-# ---- cold prompts ----------------------------------------------------------
 
 def test_cold_tag_is_deterministic_and_unique_per_index():
     tags = [fair.cold_tag(fair.COLD_SEED, "cold-ss-512-200", i) for i in range(200)]
@@ -117,7 +106,6 @@ def test_cold_prompts_share_no_prefix():
     prompts = fair.cold_prompts(body, workload_id="cold-ss-128-64", seed=fair.COLD_SEED, count=12)
     assert len(prompts) == 12
     assert len(set(prompts)) == 12
-    # the first character of the tag differs for some pairs, so the common prefix is at most "[" plus one hex digit
     assert fair.max_pairwise_prefix(prompts) < len("[") + fair.TAG_HEX_CHARS
     assert all(p.endswith(body) for p in prompts)
 
@@ -145,14 +133,12 @@ def test_max_pairwise_prefix():
     assert fair.max_pairwise_prefix(["abc"]) == 0
 
 
-# ---- perf_from_common_json wiring -----------------------------------------
-
 def _summary(**config):
     return {"output_tokens": 400, "prompt_tokens": 2 * 3234, "wall_s": 2.0, "config": config}
 
 
 def test_perf_prefill_uses_fair_definition_for_cold_single_stream():
-    requests = [req(3234, 0.25), req(3234, 0.5)]  # 12936, 6468 tok/s -> median 9702
+    requests = [req(3234, 0.25), req(3234, 0.5)]
     perf = perf_from_common_json(_summary(concurrency=1), requests, None, concurrency=1)
     assert perf.prefill_tok_s == pytest.approx((12936.0 + 6468.0) / 2)
     assert perf.counters["fair_def"] == float(fair.FAIR_DEFINITION_VERSION)
@@ -178,10 +164,8 @@ def test_perf_prefill_uses_summary_cache_count_for_openai_servers():
     assert perf.counters["cached_prompt_tokens"] == 0.0
 
 
-# ---- cold argv --------------------------------------------------------------
-
-class _Fake(Engine):  # minimal stand-in: only the attributes cold_common_args reads
-    def __init__(self):  # noqa: D401 - skip the real constructor
+class _Fake(Engine):
+    def __init__(self):
         self.name = types.SimpleNamespace(value="fake")
         self.supports_prompts_file = True
 
@@ -231,7 +215,7 @@ def test_cold_prompt_file_hash_is_recorded_and_decodable(tmp_path, monkeypatch):
 
 
 def test_cold_tagged_run_without_a_cache_count_is_cold_by_construction():
-    from pie_evals.node.engines.base import perf_from_common_json
+    from pie_bench.node.engines.base import perf_from_common_json
     reqs = [{"ok": True, "latency_s": 1.0, "ttft_s": 0.2, "output_tokens": 64, "prompt_tokens": 512, "intertoken_us": []}] * 4
     summary = {"config": {"concurrency": 1}}
     cold = perf_from_common_json(summary, reqs, None, concurrency=1, cold_tags=True)
@@ -242,7 +226,7 @@ def test_cold_tagged_run_without_a_cache_count_is_cold_by_construction():
 
 
 def test_a_cold_tagged_run_with_a_cached_opening_is_cold():
-    from pie_evals.node.engines.base import perf_from_common_json
+    from pie_bench.node.engines.base import perf_from_common_json
     reqs = [{"ok": True, "latency_s": 1.0, "ttft_s": 0.2, "output_tokens": 64, "prompt_tokens": 555, "intertoken_us": []}] * 8
     opening = perf_from_common_json({"config": {"concurrency": 1, "cached_prompt_tokens": 120}}, reqs, None, concurrency=1, cold_tags=True)
     assert opening.prefill_tok_s is not None and opening.counters["cold_opening_cached_per_request"] == 15
@@ -251,17 +235,16 @@ def test_a_cold_tagged_run_with_a_cached_opening_is_cold():
 
 
 def test_each_cold_prompt_has_its_own_body():
-    from pie_evals.node.workloads.synthetic import prompt_words_for_tokens
+    from pie_bench.node.workloads.synthetic import prompt_words_for_tokens
 
     prompts = fair.cold_prompts(lambda i: prompt_words_for_tokens(128, salt=f"c256|{i}"), workload_id="c256", seed=fair.COLD_SEED, count=8)
     bodies = [p.split("] ", 1)[1] for p in prompts]
-    assert len(set(bodies)) == 8  # one answer per lane: a MoE batch routes its requests apart
-    assert {len(b.split()) for b in bodies} == {len(prompt_words_for_tokens(128, salt="c256|0").split())}  # same length every request
-    assert fair.cold_prompts("one body", workload_id="w", seed="s", count=2)[1].endswith("] one body")  # a plain body still works
+    assert len(set(bodies)) == 8
+    assert {len(b.split()) for b in bodies} == {len(prompt_words_for_tokens(128, salt="c256|0").split())}
+    assert fair.cold_prompts("one body", workload_id="w", seed="s", count=2)[1].endswith("] one body")
 
 
 def test_time_per_output_token_does_not_read_a_batched_stream_as_zero():
-    # 65 tokens over 0.8 s after the first, handed over 4 at a time: most gaps are 0 us
     chunked = {"ok": True, "latency_s": 1.0, "ttft_s": 0.2, "output_tokens": 65, "prompt_tokens": 512, "intertoken_us": ([50000] + [0] * 3) * 16}
     perf = perf_from_common_json({"config": {"concurrency": 1}}, [chunked] * 3, None, concurrency=1)
     assert perf.itl_ms_p50 == pytest.approx(12.5) and perf.itl_ms_p99 == pytest.approx(12.5)

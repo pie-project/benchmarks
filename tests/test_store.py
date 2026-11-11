@@ -1,7 +1,5 @@
-
-
 def test_a_newer_good_row_replaces_the_stored_one_under_a_tag():
-    from pie_evals.results.store import _tag_keep
+    from pie_bench.results.store import _tag_keep
 
     class Cur:
         def __init__(self, stored):
@@ -19,5 +17,5 @@ def test_a_newer_good_row_replaces_the_stored_one_under_a_tag():
     rows = [("a", "pass", 11.0, 500.0), ("b", "fail", None, None), ("c", "pass", 9.0, 300.0)]
     cur = Cur(stored)
     keep = _tag_keep(cur, rows, "0.5.3-b1", cols)
-    assert keep == {"b"}  # a broken rerun never hides a good row
-    assert sorted(cur.deleted) == ["a", "c"]  # newer good rows replace old good and broken ones
+    assert keep == {"b"}
+    assert sorted(cur.deleted) == ["a", "c"]

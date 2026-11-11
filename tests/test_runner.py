@@ -1,32 +1,26 @@
-"""End-to-end of the node runner with a fake engine: no GPU, no pie build.
-Exercises grouping, control A/A gating, adaptive repetition, NOISY marking,
-failure classification and the records.jsonl output."""
-
 import os
 from pathlib import Path
 
 import pytest
 
-from pie_evals.node import runner as runner_mod
-from pie_evals.node.engines.base import BenchResult, Engine, EngineLaunchError
-from pie_evals.plan.jobs import make_jobs
-from pie_evals.plan.matrix import Matrix
-from pie_evals.results.store import Store
-from pie_evals.schema import CellStatus, ErrorClass, PerfMetrics, Record, Tier, WorkloadSpec
+from pie_bench.node import runner as runner_mod
+from pie_bench.node.engines.base import BenchResult, Engine, EngineLaunchError
+from pie_bench.paths import MATRIX
+from pie_bench.plan.jobs import make_jobs
+from pie_bench.plan.matrix import Matrix
+from pie_bench.results.store import Store
+from pie_bench.schema import CellStatus, ErrorClass, PerfMetrics, Record, Tier, WorkloadSpec
 
-# the runner cools the Mac before every cell and round (60 s each): these tests run with fake engines, not hot chips
-os.environ.setdefault("PIE_EVALS_SETTLE", "0")
-os.environ.setdefault("PIE_EVALS_GPU_IDLE", "0")
+os.environ.setdefault("PIE_BENCH_SETTLE", "0")
+os.environ.setdefault("PIE_BENCH_GPU_IDLE", "0")
 
 ROOT = Path(__file__).resolve().parents[1]
 REAL_ACCURACY = runner_mod.NodeRunner._accuracy
 
 
-
 def _asked(workload):
-    """A fake round finishes exactly the requests its workload asks for, as a real bench client does."""
-    from pie_evals.node.engines.base import workload_mode_args
-    from pie_evals.node.validate import expected_requests
+    from pie_bench.node.engines.base import workload_mode_args
+    from pie_bench.node.validate import expected_requests
     return expected_requests(workload_mode_args(workload)[1]) or 1
 
 class FakeEngine(Engine):
@@ -62,7 +56,7 @@ class FakeEngine(Engine):
 
 @pytest.fixture
 def job(tmp_path):
-    m = Matrix.load(ROOT / "matrix")
+    m = Matrix.load(MATRIX)
     cells = [c for c in m.runnable(Tier.SMOKE, m.expand(platforms=["l40s-x1"], artifacts=["qwen3.5-0.8b-bf16"])) if c.platform.id == "l40s-x1" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.program.id == "text-completion-bench" and c.mode.tp == 1]
     j = make_jobs(m, Tier.SMOKE, pie_commit="deadbeef", store=Store(tmp_path / "store"), platforms=["l40s-x1"], cells=cells)[0]
     assert {c.workload.id for c in j.cells} >= {"control-aa", "ss-128-64", "c8"}
@@ -71,7 +65,7 @@ def job(tmp_path):
 
 @pytest.fixture
 def mac_job(tmp_path):
-    m = Matrix.load(ROOT / "matrix")
+    m = Matrix.load(MATRIX)
     cells = [c for c in m.runnable(Tier.TARGETED, m.expand(platforms=["m4-pro-48g"], artifacts=["gemma-4-26b-a4b-mlx4"])) if c.platform.id == "m4-pro-48g" and c.artifact.id == "gemma-4-26b-a4b-mlx4" and str(c.engine) == "pie"]
     c8 = WorkloadSpec(id="c8", kind="concurrency", params={"concurrency": 8, "num_requests": 32, "prefill": 128, "decode": 128}, est_minutes=1)
     cells.append(cells[0].model_copy(update={"workload": c8}))
@@ -91,7 +85,7 @@ def patched(monkeypatch, tmp_path):
         snap = tmp_path / "hf" / repo / "snapshots" / "abc"
         snap.mkdir(parents=True)
         (snap / "config.json").write_text('{"num_hidden_layers": 28}')
-        (snap / "model.safetensors").write_bytes(b"x")  # a snapshot without weights is not present (snapshots.has_weights)
+        (snap / "model.safetensors").write_bytes(b"x")
 
     class P:
         def before_job(self, plat):
@@ -106,11 +100,9 @@ def patched(monkeypatch, tmp_path):
     monkeypatch.setattr(runner_mod.pf, "Preflight", P)
     monkeypatch.setattr(runner_mod.prov, "hardware_fingerprint", lambda: {"gpu": "fake"})
     monkeypatch.setattr(runner_mod.prov, "build_provenance", lambda *a, **k: runner_mod.prov.Provenance(harness_commit="h", engine_version="deadbeef", checkpoint_revision="abc", hardware_fingerprint={"gpu": "fake"}))
-    # accuracy gate: no reference on this box → skipped, never a failure
     monkeypatch.setattr(runner_mod.NodeRunner, "_accuracy", lambda self, cell, engine, snap: runner_mod.AccuracyMetrics())
-    # no pie binary here: a pinned-sku artifact would go through `pie model import`
-    monkeypatch.setattr("pie_evals.node.reclaim.reclaim", lambda *a, **k: 0.0)
-    monkeypatch.setattr("pie_evals.node.importer.ensure_artifact", lambda art, snap, *a, **k: snap)
+    monkeypatch.setattr("pie_bench.node.reclaim.reclaim", lambda *a, **k: 0.0)
+    monkeypatch.setattr("pie_bench.node.importer.ensure_artifact", lambda art, snap, *a, **k: snap)
     return tmp_path / "hf"
 
 
@@ -125,9 +117,8 @@ def _run(job, hf, tmp_path):
 def test_happy_path_one_process_all_cells(job, patched, tmp_path):
     recs, _ = _run(job, patched, tmp_path)
     assert {r.status for r in recs} == {CellStatus.PASS}
-    assert FakeEngine.calls[0] == "control-aa"  # control runs first
+    assert FakeEngine.calls[0] == "control-aa"
     assert all(r.provenance.pie_commit == "deadbeef" for r in recs)
-    # smoke: adaptive → without history, every cell confirms with extra rounds
     ss = next(r for r in recs if r.cell.workload.id == "ss-128-64")
     assert len(ss.perf.rounds) == 1 + job.repetition.confirm_rounds
 
@@ -148,7 +139,7 @@ def test_noisy_rounds_mark_cell_noisy(job, patched, tmp_path):
 
 
 def test_control_failure_invalidates_process(job, patched, tmp_path):
-    FakeEngine.behaviour["control-aa"] = [100.0, 130.0, 130.0, 100.0, 130.0, 130.0]  # three rounds a look; noisy twice
+    FakeEngine.behaviour["control-aa"] = [100.0, 130.0, 130.0, 100.0, 130.0, 130.0]
     recs, _ = _run(job, patched, tmp_path)
     ctrl = next(r for r in recs if r.cell.workload.id == "control-aa")
     assert ctrl.status == CellStatus.NOISY
@@ -175,7 +166,7 @@ def test_a_workload_round_timeout_lifts_the_job_cap(job, tmp_path):
 
 
 def test_noisy_control_gets_one_more_look(job, patched, tmp_path):
-    FakeEngine.behaviour["control-aa"] = [100.0, 130.0]  # the second look settles at 130 every round
+    FakeEngine.behaviour["control-aa"] = [100.0, 130.0]
     recs, _ = _run(job, patched, tmp_path)
     ctrl = next(r for r in recs if r.cell.workload.id == "control-aa")
     assert ctrl.status == CellStatus.PASS and FakeEngine.calls.count("control-aa") == 6
@@ -191,17 +182,17 @@ def test_engine_failure_is_classified(job, patched, tmp_path):
 
 def test_missing_checkpoint_fails_load(job, patched, tmp_path):
     recs, _ = _run(job, tmp_path / "empty-hf", tmp_path)
-    assert recs == []  # nothing ran …
+    assert recs == []
     lines = [Record.model_validate_json(ln) for ln in (tmp_path / "out" / "records.jsonl").read_text().splitlines()]
-    assert lines and all(r.status == CellStatus.FAIL and r.error_class == ErrorClass.LOAD_FAIL for r in lines)  # … but every cell is accounted for
+    assert lines and all(r.status == CellStatus.FAIL and r.error_class == ErrorClass.LOAD_FAIL for r in lines)
 
 
 def test_soft_budget_records_unreached_cells_as_not_run(job, patched, tmp_path):
-    job = job.model_copy(update={"budget_s": 0, "kill_s": 600})  # budget already exhausted
+    job = job.model_copy(update={"budget_s": 0, "kill_s": 600})
     recs, lines = _run(job, patched, tmp_path)
     assert recs == []
     assert lines and all(r.status == CellStatus.NOT_RUN and "budget" in (r.invalid_reason or "") for r in lines)
-    assert {r.cell_id for r in lines} == {c.cell_id for c in job.cells}  # every cell accounted for
+    assert {r.cell_id for r in lines} == {c.cell_id for c in job.cells}
 
 
 def test_per_cell_timeout_is_bounded_by_kill_deadline(job, patched, tmp_path):
@@ -230,7 +221,7 @@ def test_out_dir_is_absolute_for_subprocesses(job, patched, tmp_path, monkeypatc
 def test_cell_priority_runs_control_then_cheap_shapes_first():
     from types import SimpleNamespace as NS
 
-    from pie_evals.node.runner import cell_priority
+    from pie_bench.node.runner import cell_priority
 
     def cell(kind, est):
         return NS(workload=NS(kind=NS(value=kind), est_minutes=est))
@@ -241,24 +232,21 @@ def test_cell_priority_runs_control_then_cheap_shapes_first():
 
 
 def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
-    from pathlib import Path
 
-    from pie_evals.node.engines.shape import context_tokens_for
-    from pie_evals.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
-    from pie_evals.plan.jobs import make_jobs
-    from pie_evals.plan.matrix import Matrix
-    from pie_evals.schema import Tier
+    from pie_bench.node.engines.shape import context_tokens_for
+    from pie_bench.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
+    from pie_bench.plan.jobs import make_jobs
+    from pie_bench.plan.matrix import Matrix
+    from pie_bench.schema import Tier
 
-    m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
+    m = Matrix.load(MATRIX)
     lc32k = WorkloadSpec(id="lc-32k-128", kind="long_context", params={"prefill": 32768, "decode": 128, "concurrency": 1})
-    # Qwen3.6-27B (14 GiB) on the 32 GB RTX 5090: two boots; the 0.8B: one
     for aid, split in (("qwen3.6-27b-mlx4", True), ("qwen3.5-0.8b-bf16", False)):
         cells = [c for c in m.expand(artifacts=[aid]) if c.program.id == "text-completion-bench"]
         jobs = make_jobs(m, Tier.NIGHTLY, pie_commit="c" * 40, platforms=["rtx5090-x1"], engines=["pie"], cells=cells)
         groups = {}
         for j in jobs:
             groups.update(j.cells_by_process())
-        # nightly no longer schedules lc-32k on this card: add the long shape the split is about
         groups = {k: cs + [cs[0].model_copy(update={"workload": lc32k})] for k, cs in groups.items()}
         out = split_heavy_processes(groups)
         keys = sorted(k[2] for k in out)
@@ -272,11 +260,11 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
 
 
 def test_pie_cuda_cells_boot_at_their_own_shape_as_vllm_does():
-    from pie_evals.node.engines.shape import max_model_len_for, workload_concurrency
-    from pie_evals.node.runner import split_startups
-    from pie_evals.plan.jobs import make_jobs
+    from pie_bench.node.engines.shape import max_model_len_for, workload_concurrency
+    from pie_bench.node.runner import split_startups
+    from pie_bench.plan.jobs import make_jobs
 
-    m = Matrix.load(ROOT / "matrix")
+    m = Matrix.load(MATRIX)
     cells = [c for c in m.expand(artifacts=["minimax-m3.1-flash-mini60-e16"]) if c.program.id == "text-completion-bench"]
     jobs = make_jobs(m, Tier.WEEKLY, pie_commit="c" * 40, platforms=["h100-sxm-x1"], engines=["pie", "vllm"], cells=cells)
     groups = {}
@@ -292,13 +280,12 @@ def test_pie_cuda_cells_boot_at_their_own_shape_as_vllm_does():
 
 
 def test_mac_rivals_serve_one_request_rows_on_one_slot():
-    # llama-server booted for 32 slots ran the single-stream rows too: Gemma 4 E2B/E4B prefilled ~2.75x slower
-    from pie_evals.node.engines.llamacpp import LlamacppEngine
-    from pie_evals.node.engines.shape import workload_concurrency
-    from pie_evals.node.runner import serve_envelope, split_startups
-    from pie_evals.plan.jobs import process_key
+    from pie_bench.node.engines.llamacpp import LlamacppEngine
+    from pie_bench.node.engines.shape import workload_concurrency
+    from pie_bench.node.runner import serve_envelope, split_startups
+    from pie_bench.plan.jobs import process_key
 
-    m = Matrix.load(ROOT / "matrix")
+    m = Matrix.load(MATRIX)
     for aid, split in (("gemma-4-e2b-llamacpp", True), ("gemma-4-e2b-mlxlm", False)):
         cells = [c for c in m.runnable(Tier.TARGETED, m.expand(platforms=["m5-max-64g"], artifacts=[aid])) if c.artifact.id == aid and c.platform.id == "m5-max-64g"]
         assert {workload_concurrency(c.workload) for c in cells} >= {1, 32}, aid
@@ -308,7 +295,7 @@ def test_mac_rivals_serve_one_request_rows_on_one_slot():
         if not split:
             assert out == groups
             continue
-        (one_key, one), (wide_key, wide) = out.items()  # the one-slot process first
+        (one_key, one), (wide_key, wide) = out.items()
         assert one_key[2].endswith("@c1") and wide_key == process_key(cells[0])
         assert {workload_concurrency(c.workload) for c in one} == {1} and 1 not in {workload_concurrency(c.workload) for c in wide}
         eng = LlamacppEngine(pie_root=ROOT, artifact=one[0].artifact, platform=one[0].platform, mode=one[0].mode, recipe={"gguf": "x"})
@@ -319,7 +306,6 @@ def test_mac_rivals_serve_one_request_rows_on_one_slot():
 
 
 def test_recipe_follows_the_cell_and_keeps_what_the_boot_added(job):
-    # SGLang captured graphs to the first cell's concurrency and ran wider shapes eager (nightly 36099862659)
     ss = next(c for c in job.cells if c.workload.id == "ss-128-64")
     c8 = next(c for c in job.cells if c.workload.id == "c8")
     base = runner_mod.load_recipe("pie", "competitive", ss.platform, ss.workload, family=ss.artifact.family)
@@ -330,7 +316,6 @@ def test_recipe_follows_the_cell_and_keeps_what_the_boot_added(job):
 
 
 def test_a_slow_first_round_is_confirmed_away_not_withheld(job, patched, tmp_path):
-    # nightly (3 rounds): a first round still warming on a fresh pod gets the policy's confirmation rounds
     job = job.model_copy(update={"repetition": job.repetition.model_copy(update={"min_rounds": 3, "confirm_rounds": 2, "max_rounds": 5})})
     FakeEngine.behaviour["ss-128-64"] = [90.0, 100.0, 101.0, 100.0, 100.0]
     FakeEngine.behaviour["c8"] = [100.0, 80.0, 120.0, 85.0, 118.0]
@@ -343,18 +328,18 @@ def test_a_slow_first_round_is_confirmed_away_not_withheld(job, patched, tmp_pat
 
 def test_one_slow_boot_among_five_rounds_is_dropped(job, patched, tmp_path):
     job = job.model_copy(update={"repetition": job.repetition.model_copy(update={"min_rounds": 3, "confirm_rounds": 2, "max_rounds": 5})})
-    FakeEngine.behaviour["ss-128-64"] = [100.0, 101.0, 80.0, 100.0, 99.0]  # a slow boot in the last three: noisy before
+    FakeEngine.behaviour["ss-128-64"] = [100.0, 101.0, 80.0, 100.0, 99.0]
     recs, _ = _run(job, patched, tmp_path)
     ss = next(r for r in recs if r.cell.workload.id == "ss-128-64")
     assert ss.status == CellStatus.PASS and len(ss.perf.rounds) == 5 and ss.perf.decode_tok_s == 100.0
 
 
 def test_heavy_model_on_a_small_mac_boots_short_and_long_shapes_apart():
-    from pie_evals.node.engines.shape import context_tokens_for
-    from pie_evals.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
-    from pie_evals.plan.jobs import process_key
+    from pie_bench.node.engines.shape import context_tokens_for
+    from pie_bench.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
+    from pie_bench.plan.jobs import process_key
 
-    m = Matrix.load(ROOT / "matrix")
+    m = Matrix.load(MATRIX)
     lc16k = WorkloadSpec(id="lc-16k-128", kind="long_context", params={"prefill": 16384, "decode": 128, "concurrency": 1})
     for plat, split in (("m1-max-32g", True), ("m5-max-128g", False)):
         cells = [c for c in m.runnable(Tier.TARGETED, m.expand(platforms=[plat], artifacts=["gemma-4-26b-a4b-mlx4"])) if c.artifact.id == "gemma-4-26b-a4b-mlx4" and c.platform.id == plat and str(c.engine) == "pie"]
@@ -401,7 +386,7 @@ def test_mac_happy_path_runs_every_targeted_shape(mac_job, patched, tmp_path):
 def test_checkpoints_download_in_the_background(mac_job, patched, tmp_path, monkeypatch):
     import threading
 
-    from pie_evals.node import snapshots
+    from pie_bench.node import snapshots
 
     real = snapshots.ensure_snapshot
     threads = []
@@ -411,8 +396,7 @@ def test_checkpoints_download_in_the_background(mac_job, patched, tmp_path, monk
         return real(art, hf, download=False)
 
     monkeypatch.setattr(snapshots, "ensure_snapshot", spy)
-    # a roomy disk: on a nearly full one the runner takes one model at a time and prefetches nothing
-    from pie_evals.node import reclaim
+    from pie_bench.node import reclaim
 
     monkeypatch.setattr(reclaim, "free_gib", lambda *a, **k: 10_000.0)
     r = runner_mod.NodeRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
@@ -421,11 +405,11 @@ def test_checkpoints_download_in_the_background(mac_job, patched, tmp_path, monk
 
 
 def test_an_imported_artifact_needs_no_source_weights(mac_job, patched, tmp_path, monkeypatch):
-    from pie_evals.node import importer, snapshots
+    from pie_bench.node import importer, snapshots
 
-    monkeypatch.setenv("PIE_EVALS_CACHE", str(tmp_path / "cache"))
+    monkeypatch.setenv("PIE_BENCH_CACHE", str(tmp_path / "cache"))
     art = mac_job.cells[0].artifact
-    for plain in (False, True):  # a drafter row's raw rows serve its plain deployment, imported beside it
+    for plain in (False, True):
         zt_dir = importer.artifact_dir(art, mac_job.pie_commit, plain=plain)
         zt_dir.mkdir(parents=True)
         (zt_dir / "m.zt").write_bytes(b"x")
@@ -439,15 +423,13 @@ def test_an_imported_artifact_needs_no_source_weights(mac_job, patched, tmp_path
 
 
 def test_t0_is_judged_once_the_engine_is_down(job, patched, tmp_path, monkeypatch):
-    """The reference loads where the engine was: judged beside a live engine,
-    a 16 GB reference and the engine serving it do not share a 24 GB card."""
-    from pie_evals.node.accuracy import gate
-    from pie_evals.schema import AccuracyMetrics, AccuracyStatus
+    from pie_bench.node.accuracy import gate
+    from pie_bench.schema import AccuracyMetrics, AccuracyStatus
 
     events: list[str] = []
     monkeypatch.setattr(runner_mod.NodeRunner, "_accuracy", REAL_ACCURACY)
     monkeypatch.setattr(gate, "skip_reason", lambda cell: None)
-    monkeypatch.setattr("pie_evals.node.snapshots.with_tokenizer", lambda art, snap, hf, log=None: snap)
+    monkeypatch.setattr("pie_bench.node.snapshots.with_tokenizer", lambda art, snap, hf, log=None: snap)
     monkeypatch.setattr(gate, "t0_engine_outputs", lambda engine, snap, **kw: gate.T0Outputs([[1]], [[2]]))
     monkeypatch.setattr(FakeEngine, "stop", lambda self: events.append("stop"), raising=False)
 

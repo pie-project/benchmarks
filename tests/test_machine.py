@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from pie_evals.node.machine import MachineBusy, machine_lock
+from pie_bench.node.machine import MachineBusy, machine_lock
 
 
 @pytest.fixture(autouse=True)
@@ -29,7 +29,7 @@ def test_a_second_benchmark_waits_for_the_first(lock_file):
         order.append("second in")
     t.join()
     assert order == ["first in", "first out", "second in"] and waited > 0.2
-    assert "pid" in said[0] and "first" in said[0]  # it says who it waits for
+    assert "pid" in said[0] and "first" in said[0]
     assert "second" in lock_file.read_text()
 
 
@@ -39,5 +39,5 @@ def test_a_benchmark_gives_up_after_its_wait(lock_file):
             with machine_lock("late", max_wait_s=0.2, poll_s=0.05, log=lambda m: None):
                 pass
     assert "holder" in str(e.value)
-    with machine_lock("after", max_wait_s=5, log=lambda m: None) as waited:  # the holder left, so the machine is free
+    with machine_lock("after", max_wait_s=5, log=lambda m: None) as waited:
         assert waited < 5

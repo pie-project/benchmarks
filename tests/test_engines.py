@@ -1,13 +1,3 @@
-"""Engine adapters: argv shape + drift guard against the real bench scripts.
-
-No GPU, no pie run. Every adapter is built against /root/pie and dummy specs;
-``build_argv`` is checked for the flags a fair comparison needs, and every
-``--flag`` it emits is checked against the set of option strings the
-corresponding script (plus bench/common.py) actually registers with
-argparse - parsed from source with ``ast`` so a renamed flag in pie fails here
-rather than at 3am on a runner.
-"""
-
 from __future__ import annotations
 
 import ast
@@ -19,21 +9,22 @@ from pathlib import Path
 
 import pytest
 
-from pie_evals.node.build import bench_dir
-from pie_evals.node.engines import get_engine
-from pie_evals.node.engines.base import Engine
-from pie_evals.node.engines.llamacpp import LlamacppEngine
-from pie_evals.node.engines.mlxlm import MlxlmEngine
-from pie_evals.node.engines.pie import PieEngine
-from pie_evals.node.engines.recipes import load_recipe, recipe_names
-from pie_evals.node.engines.served import SCRIPT as OPENAI_SCRIPT
-from pie_evals.node.engines.sglang import SglangEngine
-from pie_evals.node.engines.shape import max_model_len_for, workload_concurrency
-from pie_evals.node.engines.splash import SplashEngine
-from pie_evals.node.engines.vllm import VllmEngine
-from pie_evals.node.workloads import common_args_for
-from pie_evals.node.workloads.synthetic import WORDS_PER_TOKEN
-from pie_evals.schema import ArtifactSpec, Backend, Mode, PlatformSpec, WorkloadSpec
+from pie_bench.node.build import bench_dir
+from pie_bench.node.engines import get_engine
+from pie_bench.node.engines.base import Engine
+from pie_bench.node.engines.llamacpp import LlamacppEngine
+from pie_bench.node.engines.mlxlm import MlxlmEngine
+from pie_bench.node.engines.pie import PieEngine
+from pie_bench.node.engines.recipes import load_recipe, recipe_names
+from pie_bench.node.engines.served import SCRIPT as OPENAI_SCRIPT
+from pie_bench.node.engines.sglang import SglangEngine
+from pie_bench.node.engines.shape import max_model_len_for, workload_concurrency
+from pie_bench.node.engines.splash import SplashEngine
+from pie_bench.node.engines.vllm import VllmEngine
+from pie_bench.node.workloads import common_args_for
+from pie_bench.node.workloads.synthetic import WORDS_PER_TOKEN
+from pie_bench.paths import MATRIX
+from pie_bench.schema import ArtifactSpec, Backend, Mode, PlatformSpec, WorkloadSpec
 
 
 def _default_pie_root() -> str:
@@ -47,9 +38,6 @@ PIE_ROOT = Path(os.environ.get("PIE_ROOT") or _default_pie_root())
 BENCHES = bench_dir()
 
 
-# ---- argparse flag extraction (the drift guard) -------------------------------
-
-
 def _first_arg_flags(call: ast.Call, loop_iters: list[ast.AST]) -> list[str]:
     if not call.args:
         return []
@@ -57,7 +45,6 @@ def _first_arg_flags(call: ast.Call, loop_iters: list[ast.AST]) -> list[str]:
     if isinstance(first, ast.Constant) and isinstance(first.value, str):
         return [first.value]
     if isinstance(first, ast.Name):
-        # `for flag, dest, help in ((...), ...): sp.add_argument(flag, ...)`
         out = []
         for it in loop_iters:
             for node in ast.walk(it):
@@ -68,8 +55,6 @@ def _first_arg_flags(call: ast.Call, loop_iters: list[ast.AST]) -> list[str]:
 
 
 def _flags_in(node: ast.AST, loop_iters: list[ast.AST] | None = None) -> set[str]:
-    """Every ``--option`` string registered by ``add_argument`` calls under
-    ``node``, including the ``--no-`` twin of each ``BooleanOptionalAction``."""
     flags: set[str] = set()
     loop_iters = list(loop_iters or [])
 
@@ -100,7 +85,6 @@ def _called_names(node: ast.AST) -> set[str]:
 
 
 def common_flags_by_function() -> dict[str, tuple[set[str], set[str]]]:
-    """common.py: function name -> (flags it registers, names it references)."""
     tree = ast.parse((BENCHES / "common.py").read_text())
     out = {}
     for fn in tree.body:
@@ -110,10 +94,6 @@ def common_flags_by_function() -> dict[str, tuple[set[str], set[str]]]:
 
 
 def argparse_flags(path: Path) -> set[str]:
-    """Flags ``path`` accepts: those it registers itself plus those registered
-    by the common.py helpers it (transitively) calls. ``add_output_dump_args``
-    is a common.py helper only vllm/sglang call, so its flags count for them
-    and not for llamacpp/mlx - the guard has to see that difference."""
     tree = ast.parse(path.read_text(), filename=str(path))
     flags = _flags_in(tree)
     if path.resolve() == (BENCHES / "common.py").resolve():
@@ -140,17 +120,12 @@ _FLAG_RE = re.compile(r"^--[a-z0-9][a-z0-9-]*$")
 
 
 def emitted_flags(argv: list[str]) -> list[str]:
-    """Tokens that are flags (a value like ``--server-extra "--batch-size 2048"``
-    is one token with a space and is not a flag)."""
     return [a for a in argv if _FLAG_RE.match(a)]
 
 
 def flag_value(argv: list[str], flag: str) -> str:
     i = argv.index(flag)
     return argv[i + 1]
-
-
-# ---- fixtures ------------------------------------------------------------------
 
 
 def platform(backend: Backend = Backend.CUDA, arch: str = "ada", count: int = 2) -> PlatformSpec:
@@ -197,7 +172,6 @@ def argv_for(engine: Engine, workload: WorkloadSpec, tmp_path: Path) -> list[str
 
 @pytest.fixture
 def hf_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """A fake HF hub cache with a GGUF repo (tokenizer-less) and an MLX repo."""
     hub = tmp_path / "hub"
     monkeypatch.setenv("HF_HUB_CACHE", str(hub))
     gguf = hub / "models--Qwen--Qwen3-8B-GGUF"
@@ -211,9 +185,6 @@ def hf_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (mlx / "refs" / "main").write_text("def456")
     (mlx / "snapshots" / "def456" / "tokenizer.json").write_text("{}")
     return hub
-
-
-# ---- registry / recipes -------------------------------------------------------
 
 
 def test_registry_resolves_every_engine():
@@ -265,18 +236,13 @@ def test_shape_helpers():
     assert max_model_len_for(WORKLOADS["prefix-1k-x64"]) == 2048
 
 
-# ---- pie --------------------------------------------------------------------
-
-
 def test_pie_cuda_tp2(tmp_path):
     eng = make(PieEngine, mode=Mode(id="tp2", tp=2))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
-    assert argv[1].endswith("bench/pie_bench.py") and argv[2] == "tput"
-    # pie #1099 renamed pie_bench's cuda_native engine to cuda; the adapter passes the name the script knows
+    assert argv[1].endswith("clients/pie_client.py") and argv[2] == "tput"
     expected = "cuda_native" if '"cuda_native"' in eng.script_path().read_text() else "cuda"
     assert flag_value(argv, "--engine") == expected
     assert flag_value(argv, "--tp-size") == "2"
-    # one --device flag carrying both ranks (pie_bench splits on ",")
     assert argv.count("--device") == 1
     assert flag_value(argv, "--device").split(",") == ["cuda:0", "cuda:1"]
     assert flag_value(argv, "--max-model-len") == "2048"
@@ -287,7 +253,7 @@ def test_pie_cuda_tp2(tmp_path):
     assert flag_value(argv, "--inferlet-dir") == str(PIE_ROOT / "examples/text-completion-bench")
     assert eng.env["PIE_BENCH_INFERLET_DIR"] == str(PIE_ROOT / "examples/text-completion-bench")
     assert eng.env["PYTHONPATH"].startswith(f"{PIE_ROOT}/python/client/src:{PIE_ROOT}/python/server/python")
-    assert "--kv-pages" not in argv  # documented dead for cuda_native
+    assert "--kv-pages" not in argv
 
 
 def test_pie_program_path_is_settable(tmp_path):
@@ -315,7 +281,7 @@ def test_pie_metal_and_recipe_passthrough(tmp_path):
     assert "--no-pretokenized-prompts" in argv
     i = argv.index("--engine-option")
     assert argv[i + 1] == "max_state_slots=128"
-    assert argv.count("--engine-option") == 1  # $pie_sku skipped when the artifact has none
+    assert argv.count("--engine-option") == 1
     eng.artifact = artifact(pie_sku="qwen3-8b-bf16-kv-bf16")
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
     assert "sku=qwen3-8b-bf16-kv-bf16" in argv
@@ -338,7 +304,6 @@ def test_pie_counters_from_summary():
     assert c["guest_turnaround_us"] == pytest.approx(300.0)
     assert c["batch_latency_us"] == pytest.approx(4000.0)
     assert eng.counters_from_summary({"wall_s": 1.0, "config": {}}) == {}
-    # raw status keys are accepted as well
     c = eng.counters_from_summary({"wall_s": 1.0, "config": {"default.total_batches": 10, "default.fire.quorum.device_idle_us": 100_000}})
     assert c["batches"] == 10 and c["device_idle_pct"] == pytest.approx(10.0)
 
@@ -356,13 +321,11 @@ def test_pie_serve_only_for_cli_engines_is_noop(tmp_path):
 
 
 def test_pie_serve_parses_url_and_stop(tmp_path, monkeypatch):
-    """Drive serve() against a stand-in script that behaves like pie_bench
-    under PIE_BENCH_SERVE_ONLY=1: announce the URL, then park."""
     fake_root = tmp_path / "pie"
     bench = tmp_path / "bench"
     bench.mkdir()
-    monkeypatch.setenv("PIE_EVALS_BENCH_DIR", str(bench))
-    (bench / "pie_bench.py").write_text(
+    monkeypatch.setenv("PIE_BENCH_BENCH_DIR", str(bench))
+    (bench / "pie_client.py").write_text(
         "import os, sys, time\n"
         "assert os.environ.get('PIE_BENCH_SERVE_ONLY') == '1'\n"
         "assert 'PIE_BENCH_SERVER_URL' not in os.environ\n"
@@ -380,13 +343,10 @@ def test_pie_serve_parses_url_and_stop(tmp_path, monkeypatch):
     assert "PIE_BENCH_SERVER_URL=" in (tmp_path / "serve.log").read_text()
 
 
-# ---- vllm -------------------------------------------------------------------
-
-
 def test_vllm_args(tmp_path):
     eng = make(VllmEngine, mode=Mode(id="tp2", tp=2))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
-    assert argv[1].endswith("bench/vllm_bench.py")
+    assert argv[1].endswith("clients/vllm_bench.py")
     assert flag_value(argv, "--model") == "Qwen/Qwen3-8B"
     assert flag_value(argv, "--tp-size") == "2"
     assert flag_value(argv, "--gpu-mem-util") == "0.9"
@@ -396,12 +356,10 @@ def test_vllm_args(tmp_path):
     assert "--no-prefix-caching" in argv
     assert "--no-chunked-prefill" not in argv
     assert "--kv-cache-dtype" not in argv
-    # prefix workload turns the cache on; hopper picks FA3
     eng = make(VllmEngine, plat=platform(arch="hopper"), workload=WORKLOADS["prefix-1k-x64"])
     argv = argv_for(eng, WORKLOADS["prefix-1k-x64"], tmp_path)
     assert "--prefix-caching" in argv and flag_value(argv, "--attention-backend") == "FLASH_ATTN"
     assert flag_value(argv, "--shared-prefix-words") == str(int(round(1024 * WORDS_PER_TOKEN)))
-    # fp8 KV from the artifact; ngram mode maps onto vLLM's ngram speculation
     eng = make(VllmEngine, art=artifact(kv_dtype="fp8"), mode=Mode(id="ngram", spec_dec="ngram"))
     argv = argv_for(eng, WORKLOADS["ss-128-64"], tmp_path)
     assert flag_value(argv, "--kv-cache-dtype") == "fp8"
@@ -412,9 +370,6 @@ def test_vllm_defaults():
     eng = make(VllmEngine)
     assert eng.python.endswith("python")
     assert "EngineCore" in eng.leftover_process_names()
-
-
-# ---- sglang -----------------------------------------------------------------
 
 
 def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
@@ -431,7 +386,6 @@ def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
     argv = argv_for(eng, WORKLOADS["ss-128-64"], tmp_path)
     assert flag_value(argv, "--sglang-cuda-graph-max-bs") == "1"
     assert argv[2] == "latency"
-    # a 96 GB card at 0.9 left the graphs and activations 9.5 GiB; kimi-k3 mini ran out at c64
     big = platform(count=1)
     big = big.model_copy(update={"memory_gib": 96.0})
 
@@ -442,8 +396,7 @@ def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
         argv = argv_for(make(SglangEngine, plat=big, workload=conc(n)), conc(n), tmp_path)
         assert flag_value(argv, "--gpu-mem-util") == want, n
     argv = argv_for(make(SglangEngine, workload=conc(256)), conc(256), tmp_path)
-    assert flag_value(argv, "--gpu-mem-util") == "0.9"  # a 48 GB card served c256 at 0.9
-    # Kimi-K3's MoE prefill wanted 1.2-1.5 GiB past 0.9 on an A100 from c32 up; the heavy rule still wins on a small card
+    assert flag_value(argv, "--gpu-mem-util") == "0.9"
     kimi = artifact(id="kimi-k3-mini8", base_model="moonshotai/Kimi-K3", family="kimi_k3", expected_gib=22.0)
     big = platform(count=1).model_copy(update={"memory_gib": 80.0})
     argv = argv_for(make(SglangEngine, plat=big, art=kimi, workload=conc(32)), conc(32), tmp_path)
@@ -456,7 +409,6 @@ def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
     small = platform(count=1).model_copy(update={"memory_gib": 32.0})
     argv = argv_for(make(SglangEngine, plat=small, art=kimi, workload=conc(8)), conc(8), tmp_path)
     assert flag_value(argv, "--gpu-mem-util") == "0.95"
-    # a sliding-window gemma gets one uniform KV pool; Gemma-4 keeps the split full/SWA pools (recipes/sglang.yaml, #815)
     eng = make(SglangEngine, art=artifact(id="gemma-3-4b-bf16", base_model="google/gemma-3-4b-it", family="gemma3"))
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
     assert "--sglang-disable-hybrid-swa-memory" in argv
@@ -466,16 +418,12 @@ def test_sglang_cuda_graph_max_bs_tracks_concurrency(tmp_path):
 
 
 def test_sglang_heavy_checkpoint_gets_the_fraction_it_needs(tmp_path):
-    # kimi-k3 mini (18.4 GiB) on a 32 GB 5090: sglang refused the KV cache under 0.9
     plat = platform(count=1)
     plat = plat.model_copy(update={"memory_gib": 32.0})
     eng = make(SglangEngine, plat=plat, art=artifact(expected_gib=18.4), workload=WORKLOADS["ss-128-64"])
     assert flag_value(argv_for(eng, WORKLOADS["ss-128-64"], tmp_path), "--gpu-mem-util") == "0.95"
     eng = make(SglangEngine, plat=plat, art=artifact(expected_gib=1.6), workload=WORKLOADS["ss-128-64"])
     assert flag_value(argv_for(eng, WORKLOADS["ss-128-64"], tmp_path), "--gpu-mem-util") == "0.9"
-
-
-# ---- llama.cpp ---------------------------------------------------------------
 
 
 def test_llamacpp_args(tmp_path, hf_cache, monkeypatch):
@@ -486,23 +434,20 @@ def test_llamacpp_args(tmp_path, hf_cache, monkeypatch):
     cmd = eng.server_cmd(8123, 32, 2048)
     assert cmd[0] == "/opt/llama/llama-server"
     assert flag_value(cmd, "--model") == str(hf_cache / "models--Qwen--Qwen3-8B-GGUF/snapshots/abc123/Qwen3-8B-Q4_K_M.gguf")
-    assert flag_value(cmd, "--parallel") == "32" and flag_value(cmd, "--ctx-size") == str(2048 * 32)  # the context is per slot
+    assert flag_value(cmd, "--parallel") == "32" and flag_value(cmd, "--ctx-size") == str(2048 * 32)
     assert flag_value(cmd, "--n-gpu-layers") == "all" and flag_value(cmd, "--flash-attn") == "on"
     assert cmd[cmd.index("--batch-size"):][:4] == ["--batch-size", "2048", "--ubatch-size", "512"]
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
     assert Path(argv[1]) == OPENAI_SCRIPT
-    # the GGUF repo ships no tokenizer -> --model is the base checkpoint
     assert flag_value(argv, "--model") == "Qwen/Qwen3-8B"
     assert json.loads(flag_value(argv, "--extra-body")) == {"cache_prompt": False, "ignore_eos": True}
-    assert "--ignore-eos" in argv and "--no-ignore-eos" not in argv  # writes exactly the shape's length, as every engine does
+    assert "--ignore-eos" in argv and "--no-ignore-eos" not in argv
     assert "--chat" not in argv and "--no-flush-cache" not in argv
-    assert "--token-ids" in argv  # the template's BOS is prefilled once, as pie does
-    # prefix shape asks for cache reuse and keeps its prompts as written
+    assert "--token-ids" in argv
     eng = make(LlamacppEngine, art=art, workload=WORKLOADS["prefix-1k-x64"], python="/usr/bin/python3")
     assert "--cache-reuse" in eng.server_cmd(8123, 16, 2048)
     argv = argv_for(eng, WORKLOADS["prefix-1k-x64"], tmp_path)
     assert "--no-flush-cache" in argv and json.loads(flag_value(argv, "--extra-body"))["cache_prompt"] is True
-    # metal recipe drops --no-mmap
     eng = make(LlamacppEngine, art=art, plat=platform(Backend.METAL, "apple9", count=1), python="/usr/bin/python3")
     assert "--no-mmap" not in eng.server_cmd(8123, 1, 2048)
 
@@ -528,14 +473,11 @@ def test_llamacpp_version_is_the_release_tag_the_matrix_pins(printed, tag, tmp_p
 def test_llamacpp_missing_gguf_is_load_fail(hf_cache):
     art = artifact(base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m", source_format="gguf", gguf_file="nope.gguf")
     eng = make(LlamacppEngine, art=art, python="/usr/bin/python3")
-    from pie_evals.node.engines import EngineLaunchError
+    from pie_bench.node.engines import EngineLaunchError
 
     with pytest.raises(EngineLaunchError) as e:
         eng.gguf_path()
     assert str(e.value.error_class) == "load_fail"
-
-
-# ---- mlx-lm -----------------------------------------------------------------
 
 
 def test_mlxlm_args(tmp_path, hf_cache, monkeypatch):
@@ -546,19 +488,16 @@ def test_mlxlm_args(tmp_path, hf_cache, monkeypatch):
     snap = str(hf_cache / "models--mlx-community--Qwen3.6-27B-4bit/snapshots/def456")
     eng = make(MlxlmEngine, art=art, plat=plat, workload=WORKLOADS["c32"], python="/usr/bin/python3")
     cmd = eng.server_cmd(8123, 32, 2048)
-    assert cmd[:4] == ["/opt/mlx/bin/python", "-m", "mlx_lm", "server"]  # the pinned mlx-lm, not the client's interpreter
+    assert cmd[:4] == ["/opt/mlx/bin/python", "-m", "mlx_lm", "server"]
     assert flag_value(cmd, "--model") == snap and flag_value(cmd, "--decode-concurrency") == "32"
     assert flag_value(cmd, "--prompt-cache-size") == "0"
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
     assert argv[0] == "/usr/bin/python3" and Path(argv[1]) == OPENAI_SCRIPT
     assert flag_value(argv, "--model") == snap and flag_value(argv, "--api-model") == snap
-    assert "--ignore-eos" in argv and "--no-ignore-eos" not in argv  # exact length, through logit_bias on the stop tokens
+    assert "--ignore-eos" in argv and "--no-ignore-eos" not in argv
     eng = make(MlxlmEngine, art=art, plat=plat, workload=WORKLOADS["prefix-1k-x64"], python="/usr/bin/python3")
     assert flag_value(eng.server_cmd(8123, 16, 2048), "--prompt-cache-size") == "64"
     assert "--no-flush-cache" in argv_for(eng, WORKLOADS["prefix-1k-x64"], tmp_path)
-
-
-# ---- Splash -----------------------------------------------------------------
 
 
 def splash_artifact() -> ArtifactSpec:
@@ -574,16 +513,15 @@ def test_splash_args(tmp_path, hf_cache, monkeypatch):
     assert cmd[:4] == ["/opt/splash/bin/splash", "serve", "--model", "mlx-community/Qwen3.6-27B-4bit"]
     assert flag_value(cmd, "--max-context") == "2048" and "--no-webui" in cmd
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
-    assert Path(argv[1]) == OPENAI_SCRIPT and "--chat" in argv  # Splash renders the chat template itself
+    assert Path(argv[1]) == OPENAI_SCRIPT and "--chat" in argv
     assert flag_value(argv, "--api-model") == "mlx-community/Qwen3.6-27B-4bit"
     assert flag_value(argv, "--model") == str(hf_cache / "models--mlx-community--Qwen3.6-27B-4bit/snapshots/def456")
     assert json.loads(flag_value(argv, "--extra-body")) == {"reasoning_effort": "none", "ignore_eos": True}
     default = make(SplashEngine, art=splash_artifact(), plat=plat, recipe_name="default", python="/usr/bin/python3")
-    assert "--max-context" not in default.server_cmd(8123, 1, 2048)  # Splash as shipped sizes its own context
+    assert "--max-context" not in default.server_cmd(8123, 1, 2048)
 
 
 def test_served_engines_boot_and_stop_a_server(tmp_path, hf_cache, monkeypatch):
-    """A stand-in server: the adapter waits for it to answer, records the url, and stops it whole."""
     import sys
 
     fake = tmp_path / "server.py"
@@ -614,7 +552,7 @@ def test_served_engines_boot_and_stop_a_server(tmp_path, hf_cache, monkeypatch):
 def test_a_served_engine_that_dies_at_startup_is_a_load_fail(tmp_path, hf_cache):
     import sys
 
-    from pie_evals.node.engines import EngineLaunchError
+    from pie_bench.node.engines import EngineLaunchError
 
     class Dead(SplashEngine):
         def server_cmd(self, port, slots, context):
@@ -625,8 +563,6 @@ def test_a_served_engine_that_dies_at_startup_is_a_load_fail(tmp_path, hf_cache)
         eng.serve(WORKLOADS["ss-128-64"], tmp_path / "serve.log", 30)
     assert str(e.value.error_class) == "load_fail" and "no such model" in str(e.value)
 
-
-# ---- drift guard: every emitted flag exists in the real script ------------------
 
 _CASES = []
 for _wl in WORKLOADS:
@@ -653,11 +589,10 @@ def test_every_emitted_flag_is_parsed_by_the_script(label, cls, wl, over, tmp_pa
 
 
 def test_argparse_flag_extraction_sees_loop_registered_and_boolean_optional_flags():
-    flags = argparse_flags(BENCHES / "pie_bench.py")
+    flags = argparse_flags(BENCHES / "pie_client.py")
     assert {"--inferlet-dir", "--engine", "--wasm-warm-slots", "--frame-submit-depth", "--pretokenized-prompts", "--no-pretokenized-prompts"} <= flags
     common = argparse_flags(BENCHES / "common.py")
     assert {"--model", "--ignore-eos", "--no-ignore-eos", "--tp-size", "--sglang-cuda-graph-max-bs", "--json-out"} <= common
-    # common flags reach a script only through the helpers it calls
     for script in ("llamacpp_bench.py", "mlx_bench.py"):
         got = argparse_flags(BENCHES / script)
         assert {"--model", "--max-tokens", "--concurrency", "--num-requests", "--requests"} <= got, script
@@ -668,30 +603,27 @@ def test_argparse_flag_extraction_sees_loop_registered_and_boolean_optional_flag
 
 
 def test_tensor_parallel_baselines_disable_nccl_p2p_on_a_pod(monkeypatch):
-    # vLLM tp2 on the L40S x2 pod hung at NCCL init for 30 min (nightly 36081628995 s05); SGLang tp2 the same
     monkeypatch.setenv("RUNPOD_POD_ID", "abc")
     for cls in (VllmEngine, SglangEngine, PieEngine):
         assert make(cls, mode=Mode(id="tp2", tp=2)).env["NCCL_P2P_DISABLE"] == "1"
-        assert "NCCL_P2P_DISABLE" not in make(cls).env  # a single card has no peers
+        assert "NCCL_P2P_DISABLE" not in make(cls).env
         nvlink = platform().model_copy(update={"interconnect": "nvlink"})
-        assert "NCCL_P2P_DISABLE" not in make(cls, plat=nvlink, mode=Mode(id="tp2", tp=2)).env  # SXM peers are real
+        assert "NCCL_P2P_DISABLE" not in make(cls, plat=nvlink, mode=Mode(id="tp2", tp=2)).env
     monkeypatch.delenv("RUNPOD_POD_ID")
-    assert "NCCL_P2P_DISABLE" not in make(VllmEngine, mode=Mode(id="tp2", tp=2)).env  # a real host keeps its topology
+    assert "NCCL_P2P_DISABLE" not in make(VllmEngine, mode=Mode(id="tp2", tp=2)).env
 
 
 def test_baselines_keep_all_reduce_on_nccl_without_peer_access():
-    # L40S x2 pod: vLLM/SGLang custom all-reduce over its broken peer DMA hung or faulted (weekly 39545360541)
     nopeer = platform().model_copy(update={"peer_access": False})
     tp2 = Mode(id="tp2", tp=2)
     assert make(VllmEngine, plat=nopeer, mode=tp2).env["VLLM_DISABLE_CUSTOM_AR"] == "1"
-    for cls in (VllmEngine, SglangEngine):  # vllm_bench.py's tput path ignores VLLM_DISABLE_CUSTOM_AR (weekly 39652187264)
+    for cls in (VllmEngine, SglangEngine):
         env = make(cls, plat=nopeer, mode=tp2).env
-        assert env["PIE_EVALS_NO_CUSTOM_AR"] == "1" and env["PYTHONPATH"].split(":")[0].endswith("no_peer_site")
+        assert env["PIE_BENCH_NO_CUSTOM_AR"] == "1" and env["PYTHONPATH"].split(":")[0].endswith("no_peer_site")
     for cls in (VllmEngine, SglangEngine):
         for plat, mode in ((platform(), tp2), (nopeer, Mode())):
             env = make(cls, plat=plat, mode=mode).env
-            assert "VLLM_DISABLE_CUSTOM_AR" not in env and "PIE_EVALS_NO_CUSTOM_AR" not in env
-    # 0.31.0 forked its tp workers after CUDA init and every one died
+            assert "VLLM_DISABLE_CUSTOM_AR" not in env and "PIE_BENCH_NO_CUSTOM_AR" not in env
     assert make(VllmEngine, mode=tp2).env["VLLM_WORKER_MULTIPROC_METHOD"] == "spawn"
     assert "VLLM_WORKER_MULTIPROC_METHOD" not in make(VllmEngine).env
 
@@ -700,7 +632,7 @@ def test_no_peer_sitecustomize_turns_the_p2p_checks_off(tmp_path):
     import subprocess
     import sys
 
-    from pie_evals.node.engines.base import NO_PEER_SITE
+    from pie_bench.node.engines.base import NO_PEER_SITE
 
     mods = {"vllm/distributed/device_communicators/custom_all_reduce.py": "_can_p2p",
             "sglang/srt/distributed/device_communicators/custom_all_reduce_utils.py": "can_p2p"}
@@ -714,13 +646,12 @@ def test_no_peer_sitecustomize_turns_the_p2p_checks_off(tmp_path):
         f.write_text(f"def {attr}(rank, world_size):\n    return True\n")
     code = ";".join(f"import {r[:-3].replace('/', '.')} as m{i}; print(m{i}.{a}(0, 2))" for i, (r, a) in enumerate(mods.items()))
     for flag, want in (("1", "False"), ("0", "True")):
-        env = {"PYTHONPATH": f"{NO_PEER_SITE}:{tmp_path}", "PIE_EVALS_NO_CUSTOM_AR": flag, "PATH": "/usr/bin:/bin"}
+        env = {"PYTHONPATH": f"{NO_PEER_SITE}:{tmp_path}", "PIE_BENCH_NO_CUSTOM_AR": flag, "PATH": "/usr/bin:/bin"}
         out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True, cwd=tmp_path).stdout.split()
         assert out == [want, want], (flag, out)
 
 
 def test_baseline_jit_caches_live_on_the_volume():
-    # a fresh pod otherwise autotunes each batch shape inside its first measured round (H100, nightly 36103844715 s05)
     for cls in (VllmEngine, SglangEngine):
         env = make(cls).env
         assert env["TRITON_CACHE_DIR"].endswith("jit/triton") and env["TORCHINDUCTOR_CACHE_DIR"].endswith("jit/inductor")
@@ -743,9 +674,6 @@ def test_vllm_speculative_boots_leave_warmup_room_on_small_cards(tmp_path):
     assert flag_value(argv, "--gpu-mem-util") == "0.85"
     argv = argv_for(make(VllmEngine, plat=small, workload=ss), ss, tmp_path)
     assert flag_value(argv, "--gpu-mem-util") == "0.9"
-
-
-# ---- Mac: pie on Metal ----------------------------------------------------------
 
 
 def mac_platform(arch: str = "apple9", memory_gib: float = 48.0) -> PlatformSpec:
@@ -802,7 +730,7 @@ def test_recipe_overrides_by_family_and_backend():
     r = load_recipe("pie", "default", mac_platform(), MAC_WORKLOADS["c32"], family="gemma4")
     assert "total_pages" not in r
     r = load_recipe("pie", "default", mac_platform(), MAC_WORKLOADS["c32"], family="qwen3_6_moe")
-    assert r["total_pages"] == 1024 and r["engine_option"] == {"max_state_slots": 64}  # 35B-A3B does not boot on 48 GB without it
+    assert r["total_pages"] == 1024 and r["engine_option"] == {"max_state_slots": 64}
 
 
 def test_literal_prompt_param_is_sent_as_is():
@@ -812,7 +740,6 @@ def test_literal_prompt_param_is_sent_as_is():
 
 
 def _a_page_count_pie(monkeypatch):
-    """A pie from before its pool was sized in bytes (pie #929)."""
     has = PieEngine._bench_has
     monkeypatch.setattr(PieEngine, "_bench_has", lambda self, flag: flag != "--device-kv-budget" and has(self, flag))
 
@@ -821,7 +748,7 @@ def test_pie_metal_args(tmp_path, monkeypatch):
     _a_page_count_pie(monkeypatch)
     eng = mac_make(PieEngine)
     argv = argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
-    assert argv[1].endswith("bench/pie_bench.py") and argv[2] == "tput"
+    assert argv[1].endswith("clients/pie_client.py") and argv[2] == "tput"
     assert flag_value(argv, "--engine") == "metal"
     assert flag_value(argv, "--max-model-len") == "2048"
     assert flag_value(argv, "--concurrency") == "32"
@@ -839,8 +766,8 @@ def test_the_metal_pool_holds_one_request_at_the_declared_context(tmp_path, monk
     lc = WorkloadSpec(id="lc-32k-128", kind="long_context", params={"prefill": 32768, "decode": 128, "concurrency": 1})
     argv = argv_for(eng, lc, tmp_path)
     mml = int(flag_value(argv, "--max-model-len"))
-    assert int(flag_value(argv, "--total-pages")) * 32 >= mml  # the engine's 1024 holds 32k
-    eng.recipe["total_pages"] = 1024  # qwen3.6 on metal pins it
+    assert int(flag_value(argv, "--total-pages")) * 32 >= mml
+    eng.recipe["total_pages"] = 1024
     assert int(flag_value(argv_for(eng, lc, tmp_path), "--total-pages")) * 32 >= mml
     eng.recipe["total_pages"] = 4096
     assert flag_value(argv_for(eng, lc, tmp_path), "--total-pages") == "4096"
@@ -853,18 +780,18 @@ def test_the_metal_pool_holds_one_request_at_the_declared_context(tmp_path, monk
 def test_a_pie_that_sizes_its_pool_in_bytes_gets_no_page_count(tmp_path, monkeypatch):
     eng = mac_make(PieEngine)
     monkeypatch.setattr(PieEngine, "_bench_has", lambda self, flag: True)
-    eng.recipe["total_pages"] = 1024  # qwen3.6 on metal pins it for an older pie
+    eng.recipe["total_pages"] = 1024
     argv = argv_for(eng, MAC_WORKLOADS["c32"], tmp_path)
     assert "--total-pages" not in argv
-    assert flag_value(argv, "--gpu-mem-util") == "0.9"  # the share holds on Metal too
-    assert "--device-kv-budget" not in argv  # unstated, the pool fills the share
+    assert flag_value(argv, "--gpu-mem-util") == "0.9"
+    assert "--device-kv-budget" not in argv
     eng.recipe["device_kv_budget"] = "8GiB"
     assert flag_value(argv_for(eng, MAC_WORKLOADS["c32"], tmp_path), "--device-kv-budget") == "8GiB"
 
 
 def test_pie_cuda_card_cap_never_widens_a_narrow_shape(tmp_path):
     eng = make(PieEngine, workload=WORKLOADS["c32"])
-    eng.recipe["max_forward_requests"] = 384  # a card's cap for its widest shape
+    eng.recipe["max_forward_requests"] = 384
     assert flag_value(argv_for(eng, WORKLOADS["c32"], tmp_path), "--max-forward-requests") == "32"
     eng.recipe["max_forward_requests"] = 16
     assert flag_value(argv_for(eng, WORKLOADS["c32"], tmp_path), "--max-forward-requests") == "16"
@@ -963,7 +890,6 @@ def _openai_bench():
 
 
 def test_openai_bench_keeps_the_whole_batch_in_flight_on_a_small_mac(monkeypatch):
-    """c32 means 32 requests at once, not asyncio's default min(32, cpus + 4)."""
     import asyncio
     import threading
 
@@ -977,7 +903,7 @@ def test_openai_bench_keeps_the_whole_batch_in_flight_on_a_small_mac(monkeypatch
     together = threading.Barrier(32)
 
     def run_one(args, endpoint, prompt, count, max_tokens, server, retries=None):
-        together.wait(timeout=10)  # breaks unless all 32 run at the same time
+        together.wait(timeout=10)
         return ob.RequestResult(True, 0.0, 1, 1)
 
     monkeypatch.setattr(ob, "run_one", run_one)
@@ -990,8 +916,6 @@ def test_openai_bench_keeps_the_whole_batch_in_flight_on_a_small_mac(monkeypatch
 
 
 def test_openai_bench_single_stream_ttft_is_its_own_request(monkeypatch):
-    """A single-stream round sends one request after another: no request's TTFT holds the ones before it, while a
-    concurrent shape's request still counts its wait for a seat."""
     import asyncio
     import time
 
@@ -1014,21 +938,20 @@ def test_openai_bench_single_stream_ttft_is_its_own_request(monkeypatch):
 
 
 def test_a_single_stream_request_starts_on_a_cool_mac(monkeypatch):
-    """A fanless Air throttles mid-round: every single-stream request waits for nominal first, out of the round's wall."""
     import asyncio
 
     ob = _openai_bench()
     cool = ob.cool_before_request
-    common = cool.__globals__  # bench/common.py as openai_bench imported it (another test may own sys.modules["common"])
-    monkeypatch.delenv("PIE_EVALS_SETTLE", raising=False)  # an earlier test may leave the runner's switch off
+    common = cool.__globals__
+    monkeypatch.delenv("PIE_BENCH_SETTLE", raising=False)
     states = iter(["fair", "fair", "nominal"] + ["nominal"] * 10)
     monkeypatch.setitem(common, "mac_thermal_state", lambda: next(states))
     monkeypatch.setattr(common["time"], "sleep", lambda s: None)
     assert cool() >= 0 and next(states) == "nominal"
-    monkeypatch.setenv("PIE_EVALS_SETTLE", "0")
+    monkeypatch.setenv("PIE_BENCH_SETTLE", "0")
     monkeypatch.setitem(common, "mac_thermal_state", lambda: "serious")
     assert cool() == 0.0
-    monkeypatch.delenv("PIE_EVALS_SETTLE")
+    monkeypatch.delenv("PIE_BENCH_SETTLE")
     calls = []
     monkeypatch.setattr(ob, "cool_before_request", lambda: calls.append(1) or 30.0)
     monkeypatch.setattr(ob, "make_prompts", lambda args, n: ["p"] * n)
@@ -1042,7 +965,7 @@ def test_a_single_stream_request_starts_on_a_cool_mac(monkeypatch):
     assert [r.ttft_s for r in results] == [0.01] * 3
     calls.clear()
     asyncio.run(ob.run(ob.build_parser().parse_args(["tput", *base, "--num-requests", "4", "--concurrency", "2"])))
-    assert not calls  # a batch is not paused mid-flight
+    assert not calls
 
 
 def test_openai_bench_sends_token_ids_so_the_bos_is_not_doubled(monkeypatch):
@@ -1084,7 +1007,7 @@ def test_openai_bench_resends_only_a_request_the_server_never_read(monkeypatch):
     ob.post_stream_retrying("http://h", {}, 1.0, None, retries)
     assert len(calls) == 3 and len(retries) == 2
 
-    def reset_mid_stream(url, payload, timeout, on_chunk):  # the server had the request
+    def reset_mid_stream(url, payload, timeout, on_chunk):
         calls.append(1)
         raise ConnectionResetError(errno.ECONNRESET, "Connection reset by peer")
 
@@ -1108,7 +1031,7 @@ def test_openai_bench_resends_only_a_request_the_server_never_read(monkeypatch):
 def test_a_shape_can_score_on_prefill(tmp_path):
     import sys
 
-    from pie_evals.node.engines.base import Engine
+    from pie_bench.node.engines.base import Engine
 
     fake = tmp_path / "fake_bench.py"
     fake.write_text(
@@ -1145,7 +1068,7 @@ def test_lifeline_stops_its_child_when_the_parent_goes_away():
     import sys
     import time
 
-    sup = subprocess.Popen([sys.executable, "-m", "pie_evals.node.engines.lifeline", sys.executable, "-c", "import time; time.sleep(60)"],
+    sup = subprocess.Popen([sys.executable, "-m", "pie_bench.node.engines.lifeline", sys.executable, "-c", "import time; time.sleep(60)"],
                            stdin=subprocess.PIPE)
     time.sleep(0.5)
     sup.stdin.close()
@@ -1157,7 +1080,7 @@ def test_an_idle_bench_is_stopped_as_a_hang():
     import subprocess
     import sys
 
-    from pie_evals.node.engines.base import wait_with_stall_check
+    from pie_bench.node.engines.base import wait_with_stall_check
 
     idle = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
     rc, timed_out, stalled = wait_with_stall_check(idle, timeout_s=60, stall_s=2, poll_s=0.5, device_busy=lambda: False)
@@ -1168,9 +1091,8 @@ def test_a_bench_waiting_on_a_busy_mac_gpu_is_left_to_finish():
     import subprocess
     import sys
 
-    from pie_evals.node.engines.base import wait_with_stall_check
+    from pie_bench.node.engines.base import wait_with_stall_check
 
-    # pie on the M4 Pro: a minute-long Metal prefill fire, the tree's CPU flat meanwhile
     waiting = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(4)"])
     rc, timed_out, stalled = wait_with_stall_check(waiting, timeout_s=60, stall_s=2, poll_s=0.5, device_busy=lambda: True)
     assert (rc, timed_out, stalled) == (0, False, False)
@@ -1181,7 +1103,7 @@ def test_a_hang_leaves_a_dump_of_what_the_tree_was_doing():
     import subprocess
     import sys
 
-    from pie_evals.node.engines.base import stall_dump, wait_with_stall_check
+    from pie_bench.node.engines.base import stall_dump, wait_with_stall_check
 
     idle = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
     dumps = []
@@ -1197,7 +1119,7 @@ def test_a_busy_bench_is_left_to_finish():
     import subprocess
     import sys
 
-    from pie_evals.node.engines.base import wait_with_stall_check
+    from pie_bench.node.engines.base import wait_with_stall_check
 
     busy = subprocess.Popen([sys.executable, "-c", "import time\nt = time.time()\nwhile time.time() - t < 4: pass"])
     rc, timed_out, stalled = wait_with_stall_check(busy, timeout_s=60, stall_s=2, poll_s=0.5)
@@ -1208,11 +1130,10 @@ def test_pie_prefills_cold_when_its_bench_can_turn_the_prefix_cache_off(tmp_path
     for script, cold in (("p.add_argument('--no-prefix-cache')\n", True), ("# an older bench\n", False)):
         bench = tmp_path / str(cold)
         bench.mkdir()
-        monkeypatch.setenv("PIE_EVALS_BENCH_DIR", str(bench))
-        (bench / "pie_bench.py").write_text(script)
+        monkeypatch.setenv("PIE_BENCH_BENCH_DIR", str(bench))
+        (bench / "pie_client.py").write_text(script)
         eng = PieEngine(pie_root=tmp_path, artifact=artifact(), platform=platform(), mode=Mode(), recipe={})
         assert ("--no-prefix-cache" in argv_for(eng, WORKLOADS["c32"], tmp_path)) is cold
-
 
 
 def test_pie_speculates_single_stream_and_the_recipe_can_force_it(tmp_path):
@@ -1276,20 +1197,18 @@ def test_a_dflash2_row_of_a_moe_target_verifies_what_its_draft_pays_for(tmp_path
 
 
 def test_mlxlm_blocks_every_special_token(tmp_path, monkeypatch):
-    """mlx-lm has no ignore_eos: a -100 bias on each added token of the tokenizer makes it write the full length."""
-    from pie_evals.node.engines import served
+    from pie_bench.node.engines import served
 
     snap = tmp_path / "snap"
     snap.mkdir()
     (snap / "tokenizer.json").write_text(json.dumps({"added_tokens": [{"id": 248046, "content": "<|im_end|>"}, {"id": 248069, "content": "</think>"}]}))
-    monkeypatch.setattr("pie_evals.node.engines.shape.hf_snapshot_dir", lambda *a, **k: snap)
+    monkeypatch.setattr("pie_bench.node.engines.shape.hf_snapshot_dir", lambda *a, **k: snap)
     from types import SimpleNamespace
     eng = SimpleNamespace(artifact=SimpleNamespace(base_model="m", revision=None))
     assert served.ServedEngine.stop_token_bias(eng) == {"248046": -100.0, "248069": -100.0}
 
 
 def test_vllm_single_stream_streams_one_request_at_a_time(tmp_path):
-    # the offline `latency` mode stamps no first token: 0.5.3-b5 had no vLLM decode or prefill number
     argv = make(VllmEngine).build_argv(WORKLOADS["ss-128-64"], [], tmp_path / "o.json")
     assert argv[2] == "tput" and "--report-timing" in argv
     assert argv[argv.index("--concurrency") + 1] == "1" and "--requests" not in argv
@@ -1297,9 +1216,9 @@ def test_vllm_single_stream_streams_one_request_at_a_time(tmp_path):
 
 
 def test_vllm_on_the_tpu_runs_its_tpu_build(tmp_path, monkeypatch):
-    from pie_evals.node import baselines
+    from pie_bench.node import baselines
 
-    monkeypatch.setenv("PIE_EVALS_CACHE", str(tmp_path))
+    monkeypatch.setenv("PIE_BENCH_CACHE", str(tmp_path))
     monkeypatch.delenv("VLLM_PY", raising=False)
     tpu = platform(Backend.XLA, "trillium", count=1)
     venv = baselines.venv_dir("vllm", "0.30.0", backend="xla")
@@ -1312,42 +1231,35 @@ def test_vllm_on_the_tpu_runs_its_tpu_build(tmp_path, monkeypatch):
     eng = VllmEngine(pie_root=PIE_ROOT, artifact=artifact(), platform=tpu, mode=Mode(), recipe={**recipe, "pin": "0.30.0"})
     assert eng.python == str(venv / "bin" / "python")
     argv = eng.build_argv(raw, [], tmp_path / "o.json")
-    # no CUDA attention backend, no nvidia-smi affinity; the same context and one stream at a time as pie
     assert "--attention-backend" not in argv and argv[argv.index("--cpu-affinity") + 1] == "none"
     assert argv[argv.index("--max-model-len") + 1] == str(max_model_len_for(raw))
     assert argv[2] == "tput" and argv[argv.index("--concurrency") + 1] == "1"
 
 
 def test_the_tpu_runs_pie_vllm_and_sglang_raw_prefill_and_batch_rows():
-    from pie_evals.plan.matrix import Matrix
-    from pie_evals.schema import Tier
+    from pie_bench.plan.matrix import Matrix
+    from pie_bench.schema import Tier
 
-    m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
+    m = Matrix.load(MATRIX)
     cells = [c for c in m.runnable(Tier.WEEKLY, m.expand(platforms=["tpu-v6e-1"])) if c.platform.id == "tpu-v6e-1"]
     tpu = {(str(c.engine), c.artifact.id, c.workload.id) for c in cells}
     assert ("vllm", "qwen3.5-0.8b-bf16", "raw-512-256") in tpu and ("pie", "qwen3.5-0.8b-xla", "raw-512-256") in tpu
     assert {e for e, _, _ in tpu} == {"pie", "vllm", "sglang"}
-    # every arm runs Raw and a prompt batch (256 prompts, or 32 where the chip seats no 256 recurrent states: Qwen3.8-27B's
-    # 20-layer cut, #1578), and one batch as large as the chip holds; Qwen3.5-0.8B keeps its own shapes on pie
     arms = {(e, a) for e, a, _ in tpu}
     assert all((e, a, "raw-512-256") in tpu and {(e, a, "pf256-512"), (e, a, "pf32-512")} & tpu for e, a in arms)
     assert {a for _, a, w in tpu if w == "pf32-512"} == {"qwen3.8-27b-mini20"}
     assert {w for e, a, w in tpu if a != "qwen3.5-0.8b-xla"} <= {"raw-512-256", "pf256-512", "pf32-512", "c32", "c64", "c256"}
-    # the GPU page's models too, where one 32 GB chip holds them
     more = {"qwen3-0.6b-tpu", "gemma-4-e2b-tpu", "gemma-4-e4b-tpu", "gemma-4-12b-tpu", "gpt-oss-20b-tpu"}
-    # vLLM-TPU runs gpt-oss on its int8 requant (#1307); pie runs them all
     assert more <= {a for e, a in arms if e == "vllm"} and more <= {a for e, a in arms if e == "pie"}
-    # sglang-jax 0.1.0rc0 loads none of these gemma-4 checkpoints and has no mxfp4 (support.yaml)
     assert {a for e, a in arms if e == "sglang"} & more == {"qwen3-0.6b-tpu"}
-    # sglang-jax is versioned apart from sglang
     assert {c.engine_version for c in cells if str(c.engine) == "sglang"} == {m.engines["sglang"].backend_pins["xla"]}
 
 
 def test_sglang_on_the_tpu_serves_its_jax_build(tmp_path, monkeypatch):
-    from pie_evals.node import baselines
-    from pie_evals.node.engines.sglang import SglangTpuEngine
+    from pie_bench.node import baselines
+    from pie_bench.node.engines.sglang import SglangTpuEngine
 
-    monkeypatch.setenv("PIE_EVALS_CACHE", str(tmp_path))
+    monkeypatch.setenv("PIE_BENCH_CACHE", str(tmp_path))
     monkeypatch.delenv("SGLANG_PY", raising=False)
     tpu = platform(Backend.XLA, "trillium", count=1)
     assert baselines.BACKEND_SPECS[("sglang", "xla")]("0.1.0rc0") == ["sglang-jax[tpu]==0.1.0rc0"]
@@ -1363,24 +1275,21 @@ def test_sglang_on_the_tpu_serves_its_jax_build(tmp_path, monkeypatch):
     assert cmd[:3] == [str(venv / "bin" / "python"), "-m", "sgl_jax.launch_server"]
     assert cmd[cmd.index("--device") + 1] == "tpu" and "--disable-radix-cache" in cmd
     assert cmd[cmd.index("--context-length") + 1] == str(max_model_len_for(raw))
-    # the CUDA build stays the offline sglang_bench.py engine
     assert type(SglangEngine(pie_root=PIE_ROOT, artifact=artifact(), platform=platform(), mode=Mode(), recipe=recipe)) is SglangEngine
 
 
 def test_a_queued_single_stream_request_starts_when_the_one_before_it_ends():
-    # vLLM's streaming client sends every request at t=0 and the engine seats one (0.5.3-b5, L4)
-    from pie_evals.node.engines.base import serial_clock
+    from pie_bench.node.engines.base import serial_clock
 
     rows = [{"ok": True, "client_send_s": 0.0, "client_return_s": 9.9, "ttft_s": 0.1, "latency_s": 9.9},
             {"ok": True, "client_send_s": 0.0, "client_return_s": 19.8, "ttft_s": 10.0, "latency_s": 19.8}]
     fixed = serial_clock(rows)
     assert abs(fixed[1]["ttft_s"] - 0.1) < 1e-9 and abs(fixed[1]["latency_s"] - 9.9) < 1e-9
     sequential = [{**rows[0]}, {**rows[1], "client_send_s": 9.95, "ttft_s": 0.1, "latency_s": 9.85}]
-    assert serial_clock(sequential) == sequential  # a client that sends one at a time is left alone
+    assert serial_clock(sequential) == sequential
 
 
 def test_each_round_gets_its_own_cold_prompts(tmp_path):
-    # a server kept between rounds served rounds 2 and 3 from its prefix cache (0.5.3-b5, pie on a PRO 6000)
     import json as _json
 
     eng = make(VllmEngine)
@@ -1407,13 +1316,10 @@ def test_a_16_gb_mac_gets_a_smaller_forward_budget(tmp_path):
     assert args(16.0, {"max_forward_tokens": 4096}) == "4096"
 
 
-# ---- trtllm -----------------------------------------------------------------
-
-
 def test_trtllm_serves_the_checkpoint_with_graphs_to_the_batch_and_no_block_reuse(tmp_path):
     import yaml
 
-    from pie_evals.node.engines.trtllm import TrtllmEngine
+    from pie_bench.node.engines.trtllm import TrtllmEngine
 
     eng = make(TrtllmEngine, plat=platform(count=1))
     eng.recipe["options_dir"] = str(tmp_path)
@@ -1432,45 +1338,37 @@ def test_trtllm_serves_the_checkpoint_with_graphs_to_the_batch_and_no_block_reus
 
 
 def test_trtllm_takes_the_same_share_of_the_card_as_the_other_engines():
-    from pie_evals.node.engines.trtllm import TRTLLM_RUNTIME_GIB, TrtllmEngine
+    from pie_bench.node.engines.trtllm import TRTLLM_RUNTIME_GIB, TrtllmEngine
 
-    # an 80 GB card, 50 GiB of weights: weights + runtime + f * (what is left) = 0.9 of the card
     eng = make(TrtllmEngine, plat=platform(count=1).model_copy(update={"memory_gib": 80}), art=artifact(expected_gib=50.0))
     f = eng.kv_free_mem_fraction()
     left = 80 - 50 - TRTLLM_RUNTIME_GIB
     assert abs(50 + TRTLLM_RUNTIME_GIB + f * left - 0.9 * 80) < 0.05
     assert eng.llm_api_options(32, 768)["kv_cache_config"]["free_gpu_memory_fraction"] == f
-    # per GPU on a multi-GPU platform: two 80 GB cards at tp 2 hold half the weights each
     two = make(TrtllmEngine, plat=platform(count=2).model_copy(update={"memory_gib": 160}), art=artifact(expected_gib=100.0),
                mode=Mode(tp=2))
     assert two.kv_free_mem_fraction() == f
-    # never past TensorRT-LLM's own default, which a share above 0.9 would ask
     big = make(TrtllmEngine, plat=platform(count=1).model_copy(update={"memory_gib": 180}), art=artifact(expected_gib=2.0))
     big.recipe["gpu_mem_util"] = 0.95
     assert big.kv_free_mem_fraction() == 0.9
-    # a recipe's fraction stands
     eng.recipe["kv_free_mem_fraction"] = 0.6
     assert eng.kv_free_mem_fraction() == 0.6
-    # weights unknown: TensorRT-LLM's default
     assert make(TrtllmEngine, plat=platform(count=1), art=artifact(expected_gib=None)).kv_free_mem_fraction() is None
 
 
 def test_trtllm_runs_on_nvidia_gpus_only():
-    from pie_evals.plan.matrix import Matrix
+    from pie_bench.plan.matrix import Matrix
 
-    m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
+    m = Matrix.load(MATRIX)
     cells = [c for c in m.expand(platforms={"l40s-x1", "tpu-v6e-1", "mi300x-x1"}, artifacts={"qwen3.5-0.8b-bf16"}) if str(c.engine) == "trtllm"]
     assert cells and {c.platform.id for c in cells} == {"l40s-x1"}
 
 
-# ---- browser engines (webgpu platforms) -------------------------------------
-
-
 def _browser_stubs(monkeypatch, tmp_path):
-    from pie_evals.node.engines import browser
+    from pie_bench.node.engines import browser
 
     monkeypatch.setattr(browser, "ensure_harness", lambda log=print: "/usr/bin/node")
-    monkeypatch.setenv("PIE_EVALS_CACHE", str(tmp_path / "cache"))
+    monkeypatch.setenv("PIE_BENCH_CACHE", str(tmp_path / "cache"))
     return browser
 
 
@@ -1479,7 +1377,7 @@ def _options(cmd: list[str]) -> dict:
 
 
 def test_pie_on_a_webgpu_platform_is_its_browser_runtime():
-    from pie_evals.node.engines.browser import LlamacppWebgpuEngine, PieWebEngine, WebllmEngine
+    from pie_bench.node.engines.browser import LlamacppWebgpuEngine, PieWebEngine, WebllmEngine
 
     assert get_engine("pie", "webgpu") is PieWebEngine
     assert get_engine("pie", "cuda") is PieEngine and get_engine("pie") is PieEngine
@@ -1537,19 +1435,16 @@ def test_pie_in_the_tab_sizes_its_pool_and_slots_to_the_shape(monkeypatch, tmp_p
     monkeypatch.setattr(browser.PieWebEngine, "inferlet", lambda self: wasm)
     o = _options(eng.server_cmd(8126, 32, 768))
     assert "max_state_slots = 32\n" in o["config"] and "max_forward_requests = 32\n" in o["config"] and "max_model_len = 768\n" in o["config"]
-    # the CUDA rows' Gemma-4 max_forward_tokens (pie.yaml, arch ada) does not reach the tab
     assert "max_forward_tokens = 512\n" in o["config"]
 
 
 def test_the_webgpu_platforms_run_the_browser_engines_only():
-    from pie_evals.plan.matrix import Matrix
-    from pie_evals.schema import Tier
+    from pie_bench.plan.matrix import Matrix
+    from pie_bench.schema import Tier
 
-    m = Matrix.load(Path(__file__).resolve().parents[1] / "matrix")
+    m = Matrix.load(MATRIX)
     cells = m.runnable(Tier.TARGETED, m.expand(platforms={"web-rtx4090"}))
     engines = {str(c.engine) for c in cells}
     assert engines == {"pie", "webllm", "llamacpp-webgpu"}
-    # WebLLM serves one request at a time: its batched rows are declared, not run
     assert {c.workload.id for c in cells if str(c.engine) == "webllm"} == {"raw-512-256"}
-    # 14 models, two of them past what pie's WebGPU engine takes (support.yaml)
     assert len({c.artifact.id for c in cells if str(c.engine) == "pie"}) == 12

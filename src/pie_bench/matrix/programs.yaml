@@ -1,0 +1,140 @@
+programs:
+  - id: text-completion-bench
+    path: examples/text-completion-bench
+    category: serving
+    pie_only: false
+    accuracy_gate: token_parity
+    tiers: [smoke, nightly, weekly]
+  - id: prefill-rows
+    path: examples/prefill-rows
+    category: serving
+    accuracy_gate: token_parity
+    workloads: [ss-128-64, lc-2k-128, lc-8k-128, lc-32k-128]
+    tiers: [smoke, nightly, weekly]
+  - id: prefix-tree-kv-cache
+    path: examples/prefix-tree-kv-cache
+    category: serving
+    accuracy_gate: token_parity
+    baseline_equivalents: {vllm: enable-prefix-caching, sglang: radix-cache}
+    pie_only: false
+    workloads: [prefix-1k-x64, mixed-256]
+    tiers: [smoke, nightly, weekly]
+
+  - id: dflash-speculative-bench
+    path: examples/dflash-speculative-bench
+    category: speculative
+    accuracy_gate: acceptance_rate
+    spec_dec: dflash2
+    workloads: [ss-128-64, ss-512-256, c8]
+    tiers: [smoke, nightly, weekly]
+  - id: dflash-block-acceptance
+    path: examples/dflash-block-acceptance
+    category: speculative
+    accuracy_gate: acceptance_rate
+    spec_dec: dflash2
+    workloads: [ss-128-64]
+    tiers: [nightly, weekly]
+  - id: mtp-speculative-decoding
+    path: examples/mtp-speculative-decoding
+    category: speculative
+    accuracy_gate: acceptance_rate
+    spec_dec: mtp
+    workloads: [ss-128-64, c8]
+    tiers: [smoke, nightly, weekly]
+  - id: cacheback-speculative-decoding
+    path: examples/cacheback-speculative-decoding
+    category: speculative
+    accuracy_gate: acceptance_rate
+    spec_dec: ngram
+    baseline_equivalents: {vllm: speculative-ngram, llamacpp: draft-ngram, mlxlm: prompt-lookup}
+    pie_only: false
+    workloads: [ss-128-64, c8]
+    tiers: [smoke, nightly, weekly]
+  - id: rs-speculative-decoding
+    path: examples/rs-speculative-decoding
+    category: speculative
+    accuracy_gate: acceptance_rate
+    spec_dec: rs
+    families: [qwen3_5, qwen3_6, qwen3_6_moe, glm5_next, kimi_k3, nemotron_h]
+    workloads: [ss-128-64]
+    tiers: [nightly, weekly]
+
+  - id: trackb-h2o
+    path: examples/trackb-h2o
+    bench_args: ["--temperature", "0.7"]
+    category: kv_policy
+    accuracy_gate: token_parity
+    workloads: [lc-1k-128]
+    tiers: [smoke, nightly, weekly]
+  - id: trackb-snapkv
+    path: examples/trackb-snapkv
+    bench_args: ["--temperature", "0.7"]
+    category: kv_policy
+    accuracy_gate: token_parity
+    workloads: [lc-1k-128]
+    tiers: [smoke, nightly, weekly]
+  - id: snapkv-eviction
+    path: examples/snapkv-eviction
+    bench_args: ["--temperature", "0.7"]
+    category: kv_policy
+    accuracy_gate: token_parity
+    workloads: [lc-1k-128]
+    tiers: [nightly, weekly]
+  - id: tova-attention
+    path: examples/tova-attention
+    bench_args: ["--temperature", "0.7"]
+    category: kv_policy
+    accuracy_gate: token_parity
+    workloads: [lc-1k-128]
+    tiers: [nightly, weekly]
+
+  - id: attention-sink
+    path: examples/attention-sink
+    bench_args: ["--temperature", "0.7"]
+    category: kv_policy
+    accuracy_gate: token_parity
+    workloads: [lc-1k-128]
+    tiers: [nightly, weekly]
+  - id: sliding-window-attention
+    path: examples/sliding-window-attention
+    bench_args: ["--temperature", "0.7"]
+    category: kv_policy
+    accuracy_gate: token_parity
+    workloads: [lc-1k-128]
+    tiers: [nightly, weekly]
+
+  - id: lora-probe
+    path: examples/lora-probe
+    bench_args: ["--temperature", "0.7"]
+    category: adapter
+    accuracy_gate: token_parity
+    workloads: [ss-128-64, c8]
+    tiers: [smoke, nightly, weekly]
+  - id: classifier-free-guidance
+    path: examples/classifier-free-guidance
+    category: adapter
+    accuracy_gate: token_parity
+    workloads: [ss-128-64]
+    tiers: [nightly, weekly]
+
+  - id: diffusion-parity
+    path: examples/diffusion-parity
+    category: diffusion
+    accuracy_gate: cosine
+    families: [mini_dit]
+    workloads: [ss-128-64]
+    tiers: [smoke, nightly, weekly]
+  - id: mini-dit-parity
+    path: examples/mini-dit-parity
+    category: diffusion
+    accuracy_gate: cosine
+    families: [mini_dit]
+    workloads: [ss-128-64]
+    tiers: [smoke, nightly, weekly]
+  - id: text-to-image
+    path: examples/text-to-image
+    category: diffusion
+    accuracy_gate: cosine
+    families: [mini_dit, z_image, flux2_klein]
+    workloads: [ss-128-64]
+    tiers: [nightly, weekly]

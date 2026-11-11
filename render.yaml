@@ -1,0 +1,39 @@
+databases:
+  - name: pie-bench-db
+    databaseName: piebench
+    user: piebench
+    postgresMajorVersion: "16"
+    plan: basic-1gb
+    ipAllowList: []
+
+services:
+  - type: web
+    name: pie-bench-api
+    runtime: python
+    plan: standard
+    branch: main
+    autoDeploy: true
+    buildCommand: pip install ".[server]"
+    startCommand: uvicorn server.app:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips "*"
+    healthCheckPath: /healthz
+    domains:
+      - api.pie-project.org
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+      targetCPUPercent: 70
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pie-bench-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://pie-project.org,https://benchmarks.pie-project.org,https://www.pie-project.org
+      - key: DEFAULT_QUOTA
+        value: "20"

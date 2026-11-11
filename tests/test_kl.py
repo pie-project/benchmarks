@@ -1,6 +1,6 @@
 import math
 
-from pie_evals.quality.kl import compare, partition_kl
+from pie_bench.quality.kl import compare, partition_kl
 
 
 def lp(probs: dict[int, float]) -> dict[int, float]:
@@ -13,7 +13,6 @@ def test_the_same_list_is_zero():
 
 
 def test_lists_that_share_no_token_are_far_past_the_line():
-    # the reference's top three hold 0.69; the other engine's top list holds none of them
     ref = lp({1: 0.23, 2: 0.23, 3: 0.23, 4: 0.07})
     other = lp({10: 0.3, 11: 0.2, 12: 0.1, 13: 0.05})
     assert partition_kl(ref, other) > 3 * 0.15
@@ -21,14 +20,12 @@ def test_lists_that_share_no_token_are_far_past_the_line():
 
 
 def test_a_tie_broken_differently_stays_near_zero():
-    # about 100 tokens tied at the softcap: each engine lists a different 20 of them, the same distribution
     ref = lp({t: 0.0097 for t in range(20)})
     other = lp({t: 0.0097 for t in range(50, 70)})
     assert partition_kl(ref, other) < 1e-3
 
 
 def test_full_overlap_is_unchanged():
-    # every reference token in the other's list: the cells are the reference's tokens and the rest, as before
     ref = lp({1: 0.6, 2: 0.3})
     other = lp({1: 0.5, 2: 0.3, 3: 0.1})
     want = 0.6 * math.log(0.6 / 0.5) + 0.3 * math.log(0.3 / 0.3) + 0.1 * math.log(0.1 / 0.2)
@@ -42,8 +39,6 @@ def test_a_low_ranked_token_missing_moves_it_little():
 
 
 def test_an_extra_entry_far_down_the_list_is_not_the_bound():
-    # pie's list: its top 20 and one more token at log-probability -35; the reference's 20th token sits just outside
-    # pie's 20, at about pie's 20th probability
     ref = lp({t: 0.01 for t in range(20)})
     other = lp({**{t: 0.01 for t in range(19)}, 99: 0.0099})
     other[12345] = -35.0

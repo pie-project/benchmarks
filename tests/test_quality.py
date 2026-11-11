@@ -1,7 +1,7 @@
 import json
 
-from pie_evals.quality.tasks import Item, score_gsm8k, wilson
-from pie_evals.results.store import Store
+from pie_bench.quality.tasks import Item, score_gsm8k, wilson
+from pie_bench.results.store import Store
 
 
 def test_gsm8k_reads_the_marked_answer_first():
@@ -26,7 +26,7 @@ def test_store_reads_quality_summaries(tmp_path):
 
 
 def test_scores_grade_the_answer_not_the_thinking():
-    from pie_evals.quality.tasks import answer_part
+    from pie_bench.quality.tasks import answer_part
 
     assert answer_part("<|channel>thought\nlet me think 41<channel|>#### 42") == "#### 42"
     assert answer_part("<think>41</think>\n#### 42") == "#### 42"
@@ -35,7 +35,7 @@ def test_scores_grade_the_answer_not_the_thinking():
 
 
 def test_glimmer_answers_are_the_user_message():
-    from pie_evals.quality.tasks import answer_part
+    from pie_bench.quality.tasks import answer_part
 
     out = " to=self<|message|>We need to capitalize.<|eom|><|start|>assistant to=user<|message|>HELLO THERE<|eot|>"
     assert answer_part(out) == "HELLO THERE"
@@ -43,7 +43,7 @@ def test_glimmer_answers_are_the_user_message():
 
 
 def test_choice_tasks_read_the_marked_letter():
-    from pie_evals.quality.tasks import score_choice
+    from pie_bench.quality.tasks import score_choice
 
     item = Item("q", "p", "C")
     assert score_choice(item, "It is the third.\nAnswer: C") == 1.0
@@ -57,7 +57,7 @@ def test_choice_tasks_read_the_marked_letter():
 
 
 def test_math_tasks_compare_the_boxed_answer():
-    from pie_evals.quality.tasks import score_math
+    from pie_bench.quality.tasks import score_math
 
     item = Item("q", "p", "\\frac{1}{2}")
     assert score_math(item, "so \\boxed{\\dfrac{1}{2}}") == 1.0
@@ -71,7 +71,7 @@ def test_math_tasks_compare_the_boxed_answer():
 
 
 def test_every_task_has_a_loader_scorer_and_budget():
-    from pie_evals.quality.tasks import TASKS
+    from pie_bench.quality.tasks import TASKS
 
     assert set(TASKS) == {"gsm8k", "ifeval", "mmlu", "arc", "math500"}
     for load, score, budget in TASKS.values():
@@ -79,7 +79,7 @@ def test_every_task_has_a_loader_scorer_and_budget():
 
 
 def test_a_task_that_cannot_load_is_skipped_not_fatal(monkeypatch):
-    from pie_evals.quality import run, tasks
+    from pie_bench.quality import run, tasks
 
     class GatedRepoError(Exception):
         pass
@@ -104,7 +104,7 @@ def _arm(artifact, engine, score, n=100, samples=None, scheme="affine_u4_g64", c
 def test_engine_comes_from_the_artifact_format():
     from types import SimpleNamespace as A
 
-    from pie_evals.quality.engines import engine_for, strip_bos
+    from pie_bench.quality.engines import engine_for, strip_bos
 
     assert engine_for(A(source_format="gguf", baseline_label="llama.cpp")) == "llamacpp"
     assert engine_for(A(source_format="splash", baseline_label="Splash")) == "splash"
@@ -114,7 +114,7 @@ def test_engine_comes_from_the_artifact_format():
 
 
 def test_parity_flags_a_score_gap_beyond_the_combined_intervals():
-    from pie_evals.quality.parity import rows
+    from pie_bench.quality.parity import rows
 
     same = [_arm("x-mlx4", "pie", 0.80), _arm("x-mlxlm", "mlxlm", 0.82)]
     cell = rows(same)[0]["arms"][1]
@@ -122,29 +122,29 @@ def test_parity_flags_a_score_gap_beyond_the_combined_intervals():
     far = [_arm("x-mlx4", "pie", 0.80), _arm("x-mlxlm", "mlxlm", 0.99)]
     assert rows(far)[0]["arms"][1]["score_flag"] == "mismatch" and rows(far)[0]["flag"] == "mismatch"
     ahead = [_arm("x-mlx4", "pie", 0.99), _arm("x-mlxlm", "mlxlm", 0.80)]
-    assert rows(ahead)[0]["arms"][1]["score_flag"] == "ok" and rows(ahead)[0]["flag"] == "ok"  # pie higher is no fault
+    assert rows(ahead)[0]["arms"][1]["score_flag"] == "ok" and rows(ahead)[0]["flag"] == "ok"
 
 
 def test_parity_measures_answer_drift_only_on_the_same_weights():
-    from pie_evals.quality.parity import rows
+    from pie_bench.quality.parity import rows
 
     a = [{"id": str(i), "text": "#### 1"} for i in range(10)]
     b = [{"id": str(i), "text": "#### 2" if i < 3 else "#### 1"} for i in range(10)]
     same = rows([_arm("x-mlx4", "pie", 0.8, samples=a), _arm("x-mlxlm", "mlxlm", 0.8, samples=b)])[0]
-    assert same["arms"][1]["agree"] == 0.7 and same["arms"][1]["agree_flag"] == "measured" and same["flag"] == "ok"  # drift, not a verdict
+    assert same["arms"][1]["agree"] == 0.7 and same["arms"][1]["agree_flag"] == "measured" and same["flag"] == "ok"
     splash = rows([_arm("x-mlx4", "pie", 0.8, samples=a), _arm("x-splash", "splash", 0.8, samples=b)])[0]
     assert splash["arms"][1]["agree_flag"] == "n/a"
 
 
 def test_parity_leaves_out_an_arm_on_other_weights():
-    from pie_evals.quality.parity import rows
+    from pie_bench.quality.parity import rows
 
     gguf = rows([_arm("x-mlx4", "pie", 0.3), _arm("x-llamacpp", "llamacpp", 0.6, scheme="gguf_q4_k_m", checkpoint="org/x-GGUF")])[0]
     assert [c["engine"] for c in gguf["arms"]] == ["pie"] and gguf["flag"] == "ok"
 
 
 def test_parity_compares_on_the_machine_pie_ran_on():
-    from pie_evals.quality.parity import rows
+    from pie_bench.quality.parity import rows
 
     h100 = {**_arm("x-mlx4", "pie", 0.8), "platform": "h100-sxm-x1"}
     vllm = {**_arm("x-mlx4@vllm", "vllm", 0.8), "model": "x-mlx4@vllm", "platform": "b200-x1"}
@@ -153,7 +153,7 @@ def test_parity_compares_on_the_machine_pie_ran_on():
 
 
 def test_parity_compares_a_vllm_arm_with_the_pie_arm_on_its_weights():
-    from pie_evals.quality.parity import rows
+    from pie_bench.quality.parity import rows
 
     a = [{"id": str(i), "text": "#### 1"} for i in range(10)]
     vllm = {**_arm("x-bf16@vllm", "vllm", 0.8, samples=a, scheme="bf16", checkpoint="org/x"), "model": "x-mlx4@vllm", "label": None}
@@ -174,7 +174,7 @@ def test_a_quality_write_keeps_a_stored_score(tmp_path):
 
 
 def test_parity_reads_saved_reference_texts_only_for_their_prompts(tmp_path):
-    from pie_evals.quality import dist_run, kl
+    from pie_bench.quality import dist_run, kl
 
     rendered = ["q1", "q2"]
     (tmp_path / dist_run.TEXTS_DIR).mkdir()
@@ -186,9 +186,8 @@ def test_parity_reads_saved_reference_texts_only_for_their_prompts(tmp_path):
 
 
 def test_a_reference_against_itself_measures_its_first_token_spread():
-    from pie_evals.quality import dist_run
+    from pie_bench.quality import dist_run
 
-    # two prompts of three tokens; only the last position counts. The second pass flips the first prompt's top-1
     a = [[{}, {}, {1: -0.1, 2: -2.5}], [{}, {}, {3: -0.05, 4: -3.0}]]
     b = [[{}, {}, {1: -2.5, 2: -0.1}], [{}, {}, {3: -0.05, 4: -3.0}]]
     same = dist_run.reference_spread(a, a, [3, 3], "vLLM --enforce-eager")
@@ -198,9 +197,9 @@ def test_a_reference_against_itself_measures_its_first_token_spread():
 
 
 def test_a_first_token_within_twice_the_references_spread_is_inconclusive():
-    from pie_evals.quality.dist_run import first_token_inconclusive
+    from pie_bench.quality.dist_run import first_token_inconclusive
 
-    assert first_token_inconclusive(0.395, 0.444)  # Gemma-4-26B-A4B e24 on rtx4090-x1: pie inside vLLM's own spread
-    assert first_token_inconclusive(0.152, 0.148)  # a spread just under the line still counts
-    assert not first_token_inconclusive(0.190, 0.069)  # pie past twice the reference's spread: the first token decides
+    assert first_token_inconclusive(0.395, 0.444)
+    assert first_token_inconclusive(0.152, 0.148)
+    assert not first_token_inconclusive(0.190, 0.069)
     assert not first_token_inconclusive(0.3, None)

@@ -1,0 +1,310 @@
+workloads:
+  - id: control-aa
+    kind: control_aa
+    params: {prefill: 128, decode: 64, rounds: 2}
+    tiers: [smoke, nightly, weekly]
+    est_minutes: 0.5
+
+  - id: ss-128-64
+    kind: single_stream
+    params: {prefill: 128, decode: 64}
+    tiers: [smoke, nightly, weekly]
+    est_minutes: 0.5
+  - id: ss-512-256
+    kind: single_stream
+    params: {prefill: 512, decode: 256, requests: 8, cold_cache: true}
+    tiers: [nightly, weekly, targeted]
+    est_minutes: 1
+
+  - id: c8
+    kind: concurrency
+    params: {concurrency: 8, num_requests: 32, prefill: 128, decode: 128, cold_cache: true}
+    tiers: [smoke, nightly, weekly, targeted]
+    est_minutes: 1
+  - id: c32
+    kind: concurrency
+    params: {concurrency: 32, num_requests: 128, prefill: 128, decode: 128, request_timeout_s: 2400, round_timeout_s: 3000, cold_cache: true}
+    tiers: [smoke, nightly, weekly, targeted]
+    est_minutes: 1.5
+  - id: c64
+    kind: concurrency
+    params: {concurrency: 64, num_requests: 256, prefill: 128, decode: 256, cold_cache: true}
+    tiers: [nightly, weekly]
+    est_minutes: 3
+  - id: c256
+    kind: concurrency
+    params: {concurrency: 256, num_requests: 1024, prefill: 128, decode: 256, cold_cache: true}
+    tiers: [nightly, weekly]
+    est_minutes: 6
+  - id: pf256-512
+    kind: concurrency
+    params: {concurrency: 256, num_requests: 1024, prefill: 512, decode: 1, cold_cache: true}
+    tiers: [nightly, weekly, targeted]
+    est_minutes: 2
+  - id: c16
+    kind: concurrency
+    params: {concurrency: 16, num_requests: 64, prefill: 128, decode: 256, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 2
+  - id: c128
+    kind: concurrency
+    params: {concurrency: 128, num_requests: 512, prefill: 128, decode: 256, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 3
+  - id: c512
+    kind: concurrency
+    params: {concurrency: 512, num_requests: 2048, prefill: 128, decode: 256, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 12
+  - id: c1024
+    kind: concurrency
+    params: {concurrency: 1024, num_requests: 4096, prefill: 128, decode: 256, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 20
+  - id: pf4-512
+    kind: concurrency
+    params: {concurrency: 4, num_requests: 16, prefill: 512, decode: 1, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf8-512
+    kind: concurrency
+    params: {concurrency: 8, num_requests: 32, prefill: 512, decode: 1, request_timeout_s: 2400, round_timeout_s: 3000, cold_cache: true}
+    tiers: [weekly, targeted]
+    est_minutes: 1
+  - id: pf16-512
+    kind: concurrency
+    params: {concurrency: 16, num_requests: 64, prefill: 512, decode: 1, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf32-512
+    kind: concurrency
+    params: {concurrency: 32, num_requests: 128, prefill: 512, decode: 1, request_timeout_s: 2400, round_timeout_s: 3000, cold_cache: true}
+    tiers: [weekly, targeted]
+    est_minutes: 1
+  - id: pf64-512
+    kind: concurrency
+    params: {concurrency: 64, num_requests: 256, prefill: 512, decode: 1, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf128-512
+    kind: concurrency
+    params: {concurrency: 128, num_requests: 512, prefill: 512, decode: 1, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 1
+  - id: pf512-512
+    kind: concurrency
+    params: {concurrency: 512, num_requests: 2048, prefill: 512, decode: 1, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 5
+  - id: pf1024-512
+    kind: concurrency
+    params: {concurrency: 1024, num_requests: 4096, prefill: 512, decode: 1, cold_cache: true}
+    tiers: [weekly]
+    est_minutes: 10
+
+  - id: lc-1k-128
+    kind: long_context
+    params: {prefill: 1024, decode: 128, concurrency: 1}
+    tiers: [smoke, nightly, weekly]
+    est_minutes: 0.7
+  - id: lc-2k-128
+    kind: long_context
+    params: {prefill: 2048, decode: 128, concurrency: 1}
+    tiers: [smoke, nightly, weekly]
+    est_minutes: 1
+  - id: lc-8k-128
+    kind: long_context
+    params: {prefill: 8192, decode: 128, concurrency: 1}
+    tiers: [smoke, nightly, weekly]
+    est_minutes: 1.5
+  - id: lc-32k-128
+    kind: long_context
+    params: {prefill: 32768, decode: 128, concurrency: 1}
+    tiers: [nightly, weekly]
+    est_minutes: 3
+  - id: lc-128k-64
+    kind: long_context
+    params: {prefill: 131072, decode: 64, concurrency: 1}
+    tiers: [weekly]
+    est_minutes: 8
+
+  - id: prefix-1k-x64
+    kind: prefix_shared
+    params: {shared_prefix: 1024, unique_suffix: 64, variants: 64, decode: 64, concurrency: 16}
+    tiers: [smoke, nightly, weekly]
+    est_minutes: 1.5
+
+  - id: mixed-256
+    kind: mixed_length
+    params: {num_requests: 256, concurrency: 32, prompt_lognormal: [6.0, 0.8], output_lognormal: [5.0, 0.7], max_prompt: 4096, max_output: 1024}
+    tiers: [smoke, nightly, weekly]
+    est_minutes: 3
+
+  - id: kv-oversub
+    kind: concurrency
+    params: {concurrency: 128, num_requests: 256, prefill: 2048, decode: 512, kv_oversubscribe: true}
+    tiers: [nightly, weekly]
+    est_minutes: 6
+
+  - id: replay-azure-2024
+    kind: replay
+    params: {trace: azure-llm-2024, minutes: 10, speedup: 1.0}
+    tiers: [weekly]
+    est_minutes: 15
+  - id: replay-mooncake
+    kind: replay
+    params: {trace: mooncake-conv, minutes: 10, speedup: 1.0}
+    tiers: [weekly]
+    est_minutes: 15
+  - id: replay-burstgpt
+    kind: replay
+    params: {trace: burstgpt-v2, minutes: 10, speedup: 1.0}
+    tiers: [weekly]
+    est_minutes: 15
+
+  - id: ob-story-200
+    kind: single_stream
+    params:
+      label: Story
+      description: "story prompt, 200 tokens out, 6 runs"
+      prompt: "Please write a descriptive story about a llama named Alonso who grows up to be President of the Land of Llamas. Include details about Alonso's childhood, adolescent years, and how he grew up to be a political mover and shaker. Write the story with a sense of whimsy."
+      decode: 200
+      requests: 6
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 1
+  - id: ob-512-200
+    kind: single_stream
+    params:
+      label: Prompt 512
+      description: "512 token prompt, 200 tokens out"
+      prefill: 512
+      decode: 200
+      requests: 6
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 1
+  - id: raw-512-256
+    kind: single_stream
+    params:
+      label: Raw 512
+      description: "512 token prompt, 256 tokens out, speculation off: the plain decode the hardware limit is measured against"
+      prefill: 512
+      decode: 256
+      requests: 6
+      warmup: 1
+      speculation: false
+      cold_cache: true
+    tiers: [targeted, weekly]
+    est_minutes: 1
+  - id: spec-512-256
+    kind: single_stream
+    params:
+      label: Spec 512
+      description: "512 token prompt, 256 tokens out, speculation on: each engine drafts with its own drafter (pie and Splash DFlash2, llama.cpp and mlx-lm a small draft model)"
+      prefill: 512
+      decode: 256
+      requests: 6
+      warmup: 1
+      speculation: true
+      cold_cache: true
+    tiers: [targeted]
+    est_minutes: 1
+  - id: ob-short-100
+    kind: single_stream
+    params:
+      label: Short story
+      description: "\"Write me a short story\", 100 tokens out"
+      prompt: Write me a short story
+      decode: 100
+      requests: 6
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 0.5
+  - id: ob-advanced-500
+    kind: single_stream
+    params:
+      label: Sampled 500
+      description: "story prompt, temperature 0.7, top-p 0.95, seed 42, 500 tokens out, 10 runs"
+      prompt: "Please write a descriptive story about a llama named Alonso who grows up to be President of the Land of Llamas. Include details about Alonso's childhood, adolescent years, and how he grew up to be a political mover and shaker. Write the story with a sense of whimsy."
+      decode: 500
+      requests: 10
+      warmup: 2
+      temperature: 0.7
+      top_p: 0.95
+      seed: 42
+    tiers: [targeted]
+    est_minutes: 2
+  - id: ctx-4k-256
+    kind: long_context
+    params:
+      label: Long prompt 4k
+      description: "4k token prompt, 256 tokens out: prefill speed and decode on a long context"
+      prefill: 4096
+      decode: 256
+      concurrency: 1
+      requests: 4
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 1.5
+  - id: ctx-8k-256
+    kind: long_context
+    params:
+      label: Long context 8k
+      description: "8k token prompt, 256 tokens out: how speed holds as context grows"
+      prefill: 8192
+      decode: 256
+      concurrency: 1
+      requests: 3
+      warmup: 1
+    tiers: [targeted]
+    est_minutes: 2.5
+  - id: c4
+    kind: concurrency
+    params:
+      label: 4 at once
+      description: "4 requests sent together, 128 tokens in, 256 out: serving throughput and first token under load"
+      concurrency: 4
+      num_requests: 4
+      prefill: 128
+      decode: 256
+    tiers: [targeted]
+    est_minutes: 1.5
+
+  - id: cold-ss-128-64
+    kind: single_stream
+    params:
+      label: Cold 128
+      description: "128-token prompt, 64 out, unique leading tag per request; prefill and TTFT with a cold cache"
+      prefill: 128
+      decode: 64
+      requests: 6
+      warmup: 1
+      cold_cache: true
+    tiers: [targeted]
+    est_minutes: 1
+  - id: cold-ss-512-200
+    kind: single_stream
+    params:
+      label: Cold 512
+      description: "512-token prompt, 200 out, unique leading tag per request; prefill and TTFT with a cold cache"
+      prefill: 512
+      decode: 200
+      requests: 6
+      warmup: 1
+      cold_cache: true
+    tiers: [targeted]
+    est_minutes: 1
+  - id: cold-ctx-4k-256
+    kind: long_context
+    params:
+      label: Cold 4k
+      description: "4k-token prompt, 256 out, unique leading tag per request; prefill and TTFT with a cold cache"
+      prefill: 4096
+      decode: 256
+      concurrency: 1
+      requests: 4
+      warmup: 1
+      cold_cache: true
+    tiers: [targeted]
+    est_minutes: 1.5

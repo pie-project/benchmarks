@@ -1,0 +1,128 @@
+default:
+  knobs:
+    cuda_graphs:
+      value: true
+      rationale: >
+        CUDA graphs up to the shape's batch (padded), as SGLang's graph ceiling and vLLM's
+        max_num_seqs are set to the concurrency: a decode batch past the ceiling would run eager.
+    block_reuse:
+      value: false
+      rationale: >
+        Every throughput prompt is cold on every engine; KV block reuse off, as vLLM runs
+        without prefix caching and SGLang without its radix cache.
+    max_num_tokens:
+      value: 8192
+      rationale: TensorRT-LLM's default token budget per step.
+
+competitive:
+  extends: default
+  family:
+    glm5_next:
+      knobs:
+        llm_api_options:
+          value: {disable_mm_encoder: true}
+          rationale: >
+            GLM-5.3-Flash's vision encoder needs transformers 5.17 and the wheel pins 5.5.4 ("set
+            disable_mm_encoder=True" for text-only); every row is text, as on the other engines.
+        max_batch_cap:
+          value: 128
+          rationale: >
+            Its KDA convolution indexes the whole admitted batch with 32-bit offsets, and 512 sequences overflow them
+            ("KDA convolution tensor offsets must fit int32", b200-x1); 128 at once, the rest queue.
+    deepseek_v41:
+      knobs:
+        llm_api_options:
+          value: {disable_mm_encoder: true}
+          rationale: >
+            The miniature carries no vision tower and TensorRT-LLM's V4.1 builds it unasked ("Missing DeepSeek-V4.1
+            image weight: vision.patch_embed.proj.weight", b200-x1); text-only, as every engine serves it.
+    deepseek_v4:
+      knobs:
+        kv_cache_dtype:
+          value: fp8_ds_mla
+          rationale: >
+            DeepSeek-V4's sparse MLA keeps its KV in the FP8 FlashMLA page layout, as SGLang serves it ("DeepSeek-V4 on
+            Hopper requires kv_cache_config.dtype='fp8_ds_mla'", h200-x1; the same on SM120).
+    minimax_m3:
+      knobs:
+        llm_api_options:
+          value: {sparse_attention_config: {algorithm: minimax_m3}}
+          rationale: >
+            MiniMax-M3's lightning-attention KV manager is built only with its sparse attention config
+            ("MiniMax-M3 requires sparse_attention_config.algorithm='minimax_m3'", pro6000-x1).
+    qwen3_6:
+      knobs:
+        max_batch_cap:
+          value: 128
+          rationale: >
+            Qwen3.6/3.8-27B's GDN state pool at 512 sequences took the 96 GB card ("CUDA out of memory", pro6000-x1);
+            128 at once, the rest queue, as vLLM caps its hybrids.
+    gemma4:
+      knobs:
+        max_batch_cap:
+          value: 256
+          rationale: >
+            FlashInfer's prefill workspace for 512 Gemma-4-31B sequences overflowed ("Buffer overflow when allocating
+            memory for batch_prefill_tmp_v", pro6000-x1); 256 at once, the rest queue.
+        kv_free_mem_fraction:
+          value: 0.6
+          rationale: >
+            TensorRT-LLM builds Gemma-4 with its vision tower, and at the default 0.9 its KV-sizing pool left the
+            executor's own buffers no room ("Executor creation failed due to insufficient GPU memory ... Additional
+            executor resources", gemma-4-31B and 26B-A4B on h100-sxm-x1).
+    gemma4_moe:
+      knobs:
+        max_batch_cap:
+          value: 256
+          rationale: As gemma4 (the 26B-A4B's executor died initialising 512 sequences on pro6000-x1).
+        kv_free_mem_fraction:
+          value: 0.6
+          rationale: As gemma4 ("Can't allocate profile workspace for MoE GEMM profile", l40s-x1).
+    nemotron_h:
+      knobs:
+        max_batch_cap:
+          value: 128
+          rationale: >
+            The Mamba-2 state pool holds every admitted sequence: the Nemotron-3-Super mini at 512 wanted 87 GB of it on
+            an 80 GB H100 ("The V2 Mamba GPU cache quota is too small"); 128 at once, the rest queue, as vLLM caps its hybrids.
+    qwen4_exp:
+      knobs:
+        llm_api_options:
+          value: {disable_mm_encoder: true}
+          rationale: Text-only serving, as vLLM serves it (language_model_only) and pie runs it.
+  knobs:
+    kv_free_mem_fraction:
+      value: null
+      rationale: >
+        Unset derives the fraction that lands TensorRT-LLM's whole use at gpu_mem_util of the card, the
+        share vLLM, SGLang and pie take (TrtllmEngine.kv_free_mem_fraction): its own default (0.9 of the
+        memory left after weights and activations) gave it more cache than the other engines.
+    gpu_mem_util:
+      value: 0.90
+      rationale: >
+        The share of the card every engine takes (vLLM's gpu_memory_utilization, SGLang's
+        mem_fraction_static, pie's device_memory_share).
+  platform:
+    rtx5090-x1:
+      knobs: {kv_free_mem_fraction: 0.75}
+      family:
+        qwen3_6_moe: {knobs: {max_batch_cap: 64}}
+        qwen3_6: {knobs: {max_batch_cap: 128}}
+        qwen4_exp: {knobs: {max_batch_cap: 128}}
+        nemotron_h: {knobs: {max_batch_cap: 128, kv_free_mem_fraction: 0.5}}
+        gemma4: {knobs: {kv_free_mem_fraction: 0.5}}
+    pro4500-x1:
+      knobs: {kv_free_mem_fraction: 0.75}
+      family:
+        qwen3_6_moe: {knobs: {max_batch_cap: 64}}
+        qwen3_6: {knobs: {max_batch_cap: 128}}
+        qwen4_exp: {knobs: {max_batch_cap: 128}}
+        nemotron_h: {knobs: {max_batch_cap: 128, kv_free_mem_fraction: 0.5}}
+        gemma4: {knobs: {kv_free_mem_fraction: 0.5}}
+    rtx4090-x1:
+      knobs: {kv_free_mem_fraction: 0.75}
+      family:
+        qwen3_6_moe: {knobs: {max_batch_cap: 64}}
+        qwen3_6: {knobs: {max_batch_cap: 128}}
+        qwen4_exp: {knobs: {max_batch_cap: 128}}
+        nemotron_h: {knobs: {max_batch_cap: 128, kv_free_mem_fraction: 0.5}}

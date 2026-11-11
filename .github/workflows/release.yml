@@ -1,0 +1,23 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+  id-token: write
+jobs:
+  publish:
+    runs-on: ${{ fromJSON(vars.RELEASE_RUNS_ON || '"ubuntu-latest"') }}
+    environment: pypi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: build
+        run: |
+          test "${GITHUB_REF_NAME#v}" = "$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)"
+          uv build --out-dir dist
+      - name: pypi
+        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: github release
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "pie-bench ${GITHUB_REF_NAME#v}" --notes "pip install pie-bench==${GITHUB_REF_NAME#v}" --verify-tag

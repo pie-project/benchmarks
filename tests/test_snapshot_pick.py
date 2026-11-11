@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from pie_evals.node.snapshots import snapshot_dir_if_present
-from pie_evals.schema.cell import ArtifactSpec
+from pie_bench.node.snapshots import snapshot_dir_if_present
+from pie_bench.schema.cell import ArtifactSpec
 
 
 def _art(**over) -> ArtifactSpec:
@@ -18,7 +18,6 @@ def test_a_full_row_never_picks_the_miniature_built_beside_it(tmp_path: Path):
         (snaps / d / "config.json").write_text("{}")
         (snaps / d / "model.safetensors").write_bytes(b"x")
     assert snapshot_dir_if_present(_art(), tmp_path) == snaps / rev
-    # a pinned revision still wins, a cache holding only the mini yields nothing for a full row
     assert snapshot_dir_if_present(_art(revision=rev), tmp_path) == snaps / rev
     (snaps / rev / "config.json").unlink()
     assert snapshot_dir_if_present(_art(), tmp_path) is None
@@ -36,7 +35,6 @@ def test_a_pinned_revision_wins_over_the_newest_snapshot(tmp_path: Path):
 
 
 def test_a_snapshot_whose_weights_are_gone_is_not_present(tmp_path: Path):
-    # the blobs behind the symlinks were reclaimed; config.json stayed (gemma-4-E4B, nightly 36099816046 s07)
     snaps = tmp_path / "models--mlx-community--Qwen3.6-35B-A3B-4bit" / "snapshots"
     rev = "38740b847e4cb78f352aba30aa41c76e08e6eb46"
     (snaps / rev).mkdir(parents=True)
@@ -50,7 +48,6 @@ def test_a_snapshot_whose_weights_are_gone_is_not_present(tmp_path: Path):
 
 
 def test_the_revision_main_resolved_to_wins_over_hex_order(tmp_path: Path):
-    # hex order is no order: with several revisions cached, the last one sorted is arbitrary
     repo = tmp_path / "models--mlx-community--Qwen3.6-35B-A3B-4bit"
     old, new = "f000000000000000000000000000000000000000", "38740b847e4cb78f352aba30aa41c76e08e6eb46"
     for d in (old, new):
@@ -58,6 +55,5 @@ def test_the_revision_main_resolved_to_wins_over_hex_order(tmp_path: Path):
         (repo / "snapshots" / d / "config.json").write_text("{}")
     (repo / "refs").mkdir()
     (repo / "refs" / "main").write_text(new)
-    # an imported row needs no weights in the snapshot; a served one does
     assert snapshot_dir_if_present(_art(), tmp_path, weights=False) == repo / "snapshots" / new
     assert snapshot_dir_if_present(_art(), tmp_path) is None

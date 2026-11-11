@@ -1,0 +1,51 @@
+default:
+  knobs:
+    prefix_caching:
+      value: false
+      rationale: >
+        Off, as for vLLM on the GPUs: a closed-loop client reusing a prompt would otherwise
+        measure the cache, and pie runs without one on these shapes.
+    gpu_mem_util:
+      value: null
+      rationale: null keeps vllm-metal's own KV sizing for unified memory (its default).
+    multimodal_mode:
+      value: text-only
+      rationale: >
+        A text benchmark: the text model, as mlx-lm serves it. Gemma 4's vision sidecar would
+        load encoder weights no request uses.
+    startup_timeout:
+      value: 900
+      rationale: A 30B 4-bit checkpoint pages in for minutes on a laptop-class Mac, and vLLM warms up after it.
+    server_extra:
+      value: []
+      rationale: Extra server flags.
+    flush_cache:
+      value: true
+      rationale: Single stream prefill must not be a prefix cache hit.
+    speculation:
+      value: "off"
+      rationale: Plain decoding, as the other Mac engines' plain rows.
+  platform:
+    m5-max-64g:
+      family:
+        nemotron_h:
+          knobs:
+            gpu_mem_util:
+              value: 0.6
+              rationale: >
+                Nemotron-3-Ultra's 4-bit cut (a Mamba-2 hybrid) at vllm-metal's default 0.92 sizes a 43.7 GB pool
+                past the M5 Max's free memory (38.2 GB); its hybrid cache then cannot hand the pool to MLX
+                ("[convert] Cannot import a CPU array without a copy", pie-eval 42524574937). 0.6 keeps a ~28 GB
+                pool resident; the 16 GB Macs and the M4 Pro boot at the default.
+
+competitive:
+  extends: default
+  workload_kind:
+    prefix_shared:
+      knobs:
+        prefix_caching:
+          value: true
+          rationale: vLLM's prefix cache is its equivalent of pie's prefix tree on the prefix shape.
+        flush_cache:
+          value: false
+          rationale: The shared prefix must stay as written for the cache to find it.

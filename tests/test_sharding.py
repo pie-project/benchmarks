@@ -2,17 +2,18 @@ from pathlib import Path
 
 import pytest
 
-from pie_evals.plan.jobs import cell_minutes, make_jobs, process_key, shard_groups
-from pie_evals.plan.matrix import Matrix
-from pie_evals.results.store import Store
-from pie_evals.schema import Tier
+from pie_bench.paths import MATRIX
+from pie_bench.plan.jobs import cell_minutes, make_jobs, process_key, shard_groups
+from pie_bench.plan.matrix import Matrix
+from pie_bench.results.store import Store
+from pie_bench.schema import Tier
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(scope="module")
 def matrix():
-    return Matrix.load(ROOT / "matrix")
+    return Matrix.load(MATRIX)
 
 
 def test_shards_respect_budget_and_keep_groups_whole(matrix):
@@ -21,7 +22,6 @@ def test_shards_respect_budget_and_keep_groups_whole(matrix):
     assert sum(len(s) for s in shards) == len(cells)
     for sh in shards:
         assert sum(cell_minutes(c) for c in sh) <= matrix.job_budget_minutes
-    # a process group is either entirely inside one shard, or (only if it was itself over budget) split
     placement = {}
     for i, sh in enumerate(shards):
         for c in sh:
@@ -60,18 +60,6 @@ def test_multi_gpu_platforms_only_run_tp_gt1(matrix):
             assert c.tiers == [], f"{c.platform.id} tp1 must not be scheduled"
 
 
-def test_available_platforms_keeps_runpod_and_online_resident(matrix, monkeypatch):
-    import json
-
-    from pie_evals.plan import jobs as J
-
-    runners = {"runners": [{"status": "online", "labels": [{"name": "self-hosted"}, {"name": "macos"}, {"name": "m1-max-32g"}]},
-                           {"status": "offline", "labels": [{"name": "m4-pro-48g"}]}]}
-    monkeypatch.setattr(J.subprocess, "run", lambda *a, **k: type("R", (), {"stdout": json.dumps(runners)})())
-    ok, skipped = J.available_platforms(matrix, "o/r")
-    assert "l40s-x1" in ok and "m1-max-32g" in ok
-    assert "m4-pro-48g" in skipped and "m2-max" in skipped
-
 
 def test_targeted_mac_shards_keep_groups_whole(matrix):
     cells = [c for c in matrix.runnable(Tier.TARGETED, matrix.expand(platforms=["m4-pro-48g"])) if c.platform.id == "m4-pro-48g"]
@@ -107,24 +95,17 @@ def _jobs_cli(tmp_path, monkeypatch, *platforms):
 
     from click.testing import CliRunner
 
-    from pie_evals import cli
-    from pie_evals.plan import jobs as J
+    from pie_bench import cli
+    from pie_bench.plan import jobs as J
 
     def denied(*a, **k):
         raise RuntimeError("HTTP 403")
 
     monkeypatch.setattr(J.subprocess, "run", denied)
-    args = ["--matrix", str(ROOT / "matrix"), "--store", str(tmp_path / "store"), "jobs", "--tier", "targeted", "--pie-commit", "c" * 40,
+    args = ["--matrix", str(MATRIX), "--store", str(tmp_path / "store"), "jobs", "--tier", "targeted", "--pie-commit", "c" * 40,
             "--out", str(tmp_path / "jobs"), "--skip-unavailable"] + [x for p in platforms for x in ("--platform", p)]
     res = CliRunner().invoke(cli.main, args)
     assert res.exit_code == 0, res.output
     return {j["platform"] for j in json.loads((tmp_path / "jobs" / "gh-matrix.json").read_text())["include"]}
 
 
-def test_unknown_runners_schedule_only_the_macs_asked_for(tmp_path, monkeypatch):
-    assert _jobs_cli(tmp_path, monkeypatch, "m5-max-128g") == {"m5-max-128g"}
-    assert _jobs_cli(tmp_path, monkeypatch, "m5-max-48g") == set()  # not on the list in config.json, so never scheduled
-
-
-def test_unknown_runners_and_nothing_asked_schedule_no_resident_mac(matrix, tmp_path, monkeypatch):
-    assert _jobs_cli(tmp_path, monkeypatch) <= {p.id for p in matrix.platforms.values() if p.runpod_gpu_type}

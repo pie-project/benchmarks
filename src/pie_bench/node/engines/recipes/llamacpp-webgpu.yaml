@@ -1,0 +1,20 @@
+default:
+  knobs:
+    n_batch:
+      value: 2048
+      rationale: llama-server's default logical batch.
+    n_ubatch:
+      value: 512
+      rationale: llama-server's default physical batch.
+    flash_attn:
+      value: "on"
+      rationale: as the native llama.cpp rows run (recipes/llamacpp.yaml flash_attn on).
+    flush_cache:
+      value: true
+      rationale: every prompt shuffled; a slot's KV is cleared before each request.
+    startup_timeout:
+      value: 1200
+      rationale: the tab fetches the GGUF as a Blob, then uploads it to the GPU tensor by tensor.
+
+competitive:
+  extends: default
