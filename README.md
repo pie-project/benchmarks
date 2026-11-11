@@ -46,12 +46,10 @@ Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs
 
 | Method | Path | What |
 |---|---|---|
-| GET | `/v1/catalog` | machines, engines, models, workloads |
-| GET | `/v1/grid` | the site's main view; `/v1/grid/{tag}` for one release |
-| GET | `/v1/cells/{key}/runs` | the history of one cell |
-| GET | `/v1/quality` | accuracy scores |
-| GET | `/v1/export.json.gz` | everything |
-| GET | `/v1/runs/{id}/log` | a run's log |
+| GET | `/healthz` | service health |
+| GET | `/v1/db.js` | all results, as the site loads them |
+| GET | `/v1/tags/{release}.json` | one older release |
+| GET | `/v1/trackers.json` | issue links for the site's reports |
 | POST | `/v1/tokens` | a signed upload token |
 | POST | `/v1/submissions` | upload a `submission.json.gz` |
 | POST | `/v1/tokens/{id}/quota` | admin: raise a token's quota |

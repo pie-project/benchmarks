@@ -39,6 +39,10 @@ def _record(run_id: str, value: float = 42.0) -> dict:
     return json.loads(rec.model_dump_json())
 
 
+def _db(text: str) -> dict:
+    return json.loads(text.removeprefix("const DB = ").rstrip().removesuffix(";"))
+
+
 def _submission(run_id: str, **over) -> bytes:
     doc = {"format": 1, "pie_bench": "0.1.0", "run_id": run_id, "tier": "targeted", "tag": "manual-test", "tag_kind": "manual",
            "pie_commit": "a" * 40, "platform": {"id": "m5-max-64g"}, "records": [_record(run_id)], "quality": [], "log": "hello from /Users/someone/run"}
@@ -51,17 +55,12 @@ def test_a_contributor_uploads_and_everyone_reads(client):
     res = client.post("/v1/submissions", content=_submission("run-1"), headers=auth)
     assert res.status_code == 200, res.text
     assert res.json()["results"] == 1 and res.json()["quota_left"] == 1
-    key = _record("x")["cell_key"]
-    runs = client.get(f"/v1/cells/{key}/runs").json()["runs"]
-    assert [r["decode_tok_s"] for r in runs] == [42.0]
-    assert client.get("/v1/runs/run-1/log").text == "hello from ~/run"
     deadline = time.time() + 60
-    while client.get("/v1/grid").status_code == 503 and time.time() < deadline:
+    while client.get("/v1/db.js").status_code == 503 and time.time() < deadline:
         time.sleep(0.5)
-    grid = client.get("/v1/grid")
-    assert grid.status_code == 200 and "tags" in grid.json()
-    assert client.get("/v1/grid", headers={"If-None-Match": grid.headers["etag"]}).status_code == 304
-    assert client.get("/v1/db.js").text.startswith("const DB = ")
+    db = client.get("/v1/db.js")
+    assert db.status_code == 200 and "tags" in _db(db.text)
+    assert client.get("/v1/db.js", headers={"If-None-Match": db.headers["etag"]}).status_code == 304
 
 
 def test_uploads_need_a_valid_token_and_stop_at_the_quota(client):
@@ -97,7 +96,7 @@ def test_a_machine_new_to_the_catalog_shows_on_the_site(client):
     assert client.post("/v1/submissions", content=body, headers={"Authorization": f"Bearer {tok['token']}"}).status_code == 200
     deadline = time.time() + 60
     while time.time() < deadline:
-        hardware = {h["id"]: h for h in client.get("/v1/catalog").json()["hardware"]}
+        hardware = {h["id"]: h for h in _db(client.get("/v1/db.js").text)["hardware"]}
         if "m9-ultra-512g" in hardware:
             break
         time.sleep(0.5)
@@ -106,15 +105,20 @@ def test_a_machine_new_to_the_catalog_shows_on_the_site(client):
 
 def test_a_restarted_api_serves_the_saved_views_at_once(client):
     deadline = time.time() + 60
-    while client.get("/v1/grid").status_code == 503 and time.time() < deadline:
+    while client.get("/v1/db.js").status_code == 503 and time.time() < deadline:
         time.sleep(0.5)
-    etag = client.get("/v1/grid").headers["etag"]
+    etag = client.get("/v1/db.js").headers["etag"]
     from server.app import Views, app
 
     fresh = Views(app.state.db)
     fresh.load()
-    assert fresh.get("grid")[1] == etag
+    assert fresh.get("db.js")[1] == etag
 
 
 def test_monitors_can_check_health_with_head(client):
     assert client.head("/healthz").status_code == 200
+
+
+def test_only_the_routes_the_site_and_cli_use_exist(client):
+    for gone in ["/v1/catalog", "/v1/grid", "/v1/export.json.gz", "/v1/quality", "/v1/runs/run-1/log"]:
+        assert client.get(gone).status_code == 404, gone
