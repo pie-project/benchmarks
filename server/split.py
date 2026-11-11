@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import gzip
+import io
 import json
 import re
 
@@ -60,3 +62,13 @@ HOME = re.compile(r"/(?:Users|home)/[A-Za-z0-9._-]+")
 
 def dumps(value) -> str:
     return HOME.sub("~", json.dumps(value, separators=(",", ":"), default=str))
+
+
+def gz(value, prefix: str = "", suffix: str = "") -> bytes:
+    out = io.BytesIO()
+    with gzip.GzipFile(fileobj=out, mode="wb", compresslevel=6, mtime=0) as f:
+        f.write(prefix.encode())
+        for chunk in json.JSONEncoder(separators=(",", ":"), default=str).iterencode(value):
+            f.write(HOME.sub("~", chunk).encode())
+        f.write(suffix.encode())
+    return out.getvalue()

@@ -243,6 +243,15 @@ class PgStore(BaseStore):
         return t.append_column("tag", pa.array([r[n] for r in rows], pa.string())).append_column(
             "tag_kind", pa.array([r[n + 1] for r in rows], pa.string()))
 
+    def quality_answers(self) -> list[dict]:
+        sql = ("SELECT summary, tag, tag_kind, (SELECT jsonb_agg(jsonb_build_object('id', x->'id', 'text', "
+               "md5(regexp_replace(coalesce(x->>'text', ''), '^\\s+|\\s+$', '', 'g')))) "
+               "FROM jsonb_array_elements(CASE WHEN jsonb_typeof(samples) = 'array' THEN samples ELSE '[]' END) x) "
+               "FROM quality ORDER BY artifact, task, tag")
+        with self.connect() as conn, conn.cursor() as cur:
+            cur.execute(sql)
+            return [{**summary, "tag": tag or None, "tag_kind": kind, "samples": answers or []} for summary, tag, kind, answers in cur.fetchall()]
+
     def quality(self, samples: bool = False) -> list[dict]:
         with self.connect() as conn, conn.cursor() as cur:
             cur.execute("SELECT summary, tag, tag_kind, samples FROM quality ORDER BY artifact, task, tag")
