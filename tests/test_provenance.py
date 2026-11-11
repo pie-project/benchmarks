@@ -138,3 +138,15 @@ def test_gpu_links_reads_the_matrix_not_the_legend():
     from pie_bench.node.provenance import gpu_links
     topo = "\tGPU0\tGPU1\tCPU Affinity\tNUMA Affinity\nGPU0\t X \tSYS\t0-31\t0\nGPU1\tSYS\t X \t32-63\t1\n\nLegend:\n  X    = Self\n  SYS  = ...\n  NODE = ...\n  PIX  = ...\n"
     assert gpu_links(topo) == "GPU0-GPU1:SYS"
+
+
+def test_an_installed_package_still_names_its_harness(tmp_path, monkeypatch):
+    from pie_bench import __version__
+    from pie_bench.node import provenance
+
+    monkeypatch.setattr(provenance, "harness_root", lambda: None)
+    monkeypatch.delenv("PIE_BENCH_HARNESS_COMMIT", raising=False)
+    snap = tmp_path / "rev0"
+    snap.mkdir()
+    pv = build_provenance(pie_root=tmp_path, snapshot_dir=snap, engine_version="v", engine_config={}, recipe_name=None, runner=None)
+    assert pv.harness_commit == f"pie-bench-{__version__}"
