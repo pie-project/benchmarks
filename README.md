@@ -47,6 +47,7 @@ Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs
 | Method | Path | What |
 |---|---|---|
 | GET | `/healthz` | service health |
+| GET | `/v1/head-to-head.json` | pie against each engine, per platform |
 | GET | `/v1/db.js` | all results, as the site loads them |
 | GET | `/v1/tags/{release}.json` | one older release |
 | GET | `/v1/trackers.json` | issue links for the site's reports |
@@ -54,7 +55,7 @@ Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs
 | POST | `/v1/submissions` | upload a `submission.json.gz` |
 | POST | `/v1/tokens/{id}/quota` | admin: raise a token's quota |
 
-Reads are public, cached and carry an ETag. Writes need a token; each token has an upload quota, every upload is checked and stored in one transaction. Interactive docs are at `/v1/docs`.
+Reads are public, cached and carry an ETag. Writes need a token; each token has an upload quota, every upload is checked and stored in one transaction.
 
 Run it locally:
 

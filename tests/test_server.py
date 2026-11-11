@@ -61,6 +61,7 @@ def test_a_contributor_uploads_and_everyone_reads(client):
     db = client.get("/v1/db.js")
     assert db.status_code == 200 and "tags" in _db(db.text)
     assert client.get("/v1/db.js", headers={"If-None-Match": db.headers["etag"]}).status_code == 304
+    assert client.get("/v1/head-to-head.json").json()["platforms"] == []  # pie alone: nothing to compare against yet
 
 
 def test_uploads_need_a_valid_token_and_stop_at_the_quota(client):
@@ -120,5 +121,5 @@ def test_monitors_can_check_health_with_head(client):
 
 
 def test_only_the_routes_the_site_and_cli_use_exist(client):
-    for gone in ["/v1/catalog", "/v1/grid", "/v1/export.json.gz", "/v1/quality", "/v1/runs/run-1/log"]:
+    for gone in ["/v1/catalog", "/v1/grid", "/v1/export.json.gz", "/v1/quality", "/v1/runs/run-1/log", "/v1/docs", "/v1/openapi.json", "/docs"]:
         assert client.get(gone).status_code == 404, gone
