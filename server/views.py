@@ -7,6 +7,7 @@ import re
 import sys
 import urllib.request
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -532,12 +533,11 @@ QUEUES = {w["id"] for w in load("workloads")["workloads"]
 TIMINGS = ("ttft_ms_p50", "ttft_ms_p99", "latency_ms_p50", "latency_ms_p99")
 
 
-@functools.cache
+HARNESS = json.loads((Path(__file__).parent / "harness.json").read_text())
+
+
 def harness_has(fix: str, sha: str) -> bool | None:
-    try:
-        return {"ahead": True, "identical": True, "behind": False, "diverged": False}.get(_github(f"repos/pie-project/benchmarks/compare/{fix}...{sha}").get("status"))
-    except Exception:
-        return None
+    return HARNESS.get(fix, {}).get(sha)
 
 
 def timed_with(fix: str, at: datetime, r: dict) -> bool:
@@ -833,6 +833,17 @@ def stack(order: list[str], tagged: dict[str, dict], keys: list[tuple], row, whe
     return snaps
 
 
+def stack_sources(order: list[str], tagged: dict[str, dict], keys: list[tuple], when) -> dict[str, list[tuple]]:
+    sources: dict[str, list[tuple]] = {}
+    newest: dict = {}
+    for t in reversed(order):
+        for key, item in tagged.get(t, {}).items():
+            if key not in newest or (when(item) or "") >= (when(tagged[newest[key]][key]) or ""):
+                newest[key] = t
+        sources[t] = [(key, newest[key]) for key in keys if key in newest]
+    return sources
+
+
 def gpu_note(memory) -> str:
     from pie_bench.plan.matrix import gpu_gib
 
@@ -920,17 +931,29 @@ def gpu_no_fit(store, a2m: dict[str, str], hw_rows: list[dict], gpu_ids: list[st
 
 
 def tag_date(tag: str, meta: dict) -> str | None:
-    if meta["kind"] == "release":
-        for path, key in ((f"releases/tags/{tag}", ("published_at",)), (f"commits/{tag}", ("commit", "committer", "date"))):
-            try:
-                v = _github(f"repos/pie-project/pie/{path}")
-                for k in key:
-                    v = v[k]
-                return str(v)[:10]
-            except Exception:
-                continue
+    if meta["kind"] != "release":
+        return local(meta["at"])
+    published = release_dates()
+    if tag in published:
+        return published[tag]
+    try:
+        return str(_github(f"repos/pie-project/pie/commits/{tag}")["commit"]["committer"]["date"])[:10]
+    except Exception:
         return None
-    return local(meta["at"])
+
+
+@functools.cache
+def release_dates() -> dict[str, str]:
+    out: dict[str, str] = {}
+    try:
+        for page in (1, 2, 3):
+            batch = _github(f"repos/pie-project/pie/releases?per_page=100&page={page}")
+            out.update({r["tag_name"]: str(r["published_at"])[:10] for r in batch if r.get("published_at")})
+            if len(batch) < 100:
+                break
+    except Exception:
+        pass
+    return out
 
 
 @functools.cache
@@ -966,7 +989,7 @@ class ReadOnce:
         return getattr(self.store, name)
 
 
-def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict[str, dict]]:
+def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict[str, bytes], bytes]:
     CONTRIBUTED.clear()
     CONTRIBUTED.update({pid: contributed_platform(spec) for pid, spec in (contributed or {}).items()})
     import time
@@ -1027,7 +1050,8 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
     tpus = {p["id"] for p in load("platforms")["platforms"] if p.get("backend") == "xla"}
     grid += [(hw, e, m, "raw") for hw, e, m in gpu_unsup
              if m in model_ids and (hw, e, m, "raw") not in gpu_keys and (hw in tpus or any(k[0] == hw for k in gpu_keys))]
-    snaps = stack(order, results, grid, lambda item, key, src: as_row(item[1], key, src), lambda item: local(item[1]["started_at"]))
+    when_run = lambda item: local(item[1]["started_at"])
+    sources = stack_sources(order, results, grid, when_run)
     lap("stack")
     hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids or h["class"] != "mac" or not h.get("runs")] + phone_rows
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
@@ -1041,10 +1065,14 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
     unsupported.update({k: r for k, r in setup_unsup.items() if k not in unsupported})
     memory = {h["id"]: h.get("memory_gib") for h in hw_rows}
     streams = {m["id"]: m.get("ssd_streaming") for m in models}
-    ever = {(r["hardware"], r["engine"], r["model"], r["workload"]) for rows in snaps.values() for r in rows}
+    ever = {key for pairs in sources.values() for key, _ in pairs}
+    ctx = {"models": [m for m in models if m["id"] in model_ids or m.get("catalog")], "suites": suite_ids}
+    sealed: dict[str, dict] = {}
     for t in order:
-        have = {(r["hardware"], r["engine"], r["model"], r["workload"]): r for r in snaps[t]}
-        cut = {(r["hardware"], r["model"]) for r in snaps[t] if r.get("miniature")}
+        rows = [{**as_row(results[src][key][1], key, src), "stale": None if src == t else {"tag": src, "measured": when_run(results[src][key])}}
+                for key, src in sources.pop(t)]
+        have = {(r["hardware"], r["engine"], r["model"], r["workload"]): r for r in rows}
+        cut = {(r["hardware"], r["model"]) for r in rows if r.get("miniature")}
         tried = attempts.get(t, {})
         filled = []
         for key in grid:
@@ -1068,7 +1096,8 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
                 filled.append(empty_row(key, t, "fail" if tried[key]["status"] == "fail" else "not_run", attempt_note(tried[key])))
             else:
                 filled.append(empty_row(key, t, "not_run", "Not run in this release" if key in ever else "Not run yet"))
-        snaps[t] = filled
+        sealed[t] = split.seal(filled, ctx)
+        del rows, have, filled
     qkeys = sorted({k for rows in scores.values() for k in rows})
     quality = stack(order, scores, qkeys, lambda item, key, src: {k: v for k, v in item.items() if k != "_at"}, lambda item: item["date"])
     arms = quality_arms(config)
@@ -1114,11 +1143,11 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
     ran = sum(r["status"] in ("pass", "noisy", "fail") for r in store.table().select(["status"]).to_pylist())
     busy = sum(r["duration_s"] or 0 for r in store.table().select(["status", "duration_s"]).to_pylist() if r["status"] in ("pass", "noisy", "fail"))
     totals = {"runs": ran + len(store.quality()), "machine_s": round(busy)}
-    db = {"updated_at": updated_at, "totals": totals, "tags": tags, "snapshots": snaps, "quality_snapshots": quality, "parity": {t: parity.get(t, []) for t in order},
+    db = {"updated_at": updated_at, "totals": totals, "tags": tags, "parity": {t: parity.get(t, []) for t in order},
           "quality_parity": checks["parity"], "quality_kernels": checks["kernels"], "quality_gaps": load("support").get("quality_gaps", []),
           "speed_gaps": load("support").get("speed_gaps", []),
           "no_fit": misfits, "suites": suite_ids,
           "hardware": hw_rows,
           "engines": engines(), "models": [m for m in models if m["id"] in model_ids or m.get("catalog")],
           "workloads": workloads(), "install": install_sizes(), "quality_tasks": quality_tasks(), "quality": quality.get(order[0], []) if order else []}
-    return split.split(db)
+    return split.split_sealed(db, sealed, quality)
