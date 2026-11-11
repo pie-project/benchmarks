@@ -102,3 +102,19 @@ def test_a_machine_new_to_the_catalog_shows_on_the_site(client):
             break
         time.sleep(0.5)
     assert hardware["m9-ultra-512g"]["resource"] == "Community"
+
+
+def test_a_restarted_api_serves_the_saved_views_at_once(client):
+    deadline = time.time() + 60
+    while client.get("/v1/grid").status_code == 503 and time.time() < deadline:
+        time.sleep(0.5)
+    etag = client.get("/v1/grid").headers["etag"]
+    from server.app import Views, app
+
+    fresh = Views(app.state.db)
+    fresh.load()
+    assert fresh.get("grid")[1] == etag
+
+
+def test_monitors_can_check_health_with_head(client):
+    assert client.head("/healthz").status_code == 200

@@ -47,7 +47,24 @@ class Views:
         blobs = {k: _blob(v) for k, v in data.items()}
         with self.lock:
             self.blobs, self.built_at = blobs, time.time()
+        self.save(data)
         log.info("views built in %.1fs: %d files, %.0f MB compressed", time.monotonic() - t0, len(blobs), sum(len(v) for v in data.values()) / 1e6)
+
+    def save(self, data: dict[str, bytes]) -> None:
+        with self.db.tx() as cur:
+            cur.execute("DELETE FROM views")
+            with cur.copy("COPY views (key, data) FROM STDIN") as cp:
+                for key, blob in data.items():
+                    cp.write_row((key, blob))
+
+    def load(self) -> None:
+        with self.db.tx() as cur:
+            cur.execute("SELECT key, data, extract(epoch FROM built_at) FROM views")
+            rows = cur.fetchall()
+        if rows:
+            with self.lock:
+                self.blobs, self.built_at = {k: _blob(bytes(d)) for k, d, _ in rows}, float(max(t for _, _, t in rows))
+            log.info("serving %d saved views until the first build", len(rows))
 
     def get(self, key: str) -> tuple[bytes, str]:
         with self.lock:
@@ -91,6 +108,7 @@ def _cached(request: Request, key: str, media_type: str) -> Response:
 async def lifespan(app: FastAPI):
     app.state.db = Database()
     app.state.views = Views(app.state.db)
+    app.state.views.load()
     threading.Thread(target=app.state.views.loop, daemon=True, name="views").start()
     yield
     app.state.views.stop()
@@ -102,49 +120,49 @@ app.add_middleware(CORSMiddleware, allow_origins=[o for o in os.environ.get("COR
                    allow_methods=["GET"], allow_headers=["*"], expose_headers=["ETag"])
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"name": "pie-bench api", "version": __version__, "docs": "/v1/docs"}
 
 
-@app.get("/healthz")
+@app.api_route("/healthz", methods=["GET", "HEAD"])
 def healthz():
     with app.state.db.tx() as cur:
         cur.execute("SELECT 1")
     return {"ok": True, "views_built_at": app.state.views.built_at or None}
 
 
-@app.get("/v1/catalog")
+@app.api_route("/v1/catalog", methods=["GET", "HEAD"])
 def catalog(request: Request):
     return _cached(request, "catalog", "application/json")
 
 
-@app.get("/v1/grid")
+@app.api_route("/v1/grid", methods=["GET", "HEAD"])
 def grid(request: Request):
     return _cached(request, "grid", "application/json")
 
 
-@app.get("/v1/grid/{tag}")
+@app.api_route("/v1/grid/{tag}", methods=["GET", "HEAD"])
 def grid_tag(tag: str, request: Request):
     return _cached(request, f"tag:{tag}", "application/json")
 
 
-@app.get("/v1/db.js")
+@app.api_route("/v1/db.js", methods=["GET", "HEAD"])
 def db_js(request: Request):
     return _cached(request, "db.js", "application/javascript")
 
 
-@app.get("/v1/tags/{name}")
+@app.api_route("/v1/tags/{name}", methods=["GET", "HEAD"])
 def tag_file(name: str, request: Request):
     return _cached(request, f"tag:{name.removesuffix('.json')}", "application/json")
 
 
-@app.get("/v1/trackers.json")
+@app.api_route("/v1/trackers.json", methods=["GET", "HEAD"])
 def trackers():
     return {}
 
 
-@app.get("/v1/export.json.gz")
+@app.api_route("/v1/export.json.gz", methods=["GET", "HEAD"])
 def export(request: Request):
     READS.check(auth.address(request))
     data, etag = app.state.views.get("export")

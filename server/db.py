@@ -45,6 +45,11 @@ CREATE TABLE IF NOT EXISTS ingest_log (
     action text NOT NULL,
     detail text
 );
+CREATE TABLE IF NOT EXISTS views (
+    key text PRIMARY KEY,
+    data bytea NOT NULL,
+    built_at timestamptz NOT NULL DEFAULT now()
+);
 DROP VIEW IF EXISTS cell_latest;
 CREATE VIEW cell_latest AS
     SELECT DISTINCT ON (cell_key) * FROM records WHERE cell_key IS NOT NULL ORDER BY cell_key, started_at DESC;
