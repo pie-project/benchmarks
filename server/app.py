@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import gzip
 import hashlib
-import json
 import logging
 import multiprocessing
 import os
@@ -13,18 +12,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import Response
 
 from pie_bench import __version__
-from server import auth, build, ingest, split
+from server import auth, build, ingest
 from server.db import Database
 
 log = logging.getLogger("pie-bench-api")
 READS = auth.RateLimit(int(os.environ.get("READ_LIMIT", "600")), 60)
 WRITES = auth.RateLimit(int(os.environ.get("WRITE_LIMIT", "30")), 3600)
 TOKENS = auth.RateLimit(int(os.environ.get("TOKEN_LIMIT", "5")), 3600)
-LEAN = ["run_id", "cell_key", "status", "engine", "engine_version", "started_at", "duration_s", "tag", "tag_kind",
-        "decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "itl_ms_p50", "latency_ms_p50", "pie_commit"]
 
 
 class Views:
@@ -132,21 +129,6 @@ def healthz():
     return {"ok": True, "views_built_at": app.state.views.built_at or None}
 
 
-@app.api_route("/v1/catalog", methods=["GET", "HEAD"])
-def catalog(request: Request):
-    return _cached(request, "catalog", "application/json")
-
-
-@app.api_route("/v1/grid", methods=["GET", "HEAD"])
-def grid(request: Request):
-    return _cached(request, "grid", "application/json")
-
-
-@app.api_route("/v1/grid/{tag}", methods=["GET", "HEAD"])
-def grid_tag(tag: str, request: Request):
-    return _cached(request, f"tag:{tag}", "application/json")
-
-
 @app.api_route("/v1/db.js", methods=["GET", "HEAD"])
 def db_js(request: Request):
     return _cached(request, "db.js", "application/javascript")
@@ -160,46 +142,6 @@ def tag_file(name: str, request: Request):
 @app.api_route("/v1/trackers.json", methods=["GET", "HEAD"])
 def trackers():
     return {}
-
-
-@app.api_route("/v1/export.json.gz", methods=["GET", "HEAD"])
-def export(request: Request):
-    READS.check(auth.address(request))
-    data, etag = app.state.views.get("export")
-    if request.headers.get("if-none-match") == etag:
-        return Response(status_code=304, headers={"ETag": etag})
-    return Response(data, media_type="application/gzip", headers={"ETag": etag, "Cache-Control": "public, max-age=300",
-                                                                   "Content-Disposition": 'attachment; filename="pie-benchmarks.json.gz"'})
-
-
-@app.get("/v1/cells/{key:path}/runs")
-def cell_runs(key: str, request: Request, limit: int = 100):
-    READS.check(auth.address(request))
-    with app.state.db.tx() as cur:
-        cur.execute(f"SELECT {', '.join(LEAN)} FROM records WHERE cell_key = %s ORDER BY started_at DESC LIMIT %s", (key, max(1, min(limit, 1000))))
-        rows = [dict(zip(LEAN, r)) for r in cur.fetchall()]
-    return JSONResponse(json.loads(split.dumps({"cell_key": key, "runs": rows})))
-
-
-@app.get("/v1/quality")
-def quality(request: Request, tag: str | None = None, artifact: str | None = None):
-    READS.check(auth.address(request))
-    sql = "SELECT summary, tag, tag_kind, platform FROM quality WHERE (%s::text IS NULL OR tag = %s) AND (%s::text IS NULL OR artifact = %s) ORDER BY artifact, task, tag"
-    with app.state.db.tx() as cur:
-        cur.execute(sql, (tag, tag, artifact, artifact))
-        rows = [{**s, "tag": t or None, "tag_kind": k, "platform": p or s.get("platform")} for s, t, k, p in cur.fetchall()]
-    return JSONResponse(json.loads(split.dumps(rows)))
-
-
-@app.get("/v1/runs/{run_id}/log")
-def run_log(run_id: str, request: Request):
-    READS.check(auth.address(request))
-    with app.state.db.tx() as cur:
-        cur.execute("SELECT log FROM run_logs WHERE run_id = %s", (run_id,))
-        row = cur.fetchone()
-    if not row:
-        raise HTTPException(404, "no log for this run")
-    return Response(split.HOME.sub("~", gzip.decompress(row[0]).decode(errors="replace")), media_type="text/plain")
 
 
 @app.post("/v1/tokens")
