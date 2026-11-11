@@ -17,7 +17,7 @@ services:
     startCommand: uvicorn server.app:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips "*"
     healthCheckPath: /healthz
     domains:
-      - api.pie-project.org
+      - bench-api.pie-project.org
     numInstances: 1
     envVars:
       - key: PYTHON_VERSION
