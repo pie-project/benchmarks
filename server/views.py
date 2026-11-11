@@ -7,7 +7,6 @@ import re
 import sys
 import urllib.request
 from datetime import datetime
-from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -626,44 +625,46 @@ def attempt_note(r: dict) -> str:
 
 
 @functools.cache
-def matrix_cells():
-    import hashlib
-    import pickle
-
+def catalog_matrix():
     from pie_bench.plan.matrix import Matrix
 
-    m = Matrix.load(MATRIX)
-    digest = hashlib.sha256()
-    for f in sorted(MATRIX.rglob("*")):
-        if f.is_file():
-            digest.update(str(f.relative_to(MATRIX)).encode() + f.read_bytes())
-    cache = Path(os.environ.get("PIE_BENCH_CACHE") or "/tmp/pie-bench") / f"cells-{digest.hexdigest()[:16]}.pkl"
-    try:
-        return m, pickle.loads(cache.read_bytes())
-    except Exception:
-        pass
-    cells = m.expand()
-    try:
-        cache.parent.mkdir(parents=True, exist_ok=True)
-        for old in cache.parent.glob("cells-*.pkl"):
-            old.unlink(missing_ok=True)
-        cache.write_bytes(pickle.dumps(cells, protocol=pickle.HIGHEST_PROTOCOL))
-    except Exception:
-        pass
-    return m, cells
+    return Matrix.load(MATRIX)
+
+
+def cells_on(platform_ids):
+    m = catalog_matrix()
+    wanted = set(platform_ids)
+    for pid in [pid for pid in m.platforms if pid in wanted]:
+        yield from m.expand(platforms=[pid])
+
+
+@functools.cache
+def reasoned_gpu_cells() -> list[tuple]:
+    from pie_bench.plan.matrix import selector_matches
+
+    m = catalog_matrix()
+    out = []
+    for c in cells_on(p.id for p in m.platforms.values() if p.os != "macos"):
+        reason = c.declared_unsupported_reason
+        if not reason or reason.startswith("does not fit"):
+            continue
+        excluded = any(selector_matches(sel, c) for sel in m.global_exclude)
+        plain = c.artifact.source_format.value == "hf_safetensors" and c.artifact.kind.value == "full"
+        out.append((c.platform.id, str(c.engine), c.workload.id, c.artifact.id, c.program.id, reason, excluded, plain))
+    return out
 
 
 def unsupported_reasons(a2m: dict[str, str], config: dict, hardware_ids: list[str], engine_ids: list[str], model_ids: list[str]) -> dict[tuple, str]:
     from pie_bench.plan.matrix import selector_matches
     from pie_bench.schema import Tier
 
-    m, cells = matrix_cells()
+    m = catalog_matrix()
     wanted = set(all_models(config))
     pie_arts = {a.baseline_of for a in m.artifacts.values() if a.id in wanted and a.baseline_of}
     arms = {a.id for a in m.artifacts.values() if a.id in wanted or a.id in pie_arts or a.baseline_of in pie_arts}
     benches = set(config.get("benchmarks", []))
     seen: dict[tuple, list[str | None]] = {}
-    for c in m.cells_for(Tier.TARGETED, cells):
+    for c in m.cells_for(Tier.TARGETED, list(cells_on(hardware_ids))):
         if c.platform.id not in hardware_ids or str(c.engine) not in engine_ids or c.artifact.id not in arms:
             continue
         if (str(c.engine) == "pie") != (c.artifact.baseline_of is None):
@@ -869,36 +870,24 @@ def no_fit(a2m: dict[str, str], config: dict, hw_rows: list[dict], engine_ids: l
 
 
 def gpu_unsupported(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[str], benches: list[str]) -> dict[tuple, str]:
-    from pie_bench.plan.matrix import selector_matches
-
-    m, cells = matrix_cells()
+    gpus, engines = set(gpu_ids), set(engine_ids)
     out: dict[tuple, str] = {}
-    for c in cells:
-        if c.platform.id not in gpu_ids or str(c.engine) not in engine_ids or (benches and c.workload.id not in benches):
+    for plat, engine, workload, art, program, reason, excluded, plain in reasoned_gpu_cells():
+        if plat not in gpus or engine not in engines or (benches and workload not in benches) or workload not in RAW:
             continue
-        if c.workload.id not in RAW:
+        if excluded or not plain or program != "text-completion-bench" or art not in a2m:
             continue
-        if any(selector_matches(sel, c) for sel in m.global_exclude):
-            continue
-        if c.artifact.source_format.value != "hf_safetensors" or c.artifact.kind.value != "full" or c.program.id != "text-completion-bench":
-            continue
-        reason = c.declared_unsupported_reason
-        if reason and not reason.startswith("does not fit") and c.artifact.id in a2m:
-            out.setdefault((c.platform.id, str(c.engine), a2m[c.artifact.id]), reason)
+        out.setdefault((plat, engine, a2m[art]), reason)
     return out
 
 
 def gpu_unsupported_setups(a2m: dict[str, str], gpu_ids: list[str], engine_ids: list[str]) -> dict[tuple, str]:
-    m, cells = matrix_cells()
+    gpus, engines = set(gpu_ids), set(engine_ids)
     out: dict[tuple, str] = {}
-    for c in cells:
-        if c.platform.id not in gpu_ids or str(c.engine) not in engine_ids or c.workload.id not in WL_PRIORITY:
+    for plat, engine, workload, art, program, reason, _, _ in reasoned_gpu_cells():
+        if plat not in gpus or engine not in engines or workload not in WL_PRIORITY or program != "text-completion-bench" or art not in a2m:
             continue
-        if c.program.id != "text-completion-bench" or c.artifact.id not in a2m:
-            continue
-        reason = c.declared_unsupported_reason
-        if reason and not reason.startswith("does not fit"):
-            out.setdefault((c.platform.id, str(c.engine), a2m[c.artifact.id], WL_PRIORITY[c.workload.id][0]), reason)
+        out.setdefault((plat, engine, a2m[art], WL_PRIORITY[workload][0]), reason)
     return out
 
 
