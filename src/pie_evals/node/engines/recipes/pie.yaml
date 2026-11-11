@@ -285,6 +285,22 @@ default:
                 the 4-layer cut's pf32-512 25.7k -> 34.9k tok/s, c32 2.49k -> 2.56k warm (1.31k -> 1.29k on a fresh
                 cache; pie e9a6f525 with #1588). vLLM-TPU prefills 2048 tokens a step.
       artifact:
+        gemma-4-e2b-tpu:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf256-512's 549-token prompts (640 rows); 2048 holds three. With
+                the shared tail on readout rows only (pie #1618): pf256-512 43.2k -> 60.4k tok/s, c256 7.2k/7.4k at 2048
+                against main's 6.7k at 1024, Raw the same programs (pie 9d9bc55e, pie-g3-v5e-b).
+        gemma-4-31b-mini6:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf32-512's 553-token prompts (640 rows) and reads the 262k-row
+                LM head for it; 2048 holds three: the 6-layer cut's pf32-512 20.7k -> 23.0k tok/s, c32 1.95-2.02k at
+                both, Raw unchanged; every ladder program held (163, none left out; pie f0364015).
         gemma-4-12b-mini12:
           knobs:
             max_forward_tokens:
