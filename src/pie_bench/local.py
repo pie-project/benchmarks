@@ -16,7 +16,7 @@ from pathlib import Path
 from pie_bench.paths import CONFIG
 from pie_bench.plan.jobs import make_jobs
 from pie_bench.plan.matrix import Matrix
-from pie_bench.plan.suites import load_config, suite_models
+from pie_bench.plan.suites import all_models, load_config, suite_models
 from pie_bench.schema import JobSpec, PlatformSpec, Tier
 
 HOME = Path(os.environ.get("PIE_BENCH_HOME") or Path.home() / ".pie-bench")
@@ -102,19 +102,20 @@ def resolve_pie(ref: str | None) -> tuple[str, str]:
     return sha, tag.lstrip("v")
 
 
-def arms(m: Matrix, models: list[str] | None, suite: str) -> list[str]:
-    wanted = set(suite_models(load_config(CONFIG), suite))
-    if models:
-        wanted = {a.id for a in m.artifacts.values() if any(q.lower() in a.id.lower() or q.lower() in (a.base_model or "").lower() for q in models)}
-    pie = {m.artifacts[a].baseline_of for a in wanted if a in m.artifacts and m.artifacts[a].baseline_of}
-    return sorted({a.id for a in m.artifacts.values() if a.id in wanted or a.id in pie or a.baseline_of in wanted})
+def arms(m: Matrix, models: list[str] | None, suite: str, mac: bool = True) -> list[str]:
+    config = load_config(CONFIG)
+    pool = (all_models(config) if models else suite_models(config, suite)) if mac else [a.id for a in m.artifacts.values()]
+    match = lambda a: any(q.lower() in a.id.lower() or q.lower() in (a.base_model or "").lower() for q in models or [])
+    wanted = {a for a in pool if a in m.artifacts and (not models or match(m.artifacts[a]))}
+    pie = {m.artifacts[a].baseline_of for a in wanted if m.artifacts[a].baseline_of}
+    return sorted({a.id for a in m.artifacts.values() if a.id in wanted or a.id in pie or (a.id not in pie and a.baseline_of in wanted)})
 
 
 def plan(m: Matrix, machine: Machine, *, pie_commit: str, models: list[str] | None, engines: list[str] | None,
          workloads: list[str] | None, suite: str) -> JobSpec | None:
     tier = tier_for(machine)
     config = load_config(CONFIG)
-    ids = arms(m, models, suite) if machine.platform.os == "macos" or models else None
+    ids = arms(m, models, suite, machine.platform.os == "macos") if machine.platform.os == "macos" or models else None
     cells = m.expand(platforms=[machine.platform.id], artifacts=ids)
     wls = set(workloads or config.get("benchmarks") or [])
     if wls:
