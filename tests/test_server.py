@@ -121,5 +121,5 @@ def test_monitors_can_check_health_with_head(client):
 
 
 def test_only_the_routes_the_site_and_cli_use_exist(client):
-    for gone in ["/v1/catalog", "/v1/grid", "/v1/export.json.gz", "/v1/quality", "/v1/runs/run-1/log", "/v1/docs", "/v1/openapi.json", "/docs"]:
+    for gone in ["/v1/catalog", "/v1/grid", "/v1/export.json.gz", "/v1/quality", "/v1/runs/run-1/log", "/v1/docs", "/v1/openapi.json", "/docs", "/v1/trackers.json"]:
         assert client.get(gone).status_code == 404, gone

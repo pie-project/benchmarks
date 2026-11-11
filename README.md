@@ -50,7 +50,6 @@ Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs
 | GET | `/v1/head-to-head.json` | pie against each engine, per platform |
 | GET | `/v1/db.js` | all results, as the site loads them |
 | GET | `/v1/tags/{release}.json` | one older release |
-| GET | `/v1/trackers.json` | issue links for the site's reports |
 | POST | `/v1/tokens` | a signed upload token |
 | POST | `/v1/submissions` | upload a `submission.json.gz` |
 | POST | `/v1/tokens/{id}/quota` | admin: raise a token's quota |

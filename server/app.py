@@ -144,11 +144,6 @@ def tag_file(name: str, request: Request):
     return _cached(request, f"tag:{name.removesuffix('.json')}", "application/json")
 
 
-@app.api_route("/v1/trackers.json", methods=["GET", "HEAD"])
-def trackers():
-    return {}
-
-
 @app.post("/v1/tokens")
 def create_token(request: Request, body: dict = Body(default={})):
     admin = auth.is_admin(request)
