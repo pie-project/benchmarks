@@ -4,18 +4,19 @@ import gzip
 import hashlib
 import json
 import logging
+import multiprocessing
 import os
 import threading
 import time
+from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from pie_bench import __version__
-from server import auth, ingest, split
+from server import auth, build, ingest, split
 from server.db import Database
 
 log = logging.getLogger("pie-bench-api")
@@ -32,33 +33,21 @@ class Views:
         self.lock = threading.Lock()
         self.dirty = threading.Event()
         self.stopped = threading.Event()
-        self.core: dict = {}
-        self.parts: dict[str, dict] = {}
         self.blobs: dict[str, tuple[bytes, str]] = {}
         self.built_at = 0.0
 
     def build(self) -> None:
-        from server import views
-
         t0 = time.monotonic()
         with self.db.tx() as cur:
             cur.execute("SELECT DISTINCT ON (platform) platform, machine->'platform' FROM runs "
                         "WHERE platform IS NOT NULL AND jsonb_typeof(machine->'platform') = 'object' ORDER BY platform, submitted_at DESC")
             contributed = {pid: spec for pid, spec in cur.fetchall()}
-        core, parts = views.build(self.db.store, contributed)
-        everything = {**core, "snapshots": {**core.get("snapshots", {}), **{t: p["snapshots"] for t, p in parts.items()}}}
-        if "quality_snapshots" in core:
-            everything["quality_snapshots"] = {**core["quality_snapshots"], **{t: p.get("quality_snapshots", []) for t, p in parts.items()}}
-        blobs = {
-            "grid": _blob(split.dumps(core).encode()),
-            "db.js": _blob(("const DB = " + split.dumps(core) + ";\n").encode()),
-            "export": _blob(gzip.compress(split.dumps(everything).encode())),
-            "catalog": _blob(split.dumps({k: core.get(k) for k in ("hardware", "engines", "models", "workloads", "suites", "quality_tasks", "updated_at")}).encode()),
-        }
-        blobs.update({f"tag:{t}": _blob(split.dumps(p).encode()) for t, p in parts.items()})
+        with ProcessPoolExecutor(max_workers=1, mp_context=multiprocessing.get_context("spawn")) as pool:
+            data = pool.submit(build.blobs, self.db.dsn, contributed).result()
+        blobs = {k: _blob(v) for k, v in data.items()}
         with self.lock:
-            self.core, self.parts, self.blobs, self.built_at = core, parts, blobs, time.time()
-        log.info("views built in %.1fs: %d tags", time.monotonic() - t0, len(parts))
+            self.blobs, self.built_at = blobs, time.time()
+        log.info("views built in %.1fs: %d files, %.0f MB compressed", time.monotonic() - t0, len(blobs), sum(len(v) for v in data.values()) / 1e6)
 
     def get(self, key: str) -> tuple[bytes, str]:
         with self.lock:
@@ -87,15 +76,15 @@ def _blob(data: bytes) -> tuple[bytes, str]:
     return data, '"' + hashlib.sha256(data).hexdigest()[:32] + '"'
 
 
-def _cached(request: Request, key: str, media_type: str, *, encoding: str | None = None) -> Response:
+def _cached(request: Request, key: str, media_type: str) -> Response:
     READS.check(auth.address(request))
     data, etag = app.state.views.get(key)
-    headers = {"ETag": etag, "Cache-Control": "public, max-age=60, stale-while-revalidate=600"}
-    if encoding:
-        headers["Content-Encoding"] = encoding
+    headers = {"ETag": etag, "Cache-Control": "public, max-age=60, stale-while-revalidate=600", "Vary": "Accept-Encoding"}
     if request.headers.get("if-none-match") == etag:
         return Response(status_code=304, headers=headers)
-    return Response(data, media_type=media_type, headers=headers)
+    if "gzip" in request.headers.get("accept-encoding", ""):
+        return Response(data, media_type=media_type, headers={**headers, "Content-Encoding": "gzip"})
+    return Response(gzip.decompress(data), media_type=media_type, headers=headers)
 
 
 @asynccontextmanager
@@ -109,7 +98,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Pie Benchmarks API", version=__version__, lifespan=lifespan, docs_url="/v1/docs", openapi_url="/v1/openapi.json")
-app.add_middleware(GZipMiddleware, minimum_size=2048)
 app.add_middleware(CORSMiddleware, allow_origins=[o for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o],
                    allow_methods=["GET"], allow_headers=["*"], expose_headers=["ETag"])
 

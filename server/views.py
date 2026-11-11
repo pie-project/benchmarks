@@ -792,7 +792,7 @@ def quality_by_tag(store, a2m):
 def parity_by_tag(store, a2m) -> dict[str, list[dict]]:
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     by_tag: dict[str, list[dict]] = {}
-    for q in store.quality(samples=True):
+    for q in store.quality_answers():
         t = q.get("tag")
         if not t or is_check(q):
             continue
@@ -958,6 +958,9 @@ class ReadOnce:
         if samples not in self._quality:
             self._quality[samples] = self.store.quality(samples=samples)
         return [dict(q) for q in self._quality[samples]]
+
+    def quality_answers(self):
+        return self.store.quality_answers() if hasattr(self.store, "quality_answers") else self.store.quality(samples=True)
 
     def __getattr__(self, name):
         return getattr(self.store, name)
