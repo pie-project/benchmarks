@@ -112,14 +112,14 @@ async def lifespan(app: FastAPI):
     app.state.db.close()
 
 
-app = FastAPI(title="Pie Benchmarks API", version=__version__, lifespan=lifespan, docs_url="/v1/docs", openapi_url="/v1/openapi.json")
+app = FastAPI(title="Pie Benchmarks API", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(CORSMiddleware, allow_origins=[o for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o],
                    allow_methods=["GET"], allow_headers=["*"], expose_headers=["ETag"])
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
-    return {"name": "pie-bench api", "version": __version__, "docs": "/v1/docs"}
+    return {"name": "pie-bench api", "version": __version__}
 
 
 @app.api_route("/healthz", methods=["GET", "HEAD"])
@@ -127,6 +127,11 @@ def healthz():
     with app.state.db.tx() as cur:
         cur.execute("SELECT 1")
     return {"ok": True, "views_built_at": app.state.views.built_at or None}
+
+
+@app.api_route("/v1/head-to-head.json", methods=["GET", "HEAD"])
+def head_to_head(request: Request):
+    return _cached(request, "head-to-head", "application/json")
 
 
 @app.api_route("/v1/db.js", methods=["GET", "HEAD"])
