@@ -68,7 +68,7 @@ DATABASE_URL=postgresql://postgres:pie@localhost/postgres JWT_SECRET=$(openssl r
 PIE_BENCH_API=http://localhost:8790 pie-bench run
 ```
 
-Deploy: `render.yaml` is a Render Blueprint (the API, its Postgres 16 and the secrets). Set `ADMIN_TOKEN` in Render, point `api.pie-project.org` at the service.
+Deploy: `render.yaml` is a Render Blueprint (the API, its Postgres 16 and generated secrets); `bench-api.pie-project.org` is a CNAME to the service.
 
 ## Develop
 
