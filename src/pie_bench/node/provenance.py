@@ -10,6 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from pie_bench import __version__
 from pie_bench.schema import Provenance
 
 ENV_PREFIXES = ("NCCL_", "PIE_", "VLLM_", "SGLANG_", "TLLM_", "TRTLLM_")
@@ -143,7 +144,7 @@ def versions() -> dict[str, Any]:
 
 
 def harness_commit(path: str | Path) -> str | None:
-    return git_commit(path) or os.environ.get("PIE_BENCH_HARNESS_COMMIT") or None
+    return git_commit(path) or os.environ.get("PIE_BENCH_HARNESS_COMMIT") or f"pie-bench-{__version__}"
 
 
 def git_commit(path: str | Path) -> str | None:
