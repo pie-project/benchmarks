@@ -18,10 +18,7 @@ services:
     healthCheckPath: /healthz
     domains:
       - api.pie-project.org
-    scaling:
-      minInstances: 1
-      maxInstances: 3
-      targetCPUPercent: 70
+    numInstances: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
