@@ -47,14 +47,15 @@ Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs
 | Method | Path | What |
 |---|---|---|
 | GET | `/healthz` | service health |
-| GET | `/v1/head-to-head.json` | pie against each engine, per platform |
-| GET | `/v1/db.js` | all results, as the site loads them |
-| GET | `/v1/tags/{release}.json` | one older release |
+| GET | `/v1/catalog` | machines, models, engines, workloads and the list of releases |
+| GET | `/v1/releases/latest` | the newest release: its results and quality scores |
+| GET | `/v1/releases/{id}` | one release: its results and quality scores |
+| GET | `/v1/head-to-head` | pie against each engine, per platform |
 | POST | `/v1/tokens` | a signed upload token |
 | POST | `/v1/submissions` | upload a `submission.json.gz` |
-| POST | `/v1/tokens/{id}/quota` | admin: raise a token's quota |
+| PATCH | `/v1/tokens/{id}` | admin: set a token's quota, body `{"quota": n}` |
 
-Reads are public, cached and carry an ETag. Writes need a token; each token has an upload quota, every upload is checked and stored in one transaction.
+Reads are public JSON, built once after each upload, gzip-compressed and carry an ETag. Writes need a token; each token has an upload quota, every upload is checked and stored in one transaction.
 
 Run it locally:
 

@@ -89,8 +89,7 @@ def rows_json(sealed: dict) -> str:
     return zlib.decompress(sealed["json"]).decode()
 
 
-def split_sealed(db: dict, sealed: dict[str, dict], quality: dict) -> tuple[dict, dict[str, bytes], bytes]:
-    keep = shown({**db, "snapshots": {t: s["any"] for t, s in sealed.items()}})
+def annotate(db: dict, sealed: dict[str, dict]) -> None:
     names = {"mac": "Mac", "gpu": "GPU", "tpu": "TPU", "wafer": "Wafer"}
     platform = {h["id"]: "AMD" if h.get("class") == "gpu" and h.get("backend") == "rocm" else names.get(h.get("class")) for h in db.get("hardware") or []}
     seen: dict[str, set] = {}
@@ -102,9 +101,29 @@ def split_sealed(db: dict, sealed: dict[str, dict], quality: dict) -> tuple[dict
         has = seen.get(m["id"], set()) | set(filter(None, str(m.get("platforms") or "").split(", ")))
         m["platforms"] = ", ".join(p for p in PLATFORMS if p in has)
     db["miniatures"] = any(s["mini"] for s in sealed.values())
-    parts = []
     for tag in db.get("tags") or []:
         tag["counts"] = sealed[tag["id"]]["counts"] if tag["id"] in sealed else counts(db, [])
+
+
+def publish(db: dict, sealed: dict[str, dict], quality: dict) -> tuple[dict, dict[str, bytes]]:
+    annotate(db, sealed)
+    catalog = {("releases" if k == "tags" else k): v for k, v in db.items()}
+    releases = {}
+    for tag in catalog.get("releases") or []:
+        t = tag["id"]
+        results = rows_json(sealed[t]) if t in sealed else "[]"
+        releases[t] = gz_text('{"id":' + dumps(t) + ',"results":' + results + ',"quality":' + dumps(quality.get(t, [])) + "}")
+    latest = next((tag["id"] for tag in catalog.get("releases") or [] if tag["counts"]["all"][0]), None)
+    if latest:
+        releases["latest"] = releases[latest]
+    return catalog, releases
+
+
+def split_sealed(db: dict, sealed: dict[str, dict], quality: dict) -> tuple[dict, dict[str, bytes], bytes]:
+    annotate(db, sealed)
+    keep = shown({**db, "snapshots": {t: s["any"] for t, s in sealed.items()}})
+    parts = []
+    for tag in db.get("tags") or []:
         if tag["id"] in keep or "/" in tag["id"] or tag["id"] not in sealed:
             continue
         parts.append(tag["id"])

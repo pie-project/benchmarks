@@ -32,6 +32,7 @@ class Views:
         self.stopped = threading.Event()
         self.blobs: dict[str, tuple[bytes, str]] = {}
         self.built_at = 0.0
+        self.built = False
 
     def build(self) -> None:
         t0 = time.monotonic()
@@ -43,7 +44,7 @@ class Views:
             data = pool.submit(build.blobs, self.db.dsn, contributed).result()
         blobs = {k: _blob(v) for k, v in data.items()}
         with self.lock:
-            self.blobs, self.built_at = blobs, time.time()
+            self.blobs, self.built_at, self.built = blobs, time.time(), True
         self.save(data)
         log.info("views built in %.1fs: %d files, %.0f MB compressed", time.monotonic() - t0, len(blobs), sum(len(v) for v in data.values()) / 1e6)
 
@@ -67,7 +68,7 @@ class Views:
         with self.lock:
             hit = self.blobs.get(key)
         if hit is None:
-            if not self.built_at:
+            if not self.built:
                 raise HTTPException(503, "warming up, try again in a minute", headers={"Retry-After": "30"})
             raise HTTPException(404, "not found")
         return hit
@@ -129,7 +130,17 @@ def healthz():
     return {"ok": True, "views_built_at": app.state.views.built_at or None}
 
 
-@app.api_route("/v1/head-to-head.json", methods=["GET", "HEAD"])
+@app.api_route("/v1/catalog", methods=["GET", "HEAD"])
+def catalog(request: Request):
+    return _cached(request, "catalog", "application/json")
+
+
+@app.api_route("/v1/releases/{release:path}", methods=["GET", "HEAD"])
+def release(release: str, request: Request):
+    return _cached(request, f"release:{release}", "application/json")
+
+
+@app.api_route("/v1/head-to-head", methods=["GET", "HEAD"])
 def head_to_head(request: Request):
     return _cached(request, "head-to-head", "application/json")
 
@@ -172,8 +183,8 @@ async def submissions(request: Request):
     return out
 
 
-@app.post("/v1/tokens/{tid}/quota")
-def set_quota(tid: str, request: Request, body: dict = Body(...)):
+@app.patch("/v1/tokens/{tid}")
+def update_token(tid: str, request: Request, body: dict = Body(...)):
     auth.require_admin(request)
     try:
         quota = int(body["quota"])

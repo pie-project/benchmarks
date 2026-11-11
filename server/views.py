@@ -989,7 +989,7 @@ class ReadOnce:
         return getattr(self.store, name)
 
 
-def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict[str, bytes], bytes]:
+def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict[str, dict], dict]:
     CONTRIBUTED.clear()
     CONTRIBUTED.update({pid: contributed_platform(spec) for pid, spec in (contributed or {}).items()})
     import time
@@ -1150,4 +1150,4 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
           "hardware": hw_rows,
           "engines": engines(), "models": [m for m in models if m["id"] in model_ids or m.get("catalog")],
           "workloads": workloads(), "install": install_sizes(), "quality_tasks": quality_tasks(), "quality": quality.get(order[0], []) if order else []}
-    return split.split_sealed(db, sealed, quality)
+    return db, sealed, quality
