@@ -143,8 +143,8 @@ def versions() -> dict[str, Any]:
     return v
 
 
-def harness_commit(path: str | Path) -> str | None:
-    return git_commit(path) or os.environ.get("PIE_BENCH_HARNESS_COMMIT") or f"pie-bench-{__version__}"
+def harness_commit(path: str | Path | None) -> str:
+    return (git_commit(path) if path else None) or os.environ.get("PIE_BENCH_HARNESS_COMMIT") or f"pie-bench-{__version__}"
 
 
 def git_commit(path: str | Path) -> str | None:
@@ -229,7 +229,7 @@ def build_provenance(
     v = versions()
     hroot = Path(harness_path) if harness_path else harness_root()
     return Provenance(
-        harness_commit=harness_commit(hroot) if hroot else os.environ.get("PIE_BENCH_HARNESS_COMMIT"),
+        harness_commit=harness_commit(hroot),
         pie_commit=git_commit(pie_root),
         pie_build_features=list(pie_build_features or []),
         engine_version=engine_version,
