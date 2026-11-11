@@ -1,5 +1,4 @@
-
-from pie_evals.node import build as pb
+from pie_bench.node import build as pb
 
 
 def test_cache_key_and_miss(tmp_path):
@@ -23,7 +22,7 @@ def test_restore_places_artifacts(tmp_path, monkeypatch):
     assert pb.restore(pie_root, "abc123def456", ["cuda"], cache_root=tmp_path, set_env=False, log=lambda *_: None)
     assert (pie_root / "target/release/pie").read_bytes() == b"bin"
     assert (pie_root / "examples/target/wasm32-wasip2/release/text_completion_bench.wasm").exists()
-    assert installed and installed[0][-1].endswith(".whl")  # wheel installed into the bench venv
+    assert installed and installed[0][-1].endswith(".whl")
     assert installed[0][0] == "--force-reinstall"
 
 

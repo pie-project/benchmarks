@@ -1,0 +1,884 @@
+default:
+  knobs:
+    gpu_mem_util:
+      value: 0.90
+      rationale: >
+        Same fraction handed to vLLM (gpu_memory_utilization) and SGLang
+        (mem_fraction_static). Sizes only the planner's logical KV budget on
+        cuda_native; --total-pages is the hard cap and stays unset so the
+        engine derives it, as it would in a deployment.
+    report_timing:
+      value: true
+      rationale: >
+        Per-token client stamps (TTFT, inter-token gaps) are what PerfMetrics
+        reads decode tok/s and ITL from. vLLM and SGLang run with the same
+        flag so all three are measured from the client vantage.
+    speculation:
+      value: auto
+      rationale: >
+        Draft-and-verify decode (the model's DFlash drafter) for single-stream rows only;
+        concurrency rows decode plain, since drafting costs throughput under load.
+        "on" or "off" forces it for every row. Only rows whose artifact has a drafter row speculate.
+    pretokenized_prompts:
+      value: true
+      rationale: >
+        On: pie prefills the token ids of the same Hugging Face chat render
+        vLLM, SGLang and the served engines tokenize. pie's own template
+        differs where the checkpoint ships none (Kimi-K3 c128: 180 tokens on
+        pie, 148 on vLLM), so the guest render fed pie more work per request.
+  family:
+    gemma4:
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                The L40S profile's 2048-token fires (pie #1202, tuned on Qwen3.8 and Nemotron) cut a
+                Gemma-4 dense batch of prompts into small passes: 8192 lifts gemma-4-E4B pf8-512
+                19.0k to 20.4k and c256 6.2k to 6.3k on l40s-x1 (the 31B miniature's working set
+                caps it at 1024 either way).
+    gpt_oss:
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                Larger fires feed the MXFP4 experts more tokens each: gpt-oss-20b pf8-512 19.8k to
+                21.9k and c256 5.9k to 6.2k on l40s-x1 against the profile's 2048.
+    qwen3_6:
+      knobs: {}
+      backend:
+        cuda:
+          knobs:
+            device_kv_budget:
+              value: 8GiB
+            engine_option:
+              value: {max_state_slots: 16}
+              rationale: >
+                At the default 256 state slots Qwen3.6-27B's delta state takes 23 GB and a
+                single 80 GB card refuses the load beside its 56 GB of weights.
+        metal:
+          knobs:
+            total_pages:
+              value: 1024
+            engine_option:
+              value: {max_state_slots: 64}
+    qwen3_6_moe:
+      knobs: {}
+      backend:
+        metal:
+          knobs:
+            total_pages:
+              value: 1024
+              rationale: >
+                At its default the KV pool of Qwen3.6-35B-A3B asks 69 GB and a
+                48 GB Mac refuses the load; this is the cap its 27B sibling runs with.
+            engine_option:
+              value: {max_state_slots: 64}
+    qwen4_exp:
+      knobs: {}
+      backend:
+        metal:
+          knobs:
+            total_pages:
+              value: 1024
+              rationale: >
+                The cap its Qwen3.6 hybrid siblings run with on a Mac: Qwen3.8-Flash-Next's
+                weights leave little beside them for a default-sized KV pool.
+            engine_option:
+              value: {max_state_slots: 64}
+  platform:
+    tpu-v6e-1:
+      family:
+        gpt_oss:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                gpt-oss's mxfp4 experts land pre-scaled (e5m2, twice the codes' bytes) where the pool leaves them
+                the room, and at 0.90 the pool beside them seats 95k tokens: c256 asks ~122k (221-token prompts and
+                256 out) and its processes were reclaimed and run again (pool starved). 0.95 seats ~139k.
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                A fire streams every expert's weights once (19 GB of e5m2 at the 20B's 32 experts), so 4096-row
+                fires stream them half as often per prompt token: pf256 +15% (the 4096-row fire 119 ms against
+                two 2048-row ones at 65), and c256 seats its prompts in a third as many mixed fires (5.2k -> 6.2k
+                tok/s; v6e, pie 358636825). The fire's temporaries still fit beside the pool at 0.95, and Raw
+                decode is unchanged (177 tok/s either way).
+        kimi_k3:
+          knobs:
+            gpu_mem_util:
+              value: 0.84
+              rationale: >
+                The Kimi-K3 8-layer cut is 22 GiB: at 0.90 its c256 fire found no HBM for its program
+                (RuntimeProgramAllocationFailure, #1184); a smaller pool leaves the program its room. vLLM-TPU and
+                SGLang-JAX serve no Kimi-K3.
+        nemotron_h:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                The Nemotron-3-Super cut's c256 and pf256 fires find no HBM for their program at 0.90
+                (RuntimeProgramAllocationFailure, #1184); vLLM-TPU and SGLang-JAX serve no Nemotron-H on a TPU.
+        deepseek_v4:
+          knobs:
+            max_forward_tokens:
+              value: 2176
+              rationale: >
+                At 2048 a fire holds three of pf256-512's 533-token prompts (1599 rows padded to 1792); 2176
+                holds four: pf256-512 32907 -> 34017 tok/s, c256 11709 -> 11792 (pie 2be5ba85). vLLM-TPU
+                prefills 2048 tokens a step.
+        qwen3:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                At 2048 a fire holds three of pf256-512's 533-token prompts (1599 rows padded to 1792); 2304 holds
+                four: Qwen3-0.6B pf256-512 161k -> 180k tok/s, c256 9.9k -> 10.3k, Raw decode unchanged (444 tok/s;
+                pie e9a6f525). At 4096 pf256 reads 187k but c256 compiles mixed fires mid-run (9.9k -> 2.2k).
+        gemma4:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                As qwen3's: four of pf256-512's prompts a fire. E2B pf256-512 76.3k -> 83.5k tok/s, E4B 50.3k -> 53.8k,
+                the 31B cut 19.8k -> 21.0k; c256 (E2B 11.4k -> 11.7k, E4B 7.2k both) and c32 (31B 1.31k both) and Raw
+                decode (E2B 209 tok/s) unchanged (pie e9a6f525).
+        gemma4_moe:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                As gemma4's: four of pf256-512's prompts a fire. The 32-expert 26B-A4B cut's pf256-512 30.5k -> 31.8k
+                tok/s; Raw decode 127 both, c256 2.34k -> 2.36k (cold and warm averaged; pie ec981e03). Qwen3.6-35B-A3B
+                (qwen3_6_moe) stays at 2048: its pf256-512 is 24.6k -> 23.3k at 2304.
+      artifact:
+        gemma-4-12b-tpu:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                The full 12B gains little from gemma4's 2304 (pf256-512 19.9k -> 20.5k tok/s) and its c32 compiled
+                mixed fires mid-run on a fresh cache there (1.07k -> 0.34k tok/s; 1.09k once warm; pie e9a6f525).
+    tpu-v5e-1:
+      family:
+        gpt_oss:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                The 12-layer cuts' mxfp4 experts land pre-scaled (e5m2, the grouped-matmul kernel's operand) only
+                where the pool leaves them the room: at 0.75 they stayed codes, and decode ran at 78 tok/s against
+                232. The fire's temporaries no longer decode the whole bank to bf16, so 0.95 leaves them room
+                (0.97 overflowed with them, #1184). vLLM-TPU keeps its own share.
+            admission_cap:
+              value: 176
+              rationale: >
+                At 0.95 the pool seats ~87k tokens: c256's 256 lanes of 221-token prompts and 256 out ask ~122k,
+                and pie reclaimed and reran processes the pool starved (941 tok/s). 176 seated at once hold it
+                (2776 tok/s); the client still offers 256, the rest queue for a seat.
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                The 12-layer cuts' fires fit 2048 rows beside the pool at 0.95 once the routed experts' rows go
+                through the grouped-matmul kernel (the 15.8 GiB of temporaries at 2048 were the whole bank
+                decoded to bf16, #1184): pf256's 1792-row fires ran 20.7k tok/s against 16.1k at 1024.
+        deepseek_v4:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                The DSV4-Flash cut's c256 at 0.97: a failed fire kept a pool plane and every later fire found no
+                seat for it (#1184); vLLM-TPU and SGLang-JAX serve no DeepSeek-V4 on a v5e.
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf256-512's 533-token prompts, padded to 1024 rows; the
+                3.7 GiB cut's 2048-row fire fits beside its pool and takes three: pf256-512 5166 -> 7301 tok/s,
+                c256 2730 -> 2838, Raw unchanged (pie 311beae7). vLLM-TPU prefills 2048 tokens a step.
+        deepseek_v41:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        glm5_next:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        minimax_m3:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        kimi_k3:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        muse_spark:
+          knobs:
+            gpu_mem_util:
+              value: 0.92
+              rationale: >
+                Muse-Spark's cut: at 0.80 no sequence fits beside its weights; as gpt-oss and Hy4 here, at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        nemotron_h:
+          knobs:
+            gpu_mem_util:
+              value: 0.80
+              rationale: >
+                As gpt-oss and Hy4 here: at 0.97 the fire's temporaries overflow a v5e (DSV4.1 and GLM-5.3-Flash
+                cuts, run 41774348861, #1184); vLLM-TPU and SGLang-JAX serve none of these on a v5e.
+        gemma4_moe:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf32-512's 553-token prompts, padded to 640 rows; the
+                12-layer, 32-expert cut's 2048-row fire fits beside its pool and takes three: pf32-512 20.9k ->
+                22.9k tok/s, c32 2490 -> 2577 (pie a2f02c75, pie-moe-v5e-2). vLLM-TPU prefills 2048 tokens a step.
+        hy_v4:
+          knobs:
+            gpu_mem_util:
+              value: 0.92
+              rationale: >
+                Hy4's 6-layer cut (11 GiB): its fire's temporaries overflow a v5e at 0.97 (15.84 GiB), at 0.85 no
+                sequence's KV fits beside the weights (#1184); vLLM-TPU and
+                SGLang-JAX serve no Hy4, so no other engine's share moves.
+        qwen3:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf256-512's 533-token prompts, padded to 640 rows; 2048 holds
+                three (1792 rows): Qwen3-0.6B pf256-512 68.7k -> 88.9k tok/s, c256 6.7k both, Raw decode 369 -> 367
+                (pie e9a6f525 with #1588). At 2304 pf256 reads 94.7k but c256 falls to 6.3k: the host holds fewer
+                of the ladder's programs.
+        muse_glimmer:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf32-512's 553-token prompts (640 rows); 2048 holds three:
+                the 4-layer cut's pf32-512 25.7k -> 34.9k tok/s, c32 2.49k -> 2.56k warm (1.31k -> 1.29k on a fresh
+                cache; pie e9a6f525 with #1588). vLLM-TPU prefills 2048 tokens a step.
+      artifact:
+        gemma-4-12b-mini12:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At the v5e's 1024 a fire holds one of pf32-512's 553-token prompts (640 rows) and reads the 262k-row
+                LM head for it; 2048 holds three: the 12-layer cut's pf32-512 22.7k -> 26.6k tok/s, c32 2.13k ->
+                2.26k, Raw equal (96.4 tok/s), every ladder program held (162, none parked; pie bb3c19f3).
+                vLLM-TPU prefills 2048 tokens a step.
+        qwen3.8-27b-mini8:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                As the 12B cut's: one 553-token prompt a fire at 1024, three at 2048. The 8-layer cut's pf32-512
+                18.4k -> 21.1k tok/s, c32 1.98k -> 2.05k, Raw equal (85.0 tok/s), the ladder's 216 programs all
+                held (pie bb3c19f3).
+      knobs:
+        max_forward_tokens:
+          value: 1024
+          rationale: >
+            pie's XLA fire at the backend's 2048 rows (2176 with the padding room) needs 15.8 GiB of HLO
+            temporaries for gpt-oss-20b's 5-layer cut and Hy4's 6-layer one, past a v5e's 15.75 GiB (#1184);
+            1024 rows still hold a Raw prompt in one fire.
+    mi300x-x1:
+      family:
+        qwen3_5:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: >
+                The default 256 recurrent-state slots cap the GDN hybrids' lanes ("admission: more lanes than the
+                state pool seats; capping ... seated=256") while the batched rows ask up to 1024; a 192 GB MI300X
+                holds 1024 slots beside the weights.
+        qwen3_6_moe:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: As for qwen3_5; Qwen3.6-35B-A3B stayed at ~7.0k tok/s from c256 to c1024 at 256 slots.
+        qwen3_6:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: As for qwen3_5.
+    a100-sxm-x1:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                The 80 GB rule (8 GiB of KV, 16 state slots) seats 16 lanes for Qwen3.8-27B bf16 on an A100 SXM: c64
+                400 tok/s against vLLM's 1007. The default KV pool beside the slots below.
+            engine_option:
+              value: {max_state_slots: 128}
+              rationale: >
+                A slot for each of c128's lanes, as TensorRT-LLM's state pool holds one for each of its 128
+                (pie keeps stated slots up to the lanes beside the kv pages): Qwen3.8-27B c128 1129 -> 1550
+                tok/s with the fires below (TensorRT-LLM 1574). At 64 slots c128 kept 59 lanes active.
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                4096-row fires halve the activation arena, and the 1.5 GB it gives back holds the kv pages
+                128 lanes grow into: at 8192 rows c128 ran 1366 tok/s with lanes suspended for pages.
+                pf32-512 4255 -> 4231 tok/s (TensorRT-LLM 4453).
+        qwen3_6_moe:
+          knobs:
+            max_forward_tokens:
+              value: 32768
+              rationale: >
+                Wider prefill fires feed Qwen3.6-35B-A3B's 64-expert mini more rows each on an A100 SXM: pf32-512
+                23.7k -> 24.1k and pf64-512 23.9k -> 24.7k tok/s (SGLang 25.0k / 25.6k).
+      artifact:
+        qwen3.5-0.8b-bf16:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: >
+                At its default 256 state slots pie seated 256 of c512's lanes for Qwen3.5-0.8B on an A100 SXM
+                (c256 25.1k, c512 24.2k tok/s), where vLLM and SGLang seat every lane; 1024 seat c512 and c1024, as on the A40.
+    a40-x1:
+      family:
+        nemotron_h:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                At 8192-token fires each wave of prompts stalls the Nemotron-3-Super mini's decode on a 48 GB A40:
+                2048 lifts c512 1392 to 1685 tok/s (vLLM 1476), c256 1380 to 1641,
+                pf16-512 7.06k to 6.81k (vLLM 6.46k).
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                The 80 GB rule (8 GiB of KV, 16 state slots) seated 16 of c128's lanes for the Qwen3.8-27B
+                miniature on a 48 GB A40: 287 tok/s against vLLM's 901. As on Ada, 128 slots and no cap:
+                c128 1075 tok/s, pf8-512 unchanged (3.80k).
+            engine_option:
+              value: {max_state_slots: 128}
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                A c128 cohort's 128 prompts arrive together and prefill before any of them decodes; 8192-row
+                fires (TensorRT-LLM's max_num_tokens) take them in three where 2240 took ten. Qwen3.8-27B
+                mini on a40-x1: c128 1250.7 to 1256.9 tok/s at pie 6168f025d, 1256.8 to 1275.3 with
+                pie-project/pie#1493 (TensorRT-LLM 1297.4); pf64-512 3956 to 3983. 1024- and 512-row fires
+                ran c128 slower (1206, 1168).
+        kimi_k3:
+          knobs:
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                At 8192-token fires the Kimi-K3 mini's activation arena and the KDA scratch held for it left
+                1.7 GB for the graph bodies and cache rows on a 48 GB A40, so most compositions walked
+                eagerly and c256 seated ~188 lanes: 4096 seats ~234, c256 1761 to 1876 tok/s (vLLM 1858),
+                pf16-512 4978 to 4961 (vLLM 4993).
+      artifact:
+        qwen3.5-0.8b-bf16:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 1024}
+              rationale: >
+                At its default 256 state slots pie seated 256 of c512's lanes for Qwen3.5-0.8B on a 48 GB A40
+                ("more lanes than the state pool seats"), where vLLM and SGLang seat every lane; 1024 seat c512 and c1024.
+    b200-x1:
+      knobs:
+        worker_threads:
+          value: 4
+          rationale: >
+            The B200 pod's 20-CPU quota gives pie 10 tokio workers by default, and at c512 the guests then trail
+            the device: a few lanes' outputs sit unconsumed for 4-5 frames while every other lane's next frame
+            waits at the seal (GPU idle about half the time). Four workers keep them level: Qwen3-0.6B c512
+            48.2k to 60-64k tok/s, MiMo mini 27.4k to 54-57k, DeepSeek-V4.1 mini 27.1k to 46k, Gemma-4-26B c1024
+            19.7k to 22.5k (three workers lost lanes to a missed heartbeat there).
+      artifact:
+        qwen3.6-27b-bf16:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 512}
+              rationale: >
+                pie states 1024 recurrent-state slots for Qwen3.6-27B here and serves them at 562, and at c512 it
+                kept 341 of the 512 lanes active on average: 7051 tok/s against vLLM's 7221. A slot for each lane
+                keeps 466 active: 7715/7700 tok/s (pie 276ebddb3, fair_def 2); 4096-row fires on top gave
+                7624/7491, so fires stay at the default. Single-request greedy output is the same with and without it.
+        qwen3.8-27b-bf16:
+          knobs:
+            worker_threads:
+              value: null
+              rationale: >
+                The dense 27B is GPU-bound at c512 whatever the workers (6.9k-7.2k tok/s at 3 to 10), and its prompts
+                want the default's: pf32-512 3.76/3.57 s at four workers, 3.45/3.53 s at ten.
+        gemma-4-31b-bf16:
+          knobs:
+            worker_threads:
+              value: null
+              rationale: >
+                As for Qwen3.8-27B: pf32-512 4.14/3.91 s at four workers, 3.92/3.80 s at ten.
+    h100-sxm-x1:
+      artifact:
+        qwen3.8-27b-bf16:
+          knobs:
+            engine_option:
+              value: {max_state_slots: 120}
+              rationale: >
+                pie states 512 recurrent-state slots for Qwen3.8-27B here (two a lane) and serves them at 88: its kv
+                pages seat 46 sequences at the declared 2048 context, so the slots are cut to half the room, and c256
+                keeps about 78 lanes active (2503 tok/s; TensorRT-LLM 3286). 120 slots keep about 100 active:
+                3012/3009 tok/s (pie 7d642cdc7, fair_def 2). 128 gave 3043 after a slow first round; from 136 the
+                pages run short (136: 2419, 144: 2197, 4096-row fires do not move that). Single-request greedy
+                output is the same with and without it.
+    l4-x1:
+      family:
+        muse_glimmer:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                The L4 profile's 2304-token fires cut a batch of Muse Glimmer prompts into small passes:
+                8192 lifts the 4-layer mini's pf8-512 11.0k to 11.6k and pf16-512 11.6k to 11.9k tok/s.
+    rtx4090-x1:
+      family:
+        gemma4:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
+                KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM prefills gemma-4-E4B in 2048-token chunks on the RTX 4090; pie's 8192-token fires stalled
+                the c256 decode behind each wave of prompts: c256 5.27k to 5.79k tok/s (vLLM 5.84k), pf16-512
+                16.7k to 15.7k.
+        gpt_oss:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                At 0.90 of a 24 GB RTX 4090 gpt-oss-20b's kv pool holds about the 256 c256 lanes to their end
+                and no more, so pie's seated admission held 16 of them back (7.0k tok/s); every engine gets
+                the same higher share there.
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM chunks gpt-oss-20b's prefill at 2048 tokens on the RTX 4090; pie's 8192-token fires left
+                its c256 decode waiting behind each wave of prompts: c256 6.55k to 7.22k tok/s with pie #1355
+                (vLLM 7.28k), pf16-512 22.5k to 20.8k (vLLM 19.5k).
+        glm5_next:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM chunks GLM-5.3-Flash's prefill at 2048 tokens on the RTX 4090; at pie's 8192 the fire's
+                working set left its KDA state 94 slots and c256 ran ~82 lanes wide. At 2048: 128 slots,
+                c256 4.12k to 5.06k tok/s (vLLM 4.27k on the same pod), pf32-512 23.2k to 22.2k.
+        nemotron_h:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM chunks Nemotron-3-Super's prefill at 2048 tokens on the RTX 4090; at pie's 8192 the
+                mini's fire working set left 238 MiB for graph bodies and cache rows (no body armed, 29 state
+                slots). At 2048: c128 1.02k to 1.50k tok/s (vLLM 1.55k), pf16-512 4.4k to 10.6k.
+        qwen3_6_moe:
+          knobs:
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                At pie's 8192 Qwen3.6-35B-A3B's mini fire working set left its gated delta state 87 slots on
+                the RTX 4090; at 4096: pf32-512 11.3k to 21.0k tok/s (SGLang 21.6k on mo5t09), c128 2.96k to
+                3.30k (2048: 19.9k and 3.27k).
+        gemma4_moe:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                vLLM chunks Gemma-4-26B-A4B's prefill at 2048 tokens on the RTX 4090; the mini's c256 at pie's
+                8192-token fires 1.53k tok/s, at 2048 1.70k (vLLM 1.94k on mo5t09; its kv room seats ~17 lanes).
+        kimi_k3:
+          knobs:
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                At 4096-row fires a batch of the Kimi-K3 mini's 549-token prompts packs seven to a fire, against
+                three at 2048: pf16-512 13.6k to 14.7k tok/s (vLLM 15.5k). Earlier: At 8192-token fires the Kimi-K3 mini's activation arena (4.3 GB) leaves a 24 GB RTX 4090 538 MiB for
+                graph bodies and cache rows, and its 64 state slots are served at 6 ("max_state_slots 64 is served at
+                6"): c64 ran 504 tok/s against vLLM's 3115. vLLM chunks its prefill at 2048 there too.
+            engine_option:
+              value: {max_state_slots: 64}
+              rationale: >
+                At the default 256 slots (and at 128) the Kimi-K3 mini's KDA state beside one sequence does not
+                fit what a 24 GB RTX 4090 leaves past the weights and arena ("the card does not hold this
+                deployment"); 64 slots seat c64, the widest shape vLLM serves it at there (c128 OOMs mid-run).
+      artifact:
+        qwen3.8-27b-mini12:
+          knobs:
+            max_forward_tokens:
+              value: 4480
+              rationale: >
+                Eight of a batch's 549-token prompts to a 4480-row fire, against four at the Ada family's 2240:
+                pf32-512 14.3k to 14.6k tok/s.
+        gemma-4-e4b-bf16:
+          knobs:
+            max_forward_tokens:
+              value: 4480
+              rationale: >
+                A batch of gemma-4-E4B's 549-token prompts packs eight to a 4480-row fire; at the family's 2048
+                three ride a fire and a sixth of its rows go empty: pf16-512 15.5k to 17.1k tok/s with the
+                profile's eight lattice steps a doubling (vLLM 17.6k on the same pod).
+  arch:
+    ada:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                The 8 GiB cap and 16 state slots fit the full 27B beside its 56 GB on an 80 GB card. On a
+                48 GB L40S the 27B runs as a miniature, and 16 slots seated 16 of c256's lanes (368 tok/s
+                against vLLM's 1138): the pool fits the card, and the slots match the shapes vLLM and SGLang run.
+            engine_option:
+              value: {max_state_slots: 128}
+            max_forward_tokens:
+              value: 2240
+              rationale: >
+                A 2048-row fire holds three of a batch's 556-token prompts (1668 rows, 7 of 8 GEMM row
+                tiles); 2240 holds four. Qwen3.8-27B's mini pf16-512 on l40s-x1: 5.46 s to 5.26 s for its
+                64 prompts (fresh GEMM tunings both), c128 within 1%.
+    hopper:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                On the 141 GB H200 the full Qwen3.8-27B at 16 state slots seated 16 of c64's lanes (867 tok/s
+                at c64 and c128 alike); with the cap and the 8 GiB budget off the engine sizes its slots beside
+                its pool, as on the RTX PRO 6000 and as vLLM and SGLang size theirs.
+            engine_option:
+              value: {}
+    blackwell:
+      family:
+        qwen3_6:
+          knobs:
+            device_kv_budget:
+              value: null
+              rationale: >
+                On the 96 GB RTX PRO 6000 the full Qwen3.8-27B at 16 state slots seated 16 of c128's lanes
+                (381 tok/s); with the cap and the 8 GiB budget off the engine fits 140 slots beside its pool
+                (1,555 tok/s), as vLLM and SGLang size theirs.
+            engine_option:
+              value: {}
+        qwen3_6_moe:
+          knobs:
+            max_forward_tokens:
+              value: 8192
+              rationale: >
+                The RTX PRO 6000 profile's 1024-row walk fires (pie #1250, for Qwen3.8-Flash-Next) cut
+                Qwen3.6-35B-A3B's 256 experts to ~32 routes each a fire: pf64-512 39.8k -> 38.2k tok/s.
+                8192-row fires, as before.
+    tpu-v5e:
+      knobs:
+        gpu_mem_util:
+          value: 0.97
+          rationale: >
+            A v5e chip has 15.75 GiB: at 0.90 neither pie (0 MiB left for KV) nor vLLM-TPU
+            (14.32 GiB used > 14.17 cap) boots gemma-4-E4B's 14.3 GiB of weights (b5 39658500805);
+            every engine gets the same higher share there.
+  backend:
+    cuda:
+      knobs:
+        max_forward_requests:
+          value: "$serve_concurrency"
+          rationale: >
+            Engine-side admission = the concurrency of the shape the server boots for, one boot a
+            shape (runner.split_startups), as vLLM's max_num_seqs and SGLang's max_running_requests
+            are set. At the script's 512,
+            engine-cuda holds readout rows and guest scratch for 512 lanes: 6.3 GB on the
+            gpt-oss-120b miniature, which cut its fires to 1024 tokens on l40s-x1.
+    xla:
+      knobs:
+        max_forward_tokens:
+          value: 2048
+          rationale: >
+            The XLA engine's own default (XlaEngineOptions). The TPU runs through
+            pie_bench's metal arm, which always writes this knob, at 10240 unless set.
+        server_startup_timeout:
+          value: 5400
+          rationale: >
+            pie compiles its batch shapes at load (prewarm, on by default since #1507), as vLLM-TPU and SGLang-JAX
+            compile theirs: a c256 server's ladder is ~175 programs, 52-71 s each for Qwen3.5-0.8B's GDN layers,
+            8 at a time. pie_bench's default 300 s wait gave up 32 programs in (tpu.yml 42511693568). Qwen3.6-35B-A3B's
+            40-layer cut compiles ~100 s a program: its c256 ladder took 31 min on a v6e, and a v5e host's memory
+            holds three compiles at once, not eight.
+        max_forward_requests:
+          value: "$serve_concurrency"
+          rationale: >
+            Engine-side admission = the widest concurrency of the shapes the server boots for, as on cuda: at 64
+            (the XLA engine's own default) the load reserved 128 slots and c256 failed ("this fire wants 255
+            recurrent slots", gpt-oss-20b on tpu-v6e-1, #1184).
+  artifact:
+    gemma-4-e4b-tpu:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            engine_option:
+              value: {device_headroom: 880MiB}
+              rationale: >
+                At the XLA engine's 1 GiB reserve (1/16 of the HBM) E4B's 14.3 GiB of weights leave the kv pool 331 MiB
+                of the 0.97 share and c256 seats ~17 lanes (1028 tok/s, pie 5c1c24a5). Past the weights and pool the
+                device holds the code of the fire programs that ran (13-50 MiB each, loaded at their first run), the
+                kept readout planes and the temporaries. At 880 MiB the pool takes 474 MiB, c256 seats ~24 lanes (1341
+                tok/s) and peaks at 15404 MiB, inside the share's 15642; pf256-512 15.7k (15.5k).
+    qwen3.8-flash-next-mini:
+      backend:
+        xla:
+          knobs:
+            max_forward_tokens:
+              value: 512
+              rationale: >
+                At the XLA default of 2048 the fire's HLO temporaries (32.50G) exceed a v6e chip's 31.24G;
+                parity's 512-token fires fit.
+            gpu_mem_util:
+              value: 0.6
+              rationale: >
+                The fire's HLO temporaries count the KV pool: at 0.90 (a 16.97 GiB pool) they came to 35.70G of a v6e's
+                31.24G (tpu 42342560134); 0.60 leaves the program its ~19G with a pool a single stream never fills.
+      platform:
+        tpu-v5e-1:
+          knobs:
+            gpu_mem_util:
+              value: 0.9
+              rationale: >
+                The cut's ~9.5 GiB fill 0.60 of a v5e. With its n-gram table folded (pie #1529) the fire no longer
+                relayouts the 6 GiB table (9.54 GiB of temporaries): at 0.90 a 3.6 GiB pool seats and raw-512-256 runs.
+            parity_gpu_mem_util:
+              value: 0.9
+              rationale: >
+                Parity on a v5e: the cut's ~9.4 GiB on the chip (its 6 GiB n-gram table, embedding, head and 4 layers)
+                fill 0.60 of the v5e's 15.75 GiB ("0 MiB for the kv pages", tpu 42519154722). pie sizes the KV inside
+                the share after the weights and the fire's temporaries: 0.66 seated it at 64-row fires (tpu 42525007381)
+                but not at 128 (42529251962); 0.90, as the Hy4 and Nemotron cuts' parity on a v5e (0.92).
+            parity_max_forward_tokens:
+              value: 128
+              rationale: >
+                The fire's temporaries grow with its rows (32.50G at 2048 on a v6e); parity's first-token prompts are 48
+                tokens (kl.gibberish). Parity boots pie 64 lanes wide (its scored fires read every position), and the
+                plan needs more rows than lanes: at 64 rows "the budgets admit more lanes than token rows" (tpu
+                42525007381), so 128.
+    qwen3.8-flash-next-mini10:
+      backend:
+        xla:
+          knobs:
+            max_forward_tokens:
+              value: 512
+              rationale: "As qwen3.8-flash-next-mini's: the fire's HLO temporaries grow with its rows."
+            gpu_mem_util:
+              value: 0.6
+              rationale: "As qwen3.8-flash-next-mini's: the temporaries count the KV pool."
+      platform:
+        tpu-v5e-1:
+          knobs:
+            parity_gpu_mem_util:
+              value: 0.9
+              rationale: "As qwen3.8-flash-next-mini's on a v5e (tpu 42519154722, 42525007381)."
+            parity_max_forward_tokens:
+              value: 128
+              rationale: "As qwen3.8-flash-next-mini's on a v5e: 128 rows, wider than parity's 64 lanes."
+    hy4-mini6:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            parity_gpu_mem_util:
+              value: 0.92
+              rationale: &v5eparity >
+                Parity on a v5e (quality/dist_run.py caps the share at 0.75): the 11 GiB Hy4 and 11.4 GiB Nemotron-3-Ultra
+                cuts leave no KV beside their weights there ("0 MiB for the kv pages", tpu 41978570753, 41995643253); the
+                bench's 0.92, with parity's 512-row fires.
+    nemotron-3-ultra-mini-e16:
+      knobs:
+        parity_gpu_mem_util:
+          value: 0.92
+          rationale: *v5eparity
+    gpt-oss-120b-mlx-mxfp4-slice-e10:
+      backend:
+        metal:
+          knobs:
+            max_forward_requests:
+              value: "$serve_concurrency"
+              rationale: >
+                At the script's 512 lanes the arena took 5.4 GB beside the 5.7 GiB slice on the 16 GB M2 and
+                left the kv pool 0 MiB even at 512-token fires (doesnt_fit, mac-slices 41770674896); readout
+                rows for the shapes' own lanes, as on cuda.
+            device_kv_budget:
+              value: 1GiB
+              rationale: &m2pf8 >
+                At its default kv pool pf8-512 on the 16 GB M2 ran Metal out of memory mid-batch ("waitUntilCompleted refused:
+                Insufficient Memory", 5 of 32 requests, mac-slices 42135629944) while mlx-lm finished it; a
+                smaller kv pool leaves the batch's scratch room; 1 GiB still seats c8's 8 x 768 tokens.
+    gemma-4-31b-mlx4-slice-l30:
+      backend:
+        metal:
+          knobs:
+            gpu_mem_util:
+              value: 0.97
+              rationale: >
+                The 30-layer 4-bit cut's 9.1 GB of weights and its 512-token arena leave 1.15 GB of a 16 GB Mac's 12.7 GB
+                working set at the 0.90 share, and one 4k sequence's kv takes 1.76 GB ("impossible submission", parity
+                42557488417, 42559501597 on m3-16g, 42559511213 on m2-16g); 0.97 leaves 2.0 GB. mlx-lm has run and exited
+                before pie boots, so nothing else holds the working set.
+    gemma-4-26b-a4b-mlx4-slice:
+      backend:
+        metal:
+          knobs:
+            device_kv_budget:
+              value: 2GiB
+              rationale: *m2pf8
+    gemma-4-31b-mini:
+      platform:
+        a40-x1:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                The 8192-row arena leaves the 31B miniature's cache rows less room on a 48 GB A40: 2304 seats
+                ~31 lanes, not ~28, c128 409 to 445 tok/s; pf8-512 unchanged (3.20k), its fires carry four prompts
+                either way.
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 2304
+              rationale: >
+                Its family's 8192-token fires carry all eight 553-token prompts of pf8-512 in one
+                4.4k-row pass, slower a token than two passes of four on the L40S profile's 2304:
+                pf8-512 5.8k to 6.1k tok/s (vLLM 6.2k, which prefills in 2048-token chunks);
+                gemma-4-E4B keeps 8192 (20.8k against 18.9k at 2304).
+    gemma-4-31b-mini18:
+      platform:
+        pro4500-x1:
+          knobs:
+            max_forward_tokens:
+              value: 2048
+              rationale: >
+                pie_bench's default 10240-token ask leaves the 32 GB card's cache pages short of c64's 64 lanes
+                of 768 tokens, so lanes park at each wave's end: 2048-token fires give c64 1,460 to 1,643 tok/s
+                (vLLM 1,614); pf8-512 7.8k to 7.5k (vLLM 7.1k).
+    gemma-4-26b-a4b-mini:
+      arch:
+        ada:
+          knobs:
+            max_forward_tokens:
+              value: 4096
+              rationale: >
+                pie_bench's default asks 10240 and the card serves 6317, whose activation arena leaves
+                3071 cache pages: c128's 128 lanes of 425 tokens need 3456, so lanes park at every
+                wave's end. 4096 leaves 3327 pages and still holds most of pf8-512's 4.4k rows a pass:
+                c128 2057 to 2211 tok/s (vLLM 2308), pf8-512 18.9k (vLLM 18.5k).
+    gemma-4-26b-a4b-bf16:
+      platform:
+        b200-x1:
+          knobs:
+            max_forward_requests:
+              value: 512
+              rationale: >
+                c1024's 1024 lanes of 768 tokens want ~165 GB of cache rows (25 sliding layers of 8 kv heads at
+                256) and the B200's pool holds ~105 GB, so lanes run out of pages mid-request; readout rows for
+                512 lanes keep the admitted lanes whole: c1024 18.2k/19.4k to 19.0k/20.8k tok/s over two rounds
+                (640 and 768 lanes came out 15.3k).
+        h100-sxm-x1:
+          knobs:
+            max_forward_requests:
+              value: 256
+              rationale: >
+                The 48 GB of weights leave an 80 GB H100 about 15 GB for the cache rows and graph bodies once
+                512 lanes' readout rows and an 8192-token fire's arena are down, and the pool seats fewer than
+                256 of c512's lanes: readout rows for 256 lanes give the pool the rest. c512 7.9k to 8.5k tok/s
+                (vLLM 9.0k); 4096-token fires reached 8.8k but cut pf64-512 49.1k to 44.8k.
+            max_forward_tokens:
+              value: 16384
+              rationale: >
+                pf64-512's 64 prompts (35k rows) in 16384-row fires, as the H200 profile asks: pf64-512 48.4k to
+                49.6k tok/s (vLLM 50.8k warm), c512 8.4k / 8.3k within the pod's noise.
+    gemma-4-e4b-bf16:
+      platform:
+        h100-sxm-x1:
+          knobs:
+            max_forward_tokens:
+              value: 16384
+              rationale: >
+                pf64-512's 64 prompts in 16384-row fires, as the H200 profile asks: pf64-512 59.2k to 61.4k tok/s
+                (vLLM 64.6k warm), c512 17.7k / 18.8k within the pod's noise.
+    qwen3.8-27b-bf16:
+      platform:
+        b200-x1:
+          knobs:
+            max_forward_requests:
+              value: 384
+              rationale: >
+                c512's lanes each carry 64 layers' worth of recurrent state and KV, and readout rows for all 512 leave
+                the pool and the prefill fires less room: readout rows for 384 lanes take c512 6.63k/6.51k to
+                6.78k/6.80k tok/s over two rounds on b200-x1 (256 lanes 6.72k/6.65k; vLLM 7.24k).
+    gemma-4-31b-bf16:
+      platform:
+        h100-sxm-x1:
+          knobs:
+            max_forward_requests:
+              value: 64
+              rationale: >
+                The 58 GB of weights leave an 80 GB H100 12.8 GB past them, of which an 8192-token fire's
+                arena and windowed kv rows and 512 lanes' readout rows took all but ~7 GB: the pool seated ~18
+                of c512's lanes. Readout rows for 64 lanes seat ~26: c512 664 to 934 tok/s (vLLM 1285, ~37
+                lanes); 2048-token fires reach 990 but cost the prefill rows their wide passes.
+competitive:
+  extends: default
+  knobs:
+    max_forward_requests:
+      value: "$concurrency"
+      rationale: >
+        engine-cuda declares its KV pool for max_forward_requests seats at the
+        full context, whatever the card holds: at the script default (512)
+        gemma-4-E4B declared 57344 MiB on a 24 GB RTX 4090 and every
+        concurrency cell was refused (pie issue #630, nightly 35935510089).
+        The shape's concurrency is what vLLM's max_num_seqs is set to as well.
+    engine_option:
+      value: {}
+      rationale: >
+        Pass-through to [model.engine.options]. A value of "$pie_sku" is
+        replaced by the artifact's pie_sku, but note the worker takes the SKU
+        as [model] sku, not as an engine option, and pie_client.py has no flag
+        for it (see the TODO in PieEngine.engine_args) - so leave this empty
+        until the script grows --sku.
+  backend:
+    metal:
+      knobs:
+        gpu_mem_util:
+          value: null
+          rationale: >
+            The Metal engine sizes its own heap and has no memory-fraction
+            knob (pie_bench ignores --gpu-mem-util for --engine metal).
+  workload_kind:
+    concurrency:
+      knobs: {}
+    prefix_shared:
+      knobs: {}

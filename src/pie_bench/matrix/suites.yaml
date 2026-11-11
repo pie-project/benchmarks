@@ -1,0 +1,172 @@
+job_budget_minutes: 60
+kill_factor: 2.0
+
+global_exclude:
+  - {platform: l40s-x2, tp: 1}
+  - {platform: pro6000-x4, tp: 1}
+  - {platform: h100-sxm-x4, tp: 1}
+  - {platform: a100-x2, tp: 1}
+  - {platform: a100-pcie-x2, tp: 1}
+  - {platform: pro6000-x2, tp: 1}
+  - {platform: pro6000-x4, tp: 2}
+  - {platform: h100-sxm-x4, tp: 2}
+  - {platform: h200-x2, tp: 1}
+  - {platform: h200-x4, tp: [1, 2]}
+  - {platform: [a100-sxm-x8, h100-sxm-x8, h200-x8, b200-x8, b300-x8], tp: [1, 2, 4]}
+  - {platform: mi350x-x2, tp: 1}
+  - {platform: mi300x-x8, tp: [1, 2, 4]}
+  - {platform: [mi350x-x2, mi300x-x8], not_artifact: [deepseek-v4.1-flash, glm-5.3-flash, glm-5.3, hy4-preview, mimo-v2.6-flash, kimi-k3, qwen3.8-flash-next-bf16, muse-spark-open, nemotron-3-ultra, minimax-m3.1-flash]}
+  - {platform: mi350x-x2, artifact: mimo-v2.6-flash}
+  - {artifact: [deepseek-v4.1-flash, glm-5.3-flash, glm-5.3, hy4-preview, mimo-v2.6-flash, kimi-k3, qwen3.8-flash-next-bf16, muse-spark-open, nemotron-3-ultra, minimax-m3.1-flash], not_workload: raw-512-256}
+  - {backend: xla, not_engine: [pie, vllm, sglang]}
+  - {platform: tpu-v5p-8-x4, tp: [1, 2]}
+  - {platform: tpu-v5p-8-x4, not_artifact: [deepseek-v4.1-flash, glm-5.3-flash, glm-5.3, hy4-preview, mimo-v2.6-flash, kimi-k3, qwen3.8-flash-next-bf16, muse-spark-open, nemotron-3-ultra, minimax-m3.1-flash]}
+  - {backend: xla, not_platform: tpu-v5p-8-x4, engine: pie, not_artifact: [qwen3.5-0.8b-xla, qwen3-0.6b-tpu, gemma-4-e4b-tpu, gemma-4-e2b-tpu, gemma-4-12b-tpu, gpt-oss-20b-tpu, deepseek-v4-flash-mini-tpu, deepseek-v4.1-flash-mini8-tpu, glm-5.3-mini-tpu, glm-5.3-flash-mini8-fp8-tpu, glm-5.3-flash-mini4-tpu, hy4-mini6, mimo-v2.6-flash-mini-tpu, minimax-m3.1-flash-mini-tpu, minimax-m3.1-flash-mini-tpu-bf16, muse-spark-mini4, muse-spark-mini4-e10, muse-spark-mini2-e8, nemotron-3-ultra-mini, qwen3.8-flash-next-mini, nemotron-3-super-mini, kimi-k3-mini8, gemma-4-26b-a4b-mini-e32, gemma-4-31b-mini18, gpt-oss-120b-mxfp4-mini24-e32, muse-glimmer-30b-mini12, qwen3.6-27b-mini12, qwen3.6-35b-a3b-mini-e32, qwen3.8-27b-mini20, gemma-4-26b-a4b-bf16, gemma-4-31b-bf16, gpt-oss-120b-tpu, muse-glimmer-30b, qwen3.6-27b-tpu, qwen3.6-35b-a3b-bf16, qwen3.8-27b-bf16, gpt-oss-20b-mxfp4-mini12, gpt-oss-120b-mxfp4-mini12-e32, nemotron-3-ultra-mini-e16, nemotron-3-super-mini22, kimi-k3-mini4-e16, gemma-4-26b-a4b-mini12-e32, gemma-4-31b-mini6, gemma-4-12b-mini12, muse-glimmer-30b-mini4, qwen3.6-27b-mini8, qwen3.6-35b-a3b-mini-e16, qwen3.8-27b-mini8]}
+  - {backend: xla, not_platform: tpu-v5p-8-x4, engine: [vllm, sglang], not_artifact: [qwen3.5-0.8b-bf16, qwen3-0.6b-tpu, gemma-4-e4b-tpu, gemma-4-e2b-tpu, gemma-4-12b-tpu, gpt-oss-20b-tpu, deepseek-v4-flash-mini-tpu, deepseek-v4.1-flash-mini8-tpu, glm-5.3-mini-tpu, glm-5.3-flash-mini8-fp8-tpu, glm-5.3-flash-mini4-tpu, hy4-mini6, mimo-v2.6-flash-mini-tpu, minimax-m3.1-flash-mini-tpu, minimax-m3.1-flash-mini-tpu-bf16, muse-spark-mini4, muse-spark-mini4-e10, muse-spark-mini2-e8, nemotron-3-ultra-mini, qwen3.8-flash-next-mini, nemotron-3-super-mini, kimi-k3-mini8, gemma-4-26b-a4b-mini-e32, gemma-4-31b-mini18, gpt-oss-120b-mxfp4-mini24-e32, muse-glimmer-30b-mini12, qwen3.6-27b-mini12, qwen3.6-35b-a3b-mini-e32, qwen3.8-27b-mini20, gemma-4-26b-a4b-bf16, gemma-4-31b-bf16, gpt-oss-120b-tpu, muse-glimmer-30b, qwen3.6-27b-tpu, qwen3.6-35b-a3b-bf16, qwen3.8-27b-bf16, gpt-oss-20b-mxfp4-mini12, gpt-oss-120b-mxfp4-mini12-e32, nemotron-3-ultra-mini-e16, nemotron-3-super-mini22, kimi-k3-mini4-e16, gemma-4-26b-a4b-mini12-e32, gemma-4-31b-mini6, gemma-4-12b-mini12, muse-glimmer-30b-mini4, qwen3.6-27b-mini8, qwen3.6-35b-a3b-mini-e16, qwen3.8-27b-mini8]}
+  - {platform: [tpu-v6e-1, tpu-v5e-1, tpu-v4-8], artifact: [gemma-4-26b-a4b-bf16, gemma-4-31b-bf16, gpt-oss-120b-tpu, muse-glimmer-30b, qwen3.6-27b-tpu, qwen3.6-35b-a3b-bf16, qwen3.8-27b-bf16]}
+  - {platform: [tpu-v5p-8, tpu7x-4], artifact: [gemma-4-26b-a4b-mini-e32, gemma-4-31b-mini18, gpt-oss-120b-mxfp4-mini24-e32, muse-glimmer-30b-mini12, qwen3.6-27b-mini12, qwen3.6-35b-a3b-mini-e32, qwen3.8-27b-mini20]}
+  - {platform: tpu-v5e-1, artifact: [gemma-4-26b-a4b-mini-e32, gemma-4-31b-mini18, gpt-oss-120b-mxfp4-mini24-e32, muse-glimmer-30b-mini12, qwen3.6-27b-mini12, qwen3.6-35b-a3b-mini-e32, qwen3.8-27b-mini20, gpt-oss-20b-tpu, nemotron-3-ultra-mini, nemotron-3-super-mini, kimi-k3-mini8, gemma-4-12b-tpu, glm-5.3-flash-mini8-fp8-tpu, muse-spark-mini4, muse-spark-mini4-e10]}
+  - {backend: xla, not_platform: tpu-v5e-1, artifact: [gpt-oss-20b-mxfp4-mini12, gemma-4-12b-mini12, gemma-4-26b-a4b-mini12-e32, muse-glimmer-30b-mini4, glm-5.3-flash-mini4-tpu, muse-spark-mini4-e10, muse-spark-mini2-e8]}
+  - {backend: xla, not_program: text-completion-bench}
+  - {backend: xla, not_artifact: [qwen3.5-0.8b-xla, gemma-4-12b-tpu, gemma-4-31b-mini18, gemma-4-26b-a4b-mini-e32, nemotron-3-super-mini, glm-5.3-mini-tpu, gemma-4-12b-mini12, gemma-4-31b-mini6, gemma-4-26b-a4b-mini12-e32, muse-glimmer-30b-mini4, qwen3.8-27b-mini8, qwen3.8-27b-mini20], not_workload: [raw-512-256, c256, pf256-512]}
+  - {backend: xla, artifact: gemma-4-26b-a4b-mini-e32, not_workload: [raw-512-256, c64, pf256-512]}
+  - {backend: xla, artifact: [gemma-4-12b-tpu, gemma-4-31b-mini18, nemotron-3-super-mini], not_workload: [raw-512-256, c32, pf256-512]}
+  - {backend: xla, artifact: [gemma-4-12b-mini12, gemma-4-31b-mini6, gemma-4-26b-a4b-mini12-e32, muse-glimmer-30b-mini4, qwen3.8-27b-mini8, qwen3.8-27b-mini20], not_workload: [raw-512-256, c32, pf32-512]}
+  - {backend: xla, not_platform: tpu-v5e-1, artifact: glm-5.3-mini-tpu, not_workload: [raw-512-256, c256, pf256-512]}
+  - {platform: tpu-v5e-1, artifact: glm-5.3-mini-tpu, not_workload: [raw-512-256, c256, pf32-512]}
+  - {backend: xla, artifact: qwen3.5-0.8b-xla, not_workload: [ss-512-256, c32, raw-512-256, control-aa, c256, pf256-512]}
+  - {backend: webgpu, not_engine: [pie, webllm, llamacpp-webgpu]}
+
+suites:
+  smoke:
+    max_jobs_per_platform: 2
+    enforce_budget: true
+    exclude:
+      - {program_category: speculative, not_workload: [ss-128-64]}
+      - {program_category: adapter, not_workload: [ss-128-64]}
+      - {program_category: kv_policy, not_workload: [lc-1k-128]}
+      - {program: prefill-rows, not_workload: [lc-2k-128]}
+      - {program: prefix-tree-kv-cache, not_workload: [prefix-1k-x64]}
+      - {workload: lc-8k-128, not_artifact: [qwen3.5-0.8b-bf16, gemma-4-e4b-bf16]}
+      - {workload: mixed-256, not_artifact: [qwen3.5-0.8b-bf16, qwen3.6-35b-a3b-mini5]}
+      - {workload: c32, not_artifact: [qwen3.5-0.8b-bf16, gemma-4-e4b-bf16, qwen3.6-35b-a3b-mini5]}
+      - {tp: ">=2", program_category: kv_policy}
+      - {tp: ">=2", program_category: adapter}
+      - {tp: ">=2", program_category: speculative}
+      - {tp: ">=2", not_workload: [control-aa, ss-128-64, c8, lc-2k-128]}
+      - {tp: ">=2", not_artifact: [qwen3.5-0.8b-bf16, qwen3.6-35b-a3b-mini5, gpt-oss-20b-mxfp4-mini5, deepseek-v4-flash-mini5, deepseek-v4.1-flash-mini8, glm-5.3-flash-mini8, kimi-k3-mini8]}
+  nightly:
+    max_jobs_per_platform: 48
+    enforce_budget: true
+    exclude:
+      - {engine: vllm, workload: control-aa}
+      - {engine: sglang, workload: control-aa}
+      - {engine: llamacpp, workload: control-aa}
+      - {engine: mlxlm, workload: control-aa}
+      - {backend: xla, not_artifact: [qwen3.5-0.8b-xla, deepseek-v4.1-flash-mini8, kimi-k3-mini8]}
+      - {backend: xla, workload: [pf256-512, raw-512-256]}
+      - {backend: xla, artifact: qwen3.5-0.8b-xla, workload: c256}
+  weekly:
+    max_jobs_per_platform: 900
+    enforce_budget: true
+    exclude: []
+  targeted:
+    max_jobs_per_platform: 20
+    enforce_budget: false
+    exclude:
+      - {not_engine: pie, baseline: false}
+    include:
+      - engine: pie
+        baseline: false
+        program: text-completion-bench
+        artifact_kind: full
+        tp: 1
+        os: macos
+        workload: [control-aa, ss-128-64, ss-512-256, lc-1k-128, lc-2k-128, c8, c32]
+      - engine: [mlxlm, llamacpp]
+        baseline: true
+        program: text-completion-bench
+        artifact_kind: full
+        tp: 1
+        os: macos
+        workload: [ss-128-64, ss-512-256, lc-1k-128, lc-2k-128, c8, c32]
+      - engine: pie
+        baseline: false
+        program: text-completion-bench
+        artifact_kind: full
+        tp: 1
+        os: macos
+        workload: [ob-story-200, ob-512-200, raw-512-256, spec-512-256, ob-short-100, ob-advanced-500, ctx-4k-256, ctx-8k-256, c4, ss-512-256, c32, c8, pf256-512, pf32-512, pf8-512]
+      - engine: [llamacpp, mlxlm, splash, vllm-metal]
+        baseline: true
+        program: text-completion-bench
+        artifact_kind: full
+        tp: 1
+        os: macos
+        workload: [ob-story-200, ob-512-200, raw-512-256, spec-512-256, ob-short-100, ob-advanced-500, ctx-4k-256, ctx-8k-256, c4, ss-512-256, c32, c8, pf256-512, pf32-512, pf8-512]
+      - engine: pie
+        baseline: false
+        program: text-completion-bench
+        artifact_kind: miniature
+        tp: 1
+        os: macos
+        workload: [raw-512-256, spec-512-256, c32, c8, pf32-512, pf8-512]
+      - engine: [llamacpp, mlxlm, splash, vllm-metal]
+        baseline: true
+        program: text-completion-bench
+        artifact_kind: miniature
+        tp: 1
+        os: macos
+        workload: [raw-512-256, spec-512-256, c32, c8, pf32-512, pf8-512]
+      - engine: pie
+        baseline: false
+        program: text-completion-bench
+        artifact_kind: full
+        tp: 1
+        os: macos
+        workload: [cold-ss-128-64, cold-ss-512-200, cold-ctx-4k-256]
+      - engine: [mlxlm, llamacpp, splash, vllm-metal]
+        baseline: true
+        program: text-completion-bench
+        artifact_kind: full
+        tp: 1
+        os: macos
+        workload: [cold-ss-128-64, cold-ss-512-200, cold-ctx-4k-256]
+      - engine: pie
+        baseline: false
+        program: text-completion-bench
+        backend: webgpu
+        tp: 1
+        artifact: [qwen3.5-4b-mlx4, qwen3.5-9b-mlx4, gemma-4-e2b-mlx4, gemma-4-e4b-mlx4, gemma-4-12b-mlx4, qwen3.6-35b-a3b-mlx4-slice, gemma-4-26b-a4b-mlx4-slice, gpt-oss-20b-mlx4-slice, qwen3.6-27b-mlx4-slice, qwen3.8-27b-mlx4-slice, gemma-4-31b-mlx4-slice, muse-glimmer-30b-mlx4-slice, gpt-oss-120b-mlx-mxfp4-slice-e10, qwen3.8-flash-next-mini-web]
+        workload: [raw-512-256, c32, pf32-512]
+      - engine: llamacpp-webgpu
+        baseline: true
+        program: text-completion-bench
+        backend: webgpu
+        tp: 1
+        artifact: [qwen3.5-4b-llamacpp, qwen3.5-9b-llamacpp, gemma-4-e2b-llamacpp, gemma-4-e4b-llamacpp, gemma-4-12b-llamacpp, qwen3.6-35b-a3b-llamacpp-slice, gemma-4-26b-a4b-llamacpp-slice, gpt-oss-20b-llamacpp-slice, qwen3.6-27b-llamacpp-slice, qwen3.8-27b-llamacpp-slice, gemma-4-31b-llamacpp-slice, muse-glimmer-30b-llamacpp-slice, gpt-oss-120b-llamacpp-slice-e10]
+        workload: [raw-512-256, c32, pf32-512]
+      - engine: webllm
+        baseline: true
+        program: text-completion-bench
+        backend: webgpu
+        tp: 1
+        artifact: [qwen3.5-4b-webllm, qwen3.5-9b-webllm, gemma-4-e2b-webllm, gemma-4-e4b-webllm, gemma-4-12b-webllm, qwen3.6-35b-a3b-webllm-slice, gemma-4-26b-a4b-webllm-slice, gpt-oss-20b-webllm-slice, qwen3.6-27b-webllm-slice, qwen3.8-27b-webllm-slice, gemma-4-31b-webllm-slice, muse-glimmer-30b-webllm-slice, gpt-oss-120b-webllm-slice-e10, qwen3.8-flash-next-webllm-mini]
+        workload: [raw-512-256, c32, pf32-512]
+      - engine: pie
+        baseline: false
+        program: text-completion-bench
+        artifact: qwen3.8-flash-next-mlx2-mini8
+        tp: 1
+        os: macos
+        workload: [raw-512-256, c32, c8, pf256-512, pf32-512, pf8-512]
+      - engine: [mlxlm, llamacpp, splash, vllm-metal]
+        baseline: true
+        program: text-completion-bench
+        artifact: [qwen3.8-flash-next-mlx2-mini8-mlxlm, qwen3.8-flash-next-q2k-mini8-llamacpp, qwen3.8-flash-next-q2k-mini8-splash]
+        tp: 1
+        os: macos
+        workload: [raw-512-256, c32, c8, pf256-512, pf32-512, pf8-512]
+
+escalation:
+  on_smoke_regression_promote_family_to_nightly: true

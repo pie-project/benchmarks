@@ -1,11 +1,10 @@
-from pie_evals.node.engines.base import classify_failure
-from pie_evals.schema import ErrorClass
+from pie_bench.node.engines.base import classify_failure
+from pie_bench.schema import ErrorClass
 
 
 def test_a_traceback_is_told_by_its_whole_message():
-    # pie_bench's startup failure: the server's refusal runs on after the exception line
     stderr = """Traceback (most recent call last):
-  File "pie_bench.py", line 689, in serve
+  File "pie_client.py", line 689, in serve
     raise RuntimeError(
 RuntimeError: pie serve exited before startup completed:
   INFO gateway worker-facing listener up
@@ -59,7 +58,7 @@ RuntimeError: pie serve exited before startup completed:
 
 def test_a_code_line_is_never_the_message():
     stderr = """Traceback (most recent call last):
-  File "pie_bench.py", line 12, in main
+  File "pie_client.py", line 12, in main
     resolved_model = resolve_local_model(args.model)
 ValueError: no such model
 """

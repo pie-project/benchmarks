@@ -1,6 +1,6 @@
 from types import SimpleNamespace as P
 
-from pie_evals.node.validate import expected_requests, round_problem
+from pie_bench.node.validate import expected_requests, round_problem
 
 
 def perf(requests=8, failed=0, prompt_tokens=4440):

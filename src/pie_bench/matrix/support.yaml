@@ -1,0 +1,347 @@
+unsupported:
+  - when: {engine: pie, backend: xla, tp: ">1"}
+    reason: "pie's XLA engine serves a model on one TPU device; this model needs more HBM than one chip has"
+  - when: {platform: tpu-v4-8}
+    reason: "no access: TPU v4 is only offered in us-central2-b, which the GCP organization's location policy blocks for this project"
+  - when: {platform: tpu7x-4}
+    reason: "no quota: the project's TPU7x (Ironwood) quota is 0 in us-central1, its only region (TPUS_PER_TPU_FAMILY)"
+  - when: {engine: sglang, family: kimi_k3, platform: rtx4090-x1, workload: c64}
+    reason: "SGLang: kimi-k3 mini c64 on 24 GB has no mem_fraction_static that fits both the KDA state pool and the MoE prefill"
+  - when: {engine: sglang, family: kimi_k3, platform: rtx4090-x1, workload: pf16-512}
+    reason: "SGLang: kimi-k3 mini pf16-512 on 24 GB has no mem_fraction_static that fits both the KDA state pool and the MoE prefill"
+  - when: {engine: sglang, family: kimi_k3, platform: l40s-x1, workload: kv-oversub}
+    reason: "SGLang: kimi-k3 kv-oversub on 48 GB has no mem_fraction_static that fits both KV and the MoE prefill"
+  - when: {engine: sglang, family: kimi_k3, platform: l40s-x1, workload: c256}
+    reason: "SGLang: kimi-k3 c256 on 48 GB has no mem_fraction_static that fits both KV and the 256-wide graph"
+  - when: {engine: sglang, family: kimi_k3, platform: l40s-x1, workload: pf256-512}
+    reason: "SGLang: kimi-k3 256-wide batch on 48 GB has no mem_fraction_static that fits both KV and the graph"
+  - when: {engine: splash, workload: raw-512-256}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no raw row"
+  - when: {engine: splash, workload: c32}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: c64}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: c256}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: c8}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: c4}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: pf32-512}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: splash, workload: pf8-512}
+    reason: "Splash always drafts: no flag turns speculation off, so it has no plain batched row"
+  - when: {engine: trtllm, workload: spec-512-256}
+    reason: "TensorRT-LLM rows decode plain: its speculative modes are not wired into the harness"
+  - when: {engine: trtllm, spec_dec: [dflash2, mtp, ngram, rs, eagle, dspark]}
+    reason: "TensorRT-LLM rows decode plain: its speculative modes are not wired into the harness"
+  - when: {engine: trtllm, family: [hy_v4, mimo_v2, muse_glimmer, muse_spark]}
+    reason: "TensorRT-LLM 1.4.0rc2.post1 has no implementation of this architecture (HYV4, MiMoV2, Muse): it cannot load the checkpoint"
+  - when: {engine: trtllm, family: kimi_k3}
+    reason: "TensorRT-LLM runs Kimi-K3's experts only with MXFP8 activations (W4A8, SM100 only); the other engines serve them W4A16"
+  - when: {engine: trtllm, family: deepseek_v41, not_platform: [b200-x1, b200-x8, b300-x1, b300-x8]}
+    reason: "TensorRT-LLM runs DeepSeek-V4.1's CSA2 projections only on SM100/SM103 (B200, B300)"
+  - when: {engine: trtllm, family: glm_moe_dsa, arch: blackwell, platform: [rtx5090-x1, pro4500-x1, pro6000-x1, pro6000-x2, pro6000-x4]}
+    reason: "TensorRT-LLM serves GLM-5.3's sparse MLA on SM120 only with an fp8 KV cache; the other engines keep it bf16"
+  - when: {engine: trtllm, family: [glm_moe_dsa, glm5_next], arch: [ada, ampere]}
+    reason: "TensorRT-LLM has no block-FP8 MoE kernel below SM90 (Hopper): it cannot serve GLM-5.3's FP8 experts here"
+  - when: {engine: trtllm, family: glm5_next, platform: [rtx5090-x1, pro4500-x1, pro6000-x1, pro6000-x2, pro6000-x4]}
+    reason: "TensorRT-LLM's sparse attention kernel for GLM-5.3-Flash runs on SM90a and SM100 only, not on SM120"
+  - when: {engine: trtllm, artifact: gemma-4-e4b-bf16, platform: rtx4090-x1}
+    reason: "TensorRT-LLM loads Gemma-4-E4B with its vision and audio towers and has no text-only switch for it: it does not fit 24 GB"
+  - when: {engine: trtllm, family: deepseek_v4, arch: [ada, ampere]}
+    reason: "TensorRT-LLM runs DeepSeek-V4 only on Hopper or newer GPUs"
+  - when: {engine: trtllm, artifact: [gemma-4-31b-mini12, gemma-4-31b-mini18], platform: [rtx4090-x1, rtx5090-x1, pro4500-x1]}
+    reason: "TensorRT-LLM loads Gemma-4 with its vision tower (no text-only switch): this cut does not fit the card for it"
+  - when: {engine: trtllm, artifact: gemma-4-31b-mini, platform: [l40s-x1, a40-x1]}
+    reason: "TensorRT-LLM loads Gemma-4 with its vision tower (no text-only switch): this cut does not fit the card for it"
+  - when: {engine: trtllm, family: glm5_next, arch: hopper}
+    reason: "TensorRT-LLM's SM90 sparse prefill kernel (FlashMLA) asserts on GLM-5.3-Flash's index top-k"
+  - when: {engine: trtllm, artifact: [deepseek-v4-flash-mini, deepseek-v4-flash-mini43]}
+    reason: "TensorRT-LLM's DeepSeek-V4 MoE kernel needs all 256 (or 384) experts; the miniature keeps 16"
+  - when: {engine: trtllm, family: minimax_m3}
+    reason: "TensorRT-LLM 1.4.0rc2.post1 has no MoE kernel for MiniMax-M3.1-Flash's experts on these GPUs (SM80/SM90/SM120), and its loader refuses the miniature on SM100"
+  - when: {engine: trtllm, family: gpt_oss, arch: [ampere, ada]}
+    reason: "TensorRT-LLM has no MXFP4 MoE kernel on Ampere or Ada (SM80-SM89) for gpt-oss"
+  - when: {engine: trtllm, artifact: gemma-4-31b-bf16, platform: [a100-sxm-x1, h100-sxm-x1, h200-x1]}
+    reason: "TensorRT-LLM's worker dies initialising Gemma-4-31B (with its vision tower) on this card"
+  - when: {engine: webllm, workload: [c32, pf32-512]}
+    reason: "WebLLM decodes one sequence at a time: MLCEngine serializes requests on the model's lock, so it has no batched decode or batched prefill"
+  - when: {engine: webllm, artifact: gemma-4-e4b-webllm}
+    reason: "mlc-llm cannot build it: ValueError: The first Gemma 4 target requires 8 query heads and one KV head (Gemma-4-E4B has 2 KV heads)"
+  - when: {engine: webllm, artifact: gemma-4-12b-webllm}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: gemma4_unified"
+  - when: {engine: webllm, artifact: [gemma-4-26b-a4b-webllm-slice, gemma-4-31b-webllm-slice]}
+    reason: "mlc-llm cannot build it: ValueError: The text+audio milestone supports causal attention only (mlc-llm's Gemma 4 is the dense E2B shape; this model's attention is bidirectional over images, its K equals V)"
+  - when: {engine: webllm, artifact: qwen3.6-35b-a3b-webllm-slice}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: qwen3_5_moe"
+  - when: {engine: webllm, artifact: [gpt-oss-20b-webllm-slice, gpt-oss-120b-webllm-slice-e10]}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: gpt_oss"
+  - when: {engine: webllm, artifact: muse-glimmer-30b-webllm-slice}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: muse_glimmer"
+  - when: {engine: webllm, artifact: qwen3.8-flash-next-webllm-mini}
+    reason: "mlc-llm cannot build it: ValueError: Unknown model type: qwen4_exp"
+  - when: {engine: trtllm, family: glm5_next}
+    reason: "TensorRT-LLM 1.4.0rc2.post1 cannot serve GLM-5.3-Flash here (KDA int32 offsets on SM100; sparse attention kernels missing or asserting elsewhere)"
+  - when: {engine: trtllm, family: deepseek_v41}
+    reason: "TensorRT-LLM 1.4.0rc2.post1 cannot serve DeepSeek-V4.1 here (CSA2 projections need SM100; on SM100 its loader refuses the Engram token map)"
+  - when: {engine: pie, backend: webgpu, artifact: qwen3.8-flash-next-mini-web}
+    reason: "pie's WebGPU engine needs one 6.0 GiB buffer for this model's n-gram table; WebGPU caps a buffer at 4 GiB"
+  - when: {engine: pie, backend: webgpu, artifact: qwen3.6-35b-a3b-mlx4-slice}
+    reason: "pie's WebGPU matmul writes bf16 outputs in pairs and refuses Qwen3.6-35B-A3B's one-column shared-expert gate"
+  - when: {backend: metal, tp: ">1"}
+    reason: "no tensor parallel on Metal"
+  - when: {backend: vulkan, tp: ">1"}
+    reason: "no tensor parallel on Vulkan"
+  - when: {backend: wgpu, tp: ">1"}
+    reason: "no tensor parallel on wgpu"
+  - when: {engine: sglang, artifact: mimo-v2.6-flash, platform: pro6000-x4}
+    reason: "SGLang 0.5.22 sends MiMo-V2.6-Flash's MXFP4 experts to its FP8 triton MoE on sm_120 (fused_experts: Hidden size mismatch)"
+  - when: {engine: vllm, family: deepseek_v41, arch: ada, not_platform: [l4-x1, rtx4090-x1]}
+    reason: "vLLM 0.32's DeepSeek-V4 dequant_gather_k kernel fails ptxas below sm_90 (\"Feature 'mul.bf16x2' requires .target sm_90\"; l40s-x1)"
+  - when: {engine: vllm, family: deepseek_v41, platform: [pro6000-x2, pro6000-x4, pro6000-maxq-x1, pro6000-mig24-x1, pro6000-mig48-x1, pro6000-wk-x1, pro5000-x1, pro4500bw-x1, pro4500bw-se-x1, pro4000-x1, rtx5080-x1]}
+    reason: "vLLM 0.32's SM120 sparse-MLA decode takes 64-token pages only and its DSv4.1 backend 128-token blocks only (\"page_block_size=32 is unsupported\"; with --block-size 64 \"No common block size\")"
+  - when: {engine: sglang, family: deepseek_v41, platform: [pro6000-x2, pro6000-x4, pro6000-maxq-x1, pro6000-mig24-x1, pro6000-mig48-x1, pro6000-wk-x1, pro5000-x1, pro4500bw-x1, pro4500bw-se-x1, pro4000-x1, rtx5080-x1]}
+    reason: "SGLang 0.5.22's V4.1 candidate indexer needs DeepGEMM's paged sparse MQA logits, which it enables on SM100 only (\"the candidate indexer needs DeepGEMM's paged sparse MQA logits\" on sm_120)"
+  - when: {engine: vllm, artifact: minimax-m3.1-flash}
+    reason: "vLLM 0.31.0 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 (expert load: size of tensor a (192) must match b (384))"
+  - when: {engine: sglang, artifact: minimax-m3.1-flash, platform: [h200-x4, h100-sxm-x4]}
+    reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
+  - when: {engine: vllm, artifact: minimax-m3.1-flash-mini, not_platform: [l40s-x1, pro6000-x1, h100-sxm-x1, h200-x1, pro4500-x1, rtx5090-x1, l4-x1, a40-x1, rtx4090-x1]}
+    reason: "vLLM 0.32.0 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 (expert load: size of tensor a (192) must match b (384))"
+  - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, arch: [ampere], not_platform: [a40-x1]}
+    reason: "SGLang 0.5.22 runs MXFP8 checkpoints on SM100 or newer only (\"mxfp8 is not supported for the current GPU. Minimum capability: 100\")"
+  - when: {engine: sglang, artifact: minimax-m3.1-flash-mini, platform: [pro6000-x2, pro6000-x4]}
+    reason: "SGLang 0.5.22 reads MiniMax-M3.1-Flash's NVFP4 experts as MXFP8 on sm_120 (expert load: size of tensor a (192) must match b (384))"
+  - when: {program_category: kv_policy, family: qwen3_5}
+    reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the qwen3_5 forward pass is hybrid"
+  - when: {program_category: kv_policy, family: qwen3_6}
+    reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the qwen3_6 forward pass is hybrid"
+  - when: {program_category: kv_policy, family: qwen3_6_moe}
+    reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the qwen3_6_moe forward pass is hybrid"
+  - when: {program_category: kv_policy, family: qwen4_exp}
+    reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the qwen4_exp forward pass is hybrid"
+  - when: {program_category: kv_policy, family: glm5_next}
+    reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the glm5_next forward pass is hybrid"
+  - when: {program_category: kv_policy, family: kimi_k3}
+    reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the kimi_k3 forward pass is hybrid"
+  - when: {program_category: kv_policy, family: nemotron_h}
+    reason: "attention-only KV policies are not valid on a folded recurrent state (pie: use pie:inferlet/forward-hybrid); the nemotron_h forward pass is hybrid"
+  - when: {program_category: kv_policy, family: gemma4}
+    reason: "attention-only KV policies are not valid on a windowed kv ring (pie: use pie:inferlet/forward-hybrid); the gemma4 forward pass is hybrid"
+  - when: {program_category: kv_policy, family: gemma4_moe}
+    reason: "attention-only KV policies are not valid on a windowed kv ring (pie: use pie:inferlet/forward-hybrid); the gemma4_moe forward pass is hybrid"
+  - when: {engine: sglang, family: gemma4, backend: xla}
+    reason: "sglang-jax 0.1.0rc0 cannot load the gemma-4 E2B/E4B/12B checkpoints; revisit at the next pin"
+  - when: {engine: sglang, family: gpt_oss, backend: xla}
+    reason: "sglang-jax 0.1.0rc0 has no mxfp4 support: gpt-oss loads without its quantization and then needs PyTorch"
+  - when: {engine: sglang, family: mimo_v2, backend: xla}
+    reason: "sglang-jax 0.1.0rc0 cannot load MiMo-V2.6-Flash's MXFP4 experts (it looks for FP8 weight_scale_inv)"
+  - when: {engine: vllm, family: mimo_v2, backend: xla}
+    reason: "vLLM-TPU 0.30.0 cannot build MiMo-V2.6-Flash's KV cache: AssertionError in unify_kv_cache_spec_page_size"
+  - when: {engine: pie, backend: xla, family: gpt_oss, platform: tpu-v5e-1, artifact: [gpt-oss-20b-tpu, gpt-oss-120b-tpu]}
+    reason: "doesn't fit: pie's XLA forward needs 17.3 GiB of HLO temporaries for gpt-oss-20b; a v5e chip has 15.75 GiB of HBM"
+  - when: {engine: vllm, backend: xla, family: deepseek_v41}
+    reason: "vLLM-TPU 0.32.0 has no JAX DeepseekV41ForCausalLM; its PyTorch fallback dies on torch.cuda.Stream (requires CUDA)"
+  - when: {engine: vllm, backend: xla, family: [glm_moe_dsa, glm5_next, hy_v4]}
+    reason: "vLLM-TPU 0.32.0 has no JAX model for this arch; its PyTorch fallback cannot place tensors on device \"tpu\""
+  - when: {engine: vllm, backend: xla, family: kimi_k3}
+    reason: "vLLM-TPU 0.32.0 has no KimiK3ForConditionalGeneration in vllm.models.kimi_k3"
+  - when: {engine: vllm, backend: xla, family: minimax_m3}
+    reason: "vLLM-TPU 0.32.0: mxfp8 quantization is not supported on TPU"
+  - when: {engine: vllm, backend: xla, family: muse_spark}
+    reason: "vLLM-TPU 0.32.0's Transformers does not recognize model type muse_spark"
+  - when: {engine: vllm, backend: xla, family: nemotron_h}
+    reason: "vLLM-TPU 0.32.0: is_act_and_mul=False (Nemotron's relu2 MLP) is supported only for CUDA, XPU and ROCm"
+  - when: {engine: vllm, backend: xla, family: qwen4_exp}
+    reason: "vLLM-TPU 0.32.0: Qwen4Exp raises NotImplementedError on TPU (\"Qwen4Exp currently supports CUDA and ROCm only\"; 0.33.0 too)"
+  - when: {engine: sglang, backend: xla, family: [deepseek_v4, deepseek_v41, glm5_next, hy_v4, kimi_k3, muse_glimmer, muse_spark, nemotron_h, qwen4_exp]}
+    reason: "sglang-jax 0.1.0rc0 has no model for this arch (no native class; the HF fallback needs PyTorch or a Transformers that knows the model type)"
+  - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu}
+    reason: "sglang-jax loads MiniMax-M3 in bf16 only (no MXFP8 or NVFP4): it runs minimax-m3.1-flash-mini-tpu-bf16, the same cut read out to bf16"
+  - when: {engine: sglang, backend: xla, artifact: qwen3.8-27b-mini8, platform: tpu-v5e-1}
+    reason: "doesn't fit: sglang-jax (main b3e3e16b2) runs out of HBM starting its server for this 11.3 GiB cut on a 16 GB v5e, even at c32 (pjrt OOM)"
+  - when: {engine: sglang, backend: xla, artifact: minimax-m3.1-flash-mini-tpu-bf16, platform: [tpu-v6e-1, tpu-v5e-1]}
+    reason: "sglang-jax (main b3e3e16b2) serves MiniMax-M3's MSA attention only at tp a multiple of its 4 KV heads: one chip cannot run it"
+  - when: {engine: sglang, family: gpt_oss, arch: ampere, not_platform: [a100-pcie-x1, a100-sxm-x1, a40-x1]}
+    reason: "SGLang 0.5.20 gpt-oss mxfp4 falls back to dequant on Ampere: 5-12 tok/s, not a baseline"
+  - when: {engine: sglang, artifact: gpt-oss-120b-mxfp4, platform: h100-pcie-x1}
+    reason: "SGLang 0.5.22 runs out of memory loading gpt-oss-120b on one 80 GB H100 (its mxfp4 unpack)"
+  - when: {engine: sglang, family: gpt_oss, arch: blackwell, not_platform: [pro6000-x1, b200-x1, pro4500-x1, rtx5090-x1]}
+    reason: "SGLang 0.5.22 cannot build its gpt-oss kernels for Blackwell (flashinfer compile fails)"
+  - when: {engine: sglang, family: gpt_oss, arch: cdna3}
+    reason: "SGLang 0.5.22 on ROCm serves mxfp4 (gpt-oss) only on gfx95x (MI350/MI355); the MI300X (gfx942) has no mxfp4 path"
+  - when: {engine: sglang, family: mimo_v2, arch: cdna3}
+    reason: "SGLang 0.5.22 on ROCm runs MXFP4 experts (MiMo) through AITER's fp4 activation MoE, which gfx942 (MI300X) has no fp4 type for"
+  - when: {engine: sglang, family: deepseek_v4, arch: cdna3}
+    reason: "SGLang 0.5.22's DeepSeek-V4 TileLang kernels do not compile on ROCm gfx942 (\"Check failed: src_info.order < dst_info.order ... two statements with buffer access dependency in the same scope\")"
+  - when: {engine: sglang, family: deepseek_v41, arch: cdna3}
+    reason: "SGLang 0.5.22's per_token_group_quant_8bit_v2 JIT kernel includes cuda_fp8.h, which the ROCm build cannot compile for gfx942 (\"fatal error: 'cuda_fp8.h' file not found\")"
+  - when: {engine: sglang, family: glm5_next, arch: [cdna3, cdna4]}
+    reason: "SGLang 0.5.22's GLM-5.3-Flash sparse attention needs FA3, TileLang or TRT backends: on ROCm TileLang lacks tl.get_lane_idx (\"Unresolved call Op(tl.get_lane_idx)\") and the index_kpool > 1 path is refused"
+  - when: {engine: sglang, family: hy_v4, arch: [cdna3, cdna4]}
+    reason: "SGLang 0.5.22's Hy4 requires its sparse MLA attention path, which the ROCm build does not have (\"HYV4 requires the sparse MLA attention path\")"
+  - when: {engine: sglang, family: minimax_m3, arch: [cdna3, cdna4]}
+    reason: "SGLang 0.5.22's MiniMax-M3.1 expert loading calls gptq_marlin_repack, a CUDA kernel the ROCm build does not ship (\"NameError: name 'gptq_marlin_repack' is not defined\")"
+  - when: {engine: sglang, family: kimi_k3, arch: cdna3, workload: pf16-512}
+    reason: "SGLang 0.5.22 on ROCm gfx942 dies on Kimi-K3's 16-prompt prefill batch (\"HIP error: the operation cannot be performed in the present state\"); its c1024 runs"
+  - when: {engine: vllm, arch: cdna4, family: qwen4_exp}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950): Qwen3.8-Flash-Next's torch.compile trace fails a dynamic-shape guard (\"ConstraintViolationError: Constraints violated (L['query_start_loc'].size()[0])\")"
+  - when: {engine: vllm, arch: cdna4, family: hy_v4}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950) cannot load Hy4 (\"Model architectures ['HYV4ForCausalLM'] failed to be inspected\")"
+  - when: {engine: vllm, arch: cdna4, family: deepseek_v41}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950) predates DeepSeek-V4.1: its Transformers does not know model type deepseek_v41"
+  - when: {engine: vllm, arch: cdna4, family: deepseek_v4}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950) serves DeepSeek-V4's fp8_ds_mla layout only with an fp8 KV cache (\"only supports fp8 kv-cache, got auto\"); the rows keep bf16 KV, as pie does"
+  - when: {engine: vllm, arch: cdna4, family: glm5_next}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950) has no GLM-5.3-Flash model: its Transformers fallback finds no k_conv1d parameter (\"no module or parameter named 'model.language_model.layers.0.self_attn.k_conv1d'\")"
+  - when: {engine: vllm, arch: cdna4, family: kimi_k3}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950): Kimi-K3's FlyDSL kernels do not compile (\"MLIRError: Failure while executing pass pipeline: lld invocation failed\")"
+  - when: {engine: vllm, arch: cdna4, family: minimax_m3}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950) cannot load MiniMax-M3.1-Flash's expert weights (\"The size of tensor a (192) must match the size of tensor b (384)\" in routed_experts._load_w13)"
+  - when: {engine: vllm, arch: cdna4, family: mimo_v2}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950) cannot shard MiMo-V2.6-Flash's FP8 qkv projection (\"The size of tensor a (1856) must match the size of tensor b (1792)\" in mimo_v2._shard_fp8_qkv_proj)"
+  - when: {engine: vllm, arch: cdna4, family: glm_moe_dsa}
+    reason: "vLLM 0.29.1 (AMD's ROCm image, the vLLM that replays graphs on gfx950): GLM-5.3's DSA indexer faults the GPU in prefill (\"Memory access fault by GPU\" in vllm::topKPerRowPrefill<512>)"
+  - when: {engine: sglang, family: qwen4_exp, arch: [ampere, ada], not_platform: [a100-pcie-x1, a100-x2, a100-pcie-x2, a100-sxm-x8, a100-sxm40-x1, a100-sxm-x1, l4-x1, a40-x1, rtx4090-x1]}
+    reason: "SGLang 0.5.22's qwen4_exp sparse-attention decode kernel (flash_attn.cute Sm80) fails to launch on sm_86/sm_89: CUDA_LAUNCH_INVALID_CONFIG"
+  - when: {engine: sglang, artifact: kimi-k3-mini8, platform: rtx4090-x1}
+    reason: "SGLang 0.5.20 Kimi-K3 mini does not fit a 24 GB card"
+  - when: {engine: vllm, artifact: kimi-k3-mini8, platform: rtx4090-x1}
+    reason: "vLLM 0.30 Kimi-K3 mini does not fit a 24 GB card"
+  - when: {engine: pie, artifact: qwen3.6-35b-a3b-mlx4, platform: rtx4090-x1}
+    reason: "pie's Qwen3.6-35B-A3B dflash row leaves no cache room on a 24 GB card"
+  - when: {engine: pie, backend: cuda, spec_dec: dflash2}
+    reason: "CUDA engine exposes no draft head (Metal only) — wiki speculative-decoding/"
+  - when: {scheme: fp8, arch: apple7}
+    reason: "no fp8 path on Apple7"
+  - when: {scheme: fp8, arch: apple8}
+    reason: "no fp8 path on Apple8"
+  - when: {scheme: fp8, arch: apple9}
+    reason: "no fp8 path on Apple9"
+  - when: {artifact: glm-5.3-flash-mini8, engine: vllm}
+    reason: "vLLM does not load MLX affine checkpoints; the mini exists only in the mlx layout pie reads"
+  - when: {artifact: glm-5.3-flash-mini8, engine: sglang}
+    reason: "SGLang does not load MLX affine checkpoints"
+  - when: {scheme: mlx_2bit, engine: vllm}
+    reason: "vLLM does not load MLX quantized checkpoints"
+  - when: {scheme: mlx_2bit, engine: sglang}
+    reason: "SGLang does not load MLX quantized checkpoints"
+  - when: {engine: llamacpp, backend: rocm}
+    reason: "no ROCm (HIP) llama.cpp build on the AMD pods yet"
+  - when: {engine: llamacpp, os: linux}
+    reason: "runner image has no nvcc; no CUDA llama.cpp build on pods yet"
+  - when: {engine: pie, artifact: gemma-4-26b-a4b-mlx4, tp: ">1"}
+    reason: "gemma4-26b-a4b's 2112-wide dense intermediate halves to 1056, not whole u4g64 groups, so its down plane cannot band (pie #674)"
+  - when: {engine: llamacpp, tp: ">1"}
+    reason: "llama.cpp layer-split is not tensor parallel; compared at tp1 only"
+  - when: {engine: mlxlm, program: parity, family: deepseek_v41}
+    reason: "mlx-lm 0.32.2 has no engram memory, which DeepSeek-V4.1 layer 1 uses"
+  - when: {engine: mlxlm, program: parity, family: glm5_next}
+    reason: "mlx-lm 0.32.2 ships no glm5_next model, so it cannot load GLM-5.3-Flash"
+  - when: {engine: mlxlm, program: parity, family: glm5}
+    reason: "mlx-lm 0.32.2 has no DSA indexer, so GLM-5.3 loads with 20 missing parameters"
+  - when: {engine: mlxlm, program: parity, family: hy_v4}
+    reason: "mlx-lm 0.32.2 ships no hy_v4 model, so it cannot load Hy4"
+  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [l40s-x1, rtx4090-x1]}
+    reason: "vLLM 0.32.0 DeepSeek-V4.1 CUTLASS DSL kernel fails PTX assembly on Ada"
+  - when: {engine: vllm, program: parity, artifact: deepseek-v4.1-flash-mini8, platform: [b200-x1, b300-x1]}
+    reason: "vLLM 0.32.0 DeepGEMM asserts on DeepSeek-V4.1 mini tensor rank on Blackwell (layout.hpp:46)"
+  - when: {engine: vllm, program: parity, artifact: [glm-5.3-flash-mini8-fp8, glm-5.3-mini], platform: [a100-sxm-x1, l40s-x1, rtx4090-x1]}
+    reason: "vLLM 0.32.0 has no MLA attention backend for GLM-5.3 on Ampere or Ada"
+  - when: {engine: vllm, program: parity, artifact: glm-5.3-mini, platform: [b200-x1, b300-x1]}
+    reason: "vLLM 0.32.0 Blackwell grouped top-k needs top_k below the experts in the chosen groups; the mini keeps 8 of 8"
+  - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [a100-sxm-x1, l40s-x1, rtx4090-x1]}
+    reason: "vLLM 0.32.0 has no sparse MLA backend for Hy4 on this arch and refuses dense fallback"
+  - when: {engine: vllm, program: parity, artifact: hy4-mini6, platform: [h100-sxm-x1, h200-x1, b200-x1, b300-x1]}
+    reason: "vLLM 0.32.0 Hy4 sparse MLA asserts NUM_TOPK_TOKENS 16 is not a multiple of BLOCK_N 128"
+  - when: {engine: vllm, program: parity, artifact: nemotron-3-ultra-mini, platform: rtx4090-x1}
+    reason: "vLLM 0.32.0 Nemotron 3 mini leaves no room for cuBLAS workspace on a 24 GB card"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: deepseek-v4.1-flash-mini8}
+    reason: "vllm-tpu 0.32.0 has no JAX DeepseekV41ForCausalLM; its PyTorch fallback dies on torch.cuda.Stream (requires CUDA)"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: [glm-5.3-flash-mini8-fp8, glm-5.3-mini, hy4-mini6]}
+    reason: "vllm-tpu 0.32.0 has no JAX model for this arch; its PyTorch fallback cannot place tensors on device \"tpu\""
+  - when: {engine: vllm, program: parity, backend: xla, artifact: mimo-v2.6-flash-mini}
+    reason: "vllm-tpu 0.32.0 asserts page_size_padded >= unpadded_page_size_bytes for MiMo-V2.6's KV cache (kv_cache_interface.py:518)"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: kimi-k3-mini8}
+    reason: "vllm-tpu 0.32.0 has no KimiK3ForConditionalGeneration in vllm.models.kimi_k3"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: qwen3.8-flash-next-mini}
+    reason: "vllm-tpu 0.32.0: Qwen4Exp supports CUDA and ROCm only"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: muse-spark-mini4}
+    reason: "vllm-tpu 0.32.0's Transformers does not recognize model type muse_spark"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: minimax-m3.1-flash-mini}
+    reason: "vllm-tpu 0.32.0: mxfp8 quantization is not supported on TPU"
+  - when: {engine: vllm, program: parity, backend: xla, artifact: nemotron-3-ultra-mini}
+    reason: "vllm-tpu 0.32.0: is_act_and_mul=False (Nemotron's relu2 MLP) is supported only for CUDA, XPU and ROCm"
+  - when: {engine: mlxlm, tp: ">1"}
+    reason: "mlx-lm is single device"
+  - when: {engine: mlxlm, platform: m2-16g, family: muse_spark}
+    reason: "mlx-lm 0.32.2's Muse Spark kernels ask for 1024 threads a threadgroup; an M2's GPU allows 704 for them"
+  - when: {engine: vllm-metal, platform: m2-16g, family: muse_spark}
+    reason: "vLLM-Metal 0.33.0 runs Muse Spark on mlx-lm's model, whose kernels ask for 1024 threads a threadgroup; an M2's GPU allows 704 for them"
+  - when: {engine: vllm-metal, artifact: muse-spark-mlxlm-slice-l2-e8}
+    reason: "vLLM-Metal 0.33.0 loads Muse Spark only with its vision config; this text cut drops the towers (3.5 GiB of bf16) to fit a 16 GB Mac"
+  - when: {engine: llamacpp, artifact: qwen3.8-flash-next-q2k-llamacpp, workload: pf256-512}
+    reason: "llama.cpp b12096 stalls on a second 256-prompt round of Qwen3.8-Flash-Next: the first round batches (776 tok/s on m5-max-128g), the next runs the prompts one slot at a time (990 s against 19 s on the miniature) and times out"
+  - when: {engine: splash, artifact: qwen3.8-flash-next-q2k-mini8-splash}
+    reason: "Splash 1.5.0 serves Qwen3.8-Flash-Next only at its 48 layers: \"no supported model has this architecture (text config num_hidden_layers: GGUF 8, Qwen3.8-Flash-Next 48)\", so it cannot run the miniature"
+  - when: {engine: splash, artifact_kind: miniature}
+    reason: "Splash 1.5.0 serves only the releases it lists, matched on their whole config (layer count included), so it refuses a model slice: \"no supported model has this architecture\""
+  - when: {engine: llamacpp, artifact: gemma-4-12b-llamacpp, platform: m2-16g}
+    reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 12B's weights that passes the ~10.7 GB a 16 GB Mac's GPU can use (Metal out of memory, targeted 38340671574)"
+  - when: {engine: llamacpp, artifact: gemma-4-12b-llamacpp, platform: m3-16g}
+    reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 12B's weights that passes the ~10.7 GB a 16 GB Mac's GPU can use (Metal out of memory, targeted 38340671574)"
+  - when: {engine: llamacpp, artifact: gemma-4-12b-llamacpp, platform: m5-16g}
+    reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 12B's weights that passes the ~10.7 GB a 16 GB Mac's GPU can use (Metal out of memory, targeted 38340671574)"
+  - when: {engine: llamacpp, artifact: gemma-4-31b-llamacpp, platform: m4-pro-48g}
+    reason: "llama.cpp keeps KV for all 32 streams of one server: with Gemma 4 31B's 17.5 GB of weights that needs about 39 GB, past the ~38 GB a 48 GB Mac's GPU can use (Metal out of memory, 38376994039)"
+  - when: {program_category: diffusion, engine: vllm}
+    reason: "not an LLM serving workload"
+  - when: {program_category: diffusion, engine: sglang}
+    reason: "not an LLM serving workload"
+  - when: {program_category: diffusion, engine: llamacpp}
+    reason: "not an LLM serving workload"
+  - when: {program_category: diffusion, engine: mlxlm}
+    reason: "not an LLM serving workload"
+  - when: {program: prefill-rows}
+    reason: "prefill-rows takes its own input (`ids`); pie_client.py cannot drive it"
+  - when: {program: prefix-tree-kv-cache, engine: pie}
+    reason: "returns non-JSON to pie_client.py (JSONDecodeError); on hybrid models also needs forward-hybrid"
+  - when: {program: mtp-speculative-decoding, engine: pie}
+    reason: "return envelope lacks num_output_tokens (pie_client.py KeyError); on hybrid models also needs forward-hybrid"
+  - when: {program: lora-probe, engine: pie}
+    reason: "seeds a fixed-size adapter bank (1572864 bytes) that must match the model's layer count; needs a per-model input contract"
+  - when: {program: cacheback-speculative-decoding, engine: pie}
+    reason: "return envelope lacks num_output_tokens (pie_client.py KeyError)"
+  - when: {artifact: nemotron-h-mini8}
+    reason: "shrink_checkpoint.py has no nemotron_h reader (supported: deepseek_v4, deepseek_v41, glm_moe_dsa, gpt_oss, kimi, muse_glimmer, qwen3_5_moe, qwen4_exp)"
+  - when: {artifact: mini-dit}
+    reason: "pie/mini-dit is not an HF repo; needs a checkpoint source"
+  - when: {family: mini_dit, program_category: serving}
+    reason: "diffusion model; no text serving path"
+  - when: {family: mini_dit, program_category: speculative}
+    reason: "diffusion model"
+  - when: {family: mini_dit, program_category: kv_policy}
+    reason: "diffusion model"
+  - when: {family: mini_dit, program_category: adapter}
+    reason: "diffusion model"
+
+first_token_broken:
+  muse-glimmer-30b-mlx4: "pie reports the first token before prefill ends on this model, so its prefill and TTFT are not shown"
+  qwen3.8-27b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.47 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
+  qwen3.6-35b-a3b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.09 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
+
+quality_gaps:
+  - platform: [rtx4090-x1, rtx5090-x1, pro4500-x1]
+    model: gemma-4-31b
+    reason: >-
+      Not checkable here. Every cut that fits gives a first token too flat to tell engines apart; 30 layers would, at 31.6 GiB.
+  - platform: [mi350x-x1]
+    model: minimax-m3.1-flash
+    reason: >-
+      The device's reference (vLLM 0.32.0 ROCm wheel) disagrees with the H100 reference on 57 of 64 prompts; rerun
+      against the saved reference pending.
+
+speed_gaps: []
+
+fit_factor: 1.25

@@ -2,15 +2,16 @@ from pathlib import Path
 
 import pytest
 
-from pie_evals.plan.matrix import Matrix, selector_matches, summarize
-from pie_evals.schema import ArtifactSpec, CellStatus, Tier
+from pie_bench.paths import MATRIX
+from pie_bench.plan.matrix import Matrix, selector_matches, summarize
+from pie_bench.schema import ArtifactSpec, CellStatus, Tier
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(scope="module")
 def matrix():
-    return Matrix.load(ROOT / "matrix")
+    return Matrix.load(MATRIX)
 
 
 @pytest.fixture(scope="module")
@@ -25,7 +26,6 @@ def test_expansion_is_nonempty_and_stable(cells):
 
 
 def test_every_cell_has_a_status_path(cells):
-    # nothing silently dropped: a cell is runnable, declared unsupported, or unscheduled — never absent
     for c in cells:
         assert c.declared_unsupported_reason is None or isinstance(c.declared_unsupported_reason, str)
 
@@ -36,8 +36,6 @@ def test_baselines_never_in_smoke(matrix, cells):
 
 def test_metal_tp_is_declared_not_failed(cells):
     tp = [c for c in cells if c.platform.backend.value == "metal" and c.mode.tp > 1]
-    # metal platforms have count=1 → tp cells are not generated at all (inapplicable), which is fine;
-    # but if any exist they must be declared
     assert all(c.declared_unsupported_reason for c in tp)
 
 
@@ -69,15 +67,11 @@ def test_smoke_budget_holds(matrix, cells):
 
 
 def test_smoke_includes_every_program_at_least_once(matrix, cells):
-    # every smoke program has a smoke cell — runnable, or declared unsupported and
-    # therefore visible in the coverage report (diffusion programs only run on
-    # mini-dit, which has no checkpoint source yet)
     smoke = matrix.cells_for(Tier.SMOKE, cells)
     progs = {c.program.id for c in smoke}
     expected = {p.id for p in matrix.programs.values() if Tier.SMOKE in p.tiers}
     assert not (expected - progs), expected - progs
     runnable = {c.program.id for c in matrix.runnable(Tier.SMOKE, cells)}
-    # no smoke artifact ships a dflash head (the miniatures have none to draft with)
     assert expected - runnable <= {"diffusion-parity", "mini-dit-parity", "prefill-rows", "prefix-tree-kv-cache", "mtp-speculative-decoding", "cacheback-speculative-decoding", "lora-probe", "dflash-speculative-bench"}, expected - runnable
 
 
@@ -130,7 +124,6 @@ def test_selector_matches_the_splash_arm(cells):
 
 
 def test_targeted_budget_holds(matrix, cells):
-    # the targeted job count is not enforced (suites.yaml enforce_budget: false), but every process group still fits a job
     assert [p for p in matrix.check_budget(Tier.TARGETED, cells) if "cannot fit" in p] == []
 
 

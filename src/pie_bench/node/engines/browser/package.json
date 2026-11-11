@@ -1,0 +1,10 @@
+{
+  "name": "pie-bench-browser",
+  "private": true,
+  "type": "module",
+  "description": "The browser engines' harness: headless Chrome on WebGPU (bridge.mjs) and the pinned WebLLM",
+  "dependencies": {
+    "@mlc-ai/web-llm": "0.2.87",
+    "playwright": "1.63.0"
+  }
+}

@@ -1,0 +1,219 @@
+default:
+  knobs:
+    gpu_mem_util:
+      value: 0.90
+      rationale: mem_fraction_static; same fraction as pie's gpu_mem_utilization.
+    cuda_graph_max_bs:
+      value: "$concurrency"
+      rationale: >
+        SGLang's default graph ceiling is a hardware-tier heuristic (32 on an
+        L40S at tp<4). A decode batch above it silently runs eager and the
+        run measures launch overhead, not the engine: 4,642 vs 14,042 tok/s
+        on the same cell. vLLM captures up to max_num_seqs, so SGLang is given
+        the same ceiling - the shape's concurrency (1 for latency shapes).
+    report_timing:
+      value: true
+      rationale: >
+        Streams every request so TTFT / inter-token gaps are stamped on
+        delivery, the vantage pie and vLLM are measured from.
+    page_size:
+      value: 16
+      rationale: >
+        SGLang's default page is 1 token; 16 matches pie's page and vLLM's
+        block so KV fragmentation is comparable across the three.
+
+  arch:
+    tpu-v5e:
+      knobs:
+        gpu_mem_util:
+          value: 0.97
+          rationale: >
+            A v5e chip has 15.75 GiB: at 0.90 neither pie (0 MiB left for KV) nor vLLM-TPU
+            (14.32 GiB used > 14.17 cap) boots gemma-4-E4B's 14.3 GiB of weights (b5 39658500805);
+            every engine gets the same higher share there.
+
+competitive:
+  extends: default
+  knobs:
+    attention_backend:
+      value: null
+      rationale: >
+        Unset leaves SGLang's own per-arch choice (fa3 on Hopper, flashinfer
+        elsewhere), which is what a deployment gets. Override per arch below
+        when the auto pick is known to trail.
+    radix_cache:
+      value: false
+      flag: none
+      rationale: >
+        sglang_bench.py hard-codes disable_radix_cache=True and has no flag to
+        turn it on, so the prefix_shared shape cannot give SGLang its cache
+        yet. TODO(pie/benches): add --sglang-radix-cache. Recorded, not emitted.
+    torch_compile:
+      value: false
+      flag: none
+      rationale: >
+        No --sglang-enable-torch-compile flag exists in the script. TODO(pie/benches).
+        Recorded, not emitted.
+  arch:
+    hopper:
+      knobs: {}
+  family:
+    gemma4:
+      knobs:
+        disable_hybrid_swa_memory:
+          value: false
+          rationale: >
+            Gemma-4's global layers are wider than its sliding ones (head_dim 512 vs 256), so one uniform
+            pool sized for the global rows fails every sliding-layer write (CUDA-graph capture: "shape
+            '[-1, 1024]' is invalid for input of size 512", gemma-4-E4B on l40s-x1). SGLang 0.5.22 runs
+            Gemma-4 on its split full/SWA pools, as it deploys it.
+    gpt_oss:
+      arch:
+        ada:
+          knobs:
+            disable_piecewise_cuda_graph:
+              value: true
+              rationale: >
+                SGLang 0.5.22 unpacks gpt-oss's MXFP4 experts on Ada and runs out of memory capturing its
+                prefill graphs for the 120B miniature ("CUDA error: out of memory" at 2.07 GB free,
+                num_tokens=4096, l40s-x1 pf4-512); prefill runs eager, decode keeps its graphs.
+    gemma4_moe:
+      knobs:
+        disable_hybrid_swa_memory:
+          value: false
+          rationale: Same split full/SWA pools as gemma4 (global head_dim 512, sliding 256).
+  backend:
+    xla:
+      family:
+        qwen3_5: &gdn_main
+          knobs:
+            pin:
+              value: git-b3e3e16b2
+              rationale: >
+                sglang-jax 0.1.0rc0 copies the whole GDN state pool in prefill: at 256 running requests its extend
+                precompile needs 37.6G (Qwen3.5-0.8B), 43.1G (Qwen3.6-27B mini12) of HLO temporaries on a 31.25G v6e
+                (tpu.yml 42310452107). Main fixes it (#1680, "avoid whole state-pool copies during untracked prefill").
+        qwen3_6: *gdn_main
+        qwen3_6_moe: *gdn_main
+  workload_kind:
+    prefix_shared:
+      knobs:
+        radix_cache:
+          value: true
+          flag: none
+          rationale: Would be on for the prefix shape once the script exposes it.
+  platform:
+    rtx4090-x1:
+      family:
+        gpt_oss:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                At 0.90 of a 24 GB RTX 4090 gpt-oss-20b's kv pool holds about the 256 c256 lanes to their end
+                and no more, so pie's seated admission held 16 of them back (7.0k tok/s); every engine gets
+                the same higher share there.
+        gemma4:
+          knobs:
+            gpu_mem_util:
+              value: 0.95
+              rationale: >
+                gemma-4-E4B's 14.2 GiB of weights leave vLLM 0.32 no KV at 0.90 of a 24 GB RTX 4090 ("Available
+                KV cache memory: -0.14 GiB", raw-512-256); every engine gets the same higher share there.
+  artifact:
+    minimax-m3.1-flash-mini-tpu-bf16:
+      knobs:
+        pin:
+          value: git-b3e3e16b2
+          rationale: >
+            sglang-jax 0.1.0rc0 (its newest release) has no MiniMax-M3; its main has MiniMaxM3SparseForConditionalGeneration
+            with MSA sparse decode (models/minimax_m3.py), so this model runs sglang-jax at that main commit (2026-10-20).
+        page_size:
+          value: 128
+          rationale: >
+            sglang-jax's MSA backend refuses any page size but the model's sparse_block_size (128): its decode top-k
+            picks KV pages as the sparse blocks.
+    glm-5.3-mini-tpu:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            chunked_prefill_size:
+              value: 2048
+              rationale: >
+                sglang-jax's default 4096-token prefill chunk needs 16.10G of HLO temporaries for the GLM-5.3 mini
+                on a 15.75 GiB v5e (RESOURCE_EXHAUSTED, 41896625792); 2048 is the chunk vLLM-TPU prefills in
+                (max_num_batched_tokens=2048).
+            gpu_mem_util:
+              value: 0.90
+              rationale: >
+                At 0.97 the KV pool leaves sglang-jax 180.63M for a program that reserves 530.41M at load
+                (RuntimeProgramAllocationFailure, 42116961512); 0.90 leaves it the room.
+    qwen3.6-35b-a3b-mini-e32:
+      platform:
+        tpu-v6e-1:
+          knobs:
+            max_running_requests:
+              value: 128
+              rationale: >
+                sglang-jax keeps one fp32 GDN state slot (30 layers x 2 MiB) per running request beside the 12.9 GiB of
+                weights: 256 slots (15 GiB) leave a 32 GB v6e no KV; 128 seat, the rest of a c256 batch queues.
+    qwen3.6-35b-a3b-mini-e16:
+      knobs:
+        gpu_mem_util: &sglang_v5e_room
+          value: 0.90
+          rationale: >
+            At 0.97 sglang-jax's pools leave a v5e 180-460M, and its 256-wide programs cannot load ("Attempting to
+            reserve 520.34M ... 179.79M free", jit_jitted_sampler, Qwen3-0.6B; "Attempting to allocate 485.00M ...
+            457.73M free", Qwen3.5-0.8B; 42333316224). 0.90, the GLM-5.3 mini's share, leaves them 1.5G.
+        max_running_requests:
+          value: 64
+          rationale: >
+            As on the v6e: at 256 slots the GDN state (60 MiB a request) took all of a v5e's HBM past the 7.5 GiB of
+            weights ("Not enough memory. Please try to increase --mem-fraction-static", 41913877755); 64 seat.
+        extra_body:
+          value: {skip_special_tokens: false}
+          rationale: >
+            The 16-expert cut's raw greedy output is special tokens, which sglang-jax streams as empty text: the
+            client stamped no token and the raw row had no TTFT or decode speed (42337690224, 42352803031).
+    qwen3.6-27b-mini8:
+      knobs:
+        gpu_mem_util:
+          value: 0.80
+          rationale: >
+            At 0.90 the vision tower's warmup copies the 2.37G embedding table with 1.55G free (embeddings.py, in
+            precompile_multimodal_encoder, 42357472918); 0.80 leaves it room beside 9.8 GiB of weights and 64 state slots.
+        max_running_requests:
+          value: 64
+          rationale: >
+            256 GDN state slots (6 layers x 3 MiB) beside the 9.8 GiB of weights leave a v5e no KV ("Not enough
+            memory. Please try to increase --mem-fraction-static", 42333316224); at 128 its prefill program asks 2.37G
+            with 1.54G free (42337690224). 64 seat; the rest of a c256 batch queues.
+    qwen3-0.6b-tpu:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            gpu_mem_util: *sglang_v5e_room
+    qwen3.5-0.8b-bf16:
+      platform:
+        tpu-v5e-1:
+          knobs:
+            gpu_mem_util: *sglang_v5e_room
+    gemma-4-26b-a4b-mini12-e32:
+      knobs:
+        chunked_prefill_size:
+          value: 2048
+          rationale: >
+            sglang-jax's 4096-token extend precompile needs 15.79G of HLO temporaries for this v5e cut on a 15.75G
+            chip (41957058471; every bucket up to 2048 compiled); 2048 is the chunk vLLM-TPU prefills in.
+    gpt-oss-120b-mxfp4-mini:
+      platform:
+        a40-x1:
+          knobs:
+            disable_piecewise_cuda_graph:
+              value: true
+              rationale: >
+                As on Ada: SGLang 0.5.22 runs out of memory capturing the 120B miniature's prefill graphs on a
+                48 GB A40 (c128, 2.15 GB free at 0.95, "num_active_captures_ > 0"); prefill runs eager, decode
+                keeps its graphs.
+
+fork: {repo: pie-project/sglang, upstream: sgl-project/sglang, src: python}

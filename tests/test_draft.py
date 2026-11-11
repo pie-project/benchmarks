@@ -1,22 +1,21 @@
-"""llama.cpp and mlx-lm draft with a small same-family model on exactly the rows pie speculates."""
-
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
 
-from pie_evals.node.engines import EngineLaunchError
-from pie_evals.node.engines.llamacpp import LlamacppEngine
-from pie_evals.node.engines.mlxlm import MlxlmEngine
-from pie_evals.node.engines.recipes import load_recipe
-from pie_evals.node.engines.shape import serve_envelope
-from pie_evals.node.engines.splash import SplashEngine
-from pie_evals.node.runner import split_draft_processes
-from pie_evals.node.snapshots import draft_artifact, ensure_snapshot
-from pie_evals.plan.jobs import process_key
-from pie_evals.plan.matrix import Matrix
-from pie_evals.schema import ArtifactSpec, Backend, Mode, PlatformSpec, Tier, WorkloadSpec
+from pie_bench.node.engines import EngineLaunchError
+from pie_bench.node.engines.llamacpp import LlamacppEngine
+from pie_bench.node.engines.mlxlm import MlxlmEngine
+from pie_bench.node.engines.recipes import load_recipe
+from pie_bench.node.engines.shape import serve_envelope
+from pie_bench.node.engines.splash import SplashEngine
+from pie_bench.node.runner import split_draft_processes
+from pie_bench.node.snapshots import draft_artifact, ensure_snapshot
+from pie_bench.paths import MATRIX
+from pie_bench.plan.jobs import process_key
+from pie_bench.plan.matrix import Matrix
+from pie_bench.schema import ArtifactSpec, Backend, Mode, PlatformSpec, Tier, WorkloadSpec
 
 ROOT = Path(__file__).resolve().parents[1]
 SS = WorkloadSpec(id="ss-512-256", kind="single_stream", params={"prefill": 512, "decode": 256})
@@ -49,23 +48,23 @@ def hub(tmp_path, monkeypatch):
 
 def _engine(cls, art: ArtifactSpec, workload: WorkloadSpec = SS, **recipe_over):
     recipe = load_recipe(str(cls.name), "competitive", MAC, workload, family=art.family)
-    recipe["speculation"] = "auto"  # the recipes ship plain; these tests exercise drafting
+    recipe["speculation"] = "auto"
     recipe.update(recipe_over)
     return cls(pie_root=ROOT, artifact=art, platform=MAC, mode=Mode(), recipe=recipe, python="/usr/bin/python3")
 
 
 def _art(aid: str) -> ArtifactSpec:
-    return Matrix.load(ROOT / "matrix").artifacts[aid]
+    return Matrix.load(MATRIX).artifacts[aid]
 
 
 def test_competitors_of_every_speculating_pie_row_name_a_draft_or_say_why_not():
-    m = Matrix.load(ROOT / "matrix")
+    m = Matrix.load(MATRIX)
     for arm in m.artifacts.values():
         pie = m.artifacts.get(arm.baseline_of or "")
         if pie is None or not (pie.pie_sku and "dflash" in pie.pie_sku) or arm.source_format == "splash":
-            continue  # Splash drafts on its own
+            continue
         if arm.id in ("qwen3.8-27b-mlxlm", "qwen3.6-35b-a3b-mlxlm", "qwen3.6-27b-mlxlm"):
-            assert arm.draft_model is None  # mlx-lm cannot speculate on a hybrid's untrimmable cache
+            assert arm.draft_model is None
             continue
         assert arm.draft_model, arm.id
         assert (arm.draft_gguf_file is not None) == (arm.source_format == "gguf"), arm.id
@@ -78,7 +77,7 @@ def test_llamacpp_drafts_on_a_single_stream_row(hub):
     assert args[:2] == ["--spec-type", "draft-simple"]
     assert args[args.index("--model-draft") + 1] == str((hub / "models--unsloth--Qwen3.5-0.8B-GGUF/snapshots/r1/Qwen3.5-0.8B-Q4_K_M.gguf").resolve())
     assert args[args.index("--n-gpu-layers-draft") + 1] == "all"
-    assert "--spec-draft-n-max" not in args  # llama-server's default draft length
+    assert "--spec-draft-n-max" not in args
     assert "--spec-draft-n-max" in _engine(LlamacppEngine, _art("qwen3.8-27b-llamacpp"), draft_max=8).draft_args()
 
 
@@ -86,7 +85,6 @@ def test_mlxlm_drafts_on_a_single_stream_row(hub):
     eng = _engine(MlxlmEngine, _art("gemma-4-26b-a4b-mlxlm"))
     assert eng.speculates(SS) and not eng.speculates(C32)
     assert eng.draft_args() == ["--draft-model", str(hub / "models--mlx-community--gemma-4-e2b-it-4bit/snapshots/r1")]
-    # the hybrids' arms carry no draft: plain everywhere
     assert not _engine(MlxlmEngine, _art("qwen3.8-27b-mlxlm")).speculates(SS)
 
 
@@ -94,17 +92,14 @@ def test_speculation_knob_forces_it(hub):
     art = _art("qwen3.8-27b-llamacpp")
     assert not _engine(LlamacppEngine, art, speculation="off").speculates(SS)
     assert _engine(LlamacppEngine, art, speculation="on").speculates(C32)
-    # an engine that cannot draft never speculates, whatever the artifact says
     assert not _engine(SplashEngine, art.model_copy(update={"source_format": "splash"})).speculates(SS)
 
 
 def test_a_speculative_shape_drafts_wherever_the_engine_can(hub):
     spec = WorkloadSpec(id="spec-512-256", kind="single_stream", params={"prefill": 512, "decode": 256, "speculation": True})
-    # on, whatever the recipe says; plain where the arm has nothing to draft with
     assert _engine(LlamacppEngine, _art("qwen3.8-27b-llamacpp"), speculation="off").speculates(spec)
     assert not _engine(MlxlmEngine, _art("qwen3.8-27b-mlxlm")).speculates(spec)
-    # and the matrix runs it only where something drafts: Splash always, pie with its drafter row
-    cells = [c for c in Matrix.load(ROOT / "matrix").expand(platforms=["m5-max-128g"]) if c.workload.id == "spec-512-256" and c.platform.id == "m5-max-128g"]
+    cells = [c for c in Matrix.load(MATRIX).expand(platforms=["m5-max-128g"]) if c.workload.id == "spec-512-256" and c.platform.id == "m5-max-128g"]
     why = {(str(c.engine), c.artifact.id): c.declared_unsupported_reason for c in cells}
     assert why[("splash", "qwen3.8-27b-splash")] is None and why[("pie", "qwen3.8-27b-mlx4")] is None
     assert why[("llamacpp", "qwen3.8-27b-llamacpp")] is None
@@ -112,7 +107,7 @@ def test_a_speculative_shape_drafts_wherever_the_engine_can(hub):
 
 
 def test_the_server_drafts_only_for_the_rows_that_speculate(hub, tmp_path, monkeypatch):
-    from pie_evals.node.engines import served
+    from pie_bench.node.engines import served
 
     booted = []
 
@@ -129,7 +124,6 @@ def test_the_server_drafts_only_for_the_rows_that_speculate(hub, tmp_path, monke
     eng.serve(serve_envelope([SS]), tmp_path / "ss.log", 60)
     assert eng.drafting and "--model-draft" in booted[-1]
     assert eng.counters_from_summary({})["speculative"] == 1.0
-    # a drafting server refuses a plain row instead of measuring it with the draft
     with pytest.raises(EngineLaunchError):
         eng.run(C32, [], tmp_path / "c32", 60)
     eng._server_proc = None
@@ -141,7 +135,7 @@ def test_the_server_drafts_only_for_the_rows_that_speculate(hub, tmp_path, monke
 
 
 def test_single_stream_rows_get_a_process_of_their_own():
-    m = Matrix.load(ROOT / "matrix")
+    m = Matrix.load(MATRIX)
     for aid, drafts in (("qwen3.8-27b-llamacpp", True), ("gemma-4-26b-a4b-mlxlm", True), ("qwen3.8-27b-mlxlm", False)):
         cells = [c for c in m.runnable(Tier.TARGETED, m.expand(platforms=["m5-max-128g"], artifacts=[aid])) if c.artifact.id == aid and c.platform.id == "m5-max-128g"]
         assert {c.workload.kind.value for c in cells} >= {"single_stream", "concurrency"}, aid
@@ -154,7 +148,6 @@ def test_single_stream_rows_get_a_process_of_their_own():
         for k, cs in out.items():
             ss = [c.workload.kind.value == "single_stream" for c in cs]
             assert all(ss) if k[2].endswith("-draft") else not any(ss)
-        # a process of single-stream rows only stays one process (and drafts)
         only = {process_key(cells[0]): [c for c in cells if c.workload.kind.value == "single_stream"]}
         assert split_draft_processes(only) == only
 

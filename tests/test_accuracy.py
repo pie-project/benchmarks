@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import pytest
 
-from pie_evals.node.accuracy import (
+from pie_bench.node.accuracy import (
     COSINE_GATE,
     adjudicate_divergence,
     bootstrap_ci,
@@ -18,15 +18,15 @@ from pie_evals.node.accuracy import (
     t0_verdict,
     topk_agreement,
 )
-from pie_evals.node.accuracy.gate import SAME_WEIGHTS_REFERENCE, run_t0, skip_reason
-from pie_evals.node.accuracy.prompts import LONG_PROMPT_TARGET_WORDS, t0_prompts
-from pie_evals.node.accuracy.reference import (
+from pie_bench.node.accuracy.gate import SAME_WEIGHTS_REFERENCE, run_t0, skip_reason
+from pie_bench.node.accuracy.prompts import LONG_PROMPT_TARGET_WORDS, t0_prompts
+from pie_bench.node.accuracy.reference import (
     LazyReference,
     ReferenceCache,
     prompt_hash,
     reference_for,
 )
-from pie_evals.schema import (
+from pie_bench.schema import (
     AccuracyStatus,
     ArtifactKind,
     ArtifactSpec,
@@ -46,31 +46,24 @@ from pie_evals.schema import (
 def test_package_imports_without_heavy_deps():
     assert "torch" not in sys.modules
     assert "transformers" not in sys.modules
-    importlib.import_module("pie_evals.node.accuracy.reference")
-    importlib.import_module("pie_evals.node.accuracy.prompts")
+    importlib.import_module("pie_bench.node.accuracy.reference")
+    importlib.import_module("pie_bench.node.accuracy.prompts")
     assert "torch" not in sys.modules
     assert "transformers" not in sys.modules
-
-
-# ---- first_divergence --------------------------------------------------------------
 
 
 def test_first_divergence():
     assert first_divergence([1, 2, 3], [1, 2, 3]) is None
     assert first_divergence([1, 2, 3], [1, 9, 3]) == 1
     assert first_divergence([], []) is None
-    # identical prefix, different lengths -> the position where the shorter ended
     assert first_divergence([1, 2], [1, 2, 3]) == 2
     assert first_divergence([1, 2, 3], [1, 2]) == 2
     assert first_divergence([5], [1, 2]) == 0
 
 
-# ---- adjudication -------------------------------------------------------------------
-
-
 def test_adjudicate_benign_when_top2_within_ulp():
     v = np.zeros(10, dtype=np.float32)
-    v[3], v[7] = 16.0, 16.0625  # half an ulp apart at magnitude 16
+    v[3], v[7] = 16.0, 16.0625
     gap, benign = adjudicate_divergence(v, 3, 7)
     assert gap == pytest.approx(0.0625)
     assert benign
@@ -86,7 +79,7 @@ def test_adjudicate_bug_when_gap_large():
 
 def test_adjudicate_bug_when_not_top2_even_if_close():
     v = np.zeros(10)
-    v[0] = 20.0  # the real leader
+    v[0] = 20.0
     v[3], v[7] = 16.0, 16.05
     gap, benign = adjudicate_divergence(v, 3, 7)
     assert gap == pytest.approx(0.05)
@@ -96,7 +89,7 @@ def test_adjudicate_bug_when_not_top2_even_if_close():
 def test_adjudicate_boundary_and_same_token():
     v = np.zeros(4)
     v[1], v[2] = 1.0, 1.125
-    assert adjudicate_divergence(v, 1, 2)[1]  # exactly one ulp is benign
+    assert adjudicate_divergence(v, 1, 2)[1]
     v[2] = 1.126
     assert not adjudicate_divergence(v, 1, 2)[1]
     assert adjudicate_divergence(v, 1, 1) == (0.0, True)
@@ -104,19 +97,12 @@ def test_adjudicate_boundary_and_same_token():
         adjudicate_divergence(v, 1, 99)
 
 
-# ---- verdict ---------------------------------------------------------------------------
-
-
 def test_t0_verdict():
     assert t0_verdict([None, None], [], []) == AccuracyStatus.PASS
     assert t0_verdict([None, 4], [0.05], [True]) == AccuracyStatus.PASS
     assert t0_verdict([None, 4], [3.0], [False]) == AccuracyStatus.FAIL
     assert t0_verdict([2, 4], [0.01, 3.0], [True, False]) == AccuracyStatus.FAIL
-    # a divergence nobody adjudicated is a FAIL
     assert t0_verdict([2], [], []) == AccuracyStatus.FAIL
-
-
-# ---- T1 --------------------------------------------------------------------------------
 
 
 def test_kl_and_topk():
@@ -125,12 +111,11 @@ def test_kl_and_topk():
     assert kl_divergence(p, p) == pytest.approx(0.0, abs=1e-12)
     q = p + rng.normal(scale=0.1, size=p.shape)
     assert kl_divergence(p, q) > 0.0
-    # huge logits must not overflow
     assert math.isfinite(kl_divergence(p * 1e4, q * 1e4))
     assert topk_agreement(p, p, k=1) == 1.0
     assert topk_agreement(p, p, k=5) == 1.0
     q2 = p.copy()
-    q2[0] = -p[0]  # flip one row's ranking
+    q2[0] = -p[0]
     assert topk_agreement(p, q2, k=1) == pytest.approx(0.8)
 
 
@@ -146,9 +131,6 @@ def test_perplexity():
         perplexity_from_logits(uniform, [0])
 
 
-# ---- diffusion -------------------------------------------------------------------------
-
-
 def test_cosine_and_psnr():
     a = np.random.default_rng(1).normal(size=(3, 8, 8))
     assert cosine(a, a) == pytest.approx(1.0)
@@ -162,32 +144,25 @@ def test_cosine_and_psnr():
     assert psnr(np.zeros(4), np.ones(4), peak=1.0) == pytest.approx(0.0)
 
 
-# ---- T2 --------------------------------------------------------------------------------
-
-
 def test_bootstrap_ci_and_scores_differ():
     rng = np.random.default_rng(0)
     a = list(rng.normal(loc=0.7, scale=0.05, size=200))
     lo, hi = bootstrap_ci(a)
     assert lo < 0.7 < hi
     assert hi - lo < 0.05
-    assert bootstrap_ci(a) == bootstrap_ci(a)  # seeded -> deterministic
+    assert bootstrap_ci(a) == bootstrap_ci(a)
     assert bootstrap_ci([0.5]) == (0.5, 0.5)
     b = [x + 0.001 for x in a]
     assert not scores_differ(a, a)
     assert not scores_differ(a, list(rng.normal(loc=0.7, scale=0.05, size=200)))
     assert scores_differ(a, [x + 0.1 for x in a])
-    assert scores_differ(a, list(rng.normal(loc=0.9, scale=0.05, size=150)))  # unpaired
-    assert not scores_differ(a, b) or True  # tiny paired shift: either verdict is legitimate
+    assert scores_differ(a, list(rng.normal(loc=0.9, scale=0.05, size=150)))
+    assert not scores_differ(a, b) or True
     with pytest.raises(ValueError):
         bootstrap_ci([])
 
 
-# ---- gate ------------------------------------------------------------------------------
-
-
 def _fake_tf(vocab: int, leaders: dict[int, tuple[int, int, float]]):
-    """Teacher-forced fn: at position (len(ids)-1) put tok_a/tok_b as top-2 with the gap."""
 
     calls: list[list[int]] = []
 
@@ -201,7 +176,7 @@ def _fake_tf(vocab: int, leaders: dict[int, tuple[int, int, float]]):
             out[pos, b] = 16.0 - gap
         return out
 
-    fn.calls = calls  # type: ignore[attr-defined]
+    fn.calls = calls
     return fn
 
 
@@ -220,7 +195,6 @@ def test_run_t0_benign_flip_passes():
     prompt = [7, 8, 9]
     ref = [1, 2, 3, 4]
     eng = [1, 2, 5, 4]
-    # divergence at output pos 2 -> prefix = prompt + ref[:2] has length 5, row 4 decides
     fn = _fake_tf(20, {4: (3, 5, 0.06)})
     m = run_t0([eng], [ref], fn, [prompt])
     assert m.status == AccuracyStatus.PASS
@@ -250,13 +224,11 @@ def test_run_t0_length_mismatch_fails_without_adjudication():
 
 
 def test_run_t0_compares_through_the_reference_stop_and_no_further():
-    # the engine matches through the stop token (6) and wanders after it
     fn = _fake_tf(20, {})
     m = run_t0([[1, 2, 6, 9, 9]], [[1, 2, 6, 4, 5]], fn, [[7]], stops={6})
     assert m.status == AccuracyStatus.PASS
     assert m.t0_first_divergence == [None]
     assert fn.calls == []
-    # a divergence before the stop is still judged
     fn = _fake_tf(20, {1: (6, 5, 2.5)})
     m = run_t0([[1, 5, 6]], [[1, 6, 4]], fn, [[7]], stops={6})
     assert m.status == AccuracyStatus.FAIL
@@ -265,7 +237,6 @@ def test_run_t0_compares_through_the_reference_stop_and_no_further():
 
 
 def test_run_t0_an_engine_that_stops_at_eos_leaves_the_stop_out():
-    # the engine stops where the reference writes its stop (6) and does not emit it
     fn = _fake_tf(20, {})
     m = run_t0([[1, 2]], [[1, 2, 6, 4, 5]], fn, [[7]], stops={6})
     assert m.status == AccuracyStatus.PASS
@@ -274,7 +245,6 @@ def test_run_t0_an_engine_that_stops_at_eos_leaves_the_stop_out():
 
 
 def test_run_t0_an_engine_that_stops_early_is_judged_by_its_stop():
-    # the reference goes on with 3 where the engine stopped: stop 6 against 3 at row 2
     fn = _fake_tf(20, {2: (3, 6, 0.06)})
     m = run_t0([[1, 2]], [[1, 2, 3, 4]], fn, [[7]], stops={6, 8})
     assert m.status == AccuracyStatus.PASS
@@ -287,7 +257,7 @@ def test_run_t0_an_engine_that_stops_early_is_judged_by_its_stop():
 
 
 def test_stop_ids_read_generation_config_then_config(tmp_path):
-    from pie_evals.node.accuracy.gate import stop_ids
+    from pie_bench.node.accuracy.gate import stop_ids
 
     (tmp_path / "config.json").write_text('{"text_config": {"eos_token_id": 1}}')
     assert stop_ids(tmp_path) == {1}
@@ -296,9 +266,7 @@ def test_stop_ids_read_generation_config_then_config(tmp_path):
 
 
 def test_stop_ids_take_the_tokenizers_turn_end(tmp_path):
-    # Qwen3.5: no generation_config.json, config says <|endoftext|>, and the
-    # chat turn ends on the tokenizer's <|im_end|>
-    from pie_evals.node.accuracy.gate import stop_ids
+    from pie_bench.node.accuracy.gate import stop_ids
 
     (tmp_path / "config.json").write_text('{"text_config": {"eos_token_id": 248044}}')
     (tmp_path / "tokenizer_config.json").write_text('{"eos_token": "<|im_end|>", "pad_token": "<|endoftext|>"}')
@@ -339,9 +307,6 @@ def test_skip_reason():
     assert skip_reason(_cell(budgeted)) is None
 
 
-# ---- prompts / reference helpers ---------------------------------------------------------
-
-
 def test_t0_prompts_fixed_and_deterministic():
     ps = t0_prompts()
     ids = [i for i, _ in ps]
@@ -353,7 +318,7 @@ def test_t0_prompts_fixed_and_deterministic():
     assert dict(t0_prompts())["long-1k"] == long
     assert any(ord(c) > 127 for c in dict(ps)["zh"])
     ps.append(("x", "y"))
-    assert len(t0_prompts()) == 8  # copy, not the module list
+    assert len(t0_prompts()) == 8
 
 
 def test_reference_for():
@@ -361,13 +326,12 @@ def test_reference_for():
     assert reference_for("darwin", "mlx") == "mlx"
     assert reference_for("macos", "hf_safetensors") == "hf"
     assert reference_for("linux", "mlx") == "hf"
-    # a GGUF reads against llama.cpp wherever it runs (issue #256)
     assert reference_for("linux", "gguf") == "llamacpp"
     assert reference_for("macos", "gguf") == "llamacpp"
 
 
 def _llamacpp_ref(reply):
-    from pie_evals.node.accuracy.reference import LlamaCppReference
+    from pie_bench.node.accuracy.reference import LlamaCppReference
 
     sent = []
     ref = object.__new__(LlamaCppReference)
@@ -390,7 +354,6 @@ def test_llamacpp_teacher_forced_logits_fills_the_last_row_with_top_logprobs():
     rows = ref.teacher_forced_logits([1, 2, 3])
     assert rows.shape == (3, 8) and rows.dtype == np.float32
     assert rows[-1, 6] == pytest.approx(-0.1) and rows[-1, 2] == pytest.approx(-2.5)
-    # outside the top n_probs, and every earlier row, is -inf: such a token is never benign
     assert np.isneginf(rows[-1, 0]) and np.isneginf(rows[0]).all()
     assert sent[0][1]["n_predict"] == 1 and sent[0][1]["n_probs"] == 4
 
@@ -423,7 +386,6 @@ def test_reference_cache_roundtrip(tmp_path):
     out2 = cache.greedy(ref, "abc123", [1, 2, 3], 4)
     assert out1 == out2 == [6, 7, 8, 9]
     assert ref.greedy_calls == 1
-    # different key components -> recomputed
     cache.greedy(ref, "abc123", [1, 2, 3], 5)
     cache.greedy(ref, "def456", [1, 2, 3], 4)
     cache.greedy(ref, "abc123", [1, 2, 4], 4)
@@ -439,11 +401,9 @@ def test_reference_cache_roundtrip(tmp_path):
 
 
 def test_a_program_that_states_no_prompt_count_is_not_judged(tmp_path, monkeypatch):
-    # classifier-free-guidance renders its own prompt and reports 0 prompt
-    # tokens; nothing shows it read the reference's input, so no verdict
     from types import SimpleNamespace
 
-    from pie_evals.node.accuracy import gate
+    from pie_bench.node.accuracy import gate
 
     monkeypatch.setattr(gate, "bench_system_prompt", lambda root: "sys")
     monkeypatch.setattr(gate, "render_like_bench", lambda snap, system, text, enable_thinking=False: [1, 2, 3])
@@ -458,9 +418,7 @@ def test_a_program_that_states_no_prompt_count_is_not_judged(tmp_path, monkeypat
 
 
 def test_a_cached_reference_never_loads_beside_the_engine(tmp_path, monkeypatch):
-    """The engine under test shares the device: a reference whose outputs are
-    cached must not load its weights, and a loaded one hands them back."""
-    import pie_evals.node.accuracy.reference as reference
+    import pie_bench.node.accuracy.reference as reference
 
     cache = ReferenceCache(tmp_path / "refcache")
     cache.put("rev", "argmax", [1, 2, 3], 4, np.asarray([5, 6, 7, 8]))
@@ -485,9 +443,7 @@ def test_a_cached_reference_never_loads_beside_the_engine(tmp_path, monkeypatch)
 
 
 def test_a_reply_cached_by_the_eos_masking_reference_is_read_again(tmp_path, monkeypatch):
-    """Replies cached as "greedy" came from `generate(min_new_tokens=...)`,
-    which masked the eos ids; they are not reused."""
-    import pie_evals.node.accuracy.reference as reference
+    import pie_bench.node.accuracy.reference as reference
 
     cache = ReferenceCache(tmp_path / "refcache")
     cache.put("rev", "greedy", [1, 2, 3], 2, np.asarray([5, 6]))
@@ -504,12 +460,10 @@ def test_a_reply_cached_by_the_eos_masking_reference_is_read_again(tmp_path, mon
 
 
 def test_the_hf_reference_writes_the_end_of_turn_it_ranks_first():
-    """gemma-4's turn ends on an eos id: the reference writes it where the
-    model ranks it first and runs on past it, as the engine under ignore_eos."""
     torch = pytest.importorskip("torch")
     from types import SimpleNamespace
 
-    from pie_evals.node.accuracy.reference import HFReference
+    from pie_bench.node.accuracy.reference import HFReference
 
     eos, vocab = 3, 8
     script = [5, eos, 6, 7]

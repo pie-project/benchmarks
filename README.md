@@ -1,52 +1,83 @@
-# pie-evals
+# pie-bench
 
-Benchmark & evaluation framework for [pie](https://github.com/pie-project/pie):
-performance against vLLM / SGLang / llama.cpp / mlx-lm on every supported
-platform, accuracy preservation against a same-weights reference, and a
-coverage matrix in which nothing goes missing silently.
+Measure [pie](https://github.com/pie-project/pie) against other inference engines on your own machine, and publish the results to [benchmarks.pie-project.org](https://benchmarks.pie-project.org).
 
-Read `docs/design.md` first.
+This repository holds two things:
 
-## Layout
+| | What | Where | Runs on |
+|---|---|---|---|
+| 1 | `pie-bench`, the command line tool anyone installs | `src/pie_bench/` | your machine |
+| 2 | the results API the website reads | `server/` | Render |
 
-- `matrix/` what exists: engines, platforms, models, workloads, inferlets, modes, support declarations, tier suites.
-- `src/pie_evals/` the code, one folder per job: `plan/`, `node/`, `results/`, `site/`, `pods/`, `quality/`, `schema/`.
-- Results live in the Postgres database on liszt (`PIE_EVALS_DB`); nothing is committed back to git.
-- `infra/` RunPod and Mac runner setup. `.github/workflows/` the tiers and bookkeeping.
+The website itself lives in [pie-project/website](https://github.com/pie-project/website).
 
-Each folder has a short README. The workflows are listed in [.github/AUTOMATIONS.md](.github/AUTOMATIONS.md).
-
-## Quick start
+## Run it
 
 ```sh
-uv venv && uv pip install -e ".[dev,orchestrate]"
+pip install pie-bench
+pie-bench doctor
+pie-bench run
+```
+
+`pie-bench run` detects the machine, picks the models that fit, installs each engine at its pinned version, builds pie, measures every engine on the same prompts, and uploads one signed submission when it is done. Nothing is sent while it runs.
+
+```sh
+pie-bench plan                                   # what would run here
+pie-bench run --models qwen3.6-35b               # only some models
+pie-bench run --engines pie,llamacpp             # only some engines
+pie-bench run --pie 0.6.0                        # a pie release, branch or commit
+pie-bench run --no-upload                        # keep the results local
+pie-bench upload ~/.pie-bench/runs/<time>        # upload later
+```
+
+Each run writes a folder under `~/.pie-bench/runs/`:
+
+| File | What |
+|---|---|
+| `records.jsonl` | one line per measured cell |
+| `run.log` | the full log, for audit and debugging |
+| `submission.json.gz` | both, plus machine specs and versions: what gets uploaded |
+
+Uploading needs a token, made automatically the first time and kept in `~/.config/pie-bench/token`.
+
+Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs.astral.sh/uv/). On a Mac, Apple Silicon. On Linux, NVIDIA GPUs.
+
+## The API
+
+| Method | Path | What |
+|---|---|---|
+| GET | `/v1/catalog` | machines, engines, models, workloads |
+| GET | `/v1/grid` | the site's main view; `/v1/grid/{tag}` for one release |
+| GET | `/v1/cells/{key}/runs` | the history of one cell |
+| GET | `/v1/quality` | accuracy scores |
+| GET | `/v1/export.json.gz` | everything |
+| GET | `/v1/runs/{id}/log` | a run's log |
+| POST | `/v1/tokens` | a signed upload token |
+| POST | `/v1/submissions` | upload a `submission.json.gz` |
+| POST | `/v1/tokens/{id}/quota` | admin: raise a token's quota |
+
+Reads are public, cached and carry an ETag. Writes need a token; each token has an upload quota, every upload is checked and stored in one transaction. Interactive docs are at `/v1/docs`.
+
+Run it locally:
+
+```sh
+uv venv && uv pip install -e ".[dev,server]"
+docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=pie postgres:16-alpine
+DATABASE_URL=postgresql://postgres:pie@localhost/postgres JWT_SECRET=$(openssl rand -hex 32) ADMIN_TOKEN=dev \
+  .venv/bin/uvicorn server.app:app --port 8790
+PIE_BENCH_API=http://localhost:8790 pie-bench run
+```
+
+Deploy: `render.yaml` is a Render Blueprint (the API, its Postgres 16 and the secrets). Set `ADMIN_TOKEN` in Render, point `api.pie-project.org` at the service.
+
+## Develop
+
+```sh
+uv venv && uv pip install -e ".[dev,server]"
+.venv/bin/ruff check src server tests
 .venv/bin/pytest -q
-.venv/bin/pie-evals expand                      # matrix summary + budgets
-.venv/bin/pie-evals jobs --tier smoke --pie-commit <sha> --platform l40s-x1 --out jobs
-PIE_ROOT=/root/pie .venv/bin/pie-evals-node run --job jobs/<job>.json --out out/<job>
-.venv/bin/pie-evals collect --tier smoke out/<job> && .venv/bin/pie-evals report --tier smoke
 ```
 
-Node prerequisites: the pie checkout (built at the pinned commit by the node), the checkpoints in the HF cache (`resolve_local_model` refuses to download), baseline venvs at the pins in `matrix/engines.yaml` (`VLLM_PY`, `SGLANG_PY`, `LLAMA_SERVER_BIN`, `MLX_PY`).
+`src/pie_bench/matrix/` declares what exists: engines and their pins, machines, models, workloads. To add an engine, add its driver under `src/pie_bench/node/engines/`, its client under `src/pie_bench/clients/` and its entry in `matrix/engines.yaml`.
 
-## Macs: pie against other engines
-
-The `targeted` tier measures pie against [llama.cpp](https://github.com/ggml-org/llama.cpp), [mlx-lm](https://github.com/ml-explore/mlx-lm) and [Splash](https://github.com/incoai/splash) on self-hosted Apple Silicon Macs. Every pie commit on main (or a manual `pie eval` run) is measured on the Macs listed in `config.json`, on the models of one of its two suites: `targeted` (Tier 1, what a release runs) or `full` (every model the site lists); a manual run picks one with its `suite` input. pie runs on its own checkpoint; each other engine runs on its own copy of the same model: llama.cpp on a Q4_K_M GGUF, mlx-lm on the MLX checkpoint pie reads, Splash on the two Qwen models it ships for. An engine is measured once per version, not on every pie commit. All engines get the same prompts through the `bench/common.py` client, and the site shows prefill and decode side by side, with a select for the engine to compare against. The `quality` workflow scores the models on gsm8k, ifeval, mmlu, arc and math500.
-
-```sh
-.venv/bin/pie-evals jobs --tier targeted --pie-commit <sha> --platform m5-max-64g --out jobs
-.venv/bin/pie-evals-node run --job jobs/<job>.json --out out/<job> --download
-.venv/bin/pie-evals collect --tier targeted out/<job>
-```
-
-A Mac runner is registered with `infra/mac/setup-runner.sh` and removed with `infra/mac/remove-runner.sh`. It needs AC power, Low Power Mode off, Rust with `wasm32-wasip2`, and uv. Splash, llama.cpp and mlx-lm are fetched at their pinned versions; Splash needs macOS 26.4 or newer.
-
-## Trying a change to the harness
-
-Push your change to a branch and start the eval from that branch:
-
-```sh
-gh workflow run pie-eval.yml --ref my-branch -f macs=m5-max-64g -f benchmarks=ob-short-100 -f rerun=true
-```
-
-The run uses the branch's code and saves nothing to the database, so the site stays untouched.
+A release is a tag: `git tag v0.1.1 && git push --tags` publishes to PyPI.

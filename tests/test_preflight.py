@@ -1,11 +1,7 @@
-"""kill_leftovers must never touch our own process tree, and must never fall
-back to a broad pkill -f (which once killed the interactive session because
-its cwd contained 'pie')."""
-
 import os
 import platform
 
-from pie_evals.node import preflight as pf
+from pie_bench.node import preflight as pf
 
 THERM_OK = """Note: No thermal warning level has been recorded
 Note: No performance warning level has been recorded
@@ -26,11 +22,10 @@ def test_ancestors_include_self_and_group():
     anc = pf._ancestors()
     assert os.getpid() in anc
     assert os.getpgrp() in anc
-    assert len(anc) >= 2  # self + at least one parent
+    assert len(anc) >= 2
 
 
 def test_kill_leftovers_never_kills_ancestors(monkeypatch):
-    # nvidia-smi reports OUR OWN pid as a GPU holder whose basename matches.
     my = os.getpid()
     base = pf._proc_basename(my)
     monkeypatch.setattr(pf, "gpu_processes", lambda: [{"pid": str(my), "name": f"/usr/bin/{base}", "used_mib": "40000"}])
@@ -43,7 +38,7 @@ def test_kill_leftovers_never_kills_ancestors(monkeypatch):
 
 
 def test_kill_leftovers_targets_matching_orphan(monkeypatch):
-    fake_pid = 999999  # not us, not an ancestor
+    fake_pid = 999999
     monkeypatch.setattr(pf, "gpu_processes", lambda: [{"pid": str(fake_pid), "name": "/opt/pie/target/release/pie", "used_mib": "41000"}])
     monkeypatch.setattr(pf, "_proc_basename", lambda pid: "pie" if pid == fake_pid else None)
     monkeypatch.setattr(pf, "await_free_gpu", lambda **k: 0.0)
@@ -61,13 +56,11 @@ def test_kill_leftovers_ignores_unmatched_names(monkeypatch):
     monkeypatch.setattr(pf, "await_free_gpu", lambda **k: 0.0)
     sent = []
     monkeypatch.setattr(pf.os, "kill", lambda pid, sig: sent.append((pid, sig)))
-    r = pf.kill_leftovers(["pie", "EngineCore"])  # python3 is neither
+    r = pf.kill_leftovers(["pie", "EngineCore"])
     assert sent == [] and r["killed"] == []
 
 
 def test_no_pkill_invocation():
-    """pkill may be *named* in comments (explaining why it is banned) but must
-    never be *invoked* — no code line passes it to a subprocess."""
     with open(pf.__file__) as f:
         for line in f:
             code = line.split("#", 1)[0]
@@ -77,7 +70,6 @@ def test_no_pkill_invocation():
 
 
 def test_any_holder_kills_an_orphan_of_any_name_but_never_us(monkeypatch):
-    # a cancelled shard's vLLM EngineCore (python3) holds the card at the next job's start
     me, orphan = os.getpid(), 999997
     monkeypatch.setattr(pf, "gpu_processes", lambda: [
         {"pid": str(orphan), "name": "/usr/bin/python3", "used_mib": "73409"},
@@ -103,7 +95,6 @@ def test_before_job_on_a_pod_clears_the_card_first(monkeypatch):
 
 
 def test_any_holder_finds_a_holder_nvidia_smi_cannot_list(monkeypatch):
-    # RunPod container: nvidia-smi's process table is empty, a hung tp2 worker holds both cards
     me, orphan = os.getpid(), 999996
     monkeypatch.setattr(pf, "gpu_processes", lambda: [])
     monkeypatch.setattr(pf, "dev_nvidia_holders", lambda: [{"pid": str(orphan), "name": "python3", "used_mib": ""}, {"pid": str(me), "name": "python3", "used_mib": ""}])
@@ -118,7 +109,6 @@ def test_any_holder_finds_a_holder_nvidia_smi_cannot_list(monkeypatch):
 
 
 def test_dev_nvidia_holders_reads_proc(tmp_path, monkeypatch):
-    # a fake /proc: 4242 holds /dev/nvidia0, 4243 only a socket
     for pid, target in ((4242, "/dev/nvidia0"), (4243, "socket:[1]")):
         fd = tmp_path / str(pid) / "fd"
         fd.mkdir(parents=True)
@@ -187,10 +177,9 @@ def test_after_model_names_every_change(monkeypatch):
 
 
 def test_the_runner_holding_the_gpu_is_no_other_process(monkeypatch):
-    # T0's transformers reference loads on the GPU inside the runner itself
     import os
 
-    import pie_evals.node.preflight as pf
+    import pie_bench.node.preflight as pf
 
     monkeypatch.setattr(pf, "_run", lambda cmd, *a, **k: "")
     monkeypatch.setattr(pf, "gpu_processes", lambda: [

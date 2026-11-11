@@ -1,38 +1,34 @@
-import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-from pie_evals.node.snapshots import gguf_shards
-from pie_evals.plan.matrix import Matrix, cannot_load
-from pie_evals.plan.suites import all_models, load_config, suite_models, suites
-from pie_evals.schema import Tier
+from pie_bench.node.snapshots import gguf_shards
+from pie_bench.paths import CONFIG, MATRIX
+from pie_bench.plan.matrix import Matrix, cannot_load
+from pie_bench.plan.suites import all_models, load_config, suite_models, suites
+from pie_bench.schema import Tier
 
 ROOT = Path(__file__).resolve().parents[1]
 
 TIER1 = {"qwen3.8-flash-next", "qwen3.8-27b", "qwen3.6-27b", "qwen3.6-35b-a3b", "qwen3.5-4b", "gemma-4-26b-a4b", "gemma-4-31b", "muse-glimmer-30b"}
-# Nemotron-3-Ultra and Muse Spark: their 4-bit cuts against mlx-lm (and vLLM-Metal), no llama.cpp copy of the cut
 FULL = TIER1 | {"gemma-4-12b", "gemma-4-e2b", "gemma-4-e4b", "gpt-oss-20b", "qwen3.5-9b", "nvidia-nemotron-3-ultra-550b-a55b", "muse-spark-open-816b-a42b"}
 
 
 @pytest.fixture(scope="module")
 def matrix():
-    return Matrix.load(ROOT / "matrix")
+    return Matrix.load(MATRIX)
 
 
 @pytest.fixture(scope="module")
 def config():
-    return load_config(ROOT / "config.json")
+    return load_config(CONFIG)
 
 
 @pytest.fixture(scope="module")
 def webdb():
-    sys.path.insert(0, str(ROOT / "tools"))
-    import webdb
+    from server import views
 
-    return webdb
+    return views
 
 
 def test_both_suites_name_only_competitor_arms_of_the_matrix(matrix, config):
@@ -42,7 +38,7 @@ def test_both_suites_name_only_competitor_arms_of_the_matrix(matrix, config):
         for aid in arms:
             a = matrix.artifacts[aid]
             assert a.baseline_of in matrix.artifacts and a.baseline_label, (name, aid)
-            assert cannot_load(matrix, aid.rsplit("-", 1)[1], a) is None, (name, aid)  # an arm in a suite can be run
+            assert cannot_load(matrix, aid.rsplit("-", 1)[1], a) is None, (name, aid)
 
 
 def test_the_full_suite_holds_the_targeted_one(config):
@@ -66,7 +62,6 @@ def test_targeted_is_the_default_and_models_still_reads_as_targeted():
 
 def test_every_tier1_model_has_pie_llamacpp_and_mlxlm_arms(matrix, config, webdb):
     a2m, _ = webdb.artifact_to_model()
-    # pie's targeted rows come from suites.yaml's include, whatever the artifact's own tiers say
     pie_targeted = {str(c.artifact.id) for c in matrix.cells_for(Tier.TARGETED, matrix.expand(platforms=[p for p, s in matrix.platforms.items() if s.os == "macos"])) if str(c.engine) == "pie"}
     arms = {}
     for a in matrix.artifacts.values():
@@ -75,7 +70,7 @@ def test_every_tier1_model_has_pie_llamacpp_and_mlxlm_arms(matrix, config, webdb
             pie = matrix.artifacts[a.baseline_of]
             assert pie.id in pie_targeted and pie.source_format != "gguf", a.id
             if a2m[a.id] not in {"qwen3.8-27b", "qwen3.6-27b", "qwen3.6-35b-a3b", "gemma-4-26b-a4b", "muse-glimmer-30b"}:
-                assert pie.pie_sku and not pie.pie_drafter and "dflash" not in pie.pie_sku, pie.id  # the plain row
+                assert pie.pie_sku and not pie.pie_drafter and "dflash" not in pie.pie_sku, pie.id
     assert set(arms) == TIER1
     for model, labels in arms.items():
         assert {"llama.cpp", "mlx-lm"} <= labels, model
@@ -84,9 +79,8 @@ def test_every_tier1_model_has_pie_llamacpp_and_mlxlm_arms(matrix, config, webdb
 
 def test_unsupported_models_say_why(matrix):
     for aid in ("gemma-4-12b-mlx4", "gemma-4-e2b-mlx4", "gemma-4-e4b-mlx4"):
-        assert cannot_load(matrix, "pie", matrix.artifacts[aid]) is None, aid  # pie runs Gemma 4 E2B, E4B and 12B at 4-bit (#604)
+        assert cannot_load(matrix, "pie", matrix.artifacts[aid]) is None, aid
         assert cannot_load(matrix, "mlxlm", matrix.artifacts[aid.replace("-mlx4", "-mlxlm")]) is None
-    # mlx-vlm serves Qwen3.8-Flash-Next's MLX arm (support.yaml), and mlx-lm 0.32 loads Muse Glimmer (#1302)
     assert cannot_load(matrix, "mlxlm", matrix.artifacts["qwen3.8-flash-next-mlxlm"]) is None
     assert cannot_load(matrix, "mlxlm", matrix.artifacts["muse-glimmer-30b-mlxlm"]) is None
     assert cannot_load(matrix, "pie", matrix.artifacts["qwen3.5-4b-mlx4"]) is None
@@ -96,15 +90,6 @@ def test_a_split_gguf_is_every_shard():
     assert gguf_shards("Qwen3.5-4B-Q4_K_M.gguf") == ["Qwen3.5-4B-Q4_K_M.gguf"]
     assert gguf_shards("UD-Q4_K_XL/M-UD-Q4_K_XL-00001-of-00003.gguf") == [
         "UD-Q4_K_XL/M-UD-Q4_K_XL-00001-of-00003.gguf", "UD-Q4_K_XL/M-UD-Q4_K_XL-00002-of-00003.gguf", "UD-Q4_K_XL/M-UD-Q4_K_XL-00003-of-00003.gguf"]
-
-
-def test_the_cli_prints_a_suite(tmp_path):
-    (tmp_path / "config.json").write_text(json.dumps({"suites": {"targeted": ["a-llamacpp"], "full": ["a-llamacpp", "b-mlxlm"]}}))
-    base = [sys.executable, "-m", "pie_evals.cli", "--matrix", str(ROOT / "matrix"), "--store", str(tmp_path / "store"), "suite"]
-    run = lambda *a: subprocess.run(base + list(a), cwd=tmp_path, capture_output=True, text=True)  # noqa: E731
-    assert run().stdout.strip() == "a-llamacpp"
-    assert run("full").stdout.strip() == "a-llamacpp,b-mlxlm"
-    assert run("nightly").returncode != 0
 
 
 def test_the_site_lists_every_model_of_every_suite(config, webdb):
@@ -117,12 +102,11 @@ def test_the_site_lists_every_model_of_every_suite(config, webdb):
 
 
 def test_a_gap_takes_the_newest_run_not_the_newest_tags(webdb):
-    # "old" was imported into again after "dev" ran, so it sorts first; its pie row is still the older run
     key = ("h200-x1", "pie", "mimo", "raw")
     tagged = {"top": {}, "old": {key: {"at": "2026-10-27 01:12", "v": 1}}, "dev": {key: {"at": "2026-11-03 00:18", "v": 2}}}
     snaps = webdb.stack(["top", "old", "dev"], tagged, [key], lambda item, k, src: {"v": item["v"]}, lambda item: item["at"])
     assert snaps["top"] == [{"v": 2, "stale": {"tag": "dev", "measured": "2026-11-03 00:18"}}]
-    assert snaps["old"][0]["v"] == 2 and snaps["old"][0]["stale"] == {"tag": "dev", "measured": "2026-11-03 00:18"}  # the newest run, not the tag's own (#1650)
+    assert snaps["old"][0]["v"] == 2 and snaps["old"][0]["stale"] == {"tag": "dev", "measured": "2026-11-03 00:18"}
     assert snaps["dev"][0]["v"] == 2 and snaps["dev"][0]["stale"] is None
 
 

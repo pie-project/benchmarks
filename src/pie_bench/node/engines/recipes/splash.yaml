@@ -1,0 +1,35 @@
+default:
+  knobs:
+    max_context:
+      value: null
+      rationale: Splash default, sized automatically within its memory budget.
+    server_extra:
+      value: ["--kv-format", "bf16"]
+      rationale: >
+        Splash as shipped (DFlash2 drafting included) but with its KV cache in bf16, the precision pie
+        keeps its KV in; Splash's default int8 KV would compare different cache precisions.
+    flush_cache:
+      value: true
+      rationale: Single stream prefill must not be a prefix cache hit; the client shuffles each prompt.
+    startup_timeout:
+      value: 1800
+      rationale: The first serve of a model downloads its draft and prepares the weights.
+
+competitive:
+  extends: default
+  knobs:
+    max_context:
+      value: "$serve_context"
+      rationale: Longest shape of the process, rounded like pie max-model-len.
+    queue_size:
+      value: "$serve_concurrency"
+      rationale: >
+        Splash admits 32 requests at once by default and answers the rest with 503 frontend_overloaded
+        (`--queue-size REQUESTS: requests admitted at once, running or waiting; more get 503 (default: 32)`);
+        every engine takes the whole batch, so Splash admits the process's widest shape.
+  workload_kind:
+    prefix_shared:
+      knobs:
+        flush_cache:
+          value: false
+          rationale: The cached prompt shape measures prefix reuse, so Splash keeps its cache.

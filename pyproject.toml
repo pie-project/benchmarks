@@ -1,7 +1,9 @@
 [project]
-name = "pie-evals"
+name = "pie-bench"
 version = "0.1.0"
-description = "Benchmark & evaluation framework for pie: performance vs other engines, accuracy preservation, coverage and regression tracking."
+description = "Measure pie against other inference engines on your own machine and publish the results."
+readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.7",
@@ -9,28 +11,35 @@ dependencies = [
     "pyarrow>=16.0",
     "numpy>=1.26",
     "click>=8.1",
+    "requests>=2.31",
     "huggingface_hub>=0.24",
-    "hf_xet>=1.1",  # DeepSeek-V4.1-Flash's shards download only through Xet ("too large ... install hf_xet")
-    "psycopg[binary]>=3.2",
+    "hf_xet>=1.1",
+    "transformers>=4.44",
+    "mlx-lm; sys_platform == 'darwin'",
 ]
 
 [project.optional-dependencies]
-accuracy = ["torch; sys_platform != 'darwin'", "mlx-lm; sys_platform == 'darwin'", "transformers>=4.44"]
-orchestrate = ["requests>=2.31"]
-quality = ["lm-eval[ifeval]>=0.4", "transformers", "jinja2", "tiktoken", "blobfile"]
-dev = ["pytest>=8.0", "pytest-timeout>=2.3", "ruff>=0.5"]
-web = ["pyyaml"]
+quality = ["lm-eval[ifeval]>=0.4", "jinja2", "tiktoken", "blobfile"]
+torch = ["torch"]
+server = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "psycopg[binary]>=3.2", "psycopg-pool>=3.2", "pyjwt>=2.8"]
+dev = ["pytest>=8.0", "pytest-timeout>=2.3", "ruff>=0.5", "httpx>=0.27", "fastapi>=0.115", "psycopg[binary]>=3.2", "psycopg-pool>=3.2", "pyjwt>=2.8"]
+
+[project.urls]
+Homepage = "https://benchmarks.pie-project.org"
+Source = "https://github.com/pie-project/benchmarks"
 
 [project.scripts]
-pie-evals-node = "pie_evals.node.cli:main"
-pie-evals = "pie_evals.cli:main"
+pie-bench = "pie_bench.cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pie_evals"]
+packages = ["src/pie_bench"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/pie_bench", "README.md"]
 
 [tool.ruff]
 line-length = 100
@@ -38,10 +47,13 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# a test that runs past this fails instead of holding CI for hours; the whole-matrix checks are "slow" and stay out of CI
+pythonpath = ["."]
 timeout = 120
-markers = ["slow: expands the whole matrix (about a minute each); not run in CI"]
+markers = ["slow: expands the whole matrix"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
-ignore = ["E501", "UP017", "B008", "B905"]
+ignore = ["E501", "E731", "UP017", "B008", "B905", "E402", "B023", "B904"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
