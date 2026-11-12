@@ -51,6 +51,7 @@ Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs
 | GET | `/v1/releases/latest` | the newest release: its results and quality scores |
 | GET | `/v1/releases/{id}` | one release: its results and quality scores |
 | GET | `/v1/head-to-head` | pie against each engine, per platform |
+| GET | `/v1/footprint` | download size of pie, vLLM and SGLang |
 | POST | `/v1/tokens` | a signed upload token |
 | POST | `/v1/submissions` | upload a `submission.json.gz` |
 | PATCH | `/v1/tokens/{id}` | admin: set a token's quota, body `{"quota": n}` |

@@ -16,6 +16,10 @@ def client():
 
     with psycopg.connect(DSN, autocommit=True) as conn:
         conn.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public")
+    from server import footprint
+    from tests.test_footprint import PAGES
+
+    footprint._get = PAGES.__getitem__
     os.environ.update(DATABASE_URL=DSN, JWT_SECRET="test-secret-0123456789abcdef0123456789", ADMIN_TOKEN="admin-secret", DEFAULT_QUOTA="2", REBUILD_S="1")
     from fastapi.testclient import TestClient
 
@@ -63,6 +67,7 @@ def test_a_contributor_uploads_and_everyone_reads(client):
     assert latest["id"] == release and latest["results"]
     assert client.get("/v1/releases/no-such-release").status_code == 404
     assert client.get("/v1/head-to-head").json()["platforms"] == []
+    assert [e["mb"] for e in client.get("/v1/footprint").json()["engines"]] == [16111, 9738, 31]
 
 
 def test_uploads_need_a_valid_token_and_stop_at_the_quota(client):
