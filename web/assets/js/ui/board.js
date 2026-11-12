@@ -881,11 +881,11 @@ window.Pie = window.Pie || {};
     const label = (e) => `${names().engine(e)}${e.endsWith("-webgpu") ? " WebGPU" : ""}`;
     // each engine's shortfall from the fastest engine in each of its tests, 0 where it is the fastest; drawn on a square
     // that stretches to the card (its lines keep their width), its words set around it in the page's own text
-    // the share of tests on a log scale from 1% to 100%, so the low shares, where the lines start and bunch, get the room;
-    // a share under 1% sits on the floor
-    const X = 0.5, FLOOR = 0.01;
+    // the share of tests on an inverted log scale: the distance from 100% on a log, so the top of the chart (90% to 100%),
+    // where the strong engines finish, gets as much room as the rest; within half a percent of 100% sits on the top
+    const X = 0.5, FLOOR = 0.005;
     const x = (d) => 1000 * Math.min(d, X) / X;
-    const y = (f) => 1000 * (1 - Math.log(Math.max(f, FLOOR) / FLOOR) / Math.log(1 / FLOOR));
+    const y = (f) => 1000 * Math.log(Math.max(1 - f, FLOOR) / FLOOR) / Math.log(1 / FLOOR);
     const curves = ids.map((e) => {
       const short = tests.filter((s) => s[e]).map((s) => 1 - s[e] / fastest(s)).sort((a, b) => a - b);
       const at = (d) => short.filter((v) => v <= d + 1e-9).length / short.length;
@@ -896,11 +896,11 @@ window.Pie = window.Pie || {};
     }).sort((a, b) => b.last - a.last);
     const svg = `<div class="relative-plot"><div class="relative-area">
       <svg class="relative-chart" viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img" aria-label="Share of each engine's tests where it is the fastest, or within a margin of it">
-        ${[.01, .1, .5, 1].map((f) => `<line class="board-grid" vector-effect="non-scaling-stroke" x1="0" x2="1000" y1="${y(f)}" y2="${y(f)}"/>`).join("")}
+        ${[.5, .9, .99, 1].map((f) => `<line class="board-grid" vector-effect="non-scaling-stroke" x1="0" x2="1000" y1="${y(f)}" y2="${y(f)}"/>`).join("")}
         <line class="board-axis" vector-effect="non-scaling-stroke" x1="0" x2="1000" y1="1000" y2="1000"/>
         ${curves.map((c) => `<path class="relative-line" vector-effect="non-scaling-stroke" data-engine="${esc(c.e)}" data-name="${esc(label(c.e))}" data-first="${Math.round(c.first * 100)}" data-color="${Pie.engines.colorOf(c.e)}" data-pts="${esc(JSON.stringify(c.pts))}" d="${c.path}"/>`).join("")}
       </svg>
-      ${[.01, .1, .25, .5, 1].map((f) => `<span class="relative-tick is-y" style="top: ${(y(f) / 10).toFixed(2)}%">${Math.round(f * 100)}%</span>`).join("")}
+      ${[0, .5, .75, .9, .95, .99, 1].map((f) => `<span class="relative-tick is-y" style="top: ${(y(f) / 10).toFixed(2)}%">${Math.round(f * 100)}%</span>`).join("")}
       ${[[0, "Fastest", "start"], [.1, "Within 10%", "middle"], [.25, "Within 25%", "middle"], [.5, "Within 50%", "end"]].map(([d, t, a]) => `<span class="relative-tick is-x is-${a}" style="left: ${(x(d) / 10).toFixed(1)}%">${t}</span>`).join("")}
       <span class="relative-axis-title">Gap to the fastest engine on each test</span>
       <span class="relative-axis-title is-y">Share of each engine's tests</span>
