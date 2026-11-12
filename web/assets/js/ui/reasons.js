@@ -51,7 +51,7 @@ window.Pie = window.Pie || {};
                   ? `<span class="reasons-item-status is-verified" role="img" aria-label="Verified" title="Verified: a profile of both engines agrees with the benchmark"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>`
                   : `<span class="reasons-item-status" aria-hidden="true"></span>`}
                 <div class="reasons-item-text"><h2 class="reasons-item-title">${esc(modelName(c.model))} on ${esc(machineName(c.hardware))}</h2>
-                <p class="reasons-item-meta">${esc(c.label)}<span class="reasons-item-tag">vs ${esc(nameOf(c.rival))}</span>${c.miniature ? `<span class="reasons-item-tag">Model slice</span>` : ""}</p></div>
+                <p class="reasons-item-meta">${esc(c.label)}${c.miniature ? `<span class="reasons-item-tag">Model slice</span>` : ""}</p></div>
                 <span class="reasons-item-gap">${pct(c.gap)} slower</span><svg class="reasons-item-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg>
               </summary>
               <div class="reasons-item-body">${profileOf(c)}</div>
