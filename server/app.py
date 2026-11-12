@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from pie_bench import __version__
-from server import auth, build, ingest
+from server import auth, build, footprint, ingest, split
 from server.db import Database
 
 log = logging.getLogger("pie-bench-api")
@@ -42,11 +42,23 @@ class Views:
             contributed = {pid: spec for pid, spec in cur.fetchall()}
         with ProcessPoolExecutor(max_workers=1, mp_context=multiprocessing.get_context("spawn")) as pool:
             data = pool.submit(build.blobs, self.db.dsn, contributed).result()
+        sizes = self.sizes()
+        if sizes:
+            data["footprint"] = sizes
         blobs = {k: _blob(v) for k, v in data.items()}
         with self.lock:
             self.blobs, self.built_at, self.built = blobs, time.time(), True
         self.save(data)
         log.info("views built in %.1fs: %d files, %.0f MB compressed", time.monotonic() - t0, len(blobs), sum(len(v) for v in data.values()) / 1e6)
+
+    def sizes(self) -> bytes | None:
+        try:
+            return split.gz(footprint.sizes())
+        except Exception:
+            log.warning("download sizes not refreshed, keeping the last ones", exc_info=True)
+            with self.lock:
+                old = self.blobs.get("footprint")
+            return old[0] if old else None
 
     def save(self, data: dict[str, bytes]) -> None:
         with self.db.tx() as cur:
@@ -143,6 +155,11 @@ def release(release: str, request: Request):
 @app.api_route("/v1/head-to-head", methods=["GET", "HEAD"])
 def head_to_head(request: Request):
     return _cached(request, "head-to-head", "application/json")
+
+
+@app.api_route("/v1/footprint", methods=["GET", "HEAD"])
+def download_sizes(request: Request):
+    return _cached(request, "footprint", "application/json")
 
 
 @app.post("/v1/tokens")
