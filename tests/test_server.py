@@ -127,6 +127,19 @@ def test_a_restarted_api_serves_the_saved_views_at_once(client):
     assert missing.value.status_code == 503
 
 
+def test_the_admin_can_rebuild_the_views_at_once(client):
+    tok = client.post("/v1/tokens", json={}).json()
+    assert client.post("/v1/rebuild").status_code == 403
+    assert client.post("/v1/rebuild", headers={"Authorization": f"Bearer {tok['token']}"}).status_code == 403
+    before = client.get("/healthz").json()["views_built_at"]
+    res = client.post("/v1/rebuild", headers={"Authorization": "Bearer admin-secret"})
+    assert res.status_code == 202 and res.json()["rebuilding"] is True
+    deadline = time.time() + 60
+    while client.get("/healthz").json()["views_built_at"] == before and time.time() < deadline:
+        time.sleep(0.5)
+    assert client.get("/healthz").json()["views_built_at"] > before
+
+
 def test_monitors_can_check_health_with_head(client):
     assert client.head("/healthz").status_code == 200
 

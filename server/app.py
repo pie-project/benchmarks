@@ -190,6 +190,15 @@ async def submissions(request: Request):
     return out
 
 
+@app.post("/v1/rebuild", status_code=202)
+def rebuild(request: Request):
+    auth.require_admin(request)
+    with app.state.db.tx() as cur:
+        cur.execute("INSERT INTO ingest_log (address, action) VALUES (%s, 'rebuild')", (auth.address(request),))
+    app.state.views.dirty.set()
+    return {"rebuilding": True, "views_built_at": app.state.views.built_at or None}
+
+
 @app.patch("/v1/tokens/{tid}")
 def update_token(tid: str, request: Request, body: dict = Body(...)):
     auth.require_admin(request)
