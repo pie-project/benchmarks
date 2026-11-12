@@ -29,6 +29,8 @@ window.Pie = window.Pie || {};
   // a cell's profile: each engine's step split into the same stages, as one bar each on a shared scale, and the verdict
   const STAGES = [["attention", "Attention", "#5E5CE6"], ["dense_matmul", "Dense matmul", "#0A84FF"], ["moe", "MoE", "#30B0C7"],
     ["norm_rope_elementwise", "Norm and rope", "#34C759"], ["sampling", "Sampling", "#FF9F0A"], ["other_gpu", "Other GPU", "#AF52DE"], ["gpu_idle", "GPU idle", "#AEAEB2"]];
+  // a model slice's mark, the grid's own: a square cut by a diagonal
+  const sliceIcon = (label) => `<svg class="reasons-slice-icon" viewBox="0 0 16 16" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>`;
   const verified = (c) => (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`]?.verdict === "confirmed";
   const ms = (v) => `${v >= 100 ? Math.round(v) : v >= 10 ? v.toFixed(1) : v.toFixed(2)} ms`;
   const profileOf = (c) => {
@@ -50,8 +52,8 @@ window.Pie = window.Pie || {};
                 ${verified(c)
                   ? `<span class="reasons-item-status is-verified" role="img" aria-label="Verified" title="Verified: a profile of both engines agrees with the benchmark"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>`
                   : `<span class="reasons-item-status" aria-hidden="true"></span>`}
-                <div class="reasons-item-text"><h2 class="reasons-item-title">${esc(modelName(c.model))} on ${esc(machineName(c.hardware))}</h2>
-                <p class="reasons-item-meta">${esc(c.label)}${c.miniature ? `<span class="reasons-item-tag">Model slice</span>` : ""}</p></div>
+                <div class="reasons-item-text"><h2 class="reasons-item-title">${c.miniature ? sliceIcon(`Model slice: ${c.miniature}`) : ""}${esc(modelName(c.model))} on ${esc(machineName(c.hardware))}</h2>
+                <p class="reasons-item-meta">${esc(c.label)}</p></div>
                 <span class="reasons-item-gap">${pct(c.gap)} slower</span><svg class="reasons-item-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg>
               </summary>
               <div class="reasons-item-body">${profileOf(c)}</div>
@@ -83,7 +85,7 @@ window.Pie = window.Pie || {};
         <div class="board-main">
           <div class="board-section-head"><div class="board-section-text"><h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))} Profile</h1>
           <p class="board-lede">${lede(id, cells)}</p></div>
-          <button type="button" class="reasons-slices" data-reasons-slices role="switch" aria-checked="${slices}"><span>Model slices</span><i class="reasons-switch" aria-hidden="true"></i></button></div>
+          <button type="button" class="reasons-slices" data-reasons-slices role="switch" aria-checked="${slices}">${sliceIcon("Model slices")}<span>Model slices</span><i class="reasons-switch" aria-hidden="true"></i></button></div>
           ${reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">No cells behind.</p>`}
         </div>
       </div></div>`;

@@ -672,3 +672,6 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .reasons-item-status svg { width: 18px; height: 18px; }
 .reasons-item-status.is-verified .shield { fill: var(--color-positive); }
 .reasons-item-status.is-verified .mark { fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.reasons-slice-icon { width: 13px; height: 13px; flex: none; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.3; stroke-linecap: round; vertical-align: -1px; }
+.reasons-item-title .reasons-slice-icon { margin-right: 6px; }
+#reasons .reasons-slices .reasons-slice-icon { margin-right: -2px; }
