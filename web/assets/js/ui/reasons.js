@@ -59,6 +59,8 @@ window.Pie = window.Pie || {};
               <div class="reasons-item-body">${profileOf(c)}</div>
             </details>`;
   let focus = null;
+  let shownCount = 0;
+  const countText = () => `${shownCount.toLocaleString("en-US")} ${shownCount === 1 ? "suggestion" : "suggestions"}`;
   const KEY = "pieSuggestionsEngine";
   let current = (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
   // model slices on or off, as the viewer left it: off keeps only the cells measured on the full model
@@ -89,11 +91,9 @@ window.Pie = window.Pie || {};
           ${reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">No cells behind.</p>`}
         </div>
       </div></div>`;
-    // the window's title names the engine on view, as "MLX Suggestions"; no subtitle under it
-    if (Pie.toolbar?.elements?.title && Pie.state.table === "reasons") {
-      Pie.toolbar.elements.title.textContent = `${nameOf(id)} Suggestions`;
-      Pie.toolbar.elements.subtitle.textContent = "";
-    }
+    // under the window's title, how many suggestions the engine on view has
+    shownCount = cells;
+    if (Pie.toolbar?.elements?.subtitle && Pie.state.table === "reasons") Pie.toolbar.elements.subtitle.textContent = countText();
     const nav = element.querySelector(".board-outline"), on = nav?.querySelector(".is-current");
     if (nav && on) {
       const thumb = document.createElement("span");
@@ -156,9 +156,7 @@ window.Pie = window.Pie || {};
 
   Pie.reasons = {
     element,
-    shown: () => "",
-    // the window's title: the engine on view and the page's name, as "MLX Suggestions"
-    title: () => `${nameOf(current || Pie.engines.primary)} Suggestions`,
+    shown: () => countText(),
     // set by a green grid cell before it opens this page on its reason: that engine's page, scrolled to it
     focus(cell) { focus = cell || null; if (focus) current = focus.engine; },
     render(state) {
