@@ -89,7 +89,11 @@ window.Pie = window.Pie || {};
           ${reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">No cells behind.</p>`}
         </div>
       </div></div>`;
-    if (Pie.toolbar?.elements?.subtitle && Pie.state.table === "reasons") Pie.toolbar.elements.subtitle.textContent = nameOf(id);
+    // the window's title names the engine on view, as "MLX Suggestions"; no subtitle under it
+    if (Pie.toolbar?.elements?.title && Pie.state.table === "reasons") {
+      Pie.toolbar.elements.title.textContent = `${nameOf(id)} Suggestions`;
+      Pie.toolbar.elements.subtitle.textContent = "";
+    }
     const nav = element.querySelector(".board-outline"), on = nav?.querySelector(".is-current");
     if (nav && on) {
       const thumb = document.createElement("span");
@@ -152,7 +156,9 @@ window.Pie = window.Pie || {};
 
   Pie.reasons = {
     element,
-    shown: () => nameOf(current || Pie.engines.primary),
+    shown: () => "",
+    // the window's title: the engine on view and the page's name, as "MLX Suggestions"
+    title: () => `${nameOf(current || Pie.engines.primary)} Suggestions`,
     // set by a green grid cell before it opens this page on its reason: that engine's page, scrolled to it
     focus(cell) { focus = cell || null; if (focus) current = focus.engine; },
     render(state) {
