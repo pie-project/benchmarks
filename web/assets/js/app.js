@@ -117,7 +117,7 @@
       toolbar.render(state, 0, 0);
       toolbar.elements.subtitle.textContent = `${models} ${models === 1 ? "model" : "models"}`;
     } else if (isMethod) {
-      toolbar.elements.title.textContent = Pie.schema[state.table].title || Pie.schema[state.table].label;
+      toolbar.elements.title.textContent = (state.table === "reasons" && Pie.reasons.title?.()) || Pie.schema[state.table].title || Pie.schema[state.table].label;
       // Methodology keeps the bar as the catalog does, empty
       if (state.table === "approach") {
         document.getElementById("filter-list").innerHTML = "";
