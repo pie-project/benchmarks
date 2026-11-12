@@ -1068,7 +1068,7 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
     ever = {key for pairs in sources.values() for key, _ in pairs}
     ctx = {"models": [m for m in models if m["id"] in model_ids or m.get("catalog")], "suites": suite_ids}
     sealed: dict[str, dict] = {}
-    for t in order:
+    for t in order[:1]:
         rows = [{**as_row(results[src][key][1], key, src), "stale": None if src == t else {"tag": src, "measured": when_run(results[src][key])}}
                 for key, src in sources.pop(t)]
         have = {(r["hardware"], r["engine"], r["model"], r["workload"]): r for r in rows}
@@ -1118,7 +1118,7 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
         return {"model": model, "engine": eng, "artifact": art, "task": task, "score": None,
                 "release": t, "status": status, "note": note, "stale": None}
 
-    for t in order:
+    for t in order[:1]:
         have = {(r["engine"], r["artifact"], r["task"]) for r in quality[t]}
         quality[t] += [missing(a2m.get(art, art), eng, art, task, t, "not_run")
                        for eng, art in arms for task in tasks if (eng, art, task) not in have]
@@ -1143,7 +1143,7 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
     ran = sum(r["status"] in ("pass", "noisy", "fail") for r in store.table().select(["status"]).to_pylist())
     busy = sum(r["duration_s"] or 0 for r in store.table().select(["status", "duration_s"]).to_pylist() if r["status"] in ("pass", "noisy", "fail"))
     totals = {"runs": ran + len(store.quality()), "machine_s": round(busy)}
-    db = {"updated_at": updated_at, "totals": totals, "tags": tags, "parity": {t: parity.get(t, []) for t in order},
+    db = {"updated_at": updated_at, "totals": totals, "tags": tags[:1], "parity": {t: parity.get(t, []) for t in order[:1]},
           "quality_parity": checks["parity"], "quality_kernels": checks["kernels"], "quality_gaps": load("support").get("quality_gaps", []),
           "speed_gaps": load("support").get("speed_gaps", []),
           "no_fit": misfits, "suites": suite_ids,

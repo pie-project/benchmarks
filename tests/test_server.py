@@ -61,11 +61,10 @@ def test_a_contributor_uploads_and_everyone_reads(client):
     catalog = client.get("/v1/catalog")
     assert catalog.status_code == 200 and catalog.headers["content-type"] == "application/json"
     assert client.get("/v1/catalog", headers={"If-None-Match": catalog.headers["etag"]}).status_code == 304
-    release = catalog.json()["releases"][0]["id"]
-    latest = client.get("/v1/releases/latest").json()
-    assert latest == client.get(f"/v1/releases/{release}").json()
-    assert latest["id"] == release and latest["results"]
-    assert client.get("/v1/releases/no-such-release").status_code == 404
+    [release] = catalog.json()["releases"]
+    results = client.get("/v1/results").json()
+    assert results["id"] == release["id"] and results["results"]
+    assert client.get("/v1/releases/latest").json() == results
     assert client.get("/v1/head-to-head").json()["platforms"] == []
     assert [e["mb"] for e in client.get("/v1/footprint").json()["engines"]] == [16111, 9738, 31]
 
@@ -123,7 +122,7 @@ def test_a_restarted_api_serves_the_saved_views_at_once(client):
     fresh.load()
     assert fresh.get("catalog")[1] == etag
     with pytest.raises(HTTPException) as missing:
-        fresh.get("release:not-saved")
+        fresh.get("not-saved")
     assert missing.value.status_code == 503
 
 
@@ -143,13 +142,13 @@ def test_the_admin_can_rebuild_the_views_at_once(client):
 def test_the_admin_sees_reads_per_endpoint_per_day(client):
     before = client.get("/v1/stats", headers={"Authorization": "Bearer admin-secret"}).json()["days"]
     seen = before[0]["requests"] if before else {}
-    client.get("/v1/releases/latest")
-    client.get("/v1/releases/latest")
+    client.get("/v1/results")
+    client.get("/v1/results")
     client.head("/v1/catalog")
     assert client.get("/v1/stats").status_code == 403
     today = client.get("/v1/stats", headers={"Authorization": "Bearer admin-secret"}).json()["days"][0]
     assert today["day"] == datetime.now(timezone.utc).date().isoformat()
-    assert today["requests"]["/v1/releases/latest"] == seen.get("/v1/releases/latest", 0) + 2
+    assert today["requests"]["/v1/results"] == seen.get("/v1/results", 0) + 2
     assert today["requests"].get("/v1/catalog", 0) == seen.get("/v1/catalog", 0)
 
 
@@ -158,5 +157,5 @@ def test_monitors_can_check_health_with_head(client):
 
 
 def test_only_the_routes_the_site_and_cli_use_exist(client):
-    for gone in ["/v1/db.js", "/v1/tags/manual-test.json", "/v1/grid", "/v1/head-to-head.json", "/v1/export.json.gz", "/v1/quality", "/v1/runs/run-1/log", "/v1/docs", "/v1/openapi.json", "/docs", "/v1/trackers.json"]:
+    for gone in ["/v1/db.js", "/v1/tags/manual-test.json", "/v1/grid", "/v1/head-to-head.json", "/v1/export.json.gz", "/v1/quality", "/v1/runs/run-1/log", "/v1/docs", "/v1/openapi.json", "/docs", "/v1/trackers.json", "/v1/releases/manual-test"]:
         assert client.get(gone).status_code == 404, gone

@@ -47,9 +47,8 @@ Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs
 | Method | Path | What |
 |---|---|---|
 | GET | `/healthz` | service health |
-| GET | `/v1/catalog` | machines, models, engines, workloads and the list of releases |
-| GET | `/v1/releases/latest` | the newest release: its results and quality scores |
-| GET | `/v1/releases/{id}` | one release: its results and quality scores |
+| GET | `/v1/catalog` | machines, models, engines, workloads and the newest release |
+| GET | `/v1/results` | the newest release: its results and quality scores |
 | GET | `/v1/head-to-head` | pie against each engine, per platform |
 | GET | `/v1/footprint` | download size of pie, vLLM and SGLang |
 | POST | `/v1/tokens` | a signed upload token |
