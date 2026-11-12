@@ -42,8 +42,10 @@ class Views:
             cur.execute("SELECT DISTINCT ON (platform) platform, machine->'platform' FROM runs "
                         "WHERE platform IS NOT NULL AND jsonb_typeof(machine->'platform') = 'object' ORDER BY platform, submitted_at DESC")
             contributed = {pid: spec for pid, spec in cur.fetchall()}
+            cur.execute("SELECT count(*) FROM runs")
+            submissions = cur.fetchone()[0]
         with ProcessPoolExecutor(max_workers=1, mp_context=multiprocessing.get_context("spawn")) as pool:
-            data = pool.submit(build.blobs, self.db.dsn, contributed).result()
+            data = pool.submit(build.blobs, self.db.dsn, contributed, submissions).result()
         sizes = self.sizes()
         if sizes:
             data["footprint"] = sizes
