@@ -144,7 +144,7 @@ def _cached(request: Request, key: str, media_type: str) -> Response:
     READS.check(auth.address(request))
     data, etag = app.state.views.get(key)
     if request.method == "GET":
-        app.state.hits.add("/v1/" + ("releases/latest" if key == "release:latest" else "releases/{id}" if key.startswith("release:") else key))
+        app.state.hits.add(request.url.path)
     headers = {"ETag": etag, "Cache-Control": "public, max-age=60, stale-while-revalidate=600", "Vary": "Accept-Encoding"}
     if request.headers.get("if-none-match") == etag:
         return Response(status_code=304, headers=headers)
@@ -189,9 +189,14 @@ def catalog(request: Request):
     return _cached(request, "catalog", "application/json")
 
 
-@app.api_route("/v1/releases/{release:path}", methods=["GET", "HEAD"])
-def release(release: str, request: Request):
-    return _cached(request, f"release:{release}", "application/json")
+@app.api_route("/v1/results", methods=["GET", "HEAD"])
+def results(request: Request):
+    return _cached(request, "results", "application/json")
+
+
+@app.api_route("/v1/releases/latest", methods=["GET", "HEAD"])
+def latest_release(request: Request):
+    return _cached(request, "results", "application/json")
 
 
 @app.api_route("/v1/head-to-head", methods=["GET", "HEAD"])

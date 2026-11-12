@@ -64,15 +64,10 @@ def annotate(db: dict, sealed: dict[str, dict]) -> None:
         tag["counts"] = sealed[tag["id"]]["counts"] if tag["id"] in sealed else counts(db, [])
 
 
-def publish(db: dict, sealed: dict[str, dict], quality: dict) -> tuple[dict, dict[str, bytes]]:
+def publish(db: dict, sealed: dict[str, dict], quality: dict) -> tuple[dict, str | None, bytes | None]:
     annotate(db, sealed)
     catalog = {("releases" if k == "tags" else k): v for k, v in db.items()}
-    releases = {}
-    for tag in catalog.get("releases") or []:
-        t = tag["id"]
-        results = rows_json(sealed[t]) if t in sealed else "[]"
-        releases[t] = gz_text('{"id":' + dumps(t) + ',"results":' + results + ',"quality":' + dumps(quality.get(t, [])) + "}")
     latest = next((tag["id"] for tag in catalog.get("releases") or [] if tag["counts"]["all"][0]), None)
-    if latest:
-        releases["latest"] = releases[latest]
-    return catalog, releases
+    if not latest:
+        return catalog, None, None
+    return catalog, latest, gz_text('{"id":' + dumps(latest) + ',"results":' + rows_json(sealed[latest]) + ',"quality":' + dumps(quality.get(latest, [])) + "}")
