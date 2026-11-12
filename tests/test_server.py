@@ -58,8 +58,12 @@ def test_a_contributor_uploads_and_everyone_reads(client):
     deadline = time.time() + 60
     while client.get("/v1/catalog").status_code == 503 and time.time() < deadline:
         time.sleep(0.5)
+    deadline = time.time() + 60
+    while not client.get("/v1/catalog").json()["totals"].get("submissions") and time.time() < deadline:
+        time.sleep(0.5)
     catalog = client.get("/v1/catalog")
     assert catalog.status_code == 200 and catalog.headers["content-type"] == "application/json"
+    assert catalog.json()["totals"]["submissions"] >= 1
     assert client.get("/v1/catalog", headers={"If-None-Match": catalog.headers["etag"]}).status_code == 304
     [release] = catalog.json()["releases"]
     results = client.get("/v1/results").json()
