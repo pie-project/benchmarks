@@ -881,31 +881,31 @@ window.Pie = window.Pie || {};
     const label = (e) => `${names().engine(e)}${e.endsWith("-webgpu") ? " WebGPU" : ""}`;
     // each engine's shortfall from the fastest engine in each of its tests, 0 where it is the fastest; drawn on a square
     // that stretches to the card (its lines keep their width), its words set around it in the page's own text
-    // the gap on a log scale (offset by 2%, so a gap of 0 sits at the left edge): the small gaps, where most tests fall and
-    // the lines bunch, get most of the width
-    const X = 0.5, K = 0.02;
-    const x = (d) => 1000 * Math.log1p(Math.min(d, X) / K) / Math.log1p(X / K);
-    const y = (f) => 1000 * (1 - f);
+    // the share of tests on a log scale from 1% to 100%, so the low shares, where the lines start and bunch, get the room;
+    // a share under 1% sits on the floor
+    const X = 0.5, FLOOR = 0.01;
+    const x = (d) => 1000 * Math.min(d, X) / X;
+    const y = (f) => 1000 * (1 - Math.log(Math.max(f, FLOOR) / FLOOR) / Math.log(1 / FLOOR));
     const curves = ids.map((e) => {
       const short = tests.filter((s) => s[e]).map((s) => 1 - s[e] / fastest(s)).sort((a, b) => a - b);
       const at = (d) => short.filter((v) => v <= d + 1e-9).length / short.length;
-      const pts = [[0, +y(at(0)).toFixed(1)]];
-      for (const d of [...short.filter((v) => v > 0 && v <= X), X]) pts.push([+x(d).toFixed(1), +y(at(d)).toFixed(1)]);
+      const pts = [[0, +y(at(0)).toFixed(1), +at(0).toFixed(3)]];
+      for (const d of [...short.filter((v) => v > 0 && v <= X), X]) pts.push([+x(d).toFixed(1), +y(at(d)).toFixed(1), +at(d).toFixed(3)]);
       const path = `M${pts[0][0]},${pts[0][1]}${pts.slice(1).map(([px, py]) => `H${px}V${py}`).join("")}`;
       return { e, path, pts, first: at(0), last: at(X) };
     }).sort((a, b) => b.last - a.last);
     const svg = `<div class="relative-plot"><div class="relative-area">
       <svg class="relative-chart" viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img" aria-label="Share of each engine's tests where it is the fastest, or within a margin of it">
-        ${[0, .5, 1].map((f) => `<line class="board-grid" vector-effect="non-scaling-stroke" x1="0" x2="1000" y1="${y(f)}" y2="${y(f)}"/>`).join("")}
+        ${[.01, .1, .5, 1].map((f) => `<line class="board-grid" vector-effect="non-scaling-stroke" x1="0" x2="1000" y1="${y(f)}" y2="${y(f)}"/>`).join("")}
         <line class="board-axis" vector-effect="non-scaling-stroke" x1="0" x2="1000" y1="1000" y2="1000"/>
         ${curves.map((c) => `<path class="relative-line" vector-effect="non-scaling-stroke" data-engine="${esc(c.e)}" data-name="${esc(label(c.e))}" data-first="${Math.round(c.first * 100)}" data-color="${Pie.engines.colorOf(c.e)}" data-pts="${esc(JSON.stringify(c.pts))}" d="${c.path}"/>`).join("")}
       </svg>
-      ${[0, .5, 1].map((f) => `<span class="relative-tick is-y" style="top: ${(1 - f) * 100}%">${f * 100}%</span>`).join("")}
-      ${[[0, "Fastest", "start"], [.05, "Within 5%", "middle"], [.1, "Within 10%", "middle"], [.25, "Within 25%", "middle"], [.5, "Within 50%", "end"]].map(([d, t, a]) => `<span class="relative-tick is-x is-${a}" style="left: ${(x(d) / 10).toFixed(1)}%">${t}</span>`).join("")}
+      ${[.01, .1, .25, .5, 1].map((f) => `<span class="relative-tick is-y" style="top: ${(y(f) / 10).toFixed(2)}%">${Math.round(f * 100)}%</span>`).join("")}
+      ${[[0, "Fastest", "start"], [.1, "Within 10%", "middle"], [.25, "Within 25%", "middle"], [.5, "Within 50%", "end"]].map(([d, t, a]) => `<span class="relative-tick is-x is-${a}" style="left: ${(x(d) / 10).toFixed(1)}%">${t}</span>`).join("")}
       <span class="relative-axis-title">Gap to the fastest engine on each test</span>
       <span class="relative-axis-title is-y">Share of each engine's tests</span>
       <span class="relative-active-dot" hidden></span><span class="relative-note" hidden></span>
-      ${curves.map((c) => `<span class="relative-label" data-engine="${esc(c.e)}" data-top="${((1 - c.last) * 100).toFixed(2)}" style="top: ${((1 - c.last) * 100).toFixed(2)}%">${engineMark(c.e)}${esc(label(c.e))}</span>`).join("")}
+      ${curves.map((c) => `<span class="relative-label" data-engine="${esc(c.e)}" data-top="${(y(c.last) / 10).toFixed(2)}" style="top: ${(y(c.last) / 10).toFixed(2)}%">${engineMark(c.e)}${esc(label(c.e))}</span>`).join("")}
     </div></div>`;
     return `
 ${relHead(pick)}
@@ -1311,13 +1311,13 @@ ${relHead(pick)}
     const m = svg.getScreenCTM();
     if (!m) return;
     const at = new DOMPoint(event.clientX, event.clientY).matrixTransform(m.inverse());
-    let best = null, dist = Infinity, bestY = 0;
+    let best = null, dist = Infinity, bestY = 0, bestF = 0;
     const cx = Math.max(0, Math.min(1000, at.x));
     for (const path of svg.querySelectorAll(".relative-line")) {
       const pts = path._pts || (path._pts = JSON.parse(path.dataset.pts));
-      let yv = pts[0][1];
-      for (const [px, py] of pts) { if (px > cx) break; yv = py; }
-      if (Math.abs(yv - at.y) < dist) { dist = Math.abs(yv - at.y); best = path; bestY = yv; }
+      let yv = pts[0][1], fv = pts[0][2];
+      for (const [px, py, pf] of pts) { if (px > cx) break; yv = py; fv = pf; }
+      if (Math.abs(yv - at.y) < dist) { dist = Math.abs(yv - at.y); best = path; bestY = yv; bestF = fv; }
     }
     if (!best) return;
     if (!best.classList.contains("is-active")) relActivate(area, best);
@@ -1325,7 +1325,7 @@ ${relHead(pick)}
     const dot = area.querySelector(".relative-active-dot"), note = area.querySelector(".relative-note");
     Object.assign(dot.style, { left: `${cx / 10}%`, top: `${bestY / 10}%` });
     Object.assign(note.style, { left: `${cx / 10}%`, top: `${bestY / 10}%` });
-    note.textContent = `${Math.round(100 - bestY / 10)}%`;
+    note.textContent = `${Math.round(bestF * 100)}%`;
     note.classList.toggle("is-left", cx > 820);
     note.hidden = false;
   });
