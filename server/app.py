@@ -7,8 +7,10 @@ import multiprocessing
 import os
 import threading
 import time
+from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -99,6 +101,41 @@ class Views:
             self.dirty.clear()
 
 
+class Hits:
+    def __init__(self, db: Database):
+        self.db = db
+        self.lock = threading.Lock()
+        self.counts: Counter[tuple[str, str]] = Counter()
+        self.stopped = threading.Event()
+
+    def add(self, path: str) -> None:
+        with self.lock:
+            self.counts[(datetime.now(timezone.utc).date().isoformat(), path)] += 1
+
+    def flush(self) -> None:
+        with self.lock:
+            counts, self.counts = self.counts, Counter()
+        if not counts:
+            return
+        try:
+            with self.db.tx() as cur:
+                cur.executemany("INSERT INTO hits (day, path, count) VALUES (%s, %s, %s) "
+                                "ON CONFLICT (day, path) DO UPDATE SET count = hits.count + EXCLUDED.count",
+                                [(day, path, n) for (day, path), n in counts.items()])
+        except Exception:
+            log.warning("hit counts not saved, keeping them for the next flush", exc_info=True)
+            with self.lock:
+                self.counts.update(counts)
+
+    def loop(self) -> None:
+        while not self.stopped.wait(timeout=60):
+            self.flush()
+
+    def stop(self) -> None:
+        self.stopped.set()
+        self.flush()
+
+
 def _blob(data: bytes) -> tuple[bytes, str]:
     return data, '"' + hashlib.sha256(data).hexdigest()[:32] + '"'
 
@@ -106,6 +143,8 @@ def _blob(data: bytes) -> tuple[bytes, str]:
 def _cached(request: Request, key: str, media_type: str) -> Response:
     READS.check(auth.address(request))
     data, etag = app.state.views.get(key)
+    if request.method == "GET":
+        app.state.hits.add("/v1/" + ("releases/latest" if key == "release:latest" else "releases/{id}" if key.startswith("release:") else key))
     headers = {"ETag": etag, "Cache-Control": "public, max-age=60, stale-while-revalidate=600", "Vary": "Accept-Encoding"}
     if request.headers.get("if-none-match") == etag:
         return Response(status_code=304, headers=headers)
@@ -119,9 +158,12 @@ async def lifespan(app: FastAPI):
     app.state.db = Database()
     app.state.views = Views(app.state.db)
     app.state.views.load()
+    app.state.hits = Hits(app.state.db)
     threading.Thread(target=app.state.views.loop, daemon=True, name="views").start()
+    threading.Thread(target=app.state.hits.loop, daemon=True, name="hits").start()
     yield
     app.state.views.stop()
+    app.state.hits.stop()
     app.state.db.close()
 
 
@@ -197,6 +239,19 @@ def rebuild(request: Request):
         cur.execute("INSERT INTO ingest_log (address, action) VALUES (%s, 'rebuild')", (auth.address(request),))
     app.state.views.dirty.set()
     return {"rebuilding": True, "views_built_at": app.state.views.built_at or None}
+
+
+@app.get("/v1/stats")
+def stats(request: Request, days: int = 30):
+    auth.require_admin(request)
+    app.state.hits.flush()
+    with app.state.db.tx() as cur:
+        cur.execute("SELECT day, path, count FROM hits WHERE day > current_date - %s ORDER BY day DESC, path", (max(1, min(days, 366)),))
+        rows = cur.fetchall()
+    by_day: dict[str, dict[str, int]] = {}
+    for day, path, n in rows:
+        by_day.setdefault(day.isoformat(), {})[path] = n
+    return {"days": [{"day": day, "requests": requests} for day, requests in by_day.items()]}
 
 
 @app.patch("/v1/tokens/{tid}")

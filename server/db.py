@@ -45,6 +45,12 @@ CREATE TABLE IF NOT EXISTS ingest_log (
     action text NOT NULL,
     detail text
 );
+CREATE TABLE IF NOT EXISTS hits (
+    day date NOT NULL,
+    path text NOT NULL,
+    count bigint NOT NULL,
+    PRIMARY KEY (day, path)
+);
 CREATE TABLE IF NOT EXISTS views (
     key text PRIMARY KEY,
     data bytea NOT NULL,

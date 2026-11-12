@@ -140,6 +140,19 @@ def test_the_admin_can_rebuild_the_views_at_once(client):
     assert client.get("/healthz").json()["views_built_at"] > before
 
 
+def test_the_admin_sees_reads_per_endpoint_per_day(client):
+    before = client.get("/v1/stats", headers={"Authorization": "Bearer admin-secret"}).json()["days"]
+    seen = before[0]["requests"] if before else {}
+    client.get("/v1/releases/latest")
+    client.get("/v1/releases/latest")
+    client.head("/v1/catalog")
+    assert client.get("/v1/stats").status_code == 403
+    today = client.get("/v1/stats", headers={"Authorization": "Bearer admin-secret"}).json()["days"][0]
+    assert today["day"] == datetime.now(timezone.utc).date().isoformat()
+    assert today["requests"]["/v1/releases/latest"] == seen.get("/v1/releases/latest", 0) + 2
+    assert today["requests"].get("/v1/catalog", 0) == seen.get("/v1/catalog", 0)
+
+
 def test_monitors_can_check_health_with_head(client):
     assert client.head("/healthz").status_code == 200
 
