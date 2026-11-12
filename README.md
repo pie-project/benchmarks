@@ -55,6 +55,7 @@ Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs
 | POST | `/v1/tokens` | a signed upload token |
 | POST | `/v1/submissions` | upload a `submission.json.gz` |
 | PATCH | `/v1/tokens/{id}` | admin: set a token's quota, body `{"quota": n}` |
+| POST | `/v1/rebuild` | admin: rebuild the views now instead of waiting for the next upload or the 15-minute timer |
 
 Reads are public JSON, built once after each upload, gzip-compressed and carry an ETag. Writes need a token; each token has an upload quota, every upload is checked and stored in one transaction.
 
