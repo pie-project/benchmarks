@@ -642,7 +642,7 @@ window.Pie = window.Pie || {};
   // llama.cpp's, vLLM Metal vLLM's, MLX Swift MLX's); each cell's card names the build that ran there
   const FAMILY = { webllm: "mlc", "llamacpp-webgpu": "llamacpp", "vllm-metal": "vllm", "mlx-swift": "mlxlm" };
   const FAMILY_NAMES = { mlc: "MLC" };
-  const BUILDS = { webllm: "WebLLM", mlc: "MLC LLM", "llamacpp-webgpu": "llama.cpp WebGPU", "vllm-metal": "vLLM Metal", "mlx-swift": "MLX Swift" };
+  const BUILDS = { webllm: "WebLLM", mlc: "MLC LLM", "llamacpp-webgpu": "llama.cpp Web", "vllm-metal": "vLLM Metal", "mlx-swift": "MLX Swift" };
   // where an engine can run at all, from the catalog's os and backends (matrix/engines.yaml): a platform's OS, and its
   // GPU backend where the engine names its backends; a browser tab runs only the builds made for WebGPU
   const PLATFORM_OS = { mac: ["macos"], nvidia: ["linux"], amd: ["linux"], tpu: ["linux"], android: ["android", "ios"], web: ["linux"] };
@@ -873,12 +873,12 @@ window.Pie = window.Pie || {};
     const pie = Pie.engines.primary;
     // an engine with only a few tests draws a curve of a few big steps, a line that reads as a fault: only those with ten or more
     const MIN_TESTS = 5;
-    // llama.cpp WebGPU stays off this chart
+    // llama.cpp Web stays off this chart
     const count = (e) => tests.filter((s) => s[e]).length;
     const ids = engineIds().filter((e) => !e.endsWith("-webgpu") && count(e) >= MIN_TESTS);
     if (!tests.length || !ids.includes(pie)) return `${relHead(pick)}<p class="board-empty">No ${esc(pick.label.toLowerCase())} results to compare yet</p>`;
     const fastest = (s) => Math.max(...Object.values(s));
-    const label = (e) => `${names().engine(e)}${e.endsWith("-webgpu") ? " WebGPU" : ""}`;
+    const label = (e) => `${names().engine(e)}${e.endsWith("-webgpu") ? " Web" : ""}`;
     // each engine's shortfall from the fastest engine in each of its tests, 0 where it is the fastest; drawn on a square
     // that stretches to the card (its lines keep their width), its words set around it in the page's own text
     // the share of tests on an inverted log scale: the distance from 100% on a log, so the top of the chart (90% to 100%),
@@ -902,11 +902,13 @@ window.Pie = window.Pie || {};
       </svg>
       ${[0, .5, .75, .9, .95, .99, 1].map((f) => `<span class="relative-tick is-y" style="top: ${(y(f) / 10).toFixed(2)}%">${Math.round(f * 100)}%</span>`).join("")}
       ${[[0, "Fastest", "start"], [.1, "Within 10%", "middle"], [.25, "Within 25%", "middle"], [.5, "Within 50%", "end"]].map(([d, t, a]) => `<span class="relative-tick is-x is-${a}" style="left: ${(x(d) / 10).toFixed(1)}%">${t}</span>`).join("")}
-      <span class="relative-axis-title">Gap to the fastest engine on each test</span>
-      <span class="relative-axis-title is-y">Share of each engine's tests</span>
+
       <span class="relative-active-dot" hidden></span><span class="relative-note" hidden></span>
       ${curves.map((c) => `<span class="relative-label" data-engine="${esc(c.e)}" data-top="${(y(c.last) / 10).toFixed(2)}" style="top: ${(y(c.last) / 10).toFixed(2)}%">${engineMark(c.e)}${esc(label(c.e))}</span>`).join("")}
-    </div></div>`;
+    </div>
+      <span class="relative-axis-title">Gap to the fastest engine on each test</span>
+      <span class="relative-axis-title is-y">Share of each engine's tests</span>
+    </div>`;
     return `
 ${relHead(pick)}
           <div class="board-grid-cards relative-cards">

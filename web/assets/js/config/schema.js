@@ -155,7 +155,7 @@ window.Pie = window.Pie || {};
     cerebras: {
       label: "Cerebras",
       short: "Cerebras",  // as the tables name it
-      section: null,  // no page for now; still a row in the Platforms list ("platforms" to bring it back)
+      section: "platforms",
       view: "platform",
       platform: "cerebras",
       tint: "#f05a28",
