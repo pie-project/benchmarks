@@ -8,8 +8,7 @@ This repository holds two things:
 |---|---|---|---|
 | 1 | `pie-bench`, the command line tool anyone installs | `src/pie_bench/` | your machine |
 | 2 | the results API the website reads | `server/` | Render |
-
-The website itself lives in [pie-project/website](https://github.com/pie-project/website).
+| 3 | the website, a static page that reads the API | `web/` | GitHub Pages |
 
 ## Run it
 
