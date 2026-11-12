@@ -8,7 +8,13 @@
 .reasons-empty { margin: 0 0 8px; font-size: 13px; color: var(--color-label-tertiary); }
 #reasons .board-section-head { margin-bottom: 20px; }  /* the title and its line, then room before the list, as the Overview spaces a section */
 #reasons .board-title { margin-bottom: 4px; }
-#reasons .reasons-slices { flex: none; margin-left: auto; }
+/* model slices on or off: a switch with the site's rounded-square corners, its label beside it */
+#reasons .reasons-slices { display: inline-flex; flex: none; align-items: center; gap: 8px; margin-left: auto; padding: 0; border: 0; background: none; font: inherit; font-size: 12px; color: var(--color-label-secondary); cursor: pointer; }
+#reasons .reasons-slices:focus:not(:focus-visible) { outline: none; }
+.reasons-switch { position: relative; width: 30px; height: 18px; border-radius: 6px; background: var(--color-fill-secondary); transition: background-color .2s ease; }
+.reasons-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .2s cubic-bezier(.2, .8, .2, 1); }
+.reasons-slices[aria-checked="true"] .reasons-switch { background: var(--color-accent); }
+.reasons-slices[aria-checked="true"] .reasons-switch::after { transform: translateX(12px); }
 .reasons-group { margin-top: 0; border-radius: 12px; overflow: hidden; background: color-mix(in srgb, var(--color-fill) 50%, transparent); }  /* one grouped list, as System Settings sets its rows in a rounded panel */
 .reasons-item { position: relative; scroll-margin-top: 24px; padding: 0; transition: background-color 1.2s ease; }
 .reasons-item + .reasons-item::before { content: ""; position: absolute; top: 0; left: 18px; right: 0; height: .5px; background: var(--color-separator); }  /* the hairline starts at the text, not the panel's edge */
@@ -627,7 +633,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-cards { display: grid; grid-template-columns: minmax(0, 1fr); }  /* the chart alone, the section's full width */
 @media (max-width: 899px) { .relative-cards { grid-template-columns: 1fr; } }
 .relative-plot { position: relative; height: 360px; margin-top: 4px; }
-.relative-area { position: absolute; left: 54px; right: 122px; top: 6px; bottom: 46px; }
+.relative-area { position: absolute; left: 54px; right: 122px; top: 6px; bottom: 40px; }
 .relative-chart { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; cursor: crosshair; }
 .relative-line { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; opacity: .7; }
 .relative-line.is-active { opacity: 1; }
@@ -636,8 +642,10 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-tick.is-x { top: calc(100% + 8px); }
 .relative-tick.is-middle { transform: translateX(-50%); }
 .relative-tick.is-end { transform: translateX(-100%); }
-.relative-axis-title { position: absolute; top: calc(100% + 28px); left: 50%; transform: translateX(-50%); font-size: 11px; line-height: 1; color: var(--color-label-tertiary); white-space: nowrap; pointer-events: none; }
-.relative-axis-title.is-y { top: 50%; left: -46px; transform: translate(-50%, -50%) rotate(-90deg); }
+/* the axis captions in the plot's own frame: the bottom one on its bottom edge under the chart, the left one on its left
+   edge beside it, read bottom to top */
+.relative-axis-title { position: absolute; bottom: 0; left: 54px; right: 122px; font-size: 11px; line-height: 1; text-align: center; color: var(--color-label-tertiary); white-space: nowrap; pointer-events: none; }
+.relative-axis-title.is-y { bottom: 40px; top: 6px; left: 0; right: auto; writing-mode: vertical-rl; transform: rotate(180deg); }
 .relative-label { position: absolute; left: calc(100% + 8px); font-size: 11px; line-height: 1; color: var(--color-label-secondary); white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
 .relative-label.is-active { font-weight: 400; }
 .relative-label { display: inline-flex; align-items: center; gap: 5px; }
@@ -646,3 +654,21 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-note { position: absolute; padding: 2px 6px; border-radius: 5px; font-size: 11px; line-height: 14px; font-variant-numeric: tabular-nums; color: #fff; white-space: nowrap; transform: translate(9px, -50%); pointer-events: none; }  /* the active line's share at the pointer, as a pill in its colour beside the dot */
 .relative-note.is-left { transform: translate(calc(-100% - 9px), -50%); }
 /* the two cards carry no titles: the section's title and line say what both show */
+
+/* a cell's profile in its Suggestions row: one bar per engine on a shared scale, split into the same stages */
+.profile-verdict { margin: 0 0 8px; font-size: 13px; line-height: 1.45; color: var(--color-label); }
+.profile-verdict.is-rerun { color: var(--color-label-secondary); }
+.profile-row { display: grid; grid-template-columns: 110px minmax(0, 1fr) 70px; align-items: center; gap: 10px; height: 22px; font-size: 12px; }
+.profile-engine { color: var(--color-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-bar { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: var(--color-fill); }
+.profile-bar i { display: block; height: 100%; }
+.profile-total { text-align: right; font-variant-numeric: tabular-nums; color: var(--color-label-secondary); }
+.profile-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 4px; font-size: 11px; color: var(--color-label-secondary); }
+.profile-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.profile-legend i { width: 8px; height: 8px; border-radius: 2px; }
+.profile-note { margin: 0; font-size: 11px; color: var(--color-label-tertiary); }
+/* each row's status at its left: a green shield where a profile verifies the gap; the slot stays empty otherwise */
+.reasons-item-status { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; }
+.reasons-item-status svg { width: 18px; height: 18px; }
+.reasons-item-status.is-verified .shield { fill: var(--color-positive); }
+.reasons-item-status.is-verified .mark { fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
