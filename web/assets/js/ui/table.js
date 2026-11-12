@@ -162,7 +162,7 @@ window.Pie = window.Pie || {};
     if (reviewFor !== Pie.store.tables) {
       reviewFor = Pie.store.tables;
       review = new Set((Pie.platform?.gaps?.(Pie.state) || []).map((g) => `${g.hardware}|${g.model}|${g.setup}`)
-        .filter((key) => (Pie.gapNotes || {})[key]?.[0] !== "explained"));
+        .filter((key) => (Pie.profiles || {})[key]?.verdict !== "confirmed"));
     }
     return review.has(`${row.hardware}|${row.model}|${SETUP[row.workload]}`);
   };

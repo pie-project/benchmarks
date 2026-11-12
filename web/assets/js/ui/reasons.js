@@ -5,7 +5,7 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("reasons");
   const esc = (text) => Pie.format.escape(String(text ?? ""));
-  const nameOf = (id) => `${Pie.store.names?.engine?.(id) || id}${id.endsWith("-webgpu") ? " WebGPU" : ""}`;
+  const nameOf = (id) => `${Pie.store.names?.engine?.(id) || id}${id.endsWith("-webgpu") ? " Web" : ""}`;
   const colorOf = (id) => Pie.engines.colors?.[id] || "var(--color-label-tertiary)";
 
   // every cell where an engine is the slower of the two fastest, one row each, under that engine; no shared conclusion
@@ -26,18 +26,35 @@ window.Pie = window.Pie || {};
     const name = String(h.name || id).replace(/^Apple /, "");
     return h.class === "mac" && h.memory_gib ? `${name} ${h.memory_gib} GB` : name;
   };
+  // a cell's profile: each engine's step split into the same stages, as one bar each on a shared scale, and the verdict
+  const STAGES = [["attention", "Attention", "#5E5CE6"], ["dense_matmul", "Dense matmul", "#0A84FF"], ["moe", "MoE", "#30B0C7"],
+    ["norm_rope_elementwise", "Norm and rope", "#34C759"], ["sampling", "Sampling", "#FF9F0A"], ["other_gpu", "Other GPU", "#AF52DE"], ["gpu_idle", "GPU idle", "#AEAEB2"]];
+  const verified = (c) => (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`]?.verdict === "confirmed";
+  const ms = (v) => `${v >= 100 ? Math.round(v) : v >= 10 ? v.toFixed(1) : v.toFixed(2)} ms`;
+  const profileOf = (c) => {
+    const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
+    if (!p) return `<p class="reasons-item-suggestion"><span class="reasons-item-label">Profile</span>Not measured yet</p>`;
+    const total = (side) => STAGES.reduce((n, [k]) => n + (side.stages[k] || 0), 0);
+    const top = Math.max(total(p.fastest), total(p.second));
+    const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${STAGES.map(([k, name, color]) => side.stages[k] > 0 ? `<i style="width: ${(100 * side.stages[k] / top).toFixed(2)}%; background: ${color}" title="${esc(`${name}: ${ms(side.stages[k])}`)}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;
+    const used = STAGES.filter(([k]) => p.fastest.stages[k] > 0 || p.second.stages[k] > 0);
+    return `${bar(p.fastest)}${bar(p.second)}
+                <p class="profile-legend">${used.map(([, name, color]) => `<span><i style="background: ${color}"></i>${name}</span>`).join("")}</p>
+                <p class="profile-note">${esc(p.unit || "")}</p>`;
+  };
   const keyOf = (engine, c) => `${engine}|${c.hardware}|${c.model}|${c.setup}`;
   // a row as a disclosure: the cell, its gap and setup; a click opens its profile and the suggestion
   const item = (id, c) => `
             <details class="reasons-item" data-reason-key="${esc(keyOf(id, c))}">
               <summary class="reasons-item-summary">
+                ${verified(c)
+                  ? `<span class="reasons-item-status is-verified" role="img" aria-label="Verified" title="Verified: a profile of both engines agrees with the benchmark"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>`
+                  : `<span class="reasons-item-status" aria-hidden="true"></span>`}
                 <div class="reasons-item-text"><h2 class="reasons-item-title">${esc(modelName(c.model))} on ${esc(machineName(c.hardware))}</h2>
                 <p class="reasons-item-meta">${esc(c.label)}<span class="reasons-item-tag">vs ${esc(nameOf(c.rival))}</span>${c.miniature ? `<span class="reasons-item-tag">Model slice</span>` : ""}</p></div>
                 <span class="reasons-item-gap">${pct(c.gap)} slower</span><svg class="reasons-item-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg>
               </summary>
-              <div class="reasons-item-body">
-                <p class="reasons-item-suggestion"><span class="reasons-item-label">Profile</span>Not measured yet</p>
-              </div>
+              <div class="reasons-item-body">${profileOf(c)}</div>
             </details>`;
   let focus = null;
   const KEY = "pieSuggestionsEngine";
@@ -64,9 +81,9 @@ window.Pie = window.Pie || {};
       <div class="board-scroll"><div class="board-inner">
         <nav class="board-outline" aria-label="Engines">${list.map(([e]) => `<button type="button" class="board-outline-item${e === current ? " is-current" : ""}" data-reasons-go="${esc(e)}"><i class="board-outline-dot" style="background: ${colorOf(e)}" aria-hidden="true"></i><span>${esc(nameOf(e))}</span></button>`).join("")}</nav>
         <div class="board-main">
-          <div class="board-section-head"><div class="board-section-text"><h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))}</h1>
+          <div class="board-section-head"><div class="board-section-text"><h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))} Profile</h1>
           <p class="board-lede">${lede(id, cells)}</p></div>
-          <button type="button" class="filter-button board-title-pick is-text reasons-slices" data-reasons-slices>${slices ? "Disable Model Slices" : "Enable Model Slices"}</button></div>
+          <button type="button" class="reasons-slices" data-reasons-slices role="switch" aria-checked="${slices}"><span>Model slices</span><i class="reasons-switch" aria-hidden="true"></i></button></div>
           ${reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">No cells behind.</p>`}
         </div>
       </div></div>`;
