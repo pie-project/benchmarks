@@ -3,7 +3,7 @@ window.Pie = window.Pie || {};
 (() => {
   const API = "https://bench-api.pie-project.org/v1/";
   const local = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
-  Pie.dataBase = new URLSearchParams(location.search).get("api") || (local ? "http://localhost:8790/v1/" : API);
+  Pie.dataBase = new URLSearchParams(location.search).get("api") || (local ? `${location.origin}/v1/` : API);
   Pie.getJson = (path) => fetch(Pie.dataBase + path).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${path}: ${r.status}`))));
 
   const APP = [
