@@ -643,8 +643,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-tick.is-end { transform: translateX(-100%); }
 /* the axis captions in the plot's own frame: the bottom one on its bottom edge under the chart, the left one on its left
    edge beside it, read bottom to top */
-.relative-axis-title { position: absolute; bottom: 0; left: 0; right: 0; font-size: 10px; line-height: 1; text-align: center; color: var(--color-label-secondary); white-space: nowrap; pointer-events: none; }  /* as the head-to-head grids name their sides: small grey words at the card's left edge and foot, still while the chart is pulled */
-.relative-axis-title.is-y { bottom: 40px; top: 6px; left: 0; right: auto; writing-mode: vertical-rl; transform: rotate(180deg); }
+.relative-axis-title { position: absolute; bottom: -10px; left: 0; right: 0; font-size: 10px; line-height: 1; text-align: center; color: var(--color-label-secondary); white-space: nowrap; pointer-events: none; }  /* as the head-to-head grids name their sides: small grey words at the card's left edge and foot, still while the chart is pulled */
+.relative-axis-title.is-y { bottom: 40px; top: 6px; left: -16px; right: auto; writing-mode: vertical-rl; transform: rotate(180deg); }  /* past the card's 16px side padding: flush with the section's title */
 .relative-label { position: absolute; left: calc(100% + 8px); font-size: 11px; line-height: 1; color: var(--color-label-secondary); white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
 .relative-label.is-active { font-weight: 400; }
 .relative-label { display: inline-flex; align-items: center; gap: 5px; }
