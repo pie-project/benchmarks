@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from pie_bench import __version__
-from server import auth, build, footprint, ingest, split
+from server import auth, build, footprint, ingest, profiles, split
 from server.db import Database
 
 log = logging.getLogger("pie-bench-api")
@@ -44,8 +44,10 @@ class Views:
             contributed = {pid: spec for pid, spec in cur.fetchall()}
             cur.execute("SELECT count(*) FROM runs")
             submissions = cur.fetchone()[0]
+            profiled = profiles.blob(cur)
         with ProcessPoolExecutor(max_workers=1, mp_context=multiprocessing.get_context("spawn")) as pool:
             data = pool.submit(build.blobs, self.db.dsn, contributed, submissions).result()
+        data["profiles"] = profiled
         sizes = self.sizes()
         if sizes:
             data["footprint"] = sizes
@@ -70,6 +72,12 @@ class Views:
             with cur.copy("COPY views (key, data) FROM STDIN") as cp:
                 for key, blob in data.items():
                     cp.write_row((key, blob))
+
+    def put(self, key: str, data: bytes) -> None:
+        with self.lock:
+            self.blobs = {**self.blobs, key: _blob(data)}
+        with self.db.tx() as cur:
+            cur.execute("INSERT INTO views (key, data) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, built_at = now()", (key, data))
 
     def load(self) -> None:
         with self.db.tx() as cur:
@@ -211,6 +219,11 @@ def download_sizes(request: Request):
     return _cached(request, "footprint", "application/json")
 
 
+@app.api_route("/v1/profiles", methods=["GET", "HEAD"])
+def stage_profiles(request: Request):
+    return _cached(request, "profiles", "application/json")
+
+
 @app.post("/v1/tokens")
 def create_token(request: Request, body: dict = Body(default={})):
     admin = auth.is_admin(request)
@@ -236,6 +249,24 @@ async def submissions(request: Request):
     with app.state.db.tx() as cur:
         out = ingest.store(cur, doc, records, scores, token_id=tid, address=addr)
     app.state.views.dirty.set()
+    return out
+
+
+@app.post("/v1/profiles")
+async def upload_profiles(request: Request):
+    addr = auth.address(request)
+    WRITES.check(addr)
+    tid = None if auth.is_admin(request) else auth.token_id(request)
+    cells = profiles.check(ingest.decode(await request.body()))
+    with app.state.db.tx() as cur:
+        if tid:
+            cur.execute("SELECT revoked FROM tokens WHERE id = %s", (tid,))
+            row = cur.fetchone()
+            if not row or row[0]:
+                raise HTTPException(401, "token revoked or unknown: run `pie-bench login`")
+        out = profiles.store(cur, cells, token_id=tid, address=addr)
+        data = profiles.blob(cur)
+    app.state.views.put("profiles", data)
     return out
 
 
