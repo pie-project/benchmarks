@@ -630,7 +630,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-cards { display: grid; grid-template-columns: minmax(0, 1fr); }  /* the chart alone, the section's full width */
 @media (max-width: 899px) { .relative-cards { grid-template-columns: 1fr; } }
 .relative-plot { position: relative; height: 360px; margin-top: 4px; }
-.relative-area { position: absolute; left: 54px; right: 64px; top: 6px; bottom: 40px; }
+.relative-area { position: absolute; left: 54px; right: 140px; top: 6px; bottom: 40px; }
 .relative-chart { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .relative-area { cursor: grab; user-select: none; touch-action: pan-y; }
 .relative-area.is-tugged { cursor: grabbing; }
@@ -645,10 +645,6 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
    edge beside it, read bottom to top */
 .relative-axis-title { position: absolute; bottom: -10px; left: 0; right: 0; font-size: 10px; line-height: 1; text-align: center; color: var(--color-label-secondary); white-space: nowrap; pointer-events: none; }  /* as the head-to-head grids name their sides: small grey words at the card's left edge and foot, still while the chart is pulled */
 .relative-axis-title.is-y { bottom: 40px; top: 6px; left: -16px; right: auto; writing-mode: vertical-rl; transform: rotate(180deg); }  /* past the card's 16px side padding: flush with the section's title */
-.relative-label { position: absolute; left: calc(100% + 34px); font-size: 11px; line-height: 1; color: var(--color-label-secondary); white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
-.relative-label.is-active { font-weight: 400; }
-.relative-label { display: inline-flex; align-items: center; gap: 5px; }
-.relative-label .board-pick-logo { width: 12px; height: 12px; flex: none; }
 .relative-active-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
 .relative-note { position: absolute; padding: 2px 6px; border-radius: 5px; font-size: 11px; line-height: 14px; font-variant-numeric: tabular-nums; color: #fff; white-space: nowrap; transform: translate(9px, -50%); pointer-events: none; }  /* the active line's share at the pointer, as a pill in its colour beside the dot */
 .relative-note.is-left { transform: translate(calc(-100% - 9px), -50%); }
@@ -676,6 +672,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .reasons-item-title .reasons-slice-icon { margin-right: 4px; stroke-width: 1.8; }  /* as heavy as the bold title beside it */
 #reasons .reasons-slices .reasons-slice-icon { margin-right: -2px; stroke: currentColor; }  /* the switch's icon in its label's grey */
 .relative-leaders { position: absolute; top: 0; left: 100%; overflow: visible; pointer-events: none; }
-.relative-leader { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; opacity: .7; }
+/* the lines' names: a tag in each engine's colour, its square left edge met by a neck that narrows to the leader, its
+   right corners the site's rounded squares; the leader in the same colour, quieter until its line is picked */
+.relative-label { position: absolute; left: calc(100% + 40px); display: inline-flex; align-items: center; height: 18px; padding: 0 7px 0 4px; border-radius: 0 5px 5px 0; font-size: 11px; font-weight: 500; line-height: 1; color: #fff; white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
+.relative-leader { fill: none; stroke-width: 1; opacity: .45; transition: opacity .15s ease; }
 .relative-leader.is-active { opacity: 1; }
-.relative-pill { pointer-events: visiblePainted; }
