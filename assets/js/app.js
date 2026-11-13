@@ -285,6 +285,8 @@
         Pie.reports.pick(key.slice(8), value);
       } else if (String(key).startsWith("gaps:")) {
         Pie.gaps.pick(key.slice(5), value);
+      } else if (String(key).startsWith("reasons:")) {
+        Pie.reasons.pick(key.slice(8), value);
       } else if (String(key).startsWith("methods:")) {
         Pie.methods.pick(key.slice(8), value);
       } else if (value === popover.ALL) {

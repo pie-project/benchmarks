@@ -650,6 +650,58 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .profile-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 4px; font-size: 11px; color: var(--color-label-secondary); }
 .profile-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .profile-legend i { width: 8px; height: 8px; border-radius: 2px; }
+.profile-bar i[data-stage], .profile-legend span[data-stage] { cursor: default; }
+/* a profile's Limit bar: the machine's floor for the cell, in quieter ink than the two engines */
+.profile-row.is-limit .profile-engine, .profile-row.is-limit .profile-total { color: var(--color-label-secondary); }
+.profile-bar i.is-limit, .stage-tip-name i.is-limit { background: none; box-shadow: inset 0 0 0 1.5px var(--color-label-secondary); border-radius: 3px; }
+/* the Profiling Summary: three figures, then a card a chart in the grouped panel's tint */
+.welcome-stats.summary-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 4px 0 8px; }
+.summary-card { margin-top: 12px; padding: 16px 18px 14px; border-radius: 12px; background: color-mix(in srgb, var(--color-fill) 50%, transparent); }
+.summary-card h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--color-label); }
+.summary-sub { margin: 2px 0 12px; font-size: 12px; color: var(--color-label-secondary); }
+.board-title-pick.summary-engine { gap: 6px; padding: 0 8px; }  /* the Summary's engine pick: the engine's square, its name, the menu's chevron; 8px each side, as the switches beside it */
+.summary-engine-dot { width: 8px; height: 8px; flex: none; border-radius: 2px; }
+/* the Summary's dot rows: a name, a plot on a log axis, a figure; one dot a cell, its hit area twice its size */
+.dot-axis, .dot-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 210px; align-items: center; column-gap: 14px; }
+.dot-axis { height: 20px; margin-bottom: 2px; font-size: 11px; color: var(--color-label-tertiary); }
+.dot-scale { position: relative; height: 100%; }
+.dot-scale > span { position: absolute; top: 3px; transform: translateX(-50%); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dot-row { height: 34px; font-size: 12px; color: var(--color-label); }
+.dot-plot { position: relative; height: 28px; border-radius: 4px; background: color-mix(in srgb, var(--color-fill) 70%, transparent); }
+.dot-plot.is-limit { border-left: 1.5px solid var(--color-label-secondary); border-radius: 0 4px 4px 0; }  /* 1x: the limit, a wall no dot crosses */
+.dot-one { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--color-label-tertiary); }
+.dot { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; cursor: pointer; }
+.dot::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--dot, var(--color-label-tertiary)); box-shadow: 0 0 0 1.5px var(--color-background); }
+.dot.is-faster { --dot: var(--color-positive); }
+.dot.is-slower { --dot: var(--color-negative); }
+.dot.is-same { --dot: var(--color-label-tertiary); }
+.dot.is-hollow::after { background: var(--color-background); box-shadow: inset 0 0 0 1.5px var(--color-label-secondary); }
+.dot:hover::after { inset: 3px; }  /* the dot under the pointer grows a little, as a mark answers a hover */
+.dot-link { position: absolute; height: 1px; margin-top: -.5px; background: var(--color-label-quaternary); }
+.dot-median { position: absolute; top: 3px; bottom: 3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--color-label); pointer-events: none; }
+.dot-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dot-stat { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--color-label-secondary); }
+.dot-stat b { margin-right: 4px; font-weight: 600; color: var(--color-label); font-variant-numeric: tabular-nums; }
+.dot-key { display: inline-block; width: 8px; height: 8px; margin: 0 5px 0 6px; border-radius: 50%; background: var(--dot); vertical-align: 0; }
+.dot-key.is-hollow { background: none; box-shadow: inset 0 0 0 1.5px var(--color-label-secondary); }
+.dot-key.is-faster { --dot: var(--color-positive); }
+.dot-key.is-slower { --dot: var(--color-negative); }
+@media (max-width: 640px) {
+  .welcome-stats.summary-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dot-axis, .dot-row { grid-template-columns: 100px minmax(0, 1fr); }
+  .dot-row { height: auto; padding: 4px 0; row-gap: 2px; }
+  .dot-stat { grid-column: 2; }
+  .dot-axis > span:last-child { display: none; }
+}
+}
+/* a stage's hover card: its name and time, what it does, and where its time usually goes when an engine is slow there */
+.chart-tooltip.is-note.is-stage-tip { width: 330px; max-width: calc(100vw - 16px); padding: 9px 12px; white-space: normal; box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(0, 0, 0, .1); }
+:root[data-theme="dark"] .chart-tooltip.is-note.is-stage-tip { box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(255, 255, 255, .14); }  /* a macOS popover's faint light edge */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chart-tooltip.is-note.is-stage-tip { box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(255, 255, 255, .14); } }  /* one width for every stage and the Limit, room for the longest line */
+.stage-tip-name { display: inline-flex; align-items: center; gap: 6px; }
+.stage-tip-name i { width: 8px; height: 8px; border-radius: 2px; }
+.stage-tip-head { margin-top: 8px; padding-top: 7px; border-top: .5px solid var(--color-separator); font-size: 11px; font-weight: 600; color: var(--color-label-tertiary, var(--color-label-secondary)); }  /* a section of the card, under a hairline, as a macOS popover divides one */
+.stage-tip-list { margin: 3px 0 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.5; color: var(--color-label-secondary); }  /* plain lines, no bullets */
 .profile-note { margin: 0; font-size: 11px; color: var(--color-label-tertiary); }
 /* each row's status at its left: a green shield where a profile verifies the gap; the slot stays empty otherwise */
 .reasons-item-status { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; }
