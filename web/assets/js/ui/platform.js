@@ -405,6 +405,14 @@ window.Pie = window.Pie || {};
     return b?.tps && r[metric.key] > b.tps;
   });
   const apart = (c) => c?.gain != null && c.pie.engine === Pie.engines.primary && Math.round(c.gain * 100) >= 25;
+  // a cell's two fastest engines when the second is 25% or more behind the first, as Suggestions lists them
+  const pairOf = (c, metric) => {
+    const k = metric.key, up = metric.higher !== false, top = new Map();
+    for (const r of c?.all || []) if (r[k] > 0 && (!top.has(r.engine) || (up ? r[k] > top.get(r.engine)[k] : r[k] < top.get(r.engine)[k]))) top.set(r.engine, r);
+    const [first, second] = [...top.values()].sort((a, b) => (up ? b[k] - a[k] : a[k] - b[k]));
+    const behind = second && (up ? first[k] / second[k] - 1 : second[k] / first[k] - 1);
+    return second && Math.round(behind * 100) >= 25 ? { first, second, behind } : null;
+  };
   let gapCache = { key: null, list: [] };
 
   // each engine's share of the hardware limit, against its own weights (Raw only: a drafter skips the passes the limit counts)
@@ -888,16 +896,10 @@ window.Pie = window.Pie || {};
           for (const [mac, row] of Object.entries(grid)) {
             for (const [model, { c }] of Object.entries(row)) {
               // the cell's two fastest engines, whoever they are: the second goes on its own Suggestions page when 25% or more behind
-              if (c?.pie) {
+              const pair = c?.pie && pairOf(c, mode.metric);
+              if (pair) {
                 const t = c.pie.workload === "spec" ? SPEC : mode;
-                const k = mode.metric.key, up = mode.metric.higher !== false;
-                const top = new Map();
-                for (const r of c.all || []) if (r[k] > 0 && (!top.has(r.engine) || (up ? r[k] > top.get(r.engine)[k] : r[k] < top.get(r.engine)[k]))) top.set(r.engine, r);
-                const [first, second] = [...top.values()].sort((a, b) => (up ? b[k] - a[k] : a[k] - b[k]));
-                const behind = second && (up ? first[k] / second[k] - 1 : second[k] / first[k] - 1);
-                if (second && Math.round(behind * 100) >= 25) {
-                  seconds.push({ engine: second.engine, rival: first.engine, setup: t.id, label: t.id === "spec" ? t.label : `${t.item} ${t.group}`, hardware: mac, model, gap: behind, miniature: c.pie.miniature || null });
-                }
+                seconds.push({ engine: pair.second.engine, rival: pair.first.engine, setup: t.id, label: t.id === "spec" ? t.label : `${t.item} ${t.group}`, hardware: mac, model, gap: pair.behind, miniature: c.pie.miniature || null });
               }
               if (!apart(c)) continue;
               const m = c.pie.workload === "spec" ? SPEC : mode;
@@ -1403,11 +1405,12 @@ window.Pie = window.Pie || {};
             // an engine here measured above its own theoretical limit (a full model, not a slice): the cell tinted red,
             // in every view, as the best machine is tinted blue
             const overLimit = overLimitOf(mac, realOf(model), modeOf(c), metric, c);
-            const gapped = compare === "engines" && apart(c);
-            const flagged = gapped && !overLimit;
+            // the engine on view one of the cell's two fastest, 25% or more apart: the cell on a Suggestions page
+            const pair = compare === "engines" ? pairOf(c, metric) : null;
+            const flagged = !!pair && [pair.first.engine, pair.second.engine].includes(c.pie.engine) && !overLimit;
             // explained only where a profile of both engines confirms the gap
             const explained = flagged && (Pie.profiles || {})[`${mac}|${realOf(model)}|${modeOf(c).id}`]?.verdict === "confirmed";
-            const reasonAt = explained ? ` data-gap="${esc(JSON.stringify({ engine: c.best.engine, hardware: mac, model: realOf(model), setup: modeOf(c).id }))}"` : "";
+            const reasonAt = explained ? ` data-gap="${esc(JSON.stringify({ engine: pair.second.engine, hardware: mac, model: realOf(model), setup: modeOf(c).id }))}"` : "";
             return `<td class="${sorted} is-openable${overLimit ? " is-over-limit" : explained ? " is-explained" : flagged ? " is-gap" : ""}"${reasonAt} data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">${explained ? "See Reason" : "See Runs"}<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && topIn(g.macs.filter((m) => !hidden.has(m)), model) === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}${explained ? `<span class="verified-mark" aria-hidden="true"><svg viewBox="0 0 16 16"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>` : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
           }
           // an empty cell lists every engine that has a row here and why it gave no number, as a measured cell's card does
