@@ -616,8 +616,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
    instead of their fixed height, the platform tiles small in the logos' slots, the count of platforms a quiet last column */
 .board-matrix-frame.is-support { height: auto; padding: 4px 28px 18px 0; }
 #board-support + .board-section-head { margin-top: 32px; }
-.board-matrix.is-support td.is-ran { --tile: var(--color-fill); }  /* a check on the grey tile: ran here */
-.board-support-check { width: 12px; height: 12px; vertical-align: middle; fill: none; stroke: #34C759; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }  /* its keys end the card close under the grid, so the line comes sooner */
+.board-matrix.is-support td.is-ran { --tile: #34C759; }  /* a white check on a green tile: ran here */
+.board-support-check { width: 12px; height: 12px; vertical-align: middle; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }  /* its keys end the card close under the grid, so the line comes sooner */
 .board-support-keys { position: absolute; left: 0; bottom: 1px; display: flex; gap: 12px; font-size: 9px; line-height: 1; color: var(--color-label-secondary); }  /* at the foot's left, as Speculative sits */
 .board-support-keys span { display: inline-flex; align-items: center; gap: 4px; }
 .board-support-keys i { width: 12px; height: 8px; border-radius: 2px; background: var(--color-fill); }
