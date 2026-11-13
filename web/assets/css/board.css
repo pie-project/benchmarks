@@ -651,6 +651,12 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .profile-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .profile-legend i { width: 8px; height: 8px; border-radius: 2px; }
 .profile-bar i[data-stage], .profile-legend span[data-stage] { cursor: default; }
+/* the Profiling Overview: one engine a row in the grouped panel's tint, a row opening that engine's profiles */
+.reasons-overview { padding: 14px 18px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-fill) 50%, transparent); }
+.reasons-overview-lead { margin: 0 0 10px; font-size: 12px; color: var(--color-label-secondary); }
+.reasons-overview .profile-row { height: 28px; cursor: pointer; }
+.reasons-overview .profile-row:hover .profile-engine { color: var(--color-accent); }
+.reasons-overview .profile-bar i[data-stage] { cursor: pointer; }
 /* a stage's hover card: its name and time, what it does, and where its time usually goes when an engine is slow there */
 .chart-tooltip.is-note.is-stage-tip { max-width: 260px; padding: 9px 12px; white-space: normal; }
 .stage-tip-name { display: inline-flex; align-items: center; gap: 6px; }

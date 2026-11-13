@@ -39,11 +39,15 @@ window.Pie = window.Pie || {};
     other_gpu: ["Any other kernel, such as copies", ["Weights or caches copied every step", "Host and device transfers", "Cache bookkeeping kernels"]],
     gpu_idle: ["The GPU waits on the host inside the step", ["Host prep slower than the GPU work", "No graph capture or compiled step", "Syncs between kernel launches"]],
   };
+  // the Overview's extra segment: cells no profile of both engines confirms yet, so no stage is named for them
+  const UNVERIFIED = ["unverified", "Not verified", "var(--color-label-quaternary)"];
+  HINTS.unverified = ["No profile of both engines agrees with the benchmark yet", []];
+  // value: what the segment measures, already in words (its ms in a profile, its cells in the Overview)
   const hint = (k, value) => {
-    const [, name, color] = STAGES.find(([key]) => key === k);
+    const [, name, color] = [...STAGES, UNVERIFIED].find(([key]) => key === k);
     const [does, slow] = HINTS[k];
-    return `<div class="gap-tip-title"><span class="stage-tip-name"><i style="background: ${color}"></i>${esc(name)}</span>${value == null ? "" : `<span class="gap-tip-end gap-tip-gap">${ms(value)}</span>`}</div>`
-      + `<div class="gap-tip-body">${esc(does)}</div><div class="stage-tip-head">Slow when</div><ul class="stage-tip-list">${slow.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>`;
+    return `<div class="gap-tip-title"><span class="stage-tip-name"><i style="background: ${color}"></i>${esc(name)}</span>${value ? `<span class="gap-tip-end gap-tip-gap">${esc(value)}</span>` : ""}</div>`
+      + `<div class="gap-tip-body">${esc(does)}</div>${slow.length ? `<div class="stage-tip-head">Slow when</div><ul class="stage-tip-list">${slow.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}`;
   };
   // a model slice's mark, the grid's own: a square cut by a diagonal
   const sliceIcon = (label) => `<svg class="reasons-slice-icon" viewBox="0 0 16 16" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>`;
@@ -54,7 +58,7 @@ window.Pie = window.Pie || {};
     if (!p) return `<p class="reasons-item-suggestion">Not measured yet</p>`;
     const total = (side) => STAGES.reduce((n, [k]) => n + (side.stages[k] || 0), 0);
     const top = Math.max(total(p.fastest), total(p.second));
-    const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${STAGES.map(([k, , color]) => side.stages[k] > 0 ? `<i style="width: ${(100 * side.stages[k] / top).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-ms="${side.stages[k]}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;
+    const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${STAGES.map(([k, , color]) => side.stages[k] > 0 ? `<i style="width: ${(100 * side.stages[k] / top).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-value="${ms(side.stages[k])}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;
     const used = STAGES.filter(([k]) => p.fastest.stages[k] > 0 || p.second.stages[k] > 0);
     return `${bar(p.fastest)}${bar(p.second)}
                 <p class="profile-legend">${used.map(([k, name, color]) => `<span data-stage="${k}"><i style="background: ${color}"></i>${name}</span>`).join("")}</p>
@@ -74,6 +78,27 @@ window.Pie = window.Pie || {};
               </summary>
               <div class="reasons-item-body">${profileOf(c)}</div>
             </details>`;
+  // the Overview: one bar per engine, its cells behind split by the stage each gap comes from, on one shared scale;
+  // a row opens that engine's profiles
+  const OVERVIEW = "overview";
+  const overviewOf = (engines) => {
+    const KEYS = [...STAGES, UNVERIFIED];
+    const word = (n) => `${n.toLocaleString("en-US")} ${n === 1 ? "cell" : "cells"}`;
+    const rows = engines.map(([e, cs]) => {
+      const by = {};
+      for (const c of cs) {
+        const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
+        const k = p?.verdict === "confirmed" && p.stageKey ? p.stageKey : UNVERIFIED[0];
+        by[k] = (by[k] || 0) + 1;
+      }
+      return { engine: e, total: cs.length, by };
+    });
+    const most = Math.max(1, ...rows.map((r) => r.total));
+    const row = (r) => `<div class="profile-row reasons-overview-row" data-reasons-go="${esc(r.engine)}"><span class="profile-engine">${esc(nameOf(r.engine))}</span><span class="profile-bar">${KEYS.map(([k, , color]) => r.by[k] ? `<i style="width: ${(100 * r.by[k] / most).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-value="${word(r.by[k])}"></i>` : "").join("")}</span><span class="profile-total">${word(r.total)}</span></div>`;
+    const used = KEYS.filter(([k]) => rows.some((r) => r.by[k]));
+    return `<div class="reasons-overview"><p class="reasons-overview-lead">Cells each engine trails in, by the stage the gap comes from</p>${rows.map(row).join("")}
+                <p class="profile-legend">${used.map(([k, name, color]) => `<span data-stage="${k}"><i style="background: ${color}"></i>${name}</span>`).join("")}</p></div>`;
+  };
   let focus = null;
   let shownCount = 0;
   const countText = () => `${shownCount.toLocaleString("en-US")} ${shownCount === 1 ? "profile" : "profiles"}`;
@@ -92,8 +117,9 @@ window.Pie = window.Pie || {};
     // verified only, the outline lists the engines with a verified row, so no page opens empty
     const kept = (cells) => cells.some((c) => verified(c) && (slices || !c.miniature));
     const list = verifiedOnly && groups().some(([, , cells]) => kept(cells)) ? groups().filter(([, , cells]) => kept(cells)) : groups();
-    if (!list.some(([id]) => id === current)) current = list[0]?.[0] || Pie.engines.primary;
-    const [id, , all] = list.find(([e]) => e === current) || [current, 0, []];
+    if (current !== OVERVIEW && !list.some(([id]) => id === current)) current = OVERVIEW;
+    const overview = current === OVERVIEW;
+    const [id, , all] = overview ? [OVERVIEW, 0, []] : list.find(([e]) => e === current) || [current, 0, []];
     // a grid cell that opens a model slice's row turns slices back on, so the row it asked for is there
     if (focus && !slices && all.some((c) => c.miniature && keyOf(id, c) === keyOf(focus.engine, focus))) {
       slices = true;
@@ -103,20 +129,27 @@ window.Pie = window.Pie || {};
       verifiedOnly = false;
       try { localStorage.setItem(VERIFIED, "off"); } catch { /* private windows can refuse storage */ }
     }
-    const reasons = all.filter((c) => (slices || !c.miniature) && (!verifiedOnly || verified(c)));
-    const cells = reasons.length;
+    const keep = (c) => (slices || !c.miniature) && (!verifiedOnly || verified(c));
+    const reasons = all.filter(keep);
+    const engines = list.map(([e, , cs]) => [e, cs.filter(keep)]).filter(([, cs]) => cs.length);
+    const cells = overview ? engines.reduce((n, [, cs]) => n + cs.length, 0) : reasons.length;
+    const head = overview
+      ? `<h1 class="board-title">Overview</h1><p class="board-lede">${cells.toLocaleString("en-US")} ${cells === 1 ? "cell" : "cells"} behind across ${engines.length} ${engines.length === 1 ? "engine" : "engines"}</p>`
+      : `<h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))} Profile</h1><p class="board-lede">${lede(id, cells)}</p>`;
+    const body = overview
+      ? (engines.length ? overviewOf(engines) : `<p class="reasons-empty">${verifiedOnly ? "No verified cells yet." : "No cells behind."}</p>`)
+      : reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">${verifiedOnly && all.length ? "No verified cells yet." : "No cells behind."}</p>`;
     // the outline's fill rides from the engine it marked to the one picked, not drawn afresh on the new one
     const was = element.querySelector(".board-outline-thumb")?.style.cssText;
     element.innerHTML = `
       <div class="platform-bar board-bar"><span class="reasons-bar">Found a CI benchmark anomaly?</span><span class="filter reasons-bar-action"><a class="filter-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>File a PR</a></span></div>
       <div class="board-scroll"><div class="board-inner">
-        <nav class="board-outline" aria-label="Engines">${list.map(([e]) => `<button type="button" class="board-outline-item${e === current ? " is-current" : ""}" data-reasons-go="${esc(e)}"><i class="board-outline-dot" style="background: ${colorOf(e)}" aria-hidden="true"></i><span>${esc(nameOf(e))}</span></button>`).join("")}</nav>
+        <nav class="board-outline" aria-label="Engines"><button type="button" class="board-outline-item${overview ? " is-current" : ""}" data-reasons-go="${OVERVIEW}"><i class="board-outline-dot" style="background: var(--color-label-tertiary)" aria-hidden="true"></i><span>Overview</span></button><div class="board-outline-head">Profiles</div>${list.map(([e]) => `<button type="button" class="board-outline-item${e === current ? " is-current" : ""}" data-reasons-go="${esc(e)}"><i class="board-outline-dot" style="background: ${colorOf(e)}" aria-hidden="true"></i><span>${esc(nameOf(e))}</span></button>`).join("")}</nav>
         <div class="board-main">
-          <div class="board-section-head"><div class="board-section-text"><h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))} Profile</h1>
-          <p class="board-lede">${lede(id, cells)}</p></div>
+          <div class="board-section-head"><div class="board-section-text">${head}</div>
           <button type="button" class="board-title-pick reasons-slices" data-reasons-slices role="switch" aria-checked="${slices}">${sliceIcon("Model slices")}<span>Model slices</span><i class="reasons-switch" aria-hidden="true"></i></button>
           <button type="button" class="board-title-pick reasons-slices" data-reasons-verified role="switch" aria-checked="${verifiedOnly}"><svg class="reasons-slice-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg><span>Verified</span><i class="reasons-switch" aria-hidden="true"></i></button></div>
-          ${reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">${verifiedOnly && all.length ? "No verified cells yet." : "No cells behind."}</p>`}
+          ${body}
         </div>
       </div></div>`;
     // under the window's title, how many suggestions the engine on view has
@@ -173,7 +206,7 @@ window.Pie = window.Pie || {};
     const seg = event.target.closest("[data-stage]");
     if (!seg || !tooltip || Pie.tapCard?.isTouch()) { hideTip(); return; }
     if (seg !== tipFor) {
-      tooltip.innerHTML = hint(seg.dataset.stage, seg.dataset.stageMs == null ? null : Number(seg.dataset.stageMs));
+      tooltip.innerHTML = hint(seg.dataset.stage, seg.dataset.stageValue);
       tooltip.classList.remove("is-card", "is-gap-note");
       tooltip.classList.add("is-note", "is-stage-tip");
       tooltip.hidden = false;
@@ -188,7 +221,7 @@ window.Pie = window.Pie || {};
   element.addEventListener("click", (event) => {
     const seg = event.target.closest("[data-stage]");
     if (seg && Pie.tapCard?.isTouch()) {
-      Pie.tapCard.toggle(seg, hint(seg.dataset.stage, seg.dataset.stageMs == null ? null : Number(seg.dataset.stageMs)), true);
+      Pie.tapCard.toggle(seg, hint(seg.dataset.stage, seg.dataset.stageValue), true);
       return;
     }
     const summary = event.target.closest(".reasons-item-summary");
