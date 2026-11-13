@@ -6,6 +6,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import time
 from typing import Any
 
@@ -55,6 +56,9 @@ def await_free_gpu(threshold_mib: float = 1500, timeout_s: float = 180, poll_s: 
         time.sleep(poll_s)
 
 
+WINDOWS_DESKTOP = ("c:\\windows\\", "c:\\program files\\windowsapps\\", "c:\\program files (x86)\\microsoft\\")
+
+
 def gpu_processes() -> list[dict[str, str]]:
     out = _run(["nvidia-smi", "--query-compute-apps=pid,process_name,used_memory", "--format=csv,noheader,nounits"])
     if not out:
@@ -64,6 +68,8 @@ def gpu_processes() -> list[dict[str, str]]:
         parts = [x.strip() for x in line.split(",")]
         if len(parts) >= 2:
             procs.append({"pid": parts[0], "name": parts[1], "used_mib": parts[2] if len(parts) > 2 else ""})
+    if sys.platform == "win32":  # the Windows desktop (shell, compositor, Edge views) keeps GPU contexts that come and go
+        procs = [p for p in procs if not p["name"].lower().startswith(WINDOWS_DESKTOP)]
     return procs
 
 

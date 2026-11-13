@@ -52,6 +52,7 @@ class QuantScheme(StrEnumBase):
     GGUF_Q2_K = "gguf_q2_k"
     GGUF_Q2_0 = "gguf_q2_0"
     GGUF_Q8_0 = "gguf_q8_0"
+    GGUF_UD_Q4_K_XL = "gguf_ud_q4_k_xl"
     AWQ = "awq"
     GPTQ = "gptq"
     NVFP4 = "nvfp4"
