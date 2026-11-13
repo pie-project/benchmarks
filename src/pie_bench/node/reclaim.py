@@ -12,10 +12,9 @@ LOW_WATER_GIB = 80.0
 
 def free_gib(path: Path) -> float:
     try:
-        st = os.statvfs(path)
+        return shutil.disk_usage(path).free / 2**30
     except OSError:
         return float("inf")
-    return st.f_bavail * st.f_frsize / 2**30
 
 
 def cache_root() -> Path | None:

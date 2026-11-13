@@ -91,6 +91,8 @@ def _serve(cmd: list[str], env: dict[str, str], port: int, health: str, timeout_
 
 
 def _stop(proc) -> None:
+    if sys.platform == "win32":  # the lifeline's server child dies with it only through a tree kill
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True, check=False)
     proc.terminate()
     try:
         proc.wait(timeout=30)

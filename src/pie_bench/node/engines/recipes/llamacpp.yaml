@@ -105,3 +105,11 @@ competitive:
                 No --kv-unified: llama.cpp's Muse Spark graph spans the whole shared buffer, and 32 slots of
                 2048 in one asked a 9.2 GB compute buffer on the M2 (Metal out of memory, every request a
                 "Compute error", pie-eval 42584771302). Per-slot buffers ask 1.0 GB at the same batch sizes.
+  platform:
+    rtx-spark-128g:
+      knobs:
+        server_extra:
+          value: ["--batch-size", "2048", "--ubatch-size", "512", "--load-mode", "none", "--cont-batching", "--kv-unified"]
+          rationale: >
+            b11312 replaced --no-mmap with --load-mode (none is the same: weights read, not mapped). The laptop's GPU
+            shares its memory with Windows, so the 32 slots share one KV buffer (--kv-unified), as on Apple Silicon.

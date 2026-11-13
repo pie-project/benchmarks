@@ -1,0 +1,9 @@
+default:
+  knobs:
+    flash_attn:
+      value: "on"
+      rationale: The other engines run their own optimized attention; off would benchmark a handicap (OLLAMA_FLASH_ATTENTION=1).
+
+competitive:
+  extends: default
+  knobs: {}

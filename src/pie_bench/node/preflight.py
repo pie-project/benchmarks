@@ -6,6 +6,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import time
 from typing import Any
 
@@ -55,6 +56,9 @@ def await_free_gpu(threshold_mib: float = 1500, timeout_s: float = 180, poll_s: 
         time.sleep(poll_s)
 
 
+WINDOWS_DESKTOP = ("c:\\windows\\", "c:\\program files\\windowsapps\\", "c:\\program files (x86)\\microsoft\\")
+
+
 def gpu_processes() -> list[dict[str, str]]:
     out = _run(["nvidia-smi", "--query-compute-apps=pid,process_name,used_memory", "--format=csv,noheader,nounits"])
     if not out:
@@ -64,6 +68,8 @@ def gpu_processes() -> list[dict[str, str]]:
         parts = [x.strip() for x in line.split(",")]
         if len(parts) >= 2:
             procs.append({"pid": parts[0], "name": parts[1], "used_mib": parts[2] if len(parts) > 2 else ""})
+    if sys.platform == "win32":  # the Windows desktop (shell, compositor, Edge views) keeps GPU contexts that come and go
+        procs = [p for p in procs if not p["name"].lower().startswith(WINDOWS_DESKTOP)]
     return procs
 
 
@@ -97,7 +103,7 @@ def _ancestors(pid: int | None = None) -> set[int]:
     cur = pid if pid is not None else os.getpid()
     try:
         protected.add(os.getpgrp())
-    except OSError:
+    except (OSError, AttributeError):
         pass
     seen = 0
     while cur and cur > 0 and seen < 64:
@@ -135,7 +141,7 @@ def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: flo
                 continue
             if pid in protected:
                 continue
-            base = _proc_basename(pid) or os.path.basename(p.get("name", ""))
+            base = _proc_basename(pid) or os.path.basename(p.get("name", "").replace("\\", "/")).removesuffix(".exe")
             if any_holder or base in wanted or os.path.basename(p.get("name", "")) in wanted:
                 targets.append(pid)
                 killed.append({"pid": pid, "name": base, "used_mib": p.get("used_mib", "")})
@@ -148,7 +154,7 @@ def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: flo
             time.sleep(5.0)
             for pid in targets:
                 try:
-                    os.kill(pid, signal.SIGKILL)
+                    os.kill(pid, getattr(signal, "SIGKILL", signal.SIGTERM))
                 except (ProcessLookupError, PermissionError):
                     pass
     waited = await_free_gpu(threshold_mib=threshold_mib, timeout_s=timeout_s)

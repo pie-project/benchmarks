@@ -148,7 +148,7 @@ class PieEngine(Engine):
             str(self.pie_root / "packages" / "python" / "server" / "python"),
         ]
         existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
-        self.env["PYTHONPATH"] = ":".join(sdk_paths + ([existing] if existing else []))
+        self.env["PYTHONPATH"] = os.pathsep.join(sdk_paths + ([existing] if existing else []))
         for k, v in self.nccl_env().items():
             self.env.setdefault(k, v)
         shim = nccl_shim_dir()

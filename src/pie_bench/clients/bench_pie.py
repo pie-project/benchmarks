@@ -44,6 +44,11 @@ if str(SERVER_PY) not in sys.path:
     sys.path.insert(0, str(SERVER_PY))
 
 
+
+def monotonic_ns() -> int:
+    """CLOCK_MONOTONIC, the clock a profiler stamps in, where the OS has it; Windows's monotonic clock elsewhere."""
+    return time.clock_gettime_ns(time.CLOCK_MONOTONIC) if hasattr(time, "clock_gettime_ns") else time.monotonic_ns()
+
 EMBEDDED_CLI_ENGINES: set[str] = {
     "dummy",
     "metal",
@@ -702,7 +707,7 @@ async def run(args: argparse.Namespace):
             if prompt_token_ids is not None:
                 inp["prompt_tokens"] = prompt_token_ids[i]
             start = time.perf_counter()
-            send_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+            send_monotonic_ns = monotonic_ns()
             client_send_s = (
                 (send_monotonic_ns - measured_epoch_monotonic_ns)
                 / 1_000_000_000.0
@@ -728,9 +733,7 @@ async def run(args: argparse.Namespace):
                     ev, msg = await recv(proc)
                     if ev == Event.Message and str(msg) == "t0":
                         now = time.perf_counter()
-                        now_monotonic_ns = time.clock_gettime_ns(
-                            time.CLOCK_MONOTONIC
-                        )
+                        now_monotonic_ns = monotonic_ns()
                         ttft_s = now - start
                         first_arrival_s = (
                             (
@@ -745,9 +748,7 @@ async def run(args: argparse.Namespace):
                         continue
                     if ev == Event.Return:
                         returned = time.perf_counter()
-                        returned_monotonic_ns = time.clock_gettime_ns(
-                            time.CLOCK_MONOTONIC
-                        )
+                        returned_monotonic_ns = monotonic_ns()
                         obj = json.loads(msg)
                         if i == args.warmup and first_output_text[0] is None:
                             first_output_text[0] = obj.get("text", "")
@@ -982,7 +983,7 @@ async def run(args: argparse.Namespace):
                         start,
                         proc,
                         (
-                            time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+                            monotonic_ns()
                             - measured_epoch_monotonic_ns
                         )
                         / 1_000_000_000.0
@@ -1064,9 +1065,7 @@ async def run(args: argparse.Namespace):
             or args.report_wall_clock
         ):
             measured_epoch_unix_s = time.time()
-            measured_epoch_monotonic_ns = time.clock_gettime_ns(
-                time.CLOCK_MONOTONIC
-            )
+            measured_epoch_monotonic_ns = monotonic_ns()
             measured_epoch = time.perf_counter()
             start = measured_epoch
         else:

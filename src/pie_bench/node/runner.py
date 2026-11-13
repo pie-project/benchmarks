@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import random
 import re
 import signal
@@ -133,7 +134,7 @@ class NodeRunner:
         self.out = Path(out_dir).resolve()
         self.out.mkdir(parents=True, exist_ok=True)
         self.hf_cache = Path(hf_cache or os.environ.get("HF_HUB_CACHE") or Path.home() / ".cache/huggingface/hub")
-        self.runner_name = runner_name or os.environ.get("RUNNER_NAME") or os.uname().nodename
+        self.runner_name = runner_name or os.environ.get("RUNNER_NAME") or platform.node()
         self.run_id = f"{job.job_id}-{uuid.uuid4().hex[:6]}"
         self.records_path = self.out / "records.jsonl"
         self.build = build
@@ -182,7 +183,7 @@ class NodeRunner:
                     os.killpg(os.getpgrp(), signal.SIGTERM)
                     time.sleep(3)
                     os.killpg(os.getpgrp(), signal.SIGKILL)
-                except OSError:
+                except (OSError, AttributeError):
                     pass
                 os._exit(124)
 
@@ -281,7 +282,7 @@ class NodeRunner:
         job = self.job
         try:
             os.setpgrp()
-        except OSError:
+        except (OSError, AttributeError):
             pass
         self.log(f"job {job.job_id} tier={job.tier} platform={job.platform_id} cells={len(job.cells)} run_id={self.run_id}")
         broken = pf.cuda_init() if self.platform is not None and not pf._is_mac(str(self.platform.os)) else None
@@ -290,7 +291,7 @@ class NodeRunner:
             for c in job.cells:
                 self.emit(self._failed(c, ErrorClass.HARNESS_INVALID, f"GPU preflight: {broken}", None))
             return []
-        if self.platform is not None and str(self.platform.backend) == "cuda" and os.geteuid() == 0:
+        if self.platform is not None and str(self.platform.backend) == "cuda" and hasattr(os, "geteuid") and os.geteuid() == 0:
             from .baselines import ensure_cuda_devkit
 
             ensure_cuda_devkit(log=self.log)

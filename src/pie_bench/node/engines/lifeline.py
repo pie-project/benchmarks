@@ -9,6 +9,9 @@ def main() -> int:
     child = subprocess.Popen(sys.argv[1:], start_new_session=True)
 
     def stop(*_):
+        if sys.platform == "win32":
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(child.pid)], capture_output=True, check=False)
+            return
         for sig, wait in ((signal.SIGTERM, 20), (signal.SIGKILL, 5)):
             try:
                 os.killpg(child.pid, sig)
