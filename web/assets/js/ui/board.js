@@ -879,34 +879,16 @@ window.Pie = window.Pie || {};
     if (!tests.length || !ids.includes(pie)) return `${relHead(pick)}<p class="board-empty">No ${esc(pick.label.toLowerCase())} results to compare yet</p>`;
     const fastest = (s) => Math.max(...Object.values(s));
     const label = (e) => `${names().engine(e)}${e.endsWith("-webgpu") ? " Web" : ""}`;
-    // each engine's shortfall from the fastest engine in each of its tests, 0 where it is the fastest; drawn on a square
-    // that stretches to the card (its lines keep their width), its words set around it in the page's own text
-    // both axes linear: the gap from 0 to 50%, the share of tests from 0 to 100%
-    const X = 0.5;
-    const x = (d) => 1000 * Math.min(d, X) / X;
-    const y = (f) => 1000 * (1 - f);
-    const curves = ids.map((e) => {
-      const short = tests.filter((s) => s[e]).map((s) => 1 - s[e] / fastest(s)).sort((a, b) => a - b);
-      const at = (d) => short.filter((v) => v <= d + 1e-9).length / short.length;
-      const pts = [[0, +y(at(0)).toFixed(1), +at(0).toFixed(3)]];
-      for (const d of [...short.filter((v) => v > 0 && v <= X), X]) pts.push([+x(d).toFixed(1), +y(at(d)).toFixed(1), +at(d).toFixed(3)]);
-      const path = `M${pts[0][0]},${pts[0][1]}${pts.slice(1).map(([px, py]) => `H${px}V${py}`).join("")}`;
-      return { e, path, pts, first: at(0), last: at(X) };
-    }).sort((a, b) => b.last - a.last);
-    const svg = `<div class="relative-plot"><div class="relative-area">
-      <svg class="relative-chart" viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img" aria-label="Share of each engine's tests where it is the fastest, or within a margin of it">
-        ${[.25, .5, .75, 1].map((f) => `<line class="board-grid" vector-effect="non-scaling-stroke" x1="0" x2="1000" y1="${y(f)}" y2="${y(f)}"/>`).join("")}
-        ${curves.map((c) => `<path class="relative-line" vector-effect="non-scaling-stroke" data-engine="${esc(c.e)}" data-name="${esc(label(c.e))}" data-first="${Math.round(c.first * 100)}" data-color="${Pie.engines.colorOf(c.e)}" data-pts="${esc(JSON.stringify(c.pts))}" d="${c.path}"/>`).join("")}
-      </svg>
-      ${[0, .25, .5, .75, 1].map((f) => `<span class="relative-tick is-y" style="top: ${(y(f) / 10).toFixed(2)}%">${Math.round(f * 100)}%</span>`).join("")}
-      ${[[0, "Fastest", "start"], [.1, "Within 10%", "middle"], [.25, "Within 25%", "middle"], [.5, "Within 50%", "end"]].map(([d, t, a]) => `<span class="relative-tick is-x is-${a}" style="left: ${(x(d) / 10).toFixed(1)}%">${t}</span>`).join("")}
-
-      <span class="relative-active-dot" hidden></span><span class="relative-note" hidden></span>
-      ${curves.map((c) => `<span class="relative-label" data-engine="${esc(c.e)}" data-top="${(y(c.last) / 10).toFixed(2)}" data-name="${esc(label(c.e))}" data-color="${Pie.engines.colorOf(c.e)}">${esc(label(c.e))}</span>`).join("")}
-    </div>
-      <span class="relative-axis-title">Gap to the fastest engine on each test</span>
-      <span class="relative-axis-title is-y">Share of each engine's tests</span>
-    </div>`;
+    // ranks at a few key margins: at each column the engines ordered by the share of their tests within that margin of
+    // the fastest engine, a line per engine from rank to rank, as a bump chart reads a race
+    const COLS = [[0, "Fastest"], [.05, "Within 5%"], [.1, "Within 10%"], [.25, "Within 25%"], [.5, "Within 50%"]];
+    const engines = ids.map((e) => {
+      const short = tests.filter((s) => s[e]).map((s) => 1 - s[e] / fastest(s));
+      return { e, name: label(e), color: Pie.engines.colorOf(e), shares: COLS.map(([d]) => short.filter((v) => v <= d + 1e-9).length / short.length) };
+    });
+    COLS.forEach((_, j) => [...engines].sort((a, b) => b.shares[j] - a.shares[j] || ids.indexOf(a.e) - ids.indexOf(b.e)).forEach((x, r) => { (x.ranks ||= [])[j] = r; }));
+    const data = { cols: COLS.map(([, t]) => t), engines: engines.map(({ e, name, color, shares, ranks }) => ({ e, name, color, shares, ranks })) };
+    const svg = `<div class="bump" data-bump="${esc(JSON.stringify(data))}" style="height: ${28 + 34 * engines.length}px" role="img" aria-label="Engines ranked by the share of their tests within each margin of the fastest engine"></div>`;
     return `
 ${relHead(pick)}
           <div class="board-grid-cards relative-cards">
@@ -1170,11 +1152,11 @@ ${relHead(pick)}
   let tug = null;
   element.addEventListener("pointerdown", (event) => {
     // every card's chart the same, but only sideways, and the engine legend too
-    const grid = event.target.closest?.(".board-matrix, .board-chart, .board-legend, .relative-area");
+    const grid = event.target.closest?.(".board-matrix, .board-chart, .board-legend");
     if (!grid || event.button !== 0 || event.target.closest("button, a, input, select")) return;
     // the engine key, wider than its bar, scrolls under the pointer and gives only past its ends
     const bar = grid.classList.contains("board-legend") ? grid.closest(".board-bar") : null;
-    tug = { grid, x: event.clientX, y: event.clientY, id: event.pointerId, flat: !grid.classList.contains("board-matrix") && !grid.classList.contains("relative-area"), bar, left: bar?.scrollLeft || 0 };
+    tug = { grid, x: event.clientX, y: event.clientY, id: event.pointerId, flat: !grid.classList.contains("board-matrix"), bar, left: bar?.scrollLeft || 0 };
     grid.setPointerCapture(event.pointerId);
     grid.style.transition = "none";
     grid.classList.add("is-tugged");
@@ -1259,121 +1241,48 @@ ${relHead(pick)}
   // the Outliers card's Reports button opens Reports, as the sidebar would
   element.addEventListener("click", (event) => {
   });
-  // Fastest or Nearly: the line nearest the pointer, read straight up and down from it, lights in its engine's colour,
-  // with its share of tests won at its start and its name at the right; the rest stay grey
-  const relActivate = (area, path) => {
-    for (const p of area.querySelectorAll(".relative-line.is-active")) { p.classList.remove("is-active"); p.style.stroke = ""; }
-    // the line under the pointer lights end to end in its engine's colour: line, leader, neck and tag; the rest stay grey
-    for (const x of area.querySelectorAll(".relative-leader.is-active, .relative-neck.is-active, .relative-label.is-active")) {
-      x.classList.remove("is-active");
-      x.style.stroke = x.style.fill = x.style.background = "";
-    }
-    const dot = area.querySelector(".relative-active-dot"), note = area.querySelector(".relative-note");
-    if (!path) { if (dot) dot.hidden = true; if (note) note.hidden = true; return; }
-    const color = path.dataset.color;
-    path.classList.add("is-active");
-    path.style.stroke = color;
-    path.parentNode.appendChild(path);
-    dot.style.background = color;
-    note.style.background = color;
-    dot.hidden = false;
-    note.hidden = false;
-    const of = (kind) => area.querySelector(`.${kind}[data-engine="${CSS.escape(path.dataset.engine)}"]`);
-    const leader = of("relative-leader"), neck = of("relative-neck"), tag = of("relative-label");
-    if (leader) { leader.classList.add("is-active"); leader.style.stroke = color; }
-    if (neck) { neck.classList.add("is-active"); neck.style.fill = color; }
-    if (tag) { tag.classList.add("is-active"); tag.style.background = color; }
-  };
-  // the names at the right edge, each level with its line's end, nudged apart where two would touch at the card's height
-  const spreadLabels = () => {
-    for (const area of element.querySelectorAll(".relative-area")) {
-      const h = area.clientHeight;
-      if (!h) continue;
-      // the chart gives way to its tags, so the widest one ends flush with the section's right edge (the Setup button's),
-      // past the card's 16px side padding: 40px of leader and neck, then the tag
-      const widest = Math.max(0, ...[...area.querySelectorAll(".relative-label")].map((t) => t.offsetWidth));
-      if (widest) area.style.right = `${40 + widest - 16}px`;
-      // the names in a column of even steps beside the chart, in the order the lines end; a thin leader runs from each
-      // line's end out to its name, so no two names stack where their lines finish close together
-      const names = [...area.querySelectorAll(".relative-label")].sort((a, b) => a.dataset.top - b.dataset.top);
-      const step = names.length > 1 ? Math.min(h / (names.length - 1), 28) : 0;
-      const first = Math.max(0, Math.min(h * names[0]?.dataset.top / 100 || 0, h - step * (names.length - 1)));
-      // each line is led out to a tag in its engine's colour from the top bar, the leader widening into the tag's edge
-      // every tag ends at the same right edge; a shorter name's leader runs further before its tag
-      const L = 30, NECK = 10, TAG = 18, W = L + NECK + widest, ns = "http://www.w3.org/2000/svg";
-      let leaders = area.querySelector(".relative-leaders");
-      if (!leaders) { leaders = document.createElementNS(ns, "svg"); leaders.setAttribute("class", "relative-leaders"); leaders.setAttribute("aria-hidden", "true"); area.append(leaders); }
-      leaders.setAttribute("width", W);
-      leaders.setAttribute("height", h);
-      leaders.replaceChildren(...names.flatMap((t, i) => {
-        const from = (h * t.dataset.top / 100).toFixed(1), to = first + step * i, y = to.toFixed(1), half = TAG / 2;
-        const end = L + widest - t.offsetWidth, tip = end + NECK;  // where this tag's neck starts and its body begins
-        t.style.top = `${to}px`;
-        t.style.left = `calc(100% + ${tip}px)`;
-        const path = document.createElementNS(ns, "path");
-        path.setAttribute("class", "relative-leader");
-        path.dataset.engine = t.dataset.engine;
-        path.setAttribute("d", `M0,${from}H6C18,${from} 18,${y} ${L - 4},${y}H${end}`);
-        const neck = document.createElementNS(ns, "path");
-        neck.setAttribute("class", "relative-neck");
-        neck.dataset.engine = t.dataset.engine;
-        neck.setAttribute("d", `M${end},${to - .5}C${end + 5},${to - .5} ${tip - 4},${to - half} ${tip},${to - half}V${to + half}C${tip - 4},${to + half} ${end + 5},${to + .5} ${end},${to + .5}Z`);
-        return [path, neck];
-      }));
-      // the axis words left to right; one that would touch the word before it stays hidden, the last one always shows
-      const ticks = [...area.querySelectorAll(".relative-tick.is-x")];
-      let right = -Infinity;
-      ticks.forEach((t, i) => {
-        t.style.visibility = "";
-        const r = t.getBoundingClientRect();
-        if (i < ticks.length - 1 && r.left < right + 8) { t.style.visibility = "hidden"; return; }
-        right = r.right;
-      });
+  // the rank chart, drawn at its card's width: column names along the top, a pill with each engine's name at both ends,
+  // a line per engine curving from rank to rank, each node a dot, the top three at each column a numbered badge
+  const drawBumps = () => {
+    for (const box of element.querySelectorAll(".bump")) {
+      const W = box.clientWidth;
+      if (!W || box.dataset.drawn === String(W)) continue;
+      box.dataset.drawn = String(W);
+      const { cols, engines } = JSON.parse(box.dataset.bump);
+      const PILL = 128, TOP = 28, ROW = 34, n = cols.length;
+      const x0 = PILL + 28, x1 = W - PILL - 28, x = (j) => x0 + ((x1 - x0) * j) / (n - 1), y = (r) => TOP + ROW * (r + .5);
+      const pct = (v) => `${Math.round(v * 100)}%`;
+      const guides = engines.map((_, r) => `<line class="bump-guide" x1="${x0}" x2="${x1}" y1="${y(r)}" y2="${y(r)}"/>`).join("");
+      const lines = engines.map((g) => {
+        let d = `M${x(0)},${y(g.ranks[0])}`;
+        for (let j = 1; j < n; j++) { const a = x(j - 1), b = x(j), m = (a + b) / 2; d += `C${m},${y(g.ranks[j - 1])} ${m},${y(g.ranks[j])} ${b},${y(g.ranks[j])}`; }
+        const nodes = g.ranks.map((r, j) => r < 3
+          ? `<g class="bump-badge"><circle cx="${x(j)}" cy="${y(r)}" r="9" fill="${g.color}"/><text x="${x(j)}" y="${y(r) + 3.5}">${r + 1}</text><title>${esc(`${g.name}: ${pct(g.shares[j])} of its tests ${cols[j] === "Fastest" ? "fastest" : cols[j].toLowerCase()}`)}</title></g>`
+          : `<circle class="bump-dot" cx="${x(j)}" cy="${y(r)}" r="3" fill="${g.color}"><title>${esc(`${g.name}: ${pct(g.shares[j])} of its tests ${cols[j] === "Fastest" ? "fastest" : cols[j].toLowerCase()}`)}</title></circle>`).join("");
+        return `<g class="bump-engine" data-engine="${esc(g.e)}"><path class="bump-hit" d="${d}"/><path class="bump-line" d="${d}" stroke="${g.color}"/>${nodes}</g>`;
+      }).join("");
+      const pill = (g, side) => `<span class="bump-pill is-${side}" data-engine="${esc(g.e)}" data-color="${g.color}" style="top: ${y(g.ranks[side === "left" ? 0 : n - 1])}px">${engineMark(g.e)}${esc(g.name)}</span>`;
+      box.innerHTML = `${cols.map((t, j) => `<span class="bump-col" style="left: ${x(j)}px">${esc(t)}</span>`).join("")}
+        <svg class="bump-chart" width="${W}" height="${TOP + ROW * engines.length}">${guides}${lines}</svg>
+        ${engines.map((g) => pill(g, "left") + pill(g, "right")).join("")}`;
     }
   };
-  new ResizeObserver(() => spreadLabels()).observe(element);
-  element.addEventListener("pointermove", (event) => {
-    const area = event.target.closest?.(".relative-plot")?.querySelector(".relative-area");
-    if (!area) { const any = element.querySelector(".relative-area"); if (any?.querySelector(".relative-line.is-active")) relActivate(any, null); return; }
-    // right of the chart, over the names: the tag nearest the pointer lights its line, with no reading on the line
-    const box = area.getBoundingClientRect();
-    if (event.clientX > box.right) {
-      let near = null, gap = Infinity;
-      for (const t of area.querySelectorAll(".relative-label")) {
-        const r = t.getBoundingClientRect(), d = Math.abs(r.top + r.height / 2 - event.clientY);
-        if (d < gap) { gap = d; near = t; }
-      }
-      const line = near && area.querySelector(`.relative-line[data-engine="${CSS.escape(near.dataset.engine)}"]`);
-      if (line && !line.classList.contains("is-active")) relActivate(area, line);
-      area.querySelector(".relative-active-dot").hidden = true;
-      area.querySelector(".relative-note").hidden = true;
-      return;
+  new ResizeObserver(() => drawBumps()).observe(element);
+  // an engine under the pointer, its line or a pill of its name, stands out in its colour; the others fade
+  const bumpFocus = (box, engine) => {
+    box.classList.toggle("is-focused", Boolean(engine));
+    for (const el of box.querySelectorAll("[data-engine]")) {
+      const on = el.dataset.engine === engine;
+      el.classList.toggle("is-active", on);
+      if (el.classList.contains("bump-pill")) el.style.background = on ? el.dataset.color : "";
     }
-    if (event.clientX < box.left || event.clientY < box.top || event.clientY > box.bottom) { if (area.querySelector(".relative-line.is-active")) relActivate(area, null); return; }
-    const svg = area.querySelector(".relative-chart");
-    const m = svg.getScreenCTM();
-    if (!m) return;
-    const at = new DOMPoint(event.clientX, event.clientY).matrixTransform(m.inverse());
-    let best = null, dist = Infinity, bestY = 0, bestF = 0;
-    const cx = Math.max(0, Math.min(1000, at.x));
-    for (const path of svg.querySelectorAll(".relative-line")) {
-      const pts = path._pts || (path._pts = JSON.parse(path.dataset.pts));
-      let yv = pts[0][1], fv = pts[0][2];
-      for (const [px, py, pf] of pts) { if (px > cx) break; yv = py; fv = pf; }
-      if (Math.abs(yv - at.y) < dist) { dist = Math.abs(yv - at.y); best = path; bestY = yv; bestF = fv; }
-    }
-    if (!best) return;
-    if (!best.classList.contains("is-active")) relActivate(area, best);
-    area.querySelector(".relative-active-dot").hidden = false;
-    // the dot rides the line under the pointer; the pill beside it reads that line's share of tests at the pointer's margin
-    const dot = area.querySelector(".relative-active-dot"), note = area.querySelector(".relative-note");
-    Object.assign(dot.style, { left: `${cx / 10}%`, top: `${bestY / 10}%` });
-    Object.assign(note.style, { left: `${cx / 10}%`, top: `${bestY / 10}%` });
-    note.textContent = `${Math.round(bestF * 100)}%`;
-    note.classList.toggle("is-left", cx > 820);
-    note.hidden = false;
+  };
+  element.addEventListener("pointerover", (event) => {
+    const box = event.target.closest?.(".bump");
+    if (!box) return;
+    bumpFocus(box, event.target.closest("[data-engine]")?.dataset.engine || null);
   });
-  element.addEventListener("pointerleave", () => { const area = element.querySelector(".relative-area"); if (area) relActivate(area, null); });
+  element.addEventListener("pointerleave", () => { for (const box of element.querySelectorAll(".bump")) bumpFocus(box, null); });
   element.addEventListener("click", (event) => {
     const bell = event.target.closest("[data-board-subscribe]");
     if (bell) {
@@ -1667,7 +1576,7 @@ ${relHead(pick)}
         const at = was ? [was.scrollTop, was.scrollLeft] : null;
         element.innerHTML = page();
         requestAnimationFrame(paddles);
-        requestAnimationFrame(spreadLabels);
+        requestAnimationFrame(drawBumps);
         element.dataset.key = key;
         const now = element.querySelector(".board-scroll");
         if (at && now) [now.scrollTop, now.scrollLeft] = at;
