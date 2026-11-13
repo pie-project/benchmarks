@@ -11,14 +11,14 @@ window.Pie = window.Pie || {};
     "core/state", "core/format", "core/store", "core/query",
     "ui/preferences", "ui/sidebar", "ui/toolbar", "ui/palette", "ui/report", "ui/popover", "ui/tap-card", "ui/segmented",
     "ui/filters", "ui/dates", "ui/table", "ui/overview", "ui/platform", "ui/welcome", "ui/inferlets", "ui/services",
-    "ui/approach", "ui/reports", "config/gapnotes", "config/profiles", "ui/gaps", "ui/reasons", "ui/profiler", "ui/fairness", "ui/methodology",
+    "ui/approach", "ui/reports", "config/gapnotes", "ui/gaps", "ui/reasons", "ui/profiler", "ui/fairness", "ui/methodology",
     "ui/methods", "ui/board", "ui/tour", "ui/checks", "app",
   ];
 
   const read = async () => {
     for (let tries = 0; ; tries++) {
       try {
-        return await Promise.all([Pie.getJson("catalog"), Pie.getJson("results")]);
+        return await Promise.all([Pie.getJson("catalog"), Pie.getJson("results"), Pie.getJson("profiles").catch(() => ({}))]);
       } catch (error) {
         if (tries >= 20) throw error;
         await new Promise((done) => setTimeout(done, 3000));
@@ -26,7 +26,8 @@ window.Pie = window.Pie || {};
     }
   };
 
-  read().then(([catalog, latest]) => {
+  read().then(([catalog, latest, profiles]) => {
+    Pie.profiles = profiles;
     window.DB = {
       ...catalog,
       tags: catalog.releases,
