@@ -1284,6 +1284,10 @@ ${relHead(pick)}
     for (const area of element.querySelectorAll(".relative-area")) {
       const h = area.clientHeight;
       if (!h) continue;
+      // the chart gives way to its tags, so the widest one ends flush with the section's right edge (the Setup button's),
+      // past the card's 16px side padding: 40px of leader and neck, then the tag
+      const widest = Math.max(0, ...[...area.querySelectorAll(".relative-label")].map((t) => t.offsetWidth));
+      if (widest) area.style.right = `${40 + widest - 16}px`;
       // the names in a column of even steps beside the chart, in the order the lines end; a thin leader runs from each
       // line's end out to its name, so no two names stack where their lines finish close together
       const names = [...area.querySelectorAll(".relative-label")].sort((a, b) => a.dataset.top - b.dataset.top);
