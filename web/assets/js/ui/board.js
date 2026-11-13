@@ -675,7 +675,7 @@ window.Pie = window.Pie || {};
       for (const p of PLATFORM_ORDER) if (canRun(eng, p)) (able[fam] ||= new Set()).add(p);
       if (able[fam]) ran[fam] ||= {};
     }
-    const platforms = PLATFORM_ORDER.filter((p) => all[p]);
+    const platforms = [...PLATFORM_ORDER];  // every platform the site lists, Cerebras too before any run lands there
     const order = engineIds();
     const list = Object.keys(ran).filter((e) => order.includes(e)).map((e) => {
       const share = (p) => (ran[e][p] ? ran[e][p].setups.size / all[p].size : 0);
@@ -917,11 +917,10 @@ ${relHead(pick)}
   // the site's counts as the Welcome chapter sets them: small grey words over large figures, hairlines between
   const welcomeStat = () => {
     const n = (v) => v.toLocaleString("en-US");
-    const rows = (t) => (Pie.store.rows(t) || []).length;
     // the effort first: the runs and the machine time behind them, then what they cover
     const busy = Pie.store.tables.totals?.machine_s;
     const time = !busy ? null : busy >= 3 * 86400 ? [`Days of compute`, n(Math.round(busy / 86400))] : [`Hours of compute`, n(Math.round(busy / 3600))];
-    const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Models", n(rows("models"))], ["Engines", n(rows("engines"))], ["Platforms", n(Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length)], ["Machines", n(Pie.platform?.machines?.() || 0)], ["Optimizations found", n(Pie.platform?.seconds?.(Pie.state)?.length || 0)], Pie.store.tables.totals?.submissions != null && ["Public contributions", n(Pie.store.tables.totals.submissions)]].filter((s) => s && (s[1] !== "0" || s[0] === "Public contributions"));
+    const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Machines", n(Pie.platform?.machines?.() || 0)], ["Optimizations found", n(Pie.platform?.seconds?.(Pie.state)?.length || 0)], Pie.store.tables.totals?.submissions != null && ["Public contributions", n(Pie.store.tables.totals.submissions)]].filter((s) => s && (s[1] !== "0" || s[0] === "Public contributions"));
     return `<dl class="welcome-stats board-welcome-stats">${stats.filter(Boolean).map(([label, v]) => `<div><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
   };
 
