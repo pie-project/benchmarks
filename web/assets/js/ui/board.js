@@ -948,8 +948,8 @@ ${relHead(pick)}
     // Platform Support pink, after Install Size
     const installed = INSTALL_CARDS.find(([, , p]) => installRows(p).length);
     // under small section names, as the Methodology's outline groups its chapters: the speed, where an engine goes, the models
-    const GROUPS = [["Speed", [[USE_CARDS[0][0], "Efficiency", "#34C759"], ["relative", "Relative Throughput", "#AF52DE"], [SUMMARY[0].id, "Performance", "#FF9500"]]],
-      ["", [["metric", "Find Your Speed", "#0A84FF"]]],
+    const GROUPS = [["Speed", [[USE_CARDS[0][0], "Efficiency", "#34C759"], [SUMMARY[0].id, "Performance", "#FF9500"]]],
+      ["", [["metric", "Find Your Speed", "#0A84FF"], ["relative", "Relative Throughput", "#AF52DE"]]],
       ["Deployment", [installed && [installed[0], "Install Size", "#30B0C7"], supportOf(rows).list.length && ["support", "Platforms", "#FF2D55"]]]];
     const outline = GROUPS.map(([head, items]) => [head, items.filter(Boolean)]).filter(([, items]) => items.length).map(([head, items]) =>
       `${head ? `<div class="board-outline-head">${esc(head)}</div>` : ""}${items.map(([id, title, tint]) =>
@@ -980,7 +980,6 @@ ${relHead(pick)}
             ${welcomeStat()}
           </section>
           ${useSection(rows)}
-          ${relativeSection(rows)}
           <div class="board-section-head is-apart">
             <div class="board-section-text"><h1 class="board-title">Performance Head to Head</h1>
             <p class="board-lede">Each platform on its own: engines compared on the same machines and models.</p></div>
@@ -993,6 +992,7 @@ ${relHead(pick)}
             ${headPick("cmp-platform", "Platform", BY_MODEL[cmp.p]?.[0] || cmp.p || "")}${headPick("cmp-hw", "Hardware", cmp.hw ? machineName(cmp.hw) : "")}${headPick("model", "Model", names().model(model))}${metricPick()}
           </div>
           ${compareBlock(speed, rows, cmp)}
+          ${relativeSection(rows)}
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
           ${installSection()}
