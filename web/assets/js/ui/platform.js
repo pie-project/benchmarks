@@ -1405,9 +1405,9 @@ window.Pie = window.Pie || {};
             // an engine here measured above its own theoretical limit (a full model, not a slice): the cell tinted red,
             // in every view, as the best machine is tinted blue
             const overLimit = overLimitOf(mac, realOf(model), modeOf(c), metric, c);
-            // the engine on view one of the cell's two fastest, 25% or more apart: the cell on a Suggestions page
+            // the engine on view the fastest, 25% or more ahead of the next: the gap a profile should explain
             const pair = compare === "engines" ? pairOf(c, metric) : null;
-            const flagged = !!pair && [pair.first.engine, pair.second.engine].includes(c.pie.engine) && !overLimit;
+            const flagged = !!pair && pair.first.engine === c.pie.engine && !overLimit;
             // explained only where a profile of both engines confirms the gap
             const explained = flagged && (Pie.profiles || {})[`${mac}|${realOf(model)}|${modeOf(c).id}`]?.verdict === "confirmed";
             const reasonAt = explained ? ` data-gap="${esc(JSON.stringify({ engine: pair.second.engine, hardware: mac, model: realOf(model), setup: modeOf(c).id }))}"` : "";
