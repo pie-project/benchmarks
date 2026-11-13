@@ -40,7 +40,7 @@ window.Pie = window.Pie || {};
     gpu_idle: ["The GPU waits on the host inside the step", ["Host prep slower than the GPU work", "No graph capture or compiled step", "Syncs between kernel launches"]],
   };
   // a profile's third bar: the machine's limit for the cell, the fastest any engine could run it
-  const LIMIT = ["limit", "Limit", "transparent"];  // drawn as an outline, no stage's fill
+  const LIMIT = ["limit", "Limit", "#8E8E93"];  // filled grey, no stage's colour
   const BOUND = { bandwidth: "Bandwidth-bound", compute: "Compute-bound", interconnect: "Interconnect-bound", balanced: "Balanced" };
   // value: what the segment measures, already in words (its ms in a profile, its share in the Summary); note: a line under it
   const hint = (k, value, note = "") => {
@@ -66,7 +66,8 @@ window.Pie = window.Pie || {};
     const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
     if (!p) return `<p class="reasons-item-suggestion">Not measured yet</p>`;
     const total = (side) => STAGES.reduce((n, [k]) => n + (side.stages[k] || 0), 0);
-    const limit = limitOf(c);
+    // a model slice has no limit of the full model to stand against: no Limit row
+    const limit = c.miniature ? null : limitOf(c);
     const top = Math.max(total(p.fastest), total(p.second), limit?.ms || 0);
     const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${STAGES.map(([k, , color]) => side.stages[k] > 0 ? `<i style="width: ${(100 * side.stages[k] / top).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-value="${ms(side.stages[k])}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;
     // the limit as its own bar on the same scale, so each engine's distance from it reads off the bars
@@ -198,7 +199,7 @@ window.Pie = window.Pie || {};
     // verified only, the outline lists the engines with a verified row, so no page opens empty
     const kept = (cells) => cells.some((c) => verified(c) && (slices || !c.miniature));
     const list = verifiedOnly && groups().some(([, , cells]) => kept(cells)) ? groups().filter(([, , cells]) => kept(cells)) : groups();
-    if (current !== SUMMARY && !list.some(([id]) => id === current)) current = SUMMARY;
+    if (!list.some(([id]) => id === current)) current = list[0]?.[0] || Pie.engines.primary;
     const overview = current === SUMMARY;
     const [id, , all] = overview ? [SUMMARY, 0, []] : list.find(([e]) => e === current) || [current, 0, []];
     // a grid cell that opens a model slice's row turns slices back on, so the row it asked for is there
@@ -232,7 +233,7 @@ window.Pie = window.Pie || {};
     element.innerHTML = `
       <div class="platform-bar board-bar"><span class="reasons-bar">Found a CI benchmark anomaly?</span><span class="filter reasons-bar-action"><a class="filter-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>File a PR</a></span></div>
       <div class="board-scroll"><div class="board-inner">
-        <nav class="board-outline" aria-label="Engines"><button type="button" class="board-outline-item${overview ? " is-current" : ""}" data-reasons-go="${SUMMARY}"><i class="board-outline-dot" style="background: var(--color-label-tertiary)" aria-hidden="true"></i><span>Summary</span></button><div class="board-outline-head">Profiles</div>${list.map(([e]) => `<button type="button" class="board-outline-item${e === current ? " is-current" : ""}" data-reasons-go="${esc(e)}"><i class="board-outline-dot" style="background: ${colorOf(e)}" aria-hidden="true"></i><span>${esc(nameOf(e))}</span></button>`).join("")}</nav>
+        <nav class="board-outline" aria-label="Engines">${list.map(([e]) => `<button type="button" class="board-outline-item${e === current ? " is-current" : ""}" data-reasons-go="${esc(e)}"><i class="board-outline-dot" style="background: ${colorOf(e)}" aria-hidden="true"></i><span>${esc(nameOf(e))}</span></button>`).join("")}</nav>
         <div class="board-main">
           <div class="board-section-head"><div class="board-section-text">${head}</div>${overview && summaryEngine ? `<button class="filter-button board-title-pick summary-engine" type="button" data-reasons-pick="engine" aria-haspopup="menu" aria-label="Engine"><i class="summary-engine-dot" style="background: ${colorOf(summaryEngine)}" aria-hidden="true"></i>${esc(nameOf(summaryEngine))}${CHEVRON}</button>` : ""}
           <button type="button" class="board-title-pick reasons-slices" data-reasons-slices role="switch" aria-checked="${slices}">${sliceIcon("Model slices")}<span>Model slices</span><i class="reasons-switch" aria-hidden="true"></i></button>
