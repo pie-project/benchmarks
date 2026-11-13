@@ -6,7 +6,7 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("reasons");
   const esc = (text) => Pie.format.escape(String(text ?? ""));
   const nameOf = (id) => `${Pie.store.names?.engine?.(id) || id}${id.endsWith("-webgpu") ? " Web" : ""}`;
-  const colorOf = (id) => Pie.engines.colors?.[id] || "var(--color-label-tertiary)";
+  const colorOf = (id) => Pie.engines.colorOf(id);
 
   // every cell where an engine is the slower of the two fastest, one row each, under that engine; no shared conclusion
   const groups = () => {
