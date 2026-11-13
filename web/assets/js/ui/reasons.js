@@ -66,14 +66,16 @@ window.Pie = window.Pie || {};
   // model slices on or off, as the viewer left it: off keeps only the cells measured on the full model
   const SLICES = "pieSuggestionsSlices";
   let slices = (() => { try { return localStorage.getItem(SLICES) !== "off"; } catch { return true; } })();
-  // verified only on or off, as the viewer left it: on keeps only the cells a profile of both engines confirms
-  const VERIFIED = "pieSuggestionsVerified";
-  let verifiedOnly = (() => { try { return localStorage.getItem(VERIFIED) === "on"; } catch { return false; } })();
+  // verified only on or off, as the viewer left it, on until turned off: on keeps only the cells a profile of both engines confirms
+  const VERIFIED = "pieSuggestionsVerifiedOnly";
+  let verifiedOnly = (() => { try { return localStorage.getItem(VERIFIED) !== "off"; } catch { return true; } })();
 
   // one engine a page, as the Bench Book shows one chapter: the outline down the left picks it
   const draw = () => {
     if (element.hidden) return;
-    const list = groups();
+    // verified only, the outline lists the engines with a verified row, so no page opens empty
+    const kept = (cells) => cells.some((c) => verified(c) && (slices || !c.miniature));
+    const list = verifiedOnly && groups().some(([, , cells]) => kept(cells)) ? groups().filter(([, , cells]) => kept(cells)) : groups();
     if (!list.some(([id]) => id === current)) current = list[0]?.[0] || Pie.engines.primary;
     const [id, , all] = list.find(([e]) => e === current) || [current, 0, []];
     // a grid cell that opens a model slice's row turns slices back on, so the row it asked for is there
