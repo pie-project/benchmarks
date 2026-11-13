@@ -253,7 +253,7 @@ window.Pie = window.Pie || {};
     },
     // the explained gaps, one row per cause: why Pie is faster and what the other engine could change
     reasons: {
-      label: "Suggestions",
+      label: "Profiling",
       section: "start",
       view: "reasons",
       filters: [],
