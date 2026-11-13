@@ -897,14 +897,13 @@ window.Pie = window.Pie || {};
     const svg = `<div class="relative-plot"><div class="relative-area">
       <svg class="relative-chart" viewBox="0 0 1000 1000" preserveAspectRatio="none" role="img" aria-label="Share of each engine's tests where it is the fastest, or within a margin of it">
         ${[.5, .9, .99, 1].map((f) => `<line class="board-grid" vector-effect="non-scaling-stroke" x1="0" x2="1000" y1="${y(f)}" y2="${y(f)}"/>`).join("")}
-        <line class="board-axis" vector-effect="non-scaling-stroke" x1="0" x2="1000" y1="1000" y2="1000"/>
         ${curves.map((c) => `<path class="relative-line" vector-effect="non-scaling-stroke" data-engine="${esc(c.e)}" data-name="${esc(label(c.e))}" data-first="${Math.round(c.first * 100)}" data-color="${Pie.engines.colorOf(c.e)}" data-pts="${esc(JSON.stringify(c.pts))}" d="${c.path}"/>`).join("")}
       </svg>
       ${[0, .5, .75, .9, .95, .99, 1].map((f) => `<span class="relative-tick is-y" style="top: ${(y(f) / 10).toFixed(2)}%">${Math.round(f * 100)}%</span>`).join("")}
       ${[[0, "Fastest", "start"], [.1, "Within 10%", "middle"], [.25, "Within 25%", "middle"], [.5, "Within 50%", "end"]].map(([d, t, a]) => `<span class="relative-tick is-x is-${a}" style="left: ${(x(d) / 10).toFixed(1)}%">${t}</span>`).join("")}
 
       <span class="relative-active-dot" hidden></span><span class="relative-note" hidden></span>
-      ${curves.map((c) => `<span class="relative-label" data-engine="${esc(c.e)}" data-top="${(y(c.last) / 10).toFixed(2)}" data-name="${esc(label(c.e))}" data-color="${Pie.engines.colorOf(c.e)}" style="background: ${Pie.engines.colorOf(c.e)}">${esc(label(c.e))}</span>`).join("")}
+      ${curves.map((c) => `<span class="relative-label" data-engine="${esc(c.e)}" data-top="${(y(c.last) / 10).toFixed(2)}" data-name="${esc(label(c.e))}" data-color="${Pie.engines.colorOf(c.e)}">${esc(label(c.e))}</span>`).join("")}
     </div>
       <span class="relative-axis-title">Gap to the fastest engine on each test</span>
       <span class="relative-axis-title is-y">Share of each engine's tests</span>
@@ -1265,7 +1264,11 @@ ${relHead(pick)}
   // with its share of tests won at its start and its name at the right; the rest stay grey
   const relActivate = (area, path) => {
     for (const p of area.querySelectorAll(".relative-line.is-active")) { p.classList.remove("is-active"); p.style.stroke = ""; }
-    for (const l of area.querySelectorAll(".relative-leader.is-active")) l.classList.remove("is-active");
+    // the line under the pointer lights end to end in its engine's colour: line, leader, neck and tag; the rest stay grey
+    for (const x of area.querySelectorAll(".relative-leader.is-active, .relative-neck.is-active, .relative-label.is-active")) {
+      x.classList.remove("is-active");
+      x.style.stroke = x.style.fill = x.style.background = "";
+    }
     const dot = area.querySelector(".relative-active-dot"), note = area.querySelector(".relative-note");
     if (!path) { if (dot) dot.hidden = true; if (note) note.hidden = true; return; }
     const color = path.dataset.color;
@@ -1276,8 +1279,11 @@ ${relHead(pick)}
     note.style.background = color;
     dot.hidden = false;
     note.hidden = false;
-    const leader = area.querySelector(`.relative-leader[data-engine="${CSS.escape(path.dataset.engine)}"]`);
-    if (leader) leader.classList.add("is-active");
+    const of = (kind) => area.querySelector(`.${kind}[data-engine="${CSS.escape(path.dataset.engine)}"]`);
+    const leader = of("relative-leader"), neck = of("relative-neck"), tag = of("relative-label");
+    if (leader) { leader.classList.add("is-active"); leader.style.stroke = color; }
+    if (neck) { neck.classList.add("is-active"); neck.style.fill = color; }
+    if (tag) { tag.classList.add("is-active"); tag.style.background = color; }
   };
   // the names at the right edge, each level with its line's end, nudged apart where two would touch at the card's height
   const spreadLabels = () => {
@@ -1308,11 +1314,10 @@ ${relHead(pick)}
         const path = document.createElementNS(ns, "path");
         path.setAttribute("class", "relative-leader");
         path.dataset.engine = t.dataset.engine;
-        path.setAttribute("stroke", t.dataset.color);
         path.setAttribute("d", `M0,${from}H6C18,${from} 18,${y} ${L - 4},${y}H${end}`);
         const neck = document.createElementNS(ns, "path");
         neck.setAttribute("class", "relative-neck");
-        neck.setAttribute("fill", t.dataset.color);
+        neck.dataset.engine = t.dataset.engine;
         neck.setAttribute("d", `M${end},${to - .5}C${end + 5},${to - .5} ${tip - 4},${to - half} ${tip},${to - half}V${to + half}C${tip - 4},${to + half} ${end + 5},${to + .5} ${end},${to + .5}Z`);
         return [path, neck];
       }));
