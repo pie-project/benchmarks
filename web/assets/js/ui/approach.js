@@ -191,15 +191,19 @@ window.Pie = window.Pie || {};
   const profiling = () => `
       ${lead("Where one engine is 25% or more ahead of the next on a cell, we profile both to see where the time goes.")}
       ${steps([["#5AC8FA", "Same run", "Both engines, same machine and workload"], ["#5E5CE6", "Trace", "The platform's own GPU profiler"],
-        ["#0A84FF", "Stages", "Each step split into eight parts"], ["#34C759", "Verify", "Within 10% of the benchmark"]], "<h3>How a cell is profiled</h3>")}
+        ["#0A84FF", "Stages", "Each step split by what it does"], ["#34C759", "Verify", "Within 10% of the benchmark"]], "<h3>How a cell is profiled</h3>")}
       <h3>The tracer on each platform</h3>
       ${facts([["#8E8E93", "Apple", "Metal System Trace, every GPU command"],
         ["#76B900", "NVIDIA", "Nsight Systems, every CUDA kernel"],
         ["#4285F4", "TPU", "The XLA device profiler, every TPU op"]])}
-      <h3>The eight stages</h3>
+      <h3>The stages</h3>
       ${facts([["#5E5CE6", "Attention", "Softmax attention over the KV cache: scores, softmax and the weighted sum, fused or not; grows with context"],
         ["#A09EF5", "Linear attention", "State-space and gated delta layers: a fixed-size state per layer, whatever the context"],
-        ["#0A84FF", "Dense matmul", "The weight multiplies of each layer, Q, K, V and output projections included"],
+        ["#0A84FF", "QKV projection", "Each token's queries, keys and values"],
+        ["#64D2FF", "Output projection", "Attention's output back to the hidden size"],
+        ["#0050C8", "MLP", "Each layer's feed-forward: gate, up and down"],
+        ["#FFD60A", "LM head", "The last hidden state to vocabulary logits"],
+        ["#7EB6FF", "Dense matmul", "Any weight multiply not tied to one of those roles"],
         ["#30B0C7", "MoE", "Routing tokens and running the chosen experts"],
         ["#34C759", "Norm and rope", "Normalization, rotary embeddings and other elementwise work"],
         ["#FF9F0A", "Sampling", "Picking the next token"],

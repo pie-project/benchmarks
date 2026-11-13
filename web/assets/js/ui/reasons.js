@@ -27,12 +27,18 @@ window.Pie = window.Pie || {};
     return h.class === "mac" && h.memory_gib ? `${name} ${h.memory_gib} GB` : name;
   };
   // a cell's profile: each engine's step split into the same stages, as one bar each on a shared scale, and the verdict
-  const STAGES = [["attention", "Attention", "#5E5CE6"], ["linear_attention", "Linear attention", "#A09EF5"], ["dense_matmul", "Dense matmul", "#0A84FF"], ["moe", "MoE", "#30B0C7"],
+  const STAGES = [["attention", "Attention", "#5E5CE6"], ["linear_attention", "Linear attention", "#A09EF5"], ["qkv_proj", "QKV projection", "#0A84FF"], ["o_proj", "Output projection", "#64D2FF"],
+    ["mlp", "MLP", "#0050C8"], ["lm_head", "LM head", "#FFD60A"], ["dense_matmul", "Dense matmul", "#7EB6FF"], ["moe", "MoE", "#30B0C7"],
     ["norm_rope_elementwise", "Norm and rope", "#34C759"], ["sampling", "Sampling", "#FF9F0A"], ["other_gpu", "Other GPU", "#AF52DE"], ["gpu_idle", "GPU idle", "#AEAEB2"]];
   // what each stage does and where its time usually goes when an engine is slow there: the card a stage shows on hover
   const HINTS = {
     attention: ["Reads the KV cache and scores past tokens", ["No fast kernel for this chip (a fallback)", "KV pages gathered or copied first", "Long contexts, unbatched decode"]],
-    dense_matmul: ["Multiplies each layer's weights", ["Weights read below memory bandwidth", "Quantized weights unpacked every step", "Shapes padded to bigger tiles"]],
+    linear_attention: ["Runs state-space and gated delta layers", ["No fused kernel for this chip", "State copied every step", "Short conv run as separate kernels"]],
+    qkv_proj: ["Projects each token to queries, keys and values", ["Weights read below memory bandwidth", "Q, K and V as three launches, not one", "Quantized weights unpacked every step"]],
+    o_proj: ["Projects attention's output back to the hidden size", ["Weights read below memory bandwidth", "Not fused with the residual add", "Quantized weights unpacked every step"]],
+    mlp: ["Runs each layer's feed-forward: gate, up and down", ["Weights read below memory bandwidth", "Gate and up as two launches", "Activation not fused into the matmul"]],
+    lm_head: ["Turns the last hidden state into vocabulary logits", ["Logits for every prompt token, not just the last", "Full vocabulary in fp32", "Weights read below memory bandwidth"]],
+    dense_matmul: ["Weight multiplies not tied to a layer role", ["Weights read below memory bandwidth", "Quantized weights unpacked every step", "Shapes padded to bigger tiles"]],
     moe: ["Routes tokens and runs the chosen experts", ["Experts requantized or unpacked on the fly", "Unused experts read anyway", "One launch per expert, not grouped"]],
     norm_rope_elementwise: ["Normalization, rotary embeddings, elementwise work", ["Many small unfused kernels", "Tables copied to a new layout every step", "Extra fp32 casts"]],
     sampling: ["Picks the next token", ["Full-vocabulary sort or softmax", "Logits copied to the CPU", "Sampling on one CPU thread"]],

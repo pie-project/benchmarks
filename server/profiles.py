@@ -10,8 +10,10 @@ from server.ingest import NAME
 
 TOL = 0.10
 REQUIRED = ["attention", "dense_matmul", "moe", "norm_rope_elementwise", "sampling", "other_gpu", "gpu_idle"]
-STAGES = ["attention", "linear_attention", *REQUIRED[1:]]
-LABEL = {"attention": "attention", "linear_attention": "linear attention", "dense_matmul": "dense matmul", "moe": "MoE", "norm_rope_elementwise": "norm/rope/elementwise",
+OPTIONAL = ["linear_attention", "qkv_proj", "o_proj", "mlp", "lm_head"]
+STAGES = ["attention", "linear_attention", "qkv_proj", "o_proj", "mlp", "lm_head", *REQUIRED[1:]]
+LABEL = {"attention": "attention", "linear_attention": "linear attention", "qkv_proj": "QKV projection", "o_proj": "output projection",
+         "mlp": "MLP", "lm_head": "LM head", "dense_matmul": "dense matmul", "moe": "MoE", "norm_rope_elementwise": "norm/rope/elementwise",
          "sampling": "sampling", "other_gpu": "other GPU work", "gpu_idle": "GPU idle within the step"}
 MAX_CELLS = 5000
 
@@ -34,8 +36,8 @@ def _side(raw) -> dict:
         _fail("a profile must name both engines")
     stages = raw.get("stage_ms")
     if stages is not None and (not isinstance(stages, dict) or any(_num(stages.get(k)) is None or stages[k] < 0 for k in REQUIRED)
-                               or (stages.get("linear_attention") is not None and (_num(stages["linear_attention"]) or 0) < 0)):
-        _fail(f"{raw['engine']}: stage_ms must give every stage in ms: {', '.join(REQUIRED)}, optionally linear_attention")
+                               or any(stages.get(k) is not None and (_num(stages[k]) is None or stages[k] < 0) for k in OPTIONAL)):
+        _fail(f"{raw['engine']}: stage_ms must give every stage in ms: {', '.join(REQUIRED)}, optionally {', '.join(OPTIONAL)}")
     return {"engine": raw["engine"], "unit": str(raw.get("unit") or "")[:160],
             "benchmark_step_ms": _positive(raw.get("benchmark_step_ms")), "profiled_step_ms": _positive(raw.get("profiled_step_ms")),
             "reference_step_ms": _positive(raw.get("reference_step_ms")), "speed": _positive(raw.get("speed")),
