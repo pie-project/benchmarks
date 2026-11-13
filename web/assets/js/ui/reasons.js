@@ -96,8 +96,8 @@ window.Pie = window.Pie || {};
   // engine's ms over the faster one's in each stage where it is over; each cell counts once, as its shares of that time
   const SUMMARY = "summary";
   const BY_KEY = "pieSummaryBy";
-  let summaryBy = (() => { try { const v = localStorage.getItem(BY_KEY); return ["workload", "platform", "engine"].includes(v) ? v : "workload"; } catch { return "workload"; } })();
-  // the engine the Summary is narrowed to (null: every engine), kept per browser; the engines on view and their cells, for its menu
+  let summaryBy = (() => { try { const v = localStorage.getItem(BY_KEY); return ["workload", "platform"].includes(v) ? v : "workload"; } catch { return "workload"; } })();
+  // the one engine the Summary is about, Pie unless picked, kept per browser; the engines on view and their cells, for its menu
   const ENGINE_KEY = "pieSummaryEngine";
   let summaryEngine = (() => { try { return localStorage.getItem(ENGINE_KEY) || null; } catch { return null; } })();
   let summaryEngines = [];
@@ -131,12 +131,11 @@ window.Pie = window.Pie || {};
       + `<div><dt>Median gap</dt><dd>${pct(median)}</dd></div><div><dt>Biggest cause</dt><dd>${ranked[0] ? esc(ranked[0][1]) : "–"}</dd></div></dl>`;
     // 1. where the extra time goes: one bar a stage, largest first, scaled to the largest
     const most = Math.max(0.01, ...ranked.map(([k]) => overall[k]));
-    const where = `<section class="summary-card"><h2>Where the extra time goes</h2><p class="summary-sub">${summaryEngine ? `${esc(nameOf(summaryEngine))}'s extra time over the faster engine` : "The slower engine's extra time"} by stage, averaged over ${cellsWord(rows.length)} with a verified profile</p>
+    const where = `<section class="summary-card"><h2>Where the extra time goes</h2><p class="summary-sub">${esc(nameOf(summaryEngine))}'s extra time over the faster engine by stage, averaged over ${cellsWord(rows.length)} with a verified profile</p>
       ${ranked.map(([k, name, color]) => `<div class="summary-bar"><span class="summary-name"><i style="background: ${color}"></i>${esc(name)}</span><span class="summary-track"><i style="width: ${(100 * overall[k] / most).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-value="${share(overall[k])} of the extra time"></i></span><span class="summary-value">${share(overall[k])}</span></div>`).join("")}</section>`;
     // 2. the same split by workload, platform or engine: a heatmap in one blue, darker where more of the extra time goes
-    const by = summaryEngine && summaryBy === "engine" ? "workload" : summaryBy;
-    const groupOf = by === "engine" ? (r) => [r.c.engine, nameOf(r.c.engine)]
-      : by === "platform" ? (r) => { const hw = rowOf("hardware", r.c.hardware); const id = hw && Pie.platformOf?.(hw); return [id || "other", Pie.schema?.[id]?.label || "Other"]; }
+    const by = summaryBy;
+    const groupOf = by === "platform" ? (r) => { const hw = rowOf("hardware", r.c.hardware); const id = hw && Pie.platformOf?.(hw); return [id || "other", Pie.schema?.[id]?.label || "Other"]; }
       : (r) => [r.c.setup, r.c.label];
     const groups = new Map();
     for (const r of rows) { const [id, label] = groupOf(r); (groups.get(id) || groups.set(id, { label, rows: [] }).get(id)).rows.push(r); }
@@ -144,7 +143,7 @@ window.Pie = window.Pie || {};
     const means = new Map(order.map(([id, g]) => [id, mean(g.rows)]));
     const cols = STAGES.filter(([k]) => order.some(([id]) => means.get(id)[k] >= 0.01));
     const peak = Math.max(0.01, ...order.flatMap(([id]) => cols.map(([k]) => means.get(id)[k])));
-    const pick = `<span class="platform-compare summary-by" role="group" aria-label="Group by">${[["workload", "Workload"], ["platform", "Platform"], ...(summaryEngine ? [] : [["engine", "Engine"]])].map(([v, l]) => `<button type="button" class="plain-button${v === by ? " is-active" : ""}" aria-pressed="${v === by}" data-summary-by="${v}">${l}</button>`).join("")}</span>`;
+    const pick = `<span class="platform-compare summary-by" role="group" aria-label="Group by">${[["workload", "Workload"], ["platform", "Platform"]].map(([v, l]) => `<button type="button" class="plain-button${v === by ? " is-active" : ""}" aria-pressed="${v === by}" data-summary-by="${v}">${l}</button>`).join("")}</span>`;
     const heat = `<section class="summary-card"><div class="summary-head"><div><h2>By ${by}</h2><p class="summary-sub">Share of the extra time in each stage; each row averages its cells</p></div>${pick}</div>
       <div class="summary-heat-scroll"><table class="summary-heat"><thead><tr><th></th>${cols.map(([, name, color]) => `<th scope="col"><span class="summary-name"><i style="background: ${color}"></i>${esc(name)}</span></th>`).join("")}</tr></thead>
       <tbody>${order.map(([id, g]) => `<tr><th scope="row">${esc(g.label)}<span>${cellsWord(g.rows.length)}</span></th>${cols.map(([k, name]) => { const v = means.get(id)[k]; return `<td data-heat data-heat-value="${share(v)}" data-heat-stage="${esc(name)}" data-heat-group="${esc(g.label)}" data-heat-cells="${cellsWord(g.rows.length)}" style="background: color-mix(in srgb, var(--color-accent) ${Math.round(4 + 66 * v / peak)}%, transparent)">${v >= 0.05 ? share(v) : ""}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
@@ -152,7 +151,7 @@ window.Pie = window.Pie || {};
     const losses = rows.map((r) => ({ ...r, ms: r.extra[r.top], of: r.extra[r.top] / (r.p.second.stepMs || 1) })).sort((a, b) => b.of - a.of).slice(0, 8);
     lossCells = losses.map((l) => l.c);
     const list = `<section class="summary-card"><h2>Biggest single-stage losses</h2><p class="summary-sub">The stage a cell loses most time in, as a share of the slower engine's step; a row opens its profile</p>
-      ${losses.map((l, i) => { const [, name, color] = STAGES.find(([k]) => k === l.top); return `<button type="button" class="summary-loss" data-summary-cell="${i}"><span class="summary-loss-text"><b>${esc(nameOf(l.c.engine))} · ${esc(modelName(l.c.model))} on ${esc(machineName(l.c.hardware))}</b><span>${esc(l.c.label)} · ${esc(name)} +${ms(l.ms)}</span></span><span class="summary-track"><i style="width: ${(100 * Math.min(1, l.of)).toFixed(2)}%; background: ${color}" data-stage="${l.top}" data-stage-value="+${ms(l.ms)}"></i></span><span class="summary-value">${share(l.of)}</span></button>`; }).join("")}</section>`;
+      ${losses.map((l, i) => { const [, name, color] = STAGES.find(([k]) => k === l.top); return `<button type="button" class="summary-loss" data-summary-cell="${i}"><span class="summary-loss-text"><b>${esc(modelName(l.c.model))} on ${esc(machineName(l.c.hardware))}</b><span>${esc(l.c.label)} · ${esc(name)} +${ms(l.ms)}</span></span><span class="summary-track"><i style="width: ${(100 * Math.min(1, l.of)).toFixed(2)}%; background: ${color}" data-stage="${l.top}" data-stage-value="+${ms(l.ms)}"></i></span><span class="summary-value">${share(l.of)}</span></button>`; }).join("")}</section>`;
     return `${tiles}${rows.length ? `${where}${heat}${list}` : `<p class="reasons-empty">No verified profiles yet.</p>`}`;
   };
   let focus = null;
@@ -190,11 +189,12 @@ window.Pie = window.Pie || {};
     const engines = list.map(([e, , cs]) => [e, cs.filter(keep)]).filter(([, cs]) => cs.length);
     // the Summary's engine: one on view, or every engine
     summaryEngines = engines.map(([e, cs]) => [e, cs.length]);
-    if (summaryEngine && !engines.some(([e]) => e === summaryEngine)) summaryEngine = null;
-    const scoped = summaryEngine ? engines.filter(([e]) => e === summaryEngine) : engines;
+    const has = (e) => engines.some(([x]) => x === e);
+    if (!has(summaryEngine)) summaryEngine = has(Pie.engines.primary) ? Pie.engines.primary : engines[0]?.[0] || null;
+    const scoped = engines.filter(([e]) => e === summaryEngine);
     const cells = overview ? scoped.reduce((n, [, cs]) => n + cs.length, 0) : reasons.length;
     const head = overview
-      ? `<h1 class="board-title">Summary</h1><p class="board-lede">${summaryEngine ? `${cellsWord(cells)} where ${esc(nameOf(summaryEngine))} trails the fastest engine` : `${cellsWord(cells)} behind across ${engines.length} ${engines.length === 1 ? "engine" : "engines"}`}</p>`
+      ? `<h1 class="board-title">Summary</h1><p class="board-lede">${summaryEngine ? `${cellsWord(cells)} where ${esc(nameOf(summaryEngine))} trails the fastest engine` : "No cells behind"}</p>`
       : `<h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))} Profile</h1><p class="board-lede">${lede(id, cells)}</p>`;
     const body = overview
       ? (engines.length ? summaryOf(scoped.flatMap(([, cs]) => cs)) : `<p class="reasons-empty">${verifiedOnly ? "No verified cells yet." : "No cells behind."}</p>`)
@@ -206,7 +206,7 @@ window.Pie = window.Pie || {};
       <div class="board-scroll"><div class="board-inner">
         <nav class="board-outline" aria-label="Engines"><button type="button" class="board-outline-item${overview ? " is-current" : ""}" data-reasons-go="${SUMMARY}"><i class="board-outline-dot" style="background: var(--color-label-tertiary)" aria-hidden="true"></i><span>Summary</span></button><div class="board-outline-head">Profiles</div>${list.map(([e]) => `<button type="button" class="board-outline-item${e === current ? " is-current" : ""}" data-reasons-go="${esc(e)}"><i class="board-outline-dot" style="background: ${colorOf(e)}" aria-hidden="true"></i><span>${esc(nameOf(e))}</span></button>`).join("")}</nav>
         <div class="board-main">
-          <div class="board-section-head"><div class="board-section-text">${head}</div>${overview ? `<button class="filter-button board-title-pick summary-engine" type="button" data-reasons-pick="engine" aria-haspopup="menu" aria-label="Engine">${summaryEngine ? `<i class="summary-engine-dot" style="background: ${colorOf(summaryEngine)}" aria-hidden="true"></i>${esc(nameOf(summaryEngine))}` : "All engines"}${CHEVRON}</button>` : ""}
+          <div class="board-section-head"><div class="board-section-text">${head}</div>${overview && summaryEngine ? `<button class="filter-button board-title-pick summary-engine" type="button" data-reasons-pick="engine" aria-haspopup="menu" aria-label="Engine"><i class="summary-engine-dot" style="background: ${colorOf(summaryEngine)}" aria-hidden="true"></i>${esc(nameOf(summaryEngine))}${CHEVRON}</button>` : ""}
           <button type="button" class="board-title-pick reasons-slices" data-reasons-slices role="switch" aria-checked="${slices}">${sliceIcon("Model slices")}<span>Model slices</span><i class="reasons-switch" aria-hidden="true"></i></button>
           <button type="button" class="board-title-pick reasons-slices" data-reasons-verified role="switch" aria-checked="${verifiedOnly}"><svg class="reasons-slice-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg><span>Verified</span><i class="reasons-switch" aria-hidden="true"></i></button></div>
           ${body}
@@ -340,16 +340,12 @@ window.Pie = window.Pie || {};
     shown: () => countText(),
     // set by a green grid cell before it opens this page on its reason: that engine's page, scrolled to it
     focus(cell) { focus = cell || null; if (focus) current = focus.engine; },
-    // the Summary's engine menu: every engine, then each engine on view with its cells behind
-    menu: (k) => (k !== "engine" ? [] : [
-      { value: "all", label: "All engines", detail: String(summaryEngines.reduce((n, [, c]) => n + c, 0)), selected: !summaryEngine },
-      { separator: true },
-      ...summaryEngines.map(([e, c]) => ({ value: e, label: nameOf(e), dot: colorOf(e), detail: String(c), selected: e === summaryEngine })),
-    ]),
+    // the Summary's engine menu: each engine on view with its cells behind
+    menu: (k) => (k !== "engine" ? [] : summaryEngines.map(([e, c]) => ({ value: e, label: nameOf(e), dot: colorOf(e), detail: String(c), selected: e === summaryEngine }))),
     pick(k, value) {
       if (k !== "engine") return;
-      summaryEngine = value === "all" ? null : value;
-      try { if (summaryEngine) localStorage.setItem(ENGINE_KEY, summaryEngine); else localStorage.removeItem(ENGINE_KEY); } catch { /* private windows can refuse storage */ }
+      summaryEngine = value;
+      try { localStorage.setItem(ENGINE_KEY, summaryEngine); } catch { /* private windows can refuse storage */ }
     },
     render(state) {
       element.hidden = state.table !== "reasons";
