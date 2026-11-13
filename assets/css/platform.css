@@ -347,7 +347,7 @@
 .tip-rows:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 .tip-row { display: grid; grid-template-columns: 8px 1fr auto 44px; align-items: center; gap: 7px; height: 20px; font-size: 12px; }
 .tip-when { text-align: right; font-weight: 400; color: var(--color-label-secondary); font-variant-numeric: tabular-nums; }
-.tip-row.is-pie { color: var(--color-engine-pie); font-weight: 600; }
+.tip-row.is-pie .tip-value { color: var(--color-engine-pie); }  /* the engine on view: its number in its colour, nothing bold */
 .tip-dot { width: 8px; height: 8px; border-radius: 2px; }  /* square chips, as the engine tags everywhere else */
 .tip-name { display: inline-flex; align-items: center; gap: 6px; }
 .tip-row .tip-name { white-space: nowrap; }  /* a name stays on one line: "Bandwidth bound" never breaks; the card widens instead */
@@ -748,7 +748,6 @@
 .tip-roof .rf-knee { stroke: var(--color-label); stroke-width: 7; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .tip-roof .rf-knee-hole { stroke: var(--color-menu); stroke-width: 3.6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .tip-roof .rf-name, .tip-roof .rf-tick-name { position: absolute; transform: translate(8px, -50%); white-space: nowrap; font-size: 11px; line-height: 1; pointer-events: none; }
-.tip-roof .rf-name.is-pie { font-weight: 700; }
 .tip-roof .rf-name.is-left, .tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 8px), -50%); }
 .tip-roof .rf-tick-name { font-weight: 500; color: var(--color-label-tertiary); transform: translate(6px, calc(-100% - 4px)); }
 .tip-roof .rf-tick-name.is-left { transform: translate(calc(-100% - 6px), calc(-100% - 4px)); }
