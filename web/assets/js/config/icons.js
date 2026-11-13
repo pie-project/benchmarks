@@ -25,7 +25,7 @@ Pie.icons = {
   methodology: '<path d="M3.5 17a8.5 8.5 0 1 1 17 0"/><path d="m12 17 4.2-5.2"/><path d="M6.5 13.2l1.2.7M12 8.5v1.4M17.5 13.2l-1.2.7"/>',  // a gauge: the hardware limit
   reports: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',  // a flag: a measurement flagged for review
   gaps: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',  // the same flag as CI Reports: both list runs flagged for a second look
-  reasons: '<rect x="3" y="5" width="18" height="5" rx="1.5"/><path d="M9 5v5M15 5v5"/><rect x="3" y="14" width="12" height="5" rx="1.5"/><path d="M8 14v5"/>',  // two engines' steps split into stages, as a profiler's timeline
+  reasons: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',  // a magnifier: a close look at each gap
   approach: '<path d="M4 5.5c2.7-1 5.3-1 8 .8v13c-2.7-1.8-5.3-1.8-8-.8z"/><path d="M20 5.5c-2.7-1-5.3-1-8 .8v13c2.7-1.8 5.3-1.8 8-.8z"/>',  // an open book: how the numbers are made, as prose
   methods: '<path d="M4 4v16h16"/><path d="M7 16l5-7h8"/>',  // a roofline: the bandwidth slope meeting the flat compute roof
   fit: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="7.5" y="9" width="9" height="6" rx="1"/>',  // rectangle.inset: a model inside the machine's memory
