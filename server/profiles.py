@@ -9,8 +9,9 @@ from server import split
 from server.ingest import NAME
 
 TOL = 0.10
-STAGES = ["attention", "dense_matmul", "moe", "norm_rope_elementwise", "sampling", "other_gpu", "gpu_idle"]
-LABEL = {"attention": "attention", "dense_matmul": "dense matmul", "moe": "MoE", "norm_rope_elementwise": "norm/rope/elementwise",
+REQUIRED = ["attention", "dense_matmul", "moe", "norm_rope_elementwise", "sampling", "other_gpu", "gpu_idle"]
+STAGES = ["attention", "linear_attention", *REQUIRED[1:]]
+LABEL = {"attention": "attention", "linear_attention": "linear attention", "dense_matmul": "dense matmul", "moe": "MoE", "norm_rope_elementwise": "norm/rope/elementwise",
          "sampling": "sampling", "other_gpu": "other GPU work", "gpu_idle": "GPU idle within the step"}
 MAX_CELLS = 5000
 
@@ -32,12 +33,13 @@ def _side(raw) -> dict:
     if not isinstance(raw, dict) or not isinstance(raw.get("engine"), str) or not NAME.match(raw["engine"]):
         _fail("a profile must name both engines")
     stages = raw.get("stage_ms")
-    if stages is not None and (not isinstance(stages, dict) or any(_num(stages.get(k)) is None or stages[k] < 0 for k in STAGES)):
-        _fail(f"{raw['engine']}: stage_ms must give every stage in ms: {', '.join(STAGES)}")
+    if stages is not None and (not isinstance(stages, dict) or any(_num(stages.get(k)) is None or stages[k] < 0 for k in REQUIRED)
+                               or (stages.get("linear_attention") is not None and (_num(stages["linear_attention"]) or 0) < 0)):
+        _fail(f"{raw['engine']}: stage_ms must give every stage in ms: {', '.join(REQUIRED)}, optionally linear_attention")
     return {"engine": raw["engine"], "unit": str(raw.get("unit") or "")[:160],
             "benchmark_step_ms": _positive(raw.get("benchmark_step_ms")), "profiled_step_ms": _positive(raw.get("profiled_step_ms")),
             "reference_step_ms": _positive(raw.get("reference_step_ms")), "speed": _positive(raw.get("speed")),
-            "ane_ms": _num(raw.get("ane_ms")), "stage_ms": {k: float(stages[k]) for k in STAGES} if stages else None}
+            "ane_ms": _num(raw.get("ane_ms")), "stage_ms": {k: float(stages.get(k) or 0) for k in STAGES} if stages else None}
 
 
 def check(doc: dict) -> list[dict]:
