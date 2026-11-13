@@ -60,7 +60,7 @@ window.Pie = window.Pie || {};
             </details>`;
   let focus = null;
   let shownCount = 0;
-  const countText = () => `${shownCount.toLocaleString("en-US")} ${shownCount === 1 ? "suggestion" : "suggestions"}`;
+  const countText = () => `${shownCount.toLocaleString("en-US")} ${shownCount === 1 ? "profile" : "profiles"}`;
   const KEY = "pieSuggestionsEngine";
   let current = (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
   // model slices on or off, as the viewer left it: off keeps only the cells measured on the full model

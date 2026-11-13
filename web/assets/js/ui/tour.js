@@ -36,7 +36,7 @@ window.Pie = window.Pie || {};
         return null;
       }, title: "Highlighted Gaps",
       text: "Yellow: the two fastest engines are 25% or more apart, so the cell needs review. Green: a profile of both engines confirms the gap." },
-    { target: async () => { await go("reasons"); return find("#reasons .reasons-item, #reasons .reasons-empty"); }, title: "Suggestions",
+    { target: async () => { await go("reasons"); return find("#reasons .reasons-item, #reasons .reasons-empty"); }, title: "Profiling",
       text: "Every gap under the slower engine, with a profile of both engines showing where its time goes." },
     { target: async () => { await go("board"); return find(".board-welcome-primary"); }, title: "pie-bench",
       text: "Every number is reproducible. Run pip install pie-bench on your own hardware and share your results." },
