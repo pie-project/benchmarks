@@ -860,7 +860,13 @@
 /* a cell today's miniature run is still measuring: a clock, in the accent colour (local preview) */
 .platform-pending { width: 14px; height: 14px; fill: none; stroke: var(--color-accent); stroke-width: 1.4; stroke-linecap: round; vertical-align: -2px; }
 /* a miniature's number on fine 45-degree lines instead of a tag, as the charts mark pie's bars; its hover card names it */
-.platform-cell:has(> .slice-mark) { position: relative; }
+.platform-cell:has(> .slice-mark), .platform-cell:has(> .verified-mark) { position: relative; }
+/* a verified cell under the pointer shows the Suggestions shield where a slice's mark sits, the rest of the cell hidden */
+.platform-cell > .verified-mark { display: none; position: absolute; top: 5px; left: 6px; }
+.platform-table td.is-openable:hover > .platform-cell > .verified-mark { display: block; visibility: visible; }
+.verified-mark svg { display: block; width: 13px; height: 13px; }
+.verified-mark .shield { fill: var(--color-positive); }
+.verified-mark .mark { fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .platform-cell > .slice-mark { position: absolute; top: 5px; left: 6px; margin: 0; color: var(--color-label-quaternary); }
 .platform-cell > .slice-mark svg { stroke-width: 1.1; }  /* a model slice: the mark in the cell's top-left corner */
 .platform-cell > .slice-mark .column-info-pop { top: calc(100% + 6px); right: auto; left: -8px; text-align: left; }
