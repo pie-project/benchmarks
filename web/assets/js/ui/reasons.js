@@ -29,6 +29,22 @@ window.Pie = window.Pie || {};
   // a cell's profile: each engine's step split into the same stages, as one bar each on a shared scale, and the verdict
   const STAGES = [["attention", "Attention", "#5E5CE6"], ["dense_matmul", "Dense matmul", "#0A84FF"], ["moe", "MoE", "#30B0C7"],
     ["norm_rope_elementwise", "Norm and rope", "#34C759"], ["sampling", "Sampling", "#FF9F0A"], ["other_gpu", "Other GPU", "#AF52DE"], ["gpu_idle", "GPU idle", "#AEAEB2"]];
+  // what each stage does and where its time usually goes when an engine is slow there: the card a stage shows on hover
+  const HINTS = {
+    attention: ["Reads the KV cache and scores past tokens", ["No fast kernel for this chip (a fallback)", "KV pages gathered or copied first", "Long contexts, unbatched decode"]],
+    dense_matmul: ["Multiplies each layer's weights", ["Weights read below memory bandwidth", "Quantized weights unpacked every step", "Shapes padded to bigger tiles"]],
+    moe: ["Routes tokens and runs the chosen experts", ["Experts requantized or unpacked on the fly", "Unused experts read anyway", "One launch per expert, not grouped"]],
+    norm_rope_elementwise: ["Normalization, rotary embeddings, elementwise work", ["Many small unfused kernels", "Tables copied to a new layout every step", "Extra fp32 casts"]],
+    sampling: ["Picks the next token", ["Full-vocabulary sort or softmax", "Logits copied to the CPU", "Sampling on one CPU thread"]],
+    other_gpu: ["Any other kernel, such as copies", ["Weights or caches copied every step", "Host and device transfers", "Cache bookkeeping kernels"]],
+    gpu_idle: ["The GPU waits on the host inside the step", ["Host prep slower than the GPU work", "No graph capture or compiled step", "Syncs between kernel launches"]],
+  };
+  const hint = (k, value) => {
+    const [, name, color] = STAGES.find(([key]) => key === k);
+    const [does, slow] = HINTS[k];
+    return `<div class="gap-tip-title"><span class="stage-tip-name"><i style="background: ${color}"></i>${esc(name)}</span>${value == null ? "" : `<span class="gap-tip-end gap-tip-gap">${ms(value)}</span>`}</div>`
+      + `<div class="gap-tip-body">${esc(does)}</div><div class="stage-tip-head">Slow when</div><ul class="stage-tip-list">${slow.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>`;
+  };
   // a model slice's mark, the grid's own: a square cut by a diagonal
   const sliceIcon = (label) => `<svg class="reasons-slice-icon" viewBox="0 0 16 16" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>`;
   const verified = (c) => (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`]?.verdict === "confirmed";
@@ -38,10 +54,10 @@ window.Pie = window.Pie || {};
     if (!p) return `<p class="reasons-item-suggestion">Not measured yet</p>`;
     const total = (side) => STAGES.reduce((n, [k]) => n + (side.stages[k] || 0), 0);
     const top = Math.max(total(p.fastest), total(p.second));
-    const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${STAGES.map(([k, name, color]) => side.stages[k] > 0 ? `<i style="width: ${(100 * side.stages[k] / top).toFixed(2)}%; background: ${color}" title="${esc(`${name}: ${ms(side.stages[k])}`)}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;
+    const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${STAGES.map(([k, , color]) => side.stages[k] > 0 ? `<i style="width: ${(100 * side.stages[k] / top).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-ms="${side.stages[k]}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;
     const used = STAGES.filter(([k]) => p.fastest.stages[k] > 0 || p.second.stages[k] > 0);
     return `${bar(p.fastest)}${bar(p.second)}
-                <p class="profile-legend">${used.map(([, name, color]) => `<span><i style="background: ${color}"></i>${name}</span>`).join("")}</p>
+                <p class="profile-legend">${used.map(([k, name, color]) => `<span data-stage="${k}"><i style="background: ${color}"></i>${name}</span>`).join("")}</p>
                 <p class="profile-note">${esc(p.unit || "")}</p>`;
   };
   const keyOf = (engine, c) => `${engine}|${c.hardware}|${c.model}|${c.setup}`;
@@ -144,7 +160,37 @@ window.Pie = window.Pie || {};
     const run = body.animate(frames, { duration: open ? 260 : 200, easing: open ? "cubic-bezier(.2, .8, .2, 1)" : "cubic-bezier(.4, 0, .6, 1)" });
     if (!open) run.onfinish = () => { row.open = false; };
   };
+  // a stage's card follows the pointer over its bar segment or its legend entry, in the site's chart tooltip
+  const tooltip = document.getElementById("chart-tooltip");
+  let tipFor = null;
+  const hideTip = () => {
+    if (!tipFor || !tooltip) return;
+    tipFor = null;
+    tooltip.hidden = true;
+    tooltip.classList.remove("is-note", "is-stage-tip");
+  };
+  element.addEventListener("mousemove", (event) => {
+    const seg = event.target.closest("[data-stage]");
+    if (!seg || !tooltip || Pie.tapCard?.isTouch()) { hideTip(); return; }
+    if (seg !== tipFor) {
+      tooltip.innerHTML = hint(seg.dataset.stage, seg.dataset.stageMs == null ? null : Number(seg.dataset.stageMs));
+      tooltip.classList.remove("is-card", "is-gap-note");
+      tooltip.classList.add("is-note", "is-stage-tip");
+      tooltip.hidden = false;
+      tipFor = seg;
+    }
+    const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
+    const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8);
+    tooltip.style.left = `${Math.max(8, x)}px`;
+    tooltip.style.top = `${Math.max(8, y)}px`;
+  });
+  element.addEventListener("mouseleave", hideTip);
   element.addEventListener("click", (event) => {
+    const seg = event.target.closest("[data-stage]");
+    if (seg && Pie.tapCard?.isTouch()) {
+      Pie.tapCard.toggle(seg, hint(seg.dataset.stage, seg.dataset.stageMs == null ? null : Number(seg.dataset.stageMs)), true);
+      return;
+    }
     const summary = event.target.closest(".reasons-item-summary");
     if (summary) {
       event.preventDefault();

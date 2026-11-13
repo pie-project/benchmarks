@@ -650,6 +650,13 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .profile-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 4px; font-size: 11px; color: var(--color-label-secondary); }
 .profile-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .profile-legend i { width: 8px; height: 8px; border-radius: 2px; }
+.profile-bar i[data-stage], .profile-legend span[data-stage] { cursor: default; }
+/* a stage's hover card: its name and time, what it does, and where its time usually goes when an engine is slow there */
+.chart-tooltip.is-note.is-stage-tip { max-width: 260px; padding: 9px 12px; white-space: normal; }
+.stage-tip-name { display: inline-flex; align-items: center; gap: 6px; }
+.stage-tip-name i { width: 8px; height: 8px; border-radius: 2px; }
+.stage-tip-head { margin-top: 7px; font-size: 11px; font-weight: 600; color: var(--color-label-tertiary, var(--color-label-secondary)); }
+.stage-tip-list { margin: 3px 0 0; padding-left: 15px; font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }
 .profile-note { margin: 0; font-size: 11px; color: var(--color-label-tertiary); }
 /* each row's status at its left: a green shield where a profile verifies the gap; the slot stays empty otherwise */
 .reasons-item-status { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; }
