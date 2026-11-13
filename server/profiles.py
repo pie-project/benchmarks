@@ -10,7 +10,8 @@ from server.ingest import NAME
 
 TOL = 0.10
 REQUIRED = ["attention", "dense_matmul", "moe", "norm_rope_elementwise", "sampling", "other_gpu", "gpu_idle"]
-OPTIONAL = ["linear_attention", "qkv_proj", "o_proj", "mlp", "lm_head"]
+ROLES = ["qkv_proj", "o_proj", "mlp", "lm_head"]
+OPTIONAL = ["linear_attention", *ROLES]
 STAGES = ["attention", "linear_attention", "qkv_proj", "o_proj", "mlp", "lm_head", *REQUIRED[1:]]
 LABEL = {"attention": "attention", "linear_attention": "linear attention", "qkv_proj": "QKV projection", "o_proj": "output projection",
          "mlp": "MLP", "lm_head": "LM head", "dense_matmul": "dense matmul", "moe": "MoE", "norm_rope_elementwise": "norm/rope/elementwise",
@@ -67,6 +68,9 @@ def judge(doc: dict) -> dict | None:
     f, s = doc["fastest"], doc["second"]
     if not all(b["profiled_step_ms"] and b["benchmark_step_ms"] and b["stage_ms"] for b in (f, s)):
         return None
+    if not all(any(b["stage_ms"].get(k) for k in ROLES) for b in (f, s)):
+        f, s = ({**b, "stage_ms": {**b["stage_ms"], **{k: 0.0 for k in ROLES},
+                                   "dense_matmul": b["stage_ms"]["dense_matmul"] + sum(b["stage_ms"].get(k) or 0 for k in ROLES)}} for b in (f, s))
     speeds = f["speed"] and s["speed"]
     ratio = f["speed"] / s["speed"] if speeds else s["profiled_step_ms"] / f["profiled_step_ms"]
     scale = f["speed"] * f["profiled_step_ms"] / (s["speed"] * s["profiled_step_ms"]) if speeds else 1.0

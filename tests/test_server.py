@@ -190,7 +190,11 @@ def test_profiles_are_judged_from_their_numbers_and_served_at_once(client):
     roles["second"]["stage_ms"] = {**roles["second"]["stage_ms"], "dense_matmul": 1.0, "qkv_proj": 1.0, "o_proj": 1.0, "mlp": 4.0, "lm_head": 4.1}
     client.post("/v1/profiles", content=body([roles]), headers={"Authorization": "Bearer admin-secret"})
     batching = client.get("/v1/profiles").json()["m5-max-64g|qwen3.5-9b|batching"]
-    assert batching["stageKey"] == "lm_head" and batching["second"]["stages"]["mlp"] == 4.0 and batching["fastest"]["stages"]["qkv_proj"] == 0
+    assert batching["stageKey"] == "dense_matmul" and batching["second"]["stages"]["mlp"] == 0 and batching["second"]["stages"]["dense_matmul"] == 11.1
+    roles["fastest"]["stage_ms"] = {**roles["fastest"]["stage_ms"], "dense_matmul": 1.0, "qkv_proj": 1.0, "o_proj": 1.0, "mlp": 2.0, "lm_head": 1.0}
+    client.post("/v1/profiles", content=body([roles]), headers={"Authorization": "Bearer admin-secret"})
+    batching = client.get("/v1/profiles").json()["m5-max-64g|qwen3.5-9b|batching"]
+    assert batching["stageKey"] == "lm_head" and batching["second"]["stages"]["mlp"] == 4.0 and batching["fastest"]["stages"]["lm_head"] == 1.0
 
 
 def test_monitors_can_check_health_with_head(client):
