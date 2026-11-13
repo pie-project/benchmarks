@@ -51,6 +51,15 @@ CREATE TABLE IF NOT EXISTS hits (
     count bigint NOT NULL,
     PRIMARY KEY (day, path)
 );
+CREATE TABLE IF NOT EXISTS profiles (
+    hardware text NOT NULL,
+    model text NOT NULL,
+    setup text NOT NULL,
+    doc jsonb NOT NULL,
+    token_id text,
+    submitted_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (hardware, model, setup)
+);
 CREATE TABLE IF NOT EXISTS views (
     key text PRIMARY KEY,
     data bytea NOT NULL,
