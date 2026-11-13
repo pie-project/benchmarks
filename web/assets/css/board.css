@@ -661,6 +661,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .summary-sub { margin: 2px 0 12px; font-size: 12px; color: var(--color-label-secondary); }
 .summary-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .summary-head .platform-compare { flex: none; }
+.summary-engine { gap: 6px; }  /* the Summary's engine pick: the engine's square, its name, the menu's chevron */
+.summary-engine-dot { width: 8px; height: 8px; flex: none; border-radius: 2px; }
 .summary-name { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .summary-name i { width: 8px; height: 8px; flex: none; border-radius: 2px; }
 .summary-bar { display: grid; grid-template-columns: 130px minmax(0, 1fr) 44px; align-items: center; gap: 10px; height: 26px; font-size: 12px; color: var(--color-label); }
