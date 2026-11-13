@@ -178,7 +178,13 @@ def test_profiles_are_judged_from_their_numbers_and_served_at_once(client):
     assert set(served) == {"m5-max-64g|qwen3.5-9b|decode", "m5-max-64g|qwen3.5-9b|batching"}
     good = served["m5-max-64g|qwen3.5-9b|decode"]
     assert good["verdict"] == "confirmed" and good["stageKey"] == "dense_matmul" and good["second"]["engine"] == "mlxlm"
-    assert good["fastest"]["stages"]["linear_attention"] == 0
+    assert good["fastest"]["stages"]["linear_attention"] == 0 and good["flags"] == []
+    odd = _profile("spec", 15.1)
+    odd["second"]["stage_ms"] = {**odd["second"]["stage_ms"], "dense_matmul": 1.0, "other_gpu": 10.1}
+    odd["fastest"]["benchmark_status"] = "noisy"
+    client.post("/v1/profiles", content=body([odd]), headers=auth)
+    spec = client.get("/v1/profiles").json()["m5-max-64g|qwen3.5-9b|spec"]
+    assert spec["verdict"] == "confirmed" and {(x["engine"], x["kind"]) for x in spec["flags"]} == {("mlxlm", "unclassified"), ("pie", "noisy")}
     assert served["m5-max-64g|qwen3.5-9b|batching"]["verdict"] == "bad run"
     assert "Users" not in client.get("/v1/profiles").text
     linear = _profile("batching", 15.2)

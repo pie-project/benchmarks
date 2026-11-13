@@ -213,7 +213,7 @@ window.Pie = window.Pie || {};
       <p>Both engines are measured in the benchmark's own unit: ms per output token, per prompt, per batched step or per wave of prompts. The stage where the slower engine spends the most extra time is where the gap comes from.</p>
       <h3>When a cell is verified</h3>
       ${facts([["#34C759", "Verified", "Each engine's profiled step is within 10% of the step its benchmark number implies, and the profiled gap within 10% of the benchmark's"],
-        ["#FF9500", "Bad run", "A profile disagrees with its benchmark, so the cell is profiled again"],
+        ["#FF9500", "Needs rerun", "A profile disagrees with its benchmark, or a check flags it: unclassified GPU work over 25% of a step, the GPU idle over half of it, stages that do not add up to it, or a noisy benchmark run"],
         ["#8E8E93", "Not profiled", "One engine could not be traced yet"]])}
       <p>The results API applies this rule to the uploaded numbers, so no verdict is set by hand. A verified cell turns green in the grid and carries a shield on the Profiling page.</p>`;
 

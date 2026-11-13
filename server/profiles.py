@@ -17,6 +17,8 @@ LABEL = {"attention": "attention", "linear_attention": "linear attention", "qkv_
          "mlp": "MLP", "lm_head": "LM head", "dense_matmul": "dense matmul", "moe": "MoE", "norm_rope_elementwise": "norm/rope/elementwise",
          "sampling": "sampling", "other_gpu": "other GPU work", "gpu_idle": "GPU idle within the step"}
 MAX_CELLS = 5000
+UNCLASSIFIED_MAX = 0.25
+IDLE_MAX = 0.50
 
 
 def _fail(msg: str) -> None:
@@ -42,7 +44,8 @@ def _side(raw) -> dict:
     return {"engine": raw["engine"], "unit": str(raw.get("unit") or "")[:160],
             "benchmark_step_ms": _positive(raw.get("benchmark_step_ms")), "profiled_step_ms": _positive(raw.get("profiled_step_ms")),
             "reference_step_ms": _positive(raw.get("reference_step_ms")), "speed": _positive(raw.get("speed")),
-            "ane_ms": _num(raw.get("ane_ms")), "stage_ms": {k: float(stages.get(k) or 0) for k in STAGES} if stages else None}
+            "ane_ms": _num(raw.get("ane_ms")), "benchmark_status": raw.get("benchmark_status") if isinstance(raw.get("benchmark_status"), str) else None,
+            "stage_ms": {k: float(stages.get(k) or 0) for k in STAGES} if stages else None}
 
 
 def check(doc: dict) -> list[dict]:
@@ -83,6 +86,17 @@ def judge(doc: dict) -> dict | None:
     if ratio <= 1:
         why.append("the profile does not show the second engine slower")
     top = None if why else max(STAGES, key=delta.__getitem__)
+    flags = []
+    for b, stages in ((f, f["stage_ms"]), (s, second)):
+        total = sum(stages.values()) or 1.0
+        if stages["other_gpu"] / total > UNCLASSIFIED_MAX:
+            flags.append({"engine": b["engine"], "kind": "unclassified", "pct": round(100 * stages["other_gpu"] / total)})
+        if stages["gpu_idle"] / total > IDLE_MAX:
+            flags.append({"engine": b["engine"], "kind": "idle", "pct": round(100 * stages["gpu_idle"] / total)})
+        if abs(sum(b["stage_ms"].values()) / b["profiled_step_ms"] - 1) > TOL:
+            flags.append({"engine": b["engine"], "kind": "sum", "pct": round(100 * sum(b["stage_ms"].values()) / b["profiled_step_ms"])})
+        if b.get("benchmark_status") == "noisy":
+            flags.append({"engine": b["engine"], "kind": "noisy"})
 
     def side(b: dict, stages: dict) -> dict:
         return {"engine": b["engine"], "stepMs": b["profiled_step_ms"], "benchMs": b["benchmark_step_ms"], "ane": b["ane_ms"],
@@ -90,7 +104,7 @@ def judge(doc: dict) -> dict | None:
 
     return {"verdict": "bad run" if why else "confirmed", "stage": top and LABEL[top], "stageKey": top,
             "stageMs": top and round(delta[top], 3), "gapPct": doc["gap_pct"], "profiledGapPct": round(100 * (ratio - 1), 1),
-            "unit": f["unit"], "why": "; ".join(why), "fastest": side(f, f["stage_ms"]), "second": side(s, second)}
+            "unit": f["unit"], "why": "; ".join(why), "flags": flags, "fastest": side(f, f["stage_ms"]), "second": side(s, second)}
 
 
 def store(cur, cells: list[dict], *, token_id: str | None, address: str) -> dict:
