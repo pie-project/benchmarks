@@ -1266,6 +1266,7 @@ ${relHead(pick)}
   const relActivate = (area, path) => {
     for (const p of area.querySelectorAll(".relative-line.is-active")) { p.classList.remove("is-active"); p.style.stroke = ""; }
     for (const t of area.querySelectorAll(".relative-label.is-active")) { t.classList.remove("is-active"); t.style.color = ""; }
+    for (const l of area.querySelectorAll(".relative-leader.is-active")) { l.classList.remove("is-active"); l.style.stroke = ""; }
     const dot = area.querySelector(".relative-active-dot"), note = area.querySelector(".relative-note");
     if (!path) { if (dot) dot.hidden = true; if (note) note.hidden = true; return; }
     const color = path.dataset.color;
@@ -1278,18 +1279,33 @@ ${relHead(pick)}
     note.hidden = false;
     const name = area.querySelector(`.relative-label[data-engine="${CSS.escape(path.dataset.engine)}"]`);
     if (name) { name.classList.add("is-active"); name.style.color = color; }
+    const leader = area.querySelector(`.relative-leader[data-engine="${CSS.escape(path.dataset.engine)}"]`);
+    if (leader) { leader.classList.add("is-active"); leader.style.stroke = color; }
   };
   // the names at the right edge, each level with its line's end, nudged apart where two would touch at the card's height
   const spreadLabels = () => {
     for (const area of element.querySelectorAll(".relative-area")) {
       const h = area.clientHeight;
       if (!h) continue;
-      let last = -Infinity;
-      for (const t of [...area.querySelectorAll(".relative-label")].sort((a, b) => a.dataset.top - b.dataset.top)) {
-        const top = Math.max(h * t.dataset.top / 100, last + 15);
-        t.style.top = `${top}px`;
-        last = top;
-      }
+      // the names in a column of even steps beside the chart, in the order the lines end; a thin leader runs from each
+      // line's end out to its name, so no two names stack where their lines finish close together
+      const names = [...area.querySelectorAll(".relative-label")].sort((a, b) => a.dataset.top - b.dataset.top);
+      const step = names.length > 1 ? Math.min(h / (names.length - 1), 28) : 0;
+      const first = Math.max(0, Math.min(h * names[0]?.dataset.top / 100 || 0, h - step * (names.length - 1)));
+      const W = 30, ns = "http://www.w3.org/2000/svg";
+      let leaders = area.querySelector(".relative-leaders");
+      if (!leaders) { leaders = document.createElementNS(ns, "svg"); leaders.setAttribute("class", "relative-leaders"); leaders.setAttribute("aria-hidden", "true"); area.append(leaders); }
+      leaders.setAttribute("width", W);
+      leaders.setAttribute("height", h);
+      leaders.replaceChildren(...names.map((t, i) => {
+        const from = h * t.dataset.top / 100, to = first + step * i;
+        t.style.top = `${to}px`;
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("class", "relative-leader");
+        path.dataset.engine = t.dataset.engine;
+        path.setAttribute("d", `M0,${from.toFixed(1)}H6C18,${from.toFixed(1)} 18,${to.toFixed(1)} ${W - 4},${to.toFixed(1)}H${W}`);
+        return path;
+      }));
       // the axis words left to right; one that would touch the word before it stays hidden, the last one always shows
       const ticks = [...area.querySelectorAll(".relative-tick.is-x")];
       let right = -Infinity;
