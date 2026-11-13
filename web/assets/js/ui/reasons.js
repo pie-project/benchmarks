@@ -35,7 +35,7 @@ window.Pie = window.Pie || {};
   const ms = (v) => `${v >= 100 ? Math.round(v) : v >= 10 ? v.toFixed(1) : v.toFixed(2)} ms`;
   const profileOf = (c) => {
     const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
-    if (!p) return `<p class="reasons-item-suggestion"><span class="reasons-item-label">Profile</span>Not measured yet</p>`;
+    if (!p) return `<p class="reasons-item-suggestion">Not measured yet</p>`;
     const total = (side) => STAGES.reduce((n, [k]) => n + (side.stages[k] || 0), 0);
     const top = Math.max(total(p.fastest), total(p.second));
     const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${STAGES.map(([k, name, color]) => side.stages[k] > 0 ? `<i style="width: ${(100 * side.stages[k] / top).toFixed(2)}%; background: ${color}" title="${esc(`${name}: ${ms(side.stages[k])}`)}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;

@@ -26,7 +26,7 @@
 .reasons-item-text .reasons-item-title { margin-bottom: 4px; }
 .reasons-item-chevron { flex: none; width: 12px; height: 12px; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .26s cubic-bezier(.2, .8, .2, 1); }
 .reasons-item[open] .reasons-item-chevron { transform: rotate(90deg); }
-.reasons-item-body { overflow: hidden; padding: 0 18px 0 50px; }  /* the profile under the row's title: past the 20px status icon and its 12px gap */
+.reasons-item-body { overflow: hidden; padding: 0 42px 0 50px; }  /* the profile between the row's title and the end of its gap: past the 20px status icon and its 12px gap on the left, short of the 12px chevron and its 12px gap on the right */
 .reasons-item-body > :first-child { margin-top: 0; }
 .reasons-item-body > :last-child { padding-bottom: 14px; }
 .reasons-item-body .reasons-item-suggestion + .reasons-item-suggestion { margin-top: 4px; }
