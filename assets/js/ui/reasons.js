@@ -66,7 +66,16 @@ window.Pie = window.Pie || {};
   };
   // a model slice's mark, the grid's own: a square cut by a diagonal
   const sliceIcon = (label) => `<svg class="reasons-slice-icon" viewBox="0 0 16 16" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>`;
-  const verified = (c) => (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`]?.verdict === "confirmed";
+  const verified = (c) => Pie.verifiedProfile?.(`${c.hardware}|${c.model}|${c.setup}`);
+  // why a profiled cell needs a rerun: its profile disagrees with the benchmark, or one of the API's checks flagged it
+  const FLAG = { unclassified: (n, x) => `unclassified GPU work is ${x.pct}% of ${n}'s step`, idle: (n, x) => `the GPU sits idle ${x.pct}% of ${n}'s step`,
+    sum: (n, x) => `${n}'s stages add up to ${x.pct}% of its step`, noisy: (n) => `${n}'s benchmark run was noisy` };
+  const rerunWhy = (c) => {
+    const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
+    if (!p || verified(c)) return null;
+    const flags = (p.flags || []).map((x) => FLAG[x.kind]?.(nameOf(x.engine), x)).filter(Boolean);
+    return [p.verdict !== "confirmed" ? "the profile does not match the benchmark" : "", ...flags].filter(Boolean).join("; ");
+  };
   const ms = (v) => `${v >= 100 ? Math.round(v) : v >= 10 ? v.toFixed(1) : v.toFixed(2)} ms`;
   const profileOf = (c) => {
     const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
@@ -90,6 +99,8 @@ window.Pie = window.Pie || {};
               <summary class="reasons-item-summary">
                 ${verified(c)
                   ? `<span class="reasons-item-status is-verified" role="img" aria-label="Verified" title="Verified: a profile of both engines agrees with the benchmark"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>`
+                  : rerunWhy(c)
+                  ? `<span class="reasons-item-status is-rerun" role="img" aria-label="Needs rerun" title="${esc(`Needs rerun: ${rerunWhy(c)}`)}"><svg viewBox="0 0 16 16" aria-hidden="true"><circle class="shield" cx="8" cy="8" r="6.6"/><path class="mark" d="M10.9 6.4A3.2 3.2 0 1 0 11.2 9"/><path class="mark" d="M11.1 4.2v2.4H8.7"/></svg></span>`
                   : `<span class="reasons-item-status" aria-hidden="true"></span>`}
                 <div class="reasons-item-text"><h2 class="reasons-item-title">${c.miniature ? sliceIcon(`Model slice: ${c.miniature}`) : ""}${esc(modelName(c.model))} on ${esc(machineName(c.hardware))}</h2>
                 <p class="reasons-item-meta">${esc(c.label)}</p></div>
