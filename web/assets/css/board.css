@@ -653,7 +653,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .profile-bar i[data-stage], .profile-legend span[data-stage] { cursor: default; }
 /* a profile's Limit bar: the machine's floor for the cell, in quieter ink than the two engines */
 .profile-row.is-limit .profile-engine, .profile-row.is-limit .profile-total { color: var(--color-label-secondary); }
-.profile-bar i.is-limit, .stage-tip-name i.is-limit { background: none; box-shadow: inset 0 0 0 1.5px var(--color-label-secondary); border-radius: 3px; }
+.profile-bar i.is-limit, .stage-tip-name i.is-limit { background: #8E8E93 !important; }  /* the limit filled grey, darker than GPU idle */
 /* the Profiling Summary: three figures, then a card a chart in the grouped panel's tint */
 .welcome-stats.summary-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 4px 0 8px; }
 .summary-card { margin-top: 12px; padding: 16px 18px 14px; border-radius: 12px; background: color-mix(in srgb, var(--color-fill) 50%, transparent); }
