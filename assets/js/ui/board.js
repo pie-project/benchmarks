@@ -1251,6 +1251,8 @@ ${relHead(pick)}
       const { cols, engines } = JSON.parse(box.dataset.bump);
       const PILL = 128, TOP = 28, ROW = 34, n = cols.length;
       const x0 = PILL + 28, x1 = W - PILL - 28, x = (j) => x0 + ((x1 - x0) * j) / (n - 1), y = (r) => TOP + ROW * (r + .5);
+      box._geo = { x0, x1, n, TOP, ROW, engines };
+      box.dataset.focus = "";
       const pct = (v) => `${Math.round(v * 100)}%`;
       const guides = engines.map((_, r) => `<line class="bump-guide" x1="${x0}" x2="${x1}" y1="${y(r)}" y2="${y(r)}"/>`).join("");
       const lines = engines.map((g) => {
@@ -1268,8 +1270,11 @@ ${relHead(pick)}
     }
   };
   new ResizeObserver(() => drawBumps()).observe(element);
-  // an engine under the pointer, its line or a pill of its name, stands out in its colour; the others fade
+  // the engine nearest the pointer stands out in its colour and the others fade: always exactly one while the pointer is
+  // over the chart, so there is no gap between lines that lights none
   const bumpFocus = (box, engine) => {
+    if (box.dataset.focus === (engine || "")) return;
+    box.dataset.focus = engine || "";
     box.classList.toggle("is-focused", Boolean(engine));
     for (const el of box.querySelectorAll("[data-engine]")) {
       const on = el.dataset.engine === engine;
@@ -1277,10 +1282,31 @@ ${relHead(pick)}
       if (el.classList.contains("bump-pill")) el.style.background = on ? el.dataset.color : "";
     }
   };
-  element.addEventListener("pointerover", (event) => {
+  // a line's height at a given x: each step a cubic from one rank to the next, its handles at the step's middle
+  const bumpY = (g, geo, px) => {
+    const { x0, x1, n, TOP, ROW } = geo, yr = (r) => TOP + ROW * (r + .5), step = (x1 - x0) / (n - 1);
+    if (px <= x0) return yr(g.ranks[0]);
+    if (px >= x1) return yr(g.ranks[n - 1]);
+    const j = Math.min(n - 1, Math.floor((px - x0) / step) + 1), a = x0 + step * (j - 1), b = a + step, m = (a + b) / 2;
+    const ya = yr(g.ranks[j - 1]), yb = yr(g.ranks[j]);
+    let lo = 0, hi = 1;
+    for (let k = 0; k < 24; k++) {
+      const t = (lo + hi) / 2, u = 1 - t;
+      const xt = a * u * u * u + 3 * m * u * u * t + 3 * m * u * t * t + b * t * t * t;
+      if (xt < px) lo = t; else hi = t;
+    }
+    const t = (lo + hi) / 2, u = 1 - t;
+    return ya * (u * u * u + 3 * u * u * t) + yb * (3 * u * t * t + t * t * t);
+  };
+  element.addEventListener("pointermove", (event) => {
     const box = event.target.closest?.(".bump");
-    if (!box) return;
-    bumpFocus(box, event.target.closest("[data-engine]")?.dataset.engine || null);
+    if (!box) { for (const b of element.querySelectorAll(".bump.is-focused")) bumpFocus(b, null); return; }
+    const geo = box._geo;
+    if (!geo) return;
+    const r = box.getBoundingClientRect(), px = event.clientX - r.left, py = event.clientY - r.top;
+    let best = null, gap = Infinity;
+    for (const g of geo.engines) { const d = Math.abs(bumpY(g, geo, px) - py); if (d < gap) { gap = d; best = g.e; } }
+    bumpFocus(box, best);
   });
   element.addEventListener("pointerleave", () => { for (const box of element.querySelectorAll(".bump")) bumpFocus(box, null); });
   element.addEventListener("click", (event) => {
