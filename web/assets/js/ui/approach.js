@@ -42,6 +42,7 @@ window.Pie = window.Pie || {};
     ["Quality", [
       ["parity", "Parity Checks", "#007AFF", "How we confirm every engine computes the same model.", () => parity()],
       ["accuracy", "Accuracy", "#FFCC00", "Benchmark scores on the same weights and machine.", () => accuracy()],
+      ["profiling", "Profiling", "#5AC8FA", "How a speed gap is traced to where its time goes.", () => profiling()],
     ]],
     ["Contribute", [
       ["add-engine", "Add an Engine", "#FF2D55", "How a new engine joins the benchmark.", () => addEngine()],
@@ -185,6 +186,30 @@ window.Pie = window.Pie || {};
         ["#007AFF", "Decoding", "Greedy, thinking off"],
         ["#8E8E93", "Compared with", "One other engine on the same machine"],
         ["#34C759", "Pass", "Within the run's own noise of the other engine; 5 points where it has none"]])}`;
+
+  // Profiling: how a gap the grid marks is traced on the GPU, its stages in the colours the Profiling page draws them in
+  const profiling = () => `
+      ${lead("Where one engine is 25% or more ahead of the next on a cell, we profile both to see where the time goes.")}
+      ${steps([["#5AC8FA", "Same run", "Both engines, same machine and workload"], ["#5E5CE6", "Trace", "The platform's own GPU profiler"],
+        ["#0A84FF", "Stages", "Each step split into seven parts"], ["#34C759", "Verify", "Within 10% of the benchmark"]], "<h3>How a cell is profiled</h3>")}
+      <h3>The tracer on each platform</h3>
+      ${facts([["#8E8E93", "Apple", "Metal System Trace, every GPU command"],
+        ["#76B900", "NVIDIA", "Nsight Systems, every CUDA kernel"],
+        ["#4285F4", "TPU", "The XLA device profiler, every TPU op"]])}
+      <h3>The seven stages</h3>
+      ${facts([["#5E5CE6", "Attention", "Reading the KV cache and scoring past tokens"],
+        ["#0A84FF", "Dense matmul", "The weight multiplies of each layer"],
+        ["#30B0C7", "MoE", "Routing tokens and running the chosen experts"],
+        ["#34C759", "Norm and rope", "Normalization, rotary embeddings and other elementwise work"],
+        ["#FF9F0A", "Sampling", "Picking the next token"],
+        ["#AF52DE", "Other GPU", "Any other kernel, such as copies"],
+        ["#AEAEB2", "GPU idle", "Time inside the step while the GPU waits on the host"]])}
+      <p>Both engines are measured in the benchmark's own unit: ms per output token, per prompt, per batched step or per wave of prompts. The stage where the slower engine spends the most extra time is where the gap comes from.</p>
+      <h3>When a cell is verified</h3>
+      ${facts([["#34C759", "Verified", "Each engine's profiled step is within 10% of the step its benchmark number implies, and the profiled gap within 10% of the benchmark's"],
+        ["#FF9500", "Bad run", "A profile disagrees with its benchmark, so the cell is profiled again"],
+        ["#8E8E93", "Not profiled", "One engine could not be traced yet"]])}
+      <p>The results API applies this rule to the uploaded numbers, so no verdict is set by hand. A verified cell turns green in the grid and carries a shield on the Profiling page.</p>`;
 
   // Contribute: the files an engine is added in, each a row that opens it on GitHub (its name in the file column, the
   // whole path in its title); commands as facts whose lines stay on a phone; links out as the trust rows' links
