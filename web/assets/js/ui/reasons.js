@@ -66,6 +66,9 @@ window.Pie = window.Pie || {};
   // model slices on or off, as the viewer left it: off keeps only the cells measured on the full model
   const SLICES = "pieSuggestionsSlices";
   let slices = (() => { try { return localStorage.getItem(SLICES) !== "off"; } catch { return true; } })();
+  // verified only on or off, as the viewer left it: on keeps only the cells a profile of both engines confirms
+  const VERIFIED = "pieSuggestionsVerified";
+  let verifiedOnly = (() => { try { return localStorage.getItem(VERIFIED) === "on"; } catch { return false; } })();
 
   // one engine a page, as the Bench Book shows one chapter: the outline down the left picks it
   const draw = () => {
@@ -78,8 +81,14 @@ window.Pie = window.Pie || {};
       slices = true;
       try { localStorage.setItem(SLICES, "on"); } catch { /* private windows can refuse storage */ }
     }
-    const reasons = slices ? all : all.filter((c) => !c.miniature);
+    if (focus && verifiedOnly && all.some((c) => !verified(c) && keyOf(id, c) === keyOf(focus.engine, focus))) {
+      verifiedOnly = false;
+      try { localStorage.setItem(VERIFIED, "off"); } catch { /* private windows can refuse storage */ }
+    }
+    const reasons = all.filter((c) => (slices || !c.miniature) && (!verifiedOnly || verified(c)));
     const cells = reasons.length;
+    // the outline's fill rides from the engine it marked to the one picked, not drawn afresh on the new one
+    const was = element.querySelector(".board-outline-thumb")?.style.cssText;
     element.innerHTML = `
       <div class="platform-bar board-bar"></div>
       <div class="board-scroll"><div class="board-inner">
@@ -87,8 +96,9 @@ window.Pie = window.Pie || {};
         <div class="board-main">
           <div class="board-section-head"><div class="board-section-text"><h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))} Profile</h1>
           <p class="board-lede">${lede(id, cells)}</p></div>
-          <button type="button" class="reasons-slices" data-reasons-slices role="switch" aria-checked="${slices}">${sliceIcon("Model slices")}<span>Model slices</span><i class="reasons-switch" aria-hidden="true"></i></button></div>
-          ${reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">No cells behind.</p>`}
+          <button type="button" class="board-title-pick reasons-slices" data-reasons-slices role="switch" aria-checked="${slices}">${sliceIcon("Model slices")}<span>Model slices</span><i class="reasons-switch" aria-hidden="true"></i></button>
+          <button type="button" class="board-title-pick reasons-slices" data-reasons-verified role="switch" aria-checked="${verifiedOnly}"><svg class="reasons-slice-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg><span>Verified</span><i class="reasons-switch" aria-hidden="true"></i></button></div>
+          ${reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">${verifiedOnly && all.length ? "No verified cells yet." : "No cells behind."}</p>`}
         </div>
       </div></div>`;
     // under the window's title, how many suggestions the engine on view has
@@ -100,6 +110,7 @@ window.Pie = window.Pie || {};
       thumb.className = "board-outline-thumb";
       thumb.setAttribute("aria-hidden", "true");
       nav.prepend(thumb);
+      if (was) { thumb.style.cssText = was; void thumb.offsetHeight; }
       const place = (tries) => {
         if (on.offsetParent === null) { if (tries > 0) requestAnimationFrame(() => place(tries - 1)); return; }
         thumb.style.transform = `translateY(${on.offsetTop}px)`;
@@ -144,6 +155,12 @@ window.Pie = window.Pie || {};
     if (event.target.closest("[data-reasons-slices]")) {
       slices = !slices;
       try { localStorage.setItem(SLICES, slices ? "on" : "off"); } catch { /* private windows can refuse storage */ }
+      draw();
+      return;
+    }
+    if (event.target.closest("[data-reasons-verified]")) {
+      verifiedOnly = !verifiedOnly;
+      try { localStorage.setItem(VERIFIED, verifiedOnly ? "on" : "off"); } catch { /* private windows can refuse storage */ }
       draw();
       return;
     }
