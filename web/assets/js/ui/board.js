@@ -904,7 +904,7 @@ window.Pie = window.Pie || {};
       ${[[0, "Fastest", "start"], [.1, "Within 10%", "middle"], [.25, "Within 25%", "middle"], [.5, "Within 50%", "end"]].map(([d, t, a]) => `<span class="relative-tick is-x is-${a}" style="left: ${(x(d) / 10).toFixed(1)}%">${t}</span>`).join("")}
 
       <span class="relative-active-dot" hidden></span><span class="relative-note" hidden></span>
-      ${curves.map((c) => `<span class="relative-label" data-engine="${esc(c.e)}" data-top="${(y(c.last) / 10).toFixed(2)}" style="top: ${(y(c.last) / 10).toFixed(2)}%">${engineMark(c.e)}${esc(label(c.e))}</span>`).join("")}
+      ${curves.map((c) => `<span class="relative-label" data-engine="${esc(c.e)}" data-top="${(y(c.last) / 10).toFixed(2)}" data-name="${esc(label(c.e))}" data-color="${Pie.engines.colorOf(c.e)}" hidden></span>`).join("")}
     </div>
       <span class="relative-axis-title">Gap to the fastest engine on each test</span>
       <span class="relative-axis-title is-y">Share of each engine's tests</span>
@@ -1265,7 +1265,6 @@ ${relHead(pick)}
   // with its share of tests won at its start and its name at the right; the rest stay grey
   const relActivate = (area, path) => {
     for (const p of area.querySelectorAll(".relative-line.is-active")) { p.classList.remove("is-active"); p.style.stroke = ""; }
-    for (const t of area.querySelectorAll(".relative-label.is-active")) { t.classList.remove("is-active"); t.style.color = ""; }
     for (const l of area.querySelectorAll(".relative-leader.is-active")) { l.classList.remove("is-active"); l.style.stroke = ""; }
     const dot = area.querySelector(".relative-active-dot"), note = area.querySelector(".relative-note");
     if (!path) { if (dot) dot.hidden = true; if (note) note.hidden = true; return; }
@@ -1277,8 +1276,6 @@ ${relHead(pick)}
     note.style.background = color;
     dot.hidden = false;
     note.hidden = false;
-    const name = area.querySelector(`.relative-label[data-engine="${CSS.escape(path.dataset.engine)}"]`);
-    if (name) { name.classList.add("is-active"); name.style.color = color; }
     const leader = area.querySelector(`.relative-leader[data-engine="${CSS.escape(path.dataset.engine)}"]`);
     if (leader) { leader.classList.add("is-active"); leader.style.stroke = color; }
   };
@@ -1292,19 +1289,27 @@ ${relHead(pick)}
       const names = [...area.querySelectorAll(".relative-label")].sort((a, b) => a.dataset.top - b.dataset.top);
       const step = names.length > 1 ? Math.min(h / (names.length - 1), 28) : 0;
       const first = Math.max(0, Math.min(h * names[0]?.dataset.top / 100 || 0, h - step * (names.length - 1)));
-      const W = 30, ns = "http://www.w3.org/2000/svg";
+      // each line ends in a pill of its engine's colour from the top bar: a round cap that narrows to the line's width
+      const L = 30, W = 56, ns = "http://www.w3.org/2000/svg";
       let leaders = area.querySelector(".relative-leaders");
       if (!leaders) { leaders = document.createElementNS(ns, "svg"); leaders.setAttribute("class", "relative-leaders"); leaders.setAttribute("aria-hidden", "true"); area.append(leaders); }
       leaders.setAttribute("width", W);
       leaders.setAttribute("height", h);
-      leaders.replaceChildren(...names.map((t, i) => {
-        const from = h * t.dataset.top / 100, to = first + step * i;
-        t.style.top = `${to}px`;
+      leaders.replaceChildren(...names.flatMap((t, i) => {
+        const from = (h * t.dataset.top / 100).toFixed(1), to = first + step * i;
         const path = document.createElementNS(ns, "path");
         path.setAttribute("class", "relative-leader");
         path.dataset.engine = t.dataset.engine;
-        path.setAttribute("d", `M0,${from.toFixed(1)}H6C18,${from.toFixed(1)} 18,${to.toFixed(1)} ${W - 4},${to.toFixed(1)}H${W}`);
-        return path;
+        path.setAttribute("d", `M0,${from}H6C18,${from} 18,${to.toFixed(1)} ${L - 4},${to.toFixed(1)}H${L}`);
+        const pill = document.createElementNS(ns, "path");
+        pill.setAttribute("class", "relative-pill");
+        pill.setAttribute("fill", t.dataset.color);
+        const n = L + 10, r = 4, y = to;
+        pill.setAttribute("d", `M${L},${y - .5}C${L + 6},${y - .5} ${n - 4},${y - r} ${n},${y - r}H${W - r}A${r},${r} 0 0 1 ${W - r},${y + r}H${n}C${n - 4},${y + r} ${L + 6},${y + .5} ${L},${y + .5}Z`);
+        const tip = document.createElementNS(ns, "title");
+        tip.textContent = t.dataset.name;
+        pill.append(tip);
+        return [path, pill];
       }));
       // the axis words left to right; one that would touch the word before it stays hidden, the last one always shows
       const ticks = [...area.querySelectorAll(".relative-tick.is-x")];
