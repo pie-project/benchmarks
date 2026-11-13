@@ -258,7 +258,7 @@ window.Pie = window.Pie || {};
     if (!tipFor || !tooltip) return;
     tipFor = null;
     tooltip.hidden = true;
-    tooltip.classList.remove("is-note", "is-stage-tip");
+    tooltip.classList.remove("is-note", "is-stage-tip", "is-limit-tip");
   };
   element.addEventListener("mousemove", (event) => {
     const seg = event.target.closest("[data-stage], [data-heat]");
@@ -267,6 +267,7 @@ window.Pie = window.Pie || {};
       tooltip.innerHTML = seg.dataset.heat != null ? heatTip(seg) : hint(seg.dataset.stage, seg.dataset.stageValue, seg.dataset.stageNote);
       tooltip.classList.remove("is-card", "is-gap-note");
       tooltip.classList.add("is-note", "is-stage-tip");
+      tooltip.classList.toggle("is-limit-tip", seg.dataset.stage === "limit");  // the Limit's card keeps its narrow width
       tooltip.hidden = false;
       tipFor = seg;
     }

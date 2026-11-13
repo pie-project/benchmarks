@@ -693,6 +693,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 }
 /* a stage's hover card: its name and time, what it does, and where its time usually goes when an engine is slow there */
 .chart-tooltip.is-note.is-stage-tip { width: max-content; max-width: min(380px, calc(100vw - 16px)); padding: 9px 12px; white-space: normal; }  /* as wide as its longest line, so each reason stays on one */
+.chart-tooltip.is-note.is-stage-tip.is-limit-tip { width: auto; max-width: 260px; }  /* the Limit's card: a sentence, wrapped narrow */
 .stage-tip-name { display: inline-flex; align-items: center; gap: 6px; }
 .stage-tip-name i { width: 8px; height: 8px; border-radius: 2px; }
 .stage-tip-head { margin-top: 7px; font-size: 11px; font-weight: 600; color: var(--color-label-tertiary, var(--color-label-secondary)); }
