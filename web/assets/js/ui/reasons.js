@@ -252,30 +252,45 @@ window.Pie = window.Pie || {};
     if (!open) run.onfinish = () => { row.open = false; };
   };
   // a stage's card follows the pointer over its bar segment or its legend entry, in the site's chart tooltip
+  // as a macOS popover shows: after the pointer rests a moment on a mark, then still, just under the mark where the
+  // pointer is; once one is up, the next mark's card comes at once, until the pointer has been off the marks a moment
   const tooltip = document.getElementById("chart-tooltip");
-  let tipFor = null;
+  const REST = 400, WARM = 300;
+  let tipFor = null, pending = null, timer = 0, warmUntil = 0, lastX = 0;
   const hideTip = () => {
+    clearTimeout(timer);
+    pending = null;
     if (!tipFor || !tooltip) return;
     tipFor = null;
+    warmUntil = performance.now() + WARM;
     tooltip.hidden = true;
     tooltip.classList.remove("is-note", "is-stage-tip");
   };
+  const showTip = (seg) => {
+    tooltip.innerHTML = seg.dataset.heat != null ? heatTip(seg) : hint(seg.dataset.stage, seg.dataset.stageValue, seg.dataset.stageNote);
+    tooltip.classList.remove("is-card", "is-gap-note");
+    tooltip.classList.add("is-note", "is-stage-tip");
+    tooltip.hidden = false;
+    tipFor = seg;
+    // under the mark, its left edge a little left of the pointer; above the mark where the screen ends below it
+    const box = seg.getBoundingClientRect();
+    const below = box.bottom + 6;
+    const top = below + tooltip.offsetHeight > window.innerHeight - 8 ? box.top - tooltip.offsetHeight - 6 : below;
+    tooltip.style.left = `${Math.max(8, Math.min(lastX - 12, window.innerWidth - tooltip.offsetWidth - 8))}px`;
+    tooltip.style.top = `${Math.max(8, top)}px`;
+  };
   element.addEventListener("mousemove", (event) => {
+    lastX = event.clientX;
     const seg = event.target.closest("[data-stage], [data-heat]");
     if (!seg || !tooltip || Pie.tapCard?.isTouch()) { hideTip(); return; }
-    if (seg !== tipFor) {
-      tooltip.innerHTML = seg.dataset.heat != null ? heatTip(seg) : hint(seg.dataset.stage, seg.dataset.stageValue, seg.dataset.stageNote);
-      tooltip.classList.remove("is-card", "is-gap-note");
-      tooltip.classList.add("is-note", "is-stage-tip");
-      tooltip.hidden = false;
-      tipFor = seg;
-    }
-    const x = Math.min(event.clientX + 14, window.innerWidth - tooltip.offsetWidth - 8);
-    const y = Math.min(event.clientY + 14, window.innerHeight - tooltip.offsetHeight - 8);
-    tooltip.style.left = `${Math.max(8, x)}px`;
-    tooltip.style.top = `${Math.max(8, y)}px`;
+    if (seg === tipFor || seg === pending) return;
+    clearTimeout(timer);
+    if (tipFor || performance.now() < warmUntil) { pending = null; showTip(seg); return; }
+    pending = seg;
+    timer = setTimeout(() => { pending = null; if (seg.isConnected) showTip(seg); }, REST);
   });
   element.addEventListener("mouseleave", hideTip);
+  document.addEventListener("scroll", hideTip, { capture: true, passive: true });
   element.addEventListener("click", (event) => {
     const seg = event.target.closest("[data-stage], [data-heat]");
     if (seg && Pie.tapCard?.isTouch()) {

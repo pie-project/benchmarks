@@ -692,11 +692,13 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
   .summary-loss .summary-track { grid-column: 1 / -1; grid-row: 2; }
 }
 /* a stage's hover card: its name and time, what it does, and where its time usually goes when an engine is slow there */
-.chart-tooltip.is-note.is-stage-tip { width: 330px; max-width: calc(100vw - 16px); padding: 9px 12px; white-space: normal; }  /* one width for every stage and the Limit, room for the longest line */
+.chart-tooltip.is-note.is-stage-tip { width: 330px; max-width: calc(100vw - 16px); padding: 9px 12px; white-space: normal; box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(0, 0, 0, .1); }
+:root[data-theme="dark"] .chart-tooltip.is-note.is-stage-tip { box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(255, 255, 255, .14); }  /* a macOS popover's faint light edge */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chart-tooltip.is-note.is-stage-tip { box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(255, 255, 255, .14); } }  /* one width for every stage and the Limit, room for the longest line */
 .stage-tip-name { display: inline-flex; align-items: center; gap: 6px; }
 .stage-tip-name i { width: 8px; height: 8px; border-radius: 2px; }
-.stage-tip-head { margin-top: 7px; font-size: 11px; font-weight: 600; color: var(--color-label-tertiary, var(--color-label-secondary)); }
-.stage-tip-list { margin: 3px 0 0; padding-left: 15px; font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }
+.stage-tip-head { margin-top: 8px; padding-top: 7px; border-top: .5px solid var(--color-separator); font-size: 11px; font-weight: 600; color: var(--color-label-tertiary, var(--color-label-secondary)); }  /* a section of the card, under a hairline, as a macOS popover divides one */
+.stage-tip-list { margin: 3px 0 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.5; color: var(--color-label-secondary); }  /* plain lines, no bullets */
 .profile-note { margin: 0; font-size: 11px; color: var(--color-label-tertiary); }
 /* each row's status at its left: a green shield where a profile verifies the gap; the slot stays empty otherwise */
 .reasons-item-status { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; }
