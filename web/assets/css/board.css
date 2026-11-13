@@ -674,6 +674,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-leaders { position: absolute; top: 0; left: 100%; overflow: visible; pointer-events: none; }
 /* the lines' names: a tag in each engine's colour, its square left edge met by a neck that narrows to the leader, its
    right corners the site's rounded squares; the leader in the same colour, quieter until its line is picked */
-.relative-label { position: absolute; left: calc(100% + 40px); display: inline-flex; align-items: center; height: 18px; padding: 0 7px 0 4px; border-radius: 0 5px 5px 0; font-size: 11px; font-weight: 500; line-height: 1; color: #fff; white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
-.relative-leader { fill: none; stroke-width: 1; opacity: .45; transition: opacity .15s ease; }
+.relative-label { position: absolute; left: calc(100% + 40px); display: inline-flex; align-items: center; height: 18px; padding: 0 7px 0 4px; border-radius: 0 5px 5px 0; font-size: 11px; font-weight: 500; line-height: 1; color: var(--color-label-secondary); background: var(--color-fill); white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
+.relative-label.is-active { color: #fff; }
+.relative-neck { fill: var(--color-fill); }
+.relative-leader { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; opacity: .7; }
 .relative-leader.is-active { opacity: 1; }
