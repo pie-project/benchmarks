@@ -651,12 +651,44 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .profile-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .profile-legend i { width: 8px; height: 8px; border-radius: 2px; }
 .profile-bar i[data-stage], .profile-legend span[data-stage] { cursor: default; }
-/* the Profiling Overview: one engine a row in the grouped panel's tint, a row opening that engine's profiles */
-.reasons-overview { padding: 14px 18px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-fill) 50%, transparent); }
-.reasons-overview-lead { margin: 0 0 10px; font-size: 12px; color: var(--color-label-secondary); }
-.reasons-overview .profile-row { height: 28px; cursor: pointer; }
-.reasons-overview .profile-row:hover .profile-engine { color: var(--color-accent); }
-.reasons-overview .profile-bar i[data-stage] { cursor: pointer; }
+/* a profile's Limit bar: the machine's floor for the cell, in quieter ink than the two engines */
+.profile-row.is-limit .profile-engine, .profile-row.is-limit .profile-total { color: var(--color-label-secondary); }
+.profile-bar i.is-limit, .stage-tip-name i.is-limit { background: none; box-shadow: inset 0 0 0 1.5px var(--color-label-secondary); border-radius: 3px; }
+/* the Profiling Summary: three figures, then a card a chart in the grouped panel's tint */
+.welcome-stats.summary-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 4px 0 8px; }
+.summary-card { margin-top: 12px; padding: 16px 18px 14px; border-radius: 12px; background: color-mix(in srgb, var(--color-fill) 50%, transparent); }
+.summary-card h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--color-label); }
+.summary-sub { margin: 2px 0 12px; font-size: 12px; color: var(--color-label-secondary); }
+.summary-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.summary-head .platform-compare { flex: none; }
+.summary-name { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.summary-name i { width: 8px; height: 8px; flex: none; border-radius: 2px; }
+.summary-bar { display: grid; grid-template-columns: 130px minmax(0, 1fr) 44px; align-items: center; gap: 10px; height: 26px; font-size: 12px; color: var(--color-label); }
+.summary-track { display: block; height: 10px; border-radius: 3px; background: var(--color-fill); }
+.summary-track i { display: block; height: 100%; border-radius: 0 4px 4px 0; }
+.summary-value { text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--color-label-secondary); }
+/* the heatmap: one blue, darker where more of the extra time goes; a 2px gap of the panel between cells */
+.summary-heat-scroll { overflow-x: auto; }
+.summary-heat { width: 100%; border-collapse: separate; border-spacing: 2px; font-size: 12px; }
+.summary-heat thead th { padding: 0 4px 6px; font-size: 11px; font-weight: 500; color: var(--color-label-secondary); text-align: center; }
+.summary-heat tbody th { padding: 0 14px 0 0; font-weight: 500; text-align: left; white-space: nowrap; color: var(--color-label); }
+.summary-heat tbody th span { display: block; font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); }
+.summary-heat td { height: 36px; min-width: 64px; border-radius: 4px; text-align: center; font-variant-numeric: tabular-nums; color: var(--color-label); cursor: default; }
+.summary-heat td:hover { outline: 1.5px solid var(--color-label-secondary); outline-offset: -1.5px; }
+/* the losses: a meter list, each row its cell, a bar of the step it loses and the share */
+.summary-loss { display: grid; grid-template-columns: minmax(0, 1fr) minmax(80px, 28%) 44px; align-items: center; gap: 12px; width: 100%; padding: 7px 0; border: 0; border-top: .5px solid var(--color-separator); background: none; font: inherit; text-align: left; color: var(--color-label); cursor: pointer; }
+.summary-loss:first-of-type { border-top: 0; }
+.summary-loss-text { display: flex; flex-direction: column; min-width: 0; font-size: 12px; line-height: 1.4; }
+.summary-loss-text b { overflow: hidden; font-weight: 500; white-space: nowrap; text-overflow: ellipsis; }
+.summary-loss-text span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--color-label-secondary); }
+.summary-loss:hover b { color: var(--color-accent); }
+@media (max-width: 640px) {
+  .welcome-stats.summary-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .summary-head { flex-direction: column; }
+  .summary-bar { grid-template-columns: 104px minmax(0, 1fr) 38px; }
+  .summary-loss { grid-template-columns: minmax(0, 1fr) 38px; }
+  .summary-loss .summary-track { grid-column: 1 / -1; grid-row: 2; }
+}
 /* a stage's hover card: its name and time, what it does, and where its time usually goes when an engine is slow there */
 .chart-tooltip.is-note.is-stage-tip { max-width: 260px; padding: 9px 12px; white-space: normal; }
 .stage-tip-name { display: inline-flex; align-items: center; gap: 6px; }

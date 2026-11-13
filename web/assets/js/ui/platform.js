@@ -899,7 +899,7 @@ window.Pie = window.Pie || {};
               const pair = c?.pie && pairOf(c, mode.metric);
               if (pair) {
                 const t = c.pie.workload === "spec" ? SPEC : mode;
-                seconds.push({ engine: pair.second.engine, rival: pair.first.engine, setup: t.id, label: t.id === "spec" ? t.label : `${t.item} ${t.group}`, hardware: mac, model, gap: pair.behind, miniature: c.pie.miniature || null });
+                seconds.push({ engine: pair.second.engine, rival: pair.first.engine, setup: t.id, label: t.id === "spec" ? t.label : `${t.item} ${t.group}`, hardware: mac, model, gap: pair.behind, miniature: c.pie.miniature || null, row: c.pie });
               }
               if (!apart(c)) continue;
               const m = c.pie.workload === "spec" ? SPEC : mode;
