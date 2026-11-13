@@ -921,7 +921,7 @@ ${relHead(pick)}
     // the effort first: the runs and the machine time behind them, then what they cover
     const busy = Pie.store.tables.totals?.machine_s;
     const time = !busy ? null : busy >= 3 * 86400 ? [`Days of compute`, n(Math.round(busy / 86400))] : [`Hours of compute`, n(Math.round(busy / 3600))];
-    const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Models", n(rows("models"))], ["Engines", n(rows("engines"))], ["Platforms", n(Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length)], ["Machines", n(Pie.platform?.machines?.() || 0)], Pie.store.tables.totals?.submissions != null && ["Public contributions", n(Pie.store.tables.totals.submissions)]].filter((s) => s && (s[1] !== "0" || s[0] === "Public contributions"));
+    const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Models", n(rows("models"))], ["Engines", n(rows("engines"))], ["Platforms", n(Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length)], ["Machines", n(Pie.platform?.machines?.() || 0)], ["Optimizations found", n(Pie.platform?.seconds?.(Pie.state)?.length || 0)], Pie.store.tables.totals?.submissions != null && ["Public contributions", n(Pie.store.tables.totals.submissions)]].filter((s) => s && (s[1] !== "0" || s[0] === "Public contributions"));
     return `<dl class="welcome-stats board-welcome-stats">${stats.filter(Boolean).map(([label, v]) => `<div><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
   };
 
