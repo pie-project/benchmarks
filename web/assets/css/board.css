@@ -663,8 +663,8 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .bump-dot, .bump-badge { transition: opacity .15s ease; }
 .bump-badge text { font-size: 10px; font-weight: 600; fill: #fff; text-anchor: middle; }
 .bump-pill { position: absolute; display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 11.5px; font-weight: 500; line-height: 1; color: var(--color-label-secondary); background: var(--color-fill); white-space: nowrap; transform: translateY(-50%); transition: background-color .15s ease, color .15s ease; cursor: default; }
-.bump-pill.is-left { right: calc(100% - 128px); }
-.bump-pill.is-right { left: calc(100% - 128px); }
+.bump-pill.is-left { left: -16px; }  /* past the card's 16px padding: the left pills start where the section's title does */
+.bump-pill.is-right { right: -16px; }  /* and the right ones end where its Setup button does */
 .bump-pill .board-pick-logo { width: 12px; height: 12px; flex: none; }
 .bump-pill.is-active { color: #fff; }
 .bump.is-focused .bump-engine:not(.is-active) .bump-line, .bump.is-focused .bump-engine:not(.is-active) .bump-dot, .bump.is-focused .bump-engine:not(.is-active) .bump-badge { opacity: .2; }
