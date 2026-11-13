@@ -555,9 +555,6 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
   height: 24px; padding: 0 10px; border: 0; border-radius: 6px; background: var(--chip); }
 /* the figures in the buttons' grey, the number in the label's colour, its word in the secondary */
 .board-welcome .board-welcome-stats > div { --chip: var(--color-fill); }
-.board-welcome .board-welcome-stats > div[data-board-go-page] { cursor: pointer; transition: background-color .15s ease; }  /* each opens its page */
-.board-welcome .board-welcome-stats > div[data-board-go-page]:hover { --chip: var(--color-fill-secondary); }
-.board-welcome .board-welcome-stats > div[data-board-go-page]:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .board-welcome .board-welcome-stats > div:nth-child(n + 4) { order: 2; margin-top: 8px; }
 .board-welcome .board-welcome-stats dt { font-size: 12px; line-height: 1; color: var(--color-label-secondary); text-transform: lowercase; }
 .board-welcome .board-welcome-stats dd { margin: 0; font: 600 12px/1 var(--font-text, inherit); letter-spacing: 0; color: var(--color-label); }
@@ -634,7 +631,9 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 @media (max-width: 899px) { .relative-cards { grid-template-columns: 1fr; } }
 .relative-plot { position: relative; height: 360px; margin-top: 4px; }
 .relative-area { position: absolute; left: 54px; right: 122px; top: 6px; bottom: 40px; }
-.relative-chart { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; cursor: crosshair; }
+.relative-chart { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.relative-area { cursor: grab; user-select: none; touch-action: pan-y; }
+.relative-area.is-tugged { cursor: grabbing; }
 .relative-line { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; opacity: .7; }
 .relative-line.is-active { opacity: 1; }
 .relative-tick { position: absolute; font-size: 11px; line-height: 1; color: var(--color-label-secondary); white-space: nowrap; pointer-events: none; }
@@ -644,7 +643,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-tick.is-end { transform: translateX(-100%); }
 /* the axis captions in the plot's own frame: the bottom one on its bottom edge under the chart, the left one on its left
    edge beside it, read bottom to top */
-.relative-axis-title { position: absolute; bottom: 0; left: 54px; right: 122px; font-size: 11px; line-height: 1; text-align: center; color: var(--color-label-tertiary); white-space: nowrap; pointer-events: none; }
+.relative-axis-title { position: absolute; bottom: 0; left: 0; right: 0; font-size: 10px; line-height: 1; text-align: center; color: var(--color-label-secondary); white-space: nowrap; pointer-events: none; }  /* as the head-to-head grids name their sides: small grey words at the card's left edge and foot, still while the chart is pulled */
 .relative-axis-title.is-y { bottom: 40px; top: 6px; left: 0; right: auto; writing-mode: vertical-rl; transform: rotate(180deg); }
 .relative-label { position: absolute; left: calc(100% + 8px); font-size: 11px; line-height: 1; color: var(--color-label-secondary); white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
 .relative-label.is-active { font-weight: 400; }

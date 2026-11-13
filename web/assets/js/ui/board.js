@@ -942,11 +942,7 @@ ${relHead(pick)}
     const busy = Pie.store.tables.totals?.machine_s;
     const time = !busy ? null : busy >= 3 * 86400 ? [`Days of compute`, n(Math.round(busy / 86400))] : [`Hours of compute`, n(Math.round(busy / 3600))];
     const stats = [["Runs", atLeast(Pie.store.tables.totals?.runs ?? RUNS)], time, ["Models", n(rows("models"))], ["Engines", n(rows("engines"))], ["Platforms", n(Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length)], ["Machines", n(Pie.platform?.machines?.() || 0)], Pie.store.tables.totals?.submissions != null && ["Public contributions", n(Pie.store.tables.totals.submissions)]].filter((s) => s && (s[1] !== "0" || s[0] === "Public contributions"));
-    // each figure opens the page it counts: the runs and their machine time the results, the rest their catalogs
-    const PAGES = { Runs: ["results", "Performance"], "Days of compute": ["results", "Performance"], "Hours of compute": ["results", "Performance"],
-      Models: ["models", "Models"], Engines: ["engines", "Engines"], Platforms: ["welcome", "Platforms"], Machines: ["hardware", "Hardware"] };
-    const link = (label) => (PAGES[label] ? ` role="link" tabindex="0" data-board-go-page="${PAGES[label][0]}" title="Open ${PAGES[label][1]}"` : "");
-    return `<dl class="welcome-stats board-welcome-stats">${stats.filter(Boolean).map(([label, v]) => `<div${link(label)}><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
+    return `<dl class="welcome-stats board-welcome-stats">${stats.filter(Boolean).map(([label, v]) => `<div><dt>${label}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
   };
 
   const page = () => {
@@ -1176,11 +1172,11 @@ ${relHead(pick)}
   let tug = null;
   element.addEventListener("pointerdown", (event) => {
     // every card's chart the same, but only sideways, and the engine legend too
-    const grid = event.target.closest?.(".board-matrix, .board-chart, .board-legend");
+    const grid = event.target.closest?.(".board-matrix, .board-chart, .board-legend, .relative-area");
     if (!grid || event.button !== 0 || event.target.closest("button, a, input, select")) return;
     // the engine key, wider than its bar, scrolls under the pointer and gives only past its ends
     const bar = grid.classList.contains("board-legend") ? grid.closest(".board-bar") : null;
-    tug = { grid, x: event.clientX, y: event.clientY, id: event.pointerId, flat: !grid.classList.contains("board-matrix"), bar, left: bar?.scrollLeft || 0 };
+    tug = { grid, x: event.clientX, y: event.clientY, id: event.pointerId, flat: !grid.classList.contains("board-matrix") && !grid.classList.contains("relative-area"), bar, left: bar?.scrollLeft || 0 };
     grid.setPointerCapture(event.pointerId);
     grid.style.transition = "none";
     grid.classList.add("is-tugged");
