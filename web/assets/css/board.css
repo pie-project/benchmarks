@@ -630,7 +630,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-cards { display: grid; grid-template-columns: minmax(0, 1fr); }  /* the chart alone, the section's full width */
 @media (max-width: 899px) { .relative-cards { grid-template-columns: 1fr; } }
 .relative-plot { position: relative; height: 360px; margin-top: 4px; }
-.relative-area { position: absolute; left: 54px; right: 122px; top: 6px; bottom: 40px; }
+.relative-area { position: absolute; left: 54px; right: 146px; top: 6px; bottom: 40px; }
 .relative-chart { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .relative-area { cursor: grab; user-select: none; touch-action: pan-y; }
 .relative-area.is-tugged { cursor: grabbing; }
@@ -645,7 +645,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
    edge beside it, read bottom to top */
 .relative-axis-title { position: absolute; bottom: -10px; left: 0; right: 0; font-size: 10px; line-height: 1; text-align: center; color: var(--color-label-secondary); white-space: nowrap; pointer-events: none; }  /* as the head-to-head grids name their sides: small grey words at the card's left edge and foot, still while the chart is pulled */
 .relative-axis-title.is-y { bottom: 40px; top: 6px; left: -16px; right: auto; writing-mode: vertical-rl; transform: rotate(180deg); }  /* past the card's 16px side padding: flush with the section's title */
-.relative-label { position: absolute; left: calc(100% + 8px); font-size: 11px; line-height: 1; color: var(--color-label-secondary); white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
+.relative-label { position: absolute; left: calc(100% + 34px); font-size: 11px; line-height: 1; color: var(--color-label-secondary); white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
 .relative-label.is-active { font-weight: 400; }
 .relative-label { display: inline-flex; align-items: center; gap: 5px; }
 .relative-label .board-pick-logo { width: 12px; height: 12px; flex: none; }
@@ -675,3 +675,6 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .reasons-item-title { display: flex; align-items: center; }
 .reasons-item-title .reasons-slice-icon { margin-right: 4px; stroke-width: 1.8; }  /* as heavy as the bold title beside it */
 #reasons .reasons-slices .reasons-slice-icon { margin-right: -2px; stroke: currentColor; }  /* the switch's icon in its label's grey */
+.relative-leaders { position: absolute; top: 0; left: 100%; overflow: visible; pointer-events: none; }
+.relative-leader { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; opacity: .7; }
+.relative-leader.is-active { opacity: 1; }
