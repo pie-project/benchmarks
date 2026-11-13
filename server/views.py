@@ -40,8 +40,9 @@ ENGINE_META = {
     "litert":   ("LiteRT-LM", "Apache-2.0", "google-ai-edge/LiteRT-LM"),
     "mlc":      ("MLC LLM", "Apache-2.0", "mlc-ai/mlc-llm"),
     "mlx-swift": ("MLX Swift", "MIT", "ml-explore/mlx-swift-lm"),
+    "ollama":   ("Ollama", "MIT", "ollama/ollama"),
 }
-ENGINE_COLOR = {"trtllm": "#a2845e", "litert": "#34a853", "mlc": "#5856d6", "mlx-swift": "#ff9500", "webllm": "#5e5ce6", "llamacpp-webgpu": "#8e8e93"}
+ENGINE_COLOR = {"trtllm": "#a2845e", "litert": "#34a853", "mlc": "#5856d6", "mlx-swift": "#ff9500", "webllm": "#5e5ce6", "llamacpp-webgpu": "#8e8e93", "ollama": "#bf5af2"}
 METRICS = ["decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "ttft_ms_p99",
            "itl_ms_p50", "itl_ms_p99", "latency_ms_p50", "latency_ms_p99", "resident_gib", "load_s"]
 
@@ -178,16 +179,17 @@ def hardware(cores: dict[str, dict] | None = None) -> list[dict]:
         if not p.get("tiers"):
             continue
         mac = p.get("os") == "macos"
+        win = p.get("os") == "windows"
         c = by_id.get(p.get("catalog")) or by_runpod.get(p.get("runpod_gpu_type")) or {}
         used.add(c.get("id"))
         base = row(c) if c else {}
         rows.append({
             **base,
             "id": p["id"],
-            "resource": "Community" if p.get("contributed") else "Pie self-hosted" if mac else ("Google Cloud" if p.get("backend") == "xla" else "RunPod cloud"),
+            "resource": "Community" if p.get("contributed") else "Pie self-hosted" if mac or win else ("Google Cloud" if p.get("backend") == "xla" else "RunPod cloud"),
             "name": (p["accelerator"] if mac else c.get("short") or p["accelerator"].replace("NVIDIA ", ""))
                     + (f" ×{p['count']}" if p.get("count", 1) > 1 else ""),
-            "class": "mac" if mac else ("tpu" if p.get("backend") == "xla" else "web" if p.get("backend") == "webgpu" else "gpu"), "location": "local" if mac else "cloud",
+            "class": "mac" if mac else "windows" if win else ("tpu" if p.get("backend") == "xla" else "web" if p.get("backend") == "webgpu" else "gpu"), "location": "local" if mac or win else "cloud",
             "vendor": c.get("vendor") or ("Apple" if mac else "NVIDIA"),
             "backend": p.get("backend"), "arch": p.get("arch") or c.get("arch"),
             "count": p.get("count", 1), "memory_gib": p.get("memory_gib"),
@@ -234,7 +236,7 @@ def phone_hardware(store) -> list[dict]:
 DECODING = {"pie": (True, True), "llamacpp": (True, True), "mlxlm": (True, True), "splash": (False, True),
             "vllm": (True, True), "sglang": (True, True), "trtllm": (True, False), "vllm-metal": (True, False),
             "litert": (True, False), "mlc": (True, False), "mlx-swift": (True, False),
-            "webllm": (True, False), "llamacpp-webgpu": (True, False)}
+            "webllm": (True, False), "llamacpp-webgpu": (True, False), "ollama": (True, False)}
 
 
 def engines() -> list[dict]:
@@ -1006,14 +1008,14 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
     model_ids = sorted({m for ids in suite_ids.values() for m in ids})
     for m in models:
         m["suite"] = "Targeted" if m["id"] in suite_ids.get("targeted", []) else "Full" if m["id"] in suite_ids.get("full", []) else ""
-    kind = {p["id"]: ("Mac" if p.get("os") == "macos" else "TPU" if p.get("backend") == "xla" else "AMD" if p.get("backend") == "rocm" else "GPU")
+    kind = {p["id"]: ("Mac" if p.get("os") == "macos" else "Windows" if p.get("os") == "windows" else "TPU" if p.get("backend") == "xla" else "AMD" if p.get("backend") == "rocm" else "GPU")
             for p in load("platforms")["platforms"]}
     kind.update({h["id"]: "Phone" for h in phone_hardware(store)})
     platforms: dict[str, set[str]] = {}
     for r in store.table().select(["artifact", "platform", "status"]).to_pylist():
         if r["status"] in ("pass", "noisy") and r["artifact"] in a2m and r["platform"] in kind:
             platforms.setdefault(a2m[r["artifact"]], set()).add(kind[r["platform"]])
-    order = ["Mac", "GPU", "TPU", "AMD", "Phone"]
+    order = ["Mac", "Windows", "GPU", "TPU", "AMD", "Phone"]
     for m in models:
         m["platforms"] = ", ".join(t for t in order if t in platforms.get(m["id"], set()))
     engine_ids = [e["id"] for e in mac_engines]

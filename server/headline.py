@@ -4,7 +4,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 
-PLATFORMS = {"mac": "Apple Silicon", "nvidia": "NVIDIA GPU", "amd": "AMD GPU", "tpu": "Google TPU", "cerebras": "Cerebras", "web": "Browser", "android": "Mobile"}
+PLATFORMS = {"mac": "Apple Silicon", "windows": "Windows PC", "nvidia": "NVIDIA GPU", "amd": "AMD GPU", "tpu": "Google TPU", "cerebras": "Cerebras", "web": "Browser", "android": "Mobile"}
 MEASURED = {"pass", "noisy"}
 
 
@@ -14,6 +14,8 @@ def platform_of(hw: dict) -> str | None:
         return "android"
     if hw.get("class") == "mac" or hw.get("vendor") == "Apple":
         return "mac"
+    if hw.get("class") == "windows":
+        return "windows"
     if hw.get("backend") == "xla":
         return "tpu"
     return {"NVIDIA": "nvidia", "AMD": "amd", "Cerebras": "cerebras"}.get(hw.get("vendor")) or ("web" if hw.get("class") == "web" else None)

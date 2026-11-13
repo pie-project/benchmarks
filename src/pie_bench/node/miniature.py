@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import platform
 import subprocess
 import uuid
 from pathlib import Path
@@ -84,9 +85,9 @@ def ensure_miniature(
     import tempfile
 
     base = Path(os.environ.get("PIE_BENCH_SHRINK_CACHE") or (Path(os.environ["PIE_BENCH_CACHE"]) / "shrink" if os.environ.get("PIE_BENCH_CACHE") else tempfile.gettempdir()))
-    cache_dir = base / f"{os.uname().nodename}-{os.getpid()}" / repo_cache_dirname(artifact.base_model)
+    cache_dir = base / f"{platform.node()}-{os.getpid()}" / repo_cache_dirname(artifact.base_model)
     out.parent.mkdir(parents=True, exist_ok=True)
-    tmp = out.parent / f".tmp-{out.name}-{os.uname().nodename}-{os.getpid()}-{uuid.uuid4().hex[:6]}"
+    tmp = out.parent / f".tmp-{out.name}-{platform.node()}-{os.getpid()}-{uuid.uuid4().hex[:6]}"
     shutil.rmtree(tmp, ignore_errors=True)
     if artifact.gguf_file:
         import sys

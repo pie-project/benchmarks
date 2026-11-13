@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from datetime import datetime, timezone
@@ -47,14 +48,14 @@ def _pie_generate(art, snapshot: Path, pie_root: Path, prompts: list[str], max_t
     commit = subprocess.run(["git", "-C", str(pie_root), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
     model = ensure_artifact(art, snapshot, pie_root / "target/release/pie", commit, log=log) if needs_import(art) else snapshot
     script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "quality_pie.py"
-    env = {**os.environ, "PIE_ROOT": str(pie_root), "PYTHONPATH": ":".join([str(bench_dir()), str(python_dir(pie_root) / "client/src"), str(python_dir(pie_root) / "server/python")])}
+    env = {**os.environ, "PIE_ROOT": str(pie_root), "PYTHONPATH": os.pathsep.join([str(bench_dir()), str(python_dir(pie_root) / "client/src"), str(python_dir(pie_root) / "server/python")])}
     tok = _tokenizer(snapshot)
     token_ids = [tok.encode(r, add_special_tokens=False) for r in _render(snapshot, prompts)]
     with tempfile.TemporaryDirectory() as tmp:
         items, out = Path(tmp) / "items.json", Path(tmp) / "out.json"
         items.write_text(json.dumps([{"prompt": p, "prompt_tokens": ids} for p, ids in zip(prompts, token_ids, strict=True)]))
         argv = [str(bench_python()), str(script), "--items", str(items), "--out", str(out), "--system", SYSTEM, "--max-tokens", str(max_tokens), "--",
-                "latency", "--model", str(model), "--engine", "metal", "--inferlet-dir", str(pie_root / "examples/text-completion-bench"),
+                "latency", "--model", str(model), "--engine", "metal" if sys.platform == "darwin" else "cuda", "--inferlet-dir", str(pie_root / "examples/text-completion-bench"),
                 "--max-model-len", "4096", "--requests", "1"]
         subprocess.run(argv, cwd=str(bench_dir()), env=env, check=True, timeout=6 * 3600)
         return json.loads(out.read_text()), commit[:12]

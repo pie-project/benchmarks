@@ -246,6 +246,17 @@ platforms:
     interconnect: uma
     runner_labels: [self-hosted, macos, m5-max-64g]
     tiers: [smoke, nightly, weekly]
+  - id: rtx-spark-128g
+    catalog: nvidia-rtx-spark-n1x
+    os: windows
+    backend: cuda
+    accelerator: NVIDIA RTX Spark N1X
+    arch: blackwell
+    memory_gib: 128
+    bandwidth_gbs: 300
+    interconnect: uma
+    runner_labels: [self-hosted, windows, rtx-spark-128g]
+    tiers: [targeted]
   - id: a100-pcie-x2
     os: linux
     backend: cuda

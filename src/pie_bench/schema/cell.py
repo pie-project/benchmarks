@@ -27,6 +27,7 @@ class EngineName(StrEnumBase):
     MLX_SWIFT = "mlx-swift"
     WEBLLM = "webllm"
     LLAMACPP_WEBGPU = "llamacpp-webgpu"
+    OLLAMA = "ollama"
 
 
 class Backend(StrEnumBase):

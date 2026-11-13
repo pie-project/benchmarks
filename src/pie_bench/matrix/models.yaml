@@ -647,7 +647,7 @@ artifacts:
     kind: miniature
     miniature: {layers: "0-1", experts: 8, period: 1, mlx_quantize: affine_u4_g64, note: "2 layers (one sliding, one full), 8 experts, quantized by mlx in place where it is cut (4 bits in 64-wide groups: the embedding, every projection and expert; the head bf16), its towers dropped: 4.7 GiB, for 16 GB Macs (the bf16 cut is 10.7 GiB)"}
     pie_sku: muse-spark-open-mini-l4-u4g64-kv-bf16-l2-e8
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, m5-max-128g]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, m5-max-128g, rtx-spark-128g]
     max_context: 4096
     expected_gib: 4.7
     tiers: [targeted]
@@ -675,7 +675,7 @@ artifacts:
     miniature: {layers: "0-1", experts: 8, period: 1, note: "2 layers (one sliding, one full), the first 8 experts, cut from a Q4_K_M GGUF of the release: llama.cpp's 4-bit mix (Q4_K for most planes; Q6_K for the head, the value and the experts' down projections; Q8_0 for the attention gate and the expert latents), 3.1 GiB, where pie and mlx-lm read mlx's 4 bits in 64-wide groups with a bf16 head (4.7 GiB)"}
     baseline_of: muse-spark-mlx4-slice-l2-e8
     baseline_label: llama.cpp
-    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, m5-max-128g]
+    platforms: [m2-16g, m3-16g, m4-pro-48g, m5-16g, m5-max-64g, m5-max-128g, rtx-spark-128g]
     max_context: 4096
     expected_gib: 3.1
     tiers: [targeted]
@@ -1384,7 +1384,7 @@ artifacts:
     top_k: 10
     vocab: 248320
     expected_gib: 65.8
-    platforms: [m5-max-128g]
+    platforms: [m5-max-128g, rtx-spark-128g]
     tiers: [targeted]
   - id: qwen3.8-flash-next-mlx2-mlxlm
     base_model: pie-local/Qwen3.8-Flash-Next-MLX
@@ -1408,7 +1408,7 @@ artifacts:
     baseline_of: qwen3.8-flash-next-mlx2
     baseline_label: llama.cpp
     expected_gib: 75.0
-    platforms: [m5-max-128g]
+    platforms: [m5-max-128g, rtx-spark-128g]
     tiers: [targeted]
   - id: qwen3.8-flash-next-q2k-splash
     base_model: ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF
@@ -2128,7 +2128,7 @@ artifacts:
     source_format: mlx
     pie_sku: gptoss-120b-u4g32-mxfp4-kv-bf16
     expected_gib: 58.05
-    platforms: [m5-max-128g]
+    platforms: [m5-max-128g, rtx-spark-128g]
     tiers: [targeted]
   - id: gpt-oss-120b-mlxlm
     base_model: mlx-community/gpt-oss-120b-MXFP4-Q4
@@ -2150,7 +2150,7 @@ artifacts:
     baseline_of: gpt-oss-120b-mlx-mxfp4
     baseline_label: llama.cpp
     expected_gib: 58.45
-    platforms: [m5-max-128g]
+    platforms: [m5-max-128g, rtx-spark-128g]
     tiers: [targeted]
   - id: gpt-oss-120b-mlx-mxfp4-slice-e60
     base_model: mlx-community/gpt-oss-120b-MXFP4-Q4

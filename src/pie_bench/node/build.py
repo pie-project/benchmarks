@@ -10,10 +10,13 @@ from pie_bench.paths import CLIENTS
 
 PIE_UPSTREAM = "https://github.com/pie-project/pie.git"
 BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2", "tiktoken"]
+if os.name == "nt":  # cryptography has no Windows Arm64 wheel and nothing in the bench imports it
+    BENCH_DEPS = [d for d in BENCH_DEPS if d != "cryptography"] + ["psutil"]
 
 
 DEFAULT_CACHE = Path.home() / ".cache/pie-bench"
 DEFAULT_PIE_ROOT = Path("/root/pie")
+PIE_EXE = "pie.exe" if os.name == "nt" else "pie"
 
 
 def _cache_root(root: Path | None) -> Path:
@@ -22,7 +25,7 @@ def _cache_root(root: Path | None) -> Path:
 
 def bench_python(cache_root: Path | None = None, log=print) -> Path:
     venv = _cache_root(cache_root) / "venv-pie"
-    py = venv / "bin" / "python"
+    py = venv / "Scripts" / "python.exe" if os.name == "nt" else venv / "bin" / "python"
     if not py.exists():
         log(f"venv: creating {venv}")
         if shutil.which("uv"):
@@ -65,7 +68,7 @@ def cache_dir(commit: str, features: list[str], root: Path | None = None) -> Pat
 def is_cached(commit: str, features: list[str], root: Path | None = None) -> bool:
     d = cache_dir(commit, features, root)
     wheel = any(d.glob("pie_server-*.whl")) or not ({"cuda", "rocm"} & set(features))
-    return (d / "pie").exists() and (d / "wasm").is_dir() and any((d / "wasm").glob("*.wasm")) and wheel
+    return (d / PIE_EXE).exists() and (d / "wasm").is_dir() and any((d / "wasm").glob("*.wasm")) and wheel
 
 
 def _git(args: list[str], cwd: Path | None = None, retries: int = 3, timeout_s: int = 1800) -> None:
@@ -123,7 +126,7 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
     log(f"build: pie {commit[:12]} features={feats} target={env.get('CARGO_TARGET_DIR', 'in-tree')}")
     subprocess.run(["cargo", "build", "--release", "-p", "pie", "--bin", "pie", "--features", feats], cwd=pie_root, env=env, check=True, timeout=timeout_s)
     tdir = Path(env.get("CARGO_TARGET_DIR", pie_root / "target"))
-    shutil.copy2(tdir / "release" / "pie", out / "pie")
+    shutil.copy2(tdir / "release" / PIE_EXE, out / PIE_EXE)
     if {"cuda", "rocm"} & set(features):
         py = bench_python(cache_root, log=log)
         log("build: embedded engine wheel (maturin)")
@@ -207,9 +210,9 @@ def restore(pie_root: Path, commit: str, features: list[str], *, cache_root: Pat
     d = cache_dir(commit, features, cache_root)
     if not is_cached(commit, features, cache_root):
         return False
-    binary = pie_root / "target/release/pie"
+    binary = pie_root / "target/release" / PIE_EXE
     binary.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(d / "pie", binary)
+    shutil.copy2(d / PIE_EXE, binary)
     wdir = pie_root / f"examples/target/{wasm_target(pie_root)}/release"
     wdir.mkdir(parents=True, exist_ok=True)
     for w in (d / "wasm").glob("*.wasm"):

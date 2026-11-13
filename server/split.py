@@ -6,7 +6,7 @@ import json
 import re
 import zlib
 
-PLATFORMS = ["Mac", "GPU", "TPU", "AMD", "Wafer"]
+PLATFORMS = ["Mac", "Windows", "GPU", "TPU", "AMD", "Wafer"]
 
 
 def counts(db: dict, rows: list[dict]) -> dict[str, list[int]]:
@@ -49,7 +49,7 @@ def rows_json(sealed: dict) -> str:
 
 
 def annotate(db: dict, sealed: dict[str, dict]) -> None:
-    names = {"mac": "Mac", "gpu": "GPU", "tpu": "TPU", "wafer": "Wafer"}
+    names = {"mac": "Mac", "windows": "Windows", "gpu": "GPU", "tpu": "TPU", "wafer": "Wafer"}
     platform = {h["id"]: "AMD" if h.get("class") == "gpu" and h.get("backend") == "rocm" else names.get(h.get("class")) for h in db.get("hardware") or []}
     seen: dict[str, set] = {}
     for s in sealed.values():

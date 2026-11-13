@@ -1,13 +1,40 @@
 from __future__ import annotations
 
-import fcntl
 import os
+import sys
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
 MAX_WAIT_S = 25 * 60
+
+
+def _lock(f) -> None:
+    if sys.platform == "win32":
+        import msvcrt
+
+        f.seek(0)
+        try:
+            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        except OSError:
+            raise BlockingIOError from None
+        return
+    import fcntl
+
+    fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def _unlock(f) -> None:
+    if sys.platform == "win32":
+        import msvcrt
+
+        f.seek(0)
+        msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+        return
+    import fcntl
+
+    fcntl.flock(f, fcntl.LOCK_UN)
 
 
 class MachineBusy(RuntimeError):
@@ -27,7 +54,7 @@ def machine_lock(note: str = "", *, max_wait_s: float | None = None, poll_s: flo
     with open(path, "a+") as f:
         while True:
             try:
-                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                _lock(f)
                 break
             except BlockingIOError:
                 waited = time.monotonic() - t0
@@ -45,4 +72,4 @@ def machine_lock(note: str = "", *, max_wait_s: float | None = None, poll_s: flo
         try:
             yield time.monotonic() - t0
         finally:
-            fcntl.flock(f, fcntl.LOCK_UN)
+            _unlock(f)

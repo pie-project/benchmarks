@@ -245,7 +245,7 @@ class Engine(ABC):
         if not self.no_peer_all_reduce():
             return {}
         existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
-        return {"PYTHONPATH": ":".join([str(NO_PEER_SITE)] + ([existing] if existing else [])), "PIE_BENCH_NO_CUSTOM_AR": "1"}
+        return {"PYTHONPATH": os.pathsep.join([str(NO_PEER_SITE)] + ([existing] if existing else [])), "PIE_BENCH_NO_CUSTOM_AR": "1"}
 
     @abstractmethod
     def default_python(self) -> str: ...
@@ -268,11 +268,14 @@ class Engine(ABC):
         roots = set(self.watch_pids())
         if not roots:
             return None
-        try:
-            out = subprocess.run(["ps", "-A", "-o", "pid=,ppid=,rss="], capture_output=True, text=True, timeout=10).stdout
-        except Exception:
-            return None
-        rows = [tuple(int(x) for x in line.split()) for line in out.splitlines() if len(line.split()) == 3]
+        if sys.platform == "win32":
+            rows = [(pid, ppid, rss) for pid, ppid, _, rss in win_processes()]
+        else:
+            try:
+                out = subprocess.run(["ps", "-A", "-o", "pid=,ppid=,rss="], capture_output=True, text=True, timeout=10).stdout
+            except Exception:
+                return None
+            rows = [tuple(int(x) for x in line.split()) for line in out.splitlines() if len(line.split()) == 3]
         tree, grew = set(roots), True
         while grew:
             more = {pid for pid, ppid, _ in rows if ppid in tree and pid not in tree}
@@ -286,6 +289,8 @@ class Engine(ABC):
 
     def stop(self) -> None:
         if self._server_proc is not None:
+            if sys.platform == "win32":
+                subprocess.run(["taskkill", "/T", "/F", "/PID", str(self._server_proc.pid)], capture_output=True, check=False)
             self._server_proc.terminate()
             try:
                 self._server_proc.wait(timeout=60)
@@ -396,7 +401,19 @@ def _cpu_seconds(text: str) -> float:
     return secs + (float(days) * 86400 if days else 0.0)
 
 
+def win_processes() -> list[tuple[int, int, float, int]]:
+    import psutil
+
+    rows = []
+    for p in psutil.process_iter(["pid", "ppid", "cpu_times", "memory_info"]):
+        ct, mi = p.info.get("cpu_times"), p.info.get("memory_info")
+        rows.append((p.info["pid"], p.info.get("ppid") or 0, (ct.user + ct.system) if ct else 0.0, (mi.rss // 1024) if mi else 0))
+    return rows
+
+
 def process_table() -> dict[int, tuple[int, float]]:
+    if sys.platform == "win32":
+        return {pid: (ppid, cpu) for pid, ppid, cpu, _ in win_processes()}
     out = subprocess.run(["ps", "-axo", "pid=,ppid=,time="], capture_output=True, text=True, check=False).stdout
     table = {}
     for line in out.splitlines():
@@ -526,7 +543,7 @@ def register(cls: type[Engine]) -> type[Engine]:
     return cls
 
 
-ADAPTERS = ("browser", "llamacpp", "mlxlm", "pie", "sglang", "splash", "trtllm", "vllm", "vllm_metal")
+ADAPTERS = ("browser", "llamacpp", "mlxlm", "ollama", "pie", "sglang", "splash", "trtllm", "vllm", "vllm_metal")
 
 
 def get_engine(name: str | EngineName, backend: str | None = None) -> type[Engine]:

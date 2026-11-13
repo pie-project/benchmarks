@@ -40,7 +40,7 @@ class ServedEngine(Engine):
         self.load_s: float | None = None
         self.drafting = False
         existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
-        self.env["PYTHONPATH"] = ":".join([str(bench_dir())] + ([existing] if existing else []))
+        self.env["PYTHONPATH"] = os.pathsep.join([str(bench_dir())] + ([existing] if existing else []))
 
     @abstractmethod
     def server_cmd(self, port: int, slots: int, context: int) -> list[str]:

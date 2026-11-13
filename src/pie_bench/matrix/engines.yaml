@@ -1,6 +1,6 @@
 engines:
   - id: pie
-    os: [linux, macos, android, ios]
+    os: [linux, macos, windows, android, ios]
     formats: [hf_safetensors, gguf, mlx]
     tiers: [smoke, nightly, weekly]
     recipe: default
@@ -30,13 +30,21 @@ engines:
     pin: "1.4.0rc2.post1"
     release_source: pypi:tensorrt-llm
   - id: llamacpp
-    os: [linux, macos, android, ios]
+    os: [linux, macos, windows, android, ios]
     backends: [cuda, rocm, metal]
     formats: [gguf]
     tiers: [nightly, weekly]
     recipe: competitive
     pin: "b11312"
     release_source: github:ggml-org/llama.cpp
+  - id: ollama
+    os: [windows]
+    backends: [cuda]
+    formats: [gguf]
+    tiers: [nightly, weekly]
+    recipe: competitive
+    pin: "0.40.16"
+    release_source: github:ollama/ollama
   - id: webllm
     os: [linux]
     backends: [webgpu]

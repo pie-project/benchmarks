@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import re
 import subprocess
 import uuid
@@ -56,7 +57,7 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
     if have:
         _tokenizer_beside(snapshot, d)
         return have
-    tmp = d.parent / f".tmp-{d.name}-{os.uname().nodename}-{os.getpid()}-{uuid.uuid4().hex[:6]}"
+    tmp = d.parent / f".tmp-{d.name}-{platform.node()}-{os.getpid()}-{uuid.uuid4().hex[:6]}"
     tmp.mkdir(parents=True, exist_ok=True)
     source = snapshot / artifact.gguf_file if artifact.gguf_file else snapshot
     if artifact.pie_drafter and not plain:

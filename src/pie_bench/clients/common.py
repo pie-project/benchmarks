@@ -1037,7 +1037,7 @@ def visible_cuda_devices(tp_size: int, dp_size: int = 1) -> list[int]:
 
 def maybe_set_cpu_affinity(args: argparse.Namespace, gpu_ids: list[int]) -> str | None:
     mode = getattr(args, "cpu_affinity", "auto")
-    if mode in (None, "", "none"):
+    if mode in (None, "", "none") or not hasattr(os, "sched_setaffinity"):
         return None
     cpus = gpu_local_cpu_affinity(gpu_ids) if mode == "auto" else _parse_cpu_list(mode)
     if not cpus or not hasattr(os, "sched_setaffinity"):
