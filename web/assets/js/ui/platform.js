@@ -1356,7 +1356,7 @@ window.Pie = window.Pie || {};
       // each platform folds its own Hardware column: its choice kept by name, the old page-wide one until then
       const key = own?.id || only || "all";
       const { key: sortKey = null, dir = 1 } = sortFor(key) || {};
-      const tight = p.narrowBy?.[key] ?? (p.narrow ?? true);
+      const tight = p.narrowBy?.[key] ?? (p.narrow ?? false);
       const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
       const shownGroups = [{ platform: null, macs: list }];
       // a model slice's cell carries the slice mark in its top-left corner; its popover says how much of the model ran,
