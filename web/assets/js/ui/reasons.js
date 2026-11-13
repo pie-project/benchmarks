@@ -41,9 +41,7 @@ window.Pie = window.Pie || {};
   };
   // a profile's third bar: the machine's limit for the cell, the fastest any engine could run it
   const LIMIT = ["limit", "Limit", "transparent"];  // drawn as an outline, no stage's fill
-  const BOUND = { bandwidth: "Bandwidth-bound: the weights and KV cache read at peak memory bandwidth",
-    compute: "Compute-bound: the step's math at the chip's peak FLOPS", interconnect: "Interconnect-bound: the exchange between the GPUs",
-    balanced: "Memory and math take about as long" };
+  const BOUND = { bandwidth: "Bandwidth-bound", compute: "Compute-bound", interconnect: "Interconnect-bound", balanced: "Balanced" };
   // value: what the segment measures, already in words (its ms in a profile, its share in the Summary); note: a line under it
   const hint = (k, value, note = "") => {
     const [, name, color] = [...STAGES, LIMIT].find(([key]) => key === k);
