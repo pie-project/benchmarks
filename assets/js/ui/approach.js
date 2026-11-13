@@ -203,12 +203,13 @@ window.Pie = window.Pie || {};
         ["#64D2FF", "Output projection", "Attention's output back to the hidden size"],
         ["#0050C8", "MLP", "Each layer's feed-forward: gate, up and down"],
         ["#FFD60A", "LM head", "The last hidden state to vocabulary logits"],
-        ["#7EB6FF", "Dense matmul", "Any weight multiply not tied to one of those roles"],
+        ["#7EB6FF", "Dense matmul", "Any matrix multiply the trace does not tie to a role"],
         ["#30B0C7", "MoE", "Routing tokens and running the chosen experts"],
         ["#34C759", "Norm and rope", "Normalization, rotary embeddings and other elementwise work"],
         ["#FF9F0A", "Sampling", "Picking the next token"],
         ["#AF52DE", "Other GPU", "Any other kernel, such as copies"],
         ["#AEAEB2", "GPU idle", "Time inside the step while the GPU waits on the host"]])}
+      <p>Each kernel counts toward the job the trace names it for: a role, not just the kind of math. A cell shows the QKV, output, MLP and LM head split only when both engines' traces name those roles; otherwise both keep one Dense matmul bar, so the two are always split the same way.</p>
       <p>Both engines are measured in the benchmark's own unit: ms per output token, per prompt, per batched step or per wave of prompts. The stage where the slower engine spends the most extra time is where the gap comes from.</p>
       <h3>When a cell is verified</h3>
       ${facts([["#34C759", "Verified", "Each engine's profiled step is within 10% of the step its benchmark number implies, and the profiled gap within 10% of the benchmark's"],
