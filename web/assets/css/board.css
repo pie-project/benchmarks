@@ -627,27 +627,6 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 /* Relative Throughput: the engines' median share of Pie's speed beside how often each is the fastest or nearly, as two of
    the Overview's cards */
 #board-relative { scroll-margin-top: 48px; }
-.relative-cards { display: grid; grid-template-columns: minmax(0, 1fr); }  /* the chart alone, the section's full width */
-@media (max-width: 899px) { .relative-cards { grid-template-columns: 1fr; } }
-.relative-plot { position: relative; height: 360px; margin-top: 4px; }
-.relative-area { position: absolute; left: 54px; right: 140px; top: 6px; bottom: 40px; }
-.relative-chart { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.relative-area { cursor: grab; user-select: none; touch-action: pan-y; }
-.relative-area.is-tugged { cursor: grabbing; }
-.relative-line { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; opacity: .7; }
-.relative-line.is-active { opacity: 1; }
-.relative-tick { position: absolute; font-size: 11px; line-height: 1; color: var(--color-label-secondary); white-space: nowrap; pointer-events: none; }
-.relative-tick.is-y { left: -6px; transform: translate(-100%, -50%); }
-.relative-tick.is-x { top: calc(100% + 8px); }
-.relative-tick.is-middle { transform: translateX(-50%); }
-.relative-tick.is-end { transform: translateX(-100%); }
-/* the axis captions in the plot's own frame: the bottom one on its bottom edge under the chart, the left one on its left
-   edge beside it, read bottom to top */
-.relative-axis-title { position: absolute; bottom: -10px; left: 0; right: 0; font-size: 10px; line-height: 1; text-align: center; color: var(--color-label-secondary); white-space: nowrap; pointer-events: none; }  /* as the head-to-head grids name their sides: small grey words at the card's left edge and foot, still while the chart is pulled */
-.relative-axis-title.is-y { bottom: 40px; top: 6px; left: -16px; right: auto; writing-mode: vertical-rl; transform: rotate(180deg); }  /* past the card's 16px side padding: flush with the section's title */
-.relative-active-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-.relative-note { position: absolute; padding: 2px 6px; border-radius: 5px; font-size: 11px; line-height: 14px; font-variant-numeric: tabular-nums; color: #fff; white-space: nowrap; transform: translate(9px, -50%); pointer-events: none; }  /* the active line's share at the pointer, as a pill in its colour beside the dot */
-.relative-note.is-left { transform: translate(calc(-100% - 9px), -50%); }
 /* the two cards carry no titles: the section's title and line say what both show */
 
 /* a cell's profile in its Suggestions row: one bar per engine on a shared scale, split into the same stages */
@@ -671,11 +650,23 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .reasons-item-title { display: flex; align-items: center; }
 .reasons-item-title .reasons-slice-icon { margin-right: 4px; stroke-width: 1.8; }  /* as heavy as the bold title beside it */
 #reasons .reasons-slices .reasons-slice-icon { margin-right: -2px; stroke: currentColor; }  /* the switch's icon in its label's grey */
-.relative-leaders { position: absolute; top: 0; left: 100%; overflow: visible; pointer-events: none; }
-/* the lines' names: a tag in each engine's colour, its square left edge met by a neck that narrows to the leader, its
-   right corners the site's rounded squares; the leader in the same colour, quieter until its line is picked */
-.relative-label { position: absolute; left: calc(100% + 40px); display: inline-flex; align-items: center; height: 18px; padding: 0 7px 0 4px; border-radius: 0 5px 5px 0; font-size: 11px; font-weight: 500; line-height: 1; color: var(--color-label-secondary); background: var(--color-fill); white-space: nowrap; transform: translateY(-50%); pointer-events: none; }
-.relative-label.is-active { color: #fff; }
-.relative-neck { fill: var(--color-fill); }
-.relative-leader { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; opacity: .7; }
-.relative-leader.is-active { opacity: 1; }
+
+/* Relative Throughput's rank chart: engines ranked at each key margin, a pill of each name at both ends */
+.relative-cards { display: grid; grid-template-columns: minmax(0, 1fr); }
+#board-relative-profile .board-card-head { display: none; }
+.bump { position: relative; margin-top: 4px; }
+.bump-col { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; font-weight: 500; line-height: 16px; color: var(--color-label-secondary); white-space: nowrap; }
+.bump-chart { position: absolute; top: 0; left: 0; overflow: visible; }
+.bump-guide { stroke: var(--color-separator); stroke-width: 1; stroke-dasharray: 3 3; }
+.bump-line { fill: none; stroke-width: 1.6; transition: opacity .15s ease; }
+.bump-hit { fill: none; stroke: transparent; stroke-width: 14; }
+.bump-dot, .bump-badge { transition: opacity .15s ease; }
+.bump-badge text { font-size: 10px; font-weight: 600; fill: #fff; text-anchor: middle; }
+.bump-pill { position: absolute; display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 11.5px; font-weight: 500; line-height: 1; color: var(--color-label-secondary); background: var(--color-fill); white-space: nowrap; transform: translateY(-50%); transition: background-color .15s ease, color .15s ease; cursor: default; }
+.bump-pill.is-left { right: calc(100% - 128px); }
+.bump-pill.is-right { left: calc(100% - 128px); }
+.bump-pill .board-pick-logo { width: 12px; height: 12px; flex: none; }
+.bump-pill.is-active { color: #fff; }
+.bump.is-focused .bump-engine:not(.is-active) .bump-line, .bump.is-focused .bump-engine:not(.is-active) .bump-dot, .bump.is-focused .bump-engine:not(.is-active) .bump-badge { opacity: .2; }
+.bump.is-focused .bump-pill:not(.is-active) { opacity: .5; }
+.bump-engine.is-active .bump-line { stroke-width: 2.4; }
