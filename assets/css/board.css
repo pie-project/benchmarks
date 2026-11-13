@@ -539,6 +539,10 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-welcome-actions svg { width: 12px; height: 12px; fill: currentColor; }
 .board-welcome-secondary svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }  /* the Bench Book's open book, as the sidebar draws it */
 .board-welcome-primary svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }  /* pie-bench's package, drawn as the book beside it */
+.board-welcome-actions > .board-welcome-primary { color: #fff; background: #1d1d1f; }  /* black, as the toolbar's Get pie-bench */
+.board-welcome-actions > .board-welcome-primary:hover { background: #1d1d1f; opacity: .85; }
+:root[data-theme="dark"] .board-welcome-actions > .board-welcome-primary { color: #1d1d1f; background: #f5f5f7; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .board-welcome-actions > .board-welcome-primary { color: #1d1d1f; background: #f5f5f7; } }
 
 
 /* the foot: one line under the cards' grey hairline, on the page's own white */
