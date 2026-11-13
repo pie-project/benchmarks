@@ -73,10 +73,10 @@ window.Pie = window.Pie || {};
   // one engine a page, as the Bench Book shows one chapter: the outline down the left picks it
   const draw = () => {
     if (element.hidden) return;
-    // verified only, the outline lists the engines with a verified row, so no page opens empty
+    // every engine stays in the outline; verified only, a first visit opens on one with a verified row, not an empty page
     const kept = (cells) => cells.some((c) => verified(c) && (slices || !c.miniature));
-    const list = verifiedOnly && groups().some(([, , cells]) => kept(cells)) ? groups().filter(([, , cells]) => kept(cells)) : groups();
-    if (!list.some(([id]) => id === current)) current = list[0]?.[0] || Pie.engines.primary;
+    const list = groups();
+    if (!list.some(([id]) => id === current)) current = ((verifiedOnly && list.find(([, , cells]) => kept(cells))) || list[0])?.[0] || Pie.engines.primary;
     const [id, , all] = list.find(([e]) => e === current) || [current, 0, []];
     // a grid cell that opens a model slice's row turns slices back on, so the row it asked for is there
     if (focus && !slices && all.some((c) => c.miniature && keyOf(id, c) === keyOf(focus.engine, focus))) {
