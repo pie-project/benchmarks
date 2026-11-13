@@ -970,7 +970,7 @@ ${relHead(pick)}
         <div class="board-main">
           <section class="board-welcome" aria-label="About these benchmarks">
             <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title board-welcome-title">Open Inference Benchmark Initiative</h1><p class="board-welcome-sub">Every processor has a theoretical performance limit. Real-world speed depends on how close each kernel gets to it, across precision formats, batching and sampling. As inference moves to agentic workloads, open data and shared techniques accelerate the entire ecosystem. We publish open, fair, and reproducible results for every major engine, platform and model family, and pinpoint where each one falls short.</p></div>
+            <div class="board-section-text"><h1 class="board-title board-welcome-title">Open Inference Benchmark Initiative</h1><p class="board-welcome-sub">Open, fair, and reproducible results across every platform.</p></div>
             <div class="board-welcome-actions">
               <a class="board-welcome-primary" href="https://pypi.org/project/pie-bench/" target="_blank" rel="noopener" title="pip install pie-bench"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>pie-bench</a>
               <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">${Pie.icon("approach")}Bench Book</button>
