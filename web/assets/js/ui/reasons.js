@@ -90,7 +90,8 @@ window.Pie = window.Pie || {};
     const used = STAGES.filter(([k]) => p.fastest.stages[k] > 0 || p.second.stages[k] > 0);
     return `${bar(p.fastest)}${bar(p.second)}${floor}
                 <p class="profile-legend">${used.map(([k, name, color]) => `<span data-stage="${k}"><i style="background: ${color}"></i>${name}</span>`).join("")}</p>
-                <p class="profile-note">${esc(`${p.unit || ""}${c.miniature ? `, on a model slice (${c.miniature})` : ""}`)}</p>`;
+                <p class="profile-note">${esc(`${p.unit || ""}${c.miniature ? `, on a model slice (${c.miniature})` : ""}`)}</p>
+                <p class="profile-note">Stages are grouped by the kernel names each engine reports, so how time splits between stages can differ by engine. Each step's total is exact.</p>`;
   };
   const keyOf = (engine, c) => `${engine}|${c.hardware}|${c.model}|${c.setup}`;
   // a row as a disclosure: the cell, its gap and setup; a click opens its profile and the suggestion
