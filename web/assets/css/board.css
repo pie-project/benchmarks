@@ -692,7 +692,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
   .summary-loss .summary-track { grid-column: 1 / -1; grid-row: 2; }
 }
 /* a stage's hover card: its name and time, what it does, and where its time usually goes when an engine is slow there */
-.chart-tooltip.is-note.is-stage-tip { width: 358px; max-width: calc(100vw - 16px); padding: 9px 40px 9px 12px; white-space: normal; }  /* one width for every stage and the Limit, room for the longest line */
+.chart-tooltip.is-note.is-stage-tip { width: 330px; max-width: calc(100vw - 16px); padding: 9px 12px; white-space: normal; }  /* one width for every stage and the Limit, room for the longest line */
 .stage-tip-name { display: inline-flex; align-items: center; gap: 6px; }
 .stage-tip-name i { width: 8px; height: 8px; border-radius: 2px; }
 .stage-tip-head { margin-top: 7px; font-size: 11px; font-weight: 600; color: var(--color-label-tertiary, var(--color-label-secondary)); }
