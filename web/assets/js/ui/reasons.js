@@ -90,67 +90,95 @@ window.Pie = window.Pie || {};
               </summary>
               <div class="reasons-item-body">${profileOf(c)}</div>
             </details>`;
-  // the Summary: where the slower engine's extra time goes, over every cell on view. A cell's extra time is the slower
-  // engine's ms over the faster one's in each stage where it is over; each cell counts once, as its shares of that time
+  // the Summary, about one engine (Pie unless picked): every profiled cell it was in, set against the other engine there.
+  // Two charts: its time in each stage over the other engine's, cell by cell, and how far each step is from the machine's
+  // limit, its and the other engine's
   const SUMMARY = "summary";
-  const BY_KEY = "pieSummaryBy";
-  let summaryBy = (() => { try { const v = localStorage.getItem(BY_KEY); return ["workload", "platform"].includes(v) ? v : "workload"; } catch { return "workload"; } })();
-  // the one engine the Summary is about, Pie unless picked, kept per browser; the engines on view and their cells, for its menu
   const ENGINE_KEY = "pieSummaryEngine";
   let summaryEngine = (() => { try { return localStorage.getItem(ENGINE_KEY) || null; } catch { return null; } })();
   let summaryEngines = [];
   const CHEVRON = '<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>';
-  const WORKLOADS = ["decode", "prefill", "batching", "pbatch", "spec"];
-  const share = (v) => `${Math.round(100 * v)}%`;
+  const WORKLOADS = [["decode", "Single Decode"], ["prefill", "Single Prefill"], ["batching", "Batched Decode"], ["pbatch", "Batched Prefill"]];
   const cellsWord = (n) => `${n.toLocaleString("en-US")} ${n === 1 ? "cell" : "cells"}`;
-  const heatTip = (cell) => `<div class="gap-tip-title"><span>${esc(cell.dataset.heatValue)}</span><span class="gap-tip-gap">of the extra time</span></div>`
-    + `<div class="gap-tip-body">${esc(cell.dataset.heatStage)} · ${esc(cell.dataset.heatGroup)}</div><div class="gap-tip-at">${esc(cell.dataset.heatCells)}</div>`;
-  let lossCells = [];
-  const summaryOf = (cells) => {
-    // each verified cell: its shares of the extra time by stage, and the stage it loses most in
-    const rows = [];
-    for (const c of cells) {
+  const times = (v) => `${v >= 10 ? Math.round(v) : v >= 1 ? v.toFixed(1) : v.toFixed(2)}×`;
+  const median = (list) => { const q = [...list].sort((a, b) => a - b), m = q.length >> 1; return q.length ? (q.length % 2 ? q[m] : (q[m - 1] + q[m]) / 2) : null; };
+  // a dot's height in its row: spread by the golden ratio, so dots at one value sit apart and a redraw keeps them still
+  const spread = (i) => 22 + 56 * ((i * 0.618034) % 1);
+  // a value's place on a log axis from lo to hi, in percent of the row
+  const at = (v, lo, hi) => 100 * (Math.log2(Math.min(hi, Math.max(lo, v))) - Math.log2(lo)) / (Math.log2(hi) - Math.log2(lo));
+  // the cells an engine was profiled in, each with its side and the other engine's, under the page's two switches
+  const pairsOf = (engine) => {
+    const out = [];
+    for (const c of Pie.platform?.seconds?.(Pie.state) || []) {
+      if ((c.engine !== engine && c.rival !== engine) || (!slices && c.miniature)) continue;
       const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
-      if (p?.verdict !== "confirmed" || !p.fastest?.stages || !p.second?.stages) continue;
-      const extra = Object.fromEntries(STAGES.map(([k]) => [k, Math.max(0, (p.second.stages[k] || 0) - (p.fastest.stages[k] || 0))]));
-      const sum = STAGES.reduce((n, [k]) => n + extra[k], 0);
-      if (!(sum > 0)) continue;
-      const top = STAGES.reduce((a, [k]) => (extra[k] > extra[a] ? k : a), STAGES[0][0]);
-      rows.push({ c, p, extra, share: Object.fromEntries(STAGES.map(([k]) => [k, extra[k] / sum])), top });
+      if (!p?.fastest?.stages || !p?.second?.stages || (verifiedOnly && p.verdict !== "confirmed")) continue;
+      const mine = p.fastest.engine === engine ? p.fastest : p.second.engine === engine ? p.second : null;
+      if (mine) out.push({ c, p, mine, theirs: mine === p.fastest ? p.second : p.fastest, ahead: mine === p.fastest });
     }
-    const mean = (list) => Object.fromEntries(STAGES.map(([k]) => [k, list.length ? list.reduce((n, r) => n + r.share[k], 0) / list.length : 0]));
-    const overall = mean(rows);
-    const ranked = STAGES.filter(([k]) => overall[k] >= 0.005).sort((a, b) => overall[b[0]] - overall[a[0]]);
-    const gaps = cells.map((c) => c.gap).sort((a, b) => a - b);
-    const mid = gaps.length >> 1;
-    const median = gaps.length ? (gaps.length % 2 ? gaps[mid] : (gaps[mid - 1] + gaps[mid]) / 2) : 0;
-    // the headline: how many cells, how far behind, and the stage most of the extra time goes to
-    const tiles = `<dl class="welcome-stats summary-stats"><div><dt>Cells behind</dt><dd>${cells.length.toLocaleString("en-US")}</dd></div>`
-      + `<div><dt>Median gap</dt><dd>${pct(median)}</dd></div><div><dt>Biggest cause</dt><dd>${ranked[0] ? esc(ranked[0][1]) : "–"}</dd></div></dl>`;
-    // 1. where the extra time goes: one bar a stage, largest first, scaled to the largest
-    const most = Math.max(0.01, ...ranked.map(([k]) => overall[k]));
-    const where = `<section class="summary-card"><h2>Where the extra time goes</h2><p class="summary-sub">${esc(nameOf(summaryEngine))}'s extra time over the faster engine by stage, averaged over ${cellsWord(rows.length)} with a verified profile</p>
-      ${ranked.map(([k, name, color]) => `<div class="summary-bar"><span class="summary-name"><i style="background: ${color}"></i>${esc(name)}</span><span class="summary-track"><i style="width: ${(100 * overall[k] / most).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-value="${share(overall[k])} of the extra time"></i></span><span class="summary-value">${share(overall[k])}</span></div>`).join("")}</section>`;
-    // 2. the same split by workload, platform or engine: a heatmap in one blue, darker where more of the extra time goes
-    const by = summaryBy;
-    const groupOf = by === "platform" ? (r) => { const hw = rowOf("hardware", r.c.hardware); const id = hw && Pie.platformOf?.(hw); return [id || "other", Pie.schema?.[id]?.label || "Other"]; }
-      : (r) => [r.c.setup, r.c.label];
-    const groups = new Map();
-    for (const r of rows) { const [id, label] = groupOf(r); (groups.get(id) || groups.set(id, { label, rows: [] }).get(id)).rows.push(r); }
-    const order = [...groups.entries()].sort(([a, x], [b, y]) => (by === "workload" ? WORKLOADS.indexOf(a) - WORKLOADS.indexOf(b) : y.rows.length - x.rows.length));
-    const means = new Map(order.map(([id, g]) => [id, mean(g.rows)]));
-    const cols = STAGES.filter(([k]) => order.some(([id]) => means.get(id)[k] >= 0.01));
-    const peak = Math.max(0.01, ...order.flatMap(([id]) => cols.map(([k]) => means.get(id)[k])));
-    const pick = `<span class="platform-compare summary-by" role="group" aria-label="Group by">${[["workload", "Workload"], ["platform", "Platform"]].map(([v, l]) => `<button type="button" class="plain-button${v === by ? " is-active" : ""}" aria-pressed="${v === by}" data-summary-by="${v}">${l}</button>`).join("")}</span>`;
-    const heat = `<section class="summary-card"><div class="summary-head"><div><h2>By ${by}</h2><p class="summary-sub">Share of the extra time in each stage; each row averages its cells</p></div>${pick}</div>
-      <div class="summary-heat-scroll"><table class="summary-heat"><thead><tr><th></th>${cols.map(([, name, color]) => `<th scope="col"><span class="summary-name"><i style="background: ${color}"></i>${esc(name)}</span></th>`).join("")}</tr></thead>
-      <tbody>${order.map(([id, g]) => `<tr><th scope="row">${esc(g.label)}<span>${cellsWord(g.rows.length)}</span></th>${cols.map(([k, name]) => { const v = means.get(id)[k]; return `<td data-heat data-heat-value="${share(v)}" data-heat-stage="${esc(name)}" data-heat-group="${esc(g.label)}" data-heat-cells="${cellsWord(g.rows.length)}" style="background: color-mix(in srgb, var(--color-accent) ${Math.round(4 + 66 * v / peak)}%, transparent)">${v >= 0.05 ? share(v) : ""}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
-    // 3. the biggest single-stage losses: the stage a cell loses most in, as a share of the slower engine's whole step
-    const losses = rows.map((r) => ({ ...r, ms: r.extra[r.top], of: r.extra[r.top] / (r.p.second.stepMs || 1) })).sort((a, b) => b.of - a.of).slice(0, 8);
-    lossCells = losses.map((l) => l.c);
-    const list = `<section class="summary-card"><h2>Biggest single-stage losses</h2><p class="summary-sub">The stage a cell loses most time in, as a share of the slower engine's step; a row opens its profile</p>
-      ${losses.map((l, i) => { const [, name, color] = STAGES.find(([k]) => k === l.top); return `<button type="button" class="summary-loss" data-summary-cell="${i}"><span class="summary-loss-text"><b>${esc(modelName(l.c.model))} on ${esc(machineName(l.c.hardware))}</b><span>${esc(l.c.label)} · ${esc(name)} +${ms(l.ms)}</span></span><span class="summary-track"><i style="width: ${(100 * Math.min(1, l.of)).toFixed(2)}%; background: ${color}" data-stage="${l.top}" data-stage-value="+${ms(l.ms)}"></i></span><span class="summary-value">${share(l.of)}</span></button>`; }).join("")}</section>`;
-    return `${tiles}${rows.length ? `${where}${heat}${list}` : `<p class="reasons-empty">No verified profiles yet.</p>`}`;
+    return out;
+  };
+  // every dot on the Summary, by its index: what its card says and the cell a click opens
+  let dots = [];
+  const dotTip = (el) => {
+    const d = dots[el.dataset.dot];
+    if (!d) return "";
+    const { c, mine, theirs } = d.pair;
+    const head = `<div class="gap-tip-title"><span>${esc(modelName(c.model))} on ${esc(machineName(c.hardware))}</span><span class="gap-tip-end gap-tip-gap">${esc(d.value)}</span></div>`;
+    return `${head}<div class="gap-tip-body">${esc(c.label)}${d.stage ? ` · ${esc(d.stage)}` : ""}</div>`
+      + `<div class="gap-tip-at">${esc(nameOf(mine.engine))} ${d.a} · ${esc(nameOf(theirs.engine))} ${d.b}${d.limit ? ` · limit ${d.limit}` : ""}</div>`;
+  };
+  const summaryOf = (engine) => {
+    const pairs = pairsOf(engine);
+    dots = [];
+    if (!pairs.length) return `<p class="reasons-empty">No profiled cells yet.</p>`;
+    const name = esc(nameOf(engine));
+    const dot = (pair, x, y, cls, value, extra, style = "") => `<i class="dot ${cls}" style="left: ${x.toFixed(2)}%; top: ${y.toFixed(1)}%${style}" data-dot="${dots.push({ pair, value, ...extra }) - 1}"></i>`;
+    // 1. stage by stage: the engine's ms in a stage over the other engine's, one dot a cell, where the stage is 5% or more
+    // of the step; left of 1x the engine is faster there, right of it slower
+    const LO = 1 / 8, HI = 8;
+    let k0 = 0;
+    const stageRows = STAGES.map(([k, stageName]) => {
+      const pts = pairs.filter(({ mine, theirs }) => (mine.stages[k] || 0) > 0 && (theirs.stages[k] || 0) > 0
+        && Math.max(mine.stages[k], theirs.stages[k]) >= 0.05 * Math.max(mine.stepMs, theirs.stepMs));
+      if (pts.length < 3) return "";
+      const ratios = pts.map(({ mine, theirs }) => mine.stages[k] / theirs.stages[k]);
+      const mid = median(ratios), faster = ratios.filter((r) => r < 0.9).length, slower = ratios.filter((r) => r > 1.1).length;
+      const said = mid < 0.9 ? `faster in ${faster} of ${pts.length}` : mid > 1.1 ? `slower in ${slower} of ${pts.length}` : `${faster} faster, ${slower} slower`;
+      const marks = pts.map((pair, i) => { const r = ratios[i]; return dot(pair, at(r, LO, HI), spread(k0 + i), r < 0.9 ? "is-faster" : r > 1.1 ? "is-slower" : "is-same", times(r),
+        { stage: stageName, a: ms(pair.mine.stages[k]), b: ms(pair.theirs.stages[k]) }); }).join("");
+      k0 += pts.length;
+      return `<div class="dot-row"><span class="dot-label">${esc(stageName)}</span><span class="dot-plot"><span class="dot-one" style="left: 50%"></span>${marks}<b class="dot-median" style="left: ${at(mid, LO, HI).toFixed(2)}%"></b></span><span class="dot-stat"><b>${times(mid)}</b> ${said}</span></div>`;
+    }).join("");
+    const stageAxis = `<div class="dot-axis"><span></span><span class="dot-scale">${[[0.25, "0.25×"], [0.5, "0.5×"], [1, "1×"], [2, "2×"], [4, "4×"]].map(([v, l]) => `<span style="left: ${at(v, LO, HI)}%">${l}</span>`).join("")}</span><span></span></div>`;
+    const stages = `<section class="summary-card"><h2>Stage by stage</h2><p class="summary-sub">${name}'s time in each stage over the other engine's, one dot a cell; the tick is the median. <i class="dot-key is-faster"></i>Faster <i class="dot-key is-slower"></i>Slower</p>${stageAxis}${stageRows}</section>`;
+    // 2. how far each step is from the machine's limit: the engine's (filled) and the other engine's (hollow), one pair a
+    // cell, joined; 1x is the limit itself
+    const LIM_HI = 32;
+    let w0 = 0;
+    const limitRows = WORKLOADS.map(([setup, label]) => {
+      const pts = [];
+      for (const pair of pairs.filter((x) => x.c.setup === setup)) {
+        const L = limitOf(pair.c);
+        if (L?.ms) pts.push({ pair, L: L.ms, m: pair.mine.stepMs / L.ms, t: pair.theirs.stepMs / L.ms });
+      }
+      if (!pts.length) return "";
+      const marks = pts.map(({ pair, L, m, t }, i) => {
+        const y = spread(w0 + i), xm = at(m, 1, LIM_HI), xt = at(t, 1, LIM_HI), extra = { a: ms(pair.mine.stepMs), b: ms(pair.theirs.stepMs), limit: ms(L) };
+        return `<span class="dot-link" style="left: ${Math.min(xm, xt).toFixed(2)}%; width: ${Math.abs(xm - xt).toFixed(2)}%; top: ${y.toFixed(1)}%"></span>`
+          + dot(pair, xt, y, "is-hollow", `${times(t)} the limit`, extra) + dot(pair, xm, y, "is-mine", `${times(m)} the limit`, extra, `; --dot: ${colorOf(engine)}`);
+      }).join("");
+      w0 += pts.length;
+      return `<div class="dot-row"><span class="dot-label">${esc(label)}</span><span class="dot-plot is-limit">${marks}</span><span class="dot-stat"><b>${times(median(pts.map((x) => x.m)))}</b> ${name} · ${times(median(pts.map((x) => x.t)))} others</span></div>`;
+    }).join("");
+    const limitAxis = `<div class="dot-axis"><span></span><span class="dot-scale">${[[1, "Limit"], [2, "2×"], [4, "4×"], [8, "8×"], [16, "16×"]].map(([v, l]) => `<span style="left: ${at(v, 1, LIM_HI)}%">${l}</span>`).join("")}</span><span></span></div>`;
+    const limit = limitRows ? `<section class="summary-card"><h2>Distance from the limit</h2><p class="summary-sub">Each step over the machine's limit: <i class="dot-key" style="--dot: ${colorOf(engine)}"></i>${name} <i class="dot-key is-hollow"></i>the other engine, joined a cell; 1× is the hardware limit</p>${limitAxis}${limitRows}</section>` : "";
+    // the headline: the cells, how many it leads, and its median distance from the limit
+    const ahead = pairs.filter((x) => x.ahead).length;
+    const dist = pairs.map((x) => { const L = limitOf(x.c); return L?.ms ? x.mine.stepMs / L.ms : null; }).filter((v) => v != null);
+    const tiles = `<dl class="welcome-stats summary-stats"><div><dt>Cells profiled</dt><dd>${pairs.length.toLocaleString("en-US")}</dd></div>`
+      + `<div><dt>Fastest in</dt><dd>${ahead} of ${pairs.length}</dd></div><div><dt>Median distance from the limit</dt><dd>${dist.length ? times(median(dist)) : "–"}</dd></div></dl>`;
+    return `${tiles}${stages}${limit}`;
   };
   let focus = null;
   let shownCount = 0;
@@ -185,17 +213,19 @@ window.Pie = window.Pie || {};
     const keep = (c) => (slices || !c.miniature) && (!verifiedOnly || verified(c));
     const reasons = all.filter(keep);
     const engines = list.map(([e, , cs]) => [e, cs.filter(keep)]).filter(([, cs]) => cs.length);
-    // the Summary's engine: one on view, or every engine
-    summaryEngines = engines.map(([e, cs]) => [e, cs.length]);
-    const has = (e) => engines.some(([x]) => x === e);
-    if (!has(summaryEngine)) summaryEngine = has(Pie.engines.primary) ? Pie.engines.primary : engines[0]?.[0] || null;
-    const scoped = engines.filter(([e]) => e === summaryEngine);
-    const cells = overview ? scoped.reduce((n, [, cs]) => n + cs.length, 0) : reasons.length;
+    // the Summary's engine: any engine profiled in a cell on view, Pie unless picked
+    if (overview) {
+      const ids = new Set();
+      for (const c of Pie.platform?.seconds?.(Pie.state) || []) if ((Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`]) ids.add(c.engine).add(c.rival);
+      summaryEngines = [...ids].map((e) => [e, pairsOf(e).length]).filter(([, n]) => n).sort(([a, x], [b, y]) => (a === Pie.engines.primary ? -1 : b === Pie.engines.primary ? 1 : y - x));
+      if (!summaryEngines.some(([e]) => e === summaryEngine)) summaryEngine = summaryEngines[0]?.[0] || null;
+    }
+    const cells = overview ? summaryEngines.find(([e]) => e === summaryEngine)?.[1] || 0 : reasons.length;
     const head = overview
-      ? `<h1 class="board-title">Summary</h1><p class="board-lede">${summaryEngine ? `${cellsWord(cells)} where ${esc(nameOf(summaryEngine))} trails the fastest engine` : "No cells behind"}</p>`
+      ? `<h1 class="board-title">Summary</h1><p class="board-lede">${summaryEngine ? `${esc(nameOf(summaryEngine))} in ${cellsWord(cells)} profiled against the other fastest engine` : "No profiled cells yet"}</p>`
       : `<h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))} Profile</h1><p class="board-lede">${lede(id, cells)}</p>`;
     const body = overview
-      ? (engines.length ? summaryOf(scoped.flatMap(([, cs]) => cs)) : `<p class="reasons-empty">${verifiedOnly ? "No verified cells yet." : "No cells behind."}</p>`)
+      ? (summaryEngine ? summaryOf(summaryEngine) : `<p class="reasons-empty">No profiled cells yet.</p>`)
       : reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">${verifiedOnly && all.length ? "No verified cells yet." : "No cells behind."}</p>`;
     // the outline's fill rides from the engine it marked to the one picked, not drawn afresh on the new one
     const was = element.querySelector(".board-outline-thumb")?.style.cssText;
@@ -267,7 +297,7 @@ window.Pie = window.Pie || {};
     tooltip.classList.remove("is-note", "is-stage-tip");
   };
   const showTip = (seg) => {
-    tooltip.innerHTML = seg.dataset.heat != null ? heatTip(seg) : hint(seg.dataset.stage, seg.dataset.stageValue, seg.dataset.stageNote);
+    tooltip.innerHTML = seg.dataset.dot != null ? dotTip(seg) : hint(seg.dataset.stage, seg.dataset.stageValue, seg.dataset.stageNote);
     tooltip.classList.remove("is-card", "is-gap-note");
     tooltip.classList.add("is-note", "is-stage-tip");
     tooltip.hidden = false;
@@ -281,7 +311,7 @@ window.Pie = window.Pie || {};
   };
   element.addEventListener("mousemove", (event) => {
     lastX = event.clientX;
-    const seg = event.target.closest("[data-stage], [data-heat]");
+    const seg = event.target.closest("[data-stage], [data-dot]");
     if (!seg || !tooltip || Pie.tapCard?.isTouch()) { hideTip(); return; }
     if (seg === tipFor || seg === pending) return;
     clearTimeout(timer);
@@ -292,9 +322,9 @@ window.Pie = window.Pie || {};
   element.addEventListener("mouseleave", hideTip);
   document.addEventListener("scroll", hideTip, { capture: true, passive: true });
   element.addEventListener("click", (event) => {
-    const seg = event.target.closest("[data-stage], [data-heat]");
+    const seg = event.target.closest("[data-stage], [data-dot]");
     if (seg && Pie.tapCard?.isTouch()) {
-      Pie.tapCard.toggle(seg, seg.dataset.heat != null ? heatTip(seg) : hint(seg.dataset.stage, seg.dataset.stageValue, seg.dataset.stageNote), true);
+      Pie.tapCard.toggle(seg, seg.dataset.dot != null ? dotTip(seg) : hint(seg.dataset.stage, seg.dataset.stageValue, seg.dataset.stageNote), true);
       return;
     }
     const summary = event.target.closest(".reasons-item-summary");
@@ -324,18 +354,11 @@ window.Pie = window.Pie || {};
       Pie.popover.open(pickButton, `reasons:${pickButton.dataset.reasonsPick}`, null);
       return;
     }
-    const by = event.target.closest("[data-summary-by]");
-    if (by) {
-      summaryBy = by.dataset.summaryBy;
-      try { localStorage.setItem(BY_KEY, summaryBy); } catch { /* private windows can refuse storage */ }
-      draw();
-      return;
-    }
-    // a loss opens its own profile, on its engine's page, as a green grid cell does
-    const loss = event.target.closest("[data-summary-cell]");
-    if (loss && lossCells[loss.dataset.summaryCell]) {
+    // a dot opens its cell's profile, on the slower engine's page, as a green grid cell does
+    const hit = event.target.closest("[data-dot]");
+    if (hit && dots[hit.dataset.dot]) {
       hideTip();
-      focus = lossCells[loss.dataset.summaryCell];
+      focus = dots[hit.dataset.dot].pair.c;
       current = focus.engine;
       try { localStorage.setItem(KEY, current); } catch { /* private windows can refuse storage */ }
       draw();
