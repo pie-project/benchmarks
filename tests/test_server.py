@@ -178,10 +178,14 @@ def test_profiles_are_judged_from_their_numbers_and_served_at_once(client):
     assert set(served) == {"m5-max-64g|qwen3.5-9b|decode", "m5-max-64g|qwen3.5-9b|batching"}
     good = served["m5-max-64g|qwen3.5-9b|decode"]
     assert good["verdict"] == "confirmed" and good["stageKey"] == "dense_matmul" and good["second"]["engine"] == "mlxlm"
+    assert good["fastest"]["stages"]["linear_attention"] == 0
     assert served["m5-max-64g|qwen3.5-9b|batching"]["verdict"] == "bad run"
     assert "Users" not in client.get("/v1/profiles").text
-    client.post("/v1/profiles", content=body([_profile("batching", 15.2)]), headers={"Authorization": "Bearer admin-secret"})
-    assert client.get("/v1/profiles").json()["m5-max-64g|qwen3.5-9b|batching"]["verdict"] == "confirmed"
+    linear = _profile("batching", 15.2)
+    linear["second"]["stage_ms"] = {**linear["second"]["stage_ms"], "linear_attention": 4.0, "dense_matmul": 6.0}
+    client.post("/v1/profiles", content=body([linear]), headers={"Authorization": "Bearer admin-secret"})
+    batching = client.get("/v1/profiles").json()["m5-max-64g|qwen3.5-9b|batching"]
+    assert batching["verdict"] == "confirmed" and batching["stageKey"] == "linear_attention"
 
 
 def test_monitors_can_check_health_with_head(client):

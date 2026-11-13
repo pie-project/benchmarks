@@ -27,7 +27,7 @@ window.Pie = window.Pie || {};
     return h.class === "mac" && h.memory_gib ? `${name} ${h.memory_gib} GB` : name;
   };
   // a cell's profile: each engine's step split into the same stages, as one bar each on a shared scale, and the verdict
-  const STAGES = [["attention", "Attention", "#5E5CE6"], ["dense_matmul", "Dense matmul", "#0A84FF"], ["moe", "MoE", "#30B0C7"],
+  const STAGES = [["attention", "Attention", "#5E5CE6"], ["linear_attention", "Linear attention", "#A09EF5"], ["dense_matmul", "Dense matmul", "#0A84FF"], ["moe", "MoE", "#30B0C7"],
     ["norm_rope_elementwise", "Norm and rope", "#34C759"], ["sampling", "Sampling", "#FF9F0A"], ["other_gpu", "Other GPU", "#AF52DE"], ["gpu_idle", "GPU idle", "#AEAEB2"]];
   // what each stage does and where its time usually goes when an engine is slow there: the card a stage shows on hover
   const HINTS = {
