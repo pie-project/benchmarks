@@ -703,6 +703,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .stage-tip-head { margin-top: 8px; padding-top: 7px; border-top: .5px solid var(--color-separator); font-size: 11px; font-weight: 600; color: var(--color-label-tertiary, var(--color-label-secondary)); }  /* a section of the card, under a hairline, as a macOS popover divides one */
 .stage-tip-list { margin: 3px 0 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.5; color: var(--color-label-secondary); }  /* plain lines, no bullets */
 .profile-note { margin: 0; font-size: 11px; color: var(--color-label-tertiary); }
+.profile-note + .profile-note { margin-top: 4px; }
 /* each row's status at its left: a green shield where a profile verifies the gap; the slot stays empty otherwise */
 .reasons-item-status { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; }
 .reasons-item-status svg { width: 18px; height: 18px; }
