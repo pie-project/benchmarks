@@ -970,10 +970,9 @@ ${relHead(pick)}
         <div class="board-main">
           <section class="board-welcome" aria-label="About these benchmarks">
             <div class="board-section-head">
-            <div class="board-section-text"><h1 class="board-title board-welcome-title">Open Inference Benchmark Initiative</h1><p class="board-welcome-sub">Every major inference engine, measured against the theoretical limit of the hardware it runs on. Open, fair, and reproducible, so every gap is visible and every improvement can be shared.</p>
-            <p class="board-welcome-sub">Run <code>pie-bench</code> on your own hardware and share your results.</p></div>
+            <div class="board-section-text"><h1 class="board-title board-welcome-title">Open Inference Benchmark Initiative</h1><p class="board-welcome-sub">Every processor has a theoretical performance limit. Real-world speed depends on how close each kernel gets to it, across precision formats, batching and sampling. As inference moves to agentic workloads, open data and shared techniques accelerate the entire ecosystem. We publish open, fair, and reproducible results for every major engine, platform and model family, and pinpoint where each one falls short.</p></div>
             <div class="board-welcome-actions">
-              <a class="board-welcome-primary" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Open Source</a>
+              <a class="board-welcome-primary" href="https://pypi.org/project/pie-bench/" target="_blank" rel="noopener" title="pip install pie-bench"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>pie-bench</a>
               <button type="button" class="board-welcome-secondary" data-board-go-page="approach" data-chapter="welcome">${Pie.icon("approach")}Bench Book</button>
             </div>
             </div>

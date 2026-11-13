@@ -27,13 +27,19 @@ window.Pie = window.Pie || {};
     { target: async () => {
         await go("speedups");
         if (Pie.platform?.setCompare) { Pie.platform.setCompare("engines"); document.dispatchEvent(new CustomEvent("pie:refresh")); }
-        return find(".platform-table td.is-gap");
+        for (let i = 0; i < 40; i++) {
+          const cell = [...document.querySelectorAll(".platform-table td.is-gap, .platform-table td.is-explained")]
+            .find((td) => { const r = td.getBoundingClientRect(); return td.offsetParent && r.left > 0 && r.right <= innerWidth - 16; });
+          if (cell) return cell;
+          await sleep(150);
+        }
+        return null;
       }, title: "Highlighted Gaps",
-      text: "We highlight and comment on significant engine performance gaps." },
-    { target: async () => { await go("reasons"); return find("#reasons tbody tr"); }, title: "Suggestions",
-      text: "Why Pie is faster on each explained gap, and what the other engine could change to match." },
-    { target: async () => { await go("board"); return find(".board-welcome-primary"); }, title: "Open Source",
-      text: "Open CI: every number is reproducible. Use pie-bench to run the suite." },
+      text: "Yellow: the two fastest engines are 25% or more apart, so the cell needs review. Green: a profile of both engines confirms the gap." },
+    { target: async () => { await go("reasons"); return find("#reasons .reasons-item, #reasons .reasons-empty"); }, title: "Suggestions",
+      text: "Every gap under the slower engine, with a profile of both engines showing where its time goes." },
+    { target: async () => { await go("board"); return find(".board-welcome-primary"); }, title: "pie-bench",
+      text: "Every number is reproducible. Run pip install pie-bench on your own hardware and share your results." },
     { target: async () => { await go("board"); return find('.board-welcome-secondary[data-board-go-page="approach"]'); }, title: "Bench Book",
       text: "The measurement methodology, and how every engine gets a fair setup." },
   ];
