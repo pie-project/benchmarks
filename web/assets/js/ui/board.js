@@ -1334,8 +1334,23 @@ ${relHead(pick)}
   };
   new ResizeObserver(() => spreadLabels()).observe(element);
   element.addEventListener("pointermove", (event) => {
-    const area = event.target.closest?.(".relative-area");
+    const area = event.target.closest?.(".relative-plot")?.querySelector(".relative-area");
     if (!area) { const any = element.querySelector(".relative-area"); if (any?.querySelector(".relative-line.is-active")) relActivate(any, null); return; }
+    // right of the chart, over the names: the tag nearest the pointer lights its line, with no reading on the line
+    const box = area.getBoundingClientRect();
+    if (event.clientX > box.right) {
+      let near = null, gap = Infinity;
+      for (const t of area.querySelectorAll(".relative-label")) {
+        const r = t.getBoundingClientRect(), d = Math.abs(r.top + r.height / 2 - event.clientY);
+        if (d < gap) { gap = d; near = t; }
+      }
+      const line = near && area.querySelector(`.relative-line[data-engine="${CSS.escape(near.dataset.engine)}"]`);
+      if (line && !line.classList.contains("is-active")) relActivate(area, line);
+      area.querySelector(".relative-active-dot").hidden = true;
+      area.querySelector(".relative-note").hidden = true;
+      return;
+    }
+    if (event.clientX < box.left || event.clientY < box.top || event.clientY > box.bottom) { if (area.querySelector(".relative-line.is-active")) relActivate(area, null); return; }
     const svg = area.querySelector(".relative-chart");
     const m = svg.getScreenCTM();
     if (!m) return;
@@ -1350,6 +1365,7 @@ ${relHead(pick)}
     }
     if (!best) return;
     if (!best.classList.contains("is-active")) relActivate(area, best);
+    area.querySelector(".relative-active-dot").hidden = false;
     // the dot rides the line under the pointer; the pill beside it reads that line's share of tests at the pointer's margin
     const dot = area.querySelector(".relative-active-dot"), note = area.querySelector(".relative-note");
     Object.assign(dot.style, { left: `${cx / 10}%`, top: `${bestY / 10}%` });
