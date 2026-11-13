@@ -630,7 +630,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-cards { display: grid; grid-template-columns: minmax(0, 1fr); }  /* the chart alone, the section's full width */
 @media (max-width: 899px) { .relative-cards { grid-template-columns: 1fr; } }
 .relative-plot { position: relative; height: 360px; margin-top: 4px; }
-.relative-area { position: absolute; left: 54px; right: 146px; top: 6px; bottom: 40px; }
+.relative-area { position: absolute; left: 54px; right: 64px; top: 6px; bottom: 40px; }
 .relative-chart { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .relative-area { cursor: grab; user-select: none; touch-action: pan-y; }
 .relative-area.is-tugged { cursor: grabbing; }
@@ -678,3 +678,4 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .relative-leaders { position: absolute; top: 0; left: 100%; overflow: visible; pointer-events: none; }
 .relative-leader { fill: none; stroke: var(--color-label-tertiary); stroke-width: 1; opacity: .7; }
 .relative-leader.is-active { opacity: 1; }
+.relative-pill { pointer-events: visiblePainted; }
