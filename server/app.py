@@ -44,15 +44,14 @@ class Views:
             contributed = {pid: spec for pid, spec in cur.fetchall()}
             cur.execute("SELECT count(*) FROM runs")
             submissions = cur.fetchone()[0]
-            profiled = profiles.blob(cur)
         with ProcessPoolExecutor(max_workers=1, mp_context=multiprocessing.get_context("spawn")) as pool:
             data = pool.submit(build.blobs, self.db.dsn, contributed, submissions).result()
-        data["profiles"] = profiled
         sizes = self.sizes()
         if sizes:
             data["footprint"] = sizes
-        blobs = {k: _blob(v) for k, v in data.items()}
-        with self.lock:
+        with self.lock, self.db.tx() as cur:
+            data["profiles"] = profiles.blob(cur)
+            blobs = {k: _blob(v) for k, v in data.items()}
             self.blobs, self.built_at, self.built = blobs, time.time(), True
         self.save(data)
         log.info("views built in %.1fs: %d files, %.0f MB compressed", time.monotonic() - t0, len(blobs), sum(len(v) for v in data.values()) / 1e6)
