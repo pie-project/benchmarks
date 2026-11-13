@@ -867,7 +867,7 @@
 .verified-mark .shield { fill: var(--color-positive); }
 .verified-mark .mark { fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .verified-mark.is-rerun .shield { fill: #FF9500; }
-.verified-mark.is-rerun .mark { stroke-width: 1.5; }
+.verified-mark.is-rerun .dot { fill: #fff; }
 .platform-cell > .slice-mark { position: absolute; top: 5px; left: 6px; margin: 0; color: var(--color-label-quaternary); }
 .platform-cell > .slice-mark svg { stroke-width: 1.1; }  /* a model slice: the mark in the cell's top-left corner */
 .platform-cell > .slice-mark .column-info-pop { top: calc(100% + 6px); right: auto; left: -8px; text-align: left; }
