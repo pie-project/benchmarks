@@ -28,6 +28,8 @@ window.Pie = window.Pie || {};
 
   read().then(([catalog, latest, profiles]) => {
     Pie.profiles = profiles;
+    // verified: a profile of both engines agrees with the benchmark and none of the API's checks flagged it
+    Pie.verifiedProfile = (key) => profiles[key]?.verdict === "confirmed" && !profiles[key].flags?.length;
     window.DB = {
       ...catalog,
       tags: catalog.releases,

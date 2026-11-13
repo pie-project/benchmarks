@@ -645,8 +645,8 @@ window.Pie = window.Pie || {};
   const BUILDS = { webllm: "WebLLM", mlc: "MLC LLM", "llamacpp-webgpu": "llama.cpp Web", "vllm-metal": "vLLM Metal", "mlx-swift": "MLX Swift" };
   // where an engine can run at all, from the catalog's os and backends (matrix/engines.yaml): a platform's OS, and its
   // GPU backend where the engine names its backends; a browser tab runs only the builds made for WebGPU
-  const PLATFORM_OS = { mac: ["macos"], nvidia: ["linux"], amd: ["linux"], tpu: ["linux"], android: ["android", "ios"], web: ["linux"] };
-  const PLATFORM_BACKEND = { mac: "metal", nvidia: "cuda", amd: "rocm", tpu: "xla", web: "webgpu" };
+  const PLATFORM_OS = { mac: ["macos"], nvidia: ["linux"], amd: ["linux"], tpu: ["linux"], cerebras: ["linux"], android: ["android", "ios"], web: ["linux"] };
+  const PLATFORM_BACKEND = { mac: "metal", nvidia: "cuda", amd: "rocm", tpu: "xla", cerebras: "cerebras", web: "webgpu" };
   const canRun = (eng, p) => {
     const list = (v) => (v || "").split(",").map((x) => x.trim()).filter(Boolean);
     const os = list(eng.os), backends = list(eng.backends);
