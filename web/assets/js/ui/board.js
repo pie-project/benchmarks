@@ -1294,23 +1294,26 @@ ${relHead(pick)}
       const step = names.length > 1 ? Math.min(h / (names.length - 1), 28) : 0;
       const first = Math.max(0, Math.min(h * names[0]?.dataset.top / 100 || 0, h - step * (names.length - 1)));
       // each line is led out to a tag in its engine's colour from the top bar, the leader widening into the tag's edge
-      const L = 30, NECK = 10, TAG = 18, W = L + NECK, ns = "http://www.w3.org/2000/svg";
+      // every tag ends at the same right edge; a shorter name's leader runs further before its tag
+      const L = 30, NECK = 10, TAG = 18, W = L + NECK + widest, ns = "http://www.w3.org/2000/svg";
       let leaders = area.querySelector(".relative-leaders");
       if (!leaders) { leaders = document.createElementNS(ns, "svg"); leaders.setAttribute("class", "relative-leaders"); leaders.setAttribute("aria-hidden", "true"); area.append(leaders); }
       leaders.setAttribute("width", W);
       leaders.setAttribute("height", h);
       leaders.replaceChildren(...names.flatMap((t, i) => {
         const from = (h * t.dataset.top / 100).toFixed(1), to = first + step * i, y = to.toFixed(1), half = TAG / 2;
+        const end = L + widest - t.offsetWidth, tip = end + NECK;  // where this tag's neck starts and its body begins
         t.style.top = `${to}px`;
+        t.style.left = `calc(100% + ${tip}px)`;
         const path = document.createElementNS(ns, "path");
         path.setAttribute("class", "relative-leader");
         path.dataset.engine = t.dataset.engine;
         path.setAttribute("stroke", t.dataset.color);
-        path.setAttribute("d", `M0,${from}H6C18,${from} 18,${y} ${L - 4},${y}H${L}`);
+        path.setAttribute("d", `M0,${from}H6C18,${from} 18,${y} ${L - 4},${y}H${end}`);
         const neck = document.createElementNS(ns, "path");
         neck.setAttribute("class", "relative-neck");
         neck.setAttribute("fill", t.dataset.color);
-        neck.setAttribute("d", `M${L},${to - .5}C${L + 5},${to - .5} ${W - 4},${to - half} ${W},${to - half}V${to + half}C${W - 4},${to + half} ${L + 5},${to + .5} ${L},${to + .5}Z`);
+        neck.setAttribute("d", `M${end},${to - .5}C${end + 5},${to - .5} ${tip - 4},${to - half} ${tip},${to - half}V${to + half}C${tip - 4},${to + half} ${end + 5},${to + .5} ${end},${to + .5}Z`);
         return [path, neck];
       }));
       // the axis words left to right; one that would touch the word before it stays hidden, the last one always shows
