@@ -250,6 +250,7 @@ window.Pie = window.Pie || {};
   // the platforms machines belong to, in the order the page lists them; Apple's logo is the simple-icons glyph (CC0)
   const PLATFORMS = [
     { id: "mac", label: "Apple Silicon", sub: "Metal", has: (hw) => Pie.platformOf(hw) === "mac" },
+    { id: "windows", label: "Windows PC", sub: "CUDA", has: (hw) => Pie.platformOf(hw) === "windows" },
     { id: "nvidia", label: "NVIDIA GPU", sub: "CUDA", has: (hw) => Pie.platformOf(hw) === "nvidia" },
     { id: "amd", label: "AMD GPU", sub: "ROCm", has: (hw) => Pie.platformOf(hw) === "amd" },
     { id: "tpu", label: "Google TPU", sub: "Per slice", has: (hw) => Pie.platformOf(hw) === "tpu" },
@@ -1456,7 +1457,7 @@ window.Pie = window.Pie || {};
         const m = Pie.store.index.models[realOf(model)] || {};
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B` : ""}` : "";
         // the precision pie ran the model at on this table's machines, after its size
-        const SCHEME = { affine_u4_g64: "4-bit", bf16: "BF16", fp8: "FP8", mxfp4: "MXFP4", gguf_q4_k_m: "Q4_K_M", mlx_2bit: "2-bit" };
+        const SCHEME = { affine_u4_g64: "4-bit", bf16: "BF16", fp8: "FP8", mxfp4: "MXFP4", gguf_q4_k_m: "Q4_K_M", gguf_ud_q4_k_xl: "UD-Q4_K_XL", gguf_q8_0: "Q8_0", mlx_2bit: "2-bit" };
         const precision = [...new Set(list.map((mac) => grid[mac]?.[model]?.c?.pie?.scheme).filter(Boolean).map((s) => SCHEME[s] || s))].join(" / ");
         // the speculative column says so under the model's name, where the other columns give its size
         const sub = size;

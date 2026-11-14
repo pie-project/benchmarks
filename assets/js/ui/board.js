@@ -15,7 +15,7 @@ window.Pie = window.Pie || {};
     { id: "pbatch", label: "Batched Prefill", setup: "pbatch", title: "Batched prefill", sub: "Prompt tokens per second, 256 prompts at once · Higher is better", workload: "prefill_batch", key: "prefill_tok_s", unit: "tok/s", higher: true },
     { id: "ttft", label: "TTFT", title: "TTFT", sub: "Milliseconds, one request with a 512-token prompt · Lower is better", workload: "raw", key: "ttft_ms_p50", unit: "ms", higher: false },
   ];
-  const PLATFORM_ORDER = ["mac", "nvidia", "amd", "tpu", "cerebras", "android", "web"];
+  const PLATFORM_ORDER = ["mac", "windows", "nvidia", "amd", "tpu", "cerebras", "android", "web"];
 
   let state = null;
   let model = null;  // the picked model; none picked opens on the one the most engines and platforms ran
@@ -103,7 +103,7 @@ window.Pie = window.Pie || {};
   };
   // the win rate on each platform apart: an engine is held only against the others on that platform's machines
   const onPlatform = (rows, ids) => rows.filter((r) => ids.includes(Pie.platformOf(Pie.store.index.hardware[r.hardware] || {})));
-  const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]], ["index-android", "Mobile", ["android"]], ["index-web", "Browser", ["web"]]].filter(([, , ids]) => !ids.some((p) => Pie.hiddenPlatforms.has(p))).map(([id, title, ids]) => ({
+  const SUMMARY = [["index-mac", "Apple", ["mac"]], ["index-windows", "Windows", ["windows"]], ["index-gpu", "NVIDIA", ["nvidia"]], ["index-amd", "AMD", ["amd"]], ["index-tpu", "TPU", ["tpu"]], ["index-android", "Mobile", ["android"]], ["index-web", "Browser", ["web"]]].filter(([, , ids]) => !ids.some((p) => Pie.hiddenPlatforms.has(p))).map(([id, title, ids]) => ({
     id, title, ids, sub: "Chance to decode faster than an average engine",  // one line, as the grid's, so the card keeps its height on a switch
     value: (rows, engine) => strengths(rows, ids)[engine] || null,
     label: (v) => `${Math.round(v)}%`,
@@ -205,7 +205,7 @@ window.Pie = window.Pie || {};
   GLYPHS["mlx-swift"] = GLYPHS.mlxlm;  // MLX Swift, from the same ml-explore project, in MLX's wordmark
   // the engines drawn wide: MLX's wordmark, for MLX and MLX Swift
   const WIDE = new Set(["mlxlm", "mlx-swift"]);
-  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", "llamacpp-webgpu": "llamacpp.png", webllm: "mlc.svg", mlc: "mlc.svg", splash: "splash.png", litert: "litert.svg" };  // Splash's own tile, its stacked marks on coral
+  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", "llamacpp-webgpu": "llamacpp.png", webllm: "mlc.svg", mlc: "mlc.svg", splash: "splash.png", litert: "litert.svg", ollama: "ollama.png" };  // Splash's own tile, its stacked marks on coral
   const logo = (engine, x, y, size) => GLYPHS[engine]
     ? `<svg class="board-glyph" x="${x}" y="${y}" width="${size}" height="${size}" viewBox="${GLYPHS[engine][0]}">${GLYPHS[engine][1]}</svg>`
     : FILES[engine] ? `<image class="board-logo" href="assets/img/engines/${FILES[engine]}" x="${x}" y="${y}" width="${size}" height="${size}"/>` : "";
@@ -397,7 +397,7 @@ window.Pie = window.Pie || {};
   };
   // By Model: a row per measure, its small heading with the paddles at its right, then a card per platform on the
   // machine showcase() picked, two in view as Install Size sets them; a bar per engine, best first
-  const BY_MODEL = { mac: ["Apple", "#636366"], nvidia: ["NVIDIA", "#76b900"], amd: ["AMD", "#ed1c24"], tpu: ["TPU", "#4285f4"], android: ["Mobile", "#1C1C1E"], web: ["Browser", "#8e8e93"] };  // each platform's name and tile colour, as the other rows' cards wear them
+  const BY_MODEL = { mac: ["Apple", "#636366"], windows: ["Windows", "#0078D4"], nvidia: ["NVIDIA", "#76b900"], amd: ["AMD", "#ed1c24"], tpu: ["TPU", "#4285f4"], android: ["Mobile", "#1C1C1E"], web: ["Browser", "#8e8e93"] };  // each platform's name and tile colour, as the other rows' cards wear them
   const modelSummary = (metric, rows, g, m = model) => {
     const own = rows.filter((r) => r.workload === metric.workload && r.model === m && r.hardware === g.hardware && r[metric.key]);
     return { id: g.platform, title: `${metric.label} on ${machineName(g.hardware)}`, ascending: metric.higher === false,  // its bars fill their slots, as every other ranking card's do
@@ -645,8 +645,8 @@ window.Pie = window.Pie || {};
   const BUILDS = { webllm: "WebLLM", mlc: "MLC LLM", "llamacpp-webgpu": "llama.cpp Web", "vllm-metal": "vLLM Metal", "mlx-swift": "MLX Swift" };
   // where an engine can run at all, from the catalog's os and backends (matrix/engines.yaml): a platform's OS, and its
   // GPU backend where the engine names its backends; a browser tab runs only the builds made for WebGPU
-  const PLATFORM_OS = { mac: ["macos"], nvidia: ["linux"], amd: ["linux"], tpu: ["linux"], cerebras: ["linux"], android: ["android", "ios"], web: ["linux"] };
-  const PLATFORM_BACKEND = { mac: "metal", nvidia: "cuda", amd: "rocm", tpu: "xla", cerebras: "cerebras", web: "webgpu" };
+  const PLATFORM_OS = { mac: ["macos"], windows: ["windows"], nvidia: ["linux"], amd: ["linux"], tpu: ["linux"], cerebras: ["linux"], android: ["android", "ios"], web: ["linux"] };
+  const PLATFORM_BACKEND = { mac: "metal", windows: "cuda", nvidia: "cuda", amd: "rocm", tpu: "xla", cerebras: "cerebras", web: "webgpu" };
   const canRun = (eng, p) => {
     const list = (v) => (v || "").split(",").map((x) => x.trim()).filter(Boolean);
     const os = list(eng.os), backends = list(eng.backends);

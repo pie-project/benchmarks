@@ -122,6 +122,16 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
+    windows: {
+      label: "Windows PC",
+      short: "Windows",  // as the tables name it
+      section: "platforms",
+      view: "platform",
+      platform: "windows",
+      tint: "#0078D4",
+      filters: [],
+      columns: [],
+    },
     nvidia: {
       label: "NVIDIA GPU",
       short: "NVIDIA",  // as the tables name it

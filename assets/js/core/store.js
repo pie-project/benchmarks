@@ -18,6 +18,7 @@ window.Pie = window.Pie || {};
   Pie.platformOfAll = (hw) => platformOfAll(hw);  // a hidden platform too, for the one table that lists them all (Platform Support)
   const platformOfAll = (hw) => (hw.class === "android" ? "android"  // a phone first: an iPhone's vendor is Apple too
     : hw.class === "mac" || hw.vendor === "Apple" ? "mac"
+    : hw.class === "windows" ? "windows"  // before NVIDIA: an RTX Spark laptop is its own platform, not a datacenter GPU
     : hw.backend === "xla" ? "tpu"
     : hw.vendor === "NVIDIA" ? "nvidia"
     : hw.vendor === "AMD" ? "amd"
@@ -71,7 +72,7 @@ window.Pie = window.Pie || {};
     const memory = hw.memory_gib;
     if (!memory) continue;
     // a browser tab runs the Mac's 4-bit build too, never the GPU release
-    const mac = Pie.platformOf(hw) === "mac" || Pie.platformOf(hw) === "web";
+    const mac = ["mac", "web", "windows"].includes(Pie.platformOf(hw));  // a Windows laptop runs the 4-bit builds too
     const holds = memory;
     for (const m of tables.models || []) {
       if (noFit[hw.id]?.[m.id]) continue;
@@ -123,7 +124,7 @@ window.Pie = window.Pie || {};
       // its layer count, from its config.json as the bounds read it
       model.layers = Pie.architectures?.[model.id]?.layers ?? model.layers ?? null;  // or the catalog's stated count
       const all = new Set([...(seen[model.id] || []), ...String(model.platforms || "").split(", ").filter(Boolean)]);
-      model.platforms = ["Mac", "GPU", "TPU", "AMD", "Wafer"].filter((t) => all.has(t)).join(", ");
+      model.platforms = ["Mac", "Windows", "GPU", "TPU", "AMD", "Wafer"].filter((t) => all.has(t)).join(", ");
     }
   }
   // every combination has a row; only pass and noisy ones carry numbers (older exports have no status: all measured)
