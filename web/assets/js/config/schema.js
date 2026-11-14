@@ -18,6 +18,11 @@ window.Pie = window.Pie || {};
   Pie.signedIn = () => true;
   Pie.isOpen = (table) => Pie.signedIn() || !Pie.sections.find((s) => s.id === Pie.schema[table]?.section)?.login;
 
+  // the order every list of platforms takes: the sidebar, the Performance page, the Platforms page and Platform Support
+  Pie.platformOrder = ["nvidia", "amd", "tpu", "cerebras", "mac", "windows", "web", "android"];
+  const platformRank = (s) => (s.view === "platform" && s.platform ? Pie.platformOrder.indexOf(s.platform) : -1);
+  Pie.byPlatformOrder = (a, b) => platformRank(a) - platformRank(b);
+
   Pie.schema = {
     welcome: {
       label: "Platforms",

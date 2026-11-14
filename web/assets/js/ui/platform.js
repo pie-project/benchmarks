@@ -257,7 +257,7 @@ window.Pie = window.Pie || {};
     { id: "cerebras", label: "Cerebras", sub: "CSL", has: (hw) => Pie.platformOf(hw) === "cerebras" },
     { id: "android", label: "Mobile", sub: "Mobile GPU", has: (hw) => Pie.platformOf(hw) === "android" },
     { id: "web", label: "Browser", sub: "WebGPU", has: (hw) => Pie.platformOf(hw) === "web" },
-  ];
+  ].sort((a, b) => Pie.platformOrder.indexOf(a.id) - Pie.platformOrder.indexOf(b.id));
   const platformOf = (hw) => PLATFORMS.find((p) => p.has(hw));
   // a platform's mark is the sidebar's: the same tinted squircle and glyph wherever it appears
   // a platform's scroll bar shows while its table scrolls and a moment after, then hides, as macOS's overlay scrollers do
