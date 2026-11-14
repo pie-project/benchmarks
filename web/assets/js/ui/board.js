@@ -205,7 +205,7 @@ window.Pie = window.Pie || {};
   GLYPHS["mlx-swift"] = GLYPHS.mlxlm;  // MLX Swift, from the same ml-explore project, in MLX's wordmark
   // the engines drawn wide: MLX's wordmark, for MLX and MLX Swift
   const WIDE = new Set(["mlxlm", "mlx-swift"]);
-  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", "llamacpp-webgpu": "llamacpp.png", webllm: "mlc.svg", mlc: "mlc.svg", splash: "splash.png", litert: "litert.svg", ollama: "ollama.png" };  // Splash's own tile, its stacked marks on coral
+  const FILES = { vllm: "vllm.svg", "vllm-metal": "vllm.svg", sglang: "sglang.svg", llamacpp: "llamacpp.png", "llamacpp-webgpu": "llamacpp.png", webllm: "mlc.svg", mlc: "mlc.svg", splash: "splash.png", litert: "litert.svg", ollama: "ollama.png", atom: "atom.svg" };  // Splash's own tile, its stacked marks on coral
   const logo = (engine, x, y, size) => GLYPHS[engine]
     ? `<svg class="board-glyph" x="${x}" y="${y}" width="${size}" height="${size}" viewBox="${GLYPHS[engine][0]}">${GLYPHS[engine][1]}</svg>`
     : FILES[engine] ? `<image class="board-logo" href="assets/img/engines/${FILES[engine]}" x="${x}" y="${y}" width="${size}" height="${size}"/>` : "";
