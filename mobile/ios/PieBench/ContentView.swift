@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @EnvironmentObject var runner: Runner
     @AppStorage("engines") private var enginesCSV = "llamacpp,pie"
-    @AppStorage("models") private var modelsCSV = ModelEntry.all.map(\.id).joined(separator: ",")
+    @AppStorage("models") private var modelsCSV = "llamacpp/qwen3.5-0.8b-llamacpp,pie/qwen3.5-0.8b-mlx4"
     @AppStorage("workloads") private var workloadsCSV = "raw-512-256,c4,pf4-512"
     @AppStorage("tag") private var tag = ""
     @State private var showSettings = false
