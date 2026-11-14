@@ -2565,7 +2565,7 @@ artifacts:
     gguf_file: UD-Q4_K_XL/DeepSeek-V4-Flash-UD-Q4_K_XL-00001-of-00005.gguf
     tokenizer_from: deepseek-ai/DeepSeek-V4-Flash
     kind: miniature
-    miniature: {layers: "0-3,42", experts: 16, period: 1, note: "pie's deepseek-v4-flash-mini cut (layers 0-3 and 42, 16 experts) from unsloth's UD-Q4_K_XL GGUF, where pie reads the release's MXFP4 experts"}
+    miniature: {layers: "0-3,42", experts: 16, period: 1, note: "pie's deepseek-v4-flash-mini cut (layers 0-3 and 42, 16 experts) from unsloth's UD-Q4_K_XL GGUF, where pie reads the release's MXFP4 experts; its 3 hash-routed layers' expert ids are made distinct a token, as llama.cpp's CUDA MoE needs and the full model has, where pie's cut repeats some (the same work a token)"}
     baseline_of: deepseek-v4-flash-mini
     baseline_label: llama.cpp
     platforms: [rtx-spark-128g]
