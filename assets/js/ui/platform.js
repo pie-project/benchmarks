@@ -830,6 +830,7 @@ window.Pie = window.Pie || {};
     changed: () => onChange(),
     // a model's maker as the grid draws it (its logo on a white tile), for other menus that name a model
     makerBadge: (model) => badge(makerOf(model)),
+    makerName: (model) => makerOf(model).name,
     makerName: (model) => makerOf(model).name || "Cloud",  // the band a model sits under in the grids
     // a setup's degree mark (one square for Decode, three for Prefill), for other controls that name a setup
     degree: (id) => `<svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[id] || ""}</svg>`,
