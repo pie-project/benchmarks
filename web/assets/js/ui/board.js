@@ -382,18 +382,11 @@ window.Pie = window.Pie || {};
   // the setup control's degree mark; time to first token, a latency rather than a speed, keeps a card of its own
   const SPEEDS = METRICS.filter((m) => m.setup);
   const TTFT = METRICS.find((m) => m.id === "ttft");
-  const METRIC_KEY = "pieModelMetric";
-  let modelMetric = (() => { try { const k = localStorage.getItem(METRIC_KEY); return SPEEDS.some((m) => m.id === k) ? k : SPEEDS[0].id; } catch { return SPEEDS[0].id; } })();
   const metricIcon = (m) => Pie.platform.degree(m.setup);
   const gainPick = () => {
     const g = GAIN_PICKS.find((x) => x.id === gainSetup);
     const enginePickButton = `<button class="filter-button board-card-pick" type="button" data-board-pick="gain-engine" aria-haspopup="menu" aria-label="Engine">${engineMark(gainEngine)}${gainEngine === "mlxlm" ? "" : esc(names().engine(gainEngine))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
     return `<span class="board-card-picks"><button class="filter-button board-card-pick" type="button" data-board-pick="gain-setup" aria-haspopup="menu" aria-label="Setup">${Pie.platform.degree(g.id)}${esc(g.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`;
-  };
-  // the Decode card's setup pick, at its section's head beside the model: each names what it picks, the choice shows in its menu
-  const metricPick = () => {
-    const m = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];
-    return `<button class="filter-button board-title-pick is-text" type="button" data-board-pick="metric" aria-haspopup="menu" aria-label="Setup" title="${esc(m.label)}">Setup<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
   };
   // By Model: a row per measure, its small heading with the paddles at its right, then a card per platform on the
   // machine showcase() picked, two in view as Install Size sets them; a bar per engine, best first
@@ -439,13 +432,21 @@ window.Pie = window.Pie || {};
   const INFO = '<svg class="board-compare-info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>';  // the Test Conditions button's glyph
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>';  // the platform grids' mark
   const headPick = (k, label, title) => `<button class="filter-button board-title-pick is-text" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="${label}" title="${esc(title)}">${label}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-  const compareBlock = (metric, rows, c) => {
+  // one setup's quarter of the compare card: its degree mark and its name, then a bar per engine; a
+  // quiet line where the model has no run of that setup on this machine
+  const speedPanel = (metric, full, g) => {
+    const ran = full.some((r) => r.workload === metric.workload && r.model === model && r.hardware === g.hardware && r[metric.key]);
+    const head = `<div class="board-speed-head">${metricIcon(metric)}<b>${esc(metric.label)}</b></div>`;
+    return `<div class="board-speed-cell">${head}${ran ? ranking(modelSummary(metric, full, g, model), full) : '<div class="board-compare-empty is-quiet"><span>Not measured yet</span></div>'}</div>`;
+  };
+  // the compare card: the machine and model once, then every setup at once, Single above Batched, Decode left of Prefill
+  const SPEED_GRID = ["decode", "prefill", "throughput", "pbatch"].map((id) => SPEEDS.find((m) => m.id === id));
+  const compareBlock = (rows, c) => {
     if (!c.p) return `<p class="board-empty">No runs for this model yet</p>`;
     const full = fullRows(rows), g = { platform: c.p, hardware: c.hw };
-    const ran = full.some((r) => r.workload === metric.workload && r.model === model && r.hardware === c.hw && r[metric.key]);
+    const ran = SPEED_GRID.some((m) => full.some((r) => r.workload === m.workload && r.model === model && r.hardware === c.hw && r[m.key]));
     const needs = !ran && Object.values(Pie.store.tables.no_fit?.[c.hw]?.[model] || {}).find(Boolean);
-    // a wide chart beside the page's width, the half-card one on a phone
-    const body = ran ? `${ranking({ ...modelSummary(metric, full, g, model), width: 912, left: 0 }, full).replace('class="board-chart"', 'class="board-chart is-wide"')}${ranking({ ...modelSummary(metric, full, g, model), widest: 72, left: 0 }, full).replace('class="board-chart"', 'class="board-chart is-narrow"')}`
+    const body = ran ? `<div class="board-speed-grid">${SPEED_GRID.map((m) => speedPanel(m, full, g)).join("")}</div>`
       : `<div class="board-compare-empty">${needs ? `${NOFIT}<b>Doesn't fit on this machine</b><span>This model needs about ${Math.round(needs)} GB of memory.</span>` : "<b>Not measured yet</b><span>No results for this model on this machine.</span>"}</div>`;
     // the name opens the machine's specs on hover, or on a tap
     const spec = specRows(c.hw), name = esc(machineName(c.hw));
@@ -938,7 +939,6 @@ ${relHead(pick)}
     if (!list.includes(model)) model = list[0] || null;
     if (!model) return `<div class="board-scroll"><div class="board-inner"><p class="board-empty">No runs in this release yet</p></div></div>`;
     const cmp = comparePick(rows);
-    const speed = SPEEDS.find((x) => x.id === modelMetric) || SPEEDS[0];  // the measure the speed section shows, its title
     // the engines as a key once for the page: every engine with a result in this release, as the cards across the
     // platforms draw them too (LiteRT-LM on Mobile), a dot and a name, in the catalog's order
     const ran = new Set(rows.map((r) => r.engine));
@@ -994,10 +994,10 @@ ${relHead(pick)}
           <div class="board-carousel" data-carousel-id="summary"><div class="board-grid-cards is-matrices">${SUMMARY.map((m) => card(m.id, m.title, gridCards.has("summary") ? "Head-to-head decode win rate" : m.sub, gridCards.has("summary") ? matrix(m, rows) : ranking(m, rows), "", false)).join("")}</div></div>
           <div class="board-section-head" id="board-metric">
             <div class="board-section-text"><h1 class="board-title">Find Your Speed</h1>
-            <p class="board-lede">${speed.sub.split(" · ").map((x) => `${esc(x)}.`).join("<br>")}</p></div>
-            ${headPick("cmp-platform", "Platform", BY_MODEL[cmp.p]?.[0] || cmp.p || "")}${headPick("cmp-hw", "Hardware", cmp.hw ? machineName(cmp.hw) : "")}${headPick("model", "Model", names().model(model))}${metricPick()}
+            <p class="board-lede">Tokens per second for every engine, one request and many at once.<br>Higher is better.</p></div>
+            ${headPick("cmp-platform", "Platform", BY_MODEL[cmp.p]?.[0] || cmp.p || "")}${headPick("cmp-hw", "Hardware", cmp.hw ? machineName(cmp.hw) : "")}${headPick("model", "Model", names().model(model))}
           </div>
-          ${compareBlock(speed, rows, cmp)}
+          ${compareBlock(rows, cmp)}
           ${relativeSection(rows)}
           ${""/* Spread, off: gains() stays; CI Reports lists the cells above the theoretical limit */}${""/* the banner and the Changelog, off for now: hero() */}
           ${""/* Speed by model size, off: sizeCard() and moeCard() stay */}
@@ -1548,7 +1548,6 @@ ${relHead(pick)}
       if (k === "size" || k === "moe") return SIZES.map((m) => ({ value: m.id, label: m.label, selected: m.id === (k === "moe" ? moeMetric : sizeMetric), icon: Pie.platform.degree(m.setup) }));
       if (k === "gain-setup") return GAIN_PICKS.map((g) => ({ value: g.id, label: g.label, selected: g.id === gainSetup, icon: Pie.platform.degree(g.id) }));
       if (k === "relative-setup") return GAIN_PICKS.map((g) => ({ value: g.id, label: g.label, selected: g.id === relSetup, icon: Pie.platform.degree(g.id) }));
-      if (k === "metric") return SPEEDS.map((m) => ({ value: m.id, label: m.label, selected: m.id === modelMetric, icon: metricIcon(m) }));
       if (k === "cmp-platform" && state) { const c = comparePick(measured()); return c.list.map((p) => ({ value: p, label: BY_MODEL[p]?.[0] || Pie.schema[p]?.short || p, selected: p === c.p,
         icon: `<span class="sidebar-glyph" style="--tint: ${Pie.schema[p]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(p)}</span>` })); }
       if (k === "cmp-hw" && state) { const c = comparePick(measured()); return c.machines.map((id) => ({ value: id, label: machineName(id), selected: id === c.hw })); }
@@ -1571,10 +1570,6 @@ ${relHead(pick)}
       if (k === "gain-setup" && GAIN_PICKS.some((g) => g.id === value)) {
         gainSetup = value;
         try { localStorage.setItem(GAIN_KEY, value); } catch { /* private windows can refuse storage */ }
-      }
-      if (k === "metric" && SPEEDS.some((m) => m.id === value)) {
-        modelMetric = value;
-        try { localStorage.setItem(METRIC_KEY, value); } catch { /* private windows can refuse storage */ }
       }
       if (k === "summary" && SUMMARY_WORKLOADS.some((w) => w.id === value)) {
         summaryWorkload = value;

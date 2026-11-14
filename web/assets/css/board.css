@@ -597,6 +597,14 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-compare-empty b { font-size: 13px; font-weight: 600; color: var(--color-label); }
 .board-compare-empty span { font-size: 13px; color: var(--color-label-secondary); }
 .board-compare-empty .platform-nofit { width: 20px; height: 20px; margin-bottom: 4px; stroke: var(--color-label-tertiary); }
+/* Find Your Speed: every setup at once, Single above Batched and Decode left of Prefill, each a half-card chart */
+.board-speed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; }
+@media (max-width: 899px) { .board-speed-grid { grid-template-columns: 1fr; } }  /* a phone stacks them */
+.board-speed-head { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; }
+.board-speed-head .mode-icon { width: 12px; height: 12px; color: var(--color-label-secondary); }
+.board-speed-head b { font-weight: 600; color: var(--color-label); }
+.board-compare .board-speed-cell .board-chart { margin: 10px 0 0; width: 100%; }  /* each chart keeps its own 24-unit axis inset */
+.board-speed-cell .board-compare-empty.is-quiet { min-height: 150px; }
 @media (max-width: 899px) { .board-section-head:has(> .board-title-pick + .board-title-pick) { column-gap: 8px; row-gap: 8px; } .board-section-head:has(> .board-title-pick + .board-title-pick) > .board-title-pick + .board-title-pick { margin-left: 0; } }  /* phones: Compare's four picks wrap 8px apart, each line from the same edge */
 .board-footer-simple { font-size: 12px; color: var(--color-label-secondary); }  /* the update date in the section ledes' size and grey */
 .board-footer-simple { font-size: 11px; }  /* the update date at the cards' subtitle size */
