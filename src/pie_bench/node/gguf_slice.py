@@ -149,6 +149,20 @@ def plan(kv, tensors, layers: list[int], experts: int | None):
     return out_kv, out_t
 
 
+def _ids(name: str, ty: int, dims: list[int], raw: bytes, experts: int | None) -> bytes:
+    """A hash-routed layer's token-to-expert table, its ids taken mod the experts kept (ids past the kept bank would
+    read outside it), a repeat moved to the next free expert: llama.cpp's CUDA MoE takes a token's experts as distinct
+    (a repeat leaves its index map unwritten), as the full model's are; the same work a token as pie's cut."""
+    if not experts or not name.endswith("ffn_gate_tid2eid.weight"):
+        return raw
+    import numpy as np
+    a = np.frombuffer(raw, dtype=np.int64 if ty == 27 else np.int32).reshape(-1, dims[0]) % experts
+    for j in range(1, a.shape[1]):
+        while (hit := (a[:, j:j + 1] == a[:, :j]).any(axis=1)).any():
+            a[hit, j] = (a[hit, j] + 1) % experts
+    return a.tobytes()
+
+
 def slice_gguf(repo: str, file: str, layers: str, experts: int | None, out_dir: Path, revision: str = "main", dry_run: bool = False, log=print) -> Path:
     from .snapshots import gguf_shards
 
@@ -199,7 +213,7 @@ def slice_gguf(repo: str, file: str, layers: str, experts: int | None, out_dir: 
                 span = _get(url, lo, hi)
                 for i in g:
                     f.seek(len(head) + offsets[i])
-                    f.write(span[out_t[i][3][1] - lo:out_t[i][3][1] - lo + out_t[i][4]])
+                    f.write(_ids(out_t[i][0], out_t[i][2], out_t[i][1], span[out_t[i][3][1] - lo:out_t[i][3][1] - lo + out_t[i][4]], experts))
             else:
                 (i,) = g
                 f.seek(len(head) + offsets[i])
