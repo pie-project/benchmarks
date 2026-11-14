@@ -160,6 +160,36 @@ def upload(out):
     _upload(out.resolve())
 
 
+@main.command("import-phone", help="Turn the phone app's shared records.jsonl into submissions for `pie-bench upload`.")
+@click.argument("file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--tag", required=True, help="the release tag the rows join, e.g. main-f03640150 (a test-* tag for a test)")
+@click.option("--out", type=click.Path(path_type=Path), default=None, help="folder for the submissions (default: ~/.pie-bench/phone)")
+@click.option("--dry-run", is_flag=True, help="check the rows and print a summary, write nothing")
+def import_phone(file, tag, out, dry_run):
+    import re
+
+    from pie_bench import phone
+
+    if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", tag):
+        _say(f"bad tag {tag!r}")
+        sys.exit(2)
+    m = Matrix.load(MATRIX)
+    good, bad, warnings = phone.validate(phone.read_file(file), m, phone.model_ids(m), tag=tag)
+    for w in warnings:
+        _say(f"warning: {w}")
+    for b in bad:
+        _say(f"line {b['line']} refused: {b['error']}")
+    for row, rec in good:
+        p = rec.perf
+        what = f"decode {p.decode_tok_s or 0:.1f} tok/s, prefill {p.prefill_tok_s or 0:.0f} tok/s" if p else (rec.error_message or rec.invalid_reason or "")
+        _say(f"  {rec.cell.platform.id:<14} {row.engine:<9} {row.artifact:<26} {row.workload:<12} {rec.status!s:<20} {what}")
+    _say(f"{len(good)} rows ok, {len(bad)} refused")
+    if dry_run or not good:
+        sys.exit(1 if bad or not good else 0)
+    for d in phone.pack(good, (out or local.HOME / "phone").resolve(), tag=tag):
+        _say(f"wrote {d / submit.SUBMISSION}; send it with: pie-bench upload {d}")
+
+
 @main.command(help="Score model accuracy on question sets, then upload the scores.")
 @click.option("--models", multiple=True, required=True, help="model artifact ids, comma-separated")
 @click.option("--task", "tasks", multiple=True, default=("gsm8k", "ifeval", "mmlu", "arc", "math500"), show_default=True)

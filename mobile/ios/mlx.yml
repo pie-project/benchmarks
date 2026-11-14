@@ -1,0 +1,17 @@
+# Included by project.yml when MLX_ENABLED=YES: MLX Swift (mlx-swift-lm) and its tokenizer.
+packages:
+  MLXSwiftLM:
+    url: https://github.com/ml-explore/mlx-swift-lm
+    exactVersion: "3.32.3"
+  SwiftTransformers:
+    url: https://github.com/huggingface/swift-transformers
+    exactVersion: "1.4.0"
+targets:
+  PieBench:
+    dependencies:
+      - package: MLXSwiftLM
+        product: MLXLLM
+      - package: MLXSwiftLM
+        product: MLXLMCommon
+      - package: SwiftTransformers
+        product: Tokenizers

@@ -1,0 +1,70 @@
+# XcodeGen spec for PieBench: `xcodegen generate` (brew install xcodegen) rewrites PieBench.xcodeproj.
+# MLC is built in only when MLC_ENABLED=YES with Vendor/mlc filled (scripts/vendor-mlc.sh).
+# Pie is built in only when PIE_SWIFT_PACKAGE points at pie's packages/swift with a built
+# PieServerCore.xcframework (scripts/build-pie.sh sets it up). MLX Swift only when MLX_ENABLED=YES.
+name: PieBench
+options:
+  bundleIdPrefix: org.pie-project
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: 9B2K6Z98F9
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+packages:
+  LlamaCpp:
+    path: Packages/LlamaCpp
+include:
+  - path: pie.yml
+    enable: ${PIE_ENABLED}
+  - path: mlc.yml
+    enable: ${MLC_ENABLED}
+  - path: mlx.yml
+    enable: ${MLX_ENABLED}
+targets:
+  PieBench:
+    type: application
+    platform: iOS
+    sources:
+      - path: PieBench
+      - path: ../shared/workloads.json
+        buildPhase: resources
+        group: Shared
+    dependencies:
+      - package: LlamaCpp
+        product: LlamaCpp
+    entitlements:
+      path: PieBench/PieBench.entitlements
+      properties:
+        com.apple.developer.kernel.increased-memory-limit: true
+    info:
+      path: PieBench/Info.plist
+      properties:
+        CFBundleDisplayName: Pie Bench
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight, UIInterfaceOrientationPortraitUpsideDown]
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.pie-project.pie-bench
+        PRODUCT_NAME: PieBench
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+schemes:
+  PieBench:
+    build:
+      targets:
+        PieBench: all
+    run:
+      config: Release
