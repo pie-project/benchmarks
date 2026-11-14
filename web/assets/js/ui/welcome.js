@@ -9,7 +9,7 @@ window.Pie = window.Pie || {};
     const n = SOON.has(id) || !Pie.platform?.machines ? 0 : Pie.platform.machines(platform);
     return [STACK[id], n ? `${n} ${n === 1 ? "machine" : "machines"}` : ""].filter(Boolean).join(" · ");
   };
-  const platforms = () => Object.entries(Pie.schema).filter(([, s]) => s.view === "platform" && s.platform);
+  const platforms = () => Object.entries(Pie.schema).filter(([, s]) => s.view === "platform" && s.platform).sort(([, a], [, b]) => Pie.byPlatformOrder(a, b));
   // the platforms not yet running in CI; every other one has numbers, though a local checkout may not hold them
   const SOON = new Set(["android", "web"].filter((id) => !(DB.hardware || []).some((hw) => Pie.platformOf(hw) === id)));
   const CHEVRON = '<svg class="welcome-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
