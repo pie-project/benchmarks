@@ -1381,6 +1381,7 @@ def test_atom_serves_its_openai_server_at_the_shape_with_exact_lengths(tmp_path,
     assert flag_value(v4.server_cmd(8127, 1, 2048), "--index-cache-dtype") == "fp8"
     argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
     assert json.loads(flag_value(argv, "--extra-body")) == {"ignore_eos": True} and "--ignore-eos" in argv and "--token-ids" in argv
+    assert eng.server_env()["HOME"].endswith("/atom-home/qwen3-8b-bf16")
 
 
 def test_atom_runs_on_amd_gpus_only():
