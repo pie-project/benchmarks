@@ -43,7 +43,7 @@ ENGINE_META = {
     "ollama":   ("Ollama", "MIT", "ollama/ollama"),
     "atom":     ("ATOM", "MIT", "ROCm/ATOM"),
 }
-ENGINE_COLOR = {"trtllm": "#a2845e", "litert": "#34a853", "mlc": "#5856d6", "mlx-swift": "#ff9500", "webllm": "#5e5ce6", "llamacpp-webgpu": "#8e8e93", "ollama": "#bf5af2", "atom": "#ed1c24"}
+ENGINE_COLOR = {"trtllm": "#a2845e", "litert": "#34a853", "mlc": "#5856d6", "mlx-swift": "#ff9500", "webllm": "#5e5ce6", "llamacpp-webgpu": "#8e8e93", "ollama": "#bf5af2", "atom": "#d86ecc"}
 METRICS = ["decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "ttft_ms_p99",
            "itl_ms_p50", "itl_ms_p99", "latency_ms_p50", "latency_ms_p99", "resident_gib", "load_s"]
 
