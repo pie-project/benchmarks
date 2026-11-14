@@ -428,6 +428,14 @@ window.Pie = window.Pie || {};
     return [["Chip", hw.count > 1 ? `${hw.count}× ${chip}` : chip], hw.memory_gib && ["Memory", `${hw.memory_gib} GB${hw.interconnect === "uma" ? " unified" : hw.memory_type ? ` ${hw.memory_type}` : ""}`],
       hw.bandwidth_gbs && ["Bandwidth", `${n(hw.bandwidth_gbs)} GB/s`], hw.tflops_fp16 && ["Compute", `${n(hw.tflops_fp16)} FP16 TFLOPS`]].filter(Boolean);
   };
+  // a model's card, as the grids' model heads show it on hover
+  const modelRows = (id) => {
+    const m = Pie.store.index.models[id] || {};
+    return [["Maker", Pie.platform?.makerName?.(id)], ["Architecture", m.architecture], ["Parameters", m.params_b && `${m.params_b}B`],
+      ["Active", m.active_b && m.active_b !== m.params_b && `${m.active_b}B a token`], ["Layers", m.layers],
+      ["Experts", m.experts && `${m.experts}${m.top_k ? `, ${m.top_k} a token` : ""}`], ["Context", m.context && `${Number(m.context).toLocaleString("en-US")} tokens`]]
+      .filter(([, v]) => v).map(([k, v]) => [k, String(v)]);
+  };
   const INFO = '<svg class="board-compare-info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>';  // the Test Conditions button's glyph
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>';  // the platform grids' mark
   const headPick = (k, label, title) => `<button class="filter-button board-title-pick is-text" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="${label}" title="${esc(title)}">${label}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
@@ -443,7 +451,7 @@ window.Pie = window.Pie || {};
     const spec = specRows(c.hw), name = esc(machineName(c.hw));
     // the platform's tile before the machine's name, as the leaderboard marks its rows
     const glyph = `<span class="sidebar-glyph" style="--tint: ${Pie.schema[c.p]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(c.p)}</span>`;
-    const named = `${glyph}${spec.length ? `<span class="board-compare-name" tabindex="0" data-tip-head="${name}" data-tip-rows="${esc(JSON.stringify(spec))}">${name}${INFO}</span>` : name}</h2>`;
+    const named = `${glyph}${spec.length ? `<span class="board-compare-name" tabindex="0" data-tip-head="${name}" data-tip-rows="${esc(JSON.stringify(spec))}">${name}${INFO}</span>` : name}<span class="board-compare-model">${Pie.platform?.makerBadge?.(model) || ""}<span class="board-compare-name" tabindex="0" data-tip-head="${esc(names().model(model))}" data-tip-rows="${esc(JSON.stringify(modelRows(model)))}">${esc(names().model(model))}${INFO}</span></span></h2>`;
     return card(`metric-${c.p}`, machineName(c.hw), "", body, "", false).replace('class="board-card"', 'class="board-card board-compare"').replace(`${name}</h2>`, named);
   };
   // the two as one card, Decode or Prefill picked in its corner and kept per browser
@@ -1541,7 +1549,8 @@ ${relHead(pick)}
       if (k === "gain-setup") return GAIN_PICKS.map((g) => ({ value: g.id, label: g.label, selected: g.id === gainSetup, icon: Pie.platform.degree(g.id) }));
       if (k === "relative-setup") return GAIN_PICKS.map((g) => ({ value: g.id, label: g.label, selected: g.id === relSetup, icon: Pie.platform.degree(g.id) }));
       if (k === "metric") return SPEEDS.map((m) => ({ value: m.id, label: m.label, selected: m.id === modelMetric, icon: metricIcon(m) }));
-      if (k === "cmp-platform" && state) { const c = comparePick(measured()); return c.list.map((p) => ({ value: p, label: BY_MODEL[p]?.[0] || Pie.schema[p]?.short || p, selected: p === c.p })); }
+      if (k === "cmp-platform" && state) { const c = comparePick(measured()); return c.list.map((p) => ({ value: p, label: BY_MODEL[p]?.[0] || Pie.schema[p]?.short || p, selected: p === c.p,
+        icon: `<span class="sidebar-glyph" style="--tint: ${Pie.schema[p]?.tint || "var(--color-label-tertiary)"}">${Pie.icon(p)}</span>` })); }
       if (k === "cmp-hw" && state) { const c = comparePick(measured()); return c.machines.map((id) => ({ value: id, label: machineName(id), selected: id === c.hw })); }
       if ((k !== "model" && k !== "ttft-model") || !state) return [];
       const current = k === "ttft-model" ? ttftModel : model;
