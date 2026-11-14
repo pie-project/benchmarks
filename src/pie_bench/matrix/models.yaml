@@ -1384,7 +1384,7 @@ artifacts:
     top_k: 10
     vocab: 248320
     expected_gib: 65.8
-    platforms: [m5-max-128g, rtx-spark-128g]
+    platforms: [m5-max-128g]
     tiers: [targeted]
   - id: qwen3.8-flash-next-mlx2-mlxlm
     base_model: pie-local/Qwen3.8-Flash-Next-MLX
@@ -1408,7 +1408,7 @@ artifacts:
     baseline_of: qwen3.8-flash-next-mlx2
     baseline_label: llama.cpp
     expected_gib: 75.0
-    platforms: [m5-max-128g, rtx-spark-128g]
+    platforms: [m5-max-128g]
     tiers: [targeted]
   - id: qwen3.8-flash-next-q2k-splash
     base_model: ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF
