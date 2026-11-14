@@ -421,8 +421,10 @@ def build_config(args: argparse.Namespace):
         model=ModelConfig(
             name="default",
             source=resolved_model,
-            device_weight_budget=getattr(args, "device_weight_budget", None),
-            host_weight_budget=getattr(args, "host_weight_budget", None),
+            **({"device_weight_budget": args.device_weight_budget}
+               if getattr(args, "device_weight_budget", None) else {}),
+            **({"host_weight_budget": args.host_weight_budget}
+               if getattr(args, "host_weight_budget", None) else {}),
             device_kv_budget=getattr(args, "device_kv_budget", None),
             weight_precision=getattr(args, "precision", None),
             kv_dtype=getattr(args, "kv", None),
