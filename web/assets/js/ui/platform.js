@@ -1391,7 +1391,7 @@ window.Pie = window.Pie || {};
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
           if (c && unverified(mac, model)) {
-            return `<td class="${sorted} is-unverified" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}">${needs ? NOFIT : ""}</span></td>`;
+            return `<td class="${sorted} is-unverified" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}">${needs ? `${NOFIT}N/A` : ""}</span></td>`;
           }
           if (c) {
             cells.push(c.gain);
@@ -1417,7 +1417,7 @@ window.Pie = window.Pie || {};
               engine: compare === "engines" ? [...new Set((c.all || [c.pie]).map((r) => r.engine))] : [c.pie.engine] };
             // a slice no other engine ran on this machine has nothing to compare: the cell reads as the full model's
             // "does not fit", the mark alone at the right, the engines' reasons in its card
-            if (compare === "engines" && c.gain === null && c.pie.miniature) return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty is-nofit" data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}">${NOFIT}</span>${eye(mac)}</td>`;
+            if (compare === "engines" && c.gain === null && c.pie.miniature) return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty is-nofit" data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}">${NOFIT}N/A</span>${eye(mac)}</td>`;
             // an engine here measured above its own theoretical limit (a full model, not a slice): the cell tinted red,
             // in every view, as the best machine is tinted blue
             const overLimit = overLimitOf(mac, realOf(model), modeOf(c), metric, c);
@@ -1445,7 +1445,7 @@ window.Pie = window.Pie || {};
           // shown, so it reads why there is no number (it does not fit, the engine has no build of it, the run failed)
           const EMPTY_PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
           const openEmpty = { hardware: [mac], model: [realOf(model)], workload: [EMPTY_PHASE[state.platform.mode] || "raw_decode"], _unavailable: true };
-          return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(openEmpty))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
+          return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(openEmpty))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? `${NOFIT}N/A` : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
 
