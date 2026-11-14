@@ -4,7 +4,7 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("welcome");
 
   // each row's second line says what is measured there: the stack, then how many machines the data holds
-  const STACK = { mac: "Metal", nvidia: "CUDA", tpu: "XLA", amd: "ROCm", cerebras: "CSL", android: "Vulkan", web: "WebGPU" };
+  const STACK = { mac: "Metal", windows: "CUDA", nvidia: "CUDA", tpu: "XLA", amd: "ROCm", cerebras: "CSL", android: "Vulkan", web: "WebGPU" };
   const detailOf = (id, platform) => {
     const n = SOON.has(id) || !Pie.platform?.machines ? 0 : Pie.platform.machines(platform);
     return [STACK[id], n ? `${n} ${n === 1 ? "machine" : "machines"}` : ""].filter(Boolean).join(" · ");
