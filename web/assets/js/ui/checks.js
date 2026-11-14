@@ -318,7 +318,7 @@ window.Pie = window.Pie || {};
             const open = { model: [m], hardware: [mac], task: ["parity"], engine: ["pie", r.ref_engine] };
             return `<td class="is-openable${ok ? "" : " is-over-limit"}" data-col="${esc(m)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${ok ? "is-same" : "is-behind"} is-nofit" data-tip-html="${esc(tip)}">${NOFIT}<span class="platform-main">${MARK[ok ? "pass" : "fail"]}</span></span></td>`;
           }
-          if (!g) return `<td data-col="${esc(m)}"><span class="platform-cell is-empty${"kl" in at[`${mac}|${m}`] ? " is-nofit" : ""}"${gapOf(mac, m) ? ` data-tip="${esc(gapOf(mac, m))}"` : ""}>${"kl" in at[`${mac}|${m}`] ? NOFIT : "–"}</span></td>`;
+          if (!g) return `<td data-col="${esc(m)}"><span class="platform-cell is-empty${"kl" in at[`${mac}|${m}`] ? " is-nofit" : ""}"${gapOf(mac, m) ? ` data-tip="${esc(gapOf(mac, m))}"` : ""}>${"kl" in at[`${mac}|${m}`] ? `${NOFIT}N/A` : "–"}</span></td>`;
           // what answers "is quality hurt?": both scores, the difference, how much of it is noise, and a verdict in words
           const off = Math.abs(g.d) > allowed(g);
           const tip = card(`${title} · MATH-500`, [["Pie", pct(g.pie.score), false, "pie"], [engineLabel(g.arm.engine), pct(g.arm.score), false, g.arm.engine],

@@ -940,8 +940,7 @@ td.is-overall:has(> .roll-ghost) { overflow: hidden; }
 .filter-button .view-icon { width: 14px; height: 14px; flex: none; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }  /* the picked view's symbol before its name */
 .filter-button .view-icon .is-filled { fill: var(--color-label-secondary); stroke: none; }
 .platform-cell.is-nofit { position: relative; min-height: 24px; }  /* as tall as a measured cell, so the corner is the same corner */
-.platform-cell.is-nofit > .platform-nofit { position: absolute; top: 5px; left: 6px; }  /* where the slice mark sits: the cell's top-left corner */
-.platform-cell.is-empty.is-nofit > .platform-nofit { top: 50%; left: auto; right: 10px; transform: translateY(-50%); }  /* no slice number beside it: the mark alone where a number would end */
+.platform-cell.is-nofit > .platform-nofit { position: absolute; top: 5px; left: 6px; }  /* always the cell's top-left corner, where the slice mark sits; with no number, N/A stands where one would */
 /* the setups as a row of buttons: the shown one filled grey with its name in full colour, the others plain until hovered */
 .setup-row { display: inline-flex; align-items: center; gap: 2px; }
 .setup-row .filter-button.setup-tab { gap: 6px; border-radius: var(--radius-control); color: var(--color-label-secondary); background: none; }
