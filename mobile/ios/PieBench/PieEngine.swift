@@ -40,6 +40,8 @@ struct PieAdapter: EngineAdapter {
         var cfg = PieServer.Configuration()
         cfg.maxForwardRequests = 4
         cfg.maxConcurrentProcesses = 8
+        // PieServer's default of 16 state slots starves Qwen3.5's recurrent layers at this pie ("state pool starved"); 64 is pie's own default.
+        cfg.maxStateSlots = 64
         // Test knob (the Mac harness shares its GPU with other work): PIEBENCH_PIE_MEMORY_SHARE overrides the 0.6 share.
         if let v = ProcessInfo.processInfo.environment["PIEBENCH_PIE_MEMORY_SHARE"].flatMap(Double.init) { cfg.deviceMemoryShare = v }
         let server = try await PieServer.start(model: file, configuration: cfg)
@@ -70,6 +72,7 @@ final class PieModel: LoadedModel, @unchecked Sendable {
         [("pie_commit", .opt(PieInfo.commit)), ("deployment", .str(server.summary.deployment)),
          ("inferlet", .str(inferlet)), ("device_memory_share", .num(cfg.deviceMemoryShare)),
          ("max_forward_tokens", .int(cfg.maxForwardTokens)), ("max_forward_requests", .int(cfg.maxForwardRequests)),
+         ("max_state_slots", .int(cfg.maxStateSlots)),
          ("kv_pages", .int(server.summary.kvPages)), ("kv_page_size", .int(server.summary.kvPageSize)),
          ("prompt", .str("inferlet chat::system_user(system, text) + cue (no_think)")),
          ("ttft_origin", .str("start signal to the ready inferlet"))]
@@ -96,7 +99,7 @@ final class PieModel: LoadedModel, @unchecked Sendable {
 
     /// One request: launch, wait for "ready", stamp the send, "start", first token at "t0".
     private func request(_ text: String, decode: Int, startGate: @escaping () async -> Void) async throws -> RequestTiming {
-        let p = try await client.launch(inferlet, input: Input(prompt: text, system: system, max_tokens: decode))
+        let p = try await client.launch(inferlet, json: JSONEncoder().encode(Input(prompt: text, system: system, max_tokens: decode)))
         var sent = 0.0, first = 0.0
         for try await ev in p.events {
             switch ev {

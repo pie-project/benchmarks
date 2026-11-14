@@ -13,6 +13,10 @@ targets:
         group: Pie
       - path: Vendor/pie/PieVendored.swift
         group: Pie
+      # <artifact>.metal.zt files put here ship inside the app (the phone then needs no import).
+      - path: Vendor/pie/models
+        buildPhase: resources
+        optional: true
     settings:
       base:
         # pie's Metal engine reads GPU core counts through IOKit; its Package.swift does not link it for iOS.

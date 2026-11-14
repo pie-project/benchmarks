@@ -3,14 +3,11 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject var runner: Runner
-    @AppStorage("engines") private var enginesCSV = EngineID.allCases.map(\.rawValue).joined(separator: ",")
+    @AppStorage("engines") private var enginesCSV = "llamacpp,pie"
     @AppStorage("models") private var modelsCSV = ModelEntry.all.map(\.id).joined(separator: ",")
     @AppStorage("workloads") private var workloadsCSV = "raw-512-256,c4,pf4-512"
-    @AppStorage("ingestURL") private var ingestURL = "http://100.85.194.44:8787"
-    @AppStorage("token") private var token = ""
     @AppStorage("tag") private var tag = ""
     @State private var showSettings = false
-    @State private var reply: String?
     @State private var importing: ModelEntry?
     @State private var refresh = 0
 
@@ -93,7 +90,7 @@ struct ContentView: View {
             }
             .navigationTitle("Pie Bench")
             .toolbar { Button { showSettings = true } label: { Image(systemName: "gear") } }
-            .sheet(isPresented: $showSettings) { SettingsView(ingestURL: $ingestURL, token: $token, tag: $tag) }
+            .sheet(isPresented: $showSettings) { SettingsView(tag: $tag) }
             .fileImporter(isPresented: Binding(get: { importing != nil }, set: { if !$0 { importing = nil } }),
                           allowedContentTypes: [.item, .folder]) { result in
                 guard let m = importing, case .success(let url) = result else { return }
@@ -102,9 +99,6 @@ struct ContentView: View {
                 }
                 refresh += 1
             }
-            .alert("Ingest reply", isPresented: Binding(get: { reply != nil }, set: { if !$0 { reply = nil } })) {
-                Button("OK") { reply = nil }
-            } message: { Text(reply ?? "") }
         }
     }
 
@@ -133,46 +127,24 @@ struct ContentView: View {
                     }
                 }
             }
-            HStack {
-                Button("Send") {
-                    Task {
-                        do { reply = try await Uploader.send(Storage.records, base: ingestURL, token: token) } catch { reply = error.localizedDescription }
-                    }
-                }
-                Spacer()
-                ShareLink(item: Storage.records) { Text("Share") }
-                Spacer()
-                Button("Copy for workflow") {
-                    do {
-                        UIPasteboard.general.string = try Uploader.gzipBase64(Data(contentsOf: Storage.records))
-                        reply = "Copied gzip+base64 of records.jsonl"
-                    } catch { reply = error.localizedDescription }
-                }
-            }
-            .buttonStyle(.borderless)
-            .disabled(runner.running)
+            ShareLink(item: Storage.records) { Label("Share records.jsonl", systemImage: "square.and.arrow.up") }
+                .disabled(runner.running)
         }
     }
 }
 
 struct SettingsView: View {
-    @Binding var ingestURL: String
-    @Binding var token: String
     @Binding var tag: String
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             Form {
-                Section(footer: Text("The site laptop over Tailscale; connect the Tailscale app first.")) {
-                    TextField("Ingest URL", text: $ingestURL).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
-                    SecureField("Token", text: $token)
-                }
-                Section(footer: Text("Empty = the server's default tag.")) {
+                Section(footer: Text("Empty = the tag chosen at import.")) {
                     TextField("Tag", text: $tag).textInputAutocapitalization(.never).autocorrectionDisabled()
                 }
-                Section(footer: Text("Pie models: copy <artifact>.metal.zt into PieBench/models in Files or Finder.")) {
-                    LabeledContent("records.jsonl", value: "Files › PieBench")
+                Section(footer: Text("Pie models: tap the import button next to the model and pick its .metal.zt, or put <artifact>.metal.zt in Files › On My iPhone › Pie Bench › models.")) {
+                    LabeledContent("records.jsonl", value: "Files › Pie Bench")
                 }
             }
             .navigationTitle("Settings")

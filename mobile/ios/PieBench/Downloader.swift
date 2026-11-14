@@ -57,10 +57,11 @@ enum Downloader {
         return Checkpoint.read(m.directory)
     }
 
-    /// A pie `.metal.zt` in the model's folder, or `Documents/models/<artifact>.metal.zt` from Finder/Files.
+    /// A pie `.metal.zt` in the model's folder, `Documents/models/<artifact>.metal.zt` from Finder/Files, or one bundled in the app.
     static func pieFile(_ m: ModelEntry) -> URL? {
         let fm = FileManager.default
-        let candidates = [Storage.importFolder.appending(path: "\(m.artifact).metal.zt"), m.directory.appending(path: "model.metal.zt")]
+        var candidates = [Storage.importFolder.appending(path: "\(m.artifact).metal.zt"), m.directory.appending(path: "model.metal.zt")]
+        if let bundled = Bundle.main.url(forResource: m.artifact, withExtension: "metal.zt") { candidates.append(bundled) }
         if let c = candidates.first(where: { fm.fileExists(atPath: $0.path) }) { return c }
         if let items = try? fm.contentsOfDirectory(at: m.directory, includingPropertiesForKeys: nil) {
             return items.first { $0.lastPathComponent.hasSuffix(".metal.zt") }

@@ -1,34 +1,30 @@
 # XcodeGen spec for PieBench: `xcodegen generate` (brew install xcodegen) rewrites PieBench.xcodeproj.
 # MLC is built in only when MLC_ENABLED=YES with Vendor/mlc filled (scripts/vendor-mlc.sh).
 # Pie is built in only when PIE_SWIFT_PACKAGE points at pie's packages/swift with a built
-# PieServerCore.xcframework (scripts/build-pie.sh sets it up).
+# PieServerCore.xcframework (scripts/build-pie.sh sets it up). MLX Swift only when MLX_ENABLED=YES.
 name: PieBench
 options:
-  bundleIdPrefix: org.pieproject
+  bundleIdPrefix: org.pie-project
   deploymentTarget:
     iOS: "26.0"
   createIntermediateGroups: true
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: 9B2K6Z98F9
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
 packages:
   LlamaCpp:
     path: Packages/LlamaCpp
-  MLXSwiftLM:
-    url: https://github.com/ml-explore/mlx-swift-lm
-    exactVersion: "3.32.3"
-  SwiftTransformers:
-    url: https://github.com/huggingface/swift-transformers
-    exactVersion: "1.4.0"
 include:
   - path: pie.yml
     enable: ${PIE_ENABLED}
   - path: mlc.yml
     enable: ${MLC_ENABLED}
+  - path: mlx.yml
+    enable: ${MLX_ENABLED}
 targets:
   PieBench:
     type: application
@@ -41,12 +37,6 @@ targets:
     dependencies:
       - package: LlamaCpp
         product: LlamaCpp
-      - package: MLXSwiftLM
-        product: MLXLLM
-      - package: MLXSwiftLM
-        product: MLXLMCommon
-      - package: SwiftTransformers
-        product: Tokenizers
     entitlements:
       path: PieBench/PieBench.entitlements
       properties:
@@ -62,14 +52,13 @@ targets:
         LSSupportsOpeningDocumentsInPlace: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight, UIInterfaceOrientationPortraitUpsideDown]
-        NSAppTransportSecurity:
-          NSAllowsArbitraryLoads: true
-        NSLocalNetworkUsageDescription: Sends benchmark results to the pie-evals ingest server on your network.
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: org.pieproject.bench
+        PRODUCT_BUNDLE_IDENTIFIER: org.pie-project.pie-bench
         PRODUCT_NAME: PieBench
-        TARGETED_DEVICE_FAMILY: "1,2"
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: NO
         ENABLE_USER_SCRIPT_SANDBOXING: YES
 schemes:
