@@ -59,6 +59,13 @@ class AtomEngine(ServedEngine):
             cmd += ["--index-cache-dtype", str(r["index_cache_dtype"])]
         return cmd
 
+    def server_env(self) -> dict[str, str]:
+        """ATOM 0.1.9 keys its torch.compile cache (~/.cache/atom) without the model's widths, so gpt-oss-20b loads
+        the graphs gpt-oss-120b left there and asserts (expected size 32==128): each checkpoint gets its own home."""
+        from pie_bench.node.baselines import cache_root
+
+        return {"HOME": str(cache_root() / "atom-home" / self.artifact.id)}
+
     def serve(self, workload: WorkloadSpec, log_path: Path, timeout_s: int) -> None:
         pin, have = str(self.recipe.get("pin") or ""), self.version()
         if self._server_proc is None and pin and have.split("+")[0] != pin:

@@ -73,6 +73,8 @@ unsupported:
     reason: "ATOM 0.1.9 cannot load it: KeyError: 'NemotronHForCausalLM' (no such model in its registry)"
   - when: {engine: atom, family: hy_v4}
     reason: "ATOM 0.1.9 cannot load it: ValueError: The checkpoint you are trying to load has model type `hy_v4` but Transformers does not recognize this architecture"
+  - when: {engine: atom, artifact: deepseek-v4.1-flash-mini8}
+    reason: "ATOM 0.1.9 cannot load this cut: ValueError: Checkpoint schema mismatch: missing=['aligner.w1.bias', 'aligner.w1.weight', 'aligner.w2.bias', ...] (its DeepSeek-V4.1 loader requires the vision tower, which the text cut leaves out)"
   - when: {engine: atom, family: muse_spark}
     reason: "ATOM 0.1.9 cannot load it: ValueError: The checkpoint you are trying to load has model type `muse_spark` but Transformers does not recognize this architecture"
   - when: {engine: webllm, workload: [c32, pf32-512]}
