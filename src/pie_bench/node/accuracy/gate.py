@@ -22,6 +22,7 @@ SAME_WEIGHTS_REFERENCE: dict[QuantScheme, str] = {
     QuantScheme.AWQ: "hf",
     QuantScheme.GPTQ: "hf",
     QuantScheme.AFFINE_U4_G64: "mlxlm",
+    QuantScheme.AFFINE_U4_G32: "mlxlm",
     QuantScheme.MLX_2BIT: "mlxlm",
     QuantScheme.GGUF_Q4_K_M: "llamacpp",
     QuantScheme.GGUF_Q2_K: "llamacpp",

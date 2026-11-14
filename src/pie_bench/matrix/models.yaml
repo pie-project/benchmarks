@@ -1362,9 +1362,9 @@ artifacts:
   - id: qwen3.8-flash-next-mlx4
     base_model: mlx-community/Qwen3.8-Flash-Next-4bit
     family: qwen4_exp
-    scheme: affine_u4_g64
+    scheme: affine_u4_g32
     source_format: mlx
-    pie_sku: qwen38-flash-next-u4g64-kv-bf16
+    pie_sku: qwen38-flash-next-u4g32-kv-bf16
     display_name: qwen3.8:flash-next
     expected_gib: 103.86
     tiers: [targeted]
