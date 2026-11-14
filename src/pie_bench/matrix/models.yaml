@@ -167,7 +167,7 @@ artifacts:
     scheme: affine_u4_g64
     source_format: mlx
     kind: miniature
-    miniature: {layers: "0-7", experts: 32, period: 4, note: "shrink family glm5_next_mlx; 4.71 GiB download"}
+    miniature: {layers: "0-7", experts: 32, period: 4, shrink_family: glm5_next_mlx, note: "shrink family glm5_next_mlx; 4.71 GiB download"}
     max_context: 4096
     expected_gib: 5.0
     tiers: [smoke, nightly, weekly]

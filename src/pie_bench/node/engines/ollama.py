@@ -70,7 +70,7 @@ class OllamaEngine(ServedEngine):
         with llama.cpp's own gguf-split (the same weights, one file)."""
         path = self.gguf_path()
         m = re.match(r"(.+)-00001-of-(\d{5})\.gguf$", path.name)
-        if not m:
+        if not m or not path.with_name(f"{m.group(1)}-00002-of-{m.group(2)}.gguf").exists():  # a slice is one file under the first shard's name
             return path
         merged = self.models_dir().parent / "ollama-merged" / f"{m.group(1)}.gguf"
         if merged.exists():

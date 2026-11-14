@@ -255,6 +255,8 @@ unsupported:
     reason: "runner image has no nvcc; no CUDA llama.cpp build on pods yet"
   - when: {engine: pie, artifact: gemma-4-26b-a4b-mlx4, tp: ">1"}
     reason: "gemma4-26b-a4b's 2112-wide dense intermediate halves to 1056, not whole u4g64 groups, so its down plane cannot band (pie #674)"
+  - when: {engine: llamacpp, artifact: minimax-m3.1-flash-llamacpp-slice}
+    reason: "llama.cpp b11312 has no MiniMax-M3.1 support: M3.1 runs sparse attention on its dense-lead layers too, where llama.cpp loads no indexer (\"wrong number of tensors; expected 117, got 105\"); support is in open PR ggml-org/llama.cpp#31192"
   - when: {engine: llamacpp, tp: ">1"}
     reason: "llama.cpp layer-split is not tensor parallel; compared at tp1 only"
   - when: {engine: mlxlm, program: parity, family: deepseek_v41}
