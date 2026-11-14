@@ -242,6 +242,23 @@ window.Pie = window.Pie || {};
     return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${summary.title} by engine`)}">${lines(L, W - R, y, top)}<line class="board-axis" x1="${L}" x2="${W - R}" y1="${base}" y2="${base}"/>${marks}</svg>`;
   };
 
+  // the same ranking lying down, as Find Your Speed's quarters read it, in HTML so its words keep the page's sizes at
+  // any width: a row per engine, best first, its logo and name, a thin bar on a faint track scaled to the fastest, and
+  // its number at the right, the fastest's in full weight; each row opens the board's hover card, as a column does
+  const rowsChart = (summary, rows) => {
+    const list = engineIds().map((engine) => ({ engine, ...summary.value(rows, engine) })).filter((e) => e.v !== undefined && e.v !== null)
+      .sort((a, b) => (summary.ascending ? a.v - b.v : b.v - a.v));
+    if (!list.length) return `<p class="board-empty">${esc(summary.empty || "No runs yet")}</p>`;
+    const top = Math.max(...list.map((e) => e.v));
+    return `<div class="speed-rows" role="list" aria-label="${esc(`${summary.title} by engine`)}">${list.map((e, i) => {
+      const head = names().engine(e.engine), value = (summary.tip || summary.label)(e.v);
+      return `<div class="board-bar speed-row${i === 0 ? " is-top" : ""}" role="listitem" aria-label="${esc(`${head}: ${value}`)}" data-tip-engine="${esc(e.engine)}" data-tip-head="${esc(head)}" data-tip-value="${esc(value)}" data-tip-note="${esc(e.detail || "")}">
+        <span class="speed-name">${Pie.engines.logo(e.engine) || '<span class="engine-logo"></span>'}<span>${esc(head)}</span></span>
+        <span class="speed-track"><span class="speed-fill" style="width: ${Math.max(1, (100 * e.v) / top).toFixed(2)}%; background: ${Pie.engines.colorOf(e.engine)}"></span></span>
+        <span class="speed-value">${summary.label(e.v)}</span></div>`;
+    }).join("")}</div>`;
+  };
+
   // pie's gain, cell by cell: every machine, model and setup where pie and another engine both ran, as one dot at pie's
   // speed over the fastest other engine's, as the platform pages' Relative Speed reads a cell; a row per platform
   const GAIN = { id: "gain", title: "Spread", sub: "Each engine's typical speed against the median of all engines on the same machine and model" };
@@ -432,12 +449,12 @@ window.Pie = window.Pie || {};
   const INFO = '<svg class="board-compare-info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg>';  // the Test Conditions button's glyph
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>';  // the platform grids' mark
   const headPick = (k, label, title) => `<button class="filter-button board-title-pick is-text" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="${label}" title="${esc(title)}">${label}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-  // one setup's quarter of the compare card: its degree mark and its name, then a bar per engine; a
+  // one setup's quarter of the compare card: its degree mark and its name, then a row per engine; a
   // quiet line where the model has no run of that setup on this machine
   const speedPanel = (metric, full, g) => {
     const ran = full.some((r) => r.workload === metric.workload && r.model === model && r.hardware === g.hardware && r[metric.key]);
     const head = `<div class="board-speed-head">${metricIcon(metric)}<b>${esc(metric.label)}</b></div>`;
-    return `<div class="board-speed-cell">${head}${ran ? ranking(modelSummary(metric, full, g, model), full) : '<div class="board-compare-empty is-quiet"><span>Not measured yet</span></div>'}</div>`;
+    return `<div class="board-speed-cell">${head}${ran ? rowsChart(modelSummary(metric, full, g, model), full) : '<div class="board-compare-empty is-quiet"><span>Not measured yet</span></div>'}</div>`;
   };
   // the compare card: the machine and model once, then every setup at once, Single above Batched, Decode left of Prefill
   const SPEED_GRID = ["decode", "prefill", "throughput", "pbatch"].map((id) => SPEEDS.find((m) => m.id === id));
