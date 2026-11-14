@@ -584,7 +584,7 @@ window.Pie = window.Pie || {};
   // Efficiency: how close each engine gets to the hardware, a card per platform as Head to head sets its own, a bar per
   // engine at its median share of the machine's roofline limit over every machine (and model, or the one picked) it ran
   const USE = { id: "use", title: "Share of the theoretical maximum" };
-  const USE_CARDS = [["use", "Apple", "mac"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"], ["use-android", "Mobile", "android"], ["use-web", "Browser", "web"]].filter(([, , p]) => !Pie.hiddenPlatforms.has(p));
+  const USE_CARDS = [["use", "Apple", "mac"], ["use-windows", "Windows", "windows"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"], ["use-android", "Mobile", "android"], ["use-web", "Browser", "web"]].filter(([, , p]) => !Pie.hiddenPlatforms.has(p));
   const useShares = (rows, platform) => {
     const mode = USE_MODES.find((m) => m.id === useMode);
     const out = {};  // engine -> its shares, one per machine and model at its best run there
@@ -792,7 +792,7 @@ window.Pie = window.Pie || {};
   const BADGES = {
     index:          ["#5E5CE6", '<circle cx="12" cy="12" r="9"/><path d="m12 12 2.6-5.2"/><circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/><path d="M7 15.5h.01M6.5 11h.01M9 7h.01M17.5 11h.01M17 15.5h.01"/>'],  // indigo, a speedometer as SF Symbols draws gauge.with.needle: a dial, its needle just right of upright
     "index-mac":    ["#636366"],
-    use: ["#636366"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"], "use-android": ["#1C1C1E"], "use-web": ["#8e8e93"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
+    use: ["#636366"], "use-windows": ["#0078D4"], "use-nvidia": ["#76b900"], "use-amd": ["#ed1c24"], "use-tpu": ["#4285f4"], "use-android": ["#1C1C1E"], "use-web": ["#8e8e93"],  // Efficiency's cards, each in its platform's colour  // each platform's speed index in its sidebar tile's colour
     "install-mac": ["#636366"], "install-nvidia": ["#76b900"], "install-amd": ["#ed1c24"], "install-tpu": ["#4285f4"], "install-web": ["#8e8e93"],  // Install Size's cards the same
     support:        ["#FF2D55"],  // pink, as its outline entry
     ...Object.fromEntries(Object.entries(BY_MODEL).flatMap(([p, [, tint]]) => [[`metric-${p}`, [tint]], [`ttft-${p}`, [tint]]])),  // By Model's cards, each in its platform's colour
