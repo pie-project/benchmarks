@@ -1,0 +1,44 @@
+default:
+  knobs:
+    gpu_mem_util:
+      value: 0.90
+      rationale: Same fraction pie, vLLM and SGLang are given (--gpu-memory-utilization).
+    prefix_caching:
+      value: false
+      rationale: >
+        ATOM caches prefixes by default; off (--no-enable_prefix_caching) as vLLM and SGLang run
+        here, so a reused prompt measures the engine and not its cache.
+
+competitive:
+  extends: default
+  knobs:
+    kv_cache_dtype:
+      value: null
+      rationale: >
+        Unset takes the artifact's KV dtype (bf16), as the other engines run. ATOM's guides launch with
+        --kv_cache_dtype fp8; that would halve its KV traffic against engines keeping bf16.
+    max_num_batched_tokens:
+      value: null
+      rationale: Unset leaves ATOM's own prefill budget (16384 tokens a step), what a deployment gets.
+    max_num_seqs:
+      value: "$concurrency"
+      flag: none
+      rationale: >
+        The server is started with --max-num-seqs at the shape's concurrency, so admission equals the
+        client's offered load, as vLLM's max_num_seqs; above 512 the CUDA-graph ladder gets that size too.
+  family:
+    deepseek_v4: &v4_index
+      knobs:
+        index_cache_dtype:
+          value: fp8
+          rationale: >
+            The sparse indexer's key cache in fp8, as DeepSeek's reference and vLLM keep it. ATOM 0.1.9
+            defaults to fp4 on gfx950 (fp8 on gfx942), which would cut the indexer's precision below the
+            other engines'.
+    deepseek_v41: *v4_index
+  workload_kind:
+    prefix_shared:
+      knobs:
+        prefix_caching:
+          value: true
+          rationale: The prefix shape measures the cache, so it is on for it.

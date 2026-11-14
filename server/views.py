@@ -41,8 +41,9 @@ ENGINE_META = {
     "mlc":      ("MLC LLM", "Apache-2.0", "mlc-ai/mlc-llm"),
     "mlx-swift": ("MLX Swift", "MIT", "ml-explore/mlx-swift-lm"),
     "ollama":   ("Ollama", "MIT", "ollama/ollama"),
+    "atom":     ("ATOM", "MIT", "ROCm/ATOM"),
 }
-ENGINE_COLOR = {"trtllm": "#a2845e", "litert": "#34a853", "mlc": "#5856d6", "mlx-swift": "#ff9500", "webllm": "#5e5ce6", "llamacpp-webgpu": "#8e8e93", "ollama": "#bf5af2"}
+ENGINE_COLOR = {"trtllm": "#a2845e", "litert": "#34a853", "mlc": "#5856d6", "mlx-swift": "#ff9500", "webllm": "#5e5ce6", "llamacpp-webgpu": "#8e8e93", "ollama": "#bf5af2", "atom": "#ed1c24"}
 METRICS = ["decode_tok_s", "prefill_tok_s", "output_tok_s", "ttft_ms_p50", "ttft_ms_p99",
            "itl_ms_p50", "itl_ms_p99", "latency_ms_p50", "latency_ms_p99", "resident_gib", "load_s"]
 
@@ -236,7 +237,7 @@ def phone_hardware(store) -> list[dict]:
 DECODING = {"pie": (True, True), "llamacpp": (True, True), "mlxlm": (True, True), "splash": (False, True),
             "vllm": (True, True), "sglang": (True, True), "trtllm": (True, False), "vllm-metal": (True, False),
             "litert": (True, False), "mlc": (True, False), "mlx-swift": (True, False),
-            "webllm": (True, False), "llamacpp-webgpu": (True, False), "ollama": (True, False)}
+            "webllm": (True, False), "llamacpp-webgpu": (True, False), "ollama": (True, False), "atom": (True, False)}
 
 
 def engines() -> list[dict]:

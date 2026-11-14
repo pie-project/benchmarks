@@ -21,6 +21,14 @@ engines:
     pin: "0.5.22"
     backend_pins: {xla: "0.1.0rc0"}
     release_source: pypi:sglang
+  - id: atom
+    os: [linux]
+    backends: [rocm]
+    formats: [hf_safetensors]
+    tiers: [nightly, weekly]
+    recipe: competitive
+    pin: "0.1.9"
+    release_source: github:ROCm/ATOM
   - id: trtllm
     os: [linux]
     backends: [cuda]
