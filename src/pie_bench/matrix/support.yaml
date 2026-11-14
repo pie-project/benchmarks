@@ -65,6 +65,16 @@ unsupported:
     reason: "TensorRT-LLM has no MXFP4 MoE kernel on Ampere or Ada (SM80-SM89) for gpt-oss"
   - when: {engine: trtllm, artifact: gemma-4-31b-bf16, platform: [a100-sxm-x1, h100-sxm-x1, h200-x1]}
     reason: "TensorRT-LLM's worker dies initialising Gemma-4-31B (with its vision tower) on this card"
+  - when: {engine: atom, family: [gemma4, gemma4_moe]}
+    reason: "ATOM 0.1.9 cannot load it: KeyError: 'Gemma4ForConditionalGeneration' (no such model in its registry)"
+  - when: {engine: atom, family: muse_glimmer}
+    reason: "ATOM 0.1.9 cannot load it: KeyError: 'MuseGlimmerForConditionalGeneration' (no such model in its registry)"
+  - when: {engine: atom, family: nemotron_h}
+    reason: "ATOM 0.1.9 cannot load it: KeyError: 'NemotronHForCausalLM' (no such model in its registry)"
+  - when: {engine: atom, family: hy_v4}
+    reason: "ATOM 0.1.9 cannot load it: ValueError: The checkpoint you are trying to load has model type `hy_v4` but Transformers does not recognize this architecture"
+  - when: {engine: atom, family: muse_spark}
+    reason: "ATOM 0.1.9 cannot load it: ValueError: The checkpoint you are trying to load has model type `muse_spark` but Transformers does not recognize this architecture"
   - when: {engine: webllm, workload: [c32, pf32-512]}
     reason: "WebLLM decodes one sequence at a time: MLCEngine serializes requests on the model's lock, so it has no batched decode or batched prefill"
   - when: {engine: webllm, artifact: gemma-4-e4b-webllm}
