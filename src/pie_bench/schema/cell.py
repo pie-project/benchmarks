@@ -47,6 +47,7 @@ class QuantScheme(StrEnumBase):
     FP8 = "fp8"
     MXFP4 = "mxfp4"
     AFFINE_U4_G64 = "affine_u4_g64"
+    AFFINE_U4_G32 = "affine_u4_g32"
     MLX_2BIT = "mlx_2bit"
     W4A16_MARLIN = "w4a16_marlin"
     GGUF_Q4_K_M = "gguf_q4_k_m"

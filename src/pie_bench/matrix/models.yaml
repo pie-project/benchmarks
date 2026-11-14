@@ -167,7 +167,7 @@ artifacts:
     scheme: affine_u4_g64
     source_format: mlx
     kind: miniature
-    miniature: {layers: "0-7", experts: 32, period: 4, note: "shrink family glm5_next_mlx; 4.71 GiB download"}
+    miniature: {layers: "0-7", experts: 32, period: 4, shrink_family: glm5_next_mlx, note: "shrink family glm5_next_mlx; 4.71 GiB download"}
     max_context: 4096
     expected_gib: 5.0
     tiers: [smoke, nightly, weekly]
@@ -1362,9 +1362,9 @@ artifacts:
   - id: qwen3.8-flash-next-mlx4
     base_model: mlx-community/Qwen3.8-Flash-Next-4bit
     family: qwen4_exp
-    scheme: affine_u4_g64
+    scheme: affine_u4_g32
     source_format: mlx
-    pie_sku: qwen38-flash-next-u4g64-kv-bf16
+    pie_sku: qwen38-flash-next-u4g32-kv-bf16
     display_name: qwen3.8:flash-next
     expected_gib: 103.86
     tiers: [targeted]
@@ -1384,7 +1384,7 @@ artifacts:
     top_k: 10
     vocab: 248320
     expected_gib: 65.8
-    platforms: [m5-max-128g, rtx-spark-128g]
+    platforms: [m5-max-128g]
     tiers: [targeted]
   - id: qwen3.8-flash-next-mlx2-mlxlm
     base_model: pie-local/Qwen3.8-Flash-Next-MLX
@@ -1408,7 +1408,7 @@ artifacts:
     baseline_of: qwen3.8-flash-next-mlx2
     baseline_label: llama.cpp
     expected_gib: 75.0
-    platforms: [m5-max-128g, rtx-spark-128g]
+    platforms: [m5-max-128g]
     tiers: [targeted]
   - id: qwen3.8-flash-next-q2k-splash
     base_model: ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF
