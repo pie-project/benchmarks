@@ -1,0 +1,55 @@
+cmake_minimum_required(VERSION 3.22)
+project(benchllama C CXX)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+
+# llama.cpp at the same tag as the Mac rows; a local checkout (LLAMA_CPP_DIR) or fetched by tag.
+if (LLAMA_CPP_DIR)
+    set(LLAMA_SRC ${LLAMA_CPP_DIR})
+else()
+    include(FetchContent)
+    FetchContent_Declare(llama_cpp
+        URL https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMA_CPP_TAG}.tar.gz
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+    FetchContent_Populate(llama_cpp)
+    set(LLAMA_SRC ${llama_cpp_SOURCE_DIR})
+endif()
+
+# Same CPU setup as llama.cpp's own Android example: every arm64 CPU variant
+# (dotprod, fp16, i8mm, sve2, sme) built as a loadable backend, the best one picked at run time.
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+set(LLAMA_BUILD_COMMON OFF CACHE BOOL "" FORCE)
+set(LLAMA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(LLAMA_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(LLAMA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(LLAMA_BUILD_SERVER OFF CACHE BOOL "" FORCE)
+set(LLAMA_BUILD_APP OFF CACHE BOOL "" FORCE)
+set(LLAMA_CURL OFF CACHE BOOL "" FORCE)
+set(LLAMA_OPENSSL OFF CACHE BOOL "" FORCE)
+set(GGML_NATIVE OFF CACHE BOOL "" FORCE)
+set(GGML_BACKEND_DL ON CACHE BOOL "" FORCE)
+set(GGML_CPU_ALL_VARIANTS ON CACHE BOOL "" FORCE)
+set(GGML_OPENMP ON CACHE BOOL "" FORCE)
+set(GGML_CPU_KLEIDIAI ON CACHE BOOL "" FORCE)
+set(GGML_LLAMAFILE OFF CACHE BOOL "" FORCE)
+if (LLAMA_GPU STREQUAL "vulkan")
+    set(GGML_VULKAN ON CACHE BOOL "" FORCE)
+    if (LLAMA_VULKAN_HEADERS)
+        include_directories(BEFORE SYSTEM ${LLAMA_VULKAN_HEADERS})
+        set(Vulkan_INCLUDE_DIR ${LLAMA_VULKAN_HEADERS} CACHE PATH "" FORCE)
+    endif()
+    if (LLAMA_SPIRV_HEADERS_DIR)
+        set(SPIRV-Headers_DIR ${LLAMA_SPIRV_HEADERS_DIR} CACHE PATH "" FORCE)
+    endif()
+    file(GLOB _glslc "${ANDROID_NDK}/shader-tools/*/glslc")
+    set(Vulkan_GLSLC_EXECUTABLE ${_glslc} CACHE FILEPATH "" FORCE)
+elseif (LLAMA_GPU STREQUAL "opencl")
+    set(GGML_OPENCL ON CACHE BOOL "" FORCE)
+endif()
+
+add_subdirectory(${LLAMA_SRC} build-llama)
+
+add_library(benchllama SHARED llama_jni.cpp)
+target_compile_definitions(benchllama PRIVATE LLAMA_CPP_TAG="${LLAMA_CPP_TAG}")
+target_link_libraries(benchllama llama ggml android log)
