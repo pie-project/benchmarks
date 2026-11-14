@@ -257,6 +257,8 @@ unsupported:
     reason: "gemma4-26b-a4b's 2112-wide dense intermediate halves to 1056, not whole u4g64 groups, so its down plane cannot band (pie #674)"
   - when: {engine: llamacpp, artifact: minimax-m3.1-flash-llamacpp-slice}
     reason: "llama.cpp b11312 has no MiniMax-M3.1 support: M3.1 runs sparse attention on its dense-lead layers too, where llama.cpp loads no indexer (\"wrong number of tensors; expected 117, got 105\"); support is in open PR ggml-org/llama.cpp#31192"
+  - when: {engine: ollama, artifact: minimax-m3.1-flash-llamacpp-slice}
+    reason: "Ollama 0.40.16's llama.cpp has no MiniMax-M3.1 support either (\"wrong number of tensors; expected 117, got 105\")"
   - when: {engine: llamacpp, artifact: muse-spark-llamacpp-slice-l2-e8}
     reason: "llama.cpp b11312 has no muse-spark architecture (\"unknown model architecture: 'muse-spark'\")"
   - when: {artifact: [muse-spark-mlx4-slice-l2-e8, muse-spark-llamacpp-slice-l2-e8], platform: rtx-spark-128g}
