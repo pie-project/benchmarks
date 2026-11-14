@@ -196,7 +196,7 @@ def test_registry_resolves_every_engine():
     assert get_engine("mlxlm") is MlxlmEngine
 
 
-@pytest.mark.parametrize("engine", ["pie", "vllm", "sglang", "llamacpp", "mlxlm"])
+@pytest.mark.parametrize("engine", ["pie", "vllm", "sglang", "llamacpp", "mlxlm", "atom"])
 def test_recipes_have_default_and_competitive_with_rationale(engine):
     names = recipe_names(engine)
     assert "default" in names and "competitive" in names
@@ -1362,6 +1362,33 @@ def test_trtllm_runs_on_nvidia_gpus_only():
     m = Matrix.load(MATRIX)
     cells = [c for c in m.expand(platforms={"l40s-x1", "tpu-v6e-1", "mi300x-x1"}, artifacts={"qwen3.5-0.8b-bf16"}) if str(c.engine) == "trtllm"]
     assert cells and {c.platform.id for c in cells} == {"l40s-x1"}
+
+
+def test_atom_serves_its_openai_server_at_the_shape_with_exact_lengths(tmp_path, monkeypatch):
+    from pie_bench.node.engines.atom import AtomEngine
+
+    monkeypatch.setenv("ATOM_PY", "/opt/venv/bin/python3")
+    assert get_engine("atom") is AtomEngine
+    eng = make(AtomEngine, plat=platform(Backend.ROCM, "cdna3", count=1))
+    cmd = eng.server_cmd(8127, 32, 2048)
+    assert cmd[:3] == ["/opt/venv/bin/python3", "-m", "atom.entrypoints.openai_server"]
+    assert flag_value(cmd, "--server-port") == "8127" and flag_value(cmd, "--max-num-seqs") == "32" and flag_value(cmd, "--max-model-len") == "2048"
+    assert flag_value(cmd, "--kv_cache_dtype") == "bf16" and flag_value(cmd, "--gpu-memory-utilization") == "0.9"
+    assert "--no-enable_prefix_caching" in cmd and "--cudagraph-capture-sizes" not in cmd and "--index-cache-dtype" not in cmd
+    wide = eng.server_cmd(8127, 1024, 2048)
+    assert flag_value(wide, "--cudagraph-capture-sizes") == "[1,2,3,4,5,6,7,8,16,32,48,64,128,256,512,1024]"
+    v4 = make(AtomEngine, plat=platform(Backend.ROCM, "cdna4", count=1), art=artifact(family="deepseek_v4"))
+    assert flag_value(v4.server_cmd(8127, 1, 2048), "--index-cache-dtype") == "fp8"
+    argv = argv_for(eng, WORKLOADS["c32"], tmp_path)
+    assert json.loads(flag_value(argv, "--extra-body")) == {"ignore_eos": True} and "--ignore-eos" in argv and "--token-ids" in argv
+
+
+def test_atom_runs_on_amd_gpus_only():
+    from pie_bench.plan.matrix import Matrix
+
+    m = Matrix.load(MATRIX)
+    cells = [c for c in m.expand(platforms={"l40s-x1", "tpu-v6e-1", "mi300x-x1", "mi355x-x1"}, artifacts={"qwen3.5-0.8b-bf16"}) if str(c.engine) == "atom"]
+    assert cells and {c.platform.id for c in cells} == {"mi300x-x1", "mi355x-x1"}
 
 
 def _browser_stubs(monkeypatch, tmp_path):

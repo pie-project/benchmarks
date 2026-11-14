@@ -543,7 +543,7 @@ def register(cls: type[Engine]) -> type[Engine]:
     return cls
 
 
-ADAPTERS = ("browser", "llamacpp", "mlxlm", "ollama", "pie", "sglang", "splash", "trtllm", "vllm", "vllm_metal")
+ADAPTERS = ("atom", "browser", "llamacpp", "mlxlm", "ollama", "pie", "sglang", "splash", "trtllm", "vllm", "vllm_metal")
 
 
 def get_engine(name: str | EngineName, backend: str | None = None) -> type[Engine]:

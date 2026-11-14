@@ -28,6 +28,7 @@ class EngineName(StrEnumBase):
     WEBLLM = "webllm"
     LLAMACPP_WEBGPU = "llamacpp-webgpu"
     OLLAMA = "ollama"
+    ATOM = "atom"
 
 
 class Backend(StrEnumBase):
