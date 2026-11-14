@@ -1274,7 +1274,18 @@ window.Pie = window.Pie || {};
         }
         return topOf.get(key);
       }
-      const overall = (mac) => median(models.map((model) => (compare === "tps" ? grid[mac][model].c?.pie[metric.key] : grid[mac][model].c?.gain)));
+      // Hide Unverified, on until the viewer turns it off: a Needs Review cell (pie 25% or more ahead of every other
+      // engine, no profile confirming why) shows no number, no yellow and no hover card, only its Does not fit mark, and counts in
+      // neither its machine's Overall nor a sort; the yellow returns with the number
+      const hideUnverified = compare === "engines" && p.showUnverified !== true;
+      const unverified = (mac, model) => {
+        const c = grid[mac]?.[model]?.c;
+        if (!hideUnverified || !c) return false;
+        const pair = pairOf(c, metric);
+        if (!pair || pair.first.engine !== c.pie.engine || overLimitOf(mac, realOf(model), modeOf(c), metric, c)) return false;
+        return !Pie.verifiedProfile?.(`${mac}|${realOf(model)}|${modeOf(c).id}`);
+      };
+      const overall = (mac) => median(models.map((model) => (unverified(mac, model) ? null : compare === "tps" ? grid[mac][model].c?.pie[metric.key] : grid[mac][model].c?.gain)));
       // no sort: the machines in the catalog's order, no arrow anywhere
       // each platform's table keeps its own sort: a click sorts only the table it is in
       const sortFor = (k) => p.sortBy?.[k] || null;
@@ -1286,7 +1297,7 @@ window.Pie = window.Pie || {};
         const named = [...list];
         if (!sortKey) return named;
         if (sortKey === "name") return named.sort((a, b) => dir * macName(a).localeCompare(macName(b), undefined, { numeric: true }));
-        const val = (mac) => (sortKey === "overall" ? overall(mac) : grid[mac][sortKey]?.c?.gain ?? null);
+        const val = (mac) => (sortKey === "overall" ? overall(mac) : unverified(mac, sortKey) ? null : grid[mac][sortKey]?.c?.gain ?? null);
         // empties sink to the bottom whichever way the column sorts
         return named.sort((a, b) => (val(a) === null) - (val(b) === null) || dir * ((val(a) ?? 0) - (val(b) ?? 0)));
       };
@@ -1379,6 +1390,9 @@ window.Pie = window.Pie || {};
         return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
+          if (c && unverified(mac, model)) {
+            return `<td class="${sorted} is-unverified" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}">${needs ? `${NOFIT}N/A` : ""}</span></td>`;
+          }
           if (c) {
             cells.push(c.gain);
             const ceil = compare === "ceiling" ? boundOf(mac, realOf(model), modeOf(c), metric, c.pie) : null;
@@ -1403,7 +1417,7 @@ window.Pie = window.Pie || {};
               engine: compare === "engines" ? [...new Set((c.all || [c.pie]).map((r) => r.engine))] : [c.pie.engine] };
             // a slice no other engine ran on this machine has nothing to compare: the cell reads as the full model's
             // "does not fit", the mark alone at the right, the engines' reasons in its card
-            if (compare === "engines" && c.gain === null && c.pie.miniature) return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty is-nofit" data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}">${NOFIT}</span>${eye(mac)}</td>`;
+            if (compare === "engines" && c.gain === null && c.pie.miniature) return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty is-nofit" data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}">${NOFIT}N/A</span>${eye(mac)}</td>`;
             // an engine here measured above its own theoretical limit (a full model, not a slice): the cell tinted red,
             // in every view, as the best machine is tinted blue
             const overLimit = overLimitOf(mac, realOf(model), modeOf(c), metric, c);
@@ -1431,7 +1445,7 @@ window.Pie = window.Pie || {};
           // shown, so it reads why there is no number (it does not fit, the engine has no build of it, the run failed)
           const EMPTY_PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
           const openEmpty = { hardware: [mac], model: [realOf(model)], workload: [EMPTY_PHASE[state.platform.mode] || "raw_decode"], _unavailable: true };
-          return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(openEmpty))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? NOFIT : "–"}</span></td>`;
+          return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(openEmpty))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? `${NOFIT}N/A` : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
 
@@ -1504,6 +1518,7 @@ window.Pie = window.Pie || {};
             <span class="platform-key" title="Pie is 25% or more faster than the strongest other engine on this cell, and a profile of both engines confirms it: Profiling shows the profile"><i class="platform-key-swatch is-explained" aria-hidden="true"></i>Explained</span>
             <span class="platform-key" title="Pie is 25% or more faster than the strongest other engine on this cell, with no traced cause yet: it needs study or a rerun"><i class="platform-key-swatch is-gap" aria-hidden="true"></i>Needs Review</span>
             <span class="platform-key" title="The full model does not fit one machine; a number beside the mark is a model slice&#39;s, for comparing engines">${NOFIT}Does not fit</span>
+            ${compare === "engines" ? `<span class="filter platform-setup"><button type="button" class="filter-button" data-unverified aria-pressed="${p.showUnverified !== true}" title="${p.showUnverified !== true ? "Needs Review cells show no number: click to show them" : "Hide the numbers of Needs Review cells"}"><svg class="view-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/>${p.showUnverified !== true ? '<path d="M4 4l16 16"/>' : ""}</svg><span>Hide Unverified</span></button></span>` : ""}
             <!-- the engines and models picked sit with the view, at the bar's right end, as a Mac toolbar groups its view options -->
             <span class="filter platform-setup"><button class="filter-button label-rolls" type="button" data-grid-pick="options" aria-haspopup="menu" aria-label="View Options" title="View, engine and opponent">${viewIcon(compare)}<span>${esc(COMPARES[compare])}</span><svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
             <span class="filter platform-setup"><button class="filter-button" type="button" data-grid-pick="model" aria-haspopup="menu" aria-label="Models">${esc(!p.models?.length ? "All Models" : p.models.length <= 2 ? p.models.map((id) => names().model(id)).join(", ") : `${p.models.length} Models`)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>
@@ -1624,6 +1639,12 @@ window.Pie = window.Pie || {};
         if (pick) {
           event.stopPropagation();
           Pie.popover.open(pick, `grid:${pick.dataset.gridPick}`, null);
+          return;
+        }
+        const unverifiedToggle = event.target.closest("[data-unverified]");
+        if (unverifiedToggle) {
+          state.platform.showUnverified = state.platform.showUnverified !== true;
+          onChange();
           return;
         }
         const view = event.target.closest("[data-compare]");

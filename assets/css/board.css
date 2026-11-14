@@ -597,6 +597,24 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .board-compare-empty b { font-size: 13px; font-weight: 600; color: var(--color-label); }
 .board-compare-empty span { font-size: 13px; color: var(--color-label-secondary); }
 .board-compare-empty .platform-nofit { width: 20px; height: 20px; margin-bottom: 4px; stroke: var(--color-label-tertiary); }
+/* Find Your Speed: every setup at once, Single above Batched and Decode left of Prefill, each a half-card chart */
+.board-speed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 48px; }
+@media (max-width: 899px) { .board-speed-grid { grid-template-columns: 1fr; } }  /* a phone stacks them */
+.board-speed-head { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; }
+.board-speed-head .mode-icon { width: 12px; height: 12px; color: var(--color-label-secondary); }
+.board-speed-head b { font-weight: 600; color: var(--color-label); }
+.board-speed-cell .board-compare-empty.is-quiet { min-height: 120px; }
+.speed-rows { display: grid; gap: 2px; margin: 10px -6px 0; }  /* the rows' hover fill reaches past the words, as a list row's does */
+.speed-row.board-bar { display: grid; grid-template-columns: 120px minmax(0, 1fr) 48px; align-items: center; gap: 12px; padding: 6px; border-radius: 6px; cursor: default; }
+.speed-row.board-bar:hover { background: var(--color-fill); }
+.speed-name { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; font-weight: 500; color: var(--color-label); }
+.speed-name > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.speed-name .engine-logo { width: 14px; height: 14px; }
+.speed-track { height: 8px; border-radius: 4px; background: var(--color-fill); overflow: hidden; }  /* the whole row's length, faint, so every bar reads against the fastest */
+.speed-fill { display: block; height: 100%; border-radius: 4px; }
+.speed-value { font-size: 12px; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; color: var(--color-label-secondary); }
+.speed-row.is-top .speed-value { font-weight: 600; color: var(--color-label); }  /* the fastest's number in full weight */
+@media (max-width: 899px) { .speed-row.board-bar { grid-template-columns: 118px minmax(0, 1fr) 40px; gap: 10px; } }  /* TensorRT-LLM whole on a phone */
 @media (max-width: 899px) { .board-section-head:has(> .board-title-pick + .board-title-pick) { column-gap: 8px; row-gap: 8px; } .board-section-head:has(> .board-title-pick + .board-title-pick) > .board-title-pick + .board-title-pick { margin-left: 0; } }  /* phones: Compare's four picks wrap 8px apart, each line from the same edge */
 .board-footer-simple { font-size: 12px; color: var(--color-label-secondary); }  /* the update date in the section ledes' size and grey */
 .board-footer-simple { font-size: 11px; }  /* the update date at the cards' subtitle size */
