@@ -75,6 +75,16 @@ unsupported:
     reason: "ATOM 0.1.9 cannot load it: ValueError: The checkpoint you are trying to load has model type `hy_v4` but Transformers does not recognize this architecture"
   - when: {engine: atom, artifact: deepseek-v4.1-flash-mini8}
     reason: "ATOM 0.1.9 cannot load this cut: ValueError: Checkpoint schema mismatch: missing=['aligner.w1.bias', 'aligner.w1.weight', 'aligner.w2.bias', ...] (its DeepSeek-V4.1 loader requires the vision tower, which the text cut leaves out)"
+  - when: {engine: atom, family: mimo_v2, tp: "<4"}
+    reason: "ATOM 0.1.9 cannot load it: ValueError: MiMo-V2 Pro checkpoint is fused for TP=4 (num_key_value_heads); got runtime tp_size=1"
+  - when: {engine: atom, arch: cdna4, family: minimax_m3}
+    reason: "ATOM 0.1.9 on gfx950 cannot load MiniMax-M3.1-Flash's expert weights: RuntimeError: The size of tensor a (192) must match the size of tensor b (384) at non-singleton dimension 1 (in moe._load_w13)"
+  - when: {engine: atom, arch: cdna4, artifact: kimi-k3-mini8}
+    reason: "ATOM 0.1.9 on gfx950 aborts warming up this cut: [AITER] topk_softmax_kernels_group.cu:2203 Mixed bias dtype requires the register top-k path"
+  - when: {engine: atom, artifact: qwen3.5-0.8b-bf16}
+    reason: "ATOM 0.1.9 cannot serve it: its tied lm_head runs as an embedding lookup on the hidden states (RuntimeError: Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got CUDABFloat16Type instead)"
+  - when: {engine: atom, artifact: qwen3.8-flash-next-mini}
+    reason: "ATOM 0.1.9 cannot load this cut: RuntimeError: The size of tensor a (17) must match the size of tensor b (16) at non-singleton dimension 0 (stacking the 16 kept experts in qwen4_exp's loader)"
   - when: {engine: atom, family: muse_spark}
     reason: "ATOM 0.1.9 cannot load it: ValueError: The checkpoint you are trying to load has model type `muse_spark` but Transformers does not recognize this architecture"
   - when: {engine: webllm, workload: [c32, pf32-512]}
