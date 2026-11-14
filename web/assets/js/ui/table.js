@@ -65,7 +65,7 @@ window.Pie = window.Pie || {};
       // each platform as its sidebar tile alone, its name on hover, as Finder's Tags column shows colour, not words;
       // every platform keeps its own slot down the column, empty where a model was not measured there, so a platform's
       // tiles stand in one line and the eye runs down it
-      const ID = { mac: "mac", gpu: "nvidia", tpu: "tpu", amd: "amd", wafer: "cerebras" };
+      const ID = { mac: "mac", windows: "windows", gpu: "nvidia", tpu: "tpu", amd: "amd", wafer: "cerebras" };
       // a model not yet measured shows where it would fit, its tiles faded
       const has = String(value || "").toLowerCase().split(", ");
       const fits = String(row.fits || "").toLowerCase().split(", ");
@@ -82,7 +82,7 @@ window.Pie = window.Pie || {};
 
   // the platform slots of the Platforms column: every platform any model was measured on, Mac, NVIDIA, TPU, AMD, Cerebras
   let slotsOf = null;
-  const platformSlots = () => slotsOf ||= ["mac", "gpu", "tpu", "amd", "wafer"]
+  const platformSlots = () => slotsOf ||= ["mac", "windows", "gpu", "tpu", "amd", "wafer"]
     .filter((t) => (Pie.store.tables.models || []).some((m) => String(m.platforms || "").toLowerCase().split(", ").includes(t)));
 
   // Performance and Quality rows are selected as a Mac list's are (click, ⌘-click, ⇧-click), and the bar's Report files

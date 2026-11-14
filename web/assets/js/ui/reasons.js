@@ -24,7 +24,7 @@ window.Pie = window.Pie || {};
     const h = rowOf("hardware", id);
     if (!h) return id;
     const name = String(h.name || id).replace(/^Apple /, "");
-    return h.class === "mac" && h.memory_gib ? `${name} ${h.memory_gib} GB` : name;
+    return (h.class === "mac" || h.class === "windows") && h.memory_gib ? `${name} ${h.memory_gib} GB` : name;
   };
   // a cell's profile: each engine's step split into the same stages, as one bar each on a shared scale, and the verdict
   const STAGES = [["attention", "Attention", "#5E5CE6"], ["linear_attention", "Linear attention", "#A09EF5"], ["qkv_proj", "QKV projection", "#0A84FF"], ["o_proj", "Output projection", "#64D2FF"],
@@ -90,8 +90,7 @@ window.Pie = window.Pie || {};
     const used = STAGES.filter(([k]) => p.fastest.stages[k] > 0 || p.second.stages[k] > 0);
     return `${bar(p.fastest)}${bar(p.second)}${floor}
                 <p class="profile-legend">${used.map(([k, name, color]) => `<span data-stage="${k}"><i style="background: ${color}"></i>${name}</span>`).join("")}</p>
-                <p class="profile-note">${esc(`${p.unit || ""}${c.miniature ? `, on a model slice (${c.miniature})` : ""}`)}</p>
-                <p class="profile-note">Stages are grouped by the kernel names each engine reports, so how time splits between stages can differ by engine. Each step's total is exact.</p>`;
+                <p class="profile-note">${esc(`${p.unit || ""}${c.miniature ? `, on a model slice (${c.miniature})` : ""}`)}</p>`;
   };
   const keyOf = (engine, c) => `${engine}|${c.hardware}|${c.model}|${c.setup}`;
   // a row as a disclosure: the cell, its gap and setup; a click opens its profile and the suggestion

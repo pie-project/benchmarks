@@ -56,7 +56,7 @@ window.Pie = window.Pie || {};
   // an outlier's issue on pie: one stays open per platform ("[NVIDIA] Benchmarks", labelled benchmarks), its description the platform's current
   // list (tools/outlier_issues.py rewrites it as the data changes), so every row links to its platform's issue
   const ISSUES = "https://github.com/pie-project/pie/issues";
-  const PLATFORM_NAME = { mac: "Apple", nvidia: "NVIDIA", amd: "AMD", tpu: "TPU", android: "Mobile", web: "WebGPU", cerebras: "Cerebras" };
+  const PLATFORM_NAME = { mac: "Apple", windows: "Windows", nvidia: "NVIDIA", amd: "AMD", tpu: "TPU", android: "Mobile", web: "WebGPU", cerebras: "Cerebras" };
   const issueLinks = (o) => {
     const code = Pie.platformOf(Pie.store.index.hardware[o.hardware] || {});
     const platform = PLATFORM_NAME[code] || "";

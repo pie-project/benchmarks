@@ -153,7 +153,7 @@ window.Pie = window.Pie || {};
     const esc = (text) => Pie.format.escape(text);
     const rows = Pie.store.tables.install || [];
     const size = (b) => (b >= 1e9 ? `${(b / 1e9).toFixed(2)} GB` : `${(b / 1e6).toFixed(1)} MB`);
-    const on = [["mac", "Apple"], ["nvidia", "NVIDIA"], ["amd", "AMD"], ["tpu", "TPU"], ["web", "Browser"]].filter(([p]) => !Pie.hiddenPlatforms.has(p) && rows.some((r) => r.platform === p));
+    const on = [["mac", "Apple"], ["windows", "Windows"], ["nvidia", "NVIDIA"], ["amd", "AMD"], ["tpu", "TPU"], ["web", "Browser"]].filter(([p]) => !Pie.hiddenPlatforms.has(p) && rows.some((r) => r.platform === p));
     const when = rows[0]?.measured ? new Date(`${rows[0].measured}T12:00`).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
     // one line an engine (logo, name, version, size); what it counts and how it was measured in its hover card
     const card = (r) => `<div class="tip-title">${esc(Pie.store.names.engine(r.engine))} ${esc(r.version)}</div><div class="tip-sub">${size(r.bytes)} on disk</div><div class="tip-foot">${esc(r.method)}</div><div class="tip-foot install-tip-source">${esc(r.source)}</div>`;
@@ -210,6 +210,7 @@ window.Pie = window.Pie || {};
         ["#AF52DE", "Other GPU", "Any other kernel, such as copies"],
         ["#AEAEB2", "GPU idle", "Time inside the step while the GPU waits on the host"]])}
       <p>Each kernel counts toward the job the trace names it for: a role, not just the kind of math. A cell shows the QKV, output, MLP and LM head split only when both engines' traces name those roles; otherwise both keep one Dense matmul bar, so the two are always split the same way.</p>
+      <p>Stages are grouped by the kernel names each engine reports, so how time splits between stages can differ by engine. Each step's total is exact.</p>
       <p>Both engines are measured in the benchmark's own unit: ms per output token, per prompt, per batched step or per wave of prompts. The stage where the slower engine spends the most extra time is where the gap comes from.</p>
       <h3>When a cell is verified</h3>
       ${facts([["#34C759", "Verified", "Each engine's profiled step is within 10% of the step its benchmark number implies, and the profiled gap within 10% of the benchmark's"],
