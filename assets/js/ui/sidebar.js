@@ -41,6 +41,7 @@ window.Pie = window.Pie || {};
     const current = state.table;
     const items = Object.entries(Pie.schema)
       .filter(([, schema]) => schema.section === section.id)
+      .sort(([, a], [, b]) => Pie.byPlatformOrder(a, b))
       .map(([id, schema]) => item(id, schema, id === current, state))
       .join("");
     if (!items) return "";  // a section with no pages left (Resources, its pages now Methodology chapters) shows no heading
