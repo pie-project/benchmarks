@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from pie_bench import bench_inferlet_wasm, build_parser, pie_client
+from bench_pie import bench_inferlet_wasm, build_parser, pie_client
 
 
 async def generate(bench_args: list[str], items: list[dict], system: str, max_tokens: int, timeout: float, concurrency: int) -> list[str]:
