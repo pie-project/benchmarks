@@ -1275,8 +1275,8 @@ window.Pie = window.Pie || {};
         return topOf.get(key);
       }
       // Hide Unverified, on until the viewer turns it off: a Needs Review cell (pie 25% or more ahead of every other
-      // engine, no profile confirming why) keeps its yellow and its Does not fit mark but shows no number, and counts in
-      // neither its machine's Overall nor a sort
+      // engine, no profile confirming why) shows no number, no yellow and no hover card, only its Does not fit mark, and counts in
+      // neither its machine's Overall nor a sort; the yellow returns with the number
       const hideUnverified = compare === "engines" && p.showUnverified !== true;
       const unverified = (mac, model) => {
         const c = grid[mac]?.[model]?.c;
@@ -1391,8 +1391,7 @@ window.Pie = window.Pie || {};
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
           if (c && unverified(mac, model)) {
-            const hiddenTip = card("", "", [], "Needs Review: pie is 25% or more ahead with no profile confirming why yet, so its number is hidden. Turn off Hide Unverified to show it");
-            return `<td class="${sorted} is-gap is-unverified" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}" data-tip="${esc(hiddenTip)}">${needs ? NOFIT : ""}</span></td>`;
+            return `<td class="${sorted} is-unverified" data-col="${esc(model)}"><span class="platform-cell is-empty${needs ? " is-nofit" : ""}">${needs ? NOFIT : ""}</span></td>`;
           }
           if (c) {
             cells.push(c.gain);
