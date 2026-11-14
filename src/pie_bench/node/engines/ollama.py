@@ -58,12 +58,31 @@ class OllamaEngine(ServedEngine):
         if not fresh:
             return
         modelfile = Path(log_path).with_suffix(".Modelfile")
-        modelfile.write_text(f"FROM {self.gguf_path()}\nTEMPLATE {{{{ .Prompt }}}}\n")
+        modelfile.write_text(f"FROM {self.single_gguf(timeout_s)}\nTEMPLATE {{{{ .Prompt }}}}\n")
         out = subprocess.run([self.server_bin(), "create", self.tag(), "-f", str(modelfile)], env=self.process_env(self.server_env()),
                              capture_output=True, text=True, timeout=timeout_s)
         if out.returncode != 0:
             self.stop()
             raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"ollama create failed: {(out.stderr or out.stdout).strip()[-400:]}")
+
+    def single_gguf(self, timeout_s: int) -> Path:
+        """The GGUF as one file: `ollama create` copies only the file it is given, so a split release is merged first
+        with llama.cpp's own gguf-split (the same weights, one file)."""
+        path = self.gguf_path()
+        m = re.match(r"(.+)-00001-of-(\d{5})\.gguf$", path.name)
+        if not m:
+            return path
+        merged = self.models_dir().parent / "ollama-merged" / f"{m.group(1)}.gguf"
+        if merged.exists():
+            return merged
+        tool = Path(os.environ.get("LLAMA_SERVER_BIN") or "llama-server").with_name("llama-gguf-split" + (".exe" if os.name == "nt" else ""))
+        merged.parent.mkdir(parents=True, exist_ok=True)
+        tmp = merged.with_suffix(".part")
+        out = subprocess.run([str(tool), "--merge", str(path), str(tmp)], capture_output=True, text=True, timeout=timeout_s)
+        if out.returncode != 0 or not tmp.exists():
+            raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"merging the split GGUF failed: {(out.stderr or out.stdout).strip()[-300:]}")
+        os.replace(tmp, merged)
+        return merged
 
     def extra_body(self) -> dict[str, Any]:
         return {}

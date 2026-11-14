@@ -205,7 +205,7 @@ def _unzip(url: str, dest: Path, log) -> None:
 
 def _windows_engines(m: Matrix, want: set[str], base: Path, log) -> dict[str, str]:
     env: dict[str, str] = {}
-    if "llamacpp" in want:
+    if "llamacpp" in want or "ollama" in want:  # Ollama merges split GGUFs with llama.cpp's gguf-split
         pin = m.engines["llamacpp"].pin
         d = base / f"llama-{pin}-win-cuda-arm64"
         if not (d / "llama-server.exe").exists():
