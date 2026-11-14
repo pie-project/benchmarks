@@ -180,7 +180,7 @@ window.Pie = window.Pie || {};
     android: {
       label: "Mobile",
       short: "Mobile",  // as the tables name it
-      section: null,  // no page until a machine is measured; still a row in the Platforms list
+      section: "platforms",
       view: "platform",
       platform: "android",
       tint: "#1C1C1E",  // black: no other platform wears it

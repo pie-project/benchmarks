@@ -182,6 +182,9 @@
 .popover-option[hidden] { display: none; }
 /* a model's maker before its name, as the grid's tile, sized to the menu's line */
 .popover .model-badge { width: 18px; height: 18px; margin-right: 8px; border-radius: 4px; flex: none; }
+.popover-option .sidebar-glyph { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 8px; border-radius: 4px; flex: none; background: var(--tint); }  /* a platform's tile, as the sidebar draws it */
+.popover-option .sidebar-glyph svg { width: 11px; height: 11px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.popover-option .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
 .popover .model-badge img { width: 12px; height: 12px; }
 /* a searchable menu: the field fixed at its top, the options scrolling in the space under it */
 .popover.is-searchable { display: flex; flex-direction: column; overflow: hidden; }
