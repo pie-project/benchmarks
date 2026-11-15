@@ -16,7 +16,7 @@ async def generate(bench_args: list[str], items: list[dict], system: str, max_to
     args = build_parser().parse_args(bench_args)
     out = [""] * len(items)
     async with pie_client(args) as (client, _):
-        pkg = await client.install_program(bench_inferlet_wasm(args.inferlet_dir), force_overwrite=True)
+        pkg = await client.install_program(bench_inferlet_wasm(args.inferlet_dir))
         gate = asyncio.Semaphore(concurrency)
 
         async def one(i: int, item: dict) -> None:
