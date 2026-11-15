@@ -109,7 +109,9 @@ competitive:
     rtx-spark-128g:
       knobs:
         server_extra:
-          value: ["--batch-size", "2048", "--ubatch-size", "512", "--load-mode", "none", "--cont-batching", "--kv-unified"]
+          value: ["--batch-size", "2048", "--ubatch-size", "512", "--load-mode", "none", "--cont-batching"]
           rationale: >
-            b11312 replaced --no-mmap with --load-mode (none is the same: weights read, not mapped). The laptop's GPU
-            shares its memory with Windows, so the 32 slots share one KV buffer (--kv-unified), as on Apple Silicon.
+            b11312 replaced --no-mmap with --load-mode (none is the same: weights read, not mapped). No --kv-unified,
+            as on the other CUDA platforms: one KV buffer shared by 32 slots cut c32 output 2.1-2.5x on the laptop
+            (Gemma 4 12B 116 vs 263 tok/s, gpt-oss-20b 199 vs 412), where Ollama, running llama.cpp without it, was
+            ahead by the same factor; Gemma 4 31B fits with per-slot buffers.
