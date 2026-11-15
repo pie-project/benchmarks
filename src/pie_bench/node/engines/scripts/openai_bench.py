@@ -103,7 +103,8 @@ def run_one(args: argparse.Namespace, endpoint: str, prompt: str, prompt_count: 
     end = time.perf_counter()
     usage, timings = seen["usage"], seen["timings"]
     counted = usage.get("completion_tokens") is not None
-    n_out = int(usage["completion_tokens"]) if counted else len(stamps)
+    # a stream the server cut off (Ollama's token repeat limit) can still report 0 completion tokens: count what was streamed
+    n_out = max(int(usage["completion_tokens"]), len(stamps)) if counted else len(stamps)
     n_in = int(usage.get("prompt_tokens") or prompt_count)
     server.append({
         "prompt_tokens": n_in, "output_tokens": n_out, "max_tokens": max_tokens, "hf_prompt_tokens": prompt_count, "usage_reported": counted,
