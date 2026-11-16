@@ -31,13 +31,15 @@ jobs:
       run:
         shell: bash {0}
     env:
-      WORK: ${{ runner.temp }}/etude-team
-      OUT: ${{ runner.temp }}/etude-team-out
       EHOME: /private/tmp/et-${{ github.run_id }}
       TAG: etude-team-tmp
       UV_VERSION: 0.13.5
     steps:
       - uses: actions/checkout@v4
+      - name: Paths
+        run: |
+          echo "WORK=$RUNNER_TEMP/etude-team" >> "$GITHUB_ENV"
+          echo "OUT=$RUNNER_TEMP/etude-team-out" >> "$GITHUB_ENV"
       - name: Fetch inputs
         env:
           GH_TOKEN: ${{ github.token }}
