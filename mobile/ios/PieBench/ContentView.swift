@@ -47,7 +47,7 @@ struct ContentView: View {
                             Toggle(isOn: toggle($modelsCSV, m.id)) {
                                 VStack(alignment: .leading) {
                                     Text(m.artifact).font(.callout)
-                                    Text("\(m.engine.label) · \(String(format: "%.2f GB", Double(m.bytes) / 1e9)) · \(Downloader.present(m) != nil ? "on phone" : (m.engine == .pie ? "import .metal.zt" : "downloads on Run"))")
+                                    Text("\(m.engine.label) · \(String(format: "%.2f GB", Double(m.bytes) / 1e9)) · \(Downloader.present(m) != nil ? "on phone" : "downloads on Run")")
                                         .font(.caption2).foregroundStyle(.secondary)
                                 }
                             }
@@ -143,7 +143,7 @@ struct SettingsView: View {
                 Section(footer: Text("Empty = the tag chosen at import.")) {
                     TextField("Tag", text: $tag).textInputAutocapitalization(.never).autocorrectionDisabled()
                 }
-                Section(footer: Text("Pie models: tap the import button next to the model and pick its .metal.zt, or put <artifact>.metal.zt in Files › On My iPhone › Pie Bench › models.")) {
+                Section(footer: Text("Pie models download on Run from Hugging Face (\(Downloader.pieRepo)); to use your own, tap the import button next to the model and pick its .metal.zt, or put <artifact>.metal.zt in Files › On My iPhone › Pie Bench › models.")) {
                     LabeledContent("records.jsonl", value: "Files › Pie Bench")
                 }
             }
