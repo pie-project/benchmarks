@@ -17,6 +17,8 @@ struct PieAdapter: EngineAdapter {
     let id = EngineID.pie
     /// The runtime boots once per process (PieServer.shutdown is final).
     @MainActor static var booted: String?
+    /// The model `booted` serves, kept for a second run of it in the same launch.
+    @MainActor static var served: PieModel?
 
     /// The bundled bench inferlet (PIEBENCH_PIE_WASM overrides it for the Mac test harness).
     static var wasm: URL? {
@@ -33,6 +35,8 @@ struct PieAdapter: EngineAdapter {
 
     func load(_ m: ModelEntry, checkpoint: Checkpoint, contract: Contract) async throws -> LoadedModel {
         if let other = await PieAdapter.booted {
+            // the same model again in this launch: the server it booted is still up
+            if other == m.artifact, let served = await PieAdapter.served { return served }
             throw BenchError.message("pie boots once per app process and already served \(other); relaunch the app to run \(m.artifact)")
         }
         guard let file = Downloader.pieFile(m) else { throw BenchError.message("no .metal.zt for \(m.artifact)") }
@@ -49,7 +53,9 @@ struct PieAdapter: EngineAdapter {
         let client = try await server.connect()
         let wasm = PieAdapter.wasm!
         let name = try await server.install(contentsOf: wasm)
-        return PieModel(server: server, client: client, inferlet: name, system: contract.system, cfg: cfg)
+        let model = PieModel(server: server, client: client, inferlet: name, system: contract.system, cfg: cfg)
+        await MainActor.run { PieAdapter.served = model }
+        return model
     }
 }
 

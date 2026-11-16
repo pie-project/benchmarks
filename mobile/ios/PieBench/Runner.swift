@@ -191,14 +191,9 @@ final class Runner: ObservableObject {
         Self.keepAwake(true)
         defer { running = false; Self.keepAwake(false); status = "idle"; downloadProgress = nil }
 
-        // A fresh records.jsonl per run; the previous one is kept beside it.
+        // records.jsonl keeps every run (each row carries its run id), so a run never loses the one before it.
         let fm = FileManager.default
-        if fm.fileExists(atPath: Storage.records.path) {
-            let old = Storage.documents.appending(path: "records-previous.jsonl")
-            try? fm.removeItem(at: old)
-            try? fm.moveItem(at: Storage.records, to: old)
-        }
-        fm.createFile(atPath: Storage.records.path, contents: nil)
+        if !fm.fileExists(atPath: Storage.records.path) { fm.createFile(atPath: Storage.records.path, contents: nil) }
         rows = []
         let runID = Self.runID(for: plan.models)
         say("run \(runID): \(plan.models.count) model(s) x \(plan.workloads.count) workload(s)")
