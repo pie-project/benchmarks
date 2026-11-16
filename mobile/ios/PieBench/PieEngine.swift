@@ -40,8 +40,9 @@ struct PieAdapter: EngineAdapter {
         var cfg = PieServer.Configuration()
         cfg.maxForwardRequests = 4
         cfg.maxConcurrentProcesses = 8
-        // PieServer's default of 16 state slots starves Qwen3.5's recurrent layers at this pie ("state pool starved"); 64 is pie's own default.
-        cfg.maxStateSlots = 64
+        // PieServer's default of 16 state slots starves Qwen3.5's recurrent layers ("state pool starved"); 256 is pie's own default
+        // (64 starved Qwen3.5-4B: 32 slots a request).
+        cfg.maxStateSlots = 256
         // Test knob (the Mac harness shares its GPU with other work): PIEBENCH_PIE_MEMORY_SHARE overrides the 0.6 share.
         if let v = ProcessInfo.processInfo.environment["PIEBENCH_PIE_MEMORY_SHARE"].flatMap(Double.init) { cfg.deviceMemoryShare = v }
         let server = try await PieServer.start(model: file, configuration: cfg)
@@ -154,6 +155,7 @@ actor Gate {
 }
 #else
 struct PieAdapter: EngineAdapter {
+    @MainActor static var booted: String?
     let id = EngineID.pie
     func unsupportedReason(_ m: ModelEntry) -> String? { PieBuild.unavailable }
     func load(_ m: ModelEntry, checkpoint: Checkpoint, contract: Contract) async throws -> LoadedModel {

@@ -224,6 +224,11 @@ final class Runner: ObservableObject {
             for w in workloads { emit(row(cell(w.id), status: "declared_unsupported", error: reason)) }
             return
         }
+        // pie boots once per app process: a second pie model waits for the next launch, and writes no rows here.
+        if m.engine == .pie, let served = PieAdapter.booted, served != m.artifact {
+            say("\(m.artifact): not run, pie already served \(served) in this launch: force-quit and reopen Pie Bench, then run \(m.artifact)")
+            return
+        }
         // Too big for what iOS lets this app have: fail without loading (or downloading).
         let avail = DeviceInfo.availableBytes
         let need = Int64(Double(m.bytes) * 1.1) + 300 << 20
