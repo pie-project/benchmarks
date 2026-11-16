@@ -17,7 +17,7 @@ The phone benchmark app. It runs the phone workloads on the phone and shares the
 | Pie (fdc91d79 on iPhone, a6547509 on Android) | Vulkan, in-process | Metal, in-process | `.metal.zt` / `.vulkan.zt` made with `pie model import <repo> --deployment <sku>`, then copied to the phone |
 
 - **Models:** qwen3.5-0.8b, qwen3.5-4b, gemma-4-e2b, gemma-4-e4b, gemma-4-12b. Use gemma-4-12b only on 12-16 GB phones.
-- **Downloads:** the app downloads weights from Hugging Face. Pie artifacts are not hosted there: the iPhone build ships `qwen3.5-0.8b-mlx4.metal.zt` inside the app, and the others are imported with the button next to each model.
+- **Downloads:** the app downloads weights from Hugging Face. Pie artifacts come from `antonmeln/pie-bench-phone` (`metal/<pie commit>/<artifact>.metal.zt`, made with `pie model import` at the app's pie commit); the iPhone build also ships `qwen3.5-0.8b-mlx4.metal.zt` inside the app, and the import button next to each model takes your own.
 
 ## Install
 

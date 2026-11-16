@@ -71,10 +71,8 @@ enum Downloader {
 
     static func ensure(_ m: ModelEntry, log: @escaping (String) -> Void, progress: @escaping (Double) -> Void) async throws -> Checkpoint {
         if let c = present(m) { return c }
-        if m.engine == .pie {
-            throw BenchError.message("no \(m.artifact).metal.zt on the phone: run `pie model import \(m.repo) --deployment \(m.pieSku ?? "?")` on a Mac and copy the .metal.zt into PieBench/models/ (Files or Finder)")
-        }
         let fm = FileManager.default
+        if m.engine == .pie { return try await ensurePie(m, log: log, progress: progress) }
         try fm.createDirectory(at: m.directory, withIntermediateDirectories: true)
         let info = try await repoInfo(m.repo)
         let files: [(String, Int64)]
@@ -103,6 +101,30 @@ enum Downloader {
             done += size
         }
         let c = Checkpoint(repo: m.repo, file: m.file, revision: commit ?? info.sha, bytes: files.reduce(0) { $0 + $1.1 })
+        try c.write(m.directory)
+        return c
+    }
+
+    /// Where pie artifacts are hosted: `metal/<pie commit, 8 chars>/<artifact>.metal.zt`, made with `pie model import` at that commit.
+    static let pieRepo = "antonmeln/pie-bench-phone"
+
+    /// A pie model's `.metal.zt` for this app's pie commit, downloaded from `pieRepo` when it is not on the phone already.
+    static func ensurePie(_ m: ModelEntry, log: @escaping (String) -> Void, progress: @escaping (Double) -> Void) async throws -> Checkpoint {
+        let howto = "run `pie model import \(m.repo) --deployment \(m.pieSku ?? "?")` on a Mac and copy the .metal.zt into PieBench/models/ (Files or Finder)"
+        guard let commit = PieInfo.commit else { throw BenchError.message("this build has no pie commit to fetch \(m.artifact).metal.zt for: \(howto)") }
+        let path = "metal/\(commit.prefix(8))/\(m.artifact).metal.zt"
+        let info = try await repoInfo(pieRepo)
+        guard let size = info.siblings.first(where: { $0.rfilename == path })?.size else {
+            throw BenchError.message("no \(path) in \(pieRepo) for this app's pie \(commit.prefix(8)): \(howto)")
+        }
+        try FileManager.default.createDirectory(at: m.directory, withIntermediateDirectories: true)
+        log("download \(pieRepo)/\(path) (\(String(format: "%.2f", Double(size) / 1e9)) GB)")
+        let url = URL(string: "https://huggingface.co/\(pieRepo)/resolve/\(info.sha)/\(path)")!
+        let (tmp, header) = try await fetch(url) { got in progress(Double(got) / Double(max(1, size))) }
+        let dest = m.directory.appending(path: "model.metal.zt")
+        try? FileManager.default.removeItem(at: dest)
+        try FileManager.default.moveItem(at: tmp, to: dest)
+        let c = Checkpoint(repo: pieRepo, file: path, revision: header ?? info.sha, bytes: size)
         try c.write(m.directory)
         return c
     }
