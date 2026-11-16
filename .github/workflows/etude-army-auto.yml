@@ -27,10 +27,11 @@ jobs:
     defaults:
       run:
         shell: bash {0}
-    env:
-      WORK: ${{ runner.temp }}/etude-army-auto
-      OUT: ${{ runner.temp }}/etude-army-auto-out
     steps:
+      - name: Paths
+        run: |
+          echo "WORK=$RUNNER_TEMP/etude-army-auto" >> "$GITHUB_ENV"
+          echo "OUT=$RUNNER_TEMP/etude-army-auto-out" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - name: Fetch Étude 0.2.4
         run: |
@@ -86,6 +87,8 @@ jobs:
       - name: Clean up
         if: always()
         run: |
+          WORK=${WORK:-$RUNNER_TEMP/etude-army-auto}
+          OUT=${OUT:-$RUNNER_TEMP/etude-army-auto-out}
           python3 etude-army-auto/bench.py stop --out "$WORK/gw" || true
           pkill -f "$WORK/" || true
           sleep 5
