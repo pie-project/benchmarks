@@ -1,0 +1,136 @@
+name: etude-team
+run-name: etude trained team ${{ inputs.problems }}x${{ inputs.attempts }}
+on:
+  workflow_dispatch:
+    inputs:
+      problems:
+        type: string
+        default: "16"
+      attempts:
+        type: string
+        default: "2"
+      lanes:
+        type: string
+        default: "12"
+      quant:
+        type: boolean
+        default: true
+  push:
+    branches: [etude-team]
+permissions:
+  contents: read
+concurrency:
+  group: etude-team
+  cancel-in-progress: false
+jobs:
+  team:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, macOS, ARM64, m5-max-128g]
+    timeout-minutes: 420
+    defaults:
+      run:
+        shell: bash {0}
+    env:
+      WORK: ${{ runner.temp }}/etude-team
+      OUT: ${{ runner.temp }}/etude-team-out
+      EHOME: /private/tmp/et-${{ github.run_id }}
+      TAG: etude-team-tmp
+      UV_VERSION: 0.13.5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf "$WORK" "$OUT" "$EHOME"
+          mkdir -p "$WORK/dl" "$WORK/mnt" "$WORK/tmp" "$OUT"
+          api="https://api.github.com/repos/$GITHUB_REPOSITORY"
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" "$api/releases/tags/$TAG" -o "$WORK/release.json"
+          for name in Etude-0.2.7-RC44.dmg adapter_model.safetensors adapter_config.json team.yaml pie-swarm.tar.gz; do
+            id=$(python3 -c 'import json, sys; print(next(a["id"] for a in json.load(open(sys.argv[1]))["assets"] if a["name"] == sys.argv[2]))' "$WORK/release.json" "$name")
+            curl -fsSL --retry 3 -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/octet-stream" -o "$WORK/dl/$name" "$api/releases/assets/$id"
+          done
+          curl -fsSL --retry 3 -o "$WORK/dl/uv-aarch64-apple-darwin.tar.gz" "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-aarch64-apple-darwin.tar.gz"
+          (cd "$WORK/dl" && shasum -a 256 -c "$GITHUB_WORKSPACE/etude-team/SHA256SUMS")
+          sysctl -n machdep.cpu.brand_string hw.memsize
+          sw_vers -productVersion
+          df -h "$RUNNER_TEMP" | tail -1
+          pgrep -lf 'etude|Etude|pie |llama|mlx|ollama' | cut -c1-200 | head -20 || true
+      - name: Python
+        run: |
+          set -euo pipefail
+          tar -xzf "$WORK/dl/uv-aarch64-apple-darwin.tar.gz" -C "$WORK"
+          UV="$WORK/uv-aarch64-apple-darwin/uv"
+          export UV_CACHE_DIR="$WORK/uv-cache" UV_PYTHON_INSTALL_DIR="$WORK/uv-python" UV_PYTHON_BIN_DIR="$WORK/uv-bin" UV_NO_CONFIG=1 UV_PYTHON_PREFERENCE=only-managed
+          "$UV" venv --python 3.12 "$WORK/venv"
+          mkdir -p "$WORK/src"
+          tar -xzf "$WORK/dl/pie-swarm.tar.gz" -C "$WORK/src"
+          "$UV" pip install --python "$WORK/venv/bin/python" "$WORK/src/pie-swarm" numpy tokenizers huggingface_hub
+          "$WORK/venv/bin/python" -c 'import pieswarm.team.cli, pieswarm.scoring, pieswarm.export.merge, numpy, tokenizers, huggingface_hub; print("python ok")'
+      - name: Étude app
+        run: |
+          set -euo pipefail
+          hdiutil attach -nobrowse -readonly -noautoopen -mountpoint "$WORK/mnt" "$WORK/dl/Etude-0.2.7-RC44.dmg" < /dev/null > /dev/null
+          app=$(ls -d "$WORK"/mnt/*.app | head -1)
+          ditto "$app" "$WORK/Etude.app"
+          hdiutil detach "$WORK/mnt" > /dev/null
+          ls -la "$WORK/Etude.app/Contents/Helpers" "$WORK/Etude.app/Contents/Resources/inferlets"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' -c 'Print :CFBundleVersion' "$WORK/Etude.app/Contents/Info.plist"
+          E="$WORK/Etude.app/Contents/Helpers/Etude Helper.app/Contents/MacOS/etude-helper"
+          if [ -x "$WORK/Etude.app/Contents/Helpers/etude" ]; then E="$WORK/Etude.app/Contents/Helpers/etude"; fi
+          "$E" --version
+          env -i PATH=/usr/bin:/bin HOME="$WORK/tmp" "$WORK/Etude.app/Contents/Helpers/pie" --version || true
+      - name: Run
+        env:
+          PROBLEMS: ${{ inputs.problems }}
+          ATTEMPTS: ${{ inputs.attempts }}
+          LANES: ${{ inputs.lanes }}
+          QUANT: ${{ inputs.quant }}
+        run: |
+          set -uo pipefail
+          export HF_HOME="$WORK/hf" HF_HUB_DISABLE_TELEMETRY=1 TMPDIR="$WORK/tmp"
+          "$WORK/venv/bin/python" -u etude-team/run.py --app "$WORK/Etude.app" --work "$WORK" --home "$EHOME" --out "$OUT" \
+            --assets "$WORK/dl" --venv "$WORK/venv" --problems "$PROBLEMS" --attempts "$ATTEMPTS" --lanes "$LANES" --quant "$QUANT"
+          status=$?
+          cat "$OUT/summary.md" >> "$GITHUB_STEP_SUMMARY" || true
+          exit $status
+      - name: Collect Étude logs
+        if: always()
+        run: |
+          mkdir -p "$OUT/etude-state"
+          if [ -d "$EHOME/Library" ]; then
+            (cd "$EHOME/Library" && find . -type f -size -51200k ! -path '*/models/*' ! -path '*/hf/*' ! -name '*.zt' ! -name '*key*' -print) |
+              while IFS= read -r f; do ditto "$EHOME/Library/$f" "$OUT/etude-state/$f" || true; done
+          fi
+          du -sh "$OUT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: etude-team-${{ github.run_id }}
+          path: ${{ runner.temp }}/etude-team-out
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Clean up
+        if: always()
+        run: |
+          E="$WORK/Etude.app/Contents/Helpers/Etude Helper.app/Contents/MacOS/etude-helper"
+          if [ -x "$WORK/Etude.app/Contents/Helpers/etude" ]; then E="$WORK/Etude.app/Contents/Helpers/etude"; fi
+          if [ -S "$EHOME/Library/Application Support/Etude/run/core.sock" ] && [ -x "$E" ]; then
+            env -i HOME="$EHOME" PATH=/usr/bin:/bin:/usr/sbin:/sbin ETUDE_CORE_ENGINE_DISCOVERY=off perl -e 'alarm shift; exec @ARGV' 120 "$E" --json quit --force || true
+          fi
+          pkill -f "$WORK/" || true
+          pkill -f "$EHOME/" || true
+          sleep 5
+          pkill -9 -f "$WORK/" || true
+          pkill -9 -f "$EHOME/" || true
+          hdiutil detach "$WORK/mnt" -force > /dev/null 2>&1 || true
+          for d in "$WORK" "$EHOME" "$OUT"; do
+            [ -e "$d" ] || continue
+            chflags -R nouchg "$d" 2> /dev/null || true
+            chmod -R u+rwx "$d" 2> /dev/null || true
+            rm -rf "$d"
+          done
+          echo "processes left: $(pgrep -f "$WORK/|$EHOME/" | wc -l | tr -d ' ')"
+          for d in "$WORK" "$EHOME" "$OUT"; do [ -e "$d" ] && echo "still present: $d" || echo "removed: $d"; done
+          df -h "$RUNNER_TEMP" | tail -1
