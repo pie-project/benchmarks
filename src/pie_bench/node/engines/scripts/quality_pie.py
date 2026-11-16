@@ -15,6 +15,7 @@ async def generate(bench_args: list[str], items: list[dict], system: str, max_to
 
     args = build_parser().parse_args(bench_args)
     out = [""] * len(items)
+    said: set[str] = set()
     async with pie_client(args) as (client, _):
         pkg = await client.install_program(bench_inferlet_wasm(args.inferlet_dir))
         gate = asyncio.Semaphore(concurrency)
@@ -31,7 +32,13 @@ async def generate(bench_args: list[str], items: list[dict], system: str, max_to
                     if ev == Event.Return:
                         out[i] = json.loads(msg).get("text", "")
                         return
+                    if ev in (Event.Stdout, Event.Stderr):
+                        if str(msg) not in said:
+                            said.add(str(msg))
+                            print(f"inferlet {ev.value}: {str(msg)[:300]}", file=sys.stderr)
+                        continue
                     if ev not in (Event.Message,):
+                        print(f"inferlet {ev.value}: {str(msg)[:500]}", file=sys.stderr)
                         out[i] = ""
                         return
 
@@ -52,8 +59,10 @@ def main() -> None:
     items = json.loads(Path(a.items).read_text())
     bench_args = a.bench_args[1:] if a.bench_args[:1] == ["--"] else a.bench_args
     texts = asyncio.run(generate(bench_args, items, a.system, a.max_tokens, a.timeout, a.concurrency))
-    Path(a.out).write_text(json.dumps(texts))
     print(f"generated {sum(1 for t in texts if t)} of {len(texts)}", file=sys.stderr)
+    if texts and not any(texts):
+        sys.exit("every generation came back empty: not a score")
+    Path(a.out).write_text(json.dumps(texts))
 
 
 if __name__ == "__main__":
