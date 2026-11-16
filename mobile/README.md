@@ -32,7 +32,7 @@ The phone benchmark app. It runs the phone workloads on the phone and shares the
   - A free team may refuse the increased-memory-limit entitlement; remove it if so.
   - To build with MLC and Pie too: `ios/scripts/generate-all.sh <pie checkout>`. MLX Swift is built in only with `MLX_ENABLED=YES`.
 - **iPhone, TestFlight** (app `org.pie-project.pie-bench`, team 9B2K6Z98F9):
-  1. `PIE_APPLE_SLICES="aarch64-apple-ios aarch64-apple-darwin" ios/scripts/build-pie.sh <pie checkout>` (the slices need pie's `build-xcframework.sh` to read `PIE_APPLE_SLICES`; without it all three are built).
+  1. In the pie checkout at fdc91d79, `git apply ios/scripts/pie-fdc91d79-ios.patch` (model paths passed unescaped; the recurrent-state buffer reserved at the page-rounded size its commits ask for, or Qwen3.5-4B starves on a phone's memory), then `PIE_APPLE_SLICES="aarch64-apple-ios aarch64-apple-darwin" ios/scripts/build-pie.sh <pie checkout>` (the slices need pie's `build-xcframework.sh` to read `PIE_APPLE_SLICES`; without it all three are built).
   2. `pie model import mlx-community/Qwen3.5-0.8B-4bit --deployment qwen35-d0.8b-u4g64-kv-bf16 --out ios/Vendor/pie/models/qwen3.5-0.8b-mlx4.metal.zt`, then rerun step 1's `xcodegen` so the app bundles it.
   3. Raise `CURRENT_PROJECT_VERSION` in `ios/project.yml` for every upload.
   4. `xcodebuild archive -project ios/PieBench.xcodeproj -scheme PieBench -destination generic/platform=iOS -archivePath build/PieBench.xcarchive -allowProvisioningUpdates`

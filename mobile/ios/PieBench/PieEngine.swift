@@ -17,6 +17,8 @@ struct PieAdapter: EngineAdapter {
     let id = EngineID.pie
     /// The runtime boots once per process (PieServer.shutdown is final).
     @MainActor static var booted: String?
+    /// The model `booted` serves, kept for a second run of it in the same launch.
+    @MainActor static var served: PieModel?
 
     /// The bundled bench inferlet (PIEBENCH_PIE_WASM overrides it for the Mac test harness).
     static var wasm: URL? {
@@ -33,6 +35,8 @@ struct PieAdapter: EngineAdapter {
 
     func load(_ m: ModelEntry, checkpoint: Checkpoint, contract: Contract) async throws -> LoadedModel {
         if let other = await PieAdapter.booted {
+            // the same model again in this launch: the server it booted is still up
+            if other == m.artifact, let served = await PieAdapter.served { return served }
             throw BenchError.message("pie boots once per app process and already served \(other); relaunch the app to run \(m.artifact)")
         }
         guard let file = Downloader.pieFile(m) else { throw BenchError.message("no .metal.zt for \(m.artifact)") }
@@ -40,15 +44,18 @@ struct PieAdapter: EngineAdapter {
         var cfg = PieServer.Configuration()
         cfg.maxForwardRequests = 4
         cfg.maxConcurrentProcesses = 8
-        // PieServer's default of 16 state slots starves Qwen3.5's recurrent layers at this pie ("state pool starved"); 64 is pie's own default.
-        cfg.maxStateSlots = 64
+        // PieServer's default of 16 state slots starves Qwen3.5's recurrent layers ("state pool starved"); 256 is pie's own default
+        // (64 starved Qwen3.5-4B: 32 slots a request).
+        cfg.maxStateSlots = 256
         // Test knob (the Mac harness shares its GPU with other work): PIEBENCH_PIE_MEMORY_SHARE overrides the 0.6 share.
         if let v = ProcessInfo.processInfo.environment["PIEBENCH_PIE_MEMORY_SHARE"].flatMap(Double.init) { cfg.deviceMemoryShare = v }
         let server = try await PieServer.start(model: file, configuration: cfg)
         let client = try await server.connect()
         let wasm = PieAdapter.wasm!
         let name = try await server.install(contentsOf: wasm)
-        return PieModel(server: server, client: client, inferlet: name, system: contract.system, cfg: cfg)
+        let model = PieModel(server: server, client: client, inferlet: name, system: contract.system, cfg: cfg)
+        await MainActor.run { PieAdapter.served = model }
+        return model
     }
 }
 
@@ -154,6 +161,7 @@ actor Gate {
 }
 #else
 struct PieAdapter: EngineAdapter {
+    @MainActor static var booted: String?
     let id = EngineID.pie
     func unsupportedReason(_ m: ModelEntry) -> String? { PieBuild.unavailable }
     func load(_ m: ModelEntry, checkpoint: Checkpoint, contract: Contract) async throws -> LoadedModel {

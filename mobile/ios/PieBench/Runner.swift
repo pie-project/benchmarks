@@ -191,14 +191,9 @@ final class Runner: ObservableObject {
         Self.keepAwake(true)
         defer { running = false; Self.keepAwake(false); status = "idle"; downloadProgress = nil }
 
-        // A fresh records.jsonl per run; the previous one is kept beside it.
+        // records.jsonl keeps every run (each row carries its run id), so a run never loses the one before it.
         let fm = FileManager.default
-        if fm.fileExists(atPath: Storage.records.path) {
-            let old = Storage.documents.appending(path: "records-previous.jsonl")
-            try? fm.removeItem(at: old)
-            try? fm.moveItem(at: Storage.records, to: old)
-        }
-        fm.createFile(atPath: Storage.records.path, contents: nil)
+        if !fm.fileExists(atPath: Storage.records.path) { fm.createFile(atPath: Storage.records.path, contents: nil) }
         rows = []
         let runID = Self.runID(for: plan.models)
         say("run \(runID): \(plan.models.count) model(s) x \(plan.workloads.count) workload(s)")
@@ -222,6 +217,11 @@ final class Runner: ObservableObject {
         if let reason = adapter.unsupportedReason(m) {
             say("\(m.artifact) [\(m.engine.rawValue)]: declared_unsupported: \(reason)")
             for w in workloads { emit(row(cell(w.id), status: "declared_unsupported", error: reason)) }
+            return
+        }
+        // pie boots once per app process: a second pie model waits for the next launch, and writes no rows here.
+        if m.engine == .pie, let served = PieAdapter.booted, served != m.artifact {
+            say("\(m.artifact): not run, pie already served \(served) in this launch: force-quit and reopen Pie Bench, then run \(m.artifact)")
             return
         }
         // Too big for what iOS lets this app have: fail without loading (or downloading).
