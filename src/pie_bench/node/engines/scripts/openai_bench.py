@@ -27,6 +27,11 @@ from common import (
 )
 
 
+def monotonic_ns() -> int:
+    # the clock nsys stamps a trace with: CLOCK_MONOTONIC, or Windows' monotonic counter
+    return time.clock_gettime_ns(time.CLOCK_MONOTONIC) if hasattr(time, "clock_gettime_ns") else time.monotonic_ns()
+
+
 def post_stream(url: str, payload: dict[str, Any], timeout: float, on_chunk) -> None:
     req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"}, method="POST")
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -82,6 +87,7 @@ def payload_for(args: argparse.Namespace, prompt: str, max_tokens: int) -> dict[
 def run_one(args: argparse.Namespace, endpoint: str, prompt: str, prompt_count: int, max_tokens: int, server: list[dict[str, Any]],
             retries: list[int] | None = None) -> RequestResult:
     start = time.perf_counter()
+    sent_ns = monotonic_ns()
     stamps: list[float] = []
     seen: dict[str, Any] = {"usage": {}, "timings": {}}
 
@@ -113,7 +119,7 @@ def run_one(args: argparse.Namespace, endpoint: str, prompt: str, prompt_count: 
     })
     ttft = (stamps[0] - start) if stamps else None
     gaps = [int((b - a) * 1e6) for a, b in zip(stamps, stamps[1:])]
-    return RequestResult(True, end - start, n_out, n_in, ttft_s=ttft, intertoken_us=gaps)
+    return RequestResult(True, end - start, n_out, n_in, ttft_s=ttft, intertoken_us=gaps, client_send_s=sent_ns / 1e9)
 
 
 def shuffled(prompt: str, seed: int) -> str:
@@ -169,8 +175,11 @@ async def run(args: argparse.Namespace):
         result.latency_s += waited
         if result.ttft_s is not None:
             result.ttft_s += waited
+        # with --report-timing: when the request was queued, on the epoch's clock (what a profiler lines up with its trace)
+        result.client_send_s = result.client_send_s - waited - epoch_ns / 1e9 if args.report_timing and result.client_send_s is not None else None
         return result
 
+    epoch_unix_s, epoch_ns = time.time(), monotonic_ns()
     t0 = time.perf_counter()
     try:
         results = await asyncio.gather(*(one(p, c, m) for p, c, m in zip(prompts[args.warmup:], counts[args.warmup:], budgets[args.warmup:])))
@@ -198,6 +207,9 @@ async def run(args: argparse.Namespace):
         "top_p": args.top_p,
         "extra_body": args.extra_body or "",
     }
+    if args.report_timing:
+        config["client timing epoch unix s"] = epoch_unix_s
+        config["client timing epoch monotonic ns"] = epoch_ns
     for key in ("prefill_tok_s", "decode_tok_s"):
         value = _median([float(s[key]) for s in server if s[key]])
         if value is not None:
@@ -219,6 +231,7 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--chat", action="store_true", help="send chat messages and let the server render its own template")
         sp.add_argument("--token-ids", action="store_true", help="send the rendered prompt as token ids, not text")
         sp.add_argument("--flush-cache", action=argparse.BooleanOptionalAction, default=True, help="shuffle each prompt so no request reuses a cached prefix")
+        sp.add_argument("--report-timing", action="store_true", help="each request's send time on a monotonic epoch, for a profiler")
     return parser
 
 
