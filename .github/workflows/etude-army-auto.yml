@@ -1,0 +1,99 @@
+name: etude-army-auto
+run-name: etude army auto (${{ inputs.model }}, ${{ inputs.lanes }} lanes, ${{ inputs.etude_ref }})
+on:
+  workflow_dispatch:
+    inputs:
+      etude_ref:
+        type: string
+        default: 6203a0a99c17da7303f2e82b40b3bfb338fa4b57
+      model:
+        type: string
+        default: qwen3.6-35b-a3b
+      lanes:
+        type: string
+        default: "9"
+  push:
+    branches: [etude-army-auto]
+permissions:
+  contents: read
+concurrency:
+  group: etude-army
+  cancel-in-progress: false
+jobs:
+  auto:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, macOS, ARM64, m5-max-128g]
+    timeout-minutes: 300
+    defaults:
+      run:
+        shell: bash {0}
+    env:
+      WORK: ${{ runner.temp }}/etude-army-auto
+      OUT: ${{ runner.temp }}/etude-army-auto-out
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Étude 0.2.4
+        run: |
+          set -euo pipefail
+          rm -rf "$WORK" "$OUT"
+          mkdir -p "$WORK/mnt" "$OUT"
+          curl -fsSL -o "$WORK/Etude.dmg" https://etude-updates.liszt.ai/Etude-0.2.4.dmg
+          echo "43ff68487436339cd96a33f8ee53c6f03b86e94659d984265fdf157c8dd73369  $WORK/Etude.dmg" | shasum -a 256 -c
+          hdiutil attach -nobrowse -readonly -noautoopen -mountpoint "$WORK/mnt" "$WORK/Etude.dmg" < /dev/null > /dev/null
+          ditto "$(ls -d "$WORK"/mnt/*.app | head -1)" "$WORK/Etude.app"
+          hdiutil detach "$WORK/mnt" > /dev/null
+          "$WORK/Etude.app/Contents/Helpers/etude-agent" --version || true
+          sysctl -n machdep.cpu.brand_string hw.memsize
+          df -h "$HOME" | tail -1
+      - name: Build the harness around the PR's army sources
+        env:
+          TOKEN: ${{ secrets.ETUDE_READ_TOKEN }}
+          REF: ${{ inputs.etude_ref }}
+        run: |
+          set -euo pipefail
+          cp -R etude-army-auto/harness "$WORK/harness"
+          mkdir -p "$WORK/harness/etude"
+          for f in army.rs army_serve.rs army_probe.rs army_plan.rs army_split.rs; do
+            curl -fsSL -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github.raw+json" \
+              -o "$WORK/harness/etude/$f" "https://api.github.com/repos/liszt-ai/etude/contents/etude-core/cli/src/$f?ref=$REF"
+          done
+          wc -l "$WORK"/harness/etude/*.rs
+          export PATH="$HOME/.cargo/bin:$PATH"
+          rustup toolchain install 1.98.1 --profile minimal > "$OUT/rustup.log" 2>&1 || true
+          status=0
+          CARGO_TARGET_DIR="$WORK/target" cargo +1.98.1 build -q --release --manifest-path "$WORK/harness/Cargo.toml" > "$OUT/build.log" 2>&1 || status=$?
+          rm -rf "$WORK/harness/etude"
+          tail -40 "$OUT/build.log"
+          [ "$status" = 0 ]
+      - name: Gateway
+        run: |
+          python3 -u etude-army-auto/bench.py serve --app "$WORK/Etude.app" --model "${{ inputs.model }}" \
+            --lanes "${{ inputs.lanes }}" --request 65536 --out "$WORK/gw"
+      - name: Scenarios
+        run: |
+          read -r port key_file model < <(python3 -c 'import json,sys; g=json.load(open(sys.argv[1])); print(g["port"], g["key_file"], g["model"])' "$WORK/gw/gateway.json")
+          export ARMY_BASE_URL="http://127.0.0.1:$port/v1" ARMY_KEY_FILE="$key_file" ARMY_MODEL="$model" ARMY_CONTEXT=65536 \
+            ARMY_LANES="${{ inputs.lanes }}" ARMY_AGENT="$WORK/Etude.app/Contents/Helpers/etude-agent" \
+            ETUDE_AGENT_PATTERN="$WORK/Etude.app/Contents/Helpers/etude-agent"
+          bash etude-army-auto/run.sh "$WORK/target/release/army-auto" "$OUT" "$WORK/repos"
+          cat "$OUT/summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: etude-army-auto-${{ github.run_id }}
+          path: ${{ runner.temp }}/etude-army-auto-out
+          if-no-files-found: warn
+      - name: Clean up
+        if: always()
+        run: |
+          python3 etude-army-auto/bench.py stop --out "$WORK/gw" || true
+          pkill -f "$WORK/" || true
+          sleep 5
+          pkill -9 -f "$WORK/" || true
+          hdiutil detach "$WORK/mnt" -force > /dev/null 2>&1 || true
+          rm -rf "$WORK" "$OUT" "$HOME/.cache/etude-army"
+          if [ -e "$WORK" ] || find "$RUNNER_TEMP" -name 'army_split.rs' -print -quit 2>/dev/null | grep -q .; then
+            echo "Étude sources still present"
+            exit 1
+          fi
+          echo "fetched Étude sources removed: $WORK is gone and no army_*.rs remains under RUNNER_TEMP"
