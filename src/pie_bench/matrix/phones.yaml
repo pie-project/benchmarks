@@ -14,6 +14,7 @@ phones:
   - {id: pixel-10, name: Pixel 10, vendor: Google, os: android, backend: vulkan, accelerator: Google Tensor G5, arch: tensor-g5, memory_gib: 12, year: 2025, device_models: ["Pixel 10"]}
   - {id: pixel-10-pro, name: Pixel 10 Pro, vendor: Google, os: android, backend: vulkan, accelerator: Google Tensor G5, arch: tensor-g5, memory_gib: 16, year: 2025, device_models: ["Pixel 10 Pro"]}
   - {id: pixel-10-pro-xl, name: Pixel 10 Pro XL, vendor: Google, os: android, backend: vulkan, accelerator: Google Tensor G5, arch: tensor-g5, memory_gib: 16, year: 2025, device_models: ["Pixel 10 Pro XL"]}
+  - {id: pixel-11-pro, name: Pixel 11 Pro, vendor: Google, os: android, backend: vulkan, accelerator: Google Tensor G6, arch: tensor-g6, memory_gib: 12, year: 2026, device_models: ["Pixel 11 Pro"]}
   - {id: iphone-14-pro, name: iPhone 14 Pro, vendor: Apple, os: ios, backend: metal, accelerator: Apple A16 Bionic, arch: a16, memory_gib: 6, year: 2022, device_models: ["iPhone15,2"]}
   - {id: iphone-14-pro-max, name: iPhone 14 Pro Max, vendor: Apple, os: ios, backend: metal, accelerator: Apple A16 Bionic, arch: a16, memory_gib: 6, year: 2022, device_models: ["iPhone15,3"]}
   - {id: iphone-15-pro, name: iPhone 15 Pro, vendor: Apple, os: ios, backend: metal, accelerator: Apple A17 Pro, arch: a17-pro, memory_gib: 8, year: 2023, device_models: ["iPhone16,1"]}
