@@ -22,6 +22,8 @@ object PieFactory {
  * OpenAI-compatible /v1/completions route on 127.0.0.1 with SSE streaming; concurrent
  * requests are batched by the engine (max_forward_requests = 4).
  */
+private const val KV_BUDGET = "1GiB"
+
 class PieEngine(private val context: Context) : BenchEngine {
     override val id = "pie"
     override val version = PieFactory.PIE_COMMIT
@@ -45,6 +47,7 @@ class PieEngine(private val context: Context) : BenchEngine {
         .put("max_forward_requests", 4)
         .put("max_concurrent_processes", 4)
         .put("device_memory_share", 0.6)
+        .put("device_kv_budget", KV_BUDGET)
         .put("temperature", 0)
         .put("ignore_eos", true)
         .put("prefix_cache", "always on in pie embedded (no switch); cached_prompt_tokens as pie reports them")
@@ -55,6 +58,9 @@ class PieEngine(private val context: Context) : BenchEngine {
         val s = runBlocking {
             PieServer.start(model = model, home = File(context.cacheDir, "pie"), listen = "127.0.0.1:0") {
                 maxModelLength = 4096; maxForwardRequests = 4; maxForwardTokens = forwardTokens; maxConcurrentProcesses = 4
+                // A fixed kv budget: left unset, pie reserves all of its device share for kv up front, and Android's
+                // low-memory killer then stops the app (Gemma 4 E4B on the Galaxy S26 Ultra). These workloads need well under 1 GiB.
+                deviceKvBudget = KV_BUDGET
             }
         }
         server = s
