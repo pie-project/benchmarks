@@ -1020,9 +1020,10 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
     for m in models:
         m["platforms"] = ", ".join(t for t in order if t in platforms.get(m["id"], set()))
     engine_ids = [e["id"] for e in mac_engines]
-    gpu_ids = [p["id"] for p in load("platforms")["platforms"] if p.get("os") != "macos"]
     phone_rows = phone_hardware(store)
     phone_ids = [h["id"] for h in phone_rows]
+    # a phone a submission contributed is among the platforms too: listed once, as a phone
+    gpu_ids = [p["id"] for p in load("platforms")["platforms"] if p.get("os") != "macos" and p["id"] not in phone_ids]
     all_engines = [e["id"] for e in engines()]
     results, rmeta = results_by_tag(store, a2m, hardware_ids + gpu_ids + phone_ids, all_engines, config.get("prefill_only"))
     lap("results_by_tag")
