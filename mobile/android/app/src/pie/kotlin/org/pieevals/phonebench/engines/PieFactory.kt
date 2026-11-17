@@ -12,8 +12,8 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
 object PieFactory {
-    /** pie commit the AAR in app/libs/pie was built from (pie-project/pie origin/main). */
-    const val PIE_COMMIT = "a6547509432d48c76e258bfefbb85bd58984f8e4"
+    /** pie commit the AAR in app/libs/pie was built from (pie-project/pie feat/runtime-raii, #1688: a shutdown frees the runtime for the next boot). */
+    const val PIE_COMMIT = "316e72a07353fd87fabd8c5fa9600e93544bd66d"
     fun create(context: Context): BenchEngine = PieEngine(context)
 }
 
@@ -30,12 +30,18 @@ class PieEngine(private val context: Context) : BenchEngine {
     private var server: PieServer? = null
     private var base = ""
     private var summary = JSONObject()
+    // A window-ring model (Gemma 4) runs a prompt in one fire: room for the longest prompt the workloads send, their chat
+    // template included (512 refused ~550-token prompts on iPhone), as the next power of two.
+    private val forwardTokens: Int by lazy {
+        val longest = (org.pieevals.phonebench.Workloads.load(context).workloads.maxOfOrNull { it.prefill } ?: 0) + 128
+        maxOf(512, Integer.highestOneBit(longest - 1) shl 1)
+    }
 
     override fun config(): JSONObject = JSONObject()
         .put("pie_commit", PieFactory.PIE_COMMIT)
         .put("api", "PieServer in process, POST /v1/completions stream=true on 127.0.0.1 (raw prompt, no chat template)")
         .put("max_model_len", 4096)
-        .put("max_forward_tokens", 512)
+        .put("max_forward_tokens", forwardTokens)
         .put("max_forward_requests", 4)
         .put("max_concurrent_processes", 4)
         .put("device_memory_share", 0.6)
@@ -46,11 +52,9 @@ class PieEngine(private val context: Context) : BenchEngine {
         .put("summary", summary)
 
     override fun load(artifact: Artifact, model: File) {
-        if (booted) throw IllegalStateException("pie runtime boots once per process; restart the app to run another pie model")
-        booted = true
         val s = runBlocking {
             PieServer.start(model = model, home = File(context.cacheDir, "pie"), listen = "127.0.0.1:0") {
-                maxModelLength = 4096; maxForwardRequests = 4; maxForwardTokens = 512; maxConcurrentProcesses = 4
+                maxModelLength = 4096; maxForwardRequests = 4; maxForwardTokens = forwardTokens; maxConcurrentProcesses = 4
             }
         }
         server = s
@@ -111,12 +115,8 @@ class PieEngine(private val context: Context) : BenchEngine {
     }
 
     override fun close() {
-        // the runtime cannot boot again in this process, so it is shut down only with the process
+        // frees the runtime and its memory: the next model, pie or not, starts after this returns
         runCatching { runBlocking { server?.shutdown() } }
         server = null
-    }
-
-    companion object {
-        @Volatile private var booted = false
     }
 }
