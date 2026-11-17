@@ -11,6 +11,7 @@ extension EngineID {
         case .mlxSwift: return "mlx-swift-lm 3.32.3 / mlx-swift 0.32.3"
         case .mlc: return "not built"
         case .pie: return PieInfo.commit ?? PieInfo.evaluated
+        case .litert: return "0.19.1"
         }
     }
 }
@@ -296,11 +297,13 @@ final class Runner: ObservableObject {
                     sampler.start()
                     _ = try await loaded.run(prompts: spec.warmup.map { prefix + $0 + suffix }, concurrency: w.concurrency, decode: w.decode)
                     let t0 = monotonic()
-                    let res = try await loaded.run(prompts: spec.measured.map { prefix + $0 + suffix }, concurrency: w.concurrency, decode: w.decode)
+                    var res = try await loaded.run(prompts: spec.measured.map { prefix + $0 + suffix }, concurrency: w.concurrency, decode: w.decode)
                     let wall = monotonic() - t0
                     let peak = sampler.stop()
-                    rounds.append(.obj([("wall_s", .num(wall)), ("peak_mem_gib", .num(peak)), ("requests", .arr(res.map(\.json)))]))
                     let expect = template?.prompt_tokens[w.id]?[r]
+                    // LiteRT-LM reports no prompt count (-1): the harness count stands in, as on Android
+                    if let expect, expect.count == res.count { for i in res.indices where res[i].promptTokens < 0 { res[i].promptTokens = expect[i] } }
+                    rounds.append(.obj([("wall_s", .num(wall)), ("peak_mem_gib", .num(peak)), ("requests", .arr(res.map(\.json)))]))
                     let got = res.map(\.promptTokens)
                     say(String(format: "%@ r%d: wall %.2fs peak %.2f GiB prompt %@%@", w.id, r + 1, wall, peak, "\(got.prefix(4))",
                                expect.map { $0 == got ? " (= harness)" : " (harness \($0.prefix(4)))" } ?? ""))

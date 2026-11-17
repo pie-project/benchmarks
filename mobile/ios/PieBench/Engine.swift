@@ -49,6 +49,7 @@ enum Engines {
         case .mlxSwift: return MLXAdapter()
         case .mlc: return MLCAdapter()
         case .pie: return PieAdapter()
+        case .litert: return LiteRtAdapter()
         }
     }
 }

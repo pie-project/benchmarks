@@ -1,7 +1,7 @@
 import Foundation
 
 enum EngineID: String, CaseIterable, Identifiable {
-    case llamacpp, mlxSwift = "mlx-swift", mlc, pie
+    case llamacpp, mlxSwift = "mlx-swift", mlc, pie, litert
     var id: String { rawValue }
     var label: String {
         switch self {
@@ -9,6 +9,7 @@ enum EngineID: String, CaseIterable, Identifiable {
         case .mlxSwift: return "MLX Swift"
         case .mlc: return "MLC LLM"
         case .pie: return "Pie"
+        case .litert: return "LiteRT-LM"
         }
     }
 }
@@ -50,6 +51,11 @@ struct ModelEntry: Identifiable, Hashable {
         .init(engine: .mlc, artifact: "qwen3.5-0.8b-mlc", model: "qwen3.5-0.8b", repo: "mlc-ai/Qwen3.5-0.8B-q4f32_1-MLC", file: nil, bytes: 447_175_335, pieSku: nil),
         .init(engine: .mlc, artifact: "qwen3.5-4b-mlc", model: "qwen3.5-4b", repo: "mlc-ai/Qwen3.5-4B-q4f16_1-MLC", file: nil, bytes: 2_390_497_405, pieSku: nil),
         .init(engine: .mlc, artifact: "gemma-4-e2b-mlc", model: "gemma-4-e2b", repo: "mlc-ai/gemma-4-E2B-it-q4f16_1-MLC", file: nil, bytes: 2_831_045_154, pieSku: nil),
+        // LiteRT-LM: each repo's file for the GPU on 0.19.x (Gemma 4's plain file is the one Google's iOS GPU numbers use)
+        .init(engine: .litert, artifact: "qwen3.5-0.8b-litert", model: "qwen3.5-0.8b", repo: "litert-community/Qwen3.5-0.8B", file: "Qwen3.5-0.8B_int8_gpu_composite_v0190.litertlm", bytes: 888_373_248, pieSku: nil),
+        .init(engine: .litert, artifact: "qwen3.5-4b-litert", model: "qwen3.5-4b", repo: "litert-community/Qwen3.5-4B", file: "Qwen3.5-4B_mixed_int4_gpu_composite_v0190.litertlm", bytes: 2_712_846_336, pieSku: nil),
+        .init(engine: .litert, artifact: "gemma-4-e2b-litert", model: "gemma-4-e2b", repo: "litert-community/gemma-4-E2B-it-litert-lm", file: "gemma-4-E2B-it.litertlm", bytes: 2_588_147_712, pieSku: nil),
+        .init(engine: .litert, artifact: "gemma-4-e4b-litert", model: "gemma-4-e4b", repo: "litert-community/gemma-4-E4B-it-litert-lm", file: "gemma-4-E4B-it.litertlm", bytes: 3_659_530_240, pieSku: nil),
         // Pie: `.metal.zt` artifacts from `pie model import <repo> --deployment <sku>` on a Mac, imported via Files.
         .init(engine: .pie, artifact: "qwen3.5-0.8b-mlx4", model: "qwen3.5-0.8b", repo: "mlx-community/Qwen3.5-0.8B-4bit", file: nil, bytes: 652_029_391, pieSku: "qwen35-d0.8b-u4g64-kv-bf16"),
         .init(engine: .pie, artifact: "qwen3.5-4b-mlx4", model: "qwen3.5-4b", repo: "mlx-community/Qwen3.5-4B-4bit", file: nil, bytes: 3_061_130_647, pieSku: "qwen35-d4b-u4g64-kv-bf16"),

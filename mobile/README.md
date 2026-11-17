@@ -11,7 +11,7 @@ The phone benchmark app. It runs the phone workloads on the phone and shares the
 | Engine | Android | iPhone | Weights |
 |---|---|---|---|
 | llama.cpp b11312 | CPU (Vulkan optional) | Metal | GGUF Q4_K_M, the Mac rows' files |
-| LiteRT-LM 0.19.1 (MediaPipe's successor) | GPU, or CPU | - | `.litertlm`: Gemma 4 mixed 2/4/8-bit QAT, Qwen3.5-4B mixed int4, Qwen3.5-0.8B int8 |
+| LiteRT-LM 0.19.1 (MediaPipe's successor) | GPU, or CPU | GPU | `.litertlm`: Gemma 4 mixed 2/4/8-bit QAT, Qwen3.5-4B mixed int4, Qwen3.5-0.8B int8 |
 | MLC LLM (44fd06d) | OpenCL | Metal | q4f16_1 (Qwen3.5-0.8B: q4f32_1). Only qwen3.5-0.8b, qwen3.5-4b and gemma-4-e2b |
 | MLX Swift 3.32.3 | - | Metal | MLX 4-bit g64, the Mac mlx-lm rows' weights |
 | Pie (fdc91d79 on iPhone, a6547509 on Android) | Vulkan, in-process | Metal, in-process | `.metal.zt` / `.vulkan.zt` made with `pie model import <repo> --deployment <sku>`, then copied to the phone |
