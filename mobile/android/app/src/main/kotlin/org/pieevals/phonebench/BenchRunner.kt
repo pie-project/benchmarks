@@ -155,7 +155,26 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
         }
     }
 
-    private data class RoundOut(val wallS: Double, val peakGib: Double, val reqs: List<ReqTiming>, val peakReset: Boolean)
+    private data class RoundOut(val wallS: Double, val peakGib: Double, val reqs: List<ReqTiming>, val peakReset: Boolean, val coolS: Double, val headroom: Float)
+
+    /**
+     * Before each round, for every engine alike: wait (at most 15 min) until the phone is out of thermal throttling,
+     * so a round measures the engine rather than how hot the previous round left the phone.
+     */
+    private fun coolDown(label: String): Pair<Double, Float> {
+        if (android.os.Build.VERSION.SDK_INT < 30) return 0.0 to Float.NaN
+        val pm = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        val t0 = System.nanoTime()
+        var h = pm.getThermalHeadroom(0)
+        while (!h.isNaN() && h > COOL_HEADROOM && System.nanoTime() - t0 < 15 * 60_000_000_000L && !BenchState.cancel) {
+            BenchState.progress.value = "$label: cooling, thermal headroom %.2f".format(h)
+            Thread.sleep(10_000)
+            h = pm.getThermalHeadroom(0)
+        }
+        val s = (System.nanoTime() - t0) / 1e9
+        if (s > 1) BenchState.say("$label: cooled %.0f s to thermal headroom %.2f".format(s, h))
+        return s to h
+    }
 
     private val mismatches = HashMap<String, Int>()
 
@@ -163,6 +182,7 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
         val out = ArrayList<RoundOut>()
         for ((r, round) in w.rounds.withIndex()) {
             if (BenchState.cancel) error("cancelled")
+            val (coolS, headroom) = coolDown("${c.a.id} ${w.id} r${r + 1}")
             BenchState.progress.value = "${c.a.id} ${w.id} round ${r + 1}/${w.rounds.size}: warmup"
             // warmup one request at a time, as the Mac harness does
             for (p in round.warmup) c.engine.run(listOf(tpl.render(p)), w.decode, 1)
@@ -179,7 +199,7 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
                 else { if (exp >= 0 && exp != q.promptTokens) mismatches[w.id] = (mismatches[w.id] ?: 0) + 1; q }
             }
             val wall = (fixed.maxOf { it.lastNs } - fixed.minOf { it.sendNs }) / 1e9
-            out += RoundOut(wall, peak, fixed, reset)
+            out += RoundOut(wall, peak, fixed, reset, coolS, headroom)
             val m = summarize(listOf(out.last()))
             BenchState.say("${c.a.id} ${w.id} r${r + 1}: wall %.2fs decode %s tok/s prefill %s tok/s ttft %s s peak %.2f GiB".format(
                 wall, fmt(m.first), fmt(m.second), fmt(m.third, 3), peak))
@@ -216,7 +236,8 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
                 .put("prompt_tokens", q.promptTokens).put("output_tokens", q.outputTokens)
                 .put("ttft_s", (q.firstNs - q.sendNs) / 1e9).put("latency_s", (q.lastNs - q.sendNs) / 1e9)
                 .put("cached_prompt_tokens", q.cachedPromptTokens))
-            roundsJ.put(JSONObject().put("wall_s", r.wallS).put("peak_mem_gib", r.peakGib).put("requests", reqs))
+            roundsJ.put(JSONObject().put("wall_s", r.wallS).put("peak_mem_gib", r.peakGib).put("requests", reqs)
+                .put("cooldown_s", r.coolS).put("thermal_headroom", if (r.headroom.isNaN()) JSONObject.NULL else r.headroom.toDouble()))
         }
         val ck = c.local?.let { JSONObject().put("repo", it.repo).put("file", it.file ?: JSONObject.NULL).put("revision", it.revision ?: JSONObject.NULL).put("bytes", it.bytes) }
             ?: JSONObject().put("repo", c.a.repo).put("file", store.fileFor(c.a, c.engine.id == "litert" && !cfg.litertGpu) ?: JSONObject.NULL).put("revision", JSONObject.NULL).put("bytes", JSONObject.NULL)
@@ -249,5 +270,7 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
     companion object {
         /** A model whose file is over this share of total RAM is reported doesnt_fit without loading. */
         const val FIT_FRACTION = 0.7
+        /** PowerManager thermal headroom a round waits for (1.0 = severe throttling); calibrated on the Galaxy S26 Ultra. */
+        const val COOL_HEADROOM = 0.7f
     }
 }

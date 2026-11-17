@@ -13,7 +13,7 @@ import java.util.concurrent.Executors
 
 object PieFactory {
     /** pie commit the AAR in app/libs/pie was built from (pie-project/pie feat/runtime-raii, #1688: a shutdown frees the runtime for the next boot). */
-    const val PIE_COMMIT = "316e72a07353fd87fabd8c5fa9600e93544bd66d"
+    const val PIE_COMMIT = "b2980f36cd46a36b5bc400d8a59d2b7d010587cc"
     fun create(context: Context): BenchEngine = PieEngine(context)
 }
 

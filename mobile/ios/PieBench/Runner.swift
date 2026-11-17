@@ -290,6 +290,15 @@ final class Runner: ObservableObject {
                     try Task.checkCancellation()
                     let spec = w.rounds[r]
                     status = "\(m.artifact) \(w.id) round \(r + 1)/\(contract.rounds)"
+                    // Before each round, for every engine alike: wait (at most 15 min) until iOS reports the phone nominal again,
+                    // so a round measures the engine rather than how hot the previous round left the phone.
+                    let cool0 = monotonic()
+                    while ProcessInfo.processInfo.thermalState != .nominal && monotonic() - cool0 < 900 {
+                        try Task.checkCancellation()
+                        status = "\(m.artifact) \(w.id) round \(r + 1)/\(contract.rounds): cooling (\(DeviceInfo.thermal))"
+                        try await Task.sleep(nanoseconds: 10_000_000_000)
+                    }
+                    let coolS = monotonic() - cool0, coolState = DeviceInfo.thermal
                     let sampler = MemorySampler()
                     sampler.start()
                     _ = try await loaded.run(prompts: spec.warmup.map { prefix + $0 + suffix }, concurrency: w.concurrency, decode: w.decode)
@@ -300,7 +309,8 @@ final class Runner: ObservableObject {
                     let expect = template?.prompt_tokens[w.id]?[r]
                     // LiteRT-LM reports no prompt count (-1): the harness count stands in, as on Android
                     if let expect, expect.count == res.count { for i in res.indices where res[i].promptTokens < 0 { res[i].promptTokens = expect[i] } }
-                    rounds.append(.obj([("wall_s", .num(wall)), ("peak_mem_gib", .num(peak)), ("requests", .arr(res.map(\.json)))]))
+                    rounds.append(.obj([("wall_s", .num(wall)), ("peak_mem_gib", .num(peak)), ("requests", .arr(res.map(\.json))),
+                                        ("cooldown_s", .num(coolS)), ("thermal_state", .str(coolState))]))
                     let got = res.map(\.promptTokens)
                     say(String(format: "%@ r%d: wall %.2fs peak %.2f GiB prompt %@%@", w.id, r + 1, wall, peak, "\(got.prefix(4))",
                                expect.map { $0 == got ? " (= harness)" : " (harness \($0.prefix(4)))" } ?? ""))
