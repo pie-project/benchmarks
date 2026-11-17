@@ -32,11 +32,11 @@ object Catalog {
         Artifact("gemma-4-e4b-llamacpp", "llamacpp", "gemma-4-e4b", "unsloth/gemma-4-E4B-it-GGUF", "gemma-4-E4B-it-Q4_K_M.gguf", 4_977_171_584, "GGUF Q4_K_M"),
         Artifact("gemma-4-12b-llamacpp", "llamacpp", "gemma-4-12b", "unsloth/gemma-4-12b-it-GGUF", "gemma-4-12b-it-Q4_K_M.gguf", 7_121_861_440, "GGUF Q4_K_M"),
         // LiteRT-LM: .litertlm (GPU build where the repo has one)
-        Artifact("gemma-4-e2b-litert", "litert", "gemma-4-e2b", "litert-community/gemma-4-E2B-it-litert-lm", "gemma-4-E2B-it-gpu.litertlm", 2_008_432_640, ".litertlm (GPU build)", cpuFile = "gemma-4-E2B-it.litertlm"),
-        Artifact("gemma-4-e4b-litert", "litert", "gemma-4-e4b", "litert-community/gemma-4-E4B-it-litert-lm", "gemma-4-E4B-it-gpu.litertlm", 2_969_059_328, ".litertlm (GPU build)", cpuFile = "gemma-4-E4B-it.litertlm"),
-        Artifact("gemma-4-12b-litert", "litert", "gemma-4-12b", "litert-community/gemma-4-12B-it-litert-lm", "gemma-4-12B-it-gpu.litertlm", 5_986_074_624, ".litertlm (GPU build)", cpuFile = "gemma-4-12B-it.litertlm"),
-        Artifact("qwen3.5-0.8b-litert", "litert", "qwen3.5-0.8b", "litert-community/Qwen3.5-0.8B", "Qwen3.5-0.8B_int8.litertlm", 964_566_992, ".litertlm int8", note = "int8 weights (the repo's only text build), not 4-bit"),
-        Artifact("qwen3.5-4b-litert", "litert", "qwen3.5-4b", "litert-community/Qwen3.5-4B", "Qwen3.5-4B_mixed_int4.litertlm", 2_754_070_624, ".litertlm mixed int4"),
+        Artifact("gemma-4-e2b-litert", "litert", "gemma-4-e2b", "litert-community/gemma-4-E2B-it-litert-lm", "gemma-4-E2B-it.litertlm", 2_588_147_712, ".litertlm (Android/iOS build; -gpu is the Web one)"),
+        Artifact("gemma-4-e4b-litert", "litert", "gemma-4-e4b", "litert-community/gemma-4-E4B-it-litert-lm", "gemma-4-E4B-it.litertlm", 3_659_530_240, ".litertlm (Android/iOS build; -gpu is the Web one)"),
+        Artifact("gemma-4-12b-litert", "litert", "gemma-4-12b", "litert-community/gemma-4-12B-it-litert-lm", "gemma-4-12B-it.litertlm", 6_883_278_368, ".litertlm (Android/iOS build; -gpu is the Web one)"),
+        Artifact("qwen3.5-0.8b-litert", "litert", "qwen3.5-0.8b", "litert-community/Qwen3.5-0.8B", "Qwen3.5-0.8B_int8_gpu_composite_v0190.litertlm", 888_373_248, ".litertlm int8, GPU composites", cpuFile = "Qwen3.5-0.8B_int8.litertlm", note = "int8 weights (the repo has no 4-bit text build), not 4-bit"),
+        Artifact("qwen3.5-4b-litert", "litert", "qwen3.5-4b", "litert-community/Qwen3.5-4B", "Qwen3.5-4B_mixed_int4_gpu_composite_v0190.litertlm", 2_712_846_336, ".litertlm mixed int4, GPU composites", cpuFile = "Qwen3.5-4B_int8.litertlm"),
         // MLC LLM: prebuilt weight dirs (model libraries compiled into the APK)
         Artifact("qwen3.5-4b-mlc", "mlc", "qwen3.5-4b", "mlc-ai/Qwen3.5-4B-q4f16_1-MLC", null, 2_400_000_000, "MLC q4f16_1"),
         Artifact("gemma-4-e2b-mlc", "mlc", "gemma-4-e2b", "mlc-ai/gemma-4-E2B-it-q4f16_1-MLC", null, 3_000_000_000, "MLC q4f16_1"),
