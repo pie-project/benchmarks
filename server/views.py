@@ -1057,7 +1057,7 @@ def build(store, contributed: dict[str, dict] | None = None) -> tuple[dict, dict
     when_run = lambda item: local(item[1]["started_at"])
     sources = stack_sources(order, results, grid, when_run)
     lap("stack")
-    hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] in hardware_ids or h["class"] != "mac" or not h.get("runs")] + phone_rows
+    hw_rows = [h for h in hardware(cores_by_platform(store)) if h["id"] not in phone_ids and (h["id"] in hardware_ids or h["class"] != "mac" or not h.get("runs"))] + phone_rows
     misfits = no_fit(a2m, config, hw_rows, engine_ids, model_ids)
     misfits.update(gpu_no_fit(store, a2m, hw_rows, gpu_ids))
     attempts = attempts_by_tag(store, a2m, hardware_ids, engine_ids)
