@@ -14,7 +14,7 @@ The phone benchmark app. It runs the phone workloads on the phone and shares the
 | LiteRT-LM 0.19.1 (MediaPipe's successor) | GPU, or CPU | GPU | `.litertlm`: Gemma 4 mixed 2/4/8-bit QAT, Qwen3.5-4B mixed int4, Qwen3.5-0.8B int8 |
 | MLC LLM (44fd06d) | OpenCL | Metal | q4f16_1 (Qwen3.5-0.8B: q4f32_1). Only qwen3.5-0.8b, qwen3.5-4b and gemma-4-e2b |
 | MLX Swift 3.32.3 | - | Metal | MLX 4-bit g64, the Mac mlx-lm rows' weights |
-| Pie (fdc91d79 on iPhone, a6547509 on Android) | Vulkan, in-process | Metal, in-process | `.metal.zt` / `.vulkan.zt` made with `pie model import <repo> --deployment <sku>`, then copied to the phone |
+| Pie (316e72a0, #1688: one model after another in one launch) | Vulkan, in-process | Metal, in-process | `.metal.zt` / `.vulkan.zt` made with `pie model import <repo> --deployment <sku>`, then copied to the phone |
 
 - **Models:** qwen3.5-0.8b, qwen3.5-4b, gemma-4-e2b, gemma-4-e4b, gemma-4-12b. Use gemma-4-12b only on 12-16 GB phones.
 - **Downloads:** the app downloads weights from Hugging Face. Pie artifacts come from `antonmeln/pie-bench-phone` (`metal/<pie commit>/<artifact>.metal.zt`, made with `pie model import` at the app's pie commit); the iPhone build also ships `qwen3.5-0.8b-mlx4.metal.zt` inside the app, and the import button next to each model takes your own.
@@ -32,7 +32,7 @@ The phone benchmark app. It runs the phone workloads on the phone and shares the
   - A free team may refuse the increased-memory-limit entitlement; remove it if so.
   - To build with MLC and Pie too: `ios/scripts/generate-all.sh <pie checkout>`. MLX Swift is built in only with `MLX_ENABLED=YES`.
 - **iPhone, TestFlight** (app `org.pie-project.pie-bench`, team 9B2K6Z98F9):
-  1. In the pie checkout at fdc91d79, `git apply ios/scripts/pie-fdc91d79-ios.patch` (model paths passed unescaped; the recurrent-state buffer reserved at the page-rounded size its commits ask for, or Qwen3.5-4B starves on a phone's memory), then `PIE_APPLE_SLICES="aarch64-apple-ios aarch64-apple-darwin" ios/scripts/build-pie.sh <pie checkout>` (the slices need pie's `build-xcframework.sh` to read `PIE_APPLE_SLICES`; without it all three are built).
+  1. Check out pie at 316e72a0 (feat/runtime-raii, #1688: pie shuts down and boots the next model in the same launch; `ios/scripts/pie-fdc91d79-ios.patch` is only for fdc91d79, whose fixes this commit already has), then `PIE_APPLE_SLICES="aarch64-apple-ios aarch64-apple-darwin" ios/scripts/build-pie.sh <pie checkout>` (the slices need pie's `build-xcframework.sh` to read `PIE_APPLE_SLICES`; without it all three are built).
   2. `pie model import mlx-community/Qwen3.5-0.8B-4bit --deployment qwen35-d0.8b-u4g64-kv-bf16 --out ios/Vendor/pie/models/qwen3.5-0.8b-mlx4.metal.zt`, then rerun step 1's `xcodegen` so the app bundles it.
   3. Raise `CURRENT_PROJECT_VERSION` in `ios/project.yml` for every upload.
   4. `xcodebuild archive -project ios/PieBench.xcodeproj -scheme PieBench -destination generic/platform=iOS -archivePath build/PieBench.xcarchive -allowProvisioningUpdates`

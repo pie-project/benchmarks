@@ -10,16 +10,19 @@ enum PieInfo {
 #if canImport(PieServer)
 import Metal
 import PieServer
+import Synchronization
 
 /// Pie in-process (PieServer, Metal), driven through the harness's bench inferlet
 /// (examples/text-completion-bench) as the Mac rows are. Each request is its own inferlet process;
 /// concurrent shapes run `concurrency` processes at once, which pie batches into shared forwards.
 struct PieAdapter: EngineAdapter {
     let id = EngineID.pie
-    /// The runtime boots once per process (PieServer.shutdown is final).
-    @MainActor static var booted: String?
-    /// The model `booted` serves, kept for a second run of it in the same launch.
-    @MainActor static var served: PieModel?
+    /// The shutdown a model's unload started: one pie server is live at a time, so the next boot (and the next cell's
+    /// memory check) waits for it.
+    static let stopping = Mutex<Task<Void, Never>?>(nil)
+
+    /// Waits until the last pie server has shut down and given its memory back.
+    static func settle() async { await stopping.withLock { $0 }?.value }
 
     /// The bundled bench inferlet (PIEBENCH_PIE_WASM overrides it for the Mac test harness).
     static var wasm: URL? {
@@ -35,13 +38,8 @@ struct PieAdapter: EngineAdapter {
     }
 
     func load(_ m: ModelEntry, checkpoint: Checkpoint, contract: Contract) async throws -> LoadedModel {
-        if let other = await PieAdapter.booted {
-            // the same model again in this launch: the server it booted is still up
-            if other == m.artifact, let served = await PieAdapter.served { return served }
-            throw BenchError.message("pie boots once per app process and already served \(other); relaunch the app to run \(m.artifact)")
-        }
         guard let file = Downloader.pieFile(m) else { throw BenchError.message("no .metal.zt for \(m.artifact)") }
-        await MainActor.run { PieAdapter.booted = m.artifact }
+        await PieAdapter.settle()
         var cfg = PieServer.Configuration()
         // A window-ring model (Gemma 4) runs a prompt in one fire: room for the longest prompt this contract sends, its chat
         // template included (512 refused raw's ~550 tokens), as the next power of two.
@@ -49,9 +47,6 @@ struct PieAdapter: EngineAdapter {
         cfg.maxForwardTokens = max(512, 1 << Int(ceil(log2(Double(longest)))))
         cfg.maxForwardRequests = 4
         cfg.maxConcurrentProcesses = 8
-        // PieServer's default of 16 state slots starves Qwen3.5's recurrent layers ("state pool starved"); 256 is pie's own default
-        // (64 starved Qwen3.5-4B: 32 slots a request).
-        cfg.maxStateSlots = 256
         // pie is the phone's only GPU user: its share is what iOS lets this app have now, less 768 MiB for the app itself, of the
         // GPU's working set (0.6 of 5.73 GB left Gemma 4 E4B's 4.25 GB of weights no room on a 7.5 GiB iPhone 17).
         if let gpu = MTLCreateSystemDefaultDevice(), gpu.recommendedMaxWorkingSetSize > 0, DeviceInfo.availableBytes > 0 {
@@ -64,9 +59,7 @@ struct PieAdapter: EngineAdapter {
         let client = try await server.connect()
         let wasm = PieAdapter.wasm!
         let name = try await server.install(contentsOf: wasm)
-        let model = PieModel(server: server, client: client, inferlet: name, system: contract.system, cfg: cfg)
-        await MainActor.run { PieAdapter.served = model }
-        return model
+        return PieModel(server: server, client: client, inferlet: name, system: contract.system, cfg: cfg)
     }
 }
 
@@ -90,7 +83,6 @@ final class PieModel: LoadedModel, @unchecked Sendable {
         [("pie_commit", .opt(PieInfo.commit)), ("deployment", .str(server.summary.deployment)),
          ("inferlet", .str(inferlet)), ("device_memory_share", .num(cfg.deviceMemoryShare)),
          ("max_forward_tokens", .int(cfg.maxForwardTokens)), ("max_forward_requests", .int(cfg.maxForwardRequests)),
-         ("max_state_slots", .int(cfg.maxStateSlots)),
          ("kv_pages", .int(server.summary.kvPages)), ("kv_page_size", .int(server.summary.kvPageSize)),
          ("prompt", .str("inferlet chat::system_user(system, text) + cue (no_think)")),
          ("ttft_origin", .str("start signal to the ready inferlet"))]
@@ -156,7 +148,11 @@ final class PieModel: LoadedModel, @unchecked Sendable {
         return results.map { $0! }
     }
 
-    func unload() {}
+    /// Shuts the server down, so the next model (pie or not) gets its memory back.
+    func unload() {
+        let server = server
+        PieAdapter.stopping.withLock { $0 = Task { await server.shutdown() } }
+    }
 }
 
 actor Gate {
@@ -172,7 +168,7 @@ actor Gate {
 }
 #else
 struct PieAdapter: EngineAdapter {
-    @MainActor static var booted: String?
+    static func settle() async {}
     let id = EngineID.pie
     func unsupportedReason(_ m: ModelEntry) -> String? { PieBuild.unavailable }
     func load(_ m: ModelEntry, checkpoint: Checkpoint, contract: Contract) async throws -> LoadedModel {
