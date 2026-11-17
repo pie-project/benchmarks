@@ -8,6 +8,7 @@ enum PieInfo {
 }
 
 #if canImport(PieServer)
+import Metal
 import PieServer
 
 /// Pie in-process (PieServer, Metal), driven through the harness's bench inferlet
@@ -42,12 +43,22 @@ struct PieAdapter: EngineAdapter {
         guard let file = Downloader.pieFile(m) else { throw BenchError.message("no .metal.zt for \(m.artifact)") }
         await MainActor.run { PieAdapter.booted = m.artifact }
         var cfg = PieServer.Configuration()
+        // A window-ring model (Gemma 4) runs a prompt in one fire: room for the longest prompt this contract sends, its chat
+        // template included (512 refused raw's ~550 tokens), as the next power of two.
+        let longest = (contract.workloads.map(\.prefill).max() ?? 0) + 128
+        cfg.maxForwardTokens = max(512, 1 << Int(ceil(log2(Double(longest)))))
         cfg.maxForwardRequests = 4
         cfg.maxConcurrentProcesses = 8
         // PieServer's default of 16 state slots starves Qwen3.5's recurrent layers ("state pool starved"); 256 is pie's own default
         // (64 starved Qwen3.5-4B: 32 slots a request).
         cfg.maxStateSlots = 256
-        // Test knob (the Mac harness shares its GPU with other work): PIEBENCH_PIE_MEMORY_SHARE overrides the 0.6 share.
+        // pie is the phone's only GPU user: its share is what iOS lets this app have now, less 768 MiB for the app itself, of the
+        // GPU's working set (0.6 of 5.73 GB left Gemma 4 E4B's 4.25 GB of weights no room on a 7.5 GiB iPhone 17).
+        if let gpu = MTLCreateSystemDefaultDevice(), gpu.recommendedMaxWorkingSetSize > 0, DeviceInfo.availableBytes > 0 {
+            let share = Double(DeviceInfo.availableBytes - (768 << 20)) / Double(gpu.recommendedMaxWorkingSetSize)
+            cfg.deviceMemoryShare = min(0.95, max(0.6, share))
+        }
+        // Test knob (the Mac harness shares its GPU with other work): PIEBENCH_PIE_MEMORY_SHARE overrides the share.
         if let v = ProcessInfo.processInfo.environment["PIEBENCH_PIE_MEMORY_SHARE"].flatMap(Double.init) { cfg.deviceMemoryShare = v }
         let server = try await PieServer.start(model: file, configuration: cfg)
         let client = try await server.connect()
