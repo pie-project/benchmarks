@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Image build steps shared by every Dockerfile here.
-#   install.sh tools <cuda|rocm|tpu>   apt packages, uv, Python 3.12, Rust at pie's pins, llama.cpp at its pin
-#   install.sh bench                   pie-bench from /src into /opt/pie-bench, on PATH as `pie-bench`
+#   install.sh tools <cuda|rocm|tpu> [ssh]   apt packages, uv, Python 3.12, Rust at pie's pins, llama.cpp's
+#                                            release build at its pin; ssh adds sshd (RunPod)
+#   install.sh bench                         pie-bench from /src into /opt/pie-bench, on PATH as `pie-bench`
 set -euo pipefail
 step=$1
 backend=${2:-}
@@ -10,7 +11,7 @@ if [ "$step" = tools ]; then
   apt-get update
   apt-get install -y --no-install-recommends --allow-change-held-packages \
     ca-certificates curl git jq unzip xz-utils patch procps build-essential cmake ninja-build pkg-config \
-    libssl-dev python3 python3-dev python3-venv
+    libssl-dev libgomp1 libcurl4 python3 python3-dev python3-venv
   if [ "$backend" = cuda ]; then
     apt-get install -y --no-install-recommends --allow-change-held-packages libnccl2 libopenmpi-dev openmpi-bin
   fi
@@ -25,18 +26,18 @@ if [ "$step" = tools ]; then
 
   if [ "$backend" = cuda ] || [ "$backend" = rocm ]; then
     pin=$(awk '/- id: llamacpp$/{f=1} f&&/pin:/{gsub(/[" ]|pin:/,""); print; exit}' /tmp/engines.yaml)
-    git clone --quiet --depth 1 --branch "$pin" https://github.com/ggml-org/llama.cpp /tmp/llama.cpp
-    cd /tmp/llama.cpp
-    flags=(-G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF)
+    rel=https://github.com/ggml-org/llama.cpp/releases/download/$pin
+    mkdir -p /opt/llama.cpp
     if [ "$backend" = cuda ]; then
-      cmake -S . -B build "${flags[@]}" -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="$LLAMA_CUDA_ARCHS"
+      curl -fsSL "$rel/llama-$pin-bin-ubuntu-cuda-13.4-x64.tar.gz" | tar xz --strip-components 1 -C /opt/llama.cpp
+      curl -fsSL "$rel/cudart-llama-$pin-bin-ubuntu-cuda-13.4-x64.tar.gz" | tar xz --strip-components 1 -C /opt/llama.cpp
     else
-      hip="${ROCM_PATH:-/opt/rocm}/bin/hipconfig"; HIPCXX="$($hip -l)/clang" HIP_PATH="$($hip -R)" \
-        cmake -S . -B build "${flags[@]}" -DGGML_HIP=ON -DGPU_TARGETS="$LLAMA_GPU_TARGETS"
+      curl -fsSL "$rel/llama-$pin-bin-ubuntu-rocm-10.0-x64.tar.gz" | tar xz --strip-components 1 -C /opt/llama.cpp
     fi
-    cmake --build build --target llama-server
-    install -m 755 build/bin/llama-server /usr/local/bin/llama-server
-    cd / && rm -rf /tmp/llama.cpp
+    ln -sf /opt/llama.cpp/llama-server /usr/local/bin/llama-server
+  fi
+  if [ "${3:-}" = ssh ]; then
+    apt-get update && apt-get install -y --no-install-recommends openssh-server && apt-get clean && rm -rf /var/lib/apt/lists/*
   fi
   rm -f /tmp/engines.yaml
 fi
