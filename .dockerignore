@@ -1,0 +1,6 @@
+*
+!pyproject.toml
+!PYPI.md
+!src
+!docker
+**/__pycache__
