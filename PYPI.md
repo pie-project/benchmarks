@@ -1,6 +1,6 @@
 # pie-bench
 
-Measure [Pie](https://github.com/pie-project/pie) against other inference engines on your own machine, and share the results on [pie-project.org/benchmarks](https://pie-project.org/benchmarks).
+Measure [Pie](https://github.com/pie-project/pie) against other inference engines on your own machine, and share the results on [benchmarks.pie-project.org](https://benchmarks.pie-project.org).
 
 ## Run it
 

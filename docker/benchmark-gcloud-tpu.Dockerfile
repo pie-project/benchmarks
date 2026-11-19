@@ -1,6 +1,7 @@
 # pie-bench on a Cloud TPU VM (v4, v5e, v5p, v6e, TPU7x): Ubuntu 22.04 as the VM, libtpu at the version
 # pie's XLA engine is generated against (PIE_XLA_PLUGIN), Rust for the --features xla build. vllm-tpu and
 # sglang-jax install at their pins on the first run. The machine id comes from the VM's metadata.
+# Run with: sudo docker run --privileged --net=host --ipc=host ... <pie-bench args>.
 FROM ubuntu:22.04
 ARG RUST_STABLE=1.98.1
 ARG RUST_NIGHTLY=nightly-2026-10-18

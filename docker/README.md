@@ -1,16 +1,16 @@
 # Docker images
 
-`pie-bench` ready to run, one image per place we rent machines:
+`pie-bench` ready to run, one image per place we rent machines. Results upload to [benchmarks.pie-project.org](https://benchmarks.pie-project.org).
 
 | Image | Base | Where |
 |---|---|---|
 | `pieproject/benchmark-runpod-cuda` | CUDA 13.0 devel, Ubuntu 24.04 | RunPod NVIDIA pods |
-| `pieproject/benchmark-runpod-rocm` | `lmsysorg/sglang:v0.5.22-rocm10-mi30x` (`:mi35x` for MI350/MI355X) | RunPod AMD pods |
+| `pieproject/benchmark-runpod-rocm` | `lmsysorg/sglang:v0.5.22-rocm10-mi30x` (tag `:mi35x` for MI350/MI355X) | RunPod AMD pods |
 | `pieproject/benchmark-digitalocean-cuda` | CUDA 13.0 devel, Ubuntu 24.04 | DigitalOcean NVIDIA droplets |
 | `pieproject/benchmark-digitalocean-rocm` | as RunPod ROCm | AMD Developer Cloud droplets |
 | `pieproject/benchmark-gcloud-tpu` | Ubuntu 22.04, libtpu 0.0.48 | Cloud TPU VMs |
 
-Each has uv, Python 3.12, Rust at pie's pins and `pie-bench` from this repo; CUDA and ROCm add llama.cpp at its pin. The engines (pie, vLLM, SGLang, TensorRT-LLM) install on the first run, into the data folder.
+One Dockerfile per image (`docker/benchmark-<name>.Dockerfile`), sharing `install.sh` and `entrypoint.sh`. Each has uv, Python 3.12, Rust at pie's pins and `pie-bench` from this repo; CUDA and ROCm add llama.cpp's release build at its pin. The engines (pie, vLLM, SGLang, TensorRT-LLM) install on the first run, into the data folder.
 
 The arguments go to `pie-bench`. With no arguments, `PIE_BENCH_ARGS` is used. A `run` gets `-y`, and `PIE_BENCH_MACHINE` becomes `--machine` (needed on AMD, where the CLI cannot detect the machine; TPUs read it from the VM's metadata).
 

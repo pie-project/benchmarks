@@ -1,14 +1,15 @@
 # pie-bench
 
-Measure [pie](https://github.com/pie-project/pie) against other inference engines on your own machine, and publish the results to [pie-project.org/benchmarks](https://pie-project.org/benchmarks).
+Measure [pie](https://github.com/pie-project/pie) against other inference engines on your own machine, and publish the results to [benchmarks.pie-project.org](https://benchmarks.pie-project.org).
 
-This repository holds two things:
+This repository holds:
 
 | | What | Where | Runs on |
 |---|---|---|---|
 | 1 | `pie-bench`, the command line tool anyone installs | `src/pie_bench/` | your machine |
 | 2 | the results API the website reads | `server/` | Render |
 | 3 | the website, a static page that reads the API | `web/` | GitHub Pages |
+| 4 | Docker images with `pie-bench` ready to run | `docker/` | RunPod, DigitalOcean, Cloud TPU |
 
 ## Run it
 
@@ -40,6 +41,8 @@ Each run writes a folder under `~/.pie-bench/runs/`:
 Uploading needs a token, made automatically the first time and kept in `~/.config/pie-bench/token`.
 
 Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs.astral.sh/uv/). On a Mac, Apple Silicon. On Linux, NVIDIA GPUs.
+
+Or skip the setup with a Docker image, one per place: `pieproject/benchmark-runpod-cuda`, `benchmark-runpod-rocm`, `benchmark-digitalocean-cuda`, `benchmark-digitalocean-rocm` and `benchmark-gcloud-tpu` (AMD and TPU too). See [docker/](docker/README.md).
 
 ## The API
 
