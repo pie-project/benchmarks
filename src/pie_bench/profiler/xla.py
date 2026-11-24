@@ -1,11 +1,10 @@
 """Xla: a TPU's op intervals, from the engine process's own device trace (an XSpace, what jax.profiler writes).
 
 Processes that import jax arm a trace (jax_site/sitecustomize.py, first on PYTHONPATH); pie's XLA server arms one
-through xla_trace.c, preloaded by the pie_xla.py launcher. SIGUSR1 starts the trace, SIGUSR2 stops it; markers
-<pid>.started and <pid>.done (pie-<pid>.* for pie) say when each step is over. The served engines (vLLM, SGLang) are
-traced for the whole round; pie's bench client starts and stops its own server's trace around its measured requests.
-The intervals are the ops on the TPU devices' "XLA Ops" and "Async XLA Ops" lines (compute and its copies), in
-Unix ns.
+through xla_trace.c, preloaded by the pie_xla.py launcher. The bench clients' xla_trace (clients/common.py) starts and
+stops them: pie's server and vLLM's engine core, which run inside their bench clients, around the measured requests;
+a server already up when the round starts (SGLang-JAX) from the round's start to its end. The intervals are the ops on the TPU devices' "XLA Ops", "Async XLA Ops" and "Sparse Core Ops" lines (compute, its
+copies, the SparseCores' ops), in Unix ns.
 """
 
 from __future__ import annotations
@@ -13,7 +12,6 @@ from __future__ import annotations
 import json
 import os
 import shutil
-import signal
 import subprocess
 import time
 from contextlib import contextmanager
@@ -37,23 +35,20 @@ class Tracer:
         self.env = {"PIE_BENCH_JAX_TRACE_DIR": str(self.dir), "PIE_BENCH_PIE_PRELOAD": str(so),
                     "PYTHONPATH": os.pathsep.join([str(SITE), *filter(None, [os.environ.get("PYTHONPATH")])])}
 
-    def _armed(self) -> list[int]:
-        pids = [int(p.stem) for p in self.dir.glob("*.pid") if p.stem.isdigit()]
-        return [p for p in pids if _alive(p)]
-
     @contextmanager
     def recording(self, out: Path):
         """Traces the round: the served engines' processes from start to end, pie's around its measured requests.
         The traces made in it move to out/xla."""
+        from pie_bench.clients.common import xla_trace
+
         out.mkdir(parents=True, exist_ok=True)
         since = time.time()
-        pids = self._armed()
-        signal_all(self.dir, [str(p) for p in pids], signal.SIGUSR1, "started", 300)
+        xla_trace("start", str(self.dir))
         try:
             with span(out):
                 yield
         finally:
-            signal_all(self.dir, [str(p) for p in pids if _alive(p)], signal.SIGUSR2, "done", 900)
+            xla_trace("stop", str(self.dir))
             (out / "xla").mkdir(exist_ok=True)
             for done in self.dir.glob("*.done"):
                 trace = self.dir / done.stem
@@ -71,24 +66,6 @@ class Tracer:
         if not found:
             raise RuntimeError("no TPU op in the round's device traces" if summary else "no device trace was written in the round")
         return found
-
-
-def signal_all(folder: Path, names: list[str], sig: int, marker: str, timeout_s: float) -> None:
-    """Sends sig to each armed process (<name>.pid in folder) and waits for its <name>.<marker>; a trace that did not
-    start or was not written fails the round."""
-    for name in names:
-        (folder / f"{name}.{marker}").unlink(missing_ok=True)
-        os.kill(int(name.split("-")[-1]), sig)
-    deadline = time.monotonic() + timeout_s
-    for name in names:
-        path = folder / f"{name}.{marker}"
-        while not path.exists():
-            if time.monotonic() > deadline or not _alive(int(name.split("-")[-1])):
-                raise RuntimeError(f"process {name}: no trace {marker} marker after {timeout_s:.0f} s")
-            time.sleep(0.2)
-        text = path.read_text()
-        if text.startswith("error"):
-            raise RuntimeError(f"process {name}: trace {marker}: {text}")
 
 
 def _varint(b: bytes, i: int) -> tuple[int, int]:
@@ -124,7 +101,7 @@ def _text(b: bytes, v) -> str:
     return b[v[0]:v[1]].decode("utf-8", errors="replace")
 
 
-OP_LINES = ("XLA Ops", "Async XLA Ops")  # every op the device ran, compute and its async copies
+OP_LINES = ("XLA Ops", "Async XLA Ops", "Sparse Core Ops")  # every op the chip ran: compute, async copies, SparseCores
 LAUNCH, DONE = "DoEnqueueProgram", "CompleteCallbacks"  # libtpu's host events around a program run
 
 
@@ -223,11 +200,3 @@ def device_ops(b: bytes) -> tuple[list[tuple[int, int]], dict]:
     ops = [((base if ts < 10**17 else 0) + ts + off // 1000, (base if ts < 10**17 else 0) + ts + (off + dur) // 1000) for ts, off, dur in raw]
     info.update(ops=len(ops), base_ns=base, first_ns=min((s for s, _ in ops), default=None), last_ns=max((e for _, e in ops), default=None))
     return ops, info
-
-
-def _alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-        return True
-    except OSError:
-        return False

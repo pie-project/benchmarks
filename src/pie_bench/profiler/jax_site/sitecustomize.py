@@ -1,6 +1,7 @@
-"""Arms JAX tracing in an engine process for the profiler: once jax loads, SIGUSR1 starts a trace, SIGUSR2 stops it.
-A process with no TPU backend of its own (a server's front end) skips both. Markers <pid>.started and <pid>.done
-say when each is over.
+"""Arms JAX tracing in an engine process for the profiler: once jax loads, a thread of its own watches the trace
+folder's `command` file ("<seq> start" or "<seq> stop", written by the bench client's xla_trace or the profiler) and
+starts or stops jax.profiler; markers <pid>.started and <pid>.done ("<seq> ok|skip|error ...") say when each is over.
+A process with no TPU backend of its own (a server's front end) skips both.
 
 Active only with PIE_BENCH_JAX_TRACE_DIR set. Any sitecustomize further down sys.path still runs.
 """
@@ -22,43 +23,65 @@ def _mark(kind, text):
 
 
 def _arm():
-    import signal
+    import threading
     import time
 
     import jax
     from jax._src import xla_bridge
 
-    tracing = []
+    command = os.path.join(DIR, "command")
+    state = {"seq": None, "tracing": False}
 
-    def start(*_):
-        if tracing:
-            return _mark("started", "error already tracing")
-        if not any(str(k).startswith("tpu") for k in getattr(xla_bridge, "_backends", None) or {}):
-            return _mark("started", "skip: no TPU backend in this process")
+    def act(seq, action):
+        if action == "start":
+            if state["tracing"]:
+                return _mark("started", f"{seq} error already tracing")
+            if not any(str(k).startswith("tpu") for k in getattr(xla_bridge, "_backends", None) or {}):
+                return _mark("started", f"{seq} skip: no TPU backend in this process")
+            try:
+                # as pie's trace: host and device, no Python tracer (on by default, it slows a Python-bound engine loop)
+                options = jax.profiler.ProfileOptions()
+                options.python_tracer_level = 0
+                t0 = time.time_ns()
+                jax.profiler.start_trace(os.path.join(DIR, str(os.getpid())), profiler_options=options)
+                state["tracing"] = True
+                _mark("started", f"{seq} ok {t0} {time.time_ns()}")
+            except Exception as e:
+                _mark("started", f"{seq} error {e}")
+        elif not state["tracing"]:
+            _mark("done", f"{seq} skip: not tracing")
+        else:
+            state["tracing"] = False
+            try:
+                jax.profiler.stop_trace()
+                _mark("done", f"{seq} ok")
+            except Exception as e:
+                _mark("done", f"{seq} error {e}")
+
+    def read():
         try:
-            t0 = time.time_ns()
-            jax.profiler.start_trace(os.path.join(DIR, str(os.getpid())))
-            tracing.append(1)
-            _mark("started", f"ok {t0} {time.time_ns()}")
-        except Exception as e:
-            _mark("started", f"error {e}")
+            with open(command) as f:
+                return f.read().split()[:2]
+        except OSError:
+            return []
 
-    def stop(*_):
-        if not tracing:
-            return _mark("done", "skip: not tracing")
-        tracing.clear()
-        try:
-            jax.profiler.stop_trace()
-            _mark("done", "ok")
-        except Exception as e:
-            _mark("done", f"error {e}")
+    def watch():
+        state["seq"] = (read() or [None])[0]  # a command older than this process is not for it
+        while True:
+            got = read()
+            if len(got) == 2 and got[0] != state["seq"]:
+                state["seq"] = got[0]
+                act(*got)
+            time.sleep(0.05)
 
-    signal.signal(signal.SIGUSR1, start)
-    signal.signal(signal.SIGUSR2, stop)
+    def begin():
+        state["tracing"] = False
+        threading.Thread(target=watch, name="pie-bench-trace", daemon=True).start()
+        open(os.path.join(DIR, f"{os.getpid()}.pid"), "w").close()
+
     os.makedirs(DIR, exist_ok=True)
-    pidfile = lambda: open(os.path.join(DIR, f"{os.getpid()}.pid"), "w").close()
-    pidfile()
-    os.register_at_fork(after_in_child=lambda: (tracing.clear(), pidfile()))
+    begin()
+    os.register_at_fork(after_in_child=begin)
 
 
 class _AfterJax:
