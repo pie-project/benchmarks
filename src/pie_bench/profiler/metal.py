@@ -41,6 +41,12 @@ def descendants(root: int) -> set[int]:
     return seen
 
 
+def spool() -> set[Path]:
+    """Instruments' temporary recording files, which stay behind (GBs a minute) after a trace is saved."""
+    tmp = subprocess.run(["getconf", "DARWIN_USER_TEMP_DIR"], capture_output=True, text=True).stdout.strip()
+    return {p for pattern in ("instruments*", "xrgpu_aps_*") for p in Path(tmp).glob(pattern)} if tmp else set()
+
+
 def rows(path: Path):
     """(start ns, duration ns, pid) of each row of an exported metal-gpu-intervals table."""
     cols, ids = [], {}
@@ -73,6 +79,7 @@ class Tracer:
         out.mkdir(parents=True, exist_ok=True)
         trace = out / "metal.trace"
         shutil.rmtree(trace, ignore_errors=True)
+        before = spool()
         proc = subprocess.Popen(["xctrace", "record", "--template", TEMPLATE, "--all-processes", "--time-limit", f"{LIMIT_S}s", "--output", str(trace)],
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         started, done, pids = threading.Event(), threading.Event(), set()
@@ -104,6 +111,9 @@ class Tracer:
             except subprocess.TimeoutExpired:
                 proc.kill()
                 raise RuntimeError("xctrace did not save the trace within 15 min") from None
+            finally:
+                for p in spool() - before:
+                    shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink(missing_ok=True)
             (out / "pids.json").write_text(json.dumps(sorted(pids)))
 
     def intervals(self, out: Path) -> list[tuple[int, int]]:
