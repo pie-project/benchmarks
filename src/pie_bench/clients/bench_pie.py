@@ -26,6 +26,7 @@ from common import (
     cool_before_request,
     cuda_profiler_start,
     cuda_profiler_stop,
+    xla_trace,
     finish,
     gpu_clock_state,
     hash_output_tokens,
@@ -1044,6 +1045,7 @@ async def run(args: argparse.Namespace):
         except Exception:
             pass
         clocks_at_start = gpu_clock_state()
+        await asyncio.to_thread(xla_trace, "start")
         print("[pie-bench] measured-start", flush=True)
         profiler_task = None
         if (
@@ -1093,6 +1095,7 @@ async def run(args: argparse.Namespace):
                 with contextlib.suppress(asyncio.CancelledError):
                     await profiler_task
             clocks_at_end = gpu_clock_state()
+            await asyncio.to_thread(xla_trace, "stop")
             print("[pie-bench] measured-end", flush=True)
         for result in results:
             if result.process_id is not None:

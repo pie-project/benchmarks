@@ -100,10 +100,12 @@ def profile(hardware: str | None, model: str, setup: str, out: Path, engines: li
     first, second = pair(submit.request("GET", "/v1/results")["results"], hw, model, setup, engines)
     pie = next((r for r in (first, second) if r["engine"] == "pie"), None)
     commit = local.resolve_pie(pie["commit"])[0] if pie else "0" * 40
-    (job, a), (_, b) = cell_of(m, machine, first, commit), cell_of(m, machine, second, commit)
+    (job, a), (job_b, b) = cell_of(m, machine, first, commit), cell_of(m, machine, second, commit)
     params = a.workload.params
     concurrency, prompt = int(params.get("concurrency", 1)), int(params.get("prefill", 512))
+    # each engine's own pin (vLLM-TPU, SGLang-JAX), as its own plan carries it
     job = job.model_copy(update={"cells": [a, b], "control_required": False, "pie_commit": commit if pie else None,
+                                 "baseline_versions": {**job_b.baseline_versions, **job.baseline_versions},
                                  "repetition": RepetitionPolicy(min_rounds=1, max_rounds=1, confirm_rounds=0)})
     tracer = tracer_for(str(machine.platform.backend), out)
     os.environ.update({**local.setup_engines(m, job, log=print), **tracer.env})

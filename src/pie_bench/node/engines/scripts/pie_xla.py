@@ -45,6 +45,8 @@ def main() -> None:
             text = rewrite(f.read(), port and port.group(1))
         with open(path, "w") as f:
             f.write(text)
+    if os.environ.get("PIE_BENCH_PIE_PRELOAD"):  # the profiler's device trace (profiler/xla_trace.c)
+        os.environ["LD_PRELOAD"] = " ".join(filter(None, [os.environ["PIE_BENCH_PIE_PRELOAD"], os.environ.get("LD_PRELOAD")]))
     os.execv(real, [real, *argv])
 
 

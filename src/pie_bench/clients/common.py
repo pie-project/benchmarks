@@ -942,6 +942,38 @@ def cuda_profiler_stop(enabled: bool) -> None:
         raise RuntimeError(f"cudaProfilerStop failed with CUDA error {rc}")
 
 
+def xla_trace(action: str, timeout_s: float = 900) -> None:
+    """Under the profiler (PIE_BENCH_JAX_TRACE_DIR), starts or stops the device trace of the engine processes armed
+    there (pie-<pid>.pid by profiler/xla_trace.c, <pid>.pid by its jax_site) and waits until it has started or been
+    written. An engine that runs inside its bench client (pie's server, vLLM's engine core) is traced this way, around
+    the measured requests only."""
+    import signal
+
+    folder = os.environ.get("PIE_BENCH_JAX_TRACE_DIR")
+    if not folder:
+        return
+    marker, sig = {"start": ("started", signal.SIGUSR1), "stop": ("done", signal.SIGUSR2)}[action]
+    names = []
+    for p in Path(folder).glob("*.pid"):
+        pid = int(p.stem.removeprefix("pie-"))
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            continue
+        (p.parent / f"{p.stem}.{marker}").unlink(missing_ok=True)
+        os.kill(pid, sig)
+        names.append(p.stem)
+    deadline = time.monotonic() + timeout_s
+    for name in names:
+        path = Path(folder) / f"{name}.{marker}"
+        while not path.exists():
+            if time.monotonic() > deadline:
+                raise RuntimeError(f"{name}: no trace {marker} marker after {timeout_s:.0f} s")
+            time.sleep(0.1)
+        if path.read_text().startswith("error"):
+            raise RuntimeError(f"{name}: trace {marker}: {path.read_text()}")
+
+
 def _parse_cpu_list(spec: str) -> set[int]:
     cpus: set[int] = set()
     for part in spec.split(","):
