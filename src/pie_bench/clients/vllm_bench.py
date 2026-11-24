@@ -29,6 +29,7 @@ from common import (
     run_timed_warmup_sync,
     summarize,
     visible_cuda_devices,
+    xla_trace,
 )
 
 
@@ -524,6 +525,7 @@ def run_streaming(args: argparse.Namespace):
                 await asyncio.gather(*(stream_one(f"warmup-batch-{k}", prompts[k % args.warmup], prompt_counts[k % args.warmup], short)
                                        for k in range(max_num_seqs)))
 
+        await asyncio.to_thread(xla_trace, "start")
         epoch_unix_s = time.time()
         epoch_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
         profiler_task = None
@@ -571,9 +573,11 @@ def run_streaming(args: argparse.Namespace):
                     profiler_task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await profiler_task
+        wall = time.perf_counter() - start
+        await asyncio.to_thread(xla_trace, "stop")
         return (
             results,
-            time.perf_counter() - start,
+            wall,
             epoch_unix_s,
             epoch_monotonic_ns,
         )
