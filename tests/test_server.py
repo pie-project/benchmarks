@@ -157,11 +157,9 @@ def test_the_admin_sees_reads_per_endpoint_per_day(client):
 
 
 def _profile(setup: str, second_ms: float, gap_pct: float = 50) -> dict:
-    stages = {"attention": 1.0, "dense_matmul": 6.0, "moe": 0.0, "norm_rope_elementwise": 1.0, "sampling": 0.0, "other_gpu": 0.0, "gpu_idle": 2.0}
-    slow = {**stages, "dense_matmul": 6.0 + second_ms - 10, "gpu_idle": 2.0}
     return {"hardware": "m5-max-64g", "model": "qwen3.5-9b", "setup": setup, "gap_pct": gap_pct, "trace": "/Users/someone/trace",
-            "fastest": {"engine": "pie", "unit": "ms per output token", "benchmark_step_ms": 10.0, "profiled_step_ms": 10.2, "stage_ms": stages},
-            "second": {"engine": "mlxlm", "unit": "ms per output token", "benchmark_step_ms": 15.0, "profiled_step_ms": second_ms, "stage_ms": slow}}
+            "fastest": {"engine": "pie", "unit": "ms per output token", "benchmark_step_ms": 10.0, "wall_ms": 10.2, "forward_ms": 9.0},
+            "second": {"engine": "mlxlm", "unit": "ms per output token", "benchmark_step_ms": 15.0, "wall_ms": second_ms, "forward_ms": 9.5}}
 
 
 def test_profiles_are_judged_from_their_numbers_and_served_at_once(client):
@@ -171,36 +169,15 @@ def test_profiles_are_judged_from_their_numbers_and_served_at_once(client):
     auth = {"Authorization": f"Bearer {tok['token']}"}
     assert client.post("/v1/profiles", content=body([{**_profile("decode", 15.1), "gap_pct": None}]), headers=auth).status_code == 422
     missing = _profile("prefill", 15.1)
-    missing["second"]["stage_ms"] = None
+    missing["second"] = {"engine": "mlxlm", "benchmark_step_ms": 15.0}
     res = client.post("/v1/profiles", content=body([_profile("decode", 15.1), _profile("batching", 19.0), missing]), headers=auth)
     assert res.json() == {"profiles": 3, "confirmed": 1, "bad run": 1, "not profiled": 1}, res.text
     served = client.get("/v1/profiles").json()
     assert set(served) == {"m5-max-64g|qwen3.5-9b|decode", "m5-max-64g|qwen3.5-9b|batching"}
     good = served["m5-max-64g|qwen3.5-9b|decode"]
-    assert good["verdict"] == "confirmed" and good["stageKey"] == "dense_matmul" and good["second"]["engine"] == "mlxlm"
-    assert good["fastest"]["stages"]["linear_attention"] == 0 and good["flags"] == []
-    odd = _profile("spec", 15.1)
-    odd["second"]["stage_ms"] = {**odd["second"]["stage_ms"], "dense_matmul": 1.0, "other_gpu": 10.1}
-    odd["fastest"]["benchmark_status"] = "noisy"
-    client.post("/v1/profiles", content=body([odd]), headers=auth)
-    spec = client.get("/v1/profiles").json()["m5-max-64g|qwen3.5-9b|spec"]
-    assert spec["verdict"] == "confirmed" and {(x["engine"], x["kind"]) for x in spec["flags"]} == {("mlxlm", "unclassified"), ("pie", "noisy")}
+    assert good["verdict"] == "confirmed" and good["where"] == "idle" and good["second"] == {"engine": "mlxlm", "wallMs": 15.1, "forwardMs": 9.5, "idleMs": 5.6, "benchMs": 15.0}
     assert served["m5-max-64g|qwen3.5-9b|batching"]["verdict"] == "bad run"
     assert "Users" not in client.get("/v1/profiles").text
-    linear = _profile("batching", 15.2)
-    linear["second"]["stage_ms"] = {**linear["second"]["stage_ms"], "linear_attention": 4.0, "dense_matmul": 6.0}
-    client.post("/v1/profiles", content=body([linear]), headers={"Authorization": "Bearer admin-secret"})
-    batching = client.get("/v1/profiles").json()["m5-max-64g|qwen3.5-9b|batching"]
-    assert batching["verdict"] == "confirmed" and batching["stageKey"] == "linear_attention"
-    roles = _profile("batching", 15.2)
-    roles["second"]["stage_ms"] = {**roles["second"]["stage_ms"], "dense_matmul": 1.0, "qkv_proj": 1.0, "o_proj": 1.0, "mlp": 4.0, "lm_head": 4.1}
-    client.post("/v1/profiles", content=body([roles]), headers={"Authorization": "Bearer admin-secret"})
-    batching = client.get("/v1/profiles").json()["m5-max-64g|qwen3.5-9b|batching"]
-    assert batching["stageKey"] == "dense_matmul" and batching["second"]["stages"]["mlp"] == 0 and batching["second"]["stages"]["dense_matmul"] == 11.1
-    roles["fastest"]["stage_ms"] = {**roles["fastest"]["stage_ms"], "dense_matmul": 1.0, "qkv_proj": 1.0, "o_proj": 1.0, "mlp": 2.0, "lm_head": 1.0}
-    client.post("/v1/profiles", content=body([roles]), headers={"Authorization": "Bearer admin-secret"})
-    batching = client.get("/v1/profiles").json()["m5-max-64g|qwen3.5-9b|batching"]
-    assert batching["stageKey"] == "lm_head" and batching["second"]["stages"]["mlp"] == 4.0 and batching["fastest"]["stages"]["lm_head"] == 1.0
 
 
 def test_monitors_can_check_health_with_head(client):

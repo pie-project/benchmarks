@@ -127,8 +127,9 @@ def import_reason(e: Exception) -> str:
     return marked[-1] if marked else (lines[-1] if lines else "")
 
 class NodeRunner:
-    def __init__(self, job: JobSpec, *, pie_root: Path, out_dir: Path, hf_cache: Path | None = None, runner_name: str | None = None, build: bool = True, download: bool = False):
+    def __init__(self, job: JobSpec, *, pie_root: Path, out_dir: Path, hf_cache: Path | None = None, runner_name: str | None = None, build: bool = True, download: bool = False, tracer=None):
         self.job = job
+        self.tracer = tracer
         self.download = download or not os.environ.get("PIE_BENCH_VOLUME", "") and bool(os.environ.get("RUNPOD_POD_ID"))
         self.pie_root = Path(pie_root).resolve()
         self.out = Path(out_dir).resolve()
@@ -555,7 +556,11 @@ class NodeRunner:
             settled = pre.settle(self.platform.os if self.platform else None)
             if settled:
                 self.log(f"{cell.workload.id}: cooled {settled['settle_s']}s before the next round ({settled['thermal_state_before_settle']} -> {settled['thermal_state']})")
-        return engine.run(cell.workload, common, out_dir, self.cell_timeout_s(cell))
+        if self.tracer is None:
+            return engine.run(cell.workload, common, out_dir, self.cell_timeout_s(cell))
+        # a profiled round: the device traced while it runs, each request timed on a clock the trace lines up with
+        with self.tracer.recording(out_dir):
+            return engine.run(cell.workload, [*common, "--report-timing"] if engine.reports_timing else common, out_dir, self.cell_timeout_s(cell))
 
     def _run_cell(self, cell: Cell, engine, snapshot: Path, engine_version: str, recipe: dict, recipe_name: str, fingerprint: dict, machine_state: dict) -> Record:
         t0 = time.monotonic()

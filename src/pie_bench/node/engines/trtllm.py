@@ -25,6 +25,7 @@ class TrtllmEngine(ServedEngine):
     name = EngineName.TRTLLM
     health_path = "/health"
     exact_length = "ignore_eos"
+    reports_timing = False
 
     def script_path(self) -> Path:
         return SCRIPT

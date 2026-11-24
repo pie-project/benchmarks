@@ -81,6 +81,7 @@ class BrowserEngine(ServedEngine):
     page_engine: str = ""
     health_path = "/health"
     exact_length = "ignore_eos"
+    reports_timing = False
 
     def script_path(self) -> Path:
         return SCRIPT
