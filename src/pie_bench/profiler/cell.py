@@ -16,7 +16,7 @@ from pathlib import Path
 from pie_bench import local, submit
 from pie_bench.paths import MATRIX
 from pie_bench.plan.matrix import Matrix
-from pie_bench.schema import RepetitionPolicy
+from pie_bench.schema import RepetitionPolicy, Tier
 
 from . import tracer_for, unit
 
@@ -53,14 +53,19 @@ def same_cut(artifact, label: str) -> bool:
     if not m or not label:
         return not m and not label
     kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(m.layers).split(","))
-    return label.startswith(f"{kept} ") and (m.experts is None or f"{m.experts} experts" in label)
+    # a label that names no experts ("7 of 78 layers", the NVIDIA rows) is matched by its layers alone
+    return label.startswith(f"{kept} ") and (m.experts is None or "experts" not in label or f"{m.experts} experts" in label)
 
 
 def cell_of(m: Matrix, machine, row: dict, commit: str):
     """The matrix cell a results row measured, its requests cut to one short round."""
-    job = local.plan(m, machine, pie_commit=commit, models=[row["model"]], engines=[row["engine"]], workloads=[row["benchmark"]], suite="targeted")
-    found = [c for c in (job.cells if job else []) if c.workload.id == row["benchmark"] and str(c.engine) == row["engine"]
-             and str(c.artifact.scheme) == row["scheme"] and same_cut(c.artifact, row.get("miniature") or "")]
+    # the machine's own tier first, then any tier that holds the benchmarked cell (NVIDIA's full runs are weekly cells)
+    for tier in (local.tier_for(machine), *Tier):
+        job = local.plan(m, machine, pie_commit=commit, models=[row["model"]], engines=[row["engine"]], workloads=[row["benchmark"]], suite="targeted", tier=tier)
+        found = [c for c in (job.cells if job else []) if c.workload.id == row["benchmark"] and str(c.engine) == row["engine"]
+                 and str(c.artifact.scheme) == row["scheme"] and same_cut(c.artifact, row.get("miniature") or "")]
+        if found:
+            break
     if len(found) != 1:
         raise SystemExit(f"{row['engine']} {row['model']} {row['benchmark']}: {len(found)} matrix cells match, need one: {[c.artifact.id for c in found]}")
     c, p = found[0], dict(found[0].workload.params)
@@ -116,7 +121,7 @@ def profile(hardware: str | None, model: str, setup: str, out: Path, engines: li
     doc = {"hardware": hw, "model": model, "setup": setup, "gap_pct": 100 * (first[RATES[setup][1]] / second[RATES[setup][1]] - 1),
            "slice": first.get("miniature") or None, "fastest": sides[0], "second": sides[1]}
     (out / "cell.json").write_text(json.dumps(doc, indent=1))
-    for pattern in TRACES:
+    for pattern in TRACES if not os.environ.get("PIE_BENCH_PROFILER_KEEP_TRACES") else ():
         for p in out.rglob(pattern):
             shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink(missing_ok=True)
     return doc
