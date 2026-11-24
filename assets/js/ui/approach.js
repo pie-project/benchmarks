@@ -187,34 +187,23 @@ window.Pie = window.Pie || {};
         ["#8E8E93", "Compared with", "One other engine on the same machine"],
         ["#34C759", "Pass", "Within the run's own noise of the other engine; 5 points where it has none"]])}`;
 
-  // Profiling: how a gap the grid marks is traced on the GPU, its stages in the colours the Profiling page draws them in
+  // Profiling: how a gap the grid marks is timed on the device, end to end, in the colours the Profiling page draws it in
   const profiling = () => `
       ${lead("Where one engine is 25% or more ahead of the next on a cell, we profile both to see where the time goes.")}
-      ${steps([["#5AC8FA", "Same run", "Both engines, same machine and workload"], ["#5E5CE6", "Trace", "The platform's own GPU profiler"],
-        ["#0A84FF", "Stages", "Each step split by what it does"], ["#34C759", "Verify", "Within 10% of the benchmark"]], "<h3>How a cell is profiled</h3>")}
+      ${steps([["#5AC8FA", "Same run", "Both engines, same machine and workload"], ["#5E5CE6", "Trace", "The platform's own device tracer"],
+        ["#0A84FF", "Forward pass", "Device busy time, the rest idle"], ["#34C759", "Verify", "Within 10% of the benchmark"]], "<h3>How a cell is profiled</h3>")}
       <h3>The tracer on each platform</h3>
-      ${facts([["#8E8E93", "Apple", "Metal System Trace, every GPU command"],
-        ["#76B900", "NVIDIA", "Nsight Systems, every CUDA kernel"],
-        ["#4285F4", "TPU", "The XLA device profiler, every TPU op"]])}
-      <h3>The stages</h3>
-      ${facts([["#5E5CE6", "Attention", "Softmax attention over the KV cache: scores, softmax and the weighted sum, fused or not; grows with context"],
-        ["#A09EF5", "Linear attention", "State-space and gated delta layers: a fixed-size state per layer, whatever the context"],
-        ["#0A84FF", "QKV projection", "Each token's queries, keys and values"],
-        ["#64D2FF", "Output projection", "Attention's output back to the hidden size"],
-        ["#0050C8", "MLP", "Each layer's feed-forward: gate, up and down"],
-        ["#FFD60A", "LM head", "The last hidden state to vocabulary logits"],
-        ["#7EB6FF", "Dense matmul", "Any matrix multiply the trace does not tie to a role"],
-        ["#30B0C7", "MoE", "Routing tokens and running the chosen experts"],
-        ["#34C759", "Norm and rope", "Normalization, rotary embeddings and other elementwise work"],
-        ["#FF9F0A", "Sampling", "Picking the next token"],
-        ["#AF52DE", "Other GPU", "Any other kernel, such as copies"],
-        ["#AEAEB2", "GPU idle", "Time inside the step while the GPU waits on the host"]])}
-      <p>Each kernel counts toward the job the trace names it for: a role, not just the kind of math. A cell shows the QKV, output, MLP and LM head split only when both engines' traces name those roles; otherwise both keep one Dense matmul bar, so the two are always split the same way.</p>
-      <p>Stages are grouped by the kernel names each engine reports, so how time splits between stages can differ by engine. Each step's total is exact.</p>
-      <p>Both engines are measured in the benchmark's own unit: ms per output token, per prompt, per batched step or per wave of prompts. The stage where the slower engine spends the most extra time is where the gap comes from.</p>
+      ${facts([["#8E8E93", "Apple", "Metal System Trace, every GPU interval"],
+        ["#76B900", "NVIDIA", "Nsight Systems, every CUDA kernel and copy"],
+        ["#ED1C24", "AMD", "rocprofv3, every kernel and copy"],
+        ["#4285F4", "TPU", "The JAX profiler, every TPU op"]])}
+      <h3>What a profile measures</h3>
+      ${facts([["#0A84FF", "Forward pass", "The time the device is busy inside the benchmark's measured windows: the union of every kernel and copy interval in the trace"],
+        ["#AEAEB2", "Idle", "The rest of the step: the device waits on host work, scheduling and syncs"]])}
+      <p>No kernel is named or grouped: the trace gives only when the device worked. Both engines are measured in the benchmark's own unit: ms per output token, per prompt, per batched step or per wave of prompts. The part where the slower engine spends more extra time is where the gap comes from.</p>
       <h3>When a cell is verified</h3>
       ${facts([["#34C759", "Verified", "Each engine's profiled step is within 10% of the step its benchmark number implies, and the profiled gap within 10% of the benchmark's"],
-        ["#FF9500", "Needs rerun", "A profile disagrees with its benchmark, or a check flags it: unclassified GPU work over 25% of a step, the GPU idle over half of it, stages that do not add up to it, or a noisy benchmark run"],
+        ["#FF9500", "Needs rerun", "A profile disagrees with its benchmark, or its benchmark run was noisy"],
         ["#8E8E93", "Not profiled", "One engine could not be traced yet"]])}
       <p>The results API applies this rule to the uploaded numbers, so no verdict is set by hand. A verified cell turns green in the grid and carries a shield on the Profiling page.</p>`;
 
