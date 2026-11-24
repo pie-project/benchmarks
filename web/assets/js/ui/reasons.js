@@ -26,13 +26,12 @@ window.Pie = window.Pie || {};
     const name = String(h.name || id).replace(/^Apple /, "");
     return (h.class === "mac" || h.class === "windows") && h.memory_gib ? `${name} ${h.memory_gib} GB` : name;
   };
-  // a cell's profile: each engine's step, end to end, as the forward pass (the device busy) and idle time, one bar each
-  // on a shared scale; and the part the gap is in
-  const PARTS = [["forward", "Forward pass", "#0A84FF"], ["idle", "Idle", "#AEAEB2"]];
+  // a cell's profile: each engine's forward pass, end to end (the device busy for the whole step), one bar each on a
+  // shared scale; and whether the gap is in that forward pass or in idle time
+  const PARTS = [["forward", "Forward pass", "linear-gradient(90deg, #64D2FF, #0A84FF)"]];
   // what each part is: the card it shows on hover
   const HINTS = {
     forward: "The device at work: every kernel and copy of the step, measured end to end from the device's own trace",
-    idle: "The device waiting inside the step: host work, scheduling and syncs",
     limit: "The theoretical maximum the grid checks every number against: no engine can run this cell faster",
   };
   // a profile's third bar: the machine's limit for the cell, the fastest any engine could run it
@@ -65,7 +64,7 @@ window.Pie = window.Pie || {};
   const profileOf = (c) => {
     const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
     if (!p) return `<p class="reasons-item-suggestion">Not measured yet</p>`;
-    const total = (side) => side.forwardMs + side.idleMs;
+    const total = (side) => side.forwardMs;
     // a model slice has no limit of the full model to stand against: no Limit row
     const limit = c.miniature ? null : limitOf(c);
     const top = Math.max(total(p.fastest), total(p.second), limit?.ms || 0);
@@ -82,7 +81,7 @@ window.Pie = window.Pie || {};
   const keyOf = (engine, c) => `${engine}|${c.hardware}|${c.model}|${c.setup}`;
   // a row as a disclosure: the cell, its gap and setup; a click opens its profile and the suggestion
   const item = (id, c) => `
-            <details class="reasons-item" data-reason-key="${esc(keyOf(id, c))}">
+            <details class="reasons-item" open data-reason-key="${esc(keyOf(id, c))}">
               <summary class="reasons-item-summary">
                 ${verified(c)
                   ? `<span class="reasons-item-status is-verified" role="img" aria-label="Verified" title="Verified: a profile of both engines agrees with the benchmark"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>`
@@ -96,7 +95,7 @@ window.Pie = window.Pie || {};
               <div class="reasons-item-body">${profileOf(c)}</div>
             </details>`;
   // the Summary, about one engine (Pie unless picked): every profiled cell it was in, set against the other engine there.
-  // Two charts: its forward pass and idle time over the other engine's, cell by cell, and how far each step is from the
+  // Two charts: its forward pass over the other engine's, cell by cell, and how far each step is from the
   // machine's limit, its and the other engine's
   const SUMMARY = "summary";
   const ENGINE_KEY = "pieSummaryEngine";
@@ -139,7 +138,7 @@ window.Pie = window.Pie || {};
     if (!pairs.length) return `<p class="reasons-empty">No profiled cells yet.</p>`;
     const name = esc(nameOf(engine));
     const dot = (pair, x, y, cls, value, extra, style = "") => `<i class="dot ${cls}" style="left: ${x.toFixed(2)}%; top: ${y.toFixed(1)}%${style}" data-dot="${dots.push({ pair, value, ...extra }) - 1}"></i>`;
-    // 1. part by part: the engine's ms in the forward pass (or idle) over the other engine's, one dot a cell, where the
+    // 1. the engine's forward pass in ms over the other engine's, one dot a cell, where the
     // part is 5% or more of the step; left of 1x the engine is faster there, right of it slower
     const LO = 1 / 8, HI = 8;
     let k0 = 0;
@@ -157,7 +156,7 @@ window.Pie = window.Pie || {};
       return `<div class="dot-row"><span class="dot-label">${esc(partName)}</span><span class="dot-plot"><span class="dot-one" style="left: 50%"></span>${marks}<b class="dot-median" style="left: ${at(mid, LO, HI).toFixed(2)}%"></b></span><span class="dot-stat"><b>${times(mid)}</b> ${said}</span></div>`;
     }).join("");
     const partAxis = `<div class="dot-axis"><span></span><span class="dot-scale">${[[0.25, "0.25×"], [0.5, "0.5×"], [1, "1×"], [2, "2×"], [4, "4×"]].map(([v, l]) => `<span style="left: ${at(v, LO, HI)}%">${l}</span>`).join("")}</span><span></span></div>`;
-    const parts = partRows ? `<section class="summary-card"><h2>Forward pass and idle</h2><p class="summary-sub">${name}'s forward pass and idle time over the other engine's, one dot a cell; the tick is the median. <i class="dot-key is-faster"></i>Faster <i class="dot-key is-slower"></i>Slower</p>${partAxis}${partRows}</section>` : "";
+    const parts = partRows ? `<section class="summary-card"><h2>Forward pass</h2><p class="summary-sub">${name}'s forward pass over the other engine's, one dot a cell; the tick is the median. <i class="dot-key is-faster"></i>Faster <i class="dot-key is-slower"></i>Slower</p>${partAxis}${partRows}</section>` : "";
     // 2. how far each step is from the machine's limit: the engine's (filled) and the other engine's (hollow), one pair a
     // cell, joined; 1x is the limit itself
     const LIM_HI = 32;
@@ -275,7 +274,7 @@ window.Pie = window.Pie || {};
     }
   };
 
-  // a row opens and closes as a Mac disclosure does: its body grows or folds, the chevron turns, and one row is open at a time
+  // a row opens and closes as a Mac disclosure does: its body grows or folds and the chevron turns; every row starts open
   const still = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const fold = (row, open) => {
     const body = row.querySelector(".reasons-item-body");
@@ -338,7 +337,6 @@ window.Pie = window.Pie || {};
       event.preventDefault();
       const row = summary.parentElement;
       const opening = !row.open || row.classList.contains("is-closing");
-      for (const other of element.querySelectorAll(".reasons-item[open]")) if (other !== row) fold(other, false);
       fold(row, opening);
       return;
     }

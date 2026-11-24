@@ -666,7 +666,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .profile-row { display: grid; grid-template-columns: 110px minmax(0, 1fr) 70px; align-items: center; gap: 10px; height: 22px; font-size: 12px; }
 .profile-engine { color: var(--color-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .profile-bar { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: var(--color-fill); }
-.profile-bar i { display: block; height: 100%; }
+.profile-bar i { display: block; height: 100%; border-radius: 3px; }
 .profile-total { text-align: right; font-variant-numeric: tabular-nums; color: var(--color-label-secondary); }
 .profile-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 4px; font-size: 11px; color: var(--color-label-secondary); }
 .profile-legend span { display: inline-flex; align-items: center; gap: 5px; }
@@ -674,7 +674,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .profile-bar i[data-stage], .profile-legend span[data-stage] { cursor: default; }
 /* a profile's Limit bar: the machine's floor for the cell, in quieter ink than the two engines */
 .profile-row.is-limit .profile-engine, .profile-row.is-limit .profile-total { color: var(--color-label-secondary); }
-.profile-bar i.is-limit, .stage-tip-name i.is-limit { background: #8E8E93 !important; }  /* the limit filled grey, darker than idle */
+.profile-bar i.is-limit, .stage-tip-name i.is-limit { background: #8E8E93 !important; }  /* the limit filled grey */
 /* the Profiling Summary: three figures, then a card a chart in the grouped panel's tint */
 .welcome-stats.summary-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 4px 0 8px; }
 .summary-card { margin-top: 12px; padding: 16px 18px 14px; border-radius: 12px; background: color-mix(in srgb, var(--color-fill) 50%, transparent); }
