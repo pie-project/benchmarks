@@ -113,8 +113,8 @@ def arms(m: Matrix, models: list[str] | None, suite: str, mac: bool = True) -> l
 
 
 def plan(m: Matrix, machine: Machine, *, pie_commit: str, models: list[str] | None, engines: list[str] | None,
-         workloads: list[str] | None, suite: str) -> JobSpec | None:
-    tier = tier_for(machine)
+         workloads: list[str] | None, suite: str, tier: Tier | None = None) -> JobSpec | None:
+    tier = tier or tier_for(machine)
     config = load_config(CONFIG)
     laptop = machine.platform.os in ("macos", "windows")
     ids = arms(m, models, suite, laptop) if laptop or models else None
