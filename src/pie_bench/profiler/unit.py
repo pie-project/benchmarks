@@ -69,7 +69,9 @@ def measured(bench: dict, setup: str, concurrency: int, prompt: int) -> Measured
     if setup == "prefill":
         return Measured(f"ms per {prompt}-token prompt", [(ns(sent(r)), ns(sent(r) + r["ttft_s"])) for r in reqs],
                         sum(r["prompt_tokens"] for r in reqs) / prompt, [r["prompt_tokens"] / prompt for r in reqs])
-    window = [(ns(min(sent(r) for r in reqs)), ns(max(sent(r) + r["latency_s"] for r in reqs)))]
+    # a request that waited for a seat counts the wait in its latency (pie's client), so it ends at its return
+    end = lambda r: r["client_return_s"] if r.get("client_return_s") is not None else sent(r) + r["latency_s"]
+    window = [(ns(min(sent(r) for r in reqs)), ns(max(end(r) for r in reqs)))]
     if setup == "batching":
         return Measured(f"ms per batched decode step ({concurrency} requests)", window, sum(r["output_tokens"] for r in reqs) / concurrency)
     if setup == "pbatch":
