@@ -26,34 +26,22 @@ window.Pie = window.Pie || {};
     const name = String(h.name || id).replace(/^Apple /, "");
     return (h.class === "mac" || h.class === "windows") && h.memory_gib ? `${name} ${h.memory_gib} GB` : name;
   };
-  // a cell's profile: each engine's step split into the same stages, as one bar each on a shared scale, and the verdict
-  const STAGES = [["attention", "Attention", "#5E5CE6"], ["linear_attention", "Linear attention", "#A09EF5"], ["qkv_proj", "QKV projection", "#0A84FF"], ["o_proj", "Output projection", "#64D2FF"],
-    ["mlp", "MLP", "#0050C8"], ["lm_head", "LM head", "#FFD60A"], ["dense_matmul", "Dense matmul", "#7EB6FF"], ["moe", "MoE", "#30B0C7"],
-    ["norm_rope_elementwise", "Norm and rope", "#34C759"], ["sampling", "Sampling", "#FF9F0A"], ["other_gpu", "Other GPU", "#AF52DE"], ["gpu_idle", "GPU idle", "#AEAEB2"]];
-  // what each stage does and where its time usually goes when an engine is slow there: the card a stage shows on hover
+  // a cell's profile: each engine's forward pass, end to end (the device busy for the whole step), one bar each on a
+  // shared scale; and whether the gap is in that forward pass or in idle time
+  const PARTS = [["forward", "Forward pass", "linear-gradient(90deg, #64D2FF, #0A84FF)"]];
+  // what each part is: the card it shows on hover
   const HINTS = {
-    attention: ["Reads the KV cache and scores past tokens", ["No fast kernel for this chip (a fallback)", "KV pages gathered or copied first", "Long contexts, unbatched decode"]],
-    linear_attention: ["Runs state-space and gated delta layers", ["No fused kernel for this chip", "State copied every step", "Short conv run as separate kernels"]],
-    qkv_proj: ["Projects each token to queries, keys and values", ["Weights read below memory bandwidth", "Q, K and V as three launches, not one", "Quantized weights unpacked every step"]],
-    o_proj: ["Projects attention's output back to the hidden size", ["Weights read below memory bandwidth", "Not fused with the residual add", "Quantized weights unpacked every step"]],
-    mlp: ["Runs each layer's feed-forward: gate, up and down", ["Weights read below memory bandwidth", "Gate and up as two launches", "Activation not fused into the matmul"]],
-    lm_head: ["Turns the last hidden state into vocabulary logits", ["Logits for every prompt token, not just the last", "Full vocabulary in fp32", "Weights read below memory bandwidth"]],
-    dense_matmul: ["Weight multiplies not tied to a layer role", ["Weights read below memory bandwidth", "Quantized weights unpacked every step", "Shapes padded to bigger tiles"]],
-    moe: ["Routes tokens and runs the chosen experts", ["Experts requantized or unpacked on the fly", "Unused experts read anyway", "One launch per expert, not grouped"]],
-    norm_rope_elementwise: ["Normalization, rotary embeddings, elementwise work", ["Many small unfused kernels", "Tables copied to a new layout every step", "Extra fp32 casts"]],
-    sampling: ["Picks the next token", ["Full-vocabulary sort or softmax", "Logits copied to the CPU", "Sampling on one CPU thread"]],
-    other_gpu: ["Any other kernel, such as copies", ["Weights or caches copied every step", "Host and device transfers", "Cache bookkeeping kernels"]],
-    gpu_idle: ["The GPU waits on the host inside the step", ["Host prep slower than the GPU work", "No graph capture or compiled step", "Syncs between kernel launches"]],
+    forward: "The device at work: every kernel and copy of the step, measured end to end from the device's own trace",
+    limit: "The theoretical maximum the grid checks every number against: no engine can run this cell faster",
   };
   // a profile's third bar: the machine's limit for the cell, the fastest any engine could run it
-  const LIMIT = ["limit", "Limit", "#8E8E93"];  // filled grey, no stage's colour
+  const LIMIT = ["limit", "Limit", "#8E8E93"];  // filled grey, darker than idle
   const BOUND = { bandwidth: "Bandwidth-bound", compute: "Compute-bound", interconnect: "Interconnect-bound", balanced: "Balanced" };
-  // value: what the segment measures, already in words (its ms in a profile, its share in the Summary); note: a line under it
+  // value: what the segment measures, already in words (its ms in a profile, its ratio in the Summary); note: a line under it
   const hint = (k, value, note = "") => {
-    const [, name, color] = [...STAGES, LIMIT].find(([key]) => key === k);
-    const [does, slow] = k === LIMIT[0] ? ["The theoretical maximum the grid checks every number against: no engine can run this cell faster", []] : HINTS[k];
+    const [, name, color] = [...PARTS, LIMIT].find(([key]) => key === k);
     return `<div class="gap-tip-title"><span class="stage-tip-name"><i${k === LIMIT[0] ? ' class="is-limit"' : ""} style="background: ${color}"></i>${esc(name)}</span>${value ? `<span class="gap-tip-end gap-tip-gap">${esc(value)}</span>` : ""}</div>`
-      + `<div class="gap-tip-body">${esc(does)}</div>${note ? `<div class="gap-tip-at">${esc(note)}</div>` : ""}${slow.length ? `<div class="stage-tip-head">Slow when</div><ul class="stage-tip-list">${slow.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}`;
+      + `<div class="gap-tip-body">${esc(HINTS[k])}</div>${note ? `<div class="gap-tip-at">${esc(note)}</div>` : ""}`;
   };
   // the cell's limit in its profile's own unit, from the grid's own theoretical maximum at the shape pie's run had:
   // a token (decode), a prompt (prefill), a wave of prompts (batched prefill), a step of every request (batched decode)
@@ -67,35 +55,33 @@ window.Pie = window.Pie || {};
   // a model slice's mark, the grid's own: a square cut by a diagonal
   const sliceIcon = (label) => `<svg class="reasons-slice-icon" viewBox="0 0 16 16" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>`;
   const verified = (c) => Pie.verifiedProfile?.(`${c.hardware}|${c.model}|${c.setup}`);
-  // why a profiled cell needs a rerun: its profile disagrees with the benchmark, or one of the API's checks flagged it
-  const FLAG = { unclassified: (n, x) => `unclassified GPU work is ${x.pct}% of ${n}'s step`, idle: (n, x) => `the GPU sits idle ${x.pct}% of ${n}'s step`,
-    sum: (n, x) => `${n}'s stages add up to ${x.pct}% of its step`, noisy: (n) => `${n}'s benchmark run was noisy` };
+  // why a profiled cell needs a rerun: the API's own reasons its profile disagrees with the benchmark
   const rerunWhy = (c) => {
     const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
-    if (!p || verified(c)) return null;
-    const flags = (p.flags || []).map((x) => FLAG[x.kind]?.(nameOf(x.engine), x)).filter(Boolean);
-    return [p.verdict !== "confirmed" ? "the profile does not match the benchmark" : "", ...flags].filter(Boolean).join("; ");
+    return !p || verified(c) ? null : p.why || "the profile does not match the benchmark";
   };
   const ms = (v) => `${v >= 100 ? Math.round(v) : v >= 10 ? v.toFixed(1) : v.toFixed(2)} ms`;
   const profileOf = (c) => {
     const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
     if (!p) return `<p class="reasons-item-suggestion">Not measured yet</p>`;
-    const total = (side) => STAGES.reduce((n, [k]) => n + (side.stages[k] || 0), 0);
+    const total = (side) => side.forwardMs;
     // a model slice has no limit of the full model to stand against: no Limit row
     const limit = c.miniature ? null : limitOf(c);
     const top = Math.max(total(p.fastest), total(p.second), limit?.ms || 0);
-    const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${STAGES.map(([k, , color]) => side.stages[k] > 0 ? `<i style="width: ${(100 * side.stages[k] / top).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-value="${ms(side.stages[k])}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;
+    const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${PARTS.map(([k, , color]) => side[`${k}Ms`] > 0 ? `<i style="width: ${(100 * side[`${k}Ms`] / top).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-value="${ms(side[`${k}Ms`])}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;
+    // the part the gap is in, once the profile is confirmed, and how much longer or shorter each part is on the slower engine
+    const by = (v) => `${ms(Math.abs(v))} ${v >= 0 ? "longer" : "shorter"}`;
+    const where = p.where ? `<p class="profile-verdict">The gap is ${p.where === "forward" ? "in the forward pass" : "in idle time"}: ${esc(nameOf(p.second.engine))}'s forward pass is ${by(p.extraMs.forward)}, its idle time ${by(p.extraMs.idle)}</p>` : "";
     // the limit as its own bar on the same scale, so each engine's distance from it reads off the bars
     const floor = limit ? `<div class="profile-row is-limit"><span class="profile-engine">Limit</span><span class="profile-bar"><i class="is-limit" style="width: ${(100 * limit.ms / top).toFixed(2)}%" data-stage="limit" data-stage-value="${ms(limit.ms)}" data-stage-note="${esc(BOUND[limit.bound] || "")}"></i></span><span class="profile-total">${ms(limit.ms)}</span></div>` : "";
-    const used = STAGES.filter(([k]) => p.fastest.stages[k] > 0 || p.second.stages[k] > 0);
-    return `${bar(p.fastest)}${bar(p.second)}${floor}
-                <p class="profile-legend">${used.map(([k, name, color]) => `<span data-stage="${k}"><i style="background: ${color}"></i>${name}</span>`).join("")}</p>
+    return `${where}${bar(p.fastest)}${bar(p.second)}${floor}
+                <p class="profile-legend">${PARTS.map(([k, name, color]) => `<span data-stage="${k}"><i style="background: ${color}"></i>${name}</span>`).join("")}</p>
                 <p class="profile-note">${esc(`${p.unit || ""}${c.miniature ? `, on a model slice (${c.miniature})` : ""}`)}</p>`;
   };
   const keyOf = (engine, c) => `${engine}|${c.hardware}|${c.model}|${c.setup}`;
   // a row as a disclosure: the cell, its gap and setup; a click opens its profile and the suggestion
   const item = (id, c) => `
-            <details class="reasons-item" data-reason-key="${esc(keyOf(id, c))}">
+            <details class="reasons-item" open data-reason-key="${esc(keyOf(id, c))}">
               <summary class="reasons-item-summary">
                 ${verified(c)
                   ? `<span class="reasons-item-status is-verified" role="img" aria-label="Verified" title="Verified: a profile of both engines agrees with the benchmark"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>`
@@ -109,8 +95,8 @@ window.Pie = window.Pie || {};
               <div class="reasons-item-body">${profileOf(c)}</div>
             </details>`;
   // the Summary, about one engine (Pie unless picked): every profiled cell it was in, set against the other engine there.
-  // Two charts: its time in each stage over the other engine's, cell by cell, and how far each step is from the machine's
-  // limit, its and the other engine's
+  // Two charts: its forward pass over the other engine's, cell by cell, and how far each step is from the
+  // machine's limit, its and the other engine's
   const SUMMARY = "summary";
   const ENGINE_KEY = "pieSummaryEngine";
   let summaryEngine = (() => { try { return localStorage.getItem(ENGINE_KEY) || null; } catch { return null; } })();
@@ -130,7 +116,7 @@ window.Pie = window.Pie || {};
     for (const c of Pie.platform?.seconds?.(Pie.state) || []) {
       if ((c.engine !== engine && c.rival !== engine) || (!slices && c.miniature)) continue;
       const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
-      if (!p?.fastest?.stages || !p?.second?.stages || (verifiedOnly && p.verdict !== "confirmed")) continue;
+      if (!p?.fastest || !p?.second || (verifiedOnly && p.verdict !== "confirmed")) continue;
       const mine = p.fastest.engine === engine ? p.fastest : p.second.engine === engine ? p.second : null;
       if (mine) out.push({ c, p, mine, theirs: mine === p.fastest ? p.second : p.fastest, ahead: mine === p.fastest });
     }
@@ -143,7 +129,7 @@ window.Pie = window.Pie || {};
     if (!d) return "";
     const { c, mine, theirs } = d.pair;
     const head = `<div class="gap-tip-title"><span>${esc(modelName(c.model))} on ${esc(machineName(c.hardware))}</span><span class="gap-tip-end gap-tip-gap">${esc(d.value)}</span></div>`;
-    return `${head}<div class="gap-tip-body">${esc(c.label)}${d.stage ? ` · ${esc(d.stage)}` : ""}</div>`
+    return `${head}<div class="gap-tip-body">${esc(c.label)}${d.part ? ` · ${esc(d.part)}` : ""}</div>`
       + `<div class="gap-tip-at">${esc(nameOf(mine.engine))} ${d.a} · ${esc(nameOf(theirs.engine))} ${d.b}${d.limit ? ` · limit ${d.limit}` : ""}</div>`;
   };
   const summaryOf = (engine) => {
@@ -152,24 +138,25 @@ window.Pie = window.Pie || {};
     if (!pairs.length) return `<p class="reasons-empty">No profiled cells yet.</p>`;
     const name = esc(nameOf(engine));
     const dot = (pair, x, y, cls, value, extra, style = "") => `<i class="dot ${cls}" style="left: ${x.toFixed(2)}%; top: ${y.toFixed(1)}%${style}" data-dot="${dots.push({ pair, value, ...extra }) - 1}"></i>`;
-    // 1. stage by stage: the engine's ms in a stage over the other engine's, one dot a cell, where the stage is 5% or more
-    // of the step; left of 1x the engine is faster there, right of it slower
+    // 1. the engine's forward pass in ms over the other engine's, one dot a cell, where the
+    // part is 5% or more of the step; left of 1x the engine is faster there, right of it slower
     const LO = 1 / 8, HI = 8;
     let k0 = 0;
-    const stageRows = STAGES.map(([k, stageName]) => {
-      const pts = pairs.filter(({ mine, theirs }) => (mine.stages[k] || 0) > 0 && (theirs.stages[k] || 0) > 0
-        && Math.max(mine.stages[k], theirs.stages[k]) >= 0.05 * Math.max(mine.stepMs, theirs.stepMs));
+    const of = (side, k) => side[`${k}Ms`] || 0;
+    const partRows = PARTS.map(([k, partName]) => {
+      const pts = pairs.filter(({ mine, theirs }) => of(mine, k) > 0 && of(theirs, k) > 0
+        && Math.max(of(mine, k), of(theirs, k)) >= 0.05 * Math.max(mine.wallMs, theirs.wallMs));
       if (pts.length < 3) return "";
-      const ratios = pts.map(({ mine, theirs }) => mine.stages[k] / theirs.stages[k]);
+      const ratios = pts.map(({ mine, theirs }) => of(mine, k) / of(theirs, k));
       const mid = median(ratios), faster = ratios.filter((r) => r < 0.9).length, slower = ratios.filter((r) => r > 1.1).length;
       const said = mid < 0.9 ? `faster in ${faster} of ${pts.length}` : mid > 1.1 ? `slower in ${slower} of ${pts.length}` : `${faster} faster, ${slower} slower`;
       const marks = pts.map((pair, i) => { const r = ratios[i]; return dot(pair, at(r, LO, HI), spread(k0 + i), r < 0.9 ? "is-faster" : r > 1.1 ? "is-slower" : "is-same", times(r),
-        { stage: stageName, a: ms(pair.mine.stages[k]), b: ms(pair.theirs.stages[k]) }); }).join("");
+        { part: partName, a: ms(of(pair.mine, k)), b: ms(of(pair.theirs, k)) }); }).join("");
       k0 += pts.length;
-      return `<div class="dot-row"><span class="dot-label">${esc(stageName)}</span><span class="dot-plot"><span class="dot-one" style="left: 50%"></span>${marks}<b class="dot-median" style="left: ${at(mid, LO, HI).toFixed(2)}%"></b></span><span class="dot-stat"><b>${times(mid)}</b> ${said}</span></div>`;
+      return `<div class="dot-row"><span class="dot-label">${esc(partName)}</span><span class="dot-plot"><span class="dot-one" style="left: 50%"></span>${marks}<b class="dot-median" style="left: ${at(mid, LO, HI).toFixed(2)}%"></b></span><span class="dot-stat"><b>${times(mid)}</b> ${said}</span></div>`;
     }).join("");
-    const stageAxis = `<div class="dot-axis"><span></span><span class="dot-scale">${[[0.25, "0.25×"], [0.5, "0.5×"], [1, "1×"], [2, "2×"], [4, "4×"]].map(([v, l]) => `<span style="left: ${at(v, LO, HI)}%">${l}</span>`).join("")}</span><span></span></div>`;
-    const stages = `<section class="summary-card"><h2>Stage by stage</h2><p class="summary-sub">${name}'s time in each stage over the other engine's, one dot a cell; the tick is the median. <i class="dot-key is-faster"></i>Faster <i class="dot-key is-slower"></i>Slower</p>${stageAxis}${stageRows}</section>`;
+    const partAxis = `<div class="dot-axis"><span></span><span class="dot-scale">${[[0.25, "0.25×"], [0.5, "0.5×"], [1, "1×"], [2, "2×"], [4, "4×"]].map(([v, l]) => `<span style="left: ${at(v, LO, HI)}%">${l}</span>`).join("")}</span><span></span></div>`;
+    const parts = partRows ? `<section class="summary-card"><h2>Forward pass</h2><p class="summary-sub">${name}'s forward pass over the other engine's, one dot a cell; the tick is the median. <i class="dot-key is-faster"></i>Faster <i class="dot-key is-slower"></i>Slower</p>${partAxis}${partRows}</section>` : "";
     // 2. how far each step is from the machine's limit: the engine's (filled) and the other engine's (hollow), one pair a
     // cell, joined; 1x is the limit itself
     const LIM_HI = 32;
@@ -178,11 +165,11 @@ window.Pie = window.Pie || {};
       const pts = [];
       for (const pair of pairs.filter((x) => x.c.setup === setup)) {
         const L = limitOf(pair.c);
-        if (L?.ms) pts.push({ pair, L: L.ms, m: pair.mine.stepMs / L.ms, t: pair.theirs.stepMs / L.ms });
+        if (L?.ms) pts.push({ pair, L: L.ms, m: pair.mine.wallMs / L.ms, t: pair.theirs.wallMs / L.ms });
       }
       if (!pts.length) return "";
       const marks = pts.map(({ pair, L, m, t }, i) => {
-        const y = spread(w0 + i), xm = at(m, 1, LIM_HI), xt = at(t, 1, LIM_HI), extra = { a: ms(pair.mine.stepMs), b: ms(pair.theirs.stepMs), limit: ms(L) };
+        const y = spread(w0 + i), xm = at(m, 1, LIM_HI), xt = at(t, 1, LIM_HI), extra = { a: ms(pair.mine.wallMs), b: ms(pair.theirs.wallMs), limit: ms(L) };
         return `<span class="dot-link" style="left: ${Math.min(xm, xt).toFixed(2)}%; width: ${Math.abs(xm - xt).toFixed(2)}%; top: ${y.toFixed(1)}%"></span>`
           + dot(pair, xt, y, "is-hollow", `${times(t)} the limit`, extra) + dot(pair, xm, y, "is-mine", `${times(m)} the limit`, extra, `; --dot: ${colorOf(engine)}`);
       }).join("");
@@ -193,10 +180,10 @@ window.Pie = window.Pie || {};
     const limit = limitRows ? `<section class="summary-card"><h2>Distance from the limit</h2><p class="summary-sub">Each step over the machine's limit: <i class="dot-key" style="--dot: ${colorOf(engine)}"></i>${name} <i class="dot-key is-hollow"></i>the other engine, joined a cell; 1× is the hardware limit</p>${limitAxis}${limitRows}</section>` : "";
     // the headline: the cells, how many it leads, and its median distance from the limit
     const ahead = pairs.filter((x) => x.ahead).length;
-    const dist = pairs.map((x) => { const L = limitOf(x.c); return L?.ms ? x.mine.stepMs / L.ms : null; }).filter((v) => v != null);
+    const dist = pairs.map((x) => { const L = limitOf(x.c); return L?.ms ? x.mine.wallMs / L.ms : null; }).filter((v) => v != null);
     const tiles = `<dl class="welcome-stats summary-stats"><div><dt>Cells profiled</dt><dd>${pairs.length.toLocaleString("en-US")}</dd></div>`
       + `<div><dt>Fastest in</dt><dd>${ahead} of ${pairs.length}</dd></div><div><dt>Median distance from the limit</dt><dd>${dist.length ? times(median(dist)) : "–"}</dd></div></dl>`;
-    return `${tiles}${stages}${limit}`;
+    return `${tiles}${parts}${limit}`;
   };
   let focus = null;
   let shownCount = 0;
@@ -287,7 +274,7 @@ window.Pie = window.Pie || {};
     }
   };
 
-  // a row opens and closes as a Mac disclosure does: its body grows or folds, the chevron turns, and one row is open at a time
+  // a row opens and closes as a Mac disclosure does: its body grows or folds and the chevron turns; every row starts open
   const still = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const fold = (row, open) => {
     const body = row.querySelector(".reasons-item-body");
@@ -299,7 +286,7 @@ window.Pie = window.Pie || {};
     const run = body.animate(frames, { duration: open ? 260 : 200, easing: open ? "cubic-bezier(.2, .8, .2, 1)" : "cubic-bezier(.4, 0, .6, 1)" });
     if (!open) run.onfinish = () => { row.open = false; };
   };
-  // a stage's card follows the pointer over its bar segment or its legend entry, in the site's chart tooltip
+  // a part's card follows the pointer over its bar segment or its legend entry, in the site's chart tooltip
   // as a macOS popover shows: after the pointer rests a moment on a mark, then still, just under the mark where the
   // pointer is; once one is up, the next mark's card comes at once, until the pointer has been off the marks a moment
   const tooltip = document.getElementById("chart-tooltip");
@@ -350,7 +337,6 @@ window.Pie = window.Pie || {};
       event.preventDefault();
       const row = summary.parentElement;
       const opening = !row.open || row.classList.contains("is-closing");
-      for (const other of element.querySelectorAll(".reasons-item[open]")) if (other !== row) fold(other, false);
       fold(row, opening);
       return;
     }

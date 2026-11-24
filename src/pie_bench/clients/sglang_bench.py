@@ -251,6 +251,8 @@ def run(args: argparse.Namespace):
         )
     )
 
+    epoch: dict[str, float] = {}
+
     async def drive() -> tuple[list[RequestResult], float]:
         if args.warmup:
             warmup_budget = args.warmup_max_tokens
@@ -264,6 +266,8 @@ def run(args: argparse.Namespace):
                 await asyncio.gather(*(stream_one(prompts[k % args.warmup], prompt_counts[k % args.warmup], short)
                                        for k in range(max_running_requests)))
 
+        epoch_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+        epoch.update({"client timing epoch unix s": time.time(), "client timing epoch monotonic ns": epoch_monotonic_ns})
         if args.mode == "latency":
             out: list[RequestResult] = []
             begin = time.perf_counter()
@@ -271,12 +275,11 @@ def run(args: argparse.Namespace):
                 idx = args.warmup + i
                 out.append(
                     await stream_one(
-                        prompts[idx], prompt_counts[idx], all_sampling[idx]
+                        prompts[idx], prompt_counts[idx], all_sampling[idx], epoch_monotonic_ns
                     )
                 )
             return out, time.perf_counter() - begin
 
-        epoch_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
         begin = time.perf_counter()
         pacer.start()
 
@@ -329,6 +332,7 @@ def run(args: argparse.Namespace):
                 **pacer.stats(),
             },
             "report timing": want_timing,
+            **(epoch if want_timing else {}),
         },
     )
     return summary, results

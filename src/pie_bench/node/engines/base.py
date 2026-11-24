@@ -321,6 +321,7 @@ class Engine(ABC):
         return argv
 
     supports_prompts_file: bool = True
+    reports_timing: bool = True  # the bench client takes --report-timing, so a profiler can line its requests up with a trace
 
     def cold_common_args(self, workload: WorkloadSpec, common_args: list[str], out_dir: Path) -> list[str]:
         from pie_bench.node.workloads.synthetic import prompt_words_for_tokens

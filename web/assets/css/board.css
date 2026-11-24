@@ -660,13 +660,13 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 #board-relative { scroll-margin-top: 48px; }
 /* the two cards carry no titles: the section's title and line say what both show */
 
-/* a cell's profile in its Suggestions row: one bar per engine on a shared scale, split into the same stages */
+/* a cell's profile in its Suggestions row: one bar per engine on a shared scale, its forward pass and idle time */
 .profile-verdict { margin: 0 0 8px; font-size: 13px; line-height: 1.45; color: var(--color-label); }
 .profile-verdict.is-rerun { color: var(--color-label-secondary); }
 .profile-row { display: grid; grid-template-columns: 110px minmax(0, 1fr) 70px; align-items: center; gap: 10px; height: 22px; font-size: 12px; }
 .profile-engine { color: var(--color-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .profile-bar { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: var(--color-fill); }
-.profile-bar i { display: block; height: 100%; }
+.profile-bar i { display: block; height: 100%; border-radius: 3px; }
 .profile-total { text-align: right; font-variant-numeric: tabular-nums; color: var(--color-label-secondary); }
 .profile-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 4px; font-size: 11px; color: var(--color-label-secondary); }
 .profile-legend span { display: inline-flex; align-items: center; gap: 5px; }
@@ -674,7 +674,7 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
 .profile-bar i[data-stage], .profile-legend span[data-stage] { cursor: default; }
 /* a profile's Limit bar: the machine's floor for the cell, in quieter ink than the two engines */
 .profile-row.is-limit .profile-engine, .profile-row.is-limit .profile-total { color: var(--color-label-secondary); }
-.profile-bar i.is-limit, .stage-tip-name i.is-limit { background: #8E8E93 !important; }  /* the limit filled grey, darker than GPU idle */
+.profile-bar i.is-limit, .stage-tip-name i.is-limit { background: #8E8E93 !important; }  /* the limit filled grey */
 /* the Profiling Summary: three figures, then a card a chart in the grouped panel's tint */
 .welcome-stats.summary-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 4px 0 8px; }
 .summary-card { margin-top: 12px; padding: 16px 18px 14px; border-radius: 12px; background: color-mix(in srgb, var(--color-fill) 50%, transparent); }
@@ -715,14 +715,12 @@ a.board-key:hover { color: var(--color-label); text-decoration: underline; text-
   .dot-axis > span:last-child { display: none; }
 }
 }
-/* a stage's hover card: its name and time, what it does, and where its time usually goes when an engine is slow there */
+/* a part's hover card: its name and time, and what it is */
 .chart-tooltip.is-note.is-stage-tip { width: 330px; max-width: calc(100vw - 16px); padding: 9px 12px; white-space: normal; box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(0, 0, 0, .1); }
 :root[data-theme="dark"] .chart-tooltip.is-note.is-stage-tip { box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(255, 255, 255, .14); }  /* a macOS popover's faint light edge */
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chart-tooltip.is-note.is-stage-tip { box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(255, 255, 255, .14); } }  /* one width for every stage and the Limit, room for the longest line */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chart-tooltip.is-note.is-stage-tip { box-shadow: var(--shadow-menu), inset 0 0 0 .5px rgba(255, 255, 255, .14); } }  /* one width for every part and the Limit, room for the longest line */
 .stage-tip-name { display: inline-flex; align-items: center; gap: 6px; }
 .stage-tip-name i { width: 8px; height: 8px; border-radius: 2px; }
-.stage-tip-head { margin-top: 8px; padding-top: 7px; border-top: .5px solid var(--color-separator); font-size: 11px; font-weight: 600; color: var(--color-label-tertiary, var(--color-label-secondary)); }  /* a section of the card, under a hairline, as a macOS popover divides one */
-.stage-tip-list { margin: 3px 0 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.5; color: var(--color-label-secondary); }  /* plain lines, no bullets */
 .profile-note { margin: 0; font-size: 11px; color: var(--color-label-tertiary); }
 .profile-note + .profile-note { margin-top: 4px; }
 /* each row's status at its left: a green shield where a profile verifies the gap; the slot stays empty otherwise */

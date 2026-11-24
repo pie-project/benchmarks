@@ -219,7 +219,7 @@ def download_sizes(request: Request):
 
 
 @app.api_route("/v1/profiles", methods=["GET", "HEAD"])
-def stage_profiles(request: Request):
+def cell_profiles(request: Request):
     return _cached(request, "profiles", "application/json")
 
 
