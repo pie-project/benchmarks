@@ -27,7 +27,9 @@ class Tracer:
     # buffer at `nsys stop` (SGLang on an A40: the last 620 ms of the round)
     prefix = ["nsys", "launch", "--trace=cuda", "--cuda-graph-trace=node", "--trace-fork-before-exec=true",
               f"--cuda-flush-interval={FLUSH_MS}", f"--session-new={SESSION}"]
-    env: dict[str, str] = {}
+    # vLLM's EngineCore forked from its first process kept losing the round's last kernels at stop (1.3 s of a Raw 512
+    # round on an A40) even with the flush interval: started with spawn, it is a traced process of its own
+    env: dict[str, str] = {"VLLM_WORKER_MULTIPROC_METHOD": "spawn"}
 
     def __init__(self, out: Path):
         self.out = out
