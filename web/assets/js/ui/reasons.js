@@ -81,7 +81,7 @@ window.Pie = window.Pie || {};
   const keyOf = (engine, c) => `${engine}|${c.hardware}|${c.model}|${c.setup}`;
   // a row as a disclosure: the cell, its gap and setup; a click opens its profile and the suggestion
   const item = (id, c) => `
-            <details class="reasons-item" open data-reason-key="${esc(keyOf(id, c))}">
+            <details class="reasons-item" data-reason-key="${esc(keyOf(id, c))}">
               <summary class="reasons-item-summary">
                 ${verified(c)
                   ? `<span class="reasons-item-status is-verified" role="img" aria-label="Verified" title="Verified: a profile of both engines agrees with the benchmark"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>`
@@ -274,7 +274,7 @@ window.Pie = window.Pie || {};
     }
   };
 
-  // a row opens and closes as a Mac disclosure does: its body grows or folds and the chevron turns; every row starts open
+  // a row opens and closes as a Mac disclosure does: its body grows or folds, the chevron turns, and one row is open at a time
   const still = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const fold = (row, open) => {
     const body = row.querySelector(".reasons-item-body");
@@ -337,6 +337,7 @@ window.Pie = window.Pie || {};
       event.preventDefault();
       const row = summary.parentElement;
       const opening = !row.open || row.classList.contains("is-closing");
+      for (const other of element.querySelectorAll(".reasons-item[open]")) if (other !== row) fold(other, false);
       fold(row, opening);
       return;
     }
