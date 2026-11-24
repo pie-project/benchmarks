@@ -9,18 +9,24 @@ from __future__ import annotations
 
 import sqlite3
 import subprocess
+import time
 from contextlib import contextmanager
 from pathlib import Path
 
 from . import span
 
 SESSION = "pie-bench-profile"
+FLUSH_MS = 500
 TABLES = ("CUPTI_ACTIVITY_KIND_KERNEL", "CUPTI_ACTIVITY_KIND_MEMCPY", "CUPTI_ACTIVITY_KIND_MEMSET")
 
 
 class Tracer:
     name = "nsys"
-    prefix = ["nsys", "launch", "--trace=cuda", "--cuda-graph-trace=node", f"--session-new={SESSION}"]
+    # engines that fork their model worker without exec (vLLM's EngineCore) are traced too. A CUDA buffer is saved every
+    # FLUSH_MS: with the default (saved when full), a server process idle after the round lost its last part-filled
+    # buffer at `nsys stop` (SGLang on an A40: the last 620 ms of the round)
+    prefix = ["nsys", "launch", "--trace=cuda", "--cuda-graph-trace=node", "--trace-fork-before-exec=true",
+              f"--cuda-flush-interval={FLUSH_MS}", f"--session-new={SESSION}"]
     env: dict[str, str] = {}
 
     def __init__(self, out: Path):
@@ -35,6 +41,7 @@ class Tracer:
             with span(out):
                 yield
         finally:
+            time.sleep(3 * FLUSH_MS / 1000)  # the round's last buffers saved before the collection ends
             subprocess.run(["nsys", "stop", f"--session={SESSION}"], check=True)
             subprocess.run(["nsys", "export", "--type=sqlite", "--force-overwrite=true", "--output", str(out / "nsys.sqlite"),
                             str(out / "nsys.nsys-rep")], check=True)
