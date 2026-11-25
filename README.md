@@ -27,6 +27,23 @@ This repository holds the `pie-bench` command line tool, the results API the
 site reads, the site itself, the phone app that runs the same workloads on
 iPhone and Android, and Docker images for cloud GPUs and TPUs.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/verified-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/verified-light.png">
+    <img alt="The gaps grid, one verified gap opened to its profile, and the benchmark, profile and verify steps"
+         src=".github/assets/verified-light.png" width="100%">
+  </picture>
+</p>
+
+The site shows every gap between pie and the fastest other engine. Each gap of
+25% or more is profiled: the same build runs again on prompts of its own while
+every GPU kernel is timed end to end. A gap is verified (green) only when each
+engine's profile and the gap agree with the benchmark within 10%; otherwise it
+stays yellow and is rerun. As of November 2026: 44 machines on 6 platforms
+(NVIDIA, AMD, Google TPU, Apple Silicon, browsers on WebGPU and phones), 33
+models, 13 engines, 10,176 results and 322 verified profiles.
+
 ## Install
 
 ```bash
