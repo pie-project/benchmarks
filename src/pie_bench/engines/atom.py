@@ -4,7 +4,8 @@ import os
 import subprocess
 from pathlib import Path
 
-from pie_bench.engines.engine import EngineLaunchError, register
+from pie_bench.engines import register
+from pie_bench.engines.engine import EngineLaunchError
 from pie_bench.schema import EngineName, ErrorClass, WorkloadSpec
 
 from .served import ServedEngine, free_port

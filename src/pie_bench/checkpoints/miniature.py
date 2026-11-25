@@ -6,7 +6,7 @@ import subprocess
 import uuid
 from pathlib import Path
 
-from pie_bench.installers.pie import bench_dir
+from pie_bench.installers.bench_env import bench_dir
 from pie_bench.schema import ArtifactKind, ArtifactSpec, MiniatureRecipe
 
 SHRINK_SCRIPT = "shrink_checkpoint.py"

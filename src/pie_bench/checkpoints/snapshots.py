@@ -8,8 +8,13 @@ from pathlib import Path
 from pie_bench.schema import ArtifactKind, ArtifactSpec, SourceFormat
 
 WEIGHT_PATTERNS = ["*.json", "*.safetensors", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.py", "*.jinja"]
+
+
 TOKENIZER_PATTERNS = ["*.json", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.jinja"]
+
+
 MLC_PATTERNS = ["*.json", "*.bin", "*.txt", "*.model", "tokenizer*"]
+
 
 _SPLIT = re.compile(r"-00001-of-(\d{5})\.gguf$")
 
@@ -20,10 +25,6 @@ def gguf_shards(gguf_file: str) -> list[str]:
         return [gguf_file]
     n = int(m.group(1))
     return [gguf_file[: m.start()] + f"-{i:05d}-of-{n:05d}.gguf" for i in range(1, n + 1)]
-
-
-def hf_cache_dir() -> Path:
-    return Path(os.environ.get("HF_HUB_CACHE") or (Path(os.environ["HF_HOME"]) / "hub" if os.environ.get("HF_HOME") else Path.home() / ".cache/huggingface/hub"))
 
 
 def snapshot_dir_if_present(artifact: ArtifactSpec, hf_cache: Path, weights: bool = True) -> Path | None:

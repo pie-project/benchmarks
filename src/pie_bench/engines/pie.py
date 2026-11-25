@@ -11,13 +11,15 @@ import time
 from pathlib import Path
 from typing import Any
 
-from pie_bench.engines.engine import Engine, EngineLaunchError, classify_failure, register
+from pie_bench.engines import register
+from pie_bench.engines.engine import Engine, EngineLaunchError
+from pie_bench.engines.failures import classify_failure
 from pie_bench.engines.shapes import (
     CHAT_TEMPLATE_MARGIN_TOKENS,
     context_tokens_for,
     max_model_len_for,
 )
-from pie_bench.installers.pie import bench_dir
+from pie_bench.installers.bench_env import bench_dir
 from pie_bench.paths import CLIENTS
 from pie_bench.schema import Backend, EngineName, ErrorClass, WorkloadKind, WorkloadSpec
 

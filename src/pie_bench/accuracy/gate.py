@@ -14,7 +14,7 @@ from pie_bench.accuracy.divergence import (
     first_divergence,
     t0_verdict,
 )
-from pie_bench.installers.pie import bench_dir
+from pie_bench.installers.bench_env import bench_dir
 from pie_bench.schema import AccuracyMetrics, AccuracyStatus, ArtifactKind, Cell, QuantScheme
 
 TeacherForcedFn = Callable[[list[int]], np.ndarray]

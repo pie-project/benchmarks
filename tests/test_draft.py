@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from pie_bench.checkpoints.snapshots import draft_artifact, ensure_snapshot
-from pie_bench.engines import EngineLaunchError
+from pie_bench.engines.engine import EngineLaunchError
 from pie_bench.engines.llamacpp import LlamacppEngine
 from pie_bench.engines.mlxlm import MlxlmEngine
 from pie_bench.engines.recipes import load_recipe
@@ -14,7 +14,7 @@ from pie_bench.engines.splash import SplashEngine
 from pie_bench.paths import MATRIX
 from pie_bench.plan.jobs import process_key
 from pie_bench.plan.matrix import Matrix
-from pie_bench.runner.job import split_draft_processes
+from pie_bench.runner.grouping import split_draft_processes
 from pie_bench.schema import ArtifactSpec, Backend, Mode, PlatformSpec, Tier, WorkloadSpec
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -19,7 +19,7 @@ REAL_ACCURACY = runner_mod.NodeRunner._accuracy
 
 
 def _asked(workload):
-    from pie_bench.engines.engine import workload_mode_args
+    from pie_bench.engines.shapes import workload_mode_args
     from pie_bench.runner.round_checks import expected_requests
     return expected_requests(workload_mode_args(workload)[1]) or 1
 
@@ -221,7 +221,7 @@ def test_out_dir_is_absolute_for_subprocesses(job, patched, tmp_path, monkeypatc
 def test_cell_priority_runs_control_then_cheap_shapes_first():
     from types import SimpleNamespace as NS
 
-    from pie_bench.runner.job import cell_priority
+    from pie_bench.runner.grouping import cell_priority
 
     def cell(kind, est):
         return NS(workload=NS(kind=NS(value=kind), est_minutes=est))
@@ -236,7 +236,7 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
     from pie_bench.engines.shapes import context_tokens_for
     from pie_bench.plan.jobs import make_jobs
     from pie_bench.plan.matrix import Matrix
-    from pie_bench.runner.job import SHORT_CONTEXT_TOKENS, split_heavy_processes
+    from pie_bench.runner.grouping import SHORT_CONTEXT_TOKENS, split_heavy_processes
     from pie_bench.schema import Tier
 
     m = Matrix.load(MATRIX)
@@ -262,7 +262,7 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
 def test_pie_cuda_cells_boot_at_their_own_shape_as_vllm_does():
     from pie_bench.engines.shapes import max_model_len_for, workload_concurrency
     from pie_bench.plan.jobs import make_jobs
-    from pie_bench.runner.job import split_startups
+    from pie_bench.runner.grouping import split_startups
 
     m = Matrix.load(MATRIX)
     cells = [c for c in m.expand(artifacts=["minimax-m3.1-flash-mini60-e16"]) if c.program.id == "text-completion-bench"]
@@ -283,7 +283,8 @@ def test_mac_rivals_serve_one_request_rows_on_one_slot():
     from pie_bench.engines.llamacpp import LlamacppEngine
     from pie_bench.engines.shapes import workload_concurrency
     from pie_bench.plan.jobs import process_key
-    from pie_bench.runner.job import serve_envelope, split_startups
+    from pie_bench.runner.grouping import split_startups
+    from pie_bench.runner.job import serve_envelope
 
     m = Matrix.load(MATRIX)
     for aid, split in (("gemma-4-e2b-llamacpp", True), ("gemma-4-e2b-mlxlm", False)):
@@ -337,7 +338,7 @@ def test_one_slow_boot_among_five_rounds_is_dropped(job, patched, tmp_path):
 def test_heavy_model_on_a_small_mac_boots_short_and_long_shapes_apart():
     from pie_bench.engines.shapes import context_tokens_for
     from pie_bench.plan.jobs import process_key
-    from pie_bench.runner.job import SHORT_CONTEXT_TOKENS, split_heavy_processes
+    from pie_bench.runner.grouping import SHORT_CONTEXT_TOKENS, split_heavy_processes
 
     m = Matrix.load(MATRIX)
     lc16k = WorkloadSpec(id="lc-16k-128", kind="long_context", params={"prefill": 16384, "decode": 128, "concurrency": 1})

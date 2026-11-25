@@ -13,7 +13,7 @@ from typing import Any
 
 from pie_bench.engines.engine import Engine, EngineLaunchError
 from pie_bench.engines.shapes import max_model_len_for, workload_concurrency
-from pie_bench.installers.pie import bench_dir
+from pie_bench.installers.bench_env import bench_dir
 from pie_bench.paths import CLIENTS
 from pie_bench.schema import ErrorClass, WorkloadKind, WorkloadSpec
 
@@ -71,7 +71,7 @@ class ServedEngine(Engine):
     def default_python(self) -> str:
         if os.environ.get("OPENAI_BENCH_PY"):
             return os.environ["OPENAI_BENCH_PY"]
-        from pie_bench.installers.pie import bench_python
+        from pie_bench.installers.bench_env import bench_python
 
         return str(bench_python())
 
@@ -102,7 +102,7 @@ class ServedEngine(Engine):
         return args
 
     def stop_token_bias(self) -> dict[str, float]:
-        from pie_bench.engines.shapes import hf_snapshot_dir
+        from pie_bench.checkpoints.hf_cache import hf_snapshot_dir
 
         snap = hf_snapshot_dir(self.artifact.base_model, self.artifact.revision)
         path = Path(snap) / "tokenizer.json" if snap else None

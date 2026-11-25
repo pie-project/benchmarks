@@ -4,7 +4,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from pie_bench.engines.engine import register
+from pie_bench.engines import register
 from pie_bench.schema import EngineName
 
 from .mlxlm import MlxlmEngine

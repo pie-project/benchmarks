@@ -9,10 +9,11 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from pie_bench.engines.engine import EngineLaunchError, register
+from pie_bench.checkpoints.hf_cache import hf_snapshot_dir
+from pie_bench.engines import register
+from pie_bench.engines.engine import EngineLaunchError
 from pie_bench.engines.llamacpp import LlamacppEngine
 from pie_bench.engines.served import ServedEngine
-from pie_bench.engines.shapes import hf_snapshot_dir
 from pie_bench.paths import CLIENTS
 from pie_bench.schema import EngineName, ErrorClass
 

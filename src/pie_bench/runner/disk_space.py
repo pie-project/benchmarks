@@ -18,7 +18,7 @@ def free_gib(path: Path) -> float:
 
 
 def cache_root() -> Path | None:
-    from pie_bench.installers.pie import DEFAULT_CACHE
+    from pie_bench.installers.bench_env import DEFAULT_CACHE
 
     return Path(os.environ.get("PIE_BENCH_CACHE", DEFAULT_CACHE))
 

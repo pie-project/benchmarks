@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 import subprocess
 
-from pie_bench.engines.engine import Engine, register
+from pie_bench.engines import register
+from pie_bench.engines.engine import Engine
 from pie_bench.engines.shapes import max_model_len_for, workload_concurrency
 from pie_bench.schema import EngineName, WorkloadSpec
 

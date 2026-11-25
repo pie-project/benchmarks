@@ -17,7 +17,7 @@ def needs_import(artifact: ArtifactSpec) -> bool:
 
 
 def artifact_root(root: Path | None = None) -> Path:
-    from pie_bench.installers.pie import DEFAULT_CACHE
+    from pie_bench.installers.bench_env import DEFAULT_CACHE
 
     return root or Path(os.environ.get("PIE_BENCH_CACHE", DEFAULT_CACHE)) / "artifacts"
 

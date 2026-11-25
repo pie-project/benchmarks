@@ -6,8 +6,9 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from pie_bench.engines.engine import EngineLaunchError, register
-from pie_bench.engines.shapes import hf_snapshot_dir, hf_snapshot_file
+from pie_bench.checkpoints.hf_cache import hf_snapshot_dir, hf_snapshot_file
+from pie_bench.engines import register
+from pie_bench.engines.engine import EngineLaunchError
 from pie_bench.schema import EngineName, ErrorClass
 
 from .served import ServedEngine

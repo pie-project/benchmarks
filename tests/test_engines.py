@@ -20,7 +20,7 @@ from pie_bench.engines.sglang import SglangEngine
 from pie_bench.engines.shapes import max_model_len_for, workload_concurrency
 from pie_bench.engines.splash import SplashEngine
 from pie_bench.engines.vllm import VllmEngine
-from pie_bench.installers.pie import bench_dir
+from pie_bench.installers.bench_env import bench_dir
 from pie_bench.paths import MATRIX
 from pie_bench.schema import ArtifactSpec, Backend, Mode, PlatformSpec, WorkloadSpec
 from pie_bench.workloads import WORDS_PER_TOKEN, common_args_for
@@ -472,7 +472,7 @@ def test_llamacpp_version_is_the_release_tag_the_matrix_pins(printed, tag, tmp_p
 def test_llamacpp_missing_gguf_is_load_fail(hf_cache):
     art = artifact(base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m", source_format="gguf", gguf_file="nope.gguf")
     eng = make(LlamacppEngine, art=art, python="/usr/bin/python3")
-    from pie_bench.engines import EngineLaunchError
+    from pie_bench.engines.engine import EngineLaunchError
 
     with pytest.raises(EngineLaunchError) as e:
         eng.gguf_path()
@@ -551,7 +551,7 @@ def test_served_engines_boot_and_stop_a_server(tmp_path, hf_cache, monkeypatch):
 def test_a_served_engine_that_dies_at_startup_is_a_load_fail(tmp_path, hf_cache):
     import sys
 
-    from pie_bench.engines import EngineLaunchError
+    from pie_bench.engines.engine import EngineLaunchError
 
     class Dead(SplashEngine):
         def server_cmd(self, port, slots, context):
@@ -1075,7 +1075,7 @@ def test_an_idle_bench_is_stopped_as_a_hang():
     import subprocess
     import sys
 
-    from pie_bench.engines.engine import wait_with_stall_check
+    from pie_bench.engines.processes import wait_with_stall_check
 
     idle = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
     rc, timed_out, stalled = wait_with_stall_check(idle, timeout_s=60, stall_s=2, poll_s=0.5, device_busy=lambda: False)
@@ -1086,7 +1086,7 @@ def test_a_bench_waiting_on_a_busy_mac_gpu_is_left_to_finish():
     import subprocess
     import sys
 
-    from pie_bench.engines.engine import wait_with_stall_check
+    from pie_bench.engines.processes import wait_with_stall_check
 
     waiting = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(4)"])
     rc, timed_out, stalled = wait_with_stall_check(waiting, timeout_s=60, stall_s=2, poll_s=0.5, device_busy=lambda: True)
@@ -1098,7 +1098,7 @@ def test_a_hang_leaves_a_dump_of_what_the_tree_was_doing():
     import subprocess
     import sys
 
-    from pie_bench.engines.engine import stall_dump, wait_with_stall_check
+    from pie_bench.engines.processes import stall_dump, wait_with_stall_check
 
     idle = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
     dumps = []
@@ -1114,7 +1114,7 @@ def test_a_busy_bench_is_left_to_finish():
     import subprocess
     import sys
 
-    from pie_bench.engines.engine import wait_with_stall_check
+    from pie_bench.engines.processes import wait_with_stall_check
 
     busy = subprocess.Popen([sys.executable, "-c", "import time\nt = time.time()\nwhile time.time() - t < 4: pass"])
     rc, timed_out, stalled = wait_with_stall_check(busy, timeout_s=60, stall_s=2, poll_s=0.5)
@@ -1197,7 +1197,7 @@ def test_mlxlm_blocks_every_special_token(tmp_path, monkeypatch):
     snap = tmp_path / "snap"
     snap.mkdir()
     (snap / "tokenizer.json").write_text(json.dumps({"added_tokens": [{"id": 248046, "content": "<|im_end|>"}, {"id": 248069, "content": "</think>"}]}))
-    monkeypatch.setattr("pie_bench.engines.shapes.hf_snapshot_dir", lambda *a, **k: snap)
+    monkeypatch.setattr("pie_bench.checkpoints.hf_cache.hf_snapshot_dir", lambda *a, **k: snap)
     from types import SimpleNamespace
     eng = SimpleNamespace(artifact=SimpleNamespace(base_model="m", revision=None))
     assert served.ServedEngine.stop_token_bias(eng) == {"248046": -100.0, "248069": -100.0}
@@ -1274,7 +1274,7 @@ def test_sglang_on_the_tpu_serves_its_jax_build(tmp_path, monkeypatch):
 
 
 def test_a_queued_single_stream_request_starts_when_the_one_before_it_ends():
-    from pie_bench.engines.engine import serial_clock
+    from pie_bench.metrics.perf import serial_clock
 
     rows = [{"ok": True, "client_send_s": 0.0, "client_return_s": 9.9, "ttft_s": 0.1, "latency_s": 9.9},
             {"ok": True, "client_send_s": 0.0, "client_return_s": 19.8, "ttft_s": 10.0, "latency_s": 19.8}]

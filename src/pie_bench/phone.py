@@ -24,7 +24,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from pie_bench import submit
-from pie_bench.engines.engine import perf_from_common_json
+from pie_bench.metrics.perf import perf_from_common_json
 from pie_bench.metrics.stats import cov
 from pie_bench.schema import Backend, CellStatus, ErrorClass, PlatformSpec, Provenance, Record, Tier
 from pie_bench.schema.cell import Cell, EngineName, Mode

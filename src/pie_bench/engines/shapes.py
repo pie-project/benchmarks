@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
 from pie_bench.schema import WorkloadSpec
 
 MAX_MODEL_LEN_QUANTUM = 2048
+
 
 CHAT_TEMPLATE_MARGIN_TOKENS = 64
 
@@ -58,52 +56,6 @@ def is_prefix_workload(workload: WorkloadSpec) -> bool:
     return str(workload.kind) == "prefix_shared"
 
 
-def hf_cache_roots() -> list[Path]:
-    roots: list[Path] = []
-    if cache := os.environ.get("HF_HUB_CACHE"):
-        roots.append(Path(cache).expanduser())
-    if home := os.environ.get("HF_HOME"):
-        roots.append(Path(home).expanduser() / "hub")
-    roots.append(Path(os.environ.get("XDG_CACHE_HOME", "~/.cache")).expanduser() / "huggingface" / "hub")
-    return roots
-
-
-def hf_snapshot_dir(repo_id: str, revision: str | None = None) -> Path | None:
-    candidate = Path(repo_id).expanduser()
-    if candidate.exists():
-        return candidate.resolve()
-    encoded = f"models--{repo_id.replace('/', '--')}"
-    for root in hf_cache_roots():
-        repo = root / encoded
-        snapshots = repo / "snapshots"
-        if not snapshots.is_dir():
-            continue
-        if revision and (snapshots / revision).is_dir():
-            return (snapshots / revision).resolve()
-        for ref_name in ("main", "master"):
-            ref = repo / "refs" / ref_name
-            if ref.is_file():
-                rev = ref.read_text().strip()
-                if (snapshots / rev).is_dir():
-                    return (snapshots / rev).resolve()
-        dirs = sorted((d for d in snapshots.iterdir() if d.is_dir()), key=lambda d: d.stat().st_mtime_ns)
-        if dirs:
-            return dirs[-1].resolve()
-    return None
-
-
-def hf_snapshot_file(repo_id: str, file_name: str, revision: str | None = None) -> Path | None:
-    snap = hf_snapshot_dir(repo_id, revision)
-    if snap is None:
-        return None
-    split = "-00001-of-" in file_name
-    direct = snap / file_name
-    if direct.is_file():
-        return direct if split else direct.resolve()
-    hits = sorted(snap.rglob(Path(file_name).name))
-    return (hits[0] if split else hits[0].resolve()) if hits else None
-
-
 def serve_envelope(workloads: list[WorkloadSpec]) -> WorkloadSpec:
     by_ctx = max(workloads, key=context_tokens_for)
     conc = max(workload_concurrency(w) for w in workloads)
@@ -112,3 +64,20 @@ def serve_envelope(workloads: list[WorkloadSpec]) -> WorkloadSpec:
         return by_ctx
     kind = "concurrency" if str(by_ctx.kind) in ("single_stream", "control_aa") else by_ctx.kind
     return by_ctx.model_copy(update={"kind": kind, "params": {**by_ctx.params, "concurrency": conc, "num_requests": max(reqs, conc * 2)}})
+
+
+def workload_mode_args(workload: WorkloadSpec) -> tuple[str, list[str]]:
+    p = workload.params
+    kind = str(workload.kind)
+    if kind in ("single_stream", "control_aa"):
+        return "latency", ["--requests", str(p.get("requests", 8))]
+    if kind == "long_context":
+        conc = int(p.get("concurrency", 1))
+        if conc <= 1:
+            return "latency", ["--requests", str(p.get("requests", 4))]
+        return "tput", ["--num-requests", str(p.get("num_requests", conc * 2)), "--concurrency", str(conc)]
+    if kind in ("concurrency", "prefix_shared", "mixed_length", "replay"):
+        conc = int(p.get("concurrency", 8))
+        n = int(p.get("num_requests", p.get("variants", conc * 4)))
+        return "tput", ["--num-requests", str(n), "--concurrency", str(conc)]
+    raise ValueError(f"unknown workload kind {kind}")

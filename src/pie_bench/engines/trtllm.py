@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from pie_bench.engines.engine import register
+from pie_bench.engines import register
 from pie_bench.paths import CLIENTS
 from pie_bench.schema import EngineName
 

@@ -14,7 +14,7 @@ from pie_bench.checkpoints.miniature import (
     recipe_from_snapshot,
     repo_cache_dirname,
 )
-from pie_bench.installers.pie import bench_dir
+from pie_bench.installers.bench_env import bench_dir
 from pie_bench.schema import ArtifactKind, ArtifactSpec, MiniatureRecipe, QuantScheme
 
 

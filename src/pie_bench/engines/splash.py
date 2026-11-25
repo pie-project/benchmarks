@@ -6,8 +6,8 @@ import shutil
 import subprocess
 from typing import Any
 
-from pie_bench.engines.engine import register
-from pie_bench.engines.shapes import hf_snapshot_dir
+from pie_bench.checkpoints.hf_cache import hf_snapshot_dir
+from pie_bench.engines import register
 from pie_bench.schema import EngineName
 
 from .served import ServedEngine
