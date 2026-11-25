@@ -26,7 +26,7 @@ Silicon, browsers and phones. Ship a kernel, watch it land. Spot a gap, go close
 that fit in memory, installs every engine at its pinned version, runs the sweep,
 and uploads a signed submission to [benchmarks.pie-project.org][Benchmarks].
 
-**How we earn your trust:** every gap over 25% is re-measured under an end-to-end
+Every gap over 25% is re-measured under an end-to-end
 GPU profiler on fresh prompts. It's marked verified only if the profile agrees
 with the benchmark within 10%; otherwise it's rerun. Details in the [Bench Book].
 
