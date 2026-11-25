@@ -97,11 +97,9 @@ _DIRECT_FLAGS: tuple[tuple[str, str], ...] = (
     ("host_weight_budget", "--host-weight-budget"),
     ("pie_bin", "--pie-bin"),
     ("server_startup_timeout", "--server-startup-timeout"),
-    ("cpu_mem_budget", "--cpu-mem-budget"),
     ("cpu_affinity", "--cpu-affinity"),
     ("request_timeout", "--request-timeout"),
     ("wasm_delay_us", "--wasm-delay-us"),
-    ("venv", "--venv"),
 )
 
 _BOOL_OPTIONAL_FLAGS: tuple[tuple[str, str], ...] = (
