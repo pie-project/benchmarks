@@ -493,7 +493,6 @@ class JobRunner:
                 self.log(f"{cell.workload.id}: cooled {settled['settle_s']}s before the next round ({settled['thermal_state_before_settle']} -> {settled['thermal_state']})")
         if not traced:
             return engine.run(cell.workload, common, out_dir, self.cell_timeout_s(cell))
-        # a profiled round: the device traced while it runs, each request timed on a clock the trace lines up with
         with self.tracer.recording(out_dir):
             return engine.run(cell.workload, [*common, "--report-timing"] if engine.reports_timing else common, out_dir, self.cell_timeout_s(cell))
 
@@ -535,7 +534,6 @@ class JobRunner:
             self.log(f"{cell.workload.id}/{cell.program.id}: harness exception {e}\n{traceback.format_exc()}")
             return self._failed(cell, ErrorClass.HARNESS_INVALID, f"harness: {e}", fingerprint, duration=time.monotonic() - t0)
         if self.tracer is not None and cell.workload.kind.value != "control_aa":
-            # the cell's profile: one short traced round in the same engine session, right after its benchmark rounds
             from pie_bench.profiler.profiled_round import short
 
             try:

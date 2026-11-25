@@ -4,7 +4,7 @@ out=$(realpath -m "$1")
 tag=$2
 here=$(cd "$(dirname "$0")" && pwd)
 cache=${LW_CACHE:-$HOME/.cache/pie-bench/llamacpp-webgpu}
-EMSDK_VERSION=${EMSDK_VERSION:-latest}  # what llama.cpp's own wasm CI builds with
+EMSDK_VERSION=${EMSDK_VERSION:-latest}
 mkdir -p "$cache" "$out"
 cd "$cache"
 if [ ! -d emsdk ]; then git clone -q https://github.com/emscripten-core/emsdk.git; fi

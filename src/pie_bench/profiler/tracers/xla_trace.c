@@ -1,7 +1,3 @@
-// Preloaded into pie's XLA server under the profiler (PIE_BENCH_JAX_TRACE_DIR set): SIGUSR1 starts the PJRT
-// plugin's profiler (the PLUGIN_Profiler API pie's own PIE_XLA_PROFILE drives), SIGUSR2 stops it and writes the
-// trace as a serialized XSpace to <dir>/pie-<pid>/trace.xplane.pb. pie runs as benchmarked: no run waits for the
-// device. Markers <dir>/pie-<pid>.pid, .started and .done tell the bench client where it is.
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include <link.h>
@@ -15,8 +11,8 @@
 #include <time.h>
 #include <unistd.h>
 
-typedef struct Ext { size_t struct_size; int type; struct Ext *next; } Ext;  // PJRT_Extension_Base
-typedef struct { size_t struct_size; Ext *extension_start; } Api;             // the head of PJRT_Api
+typedef struct Ext { size_t struct_size; int type; struct Ext *next; } Ext;
+typedef struct { size_t struct_size; Ext *extension_start; } Api;
 typedef struct Err Err;
 typedef struct Prof Prof;
 typedef struct { size_t struct_size; void *priv; Err *error; } ErrDestroy;
@@ -99,7 +95,6 @@ static void start(void) {
   char text[1200];
   if (live) { mark("started", "error already tracing"); return; }
   if (!table && !(table = profiler_api(text, sizeof text))) { mark("started", text); return; }
-  // tensorflow ProfileOptions, as pie's PIE_XLA_PROFILE: host level 2, device level 1, version 1, HLO protos
   static const char options[] = {0x10, 0x02, 0x18, 0x01, 0x28, 0x01, 0x38, 0x01};
   Create c = {sizeof c, options, sizeof options, NULL};
   long long t0 = now_ns();
@@ -139,7 +134,7 @@ static void stop(void) {
     }
   }
   size_t n = c.buffer_size_in_bytes;
-  if (n && bytes[n - 1] == 0) n--;  // the plugin counts a terminating NUL
+  if (n && bytes[n - 1] == 0) n--;
   snprintf(path, sizeof path, "%s/pie-%d", dir, (int)getpid());
   mkdir(path, 0755);
   snprintf(path, sizeof path, "%s/pie-%d/trace.xplane.pb", dir, (int)getpid());
@@ -180,7 +175,7 @@ __attribute__((constructor)) static void arm(void) {
   pthread_t t;
   sigset_t all, old;
   sigfillset(&all);
-  pthread_sigmask(SIG_BLOCK, &all, &old);  // the thread takes no signals; pie's own threads do
+  pthread_sigmask(SIG_BLOCK, &all, &old);
   int ok = pthread_create(&t, NULL, loop, NULL) == 0;
   pthread_sigmask(SIG_SETMASK, &old, NULL);
   if (!ok) return;

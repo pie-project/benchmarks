@@ -118,7 +118,6 @@ if os.environ.get("PIE_BENCH_TPU_XLA_CSA_GATHER") == "1":
     sys.meta_path.insert(0, _XlaCsaGather())
 
 
-# under the profiler, its jax_site sitecustomize further down the path still runs
 _here = os.path.dirname(os.path.abspath(__file__))
 _paths = [os.path.abspath(p or ".") for p in sys.path]
 for _entry in sys.path[_paths.index(_here) + 1:] if os.environ.get("PIE_BENCH_JAX_TRACE_DIR") and _here in _paths else []:

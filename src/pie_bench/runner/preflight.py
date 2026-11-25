@@ -68,7 +68,7 @@ def gpu_processes() -> list[dict[str, str]]:
         parts = [x.strip() for x in line.split(",")]
         if len(parts) >= 2:
             procs.append({"pid": parts[0], "name": parts[1], "used_mib": parts[2] if len(parts) > 2 else ""})
-    if sys.platform == "win32":  # the Windows desktop (shell, compositor, Edge views) keeps GPU contexts that come and go
+    if sys.platform == "win32":
         procs = [p for p in procs if not p["name"].lower().startswith(WINDOWS_DESKTOP)]
     return procs
 

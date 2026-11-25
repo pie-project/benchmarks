@@ -1,12 +1,3 @@
-"""Cupti: an NVIDIA GPU's kernel, copy and memset intervals from CUPTI's activity API alone, without nsys.
-
-nsys traces every CUDA API call as well, and on engines that launch kernels one by one from Python (SGLang's and vLLM's
-eager prefill) that cost lands in the measured round: an RTX 4090's SGLang Qwen3.5-0.8B prefill took 29 to 34% longer
-under nsys. This tracer is a CUDA injection library (cupti_trace.c, built here against the CUPTI of an engine's own
-wheel) that every engine process loads at CUDA init and that records nothing until the profiled round: then only the
-device's activity records, as a binary of (start, end) pairs per process, with a clock pair to put them in Unix ns.
-"""
-
 from __future__ import annotations
 
 import glob
@@ -21,13 +12,10 @@ from pathlib import Path
 from pie_bench.profiler.tracers.span import span
 
 SHIM = Path(__file__).resolve().parent / "cupti_trace.c"
-ARM_S = 120  # how long a process may take to start recording: CUPTI's first enable in a process with many modules loaded
-# (vLLM's EngineCore) takes seconds, and a round started before it lost its first windows
+ARM_S = 120
 
 
 def _cupti() -> tuple[Path, Path]:
-    """The include and lib folders of a CUDA 13 CUPTI: the toolkit's, or an nvidia-cuda-cupti wheel's."""
-    # the toolkit's CUPTI: extras/CUPTI, or the targets/ layout of the cuda-cupti-dev package
     roots = [Path("/usr/local/cuda/extras/CUPTI"), Path("/usr/local/cuda/targets/x86_64-linux"), Path("/usr/local/cuda/targets/sbsa-linux")]
     roots += [Path(p).parent.parent for p in glob.glob(str(Path.home() / ".cache/pie-bench/venv-*/lib/python3*/site-packages/nvidia/cu13/lib/libcupti.so*"))]
     roots += [Path(p).parent.parent for p in glob.glob(str(Path(sys.prefix) / "lib/python3*/site-packages/nvidia/cu13/lib/libcupti.so*"))]
@@ -40,7 +28,7 @@ def _cupti() -> tuple[Path, Path]:
 
 class Tracer:
     name = "cupti"
-    prefix: list[str] = []  # nothing launches the run: each engine process loads the library itself
+    prefix: list[str] = []
 
     def __init__(self, out: Path):
         self.out = out
@@ -59,12 +47,11 @@ class Tracer:
 
     @contextmanager
     def recording(self, out: Path):
-        """The activity records of every engine process while the block runs, moved to out/cupti/."""
         out.mkdir(parents=True, exist_ok=True)
         self.round += 1
         n = self.round
         (self.dir / "on.tmp").write_text(f"{n}\n")
-        os.replace(self.dir / "on.tmp", self.dir / "on")  # whole: a process that reads it half-written records round 0
+        os.replace(self.dir / "on.tmp", self.dir / "on")
         deadline = time.time() + ARM_S
         while time.time() < deadline and not all((self.dir / f"{pid}-{n}.armed").exists() for pid in self._alive()):
             time.sleep(0.05)
@@ -84,7 +71,6 @@ class Tracer:
                 shutil.move(str(p), dest / p.name)
 
     def _alive(self) -> list[int]:
-        """The processes that loaded the library and still run."""
         pids = []
         for p in self.dir.glob("*.alive"):
             try:
@@ -95,7 +81,6 @@ class Tracer:
         return pids
 
     def intervals(self, out: Path) -> list[tuple[int, int]]:
-        """Every kernel, copy and memset the engine processes recorded, in Unix ns."""
         import array
 
         found: list[tuple[int, int]] = []

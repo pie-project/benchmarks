@@ -1,12 +1,3 @@
-// hsa_trace: an engine process's kernel intervals, from the GPU's own dispatch timestamps, recorded only while the
-// profiler's marker file ($PIE_BENCH_HSA_TRACE_DIR/recording) exists. ROCr loads it into every process that starts
-// HSA (HSA_TOOLS_LIB). Queues are made as the engine asks; outside a recording the tool only checks one flag on each
-// signal store. While recording, a store to a queue's doorbell first gives each kernel packet it publishes (written,
-// not yet seen by the GPU) a completion signal from the queue's pool, the queue writes start and end timestamps into
-// it, and a thread of the tool's own writes them as Unix ns to kernels-<pid>-<n>.csv, then kernels-<pid>-<n>.done
-// once the round's dispatches have all completed (or 5 s after the round, counting the ones that had not in
-// kernels-<pid>-<n>.unfinished). A kernel that carries a completion signal of its own is left as it is and counted in
-// kernels-<pid>-<n>.skipped.
 #include <hsa.h>
 #include <hsa_api_trace.h>
 #include <hsa_ext_amd.h>
@@ -39,24 +30,24 @@ decltype(hsa_amd_signal_create)*                  signal_create;
 decltype(hsa_amd_queue_create)* amd_queue_create;
 #endif
 
-constexpr size_t POOL = 4096;  // signals per queue, made when a round starts
-constexpr size_t SLOTS = 1024;  // doorbell table
+constexpr size_t POOL = 4096;
+constexpr size_t SLOTS = 1024;
 
 struct Queue
 {
     hsa_agent_t               agent{};
     hsa_queue_t*              queue = nullptr;
     std::mutex                mu;
-    uint64_t                  next = 0;  // the first packet not yet looked at in this round
+    uint64_t                  next = 0;
     bool                      armed = false;
-    std::vector<hsa_signal_t> pending;  // a long kernel does not hold back the ones done after it
+    std::vector<hsa_signal_t> pending;
     std::vector<hsa_signal_t> pool;
     uint64_t                  skipped = 0;
 };
 
-std::atomic<uint64_t> keys[SLOTS];  // doorbell signal handle -> queue, open addressing, entries only added
+std::atomic<uint64_t> keys[SLOTS];
 Queue*                values[SLOTS];
-std::mutex            mu;  // the queue list
+std::mutex            mu;
 std::vector<Queue*>   queues;
 std::atomic<bool>     recording{false};
 std::atomic<bool>     quit{false};
@@ -99,13 +90,11 @@ add(hsa_agent_t agent, hsa_queue_t* queue)
 hsa_signal_t
 make_signal()
 {
-    // polled by the tool's thread only: no interrupt on completion
     hsa_signal_t s{};
     signal_create(1, 0, nullptr, HSA_AMD_SIGNAL_AMD_GPU_ONLY, &s);
     return s;
 }
 
-// before the GPU hears of them: give the kernels the doorbell publishes a pooled completion signal
 void
 mark(Queue* q, hsa_signal_value_t last)
 {
@@ -118,7 +107,7 @@ mark(Queue* q, hsa_signal_value_t last)
         const auto type = (__atomic_load_n(&p.header, __ATOMIC_ACQUIRE) >> HSA_PACKET_HEADER_TYPE) & ((1 << HSA_PACKET_HEADER_WIDTH_TYPE) - 1);
         if(type == HSA_PACKET_TYPE_INVALID)
         {
-            q->next = i;  // not written yet: looked at with a later doorbell
+            q->next = i;
             return;
         }
         if(type == HSA_PACKET_TYPE_KERNEL_DISPATCH)
@@ -163,7 +152,6 @@ my_queue_create(hsa_agent_t agent, uint32_t size, hsa_queue_type32_t type, void 
 }
 
 #if HSA_AMD_EXT_API_TABLE_STEP_VERSION >= 0x10
-// HIP on ROCm 10 makes its queues with hsa_amd_queue_create
 hsa_status_t
 my_amd_queue_create(hsa_agent_t agent, hsa_amd_queue_create_desc_t* descs, uint32_t n)
 {
@@ -187,7 +175,7 @@ arm(Queue* q)
     set_profiling(q->queue, 1);
     std::lock_guard<std::mutex> lock(q->mu);
     q->pool.insert(q->pool.end(), made.begin(), made.end());
-    q->pending.clear();  // ones left unfinished by an earlier round
+    q->pending.clear();
     q->next    = write_index(q->queue);
     q->skipped = 0;
     q->armed   = true;
@@ -249,11 +237,11 @@ read_loop()
                 std::lock_guard<std::mutex> lock(q->mu);
                 fresh = recording && !q->armed;
             }
-            if(fresh) arm(q);  // a queue made during the round
+            if(fresh) arm(q);
             done.clear();
             keep.clear();
             {
-                std::lock_guard<std::mutex> lock(q->mu);  // the launch thread waits only for the swap
+                std::lock_guard<std::mutex> lock(q->mu);
                 keep.swap(q->pending);
                 skipped += q->skipped;
             }
@@ -288,8 +276,6 @@ read_loop()
         }
         if(out)
         {
-            // an engine that stops inside the round (an offline engine in its bench client) leaves its file complete
-            // to the last millisecond, with its skipped count
             std::fflush(out);
             if(skipped != last_skipped)
                 if(FILE* f = std::fopen((name + ".skipped").c_str(), "w"))
@@ -311,13 +297,12 @@ read_loop()
                 }
             std::fclose(std::fopen((name + ".done").c_str(), "w"));
         }
-        // once a millisecond: the pools hold several milliseconds of a queue's kernels
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     if(out) std::fclose(out);
     stopped = true;
 }
-}  // namespace
+}
 
 extern "C" bool
 OnLoad(HsaApiTable* table, uint64_t, uint64_t, const char* const*)
@@ -343,7 +328,7 @@ OnLoad(HsaApiTable* table, uint64_t, uint64_t, const char* const*)
     core->hsa_queue_create_fn          = my_queue_create;
     core->hsa_signal_store_relaxed_fn   = my_store_relaxed;
     core->hsa_signal_store_screlease_fn = my_store_screlease;
-    std::thread(read_loop).detach();  // a joinable thread left at exit would abort the engine
+    std::thread(read_loop).detach();
     return true;
 }
 

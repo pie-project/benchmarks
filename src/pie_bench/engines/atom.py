@@ -23,8 +23,6 @@ def image_python() -> str:
 
 @register
 class AtomEngine(ServedEngine):
-    """AMD's ATOM (ROCm/ATOM) serving its OpenAI server from AMD's image, the way ATOM ships."""
-
     name = EngineName.ATOM
     health_path = "/v1/models"
     exact_length = "ignore_eos"
@@ -61,8 +59,6 @@ class AtomEngine(ServedEngine):
         return cmd
 
     def server_env(self) -> dict[str, str]:
-        """ATOM 0.1.9 keys its torch.compile cache (~/.cache/atom) without the model's widths, so gpt-oss-20b loads
-        the graphs gpt-oss-120b left there and asserts (expected size 32==128): each checkpoint gets its own home."""
         from pie_bench.installers.baselines import cache_root
 
         return {"HOME": str(cache_root() / "atom-home" / self.artifact.id)}

@@ -51,9 +51,6 @@ class VllmEngine(Engine):
         if self.artifact.family == "deepseek_v4" and self.platform is not None and str(self.platform.arch) == "hopper":
             env["VLLM_USE_DEEP_GEMM"] = "1"
         if self.artifact.family in ("gpt_oss", "gemma4", "gemma4_moe", "deepseek_v41") and self.platform is not None and str(self.platform.arch) == "hopper":
-            # vLLM 0.32's model runner v2 faults at warmup on Hopper here (illegal memory access in FA3, CuTe flash
-            # attention, DeepSeek-V4.1's launcher; plain runs on an H100 and an H200, 2026-11-25); v1 runs gpt-oss-20b on
-            # an H100 at 308.1 tok/s, the stored row 304.8
             env["VLLM_USE_V2_MODEL_RUNNER"] = "0"
         if self.artifact.family in ("deepseek_v41", "deepseek_v4") and self.platform is not None and self.platform.id == "l4-x1":
             env["VLLM_USE_BREAKABLE_CUDAGRAPH"] = "0"

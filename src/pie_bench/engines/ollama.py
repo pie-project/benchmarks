@@ -16,9 +16,6 @@ from .served import ServedEngine
 
 @register
 class OllamaEngine(ServedEngine):
-    """Ollama serving the llama.cpp arm's own GGUF file: the same weights, imported with a raw template so the
-    prompt reaches the model as the other engines send it."""
-
     name = EngineName.OLLAMA
     health_path = "/api/version"
     exact_length = "ignore_eos"
@@ -66,11 +63,9 @@ class OllamaEngine(ServedEngine):
             raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"ollama create failed: {(out.stderr or out.stdout).strip()[-400:]}")
 
     def single_gguf(self, timeout_s: int) -> Path:
-        """The GGUF as one file: `ollama create` copies only the file it is given, so a split release is merged first
-        with llama.cpp's own gguf-split (the same weights, one file)."""
         path = self.gguf_path()
         m = re.match(r"(.+)-00001-of-(\d{5})\.gguf$", path.name)
-        if not m or not path.with_name(f"{m.group(1)}-00002-of-{m.group(2)}.gguf").exists():  # a slice is one file under the first shard's name
+        if not m or not path.with_name(f"{m.group(1)}-00002-of-{m.group(2)}.gguf").exists():
             return path
         merged = self.models_dir().parent / "ollama-merged" / f"{m.group(1)}.gguf"
         if merged.exists():

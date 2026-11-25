@@ -1,9 +1,3 @@
-"""Rerun grid cells on this machine, benchmark and profile in one job:
-python -m pie_bench.profiler gemma-4-e2b:prefill qwen3.5-4b:pbatch [--upload]
-
-Under a tracer that must launch the run (nsys), the command runs itself again inside it.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -23,7 +17,6 @@ TRACED = "PIE_BENCH_PROFILER_TRACED"
 
 
 def judged(docs: list[dict]) -> list[dict]:
-    """Each cell as the API judges it (server/profiles.py, from a checkout of the repo with its server extra)."""
     try:
         from server import profiles
     except ImportError:

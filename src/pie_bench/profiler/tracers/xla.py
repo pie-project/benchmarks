@@ -1,12 +1,3 @@
-"""Xla: a TPU's op intervals, from the engine process's own device trace (an XSpace, what jax.profiler writes).
-
-Processes that import jax arm a trace (jax_site/sitecustomize.py, first on PYTHONPATH); pie's XLA server arms one
-through xla_trace.c, preloaded by the pie_xla.py launcher. The bench clients' xla_trace (clients/common.py) starts and
-stops them: pie's server and vLLM's engine core, which run inside their bench clients, around the measured requests;
-a server already up when the round starts (SGLang-JAX) from the round's start to its end. The intervals are the ops on the TPU devices' "XLA Ops", "Async XLA Ops" and "Sparse Core Ops" lines (compute, its
-copies, the SparseCores' ops), in Unix ns.
-"""
-
 from __future__ import annotations
 
 import json
@@ -37,13 +28,11 @@ class Tracer:
 
     @contextmanager
     def recording(self, out: Path):
-        """Traces the round: the served engines' processes from start to end, pie's around its measured requests.
-        The traces made in it move to out/xla."""
         from pie_bench.clients.bench_tracing import xla_trace
 
         out.mkdir(parents=True, exist_ok=True)
         since = time.time()
-        (self.dir / "recording").touch()  # the bench clients trace their measured requests only in this round
+        (self.dir / "recording").touch()
         xla_trace("start", str(self.dir))
         try:
             with span(out):
@@ -58,7 +47,6 @@ class Tracer:
                     shutil.move(str(trace), str(out / "xla" / trace.name))
 
     def intervals(self, out: Path) -> list[tuple[int, int]]:
-        """The TPU ops of the round's traces, in Unix ns; a summary of each trace goes to out/xla-summary.json."""
         found, summary = [], []
         for path in sorted((out / "xla").rglob("*.xplane.pb")):
             ops, info = device_ops(path.read_bytes())
@@ -82,7 +70,6 @@ def _varint(b: bytes, i: int) -> tuple[int, int]:
 
 
 def _fields(b: bytes, i: int = 0, end: int | None = None):
-    """(field number, value) of a protobuf message: an int, or (start, end) of a length-delimited field."""
     end = len(b) if end is None else end
     while i < end:
         key, i = _varint(b, i)
@@ -103,12 +90,11 @@ def _text(b: bytes, v) -> str:
     return b[v[0]:v[1]].decode("utf-8", errors="replace")
 
 
-OP_LINES = ("XLA Ops", "Async XLA Ops", "Sparse Core Ops")  # every op the chip ran: compute, async copies, SparseCores
-LAUNCH, DONE = "DoEnqueueProgram", "CompleteCallbacks"  # libtpu's host events around a program run
+OP_LINES = ("XLA Ops", "Async XLA Ops", "Sparse Core Ops")
+LAUNCH, DONE = "DoEnqueueProgram", "CompleteCallbacks"
 
 
 def _plane(b: bytes, plane):
-    """A plane's name, stat names and event names by id, its stats and its lines (unparsed)."""
     name, stat_names, event_names, stats, lines = "", {}, {}, [], []
     for f, v in _fields(b, *plane):
         if f == 2:
@@ -125,7 +111,6 @@ def _plane(b: bytes, plane):
 
 
 def _line(b: bytes, v, run_id, want) -> tuple[str, int, list]:
-    """A line's name, timestamp_ns and events (metadata id, offset ps, duration ps, run_id stat when want(name))."""
     name, ts, events = "", 0, []
     for f, lv in _fields(b, *v):
         if f == 2:
@@ -151,8 +136,6 @@ def _line(b: bytes, v, run_id, want) -> tuple[str, int, list]:
 
 
 def _launch_base(modules: dict, host: list) -> tuple[int, int]:
-    """The Unix ns a device plane's offsets count from, when nothing in the trace states it: each program run starts
-    after the host began enqueuing it and ends before the host ran its completion callbacks (matched by run_id)."""
     launch, done = {}, {}
     for name, run, t in host:
         (launch if name == LAUNCH else done).setdefault(run, []).append(t)
@@ -167,10 +150,6 @@ def _launch_base(modules: dict, host: list) -> tuple[int, int]:
 
 
 def device_ops(b: bytes) -> tuple[list[tuple[int, int]], dict]:
-    """(start, end) Unix ns of every op on a TPU device's op lines of a serialized XSpace, and a summary. A device line
-    with no timestamp counts from the device tracer's own start, which the trace does not state (it is not the
-    session's profile_start_time: 1.3 ms later in a vLLM-TPU trace): the host launches and completions of its program
-    runs pin it. Host lines a framework session normalized count from its profile_start_time."""
     info, start, raw, modules, host = {"bytes": len(b), "planes": {}}, None, [], {}, []
     for plane in (v for f, v in _fields(b) if f == 1):
         name, stat_names, event_names, stats, lines = _plane(b, plane)

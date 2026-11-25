@@ -150,9 +150,6 @@ def plan(kv, tensors, layers: list[int], experts: int | None):
 
 
 def _ids(name: str, ty: int, dims: list[int], raw: bytes, experts: int | None) -> bytes:
-    """A hash-routed layer's token-to-expert table, its ids taken mod the experts kept (ids past the kept bank would
-    read outside it), a repeat moved to the next free expert: llama.cpp's CUDA MoE takes a token's experts as distinct
-    (a repeat leaves its index map unwritten), as the full model's are; the same work a token as pie's cut."""
     if not experts or not name.endswith("ffn_gate_tid2eid.weight"):
         return raw
     import numpy as np

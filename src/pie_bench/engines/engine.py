@@ -184,7 +184,7 @@ class Engine(ABC):
         return argv
 
     supports_prompts_file: bool = True
-    reports_timing: bool = True  # the bench client takes --report-timing, so a profiler can line its requests up with a trace
+    reports_timing: bool = True
 
     def cold_common_args(self, workload: WorkloadSpec, common_args: list[str], out_dir: Path) -> list[str]:
         from pie_bench.workloads import prompt_words_for_tokens
@@ -196,7 +196,7 @@ class Engine(ABC):
         m = re.fullmatch(r"r(\d+)", out_dir.name)
         seed = COLD_SEED if not m or m.group(1) == "0" else f"{COLD_SEED}|round{m.group(1)}"
         if out_dir.name == "profile":
-            seed = f"{COLD_SEED}|profile"  # its own prompts: round 0's would hit the engine's prefix cache
+            seed = f"{COLD_SEED}|profile"
         prompts = cold_prompts(body, workload_id=workload.id, seed=seed, count=cold_request_count(workload.params))
         path = out_dir / "cold_prompts.json"
         path.write_text(json.dumps(prompts, ensure_ascii=False))

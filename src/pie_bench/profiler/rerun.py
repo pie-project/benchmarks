@@ -1,12 +1,3 @@
-"""Cell: reruns grid cells' two fastest engines on this machine, benchmark and profile in one job.
-
-Each engine reruns its benchmark row's matrix cell through the harness (the row's pie commit and engine version, the
-same boot, recipe and bench client): the standard rounds, untraced, then one short round under the platform's tracer in
-the same engine session. The run writes the benchmark records as `pie-bench run` uploads them (records.jsonl,
-submission.json.gz) and the cells for POST /v1/profiles (profiles.json), each judged against the fresh benchmark: both
-engines in one unit, taken from the faster engine's benchmark, and its step worked out from the fresh rate.
-"""
-
 from __future__ import annotations
 
 import json
@@ -26,7 +17,6 @@ from pie_bench.profiler import breakdown
 from pie_bench.profiler.tracers import tracer_for
 from pie_bench.schema import Tier
 
-# each setup's results workload and the rate its benchmark number is
 RATES = {"decode": ("raw", "decode_tok_s"), "spec": ("spec", "decode_tok_s"), "prefill": ("raw", "prefill_tok_s"),
          "batching": ("throughput", "output_tok_s"), "pbatch": ("prefill_batch", "prefill_tok_s")}
 MEASURED = ("pass", "noisy")
@@ -34,7 +24,6 @@ TRACES = ("*.trace", "*.nsys-rep", "*.sqlite", "*.xml", "rocprof", "xla", "hsa",
 
 
 def pair(results: list[dict], hardware: str, model: str, setup: str, engines: list[str] | None = None) -> tuple[dict, dict]:
-    """The cell's fastest and second fastest engines: each engine's best measured row, as the grid compares them."""
     workload, rate = RATES[setup]
     best: dict[str, dict] = {}
     for r in results:
@@ -48,24 +37,19 @@ def pair(results: list[dict], hardware: str, model: str, setup: str, engines: li
 
 
 def step_ms(rate: float, setup: str, concurrency: int, prompt: int) -> float:
-    """The benchmark's step in the profile's unit, from its rate: a token, a prompt, a batched step or a wave."""
     tokens = {"decode": 1, "spec": 1, "prefill": prompt, "batching": concurrency, "pbatch": concurrency * prompt}[setup]
     return 1000 * tokens / rate
 
 
 def same_cut(artifact, label: str) -> bool:
-    """Whether an artifact is the model slice a results row names ("30 layers, 36 experts"), or the full model for none."""
     m = artifact.miniature if str(artifact.kind) == "miniature" else None
     if not m or not label:
         return not m and not label
     kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(m.layers).split(","))
-    # a label that names no experts ("7 of 78 layers", the NVIDIA rows) is matched by its layers alone
     return label.startswith(f"{kept} ") and (m.experts is None or "experts" not in label or f"{m.experts} experts" in label)
 
 
 def mini_params_b(artifact) -> float | None:
-    """A slice's parameter count in billions as the results rows give it (server/views.py), to tell apart slices whose
-    label is the same ("78 of 78 layers" at 16 or 12 experts)."""
     import yaml
 
     r = artifact.miniature if str(artifact.kind) == "miniature" else None
@@ -82,7 +66,6 @@ def mini_params_b(artifact) -> float | None:
 
 
 def cut_size(artifact) -> tuple:
-    """A slice's size as the site ranks cuts (server/views.py _cut_size): the full model, then layers, then experts."""
     m = artifact.miniature if str(artifact.kind) == "miniature" else None
     if not m:
         return (1, 0, 0)
@@ -90,9 +73,6 @@ def cut_size(artifact) -> tuple:
 
 
 def cell_of(m: Matrix, machine, row: dict, commit: str):
-    """The matrix cell a results row measured, with the job that plans it."""
-    # the machine's own tier first, then any tier that holds the benchmarked cell (NVIDIA's full runs are weekly cells);
-    # a Mac's model slices are in no suite of the config, so a row none of its arms plans is looked for in every artifact
     for every in (False, True):
         for tier in (tier_for(machine), *Tier):
             job = machine_plan(m, machine, pie_commit=commit, models=[row["model"]], engines=[row["engine"]], workloads=[row["benchmark"]], suite="targeted",
@@ -104,15 +84,12 @@ def cell_of(m: Matrix, machine, row: dict, commit: str):
         if found:
             break
     if len(found) > 1 and machine.platform.os != "macos":
-        # an MLX checkpoint is a Mac's: off a Mac the grid takes the row of the safetensors one (server/views.py pick)
         found = [c for c in found if str(c.artifact.source_format) != "mlx"] or found
     if len(found) > 1:
-        found = [c for c in found if not c.mode.spec_dec] or found  # the grid's rows are the plain, unspeculated runs
+        found = [c for c in found if not c.mode.spec_dec] or found
     if len(found) > 1 and row.get("mini_params_b"):
         found = [c for c in found if mini_params_b(c.artifact) == row["mini_params_b"]] or found
     if len(found) > 1 and len({cut_size(c.artifact) for c in found}) == len(found):
-        # one label, several cuts: the site shows the biggest cut an engine ran last (server/views.py share_cut), so
-        # the rerun takes that one and its fresh rows become the cell's
         found = [max(found, key=lambda c: cut_size(c.artifact))]
     if len(found) != 1:
         raise SystemExit(f"{row['engine']} {row['model']} {row['benchmark']}: {len(found)} matrix cells match, need one: {[c.artifact.id for c in found]}")
@@ -120,7 +97,6 @@ def cell_of(m: Matrix, machine, row: dict, commit: str):
 
 
 def side(rec, engine: str, setup: str, concurrency: int, prompt: int, tracer, out: Path) -> dict:
-    """One engine's profile in the shared unit, from its fresh benchmark record and its profiled round's bench JSON and trace."""
     base = {"engine": engine, "tracer": tracer.name}
     rate = getattr(rec.perf, RATES[setup][1], None) if rec is not None and rec.perf else None
     if rec is None or str(rec.status) not in MEASURED or not rate:
@@ -138,11 +114,10 @@ def side(rec, engine: str, setup: str, concurrency: int, prompt: int, tracer, ou
 
 
 def versions(rows: list[dict]) -> dict[str, str]:
-    """Each rival's engine version as its rows measured it, so the rerun replaces them like for like."""
     out: dict[str, str] = {}
     for r in rows:
         if r["engine"] == "pie" or not re.fullmatch(r"[A-Za-z0-9._-]+", r.get("version") or ""):
-            continue  # pie runs at its commit; "0.33.0 (vllm 0.33.0+cpu)", "mlx-vlm 0.7.11" name no installable pin
+            continue
         if out.setdefault(r["engine"], r["version"]) != r["version"]:
             raise SystemExit(f"{r['engine']} rows at {out[r['engine']]} and {r['version']}: one job runs one version, so run these cells apart")
     return out
@@ -150,8 +125,6 @@ def versions(rows: list[dict]) -> dict[str, str]:
 
 def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engines: list[str] | None = None, pie_root: Path | None = None,
             tag: str | None = None, pie_commit: str | None = None) -> list[dict]:
-    """Reruns the cells' two fastest engines on this machine, benchmark and profile, and writes the run's records,
-    its submission and out/profiles.json."""
     from pie_bench.runner.job import JobRunner
     from pie_bench.runner.machine_lock import machine_lock
 
@@ -174,10 +147,8 @@ def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engin
         planned.setdefault(key(r), cell_of(m, machine, r, commit or "0" * 40))
     jobs = [j for j, _ in planned.values()]
     runs = {c.cell_id: c for _, c in planned.values()}
-    # each process's control A/A, as the standard job runs it
     controls = {x.cell_id: x for j, c in planned.values() for x in j.cells if str(x.workload.kind) == "control_aa"
                 and (str(x.engine), x.artifact.artifact_key, x.mode.key) == (str(c.engine), c.artifact.artifact_key, c.mode.key)}
-    # each engine's own pin (vLLM-TPU, SGLang-JAX), as its own plan carries it, then the version its rows ran
     pins = {k: v for j in jobs for k, v in j.baseline_versions.items()} | versions(rows)
     job = jobs[0].model_copy(update={"cells": [*controls.values(), *runs.values()], "pie_commit": commit, "baseline_versions": pins,
                                      "budget_s": sum(j.budget_s for j in jobs), "kill_s": sum(j.kill_s for j in jobs)})
@@ -195,7 +166,7 @@ def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engin
         recs = [by_cell.get(planned[key(r)][1].cell_id) for r in (first, second)]
         sides = [side(rec, r["engine"], setup, concurrency, prompt, tracer, out) for rec, r in zip(recs, (first, second))]
         if all("benchmark_step_ms" in s for s in sides):
-            sides.sort(key=lambda s: s["benchmark_step_ms"])  # the fresh benchmark decides which engine is the faster
+            sides.sort(key=lambda s: s["benchmark_step_ms"])
         steps = [s.get("benchmark_step_ms") for s in sides]
         docs.append({"hardware": hw, "model": model, "setup": setup, "gap_pct": 100 * (steps[1] / steps[0] - 1) if all(steps) else None,
                      "slice": first.get("miniature") or None, "fastest": sides[0], "second": sides[1]})

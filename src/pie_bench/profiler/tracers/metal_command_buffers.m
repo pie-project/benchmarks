@@ -1,9 +1,3 @@
-// Metal's own GPU times of every command buffer a process commits, with no kernel tracing.
-//
-// Preloaded into the job's processes (DYLD_INSERT_LIBRARIES) with PIE_BENCH_METAL_CB_DIR set, it wraps the Metal
-// device's command buffer classes' -commit once the process creates its device. While <dir>/recording exists, each
-// committed buffer gets a completed handler that appends its GPUStartTime and GPUEndTime, in Unix ns, to <dir>/<pid>.txt.
-// Outside that window -commit costs one atomic load more.
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import <objc/runtime.h>
@@ -16,7 +10,7 @@
 #include <unistd.h>
 
 static atomic_int on, dirty;
-static atomic_llong offset_ns;  // Unix ns minus host-time ns, taken as the gate opens
+static atomic_llong offset_ns;
 static char dir[900];
 static FILE *out;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -28,7 +22,7 @@ static void flush(void) {
 }
 
 static void record(CFTimeInterval start, CFTimeInterval end) {
-    if (start <= 0 || end < start) return;  // a buffer that errored or never ran
+    if (start <= 0 || end < start) return;
     long long off = atomic_load(&offset_ns);
     pthread_mutex_lock(&lock);
     if (!out) {
@@ -59,7 +53,7 @@ static void *watch(void *arg) {
     return NULL;
 }
 
-static void forked(void) { atomic_store(&on, 0); out = NULL; }  // a forked child records nothing (no watcher in it)
+static void forked(void) { atomic_store(&on, 0); out = NULL; }
 
 static NSMutableSet *wrapped;
 

@@ -1,11 +1,3 @@
-"""Arms JAX tracing in an engine process for the profiler: once jax loads, a thread of its own watches the trace
-folder's `command` file ("<seq> start" or "<seq> stop", written by the bench client's xla_trace or the profiler) and
-starts or stops jax.profiler; markers <pid>.started and <pid>.done ("<seq> ok|skip|error ...") say when each is over.
-A process with no TPU backend of its own (a server's front end) skips both.
-
-Active only with PIE_BENCH_JAX_TRACE_DIR set. Any sitecustomize further down sys.path still runs.
-"""
-
 import importlib.machinery
 import importlib.util
 import os
@@ -39,7 +31,6 @@ def _arm():
             if not any(str(k).startswith("tpu") for k in getattr(xla_bridge, "_backends", None) or {}):
                 return _mark("started", f"{seq} skip: no TPU backend in this process")
             try:
-                # as pie's trace: host and device, no Python tracer (on by default, it slows a Python-bound engine loop)
                 options = jax.profiler.ProfileOptions()
                 options.python_tracer_level = 0
                 t0 = time.time_ns()
@@ -66,7 +57,7 @@ def _arm():
             return []
 
     def watch():
-        state["seq"] = (read() or [None])[0]  # a command older than this process is not for it
+        state["seq"] = (read() or [None])[0]
         while True:
             got = read()
             if len(got) == 2 and got[0] != state["seq"]:

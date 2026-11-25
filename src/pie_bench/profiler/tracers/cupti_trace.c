@@ -1,10 +1,3 @@
-// CUDA injection (CUDA_INJECTION64_PATH) that records only the device's kernel, copy and memset intervals through
-// CUPTI's activity API: no API tracing, nothing enabled until the profiler asks. A thread polls
-// $PIE_CUPTI_DIR/on: while it exists (it holds the round's number N) the activities are on (each process says so in
-// <pid>-<N>.armed, beside the <pid>.alive it writes at CUDA init); when it goes, they are
-// flushed and the process writes <pid>-<N>.bin (start, end pairs of uint64 CUPTI ns), <pid>-<N>.clock (a CUPTI
-// timestamp and the CLOCK_REALTIME ns taken together) and <pid>-<N>.done. A process that exits during a round (vLLM's
-// offline engine stops with its bench client, before the profiler ends the round) flushes its records on the way out.
 #include <cupti.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -50,7 +43,7 @@ static void CUPTIAPI complete(CUcontext ctx, uint32_t stream, uint8_t *buffer, s
         default:
             continue;
         }
-        if (out && se[0])  // a forced flush hands over a record its device has not finished: no timestamps yet
+        if (out && se[0])
             fwrite(se, sizeof se[0], 2, out);
     }
     pthread_mutex_unlock(&mu);
@@ -83,8 +76,6 @@ static void at_exit(void) {
         finish();
 }
 
-// PIE_CUPTI_MODES="<word>=<mode>;...": the mode of a process whose command line holds the word (SGLang's scheduler is
-// started by its venv's python), else PIE_CUPTI_MODE
 static char chosen[256];
 static const char *process_mode(void) {
     const char *modes = getenv("PIE_CUPTI_MODES");
@@ -136,8 +127,6 @@ static void *control(void *arg) {
             FILE *c = fopen(p, "w");
             if (c)
                 fprintf(c, "%llu %lld\n", (unsigned long long)ts, (long long)rt.tv_sec * 1000000000LL + rt.tv_nsec), fclose(c);
-            // PIE_CUPTI_MODE: "graph" traces each CUDA graph launch whole (one record, not one per node), "hw" takes
-            // kernel times from the GPU's hardware events (Blackwell), "off" records nothing (tracer cost A/B)
             const char *mode = process_mode();
             if (!mode || !strstr(mode, "off")) {
                 if (mode && strstr(mode, "hw"))
@@ -147,11 +136,9 @@ static void *control(void *arg) {
                 cuptiActivityEnable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
                 cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMCPY);
                 cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMSET);
-                // completed records leave every 100 ms: a process that exits inside the round (SGLang's scheduler at
-                // its client's shutdown) loses at most that, not a part-filled 8 MB buffer (whole measured windows)
                 cuptiActivityFlushPeriod(100);
             }
-            path(p, sizeof p, "armed");  // the profiler starts the round once every process is recording
+            path(p, sizeof p, "armed");
             FILE *a = fopen(p, "w");
             if (a)
                 fclose(a);
