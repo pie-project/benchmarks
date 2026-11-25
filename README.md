@@ -72,7 +72,12 @@ after each upload; writes need a token with an upload quota.
 | Method | Path | What |
 |---|---|---|
 | GET | `/healthz` | service health |
-| GET | `/v1/catalog` | machines, models, engines, workloads and the newest release |
+| GET | `/v1/machines` | every machine, with its chip, memory and bandwidth |
+| GET | `/v1/models` | every model |
+| GET | `/v1/engines` | every engine, with its pinned version |
+| GET | `/v1/workloads` | every workload |
+| GET | `/v1/releases` | the published releases |
+| GET | `/v1/catalog` | all of the above in one document, as the site reads it |
 | GET | `/v1/results` | the newest release: its results and quality scores |
 | GET | `/v1/head-to-head` | pie against each engine, per platform |
 | GET | `/v1/footprint` | download size of pie, vLLM and SGLang |

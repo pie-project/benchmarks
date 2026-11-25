@@ -5,6 +5,8 @@ import json
 from pie_bench.results.store import PgStore
 from server import headline, split, views
 
+CATALOG_PARTS = {"machines": "hardware", "models": "models", "engines": "engines", "workloads": "workloads", "releases": "releases"}
+
 
 def blobs(dsn: str, contributed: dict[str, dict], submissions: int = 0) -> dict[str, bytes]:
     store = PgStore(dsn)
@@ -14,6 +16,8 @@ def blobs(dsn: str, contributed: dict[str, dict], submissions: int = 0) -> dict[
     catalog["totals"] = {**(catalog.get("totals") or {}), "submissions": submissions}
     newest = {latest: json.loads(split.rows_json(sealed[latest]))} if latest else {}
     out = {"catalog": split.gz(catalog), "head-to-head": split.gz(headline.head_to_head({**db, "snapshots": newest}))}
+    for key, field in CATALOG_PARTS.items():
+        out[key] = split.gz({"updated_at": catalog.get("updated_at"), key: catalog.get(field) or []})
     if results:
         out["results"] = results
     return out
