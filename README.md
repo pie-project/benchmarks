@@ -30,8 +30,17 @@ Every gap over 25% is re-measured under an end-to-end
 GPU profiler on fresh prompts. It's marked verified only if the profile agrees
 with the benchmark within 10%; otherwise it's rerun. Details in the [Bench Book].
 
-In this repo: the `pie-bench` CLI, the results API, the site, the phone app
-(iPhone and Android, same workloads), and Docker images for cloud GPUs and TPUs.
+In this repo:
+- **`pie-bench`**, the command line tool, on [PyPI].
+- **The results API** behind [benchmarks.pie-project.org][Benchmarks], deployed on Render.
+- **The site**, a static page that reads the API.
+- **The phone app** for iPhone and Android, running the same workloads as the Macs.
+- **Docker images**, one per cloud, built by [`docker/build.sh`](docker/README.md):
+  - `pieproject/benchmark-runpod-cuda`: RunPod NVIDIA pods
+  - `pieproject/benchmark-runpod-rocm`: RunPod AMD pods
+  - `pieproject/benchmark-digitalocean-cuda`: DigitalOcean NVIDIA droplets
+  - `pieproject/benchmark-digitalocean-rocm`: AMD Developer Cloud droplets
+  - `pieproject/benchmark-gcloud-tpu`: Google Cloud TPU VMs
 
 Engine folks, model folks: bring your engine, tune its flags, call out a bad
 number. PRs and [issues](https://github.com/pie-project/pie-evals/issues) welcome;
@@ -45,10 +54,8 @@ pie-bench doctor
 ```
 
 Needs Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs.astral.sh/uv/):
-Apple Silicon on a Mac, NVIDIA or AMD GPUs on Linux, or a Cloud TPU. Or skip the
-setup with a ready image, one per cloud (`pieproject/benchmark-runpod-cuda`,
-`-runpod-rocm`, `-digitalocean-cuda`, `-digitalocean-rocm`, `-gcloud-tpu`); see
-[docker/](docker/README.md).
+Apple Silicon on a Mac, NVIDIA or AMD GPUs on Linux, or a Cloud TPU. Or run it in
+the Docker image for your cloud (listed above); see [docker/](docker/README.md).
 
 ## Run a benchmark
 
