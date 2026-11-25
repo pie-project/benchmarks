@@ -203,6 +203,7 @@ read_loop()
     int64_t           shift = 0;
     double            scale = 1;
     std::vector<hsa_signal_t> done, keep;
+    uint64_t          last_skipped = 0;
     auto              ended = std::chrono::steady_clock::now();
     while(!quit)
     {
@@ -224,6 +225,7 @@ read_loop()
             shift = int64_t(t.tv_sec) * 1000000000 + t.tv_nsec - int64_t(double(ts) * scale);
             name  = dir + "/kernels-" + std::to_string(getpid()) + "-" + std::to_string(round++);
             out   = std::fopen((name + ".csv").c_str(), "w");
+            last_skipped = 0;
             for(auto* q : qs) arm(q);
             recording.store(true, std::memory_order_release);
         }
@@ -284,17 +286,29 @@ read_loop()
                 q->pool.insert(q->pool.end(), done.begin(), done.end());
             }
         }
+        if(out)
+        {
+            // an engine that stops inside the round (an offline engine in its bench client) leaves its file complete
+            // to the last millisecond, with its skipped count
+            std::fflush(out);
+            if(skipped != last_skipped)
+                if(FILE* f = std::fopen((name + ".skipped").c_str(), "w"))
+                {
+                    std::fprintf(f, "%llu\n", (unsigned long long) skipped);
+                    std::fclose(f);
+                    last_skipped = skipped;
+                }
+        }
         if(out && !recording && (drained || std::chrono::steady_clock::now() - ended > std::chrono::seconds(5)))
         {
             std::fclose(out);
             out = nullptr;
-            for(auto [what, n] : {std::pair{".skipped", skipped}, std::pair{".unfinished", unfinished}})
-                if(n)
-                    if(FILE* f = std::fopen((name + what).c_str(), "w"))
-                    {
-                        std::fprintf(f, "%llu\n", (unsigned long long) n);
-                        std::fclose(f);
-                    }
+            if(unfinished)
+                if(FILE* f = std::fopen((name + ".unfinished").c_str(), "w"))
+                {
+                    std::fprintf(f, "%llu\n", (unsigned long long) unfinished);
+                    std::fclose(f);
+                }
             std::fclose(std::fopen((name + ".done").c_str(), "w"));
         }
         // once a millisecond: the pools hold several milliseconds of a queue's kernels

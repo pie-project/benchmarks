@@ -61,8 +61,11 @@ class Tracer:
         finally:
             marker.unlink(missing_ok=True)
             made = lambda: [p for p in self.dir.glob("kernels-*.csv") if p.stat().st_mtime >= since]
-            deadline = time.time() + 30  # each process writes its .done once the round's dispatches have completed
-            while time.time() < deadline and not all(p.with_suffix(".done").exists() for p in made()):
+            # each process writes its .done once the round's dispatches have completed; one that ended in the round
+            # (an offline engine inside its bench client) has flushed its file to its last millisecond
+            alive = lambda p: Path(f"/proc/{p.name.split('-')[1]}").exists()
+            deadline = time.time() + 30
+            while time.time() < deadline and not all(p.with_suffix(".done").exists() or not alive(p) for p in made()):
                 time.sleep(0.1)
             (out / "hsa").mkdir(exist_ok=True)
             for p in made():
