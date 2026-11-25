@@ -16,18 +16,13 @@ from pie_bench.engines import register
 from pie_bench.engines.engine import EngineLaunchError
 from pie_bench.engines.llamacpp import LlamacppEngine
 from pie_bench.engines.served import ServedEngine
+from pie_bench.installers.bench_env import cache_root
 from pie_bench.paths import CLIENTS
 from pie_bench.schema import EngineName, ErrorClass
 
 BROWSER = Path(__file__).resolve().parent / "harness"
 LLAMACPP_WASM = Path(__file__).resolve().parent / "llamacpp_wasm"
 SCRIPT = CLIENTS / "browser_bench.py"
-
-
-def _cache() -> Path:
-    from pie_bench.installers.baselines import cache_root
-
-    return cache_root()
 
 
 def ensure_harness(log=print) -> str:
@@ -113,7 +108,7 @@ class BrowserEngine(ServedEngine):
 
     def files_dir(self) -> Path:
         d = (
-            _cache()
+            cache_root()
             / "browser-files"
             / f"{self.page_engine}-{re.sub(r'[^A-Za-z0-9._-]', '_', self.artifact.id)}-{os.getpid()}"
         )
@@ -124,7 +119,7 @@ class BrowserEngine(ServedEngine):
         raise NotImplementedError
 
     def default_env(self) -> dict[str, str]:
-        root = _cache() / "browser-profiles"
+        root = cache_root() / "browser-profiles"
         root.mkdir(parents=True, exist_ok=True)
         return {"BROWSER_PROFILE_ROOT": str(root)}
 
@@ -184,7 +179,7 @@ class WebllmEngine(BrowserEngine):
             )
         if "://" not in url:
             return Path(self.recipe.get("snapshot_dir") or "") / url
-        d = _cache() / "webllm-libs"
+        d = cache_root() / "webllm-libs"
         d.mkdir(parents=True, exist_ok=True)
         path = d / url.rsplit("/", 1)[-1]
         if not path.exists():
@@ -239,7 +234,7 @@ class LlamacppWebgpuEngine(BrowserEngine):
         src = hashlib.sha256(
             b"".join((LLAMACPP_WASM / f).read_bytes() for f in ("llama_webgpu.cpp", "build.sh"))
         ).hexdigest()[:8]
-        out = _cache() / "llamacpp-webgpu" / f"{tag}-{src}"
+        out = cache_root() / "llamacpp-webgpu" / f"{tag}-{src}"
         if not (out / "lw.wasm").exists():
             subprocess.run(
                 ["bash", str(LLAMACPP_WASM / "build.sh"), str(out), tag], check=True, timeout=7200

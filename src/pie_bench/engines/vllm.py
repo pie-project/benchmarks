@@ -9,6 +9,7 @@ from typing import Any
 from pie_bench.engines import register
 from pie_bench.engines.engine import Engine
 from pie_bench.engines.shapes import is_prefix_workload, max_model_len_for, workload_concurrency
+from pie_bench.installers.bench_env import cache_root
 from pie_bench.schema import EngineName, WorkloadSpec
 
 _VLLM_KV_DTYPES = {
@@ -20,6 +21,8 @@ _VLLM_KV_DTYPES = {
     "fp8_e5m2": "fp8_e5m2",
 }
 
+V2_RUNNER_FAULTS_ON_HOPPER = ("gpt_oss", "gemma4", "gemma4_moe", "deepseek_v41")
+
 
 @register
 class VllmEngine(Engine):
@@ -28,8 +31,6 @@ class VllmEngine(Engine):
     env_defaults = {"VLLM_USE_DEEP_GEMM": "0"}
 
     def default_env(self) -> dict[str, str]:
-        from pie_bench.installers.baselines import cache_root
-
         jit = cache_root() / "jit"
         env = {
             "FLASHINFER_WORKSPACE_BASE": str(jit / "flashinfer"),
@@ -80,7 +81,7 @@ class VllmEngine(Engine):
         ):
             env["VLLM_USE_DEEP_GEMM"] = "1"
         if (
-            self.artifact.family in ("gpt_oss", "gemma4", "gemma4_moe", "deepseek_v41")
+            self.artifact.family in V2_RUNNER_FAULTS_ON_HOPPER
             and self.platform is not None
             and str(self.platform.arch) == "hopper"
         ):

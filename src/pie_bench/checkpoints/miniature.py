@@ -6,14 +6,11 @@ import subprocess
 import uuid
 from pathlib import Path
 
+from pie_bench.checkpoints.hf_cache import repo_cache_dirname
 from pie_bench.installers.bench_env import bench_dir
 from pie_bench.schema import ArtifactKind, ArtifactSpec
 
 SHRINK_SCRIPT = "shrink_checkpoint.py"
-
-
-def repo_cache_dirname(repo_id: str) -> str:
-    return "models--" + repo_id.replace("/", "--")
 
 
 def miniature_snapshot_dir(artifact: ArtifactSpec, hf_cache: Path) -> Path:

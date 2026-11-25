@@ -2,13 +2,22 @@ from __future__ import annotations
 
 import os
 import subprocess
+from typing import Any
 
 from pie_bench.engines import register
 from pie_bench.engines.engine import Engine
 from pie_bench.engines.shapes import max_model_len_for, workload_concurrency
+from pie_bench.installers.bench_env import cache_root
 from pie_bench.schema import EngineName, WorkloadSpec
 
 from .served import ServedEngine
+
+
+def _capped(gmu: Any, caps: tuple[tuple[bool, float], ...]) -> Any:
+    for applies, cap in caps:
+        if applies:
+            gmu = min(float(gmu), cap)
+    return gmu
 
 
 @register
@@ -24,8 +33,6 @@ class SglangEngine(Engine):
         return super().__new__(cls)
 
     def default_env(self) -> dict[str, str]:
-        from pie_bench.installers.baselines import cache_root
-
         jit = cache_root() / "jit"
         env = {
             "SGLANG_JIT_CACHE_DIR": str(jit / "sglang"),
@@ -68,154 +75,27 @@ class SglangEngine(Engine):
     def engine_args(self, workload: WorkloadSpec) -> list[str]:
         r = self.recipe
         args: list[str] = ["--tp-size", str(max(1, int(self.mode.tp)))]
-        gmu = r.get("gpu_mem_util", 0.90)
         card = float(self.platform.memory_gib or 0.0) / max(1, int(self.mode.tp))
-        if gmu is not None:
-            weights = float(self.artifact.expected_gib or 0.0)
-            if (
-                weights
-                and card
-                and weights / card > 0.5
-                and not (
-                    self.artifact.family in ("qwen3_6", "muse_glimmer") and weights / card < 0.65
-                )
-            ):
-                gmu = max(float(gmu), 0.95)
-            elif self.artifact.family == "kimi_k3":
-                wide = card < 80 and workload_concurrency(workload) >= 128
-                gmu = min(float(gmu), 0.79 if wide else 0.75)
-                if card < 48:
-                    gmu = min(float(gmu), 0.6)
-            elif (
-                self.artifact.family == "deepseek_v4"
-                and card < 80
-                and str(self.platform.arch) in ("ada", "ampere")
-            ):
-                gmu = min(float(gmu), 0.75)
-            elif self.artifact.family in ("glm5_next", "qwen4_exp"):
-                gmu = min(float(gmu), 0.85 if card >= 80 else 0.75)
-            if self.platform.id == "l4-x1":
-                gmu = min(float(gmu), 0.85)
-            if (
-                self.artifact.id == "gpt-oss-120b-mxfp4"
-                and str(self.platform.arch) == "ampere"
-                and card >= 80
-            ):
-                gmu = min(float(gmu), 0.85)
-            if (
-                self.artifact.family == "qwen3_6"
-                and str(self.platform.arch) == "ampere"
-                and card >= 80
-                and weights / card < 0.7
-            ):
-                gmu = min(float(gmu), 0.9)
-            if self.artifact.family in ("minimax_m3", "glm_moe_dsa") and card >= 80:
-                gmu = min(float(gmu), 0.88)
-            if self.artifact.family in ("glm_moe_dsa", "hy_v4", "minimax_m3") and card < 48:
-                gmu = min(float(gmu), 0.80)
-            if self.artifact.family == "deepseek_v4" and str(self.platform.arch) == "hopper":
-                gmu = min(float(gmu), 0.85)
-            if self.artifact.family == "muse_spark" and card <= 80:
-                gmu = min(float(gmu), 0.85 if card >= 48 else 0.75)
-            if card < 80 and workload_concurrency(workload) >= 512:
-                gmu = min(float(gmu), 0.85)
-            if self.artifact.family == "nemotron_h" and 40 <= card < 80:
-                gmu = min(float(gmu), 0.85)
-            if (
-                self.artifact.family == "muse_glimmer"
-                and card < 80
-                and (workload_concurrency(workload) >= 128 or card <= 32)
-            ):
-                gmu = 0.85
-            if (
-                self.artifact.family == "glm5_next"
-                and str(self.platform.arch) == "blackwell"
-                and "RTX" in str(self.platform.accelerator)
-                and card >= 80
-            ):
-                gmu = 0.88
-            if self.artifact.family in ("glm5_next", "hy_v4", "muse_spark") and card <= 32:
-                gmu = min(float(gmu), 0.78)
-            if self.artifact.family == "qwen3_6_moe" and card <= 32:
-                gmu = min(float(gmu), 0.88)
-            if self.artifact.family == "nemotron_h" and card <= 32:
-                gmu = min(float(gmu), 0.85)
-            if self.platform.id == "rtx4090-x1":
-                gmu = min(float(gmu), 0.85 if weights / card > 0.6 else 0.80)
-                if self.artifact.family == "kimi_k3":
-                    gmu = min(float(gmu), 0.70)
-            args += ["--gpu-mem-util", str(gmu)]
         graph_bs = r.get("cuda_graph_max_bs")
         if graph_bs is None:
             graph_bs = workload_concurrency(workload)
-        if gmu is not None and card >= 80 and int(graph_bs) >= 64:
-            capped = (
-                0.80
-                if int(graph_bs) >= 256 and float(self.artifact.expected_gib or 0.0) / card <= 0.5
-                else 0.85
-            )
-            if (
-                self.artifact.id == "gpt-oss-120b-mxfp4"
-                and str(self.platform.arch) == "hopper"
-                and card <= 80
-            ):
-                capped = float(gmu)
-            if float(gmu) > capped:
-                args[-1] = str(capped)
+        gmu = r.get("gpu_mem_util", 0.90)
+        if gmu is not None:
+            gmu = self.memory_fraction(gmu, card, workload_concurrency(workload))
+            args += ["--gpu-mem-util", str(self.graph_capped(gmu, card, int(graph_bs)))]
         args += ["--max-model-len", str(max_model_len_for(workload))]
         args += ["--sglang-cuda-graph-max-bs", str(int(graph_bs))]
-
         if r.get("report_timing", True):
             args += ["--report-timing"]
         if r.get("attention_backend"):
             args += ["--sglang-attention-backend", str(r["attention_backend"])]
-        dsa = r.get("dsa_backend")
-        if (
-            dsa is None
-            and self.artifact.family == "glm5_next"
-            and self.platform is not None
-            and str(self.platform.arch) == "blackwell"
-            and "RTX" in str(self.platform.accelerator)
-        ):
-            dsa = "tilelang"
-        blackwell = self.platform is not None and str(self.platform.arch) == "blackwell"
-        rtx_blackwell = blackwell and "RTX" in str(self.platform.accelerator)
-        if self.artifact.family in ("glm_moe_dsa", "glm5_next", "hy_v4") and blackwell:
-            args += ["--sglang-kv-cache-dtype", "bfloat16"]
-            if dsa is None and self.artifact.family == "glm_moe_dsa" and rtx_blackwell:
-                dsa = "flashmla_sparse"
-        if dsa:
-            args += ["--sglang-dsa-backend", str(dsa)]
+        args += self.sparse_attention_args()
         moe = r.get("moe_runner_backend")
-        if moe is None and self.artifact.family == "deepseek_v41" and int(self.mode.tp) == 4:
-            moe = "marlin"
-        if (
-            moe is None
-            and self.artifact.family == "gpt_oss"
-            and self.platform is not None
-            and str(self.platform.arch) == "blackwell"
-            and "RTX" in str(self.platform.accelerator)
-        ):
-            moe = "marlin"
-        if (
-            moe is None
-            and self.artifact.family == "gpt_oss"
-            and self.platform is not None
-            and str(self.platform.arch) == "ampere"
-        ):
-            moe = "marlin"
-        if moe is None and self.artifact.family == "kimi_k3" and blackwell and not rtx_blackwell:
-            moe = "marlin"
-        if (
-            moe is None
-            and self.artifact.family == "nemotron_h"
-            and self.platform is not None
-            and str(self.platform.backend) == "rocm"
-        ):
-            moe = "triton"
+        if moe is None:
+            moe = self.default_moe_runner()
         if moe:
             args += ["--sglang-moe-runner-backend", str(moe)]
-        if moe is None and self.artifact.family == "gpt_oss" and blackwell and not rtx_blackwell:
+        if moe is None and self.artifact.family == "gpt_oss" and self.datacenter_blackwell():
             args += ["--sglang-flashinfer-mxfp4-moe-precision", "bf16"]
         if r.get("sampling_backend"):
             args += ["--sglang-sampling-backend", str(r["sampling_backend"])]
@@ -226,27 +106,121 @@ class SglangEngine(Engine):
         if r.get("disable_cuda_graph"):
             args.append("--sglang-disable-cuda-graph")
         piecewise_off = r.get("disable_piecewise_cuda_graph")
-        if (
-            piecewise_off is None
-            and self.artifact.family in ("minimax_m3", "glm_moe_dsa", "hy_v4")
-            and self.platform is not None
-            and str(self.platform.arch) == "ampere"
-        ):
-            piecewise_off = True
+        if piecewise_off is None:
+            piecewise_off = (
+                self.artifact.family in ("minimax_m3", "glm_moe_dsa", "hy_v4")
+                and str(self.platform.arch) == "ampere"
+            )
         if piecewise_off:
             args.append("--sglang-disable-piecewise-cuda-graph")
-
         hybrid_swa = r.get("disable_hybrid_swa_memory")
         if hybrid_swa is None:
             hybrid_swa = self.artifact.family.startswith("gemma")
         if hybrid_swa:
             args.append("--sglang-disable-hybrid-swa-memory")
-
         if r.get("cpu_affinity"):
             args += ["--cpu-affinity", str(r["cpu_affinity"])]
         if r.get("request_timeout"):
             args += ["--request-timeout", str(r["request_timeout"])]
         return args
+
+    def blackwell(self) -> bool:
+        return str(self.platform.arch) == "blackwell"
+
+    def rtx_blackwell(self) -> bool:
+        return self.blackwell() and "RTX" in str(self.platform.accelerator)
+
+    def datacenter_blackwell(self) -> bool:
+        return self.blackwell() and "RTX" not in str(self.platform.accelerator)
+
+    def memory_fraction(self, gmu: Any, card: float, concurrency: int) -> Any:
+        family, arch, platform = self.artifact.family, str(self.platform.arch), self.platform.id
+        weights = float(self.artifact.expected_gib or 0.0)
+        share = weights / card if card else 0.0
+        if (
+            weights
+            and card
+            and share > 0.5
+            and not (family in ("qwen3_6", "muse_glimmer") and share < 0.65)
+        ):
+            gmu = max(float(gmu), 0.95)
+        elif family == "kimi_k3":
+            gmu = min(float(gmu), 0.79 if card < 80 and concurrency >= 128 else 0.75)
+            if card < 48:
+                gmu = min(gmu, 0.6)
+        elif family == "deepseek_v4" and card < 80 and arch in ("ada", "ampere"):
+            gmu = min(float(gmu), 0.75)
+        elif family in ("glm5_next", "qwen4_exp"):
+            gmu = min(float(gmu), 0.85 if card >= 80 else 0.75)
+        gmu = _capped(
+            gmu,
+            (
+                (platform == "l4-x1", 0.85),
+                (
+                    self.artifact.id == "gpt-oss-120b-mxfp4" and arch == "ampere" and card >= 80,
+                    0.85,
+                ),
+                (family == "qwen3_6" and arch == "ampere" and card >= 80 and share < 0.7, 0.9),
+                (family in ("minimax_m3", "glm_moe_dsa") and card >= 80, 0.88),
+                (family in ("glm_moe_dsa", "hy_v4", "minimax_m3") and card < 48, 0.80),
+                (family == "deepseek_v4" and arch == "hopper", 0.85),
+                (family == "muse_spark" and card <= 80, 0.85 if card >= 48 else 0.75),
+                (card < 80 and concurrency >= 512, 0.85),
+                (family == "nemotron_h" and 40 <= card < 80, 0.85),
+            ),
+        )
+        if family == "muse_glimmer" and card < 80 and (concurrency >= 128 or card <= 32):
+            gmu = 0.85
+        if family == "glm5_next" and self.rtx_blackwell() and card >= 80:
+            gmu = 0.88
+        return _capped(
+            gmu,
+            (
+                (family in ("glm5_next", "hy_v4", "muse_spark") and card <= 32, 0.78),
+                (family == "qwen3_6_moe" and card <= 32, 0.88),
+                (family == "nemotron_h" and card <= 32, 0.85),
+                (platform == "rtx4090-x1", 0.85 if share > 0.6 else 0.80),
+                (platform == "rtx4090-x1" and family == "kimi_k3", 0.70),
+            ),
+        )
+
+    def graph_capped(self, gmu: Any, card: float, graph_bs: int) -> Any:
+        if card < 80 or graph_bs < 64:
+            return gmu
+        share = float(self.artifact.expected_gib or 0.0) / card
+        cap = 0.80 if graph_bs >= 256 and share <= 0.5 else 0.85
+        if (
+            self.artifact.id == "gpt-oss-120b-mxfp4"
+            and str(self.platform.arch) == "hopper"
+            and card <= 80
+        ):
+            cap = float(gmu)
+        return cap if float(gmu) > cap else gmu
+
+    def sparse_attention_args(self) -> list[str]:
+        family = self.artifact.family
+        args: list[str] = []
+        dsa = self.recipe.get("dsa_backend")
+        if dsa is None and family == "glm5_next" and self.rtx_blackwell():
+            dsa = "tilelang"
+        if family in ("glm_moe_dsa", "glm5_next", "hy_v4") and self.blackwell():
+            args += ["--sglang-kv-cache-dtype", "bfloat16"]
+            if dsa is None and family == "glm_moe_dsa" and self.rtx_blackwell():
+                dsa = "flashmla_sparse"
+        if dsa:
+            args += ["--sglang-dsa-backend", str(dsa)]
+        return args
+
+    def default_moe_runner(self) -> str | None:
+        family, arch = self.artifact.family, str(self.platform.arch)
+        defaults = (
+            (family == "deepseek_v41" and int(self.mode.tp) == 4, "marlin"),
+            (family == "gpt_oss" and self.rtx_blackwell(), "marlin"),
+            (family == "gpt_oss" and arch == "ampere", "marlin"),
+            (family == "kimi_k3" and self.datacenter_blackwell(), "marlin"),
+            (family == "nemotron_h" and str(self.platform.backend) == "rocm", "triton"),
+        )
+        return next((runner for applies, runner in defaults if applies), None)
 
     def version(self) -> str:
         try:

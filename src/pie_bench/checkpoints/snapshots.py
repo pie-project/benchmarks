@@ -5,6 +5,7 @@ import os
 import re
 from pathlib import Path
 
+from pie_bench.checkpoints.hf_cache import repo_cache_dirname
 from pie_bench.schema import ArtifactKind, ArtifactSpec, SourceFormat
 
 WEIGHT_PATTERNS = [
@@ -34,8 +35,7 @@ def gguf_shards(gguf_file: str) -> list[str]:
 def snapshot_dir_if_present(
     artifact: ArtifactSpec, hf_cache: Path, weights: bool = True
 ) -> Path | None:
-    org, _, name = artifact.base_model.partition("/")
-    repo = hf_cache / f"models--{org}--{name}"
+    repo = hf_cache / repo_cache_dirname(artifact.base_model)
     base = repo / "snapshots"
     marker = artifact.gguf_file or (
         "mlc-chat-config.json" if artifact.source_format == SourceFormat.MLC else "config.json"

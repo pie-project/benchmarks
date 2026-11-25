@@ -60,11 +60,20 @@ def step_ms(rate: float, setup: str, concurrency: int, prompt: int) -> float:
     return 1000 * tokens / rate
 
 
+def model_slice(artifact):
+    return artifact.miniature if str(artifact.kind) == "miniature" else None
+
+
+def kept_layers(miniature) -> int:
+    spans = [x.split("-") for x in str(miniature.layers).split(",")]
+    return sum(int(span[-1]) - int(span[0]) + 1 for span in spans)
+
+
 def same_cut(artifact, label: str) -> bool:
-    m = artifact.miniature if str(artifact.kind) == "miniature" else None
+    m = model_slice(artifact)
     if not m or not label:
         return not m and not label
-    kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(m.layers).split(","))
+    kept = kept_layers(m)
     return label.startswith(f"{kept} ") and (
         m.experts is None or "experts" not in label or f"{m.experts} experts" in label
     )
@@ -73,7 +82,7 @@ def same_cut(artifact, label: str) -> bool:
 def mini_params_b(artifact) -> float | None:
     import yaml
 
-    r = artifact.miniature if str(artifact.kind) == "miniature" else None
+    r = model_slice(artifact)
     arts = yaml.safe_load((MATRIX / "models.yaml").read_text())["artifacts"]
     f = {
         a["base_model"]: a
@@ -82,7 +91,7 @@ def mini_params_b(artifact) -> float | None:
     }.get(artifact.base_model)
     if not r or not f or not f.get("params_b"):
         return None
-    kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(r.layers).split(","))
+    kept = kept_layers(r)
     emb = 2 * f["vocab"] * f["hidden_size"] / 1e9
     body, active = f["params_b"] - emb, (f.get("active_b") or f["params_b"]) - emb
     n, top = f.get("experts"), f.get("top_k") or 0
@@ -91,14 +100,10 @@ def mini_params_b(artifact) -> float | None:
 
 
 def cut_size(artifact) -> tuple:
-    m = artifact.miniature if str(artifact.kind) == "miniature" else None
+    m = model_slice(artifact)
     if not m:
         return (1, 0, 0)
-    return (
-        0,
-        sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(m.layers).split(",")),
-        m.experts or 0,
-    )
+    return (0, kept_layers(m), m.experts or 0)
 
 
 def cell_of(m: Matrix, machine, row: dict, commit: str):

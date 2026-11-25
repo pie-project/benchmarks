@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 from pathlib import Path
+
+from pie_bench.installers.bench_env import pip_install
+
+
+def _apt_get() -> tuple[list[str], dict[str, str]]:
+    apt = ["apt-get"] if os.geteuid() == 0 else ["sudo", "-n", "apt-get"]
+    return apt, dict(os.environ, DEBIAN_FRONTEND="noninteractive")
 
 
 def ensure_python_headers(py: Path, log=print) -> bool:
@@ -27,8 +33,7 @@ def ensure_python_headers(py: Path, log=print) -> bool:
         return True
     pkg = f"python{major}.{minor}-dev"
     log(f"baseline: {include}/Python.h is missing; installing {pkg}")
-    apt = ["apt-get"] if os.geteuid() == 0 else ["sudo", "-n", "apt-get"]
-    env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+    apt, env = _apt_get()
     try:
         subprocess.run(
             apt + ["update", "-qq"], env=env, check=False, timeout=600, capture_output=True
@@ -119,8 +124,7 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
         if missing
     ]
     log(f"baseline: {nvcc.name}/{header.name}/{devrt.name} missing; installing {' '.join(pkgs)}")
-    apt = ["apt-get"] if os.geteuid() == 0 else ["sudo", "-n", "apt-get"]
-    env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+    apt, env = _apt_get()
     try:
         subprocess.run(
             apt + ["update", "-qq"], env=env, check=False, timeout=600, capture_output=True
@@ -225,8 +229,7 @@ def ensure_mpi(log=print) -> bool:
 
     if ctypes.util.find_library("mpi"):
         return True
-    apt = ["apt-get"] if os.geteuid() == 0 else ["sudo", "-n", "apt-get"]
-    env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+    apt, env = _apt_get()
     try:
         quiet = dict(env=env, stdin=subprocess.DEVNULL, capture_output=True)
         subprocess.run(apt + ["update", "-qq"], check=False, timeout=600, **quiet)
@@ -258,12 +261,7 @@ def ensure_pip_nvcc_matches_cudart(py: Path, log=print) -> None:
     pins = [f"{p}=={mm(rt)}.*" for p in ("nvidia-cuda-nvcc", "nvidia-cuda-crt", "nvidia-nvvm")]
     log(f"baseline: pip nvcc {cc} beside cudart {rt}; installing {' '.join(pins)}")
     try:
-        cmd = (
-            ["uv", "pip", "install", "--quiet", "--python", str(py)]
-            if shutil.which("uv")
-            else [str(py), "-m", "pip", "install", "-q"]
-        )
-        subprocess.run([*cmd, *pins], check=True, timeout=900)
+        pip_install(py, pins, timeout=900)
     except (OSError, subprocess.SubprocessError) as e:
         log(f"baseline: nvcc pin failed ({e})")
 
@@ -296,28 +294,7 @@ def ensure_flashinfer_aot(py: Path, marker: Path, log=print) -> bool:
     for spec, index in plan:
         log(f"baseline: installing {spec} from {index}")
         try:
-            if shutil.which("uv"):
-                subprocess.run(
-                    [
-                        "uv",
-                        "pip",
-                        "install",
-                        "--quiet",
-                        "--python",
-                        str(py),
-                        "--extra-index-url",
-                        index,
-                        spec,
-                    ],
-                    check=True,
-                    timeout=1800,
-                )
-            else:
-                subprocess.run(
-                    [str(py), "-m", "pip", "install", "-q", "--extra-index-url", index, spec],
-                    check=True,
-                    timeout=1800,
-                )
+            pip_install(py, ["--extra-index-url", index, spec], timeout=1800)
         except (OSError, subprocess.SubprocessError) as e:
             log(f"baseline: {spec} install failed ({e}); FlashInfer may JIT and need nvcc")
             ok = False

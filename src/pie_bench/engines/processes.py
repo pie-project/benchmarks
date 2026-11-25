@@ -51,6 +51,24 @@ def process_table() -> dict[int, tuple[int, float]]:
     return table
 
 
+def memory_table() -> dict[int, tuple[int, int]]:
+    if sys.platform == "win32":
+        return {pid: (ppid, rss) for pid, ppid, _, rss in win_processes()}
+    try:
+        out = subprocess.run(
+            ["ps", "-axo", "pid=,ppid=,rss="], capture_output=True, text=True, timeout=10
+        ).stdout
+    except Exception:
+        return {}
+    rows = [line.split() for line in out.splitlines()]
+    return {int(pid): (int(ppid), int(rss)) for pid, ppid, rss in (r for r in rows if len(r) == 3)}
+
+
+def resident_kib(roots: list[int]) -> int:
+    table = memory_table()
+    return sum(table[pid][1] for pid in tree_pids(roots, table))
+
+
 def tree_pids(roots: list[int], table: dict[int, tuple[int, float]]) -> set[int]:
     pids = {r for r in roots if r in table}
     grew = True

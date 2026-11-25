@@ -5,6 +5,7 @@ import shutil
 import sys
 from pathlib import Path
 
+from pie_bench.installers.bench_env import cache_root
 from pie_bench.schema import JobSpec
 
 LOW_WATER_GIB = 80.0
@@ -17,17 +18,11 @@ def free_gib(path: Path) -> float:
         return float("inf")
 
 
-def cache_root() -> Path | None:
-    from pie_bench.installers.bench_env import DEFAULT_CACHE
-
-    return Path(os.environ.get("PIE_BENCH_CACHE", DEFAULT_CACHE))
-
-
 def reclaim(
     job: JobSpec, hf_cache: Path, *, low_water_gib: float = LOW_WATER_GIB, log=print
 ) -> float:
     root = cache_root()
-    probe = root if root and root.exists() else hf_cache
+    probe = root if root.exists() else hf_cache
     before = free_gib(probe)
     if before >= low_water_gib:
         return 0.0
@@ -39,7 +34,7 @@ def reclaim(
     log(
         f"disk: {before:.0f} GiB free under {low_water_gib:.0f}; reclaiming what this job does not need"
     )
-    if root and root.exists():
+    if root.exists():
         for d in sorted((root / "artifacts").glob("*")) if (root / "artifacts").exists() else []:
             aid, _, tail = d.name.removesuffix("-plain").rpartition("-")
             if d.name.startswith(".tmp-") or aid not in wanted_ids or (commit and tail != commit):

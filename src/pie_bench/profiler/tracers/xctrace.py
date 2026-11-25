@@ -12,26 +12,12 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
+from pie_bench.engines.processes import process_table, tree_pids
 from pie_bench.profiler.tracers.span import span
 
 INSTRUMENT = "GPU"
 TABLE = '/trace-toc/run[@number="1"]/data/table[@schema="metal-gpu-intervals"]'
 LIMIT_S = 3600
-
-
-def descendants(root: int) -> set[int]:
-    out = subprocess.run(["ps", "-axo", "pid=,ppid="], capture_output=True, text=True).stdout
-    kids: dict[int, list[int]] = {}
-    for line in out.splitlines():
-        pid, ppid = (int(x) for x in line.split())
-        kids.setdefault(ppid, []).append(pid)
-    seen, stack = set(), [root]
-    while stack:
-        for k in kids.get(stack.pop(), []):
-            if k not in seen:
-                seen.add(k)
-                stack.append(k)
-    return seen
 
 
 def spool() -> set[Path]:
@@ -115,7 +101,7 @@ class Tracer:
 
         def watch():
             while not done.wait(0.25):
-                pids.update(descendants(os.getpid()))
+                pids.update(tree_pids([os.getpid()], process_table()) - {os.getpid()})
 
         threading.Thread(target=pump, daemon=True).start()
         if not started.wait(120):

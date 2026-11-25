@@ -19,7 +19,7 @@ from pie_bench.engines.shapes import (
     context_tokens_for,
     max_model_len_for,
 )
-from pie_bench.installers.bench_env import bench_dir
+from pie_bench.installers.bench_env import bench_dir, cache_root
 from pie_bench.paths import CLIENTS
 from pie_bench.schema import Backend, EngineName, ErrorClass, WorkloadKind, WorkloadSpec
 
@@ -51,8 +51,6 @@ def nccl_shim_dir() -> Path | None:
         found[name.split(" ")[0]] = path.strip()
     if any(n in found for n in _NCCL_SONAMES) or "libnccl.so.2" not in found:
         return None
-    from pie_bench.installers.baselines import cache_root
-
     d = cache_root() / "lib"
     d.mkdir(parents=True, exist_ok=True)
     link = d / "libnccl.so"

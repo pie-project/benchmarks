@@ -4,6 +4,10 @@ import os
 from pathlib import Path
 
 
+def repo_cache_dirname(repo_id: str) -> str:
+    return "models--" + repo_id.replace("/", "--")
+
+
 def hf_cache_roots() -> list[Path]:
     roots: list[Path] = []
     if cache := os.environ.get("HF_HUB_CACHE"):
@@ -20,9 +24,8 @@ def hf_snapshot_dir(repo_id: str, revision: str | None = None) -> Path | None:
     candidate = Path(repo_id).expanduser()
     if candidate.exists():
         return candidate.resolve()
-    encoded = f"models--{repo_id.replace('/', '--')}"
     for root in hf_cache_roots():
-        repo = root / encoded
+        repo = root / repo_cache_dirname(repo_id)
         snapshots = repo / "snapshots"
         if not snapshots.is_dir():
             continue

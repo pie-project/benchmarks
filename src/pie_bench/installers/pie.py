@@ -11,7 +11,8 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pie_bench.installers.bench_env import _cache_root, _pip_install, bench_python
+from pie_bench.installers import bench_env
+from pie_bench.installers.bench_env import bench_python, pip_install
 
 PIE_UPSTREAM = "https://github.com/pie-project/pie.git"
 PIE_EXE = "pie.exe" if os.name == "nt" else "pie"
@@ -30,7 +31,7 @@ def cache_key(commit: str, features: list[str]) -> str:
 
 
 def cache_dir(commit: str, features: list[str], root: Path | None = None) -> Path:
-    return _cache_root(root) / "builds" / cache_key(commit, features)
+    return bench_env.cache_root(root) / "builds" / cache_key(commit, features)
 
 
 def is_cached(commit: str, features: list[str], root: Path | None = None) -> bool:
@@ -126,112 +127,91 @@ def build(
         env["CARGO_TARGET_DIR"] = str(target_dir)
     feats = ",".join(features)
     if "wgpu" in features and not env.get("PIE_SLANGC") and not shutil.which("slangc"):
-        env["PIE_SLANGC"] = str(ensure_slangc(pie_root, _cache_root(cache_root), log=log))
+        env["PIE_SLANGC"] = str(ensure_slangc(pie_root, bench_env.cache_root(cache_root), log=log))
     log(
         f"build: pie {commit[:12]} features={feats} target={env.get('CARGO_TARGET_DIR', 'in-tree')}"
     )
-    subprocess.run(
-        ["cargo", "build", "--release", "-p", "pie", "--bin", "pie", "--features", feats],
-        cwd=pie_root,
-        env=env,
-        check=True,
-        timeout=timeout_s,
-    )
+
+    def run(argv: list[str], cwd: Path = pie_root, env: dict[str, str] = env, check: bool = True):
+        return subprocess.run(argv, cwd=cwd, env=env, check=check, timeout=timeout_s)
+
+    run(["cargo", "build", "--release", "-p", "pie", "--bin", "pie", "--features", feats])
     tdir = Path(env.get("CARGO_TARGET_DIR", pie_root / "target"))
     shutil.copy2(tdir / "release" / PIE_EXE, out / PIE_EXE)
     if {"cuda", "rocm"} & set(features):
-        py = bench_python(cache_root, log=log)
-        log("build: embedded engine wheel (maturin)")
-        if shutil.which("uv"):
-            maturin = ["uv", "tool", "run", "maturin"]
-        else:
-            _pip_install(py, ["maturin"])
-            maturin = [str(py), "-m", "maturin"]
-        nodef = [] if "cuda" in features else ["--no-default-features"]
-        subprocess.run(
-            [
-                *maturin,
-                "build",
-                "--release",
-                "-o",
-                str(out),
-                *nodef,
-                "--features",
-                feats,
-                "-i",
-                str(py),
-            ],
-            cwd=python_dir(pie_root) / "server",
-            env=env,
-            check=True,
-            timeout=timeout_s,
-        )
+        _build_engine_wheel(pie_root, features, out, cache_root, run, log)
     if "wgpu" in features:
-        log("build: @pie-project/server-web (wasm32-unknown-unknown + wasm-bindgen)")
-        if not shutil.which("wasm-bindgen"):
-            lock = (pie_root / "Cargo.lock").read_text()
-            ver = re.search(r'name = "wasm-bindgen"\nversion = "([^"]+)"', lock).group(1)
-            subprocess.run(
-                ["cargo", "install", "wasm-bindgen-cli", "--locked", "--version", ver],
-                cwd=pie_root,
-                env=env,
-                check=True,
-                timeout=timeout_s,
-            )
-        if shutil.which("rustup"):
-            subprocess.run(
-                ["rustup", "target", "add", "wasm32-unknown-unknown"],
-                cwd=pie_root,
-                env=env,
-                check=False,
-                timeout=timeout_s,
-            )
-        wenv = {k: v for k, v in env.items() if k != "CARGO_TARGET_DIR"}
-        subprocess.run(
-            ["bash", "packages/javascript/server-web/build.sh", "release"],
-            cwd=pie_root,
-            env=wenv,
-            check=True,
-            timeout=timeout_s,
-        )
-        dist = pie_root / "packages/javascript/server-web/dist"
-        if (out / "web").exists():
-            shutil.rmtree(out / "web")
-        shutil.copytree(dist, out / "web")
-    target = wasm_target(pie_root)
-    log(f"build: every inferlet in examples/ ({target})")
-    genv = {k: v for k, v in env.items() if k != "CARGO_TARGET_DIR"}
-    if shutil.which("rustup"):
-        subprocess.run(
-            ["rustup", "toolchain", "install"],
-            cwd=pie_root / "examples",
-            env=genv,
-            check=False,
-            timeout=timeout_s,
-        )
-        subprocess.run(
-            ["rustup", "target", "add", target],
-            cwd=pie_root / "examples",
-            env=genv,
-            check=False,
-            timeout=timeout_s,
-        )
-    subprocess.run(
-        ["cargo", "build", "--release", "--target", target, "--workspace"],
-        cwd=pie_root / "examples",
-        env=genv,
-        check=True,
-        timeout=timeout_s,
-    )
-    (out / "wasm").mkdir(exist_ok=True)
-    n = 0
-    for w in (pie_root / f"examples/target/{target}/release").glob("*.wasm"):
-        shutil.copy2(w, out / "wasm" / w.name)
-        n += 1
-    log(f"build: {n} guest programs cached")
+        _build_server_web(pie_root, out, env, run, log)
+    _build_inferlets(pie_root, out, env, run, log)
     (out / "COMMIT").write_text(commit + "\n")
     log(f"build: cached at {out}")
     return out
+
+
+def _without_target_dir(env: dict[str, str]) -> dict[str, str]:
+    return {k: v for k, v in env.items() if k != "CARGO_TARGET_DIR"}
+
+
+def _build_engine_wheel(
+    pie_root: Path, features: list[str], out: Path, cache_root, run, log
+) -> None:
+    py = bench_python(cache_root, log=log)
+    log("build: embedded engine wheel (maturin)")
+    if shutil.which("uv"):
+        maturin = ["uv", "tool", "run", "maturin"]
+    else:
+        pip_install(py, ["maturin"])
+        maturin = [str(py), "-m", "maturin"]
+    nodef = [] if "cuda" in features else ["--no-default-features"]
+    run(
+        [
+            *maturin,
+            "build",
+            "--release",
+            "-o",
+            str(out),
+            *nodef,
+            "--features",
+            ",".join(features),
+            "-i",
+            str(py),
+        ],
+        cwd=python_dir(pie_root) / "server",
+    )
+
+
+def _build_server_web(pie_root: Path, out: Path, env: dict[str, str], run, log) -> None:
+    log("build: @pie-project/server-web (wasm32-unknown-unknown + wasm-bindgen)")
+    if not shutil.which("wasm-bindgen"):
+        lock = (pie_root / "Cargo.lock").read_text()
+        ver = re.search(r'name = "wasm-bindgen"\nversion = "([^"]+)"', lock).group(1)
+        run(["cargo", "install", "wasm-bindgen-cli", "--locked", "--version", ver])
+    if shutil.which("rustup"):
+        run(["rustup", "target", "add", "wasm32-unknown-unknown"], check=False)
+    run(
+        ["bash", "packages/javascript/server-web/build.sh", "release"],
+        env=_without_target_dir(env),
+    )
+    dist = pie_root / "packages/javascript/server-web/dist"
+    if (out / "web").exists():
+        shutil.rmtree(out / "web")
+    shutil.copytree(dist, out / "web")
+
+
+def _build_inferlets(pie_root: Path, out: Path, env: dict[str, str], run, log) -> None:
+    target = wasm_target(pie_root)
+    log(f"build: every inferlet in examples/ ({target})")
+    examples, genv = pie_root / "examples", _without_target_dir(env)
+    if shutil.which("rustup"):
+        run(["rustup", "toolchain", "install"], cwd=examples, env=genv, check=False)
+        run(["rustup", "target", "add", target], cwd=examples, env=genv, check=False)
+    run(["cargo", "build", "--release", "--target", target, "--workspace"], cwd=examples, env=genv)
+    (out / "wasm").mkdir(exist_ok=True)
+    n = 0
+    for w in (examples / f"target/{target}/release").glob("*.wasm"):
+        shutil.copy2(w, out / "wasm" / w.name)
+        n += 1
+    log(f"build: {n} guest programs cached")
 
 
 def ensure_slangc(pie_root: Path, cache: Path, log=print) -> Path:
@@ -292,7 +272,7 @@ def restore(
     whl = sorted(d.glob("pie_server-*.whl"))
     if whl:
         py = bench_python(cache_root, log=log)
-        _pip_install(py, ["--force-reinstall", "--no-deps", str(whl[-1])])
+        pip_install(py, ["--force-reinstall", "--no-deps", str(whl[-1])])
         so = subprocess.run(
             [str(py), "-c", "import pie._engine as e; print(e.__file__)"],
             capture_output=True,

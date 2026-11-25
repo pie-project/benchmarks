@@ -6,6 +6,7 @@ from pathlib import Path
 
 from pie_bench.engines import register
 from pie_bench.engines.engine import EngineLaunchError
+from pie_bench.installers.bench_env import cache_root
 from pie_bench.schema import EngineName, ErrorClass, WorkloadSpec
 
 from .served import ServedEngine, free_port
@@ -81,8 +82,6 @@ class AtomEngine(ServedEngine):
         return cmd
 
     def server_env(self) -> dict[str, str]:
-        from pie_bench.installers.baselines import cache_root
-
         return {"HOME": str(cache_root() / "atom-home" / self.artifact.id)}
 
     def serve(self, workload: WorkloadSpec, log_path: Path, timeout_s: int) -> None:

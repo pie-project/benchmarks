@@ -15,7 +15,7 @@ from pie_bench.metrics.fairness import (
 from pie_bench.schema import PerfMetrics
 
 
-def _all_completed(json_out: Path) -> bool:
+def all_completed(json_out: Path) -> bool:
     try:
         s = json.loads(json_out.read_text()).get("summary", {})
     except (OSError, ValueError):

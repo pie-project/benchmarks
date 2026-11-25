@@ -17,7 +17,7 @@ from pie_bench.engines import get_engine
 from pie_bench.engines.engine import EngineLaunchError
 from pie_bench.engines.recipes import load_recipe
 from pie_bench.engines.shapes import context_tokens_for, serve_envelope, workload_mode_args
-from pie_bench.installers.bench_env import bench_dir
+from pie_bench.installers.bench_env import bench_dir, cache_root
 from pie_bench.metrics.stats import cov, decide_repetition, median
 from pie_bench.paths import PACKAGE
 from pie_bench.runner import process_sampler as profile
@@ -48,6 +48,8 @@ from pie_bench.workloads import common_args_for
 from . import preflight as pf
 from . import provenance as prov
 
+BASELINE_PYTHON_ENV = {"vllm": "VLLM_PY", "sglang": "SGLANG_PY", "trtllm": "TRTLLM_PY"}
+
 
 def recipe_for_cell(recipe: dict, recipe_name: str, cell: Cell) -> dict:
     fresh = load_recipe(
@@ -63,6 +65,13 @@ def recipe_for_cell(recipe: dict, recipe_name: str, cell: Cell) -> dict:
             fresh[k] = v
         fresh.setdefault(k, v)
     return fresh
+
+
+def _stop_quietly(engine) -> None:
+    try:
+        engine.stop()
+    except Exception:
+        pass
 
 
 def import_reason(e: Exception) -> str:
@@ -309,18 +318,67 @@ class JobRunner:
         )
         broken = (
             pf.cuda_init()
-            if self.platform is not None and not pf._is_mac(str(self.platform.os))
+            if self.platform is not None and not pf.is_mac(str(self.platform.os))
             else None
         )
         if broken:
             self.log(
                 f"GPU preflight failed: {broken}; this pod cannot reach the driver, so no cell is attempted"
             )
-            for c in job.cells:
-                self.emit(
-                    self._failed(c, ErrorClass.HARNESS_INVALID, f"GPU preflight: {broken}", None)
-                )
+            self._fail_cells(
+                job.cells, ErrorClass.HARNESS_INVALID, f"GPU preflight: {broken}", None
+            )
             return []
+        self._ensure_cuda_toolkit()
+        job = self._build_pie(job)
+        self._pre = pf.Preflight()
+        machine_before = self._pre.before_job(self._platform_os())
+        self._last_state = machine_before
+        if machine_before.get("gpu_drain_error"):
+            self.log(
+                f"GPU not clean at job start: {machine_before['gpu_drain_error']}; no cell is attempted on this pod"
+            )
+            self._fail_cells(
+                job.cells,
+                ErrorClass.HARNESS_INVALID,
+                f"GPU not clean at job start: {machine_before['gpu_drain_error']}",
+                None,
+            )
+            return []
+        self._reclaim_disk(job)
+        fingerprint = prov.hardware_fingerprint()
+        records: list[Record] = []
+        control_failed: set[tuple] = set()
+        groups, tight = self._engine_processes(job)
+        keys = list(groups)
+        for gi, (key, cells) in enumerate(groups.items()):
+            if tight:
+                self._ahead = job.model_copy(
+                    update={"cells": [c for k in keys[gi:] for c in groups[k]]}
+                )
+            self._run_process(
+                job, groups, key, cells, fingerprint, machine_before, control_failed, records
+            )
+        self._emit_unreached(
+            f"job budget ({job.budget_s}s) exhausted before this cell was reached"
+            if self.over_budget()
+            else "not reached (earlier failure)"
+        )
+        self._watchdog.cancel()
+        self.log(f"done in {self.elapsed_s():.0f}s (budget {job.budget_s}s, kill {job.kill_s}s)")
+        self._log.close()
+        return records
+
+    def _platform_os(self) -> str | None:
+        return self.platform.os if self.platform else None
+
+    def _fail_cells(
+        self, cells: list[Cell], cls: ErrorClass, msg: str, fingerprint: dict | None
+    ) -> None:
+        for c in cells:
+            self.emit(self._failed(c, cls, msg, fingerprint))
+
+    def _ensure_cuda_toolkit(self) -> None:
         if (
             self.platform is not None
             and str(self.platform.backend) == "cuda"
@@ -330,53 +388,38 @@ class JobRunner:
             from pie_bench.installers.cuda_toolkit import ensure_cuda_devkit
 
             ensure_cuda_devkit(log=self.log)
+
+    def _build_pie(self, job: JobSpec) -> JobSpec:
         try:
             self.ensure_pie()
         except Exception as e:
             self.log(f"pie build failed: {e}")
-            for c in job.cells:
-                if str(c.engine) == "pie":
-                    self.emit(self._failed(c, ErrorClass.LOAD_FAIL, f"pie build failed: {e}", None))
+            pie = [c for c in job.cells if str(c.engine) == "pie"]
+            self._fail_cells(pie, ErrorClass.LOAD_FAIL, f"pie build failed: {e}", None)
             job = job.model_copy(update={"cells": [c for c in job.cells if str(c.engine) != "pie"]})
-        pre = pf.Preflight()
-        self._pre = pre
-        machine_before = pre.before_job(self.platform.os if self.platform else None)
-        self._last_state = machine_before
-        if machine_before.get("gpu_drain_error"):
-            self.log(
-                f"GPU not clean at job start: {machine_before['gpu_drain_error']}; no cell is attempted on this pod"
-            )
-            for c in job.cells:
-                self.emit(
-                    self._failed(
-                        c,
-                        ErrorClass.HARNESS_INVALID,
-                        f"GPU not clean at job start: {machine_before['gpu_drain_error']}",
-                        None,
-                    )
-                )
-            return []
+        return job
+
+    def _reclaim_disk(self, job: JobSpec) -> None:
         try:
             from pie_bench.runner.disk_space import reclaim
 
             reclaim(job, self.hf_cache, log=self.log)
         except Exception as e:
             self.log(f"disk reclaim skipped: {str(e)[:120]}")
-        fingerprint = prov.hardware_fingerprint()
-        records: list[Record] = []
+
+    def _engine_processes(self, job: JobSpec) -> tuple[dict[tuple, list[Cell]], bool]:
+        from pie_bench.runner.disk_space import free_gib
+
         groups = split_startups(
             split_draft_processes(split_heavy_processes(job.cells_by_process()))
         )
-        control_failed: set[tuple] = set()
         groups = dict(sorted(groups.items(), key=lambda kv: str(kv[0][0]) != "pie"))
-        from pie_bench.runner.disk_space import cache_root, free_gib
-
-        models = {}
+        models: dict[str, float] = {}
         for cells in groups.values():
             models.setdefault(
                 cells[0].artifact.base_model, float(cells[0].artifact.expected_gib or 0)
             )
-        tight = free_gib(cache_root() or self.hf_cache) < sum(models.values()) * 2.5 + 20
+        tight = free_gib(cache_root()) < sum(models.values()) * 2.5 + 20
         if tight:
             order = list(models)
             groups = dict(
@@ -388,117 +431,192 @@ class JobRunner:
         else:
             self.log(f"{len(groups)} engine processes to run")
             self._start_prefetch([cells[0].artifact for cells in groups.values()])
-        keys = list(groups)
-        for gi, (gkey, cells) in enumerate(groups.items()):
-            if tight:
-                self._ahead = job.model_copy(
-                    update={"cells": [c for k in keys[gi:] for c in groups[k]]}
-                )
-            engine_name, artifact_key, mode_key = gkey
+        return groups, tight
+
+    def _run_process(
+        self,
+        job: JobSpec,
+        groups: dict[tuple, list[Cell]],
+        key: tuple,
+        cells: list[Cell],
+        fingerprint: dict,
+        machine_before: dict,
+        control_failed: set[tuple],
+        records: list[Record],
+    ) -> None:
+        engine_name, artifact_key, mode_key = key
+        if self.over_budget():
+            self.log(
+                f"soft budget {job.budget_s}s exhausted after {self.elapsed_s():.0f}s; not starting {engine_name} {artifact_key}"
+            )
+            return
+        self.log(
+            f"--- process {engine_name} {artifact_key} {mode_key} ({len(cells)} cells) t+{self.elapsed_s():.0f}s"
+        )
+        started = self._start_engine(groups, key, cells, fingerprint)
+        if started is None:
+            return
+        engine, cells, snapshot, engine_version, recipe_name = started
+        self._last_state = machine_before
+        control_key = (engine_name, artifact_key, mode_key.split("@")[0])
+        for cell in self._cell_order(job, cells):
+            if cell.cell_id in self._done:
+                continue
             if self.over_budget():
                 self.log(
-                    f"soft budget {job.budget_s}s exhausted after {self.elapsed_s():.0f}s; not starting {engine_name} {artifact_key}"
+                    f"soft budget exhausted at t+{self.elapsed_s():.0f}s; remaining cells of this process not started"
                 )
-                continue
-            self.log(
-                f"--- process {engine_name} {artifact_key} {mode_key} ({len(cells)} cells) t+{self.elapsed_s():.0f}s"
+                break
+            rec, measured = self._measure_cell(
+                job,
+                cell,
+                engine,
+                snapshot,
+                engine_version,
+                recipe_name,
+                fingerprint,
+                machine_before,
+                control_ok=control_key not in control_failed,
             )
-            engine = None
-            snapshot = None
-            try:
-                snapshot = self.snapshot_dir(cells[0])
-            except EngineLaunchError as e:
-                for c in cells:
-                    self.emit(self._failed(c, e.error_class, str(e), fingerprint))
-                continue
-            except Exception as e:
-                self.log(f"process setup crashed: {e}\n{traceback.format_exc()}")
-                for c in cells:
-                    self.emit(
-                        self._failed(
-                            c, ErrorClass.HARNESS_INVALID, f"process setup: {e}", fingerprint
-                        )
-                    )
-                continue
-            from pie_bench.checkpoints.miniature import num_layers_of
-
-            num_layers = num_layers_of(snapshot)
-            first = cells[0]
-            model_path = snapshot
-            if str(first.engine) == "pie" and self.job.pie_commit:
-                from pie_bench.checkpoints.pie_import import ensure_artifact, needs_import
-
-                if (
-                    needs_import(first.artifact)
-                    or int(first.mode.tp) > 1
-                    or first.platform.backend == Backend.XLA
-                ):
-                    try:
-                        if (
-                            first.artifact.family == "deepseek_v41"
-                            and first.artifact.kind != ArtifactKind.MINIATURE
-                            and not (Path(snapshot) / "engram_token_map.safetensors").exists()
-                        ):
-                            self.log(f"engram: writing the token map beside {snapshot}")
-                            subprocess.run(
-                                [
-                                    os.environ.get("PIE_PY", "python3"),
-                                    str(bench_dir() / "engram_token_map.py"),
-                                    str(snapshot),
-                                ],
-                                check=True,
-                                timeout=1800,
-                            )
-                        model_path = ensure_artifact(
-                            first.artifact,
-                            snapshot,
-                            self.pie_root / "target/release/pie",
-                            self.job.pie_commit,
-                            log=self.log,
-                        )
-                    except Exception as e:
-                        for c in cells:
-                            self.emit(
-                                self._failed(
-                                    c,
-                                    ErrorClass.LOAD_FAIL,
-                                    f"artifact import: {import_reason(e)[:900]}",
-                                    fingerprint,
-                                )
-                            )
-                        continue
-            recipe_name = "competitive" if str(first.engine) != "pie" else "default"
-            try:
-                pre.between_engines(self.platform.os if self.platform else None, [])
-                cls = get_engine(first.engine, str(first.platform.backend))
-                recipe = load_recipe(
-                    str(first.engine),
-                    recipe_name,
-                    first.platform,
-                    first.workload,
-                    family=first.artifact.family,
-                    artifact=first.artifact.id,
+            if (
+                measured
+                and cell.workload.kind.value == "control_aa"
+                and rec.status != CellStatus.PASS
+            ):
+                control_failed.add(control_key)
+                self.log(
+                    "control A/A failed; remaining cells in this process are "
+                    + ("NOISY" if job.control_marks_noisy else "HARNESS_INVALID")
                 )
-                recipe["program_path"] = first.program.path
-                recipe["snapshot_dir"] = str(model_path)
-                if str(first.engine) in self.job.baseline_versions:
-                    from pie_bench.installers.baselines import SPECS, ensure_baseline
+            records.append(rec)
+            self._done.add(cell.cell_id)
+            self.emit(rec)
+        self._stop_process(engine, artifact_key, machine_before, records)
 
-                    recipe["pin"] = (
-                        recipe.get("pin") or self.job.baseline_versions[str(first.engine)]
-                    )
-                    if str(first.engine) in SPECS and not os.environ.get(
-                        {"vllm": "VLLM_PY", "sglang": "SGLANG_PY", "trtllm": "TRTLLM_PY"}.get(
-                            str(first.engine), ""
-                        )
-                    ):
-                        ensure_baseline(
-                            str(first.engine),
-                            recipe["pin"],
-                            backend=str(first.platform.backend),
-                            log=self.log,
-                        )
-                engine = cls(
+    def _cell_order(self, job: JobSpec, cells: list[Cell]) -> list[Cell]:
+        order = list(cells)
+        if job.repetition.interleave:
+            random.Random(self.run_id).shuffle(order)
+        order.sort(key=cell_priority)
+        return order
+
+    def _measure_cell(
+        self,
+        job: JobSpec,
+        cell: Cell,
+        engine,
+        snapshot: Path,
+        engine_version: str,
+        recipe_name: str,
+        fingerprint: dict,
+        machine_before: dict,
+        *,
+        control_ok: bool,
+    ) -> tuple[Record, bool]:
+        if not control_ok and job.control_required and not job.control_marks_noisy:
+            reason = "control A/A failed on this process; numbers not read"
+            return self._invalid(cell, reason, fingerprint), False
+        if hasattr(engine, "program_path"):
+            engine.program_path = cell.program.path
+        recipe = recipe_for_cell(engine.recipe, recipe_name, cell)
+        engine.recipe = recipe
+        state, busy = self._cell_machine_state(cell, machine_before)
+        if busy:
+            return self._invalid(cell, busy, fingerprint), False
+
+        def run(machine_state: dict) -> Record:
+            return self._run_cell(
+                cell,
+                engine,
+                snapshot,
+                engine_version,
+                recipe,
+                recipe_name,
+                fingerprint,
+                machine_state,
+            )
+
+        rec = run(state)
+        if not control_ok and rec.status == CellStatus.PASS:
+            rec = rec.model_copy(
+                update={
+                    "status": CellStatus.NOISY,
+                    "invalid_reason": "control A/A failed on this process",
+                }
+            )
+        if cell.workload.kind.value == "control_aa" and rec.status == CellStatus.NOISY:
+            self.log(f"control A/A noisy ({rec.invalid_reason}); running the control once more")
+            again = run(machine_before)
+            if again.status == CellStatus.PASS:
+                rec = again
+        return rec, True
+
+    def _cell_machine_state(self, cell: Cell, machine_before: dict) -> tuple[dict, str | None]:
+        state = machine_before
+        if os.environ.get("PIE_BENCH_SETTLE", "1") != "0":
+            settled = self._pre.settle(self._platform_os())
+            if settled:
+                self.log(
+                    f"{cell.workload.id}: settled {settled['settle_s']}s, thermal {settled['thermal_state_before_settle']} -> {settled['thermal_state']}"
+                )
+                state = {**machine_before, **settled}
+        idle = self._pre.before_cell(self._platform_os())
+        if idle.get("gpu_busy_error"):
+            return state, idle["gpu_busy_error"]
+        if idle:
+            self.log(
+                f"{cell.workload.id}: GPU idle after {idle['gpu_idle_wait_s']}s (was {idle['gpu_util_before_cell']}%)"
+            )
+            state = {**state, **idle}
+        return state, None
+
+    def _stop_process(
+        self, engine, artifact_key: str, machine_before: dict, records: list[Record]
+    ) -> None:
+        try:
+            if engine:
+                engine.stop()
+                self._pre.between_engines(self._platform_os(), engine.leftover_process_names())
+        except Exception as e:
+            self.log(f"teardown: {e}")
+        self._judge_t0(records)
+        invalid = self._pre.after_model(self._platform_os(), machine_before)
+        if not invalid:
+            return
+        self.log(f"model run invalidated: {invalid}")
+        mine = [r for r in records if r.cell.artifact.artifact_key == artifact_key]
+        for r in [r for r in mine if r.status == CellStatus.PASS]:
+            r.status = CellStatus.NOISY
+            r.invalid_reason = "; ".join(invalid)
+            self.emit(r)
+        for r in [r for r in mine if r.status == CellStatus.FAIL]:
+            r.error_class = ErrorClass.HARNESS_INVALID
+            r.invalid_reason = "; ".join(invalid)
+            self.emit(r)
+
+    def _start_engine(
+        self, groups: dict[tuple, list[Cell]], key: tuple, cells: list[Cell], fingerprint: dict
+    ):
+        engine_name, artifact_key, mode_key = key
+        snapshot = self._process_snapshot(cells, fingerprint)
+        if snapshot is None:
+            return None
+        from pie_bench.checkpoints.miniature import num_layers_of
+
+        num_layers = num_layers_of(snapshot)
+        first = cells[0]
+        model_path = self._pie_artifact(cells, snapshot, fingerprint)
+        if model_path is None:
+            return None
+        recipe_name = "competitive" if str(first.engine) != "pie" else "default"
+        engine = None
+        try:
+            self._pre.between_engines(self._platform_os(), [])
+            cls = get_engine(first.engine, str(first.platform.backend))
+            recipe = self._process_recipe(first, recipe_name, model_path)
+
+            def fresh_engine():
+                return cls(
                     pie_root=self.pie_root,
                     artifact=first.artifact,
                     platform=first.platform,
@@ -506,249 +624,160 @@ class JobRunner:
                     recipe=recipe,
                     num_layers=num_layers,
                 )
-                self._plain_deployment(engine, cells, snapshot, model_path, recipe)
-                engine_version = engine.version()
-                serve_log = (
-                    self.out
-                    / "serve"
-                    / f"{re.sub(r'[^A-Za-z0-9._-]', '_', artifact_key)}-{mode_key}.log"
+
+            engine = fresh_engine()
+            self._plain_deployment(engine, cells, snapshot, model_path, recipe)
+            engine_version = engine.version()
+            serve_log = (
+                self.out
+                / "serve"
+                / f"{re.sub(r'[^A-Za-z0-9._-]', '_', artifact_key)}-{mode_key}.log"
+            )
+
+            def boot(engine, workloads):
+                return self._boot(
+                    engine,
+                    serve_envelope(workloads),
+                    serve_log,
+                    cls=cls,
+                    first=first,
+                    recipe=recipe,
+                    num_layers=num_layers,
+                    snapshot=snapshot,
+                    model_path=model_path,
                 )
 
-                try:
-                    engine, model_path = self._boot(
-                        engine,
-                        serve_envelope([c.workload for c in cells]),
-                        serve_log,
-                        cls=cls,
-                        first=first,
-                        recipe=recipe,
-                        num_layers=num_layers,
-                        snapshot=snapshot,
-                        model_path=model_path,
-                    )
-                except EngineLaunchError as e:
-                    wide = [
-                        c.workload
-                        for k, cs in groups.items()
-                        if k[:2] == (engine_name, artifact_key)
-                        and k[2].split("@")[0] == mode_key.split("@")[0]
-                        for c in cs
-                    ]
-                    if (
-                        "@" in mode_key
-                        and any(m in str(e) for m in MEMORY_BOUND_MARKS)
-                        and len(wide) > len(cells)
-                    ):
-                        self.log(
-                            "engine boot at the cells' own shape failed for memory; retrying at the process's envelope"
-                        )
-                        try:
-                            engine.stop()
-                        except Exception:
-                            pass
-                        engine = cls(
-                            pie_root=self.pie_root,
-                            artifact=first.artifact,
-                            platform=first.platform,
-                            mode=first.mode,
-                            recipe=recipe,
-                            num_layers=num_layers,
-                        )
-                        engine, model_path = self._boot(
-                            engine,
-                            serve_envelope(wide),
-                            serve_log,
-                            cls=cls,
-                            first=first,
-                            recipe=recipe,
-                            num_layers=num_layers,
-                            snapshot=snapshot,
-                            model_path=model_path,
-                        )
-                    else:
-                        short = [
-                            c
-                            for c in cells
-                            if context_tokens_for(c.workload) <= SHORT_CONTEXT_TOKENS
-                        ]
-                        if (
-                            not any(m in str(e) for m in MEMORY_BOUND_MARKS)
-                            or not short
-                            or len(short) == len(cells)
-                        ):
-                            raise
-                        self.log(
-                            f"engine boot at the full envelope failed for memory; retrying with the shapes under {SHORT_CONTEXT_TOKENS} tokens ({len(short)} of {len(cells)} cells)"
-                        )
-                        for c in cells:
-                            if c not in short:
-                                self.emit(
-                                    self._failed(
-                                        c,
-                                        e.error_class,
-                                        f"does not fit beside the short shapes: {e}",
-                                        fingerprint,
-                                    )
-                                )
-                        try:
-                            engine.stop()
-                        except Exception:
-                            pass
-                        engine = cls(
-                            pie_root=self.pie_root,
-                            artifact=first.artifact,
-                            platform=first.platform,
-                            mode=first.mode,
-                            recipe=recipe,
-                            num_layers=num_layers,
-                        )
-                        cells = short
-                        engine, model_path = self._boot(
-                            engine,
-                            serve_envelope([c.workload for c in cells]),
-                            serve_log,
-                            cls=cls,
-                            first=first,
-                            recipe=recipe,
-                            num_layers=num_layers,
-                            snapshot=snapshot,
-                            model_path=model_path,
-                        )
-                if getattr(engine, "server_url", None):
-                    self.log(f"serving {artifact_key} at {engine.server_url}")
-            except EngineLaunchError as e:
-                self.log(f"engine boot failed: {e.error_class} {e}")
-                for c in cells:
-                    self.emit(self._failed(c, e.error_class, str(e), fingerprint))
-                if engine:
-                    engine.stop()
-                continue
-            except Exception as e:
-                self.log(f"engine setup failed: {e}\n{traceback.format_exc()}")
-                for c in cells:
-                    self.emit(
-                        self._failed(c, ErrorClass.LOAD_FAIL, f"engine setup: {e}", fingerprint)
-                    )
-                continue
-            order = list(cells)
-            if job.repetition.interleave:
-                random.Random(self.run_id).shuffle(order)
-            order.sort(key=cell_priority)
-            control_ok = (engine_name, artifact_key, mode_key.split("@")[0]) not in control_failed
-            model_state = machine_before
-            self._last_state = model_state
-            for cell in order:
-                if cell.cell_id in self._done:
-                    continue
-                if self.over_budget():
-                    self.log(
-                        f"soft budget exhausted at t+{self.elapsed_s():.0f}s; remaining cells of this process not started"
-                    )
-                    break
-                if not control_ok and job.control_required and not job.control_marks_noisy:
-                    rec = self._invalid(
-                        cell, "control A/A failed on this process; numbers not read", fingerprint
-                    )
-                    records.append(rec)
-                    self.emit(rec)
-                    continue
-                if hasattr(engine, "program_path"):
-                    engine.program_path = cell.program.path
-                recipe = recipe_for_cell(engine.recipe, recipe_name, cell)
-                engine.recipe = recipe
-                state = machine_before
-                if os.environ.get("PIE_BENCH_SETTLE", "1") != "0":
-                    settled = pre.settle(self.platform.os if self.platform else None)
-                    if settled:
-                        self.log(
-                            f"{cell.workload.id}: settled {settled['settle_s']}s, thermal {settled['thermal_state_before_settle']} -> {settled['thermal_state']}"
-                        )
-                        state = {**machine_before, **settled}
-                idle = pre.before_cell(self.platform.os if self.platform else None)
-                if idle.get("gpu_busy_error"):
-                    rec = self._invalid(cell, idle["gpu_busy_error"], fingerprint)
-                    records.append(rec)
-                    self._done.add(cell.cell_id)
-                    self.emit(rec)
-                    continue
-                if idle:
-                    self.log(
-                        f"{cell.workload.id}: GPU idle after {idle['gpu_idle_wait_s']}s (was {idle['gpu_util_before_cell']}%)"
-                    )
-                    state = {**state, **idle}
-                rec = self._run_cell(
-                    cell, engine, snapshot, engine_version, recipe, recipe_name, fingerprint, state
-                )
-                if not control_ok and rec.status == CellStatus.PASS:
-                    rec = rec.model_copy(
-                        update={
-                            "status": CellStatus.NOISY,
-                            "invalid_reason": "control A/A failed on this process",
-                        }
-                    )
-                if cell.workload.kind.value == "control_aa" and rec.status == CellStatus.NOISY:
-                    self.log(
-                        f"control A/A noisy ({rec.invalid_reason}); running the control once more"
-                    )
-                    again = self._run_cell(
-                        cell,
-                        engine,
-                        snapshot,
-                        engine_version,
-                        recipe,
-                        recipe_name,
-                        fingerprint,
-                        machine_before,
-                    )
-                    if again.status == CellStatus.PASS:
-                        rec = again
-                if cell.workload.kind.value == "control_aa" and rec.status != CellStatus.PASS:
-                    control_ok = False
-                    control_failed.add((engine_name, artifact_key, mode_key.split("@")[0]))
-                    self.log(
-                        "control A/A failed; remaining cells in this process are "
-                        + ("NOISY" if job.control_marks_noisy else "HARNESS_INVALID")
-                    )
-                records.append(rec)
-                self._done.add(cell.cell_id)
-                self.emit(rec)
             try:
-                if engine:
-                    engine.stop()
-                    pre.between_engines(
-                        self.platform.os if self.platform else None, engine.leftover_process_names()
+                engine, model_path = boot(engine, [c.workload for c in cells])
+            except EngineLaunchError as e:
+                out_of_memory = any(m in str(e) for m in MEMORY_BOUND_MARKS)
+                wide = self._process_family_workloads(groups, key)
+                if "@" in mode_key and out_of_memory and len(wide) > len(cells):
+                    self.log(
+                        "engine boot at the cells' own shape failed for memory; retrying at the process's envelope"
                     )
-            except Exception as e:
-                self.log(f"teardown: {e}")
-            self._judge_t0(records)
-            invalid = pre.after_model(self.platform.os if self.platform else None, model_state)
-            if invalid:
-                self.log(f"model run invalidated: {invalid}")
-                for r in [
-                    r
-                    for r in records
-                    if r.cell.artifact.artifact_key == artifact_key and r.status == CellStatus.PASS
-                ]:
-                    r.status = CellStatus.NOISY
-                    r.invalid_reason = "; ".join(invalid)
-                    self.emit(r)
-                for r in [
-                    r
-                    for r in records
-                    if r.cell.artifact.artifact_key == artifact_key and r.status == CellStatus.FAIL
-                ]:
-                    r.error_class = ErrorClass.HARNESS_INVALID
-                    r.invalid_reason = "; ".join(invalid)
-                    self.emit(r)
-        self._emit_unreached(
-            f"job budget ({job.budget_s}s) exhausted before this cell was reached"
-            if self.over_budget()
-            else "not reached (earlier failure)"
+                    _stop_quietly(engine)
+                    engine = fresh_engine()
+                    engine, model_path = boot(engine, wide)
+                else:
+                    short = [
+                        c for c in cells if context_tokens_for(c.workload) <= SHORT_CONTEXT_TOKENS
+                    ]
+                    if not out_of_memory or not short or len(short) == len(cells):
+                        raise
+                    self.log(
+                        f"engine boot at the full envelope failed for memory; retrying with the shapes under {SHORT_CONTEXT_TOKENS} tokens ({len(short)} of {len(cells)} cells)"
+                    )
+                    long = [c for c in cells if c not in short]
+                    self._fail_cells(
+                        long,
+                        e.error_class,
+                        f"does not fit beside the short shapes: {e}",
+                        fingerprint,
+                    )
+                    _stop_quietly(engine)
+                    engine = fresh_engine()
+                    cells = short
+                    engine, model_path = boot(engine, [c.workload for c in cells])
+            if getattr(engine, "server_url", None):
+                self.log(f"serving {artifact_key} at {engine.server_url}")
+        except EngineLaunchError as e:
+            self.log(f"engine boot failed: {e.error_class} {e}")
+            self._fail_cells(cells, e.error_class, str(e), fingerprint)
+            if engine:
+                engine.stop()
+            return None
+        except Exception as e:
+            self.log(f"engine setup failed: {e}\n{traceback.format_exc()}")
+            self._fail_cells(cells, ErrorClass.LOAD_FAIL, f"engine setup: {e}", fingerprint)
+            return None
+        return engine, cells, snapshot, engine_version, recipe_name
+
+    @staticmethod
+    def _process_family_workloads(groups: dict[tuple, list[Cell]], key: tuple) -> list:
+        engine_name, artifact_key, mode_key = key
+        return [
+            c.workload
+            for k, cs in groups.items()
+            if k[:2] == (engine_name, artifact_key) and k[2].split("@")[0] == mode_key.split("@")[0]
+            for c in cs
+        ]
+
+    def _process_snapshot(self, cells: list[Cell], fingerprint: dict) -> Path | None:
+        try:
+            return self.snapshot_dir(cells[0])
+        except EngineLaunchError as e:
+            self._fail_cells(cells, e.error_class, str(e), fingerprint)
+        except Exception as e:
+            self.log(f"process setup crashed: {e}\n{traceback.format_exc()}")
+            self._fail_cells(cells, ErrorClass.HARNESS_INVALID, f"process setup: {e}", fingerprint)
+        return None
+
+    def _pie_artifact(self, cells: list[Cell], snapshot: Path, fingerprint: dict) -> Path | None:
+        first = cells[0]
+        if str(first.engine) != "pie" or not self.job.pie_commit:
+            return snapshot
+        from pie_bench.checkpoints.pie_import import ensure_artifact, needs_import
+
+        if not (
+            needs_import(first.artifact)
+            or int(first.mode.tp) > 1
+            or first.platform.backend == Backend.XLA
+        ):
+            return snapshot
+        try:
+            if (
+                first.artifact.family == "deepseek_v41"
+                and first.artifact.kind != ArtifactKind.MINIATURE
+                and not (Path(snapshot) / "engram_token_map.safetensors").exists()
+            ):
+                self.log(f"engram: writing the token map beside {snapshot}")
+                subprocess.run(
+                    [
+                        os.environ.get("PIE_PY", "python3"),
+                        str(bench_dir() / "engram_token_map.py"),
+                        str(snapshot),
+                    ],
+                    check=True,
+                    timeout=1800,
+                )
+            return ensure_artifact(
+                first.artifact,
+                snapshot,
+                self.pie_root / "target/release/pie",
+                self.job.pie_commit,
+                log=self.log,
+            )
+        except Exception as e:
+            self._fail_cells(
+                cells,
+                ErrorClass.LOAD_FAIL,
+                f"artifact import: {import_reason(e)[:900]}",
+                fingerprint,
+            )
+            return None
+
+    def _process_recipe(self, first: Cell, recipe_name: str, model_path: Path) -> dict:
+        recipe = load_recipe(
+            str(first.engine),
+            recipe_name,
+            first.platform,
+            first.workload,
+            family=first.artifact.family,
+            artifact=first.artifact.id,
         )
-        self._watchdog.cancel()
-        self.log(f"done in {self.elapsed_s():.0f}s (budget {job.budget_s}s, kill {job.kill_s}s)")
-        self._log.close()
-        return records
+        recipe["program_path"] = first.program.path
+        recipe["snapshot_dir"] = str(model_path)
+        engine = str(first.engine)
+        if engine in self.job.baseline_versions:
+            from pie_bench.installers.baselines import SPECS, ensure_baseline
+
+            recipe["pin"] = recipe.get("pin") or self.job.baseline_versions[engine]
+            if engine in SPECS and not os.environ.get(BASELINE_PYTHON_ENV.get(engine, "")):
+                ensure_baseline(
+                    engine, recipe["pin"], backend=str(first.platform.backend), log=self.log
+                )
+        return recipe
 
     def _plain_deployment(
         self, engine, cells, snapshot: Path, model_path: Path, recipe: dict
@@ -889,53 +918,10 @@ class JobRunner:
         t0 = time.monotonic()
         cell = cell.model_copy(update={"engine_version": engine_version})
         cell_out = self.out / "cells" / cell.cell_id
-        common = common_args_for(
-            cell.workload,
-            warmup=int(
-                cell.workload.params.get(
-                    "warmup", 2 if self.job.tier in (Tier.SMOKE, Tier.TARGETED) else 3
-                )
-            ),
-        ) + list(cell.program.bench_args)
-        policy = self.job.repetition
-        need = (
-            min(policy.min_rounds, 2)
-            if cell.workload.kind.value not in ("single_stream", "control_aa", "long_context")
-            else policy.min_rounds
-        )
-        if cell.workload.kind.value == "single_stream" and policy.single_stream_rounds:
-            need = max(need, policy.single_stream_rounds)
-        rounds: list[float] = []
-        results = []
+        common = self._common_args(cell)
+        need = self._rounds_needed(cell)
         try:
-            for i in range(need):
-                res = self._round(cell, engine, common, cell_out / f"r{i}", first=i == 0)
-                results.append(res)
-                rounds.append(self._primary(res.perf))
-            hist = self.job.history.get(cell.cell_id, [])
-            if need == 1:
-                d = decide_repetition(
-                    rounds[0],
-                    hist,
-                    sigma=policy.history_sigma,
-                    confirm_rounds=policy.confirm_rounds,
-                )
-                self.log(f"{cell.workload.id}/{cell.program.id}: {rounds[0]:.4g} — {d.reason}")
-                for _ in range(d.more_rounds):
-                    if len(rounds) >= policy.max_rounds:
-                        break
-                    res = self._round(
-                        cell, engine, common, cell_out / f"r{len(rounds)}", first=False
-                    )
-                    results.append(res)
-                    rounds.append(self._primary(res.perf))
-            elif cov(rounds) > self._noise_bound(cell):
-                for _ in range(min(policy.confirm_rounds, policy.max_rounds - len(rounds))):
-                    res = self._round(
-                        cell, engine, common, cell_out / f"r{len(rounds)}", first=False
-                    )
-                    results.append(res)
-                    rounds.append(self._primary(res.perf))
+            rounds, results = self._measured_rounds(cell, engine, common, cell_out, need)
         except EngineLaunchError as e:
             self.log(f"{cell.workload.id}/{cell.program.id}: {e.error_class} {e}")
             return self._failed(
@@ -952,53 +938,9 @@ class JobRunner:
                 fingerprint,
                 duration=time.monotonic() - t0,
             )
-        if self.tracer is not None and cell.workload.kind.value != "control_aa":
-            from pie_bench.profiler.profiled_round import short
-
-            try:
-                self._round(
-                    cell.model_copy(update={"workload": short(cell.workload)}),
-                    engine,
-                    common,
-                    cell_out / "profile",
-                    first=False,
-                    traced=True,
-                )
-            except Exception as e:
-                self.log(f"{cell.workload.id}/{cell.program.id}: profiled round failed: {e}")
-        steady = list(range(len(rounds)))[-need:] if need > 1 else list(range(len(rounds)))
-        if len(rounds) >= 5:
-            mid = median(rounds)
-            far = max(range(len(rounds)), key=lambda i: abs(rounds[i] - mid))
-            steady = [i for i in range(len(rounds)) if i != far]
-        med_idx = sorted(steady, key=lambda i: rounds[i])[len(steady) // 2]
-        perf: PerfMetrics = results[med_idx].perf
-        perf.rounds = rounds
-        perf.cov = cov([rounds[i] for i in steady])
-        served = (perf.counters or {}).get("server_load_s")
-        warm = results[0].duration_s - results[med_idx].duration_s if len(results) > 1 else None
-        perf.load_s = (
-            served if served is not None else (warm if warm is not None and warm > 0 else None)
-        )
-        status = CellStatus.PASS
-        invalid = None
-        tight = (
-            policy.cov_noisy_threshold
-            if int(cell.mode.tp) <= 1
-            else policy.cov_noisy_threshold_concurrent
-        )
-        thr = self._noise_bound(cell)
-        problem = round_problem(
-            expected_requests(workload_mode_args(cell.workload)[1]), [r.perf for r in results]
-        )
-        if problem:
-            status, invalid = CellStatus.FAIL, problem
-        elif len(rounds) >= 2 and perf.cov > thr:
-            status, invalid = CellStatus.NOISY, f"cov {perf.cov:.3%} > {thr:.1%}"
-        if cell.workload.kind.value == "control_aa" and len(rounds) >= 2:
-            spread = abs(rounds[0] - rounds[-1]) / median(rounds)
-            if spread > tight:
-                status, invalid = CellStatus.NOISY, f"control A/A spread {spread:.3%} > {tight:.1%}"
+        self._profiled_round(cell, engine, common, cell_out)
+        perf = self._median_round(rounds, results, need)
+        status, invalid = self._round_status(cell, rounds, results, perf)
         accuracy = self._accuracy(cell, engine, snapshot)
         if accuracy.status == AccuracyStatus.FAIL and status == CellStatus.PASS:
             status = CellStatus.FAIL
@@ -1025,6 +967,113 @@ class JobRunner:
             provenance=provenance,
             duration_s=time.monotonic() - t0,
         )
+
+    def _common_args(self, cell: Cell) -> list[str]:
+        default_warmup = 2 if self.job.tier in (Tier.SMOKE, Tier.TARGETED) else 3
+        warmup = int(cell.workload.params.get("warmup", default_warmup))
+        return common_args_for(cell.workload, warmup=warmup) + list(cell.program.bench_args)
+
+    def _rounds_needed(self, cell: Cell) -> int:
+        policy = self.job.repetition
+        need = (
+            min(policy.min_rounds, 2)
+            if cell.workload.kind.value not in ("single_stream", "control_aa", "long_context")
+            else policy.min_rounds
+        )
+        if cell.workload.kind.value == "single_stream" and policy.single_stream_rounds:
+            need = max(need, policy.single_stream_rounds)
+        return need
+
+    def _measured_rounds(
+        self, cell: Cell, engine, common: list[str], cell_out: Path, need: int
+    ) -> tuple[list[float], list]:
+        policy = self.job.repetition
+        rounds: list[float] = []
+        results = []
+
+        def another(first: bool = False) -> None:
+            res = self._round(cell, engine, common, cell_out / f"r{len(rounds)}", first=first)
+            results.append(res)
+            rounds.append(self._primary(res.perf))
+
+        for i in range(need):
+            another(first=i == 0)
+        if need == 1:
+            hist = self.job.history.get(cell.cell_id, [])
+            d = decide_repetition(
+                rounds[0], hist, sigma=policy.history_sigma, confirm_rounds=policy.confirm_rounds
+            )
+            self.log(f"{cell.workload.id}/{cell.program.id}: {rounds[0]:.4g}, {d.reason}")
+            for _ in range(d.more_rounds):
+                if len(rounds) >= policy.max_rounds:
+                    break
+                another()
+        elif cov(rounds) > self._noise_bound(cell):
+            for _ in range(min(policy.confirm_rounds, policy.max_rounds - len(rounds))):
+                another()
+        return rounds, results
+
+    def _profiled_round(self, cell: Cell, engine, common: list[str], cell_out: Path) -> None:
+        if self.tracer is None or cell.workload.kind.value == "control_aa":
+            return
+        from pie_bench.profiler.profiled_round import short
+
+        try:
+            self._round(
+                cell.model_copy(update={"workload": short(cell.workload)}),
+                engine,
+                common,
+                cell_out / "profile",
+                first=False,
+                traced=True,
+            )
+        except Exception as e:
+            self.log(f"{cell.workload.id}/{cell.program.id}: profiled round failed: {e}")
+
+    @staticmethod
+    def _steady_rounds(rounds: list[float], need: int) -> list[int]:
+        if len(rounds) >= 5:
+            mid = median(rounds)
+            far = max(range(len(rounds)), key=lambda i: abs(rounds[i] - mid))
+            return [i for i in range(len(rounds)) if i != far]
+        return list(range(len(rounds)))[-need:] if need > 1 else list(range(len(rounds)))
+
+    def _median_round(self, rounds: list[float], results: list, need: int) -> PerfMetrics:
+        steady = self._steady_rounds(rounds, need)
+        med_idx = sorted(steady, key=lambda i: rounds[i])[len(steady) // 2]
+        perf: PerfMetrics = results[med_idx].perf
+        perf.rounds = rounds
+        perf.cov = cov([rounds[i] for i in steady])
+        served = (perf.counters or {}).get("server_load_s")
+        warm = results[0].duration_s - results[med_idx].duration_s if len(results) > 1 else None
+        perf.load_s = (
+            served if served is not None else (warm if warm is not None and warm > 0 else None)
+        )
+        return perf
+
+    def _round_status(
+        self, cell: Cell, rounds: list[float], results: list, perf: PerfMetrics
+    ) -> tuple[CellStatus, str | None]:
+        policy = self.job.repetition
+        status, invalid = CellStatus.PASS, None
+        tight = (
+            policy.cov_noisy_threshold
+            if int(cell.mode.tp) <= 1
+            else policy.cov_noisy_threshold_concurrent
+        )
+        thr = self._noise_bound(cell)
+        problem = round_problem(
+            expected_requests(workload_mode_args(cell.workload)[1]), [r.perf for r in results]
+        )
+        if problem:
+            status, invalid = CellStatus.FAIL, problem
+        elif len(rounds) >= 2 and perf.cov > thr:
+            status, invalid = CellStatus.NOISY, f"cov {perf.cov:.3%} > {thr:.1%}"
+        if cell.workload.kind.value == "control_aa" and len(rounds) >= 2:
+            spread = abs(rounds[0] - rounds[-1]) / median(rounds)
+            if spread > tight:
+                status, invalid = CellStatus.NOISY, f"control A/A spread {spread:.3%} > {tight:.1%}"
+        return status, invalid
 
     @staticmethod
     def _primary(perf: PerfMetrics) -> float:
@@ -1066,9 +1115,7 @@ class JobRunner:
     def _judge_t0(self, records: list[Record]) -> None:
         from pie_bench.accuracy.gate import t0_judge
 
-        cache = (
-            Path(os.environ.get("PIE_BENCH_CACHE", Path.home() / ".cache/pie-bench")) / "refcache"
-        )
+        cache = cache_root() / "refcache"
         pending, self._t0_pending = self._t0_pending, {}
         for rec in [r for r in records if r.cell_id in pending]:
             outputs, snapshot = pending[rec.cell_id]

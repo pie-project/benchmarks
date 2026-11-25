@@ -407,14 +407,14 @@ def mac_thermal_changed(before: dict[str, Any], after: dict[str, Any]) -> bool:
     return False
 
 
-def _is_mac(platform_os: str | None) -> bool:
+def is_mac(platform_os: str | None) -> bool:
     if platform_os is None:
         return platform.system() == "Darwin"
     return str(platform_os).lower() in ("macos", "darwin", "mac")
 
 
 def machine_state(platform_os: str | None = None) -> dict[str, Any]:
-    return mac_machine_state() if _is_mac(platform_os) else linux_machine_state()
+    return mac_machine_state() if is_mac(platform_os) else linux_machine_state()
 
 
 class Preflight:
@@ -424,7 +424,7 @@ class Preflight:
 
     def before_job(self, platform_os: str | None = None) -> dict[str, Any]:
         state = machine_state(platform_os)
-        if not _is_mac(platform_os):
+        if not is_mac(platform_os):
             try:
                 if os.environ.get("RUNPOD_POD_ID"):
                     state.update(
@@ -443,16 +443,16 @@ class Preflight:
     def before_cell(self, platform_os: str | None) -> dict[str, Any]:
         return (
             await_idle_mac_gpu()
-            if _is_mac(platform_os) and os.environ.get("PIE_BENCH_GPU_IDLE", "1") != "0"
+            if is_mac(platform_os) and os.environ.get("PIE_BENCH_GPU_IDLE", "1") != "0"
             else {}
         )
 
     def settle(self, platform_os: str | None) -> dict[str, Any]:
-        return settle_mac() if _is_mac(platform_os) else {}
+        return settle_mac() if is_mac(platform_os) else {}
 
     def between_engines(self, platform_os: str | None, leftover_names: list[str]) -> dict[str, Any]:
         state: dict[str, Any] = {}
-        if not _is_mac(platform_os):
+        if not is_mac(platform_os):
             try:
                 pod = bool(os.environ.get("RUNPOD_POD_ID"))
                 state.update(
@@ -468,7 +468,7 @@ class Preflight:
     def after_model(self, platform_os: str | None, before_state: dict[str, Any]) -> list[str]:
         reasons: list[str] = []
         after = machine_state(platform_os)
-        if _is_mac(platform_os):
+        if is_mac(platform_os):
             if mac_thermal_changed(before_state, after):
                 reasons.append(
                     f"thermal state changed during model: {before_state.get('thermal_warning')}"

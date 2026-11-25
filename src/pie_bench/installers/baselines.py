@@ -7,6 +7,7 @@ import subprocess
 import urllib.request
 from pathlib import Path
 
+from pie_bench.installers.bench_env import cache_root
 from pie_bench.installers.cuda_toolkit import (
     ensure_cuda_devkit,
     ensure_flashinfer_aot,
@@ -79,10 +80,6 @@ def _uv_flags(engine: str, backend: str | None, version: str) -> list[str]:
             "unsafe-best-match",
         ]
     return BACKEND_UV_FLAGS.get(key, []) if key else []
-
-
-def cache_root(root: Path | None = None) -> Path:
-    return root or Path(os.environ.get("PIE_BENCH_CACHE", Path.home() / ".cache/pie-bench"))
 
 
 def _backend_key(engine: str, backend: str | None) -> tuple[str, str] | None:
@@ -202,11 +199,7 @@ def ensure_fork(
                 ],
                 check=True,
                 timeout=900,
-                env={
-                    k: v
-                    for k, v in os.environ.items()
-                    if k not in ("PIP_CONSTRAINT", "UV_CONSTRAINT", "VIRTUAL_ENV")
-                },
+                env=_install_env(),
             )
     owner = fork["repo"].split("/")[0]
     url = f"https://github.com/{fork['upstream']}/compare/v{version}...{owner}:{fork['repo'].split('/')[1]}:{sha}.diff"
@@ -247,30 +240,12 @@ def ensure_baseline(
     bkey = _backend_key(engine, backend)
     spec = (BACKEND_SPECS[bkey] if bkey else SPECS[engine])(version)
     uv_flags = _uv_flags(engine, backend, version)
-    cuda = engine in ("vllm", "sglang") and str(backend or "cuda") == "cuda"
     if engine == "trtllm":
         ensure_mpi(log=log)
-    fork = engine in ("vllm", "sglang") and str(backend or "cuda") in ("cuda", "rocm")
     d = venv_dir(engine, version, root, backend)
     py = d / "bin" / "python"
     if (d / ".ok").exists():
-        ensure_python_headers(py, log=log)
-        if engine == "trtllm":
-            ensure_cuda_devkit(py, log=log)
-            if not (d / "bin" / "pip").exists() and shutil.which("uv"):
-                subprocess.run(
-                    ["uv", "pip", "install", "--quiet", "--python", str(py), "pip"],
-                    check=False,
-                    timeout=600,
-                )
-            ensure_nvrtc_matches_toolkit(py, log=log)
-        if fork:
-            ensure_fork(engine, version, py, log=log, backend=backend)
-        if cuda:
-            ensure_cuda_devkit(py, log=log)
-            ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
-            if engine == "sglang":
-                ensure_pip_nvcc_matches_cudart(py, log=log)
+        _prepare(engine, version, d, backend, log)
         return py
     if d.exists():
         shutil.rmtree(d, ignore_errors=True)
@@ -279,47 +254,60 @@ def ensure_baseline(
         ensure_fork(engine, version, py, log=log, backend=backend)
         return py
     log(f"baseline: installing {' '.join(spec)} into {d} (once per volume)")
-    ienv = {
+    _install(d, [*uv_flags, *spec], spec, timeout_s, (engine, version, backend), log)
+    _prepare(engine, version, d, backend, log)
+    (d / ".ok").write_text(version + "\n")
+    return py
+
+
+def _install_env() -> dict[str, str]:
+    return {
         k: v
         for k, v in os.environ.items()
         if k not in ("PIP_CONSTRAINT", "UV_CONSTRAINT", "VIRTUAL_ENV")
     }
-    if shutil.which("uv"):
-        subprocess.run(["uv", "venv", "--quiet", "--python", "3.12", str(d)], check=True, env=ienv)
-        for attempt in (1, 2):
-            try:
-                subprocess.run(
-                    ["uv", "pip", "install", "--quiet", "--python", str(py), *uv_flags, *spec],
-                    check=True,
-                    timeout=timeout_s,
-                    env=ienv,
-                )
-                break
-            except subprocess.SubprocessError as e:
-                if attempt == 2:
-                    _FAILED[engine, version, backend] = str(e)[:300]
-                    raise
-                log(f"baseline: {' '.join(spec)} install failed ({str(e)[:200]}); retrying once")
-    else:
+
+
+def _install(d: Path, uv_args: list[str], spec: list[str], timeout_s: int, key: tuple, log) -> None:
+    py = d / "bin" / "python"
+    if not shutil.which("uv"):
         subprocess.run(["python3", "-m", "venv", str(d)], check=True)
         subprocess.run(
             [str(py), "-m", "pip", "install", "-q", *spec], check=True, timeout=timeout_s
         )
+        return
+    env = _install_env()
+    subprocess.run(["uv", "venv", "--quiet", "--python", "3.12", str(d)], check=True, env=env)
+    install = ["uv", "pip", "install", "--quiet", "--python", str(py), *uv_args]
+    try:
+        subprocess.run(install, check=True, timeout=timeout_s, env=env)
+        return
+    except subprocess.SubprocessError as e:
+        log(f"baseline: {' '.join(spec)} install failed ({str(e)[:200]}); retrying once")
+    try:
+        subprocess.run(install, check=True, timeout=timeout_s, env=env)
+    except subprocess.SubprocessError as e:
+        _FAILED[key] = str(e)[:300]
+        raise
+
+
+def _prepare(engine: str, version: str, d: Path, backend: str | None, log) -> None:
+    py = d / "bin" / "python"
+    target = str(backend or "cuda")
     ensure_python_headers(py, log=log)
     if engine == "trtllm":
         ensure_cuda_devkit(py, log=log)
-        subprocess.run(
-            ["uv", "pip", "install", "--quiet", "--python", str(py), "pip"],
-            check=False,
-            timeout=600,
-        )
+        if not (d / "bin" / "pip").exists() and shutil.which("uv"):
+            subprocess.run(
+                ["uv", "pip", "install", "--quiet", "--python", str(py), "pip"],
+                check=False,
+                timeout=600,
+            )
         ensure_nvrtc_matches_toolkit(py, log=log)
-    if fork:
+    if engine in ("vllm", "sglang") and target in ("cuda", "rocm"):
         ensure_fork(engine, version, py, log=log, backend=backend)
-    if cuda:
+    if engine in ("vllm", "sglang") and target == "cuda":
         ensure_cuda_devkit(py, log=log)
         ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
         if engine == "sglang":
             ensure_pip_nvcc_matches_cudart(py, log=log)
-    (d / ".ok").write_text(version + "\n")
-    return py

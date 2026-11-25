@@ -14,11 +14,11 @@ from pathlib import Path
 from typing import Any
 
 from pie_bench.engines.failures import classify_failure
-from pie_bench.engines.processes import jit_jobs, stall_dump, wait_with_stall_check, win_processes
+from pie_bench.engines.processes import jit_jobs, resident_kib, stall_dump, wait_with_stall_check
 from pie_bench.engines.shapes import workload_mode_args
 from pie_bench.installers.bench_env import bench_dir
 from pie_bench.metrics.fairness import COLD_SEED, cold_prompts, cold_request_count
-from pie_bench.metrics.perf import _all_completed, perf_from_common_json
+from pie_bench.metrics.perf import all_completed, perf_from_common_json
 from pie_bench.schema import (
     ArtifactSpec,
     EngineName,
@@ -138,32 +138,10 @@ class Engine(ABC):
         return {}
 
     def resident_gib(self) -> float | None:
-        roots = set(self.watch_pids())
+        roots = self.watch_pids()
         if not roots:
             return None
-        if sys.platform == "win32":
-            rows = [(pid, ppid, rss) for pid, ppid, _, rss in win_processes()]
-        else:
-            try:
-                out = subprocess.run(
-                    ["ps", "-A", "-o", "pid=,ppid=,rss="],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                ).stdout
-            except Exception:
-                return None
-            rows = [
-                tuple(int(x) for x in line.split())
-                for line in out.splitlines()
-                if len(line.split()) == 3
-            ]
-        tree, grew = set(roots), True
-        while grew:
-            more = {pid for pid, ppid, _ in rows if ppid in tree and pid not in tree}
-            tree |= more
-            grew = bool(more)
-        kib = sum(rss for pid, _, rss in rows if pid in tree)
+        kib = resident_kib(roots)
         return round(kib / 2**20, 2) if kib else None
 
     def serve(self, workload: WorkloadSpec, log_path: Path, timeout_s: int) -> None:
@@ -269,7 +247,7 @@ class Engine(ABC):
                 ErrorClass.HANG,
                 f"no CPU work from the bench or its engine for {self.stall_s()}s; stopped",
             )
-        if rc == -6 and not timed_out and json_out.exists() and _all_completed(json_out):
+        if rc == -6 and not timed_out and json_out.exists() and all_completed(json_out):
             rc = 0
         if rc != 0 or not json_out.exists():
             cls, msg = classify_failure(rc, stderr, stdout, timed_out)

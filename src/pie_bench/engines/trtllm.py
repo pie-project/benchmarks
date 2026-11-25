@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 
 from pie_bench.engines import register
+from pie_bench.installers.bench_env import cache_root
 from pie_bench.paths import CLIENTS
 from pie_bench.schema import EngineName
 
@@ -49,8 +50,6 @@ class TrtllmEngine(ServedEngine):
         return {"add_special_tokens": False}
 
     def default_env(self) -> dict[str, str]:
-        from pie_bench.installers.baselines import cache_root
-
         jit = cache_root() / "jit"
         env = {
             "TRITON_CACHE_DIR": str(jit / "triton"),

@@ -8,6 +8,7 @@ import subprocess
 import uuid
 from pathlib import Path
 
+from pie_bench.installers.bench_env import cache_root
 from pie_bench.schema import ArtifactKind, ArtifactSpec, QuantScheme, SourceFormat
 
 RELAYOUT_MARK = "would relayout a weight plane"
@@ -23,9 +24,7 @@ def needs_import(artifact: ArtifactSpec) -> bool:
 
 
 def artifact_root(root: Path | None = None) -> Path:
-    from pie_bench.installers.bench_env import DEFAULT_CACHE
-
-    return root or Path(os.environ.get("PIE_BENCH_CACHE", DEFAULT_CACHE)) / "artifacts"
+    return root or cache_root() / "artifacts"
 
 
 def plain_sku(artifact: ArtifactSpec) -> str | None:
