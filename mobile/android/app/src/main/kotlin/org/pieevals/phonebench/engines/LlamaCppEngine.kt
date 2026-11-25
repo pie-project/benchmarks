@@ -24,7 +24,6 @@ object LlamaNative {
     @JvmStatic external fun gpuDevices(): String
     @JvmStatic external fun load(path: String, nCtx: Int, nBatch: Int, nUbatch: Int, nThreads: Int, nSeq: Int, nGpuLayers: Int, flashAttn: Boolean): Long
     @JvmStatic external fun modelDesc(handle: Long): String
-    @JvmStatic external fun countTokens(handle: Long, text: String): Int
     @JvmStatic external fun run(handle: Long, prompts: Array<String>, maxNew: Int, slots: Int, ignoreEos: Boolean): LongArray
     @JvmStatic external fun free(handle: Long)
 }

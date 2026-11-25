@@ -9,11 +9,8 @@ data class Round(val warmup: List<String>, val measured: List<String>)
 data class Workload(
     val id: String,
     val concurrency: Int,
-    val prefill: Int,
     val decode: Int,
-    val requests: Int,
     val warmup: Int,
-    val coldCache: Boolean,
     val rounds: List<Round>,
 )
 
@@ -33,8 +30,7 @@ class Workloads(val harnessCommit: String, val system: String, val rounds: Int, 
                     val w = arr.getJSONObject(k)
                     val rs = w.getJSONArray("rounds")
                     Workload(
-                        w.getString("id"), w.getInt("concurrency"), w.getInt("prefill"), w.getInt("decode"),
-                        w.getInt("requests"), w.getInt("warmup"), w.optBoolean("cold_cache"),
+                        w.getString("id"), w.getInt("concurrency"), w.getInt("decode"), w.getInt("warmup"),
                         (0 until rs.length()).map { r -> rs.getJSONObject(r).let { Round(strs(it.getJSONArray("warmup")), strs(it.getJSONArray("measured"))) } },
                     )
                 }

@@ -136,14 +136,6 @@ Java_org_pieevals_phonebench_engines_LlamaNative_modelDesc(JNIEnv * env, jclass,
     return env->NewStringUTF(buf);
 }
 
-extern "C" JNIEXPORT jint JNICALL
-Java_org_pieevals_phonebench_engines_LlamaNative_countTokens(JNIEnv * env, jclass, jlong hp, jstring text) {
-    auto * h = (Handle *) hp;
-    std::string s = jstr(env, text);
-    int n = -llama_tokenize(h->vocab, s.c_str(), (int) s.size(), nullptr, 0, false, true);
-    return n;
-}
-
 static std::vector<llama_token> tokenize(Handle * h, const std::string & s) {
     int n = -llama_tokenize(h->vocab, s.c_str(), (int) s.size(), nullptr, 0, false, true);
     std::vector<llama_token> out(std::max(n, 0));

@@ -25,7 +25,6 @@ struct ModelEntry: Identifiable, Hashable {
 
     var id: String { "\(engine.rawValue)/\(artifact)" }
     var slug: String { model.replacingOccurrences(of: ".", with: "") }
-    var family: String { model.hasPrefix("gemma") ? "gemma4" : "qwen3_5" }
 
     var directory: URL { Storage.models.appending(path: "\(engine.rawValue)/\(artifact)", directoryHint: .isDirectory) }
 

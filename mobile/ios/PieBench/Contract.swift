@@ -8,15 +8,10 @@ struct Contract: Decodable {
 
     struct Workload: Decodable, Identifiable {
         let id: String
-        let kind: String
         let concurrency: Int
         let prefill: Int
         let decode: Int
-        let requests: Int
         let warmup: Int
-        let cold_cache: Bool
-        let temperature: Double
-        let ignore_eos: Bool
         let rounds: [Round]
     }
 
@@ -27,7 +22,6 @@ struct Contract: Decodable {
         let prompt_tokens: [String: [[Int]]]
     }
 
-    let schema: String
     let harness_commit: String
     let system: String
     let rounds: Int
