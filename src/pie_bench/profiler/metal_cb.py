@@ -4,6 +4,11 @@ metal_cb.m, preloaded into the processes the job starts (DYLD_INSERT_LIBRARIES),
 buffers and, while the round's gate file exists, appends each buffer's GPUStartTime..GPUEndTime in Unix ns to
 <dir>/<pid>.txt. There is no kernel tracing, so a host-bound engine runs at its own speed: xctrace's kernel event
 tracing costs mlx-lm's 512-token prefill 8 to 15% on an M5 Max. A buffer's interval spans its encoders back to back.
+
+On an M5 Max (gemma-4-e2b, 512-token prefill) the profiled walls came within 0.8% of the same session's benchmark for
+pie and mlx-lm (xctrace: +2% and +13%), and the forward passes within 0.6% of xctrace's GPU intervals (22.42 vs 22.49 ms,
+24.65 vs 24.50 ms). The default on Apple silicon; PIE_BENCH_METAL_TRACER=xctrace records with Instruments instead, for
+an engine started through a system shell, which drops DYLD_INSERT_LIBRARIES.
 """
 
 from __future__ import annotations
@@ -65,5 +70,5 @@ class Tracer:
 
 
 def chosen() -> bool:
-    """Whether this job times the GPU from the command buffers (PIE_BENCH_METAL_TRACER=cb) instead of xctrace."""
-    return os.environ.get("PIE_BENCH_METAL_TRACER") == "cb"
+    """Whether this job times the GPU from the command buffers (the default) instead of xctrace (PIE_BENCH_METAL_TRACER=xctrace)."""
+    return os.environ.get("PIE_BENCH_METAL_TRACER", "cb") != "xctrace"
