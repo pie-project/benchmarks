@@ -44,6 +44,9 @@ static void CUPTIAPI complete(CUcontext ctx, uint32_t stream, uint8_t *buffer, s
         case CUPTI_ACTIVITY_KIND_MEMSET:
             se[0] = ((CUpti_ActivityMemset4 *)rec)->start, se[1] = ((CUpti_ActivityMemset4 *)rec)->end;
             break;
+        case CUPTI_ACTIVITY_KIND_GRAPH_TRACE:
+            se[0] = ((CUpti_ActivityGraphTrace2 *)rec)->start, se[1] = ((CUpti_ActivityGraphTrace2 *)rec)->end;
+            break;
         default:
             continue;
         }
@@ -80,6 +83,35 @@ static void at_exit(void) {
         finish();
 }
 
+// PIE_CUPTI_MODES="<word>=<mode>;...": the mode of a process whose command line holds the word (SGLang's scheduler is
+// started by its venv's python), else PIE_CUPTI_MODE
+static char chosen[256];
+static const char *process_mode(void) {
+    const char *modes = getenv("PIE_CUPTI_MODES");
+    if (modes && !chosen[0]) {
+        char cmd[4096] = {0};
+        FILE *f = fopen("/proc/self/cmdline", "r");
+        size_t n = f ? fread(cmd, 1, sizeof cmd - 1, f) : 0;
+        if (f)
+            fclose(f);
+        for (size_t i = 0; i < n; i++)
+            if (!cmd[i])
+                cmd[i] = ' ';
+        char list[1024];
+        snprintf(list, sizeof list, "%s", modes);
+        for (char *save = NULL, *item = strtok_r(list, ";", &save); item; item = strtok_r(NULL, ";", &save)) {
+            char *eq = strchr(item, '=');
+            if (eq && (*eq = 0, strstr(cmd, item))) {
+                snprintf(chosen, sizeof chosen, "%s", eq + 1);
+                break;
+            }
+        }
+        if (!chosen[0])
+            snprintf(chosen, sizeof chosen, "%s", getenv("PIE_CUPTI_MODE") ? getenv("PIE_CUPTI_MODE") : "kernel");
+    }
+    return chosen[0] ? chosen : getenv("PIE_CUPTI_MODE");
+}
+
 static void *control(void *arg) {
     (void)arg;
     char on[4096], p[4096];
@@ -104,15 +136,29 @@ static void *control(void *arg) {
             FILE *c = fopen(p, "w");
             if (c)
                 fprintf(c, "%llu %lld\n", (unsigned long long)ts, (long long)rt.tv_sec * 1000000000LL + rt.tv_nsec), fclose(c);
-            cuptiActivityEnable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
-            cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMCPY);
-            cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMSET);
+            // PIE_CUPTI_MODE: "graph" traces each CUDA graph launch whole (one record, not one per node), "hw" takes
+            // kernel times from the GPU's hardware events (Blackwell), "off" records nothing (tracer cost A/B)
+            const char *mode = process_mode();
+            if (!mode || !strstr(mode, "off")) {
+                if (mode && strstr(mode, "hw"))
+                    cuptiActivityEnableHWTrace(1);
+                if (mode && strstr(mode, "graph"))
+                    cuptiActivityEnable(CUPTI_ACTIVITY_KIND_GRAPH_TRACE);
+                cuptiActivityEnable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
+                cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMCPY);
+                cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMSET);
+                // completed records leave every 100 ms: a process that exits inside the round (SGLang's scheduler at
+                // its client's shutdown) loses at most that, not a part-filled 8 MB buffer (whole measured windows)
+                cuptiActivityFlushPeriod(100);
+            }
             path(p, sizeof p, "armed");  // the profiler starts the round once every process is recording
             FILE *a = fopen(p, "w");
             if (a)
                 fclose(a);
             active = 1;
         } else if (!f && active) {
+            cuptiActivityFlushPeriod(0);
+            cuptiActivityDisable(CUPTI_ACTIVITY_KIND_GRAPH_TRACE);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_MEMCPY);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_MEMSET);

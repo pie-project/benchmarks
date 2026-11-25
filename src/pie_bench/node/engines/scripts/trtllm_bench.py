@@ -53,8 +53,9 @@ def serve(argv: list[str]) -> int:
     import openai_bench as ob
     from common import RequestResult, finish
 
-    async def stream(prompt: str, sp) -> tuple[float, list[float], int, int | None]:
+    async def stream(prompt: str, sp) -> tuple[float, list[float], int, int | None, int]:
         start = time.perf_counter()
+        sent_ns = ob.monotonic_ns()
         stamps: list[float] = []
         n, n_in = 0, None
         async for out in llm.generate_async(prompt, sampling_params=sp, streaming=True):
@@ -64,7 +65,7 @@ def serve(argv: list[str]) -> int:
                 n = k
             if n_in is None and getattr(out, "prompt_token_ids", None) is not None:
                 n_in = len(out.prompt_token_ids)
-        return start, stamps, n, n_in
+        return start, stamps, n, n_in, sent_ns
 
     def run_one(args, endpoint, prompt, prompt_count, max_tokens, server, retries=None):
         body = json.loads(args.extra_body or "{}")
@@ -73,7 +74,7 @@ def serve(argv: list[str]) -> int:
                             add_special_tokens=bool(body.get("add_special_tokens", True)))
         t0 = time.perf_counter()
         try:
-            start, stamps, n_out, n_in = asyncio.run_coroutine_threadsafe(stream(prompt, sp), loop).result()
+            start, stamps, n_out, n_in, sent_ns = asyncio.run_coroutine_threadsafe(stream(prompt, sp), loop).result()
         except Exception as e:
             return RequestResult(False, time.perf_counter() - t0, 0, error=f"{type(e).__name__}: {e}")
         end = time.perf_counter()
@@ -82,7 +83,7 @@ def serve(argv: list[str]) -> int:
                        "usage_reported": True, "cached_tokens": 0, "prefill_tok_s": None, "decode_tok_s": None})
         ttft = (stamps[0] - start) if stamps else None
         gaps = [int((b - a_) * 1e6) for a_, b in zip(stamps, stamps[1:])]
-        return RequestResult(True, end - start, n_out, n_in, ttft_s=ttft, intertoken_us=gaps)
+        return RequestResult(True, end - start, n_out, n_in, ttft_s=ttft, intertoken_us=gaps, client_send_s=sent_ns / 1e9)
 
     ob.run_one = run_one
     lock = threading.Lock()
