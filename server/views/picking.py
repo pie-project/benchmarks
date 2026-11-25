@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 
 from server.views.matrix_files import load
-from server.views.miniatures import SHOWN_MINIATURES, miniature_fields, share_cut
+from server.views.miniatures import miniature_fields, share_cut, shown_miniatures
 from server.views.releases import local
 from server.views.timing_fixes import withhold_seat_ttft
 from server.views.workloads import METRICS, WL_PRIORITY
@@ -33,6 +33,7 @@ def share_workload(rows: list[dict], a2m: dict[str, str]) -> list[dict]:
 def pick(rows: list[dict], a2m: dict[str, str], skipped: dict | None = None) -> dict[tuple, tuple]:
     arts = {a["id"]: a for a in load("models")["artifacts"]}
     macs = {p["id"] for p in load("platforms")["platforms"] if p.get("os") == "macos"}
+    shown = shown_miniatures()
     best: dict[tuple, tuple] = {}
     cands: dict[tuple, list[tuple]] = {}
     for r in rows:
@@ -41,7 +42,7 @@ def pick(rows: list[dict], a2m: dict[str, str], skipped: dict | None = None) -> 
             continue
         art = arts.get(r["artifact"], {})
         mini = art.get("kind") == "miniature"
-        if mini and r["artifact"] not in SHOWN_MINIATURES:
+        if mini and r["artifact"] not in shown:
             if skipped is not None:
                 skipped[(r.get("tag"), r["platform"], r["engine"], r["artifact"])] = "a CI fixture, never a model's number"
             continue
@@ -136,7 +137,7 @@ def results_by_tag(store, a2m, hardware_ids, engine_ids, prefill_only=None):
     skipped: dict[tuple, str] = {}
     tagged = {t: pick(rs, a2m, skipped) for t, rs in by_tag.items()}
     for (t, hw, engine, art), why in sorted(skipped.items()):
-        print(f"[webdb] {t}: {engine} {art} on {hw} not shown: {why}", file=sys.stderr)
+        print(f"{t}: {engine} {art} on {hw} not shown: {why}", file=sys.stderr)
     for t, p in (prefill_only or {}).items():
         if t in tagged:
             keep_decode(by_tag[t], tagged[t], a2m, p["engine"], datetime.fromisoformat(p["since"]))
