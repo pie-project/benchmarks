@@ -17,6 +17,10 @@ val llamaGpu: String = (project.findProperty("llamaGpu") as String?)
 val pieAars = fileTree("libs/pie") { include("*.aar", "*.jar") }
 val hasPie = !pieAars.isEmpty && file("src/pie/kotlin").exists()
 val hasMlc = file("libs/mlc/mlc4j/output/tvm4j_core.jar").exists() && file("src/mlc/kotlin").exists()
+val releaseSigning = Properties().apply {
+    val f = File(System.getProperty("user.home"), ".config/pie-bench/android/release.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
 
 android {
     namespace = "org.pieevals.phonebench"
@@ -29,8 +33,8 @@ android {
         applicationId = "org.pieevals.phonebench"
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
         ndk { abiFilters += "arm64-v8a" }
         buildConfigField("String", "LLAMA_CPP_TAG", "\"$llamaCppTag\"")
         buildConfigField("String", "LLAMA_GPU", "\"$llamaGpu\"")
@@ -51,13 +55,22 @@ android {
         }
     }
 
+    signingConfigs {
+        if (releaseSigning.getProperty("storeFile") != null) create("release") {
+            storeFile = file(releaseSigning.getProperty("storeFile"))
+            storePassword = releaseSigning.getProperty("storePassword")
+            keyAlias = releaseSigning.getProperty("keyAlias")
+            keyPassword = releaseSigning.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
         }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
