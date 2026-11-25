@@ -17,31 +17,27 @@
 [API]: https://bench-api.pie-project.org/v1/catalog
 [Pie]: https://github.com/pie-project/pie
 
-Pie Bench is an open, fully transparent benchmark for LLM inference. vLLM, SGLang, TensorRT-LLM, llama.cpp, MLX,
-Ollama, MLC, pie and more run side by side on the same models, the same prompts
-and the same hardware, each at a pinned version, across GPUs, TPUs, Apple
-Silicon, browsers and phones. Every kernel optimization an engine ships becomes a
-measured, verified result, and every gap becomes a clear target for the next one.
+Pie Bench is an open, apples-to-apples benchmark for LLM inference. vLLM,
+SGLang, TensorRT-LLM, llama.cpp, MLX, Ollama, MLC, pie and friends: same weights,
+same prompts, same silicon, pinned versions. Datacenter GPUs, TPUs, Apple
+Silicon, browsers and phones. Ship a kernel, watch it land. Spot a gap, go close it.
 
-Every result is [reproducible][PyPI]. One command detects the machine, selects the
-models that fit, installs each engine at a pinned version, measures them all, and
-uploads a signed submission to [benchmarks.pie-project.org][Benchmarks].
+[Reproducible][PyPI] by default. One command sizes up the box, picks the models
+that fit in memory, installs every engine at its pinned version, runs the sweep,
+and uploads a signed submission to [benchmarks.pie-project.org][Benchmarks].
 
-To guard against measurement artifacts, every gap of 25% or more is verified
-independently. The same build is run again under an end-to-end GPU profiler, on
-prompts it has not seen, and the profile attributes the gap to the forward pass
-or to idle time. A gap is reported as verified only when each engine's profiled
-step time and the profiled gap agree with the benchmark to within 10%; gaps that
-fail this check are flagged and measured again. The full method is described in
-the [Bench Book].
+No vibes, no cherry-picks. Any gap of 25% or more gets a second opinion: the same
+build reruns under an end-to-end GPU profiler on fresh prompts, and the trace
+says where the time went, forward pass or idle. A gap only goes green when every
+engine's profiled step time and the gap itself land within 10% of the benchmark;
+anything else gets flagged and rerun. Full method in the [Bench Book].
 
-This repository holds the `pie-bench` command line tool, the results API the
-site reads, the site itself, the phone app that runs the same workloads on
-iPhone and Android, and Docker images for cloud GPUs and TPUs.
+In this repo: the `pie-bench` CLI, the results API, the site, the phone app
+(iPhone and Android, same workloads), and Docker images for cloud GPUs and TPUs.
 
-Engine and model authors are warmly invited to add their work, tune its
-settings, or challenge any number: see [Develop](#develop), or open an
-[issue](https://github.com/pie-project/pie-evals/issues) or a pull request.
+Engine folks, model folks: bring your engine, tune its flags, call out a bad
+number. PRs and [issues](https://github.com/pie-project/pie-evals/issues) welcome;
+start with [Develop](#develop).
 
 ## Install
 
