@@ -1,28 +1,22 @@
 window.Pie = window.Pie || {};
 
-// The page's outline while its data loads, as a Mac app shows a redacted view: grey rounded bars where the words and
-// numbers go, laid out as the page about to open lays them out. Drawn before the data is read, for the page a
-// reload or a link opens; app.js shows it again while a tag's own file loads (core/store.js), then fades the page in.
 (() => {
   const element = document.getElementById("skeleton");
   const GRIDS = ["speedups", "tps", "all_hardware", "mac", "nvidia", "amd", "tpu", "cerebras", "android", "web", "checks"];
   const TEXTS = ["methods", "fit", "methodology", "approach", "reports", "accuracy"];
-  // the page a reload opens, read as app.js reads it: the address first, then the view kept in the browser
   const opening = () => {
     let address = "";
-    try { address = decodeURIComponent(location.hash.slice(1)); } catch { address = ""; }  // a malformed address: the default page
+    try { address = decodeURIComponent(location.hash.slice(1)); } catch { address = ""; }
     const [view] = address.split("/");
     if (view === "board") return "board";
     if (view === "quality") return "checks";
     if (view === "overview" || view === "mac") return "mac";
     try { return JSON.parse(localStorage.getItem("pieView") || "null")?.table || "board"; } catch { return "board"; }
   };
-  // widths that vary from bar to bar, the same on every draw, so the outline does not flicker as it is drawn again
   const width = (i, lo, hi) => lo + ((i * 37) % 11) / 10 * (hi - lo);
   const bar = (w, cls = "") => `<span class="skeleton-bar${cls ? ` ${cls}` : ""}" style="width: ${typeof w === "number" ? `${Math.round(w)}px` : w}"></span>`;
   const range = (n) => [...Array(n).keys()];
 
-  // the four platforms the page lists (Apple Silicon, NVIDIA, AMD, TPU), each with about its own number of machines
   const ROWS = [5, 10, 2, 3];
   const grid = () => range(4).map((s) => `
     <div class="skeleton-section">
@@ -58,7 +52,6 @@ window.Pie = window.Pie || {};
 
   const draw = (page) => (page === "board" ? board() : GRIDS.includes(page) ? grid() : TEXTS.includes(page) ? text() : table(page === "welcome" ? 7 : 18));
 
-  // the sidebar's rows and the toolbar's title, until app.js names them
   const chrome = () => {
     const nav = document.getElementById("sidebar-nav");
     if (nav && !nav.children.length) {
@@ -70,10 +63,8 @@ window.Pie = window.Pie || {};
 
   let shown = null;
   Pie.skeleton = {
-    // the outline of a page, in place of the page; the pages and their bars stay hidden under it
     show(page) {
       if (!element) return;
-      // no outline is drawn: the page stays empty until its data arrives
       shown = page;
       for (const id of ["table-container", "overview", "platform", "welcome", "approach", "reports", "methodology", "methods", "board", "checks"]) {
         const other = document.getElementById(id);
@@ -81,7 +72,6 @@ window.Pie = window.Pie || {};
       }
       document.querySelector(".filter-bar")?.setAttribute("hidden", "");
     },
-    // the page drawn in its place fades in (a platform's numbers roll in instead, platform.js)
     hide() {
       if (!element || shown === null) return false;
       shown = null;

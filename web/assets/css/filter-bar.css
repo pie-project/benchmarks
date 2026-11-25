@@ -51,15 +51,14 @@
 
 .filter.is-set .engine-tag,
 .filter.is-set .hardware-tag,
-.filter.is-set .workload-tag .mode-icon {  /* a picked setup's mark takes the accent with its name */
+.filter.is-set .workload-tag .mode-icon {
   color: var(--color-accent);
 }
 
-/* Clear, after the filters: plain text with its mark in the label's colour, both turning the accent blue under the pointer, no fill */
 .filter-clear {
   display: inline-flex;
   align-items: center;
-  gap: 3px;  /* a small mark close to its name */
+  gap: 3px;
   border: 0;
   border-radius: var(--radius-control);
   background: none;
@@ -82,7 +81,6 @@
 }
 
 
-/* on a phone the filters are a row of pop-up buttons that slides sideways under a finger, Hide unavailable last */
 @media (max-width: 899px) {
   .filter-bar {
     gap: 6px;
@@ -117,10 +115,8 @@
   }
 }
 
-/* a table with no filters has an empty list: it takes no place, so the bar's first button starts where every page's does */
 .filter-list:empty { display: none; }
 
-/* phones: the Results and Quality selects follow the platform bar's dropdowns: one 34px pill with one fill, no wrapper box */
 @media (max-width: 899px) {
   .filter-bar .filter,
   .filter-bar .filter:hover,
@@ -134,11 +130,9 @@
   }
   .filter-bar .filter .filter-button:hover,
   .filter-bar .filter .filter-button[aria-expanded="true"] { background: var(--color-fill-secondary); }
-  /* a filter in use keeps its tint, now on the pill itself */
   .filter-bar .filter.is-set .filter-button { background: var(--color-accent-tint); color: var(--color-accent); }
 }
 
-/* phones: one 8px gap between every button, Status to Configuration to Hide unavailable included; no spacer pushes Hide away */
 @media (max-width: 899px) {
   .filter-bar,
   .filter-bar .filter-list { gap: 8px; }
@@ -146,7 +140,6 @@
   .filter-bar > * { margin-left: 0; margin-right: 0; }
 }
 
-/* the Results page's calendar: a small month in a menu's card, the days with results dotted, the range in the accent */
 .date-popover { position: fixed; z-index: 1000; width: 232px; padding: 10px; border-radius: 10px; background: var(--color-chrome); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .12), 0 8px 24px rgba(0, 0, 0, .14); font-size: 12px; color: var(--color-label); }
 .date-popover[hidden] { display: none; }
 .date-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
@@ -160,7 +153,7 @@
 .date-grid button { position: relative; height: 28px; padding: 0; border: 0; border-radius: 6px; font: inherit; font-variant-numeric: tabular-nums; color: var(--color-label-tertiary); background: none; cursor: pointer; }
 .date-grid button:hover { background: var(--color-fill); }
 .date-grid button.has-data { font-weight: 600; color: var(--color-label); }
-.date-grid button.has-data::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--color-accent); }  /* a day with results */
+.date-grid button.has-data::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--color-accent); }
 .date-grid button.is-in { background: var(--color-accent-tint); }
 .date-grid button.is-end { color: #fff; background: var(--color-accent); }
 .date-grid button.is-end::after { background: #fff; }
@@ -168,6 +161,5 @@
 .date-clear { padding: 0; border: 0; background: none; font: inherit; color: var(--color-accent); cursor: pointer; }
 .date-empty { margin: 4px 0; color: var(--color-label-secondary); }
 
-/* the row colours' keys before the bar's buttons, as a grid's bar sets its CI Error key */
 .table-keys { display: inline-flex; align-items: center; gap: 12px; margin-right: 8px; }
 .table-keys[hidden], .table-keys .platform-key[hidden] { display: none; }

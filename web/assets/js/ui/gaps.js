@@ -1,17 +1,12 @@
 window.Pie = window.Pie || {};
 
-// Engine Gaps: the cells where pie is 25% or more faster than the strongest other engine (the grid's yellow and green
-// cells), each run with its own date and a maintainer's note: why the gap is real, or that the cell needs a rerun
 (() => {
   const element = document.getElementById("gaps");
   const esc = (text) => Pie.format.escape(String(text ?? ""));
   const tag = Pie.format;
-  // how far apart the engines must sit to be listed, as a share of the theoretical maximum: picked in the bar, kept per browser
   const LEASTS = [0.25, 0.5, 0.75];
   let least = (() => { try { const v = Number(localStorage.getItem("pieGapsLeast")); return LEASTS.includes(v) ? v : 0.25; } catch { return 0.25; } })();
-  // a yellow cell on the grid opens this view on its own row: machine, model and setup, whatever the Gap pick
   let focus = null;
-  // the Conclusion pick: every row, or only those with one conclusion (Needs Rerun, Explained, ...), kept per browser
   const CONCLUSION = { explained: "Explained", real: "Real Gap", rerun: "Needs Rerun", study: "Needs Study" };
   let only = (() => { try { const v = localStorage.getItem("pieGapsConclusion"); return CONCLUSION[v] ? v : ""; } catch { return ""; } })();
   const every = () => Pie.platform?.gaps?.(Pie.state) || [];
@@ -83,13 +78,10 @@ window.Pie = window.Pie || {};
   };
 
   Pie.pickRows(element);
-  // a note's detail follows the pointer in the site's chart tooltip, as a narrow note (as on the Checks page)
   const tooltip = document.getElementById("chart-tooltip");
   element.addEventListener("mousemove", (event) => {
-    // anywhere on the row, not only over its note
     const target = event.target.closest("tbody tr")?.querySelector("td.gaps-note[data-tip]");
     if (!target || !tooltip) { if (tooltip) { tooltip.hidden = true; tooltip.classList.remove("is-note", "is-gap-note"); } return; }
-    // a popover's two levels: the two engines compared, their gap and the conclusion as its title, the reasoning under it
     tooltip.innerHTML = `<div class="gap-tip-title"><span>${esc(target.dataset.tipVs)}</span><span class="gap-tip-gap">${esc(target.dataset.tipGap)}</span><span class="gap-tip-end">${conclusion(target.dataset.tipKind)}</span></div><div class="gap-tip-body">${esc(target.dataset.tip)}</div><div class="gap-tip-at">${esc(target.dataset.tipAt)}</div>`;
     tooltip.classList.remove("is-card"); tooltip.classList.add("is-note", "is-gap-note");
     tooltip.hidden = false;
@@ -113,19 +105,15 @@ window.Pie = window.Pie || {};
   Pie.gaps = {
     element,
     count: () => gaps().length,
-    // how many rows the table holds, said under the window's title
     shown: () => { const n = gaps().length; return `${n.toLocaleString("en-US")} ${n === 1 ? "row" : "rows"}`; },
-    // the bar's Gap pick, named as CI Reports names its Type, the share picked ticked in its menu
     bar: () => (focus
       ? `<span class="filter"><button class="filter-button" type="button" data-gaps-all>Show All Gaps</button></span>`
       : `<span class="filter"><button class="filter-button" type="button" data-gaps-pick="least" aria-haspopup="menu">Min Gap<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`
         + `<span class="filter"><button class="filter-button" type="button" data-gaps-pick="conclusion" aria-haspopup="menu">Conclusion<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`),
-    // set by the grid before it opens this view on one cell; cleared by Show All Gaps or the sidebar
     focus(cell) { focus = cell || null; },
     menu: (k) => {
       if (k === "least") return LEASTS.map((v) => ({ value: String(v), label: `${Math.round(v * 100)}%`, selected: v === least }));
       if (k !== "conclusion") return [];
-      // each conclusion with how many rows at the picked Min Gap carry it
       const all = atLeast(every(), least);
       const n = (c) => all.filter((g) => noteOf(g)[0] === c).length;
       return [{ value: "all", label: `All (${all.length})`, selected: !only },
@@ -134,13 +122,13 @@ window.Pie = window.Pie || {};
     pick(k, value) {
       if (k === "conclusion") {
         only = CONCLUSION[value] ? value : "";
-        try { localStorage.setItem("pieGapsConclusion", only); } catch { /* private windows can refuse storage */ }
+        try { localStorage.setItem("pieGapsConclusion", only); } catch { }
         draw();
         return;
       }
       if (k !== "least" || !LEASTS.includes(Number(value))) return;
       least = Number(value);
-      try { localStorage.setItem("pieGapsLeast", value); } catch { /* private windows can refuse storage */ }
+      try { localStorage.setItem("pieGapsLeast", value); } catch { }
       draw();
       document.querySelector('.sidebar-item[data-table="gaps"] .sidebar-count')?.replaceChildren(String(gaps().length));
     },

@@ -28,7 +28,6 @@ window.Pie = window.Pie || {};
 
   read().then(([catalog, latest, profiles]) => {
     Pie.profiles = profiles;
-    // verified: a profile of both engines agrees with the benchmark, by the API's own checks
     Pie.verifiedProfile = (key) => profiles[key]?.verdict === "confirmed";
     window.DB = {
       ...catalog,

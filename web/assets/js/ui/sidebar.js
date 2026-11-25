@@ -6,9 +6,7 @@ window.Pie = window.Pie || {};
   const aside = document.getElementById("sidebar");
   const backdrop = document.getElementById("sidebar-backdrop");
 
-  // results count the selected release's enumerated setups, measured or not
   const count = (id, state) => (id === "results" ? Pie.store.count(state.release).rows : (Pie.store.rows(id) || []).length);
-  // a platform counts its machines; an empty one shows none
   const machines = (schema) => (Pie.platform?.machines ? Pie.platform.machines(schema.platform) : 0);
 
   const item = (id, schema, selected, state) => schema.href ? `
@@ -21,17 +19,12 @@ window.Pie = window.Pie || {};
       <span class="sidebar-glyph"${schema.tint ? ` style="--tint: ${schema.tint}"` : ""}>${Pie.icon(id)}</span>
       <span>${schema.label}</span>
       ${schema.tag ? `<span class="sidebar-tag" title="Under development">${schema.tag}</span>` : ""}
-      ${schema.view === "platform" && !schema.platform ? ""  // Speedup and Efficiency: views, not lists, so no count
+      ${schema.view === "platform" && !schema.platform ? ""
         : schema.view === "platform"
-        // a platform counts the machines measured on it; none yet reads 0
         ? `<span class="sidebar-count"${machines(schema) ? "" : ' title="No measurements yet"'}>${machines(schema)}</span>`
-        // the Platforms list counts its rows, one a platform
         : schema.view === "welcome" ? `<span class="sidebar-count">${Object.values(Pie.schema).filter((s) => s.view === "platform" && s.platform).length}</span>`
-        // the Bench Book is a page to read, as the Overview is: no count beside it
         : schema.view === "approach" ? ""
-        // Reports counts the ones still open
         : schema.view === "reports" ? `<span class="sidebar-count">${Pie.reports?.open() ?? ""}</span>`
-        // Engine Gaps counts its cells
         : schema.view === "gaps" ? `<span class="sidebar-count">${Pie.gaps?.count() ?? ""}</span>`
         : schema.view === "reasons" ? ""
         : schema.view ? "" : `<span class="sidebar-count">${count(id, state)}</span>`}
@@ -44,7 +37,7 @@ window.Pie = window.Pie || {};
       .sort(([, a], [, b]) => Pie.byPlatformOrder(a, b))
       .map(([id, schema]) => item(id, schema, id === current, state))
       .join("");
-    if (!items) return "";  // a section with no pages left (Resources, its pages now Methodology chapters) shows no heading
+    if (!items) return "";
     return `${section.label ? `<div class="sidebar-heading">${section.label}</div>` : ""}${items}`;
   };
 
@@ -61,14 +54,12 @@ window.Pie = window.Pie || {};
 
     bindLogo() {
       logo.addEventListener("animationend", () => logo.classList.remove("is-spinning"));
-      // the whole brand row spins it: the logo, the name and the (i) beside them
       logo.closest(".sidebar-brand").addEventListener("mouseenter", () => {
         if (!logo.classList.contains("is-spinning")) logo.classList.add("is-spinning");
       });
       this.spinLogo();
     },
 
-    // the slide-over closes on its backdrop, and follows a finger swiping it back to the left
     bindDrawer(close) {
       backdrop.addEventListener("click", close);
       let start = null;

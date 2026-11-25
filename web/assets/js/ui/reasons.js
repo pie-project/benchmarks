@@ -1,14 +1,11 @@
 window.Pie = window.Pie || {};
 
-// Suggestions: on each cell only the two fastest engines are compared, and the slower of the two gets the suggestion:
-// Pie where it trails the fastest engine, the other engine where Pie leads it; grouped by engine, written once both are profiled
 (() => {
   const element = document.getElementById("reasons");
   const esc = (text) => Pie.format.escape(String(text ?? ""));
   const nameOf = (id) => `${Pie.store.names?.engine?.(id) || id}${id.endsWith("-webgpu") ? " Web" : ""}`;
   const colorOf = (id) => Pie.engines.colorOf(id);
 
-  // every cell where an engine is the slower of the two fastest, one row each, under that engine; no shared conclusion
   const groups = () => {
     const primary = Pie.engines.primary;
     const by = new Map([[primary, []]]);
@@ -26,25 +23,18 @@ window.Pie = window.Pie || {};
     const name = String(h.name || id).replace(/^Apple /, "");
     return (h.class === "mac" || h.class === "windows") && h.memory_gib ? `${name} ${h.memory_gib} GB` : name;
   };
-  // a cell's profile: each engine's forward pass, end to end (the device busy for the whole step), one bar each on a
-  // shared scale; and whether the gap is in that forward pass or in idle time
   const PARTS = [["forward", "Forward pass", "linear-gradient(90deg, #64D2FF, #0A84FF)"]];
-  // what each part is: the card it shows on hover
   const HINTS = {
     forward: "The device at work: every kernel and copy of the step, measured end to end from the device's own trace",
     limit: "The theoretical maximum the grid checks every number against: no engine can run this cell faster",
   };
-  // a profile's third bar: the machine's limit for the cell, the fastest any engine could run it
-  const LIMIT = ["limit", "Limit", "#8E8E93"];  // filled grey, darker than idle
+  const LIMIT = ["limit", "Limit", "#8E8E93"];
   const BOUND = { bandwidth: "Bandwidth-bound", compute: "Compute-bound", interconnect: "Interconnect-bound", balanced: "Balanced" };
-  // value: what the segment measures, already in words (its ms in a profile, its ratio in the Summary); note: a line under it
   const hint = (k, value, note = "") => {
     const [, name, color] = [...PARTS, LIMIT].find(([key]) => key === k);
     return `<div class="gap-tip-title"><span class="stage-tip-name"><i${k === LIMIT[0] ? ' class="is-limit"' : ""} style="background: ${color}"></i>${esc(name)}</span>${value ? `<span class="gap-tip-end gap-tip-gap">${esc(value)}</span>` : ""}</div>`
       + `<div class="gap-tip-body">${esc(HINTS[k])}</div>${note ? `<div class="gap-tip-at">${esc(note)}</div>` : ""}`;
   };
-  // the cell's limit in its profile's own unit, from the grid's own theoretical maximum at the shape pie's run had:
-  // a token (decode), a prompt (prefill), a wave of prompts (batched prefill), a step of every request (batched decode)
   const limitOf = (c) => {
     const r = c.row;
     if (!r || c.setup === "spec") return null;
@@ -52,10 +42,8 @@ window.Pie = window.Pie || {};
     const tokens = c.setup === "batching" ? at?.parts?.requests : c.setup === "decode" ? 1 : at?.parts?.tokens;
     return at?.tps && tokens ? { ms: 1000 * tokens / at.tps, bound: at.bound } : null;
   };
-  // a model slice's mark, the grid's own: a square cut by a diagonal
   const sliceIcon = (label) => `<svg class="reasons-slice-icon" viewBox="0 0 16 16" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>`;
   const verified = (c) => Pie.verifiedProfile?.(`${c.hardware}|${c.model}|${c.setup}`);
-  // why a profiled cell needs a rerun: the API's own reasons its profile disagrees with the benchmark
   const rerunWhy = (c) => {
     const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
     return !p || verified(c) ? null : p.why || "the profile does not match the benchmark";
@@ -65,21 +53,17 @@ window.Pie = window.Pie || {};
     const p = (Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`];
     if (!p) return `<p class="reasons-item-suggestion">Not measured yet</p>`;
     const total = (side) => side.forwardMs;
-    // a model slice has no limit of the full model to stand against: no Limit row
     const limit = c.miniature ? null : limitOf(c);
     const top = Math.max(total(p.fastest), total(p.second), limit?.ms || 0);
     const bar = (side) => `<div class="profile-row"><span class="profile-engine">${esc(nameOf(side.engine))}</span><span class="profile-bar">${PARTS.map(([k, , color]) => side[`${k}Ms`] > 0 ? `<i style="width: ${(100 * side[`${k}Ms`] / top).toFixed(2)}%; background: ${color}" data-stage="${k}" data-stage-value="${ms(side[`${k}Ms`])}"></i>` : "").join("")}</span><span class="profile-total">${ms(total(side))}</span></div>`;
-    // the part the gap is in, once the profile is confirmed, and how much longer or shorter each part is on the slower engine
     const by = (v) => `${ms(Math.abs(v))} ${v >= 0 ? "longer" : "shorter"}`;
     const where = p.where ? `<p class="profile-verdict">The gap is ${p.where === "forward" ? "in the forward pass" : "in idle time"}: ${esc(nameOf(p.second.engine))}'s forward pass is ${by(p.extraMs.forward)}, its idle time ${by(p.extraMs.idle)}</p>` : "";
-    // the limit as its own bar on the same scale, so each engine's distance from it reads off the bars
     const floor = limit ? `<div class="profile-row is-limit"><span class="profile-engine">Limit</span><span class="profile-bar"><i class="is-limit" style="width: ${(100 * limit.ms / top).toFixed(2)}%" data-stage="limit" data-stage-value="${ms(limit.ms)}" data-stage-note="${esc(BOUND[limit.bound] || "")}"></i></span><span class="profile-total">${ms(limit.ms)}</span></div>` : "";
     return `${where}${bar(p.fastest)}${bar(p.second)}${floor}
                 <p class="profile-legend">${PARTS.map(([k, name, color]) => `<span data-stage="${k}"><i style="background: ${color}"></i>${name}</span>`).join("")}</p>
                 <p class="profile-note">${esc(`${p.unit || ""}${c.miniature ? `, on a model slice (${c.miniature})` : ""}`)}</p>`;
   };
   const keyOf = (engine, c) => `${engine}|${c.hardware}|${c.model}|${c.setup}`;
-  // a row as a disclosure: the cell, its gap and setup; a click opens its profile and the suggestion
   const item = (id, c) => `
             <details class="reasons-item" data-reason-key="${esc(keyOf(id, c))}">
               <summary class="reasons-item-summary">
@@ -94,9 +78,6 @@ window.Pie = window.Pie || {};
               </summary>
               <div class="reasons-item-body">${profileOf(c)}</div>
             </details>`;
-  // the Summary, about one engine (Pie unless picked): every profiled cell it was in, set against the other engine there.
-  // Two charts: its forward pass over the other engine's, cell by cell, and how far each step is from the
-  // machine's limit, its and the other engine's
   const SUMMARY = "summary";
   const ENGINE_KEY = "pieSummaryEngine";
   let summaryEngine = (() => { try { return localStorage.getItem(ENGINE_KEY) || null; } catch { return null; } })();
@@ -106,11 +87,8 @@ window.Pie = window.Pie || {};
   const cellsWord = (n) => `${n.toLocaleString("en-US")} ${n === 1 ? "cell" : "cells"}`;
   const times = (v) => `${v >= 10 ? Math.round(v) : v >= 1 ? v.toFixed(1) : v.toFixed(2)}×`;
   const median = (list) => { const q = [...list].sort((a, b) => a - b), m = q.length >> 1; return q.length ? (q.length % 2 ? q[m] : (q[m - 1] + q[m]) / 2) : null; };
-  // a dot's height in its row: spread by the golden ratio, so dots at one value sit apart and a redraw keeps them still
   const spread = (i) => 22 + 56 * ((i * 0.618034) % 1);
-  // a value's place on a log axis from lo to hi, in percent of the row
   const at = (v, lo, hi) => 100 * (Math.log2(Math.min(hi, Math.max(lo, v))) - Math.log2(lo)) / (Math.log2(hi) - Math.log2(lo));
-  // the cells an engine was profiled in, each with its side and the other engine's, under the page's two switches
   const pairsOf = (engine) => {
     const out = [];
     for (const c of Pie.platform?.seconds?.(Pie.state) || []) {
@@ -122,7 +100,6 @@ window.Pie = window.Pie || {};
     }
     return out;
   };
-  // every dot on the Summary, by its index: what its card says and the cell a click opens
   let dots = [];
   const dotTip = (el) => {
     const d = dots[el.dataset.dot];
@@ -138,8 +115,6 @@ window.Pie = window.Pie || {};
     if (!pairs.length) return `<p class="reasons-empty">No profiled cells yet.</p>`;
     const name = esc(nameOf(engine));
     const dot = (pair, x, y, cls, value, extra, style = "") => `<i class="dot ${cls}" style="left: ${x.toFixed(2)}%; top: ${y.toFixed(1)}%${style}" data-dot="${dots.push({ pair, value, ...extra }) - 1}"></i>`;
-    // 1. the engine's forward pass in ms over the other engine's, one dot a cell, where the
-    // part is 5% or more of the step; left of 1x the engine is faster there, right of it slower
     const LO = 1 / 8, HI = 8;
     let k0 = 0;
     const of = (side, k) => side[`${k}Ms`] || 0;
@@ -157,8 +132,6 @@ window.Pie = window.Pie || {};
     }).join("");
     const partAxis = `<div class="dot-axis"><span></span><span class="dot-scale">${[[0.25, "0.25×"], [0.5, "0.5×"], [1, "1×"], [2, "2×"], [4, "4×"]].map(([v, l]) => `<span style="left: ${at(v, LO, HI)}%">${l}</span>`).join("")}</span><span></span></div>`;
     const parts = partRows ? `<section class="summary-card"><h2>Forward pass</h2><p class="summary-sub">${name}'s forward pass over the other engine's, one dot a cell; the tick is the median. <i class="dot-key is-faster"></i>Faster <i class="dot-key is-slower"></i>Slower</p>${partAxis}${partRows}</section>` : "";
-    // 2. how far each step is from the machine's limit: the engine's (filled) and the other engine's (hollow), one pair a
-    // cell, joined; 1x is the limit itself
     const LIM_HI = 32;
     let w0 = 0;
     const limitRows = WORKLOADS.map(([setup, label]) => {
@@ -178,7 +151,6 @@ window.Pie = window.Pie || {};
     }).join("");
     const limitAxis = `<div class="dot-axis"><span></span><span class="dot-scale">${[[1, "Limit"], [2, "2×"], [4, "4×"], [8, "8×"], [16, "16×"]].map(([v, l]) => `<span style="left: ${at(v, 1, LIM_HI)}%">${l}</span>`).join("")}</span><span></span></div>`;
     const limit = limitRows ? `<section class="summary-card"><h2>Distance from the limit</h2><p class="summary-sub">Each step over the machine's limit: <i class="dot-key" style="--dot: ${colorOf(engine)}"></i>${name} <i class="dot-key is-hollow"></i>the other engine, joined a cell; 1× is the hardware limit</p>${limitAxis}${limitRows}</section>` : "";
-    // the headline: the cells, how many it leads, and its median distance from the limit
     const ahead = pairs.filter((x) => x.ahead).length;
     const dist = pairs.map((x) => { const L = limitOf(x.c); return L?.ms ? x.mine.wallMs / L.ms : null; }).filter((v) => v != null);
     const tiles = `<dl class="welcome-stats summary-stats"><div><dt>Cells profiled</dt><dd>${pairs.length.toLocaleString("en-US")}</dd></div>`
@@ -190,35 +162,29 @@ window.Pie = window.Pie || {};
   const countText = () => `${shownCount.toLocaleString("en-US")} ${shownCount === 1 ? "profile" : "profiles"}`;
   const KEY = "pieSuggestionsEngine";
   let current = (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
-  // model slices on or off, as the viewer left it: off keeps only the cells measured on the full model
   const SLICES = "pieSuggestionsSlices";
   let slices = (() => { try { return localStorage.getItem(SLICES) !== "off"; } catch { return true; } })();
-  // verified only on or off, as the viewer left it, on until turned off: on keeps only the cells a profile of both engines confirms
   const VERIFIED = "pieSuggestionsVerifiedOnly";
   let verifiedOnly = (() => { try { return localStorage.getItem(VERIFIED) !== "off"; } catch { return true; } })();
 
-  // one engine a page, as the Bench Book shows one chapter: the outline down the left picks it
   const draw = () => {
     if (element.hidden) return;
-    // verified only, the outline lists the engines with a verified row, so no page opens empty
     const kept = (cells) => cells.some((c) => verified(c) && (slices || !c.miniature));
     const list = verifiedOnly && groups().some(([, , cells]) => kept(cells)) ? groups().filter(([, , cells]) => kept(cells)) : groups();
     if (!list.some(([id]) => id === current)) current = list[0]?.[0] || Pie.engines.primary;
     const overview = current === SUMMARY;
     const [id, , all] = overview ? [SUMMARY, 0, []] : list.find(([e]) => e === current) || [current, 0, []];
-    // a grid cell that opens a model slice's row turns slices back on, so the row it asked for is there
     if (focus && !slices && all.some((c) => c.miniature && keyOf(id, c) === keyOf(focus.engine, focus))) {
       slices = true;
-      try { localStorage.setItem(SLICES, "on"); } catch { /* private windows can refuse storage */ }
+      try { localStorage.setItem(SLICES, "on"); } catch { }
     }
     if (focus && verifiedOnly && all.some((c) => !verified(c) && keyOf(id, c) === keyOf(focus.engine, focus))) {
       verifiedOnly = false;
-      try { localStorage.setItem(VERIFIED, "off"); } catch { /* private windows can refuse storage */ }
+      try { localStorage.setItem(VERIFIED, "off"); } catch { }
     }
     const keep = (c) => (slices || !c.miniature) && (!verifiedOnly || verified(c));
     const reasons = all.filter(keep);
     const engines = list.map(([e, , cs]) => [e, cs.filter(keep)]).filter(([, cs]) => cs.length);
-    // the Summary's engine: any engine profiled in a cell on view, Pie unless picked
     if (overview) {
       const ids = new Set();
       for (const c of Pie.platform?.seconds?.(Pie.state) || []) if ((Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`]) ids.add(c.engine).add(c.rival);
@@ -232,7 +198,6 @@ window.Pie = window.Pie || {};
     const body = overview
       ? (summaryEngine ? summaryOf(summaryEngine) : `<p class="reasons-empty">No profiled cells yet.</p>`)
       : reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">${verifiedOnly && all.length ? "No verified cells yet." : "No cells behind."}</p>`;
-    // the outline's fill rides from the engine it marked to the one picked, not drawn afresh on the new one
     const was = element.querySelector(".board-outline-thumb")?.style.cssText;
     element.innerHTML = `
       <div class="platform-bar board-bar"><span class="reasons-bar">Found a CI benchmark anomaly?</span><span class="filter reasons-bar-action"><a class="filter-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>File a PR</a></span></div>
@@ -245,7 +210,6 @@ window.Pie = window.Pie || {};
           ${body}
         </div>
       </div></div>`;
-    // under the window's title, how many suggestions the engine on view has
     shownCount = cells;
     if (Pie.toolbar?.elements?.subtitle && Pie.state.table === "reasons") Pie.toolbar.elements.subtitle.textContent = countText();
     const nav = element.querySelector(".board-outline"), on = nav?.querySelector(".is-current");
@@ -274,7 +238,6 @@ window.Pie = window.Pie || {};
     }
   };
 
-  // a row opens and closes as a Mac disclosure does: its body grows or folds, the chevron turns, and one row is open at a time
   const still = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const fold = (row, open) => {
     const body = row.querySelector(".reasons-item-body");
@@ -286,9 +249,6 @@ window.Pie = window.Pie || {};
     const run = body.animate(frames, { duration: open ? 260 : 200, easing: open ? "cubic-bezier(.2, .8, .2, 1)" : "cubic-bezier(.4, 0, .6, 1)" });
     if (!open) run.onfinish = () => { row.open = false; };
   };
-  // a part's card follows the pointer over its bar segment or its legend entry, in the site's chart tooltip
-  // as a macOS popover shows: after the pointer rests a moment on a mark, then still, just under the mark where the
-  // pointer is; once one is up, the next mark's card comes at once, until the pointer has been off the marks a moment
   const tooltip = document.getElementById("chart-tooltip");
   const REST = 400, WARM = 300;
   let tipFor = null, pending = null, timer = 0, warmUntil = 0, lastX = 0;
@@ -307,7 +267,6 @@ window.Pie = window.Pie || {};
     tooltip.classList.add("is-note", "is-stage-tip");
     tooltip.hidden = false;
     tipFor = seg;
-    // under the mark, its left edge a little left of the pointer; above the mark where the screen ends below it
     const box = seg.getBoundingClientRect();
     const below = box.bottom + 6;
     const top = below + tooltip.offsetHeight > window.innerHeight - 8 ? box.top - tooltip.offsetHeight - 6 : below;
@@ -343,13 +302,13 @@ window.Pie = window.Pie || {};
     }
     if (event.target.closest("[data-reasons-slices]")) {
       slices = !slices;
-      try { localStorage.setItem(SLICES, slices ? "on" : "off"); } catch { /* private windows can refuse storage */ }
+      try { localStorage.setItem(SLICES, slices ? "on" : "off"); } catch { }
       draw();
       return;
     }
     if (event.target.closest("[data-reasons-verified]")) {
       verifiedOnly = !verifiedOnly;
-      try { localStorage.setItem(VERIFIED, verifiedOnly ? "on" : "off"); } catch { /* private windows can refuse storage */ }
+      try { localStorage.setItem(VERIFIED, verifiedOnly ? "on" : "off"); } catch { }
       draw();
       return;
     }
@@ -359,34 +318,31 @@ window.Pie = window.Pie || {};
       Pie.popover.open(pickButton, `reasons:${pickButton.dataset.reasonsPick}`, null);
       return;
     }
-    // a dot opens its cell's profile, on the slower engine's page, as a green grid cell does
     const hit = event.target.closest("[data-dot]");
     if (hit && dots[hit.dataset.dot]) {
       hideTip();
       focus = dots[hit.dataset.dot].pair.c;
       current = focus.engine;
-      try { localStorage.setItem(KEY, current); } catch { /* private windows can refuse storage */ }
+      try { localStorage.setItem(KEY, current); } catch { }
       draw();
       return;
     }
     const go = event.target.closest("[data-reasons-go]");
     if (!go) return;
     current = go.dataset.reasonsGo;
-    try { localStorage.setItem(KEY, current); } catch { /* private windows can refuse storage */ }
+    try { localStorage.setItem(KEY, current); } catch { }
     draw();
   });
 
   Pie.reasons = {
     element,
     shown: () => countText(),
-    // set by a green grid cell before it opens this page on its reason: that engine's page, scrolled to it
     focus(cell) { focus = cell || null; if (focus) current = focus.engine; },
-    // the Summary's engine menu: each engine on view with its cells behind
     menu: (k) => (k !== "engine" ? [] : summaryEngines.map(([e, c]) => ({ value: e, label: nameOf(e), dot: colorOf(e), detail: String(c), selected: e === summaryEngine }))),
     pick(k, value) {
       if (k !== "engine") return;
       summaryEngine = value;
-      try { localStorage.setItem(ENGINE_KEY, summaryEngine); } catch { /* private windows can refuse storage */ }
+      try { localStorage.setItem(ENGINE_KEY, summaryEngine); } catch { }
     },
     render(state) {
       element.hidden = state.table !== "reasons";

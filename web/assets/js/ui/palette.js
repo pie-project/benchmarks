@@ -1,9 +1,5 @@
 window.Pie = window.Pie || {};
 
-// Search as a command palette, as Spotlight opens over a Mac: ⌘K (or /) or the toolbar's button brings up one field in
-// the middle of the window, and what is typed finds the site's pages, platforms, machines and models; ↑ and ↓ move
-// through them, Return opens one. On a page that filters (a platform grid, a table), the last row filters that page
-// for the words typed, as the old search field did, and the toolbar's button then shows them.
 (() => {
   const esc = (text) => Pie.format.escape(text);
   const button = document.getElementById("toolbar-search");
@@ -11,7 +7,7 @@ window.Pie = window.Pie || {};
   back.className = "palette-backdrop";
   back.hidden = true;
   document.body.append(back);
-  let app = null;  // { state, render, filters(): whether the page filters }
+  let app = null;
   let rows = [];
   let at = 0;
 
@@ -28,7 +24,6 @@ window.Pie = window.Pie || {};
     label();
   };
 
-  // everything the palette can find, built when it opens, so a login or a new release is reflected
   const entries = () => {
     const out = [];
     const shown = (id) => Pie.isOpen(id) && Pie.sections.some((s) => s.id === Pie.schema[id]?.section && (!s.login || Pie.signedIn()));
@@ -42,7 +37,6 @@ window.Pie = window.Pie || {};
       const platform = Pie.platformOf(hw);
       const s = Pie.schema[platform];
       if (!s || !shown(platform)) continue;
-      // the site's own name for a machine, with its GPU count, so an H100 and four of them are told apart
       const name = hw.name || hw.full_name || hw.id;
       out.push({ kind: "Machine", text: name, sub: s.short || s.label, icon: Pie.icon(platform), tint: s.tint, run: () => { go(platform); filter(name); } });
     }
@@ -56,11 +50,9 @@ window.Pie = window.Pie || {};
     const words = q.toLowerCase().split(/\s+/).filter(Boolean);
     const all = entries();
     const found = words.length ? all.filter((e) => words.every((w) => `${e.text} ${e.sub} ${e.kind}`.toLowerCase().includes(w))) : all.filter((e) => ["Page", "Platform", "Link"].includes(e.kind));
-    // a name that starts with the words first, then pages, platforms, machines, models
     const order = ["Page", "Link", "Platform", "Machine", "Model"];
     found.sort((a, b) => (b.text.toLowerCase().startsWith(words[0] || "") - a.text.toLowerCase().startsWith(words[0] || "")) || order.indexOf(a.kind) - order.indexOf(b.kind));
     const list = found.slice(0, 12);
-    // filtering the page comes after what was found, so Return opens the page, machine or model named
     if (q.trim() && app.filters()) list.push({ kind: "Filter", text: `Filter this page for “${q.trim()}”`, sub: "", icon: ICON_SEARCH, run: () => filter(q.trim()) });
     if (app.state.query && !q.trim()) list.unshift({ kind: "Filter", text: `Clear the filter “${app.state.query}”`, sub: "", icon: ICON_SEARCH, run: () => filter("") });
     return list;
@@ -117,9 +109,8 @@ window.Pie = window.Pie || {};
       event.preventDefault();
       close();
     }
-    event.stopPropagation();  // the page's own keys (arrows, numbers, V) wait while the palette is open
+    event.stopPropagation();
   });
-  // ⌘K, or Ctrl+K, opens it from anywhere, and closes it again
   document.addEventListener("keydown", (event) => {
     if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey) && !event.altKey) {
       event.preventDefault();
@@ -128,7 +119,6 @@ window.Pie = window.Pie || {};
   }, true);
   button.addEventListener("click", open);
 
-  // the button: the shortcut, or the words a page is filtered for
   const label = () => {
     const q = app?.state.query?.trim();
     button.innerHTML = `${ICON_SEARCH}<span class="toolbar-search-text">${q ? esc(q) : `<kbd>${/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl "}K</kbd>`}</span>`;

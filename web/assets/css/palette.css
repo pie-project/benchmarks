@@ -1,5 +1,3 @@
-/* the ⌘K palette, as Spotlight sits over a Mac: one rounded panel in the middle of the dimmed window, a large field,
-   the results under it as a source list, the chosen row in the accent */
 .palette-backdrop { position: fixed; inset: 0; z-index: 1100; display: flex; justify-content: center; align-items: center; padding: 24px; background: rgba(0, 0, 0, .28); }
 .palette-backdrop[hidden] { display: none; }
 .palette { display: flex; flex-direction: column; width: min(560px, 100%); max-height: min(460px, 100%); overflow: hidden; border-radius: 12px; background: var(--color-menu); box-shadow: var(--shadow-menu), 0 0 0 .5px var(--color-separator); -webkit-backdrop-filter: blur(30px); backdrop-filter: blur(30px); animation: palette-in .16s ease-out; }
@@ -18,15 +16,13 @@
 .palette-icon svg { width: 15px; height: 15px; fill: none; stroke: var(--color-accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .palette-icon svg .is-filled { fill: var(--color-label); stroke: none; }
 .palette-row.is-current .palette-icon:not(.is-tile) svg { stroke: #fff; }
-.palette-icon.is-tile { border-radius: 5px; background: var(--tint); }  /* a platform's or machine's tile, as the sidebar draws it */
+.palette-icon.is-tile { border-radius: 5px; background: var(--tint); }
 .palette-icon.is-tile svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 2; }
 .palette-icon.is-tile svg .is-filled { fill: #fff; }
 .palette-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--color-label); }
 .palette-sub { flex: none; font-size: 12px; color: var(--color-label-tertiary); }
 .palette-empty { padding: 18px; font-size: 13px; text-align: center; color: var(--color-label-tertiary); }
 
-/* in the site's production look, as the sidebar now draws it: a white panel with the cards' 12px corners and outline, a
-   calmer field, grey line symbols with no tiles, and the chosen row in a soft grey with its symbol in full ink */
 .palette { background: var(--color-background); box-shadow: 0 0 0 1px var(--color-separator), 0 16px 48px rgba(0, 0, 0, .16); -webkit-backdrop-filter: none; backdrop-filter: none; }
 .palette-backdrop { background: rgba(0, 0, 0, .18); }
 .palette-field { height: 48px; border-bottom-color: var(--color-separator); }

@@ -1,7 +1,5 @@
 window.Pie = window.Pie || {};
 
-// The overview: for one Mac and one workload, where pie stands against every other engine.
-// Four answers, top to bottom: how often pie wins, against which engine, on which model, and the trend.
 (() => {
   const element = document.getElementById("overview");
   const tooltip = document.getElementById("chart-tooltip");
@@ -25,12 +23,10 @@ window.Pie = window.Pie || {};
 
   const esc = (value) => Pie.format.escape(value);
   const names = () => Pie.store.names;
-  // the engine every other one is measured against: the picked one, pie unless the viewer chose another
   let base = Pie.engines.primary;
   const baseName = () => names().engine(base);
   const isPie = (row) => row.engine === base;
 
-  // "M5 Max 64 GB": two Macs share a chip, so the memory tells them apart
   const macName = (id) => Pie.platform.machineName(id);
 
   const value = (n) => {
@@ -38,7 +34,6 @@ window.Pie = window.Pie || {};
     return n >= 100 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, { maximumFractionDigits: 1 });
   };
 
-  // pie ÷ other as a signed change: +21%, −8%; from 2× up a multiple reads better than +468%
   const delta = (r) => {
     if (r >= 2) return `${r >= 10 ? Math.round(r) : r.toFixed(1)}×`;
     const pct = Math.round((r - 1) * 100);
@@ -60,7 +55,6 @@ window.Pie = window.Pie || {};
     row.stale ? `From ${row.stale.tag}, ${Pie.format.date(row.stale.measured)}` : `Measured ${Pie.format.date(row.measured)}`;
 
 
-  // a pop-up button: the same control as the release picker at the top right
   const popup = (id, label, current) => `
     <button class="release-picker overview-popup" id="${id}" type="button" aria-haspopup="menu">
       <span class="release-picker-label">${esc(label)}</span>
@@ -68,7 +62,6 @@ window.Pie = window.Pie || {};
       <svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
     </button>`;
 
-  // every pairing of pie with another engine on one model, for one metric
   const comparisons = (byModel, models, key) => {
     const out = [];
     for (const model of models) {
@@ -89,7 +82,6 @@ window.Pie = window.Pie || {};
     return byModel;
   };
 
-  // each section's mark: a white glyph on a tinted rounded square, as Apple's settings show theirs
   const SECTION_ICONS = {
     "Where we stand": ["#0a84ff", '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/>'],
     "Against the best": ["#ff9f0a", '<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/>'],
@@ -104,7 +96,6 @@ window.Pie = window.Pie || {};
     return icon ? `<span class="section-icon" style="--tint: ${icon[0]}"><svg viewBox="0 0 24 24" aria-hidden="true">${icon[1]}</svg></span>` : "";
   };
 
-  // the ring gradients every ring on the page paints with: drawn once, whatever each section shows
   const RING_DEFS = `
     <svg class="heat-defs" width="0" height="0" aria-hidden="true">
       <defs>
@@ -132,10 +123,6 @@ window.Pie = window.Pie || {};
       ${body}
     </section>`;
 
-  // 1. Where we stand: Apple Fitness rings, one inside the other.
-  // Outer, blue: the share of decode comparisons pie wins. Middle, green: median decode advantage.
-  // Inner, teal: median prefill advantage. An advantage ring closes at 2× and laps past it,
-  // the newest lap drawn over the last with a soft shadow; a deficit runs counter-clockwise in red.
   const standing = (decode, prefill, mac) => {
     const wins = decode.filter((c) => c.r > 1);
     const decodeMid = median(decode.map((entry) => entry.r));
@@ -183,7 +170,6 @@ window.Pie = window.Pie || {};
         </svg>
       </div>`;
 
-    // numbers in plain ink, labels in grey; a dot in the ring's colour ties each one to its ring
     const legend = (label, figure, dot, empty) => `
       <div class="stand-metric">
         <div class="stand-label"><span class="stand-dot ${dot}"></span>${label}</div>
@@ -200,8 +186,6 @@ window.Pie = window.Pie || {};
       `<div class="standing">${ring}<div class="stand-side">${side}</div></div>`, popup("overview-stand-mac", "Mac", macName(mac)));
   };
 
-  // 3. Against each engine: models down, engines across, a small activity ring per pairing.
-  // The arc closes at 2× (or ½×): clockwise and green where pie leads, counter-clockwise and red where it trails.
   const PARITY = 0.03;
   const miniRing = (cx, cy, r) => {
     const radius = 23, stroke = 4.5, length = 2 * Math.PI * radius;
@@ -217,28 +201,21 @@ window.Pie = window.Pie || {};
         <text class="mini-value ${kind}" x="${cx}" y="${cy + 4}" text-anchor="middle">${delta(r)}</text>`;
   };
 
-  // setups too big for the selected Mac: {model: {engine: GiB needed}}, from the planner's fit rule
   let tooBig = {};
   let macMemory = null;
   const misfit = (model, engine) => tooBig[model]?.[engine];
   const fitNote = (gib, model) => {
-    // MoE models say whether their experts stream from the SSD; dense ones carry "n/a"
     const streaming = ["Without", "With"].includes(Pie.store.index.models[model]?.ssd_streaming) ? Pie.store.index.models[model].ssd_streaming : "";
-    // a Mac's GPU can use about two thirds of its memory up to 36 GB and three quarters above (the planner's rule)
     const gpu = macMemory ? Math.round(macMemory * (macMemory <= 36 ? 2 / 3 : 0.75)) : null;
     return `Needs about ${Math.round(gib)} GB${streaming ? ` ${streaming.toLowerCase()} SSD streaming` : ""}${gpu ? `; this Mac's GPU can use about ${gpu} GB` : ""}`;
   };
-  // a small "no entry" mark: a hairline circle with a slash
   const noFitMark = (cx, cy) => `
     <circle class="nofit-mark" cx="${cx}" cy="${cy}" r="9"/>
     <line class="nofit-mark" x1="${cx - 6.4}" y1="${cy + 6.4}" x2="${cx + 6.4}" y2="${cy - 6.4}"/>`;
 
-  // the grid reads like an Apple inset table: one rounded group per speed, a row per model,
-  // the model name flush left, one even column per engine, hairlines between rows
   const CELL = 52;
   const cellSvg = (inner) => `<svg class="heat-cell-svg" viewBox="0 0 ${CELL} ${CELL}" width="${CELL}" height="${CELL}" aria-hidden="true">${inner}</svg>`;
 
-  // one ring cell: the ring, a "doesn't fit" mark, or a quiet dot where nothing was measured
   const heatCell = (byModel, model, engine, metric, list, extra = "") => {
     const mid = CELL / 2;
     const c = list.find((entry) => entry.model === model && entry.engine === engine);
@@ -260,7 +237,6 @@ window.Pie = window.Pie || {};
     return `<div class="heat-cell${extra}" role="cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, c.r))}</div>`;
   };
 
-  // the wide layout: one table, the model names once on the left, Decode and Prefill side by side
   const wideTable = (byModel, rowsShown, engines) => {
     const lists = METRICS.map((metric) => comparisons(byModel, rowsShown, metric.key));
     const n = engines.length;
@@ -290,7 +266,6 @@ window.Pie = window.Pie || {};
       `<div class="heat-head" role="columnheader">${esc(names().engine(engine))}</div>`).join("")}</div>`;
     const rows = rowsShown.map((model) => {
       const label = `<div class="heat-label" role="rowheader" title="${esc(names().model(model))}">${esc(names().model(model))}</div>`;
-      // pie itself cannot load this model here: one quiet line across the row
       const pieNeeds = misfit(model, base);
       if (pieNeeds && !(byModel[model] || []).some(isPie)) {
         const tip = esc(`${names().model(model)}\nDoesn't fit. ${fitNote(pieNeeds, model)}`);
@@ -308,7 +283,6 @@ window.Pie = window.Pie || {};
       </div>`;
   };
 
-  // a section's view: rings of the picked engine against each other, or bars of every engine's tok/s
   const viewToggle = (key, current, options = [["rings", "Rings"], ["bars", "Bars"]]) => `
     <div class="view-toggle" role="group" aria-label="View">
       ${options.map(([id, label]) =>
@@ -316,7 +290,6 @@ window.Pie = window.Pie || {};
     </div>`;
   const tools = (...parts) => `<div class="section-tools">${parts.join("")}</div>`;
 
-  // one entry per row (a model or a Mac): Decode and Prefill, a bar per engine, longest bar = fastest in that row
   const barsBlock = (entries, engines) => {
     const order = [base, ...engines.filter((e) => e !== base)];
     const body = entries.map(({ label, rows, note }) => {
@@ -337,7 +310,6 @@ window.Pie = window.Pie || {};
     return `<div class="bars-table">${body}</div>`;
   };
 
-  // against the best: models down, Macs across; each cell is the picked engine against the fastest other engine there
   const bestOf = (rows, model, mac, key) => {
     const here = rows.filter((row) => row.model === model && row.hardware === mac);
     const pie = here.find((row) => isPie(row) && row[key]);
@@ -360,7 +332,6 @@ window.Pie = window.Pie || {};
     }
     return `<div class="heat-cell${extra}" role="cell" data-tip="${esc(bestTip(model, mac, metric, c))}">${cellSvg(miniRing(mid, mid, c.r))}</div>`;
   };
-  // "M5 Max" over "128GB": the column stays narrow enough for twelve of them
   const macHead = (mac) => {
     const name = macName(mac);
     const at = name.lastIndexOf(" ");
@@ -414,7 +385,6 @@ window.Pie = window.Pie || {};
     const engines = [...new Set(Object.values(byModel).flat().filter((row) => !isPie(row)).map((row) => row.engine))]
       .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
     if (!engines.length) engines.push(...others);
-    // every model of the suite has its row: measured, too big, or crossed out until it is measured
     const rowsShown = models;
     if (!engines.length || !rowsShown.length) return "";
 
@@ -431,7 +401,6 @@ window.Pie = window.Pie || {};
       </div>`, head);
   };
 
-  // across Macs: one model, a row per Mac, the picked engine against each other engine
   const macCell = (rows, mac, engine, metric, model) => {
     const mid = CELL / 2;
     const title = `${macName(mac)}: ${baseName()} vs ${names().engine(engine)}`;
@@ -450,7 +419,6 @@ window.Pie = window.Pie || {};
     return `<div class="heat-cell" role="cell" data-tip="${esc(tip)}">${cellSvg(miniRing(mid, mid, r))}</div>`;
   };
 
-  // the engines the release compares against, for a model with no numbers of its own
   const competitors = (all) => {
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
     return [...new Set(all.filter((row) => !isPie(row)).map((row) => row.engine))].sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
@@ -494,9 +462,6 @@ window.Pie = window.Pie || {};
         style="--engines: ${n * METRICS.length}">${groups}${heads}${body}</div></div>`, head);
   };
 
-  // 4. By model: one card per model, a lollipop per engine
-  // quality against each engine: a model matches an engine when, on every task both scored, pie's
-  // 95% interval reaches the engine's (the same questions, so a gap outside both intervals is real)
   const qualityMark = (cx, cy, ok, text) => {
     const kind = ok ? "is-ahead" : "is-behind";
     return `<circle class="mini-track ${kind}" cx="${cx}" cy="${cy}" r="23" stroke-width="4.5"/>
@@ -506,13 +471,10 @@ window.Pie = window.Pie || {};
 
   const TASK_NAMES = { gsm8k: "GSM8K", ifeval: "IFEval", mmlu: "MMLU", arc: "ARC", math500: "MATH-500" };
 
-  // where each model lands on the accuracy scale: its mean over the benchmarks, the picked engine's scores
-  // each model: the engines' average accuracy as the bar, their spread as the whisker, the picked engine as the mark
   const qualityRanking = (rows, models, pick) => {
     const ranked = models.map((model) => {
       const mine = rows.filter((r) => r.model === model);
       const engines = [...new Set(mine.map((r) => r.engine))];
-      // the tasks every engine answered, so each engine's mean is over the same questions
       const shared = Object.keys(TASK_NAMES).filter((task) => engines.every((e) => mine.some((r) => r.engine === e && r.task === task)));
       const means = engines.map((engine) => {
         const own = mine.filter((r) => r.engine === engine && (!shared.length || shared.includes(r.task)));
@@ -523,7 +485,6 @@ window.Pie = window.Pie || {};
         mark: means.find((m) => m.engine === pick), tasks: shared.length ? shared : null };
     }).filter((x) => x.means.length).sort((a, b) => b.avg - a.avg);
     if (!ranked.length) return "";
-    // a zoomed scale, so a few points of difference show
     const floor = Math.max(0, Math.floor((Math.min(...ranked.map((x) => x.low)) - 0.05) * 20) / 20);
     const at = (v) => `${(((v - floor) / (1 - floor)) * 100).toFixed(1)}%`;
     const pct = (v) => `${(v * 100).toFixed(1)}%`;
@@ -580,7 +541,6 @@ window.Pie = window.Pie || {};
 
   const lollipops = (model, rows, metric) => {
     const bars = rows.filter((row) => row[metric.key]).sort((a, b) => b[metric.key] - a[metric.key]);
-    // engines that cannot load the model on this Mac get a row of their own, below the measured ones
     const engineOrder = Pie.store.tables.engines.map((e) => e.id);
     const misfits = Object.keys(tooBig[model] || {})
       .filter((engine) => !rows.some((row) => row.engine === engine))
@@ -625,8 +585,6 @@ window.Pie = window.Pie || {};
       <div class="model-card-charts">${METRICS.map((metric) => lollipops(model, rows, metric)).join("")}</div>
     </article>`;
 
-  // an Apple-style gallery: one model card at a time with the next one peeking in, snapping as it scrolls,
-  // page dots below and round arrow buttons beside them
   const carousel = (cards) => `
     <div class="carousel">
       <div class="carousel-track" tabindex="0" aria-label="Models">${cards.join("")}</div>
@@ -643,7 +601,6 @@ window.Pie = window.Pie || {};
         </div>` : ""}
     </div>`;
 
-  // which card sits at the track's left edge, and the dots and paddles to match
   const syncCarousel = (track) => {
     const cards = [...track.children];
     if (!cards.length) return;
@@ -664,8 +621,6 @@ window.Pie = window.Pie || {};
     if (card) track.scrollTo({ left: card.offsetLeft - track.offsetLeft, behavior: "smooth" });
   };
 
-  // macs with any row in this release, in catalog order
-  // Where <engine> stands, on its own Mac
   const standSection = (state, all, models, workload) => {
     const mac = state.overview.standMac || state.overview.hardware;
     const byModel = groupByModel(all.filter((row) => row.hardware === mac && row.workload === workload));
@@ -678,7 +633,6 @@ window.Pie = window.Pie || {};
     return standing(decode, comparisons(byModel, shown, "prefill_tok_s"), mac);
   };
 
-  // Against each engine on its own Mac: the no-fit marks follow that Mac, then return to the page's
   const heatSection = (state, all, models, workload) => {
     const mac = state.overview.heatMac || state.overview.hardware;
     const byModel = groupByModel(all.filter((row) => row.hardware === mac && row.workload === workload));
@@ -690,7 +644,6 @@ window.Pie = window.Pie || {};
     return html;
   };
 
-  // "Updated 2 hr ago", the way Apple's apps date their data; the full time on hover
   const updated = () => {
     const at = Pie.store.tables.updated_at ? new Date(Pie.store.tables.updated_at) : null;
     if (!at || Number.isNaN(at.getTime())) return "";
@@ -711,7 +664,6 @@ window.Pie = window.Pie || {};
   Pie.overview = {
     element,
 
-    // every Mac we operate, in catalog order (a Mac with no run in this release still shows in the menu)
     macs() {
       return Pie.store.tables.hardware.map((hw) => ({ id: hw.id, label: macName(hw.id) }));
     },
@@ -720,7 +672,6 @@ window.Pie = window.Pie || {};
       return WORKLOADS;
     },
 
-    // engines with numbers in this release, in the catalog's order
     engines(state) {
       const ran = new Set(Pie.store.snapshot(state.release).filter(Pie.store.isMeasured).map((r) => r.engine));
       return Pie.store.tables.engines.filter((e) => ran.has(e.id)).map((e) => ({ id: e.id, label: names().engine(e.id) }));
@@ -746,7 +697,6 @@ window.Pie = window.Pie || {};
       onOpenQualityEngine = handler;
     },
 
-    // engines with quality scores in this release, for the Quality section's picker
     qualityEngines(state) {
       const scored = new Set(Pie.store.qualitySnapshot(state.release).filter((r) => typeof r.score === "number").map((r) => r.engine));
       return Pie.store.tables.engines.filter((e) => scored.has(e.id)).map((e) => ({ id: e.id, label: names().engine(e.id) }));
@@ -761,7 +711,6 @@ window.Pie = window.Pie || {};
     },
 
 
-    // keep the hardware and workload choice valid for the selected release
     settle(state) {
       const macs = macsIn(Pie.store.snapshot(state.release));
       const known = Pie.store.tables.hardware.map((hw) => hw.id);
@@ -777,18 +726,15 @@ window.Pie = window.Pie || {};
       if (!models.includes(state.overview.model)) state.overview.model = models[0] || null;
     },
 
-    // the suite's models, in the catalog's order, for the Across Macs picker
     models(state) {
       return Pie.store.tables.models.filter((m) => Pie.store.inSuite(m.id)).map((m) => ({ id: m.id, label: names().model(m.id) }));
     },
 
-    // returns the number of models shown, for the toolbar subtitle
     render(state) {
       this.settle(state);
       base = state.overview.engine || Pie.engines.primary;
       const all = Pie.store.snapshot(state.release).filter(Pie.store.isMeasured);
       const { hardware, workload } = state.overview;
-      // the Mac and workload pickers stay on every path, so a Mac with no runs can still be left for another one
       const controls = () => `
         <div class="overview-controls">
           ${popup("overview-workload", "Workload", (Pie.overview.workloads().find((w) => w.id === workload) || { label: workload }).label)}
@@ -805,14 +751,12 @@ window.Pie = window.Pie || {};
       }
       const query = state.query.trim().toLowerCase();
       const byModel = groupByModel(all.filter((row) => row.hardware === hardware && row.workload === workload));
-      // the picked suite's models only
       const models = Pie.store.tables.models
         .map((model) => model.id)
         .filter((id) => Pie.store.inSuite(id))
         .filter((id) => !query || names().model(id).toLowerCase().includes(query) || id.includes(query));
       tooBig = (Pie.store.tables.no_fit || {})[hardware] || {};
       macMemory = Pie.store.index.hardware[hardware]?.memory_gib || null;
-      // measured models first, then the ones too big for this Mac
       const shown = [...models.filter((id) => byModel[id]), ...models.filter((id) => !byModel[id] && tooBig[id])];
 
       const decode = comparisons(byModel, shown, "decode_tok_s");
@@ -854,7 +798,6 @@ window.Pie = window.Pie || {};
           "overview-quality-engine": onOpenQualityEngine })[button.id](button);
       });
 
-      // one tooltip for every mark: what it compares, the values, and when they were measured
       element.addEventListener("pointermove", (event) => {
         const row = event.target.closest("[data-tip]");
         if (!row) {
@@ -871,7 +814,6 @@ window.Pie = window.Pie || {};
       element.addEventListener("pointerleave", () => (tooltip.hidden = true));
       element.addEventListener("scroll", () => (tooltip.hidden = true));
 
-      // the model gallery: dots jump to a card, paddles step one card, scrolling keeps both in sync
       element.addEventListener("click", (event) => {
         const control = event.target.closest(".carousel-dot, .carousel-paddle");
         if (!control) return;

@@ -76,7 +76,6 @@
   stroke-width: 1.8;
 }
 
-/* nowhere to go: the chevron dims and takes no hover, as Finder's does */
 .nav-button:disabled {
   opacity: .3;
   pointer-events: none;
@@ -147,7 +146,6 @@
   background: var(--color-hover);
 }
 
-/* no ring after a click, as a macOS pop-up button; the keyboard still sees where it is by the fill */
 .release-picker:focus { outline: none; }
 .release-picker:focus-visible { background: var(--color-hover); }
 
@@ -174,13 +172,12 @@
   display: none;
 }
 
-/* the phone toolbar, as an iPhone navigation bar: the sidebar button, the title, then icons a finger can hit */
 @media (max-width: 899px) {
   .toolbar {
     gap: 2px;
     height: auto;
     min-height: calc(var(--bar-height) + env(safe-area-inset-top));
-    padding: env(safe-area-inset-top) max(var(--edge), env(safe-area-inset-right)) 0 max(var(--edge), env(safe-area-inset-left));  /* the buttons start and end where the content does */
+    padding: env(safe-area-inset-top) max(var(--edge), env(safe-area-inset-right)) 0 max(var(--edge), env(safe-area-inset-left));
   }
 
   .toolbar .tool-button {
@@ -226,14 +223,12 @@
     display: none;
   }
 
-  /* the appearance lives in the slide-over; the release and suite share one capsule */
   #release-picker,
   #suite-picker,
   .toolbar .theme-toggle {
     display: none;
   }
 
-  /* one picker for the release and the suite, as a small capsule */
   .view-picker {
     display: inline-flex;
     flex: 0 1 auto;
@@ -253,7 +248,6 @@
     text-overflow: ellipsis;
   }
 
-  /* closed, the search is a magnifying glass in the bar */
   .search-field {
     flex: none;
     justify-content: center;
@@ -281,7 +275,6 @@
     box-shadow: none;
   }
 
-  /* open, it fills the bar: a rounded field and Cancel, nothing else */
   :root[data-search="open"] .toolbar > :not(.search-field):not(.search-cancel) {
     display: none;
   }
@@ -318,8 +311,6 @@
   }
 }
 
-/* the report sheet, on the same surface as the site's menus and Test Conditions: frosted, a hairline edge, the menu
-   corner; the title and its line at the leading edge, an outlined field, the toolbar's buttons */
 .report-dialog {
   width: min(420px, calc(100vw - 32px));
   padding: 0;
@@ -351,7 +342,7 @@
   resize: vertical;
 }
 .report-form textarea::placeholder { color: var(--color-label-tertiary); }
-.report-form textarea:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-tint); }  /* the search field's focus */
+.report-form textarea:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-tint); }
 
 .report-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
 .report-actions button { min-width: 76px; height: var(--control-height); padding: 0 14px; border-radius: var(--radius-control); font: inherit; font-size: 13px; cursor: pointer; }
@@ -365,7 +356,6 @@
 .report-send:disabled { opacity: .6; cursor: default; }
 .report-status:empty { display: none; }
 
-/* on a phone the report is an iOS sheet: it rises from the bottom, Cancel and Send in its header, the text field first */
 @media (max-width: 899px) {
   .report-dialog {
     width: 100%;
@@ -387,7 +377,7 @@
     padding: 12px var(--edge) calc(16px + env(safe-area-inset-bottom));
   }
 
-  .report-head { display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 0 76px; text-align: center; }  /* an iOS sheet centres its title between Cancel and Send */
+  .report-head { display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 0 76px; text-align: center; }
   .report-form h2 { font-size: 17px; }
   .report-hint { margin: 16px -76px 0; font-size: 13px; }
 
@@ -433,23 +423,19 @@
   .report-dialog { animation: none; }
 }
 
-/* phones: no report flag in the top bar */
 @media (max-width: 899px) { #report-button { display: none; } }
 @media (max-width: 899px) { #view-picker { display: none; } }
 
-/* the release is the page's most important choice: a prominent pop-up button, the system blue with white text,
-   as Apple draws the one control on a screen it wants found first; it names the run, Latest or its day */
 .release-picker.is-prominent {
   padding: 0 8px 0 10px;
   background: var(--color-accent);
 }
 .release-picker.is-prominent:hover,
 .release-picker.is-prominent[aria-expanded="true"] { background: color-mix(in srgb, var(--color-accent) 88%, #fff); }
-.release-picker.is-prominent .release-picker-label { display: none; }  /* the date alone; the button is named for screen readers */
+.release-picker.is-prominent .release-picker-label { display: none; }
 .release-picker.is-prominent .release-picker-value { font-weight: 500; color: #fff; font-variant-numeric: tabular-nums; }
 .release-picker.is-prominent .popup-chevron { stroke: rgba(255, 255, 255, .85); }
 
-/* the toolbar's trailing group: the theme button first, then search (the ⌘K button) and Log In, then the run picker */
 .toolbar > .theme-toggle { order: 1; }
 .toolbar > .search-field { order: 2; }
 .toolbar > .search-cancel { order: 3; }
@@ -458,41 +444,33 @@
 .toolbar-install { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; white-space: nowrap; }
 .toolbar-install:focus:not(:focus-visible) { outline: none; }
 .toolbar-install svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.toolbar > .release-picker, .toolbar > .view-picker { order: 4; }  /* the run last, at the trailing edge */
+.toolbar > .release-picker, .toolbar > .view-picker { order: 4; }
 
-/* Log in after the search: the toolbar's one prominent button, filled solid black in light mode and white in dark, so it
-   stands out in both, its word in the other */
 .toolbar-login { flex: none; height: 28px; padding: 0 12px; border: 0; border-radius: 12px; font: inherit; font-size: 13px; font-weight: 500; color: #fff; background: #1d1d1f; cursor: pointer; }
 :root[data-theme="dark"] .toolbar-login { color: #1d1d1f; background: #f5f5f7; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .toolbar-login { color: #1d1d1f; background: #f5f5f7; } }
 .toolbar-login:hover { opacity: .85; }
 .toolbar-login:active { opacity: .7; }
 .toolbar-login:focus:not(:focus-visible) { outline: none; }
-/* search is the ⌘K palette: the field stays hidden, holding the words a page is filtered for */
 .search-field[hidden], .search-cancel[hidden] { display: none !important; }
-/* the palette's button, as a toolbar's search item reads when collapsed: the glass and the shortcut, or the filter */
 .toolbar-search { display: inline-flex; flex: none; align-items: center; gap: 6px; height: 28px; max-width: 200px; padding: 0 10px; border: 0; border-radius: var(--radius-field); font: inherit; font-size: 13px; color: var(--color-label-secondary); background: var(--color-fill); cursor: pointer; }
 .toolbar-search:hover { background: var(--color-fill-secondary); }
 .toolbar-search svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .toolbar-search kbd { font: inherit; letter-spacing: .02em; }
 .toolbar-search-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.toolbar-search.is-filtered { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 14%, transparent); }  /* a page filtered: its words in the accent */
+.toolbar-search.is-filtered { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 14%, transparent); }
 .toolbar-search:focus:not(:focus-visible) { outline: none; }
-/* a phone has no ⌘K: the search button is its glass alone, its words shown only while a page is filtered */
 @media (max-width: 899px) {
   .toolbar-search:not(.is-filtered) .toolbar-search-text { display: none; }
   .toolbar-search { padding: 0 9px; }
 }
-.tool-button:focus:not(:focus-visible) { outline: none; }  /* no ring after a click, only for the keyboard */
-@media (max-width: 899px) { .toolbar > .toolbar-login { margin-left: 6px; } }  /* the bar's 2px gap, plus room to tell search from Log in */
-/* phones: Log in and search as chunky as the drawer's rows, 44px tall with their 10px corner and 17px type */
+.tool-button:focus:not(:focus-visible) { outline: none; }
+@media (max-width: 899px) { .toolbar > .toolbar-login { margin-left: 6px; } }
 @media (max-width: 899px) {
   .toolbar-login { height: 44px; padding: 0 18px; border-radius: 10px; font-size: 17px; }
   .toolbar-search { height: 44px; min-width: 44px; justify-content: center; border-radius: 10px; }
   .toolbar-search svg { width: 18px; height: 18px; }
 }
-/* phones, as iOS sets its navigation bar: a frosted bar over the page, its buttons round glass-grey circles and capsules
-   44px high, Log in a solid capsule; the title in iOS's 17pt semibold */
 @media (max-width: 899px) {
   .toolbar { background: color-mix(in srgb, var(--color-background) 82%, transparent); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); }
   .toolbar .sidebar-toggle, .toolbar-search { width: 44px; height: 44px; min-width: 44px; padding: 0; justify-content: center; border-radius: 999px; background: var(--color-fill); }
@@ -500,9 +478,8 @@
   .toolbar-login { border-radius: 999px; padding: 0 20px; font-weight: 600; }
 }
 
-/* Auto: pause while the setups turn, play while they rest */
 .auto-toggle[hidden] { display: none; }
 .auto-toggle[aria-pressed="true"] .auto-icon-play, .auto-toggle[aria-pressed="false"] .auto-icon-pause { display: none; }
-.auto-toggle .auto-icon-pause { stroke-width: 2; }  /* SF Symbols' pause: two round-capped strokes, as heavy as the play triangle reads */
+.auto-toggle .auto-icon-pause { stroke-width: 2; }
 
 .toolbar-login[hidden] { display: none; }

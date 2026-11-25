@@ -9,7 +9,7 @@
   --bar-height: 52px;
   --filter-bar-height: 40px;
   --control-height: 28px;
-  --control-gap: 4px;  /* between two controls side by side in the bars under the toolbar */
+  --control-gap: 4px;
   --row-height: 32px;
   --edge: 16px;
   --radius-control: 6px;
@@ -31,7 +31,7 @@
   --color-separator-light: rgba(60, 60, 67, .08);
   --color-hover: rgba(0, 0, 0, .04);
   --color-fill: rgba(118, 118, 128, .12);
-  --color-fill-secondary: rgba(120, 120, 128, .16);  /* Apple's secondarySystemFill: a filled button under the pointer */
+  --color-fill-secondary: rgba(120, 120, 128, .16);
   --color-selection: rgba(0, 0, 0, .07);
 
   --color-accent: #007aff;
@@ -64,7 +64,6 @@
   --color-bar-other: #aeaeb2;
   --color-lollipop-other: #8e8e93;
 
-  /* gradients along the rings: a lighter step of the same hue into the full one */
   --color-ring-start: #4aa8ff;
   --color-heat-ahead-start: #34c759;
   --color-heat-behind-start: #ff5e57;
@@ -135,7 +134,6 @@
   --shadow-menu: 0 0 0 .5px rgba(255, 255, 255, .12), 0 12px 36px rgba(0, 0, 0, .5);
 }
 
-/* phones and iPads in portrait: the page edge clears a landscape notch, rows grow toward a finger's 44 points */
 @media (max-width: 899px) {
   :root {
     --edge: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
@@ -143,5 +141,4 @@
     --row-height: 40px;
   }
 }
-/* phones: a taller top bar, so the 44px buttons sit in it with room around them as in iOS's navigation bar */
 @media (max-width: 899px) { :root { --bar-height: 60px; } }
