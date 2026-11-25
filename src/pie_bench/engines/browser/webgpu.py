@@ -290,7 +290,7 @@ class PieWebEngine(BrowserEngine):
         if not (dist / "pie.mjs").exists():
             raise EngineLaunchError(
                 ErrorClass.LOAD_FAIL,
-                f"pie: no server-web build at {dist} (build.py builds it with the wgpu feature)",
+                f"pie: no server-web build at {dist} (installers/pie.py builds it with the wgpu feature)",
             )
         return dist
 
