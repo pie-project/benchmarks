@@ -332,6 +332,8 @@ class Engine(ABC):
         body = lambda i: prompt_words_for_tokens(prefill, salt=f"{workload.id}|{i}")
         m = re.fullmatch(r"r(\d+)", out_dir.name)
         seed = COLD_SEED if not m or m.group(1) == "0" else f"{COLD_SEED}|round{m.group(1)}"
+        if out_dir.name == "profile":
+            seed = f"{COLD_SEED}|profile"  # its own prompts: round 0's would hit the engine's prefix cache
         prompts = cold_prompts(body, workload_id=workload.id, seed=seed, count=cold_request_count(workload.params))
         path = out_dir / "cold_prompts.json"
         path.write_text(json.dumps(prompts, ensure_ascii=False))
