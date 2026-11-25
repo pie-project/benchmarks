@@ -21,7 +21,8 @@ from pathlib import Path
 from . import span
 
 SHIM = Path(__file__).resolve().parent / "cupti_trace.c"
-SETTLE_S = 1.0  # every process's control thread sees the switch (it polls every 2 ms; CUPTI's first enable takes longer)
+ARM_S = 120  # how long a process may take to start recording: CUPTI's first enable in a process with many modules loaded
+# (vLLM's EngineCore) takes seconds, and a round started before it lost its first windows
 
 
 def _cupti() -> tuple[Path, Path]:
@@ -61,8 +62,12 @@ class Tracer:
         out.mkdir(parents=True, exist_ok=True)
         self.round += 1
         n = self.round
-        (self.dir / "on").write_text(f"{n}\n")
-        time.sleep(SETTLE_S)
+        (self.dir / "on.tmp").write_text(f"{n}\n")
+        os.replace(self.dir / "on.tmp", self.dir / "on")  # whole: a process that reads it half-written records round 0
+        deadline = time.time() + ARM_S
+        while time.time() < deadline and not all((self.dir / f"{pid}-{n}.armed").exists() for pid in self._alive()):
+            time.sleep(0.05)
+        time.sleep(0.2)
         try:
             with span(out):
                 yield
@@ -76,6 +81,17 @@ class Tracer:
             dest.mkdir(exist_ok=True)
             for p in self.dir.glob(f"*-{n}.*"):
                 shutil.move(str(p), dest / p.name)
+
+    def _alive(self) -> list[int]:
+        """The processes that loaded the library and still run."""
+        pids = []
+        for p in self.dir.glob("*.alive"):
+            try:
+                os.kill(int(p.stem), 0)
+                pids.append(int(p.stem))
+            except (OSError, ValueError):
+                p.unlink(missing_ok=True)
+        return pids
 
     def intervals(self, out: Path) -> list[tuple[int, int]]:
         """Every kernel, copy and memset the engine processes recorded, in Unix ns."""

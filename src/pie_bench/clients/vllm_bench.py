@@ -10,6 +10,7 @@ import time
 from typing import Any
 
 from common import (
+    end_trace,
     ArrivalPacer,
     RequestResult,
     add_mode_subcommands,
@@ -585,6 +586,7 @@ def run_streaming(args: argparse.Namespace):
     try:
         results, wall, epoch_unix_s, epoch_monotonic_ns = asyncio.run(drive())
     finally:
+        end_trace()
         engine.shutdown()
 
     summary = summarize(
