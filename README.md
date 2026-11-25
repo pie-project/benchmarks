@@ -18,8 +18,10 @@
 [Docs]: https://pie-project.org/docs
 [Paper (SOSP'25)]: https://ingim.org/papers/gim2025pie.pdf
 
-Pie Bench measures [pie](https://github.com/pie-project/pie) against other
-inference engines on your own machine: the same models, the same prompts, each
+Pie Bench is a fully transparent platform to compare existing inference engines,
+keep up with kernel optimizations, and monitor the gaps between them. It measures
+[pie](https://github.com/pie-project/pie) against other inference engines on your
+own machine: the same models, the same prompts, each
 engine at a pinned version. One command detects the machine, picks the models
 that fit, installs every engine, builds pie, measures them all, and uploads one
 signed submission to [benchmarks.pie-project.org][Benchmarks].
