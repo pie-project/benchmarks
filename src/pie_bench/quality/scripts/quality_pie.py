@@ -10,9 +10,47 @@ from pathlib import Path
 from bench_pie import bench_inferlet_wasm, build_parser, pie_client
 
 
-async def generate(bench_args: list[str], items: list[dict], system: str, max_tokens: int, timeout: float, concurrency: int) -> list[str]:
+def _request_input(item: dict, system: str, max_tokens: int) -> dict:
+    inp = {
+        "system": system,
+        "prompt": item["prompt"],
+        "max_tokens": max_tokens,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "ignore_eos": False,
+        "return_text": True,
+        "report_timing": False,
+    }
+    if item.get("prompt_tokens"):
+        inp["prompt_tokens"] = item["prompt_tokens"]
+    return inp
+
+
+async def _answer(proc, timeout: float, said: set[str]) -> str:
     from pie_client import Event
 
+    while True:
+        ev, msg = await asyncio.wait_for(proc.recv(), timeout=timeout)
+        if ev == Event.Return:
+            return json.loads(msg).get("text", "")
+        if ev in (Event.Stdout, Event.Stderr):
+            if str(msg) not in said:
+                said.add(str(msg))
+                print(f"inferlet {ev.value}: {str(msg)[:300]}", file=sys.stderr)
+            continue
+        if ev != Event.Message:
+            print(f"inferlet {ev.value}: {str(msg)[:500]}", file=sys.stderr)
+            return ""
+
+
+async def generate(
+    bench_args: list[str],
+    items: list[dict],
+    system: str,
+    max_tokens: int,
+    timeout: float,
+    concurrency: int,
+) -> list[str]:
     args = build_parser().parse_args(bench_args)
     out = [""] * len(items)
     said: set[str] = set()
@@ -22,25 +60,10 @@ async def generate(bench_args: list[str], items: list[dict], system: str, max_to
 
         async def one(i: int, item: dict) -> None:
             async with gate:
-                inp = {"system": system, "prompt": item["prompt"], "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0,
-                       "ignore_eos": False, "return_text": True, "report_timing": False}
-                if item.get("prompt_tokens"):
-                    inp["prompt_tokens"] = item["prompt_tokens"]
-                proc = await client.launch_process(pkg, input=inp)
-                while True:
-                    ev, msg = await asyncio.wait_for(proc.recv(), timeout=timeout)
-                    if ev == Event.Return:
-                        out[i] = json.loads(msg).get("text", "")
-                        return
-                    if ev in (Event.Stdout, Event.Stderr):
-                        if str(msg) not in said:
-                            said.add(str(msg))
-                            print(f"inferlet {ev.value}: {str(msg)[:300]}", file=sys.stderr)
-                        continue
-                    if ev not in (Event.Message,):
-                        print(f"inferlet {ev.value}: {str(msg)[:500]}", file=sys.stderr)
-                        out[i] = ""
-                        return
+                proc = await client.launch_process(
+                    pkg, input=_request_input(item, system, max_tokens)
+                )
+                out[i] = await _answer(proc, timeout, said)
 
         await asyncio.gather(*(one(i, it) for i, it in enumerate(items)))
     return out
@@ -58,7 +81,9 @@ def main() -> None:
     a = p.parse_args()
     items = json.loads(Path(a.items).read_text())
     bench_args = a.bench_args[1:] if a.bench_args[:1] == ["--"] else a.bench_args
-    texts = asyncio.run(generate(bench_args, items, a.system, a.max_tokens, a.timeout, a.concurrency))
+    texts = asyncio.run(
+        generate(bench_args, items, a.system, a.max_tokens, a.timeout, a.concurrency)
+    )
     print(f"generated {sum(1 for t in texts if t)} of {len(texts)}", file=sys.stderr)
     if texts and not any(texts):
         sys.exit("every generation came back empty: not a score")

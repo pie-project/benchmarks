@@ -22,7 +22,9 @@ def get(url: str, timeout: float = 5.0) -> bytes:
 
 
 def post(url: str, body: dict, timeout: float = 1200.0) -> dict:
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(
+        url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
+    )
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read())
 
@@ -30,8 +32,13 @@ def post(url: str, body: dict, timeout: float = 1200.0) -> dict:
 def serve(cmd: list[str], env: dict[str, str], port: int, health: str, timeout_s: float):
     url = f"http://127.0.0.1:{port}"
     log = tempfile.NamedTemporaryFile("w", prefix="quality-server-", suffix=".log", delete=False)
-    proc = subprocess.Popen([sys.executable, "-m", "pie_bench.engines.lifeline", *cmd], env={**os.environ, **env},
-                            stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT)
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "pie_bench.engines.lifeline", *cmd],
+        env={**os.environ, **env},
+        stdin=subprocess.PIPE,
+        stdout=log,
+        stderr=subprocess.STDOUT,
+    )
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
         if proc.poll() is not None:
@@ -45,9 +52,15 @@ def serve(cmd: list[str], env: dict[str, str], port: int, health: str, timeout_s
     raise RuntimeError(f"{cmd[0]} did not answer {health} within {timeout_s:.0f}s (see {log.name})")
 
 
+def _kill_lifeline_tree(proc) -> None:
+    if sys.platform == "win32":
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True, check=False
+        )
+
+
 def stop(proc) -> None:
-    if sys.platform == "win32":  # the lifeline's server child dies with it only through a tree kill
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True, check=False)
+    _kill_lifeline_tree(proc)
     proc.terminate()
     try:
         proc.wait(timeout=30)
