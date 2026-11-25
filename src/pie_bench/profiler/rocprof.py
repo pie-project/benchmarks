@@ -1,50 +1,89 @@
-"""Rocprof: an AMD GPU's kernel and copy intervals, from a rocprofv3 trace.
+"""Rocprof: an AMD GPU's kernel intervals, from the GPU's own dispatch timestamps, in the profiled round only.
 
-The profiler runs under rocprofv3, which traces every process below it and writes each one's CSV files when it exits.
-Their timestamps are CLOCK_BOOTTIME ns; each round notes that clock against Unix time to move them.
+rocprofv3 traced every dispatch of the run from launch, through intercept queues, and made each dispatch create and
+wait on a signal of its own: that cost the launch-bound engines 4% to 246% of their step, and SGLang's HIP graph replay
+crashed in them on ROCm 7.2.0. Instead every engine process loads hsa_trace.cpp (ROCr's HSA_TOOLS_LIB), which leaves
+the engine's queues as they are and, outside the round, only checks a flag on each signal store. While the round's
+marker file exists, each kernel a doorbell publishes gets a pooled completion signal, the queues write its start and
+end timestamps, and a thread of the tool's own writes them as Unix ns. Copies (SDMA, and ROCr's own blit queues) are
+not in it; a prefill's are a few microseconds.
 """
 
 from __future__ import annotations
 
-import csv
-import json
+import os
+import shutil
+import subprocess
 import time
 from contextlib import contextmanager
 from pathlib import Path
 
 from . import span
 
-FILES = ("*kernel_trace.csv", "*memory_copy_trace.csv")
+SHIM = Path(__file__).resolve().parent / "hsa_trace.cpp"
+
+
+def rocm_root() -> Path:
+    """The ROCm tree with HSA's headers: ROCM_PATH, /opt/rocm, or the one hipcc sits in (AMD's vLLM image ships ROCm as
+    pip packages)."""
+    hipcc = shutil.which("hipcc")
+    for root in (os.environ.get("ROCM_PATH"), "/opt/rocm", hipcc and str(Path(hipcc).resolve().parents[1])):
+        if root and (Path(root) / "include" / "hsa" / "hsa_api_trace.h").exists():
+            return Path(root)
+    raise SystemExit("no ROCm tree with HSA's headers (set ROCM_PATH)")
 
 
 class Tracer:
-    name = "rocprof"
-    # rocprofv3 traces every dispatch of the run from launch, so no round of it runs untraced
-    whole_run = True
-    # rocprofv3's tool brings up HSA in every process it is preloaded into, so a model worker forked from the engine's
-    # first process (vLLM's EngineCore) hangs on its first GPU signal: vLLM starts it with spawn instead.
-    # Each traced dispatch's completion is waited on by one of rocprofiler's async handler threads (4 by default); pie
-    # keeps hundreds of dispatches in flight across streams that wait on each other, so a small pool deadlocks it
-    env: dict[str, str] = {"VLLM_WORKER_MULTIPROC_METHOD": "spawn", "ROCPROFILER_ASYNC_SIGNAL_HANDLER_THREADS": "4096"}
+    name = "hsa"
+    prefix: list[str] = []
 
     def __init__(self, out: Path):
-        self.root = out / "rocprof"
-        self.prefix = ["rocprofv3", "--kernel-trace", "--memory-copy-trace", "--output-format", "csv", "--output-directory", str(self.root), "--"]
+        self.dir = out / "hsa"
+        self.dir.mkdir(parents=True, exist_ok=True)
+        so = out / "hsa_trace.so"
+        subprocess.run(["g++", "-O2", "-std=c++17", "-shared", "-fPIC", "-DAMD_INTERNAL_BUILD", f"-I{rocm_root() / 'include' / 'hsa'}",
+                        "-o", str(so), str(SHIM), "-lpthread"], check=True)
+        # ROCr skips HSA_TOOLS_LIB in processes where rocprofiler-register took the API table (any torch process)
+        # unless v1 tools are allowed
+        self.env = {"HSA_TOOLS_LIB": str(so), "HSA_TOOLS_ROCPROFILER_V1_TOOLS": "1", "PIE_BENCH_HSA_TRACE_DIR": str(self.dir)}
 
     @contextmanager
     def recording(self, out: Path):
-        """Notes the boot clock against Unix time; rocprofv3 traces the whole run."""
+        """Records the engine processes' kernels while the block runs; their files move to out/hsa."""
         out.mkdir(parents=True, exist_ok=True)
-        (out / "clock.json").write_text(json.dumps({"unix_minus_boot_ns": time.time_ns() - time.clock_gettime_ns(time.CLOCK_BOOTTIME)}))
-        with span(out):
-            yield
+        since = time.time()
+        marker = self.dir / "recording"
+        marker.touch()
+        time.sleep(0.05)  # each process looks for the marker every millisecond
+        try:
+            with span(out):
+                yield
+        finally:
+            marker.unlink(missing_ok=True)
+            made = lambda: [p for p in self.dir.glob("kernels-*.csv") if p.stat().st_mtime >= since]
+            deadline = time.time() + 30  # each process writes its .done once the round's dispatches have completed
+            while time.time() < deadline and not all(p.with_suffix(".done").exists() for p in made()):
+                time.sleep(0.1)
+            (out / "hsa").mkdir(exist_ok=True)
+            for p in made():
+                shutil.move(str(p), str(out / "hsa" / p.name))
+                p.with_suffix(".done").unlink(missing_ok=True)
+                for extra in (p.with_suffix(".skipped"), p.with_suffix(".unfinished")):
+                    if extra.exists():
+                        shutil.move(str(extra), str(out / "hsa" / extra.name))
 
     def intervals(self, out: Path) -> list[tuple[int, int]]:
-        """Every kernel and copy of every traced process, in Unix ns."""
-        shift = json.loads((out / "clock.json").read_text())["unix_minus_boot_ns"]
+        """Every kernel the round's processes ran, in Unix ns."""
         found = []
-        for pattern in FILES:
-            for path in self.root.rglob(pattern):
-                with open(path, newline="") as f:
-                    found += [(int(r["Start_Timestamp"]) + shift, int(r["End_Timestamp"]) + shift) for r in csv.DictReader(f)]
+        for path in sorted((out / "hsa").glob("kernels-*.csv")):
+            found += [tuple(map(int, line.split(","))) for line in path.read_text().splitlines() if line.count(",") == 1]
+        if not found:
+            raise RuntimeError("no kernel was recorded in the round")
+        # a kernel that came with a completion signal of its own keeps it and is not timed; one that had not completed
+        # 5 s after the round has no end
+        count = lambda kind: sum(int(p.read_text()) for p in (out / "hsa").glob(f"kernels-*.{kind}"))
+        if count("skipped") > 0.01 * len(found):
+            raise RuntimeError(f"{count('skipped')} of {len(found) + count('skipped')} kernels carried their own completion signal and were not timed")
+        if count("unfinished") > 0.01 * len(found):
+            raise RuntimeError(f"{count('unfinished')} kernels of the round had not completed 5 s after it")
         return found
