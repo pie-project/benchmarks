@@ -14,15 +14,26 @@ from pie_bench import __version__
 from pie_bench.schema import Provenance
 
 ENV_PREFIXES = ("NCCL_", "PIE_", "VLLM_", "SGLANG_", "TLLM_", "TRTLLM_")
-ENV_EXACT = ("LD_LIBRARY_PATH", "CUDA_VISIBLE_DEVICES", "HF_HUB_CACHE", "HF_HOME", "CUDA_HOME",
-             "TORCH_CUDA_ARCH_LIST", "OMP_NUM_THREADS", "METAL_DEVICE_WRAPPER_TYPE", "MTL_DEBUG_LAYER")
+ENV_EXACT = (
+    "LD_LIBRARY_PATH",
+    "CUDA_VISIBLE_DEVICES",
+    "HF_HUB_CACHE",
+    "HF_HOME",
+    "CUDA_HOME",
+    "TORCH_CUDA_ARCH_LIST",
+    "OMP_NUM_THREADS",
+    "METAL_DEVICE_WRAPPER_TYPE",
+    "MTL_DEBUG_LAYER",
+)
 
 
 def _run(argv: list[str], timeout: float = 30.0, cwd: str | Path | None = None) -> str | None:
     if shutil.which(argv[0]) is None:
         return None
     try:
-        p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, cwd=cwd, check=False)
+        p = subprocess.run(
+            argv, capture_output=True, text=True, timeout=timeout, cwd=cwd, check=False
+        )
     except (OSError, subprocess.TimeoutExpired):
         return None
     return p.stdout if p.returncode == 0 else None
@@ -49,15 +60,27 @@ def gpu_links(topo: str) -> str:
 
 def _linux_fingerprint() -> dict[str, Any]:
     fp: dict[str, Any] = {"os": "linux", "arch": platform.machine()}
-    out = _run(["nvidia-smi", "--query-gpu=name,uuid,driver_version,vbios_version,memory.total",
-                "--format=csv,noheader,nounits"])
+    out = _run(
+        [
+            "nvidia-smi",
+            "--query-gpu=name,uuid,driver_version,vbios_version,memory.total",
+            "--format=csv,noheader,nounits",
+        ]
+    )
     gpus: list[dict[str, str]] = []
     if out:
         for line in out.strip().splitlines():
             parts = [x.strip() for x in line.split(",")]
             if len(parts) >= 5:
-                gpus.append({"name": parts[0], "uuid": parts[1], "driver": parts[2],
-                             "vbios": parts[3], "memory_mib": parts[4]})
+                gpus.append(
+                    {
+                        "name": parts[0],
+                        "uuid": parts[1],
+                        "driver": parts[2],
+                        "vbios": parts[3],
+                        "memory_mib": parts[4],
+                    }
+                )
     fp["gpus"] = gpus
     if gpus:
         fp["gpu_name"] = gpus[0]["name"]
@@ -98,10 +121,14 @@ def _mac_fingerprint() -> dict[str, Any]:
     if prof:
         for line in prof.splitlines():
             s = line.strip()
-            for key, label in (("chip", "Chip:"), ("cores", "Total Number of Cores:"),
-                               ("model", "Model Identifier:"), ("memory", "Memory:")):
+            for key, label in (
+                ("chip", "Chip:"),
+                ("cores", "Total Number of Cores:"),
+                ("model", "Model Identifier:"),
+                ("memory", "Memory:"),
+            ):
                 if s.startswith(label):
-                    fp[key] = s[len(label):].strip()
+                    fp[key] = s[len(label) :].strip()
     gpu = _run(["system_profiler", "SPDisplaysDataType"], timeout=60)
     if gpu:
         m = re.search(r"Total Number of Cores:\s*(\d+)", gpu)
@@ -144,7 +171,11 @@ def versions() -> dict[str, Any]:
 
 
 def harness_commit(path: str | Path | None) -> str:
-    return (git_commit(path) if path else None) or os.environ.get("PIE_BENCH_HARNESS_COMMIT") or f"pie-bench-{__version__}"
+    return (
+        (git_commit(path) if path else None)
+        or os.environ.get("PIE_BENCH_HARNESS_COMMIT")
+        or f"pie-bench-{__version__}"
+    )
 
 
 def git_commit(path: str | Path) -> str | None:
@@ -193,7 +224,9 @@ def quant_block_hash(snapshot_dir: str | Path) -> str | None:
     block = quant_block(snapshot_dir)
     if block is None:
         return None
-    return hashlib.sha256(json.dumps(block, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(block, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 def relevant_env(environ: dict[str, str] | None = None) -> dict[str, str]:

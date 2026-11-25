@@ -8,7 +8,6 @@ from pathlib import Path
 
 @contextmanager
 def span(out: Path):
-    """Writes when a recording started and stopped (span.json), for the measured windows to be checked against."""
     start = time.time_ns()
     try:
         yield

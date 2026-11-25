@@ -42,7 +42,9 @@ def gpu_memory_used_mib() -> list[float] | None:
     return vals
 
 
-def await_free_gpu(threshold_mib: float = 1500, timeout_s: float = 180, poll_s: float = 2.0) -> float:
+def await_free_gpu(
+    threshold_mib: float = 1500, timeout_s: float = 180, poll_s: float = 2.0
+) -> float:
     t0 = time.monotonic()
     last: list[float] | None = None
     while True:
@@ -56,19 +58,31 @@ def await_free_gpu(threshold_mib: float = 1500, timeout_s: float = 180, poll_s: 
         time.sleep(poll_s)
 
 
-WINDOWS_DESKTOP = ("c:\\windows\\", "c:\\program files\\windowsapps\\", "c:\\program files (x86)\\microsoft\\")
+WINDOWS_DESKTOP = (
+    "c:\\windows\\",
+    "c:\\program files\\windowsapps\\",
+    "c:\\program files (x86)\\microsoft\\",
+)
 
 
 def gpu_processes() -> list[dict[str, str]]:
-    out = _run(["nvidia-smi", "--query-compute-apps=pid,process_name,used_memory", "--format=csv,noheader,nounits"])
+    out = _run(
+        [
+            "nvidia-smi",
+            "--query-compute-apps=pid,process_name,used_memory",
+            "--format=csv,noheader,nounits",
+        ]
+    )
     if not out:
         return []
     procs = []
     for line in out.strip().splitlines():
         parts = [x.strip() for x in line.split(",")]
         if len(parts) >= 2:
-            procs.append({"pid": parts[0], "name": parts[1], "used_mib": parts[2] if len(parts) > 2 else ""})
-    if sys.platform == "win32":  # the Windows desktop (shell, compositor, Edge views) keeps GPU contexts that come and go
+            procs.append(
+                {"pid": parts[0], "name": parts[1], "used_mib": parts[2] if len(parts) > 2 else ""}
+            )
+    if sys.platform == "win32":
         procs = [p for p in procs if not p["name"].lower().startswith(WINDOWS_DESKTOP)]
     return procs
 
@@ -125,7 +139,9 @@ def _proc_basename(pid: int) -> str | None:
         return None
 
 
-def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: float = 180, any_holder: bool = False) -> dict[str, Any]:
+def kill_leftovers(
+    names: list[str], threshold_mib: float = 1500, timeout_s: float = 180, any_holder: bool = False
+) -> dict[str, Any]:
     wanted = {n.strip() for n in names if n and n.strip()}
     protected = _ancestors()
     killed: list[dict[str, Any]] = []
@@ -141,7 +157,9 @@ def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: flo
                 continue
             if pid in protected:
                 continue
-            base = _proc_basename(pid) or os.path.basename(p.get("name", "").replace("\\", "/")).removesuffix(".exe")
+            base = _proc_basename(pid) or os.path.basename(
+                p.get("name", "").replace("\\", "/")
+            ).removesuffix(".exe")
             if any_holder or base in wanted or os.path.basename(p.get("name", "")) in wanted:
                 targets.append(pid)
                 killed.append({"pid": pid, "name": base, "used_mib": p.get("used_mib", "")})
@@ -163,15 +181,29 @@ def kill_leftovers(names: list[str], threshold_mib: float = 1500, timeout_s: flo
 
 def linux_machine_state() -> dict[str, Any]:
     state: dict[str, Any] = {"os": "linux"}
-    out = _run(["nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,clocks.sm,clocks.mem,power.draw,power.limit,temperature.gpu,clocks_throttle_reasons.active",
-                "--format=csv,noheader,nounits"])
+    out = _run(
+        [
+            "nvidia-smi",
+            "--query-gpu=name,driver_version,memory.total,memory.used,clocks.sm,clocks.mem,power.draw,power.limit,temperature.gpu,clocks_throttle_reasons.active",
+            "--format=csv,noheader,nounits",
+        ]
+    )
     if out:
         gpus = []
         for line in out.strip().splitlines():
             parts = [x.strip() for x in line.split(",")]
             if len(parts) >= 4:
-                g = {"name": parts[0], "driver": parts[1], "memory_total_mib": parts[2], "memory_used_mib": parts[3]}
-                for k, v in zip(("sm_mhz", "mem_mhz", "power_w", "power_limit_w", "temp_c", "throttle_reasons"), parts[4:10], strict=False):
+                g = {
+                    "name": parts[0],
+                    "driver": parts[1],
+                    "memory_total_mib": parts[2],
+                    "memory_used_mib": parts[3],
+                }
+                for k, v in zip(
+                    ("sm_mhz", "mem_mhz", "power_w", "power_limit_w", "temp_c", "throttle_reasons"),
+                    parts[4:10],
+                    strict=False,
+                ):
                     g[k] = v
                 gpus.append(g)
         state["gpus"] = gpus
@@ -180,10 +212,14 @@ def linux_machine_state() -> dict[str, Any]:
     procs = [p for p in gpu_processes() if p["pid"] != str(os.getpid())]
     state["gpu_process_count"] = str(len(procs))
     state["gpu_processes"] = [p["name"] for p in procs][:20]
-    state["cpu_count"] = str(len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count())
+    state["cpu_count"] = str(
+        len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count()
+    )
     try:
         with open("/proc/cpuinfo") as f:
-            state["cpu_model"] = next((ln.split(":", 1)[1].strip() for ln in f if ln.startswith("model name")), "")
+            state["cpu_model"] = next(
+                (ln.split(":", 1)[1].strip() for ln in f if ln.startswith("model name")), ""
+            )
     except OSError:
         pass
     if len(state.get("gpus", [])) > 1 and (topo := _run(["nvidia-smi", "topo", "-m"])):
@@ -200,7 +236,11 @@ def linux_machine_state() -> dict[str, Any]:
 
 def engine_processes(exclude: set[int] | None = None) -> list[str]:
     out = _run(["ps", "-axo", "pid=,comm="]) or ""
-    args = {ln.strip().split(None, 1)[0]: ln.strip().split(None, 1)[1] for ln in (_run(["ps", "-axo", "pid=,args="]) or "").splitlines() if len(ln.strip().split(None, 1)) == 2}
+    args = {
+        ln.strip().split(None, 1)[0]: ln.strip().split(None, 1)[1]
+        for ln in (_run(["ps", "-axo", "pid=,args="]) or "").splitlines()
+        if len(ln.strip().split(None, 1)) == 2
+    }
     found = []
     skip = exclude or set()
     for line in out.splitlines():
@@ -296,15 +336,23 @@ def mac_thermal_state() -> str | None:
         objc.objc_getClass.argtypes = [ctypes.c_char_p]
         objc.sel_registerName.restype = ctypes.c_void_p
         objc.sel_registerName.argtypes = [ctypes.c_char_p]
-        obj = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)(("objc_msgSend", objc))
-        num = ctypes.CFUNCTYPE(ctypes.c_long, ctypes.c_void_p, ctypes.c_void_p)(("objc_msgSend", objc))
+        obj = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)(
+            ("objc_msgSend", objc)
+        )
+        num = ctypes.CFUNCTYPE(ctypes.c_long, ctypes.c_void_p, ctypes.c_void_p)(
+            ("objc_msgSend", objc)
+        )
         info = obj(objc.objc_getClass(b"NSProcessInfo"), objc.sel_registerName(b"processInfo"))
-        return ("nominal", "fair", "serious", "critical")[num(info, objc.sel_registerName(b"thermalState"))]
+        return ("nominal", "fair", "serious", "critical")[
+            num(info, objc.sel_registerName(b"thermalState"))
+        ]
     except Exception:
         return None
 
 
-def settle_mac(idle_s: float = 60, nominal_timeout_s: float = 600, poll_s: float = 10) -> dict[str, Any]:
+def settle_mac(
+    idle_s: float = 60, nominal_timeout_s: float = 600, poll_s: float = 10
+) -> dict[str, Any]:
     t0 = time.monotonic()
     before = mac_thermal_state()
     time.sleep(idle_s)
@@ -312,7 +360,11 @@ def settle_mac(idle_s: float = 60, nominal_timeout_s: float = 600, poll_s: float
     while state not in (None, "nominal") and time.monotonic() - t0 < nominal_timeout_s:
         time.sleep(poll_s)
         state = mac_thermal_state()
-    return {"thermal_state_before_settle": before, "thermal_state": state, "settle_s": round(time.monotonic() - t0)}
+    return {
+        "thermal_state_before_settle": before,
+        "thermal_state": state,
+        "settle_s": round(time.monotonic() - t0),
+    }
 
 
 def mac_gpu_utilization() -> int | None:
@@ -321,7 +373,9 @@ def mac_gpu_utilization() -> int | None:
     return int(m.group(1)) if m else None
 
 
-def await_idle_mac_gpu(max_util: int = 5, quiet_s: float = 10, timeout_s: float = 1800, poll_s: float = 1) -> dict[str, Any]:
+def await_idle_mac_gpu(
+    max_util: int = 5, quiet_s: float = 10, timeout_s: float = 1800, poll_s: float = 1
+) -> dict[str, Any]:
     t0 = time.monotonic()
     first = mac_gpu_utilization()
     if first is None:
@@ -337,7 +391,10 @@ def await_idle_mac_gpu(max_util: int = 5, quiet_s: float = 10, timeout_s: float 
         else:
             quiet_since = None
         if now - t0 > timeout_s:
-            return {"gpu_util_before_cell": first, "gpu_busy_error": f"GPU still {util}% busy after {timeout_s:.0f}s: another workload shares it"}
+            return {
+                "gpu_util_before_cell": first,
+                "gpu_busy_error": f"GPU still {util}% busy after {timeout_s:.0f}s: another workload shares it",
+            }
         time.sleep(poll_s)
 
 
@@ -350,28 +407,31 @@ def mac_thermal_changed(before: dict[str, Any], after: dict[str, Any]) -> bool:
     return False
 
 
-def _is_mac(platform_os: str | None) -> bool:
+def is_mac(platform_os: str | None) -> bool:
     if platform_os is None:
         return platform.system() == "Darwin"
     return str(platform_os).lower() in ("macos", "darwin", "mac")
 
 
 def machine_state(platform_os: str | None = None) -> dict[str, Any]:
-    return mac_machine_state() if _is_mac(platform_os) else linux_machine_state()
+    return mac_machine_state() if is_mac(platform_os) else linux_machine_state()
 
 
 class Preflight:
-
     def __init__(self, gpu_threshold_mib: float = 1500, gpu_timeout_s: float = 180):
         self.gpu_threshold_mib = gpu_threshold_mib
         self.gpu_timeout_s = gpu_timeout_s
 
     def before_job(self, platform_os: str | None = None) -> dict[str, Any]:
         state = machine_state(platform_os)
-        if not _is_mac(platform_os):
+        if not is_mac(platform_os):
             try:
                 if os.environ.get("RUNPOD_POD_ID"):
-                    state.update(kill_leftovers([], self.gpu_threshold_mib, self.gpu_timeout_s, any_holder=True))
+                    state.update(
+                        kill_leftovers(
+                            [], self.gpu_threshold_mib, self.gpu_timeout_s, any_holder=True
+                        )
+                    )
                 else:
                     state["gpu_drain_wait_s"] = round(
                         await_free_gpu(self.gpu_threshold_mib, self.gpu_timeout_s), 2
@@ -381,17 +441,25 @@ class Preflight:
         return state
 
     def before_cell(self, platform_os: str | None) -> dict[str, Any]:
-        return await_idle_mac_gpu() if _is_mac(platform_os) and os.environ.get("PIE_BENCH_GPU_IDLE", "1") != "0" else {}
+        return (
+            await_idle_mac_gpu()
+            if is_mac(platform_os) and os.environ.get("PIE_BENCH_GPU_IDLE", "1") != "0"
+            else {}
+        )
 
     def settle(self, platform_os: str | None) -> dict[str, Any]:
-        return settle_mac() if _is_mac(platform_os) else {}
+        return settle_mac() if is_mac(platform_os) else {}
 
     def between_engines(self, platform_os: str | None, leftover_names: list[str]) -> dict[str, Any]:
         state: dict[str, Any] = {}
-        if not _is_mac(platform_os):
+        if not is_mac(platform_os):
             try:
                 pod = bool(os.environ.get("RUNPOD_POD_ID"))
-                state.update(kill_leftovers(leftover_names, self.gpu_threshold_mib, self.gpu_timeout_s, any_holder=pod))
+                state.update(
+                    kill_leftovers(
+                        leftover_names, self.gpu_threshold_mib, self.gpu_timeout_s, any_holder=pod
+                    )
+                )
             except TimeoutError as e:
                 state["gpu_drain_error"] = str(e)
         state.update(machine_state(platform_os))
@@ -400,7 +468,7 @@ class Preflight:
     def after_model(self, platform_os: str | None, before_state: dict[str, Any]) -> list[str]:
         reasons: list[str] = []
         after = machine_state(platform_os)
-        if _is_mac(platform_os):
+        if is_mac(platform_os):
             if mac_thermal_changed(before_state, after):
                 reasons.append(
                     f"thermal state changed during model: {before_state.get('thermal_warning')}"
@@ -408,26 +476,36 @@ class Preflight:
                     f"(speed limit {before_state.get('cpu_speed_limit')}->{after.get('cpu_speed_limit')})"
                 )
             if before_state.get("power_source") != after.get("power_source"):
-                reasons.append(f"power source changed: {before_state.get('power_source')}->{after.get('power_source')}")
+                reasons.append(
+                    f"power source changed: {before_state.get('power_source')}->{after.get('power_source')}"
+                )
             if after.get("power_source") == "battery":
                 reasons.append("running on battery")
             if after.get("low_power_mode") == "on":
                 reasons.append("low power mode on")
             if before_state.get("displays") != after.get("displays"):
-                reasons.append(f"display count changed: {before_state.get('displays')}->{after.get('displays')}")
+                reasons.append(
+                    f"display count changed: {before_state.get('displays')}->{after.get('displays')}"
+                )
             before = set(before_state.get("engine_processes") or [])
             new = sorted(set(after.get("engine_processes") or []) - before)
             if new:
-                reasons.append(f"another inference engine started during the model: {', '.join(new)}")
+                reasons.append(
+                    f"another inference engine started during the model: {', '.join(new)}"
+                )
             if stale := sorted(before):
                 reasons.append(f"another inference engine was already running: {', '.join(stale)}")
         else:
             if before_state.get("gpu_drain_error"):
-                reasons.append("GPU was not drained before the model: " + str(before_state["gpu_drain_error"]))
+                reasons.append(
+                    "GPU was not drained before the model: " + str(before_state["gpu_drain_error"])
+                )
             b = int(before_state.get("gpu_process_count") or 0)
             a = int(after.get("gpu_process_count") or 0)
             if a > b:
-                reasons.append(f"other GPU processes appeared during model: {b}->{a} ({after.get('gpu_processes')})")
+                reasons.append(
+                    f"other GPU processes appeared during model: {b}->{a} ({after.get('gpu_processes')})"
+                )
         return reasons
 
 

@@ -40,7 +40,9 @@ class ServedEngine(Engine):
         self.load_s: float | None = None
         self.drafting = False
         existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
-        self.env["PYTHONPATH"] = os.pathsep.join([str(bench_dir())] + ([existing] if existing else []))
+        self.env["PYTHONPATH"] = os.pathsep.join(
+            [str(bench_dir())] + ([existing] if existing else [])
+        )
 
     @abstractmethod
     def server_cmd(self, port: int, slots: int, context: int) -> list[str]:
@@ -77,7 +79,12 @@ class ServedEngine(Engine):
 
     def engine_args(self, workload: WorkloadSpec) -> list[str]:
         r = self.recipe
-        args = ["--url", self.server_url or "http://127.0.0.1:8000", "--engine-name", str(self.name)]
+        args = [
+            "--url",
+            self.server_url or "http://127.0.0.1:8000",
+            "--engine-name",
+            str(self.name),
+        ]
         if self.api_model():
             args += ["--api-model", self.api_model()]
         if self.chat:
@@ -111,8 +118,12 @@ class ServedEngine(Engine):
         added = json.loads(path.read_text()).get("added_tokens") or []
         return {str(t["id"]): -100.0 for t in added if "id" in t}
 
-    def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
-        argv = [a for a in super().build_argv(workload, common_args, json_out) if a != "--ignore-eos"]
+    def build_argv(
+        self, workload: WorkloadSpec, common_args: list[str], json_out: Path
+    ) -> list[str]:
+        argv = [
+            a for a in super().build_argv(workload, common_args, json_out) if a != "--ignore-eos"
+        ]
         return argv + (["--ignore-eos"] if self.exact_length else ["--no-ignore-eos"])
 
     def server_env(self) -> dict[str, str]:
@@ -132,15 +143,23 @@ class ServedEngine(Engine):
         with open(log_path, "w") as log:
             log.write(" ".join(cmd) + "\n")
             log.flush()
-            proc = subprocess.Popen([sys.executable, "-m", "pie_bench.engines.lifeline", *cmd],
-                                    env=self.process_env(self.server_env()), stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT)
+            proc = subprocess.Popen(
+                [sys.executable, "-m", "pie_bench.engines.lifeline", *cmd],
+                env=self.process_env(self.server_env()),
+                stdin=subprocess.PIPE,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+            )
         self._server_proc = proc
         deadline = t0 + min(timeout_s, int(self.recipe.get("startup_timeout") or timeout_s))
         while time.monotonic() < deadline:
             if proc.poll() is not None:
                 self._server_proc = None
                 tail = log_path.read_text(errors="replace").strip().splitlines()[-5:]
-                raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"{self.name} server exited during startup: " + " | ".join(tail)[:500])
+                raise EngineLaunchError(
+                    ErrorClass.LOAD_FAIL,
+                    f"{self.name} server exited during startup: " + " | ".join(tail)[:500],
+                )
             try:
                 with urllib.request.urlopen(url + self.health_path, timeout=5) as resp:
                     resp.read()
@@ -149,7 +168,10 @@ class ServedEngine(Engine):
             except OSError:
                 time.sleep(0.05)
         self.stop()
-        raise EngineLaunchError(ErrorClass.HANG, f"{self.name} server did not answer {self.health_path} in time (see {log_path})")
+        raise EngineLaunchError(
+            ErrorClass.HANG,
+            f"{self.name} server did not answer {self.health_path} in time (see {log_path})",
+        )
 
     def stop(self) -> None:
         super().stop()
@@ -160,7 +182,10 @@ class ServedEngine(Engine):
 
     def run(self, workload: WorkloadSpec, common_args: list[str], out_dir: Path, timeout_s: int):
         if self._server_proc is not None and self.drafting != self.speculates(workload):
-            raise EngineLaunchError(ErrorClass.HARNESS_INVALID, f"{self.name} server {'drafts' if self.drafting else 'does not draft'} but {workload.id} {'does not speculate' if self.drafting else 'speculates'}")
+            raise EngineLaunchError(
+                ErrorClass.HARNESS_INVALID,
+                f"{self.name} server {'drafts' if self.drafting else 'does not draft'} but {workload.id} {'does not speculate' if self.drafting else 'speculates'}",
+            )
         return super().run(workload, common_args, out_dir, timeout_s)
 
     def counters_from_summary(self, summary: dict[str, Any]) -> dict[str, float]:

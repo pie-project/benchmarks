@@ -19,18 +19,28 @@ from pie_bench.engines.shapes import (
     context_tokens_for,
     max_model_len_for,
 )
-from pie_bench.installers.bench_env import bench_dir
+from pie_bench.installers.bench_env import bench_dir, cache_root
 from pie_bench.paths import CLIENTS
 from pie_bench.schema import Backend, EngineName, ErrorClass, WorkloadKind, WorkloadSpec
 
-_NCCL_SONAMES = ("libnccl.so", "libnccl.so.13", "libnccl.so.12", "libnccl.so.11", "libnccl.so.10", "libnccl.so.9", "libnccl.so.1")
+_NCCL_SONAMES = (
+    "libnccl.so",
+    "libnccl.so.13",
+    "libnccl.so.12",
+    "libnccl.so.11",
+    "libnccl.so.10",
+    "libnccl.so.9",
+    "libnccl.so.1",
+)
 
 
-def nccl_shim_dir(root: Path | None = None) -> Path | None:
+def nccl_shim_dir() -> Path | None:
     if sys.platform != "linux":
         return None
     try:
-        out = subprocess.run(["ldconfig", "-p"], capture_output=True, text=True, timeout=30, check=False).stdout
+        out = subprocess.run(
+            ["ldconfig", "-p"], capture_output=True, text=True, timeout=30, check=False
+        ).stdout
     except OSError:
         return None
     found: dict[str, str] = {}
@@ -41,9 +51,7 @@ def nccl_shim_dir(root: Path | None = None) -> Path | None:
         found[name.split(" ")[0]] = path.strip()
     if any(n in found for n in _NCCL_SONAMES) or "libnccl.so.2" not in found:
         return None
-    from pie_bench.installers.baselines import cache_root
-
-    d = cache_root(root) / "lib"
+    d = cache_root() / "lib"
     d.mkdir(parents=True, exist_ok=True)
     link = d / "libnccl.so"
     target = Path(found["libnccl.so.2"])
@@ -146,7 +154,9 @@ class PieEngine(Engine):
     def __init__(self, *args: Any, program_path: str | None = None, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self._program_path = ""
-        self.program_path = program_path or self.recipe.get("program_path") or self.DEFAULT_PROGRAM_PATH
+        self.program_path = (
+            program_path or self.recipe.get("program_path") or self.DEFAULT_PROGRAM_PATH
+        )
         sdk_paths = [
             str(self.pie_root / "python" / "client" / "src"),
             str(self.pie_root / "python" / "server" / "python"),
@@ -189,7 +199,9 @@ class PieEngine(Engine):
     def model_arg(self) -> str:
         return str(self.recipe.get("snapshot_dir") or self.artifact.base_model)
 
-    def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
+    def build_argv(
+        self, workload: WorkloadSpec, common_args: list[str], json_out: Path
+    ) -> list[str]:
         argv = super().build_argv(workload, common_args, json_out)
         plain = self.recipe.get("plain_snapshot_dir")
         if plain and self.pie_engine_name() != "cuda_native" and not self.speculates(workload):
@@ -225,9 +237,15 @@ class PieEngine(Engine):
         r = self.recipe
         engine = self.pie_engine_name()
         spec = self.speculates(workload)
-        inferlet = self.pie_root / "examples/dflash-speculative-bench" if spec else self.inferlet_dir
+        inferlet = (
+            self.pie_root / "examples/dflash-speculative-bench" if spec else self.inferlet_dir
+        )
         self.env["PIE_BENCH_INFERLET_DIR"] = str(inferlet)
-        cli = "cuda" if engine == "cuda_native" and '"cuda_native"' not in self.script_path().read_text() else engine
+        cli = (
+            "cuda"
+            if engine == "cuda_native" and '"cuda_native"' not in self.script_path().read_text()
+            else engine
+        )
         args: list[str] = ["--engine", cli, "--inferlet-dir", str(inferlet)]
         if not spec:
             args += ["--no-system-speculation"]
@@ -250,7 +268,10 @@ class PieEngine(Engine):
 
         args += ["--max-model-len", str(max_model_len_for(workload))]
         if self.platform.backend == Backend.XLA and self._pie_has("pub seat_tokens"):
-            args += ["--engine-option", f"seat_tokens={context_tokens_for(workload) + CHAT_TEMPLATE_MARGIN_TOKENS}"]
+            args += [
+                "--engine-option",
+                f"seat_tokens={context_tokens_for(workload) + CHAT_TEMPLATE_MARGIN_TOKENS}",
+            ]
 
         bytes_pool = self._bench_has("--device-kv-budget")
         gmu = r.get("gpu_mem_util", 0.90)
@@ -268,15 +289,30 @@ class PieEngine(Engine):
                 v = None
             elif knob == "total_pages" and self.platform.backend == Backend.METAL:
                 v = metal_total_pages(v, max_model_len_for(workload))
-            elif knob == "max_forward_tokens" and v is None and self.platform.backend == Backend.METAL and 0 < float(self.platform.memory_gib or 0) <= SMALL_MAC_GIB:
+            elif (
+                knob == "max_forward_tokens"
+                and v is None
+                and self.platform.backend == Backend.METAL
+                and 0 < float(self.platform.memory_gib or 0) <= SMALL_MAC_GIB
+            ):
                 v = SMALL_MAC_FORWARD_TOKENS
-            elif knob == "max_forward_tokens" and v is None and self.platform.backend == Backend.CUDA and self.artifact.family == "nemotron_h" and 0 < float(self.platform.memory_gib or 0) <= 32:
+            elif (
+                knob == "max_forward_tokens"
+                and v is None
+                and self.platform.backend == Backend.CUDA
+                and self.artifact.family == "nemotron_h"
+                and 0 < float(self.platform.memory_gib or 0) <= 32
+            ):
                 v = 2048
             elif v == "$serve_concurrency":
                 from pie_bench.engines.shapes import workload_concurrency
 
                 v = workload_concurrency(workload)
-            elif knob == "max_forward_requests" and v is not None and self.platform.backend == Backend.CUDA:
+            elif (
+                knob == "max_forward_requests"
+                and v is not None
+                and self.platform.backend == Backend.CUDA
+            ):
                 from pie_bench.engines.shapes import workload_concurrency
 
                 v = min(int(v), workload_concurrency(workload))
@@ -314,7 +350,10 @@ class PieEngine(Engine):
         try:
             out = subprocess.run(
                 ["git", "-C", str(self.pie_root), "rev-parse", "--short", "HEAD"],
-                capture_output=True, text=True, timeout=10, check=True,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=True,
             ).stdout.strip()
             return out or "unknown"
         except Exception:
@@ -339,13 +378,17 @@ class PieEngine(Engine):
             if isinstance(wall_s, (int, float)) and wall_s > 0:
                 out["device_idle_pct"] = 100.0 * idle_us / (float(wall_s) * 1e6)
 
-        cum_batch_us = _num(cfg, "cumulative_batch_latency_us", "default.cumulative_batch_latency_us")
+        cum_batch_us = _num(
+            cfg, "cumulative_batch_latency_us", "default.cumulative_batch_latency_us"
+        )
         avg_batch_us = _num(cfg, "avg batch latency us", "default.avg_batch_latency_us")
         if avg_batch_us is None and cum_batch_us is not None and batches:
             avg_batch_us = cum_batch_us / batches
         if avg_batch_us is not None:
             out["batch_latency_us"] = avg_batch_us
-        engine_fire_us = _num(cfg, "fire.execute.engine_fire_us", "default.fire.execute.engine_fire_us")
+        engine_fire_us = _num(
+            cfg, "fire.execute.engine_fire_us", "default.fire.execute.engine_fire_us"
+        )
         if engine_fire_us is None:
             fire_sum = _num(cfg, "default.fire.execute.engine_fire_us_sum")
             if fire_sum is not None and batches:
@@ -395,8 +438,13 @@ class PieEngine(Engine):
         env.pop("PIE_BENCH_SERVER_URL", None)
         log = log_path.open("w", encoding="utf-8")
         proc = subprocess.Popen(
-            argv, cwd=str(bench_dir()), env=env,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1,
+            argv,
+            cwd=str(bench_dir()),
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
         lines: queue.Queue[str | None] = queue.Queue()
         announced = threading.Event()
@@ -417,7 +465,10 @@ class PieEngine(Engine):
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 self._kill(proc, log)
-                raise EngineLaunchError(ErrorClass.HANG, f"pie serve did not announce PIE_BENCH_SERVER_URL within {timeout_s}s")
+                raise EngineLaunchError(
+                    ErrorClass.HANG,
+                    f"pie serve did not announce PIE_BENCH_SERVER_URL within {timeout_s}s",
+                )
             try:
                 line = lines.get(timeout=min(remaining, 1.0))
             except queue.Empty:
@@ -437,7 +488,11 @@ class PieEngine(Engine):
                 return
 
     def watch_pids(self) -> list[int]:
-        return [self._server_proc.pid] if self._server_proc is not None and self._server_proc.poll() is None else []
+        return (
+            [self._server_proc.pid]
+            if self._server_proc is not None and self._server_proc.poll() is None
+            else []
+        )
 
     @staticmethod
     def _kill(proc: subprocess.Popen, log: Any) -> None:

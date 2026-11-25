@@ -140,4 +140,4 @@ EMSCRIPTEN_KEEPALIVE int lw_active() {
     return n;
 }
 
-}  // extern "C"
+}

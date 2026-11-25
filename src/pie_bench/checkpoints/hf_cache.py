@@ -4,13 +4,19 @@ import os
 from pathlib import Path
 
 
+def repo_cache_dirname(repo_id: str) -> str:
+    return "models--" + repo_id.replace("/", "--")
+
+
 def hf_cache_roots() -> list[Path]:
     roots: list[Path] = []
     if cache := os.environ.get("HF_HUB_CACHE"):
         roots.append(Path(cache).expanduser())
     if home := os.environ.get("HF_HOME"):
         roots.append(Path(home).expanduser() / "hub")
-    roots.append(Path(os.environ.get("XDG_CACHE_HOME", "~/.cache")).expanduser() / "huggingface" / "hub")
+    roots.append(
+        Path(os.environ.get("XDG_CACHE_HOME", "~/.cache")).expanduser() / "huggingface" / "hub"
+    )
     return roots
 
 
@@ -18,9 +24,8 @@ def hf_snapshot_dir(repo_id: str, revision: str | None = None) -> Path | None:
     candidate = Path(repo_id).expanduser()
     if candidate.exists():
         return candidate.resolve()
-    encoded = f"models--{repo_id.replace('/', '--')}"
     for root in hf_cache_roots():
-        repo = root / encoded
+        repo = root / repo_cache_dirname(repo_id)
         snapshots = repo / "snapshots"
         if not snapshots.is_dir():
             continue
@@ -32,7 +37,9 @@ def hf_snapshot_dir(repo_id: str, revision: str | None = None) -> Path | None:
                 rev = ref.read_text().strip()
                 if (snapshots / rev).is_dir():
                     return (snapshots / rev).resolve()
-        dirs = sorted((d for d in snapshots.iterdir() if d.is_dir()), key=lambda d: d.stat().st_mtime_ns)
+        dirs = sorted(
+            (d for d in snapshots.iterdir() if d.is_dir()), key=lambda d: d.stat().st_mtime_ns
+        )
         if dirs:
             return dirs[-1].resolve()
     return None
@@ -51,4 +58,11 @@ def hf_snapshot_file(repo_id: str, file_name: str, revision: str | None = None) 
 
 
 def hf_cache_dir() -> Path:
-    return Path(os.environ.get("HF_HUB_CACHE") or (Path(os.environ["HF_HOME"]) / "hub" if os.environ.get("HF_HOME") else Path.home() / ".cache/huggingface/hub"))
+    return Path(
+        os.environ.get("HF_HUB_CACHE")
+        or (
+            Path(os.environ["HF_HOME"]) / "hub"
+            if os.environ.get("HF_HOME")
+            else Path.home() / ".cache/huggingface/hub"
+        )
+    )

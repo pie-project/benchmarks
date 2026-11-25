@@ -13,7 +13,9 @@ def expected_requests(mode_args: list[str]) -> int | None:
     return None
 
 
-def round_problem(expected: int | None, rounds: list[Any], *, prompt_tolerance: float = 0.03) -> str | None:
+def round_problem(
+    expected: int | None, rounds: list[Any], *, prompt_tolerance: float = 0.03
+) -> str | None:
     for i, p in enumerate(rounds, 1):
         if p.failed:
             return f"round {i}: {p.failed} of {p.requests} requests failed"

@@ -25,7 +25,9 @@ class _NoPeerAllReduce:
         def patched(module):
             exec_module(module)
             setattr(module, attr, lambda rank, world_size: False)
-            sys.stderr.write(f"pie-bench: {name}.{attr} -> False (no GPU peer access); NCCL carries the all-reduce\n")
+            sys.stderr.write(
+                f"pie-bench: {name}.{attr} -> False (no GPU peer access); NCCL carries the all-reduce\n"
+            )
 
         spec.loader.exec_module = patched
         return spec

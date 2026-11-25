@@ -23,14 +23,23 @@ def win_processes() -> list[tuple[int, int, float, int]]:
     rows = []
     for p in psutil.process_iter(["pid", "ppid", "cpu_times", "memory_info"]):
         ct, mi = p.info.get("cpu_times"), p.info.get("memory_info")
-        rows.append((p.info["pid"], p.info.get("ppid") or 0, (ct.user + ct.system) if ct else 0.0, (mi.rss // 1024) if mi else 0))
+        rows.append(
+            (
+                p.info["pid"],
+                p.info.get("ppid") or 0,
+                (ct.user + ct.system) if ct else 0.0,
+                (mi.rss // 1024) if mi else 0,
+            )
+        )
     return rows
 
 
 def process_table() -> dict[int, tuple[int, float]]:
     if sys.platform == "win32":
         return {pid: (ppid, cpu) for pid, ppid, cpu, _ in win_processes()}
-    out = subprocess.run(["ps", "-axo", "pid=,ppid=,time="], capture_output=True, text=True, check=False).stdout
+    out = subprocess.run(
+        ["ps", "-axo", "pid=,ppid=,time="], capture_output=True, text=True, check=False
+    ).stdout
     table = {}
     for line in out.splitlines():
         parts = line.split()
@@ -40,6 +49,24 @@ def process_table() -> dict[int, tuple[int, float]]:
             except ValueError:
                 continue
     return table
+
+
+def memory_table() -> dict[int, tuple[int, int]]:
+    if sys.platform == "win32":
+        return {pid: (ppid, rss) for pid, ppid, _, rss in win_processes()}
+    try:
+        out = subprocess.run(
+            ["ps", "-axo", "pid=,ppid=,rss="], capture_output=True, text=True, timeout=10
+        ).stdout
+    except Exception:
+        return {}
+    rows = [line.split() for line in out.splitlines()]
+    return {int(pid): (int(ppid), int(rss)) for pid, ppid, rss in (r for r in rows if len(r) == 3)}
+
+
+def resident_kib(roots: list[int]) -> int:
+    table = memory_table()
+    return sum(table[pid][1] for pid in tree_pids(roots, table))
 
 
 def tree_pids(roots: list[int], table: dict[int, tuple[int, float]]) -> set[int]:
@@ -55,29 +82,60 @@ def tree_pids(roots: list[int], table: dict[int, tuple[int, float]]) -> set[int]
 def stall_dump(pids: list[int]) -> str:
     out = []
     if shutil.which("nvidia-smi"):
-        smi = subprocess.run(["nvidia-smi", "--query-gpu=index,utilization.gpu,memory.used", "--format=csv,noheader"],
-                             capture_output=True, text=True, check=False, timeout=30)
+        smi = subprocess.run(
+            [
+                "nvidia-smi",
+                "--query-gpu=index,utilization.gpu,memory.used",
+                "--format=csv,noheader",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=30,
+        )
         out.append("== nvidia-smi (index, util, mem)\n" + (smi.stdout or smi.stderr))
     gdb = shutil.which("gdb")
     for pid in pids:
         try:
-            cmd = Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ").decode(errors="replace")[:300]
+            cmd = (
+                Path(f"/proc/{pid}/cmdline")
+                .read_bytes()
+                .replace(b"\0", b" ")
+                .decode(errors="replace")[:300]
+            )
         except OSError:
             continue
         out.append(f"== pid {pid}: {cmd}")
         if gdb:
-            bt = subprocess.run([gdb, "-p", str(pid), "-batch", "-nx", "-ex", "set pagination off", "-ex", "thread apply all bt 30"],
-                                capture_output=True, text=True, check=False, timeout=120)
+            bt = subprocess.run(
+                [
+                    gdb,
+                    "-p",
+                    str(pid),
+                    "-batch",
+                    "-nx",
+                    "-ex",
+                    "set pagination off",
+                    "-ex",
+                    "thread apply all bt 30",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=120,
+            )
             if bt.returncode == 0 and "Thread" in bt.stdout:
                 out.append(bt.stdout)
                 continue
             out.append(f"(gdb could not attach: {bt.stderr.strip()[-200:]})")
         for task in sorted(Path(f"/proc/{pid}/task").glob("*")):
+
             def read(name: str, task: Path = task) -> str:
                 try:
                     return (task / name).read_text(errors="replace").strip()
                 except OSError:
                     return "?"
+
             out.append(f"-- tid {task.name} {read('comm')} wchan={read('wchan')}\n{read('stack')}")
     return "\n".join(out)
 
@@ -88,7 +146,10 @@ def jit_jobs() -> str:
         try:
             limit = open(path).read().split()
             if limit and limit[0] != "max":
-                jobs = min(jobs, max(1, int(limit[0]) // int(limit[1]) if per is None else int(limit[0]) // per))
+                jobs = min(
+                    jobs,
+                    max(1, int(limit[0]) // int(limit[1]) if per is None else int(limit[0]) // per),
+                )
         except (OSError, ValueError, IndexError):
             pass
     return str(jobs)
@@ -102,7 +163,15 @@ def mac_gpu_busy() -> bool:
     return (mac_gpu_utilization() or 0) > 5
 
 
-def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: float, extra_pids=lambda: [], poll_s: float = 5.0, on_stall=None, device_busy=mac_gpu_busy) -> tuple[int, bool, bool]:
+def wait_with_stall_check(
+    proc: subprocess.Popen,
+    timeout_s: float,
+    stall_s: float,
+    extra_pids=lambda: [],
+    poll_s: float = 5.0,
+    on_stall=None,
+    device_busy=mac_gpu_busy,
+) -> tuple[int, bool, bool]:
     start = last_work = time.monotonic()
     last_cpu = None
     while True:
@@ -113,7 +182,11 @@ def wait_with_stall_check(proc: subprocess.Popen, timeout_s: float, stall_s: flo
         now = time.monotonic()
         table = process_table()
         cpu = {p: table[p][1] for p in tree_pids([proc.pid, *extra_pids()], table)}
-        if last_cpu is None or any(c > last_cpu.get(p, 0.0) + 0.05 for p, c in cpu.items()) or device_busy():
+        if (
+            last_cpu is None
+            or any(c > last_cpu.get(p, 0.0) + 0.05 for p, c in cpu.items())
+            or device_busy()
+        ):
             last_work = now
         last_cpu = cpu
         timed_out, stalled = now - start > timeout_s, now - last_work > stall_s

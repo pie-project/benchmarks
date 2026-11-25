@@ -43,24 +43,42 @@ class SplashEngine(ServedEngine):
         extra = r.get("server_extra") or []
         if isinstance(extra, str):
             extra = extra.split()
-        cmd = [splash_bin(), "serve", "--model", self.artifact.base_model, "--host", "127.0.0.1", "--port", str(port), "--no-webui"]
+        cmd = [
+            splash_bin(),
+            "serve",
+            "--model",
+            self.artifact.base_model,
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(port),
+            "--no-webui",
+        ]
         if self.artifact.base_model.startswith(LOCAL_ORG) or self.artifact.gguf_file:
             snap = hf_snapshot_dir(self.artifact.base_model, self.artifact.revision)
             if snap is not None:
-                cmd += ["--model-dir", str(snap / self.artifact.gguf_file if self.artifact.gguf_file else snap)]
+                cmd += [
+                    "--model-dir",
+                    str(snap / self.artifact.gguf_file if self.artifact.gguf_file else snap),
+                ]
         if r.get("queue_size") is not None:
-            cmd += ["--queue-size", str(slots if r["queue_size"] == "$serve_concurrency" else r["queue_size"])]
+            cmd += [
+                "--queue-size",
+                str(slots if r["queue_size"] == "$serve_concurrency" else r["queue_size"]),
+            ]
         if r.get("max_context") is not None:
-            cmd += ["--max-context", str(context if r["max_context"] == "$serve_context" else r["max_context"])]
+            cmd += [
+                "--max-context",
+                str(context if r["max_context"] == "$serve_context" else r["max_context"]),
+            ]
         return cmd + [str(x) for x in extra]
 
     def version(self) -> str:
         try:
-            out = subprocess.run([splash_bin(), "--version"], capture_output=True, text=True, timeout=30, check=False)
+            out = subprocess.run(
+                [splash_bin(), "--version"], capture_output=True, text=True, timeout=30, check=False
+            )
         except OSError:
             return "unknown"
         found = re.findall(r"(\d+\.\d+(?:\.\d+)?)", (out.stdout or "") + (out.stderr or ""))
         return found[-1] if found else "unknown"
-
-    def leftover_process_names(self) -> list[str]:
-        return []

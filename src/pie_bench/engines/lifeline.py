@@ -10,7 +10,9 @@ def main() -> int:
 
     def stop(*_):
         if sys.platform == "win32":
-            subprocess.run(["taskkill", "/T", "/F", "/PID", str(child.pid)], capture_output=True, check=False)
+            subprocess.run(
+                ["taskkill", "/T", "/F", "/PID", str(child.pid)], capture_output=True, check=False
+            )
             return
         for sig, wait in ((signal.SIGTERM, 20), (signal.SIGKILL, 5)):
             try:

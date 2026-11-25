@@ -72,8 +72,15 @@ def run_t0(
         if (d >= len(eng) or d >= len(ref)) and not stops:
             gaps.append(float("nan"))
             benign.append(False)
-            detail.append({"prompt": i, "pos": d, "kind": "length_mismatch",
-                           "engine_len": len(eng), "reference_len": len(ref)})
+            detail.append(
+                {
+                    "prompt": i,
+                    "pos": d,
+                    "kind": "length_mismatch",
+                    "engine_len": len(eng),
+                    "reference_len": len(ref),
+                }
+            )
             continue
         prefix = list(prompt) + list(ref[:d])
         logits = np.asarray(teacher_forced_logits_fn(prefix))
@@ -85,8 +92,16 @@ def run_t0(
         gap, ok = adjudicate_divergence(logits[-1], eng_tok, ref_tok, ulp=ulp)
         gaps.append(gap)
         benign.append(ok)
-        detail.append({"prompt": i, "pos": d, "engine_tok": eng_tok,
-                       "reference_tok": ref_tok, "gap": gap, "benign": ok})
+        detail.append(
+            {
+                "prompt": i,
+                "pos": d,
+                "engine_tok": eng_tok,
+                "reference_tok": ref_tok,
+                "gap": gap,
+                "benign": ok,
+            }
+        )
     status = t0_verdict(divergences, gaps, benign)
     finite = [g for g in gaps if not math.isnan(g)]
     return AccuracyMetrics(
@@ -94,7 +109,9 @@ def run_t0(
         reference=reference,
         t0_first_divergence=divergences,
         t0_max_logit_gap=max(finite) if finite else None,
-        t0_benign=(all(benign) if benign else None) if any(d is not None for d in divergences) else True,
+        t0_benign=(all(benign) if benign else None)
+        if any(d is not None for d in divergences)
+        else True,
         detail={"t0": detail, "ulp": ulp},
     )
 
@@ -107,7 +124,7 @@ def _answer(ids: list[int], stops: Collection[int]) -> list[int]:
 BENCH_SYSTEM_DEFAULT = "You are a helpful benchmarking assistant."
 
 
-def bench_system_prompt(pie_root: str | Path) -> str:
+def bench_system_prompt() -> str:
     import re
 
     try:
@@ -149,7 +166,9 @@ def _tokenizer_eos(snap: Path) -> set[int]:
     return {int(t["id"]) for t in added if eos is not None and t.get("content") == eos}
 
 
-def render_like_bench(snapshot_dir: str | Path, system: str, prompt: str, enable_thinking: bool | None = False) -> list[int]:
+def render_like_bench(
+    snapshot_dir: str | Path, system: str, prompt: str, enable_thinking: bool | None = False
+) -> list[int]:
     from transformers import AutoTokenizer
 
     tok = AutoTokenizer.from_pretrained(str(snapshot_dir))
@@ -157,7 +176,9 @@ def render_like_bench(snapshot_dir: str | Path, system: str, prompt: str, enable
         extra = {} if enable_thinking is None else {"enable_thinking": enable_thinking}
         text = tok.apply_chat_template(
             [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-            tokenize=False, add_generation_prompt=True, **extra,
+            tokenize=False,
+            add_generation_prompt=True,
+            **extra,
         )
         return tok(text, add_special_tokens=False)["input_ids"]
     return tok(f"{system}\n\n{prompt}" if system else prompt)["input_ids"]
@@ -165,7 +186,6 @@ def render_like_bench(snapshot_dir: str | Path, system: str, prompt: str, enable
 
 @dataclass
 class T0Outputs:
-
     engine_ids: list[list[int]]
     prompt_ids: list[list[int]]
 
@@ -174,7 +194,6 @@ def t0_engine_outputs(
     engine: Any,
     snapshot_dir: str | Path,
     *,
-    pie_root: str | Path,
     out_dir: str | Path,
     max_new_tokens: int = 64,
     timeout_s: int = 900,
@@ -184,26 +203,53 @@ def t0_engine_outputs(
     from .prompts import t0_prompts
 
     out_dir = Path(out_dir)
-    system = bench_system_prompt(pie_root)
+    system = bench_system_prompt()
     prompts = t0_prompts()
     engine_ids: list[list[int]] = []
     prompt_ids: list[list[int]] = []
     reported_prompt_tokens: list[int] = []
-    wl = WorkloadSpec(id="t0", kind=WorkloadKind.SINGLE_STREAM, params={"requests": 1, "decode": max_new_tokens})
+    wl = WorkloadSpec(
+        id="t0", kind=WorkloadKind.SINGLE_STREAM, params={"requests": 1, "decode": max_new_tokens}
+    )
     for pid, text in prompts:
-        common = ["--prompt", text, "--max-tokens", str(max_new_tokens), "--temperature", "0", "--top-p", "1",
-                  "--ignore-eos", "--warmup", "0", "--no-think", "--no-unique-prompts"]
+        common = [
+            "--prompt",
+            text,
+            "--max-tokens",
+            str(max_new_tokens),
+            "--temperature",
+            "0",
+            "--top-p",
+            "1",
+            "--ignore-eos",
+            "--warmup",
+            "0",
+            "--no-think",
+            "--no-unique-prompts",
+        ]
         res = engine.run(wl, common, out_dir / pid, timeout_s)
         if not res.output_token_ids or not res.output_token_ids[0]:
-            return AccuracyMetrics(status=AccuracyStatus.SKIPPED_NO_REFERENCE, detail={"error": f"engine returned no token ids for {pid} (needs --dump-all-token-ids)"})
+            return AccuracyMetrics(
+                status=AccuracyStatus.SKIPPED_NO_REFERENCE,
+                detail={
+                    "error": f"engine returned no token ids for {pid} (needs --dump-all-token-ids)"
+                },
+            )
         engine_ids.append(list(res.output_token_ids[0]))
         reported_prompt_tokens.append(int(res.requests[0].get("prompt_tokens") or 0))
         prompt_ids.append(render_like_bench(snapshot_dir, system, text, enable_thinking=False))
-    mismatch = [(pid, len(p), n) for (pid, _), p, n in zip(prompts, prompt_ids, reported_prompt_tokens) if n != len(p)]
+    mismatch = [
+        (pid, len(p), n)
+        for (pid, _), p, n in zip(prompts, prompt_ids, reported_prompt_tokens)
+        if n != len(p)
+    ]
     if mismatch:
         return AccuracyMetrics(
             status=AccuracyStatus.SKIPPED_NO_REFERENCE,
-            detail={"error": "prompt token count differs between engine and reference rendering", "mismatch": mismatch},
+            detail={
+                "error": "prompt token count differs between engine and reference rendering",
+                "mismatch": mismatch,
+            },
         )
     return T0Outputs(engine_ids, prompt_ids)
 
@@ -233,6 +279,13 @@ def t0_judge(
 
     try:
         reference_ids = [cache.greedy(ref, revision, p, max_new_tokens) for p in outputs.prompt_ids]
-        return run_t0(outputs.engine_ids, reference_ids, tf, outputs.prompt_ids, reference=kind, stops=stop_ids(snapshot_dir))
+        return run_t0(
+            outputs.engine_ids,
+            reference_ids,
+            tf,
+            outputs.prompt_ids,
+            reference=kind,
+            stops=stop_ids(snapshot_dir),
+        )
     finally:
         ref.close()

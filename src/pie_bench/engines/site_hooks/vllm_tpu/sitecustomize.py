@@ -32,7 +32,13 @@ class _EngineArgsOverlay:
             def create_engine_config(self, *args, **kwargs):
                 for field, value in extra.items():
                     have = getattr(self, field, None)
-                    setattr(self, field, {**have, **value} if isinstance(have, dict) and isinstance(value, dict) else value)
+                    setattr(
+                        self,
+                        field,
+                        {**have, **value}
+                        if isinstance(have, dict) and isinstance(value, dict)
+                        else value,
+                    )
                 return create(self, *args, **kwargs)
 
             module.EngineArgs.create_engine_config = create_engine_config
@@ -76,28 +82,49 @@ class _XlaCsaGather:
             if name == _PROJ:
                 import jax
 
-                def proj_and_save_state(hidden_states, wkv_wgate, ape, positions, slot_mapping, cache, compress_ratio, interpret=False):
+                def proj_and_save_state(
+                    hidden_states,
+                    wkv_wgate,
+                    ape,
+                    positions,
+                    slot_mapping,
+                    cache,
+                    compress_ratio,
+                    interpret=False,
+                ):
                     num_pages, page_size, d1, d2 = cache.shape
                     state_dim = wkv_wgate.shape[1]
                     width = state_dim // 2
                     kv_score = jnp.matmul(hidden_states, wkv_wgate)
-                    packed = jnp.concatenate([kv_score[:, :width], kv_score[:, width:] + ape[jnp.mod(positions, compress_ratio)]], axis=-1)
+                    packed = jnp.concatenate(
+                        [
+                            kv_score[:, :width],
+                            kv_score[:, width:] + ape[jnp.mod(positions, compress_ratio)],
+                        ],
+                        axis=-1,
+                    )
                     per_slot = d1 * d2 // 4
                     spt = state_dim // per_slot
                     n = packed.shape[0]
-                    rows = jax.lax.bitcast_convert_type(packed.astype(jnp.float32).reshape(n, spt, per_slot, 1), jnp.uint8)
+                    rows = jax.lax.bitcast_convert_type(
+                        packed.astype(jnp.float32).reshape(n, spt, per_slot, 1), jnp.uint8
+                    )
                     rows = rows.reshape(n, spt, d2, d1).transpose(0, 1, 3, 2)
                     flat = cache.reshape(num_pages * (page_size // spt), spt, d1, d2)
                     idx = jnp.where(slot_mapping >= 0, slot_mapping // spt, flat.shape[0])
                     return flat.at[idx].set(rows, mode="drop").reshape(cache.shape)
 
                 module.proj_and_save_state = proj_and_save_state
-                sys.stderr.write("pie-bench: no SparseCore on this chip; DeepSeek-V4's proj_and_save_state runs as an XLA scatter of its reference\n")
+                sys.stderr.write(
+                    "pie-bench: no SparseCore on this chip; DeepSeek-V4's proj_and_save_state runs as an XLA scatter of its reference\n"
+                )
                 return
 
             def csa_gather(nope_cache, rope_cache, indices):
                 nope = jnp.take(nope_cache.reshape(-1, 4 * nope_cache.shape[3]), indices, axis=0)
-                rope = jnp.take(rope_cache.reshape(-1, rope_cache.shape[3]), indices, axis=0).astype(jnp.uint16)
+                rope = jnp.take(
+                    rope_cache.reshape(-1, rope_cache.shape[3]), indices, axis=0
+                ).astype(jnp.uint16)
                 half = rope.shape[1] // 2
                 bits = jnp.left_shift(rope[:, :half], 8) | rope[:, half:]
                 return nope, jax_bitcast(bits)
@@ -108,7 +135,9 @@ class _XlaCsaGather:
                 return jax.lax.bitcast_convert_type(bits, jnp.bfloat16)
 
             module.csa_gather = csa_gather
-            sys.stderr.write("pie-bench: no SparseCore on this chip; DeepSeek-V4's csa_gather runs as an XLA gather\n")
+            sys.stderr.write(
+                "pie-bench: no SparseCore on this chip; DeepSeek-V4's csa_gather runs as an XLA gather\n"
+            )
 
         spec.loader.exec_module = patched
         return spec
@@ -118,10 +147,13 @@ if os.environ.get("PIE_BENCH_TPU_XLA_CSA_GATHER") == "1":
     sys.meta_path.insert(0, _XlaCsaGather())
 
 
-# under the profiler, its jax_site sitecustomize further down the path still runs
 _here = os.path.dirname(os.path.abspath(__file__))
 _paths = [os.path.abspath(p or ".") for p in sys.path]
-for _entry in sys.path[_paths.index(_here) + 1:] if os.environ.get("PIE_BENCH_JAX_TRACE_DIR") and _here in _paths else []:
+for _entry in (
+    sys.path[_paths.index(_here) + 1 :]
+    if os.environ.get("PIE_BENCH_JAX_TRACE_DIR") and _here in _paths
+    else []
+):
     _spec = importlib.machinery.PathFinder.find_spec("sitecustomize", [_entry])
     if _spec is not None:
         _spec.loader.exec_module(importlib.util.module_from_spec(_spec))

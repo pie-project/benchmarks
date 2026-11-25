@@ -33,7 +33,9 @@ def _split_knob(raw: Any) -> tuple[Any, str]:
     return raw, ""
 
 
-def _merge_knobs(into: dict[str, Any], rationale: dict[str, str], knobs: dict[str, Any] | None) -> None:
+def _merge_knobs(
+    into: dict[str, Any], rationale: dict[str, str], knobs: dict[str, Any] | None
+) -> None:
     for k, raw in (knobs or {}).items():
         v, why = _split_knob(raw)
         into[k] = v
@@ -62,7 +64,9 @@ def _resolve_value(v: Any, subs: dict[str, Any]) -> Any:
     if isinstance(v, str) and v.startswith("$"):
         key = v[1:]
         if key not in subs:
-            raise KeyError(f"unknown recipe substitution {v!r} (have {sorted('$' + s for s in subs)})")
+            raise KeyError(
+                f"unknown recipe substitution {v!r} (have {sorted('$' + s for s in subs)})"
+            )
         return subs[key]
     if isinstance(v, list):
         return [_resolve_value(x, subs) for x in v]
@@ -71,7 +75,14 @@ def _resolve_value(v: Any, subs: dict[str, Any]) -> Any:
     return v
 
 
-def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: WorkloadSpec, family: str | None = None, artifact: str | None = None) -> dict[str, Any]:
+def load_recipe(
+    engine: str,
+    name: str,
+    platform: PlatformSpec,
+    workload: WorkloadSpec,
+    family: str | None = None,
+    artifact: str | None = None,
+) -> dict[str, Any]:
     data = _load_yaml(engine)
     knobs: dict[str, Any] = {}
     rationale: dict[str, str] = {}
@@ -90,7 +101,9 @@ def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: Worklo
             if override:
                 _merge_knobs(knobs, rationale, override.get("knobs", override))
                 for inner in _OVERRIDE_AXES:
-                    exc = (override.get(inner) or {}).get(selectors[inner]) if inner != axis else None
+                    exc = (
+                        (override.get(inner) or {}).get(selectors[inner]) if inner != axis else None
+                    )
                     if exc:
                         _merge_knobs(knobs, rationale, exc.get("knobs", exc))
     subs = {
@@ -106,13 +119,6 @@ def load_recipe(engine: str, name: str, platform: PlatformSpec, workload: Worklo
     return out
 
 
-def recipe_names(engine: str) -> list[str]:
-    return sorted(k for k in _load_yaml(engine) if k != "fork")
-
-
 def recipe_fork(engine: str) -> dict[str, Any] | None:
     path = recipe_path(engine)
     return (yaml.safe_load(path.read_text()) or {}).get("fork") if path.is_file() else None
-
-
-__all__ = ["RECIPE_DIR", "load_recipe", "recipe_fork", "recipe_names", "recipe_path"]

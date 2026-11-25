@@ -1,11 +1,3 @@
-"""Arms JAX tracing in an engine process for the profiler: once jax loads, a thread of its own watches the trace
-folder's `command` file ("<seq> start" or "<seq> stop", written by the bench client's xla_trace or the profiler) and
-starts or stops jax.profiler; markers <pid>.started and <pid>.done ("<seq> ok|skip|error ...") say when each is over.
-A process with no TPU backend of its own (a server's front end) skips both.
-
-Active only with PIE_BENCH_JAX_TRACE_DIR set. Any sitecustomize further down sys.path still runs.
-"""
-
 import importlib.machinery
 import importlib.util
 import os
@@ -36,14 +28,17 @@ def _arm():
         if action == "start":
             if state["tracing"]:
                 return _mark("started", f"{seq} error already tracing")
-            if not any(str(k).startswith("tpu") for k in getattr(xla_bridge, "_backends", None) or {}):
+            if not any(
+                str(k).startswith("tpu") for k in getattr(xla_bridge, "_backends", None) or {}
+            ):
                 return _mark("started", f"{seq} skip: no TPU backend in this process")
             try:
-                # as pie's trace: host and device, no Python tracer (on by default, it slows a Python-bound engine loop)
                 options = jax.profiler.ProfileOptions()
                 options.python_tracer_level = 0
                 t0 = time.time_ns()
-                jax.profiler.start_trace(os.path.join(DIR, str(os.getpid())), profiler_options=options)
+                jax.profiler.start_trace(
+                    os.path.join(DIR, str(os.getpid())), profiler_options=options
+                )
                 state["tracing"] = True
                 _mark("started", f"{seq} ok {t0} {time.time_ns()}")
             except Exception as e:
@@ -66,7 +61,7 @@ def _arm():
             return []
 
     def watch():
-        state["seq"] = (read() or [None])[0]  # a command older than this process is not for it
+        state["seq"] = (read() or [None])[0]
         while True:
             got = read()
             if len(got) == 2 and got[0] != state["seq"]:
@@ -106,7 +101,7 @@ class _AfterJax:
 if DIR:
     sys.meta_path.insert(0, _AfterJax())
 _paths = [os.path.abspath(p or ".") for p in sys.path]
-for _entry in sys.path[_paths.index(HERE) + 1:] if HERE in _paths else []:
+for _entry in sys.path[_paths.index(HERE) + 1 :] if HERE in _paths else []:
     _spec = importlib.machinery.PathFinder.find_spec("sitecustomize", [_entry])
     if _spec is not None:
         _spec.loader.exec_module(importlib.util.module_from_spec(_spec))
