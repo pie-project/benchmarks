@@ -21,7 +21,7 @@ The phone benchmark app. It runs the phone workloads on the phone and shares the
 
 ## Install
 
-- **Android:** download `pie-phone-bench-0.1.0-debug.apk` from the GitHub release `mobile-v0.1.0` and open it on the phone (allow "install unknown apps"). Or run `adb install -r pie-phone-bench-0.1.0-debug.apk`.
+- **Android:** download `pie-bench-phone-0.2.0.apk` from the GitHub release `mobile-v0.2.0` and open it on the phone (allow "install unknown apps"), or run `adb install pie-bench-phone-0.2.0.apk`. Uninstall the 0.1.0 debug build first: it was signed with a different key. Scripted runs (`am start --es ...`, `run-as`) need a debug build.
   - To build it yourself: `cd android && ./gradlew assembleDebug`, which needs JDK 17 and the Android SDK with NDK 28.
   - Pie and MLC need their libraries in `android/app/libs/` (not committed). Without them the APK builds, and those engines report "not built".
 - **iPhone:**
