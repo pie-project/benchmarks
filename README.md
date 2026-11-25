@@ -30,9 +30,6 @@ Every gap over 25% is re-measured under an end-to-end
 GPU profiler on fresh prompts. It's marked verified only if the profile agrees
 with the benchmark within 10%; otherwise it's rerun. Details in the [Bench Book].
 
-Want to add an engine or a model, tune flags, or question a number? See
-[CONTRIBUTING.md](CONTRIBUTING.md).
-
 ## Install
 
 ```bash
