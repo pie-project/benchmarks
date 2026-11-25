@@ -22,9 +22,9 @@ from pie_bench.machine import detect, tier_for
 from pie_bench.paths import HOME, MATRIX
 from pie_bench.plan.local import plan as machine_plan
 from pie_bench.plan.matrix import Matrix
+from pie_bench.profiler import breakdown
+from pie_bench.profiler.tracers import tracer_for
 from pie_bench.schema import Tier
-
-from . import tracer_for, unit
 
 # each setup's results workload and the rate its benchmark number is
 RATES = {"decode": ("raw", "decode_tok_s"), "spec": ("spec", "decode_tok_s"), "prefill": ("raw", "prefill_tok_s"),
@@ -128,11 +128,11 @@ def side(rec, engine: str, setup: str, concurrency: int, prompt: int, tracer, ou
     base.update(benchmark_step_ms=step_ms(rate, setup, concurrency, prompt), benchmark_status=str(rec.status))
     rnd = out / "cells" / rec.cell_id / "profile"
     try:
-        measured = unit.measured(json.loads((rnd / "bench.json").read_text()), setup, concurrency, prompt)
+        measured = breakdown.measured(json.loads((rnd / "bench.json").read_text()), setup, concurrency, prompt)
         span = json.loads((rnd / "span.json").read_text())
         if min(s for s, _ in measured.windows) < span["start_ns"] or max(e for _, e in measured.windows) > span["stop_ns"]:
             raise ValueError("the measured windows fall outside the recording")
-        return {**base, **unit.split(measured, tracer.intervals(rnd))}
+        return {**base, **breakdown.split(measured, tracer.intervals(rnd))}
     except (OSError, ValueError, KeyError, RuntimeError) as e:
         return {**base, "why": f"the profiled round: {e}"}
 

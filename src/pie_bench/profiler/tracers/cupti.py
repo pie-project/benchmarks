@@ -18,7 +18,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from . import span
+from pie_bench.profiler.tracers.span import span
 
 SHIM = Path(__file__).resolve().parent / "cupti_trace.c"
 ARM_S = 120  # how long a process may take to start recording: CUPTI's first enable in a process with many modules loaded

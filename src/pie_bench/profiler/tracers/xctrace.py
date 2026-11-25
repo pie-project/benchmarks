@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
-from . import span
+from pie_bench.profiler.tracers.span import span
 
 # the GPU instrument alone: the same metal-gpu-intervals as the Metal System Trace template (an M5 Max mlx-lm server's GPU
 # busy time 8.65 s either way), in a trace 30 times smaller that saves in seconds, not minutes. Either way the kernel

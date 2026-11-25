@@ -20,9 +20,9 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from . import span
+from pie_bench.profiler.tracers.span import span
 
-SRC = Path(__file__).resolve().parent / "metal_cb.m"
+SRC = Path(__file__).resolve().parent / "metal_command_buffers.m"
 GATE_S = 0.1  # the processes' watchers look for the gate every 10 ms
 
 

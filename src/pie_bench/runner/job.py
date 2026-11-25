@@ -539,7 +539,7 @@ class JobRunner:
             return self._failed(cell, ErrorClass.HARNESS_INVALID, f"harness: {e}", fingerprint, duration=time.monotonic() - t0)
         if self.tracer is not None and cell.workload.kind.value != "control_aa":
             # the cell's profile: one short traced round in the same engine session, right after its benchmark rounds
-            from pie_bench.profiler import short
+            from pie_bench.profiler.profiled_round import short
 
             try:
                 self._round(cell.model_copy(update={"workload": short(cell.workload)}), engine, common, cell_out / "profile", first=False, traced=True)

@@ -16,8 +16,8 @@ from pathlib import Path
 from pie_bench import api_client, submission
 from pie_bench.machine import detect
 from pie_bench.paths import HOME
-
-from . import cell, tracer_for, unit
+from pie_bench.profiler import breakdown, rerun
+from pie_bench.profiler.tracers import tracer_for
 
 TRACED = "PIE_BENCH_PROFILER_TRACED"
 
@@ -40,7 +40,7 @@ def judged(docs: list[dict]) -> list[dict]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(prog="python -m pie_bench.profiler", description="Rerun cells' two fastest engines: the benchmark, then its profile, in one job.")
-    ap.add_argument("cells", nargs="+", help="model:setup, the model as the site names it, e.g. gemma-4-e2b:prefill (setups: " + ", ".join(unit.SETUPS) + ")")
+    ap.add_argument("cells", nargs="+", help="model:setup, the model as the site names it, e.g. gemma-4-e2b:prefill (setups: " + ", ".join(breakdown.SETUPS) + ")")
     ap.add_argument("--machine", default=None, help="this machine's id when it is not detected")
     ap.add_argument("--engines", default=None, help="the engines to compare instead of each cell's two fastest, comma-separated")
     ap.add_argument("--pie-root", type=Path, default=None, help="pie checkout to build and use (default ~/.pie-bench/pie)")
@@ -50,7 +50,7 @@ def main() -> None:
     ap.add_argument("--upload", action="store_true", help="post the records to /v1/submissions (one of the token's quota) and the cells to /v1/profiles")
     a = ap.parse_args()
     cells = [tuple(c.split(":", 1)) for c in a.cells]
-    if any(len(c) != 2 or c[1] not in unit.SETUPS for c in cells):
+    if any(len(c) != 2 or c[1] not in breakdown.SETUPS for c in cells):
         ap.error("each cell is model:setup")
     a.out = (a.out or HOME / "profiles" / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")).resolve()
     a.out.mkdir(parents=True, exist_ok=True)
@@ -63,7 +63,7 @@ def main() -> None:
         os.environ[TRACED] = "1"
         argv = [*sys.argv[1:], "--out", str(a.out)] if "--out" not in sys.argv else sys.argv[1:]
         os.execvp(tracer.prefix[0], [*tracer.prefix, sys.executable, "-m", "pie_bench.profiler", *argv])
-    docs = cell.profile(a.machine, cells, a.out, a.engines.split(",") if a.engines else None, a.pie_root, a.tag, a.pie_commit)
+    docs = rerun.profile(a.machine, cells, a.out, a.engines.split(",") if a.engines else None, a.pie_root, a.tag, a.pie_commit)
     verdicts = judged(docs)
     (a.out / "verdicts.json").write_text(json.dumps(verdicts, indent=1))
     print(json.dumps(verdicts, indent=1))

@@ -13,7 +13,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from . import span
+from pie_bench.profiler.tracers.span import span
 
 SESSION = "pie-bench-profile"
 FLUSH_MS = 500

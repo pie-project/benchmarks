@@ -17,7 +17,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from . import span
+from pie_bench.profiler.tracers.span import span
 
 SITE = Path(__file__).resolve().parent / "jax_site"
 SHIM = Path(__file__).resolve().parent / "xla_trace.c"
