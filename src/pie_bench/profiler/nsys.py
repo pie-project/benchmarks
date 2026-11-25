@@ -39,6 +39,9 @@ class Tracer:
         """One collection of the launched session while the block runs, saved as nsys.sqlite."""
         out.mkdir(parents=True, exist_ok=True)
         subprocess.run(["nsys", "start", f"--session={SESSION}", "--output", str(out / "nsys"), "--force-overwrite=true"], check=True)
+        # every traced process collecting before the round's first request (SGLang's scheduler on an RTX 5090 had
+        # no device work in its first measured window without it)
+        time.sleep(3 * FLUSH_MS / 1000)
         try:
             with span(out):
                 yield
