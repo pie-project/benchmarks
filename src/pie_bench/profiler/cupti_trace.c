@@ -147,6 +147,9 @@ static void *control(void *arg) {
                 cuptiActivityEnable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
                 cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMCPY);
                 cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMSET);
+                // completed records leave every 100 ms: a process that exits inside the round (SGLang's scheduler at
+                // its client's shutdown) loses at most that, not a part-filled 8 MB buffer (whole measured windows)
+                cuptiActivityFlushPeriod(100);
             }
             path(p, sizeof p, "armed");  // the profiler starts the round once every process is recording
             FILE *a = fopen(p, "w");
@@ -154,6 +157,7 @@ static void *control(void *arg) {
                 fclose(a);
             active = 1;
         } else if (!f && active) {
+            cuptiActivityFlushPeriod(0);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_GRAPH_TRACE);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_MEMCPY);
