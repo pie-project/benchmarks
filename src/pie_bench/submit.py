@@ -86,5 +86,30 @@ def pack(out: Path, meta: dict) -> Path:
     return path
 
 
+def merge(outs: list[Path], path: Path) -> Path:
+    """One submission of several runs' folders on one machine (the quota counts submissions, not runs). Each record
+    keeps its run; the submission names a pie commit only when every run measured that one."""
+    docs = [json.loads(gzip.decompress((o / SUBMISSION).read_bytes())) for o in outs]
+    machines = {(d.get("platform") or {}).get("id") for d in docs}
+    tags = {d.get("tag") for d in docs}
+    if len(machines) > 1 or len(tags) > 1:
+        raise ApiError(f"one submission holds one machine's runs for one release: {sorted(map(str, machines))}, tags {sorted(map(str, tags))}")
+    commits = {d.get("pie_commit") for d in docs}
+    doc = {**docs[0], "pie_commit": commits.pop() if len(commits) == 1 else None, "records": [r for d in docs for r in d["records"]],
+           "quality": [q for d in docs for q in d.get("quality") or []], "log": "\n".join(d.get("log") or "" for d in docs)}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(gzip.compress(json.dumps(doc, default=str).encode()))
+    return path
+
+
 def upload(path: Path) -> dict:
     return request("POST", "/v1/submissions", path.read_bytes(), token=token(), content_type="application/gzip")
+
+
+def upload_profiles(cells: list[dict]) -> dict:
+    """Posts profiled cells to /v1/profiles, which judges each one (no quota); a cell with an engine not measured stays out."""
+    cells = [c for c in cells if c.get("gap_pct") is not None and not any("why" in c[s] for s in ("fastest", "second"))]
+    if not cells:
+        return {"profiles": 0}
+    body = gzip.compress(json.dumps({"format": 1, "profiles": cells}).encode())
+    return request("POST", "/v1/profiles", body, token=token(), content_type="application/gzip")

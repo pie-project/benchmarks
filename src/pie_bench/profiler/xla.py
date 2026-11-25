@@ -43,12 +43,14 @@ class Tracer:
 
         out.mkdir(parents=True, exist_ok=True)
         since = time.time()
+        (self.dir / "recording").touch()  # the bench clients trace their measured requests only in this round
         xla_trace("start", str(self.dir))
         try:
             with span(out):
                 yield
         finally:
             xla_trace("stop", str(self.dir))
+            (self.dir / "recording").unlink(missing_ok=True)
             (out / "xla").mkdir(exist_ok=True)
             for done in self.dir.glob("*.done"):
                 trace = self.dir / done.stem

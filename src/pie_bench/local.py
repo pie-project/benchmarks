@@ -167,19 +167,19 @@ def setup_engines(m: Matrix, job: JobSpec, log=print) -> dict[str, str]:
     if not shutil.which("uv"):
         raise SystemExit("pie-bench needs uv: curl -LsSf https://astral.sh/uv/install.sh | sh")
     if "mlxlm" in want:
-        pin = m.engines["mlxlm"].pin
+        pin = job.baseline_versions.get("mlxlm") or m.engines["mlxlm"].pin
         env["MLX_PY"] = str(_venv(base / f"mlx-lm-{pin}", [f"mlx-lm=={pin}", "transformers"], log))
         env["LLAMACPP_PY"] = env["MLX_PY"]
         env["MLX_VLM_PY"] = str(_venv(base / f"mlx-vlm-{MLX_VLM_PIN}", [f"mlx-vlm=={MLX_VLM_PIN}"], log))
     if "llamacpp" in want:
-        pin = m.engines["llamacpp"].pin
+        pin = job.baseline_versions.get("llamacpp") or m.engines["llamacpp"].pin
         d = base / f"llama-{pin}"
         if not (d / "llama-server").exists():
             _untar(f"https://github.com/ggml-org/llama.cpp/releases/download/{pin}/llama-{pin}-bin-macos-arm64.tar.gz", d, log)
         env["LLAMA_SERVER_BIN"] = str(d / "llama-server")
         env.setdefault("LLAMACPP_PY", str(_venv(base / "llamacpp-client", ["transformers"], log)))
     if "splash" in want:
-        pin = m.engines["splash"].pin
+        pin = job.baseline_versions.get("splash") or m.engines["splash"].pin
         d = base / f"splash-{pin}"
         launcher = d / "bin" / "splash"
         if not launcher.exists():

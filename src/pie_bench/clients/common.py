@@ -952,7 +952,7 @@ def xla_trace(action: str, folder: str | None = None) -> None:
     import signal
 
     folder = folder or os.environ.get("PIE_BENCH_JAX_TRACE_DIR")
-    if not folder:
+    if not folder or not (Path(folder) / "recording").exists():  # a benchmark round beside the profiled one runs untraced
         return
     # a trace starts in a second or two; writing one can take minutes
     marker, sig, timeout_s = {"start": ("started", signal.SIGUSR1, 120), "stop": ("done", signal.SIGUSR2, 900)}[action]

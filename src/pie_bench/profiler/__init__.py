@@ -1,7 +1,8 @@
 """Profiler: an engine's forward pass, timed end to end from the device's own trace.
 
-A profile runs a benchmark cell under the platform's tracer and reports, per benchmark unit, the wall time, the time
-the device was busy (the forward pass: the union of every device work interval) and the rest (idle). No kernel names.
+A profiled cell runs its standard benchmark rounds and then one short round under the platform's tracer, in the same
+engine session, and reports per benchmark unit the wall time, the time the device was busy (the forward pass: the
+union of every device work interval) and the rest (idle). No kernel names.
 """
 
 from __future__ import annotations
@@ -20,6 +21,16 @@ def span(out: Path):
         yield
     finally:
         (out / "span.json").write_text(json.dumps({"start_ns": start, "stop_ns": time.time_ns()}))
+
+
+def short(workload):
+    """The profiled round's workload: the benchmark's own shape with 4 requests, or 3 waves of its concurrency."""
+    p = dict(workload.params)
+    if "num_requests" in p:
+        p["num_requests"] = min(int(p["num_requests"]), 3 * int(p.get("concurrency", 1)))
+    else:
+        p["requests"] = min(int(p.get("requests", 4)), 4)
+    return workload.model_copy(update={"params": p})
 
 
 def tracer_for(backend: str, out: Path):
