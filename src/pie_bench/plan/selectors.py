@@ -58,18 +58,14 @@ def _narrow(sels: list[tuple[Any, dict[str, Any]]], attr: str, obj: Any) -> list
     return out
 
 
-def _narrow_all(groups: list[list[tuple[Any, dict[str, Any]]]], attr: str, obj: Any) -> list[list[tuple[Any, dict[str, Any]]]]:
+def narrow_all(groups: list[list[tuple[Any, dict[str, Any]]]], attr: str, obj: Any) -> list[list[tuple[Any, dict[str, Any]]]]:
     return [_narrow(g, attr, obj) for g in groups]
-
-
-def _cell_field(cell: Cell, key: str) -> Any:
-    return _CELL_FIELDS[key](cell)
 
 
 def selector_matches(sel: dict[str, Any], cell: Cell) -> bool:
     for key, want in sel.items():
         negate = key.startswith("not_")
-        have = _cell_field(cell, key[4:] if negate else key)
+        have = _CELL_FIELDS[key[4:] if negate else key](cell)
         if negate:
             if _field_matches(have, want):
                 return False
@@ -80,13 +76,13 @@ def selector_matches(sel: dict[str, Any], cell: Cell) -> bool:
 
 
 def _field_matches(have: Any, want: Any) -> bool:
-    if True:
-        if isinstance(want, list):
-            return have in want
-        if isinstance(want, str) and isinstance(have, int) and _CMP.match(want.strip()):
-            op, num = _CMP.match(want.strip()).groups()
-            return bool(_OPS[op](have, int(num)))
-        return have == want
+    if isinstance(want, list):
+        return have in want
+    compare = _CMP.match(want.strip()) if isinstance(want, str) and isinstance(have, int) else None
+    if compare:
+        op, num = compare.groups()
+        return bool(_OPS[op](have, int(num)))
+    return have == want
 
 
 _ARTIFACT_KEYS = {"engine", "artifact", "family", "scheme", "source_format"}

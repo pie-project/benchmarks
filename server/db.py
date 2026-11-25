@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 from psycopg_pool import ConnectionPool
 
-from pie_bench.results.pg_store import SCHEMA_SQL, PgStore
+from pie_bench.results.pg_store import SCHEMA_SQL
 
 API_SQL = """
 CREATE TABLE IF NOT EXISTS tokens (
@@ -83,8 +83,6 @@ class Database:
         self.dsn = dsn or url()
         self.pool = ConnectionPool(self.dsn, min_size=1, max_size=int(os.environ.get("DB_POOL", "8")), open=True,
                                    kwargs={"connect_timeout": 15})
-        self.store = PgStore(self.dsn)
-        self.store._ready = True
         with self.tx() as cur:
             cur.execute("SELECT pg_advisory_xact_lock(7212031)")
             cur.execute(SCHEMA_SQL)

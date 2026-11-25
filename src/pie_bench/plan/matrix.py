@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 
 from pie_bench.paths import MATRIX
-from pie_bench.plan.selectors import _narrow_all, selector_matches
+from pie_bench.plan.selectors import narrow_all, selector_matches
 from pie_bench.schema import (
     ArtifactSpec,
     Cell,
@@ -68,15 +68,10 @@ class Matrix:
     unsupported: list[SupportRule]
     fit_factor: float
     suites: dict[str, SuiteDecl]
-    escalation: dict[str, Any]
     root: Path
     global_exclude: list[dict[str, Any]] = field(default_factory=list)
     job_budget_minutes: float = 60.0
     kill_factor: float = 1.5
-
-    @property
-    def kill_minutes(self) -> int:
-        return int(round(self.job_budget_minutes * self.kill_factor))
 
     @classmethod
     def load(cls, root: Path | str = MATRIX) -> Matrix:
@@ -98,61 +93,71 @@ class Matrix:
         suites = {k: SuiteDecl(**v) for k, v in suites_raw.get("suites", {}).items()}
         return cls(
             engines=eng, platforms=plats, artifacts=arts, workloads=wls, programs=progs, modes=modes,
-            unsupported=rules, fit_factor=float(sup.get("fit_factor", 1.25)), suites=suites,
-            escalation=suites_raw.get("escalation", {}), root=root,
+            unsupported=rules, fit_factor=float(sup.get("fit_factor", 1.25)), suites=suites, root=root,
             global_exclude=list(suites_raw.get("global_exclude", []) or []),
             job_budget_minutes=float(suites_raw.get("job_budget_minutes", 60)),
             kill_factor=float(suites_raw.get("kill_factor", 1.5)),
         )
 
     def expand(self, platforms=None, artifacts=None) -> list[Cell]:
-        sels = self._selector_lists()
         suite_tiers = [Tier(name) for name in self.suites]
         cells: list[Cell] = []
+        for eng, plat, s_plat in self._engine_platforms(self._selector_lists(), platforms):
+            for art, s_art in self._artifacts_for(eng, plat, s_plat, artifacts):
+                for mode, s_mode in self._modes_for(plat, s_art):
+                    for prog, s_prog in self._programs_for(eng, art, s_mode):
+                        for wl in self._workloads_for(eng, prog):
+                            cells.append(self._cell(eng, plat, art, mode, prog, wl, s_prog, suite_tiers))
+        return cells
+
+    def _engine_platforms(self, sels: list, platforms) -> Iterator[tuple[EngineDecl, PlatformSpec, list]]:
         for eng in self.engines.values():
-            s_eng = _narrow_all(sels, "engine", EngineName(eng.id))
+            s_eng = narrow_all(sels, "engine", EngineName(eng.id))
             for plat in self.platforms.values():
                 if plat.os not in eng.os or (platforms and plat.id not in platforms):
                     continue
-                if eng.backends is not None and str(plat.backend) not in eng.backends:
-                    continue
-                s_plat = _narrow_all(s_eng, "platform", plat)
-                for art in self.artifacts.values():
-                    if artifacts and art.id not in artifacts:
-                        continue
-                    if str(art.source_format) not in eng.formats:
-                        continue
-                    if art.platforms is not None and plat.id not in art.platforms:
-                        continue
-                    s_art = _narrow_all(s_plat, "artifact", art)
-                    for mode in self.modes.values():
-                        if mode.tp > 1 and (plat.count < mode.tp or not plat.tp_capable):
-                            continue
-                        s_mode = _narrow_all(s_art, "mode", mode)
-                        for prog in self.programs.values():
-                            if prog.pie_only and eng.id != "pie":
-                                continue
-                            if prog.families is not None and art.family not in prog.families:
-                                continue
-                            s_prog = _narrow_all(s_mode, "program", prog)
-                            for wl in self.workloads.values():
-                                if prog.workloads is not None and wl.id not in prog.workloads:
-                                    continue
-                                if wl.kind.value == "control_aa" and eng.id != "pie":
-                                    continue
-                                cell_mode = mode.model_copy(update={"spec_dec": prog.spec_dec}) if prog.spec_dec else mode
-                                cell = Cell(
-                                    engine=EngineName(eng.id), engine_version=eng.pin_for(plat.backend.value), platform=plat,
-                                    artifact=art, workload=wl, program=prog, mode=cell_mode,
-                                )
-                                cell.tiers = self._tiers_for(eng, plat, art, wl, prog, mode)
-                                reason = self._physical_reason(cell) or next(
-                                    (r.reason for r, sel in s_prog[0] if selector_matches(sel, cell)), None)
-                                if reason:
-                                    cell.declared_unsupported_reason = reason
-                                self._apply_suites_one(cell, s_prog, suite_tiers)
-                                cells.append(cell)
-        return cells
+                if eng.backends is None or str(plat.backend) in eng.backends:
+                    yield eng, plat, narrow_all(s_eng, "platform", plat)
+
+    def _artifacts_for(self, eng: EngineDecl, plat: PlatformSpec, sels: list, artifacts) -> Iterator[tuple[ArtifactSpec, list]]:
+        for art in self.artifacts.values():
+            if artifacts and art.id not in artifacts:
+                continue
+            if str(art.source_format) not in eng.formats:
+                continue
+            if art.platforms is None or plat.id in art.platforms:
+                yield art, narrow_all(sels, "artifact", art)
+
+    def _modes_for(self, plat: PlatformSpec, sels: list) -> Iterator[tuple[Mode, list]]:
+        for mode in self.modes.values():
+            if mode.tp <= 1 or (plat.count >= mode.tp and plat.tp_capable):
+                yield mode, narrow_all(sels, "mode", mode)
+
+    def _programs_for(self, eng: EngineDecl, art: ArtifactSpec, sels: list) -> Iterator[tuple[ProgramSpec, list]]:
+        for prog in self.programs.values():
+            if prog.pie_only and eng.id != "pie":
+                continue
+            if prog.families is None or art.family in prog.families:
+                yield prog, narrow_all(sels, "program", prog)
+
+    def _workloads_for(self, eng: EngineDecl, prog: ProgramSpec) -> Iterator[WorkloadSpec]:
+        for wl in self.workloads.values():
+            if prog.workloads is not None and wl.id not in prog.workloads:
+                continue
+            if wl.kind.value != "control_aa" or eng.id == "pie":
+                yield wl
+
+    def _cell(self, eng: EngineDecl, plat: PlatformSpec, art: ArtifactSpec, mode: Mode, prog: ProgramSpec, wl: WorkloadSpec,
+              sels: list, suite_tiers: list[Tier]) -> Cell:
+        cell_mode = mode.model_copy(update={"spec_dec": prog.spec_dec}) if prog.spec_dec else mode
+        cell = Cell(engine=EngineName(eng.id), engine_version=eng.pin_for(plat.backend.value), platform=plat,
+                    artifact=art, workload=wl, program=prog, mode=cell_mode)
+        cell.tiers = self._tiers_for(eng, plat, art, wl, prog, mode)
+        reason = self._physical_reason(cell) or next((r.reason for r, sel in sels[0] if selector_matches(sel, cell)), None)
+        if reason:
+            cell.declared_unsupported_reason = reason
+        self._apply_suites_one(cell, sels, suite_tiers)
+        return cell
 
     def _selector_lists(self) -> list[list[tuple[Any, dict[str, Any]]]]:
         out: list[list[tuple[Any, dict[str, Any]]]] = [[(r, r.when) for r in self.unsupported], [(None, s) for s in self.global_exclude]]
@@ -224,17 +229,6 @@ class Matrix:
             if r["max_shard_minutes"] > self.job_budget_minutes * self.kill_factor:
                 problems.append(f"{tier}: platform {plat} has a single process group of {r['max_shard_minutes']:.0f} min that cannot fit a {self.job_budget_minutes:.0f}-min job")
         return problems
-
-
-def summarize(cells: Iterable[Cell]) -> dict[str, int]:
-    out: dict[str, int] = {"total": 0, "declared_unsupported": 0}
-    for c in cells:
-        out["total"] += 1
-        if c.declared_unsupported_reason:
-            out["declared_unsupported"] += 1
-        for t in c.tiers:
-            out[f"tier:{t}"] = out.get(f"tier:{t}", 0) + 1
-    return out
 
 
 def drafts(cell: Cell) -> bool:

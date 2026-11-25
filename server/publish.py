@@ -58,9 +58,7 @@ def publish(db: dict, sealed: dict[str, dict], quality: dict) -> tuple[dict, str
 def blobs(dsn: str, contributed: dict[str, dict], submissions: int = 0) -> dict[str, bytes]:
     from server.views import build
 
-    store = PgStore(dsn)
-    store._ready = True
-    db, sealed, quality = build(store, contributed)
+    db, sealed, quality = build(PgStore(dsn, schema_ready=True), contributed)
     catalog, latest, results = publish(db, sealed, quality)
     catalog["totals"] = {**(catalog.get("totals") or {}), "submissions": submissions}
     newest = {latest: json.loads(rows_json(sealed[latest]))} if latest else {}

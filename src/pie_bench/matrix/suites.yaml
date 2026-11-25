@@ -179,6 +179,3 @@ suites:
         tp: 1
         os: windows
         workload: [raw-512-256, spec-512-256, c32, pf32-512]
-
-escalation:
-  on_smoke_regression_promote_family_to_nightly: true

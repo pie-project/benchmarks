@@ -4,7 +4,6 @@ import hashlib
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from pie_bench.results.store import BaseStore
 from pie_bench.schema import Cell, JobSpec, RepetitionPolicy, Tier
 
 if TYPE_CHECKING:
@@ -21,9 +20,7 @@ ENGINE_CELL_MINUTES = {"vllm": 4.0, "sglang": 3.5}
 PIE_XLA_BOOT_MINUTES = 15.0
 
 
-def cell_minutes(c: Cell, measured: dict[str, float] | None = None) -> float:
-    if measured and c.cell_id in measured:
-        return measured[c.cell_id]
+def cell_minutes(c: Cell) -> float:
     extra = ENGINE_CELL_MINUTES.get(str(c.engine), 0.0)
     if str(c.engine) == "pie" and str(getattr(c.platform.backend, "value", c.platform.backend)) == "xla":
         extra += PIE_XLA_BOOT_MINUTES
@@ -34,35 +31,35 @@ def load_minutes(c: Cell) -> float:
     return gib / 30.0 if gib >= 200 else 0.0
 
 
-def group_minutes(g: list[Cell], measured: dict[str, float] | None = None) -> float:
-    return sum(cell_minutes(c, measured) for c in g) + (load_minutes(g[0]) if g else 0.0)
+def group_minutes(g: list[Cell]) -> float:
+    return sum(cell_minutes(c) for c in g) + (load_minutes(g[0]) if g else 0.0)
 
 
-def shard_groups(cells: list[Cell], budget_minutes: float, measured: dict[str, float] | None = None) -> list[list[Cell]]:
+def shard_groups(cells: list[Cell], budget_minutes: float) -> list[list[Cell]]:
     groups: dict[tuple, list[Cell]] = {}
     for c in cells:
         groups.setdefault(process_key(c), []).append(c)
     pieces: list[list[Cell]] = []
     for g in groups.values():
-        if group_minutes(g, measured) <= budget_minutes:
+        if group_minutes(g) <= budget_minutes:
             pieces.append(g)
             continue
-        g = sorted(g, key=lambda c: (0 if c.workload.kind.value == "control_aa" else 1, -cell_minutes(c, measured)))
+        g = sorted(g, key=lambda c: (0 if c.workload.kind.value == "control_aa" else 1, -cell_minutes(c)))
         cur: list[Cell] = []
         load = load_minutes(g[0])
         for c in g:
-            if cur and load + cell_minutes(c, measured) > budget_minutes:
+            if cur and load + cell_minutes(c) > budget_minutes:
                 pieces.append(cur)
                 cur, load = [], load_minutes(g[0])
             cur.append(c)
-            load += cell_minutes(c, measured)
+            load += cell_minutes(c)
         if cur:
             pieces.append(cur)
-    ordered = sorted(pieces, key=lambda g: -group_minutes(g, measured))
+    ordered = sorted(pieces, key=lambda g: -group_minutes(g))
     shards: list[list[Cell]] = []
     loads: list[float] = []
     for g in ordered:
-        need = group_minutes(g, measured)
+        need = group_minutes(g)
         for i, load in enumerate(loads):
             if load + need <= budget_minutes:
                 shards[i].extend(g)
@@ -86,7 +83,6 @@ def make_jobs(
     tier: Tier,
     *,
     pie_commit: str | None,
-    store: BaseStore | None = None,
     platforms: list[str] | None = None,
     engines: list[str] | None = None,
     cells: list[Cell] | None = None,
@@ -99,8 +95,6 @@ def make_jobs(
         cells = [c for c in cells if c.platform.id in platforms]
     if engines:
         cells = [c for c in cells if str(c.engine) in engines]
-    history = store.history(limit=20) if store else {}
-    measured = store.measured_minutes() if store else {}
     by_plat: dict[str, list[Cell]] = {}
     for c in cells:
         by_plat.setdefault(c.platform.id, []).append(c)
@@ -111,13 +105,13 @@ def make_jobs(
         kill_s = max(kill_s, 6 * 3600)
     jobs = []
     for plat, plat_cells in sorted(by_plat.items()):
-        for idx, shard in enumerate(shard_groups(plat_cells, budget, measured)):
+        for idx, shard in enumerate(shard_groups(plat_cells, budget)):
             shard.sort(key=lambda c: (str(c.engine), c.artifact.id, c.mode.key, c.program.id, c.workload.id))
             backend = shard[0].platform.backend.value
             pins = {e.id: e.pin_for(backend) for e in matrix.engines.values() if e.pin_for(backend) and any(str(c.engine) == e.id for c in shard)}
             seed = f"{tier}|{plat}|{idx}|{pie_commit}|{stamp}|{label or ''}"
             job_id = f"{tier}-{plat}-s{idx:02d}-{stamp}-" + hashlib.sha256(seed.encode()).hexdigest()[:6]
-            est = sum(cell_minutes(c, measured) for c in shard) + sum(load_minutes(g[0]) for g in _groups(shard))
+            est = sum(cell_minutes(c) for c in shard) + sum(load_minutes(g[0]) for g in _groups(shard))
             job_kill_s = max(kill_s, int(est * matrix.kill_factor * 60))
             jobs.append(
                 JobSpec(
@@ -131,7 +125,6 @@ def make_jobs(
                     cells=shard,
                     repetition=RepetitionPolicy(min_rounds=1 if tier in (Tier.SMOKE, Tier.TARGETED) else 3,
                                                 single_stream_rounds=3 if tier == Tier.TARGETED else None),
-                    history={c.cell_id: history.get(c.cell_id, []) for c in shard if c.cell_id in history},
                     per_cell_timeout_s=min(max(1800 if tier in (Tier.SMOKE, Tier.TARGETED) else 5400, int(max(load_minutes(c) for c in shard) * 2 * 60)), job_kill_s),
                     budget_s=job_kill_s,
                     kill_s=job_kill_s,
@@ -147,8 +140,3 @@ def make_jobs(
 def _feature_for(backend: str) -> str:
     return {"cuda": "cuda", "metal": "metal", "vulkan": "vulkan", "wgpu": "wgpu", "webgpu": "wgpu", "xla": "xla", "rocm": "rocm"}[backend]
 
-
-BASELINE_RECIPE_PER_CELL_SINCE = datetime(2026, 9, 25, 6, 38, tzinfo=timezone.utc)
-
-
-NOISY_BASELINE_IS_SETTLED_AFTER = 2
