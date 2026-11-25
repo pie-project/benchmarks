@@ -8,7 +8,7 @@
     <p></p>
   </picture>
 
-[Benchmarks] | [Bench Book] | [PyPI] | [API] | [Pie] | [Docs] | [Paper (SOSP'25)]
+[Benchmarks] | [Bench Book] | [PyPI] | [API] | [Pie]
 </div>
 
 [Benchmarks]: https://benchmarks.pie-project.org/
@@ -16,8 +16,6 @@
 [PyPI]: https://pypi.org/project/pie-bench/
 [API]: https://bench-api.pie-project.org/v1/catalog
 [Pie]: https://github.com/pie-project/pie
-[Docs]: https://pie-project.org/docs
-[Paper (SOSP'25)]: https://ingim.org/papers/gim2025pie.pdf
 
 Pie Bench is an open, fully transparent benchmark for LLM inference. It tracks
 how [pie](https://github.com/pie-project/pie) and the leading engines (vLLM,
