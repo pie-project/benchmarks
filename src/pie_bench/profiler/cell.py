@@ -61,11 +61,16 @@ def same_cut(artifact, label: str) -> bool:
 
 def cell_of(m: Matrix, machine, row: dict, commit: str):
     """The matrix cell a results row measured, with the job that plans it."""
-    # the machine's own tier first, then any tier that holds the benchmarked cell (NVIDIA's full runs are weekly cells)
-    for tier in (local.tier_for(machine), *Tier):
-        job = local.plan(m, machine, pie_commit=commit, models=[row["model"]], engines=[row["engine"]], workloads=[row["benchmark"]], suite="targeted", tier=tier)
-        found = [c for c in (job.cells if job else []) if c.workload.id == row["benchmark"] and str(c.engine) == row["engine"]
-                 and str(c.artifact.scheme) == row["scheme"] and same_cut(c.artifact, row.get("miniature") or "")]
+    # the machine's own tier first, then any tier that holds the benchmarked cell (NVIDIA's full runs are weekly cells);
+    # a Mac's model slices are in no suite of the config, so a row none of its arms plans is looked for in every artifact
+    for every in (False, True):
+        for tier in (local.tier_for(machine), *Tier):
+            job = local.plan(m, machine, pie_commit=commit, models=[row["model"]], engines=[row["engine"]], workloads=[row["benchmark"]], suite="targeted",
+                             tier=tier, every_artifact=every)
+            found = [c for c in (job.cells if job else []) if c.workload.id == row["benchmark"] and str(c.engine) == row["engine"]
+                     and str(c.artifact.scheme) == row["scheme"] and same_cut(c.artifact, row.get("miniature") or "")]
+            if found:
+                break
         if found:
             break
     if len(found) != 1:

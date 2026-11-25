@@ -113,11 +113,11 @@ def arms(m: Matrix, models: list[str] | None, suite: str, mac: bool = True) -> l
 
 
 def plan(m: Matrix, machine: Machine, *, pie_commit: str, models: list[str] | None, engines: list[str] | None,
-         workloads: list[str] | None, suite: str, tier: Tier | None = None) -> JobSpec | None:
+         workloads: list[str] | None, suite: str, tier: Tier | None = None, every_artifact: bool = False) -> JobSpec | None:
     tier = tier or tier_for(machine)
     config = load_config(CONFIG)
     laptop = machine.platform.os in ("macos", "windows")
-    ids = arms(m, models, suite, laptop) if laptop or models else None
+    ids = arms(m, models, suite, laptop and not every_artifact) if laptop or models else None
     cells = m.expand(platforms=[machine.platform.id], artifacts=ids)
     wls = set(workloads or config.get("benchmarks") or [])
     if wls:
