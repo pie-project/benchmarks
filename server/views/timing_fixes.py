@@ -9,8 +9,14 @@ from zoneinfo import ZoneInfo
 
 from server.views.matrix_files import catalog, load
 
-SEAT_FIX, SEAT_FIX_AT = "434fc3a158dd788ac7b1f62307c6d2eda0c69642", datetime(2026, 11, 10, 19, 54, 25, tzinfo=ZoneInfo("UTC"))
-SOLO_FIX, SOLO_FIX_AT = "d6163483c48bfc00ab7e82236ab5f7012ba2c6e1", datetime(2026, 11, 10, 21, 12, 19, tzinfo=ZoneInfo("UTC"))
+SEAT_FIX, SEAT_FIX_AT = (
+    "434fc3a158dd788ac7b1f62307c6d2eda0c69642",
+    datetime(2026, 11, 10, 19, 54, 25, tzinfo=ZoneInfo("UTC")),
+)
+SOLO_FIX, SOLO_FIX_AT = (
+    "d6163483c48bfc00ab7e82236ab5f7012ba2c6e1",
+    datetime(2026, 11, 10, 21, 12, 19, tzinfo=ZoneInfo("UTC")),
+)
 SEAT_ENGINES = {"pie", "trtllm", "llamacpp", "mlxlm", "vllm-metal", "splash"}
 TIMINGS = ("ttft_ms_p50", "ttft_ms_p99", "latency_ms_p50", "latency_ms_p99")
 FIXES_FILE = Path(__file__).parent / "timing_fixes.json"
@@ -41,7 +47,11 @@ def harness_has(fix: str, sha: str) -> bool | None:
 
 
 def timed_with(fix: str, at: datetime, r: dict) -> bool:
-    started = r["started_at"] if r["started_at"].tzinfo else r["started_at"].replace(tzinfo=ZoneInfo("UTC"))
+    started = (
+        r["started_at"]
+        if r["started_at"].tzinfo
+        else r["started_at"].replace(tzinfo=ZoneInfo("UTC"))
+    )
     if started < at:
         return False
     sha = r.get("harness_commit") or ""
@@ -53,9 +63,18 @@ def withhold_seat_ttft(row: dict, r: dict, hw: str, engine: str, cat: str) -> di
     seat = engine in SEAT_ENGINES or (engine == "sglang" and backend == "xla")
     if not seat or backend == "webgpu":
         return row
-    if cat in ("throughput", "prefill_batch") and r["workload"] in queued_workloads() and not timed_with(SEAT_FIX, SEAT_FIX_AT, r):
+    if (
+        cat in ("throughput", "prefill_batch")
+        and r["workload"] in queued_workloads()
+        and not timed_with(SEAT_FIX, SEAT_FIX_AT, r)
+    ):
         note = "TTFT and latency withheld: this run started each request's clock when it took a seat, not when it was sent, so they leave out the queue (rerun pending)"
-    elif cat in ("raw", "spec") and engine != "pie" and timed_with(SEAT_FIX, SEAT_FIX_AT, r) and not timed_with(SOLO_FIX, SOLO_FIX_AT, r):
+    elif (
+        cat in ("raw", "spec")
+        and engine != "pie"
+        and timed_with(SEAT_FIX, SEAT_FIX_AT, r)
+        and not timed_with(SOLO_FIX, SOLO_FIX_AT, r)
+    ):
         note = "Prefill, TTFT and latency withheld: this run counted each request's wait on the one before it (rerun pending)"
         row["prefill_tok_s"] = None
     else:

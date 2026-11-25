@@ -24,7 +24,9 @@ def tag_date(tag: str, meta: dict) -> str | None:
     if tag in published:
         return published[tag]
     try:
-        return str(_github(f"repos/pie-project/pie/commits/{tag}")["commit"]["committer"]["date"])[:10]
+        return str(_github(f"repos/pie-project/pie/commits/{tag}")["commit"]["committer"]["date"])[
+            :10
+        ]
     except Exception:
         return None
 
@@ -35,7 +37,9 @@ def release_dates() -> dict[str, str]:
     try:
         for page in (1, 2, 3):
             batch = _github(f"repos/pie-project/pie/releases?per_page=100&page={page}")
-            out.update({r["tag_name"]: str(r["published_at"])[:10] for r in batch if r.get("published_at")})
+            out.update(
+                {r["tag_name"]: str(r["published_at"])[:10] for r in batch if r.get("published_at")}
+            )
             if len(batch) < 100:
                 break
     except Exception:
@@ -45,7 +49,10 @@ def release_dates() -> dict[str, str]:
 
 @functools.cache
 def _github(path: str) -> dict:
-    req = urllib.request.Request(f"https://api.github.com/{path}", headers={"Accept": "application/vnd.github+json", "User-Agent": "pie-bench-api"})
+    req = urllib.request.Request(
+        f"https://api.github.com/{path}",
+        headers={"Accept": "application/vnd.github+json", "User-Agent": "pie-bench-api"},
+    )
     if os.environ.get("GITHUB_TOKEN"):
         req.add_header("Authorization", f"Bearer {os.environ['GITHUB_TOKEN']}")
     with urllib.request.urlopen(req, timeout=20) as r:

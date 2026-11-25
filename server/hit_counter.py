@@ -28,9 +28,11 @@ class HitCounter:
             return
         try:
             with self.db.tx() as cur:
-                cur.executemany("INSERT INTO hits (day, path, count) VALUES (%s, %s, %s) "
-                                "ON CONFLICT (day, path) DO UPDATE SET count = hits.count + EXCLUDED.count",
-                                [(day, path, n) for (day, path), n in counts.items()])
+                cur.executemany(
+                    "INSERT INTO hits (day, path, count) VALUES (%s, %s, %s) "
+                    "ON CONFLICT (day, path) DO UPDATE SET count = hits.count + EXCLUDED.count",
+                    [(day, path, n) for (day, path), n in counts.items()],
+                )
         except Exception:
             log.warning("hit counts not saved, keeping them for the next flush", exc_info=True)
             with self.lock:

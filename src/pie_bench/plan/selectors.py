@@ -10,7 +10,15 @@ if TYPE_CHECKING:
     from pie_bench.plan.matrix import Matrix
 
 _CMP = re.compile(r"^(>=|<=|>|<|!=|==)?\s*(-?\d+)$")
-_OPS = {">=": operator.ge, "<=": operator.le, ">": operator.gt, "<": operator.lt, "!=": operator.ne, "==": operator.eq, None: operator.eq}
+_OPS = {
+    ">=": operator.ge,
+    "<=": operator.le,
+    ">": operator.gt,
+    "<": operator.lt,
+    "!=": operator.ne,
+    "==": operator.eq,
+    None: operator.eq,
+}
 
 
 _FIELD_SOURCES: dict[str, tuple[str, Any]] = {
@@ -42,7 +50,9 @@ def _on_cell(attr: str, get: Any) -> Any:
 _CELL_FIELDS = {k: _on_cell(attr, get) for k, (attr, get) in _FIELD_SOURCES.items()}
 
 
-def _narrow(sels: list[tuple[Any, dict[str, Any]]], attr: str, obj: Any) -> list[tuple[Any, dict[str, Any]]]:
+def _narrow(
+    sels: list[tuple[Any, dict[str, Any]]], attr: str, obj: Any
+) -> list[tuple[Any, dict[str, Any]]]:
     out = []
     for payload, sel in sels:
         rest: dict[str, Any] = {}
@@ -58,7 +68,9 @@ def _narrow(sels: list[tuple[Any, dict[str, Any]]], attr: str, obj: Any) -> list
     return out
 
 
-def narrow_all(groups: list[list[tuple[Any, dict[str, Any]]]], attr: str, obj: Any) -> list[list[tuple[Any, dict[str, Any]]]]:
+def narrow_all(
+    groups: list[list[tuple[Any, dict[str, Any]]]], attr: str, obj: Any
+) -> list[list[tuple[Any, dict[str, Any]]]]:
     return [_narrow(g, attr, obj) for g in groups]
 
 
@@ -89,9 +101,18 @@ _ARTIFACT_KEYS = {"engine", "artifact", "family", "scheme", "source_format"}
 
 
 def cannot_load(m: Matrix, engine: str, artifact: ArtifactSpec) -> str | None:
-    have = {"engine": engine, "artifact": artifact.id, "family": artifact.family,
-            "scheme": str(artifact.scheme), "source_format": str(artifact.source_format)}
+    have = {
+        "engine": engine,
+        "artifact": artifact.id,
+        "family": artifact.family,
+        "scheme": str(artifact.scheme),
+        "source_format": str(artifact.source_format),
+    }
     for rule in m.unsupported:
-        if rule.when and set(rule.when) <= _ARTIFACT_KEYS and all(_field_matches(have[k], v) for k, v in rule.when.items()):
+        if (
+            rule.when
+            and set(rule.when) <= _ARTIFACT_KEYS
+            and all(_field_matches(have[k], v) for k, v in rule.when.items())
+        ):
             return rule.reason
     return None

@@ -57,9 +57,16 @@ def detect(m: Matrix, platform_id: str | None = None) -> Machine:
                 return Machine(p, True, fp)
         slug = re.sub(r"[^a-z0-9]+", "-", chip.lower().replace("apple ", "")).strip("-") or "mac"
         gen = re.search(r"m(\d+)", slug)
-        spec = PlatformSpec(id=f"{slug}-{mem}g", os="macos", backend="metal", accelerator=chip or "Apple Silicon",
-                            arch=f"apple{int(gen.group(1)) + 5}" if gen else "apple", memory_gib=mem, interconnect="uma",
-                            tiers=[Tier.SMOKE, Tier.NIGHTLY, Tier.WEEKLY])
+        spec = PlatformSpec(
+            id=f"{slug}-{mem}g",
+            os="macos",
+            backend="metal",
+            accelerator=chip or "Apple Silicon",
+            arch=f"apple{int(gen.group(1)) + 5}" if gen else "apple",
+            memory_gib=mem,
+            interconnect="uma",
+            tiers=[Tier.SMOKE, Tier.NIGHTLY, Tier.WEEKLY],
+        )
         m.platforms[spec.id] = spec
         return Machine(spec, False, fp)
     gpus = _gpus()
@@ -67,9 +74,15 @@ def detect(m: Matrix, platform_id: str | None = None) -> Machine:
     if gpus:
         name = gpus[0].split(",")[0].strip().lower()
         for p in m.platforms.values():
-            if p.os == ("windows" if platform.system() == "Windows" else "linux") and p.count == len(gpus) and (p.accelerator.lower() in name or name in p.accelerator.lower()):
+            if (
+                p.os == ("windows" if platform.system() == "Windows" else "linux")
+                and p.count == len(gpus)
+                and (p.accelerator.lower() in name or name in p.accelerator.lower())
+            ):
                 return Machine(p, True, fp)
-    raise SystemExit("this machine is not in the catalog yet; pass --machine <id> (see `pie-bench machines`)")
+    raise SystemExit(
+        "this machine is not in the catalog yet; pass --machine <id> (see `pie-bench machines`)"
+    )
 
 
 def tier_for(machine: Machine) -> Tier:

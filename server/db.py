@@ -81,8 +81,13 @@ def url() -> str:
 class Database:
     def __init__(self, dsn: str | None = None):
         self.dsn = dsn or url()
-        self.pool = ConnectionPool(self.dsn, min_size=1, max_size=int(os.environ.get("DB_POOL", "8")), open=True,
-                                   kwargs={"connect_timeout": 15})
+        self.pool = ConnectionPool(
+            self.dsn,
+            min_size=1,
+            max_size=int(os.environ.get("DB_POOL", "8")),
+            open=True,
+            kwargs={"connect_timeout": 15},
+        )
         with self.tx() as cur:
             cur.execute("SELECT pg_advisory_xact_lock(7212031)")
             cur.execute(SCHEMA_SQL)

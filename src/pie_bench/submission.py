@@ -25,7 +25,11 @@ def _jsonl(path: Path) -> list[dict]:
 
 def pack(out: Path, meta: dict) -> Path:
     log = out / "run.log"
-    quality = [json.loads(p.read_text()) for p in sorted((out / "quality").glob("*.json"))] if (out / "quality").is_dir() else []
+    quality = (
+        [json.loads(p.read_text()) for p in sorted((out / "quality").glob("*.json"))]
+        if (out / "quality").is_dir()
+        else []
+    )
     doc = {
         "format": FORMAT,
         "pie_bench": __version__,
@@ -44,10 +48,17 @@ def merge(outs: list[Path], path: Path) -> Path:
     machines = {(d.get("platform") or {}).get("id") for d in docs}
     tags = {d.get("tag") for d in docs}
     if len(machines) > 1 or len(tags) > 1:
-        raise ApiError(f"one submission holds one machine's runs for one release: {sorted(map(str, machines))}, tags {sorted(map(str, tags))}")
+        raise ApiError(
+            f"one submission holds one machine's runs for one release: {sorted(map(str, machines))}, tags {sorted(map(str, tags))}"
+        )
     commits = {d.get("pie_commit") for d in docs}
-    doc = {**docs[0], "pie_commit": commits.pop() if len(commits) == 1 else None, "records": [r for d in docs for r in d["records"]],
-           "quality": [q for d in docs for q in d.get("quality") or []], "log": "\n".join(d.get("log") or "" for d in docs)}
+    doc = {
+        **docs[0],
+        "pie_commit": commits.pop() if len(commits) == 1 else None,
+        "records": [r for d in docs for r in d["records"]],
+        "quality": [q for d in docs for q in d.get("quality") or []],
+        "log": "\n".join(d.get("log") or "" for d in docs),
+    }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(gzip.compress(json.dumps(doc, default=str).encode()))
     return path
