@@ -42,6 +42,7 @@ def main() -> None:
     ap.add_argument("--machine", default=None, help="this machine's id when it is not detected")
     ap.add_argument("--engines", default=None, help="the engines to compare instead of each cell's two fastest, comma-separated")
     ap.add_argument("--pie-root", type=Path, default=None, help="pie checkout to build and use (default ~/.pie-bench/pie)")
+    ap.add_argument("--pie-commit", default=None, help="pie commit to build instead of the cells' pie rows' (a row's commit that today's bench client cannot start)")
     ap.add_argument("--tag", default=None, help="the release the records join (default: the live one, so they replace its rows)")
     ap.add_argument("--out", type=Path, default=None, help="folder for the run (default ~/.pie-bench/profiles/<time>)")
     ap.add_argument("--upload", action="store_true", help="post the records to /v1/submissions (one of the token's quota) and the cells to /v1/profiles")
@@ -60,7 +61,7 @@ def main() -> None:
         os.environ[TRACED] = "1"
         argv = [*sys.argv[1:], "--out", str(a.out)] if "--out" not in sys.argv else sys.argv[1:]
         os.execvp(tracer.prefix[0], [*tracer.prefix, sys.executable, "-m", "pie_bench.profiler", *argv])
-    docs = cell.profile(a.machine, cells, a.out, a.engines.split(",") if a.engines else None, a.pie_root, a.tag)
+    docs = cell.profile(a.machine, cells, a.out, a.engines.split(",") if a.engines else None, a.pie_root, a.tag, a.pie_commit)
     verdicts = judged(docs)
     (a.out / "verdicts.json").write_text(json.dumps(verdicts, indent=1))
     print(json.dumps(verdicts, indent=1))

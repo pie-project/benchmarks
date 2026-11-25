@@ -59,6 +59,32 @@ def same_cut(artifact, label: str) -> bool:
     return label.startswith(f"{kept} ") and (m.experts is None or "experts" not in label or f"{m.experts} experts" in label)
 
 
+def mini_params_b(artifact) -> float | None:
+    """A slice's parameter count in billions as the results rows give it (server/views.py), to tell apart slices whose
+    label is the same ("78 of 78 layers" at 16 or 12 experts)."""
+    import yaml
+
+    r = artifact.miniature if str(artifact.kind) == "miniature" else None
+    arts = yaml.safe_load((MATRIX / "models.yaml").read_text())["artifacts"]
+    f = {a["base_model"]: a for a in arts if a.get("kind", "full") == "full" and a.get("layers") and a.get("vocab")}.get(artifact.base_model)
+    if not r or not f or not f.get("params_b"):
+        return None
+    kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(r.layers).split(","))
+    emb = 2 * f["vocab"] * f["hidden_size"] / 1e9
+    body, active = f["params_b"] - emb, (f.get("active_b") or f["params_b"]) - emb
+    n, top = f.get("experts"), f.get("top_k") or 0
+    idle = min(1.0, max(0, (r.experts or n) - top) / (n - top)) if n and n > top else 1.0
+    return round(emb + (active + (body - active) * idle) * kept / f["layers"], 3)
+
+
+def cut_size(artifact) -> tuple:
+    """A slice's size as the site ranks cuts (server/views.py _cut_size): the full model, then layers, then experts."""
+    m = artifact.miniature if str(artifact.kind) == "miniature" else None
+    if not m:
+        return (1, 0, 0)
+    return (0, sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(m.layers).split(",")), m.experts or 0)
+
+
 def cell_of(m: Matrix, machine, row: dict, commit: str):
     """The matrix cell a results row measured, with the job that plans it."""
     # the machine's own tier first, then any tier that holds the benchmarked cell (NVIDIA's full runs are weekly cells);
@@ -73,6 +99,14 @@ def cell_of(m: Matrix, machine, row: dict, commit: str):
                 break
         if found:
             break
+    if len(found) > 1:
+        found = [c for c in found if not c.mode.spec_dec] or found  # the grid's rows are the plain, unspeculated runs
+    if len(found) > 1 and row.get("mini_params_b"):
+        found = [c for c in found if mini_params_b(c.artifact) == row["mini_params_b"]] or found
+    if len(found) > 1 and len({cut_size(c.artifact) for c in found}) == len(found):
+        # one label, several cuts: the site shows the biggest cut an engine ran last (server/views.py share_cut), so
+        # the rerun takes that one and its fresh rows become the cell's
+        found = [max(found, key=lambda c: cut_size(c.artifact))]
     if len(found) != 1:
         raise SystemExit(f"{row['engine']} {row['model']} {row['benchmark']}: {len(found)} matrix cells match, need one: {[c.artifact.id for c in found]}")
     return job, found[0]
@@ -108,7 +142,7 @@ def versions(rows: list[dict]) -> dict[str, str]:
 
 
 def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engines: list[str] | None = None, pie_root: Path | None = None,
-            tag: str | None = None) -> list[dict]:
+            tag: str | None = None, pie_commit: str | None = None) -> list[dict]:
     """Reruns the cells' two fastest engines on this machine, benchmark and profile, and writes the run's records,
     its submission and out/profiles.json."""
     from pie_bench.node.machine import machine_lock
@@ -123,7 +157,7 @@ def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engin
     live = submit.request("GET", "/v1/results")
     pairs = {(model, setup): pair(live["results"], hw, model, setup, engines) for model, setup in cells}
     rows = [r for p in pairs.values() for r in p]
-    commits = {r["commit"] for r in rows if r["engine"] == "pie"}
+    commits = {pie_commit} if pie_commit else {r["commit"] for r in rows if r["engine"] == "pie"}
     if len(commits) > 1:
         raise SystemExit(f"the cells' pie rows were measured at pie {', '.join(sorted(commits))}: one job builds one commit, so run them apart")
     commit = local.resolve_pie(commits.pop())[0] if commits else None
