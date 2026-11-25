@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import statistics
@@ -69,6 +70,14 @@ def percentile(xs: list[float], q: float) -> float | None:
     return s[lo] + (s[hi] - s[lo]) * (k - lo)
 
 
+def _mean_ms(seconds: list[float]) -> float | None:
+    return (statistics.fmean(seconds) * 1000.0) if seconds else None
+
+
+def _ms_at(seconds: list[float], q: float) -> float | None:
+    return (percentile(seconds, q) * 1000.0) if seconds else None
+
+
 def summarize(
     *,
     mode: str,
@@ -83,12 +92,8 @@ def summarize(
     output_tokens = sum(r.output_tokens for r in ok)
     prompt_known = [r.prompt_tokens for r in ok if r.prompt_tokens is not None]
     prompt_tokens = sum(prompt_known) if len(prompt_known) == len(ok) else None
-    ttfts = [r.ttft_s for r in ok if getattr(r, "ttft_s", None) is not None]
-    gaps_ms = [
-        g / 1000.0
-        for r in ok
-        for g in (getattr(r, "intertoken_us", None) or [])
-    ]
+    ttfts = [r.ttft_s for r in ok if r.ttft_s is not None]
+    gaps_ms = [g / 1000.0 for r in ok for g in (r.intertoken_us or [])]
     return BenchSummary(
         mode=mode,
         engine=engine,
@@ -101,19 +106,82 @@ def summarize(
         prompt_tokens=prompt_tokens,
         req_per_s=(len(ok) / wall_s) if wall_s > 0 else 0.0,
         output_tok_per_s=(output_tokens / wall_s) if wall_s > 0 else 0.0,
-        latency_mean_ms=(statistics.fmean(lats) * 1000.0) if lats else None,
-        latency_p50_ms=(percentile(lats, 0.50) * 1000.0) if lats else None,
-        latency_p95_ms=(percentile(lats, 0.95) * 1000.0) if lats else None,
-        latency_p99_ms=(percentile(lats, 0.99) * 1000.0) if lats else None,
+        latency_mean_ms=_mean_ms(lats),
+        latency_p50_ms=_ms_at(lats, 0.50),
+        latency_p95_ms=_ms_at(lats, 0.95),
+        latency_p99_ms=_ms_at(lats, 0.99),
         config=config,
-        ttft_mean_ms=(statistics.fmean(ttfts) * 1000.0) if ttfts else None,
-        ttft_p50_ms=(percentile(ttfts, 0.50) * 1000.0) if ttfts else None,
-        ttft_p95_ms=(percentile(ttfts, 0.95) * 1000.0) if ttfts else None,
-        ttft_p99_ms=(percentile(ttfts, 0.99) * 1000.0) if ttfts else None,
+        ttft_mean_ms=_mean_ms(ttfts),
+        ttft_p50_ms=_ms_at(ttfts, 0.50),
+        ttft_p95_ms=_ms_at(ttfts, 0.95),
+        ttft_p99_ms=_ms_at(ttfts, 0.99),
         intertoken_p50_ms=percentile(gaps_ms, 0.50) if gaps_ms else None,
         intertoken_p99_ms=percentile(gaps_ms, 0.99) if gaps_ms else None,
         intertoken_max_ms=max(gaps_ms) if gaps_ms else None,
     )
+
+
+SPEC_COUNTER_KEYS = (
+    "spec attempted",
+    "spec hits",
+    "spec misses",
+    "spec rule skipped",
+    "spec budget skipped",
+    "spec dropped orphan",
+    "spec need pages",
+    "spec chain now",
+    "spec chain peak",
+    "spec longest chain",
+    "total batches",
+    "cumulative batch latency us",
+    "avg batch latency us",
+    "last batch latency us",
+    "system spec draft tokens proposed",
+    "system spec draft tokens accepted",
+    "system spec draft tokens proposed per pos",
+    "system spec draft tokens accepted per pos",
+    "bypass hits",
+    "chain submits",
+    "chain drops",
+    "total requests",
+    "max forward requests",
+    "batch size hist",
+    "runtime launch ack mean ms",
+    "runtime launch ack p50 ms",
+    "runtime launch ack p95 ms",
+    "runtime launch ack max ms",
+    "runtime launch ack before start ms",
+    "runtime first launch ack ms",
+    "runtime all launch ack ms",
+    "runtime ready before start ms",
+    "runtime all ready ms",
+    "runtime first return ms",
+    "runtime last return ms",
+    "runtime engine cumulative ms",
+    "runtime wall minus engine ms",
+    "runtime non-engine after launch ms",
+    "vllm spec drafts",
+    "vllm spec draft tokens",
+    "vllm spec accepted tokens",
+    "vllm spec accepted per position",
+    "vllm spec acceptance rate",
+    "vllm spec mean acceptance length",
+)
+
+
+def _print_spec_counters(config: dict[str, Any]) -> None:
+    for k in SPEC_COUNTER_KEYS:
+        if k in config:
+            print(f"{k + ':':<18} {config[k]}")
+    hits = config.get("spec hits", 0)
+    misses = config.get("spec misses", 0)
+    attempted = config.get("spec attempted", 0)
+    depth_cap = config.get("max chain depth")
+    total_calls = hits + misses + attempted
+    if total_calls > 0:
+        print(f"{'spec hit rate:':<18} {hits / total_calls:.1%}")
+    if depth_cap and attempted > 0:
+        print(f"{'spec chain yield:':<18} {hits / (attempted * depth_cap):.1%}")
 
 
 def print_summary(s: BenchSummary) -> None:
@@ -140,66 +208,8 @@ def print_summary(s: BenchSummary) -> None:
             f"intertoken p50/p99/max: {s.intertoken_p50_ms:.2f} / "
             f"{s.intertoken_p99_ms:.2f} / {s.intertoken_max_ms:.2f} ms"
         )
-    spec_keys = (
-        "spec attempted",
-        "spec hits",
-        "spec misses",
-        "spec rule skipped",
-        "spec budget skipped",
-        "spec dropped orphan",
-        "spec need pages",
-        "spec chain now",
-        "spec chain peak",
-        "spec longest chain",
-        "total batches",
-        "cumulative batch latency us",
-        "avg batch latency us",
-        "last batch latency us",
-        "system spec draft tokens proposed",
-        "system spec draft tokens accepted",
-        "system spec draft tokens proposed per pos",
-        "system spec draft tokens accepted per pos",
-        "bypass hits",
-        "chain submits",
-        "chain drops",
-        "total requests",
-        "max forward requests",
-        "batch size hist",
-        "runtime launch ack mean ms",
-        "runtime launch ack p50 ms",
-        "runtime launch ack p95 ms",
-        "runtime launch ack max ms",
-        "runtime launch ack before start ms",
-        "runtime first launch ack ms",
-        "runtime all launch ack ms",
-        "runtime ready before start ms",
-        "runtime all ready ms",
-        "runtime first return ms",
-        "runtime last return ms",
-        "runtime engine cumulative ms",
-        "runtime wall minus engine ms",
-        "runtime non-engine after launch ms",
-        "vllm spec drafts",
-        "vllm spec draft tokens",
-        "vllm spec accepted tokens",
-        "vllm spec accepted per position",
-        "vllm spec acceptance rate",
-        "vllm spec mean acceptance length",
-    )
-    if any(k in s.config for k in spec_keys):
-        for k in spec_keys:
-            if k in s.config:
-                print(f"{k+':':<18} {s.config[k]}")
-        hits = s.config.get("spec hits", 0)
-        misses = s.config.get("spec misses", 0)
-        attempted = s.config.get("spec attempted", 0)
-        depth_cap = s.config.get("max chain depth")
-        total_calls = hits + misses + attempted
-        if total_calls > 0:
-            print(f"{'spec hit rate:':<18} {hits / total_calls:.1%}")
-        if depth_cap and attempted > 0:
-            theoretical = attempted * depth_cap
-            print(f"{'spec chain yield:':<18} {hits / theoretical:.1%}")
+    if any(k in s.config for k in SPEC_COUNTER_KEYS):
+        _print_spec_counters(s.config)
     print("-" * 52)
 
 
@@ -213,8 +223,6 @@ def write_json(path: str | None, summary: BenchSummary, results: list[RequestRes
 
 
 def hash_output_tokens(token_ids: list[int]) -> str:
-    import hashlib
-
     digest = hashlib.sha256()
     for token in token_ids:
         digest.update(int(token).to_bytes(4, "little", signed=False))
@@ -224,8 +232,6 @@ def hash_output_tokens(token_ids: list[int]) -> str:
 def print_first_output(args: argparse.Namespace, text: str | None) -> None:
     if not getattr(args, "dump_first_text", False) or text is None:
         return
-    import hashlib
-
     sha = hashlib.sha256(text.encode()).hexdigest()[:16]
     print(f"\nFIRST REQUEST OUTPUT (sha256[:16]={sha}):")
     print(text)

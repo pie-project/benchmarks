@@ -5,32 +5,45 @@ import re
 import sys
 
 
+def _engine_line(line: str) -> str:
+    if re.match(r"^type\s*=", line):
+        line = 'type = "xla"'
+    return re.sub(r"^total_pages(\s*=)", r"max_total_pages\1", line)
+
+
 def rewrite(text: str, port: str | None = None) -> str:
-    prewarm = os.environ.get("PIE_XLA_PREWARM", "1") == "1"
-    silence = os.environ.get("PIE_SILENCE_TIMEOUT")
     out, section = [], None
     for line in text.splitlines():
         header = re.match(r"^\[([^\]]+)\]\s*$", line)
         if header:
             section = header.group(1)
             out.append(line)
-            if section == "engine" and prewarm:
+            if section == "engine":
                 out.append("prewarm = true")
-            if section == "runtime" and silence:
-                out.append(f'silence_timeout = "{silence}"')
             continue
-        if (section == "engine" and prewarm and re.match(r"^prewarm\s*=", line)) or (section == "runtime" and silence and re.match(r"^silence_timeout\s*=", line)):
+        if section == "engine" and re.match(r"^prewarm\s*=", line):
             continue
-        elif section == "server" and port and re.match(r"^listen\s*=", line):
+        if section == "server" and port and re.match(r"^listen\s*=", line):
             line = f'listen = "127.0.0.1:{port}"'
         elif section == "engine":
-            if re.match(r"^type\s*=", line):
-                line = 'type = "xla"'
-            line = re.sub(r"^total_pages(\s*=)", r"max_total_pages\1", line)
+            line = _engine_line(line)
         out.append(line)
-    if silence and not any(re.match(r"^\[runtime\]\s*$", ln) for ln in out):
-        out += ["[runtime]", f'silence_timeout = "{silence}"']
     return "\n".join(out) + "\n"
+
+
+def _rewrite_config_in_place(argv: list[str]) -> None:
+    path = argv[argv.index("--config") + 1]
+    port = re.search(r"-(\d+)\.toml$", path)
+    with open(path) as f:
+        text = rewrite(f.read(), port and port.group(1))
+    with open(path, "w") as f:
+        f.write(text)
+
+
+def _add_profiler_preload() -> None:
+    preload = os.environ.get("PIE_BENCH_PIE_PRELOAD")
+    if preload:
+        os.environ["LD_PRELOAD"] = " ".join(filter(None, [preload, os.environ.get("LD_PRELOAD")]))
 
 
 def main() -> None:
@@ -39,14 +52,8 @@ def main() -> None:
     if not real:
         sys.exit("pie_xla.py: PIE_XLA_REAL_PIE is not set")
     if "--config" in argv:
-        path = argv[argv.index("--config") + 1]
-        port = re.search(r"-(\d+)\.toml$", path)
-        with open(path) as f:
-            text = rewrite(f.read(), port and port.group(1))
-        with open(path, "w") as f:
-            f.write(text)
-    if os.environ.get("PIE_BENCH_PIE_PRELOAD"):  # the profiler's device trace (profiler/xla_trace.c)
-        os.environ["LD_PRELOAD"] = " ".join(filter(None, [os.environ["PIE_BENCH_PIE_PRELOAD"], os.environ.get("LD_PRELOAD")]))
+        _rewrite_config_in_place(argv)
+    _add_profiler_preload()
     os.execv(real, [real, *argv])
 
 

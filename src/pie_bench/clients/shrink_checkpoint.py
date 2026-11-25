@@ -19,11 +19,23 @@ from typing import Any
 HF_ENDPOINT = os.environ.get("HF_ENDPOINT", "https://huggingface.co")
 
 DTYPE_BYTES = {
-    "BOOL": 1, "U8": 1, "I8": 1,
-    "F8_E4M3": 1, "F8_E5M2": 1, "F8_E8M0": 1, "F8_E4M3FN": 1,
-    "I16": 2, "U16": 2, "F16": 2, "BF16": 2,
-    "I32": 4, "U32": 4, "F32": 4,
-    "I64": 8, "U64": 8, "F64": 8,
+    "BOOL": 1,
+    "U8": 1,
+    "I8": 1,
+    "F8_E4M3": 1,
+    "F8_E5M2": 1,
+    "F8_E8M0": 1,
+    "F8_E4M3FN": 1,
+    "I16": 2,
+    "U16": 2,
+    "F16": 2,
+    "BF16": 2,
+    "I32": 4,
+    "U32": 4,
+    "F32": 4,
+    "I64": 8,
+    "U64": 8,
+    "F64": 8,
 }
 
 MAX_SHARD_BYTES = 4 * 1024**3
@@ -61,7 +73,7 @@ def _urlopen(url: str, headers: dict[str, str] | None = None, retries: int = 6):
             last = exc
             if isinstance(exc, urllib.error.HTTPError) and exc.code in (401, 403, 404):
                 raise
-            time.sleep(min(2 ** attempt, 30))
+            time.sleep(min(2**attempt, 30))
     raise RuntimeError(f"GET {url} failed after {retries} attempts: {last}")
 
 
@@ -69,8 +81,9 @@ def file_url(repo: str, revision: str, name: str) -> str:
     return f"{HF_ENDPOINT}/{repo}/resolve/{revision}/{name}"
 
 
-def fetch_bytes(repo: str, revision: str, name: str,
-                start: int | None = None, end: int | None = None) -> bytes:
+def fetch_bytes(
+    repo: str, revision: str, name: str, start: int | None = None, end: int | None = None
+) -> bytes:
     headers = {}
     if start is not None:
         headers["Range"] = f"bytes={start}-{end - 1}"
@@ -78,8 +91,7 @@ def fetch_bytes(repo: str, revision: str, name: str,
         return resp.read()
 
 
-def fetch_to_file(repo: str, revision: str, name: str, dest: Path,
-                  start: int, end: int) -> None:
+def fetch_to_file(repo: str, revision: str, name: str, dest: Path, start: int, end: int) -> None:
     tmp = dest.with_suffix(dest.suffix + ".part")
     piece = 64 << 20
     with tmp.open("wb") as out:
@@ -100,6 +112,7 @@ def fetch_to_file(repo: str, revision: str, name: str, dest: Path,
         return n
 
     from concurrent.futures import ThreadPoolExecutor
+
     with ThreadPoolExecutor(8) as pool:
         got = sum(pool.map(part, range(start, end, piece)))
     want = end - start
@@ -162,20 +175,22 @@ def read_shard_header(repo: str, revision: str, shard: str) -> dict[str, SrcTens
         if name == "__metadata__":
             continue
         s, e = meta["data_offsets"]
-        out[name] = SrcTensor(name, shard, meta["dtype"], list(meta["shape"]),
-                              data_start + s, data_start + e)
+        out[name] = SrcTensor(
+            name, shard, meta["dtype"], list(meta["shape"]), data_start + s, data_start + e
+        )
     return out
 
 
-def write_safetensors(path: Path, entries: list[tuple[str, str, list[int], Callable[[], Iterable[bytes]]]]) -> None:
+def write_safetensors(
+    path: Path, entries: list[tuple[str, str, list[int], Callable[[], Iterable[bytes]]]]
+) -> None:
     header: dict[str, Any] = {}
     offset = 0
     for name, dtype, shape, _ in entries:
         n = DTYPE_BYTES[dtype]
         for d in shape:
             n *= d
-        header[name] = {"dtype": dtype, "shape": shape,
-                        "data_offsets": [offset, offset + n]}
+        header[name] = {"dtype": dtype, "shape": shape, "data_offsets": [offset, offset + n]}
         offset += n
     blob = json.dumps(header, separators=(",", ":")).encode()
     pad = (-len(blob)) % 8
@@ -267,8 +282,7 @@ def _rewrite_dsv4(cfg: dict, plan: Plan) -> None:
     if isinstance(cfg.get("compress_ratios"), list):
         cfg["compress_ratios"] = _slice_list(cfg["compress_ratios"], plan.src_layers)
     if "num_hash_layers" in cfg:
-        cfg["num_hash_layers"] = _prefix_count(
-            plan, "num_hash_layers", cfg["num_hash_layers"])
+        cfg["num_hash_layers"] = _prefix_count(plan, "num_hash_layers", cfg["num_hash_layers"])
 
 
 def _rewrite_dsv41(cfg: dict, plan: Plan) -> None:
@@ -278,7 +292,7 @@ def _rewrite_dsv41(cfg: dict, plan: Plan) -> None:
     remap = {src: i for i, src in enumerate(plan.src_layers)}
     if isinstance(tc.get("compress_ratios"), list):
         full = tc["compress_ratios"]
-        tail = full[len(full) - stages:] if plan.dspark and stages else []
+        tail = full[len(full) - stages :] if plan.dspark and stages else []
         tc["compress_ratios"] = _slice_list(full, plan.src_layers) + tail
     ratios = tc.get("compress_ratios") or []
 
@@ -292,12 +306,14 @@ def _rewrite_dsv41(cfg: dict, plan: Plan) -> None:
             raise SystemExit(
                 f"deepseek_v41: kept layer {i} (source {plan.src_layers[i]}) compresses "
                 f"at ratio {ratio} but no kept KV source layer precedes it; keep one of "
-                f"{tc.get('kv_source_layer_ids')} before it")
+                f"{tc.get('kv_source_layer_ids')} before it"
+            )
         if ratio and not any(s <= i for s in index_sources):
             raise SystemExit(
                 f"deepseek_v41: kept layer {i} (source {plan.src_layers[i]}) attends "
                 f"over a selection but no kept index source precedes it; keep one of "
-                f"{tc.get('index_source_layer_ids')} before it")
+                f"{tc.get('index_source_layer_ids')} before it"
+            )
     tc["kv_source_layer_ids"] = kv_sources
     tc["index_source_layer_ids"] = index_sources
     cand = tc.get("candidate_source_layer_id")
@@ -307,14 +323,17 @@ def _rewrite_dsv41(cfg: dict, plan: Plan) -> None:
     if plan.dspark and targets:
         n = len(targets)
         if n > len(plan.src_layers):
-            raise SystemExit(f"deepseek_v41: DSpark taps {n} layers and {len(plan.src_layers)} are kept")
+            raise SystemExit(
+                f"deepseek_v41: DSpark taps {n} layers and {len(plan.src_layers)} are kept"
+            )
         tc["dspark_target_layer_ids"] = list(range(len(plan.src_layers) - n, len(plan.src_layers)))
         tc["num_nextn_predict_layers"] = stages
         if plan.experts is not None and isinstance(tc.get("dspark_n_routed_experts"), int):
             tc["dspark_n_routed_experts"] = min(tc["dspark_n_routed_experts"], plan.experts)
             if isinstance(tc.get("dspark_num_experts_per_tok"), int):
-                tc["dspark_num_experts_per_tok"] = min(tc["dspark_num_experts_per_tok"],
-                                                       tc["dspark_n_routed_experts"])
+                tc["dspark_num_experts_per_tok"] = min(
+                    tc["dspark_num_experts_per_tok"], tc["dspark_n_routed_experts"]
+                )
     else:
         tc["num_nextn_predict_layers"] = 0
         if "dspark_block_size" in tc:
@@ -329,9 +348,11 @@ def _rewrite_dsv41(cfg: dict, plan: Plan) -> None:
     else:
         source_ids = tc.get("engram_layer_ids", [])
         if isinstance(tc.get("engram_num_embeddings"), list):
-            tc["engram_num_embeddings"] = [size for source_id, size in
-                                           zip(source_ids, tc["engram_num_embeddings"])
-                                           if source_id in remap]
+            tc["engram_num_embeddings"] = [
+                size
+                for source_id, size in zip(source_ids, tc["engram_num_embeddings"])
+                if source_id in remap
+            ]
         tc["engram_layer_ids"] = kept("engram_layer_ids")
 
 
@@ -353,8 +374,11 @@ def _remap_quant_lists(cfg: dict, plan: Plan) -> None:
                     out.append(name)
                     continue
                 src = int(m.group(1))
-                out.extend(name[:m.start(1)] + str(dst) + name[m.end(1):]
-                           for dst, kept in enumerate(plan.src_layers) if kept == src)
+                out.extend(
+                    name[: m.start(1)] + str(dst) + name[m.end(1) :]
+                    for dst, kept in enumerate(plan.src_layers)
+                    if kept == src
+                )
             table[key] = out
 
 
@@ -389,7 +413,8 @@ def _rewrite_kimi(cfg: dict, plan: Plan) -> None:
     tc = _text_cfg(cfg, plan)
     if "first_k_dense_replace" in tc:
         tc["first_k_dense_replace"] = sum(
-            1 for i in plan.src_layers if i < tc["first_k_dense_replace"])
+            1 for i in plan.src_layers if i < tc["first_k_dense_replace"]
+        )
 
 
 def _prefix_count(plan: Plan, key: str, bound: int) -> int:
@@ -402,7 +427,8 @@ def _prefix_count(plan: Plan, key: str, bound: int) -> int:
             f"{plan.family}: the first {bound} source layers are the ones "
             f"`{key}` names, and it can only name a *prefix* of the output "
             f"layers -- so they must be selected once and up front; got "
-            f"--layers {plan.src_layers}")
+            f"--layers {plan.src_layers}"
+        )
     return n
 
 
@@ -414,16 +440,20 @@ TEXT_TOWER_PREFIX = "language_model."
 
 
 def _strip_text_tower(name: str) -> str:
-    return name[len(TEXT_TOWER_PREFIX):] if name.startswith(TEXT_TOWER_PREFIX) else name
+    return name[len(TEXT_TOWER_PREFIX) :] if name.startswith(TEXT_TOWER_PREFIX) else name
 
 
 def _flatten_text_only(cfg: dict, plan: Plan) -> None:
     tc = cfg.pop(plan.text_cfg_key)
-    for key in ("architectures", "auto_map", "_name_or_path", "model_type",
-                "torch_dtype", "dtype"):
+    for key in ("architectures", "auto_map", "_name_or_path", "model_type", "torch_dtype", "dtype"):
         tc.pop(key, None)
-    for key in ("vision_config", "auto_map", "image_placeholder",
-                "media_placeholder_token_id", "ignore_index"):
+    for key in (
+        "vision_config",
+        "auto_map",
+        "image_placeholder",
+        "media_placeholder_token_id",
+        "ignore_index",
+    ):
         cfg.pop(key, None)
     cfg.update(tc)
     cfg["model_type"] = "kimi_k3"
@@ -434,8 +464,7 @@ def _rewrite_kimi_k3(cfg: dict, plan: Plan) -> None:
     _rewrite_common(cfg, plan)
     tc = _text_cfg(cfg, plan)
     if "first_k_dense_replace" in tc:
-        tc["first_k_dense_replace"] = _dense_prefix_len(
-            plan, tc["first_k_dense_replace"])
+        tc["first_k_dense_replace"] = _dense_prefix_len(plan, tc["first_k_dense_replace"])
 
     lac = tc.get("linear_attn_config")
     if isinstance(lac, dict):
@@ -448,7 +477,8 @@ def _rewrite_kimi_k3(cfg: dict, plan: Plan) -> None:
             raise SystemExit(
                 "kimi_k3: the selection must keep at least one KDA layer and one "
                 "full-attention (MLA) layer; source MLA layers are "
-                f"{sorted(i - 1 for i in (lac.get('full_attn_layers') or ()))[:8]}...")
+                f"{sorted(i - 1 for i in (lac.get('full_attn_layers') or ()))[:8]}..."
+            )
         lac["kda_layers"] = kda
         lac["full_attn_layers"] = full
 
@@ -507,11 +537,6 @@ def _rewrite_minimax_m3(cfg: dict, plan: Plan) -> None:
     tc["num_nextn_predict_layers"] = 0
 
 
-def _rewrite_hy_v4(cfg: dict, plan: Plan) -> None:
-    _rewrite_glm(cfg, plan)
-    cfg["index_topk"] = min(cfg.get("index_topk", 16), 16)
-
-
 def _rewrite_nemotron_h(cfg: dict, plan: Plan) -> None:
     _rewrite_common(cfg, plan)
     pat = cfg.get("hybrid_override_pattern")
@@ -544,15 +569,18 @@ def _check_attn_period(tc: dict, plan: Plan) -> None:
     if not isinstance(interval, int) or interval <= 0:
         return
     types = tc["layer_types"]
-    derived = ["full_attention" if (i + 1) % interval == 0 else "linear_attention"
-               for i in range(len(types))]
+    derived = [
+        "full_attention" if (i + 1) % interval == 0 else "linear_attention"
+        for i in range(len(types))
+    ]
     if types != derived:
         raise SystemExit(
             f"{plan.family}: --layers {plan.src_layers} truncates layer_types to "
             f"{types}, but full_attention_interval {interval} derives {derived}. "
             f"The artifact would say two different things about which layers are "
             f"full-attention; select a block that keeps the two in step (one "
-            f"starting at 0 does).")
+            f"starting at 0 does)."
+        )
 
 
 def _rewrite_qwen4_exp(cfg: dict, plan: Plan) -> None:
@@ -564,8 +592,10 @@ def _rewrite_qwen4_exp(cfg: dict, plan: Plan) -> None:
     src_parts = tc.get("split_ngram_parts")
     if plan.parts is not None and isinstance(src_parts, int):
         if plan.parts > src_parts:
-            raise SystemExit(f"qwen4_exp: --parts {plan.parts} exceeds the "
-                             f"checkpoint's {src_parts} n-gram shards")
+            raise SystemExit(
+                f"qwen4_exp: --parts {plan.parts} exceeds the "
+                f"checkpoint's {src_parts} n-gram shards"
+            )
         tc["split_ngram_parts"] = plan.parts
         base = tc.get("ngram_vocab_size_base")
         if isinstance(base, int):
@@ -575,7 +605,8 @@ def _rewrite_qwen4_exp(cfg: dict, plan: Plan) -> None:
             raise SystemExit(
                 f"qwen4_exp: the carve cut the table for "
                 f"ngram_vocab_size_base {carve.dst_base} and the config rewrite "
-                f"declares {tc.get('ngram_vocab_size_base')}")
+                f"declares {tc.get('ngram_vocab_size_base')}"
+            )
 
     ids = tc.get("ple_layer_ids")
     if isinstance(ids, list) and ids:
@@ -586,7 +617,8 @@ def _rewrite_qwen4_exp(cfg: dict, plan: Plan) -> None:
                 f"qwen4_exp: the selection drops every PLE layer (the config's "
                 f"one-indexed ple_layer_ids {ids} name layer(s) "
                 f"{[i - 1 for i in ids]}), and a Flash-Next without its n-gram "
-                f"memory is a different model; got --layers {plan.src_layers}")
+                f"memory is a different model; got --layers {plan.src_layers}"
+            )
         tc["ple_layer_ids"] = kept
 
     if "mtp_num_hidden_layers" in tc:
@@ -614,8 +646,9 @@ def _is_prime(v: int) -> bool:
     return True
 
 
-def ngram_hash_geometry(base: int, heads: int, divisible_by: int
-                        ) -> tuple[list[int], list[int], int]:
+def ngram_hash_geometry(
+    base: int, heads: int, divisible_by: int
+) -> tuple[list[int], list[int], int]:
     primes: list[int] = []
     offsets: list[int] = []
     total = 0
@@ -667,8 +700,13 @@ def plan_ple_carve(cfg: dict, plan: Plan) -> PleCarve | None:
     if plan.parts is None or plan.part_re is None:
         return None
     tc = _text_cfg(cfg, plan)
-    keys = ("ngram_vocab_size_base", "split_ngram_parts", "ngram_size",
-            "heads_per_ngram", "make_ngram_vocab_size_divisible_by")
+    keys = (
+        "ngram_vocab_size_base",
+        "split_ngram_parts",
+        "ngram_size",
+        "heads_per_ngram",
+        "make_ngram_vocab_size_divisible_by",
+    )
     if any(not isinstance(tc.get(k), int) for k in keys):
         return None
     src_base, src_parts, ngram, per_ngram, divisible_by = (tc[k] for k in keys)
@@ -682,13 +720,15 @@ def plan_ple_carve(cfg: dict, plan: Plan) -> PleCarve | None:
     if src_padded % src_parts:
         raise SystemExit(
             f"qwen4_exp: the source's {src_padded} padded n-gram rows do not "
-            f"divide into its {src_parts} stored shards")
+            f"divide into its {src_parts} stored shards"
+        )
     if dst_padded % plan.parts:
         raise SystemExit(
             f"qwen4_exp: `ngram_vocab_size_base {dst_base}` derives {dst_padded} "
             f"padded n-gram rows, which do not divide into --parts {plan.parts} "
             f"equal shards. Pick a --parts that divides it, or the table cannot "
-            f"be stored the way this family stores tables.")
+            f"be stored the way this family stores tables."
+        )
 
     spans = [(src_offsets[h], dst_primes[h]) for h in range(heads)]
     spans[-1] = (spans[-1][0], spans[-1][1] + dst_padded - sum(dst_primes))
@@ -697,7 +737,8 @@ def plan_ple_carve(cfg: dict, plan: Plan) -> PleCarve | None:
             raise SystemExit(
                 f"qwen4_exp: miniature head {h} wants {rows} rows and the "
                 f"source's head {h} has {src_primes[h]}: this is a shrink, and "
-                f"that would be a growth")
+                f"that would be a growth"
+            )
 
     src_rows = src_padded // src_parts
     dst_rows = dst_padded // plan.parts
@@ -728,12 +769,20 @@ def plan_ple_carve(cfg: dict, plan: Plan) -> PleCarve | None:
         raise SystemExit(f"qwen4_exp: the carve laid {at} rows, not {dst_padded}")
 
     return PleCarve(
-        heads=heads, divisible_by=divisible_by,
-        src_base=src_base, dst_base=dst_base,
-        src_parts=src_parts, dst_parts=plan.parts,
-        src_primes=src_primes, src_offsets=src_offsets, src_padded=src_padded,
-        dst_primes=dst_primes, dst_offsets=dst_offsets, dst_padded=dst_padded,
-        layout=layout, windows=windows,
+        heads=heads,
+        divisible_by=divisible_by,
+        src_base=src_base,
+        dst_base=dst_base,
+        src_parts=src_parts,
+        dst_parts=plan.parts,
+        src_primes=src_primes,
+        src_offsets=src_offsets,
+        src_padded=src_padded,
+        dst_primes=dst_primes,
+        dst_offsets=dst_offsets,
+        dst_padded=dst_padded,
+        layout=layout,
+        windows=windows,
     )
 
 
@@ -756,8 +805,9 @@ def _part_name(src_name: str, plan: Plan, part: int) -> str:
     return f"{src_name[:lo]}{part}{src_name[hi:]}"
 
 
-def apply_ple_carve(outs: list[OutTensor], src: dict[str, SrcTensor],
-                    plan: Plan) -> list[tuple[str, SrcTensor, bytes]]:
+def apply_ple_carve(
+    outs: list[OutTensor], src: dict[str, SrcTensor], plan: Plan
+) -> list[tuple[str, SrcTensor, bytes]]:
     carve = plan.ple_carve
     if carve is None:
         return []
@@ -774,7 +824,8 @@ def apply_ple_carve(outs: list[OutTensor], src: dict[str, SrcTensor],
                     f"{ot.src.name} stores {rows_each} rows and the config's "
                     f"hashing derives {carve.src_rows} per shard: the table in "
                     f"the file is not the table the config describes, and this "
-                    f"tool will not guess which is right")
+                    f"tool will not guess which is right"
+                )
             ot.pieces = [
                 Piece(src[_part_name(ot.src.name, plan, part)], row0, rows)
                 for part, row0, rows in carve.layout[out_part]
@@ -792,12 +843,16 @@ def apply_ple_carve(outs: list[OutTensor], src: dict[str, SrcTensor],
         elif tail == "ngram_heads_offsets":
             ot.literal = i64(carve.dst_offsets)
             checks.append((ot.src.name, ot.src, i64(carve.src_offsets)))
-    print(f"      the n-gram table is re-carved by head: {carve.src_padded} rows "
-          f"in {carve.src_parts} shards -> {carve.dst_padded} in {carve.dst_parts}, "
-          f"{seen} planes from {len(carve.windows)} source shards")
-    print(f"      heads past {carve.dst_base}: primes {carve.dst_primes[0]}"
-          f"..{carve.dst_primes[-1]}, offsets to {carve.dst_offsets[-1]}, "
-          f"padded to {carve.dst_padded} = {carve.dst_parts} x {carve.dst_rows}")
+    print(
+        f"      the n-gram table is re-carved by head: {carve.src_padded} rows "
+        f"in {carve.src_parts} shards -> {carve.dst_padded} in {carve.dst_parts}, "
+        f"{seen} planes from {len(carve.windows)} source shards"
+    )
+    print(
+        f"      heads past {carve.dst_base}: primes {carve.dst_primes[0]}"
+        f"..{carve.dst_primes[-1]}, offsets to {carve.dst_offsets[-1]}, "
+        f"padded to {carve.dst_padded} = {carve.dst_parts} x {carve.dst_rows}"
+    )
     return checks
 
 
@@ -830,9 +885,11 @@ FAMILIES: dict[str, dict[str, Any]] = {
             "mlp.experts.gate_up_proj",
             "mlp.experts.down_proj",
         ),
-        globals_keep=("model.language_model.embed_tokens.weight",
-                      "model.language_model.norm.weight",
-                      "lm_head.weight"),
+        globals_keep=(
+            "model.language_model.embed_tokens.weight",
+            "model.language_model.norm.weight",
+            "lm_head.weight",
+        ),
         default_layers="0-7",
         config_rewrite=_rewrite_qwen3_5_moe,
         text_cfg_key="text_config",
@@ -856,13 +913,15 @@ FAMILIES: dict[str, dict[str, Any]] = {
             "mlp.switch_mlp.down_proj.scales",
             "mlp.switch_mlp.down_proj.biases",
         ),
-        globals_keep=("language_model.model.embed_tokens.weight",
-                      "language_model.model.embed_tokens.scales",
-                      "language_model.model.embed_tokens.biases",
-                      "language_model.model.norm.weight",
-                      "language_model.lm_head.weight",
-                      "language_model.lm_head.scales",
-                      "language_model.lm_head.biases"),
+        globals_keep=(
+            "language_model.model.embed_tokens.weight",
+            "language_model.model.embed_tokens.scales",
+            "language_model.model.embed_tokens.biases",
+            "language_model.model.norm.weight",
+            "language_model.lm_head.weight",
+            "language_model.lm_head.scales",
+            "language_model.lm_head.biases",
+        ),
         default_layers="0-4",
         config_rewrite=_rewrite_qwen3_5_moe,
         text_cfg_key="text_config",
@@ -880,11 +939,15 @@ FAMILIES: dict[str, dict[str, Any]] = {
         layer_prefix="model.language_model.layers.",
         expert_re=re.compile(r"\.mlp\.experts\.(\d+)\."),
         router_suffixes=("mlp.gate.weight", "mlp.gate.e_score_correction_bias"),
-        globals_keep=("model.language_model.embed_tokens.weight",
-                      "model.language_model.embed_tokens.scales",
-                      "model.language_model.embed_tokens.biases",
-                      "model.language_model.norm.weight",
-                      "lm_head.weight", "lm_head.scales", "lm_head.biases"),
+        globals_keep=(
+            "model.language_model.embed_tokens.weight",
+            "model.language_model.embed_tokens.scales",
+            "model.language_model.embed_tokens.biases",
+            "model.language_model.norm.weight",
+            "lm_head.weight",
+            "lm_head.scales",
+            "lm_head.biases",
+        ),
         default_layers="0-7",
         config_rewrite=_rewrite_glm,
         text_cfg_key="text_config",
@@ -894,8 +957,14 @@ FAMILIES: dict[str, dict[str, Any]] = {
         layer_prefix="layers.",
         expert_re=re.compile(r"\.ffn\.experts\.(\d+)\."),
         router_suffixes=("ffn.gate.weight", "ffn.gate.bias"),
-        globals_keep=("embed.weight", "norm.weight", "head.weight",
-                      "hc_head_fn", "hc_head_scale", "hc_head_base"),
+        globals_keep=(
+            "embed.weight",
+            "norm.weight",
+            "head.weight",
+            "hc_head_fn",
+            "hc_head_scale",
+            "hc_head_base",
+        ),
         default_layers="0-5",
         config_rewrite=_rewrite_dsv4,
     ),
@@ -916,11 +985,18 @@ FAMILIES: dict[str, dict[str, Any]] = {
             "ffn.switch_mlp.down_proj.scales",
             "ffn.switch_mlp.down_proj.biases",
         ),
-        globals_keep=("model.embed_tokens.weight", "model.embed_tokens.scales",
-                      "model.embed_tokens.biases", "model.norm.weight",
-                      "lm_head.weight", "lm_head.scales", "lm_head.biases",
-                      "model.hc_head.base", "model.hc_head.fn",
-                      "model.hc_head.scale"),
+        globals_keep=(
+            "model.embed_tokens.weight",
+            "model.embed_tokens.scales",
+            "model.embed_tokens.biases",
+            "model.norm.weight",
+            "lm_head.weight",
+            "lm_head.scales",
+            "lm_head.biases",
+            "model.hc_head.base",
+            "model.hc_head.fn",
+            "model.hc_head.scale",
+        ),
         default_layers="0-3,42",
         config_rewrite=_rewrite_dsv4,
     ),
@@ -950,21 +1026,17 @@ FAMILIES: dict[str, dict[str, Any]] = {
         ),
         part_re=re.compile(r"\.ngram_embedding\.shard_(\d+)\."),
         default_parts=8,
-        globals_keep=("language_model.model.embed_tokens.weight",
-                      "language_model.lm_head.weight",
-                      "language_model.model.hyper_connection_mixer.hc_norm.weight",
-                      "language_model.model.hyper_connection_mixer."
-                      "input_mix_weight_down.weight",
-                      "language_model.model.hyper_connection_mixer."
-                      "input_mix_weight_down.scales",
-                      "language_model.model.hyper_connection_mixer."
-                      "input_mix_weight_down.biases",
-                      "language_model.model.hyper_connection_mixer."
-                      "input_mix_weight_up.weight",
-                      "language_model.model.hyper_connection_mixer."
-                      "input_mix_weight_up.scales",
-                      "language_model.model.hyper_connection_mixer."
-                      "input_mix_weight_up.biases"),
+        globals_keep=(
+            "language_model.model.embed_tokens.weight",
+            "language_model.lm_head.weight",
+            "language_model.model.hyper_connection_mixer.hc_norm.weight",
+            "language_model.model.hyper_connection_mixer.input_mix_weight_down.weight",
+            "language_model.model.hyper_connection_mixer.input_mix_weight_down.scales",
+            "language_model.model.hyper_connection_mixer.input_mix_weight_down.biases",
+            "language_model.model.hyper_connection_mixer.input_mix_weight_up.weight",
+            "language_model.model.hyper_connection_mixer.input_mix_weight_up.scales",
+            "language_model.model.hyper_connection_mixer.input_mix_weight_up.biases",
+        ),
         default_layers="0-3",
         config_rewrite=_rewrite_qwen4_exp,
         text_cfg_key="text_config",
@@ -980,13 +1052,13 @@ FAMILIES: dict[str, dict[str, Any]] = {
         ),
         part_re=re.compile(r"\.ngram_embedding\.shard_(\d+)\."),
         default_parts=8,
-        globals_keep=("model.language_model.embed_tokens.weight",
-                      "lm_head.weight",
-                      "model.language_model.hyper_connection_mixer.hc_norm.weight",
-                      "model.language_model.hyper_connection_mixer."
-                      "input_mix_weight_down.weight",
-                      "model.language_model.hyper_connection_mixer."
-                      "input_mix_weight_up.weight"),
+        globals_keep=(
+            "model.language_model.embed_tokens.weight",
+            "lm_head.weight",
+            "model.language_model.hyper_connection_mixer.hc_norm.weight",
+            "model.language_model.hyper_connection_mixer.input_mix_weight_down.weight",
+            "model.language_model.hyper_connection_mixer.input_mix_weight_up.weight",
+        ),
         default_layers="0-3",
         config_rewrite=_rewrite_qwen4_exp,
         text_cfg_key="text_config",
@@ -995,9 +1067,11 @@ FAMILIES: dict[str, dict[str, Any]] = {
         layer_prefix="language_model.model.layers.",
         expert_re=re.compile(r"\.mlp\.experts\.(\d+)\."),
         router_suffixes=("mlp.gate.weight", "mlp.gate.e_score_correction_bias"),
-        globals_keep=("language_model.model.embed_tokens.weight",
-                      "language_model.model.norm.weight",
-                      "language_model.lm_head.weight"),
+        globals_keep=(
+            "language_model.model.embed_tokens.weight",
+            "language_model.model.norm.weight",
+            "language_model.lm_head.weight",
+        ),
         default_layers="0-3",
         config_rewrite=_rewrite_kimi,
         text_cfg_key="text_config",
@@ -1006,13 +1080,17 @@ FAMILIES: dict[str, dict[str, Any]] = {
     "kimi_k3": dict(
         layer_prefix="language_model.model.layers.",
         expert_re=re.compile(r"\.block_sparse_moe\.experts\.(\d+)\."),
-        router_suffixes=("block_sparse_moe.gate.weight",
-                         "block_sparse_moe.gate.e_score_correction_bias"),
-        globals_keep=("language_model.model.embed_tokens.weight",
-                      "language_model.model.norm.weight",
-                      "language_model.lm_head.weight",
-                      "language_model.model.output_attn_res_norm.weight",
-                      "language_model.model.output_attn_res_proj.weight"),
+        router_suffixes=(
+            "block_sparse_moe.gate.weight",
+            "block_sparse_moe.gate.e_score_correction_bias",
+        ),
+        globals_keep=(
+            "language_model.model.embed_tokens.weight",
+            "language_model.model.norm.weight",
+            "language_model.lm_head.weight",
+            "language_model.model.output_attn_res_norm.weight",
+            "language_model.model.output_attn_res_proj.weight",
+        ),
         default_layers="0-7",
         config_rewrite=_rewrite_kimi_k3,
         text_cfg_key="text_config",
@@ -1021,10 +1099,16 @@ FAMILIES: dict[str, dict[str, Any]] = {
     "gemma4": dict(
         layer_prefix="model.language_model.layers.",
         expert_re=None,
-        router_suffixes=("router.proj.weight", "router.per_expert_scale",
-                         "experts.gate_up_proj", "experts.down_proj"),
-        globals_keep=("model.language_model.embed_tokens.weight",
-                      "model.language_model.norm.weight"),
+        router_suffixes=(
+            "router.proj.weight",
+            "router.per_expert_scale",
+            "experts.gate_up_proj",
+            "experts.down_proj",
+        ),
+        globals_keep=(
+            "model.language_model.embed_tokens.weight",
+            "model.language_model.norm.weight",
+        ),
         default_layers="0-5",
         config_rewrite=_rewrite_gemma4,
         text_cfg_key="text_config",
@@ -1034,9 +1118,11 @@ FAMILIES: dict[str, dict[str, Any]] = {
         layer_prefix="model.language_model.layers.",
         expert_re=None,
         router_suffixes=(),
-        globals_keep=("model.language_model.embed_tokens.weight",
-                      "model.language_model.norm.weight",
-                      "lm_head.weight"),
+        globals_keep=(
+            "model.language_model.embed_tokens.weight",
+            "model.language_model.norm.weight",
+            "lm_head.weight",
+        ),
         default_layers="0-3,48-51",
         config_rewrite=_rewrite_muse_glimmer,
         text_cfg_key="text_config",
@@ -1052,10 +1138,12 @@ FAMILIES: dict[str, dict[str, Any]] = {
         ),
         sink_suffixes=("mlp.gate.weight",),
         sink_rows=2,
-        globals_keep=("model.llm.embed.weight",
-                      "model.llm.embed_norm.weight",
-                      "model.llm.norm.weight",
-                      "model.llm.unembed.weight"),
+        globals_keep=(
+            "model.llm.embed.weight",
+            "model.llm.embed_norm.weight",
+            "model.llm.norm.weight",
+            "model.llm.unembed.weight",
+        ),
         default_layers="0-6",
         config_rewrite=_rewrite_inkling,
         text_cfg_key="text_config",
@@ -1090,10 +1178,14 @@ FAMILIES: dict[str, dict[str, Any]] = {
         layer_prefix="model.language_model.layers.",
         expert_re=re.compile(r"\.mlp\.experts\.(\d+)\."),
         router_suffixes=("mlp.gate.weight",),
-        globals_keep=("model.language_model.embed_tokens.weight",
-                      "model.language_model.norm.weight",
-                      "lm_head.weight", "lm_head.weight_scale",
-                      "lm_head.weight_scale_2", "lm_head.input_scale"),
+        globals_keep=(
+            "model.language_model.embed_tokens.weight",
+            "model.language_model.norm.weight",
+            "lm_head.weight",
+            "lm_head.weight_scale",
+            "lm_head.weight_scale_2",
+            "lm_head.input_scale",
+        ),
         default_layers="0-7",
         config_rewrite=_rewrite_qwen3_5_moe,
         text_cfg_key="text_config",
@@ -1110,7 +1202,10 @@ FAMILIES: dict[str, dict[str, Any]] = {
     "minimax_m2": dict(
         layer_prefix="model.layers.",
         expert_re=re.compile(r"\.block_sparse_moe\.experts\.(\d+)\."),
-        router_suffixes=("block_sparse_moe.gate.weight", "block_sparse_moe.e_score_correction_bias"),
+        router_suffixes=(
+            "block_sparse_moe.gate.weight",
+            "block_sparse_moe.e_score_correction_bias",
+        ),
         globals_keep=("model.embed_tokens.weight", "model.norm.weight", "lm_head.weight"),
         default_layers="0-3",
         config_rewrite=_rewrite_common,
@@ -1118,16 +1213,23 @@ FAMILIES: dict[str, dict[str, Any]] = {
     "minimax_m3_vl": dict(
         layer_prefix="language_model.model.layers.",
         expert_re=re.compile(r"\.block_sparse_moe\.experts\.(\d+)\."),
-        router_suffixes=("block_sparse_moe.gate.weight",
-                         "block_sparse_moe.e_score_correction_bias"),
-        globals_keep=("language_model.model.embed_tokens.weight",
-                      "language_model.model.norm.weight",
-                      "language_model.lm_head.weight"),
+        router_suffixes=(
+            "block_sparse_moe.gate.weight",
+            "block_sparse_moe.e_score_correction_bias",
+        ),
+        globals_keep=(
+            "language_model.model.embed_tokens.weight",
+            "language_model.model.norm.weight",
+            "language_model.lm_head.weight",
+        ),
         default_layers="0-5",
         config_rewrite=_rewrite_minimax_m3,
         text_cfg_key="text_config",
-        keep_res=(re.compile(r"^vision_tower\."), re.compile(r"^multi_modal_projector\."),
-                  re.compile(r"^patch_merge_mlp\.")),
+        keep_res=(
+            re.compile(r"^vision_tower\."),
+            re.compile(r"^multi_modal_projector\."),
+            re.compile(r"^patch_merge_mlp\."),
+        ),
     ),
     "nemotron_h": dict(
         layer_prefix="backbone.layers.",
@@ -1150,8 +1252,7 @@ FAMILIES: dict[str, dict[str, Any]] = {
             "mlp.experts.down_proj_scales",
             "mlp.experts.down_proj_bias",
         ),
-        globals_keep=("model.embed_tokens.weight", "model.norm.weight",
-                      "lm_head.weight"),
+        globals_keep=("model.embed_tokens.weight", "model.norm.weight", "lm_head.weight"),
         default_layers="0-3",
         config_rewrite=_rewrite_gpt_oss,
     ),
@@ -1162,18 +1263,30 @@ FAMILIES: dict[str, dict[str, Any]] = {
         globals_keep=("model.embed_tokens.weight", "model.norm.weight", "lm_head.weight"),
         default_layers="0-5",
         config_rewrite=_rewrite_mimo,
-        keep_res=(re.compile(r"^visual\."), re.compile(r"^audio_encoder\."),
-                  re.compile(r"^speech_embeddings\.")),
+        keep_res=(
+            re.compile(r"^visual\."),
+            re.compile(r"^audio_encoder\."),
+            re.compile(r"^speech_embeddings\."),
+        ),
         aux_dirs=("audio_tokenizer/",),
     ),
     "hy_v4": dict(
         layer_prefix="model.layers.",
         expert_re=None,
-        router_suffixes=("mlp.gate.weight", "mlp.gate.e_score_correction_bias",
-                         "mlp.experts.gate_up_proj", "mlp.experts.down_proj"),
-        globals_keep=("model.embed_tokens.weight", "model.norm.weight", "lm_head.weight",
-                      "model.hc_head.hc_head_base", "model.hc_head.hc_head_fn",
-                      "model.hc_head.hc_head_scale"),
+        router_suffixes=(
+            "mlp.gate.weight",
+            "mlp.gate.e_score_correction_bias",
+            "mlp.experts.gate_up_proj",
+            "mlp.experts.down_proj",
+        ),
+        globals_keep=(
+            "model.embed_tokens.weight",
+            "model.norm.weight",
+            "lm_head.weight",
+            "model.hc_head.hc_head_base",
+            "model.hc_head.hc_head_fn",
+            "model.hc_head.hc_head_scale",
+        ),
         default_layers="0-5",
         config_rewrite=_rewrite_hy4,
     ),
@@ -1182,10 +1295,17 @@ FAMILIES: dict[str, dict[str, Any]] = {
         expert_re=None,
         router_suffixes=tuple(
             ["mlp.gate.weight", "mlp.gate.e_score_correction_bias"]
-            + [f"mlp.experts.{p}{s}" for p in ("gate_up_proj", "down_proj")
-               for s in ("", "_input_scale", "_weight_scale", "_weight_scale_2")]),
-        globals_keep=("model.language_model.embed_tokens.weight",
-                      "model.language_model.norm.weight", "lm_head.weight"),
+            + [
+                f"mlp.experts.{p}{s}"
+                for p in ("gate_up_proj", "down_proj")
+                for s in ("", "_input_scale", "_weight_scale", "_weight_scale_2")
+            ]
+        ),
+        globals_keep=(
+            "model.language_model.embed_tokens.weight",
+            "model.language_model.norm.weight",
+            "lm_head.weight",
+        ),
         default_layers="0-7",
         config_rewrite=_rewrite_muse_spark,
         text_cfg_key="text_config",
@@ -1195,8 +1315,11 @@ FAMILIES: dict[str, dict[str, Any]] = {
         layer_prefix="model.language_model.layers.",
         expert_re=re.compile(r"\.mlp\.experts\.(\d+)\."),
         router_suffixes=("mlp.gate.weight", "mlp.gate.e_score_correction_bias"),
-        globals_keep=("model.language_model.embed_tokens.weight",
-                      "model.language_model.norm.weight", "lm_head.weight"),
+        globals_keep=(
+            "model.language_model.embed_tokens.weight",
+            "model.language_model.norm.weight",
+            "lm_head.weight",
+        ),
         default_layers="0-7",
         config_rewrite=_rewrite_glm5_next,
         text_cfg_key="text_config",
@@ -1207,8 +1330,12 @@ FAMILIES: dict[str, dict[str, Any]] = {
         layer_prefix="language_model.model.layers.",
         expert_re=None,
         router_suffixes=(),
-        globals_keep=tuple(f"language_model.{m}.{p}" for m in ("model.embed_tokens", "lm_head")
-                           for p in ("weight", "scales", "biases")) + ("language_model.model.norm.weight",),
+        globals_keep=tuple(
+            f"language_model.{m}.{p}"
+            for m in ("model.embed_tokens", "lm_head")
+            for p in ("weight", "scales", "biases")
+        )
+        + ("language_model.model.norm.weight",),
         default_layers="0-7",
         config_rewrite=_rewrite_qwen3_5_moe,
         text_cfg_key="text_config",
@@ -1218,10 +1345,20 @@ FAMILIES: dict[str, dict[str, Any]] = {
         model_type="gemma4",
         layer_prefix="language_model.model.layers.",
         expert_re=None,
-        router_suffixes=tuple(f"{m}.{p}" for m in ("router.proj", "experts.switch_glu.gate_proj",
-                                                    "experts.switch_glu.up_proj", "experts.switch_glu.down_proj")
-                              for p in ("weight", "scales", "biases")) + ("router.per_expert_scale",),
-        globals_keep=tuple(f"language_model.model.embed_tokens.{p}" for p in ("weight", "scales", "biases"))
+        router_suffixes=tuple(
+            f"{m}.{p}"
+            for m in (
+                "router.proj",
+                "experts.switch_glu.gate_proj",
+                "experts.switch_glu.up_proj",
+                "experts.switch_glu.down_proj",
+            )
+            for p in ("weight", "scales", "biases")
+        )
+        + ("router.per_expert_scale",),
+        globals_keep=tuple(
+            f"language_model.model.embed_tokens.{p}" for p in ("weight", "scales", "biases")
+        )
         + ("language_model.model.norm.weight",),
         default_layers="0-5",
         config_rewrite=_rewrite_gemma4,
@@ -1233,8 +1370,12 @@ FAMILIES: dict[str, dict[str, Any]] = {
         layer_prefix="language_model.model.layers.",
         expert_re=None,
         router_suffixes=(),
-        globals_keep=tuple(f"language_model.{m}.{p}" for m in ("model.embed_tokens", "lm_head")
-                           for p in ("weight", "scales", "biases")) + ("language_model.model.norm.weight",),
+        globals_keep=tuple(
+            f"language_model.{m}.{p}"
+            for m in ("model.embed_tokens", "lm_head")
+            for p in ("weight", "scales", "biases")
+        )
+        + ("language_model.model.norm.weight",),
         default_layers="0-7",
         config_rewrite=_rewrite_muse_glimmer,
         text_cfg_key="text_config",
@@ -1244,38 +1385,45 @@ FAMILIES: dict[str, dict[str, Any]] = {
         model_type="gpt_oss",
         layer_prefix="model.layers.",
         expert_re=None,
-        router_suffixes=tuple(f"mlp.{m}.{p}" for m in ("router", "experts.gate_proj", "experts.up_proj", "experts.down_proj")
-                              for p in ("weight", "scales", "biases", "bias")),
-        globals_keep=tuple(f"{m}.{p}" for m in ("model.embed_tokens", "lm_head")
-                           for p in ("weight", "scales", "biases")) + ("model.norm.weight",),
+        router_suffixes=tuple(
+            f"mlp.{m}.{p}"
+            for m in ("router", "experts.gate_proj", "experts.up_proj", "experts.down_proj")
+            for p in ("weight", "scales", "biases", "bias")
+        ),
+        globals_keep=tuple(
+            f"{m}.{p}"
+            for m in ("model.embed_tokens", "lm_head")
+            for p in ("weight", "scales", "biases")
+        )
+        + ("model.norm.weight",),
         default_layers="0-3",
         config_rewrite=_rewrite_gpt_oss,
     ),
 }
 
 
-def resolve_family(cfg: dict, weight_map: dict[str, str],
-                   forced: str | None) -> str:
+def resolve_family(cfg: dict, weight_map: dict[str, str], forced: str | None) -> str:
     if forced is not None:
         if forced not in FAMILIES:
-            raise SystemExit(f"unknown --family {forced!r}; "
-                             f"known: {sorted(FAMILIES)}")
+            raise SystemExit(f"unknown --family {forced!r}; known: {sorted(FAMILIES)}")
         return forced
     model_type = cfg.get("model_type", "")
     named = [k for k, v in FAMILIES.items() if v.get("model_type", k) == model_type]
     if not named:
-        raise SystemExit(f"unsupported model_type {model_type!r}; known: "
-                         f"{sorted({v.get('model_type', k) for k, v in FAMILIES.items()})}")
+        raise SystemExit(
+            f"unsupported model_type {model_type!r}; known: "
+            f"{sorted({v.get('model_type', k) for k, v in FAMILIES.items()})}"
+        )
     if len(named) == 1:
         return named[0]
-    fits = [k for k in named
-            if any(n.startswith(FAMILIES[k]["layer_prefix"]) for n in weight_map)]
+    fits = [k for k in named if any(n.startswith(FAMILIES[k]["layer_prefix"]) for n in weight_map)]
     if len(fits) != 1:
         raise SystemExit(
             f"model_type {model_type!r} is described by {named}, and the index "
             f"{'matches all of' if fits else 'matches none of'} their layer "
             f"prefixes {[FAMILIES[k]['layer_prefix'] for k in named]}; "
-            f"pass --family")
+            f"pass --family"
+        )
     return fits[0]
 
 
@@ -1317,13 +1465,14 @@ class OutTensor:
 def layer_index(name: str, prefix: str) -> int | None:
     if not name.startswith(prefix):
         return None
-    rest = name[len(prefix):]
+    rest = name[len(prefix) :]
     head = rest.split(".", 1)[0]
     return int(head) if head.isdigit() else None
 
 
-def build_out_tensors(index: dict[str, str], plan: Plan,
-                      keep_res: tuple[re.Pattern, ...]) -> list[tuple[str, str]]:
+def build_out_tensors(
+    index: dict[str, str], plan: Plan, keep_res: tuple[re.Pattern, ...]
+) -> list[tuple[str, str]]:
     pairs: list[tuple[str, str]] = []
     for g in plan.globals_keep:
         if g in index:
@@ -1345,7 +1494,7 @@ def build_out_tensors(index: dict[str, str], plan: Plan,
         src_pfx = f"{plan.layer_prefix}{src_idx}."
         out_pfx = f"{plan.layer_prefix}{out_idx}."
         for name in sorted(by_layer[src_idx]):
-            suffix = name[len(src_pfx):]
+            suffix = name[len(src_pfx) :]
             if plan.experts is not None and plan.expert_re is not None:
                 m = plan.expert_re.search(name)
                 if m and int(m.group(1)) >= plan.experts:
@@ -1367,74 +1516,98 @@ def build_out_tensors(index: dict[str, str], plan: Plan,
     return pairs
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+def build_parser() -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser()
     ap.add_argument("--repo", required=True, help="HF repo id, e.g. zai-org/GLM-5.2")
     ap.add_argument("--revision", default="main")
     ap.add_argument("--out", required=True, help="output snapshot directory")
-    ap.add_argument("--layers", default=None,
-                    help="source layer indices, e.g. '0-6' or '0,1,2,60' "
-                         "(default: per-family block covering every layer type)")
-    ap.add_argument("--repeat", type=int, default=1,
-                    help="repeat the selected layer block N times (weights are "
-                         "reused, so this costs no extra download)")
-    ap.add_argument("--experts", type=int, default=8,
-                    help="routed experts to keep per MoE layer (0 = all)")
-    ap.add_argument("--parts", type=int, default=None,
-                    help="pieces to keep of a weight the checkpoint splits "
-                         "into a fixed number of them -- Qwen4's PLE n-gram "
-                         "table (default: the family's, 0 = all)")
-    ap.add_argument("--family", default=None,
-                    help="force a FAMILIES entry instead of picking one from "
-                         "config.json's model_type (two entries can describe "
-                         "one model_type: upstream naming vs an mlx_lm "
-                         f"conversion of it). Known: {sorted(FAMILIES)}")
-    ap.add_argument("--attn-res-block-size", type=int, default=None,
-                    help="Kimi-K3 AttnRes residual-block stride (default: "
-                         "scaled down with the kept depth so the blend sees "
-                         "more than one block)")
-    ap.add_argument("--text-only", action="store_true",
-                    help="drop the vision tower and flatten the text sub-config "
-                         "to the top level, producing a text-only checkpoint of "
-                         "the same decoder (Kimi-K3)")
-    ap.add_argument("--engram-vocab", type=int, default=None,
-                    help="DeepSeek-V4.1: re-carve each Engram hash table to this "
-                         "bucket base (the release hashes at 16,000,000; a "
-                         "miniature at 20,000 keeps ~480k of 384M rows per table)")
-    ap.add_argument("--dspark", action="store_true",
-                    help="DeepSeek-V4.1: keep the DSpark draft head (mtp.*), tapping the last kept layers")
-    ap.add_argument("--keep-fp8", action="store_true",
-                    help="DeepSeek-V4/V4.1: keep the fp8 planes as released, beside "
-                         "their `.scale` e8m0 exponents (the release format), rather "
-                         "than reading them out to bf16")
-    ap.add_argument("--cache", default=None,
-                    help="raw tensor cache dir (default: <out>/.srccache)")
+    ap.add_argument(
+        "--layers",
+        default=None,
+        help="source layer indices, e.g. '0-6' or '0,1,2,60' "
+        "(default: per-family block covering every layer type)",
+    )
+    ap.add_argument(
+        "--repeat",
+        type=int,
+        default=1,
+        help="repeat the selected layer block N times (weights are "
+        "reused, so this costs no extra download)",
+    )
+    ap.add_argument(
+        "--experts", type=int, default=8, help="routed experts to keep per MoE layer (0 = all)"
+    )
+    ap.add_argument(
+        "--parts",
+        type=int,
+        default=None,
+        help="pieces to keep of a weight the checkpoint splits "
+        "into a fixed number of them -- Qwen4's PLE n-gram "
+        "table (default: the family's, 0 = all)",
+    )
+    ap.add_argument(
+        "--family",
+        default=None,
+        help="force a FAMILIES entry instead of picking one from "
+        "config.json's model_type (two entries can describe "
+        "one model_type: upstream naming vs an mlx_lm "
+        f"conversion of it). Known: {sorted(FAMILIES)}",
+    )
+    ap.add_argument(
+        "--attn-res-block-size",
+        type=int,
+        default=None,
+        help="Kimi-K3 AttnRes residual-block stride (default: "
+        "scaled down with the kept depth so the blend sees "
+        "more than one block)",
+    )
+    ap.add_argument(
+        "--text-only",
+        action="store_true",
+        help="drop the vision tower and flatten the text sub-config "
+        "to the top level, producing a text-only checkpoint of "
+        "the same decoder (Kimi-K3)",
+    )
+    ap.add_argument(
+        "--engram-vocab",
+        type=int,
+        default=None,
+        help="DeepSeek-V4.1: re-carve each Engram hash table to this "
+        "bucket base (the release hashes at 16,000,000; a "
+        "miniature at 20,000 keeps ~480k of 384M rows per table)",
+    )
+    ap.add_argument(
+        "--dspark",
+        action="store_true",
+        help="DeepSeek-V4.1: keep the DSpark draft head (mtp.*), tapping the last kept layers",
+    )
+    ap.add_argument(
+        "--keep-fp8",
+        action="store_true",
+        help="DeepSeek-V4/V4.1: keep the fp8 planes as released, beside "
+        "their `.scale` e8m0 exponents (the release format), rather "
+        "than reading them out to bf16",
+    )
+    ap.add_argument("--cache", default=None, help="raw tensor cache dir (default: <out>/.srccache)")
     ap.add_argument("--keep-cache", action="store_true")
-    ap.add_argument("--dry-run", action="store_true",
-                    help="print the download plan and exit")
-    args = ap.parse_args()
+    ap.add_argument("--dry-run", action="store_true", help="print the download plan and exit")
+    return ap
 
-    out_dir = Path(os.path.expanduser(args.out))
-    out_dir.mkdir(parents=True, exist_ok=True)
-    cache = Path(os.path.expanduser(args.cache)) if args.cache else out_dir / ".srccache"
-    cache.mkdir(parents=True, exist_ok=True)
 
-    print(f"[1/6] reading {args.repo} config + index")
-    cfg = json.loads(fetch_bytes(args.repo, args.revision, "config.json"))
+def _weight_map(repo: str, revision: str) -> dict[str, str]:
     try:
-        index_json = json.loads(fetch_bytes(args.repo, args.revision,
-                                            "model.safetensors.index.json"))
-        weight_map: dict[str, str] = index_json["weight_map"]
+        index_json = json.loads(fetch_bytes(repo, revision, "model.safetensors.index.json"))
+        return index_json["weight_map"]
     except urllib.error.HTTPError as exc:
         if exc.code != 404:
             raise
-        weight_map = {name: "model.safetensors"
-                      for name in read_shard_header(args.repo, args.revision, "model.safetensors")}
+        return {
+            name: "model.safetensors"
+            for name in read_shard_header(repo, revision, "model.safetensors")
+        }
 
-    family = resolve_family(cfg, weight_map, args.family)
-    fam = FAMILIES[family]
 
+def _plan(args: argparse.Namespace, cfg: dict, family: str, fam: dict[str, Any]) -> Plan:
     src_layers = parse_layer_spec(args.layers or fam["default_layers"])
     if args.repeat > 1:
         src_layers = src_layers * args.repeat
@@ -1460,27 +1633,36 @@ def main() -> int:
     )
     plan.engram_carve = plan_engram_carve(cfg, plan)
     plan.ple_carve = plan_ple_carve(cfg, plan)
+    return plan
 
-    pairs = build_out_tensors(weight_map, plan,
-                              () if args.text_only else fam.get("keep_res", ()))
+
+def _output_pairs(args, plan: Plan, fam: dict[str, Any], weight_map: dict[str, str]):
+    pairs = build_out_tensors(weight_map, plan, () if args.text_only else fam.get("keep_res", ()))
     if args.text_only and plan.layer_prefix.startswith(TEXT_TOWER_PREFIX):
         pairs = [(_strip_text_tower(out), src) for out, src in pairs]
     src_names = sorted(set(carve_source_names(pairs, plan)) | {s for _, s in pairs})
     missing = [n for n in src_names if n not in weight_map]
     if missing:
-        raise SystemExit(f"the n-gram carve reads {len(missing)} tensor(s) the "
-                         f"index does not have, first {missing[0]}")
-    print(f"      {len(weight_map)} source tensors -> {len(pairs)} output tensors "
-          f"({len(src_names)} distinct downloads)")
+        raise SystemExit(
+            f"the n-gram carve reads {len(missing)} tensor(s) the "
+            f"index does not have, first {missing[0]}"
+        )
+    print(
+        f"      {len(weight_map)} source tensors -> {len(pairs)} output tensors "
+        f"({len(src_names)} distinct downloads)"
+    )
+    return pairs, src_names
 
-    print("[2/6] reading safetensors headers")
+
+def _source_tensors(
+    args, weight_map: dict[str, str], src_names: list[str]
+) -> tuple[dict[str, SrcTensor], list[str]]:
     shards = sorted({weight_map[s] for s in src_names})
     headers: dict[str, dict[str, SrcTensor]] = {}
     for i, shard in enumerate(shards, 1):
         headers[shard] = read_shard_header(args.repo, args.revision, shard)
         print(f"      [{i}/{len(shards)}] {shard}", end="\r", flush=True)
     print(" " * 78, end="\r")
-
     src: dict[str, SrcTensor] = {}
     for name in src_names:
         shard = weight_map[name]
@@ -1488,6 +1670,114 @@ def main() -> int:
         if t is None:
             raise SystemExit(f"{name} missing from {shard} header")
         src[name] = t
+    return src, shards
+
+
+def _coalesced(tensors: list[SrcTensor]) -> list[list[SrcTensor]]:
+    tensors.sort(key=lambda t: t.fetch_start)
+    groups: list[list[SrcTensor]] = []
+    for t in tensors:
+        if groups and t.fetch_start - groups[-1][-1].keep_end <= COALESCE_GAP:
+            groups[-1].append(t)
+        else:
+            groups.append([t])
+    return groups
+
+
+def _fetch_group(args, cache: Path, shard: str, grp: list[SrcTensor]) -> None:
+    lo = grp[0].fetch_start
+    hi = max(t.keep_end for t in grp)
+    blob_path = cache / f"span-{shard.replace('/', '_')}-{lo}-{hi}.bin"
+    fetch_to_file(args.repo, args.revision, shard, blob_path, lo, hi)
+    with blob_path.open("rb") as bf:
+        for t in grp:
+            dest = cache / cache_key(t)
+            if dest.exists():
+                continue
+            bf.seek(t.fetch_start - lo)
+            data = bf.read(t.keep_bytes)
+            tmp = dest.with_suffix(".part")
+            tmp.write_bytes(data)
+            tmp.rename(dest)
+    blob_path.unlink(missing_ok=True)
+
+
+def _download(
+    args, cache: Path, src: dict[str, SrcTensor], src_names: list[str], total: int
+) -> None:
+    by_shard: dict[str, list[SrcTensor]] = {}
+    for n in src_names:
+        by_shard.setdefault(src[n].shard, []).append(src[n])
+    done_bytes = 0
+    t0 = time.time()
+    for shard, tensors in by_shard.items():
+        for grp in _coalesced(tensors):
+            if all((cache / cache_key(t)).exists() for t in grp):
+                done_bytes += sum(t.keep_bytes for t in grp)
+                continue
+            _fetch_group(args, cache, shard, grp)
+            done_bytes += sum(t.keep_bytes for t in grp)
+            el = time.time() - t0
+            print(
+                f"      {done_bytes / 1024**3:7.2f}/{total / 1024**3:.2f} GiB "
+                f"({done_bytes / 1024**2 / max(el, 1e-3):.0f} MiB/s)",
+                end="\r",
+                flush=True,
+            )
+    print(" " * 78, end="\r")
+
+
+def _int64s(b: bytes) -> list[int]:
+    return [int.from_bytes(b[i : i + 8], "little", signed=True) for i in range(0, len(b), 8)]
+
+
+def _verify_derived_heads(checks, cache: Path) -> None:
+    for name, tensor, want in checks:
+        got = (cache / cache_key(tensor)).read_bytes()
+        if got != want:
+            raise SystemExit(
+                f"{name}: this tool derives {_int64s(want)} and the checkpoint "
+                f"publishes {_int64s(got)}. The n-gram carve reads the head "
+                f"segments the derivation names, so it must not run against a "
+                f"hashing it cannot reproduce."
+            )
+    if checks:
+        print(
+            f"      the source's own n-gram head buffers are the derivation's "
+            f"({len(checks)} of them)"
+        )
+
+
+def _write_config_and_tokenizer(
+    args, out_dir: Path, cfg: dict, plan: Plan, pairs, fam: dict[str, Any], shard_files
+) -> None:
+    plan.config_rewrite(cfg, plan)
+    for key, n in carry_quant_overrides(cfg, pairs).items():
+        print(f"      {key}: {n} per-tensor overrides carried onto the renumbered names")
+    (out_dir / "config.json").write_text(json.dumps(cfg, indent=2) + "\n")
+    copy_aux_files(args.repo, args.revision, out_dir, fam.get("aux_dirs", ()))
+    write_index(out_dir, shard_files)
+    if plan.family == "deepseek_v41":
+        write_engram_token_map(out_dir)
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    out_dir = Path(os.path.expanduser(args.out))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cache = Path(os.path.expanduser(args.cache)) if args.cache else out_dir / ".srccache"
+    cache.mkdir(parents=True, exist_ok=True)
+
+    print(f"[1/6] reading {args.repo} config + index")
+    cfg = json.loads(fetch_bytes(args.repo, args.revision, "config.json"))
+    weight_map = _weight_map(args.repo, args.revision)
+    family = resolve_family(cfg, weight_map, args.family)
+    fam = FAMILIES[family]
+    plan = _plan(args, cfg, family, fam)
+    pairs, src_names = _output_pairs(args, plan, fam, weight_map)
+
+    print("[2/6] reading safetensors headers")
+    src, shards = _source_tensors(args, weight_map, src_names)
 
     print("[3/6] applying expert-bank slicing")
     outs = assign_rows(pairs, src, plan)
@@ -1498,90 +1788,35 @@ def main() -> int:
     raw_total = sum(src[n].nbytes for n in src_names)
     total = sum(src[n].keep_bytes for n in src_names)
     if total < raw_total:
-        print(f"      expert banks stacked on dim 0 keep only their prefix: "
-              f"{total / 1024**3:.2f} GiB instead of {raw_total / 1024**3:.2f}")
+        print(
+            f"      expert banks stacked on dim 0 keep only their prefix: "
+            f"{total / 1024**3:.2f} GiB instead of {raw_total / 1024**3:.2f}"
+        )
     print(f"      download size: {total / 1024**3:.2f} GiB from {len(shards)} shards")
     if args.dry_run:
         for n in src_names[:20]:
             t = src[n]
-            print(f"      {n}  {t.dtype}{t.shape}  {t.keep_bytes/1024**2:.1f} MiB")
+            print(f"      {n}  {t.dtype}{t.shape}  {t.keep_bytes / 1024**2:.1f} MiB")
         return 0
 
     print("[4/6] downloading tensors")
-    by_shard: dict[str, list[SrcTensor]] = {}
-    for n in src_names:
-        by_shard.setdefault(src[n].shard, []).append(src[n])
-    done_bytes = 0
-    t0 = time.time()
-    for shard, tensors in by_shard.items():
-        tensors.sort(key=lambda t: t.fetch_start)
-        groups: list[list[SrcTensor]] = []
-        for t in tensors:
-            if groups and t.fetch_start - groups[-1][-1].keep_end <= COALESCE_GAP:
-                groups[-1].append(t)
-            else:
-                groups.append([t])
-        for grp in groups:
-            missing = [t for t in grp if not (cache / cache_key(t)).exists()]
-            if not missing:
-                done_bytes += sum(t.keep_bytes for t in grp)
-                continue
-            lo = grp[0].fetch_start
-            hi = max(t.keep_end for t in grp)
-            blob_path = cache / f"span-{shard.replace('/', '_')}-{lo}-{hi}.bin"
-            fetch_to_file(args.repo, args.revision, shard, blob_path, lo, hi)
-            with blob_path.open("rb") as bf:
-                for t in grp:
-                    dest = cache / cache_key(t)
-                    if dest.exists():
-                        continue
-                    bf.seek(t.fetch_start - lo)
-                    data = bf.read(t.keep_bytes)
-                    tmp = dest.with_suffix(".part")
-                    tmp.write_bytes(data)
-                    tmp.rename(dest)
-            blob_path.unlink(missing_ok=True)
-            done_bytes += sum(t.keep_bytes for t in grp)
-            el = time.time() - t0
-            print(f"      {done_bytes/1024**3:7.2f}/{total/1024**3:.2f} GiB "
-                  f"({done_bytes/1024**2/max(el,1e-3):.0f} MiB/s)", end="\r", flush=True)
-    print(" " * 78, end="\r")
-
-    for name, tensor, want in checks:
-        got = (cache / cache_key(tensor)).read_bytes()
-        if got != want:
-            wide = lambda b: [int.from_bytes(b[i:i + 8], "little", signed=True)
-                              for i in range(0, len(b), 8)]
-            raise SystemExit(
-                f"{name}: this tool derives {wide(want)} and the checkpoint "
-                f"publishes {wide(got)}. The n-gram carve reads the head "
-                f"segments the derivation names, so it must not run against a "
-                f"hashing it cannot reproduce.")
-    if checks:
-        print(f"      the source's own n-gram head buffers are the derivation's "
-              f"({len(checks)} of them)")
+    _download(args, cache, src, src_names, total)
+    _verify_derived_heads(checks, cache)
 
     print("[5/6] writing shards")
     shard_files = write_output(out_dir, cache, outs)
 
     print("[6/6] writing config + tokenizer")
-    plan.config_rewrite(cfg, plan)
-    for key, n in carry_quant_overrides(cfg, pairs).items():
-        print(f"      {key}: {n} per-tensor overrides carried onto the "
-              f"renumbered names")
-    (out_dir / "config.json").write_text(json.dumps(cfg, indent=2) + "\n")
-    copy_aux_files(args.repo, args.revision, out_dir, fam.get("aux_dirs", ()))
-    write_index(out_dir, shard_files)
-    if plan.family == "deepseek_v41":
-        write_engram_token_map(out_dir)
-
+    _write_config_and_tokenizer(args, out_dir, cfg, plan, pairs, fam, shard_files)
     if not args.keep_cache:
         shutil.rmtree(cache, ignore_errors=True)
 
     size = sum(f.stat().st_size for f in out_dir.glob("*.safetensors"))
-    print(f"done: {out_dir}  ({size / 1024**3:.2f} GiB, "
-          f"{len(outs)} tensors, {len(plan.src_layers)} layers, "
-          f"{plan.experts or 'all'} experts)")
+    print(
+        f"done: {out_dir}  ({size / 1024**3:.2f} GiB, "
+        f"{len(outs)} tensors, {len(plan.src_layers)} layers, "
+        f"{plan.experts or 'all'} experts)"
+    )
     return 0
 
 
@@ -1592,8 +1827,9 @@ def _next_prime_after(start: int, seen: set[int]) -> int:
     return candidate
 
 
-def engram_geometry(base: int, orders: int, heads: int, modules: int
-                    ) -> list[tuple[list[int], list[int]]]:
+def engram_geometry(
+    base: int, orders: int, heads: int, modules: int
+) -> list[tuple[list[int], list[int]]]:
     seen: set[int] = set()
     out: list[tuple[list[int], list[int]]] = []
     for _ in range(modules):
@@ -1643,18 +1879,28 @@ def plan_engram_carve(cfg: dict, plan: Plan) -> EngramCarve | None:
                 f"deepseek_v41: this tool derives {sum(primes)} rows for Engram module "
                 f"{i} and config.json states {stated[i]}; the carve reads the head "
                 f"segments the derivation names, so it must not run against a hashing "
-                f"it cannot reproduce")
+                f"it cannot reproduce"
+            )
     kept = [(s, m) for m, s in enumerate(layer_ids) if s in plan.src_layers]
     kept.sort(key=lambda sm: plan.src_layers.index(sm[0]))
     dst = engram_geometry(plan.engram_vocab, orders, heads, len(kept))
     return EngramCarve(
-        src_base=src_base, dst_base=plan.engram_vocab, src=src, dst=dst,
-        kept_src_layers=[s for s, _ in kept], kept_src_modules=[m for _, m in kept],
+        src_base=src_base,
+        dst_base=plan.engram_vocab,
+        src=src,
+        dst=dst,
+        kept_src_layers=[s for s, _ in kept],
+        kept_src_modules=[m for _, m in kept],
     )
 
 
-def apply_engram_carve(outs: list[OutTensor], src: dict[str, SrcTensor], plan: Plan,
-                       weight_map: dict[str, str], src_names: list[str]) -> list[str]:
+def apply_engram_carve(
+    outs: list[OutTensor],
+    src: dict[str, SrcTensor],
+    plan: Plan,
+    weight_map: dict[str, str],
+    src_names: list[str],
+) -> list[str]:
     carve = plan.engram_carve
     if carve is None:
         return src_names
@@ -1672,13 +1918,22 @@ def apply_engram_carve(outs: list[OutTensor], src: dict[str, SrcTensor], plan: P
         if not ot.src.shape or ot.src.shape[0] != sum(s_primes):
             raise SystemExit(
                 f"{ot.src.name}: expected {sum(s_primes)} Engram table rows, "
-                f"got {ot.src.shape[0] if ot.src.shape else 'no first dimension'}")
+                f"got {ot.src.shape[0] if ot.src.shape else 'no first dimension'}"
+            )
         pieces: list[Piece] = []
         for j, (row0, rows) in enumerate(zip(s_offsets, d_primes)):
             if rows > s_primes[j]:
                 raise SystemExit(f"{ot.name}: head {j} wants {rows} rows of {s_primes[j]}")
-            clone = SrcTensor(ot.src.name, ot.src.shard, ot.src.dtype, list(ot.src.shape),
-                              ot.src.start, ot.src.end, keep_from=row0, keep_rows=rows)
+            clone = SrcTensor(
+                ot.src.name,
+                ot.src.shard,
+                ot.src.dtype,
+                list(ot.src.shape),
+                ot.src.start,
+                ot.src.end,
+                keep_from=row0,
+                keep_rows=rows,
+            )
             key = f"{ot.src.name}#engram{j}"
             src[key] = clone
             weight_map[key] = ot.src.shard
@@ -1689,9 +1944,11 @@ def apply_engram_carve(outs: list[OutTensor], src: dict[str, SrcTensor], plan: P
         drop.add(ot.src.name)
     if not drop:
         return src_names
-    print(f"      the Engram tables are re-carved by head: {carve.src_base} -> "
-          f"{carve.dst_base} buckets, {[sum(p) for p, _ in carve.dst]} rows kept of "
-          f"{[sum(p) for p, _ in carve.src]}")
+    print(
+        f"      the Engram tables are re-carved by head: {carve.src_base} -> "
+        f"{carve.dst_base} buckets, {[sum(p) for p, _ in carve.dst]} rows kept of "
+        f"{[sum(p) for p, _ in carve.src]}"
+    )
     return sorted((set(src_names) - drop) | set(extra))
 
 
@@ -1723,13 +1980,14 @@ def _e4m3_lut():
     global _E4M3_LUT
     if _E4M3_LUT is None:
         import numpy as np
+
         vals = np.zeros(256, dtype=np.float32)
         for b in range(256):
             sign = -1.0 if b & 0x80 else 1.0
             e = (b >> 3) & 0xF
             m = b & 7
             if e == 0:
-                v = m / 8.0 * 2.0 ** -6
+                v = m / 8.0 * 2.0**-6
             elif e == 15 and m == 7:
                 v = float("nan")
             else:
@@ -1739,9 +1997,11 @@ def _e4m3_lut():
     return _E4M3_LUT
 
 
-def dequant_fp8_bf16(weight: bytes, wshape: list[int], scale: bytes, sshape: list[int]
-                     ) -> Iterable[bytes]:
+def dequant_fp8_bf16(
+    weight: bytes, wshape: list[int], scale: bytes, sshape: list[int]
+) -> Iterable[bytes]:
     import numpy as np
+
     rows, cols = int(wshape[0]), int(wshape[1])
     srows, scols = int(sshape[0]), int(sshape[1])
     if rows % srows or cols % scols:
@@ -1754,7 +2014,7 @@ def dequant_fp8_bf16(weight: bytes, wshape: list[int], scale: bytes, sshape: lis
     for r0 in range(0, rows, step):
         r1 = min(rows, r0 + step)
         f = lut[w[r0:r1]].reshape((r1 - r0) // br, br, scols, bc)
-        e = np.ldexp(np.float32(1.0), s[r0 // br:r1 // br].astype(np.int32) - 127)
+        e = np.ldexp(np.float32(1.0), s[r0 // br : r1 // br].astype(np.int32) - 127)
         f = (f * e[:, None, :, None]).reshape(r1 - r0, cols).astype(np.float32)
         u = f.view(np.uint32)
         rounded = ((u + np.uint32(0x7FFF) + ((u >> 16) & 1)) >> 16).astype(np.uint16)
@@ -1763,6 +2023,7 @@ def dequant_fp8_bf16(weight: bytes, wshape: list[int], scale: bytes, sshape: lis
 
 def write_engram_token_map(out_dir: Path) -> None:
     import sys
+
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     try:
         from engram_token_map import FILE, build_compressed_token_map, write_plane
@@ -1788,8 +2049,9 @@ def cache_key(t: SrcTensor) -> str:
     return f"{safe}{rows}.bin"
 
 
-def assign_rows(pairs: list[tuple[str, str]], src: dict[str, SrcTensor],
-                plan: Plan) -> list[OutTensor]:
+def assign_rows(
+    pairs: list[tuple[str, str]], src: dict[str, SrcTensor], plan: Plan
+) -> list[OutTensor]:
     outs: list[OutTensor] = []
     router_rows = plan.experts
     full: set[str] = set()
@@ -1804,8 +2066,10 @@ def assign_rows(pairs: list[tuple[str, str]], src: dict[str, SrcTensor],
             if tail in plan.router_suffixes and t.shape and t.shape[0] > router_rows:
                 ot.rows = router_rows
             if tail in plan.sink_suffixes and t.shape and t.shape[0] > router_rows + plan.sink_rows:
-                ot.pieces = [Piece(t, 0, router_rows),
-                             Piece(t, t.shape[0] - plan.sink_rows, plan.sink_rows)]
+                ot.pieces = [
+                    Piece(t, 0, router_rows),
+                    Piece(t, t.shape[0] - plan.sink_rows, plan.sink_rows),
+                ]
                 ot.rows = router_rows + plan.sink_rows
                 full.add(src_name)
             if tail.endswith("gate.tid2eid"):
@@ -1827,6 +2091,7 @@ def transform_bytes(ot: OutTensor, raw: bytes) -> tuple[bytes, list[int]]:
         shape[0] = ot.rows
     if ot.mod:
         import numpy as np
+
         a = np.frombuffer(raw, dtype=np.int64).copy()
         a %= ot.mod
         raw = a.tobytes()
@@ -1845,8 +2110,9 @@ def _rows_from(path: Path, row_bytes: int, skip: int, rows: int) -> Iterable[byt
             yield buf
 
 
-def output_entry(cache: Path, ot: OutTensor
-                 ) -> tuple[str, str, list[int], Callable[[], Iterable[bytes]]]:
+def output_entry(
+    cache: Path, ot: OutTensor
+) -> tuple[str, str, list[int], Callable[[], Iterable[bytes]]]:
     shape = list(ot.src.shape)
     if ot.literal is not None:
         data = ot.literal
@@ -1856,7 +2122,9 @@ def output_entry(cache: Path, ot: OutTensor
         _, wdtype, wshape, wgen = output_entry(cache, weight)
         _, sdtype, sshape, sgen = output_entry(cache, ot.dequant_scale)
         if wdtype != "F8_E4M3" or sdtype != "F8_E8M0":
-            raise SystemExit(f"{ot.name}: read-out expects F8_E4M3 beside F8_E8M0, got {wdtype}/{sdtype}")
+            raise SystemExit(
+                f"{ot.name}: read-out expects F8_E4M3 beside F8_E8M0, got {wdtype}/{sdtype}"
+            )
 
         def readout(wgen=wgen, sgen=sgen, wshape=wshape, sshape=sshape) -> Iterable[bytes]:
             return dequant_fp8_bf16(b"".join(wgen()), wshape, b"".join(sgen()), sshape)
@@ -1867,9 +2135,12 @@ def output_entry(cache: Path, ot: OutTensor
 
         def joined() -> Iterable[bytes]:
             for piece in ot.pieces:
-                yield from _rows_from(cache / cache_key(piece.src),
-                                      piece.src.row_bytes,
-                                      piece.row0 - piece.src.keep_from, piece.rows)
+                yield from _rows_from(
+                    cache / cache_key(piece.src),
+                    piece.src.row_bytes,
+                    piece.row0 - piece.src.keep_from,
+                    piece.rows,
+                )
 
         return ot.name, ot.src.dtype, shape, joined
     if ot.mod:
@@ -1881,8 +2152,7 @@ def output_entry(cache: Path, ot: OutTensor
     path = cache / cache_key(ot.src)
     if not shape:
         return ot.name, ot.src.dtype, shape, (lambda: iter((path.read_bytes(),)))
-    return ot.name, ot.src.dtype, shape, (
-        lambda: _rows_from(path, ot.src.row_bytes, 0, rows))
+    return ot.name, ot.src.dtype, shape, (lambda: _rows_from(path, ot.src.row_bytes, 0, rows))
 
 
 def write_output(out_dir: Path, cache: Path, outs: list[OutTensor]) -> list[tuple[str, list[str]]]:
@@ -1921,16 +2191,16 @@ def write_index(out_dir: Path, shards: list[tuple[str, list[str]]]) -> None:
         (out_dir / name).rename(out_dir / new)
         renamed.append((new, names))
     weight_map = {t: n for n, names in renamed for t in names}
-    (out_dir / "model.safetensors.index.json").write_text(json.dumps(
-        {"metadata": {"total_size": total}, "weight_map": weight_map}, indent=2) + "\n")
+    (out_dir / "model.safetensors.index.json").write_text(
+        json.dumps({"metadata": {"total_size": total}, "weight_map": weight_map}, indent=2) + "\n"
+    )
 
 
 AUX_MAX = 64 * 1024**2
 AUX_SKIP_SUFFIX = (".safetensors", ".bin", ".pt", ".pth", ".gguf", ".h5", ".msgpack")
 
 
-def copy_aux_files(repo: str, revision: str, out_dir: Path,
-                   dirs: tuple[str, ...] = ()) -> None:
+def copy_aux_files(repo: str, revision: str, out_dir: Path, dirs: tuple[str, ...] = ()) -> None:
     for sib in list_repo_files(repo, revision):
         name = sib.get("rfilename", "")
         if name and name.startswith(dirs):
