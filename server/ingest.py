@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 
-from pie_bench.results.store import copy_records, upsert_quality
+from pie_bench.results.pg_store import copy_records, upsert_quality
 from pie_bench.schema import Record
 from pie_bench.schema.record import records_to_table
 

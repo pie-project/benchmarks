@@ -5,7 +5,7 @@ import pytest
 from pie_bench.paths import MATRIX
 from pie_bench.plan.jobs import cell_minutes, make_jobs, process_key, shard_groups
 from pie_bench.plan.matrix import Matrix
-from pie_bench.results.store import Store
+from pie_bench.results.store import open_store
 from pie_bench.schema import Tier
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,7 +35,7 @@ def test_shards_respect_budget_and_keep_groups_whole(matrix):
 
 
 def test_jobs_carry_time_policy(matrix, tmp_path):
-    jobs = make_jobs(matrix, Tier.NIGHTLY, pie_commit="abc", store=Store(tmp_path), platforms=["l40s-x1"])
+    jobs = make_jobs(matrix, Tier.NIGHTLY, pie_commit="abc", store=open_store(tmp_path), platforms=["l40s-x1"])
     assert len(jobs) > 1
     ids = [j.job_id for j in jobs]
     assert len(ids) == len(set(ids))
@@ -80,7 +80,7 @@ def test_targeted_mac_shards_keep_groups_whole(matrix):
 
 
 def test_targeted_mac_jobs_build_metal_and_pin_splash(matrix, tmp_path):
-    jobs = make_jobs(matrix, Tier.TARGETED, pie_commit="abc", store=Store(tmp_path), platforms=["m4-pro-48g"])
+    jobs = make_jobs(matrix, Tier.TARGETED, pie_commit="abc", store=open_store(tmp_path), platforms=["m4-pro-48g"])
     assert jobs
     assert any(str(c.engine) == "splash" for j in jobs for c in j.cells)
     for j in jobs:

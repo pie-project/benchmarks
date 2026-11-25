@@ -84,7 +84,7 @@ def _called_names(node: ast.AST) -> set[str]:
 
 
 def common_flags_by_function() -> dict[str, tuple[set[str], set[str]]]:
-    tree = ast.parse((BENCHES / "common.py").read_text())
+    tree = ast.parse((BENCHES / "bench_args.py").read_text())
     out = {}
     for fn in tree.body:
         if isinstance(fn, ast.FunctionDef):
@@ -95,7 +95,7 @@ def common_flags_by_function() -> dict[str, tuple[set[str], set[str]]]:
 def argparse_flags(path: Path) -> set[str]:
     tree = ast.parse(path.read_text(), filename=str(path))
     flags = _flags_in(tree)
-    if path.resolve() == (BENCHES / "common.py").resolve():
+    if path.resolve() == (BENCHES / "bench_args.py").resolve():
         return flags
     common = common_flags_by_function()
     todo = [n for n in _called_names(tree) if n in common]
@@ -590,7 +590,7 @@ def test_every_emitted_flag_is_parsed_by_the_script(label, cls, wl, over, tmp_pa
 def test_argparse_flag_extraction_sees_loop_registered_and_boolean_optional_flags():
     flags = argparse_flags(BENCHES / "bench_pie.py")
     assert {"--inferlet-dir", "--engine", "--wasm-warm-slots", "--frame-submit-depth", "--pretokenized-prompts", "--no-pretokenized-prompts"} <= flags
-    common = argparse_flags(BENCHES / "common.py")
+    common = argparse_flags(BENCHES / "bench_args.py")
     assert {"--model", "--ignore-eos", "--no-ignore-eos", "--tp-size", "--sglang-cuda-graph-max-bs", "--json-out"} <= common
     assert "--dump-all-token-ids" in argparse_flags(BENCHES / "vllm_bench.py")
     assert "--dump-all-token-ids" in argparse_flags(BENCHES / "sglang_bench.py")

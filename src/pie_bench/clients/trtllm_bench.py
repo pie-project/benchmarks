@@ -51,7 +51,7 @@ def serve(argv: list[str]) -> int:
     threading.Thread(target=loop.run_forever, daemon=True).start()
 
     import openai_bench as ob
-    from common import RequestResult, finish
+    from bench_results import RequestResult, finish
 
     async def stream(prompt: str, sp) -> tuple[float, list[float], int, int | None, int]:
         start = time.perf_counter()

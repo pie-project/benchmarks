@@ -13,7 +13,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pie_bench import local, submit
+from pie_bench import api_client, submission
+from pie_bench.machine import detect
+from pie_bench.paths import HOME
 
 from . import cell, tracer_for, unit
 
@@ -50,12 +52,12 @@ def main() -> None:
     cells = [tuple(c.split(":", 1)) for c in a.cells]
     if any(len(c) != 2 or c[1] not in unit.SETUPS for c in cells):
         ap.error("each cell is model:setup")
-    a.out = (a.out or local.HOME / "profiles" / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")).resolve()
+    a.out = (a.out or HOME / "profiles" / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")).resolve()
     a.out.mkdir(parents=True, exist_ok=True)
     from pie_bench.paths import MATRIX
     from pie_bench.plan.matrix import Matrix
 
-    backend = str(local.detect(Matrix.load(MATRIX), a.machine).platform.backend)
+    backend = str(detect(Matrix.load(MATRIX), a.machine).platform.backend)
     tracer = tracer_for(backend, a.out)
     if tracer.prefix and not getattr(tracer, "whole_run", False) and not os.environ.get(TRACED):
         os.environ[TRACED] = "1"
@@ -65,10 +67,10 @@ def main() -> None:
     verdicts = judged(docs)
     (a.out / "verdicts.json").write_text(json.dumps(verdicts, indent=1))
     print(json.dumps(verdicts, indent=1))
-    print(f"records: {a.out / submit.SUBMISSION}\nprofiles: {a.out / 'profiles.json'}")
+    print(f"records: {a.out / submission.SUBMISSION}\nprofiles: {a.out / 'profiles.json'}")
     if a.upload:
-        print(submit.upload(a.out / submit.SUBMISSION))
-        print(submit.upload_profiles(docs))
+        print(api_client.upload(a.out / submission.SUBMISSION))
+        print(api_client.upload_profiles(docs))
 
 
 if __name__ == "__main__":

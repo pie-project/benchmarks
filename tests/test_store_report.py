@@ -6,7 +6,7 @@ import pytest
 from pie_bench.paths import MATRIX
 from pie_bench.plan.jobs import make_jobs
 from pie_bench.plan.matrix import Matrix
-from pie_bench.results.store import Store
+from pie_bench.results.store import open_store
 from pie_bench.schema import CellStatus, PerfMetrics, Provenance, Record, Tier
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,7 +32,7 @@ def _rec(cell, value, when, status=CellStatus.PASS, engine_version="abc123", run
 def test_store_roundtrip_and_history(tmp_path, matrix, cells):
     cells = matrix.runnable(Tier.SMOKE, cells)
     cell = next(c for c in cells if c.workload.id == "ss-128-64" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.platform.id == "l40s-x1" and c.program.id == "text-completion-bench")
-    st = Store(tmp_path / "store")
+    st = open_store(tmp_path / "store")
     t0 = datetime(2026, 9, 1, tzinfo=timezone.utc)
     for i, v in enumerate([430, 432, 431, 433]):
         st.write_run([_rec(cell, v, t0 + timedelta(days=i), run=f"r{i}")], tier=Tier.SMOKE, run_id=f"r{i}", when=t0 + timedelta(days=i))
@@ -46,11 +46,11 @@ def test_store_refuses_missing_provenance(tmp_path, matrix, cells):
     r = _rec(cell, 1.0, datetime.now(timezone.utc))
     r.provenance.checkpoint_revision = None
     with pytest.raises(ValueError):
-        Store(tmp_path).write_run([r], tier=Tier.SMOKE, run_id="x")
+        open_store(tmp_path).write_run([r], tier=Tier.SMOKE, run_id="x")
 
 
 def test_jobs_group_one_model_per_process(matrix, tmp_path):
-    jobs = make_jobs(matrix, Tier.SMOKE, pie_commit="abc123", store=Store(tmp_path), platforms=["l40s-x1"])
+    jobs = make_jobs(matrix, Tier.SMOKE, pie_commit="abc123", store=open_store(tmp_path), platforms=["l40s-x1"])
     assert 1 <= len(jobs) <= matrix.suites["smoke"].max_jobs_per_platform
     for j in jobs:
         assert j.platform_id == "l40s-x1" and j.pie_build_features == ["cuda"]
@@ -69,7 +69,7 @@ def _pair(matrix, workload="ob-512-200"):
 
 
 def test_targeted_mac_jobs_keep_one_engine_per_process(matrix, tmp_path):
-    jobs = make_jobs(matrix, Tier.TARGETED, pie_commit="abc123", store=Store(tmp_path), platforms=["m4-pro-48g"])
+    jobs = make_jobs(matrix, Tier.TARGETED, pie_commit="abc123", store=open_store(tmp_path), platforms=["m4-pro-48g"])
     suite = matrix.suites["targeted"]
     assert jobs and (not suite.enforce_budget or len(jobs) <= suite.max_jobs_per_platform)
     for j in jobs:

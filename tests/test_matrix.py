@@ -3,7 +3,8 @@ from pathlib import Path
 import pytest
 
 from pie_bench.paths import MATRIX
-from pie_bench.plan.matrix import Matrix, selector_matches, summarize
+from pie_bench.plan.matrix import Matrix, summarize
+from pie_bench.plan.selectors import selector_matches
 from pie_bench.schema import ArtifactSpec, CellStatus, Tier
 
 ROOT = Path(__file__).resolve().parents[1]

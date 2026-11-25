@@ -7,7 +7,7 @@ from pie_bench.engines.engine import BenchResult, Engine, EngineLaunchError
 from pie_bench.paths import MATRIX
 from pie_bench.plan.jobs import make_jobs
 from pie_bench.plan.matrix import Matrix
-from pie_bench.results.store import Store
+from pie_bench.results.store import open_store
 from pie_bench.runner import job as runner_mod
 from pie_bench.schema import CellStatus, ErrorClass, PerfMetrics, Record, Tier, WorkloadSpec
 
@@ -15,7 +15,7 @@ os.environ.setdefault("PIE_BENCH_SETTLE", "0")
 os.environ.setdefault("PIE_BENCH_GPU_IDLE", "0")
 
 ROOT = Path(__file__).resolve().parents[1]
-REAL_ACCURACY = runner_mod.NodeRunner._accuracy
+REAL_ACCURACY = runner_mod.JobRunner._accuracy
 
 
 def _asked(workload):
@@ -58,7 +58,7 @@ class FakeEngine(Engine):
 def job(tmp_path):
     m = Matrix.load(MATRIX)
     cells = [c for c in m.runnable(Tier.SMOKE, m.expand(platforms=["l40s-x1"], artifacts=["qwen3.5-0.8b-bf16"])) if c.platform.id == "l40s-x1" and c.artifact.id == "qwen3.5-0.8b-bf16" and c.program.id == "text-completion-bench" and c.mode.tp == 1]
-    j = make_jobs(m, Tier.SMOKE, pie_commit="deadbeef", store=Store(tmp_path / "store"), platforms=["l40s-x1"], cells=cells)[0]
+    j = make_jobs(m, Tier.SMOKE, pie_commit="deadbeef", store=open_store(tmp_path / "store"), platforms=["l40s-x1"], cells=cells)[0]
     assert {c.workload.id for c in j.cells} >= {"control-aa", "ss-128-64", "c8"}
     return j
 
@@ -69,7 +69,7 @@ def mac_job(tmp_path):
     cells = [c for c in m.runnable(Tier.TARGETED, m.expand(platforms=["m4-pro-48g"], artifacts=["gemma-4-26b-a4b-mlx4"])) if c.platform.id == "m4-pro-48g" and c.artifact.id == "gemma-4-26b-a4b-mlx4" and str(c.engine) == "pie"]
     c8 = WorkloadSpec(id="c8", kind="concurrency", params={"concurrency": 8, "num_requests": 32, "prefill": 128, "decode": 128}, est_minutes=1)
     cells.append(cells[0].model_copy(update={"workload": c8}))
-    j = make_jobs(m, Tier.TARGETED, pie_commit="deadbeef", store=Store(tmp_path / "store"), platforms=["m4-pro-48g"], cells=cells)[0]
+    j = make_jobs(m, Tier.TARGETED, pie_commit="deadbeef", store=open_store(tmp_path / "store"), platforms=["m4-pro-48g"], cells=cells)[0]
     assert {c.workload.id for c in j.cells} >= {"control-aa", "ob-story-200", "c8"}
     return j
 
@@ -100,14 +100,14 @@ def patched(monkeypatch, tmp_path):
     monkeypatch.setattr(runner_mod.pf, "Preflight", P)
     monkeypatch.setattr(runner_mod.prov, "hardware_fingerprint", lambda: {"gpu": "fake"})
     monkeypatch.setattr(runner_mod.prov, "build_provenance", lambda *a, **k: runner_mod.prov.Provenance(harness_commit="h", engine_version="deadbeef", checkpoint_revision="abc", hardware_fingerprint={"gpu": "fake"}))
-    monkeypatch.setattr(runner_mod.NodeRunner, "_accuracy", lambda self, cell, engine, snap: runner_mod.AccuracyMetrics())
+    monkeypatch.setattr(runner_mod.JobRunner, "_accuracy", lambda self, cell, engine, snap: runner_mod.AccuracyMetrics())
     monkeypatch.setattr("pie_bench.runner.disk_space.reclaim", lambda *a, **k: 0.0)
     monkeypatch.setattr("pie_bench.checkpoints.pie_import.ensure_artifact", lambda art, snap, *a, **k: snap)
     return tmp_path / "hf"
 
 
 def _run(job, hf, tmp_path):
-    r = runner_mod.NodeRunner(job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=hf, build=False)
+    r = runner_mod.JobRunner(job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=hf, build=False)
     recs = r.run()
     lines = (tmp_path / "out" / "records.jsonl").read_text().splitlines()
     assert len(lines) >= len(recs)
@@ -159,7 +159,7 @@ def test_a_mac_run_keeps_numbers_after_a_failed_control(job, patched, tmp_path):
 def test_a_workload_round_timeout_lifts_the_job_cap(job, tmp_path):
     from types import SimpleNamespace as NS
 
-    r = runner_mod.NodeRunner(job.model_copy(update={"per_cell_timeout_s": 1800, "kill_s": 99999}), pie_root=tmp_path, out_dir=tmp_path / "o", build=False)
+    r = runner_mod.JobRunner(job.model_copy(update={"per_cell_timeout_s": 1800, "kill_s": 99999}), pie_root=tmp_path, out_dir=tmp_path / "o", build=False)
     slow = NS(workload=NS(est_minutes=1.5, params={"round_timeout_s": 3000}))
     plain = NS(workload=NS(est_minutes=1.5, params={}))
     assert r.cell_timeout_s(slow) == 3000 and r.cell_timeout_s(plain) == 900
@@ -214,7 +214,7 @@ def test_per_cell_timeout_is_bounded_by_kill_deadline(job, patched, tmp_path):
 
 def test_out_dir_is_absolute_for_subprocesses(job, patched, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    r = runner_mod.NodeRunner(job, pie_root=tmp_path / "pie", out_dir=Path("out/rel"), hf_cache=patched, build=False)
+    r = runner_mod.JobRunner(job, pie_root=tmp_path / "pie", out_dir=Path("out/rel"), hf_cache=patched, build=False)
     assert r.out.is_absolute() and r.out == (tmp_path / "out/rel").resolve()
 
 
@@ -400,7 +400,7 @@ def test_checkpoints_download_in_the_background(mac_job, patched, tmp_path, monk
     from pie_bench.runner import disk_space as reclaim
 
     monkeypatch.setattr(reclaim, "free_gib", lambda *a, **k: 10_000.0)
-    r = runner_mod.NodeRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
+    r = runner_mod.JobRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
     recs = r.run()
     assert recs and any(t.startswith("prefetch") for t in threads)
 
@@ -420,7 +420,7 @@ def test_an_imported_artifact_needs_no_source_weights(mac_job, patched, tmp_path
     for f in snap.glob("*.safetensors"):
         f.unlink()
     monkeypatch.setattr(snapshots, "ensure_snapshot", lambda *a, **k: (_ for _ in ()).throw(AssertionError("fetched the source")))
-    r = runner_mod.NodeRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
+    r = runner_mod.JobRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
     assert r.snapshot_dir(mac_job.cells[0]) == snap
 
 
@@ -429,7 +429,7 @@ def test_t0_is_judged_once_the_engine_is_down(job, patched, tmp_path, monkeypatc
     from pie_bench.schema import AccuracyMetrics, AccuracyStatus
 
     events: list[str] = []
-    monkeypatch.setattr(runner_mod.NodeRunner, "_accuracy", REAL_ACCURACY)
+    monkeypatch.setattr(runner_mod.JobRunner, "_accuracy", REAL_ACCURACY)
     monkeypatch.setattr(gate, "skip_reason", lambda cell: None)
     monkeypatch.setattr("pie_bench.checkpoints.snapshots.with_tokenizer", lambda art, snap, hf, log=None: snap)
     monkeypatch.setattr(gate, "t0_engine_outputs", lambda engine, snap, **kw: gate.T0Outputs([[1]], [[2]]))

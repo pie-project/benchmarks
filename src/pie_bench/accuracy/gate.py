@@ -111,7 +111,7 @@ def bench_system_prompt(pie_root: str | Path) -> str:
     import re
 
     try:
-        src = (bench_dir() / "common.py").read_text()
+        src = (bench_dir() / "bench_prompts.py").read_text()
         m = re.search(r'^BENCH_SYSTEM\s*=\s*"([^"]*)"', src, re.M)
         return m.group(1) if m else BENCH_SYSTEM_DEFAULT
     except OSError:

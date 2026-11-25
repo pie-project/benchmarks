@@ -107,13 +107,13 @@ def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str =
     from pie_bench.checkpoints.hf_cache import hf_cache_dir
     from pie_bench.checkpoints.snapshots import ensure_snapshot
     from pie_bench.plan.matrix import Matrix
-    from pie_bench.results.store import Store
+    from pie_bench.results.store import open_store
 
-    store = Store(store_dir)
+    store = open_store(store_dir)
     m = Matrix.load(matrix_dir)
     art = m.artifacts[artifact_id]
     engine = engine_for(art)
-    from pie_bench.plan.matrix import cannot_load
+    from pie_bench.plan.selectors import cannot_load
 
     why = cannot_load(m, engine, art)
     if why:

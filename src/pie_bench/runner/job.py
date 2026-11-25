@@ -64,7 +64,7 @@ def import_reason(e: Exception) -> str:
     return marked[-1] if marked else (lines[-1] if lines else "")
 
 
-class NodeRunner:
+class JobRunner:
     def __init__(self, job: JobSpec, *, pie_root: Path, out_dir: Path, hf_cache: Path | None = None, runner_name: str | None = None, build: bool = True, download: bool = False, tracer=None):
         self.job = job
         self.tracer = tracer

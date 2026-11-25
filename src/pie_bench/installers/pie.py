@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import json
 import os
+import re
 import shutil
 import subprocess
 import time
+import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 from pie_bench.installers.bench_env import _cache_root, _pip_install, bench_python
@@ -202,3 +206,22 @@ def ensure(pie_root: Path, commit: str, features: list[str], *, cache_root: Path
         return
     build(pie_root, commit, features, cache_root=cache_root, target_dir=target_dir, python=python, log=log)
     restore(pie_root, commit, features, cache_root=cache_root, python=python, log=log)
+
+
+PIE_REPO = "pie-project/pie"
+
+
+def _gh(path: str) -> dict:
+    req = urllib.request.Request(f"https://api.github.com/repos/{PIE_REPO}/{path}", headers={"Accept": "application/vnd.github+json"})
+    if os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN"):
+        req.add_header("Authorization", f"Bearer {os.environ.get('GH_TOKEN') or os.environ.get('GITHUB_TOKEN')}")
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read())
+
+
+def resolve_pie(ref: str | None) -> tuple[str, str]:
+    if not ref or ref == "latest":
+        ref = _gh("releases/latest")["tag_name"]
+    sha = _gh(f"commits/{ref}")["sha"]
+    tag = ref if re.fullmatch(r"v?\d+\.\d+\.\d+.*", ref) else f"manual-{datetime.now(timezone.utc):%Y%m%d-%H%M}"
+    return sha, tag.lstrip("v")

@@ -15,8 +15,12 @@ import re
 import shutil
 from pathlib import Path
 
-from pie_bench import local, submit
-from pie_bench.paths import MATRIX
+from pie_bench import api_client, submission
+from pie_bench.installers.desktop_engines import setup_engines
+from pie_bench.installers.pie import resolve_pie
+from pie_bench.machine import detect, tier_for
+from pie_bench.paths import HOME, MATRIX
+from pie_bench.plan.local import plan as machine_plan
 from pie_bench.plan.matrix import Matrix
 from pie_bench.schema import Tier
 
@@ -90,8 +94,8 @@ def cell_of(m: Matrix, machine, row: dict, commit: str):
     # the machine's own tier first, then any tier that holds the benchmarked cell (NVIDIA's full runs are weekly cells);
     # a Mac's model slices are in no suite of the config, so a row none of its arms plans is looked for in every artifact
     for every in (False, True):
-        for tier in (local.tier_for(machine), *Tier):
-            job = local.plan(m, machine, pie_commit=commit, models=[row["model"]], engines=[row["engine"]], workloads=[row["benchmark"]], suite="targeted",
+        for tier in (tier_for(machine), *Tier):
+            job = machine_plan(m, machine, pie_commit=commit, models=[row["model"]], engines=[row["engine"]], workloads=[row["benchmark"]], suite="targeted",
                              tier=tier, every_artifact=every)
             found = [c for c in (job.cells if job else []) if c.workload.id == row["benchmark"] and str(c.engine) == row["engine"]
                      and str(c.artifact.scheme) == row["scheme"] and same_cut(c.artifact, row.get("miniature") or "")]
@@ -148,22 +152,22 @@ def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engin
             tag: str | None = None, pie_commit: str | None = None) -> list[dict]:
     """Reruns the cells' two fastest engines on this machine, benchmark and profile, and writes the run's records,
     its submission and out/profiles.json."""
-    from pie_bench.runner.job import NodeRunner
+    from pie_bench.runner.job import JobRunner
     from pie_bench.runner.machine_lock import machine_lock
 
     m = Matrix.load(MATRIX)
-    machine = local.detect(m, hardware)
+    machine = detect(m, hardware)
     hw = machine.platform.id
     tracer = tracer_for(str(machine.platform.backend), out)
     if getattr(tracer, "whole_run", False):
         raise SystemExit(f"{tracer.name} traces the whole run, so the benchmark rounds would carry its cost: no combined job on this platform")
-    live = submit.request("GET", "/v1/results")
+    live = api_client.request("GET", "/v1/results")
     pairs = {(model, setup): pair(live["results"], hw, model, setup, engines) for model, setup in cells}
     rows = [r for p in pairs.values() for r in p]
     commits = {pie_commit} if pie_commit else {r["commit"] for r in rows if r["engine"] == "pie"}
     if len(commits) > 1:
         raise SystemExit(f"the cells' pie rows were measured at pie {', '.join(sorted(commits))}: one job builds one commit, so run them apart")
-    commit = local.resolve_pie(commits.pop())[0] if commits else None
+    commit = resolve_pie(commits.pop())[0] if commits else None
     key = lambda r: (r["engine"], r["model"], r["benchmark"], r["scheme"], r.get("miniature") or "")
     planned = {}
     for r in rows:
@@ -177,11 +181,11 @@ def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engin
     pins = {k: v for j in jobs for k, v in j.baseline_versions.items()} | versions(rows)
     job = jobs[0].model_copy(update={"cells": [*controls.values(), *runs.values()], "pie_commit": commit, "baseline_versions": pins,
                                      "budget_s": sum(j.budget_s for j in jobs), "kill_s": sum(j.kill_s for j in jobs)})
-    os.environ.update({**local.setup_engines(m, job, log=print), **tracer.env})
+    os.environ.update({**setup_engines(m, job, log=print), **tracer.env})
     with machine_lock(f"profile {hw} {len(cells)} cells", max_wait_s=3600, log=print):
-        runner = NodeRunner(job, pie_root=(pie_root or local.HOME / "pie").resolve(), out_dir=out, download=True, tracer=tracer)
+        runner = JobRunner(job, pie_root=(pie_root or HOME / "pie").resolve(), out_dir=out, download=True, tracer=tracer)
         records = runner.run()
-    submit.pack(out, {"run_id": runner.run_id, "tier": str(job.tier), "tag": tag or live["id"], "tag_kind": "manual",
+    submission.pack(out, {"run_id": runner.run_id, "tier": str(job.tier), "tag": tag or live["id"], "tag_kind": "manual",
                       "platform": machine.platform.model_dump(mode="json"), "pie_commit": commit})
     by_cell = {r.cell_id: r for r in records}
     docs = []

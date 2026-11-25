@@ -9,16 +9,9 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from common import (
-    RequestResult,
-    _render_chat,
-    add_mode_subcommands,
-    add_output_dump_args,
-    finish,
-    make_prompts,
-    request_max_tokens,
-    summarize,
-)
+from bench_args import add_mode_subcommands, add_output_dump_args
+from bench_prompts import _render_chat, make_prompts, request_max_tokens
+from bench_results import RequestResult, finish, summarize
 
 
 def shuffled(prompt: str, seed: int) -> str:

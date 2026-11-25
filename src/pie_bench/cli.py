@@ -10,8 +10,12 @@ from pathlib import Path
 
 import click
 
-from pie_bench import __version__, local, submit
-from pie_bench.paths import MATRIX
+from pie_bench import __version__, api_client, submission
+from pie_bench.installers.desktop_engines import setup_engines
+from pie_bench.installers.pie import resolve_pie
+from pie_bench.machine import detect, prerequisites
+from pie_bench.paths import HOME, MATRIX
+from pie_bench.plan.local import plan as machine_plan
 from pie_bench.plan.matrix import Matrix
 from pie_bench.plan.suites import SUITES
 
@@ -40,11 +44,11 @@ def _mask_gpus(count: int) -> None:
 
 
 def _upload(out: Path, path: Path | None = None) -> None:
-    path = path or out / submit.SUBMISSION
-    _say(f"uploading {path} to {submit.API}")
+    path = path or out / submission.SUBMISSION
+    _say(f"uploading {path} to {api_client.API}")
     try:
-        res = submit.upload(path)
-    except submit.ApiError as e:
+        res = api_client.upload(path)
+    except api_client.ApiError as e:
         _say(f"upload failed: {e}\nyour results are safe in {out}; retry with: pie-bench upload {out}")
         sys.exit(1)
     _say(f"uploaded: run {res.get('run_id')}, {res.get('results', 0)} results, {res.get('quota_left')} uploads left")
@@ -69,13 +73,13 @@ def main():
 @click.option("-y", "--yes", is_flag=True, help="start without asking")
 def run(models, engines, workloads, suite, machine_id, pie_ref, pie_root, out, upload, yes):
     m = Matrix.load(MATRIX)
-    machine = local.detect(m, machine_id)
-    missing = local.prerequisites(machine)
+    machine = detect(m, machine_id)
+    missing = prerequisites(machine)
     if missing:
         _say("install these first:\n  " + "\n  ".join(missing))
         sys.exit(1)
-    commit, tag = local.resolve_pie(pie_ref)
-    job = local.plan(m, machine, pie_commit=commit, models=_split(models), engines=_split(engines), workloads=_split(workloads), suite=suite)
+    commit, tag = resolve_pie(pie_ref)
+    job = machine_plan(m, machine, pie_commit=commit, models=_split(models), engines=_split(engines), workloads=_split(workloads), suite=suite)
     if job is None:
         _say(f"nothing to measure on {machine.platform.id}; try `pie-bench plan` with other --models")
         sys.exit(1)
@@ -86,17 +90,17 @@ def run(models, engines, workloads, suite, machine_id, pie_ref, pie_root, out, u
     _say(f"estimate  about {max(1, round(job.est_minutes + 3 * len(groups)))} minutes, plus model downloads on a first run")
     if not yes and not click.confirm("start?", default=True, err=True):
         return
-    out = (out or local.HOME / "runs" / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")).resolve()
+    out = (out or HOME / "runs" / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")).resolve()
     out.mkdir(parents=True, exist_ok=True)
     (out / "job.json").write_text(job.model_dump_json(indent=1))
-    os.environ.update(local.setup_engines(m, job, log=_say))
+    os.environ.update(setup_engines(m, job, log=_say))
     _mask_gpus(machine.platform.count)
-    from pie_bench.runner.job import NodeRunner
+    from pie_bench.runner.job import JobRunner
     from pie_bench.runner.machine_lock import MachineBusy, machine_lock
 
     try:
         with machine_lock(job.job_id, max_wait_s=3600, log=_say):
-            runner = NodeRunner(job, pie_root=(pie_root or local.HOME / "pie").resolve(), out_dir=out, download=True)
+            runner = JobRunner(job, pie_root=(pie_root or HOME / "pie").resolve(), out_dir=out, download=True)
             recs = runner.run()
     except MachineBusy as e:
         _say(str(e))
@@ -104,7 +108,7 @@ def run(models, engines, workloads, suite, machine_id, pie_ref, pie_root, out, u
     by: dict[str, int] = {}
     for r in recs:
         by[str(r.status)] = by.get(str(r.status), 0) + 1
-    submit.pack(out, {"run_id": runner.run_id, "tier": str(job.tier), "tag": tag, "tag_kind": "release" if not tag.startswith("manual-") else "manual",
+    submission.pack(out, {"run_id": runner.run_id, "tier": str(job.tier), "tag": tag, "tag_kind": "release" if not tag.startswith("manual-") else "manual",
                       "platform": machine.platform.model_dump(mode="json"), "pie_commit": commit})
     _say(f"done: {len(recs)} results ({', '.join(f'{v} {k}' for k, v in sorted(by.items()))}) in {out}")
     if upload:
@@ -120,8 +124,8 @@ def run(models, engines, workloads, suite, machine_id, pie_ref, pie_root, out, u
 @click.option("--json", "as_json", is_flag=True)
 def plan(models, engines, workloads, suite, machine_id, as_json):
     m = Matrix.load(MATRIX)
-    machine = local.detect(m, machine_id)
-    job = local.plan(m, machine, pie_commit="0" * 40, models=_split(models), engines=_split(engines), workloads=_split(workloads), suite=suite)
+    machine = detect(m, machine_id)
+    job = machine_plan(m, machine, pie_commit="0" * 40, models=_split(models), engines=_split(engines), workloads=_split(workloads), suite=suite)
     cells = job.cells if job else []
     if as_json:
         click.echo(json.dumps([c.cell_key for c in cells], indent=1))
@@ -142,34 +146,34 @@ def machines():
 @click.option("--name", default=None, help="a name for this machine's token (default: its host name)")
 def login(name):
     try:
-        res = submit.login(name)
-    except submit.ApiError as e:
+        res = api_client.login(name)
+    except api_client.ApiError as e:
         _say(f"login failed: {e}")
         sys.exit(1)
-    _say(f"token saved to {submit.TOKEN_FILE} (quota {res.get('quota')} uploads)")
+    _say(f"token saved to {api_client.TOKEN_FILE} (quota {res.get('quota')} uploads)")
 
 
 @main.command(help="Upload finished runs' folders: several of one machine go as one submission, with the profiles they hold.")
 @click.argument("outs", nargs=-1, required=True, type=click.Path(exists=True, file_okay=False, path_type=Path))
 def upload(outs):
     for out in outs:
-        if not (out / submit.SUBMISSION).exists():
+        if not (out / submission.SUBMISSION).exists():
             job = json.loads((out / "job.json").read_text())
             run_id = (out / "run_id.txt").read_text().strip() if (out / "run_id.txt").exists() else job["job_id"]
-            submit.pack(out, {"run_id": run_id, "tier": job["tier"], "tag": None, "tag_kind": "manual",
+            submission.pack(out, {"run_id": run_id, "tier": job["tier"], "tag": None, "tag_kind": "manual",
                               "platform": job["cells"][0]["platform"] if job["cells"] else None, "pie_commit": job.get("pie_commit")})
     out = outs[0].resolve()
     try:
-        merged = submit.merge(list(outs), out / "merged" / submit.SUBMISSION) if len(outs) > 1 else None
-    except submit.ApiError as e:
+        merged = submission.merge(list(outs), out / "merged" / submission.SUBMISSION) if len(outs) > 1 else None
+    except api_client.ApiError as e:
         _say(str(e))
         sys.exit(2)
     _upload(out, merged)
     profiles = [c for o in outs if (o / "profiles.json").exists() for c in json.loads((o / "profiles.json").read_text())["profiles"]]
     if profiles:
         try:
-            res = submit.upload_profiles(profiles)
-        except submit.ApiError as e:
+            res = api_client.upload_profiles(profiles)
+        except api_client.ApiError as e:
             _say(f"the records are in; the profiles upload failed: {e}")
             sys.exit(1)
         _say(f"profiles: {res}")
@@ -183,13 +187,13 @@ def upload(outs):
 def import_phone(file, tag, out, dry_run):
     import re
 
-    from pie_bench import phone
+    from pie_bench import phone_import
 
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", tag):
         _say(f"bad tag {tag!r}")
         sys.exit(2)
     m = Matrix.load(MATRIX)
-    good, bad, warnings = phone.validate(phone.read_file(file), m, phone.model_ids(m), tag=tag)
+    good, bad, warnings = phone_import.validate(phone_import.read_file(file), m, phone_import.model_ids(m), tag=tag)
     for w in warnings:
         _say(f"warning: {w}")
     for b in bad:
@@ -201,8 +205,8 @@ def import_phone(file, tag, out, dry_run):
     _say(f"{len(good)} rows ok, {len(bad)} refused")
     if dry_run or not good:
         sys.exit(1 if bad or not good else 0)
-    for d in phone.pack(good, (out or local.HOME / "phone").resolve(), tag=tag):
-        _say(f"wrote {d / submit.SUBMISSION}; send it with: pie-bench upload {d}")
+    for d in phone_import.pack(good, (out or HOME / "phone").resolve(), tag=tag):
+        _say(f"wrote {d / submission.SUBMISSION}; send it with: pie-bench upload {d}")
 
 
 @main.command(help="Score model accuracy on question sets, then upload the scores.")
@@ -216,18 +220,18 @@ def quality(models, tasks, n, pie_root, out, upload):
     from pie_bench.quality.run import run_quality
 
     m = Matrix.load(MATRIX)
-    machine = local.detect(m)
-    out = (out or local.HOME / "runs" / f"quality-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}").resolve()
+    machine = detect(m)
+    out = (out or HOME / "runs" / f"quality-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}").resolve()
     out.mkdir(parents=True, exist_ok=True)
     failed = []
     for a in _split(models) or []:
         try:
-            run_quality(a, _split(tasks), n, store_dir=str(out), pie_root=(pie_root or local.HOME / "pie").resolve(),
+            run_quality(a, _split(tasks), n, store_dir=str(out), pie_root=(pie_root or HOME / "pie").resolve(),
                         platform=machine.platform.id, log=_say)
         except Exception as e:
             failed.append(a)
             _say(f"{a}: {type(e).__name__}: {e}")
-    submit.pack(out, {"run_id": out.name, "tier": "quality", "tag": None, "tag_kind": "manual", "platform": machine.platform.model_dump(mode="json"), "pie_commit": None})
+    submission.pack(out, {"run_id": out.name, "tier": "quality", "tag": None, "tag_kind": "manual", "platform": machine.platform.model_dump(mode="json"), "pie_commit": None})
     if upload:
         _upload(out)
     sys.exit(1 if failed else 0)
@@ -236,12 +240,12 @@ def quality(models, tasks, n, pie_root, out, upload):
 @main.command(help="Check this machine is ready to run pie-bench.")
 def doctor():
     m = Matrix.load(MATRIX)
-    machine = local.detect(m)
+    machine = detect(m)
     click.echo(f"machine  {machine.platform.id} ({machine.platform.accelerator}){'' if machine.known else ', new to the catalog'}")
-    missing = local.prerequisites(machine)
+    missing = prerequisites(machine)
     click.echo("tools    " + ("ready" if not missing else "missing: " + "; ".join(missing)))
-    click.echo(f"token    {'saved' if submit.saved_token() else 'not yet (made on the first upload)'}")
-    click.echo(f"api      {submit.API}")
+    click.echo(f"token    {'saved' if api_client.saved_token() else 'not yet (made on the first upload)'}")
+    click.echo(f"api      {api_client.API}")
     sys.exit(1 if missing else 0)
 
 

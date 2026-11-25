@@ -1,7 +1,7 @@
 import json
 
 from pie_bench.quality.tasks import Item, score_gsm8k, wilson
-from pie_bench.results.store import Store
+from pie_bench.results.store import open_store
 
 
 def test_gsm8k_reads_the_marked_answer_first():
@@ -22,7 +22,7 @@ def test_store_reads_quality_summaries(tmp_path):
     q = tmp_path / "quality"
     q.mkdir()
     (q / "gemma-4-26b-a4b-llamacpp-gsm8k.json").write_text(json.dumps({"artifact": "gemma-4-26b-a4b-llamacpp", "task": "gsm8k", "score": 0.9, "ci95": [0.8, 0.95], "n": 100, "samples": [1]}))
-    assert Store(tmp_path).quality() == [{"artifact": "gemma-4-26b-a4b-llamacpp", "task": "gsm8k", "score": 0.9, "ci95": [0.8, 0.95], "n": 100}]
+    assert open_store(tmp_path).quality() == [{"artifact": "gemma-4-26b-a4b-llamacpp", "task": "gsm8k", "score": 0.9, "ci95": [0.8, 0.95], "n": 100}]
 
 
 def test_scores_grade_the_answer_not_the_thinking():
@@ -114,7 +114,7 @@ def test_engine_comes_from_the_artifact_format():
 
 
 def test_parity_flags_a_score_gap_beyond_the_combined_intervals():
-    from pie_bench.quality.parity import rows
+    from pie_bench.quality.parity_table import rows
 
     same = [_arm("x-mlx4", "pie", 0.80), _arm("x-mlxlm", "mlxlm", 0.82)]
     cell = rows(same)[0]["arms"][1]
@@ -126,7 +126,7 @@ def test_parity_flags_a_score_gap_beyond_the_combined_intervals():
 
 
 def test_parity_measures_answer_drift_only_on_the_same_weights():
-    from pie_bench.quality.parity import rows
+    from pie_bench.quality.parity_table import rows
 
     a = [{"id": str(i), "text": "#### 1"} for i in range(10)]
     b = [{"id": str(i), "text": "#### 2" if i < 3 else "#### 1"} for i in range(10)]
@@ -137,14 +137,14 @@ def test_parity_measures_answer_drift_only_on_the_same_weights():
 
 
 def test_parity_leaves_out_an_arm_on_other_weights():
-    from pie_bench.quality.parity import rows
+    from pie_bench.quality.parity_table import rows
 
     gguf = rows([_arm("x-mlx4", "pie", 0.3), _arm("x-llamacpp", "llamacpp", 0.6, scheme="gguf_q4_k_m", checkpoint="org/x-GGUF")])[0]
     assert [c["engine"] for c in gguf["arms"]] == ["pie"] and gguf["flag"] == "ok"
 
 
 def test_parity_compares_on_the_machine_pie_ran_on():
-    from pie_bench.quality.parity import rows
+    from pie_bench.quality.parity_table import rows
 
     h100 = {**_arm("x-mlx4", "pie", 0.8), "platform": "h100-sxm-x1"}
     vllm = {**_arm("x-mlx4@vllm", "vllm", 0.8), "model": "x-mlx4@vllm", "platform": "b200-x1"}
@@ -153,7 +153,7 @@ def test_parity_compares_on_the_machine_pie_ran_on():
 
 
 def test_parity_compares_a_vllm_arm_with_the_pie_arm_on_its_weights():
-    from pie_bench.quality.parity import rows
+    from pie_bench.quality.parity_table import rows
 
     a = [{"id": str(i), "text": "#### 1"} for i in range(10)]
     vllm = {**_arm("x-bf16@vllm", "vllm", 0.8, samples=a, scheme="bf16", checkpoint="org/x"), "model": "x-mlx4@vllm", "label": None}
@@ -165,7 +165,7 @@ def test_parity_compares_a_vllm_arm_with_the_pie_arm_on_its_weights():
 
 def test_a_quality_write_keeps_a_stored_score(tmp_path):
     base = {"artifact": "x-mlx4", "task": "gsm8k", "model": "x-mlx4", "engine": "pie", "n": 100, "ci95": [0.7, 0.9], "date": "2026-10-08T00:00:00Z"}
-    store = Store(tmp_path)
+    store = open_store(tmp_path)
     store.write_quality({**base, "score": None, "n": 0}, tag="0.5.2", tag_kind="release")
     store.write_quality({**base, "score": 0.8}, tag="0.5.2", tag_kind="release")
     assert store.quality(samples=True)[0]["score"] == 0.8

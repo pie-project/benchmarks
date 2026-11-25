@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 from psycopg_pool import ConnectionPool
 
-from pie_bench.results.store import SCHEMA_SQL, PgStore
+from pie_bench.results.pg_store import SCHEMA_SQL, PgStore
 
 API_SQL = """
 CREATE TABLE IF NOT EXISTS tokens (

@@ -117,9 +117,9 @@ class LlamaCppReference:
 
     def __init__(self, snapshot_dir: str | Path, gguf_file: str | None = None, device: str = "gpu", n_probs: int = 256):
         from pie_bench.checkpoints.snapshots import gguf_shards
-        from pie_bench.quality.engines import _free_port, _get, _post, _serve
+        from pie_bench.quality.servers import free_port, get, post, serve
 
-        self._post = _post
+        self._post = post
         self.snapshot_dir = Path(snapshot_dir)
         self.n_probs = n_probs
         if gguf_file:
@@ -130,11 +130,11 @@ class LlamaCppReference:
                 raise FileNotFoundError(f"no .gguf file in {self.snapshot_dir}")
             gguf = found[0]
         server = os.environ.get("LLAMA_SERVER_BIN") or "llama-server"
-        port = _free_port()
+        port = free_port()
         cmd = [server, "--model", str(gguf), "--host", "127.0.0.1", "--port", str(port), "--ctx-size", "8192",
                "--parallel", "1", "--n-gpu-layers", "0" if device == "cpu" else "all", "--no-warmup"]
-        self._proc, self.url = _serve(cmd, {}, port, "/health", 1800)
-        meta = json.loads(_get(self.url + "/v1/models"))["data"][0].get("meta", {})
+        self._proc, self.url = serve(cmd, {}, port, "/health", 1800)
+        meta = json.loads(get(self.url + "/v1/models"))["data"][0].get("meta", {})
         self.vocab_size = int(meta["n_vocab"])
 
     def _complete(self, ids: list[int], n_predict: int, **extra: Any) -> dict:
@@ -159,11 +159,11 @@ class LlamaCppReference:
         return rows
 
     def close(self) -> None:
-        from pie_bench.quality.engines import _stop
+        from pie_bench.quality.servers import stop
 
         proc, self._proc = self._proc, None
         if proc is not None:
-            _stop(proc)
+            stop(proc)
 
 
 def load_reference(kind: str, snapshot_dir: str | Path, **kw: Any) -> HFReference | MlxReference | LlamaCppReference:

@@ -1,5 +1,5 @@
 def test_a_newer_good_row_replaces_the_stored_one_under_a_tag():
-    from pie_bench.results.store import _tag_keep
+    from pie_bench.results.pg_store import _tag_keep
 
     class Cur:
         def __init__(self, stored):

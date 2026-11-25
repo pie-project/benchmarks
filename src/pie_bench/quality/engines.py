@@ -3,18 +3,17 @@ from __future__ import annotations
 import json
 import os
 import re
-import socket
 import subprocess
-import sys
 import tempfile
-import time
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from pie_bench.quality.servers import free_port, post, serve, stop
 from pie_bench.schema import SourceFormat
 
 ENGINES = ("pie", "llamacpp", "mlxlm", "splash")
+
+
 PARALLEL = 4
 
 
@@ -42,23 +41,6 @@ def adds_bos(snapshot: Path) -> bool:
     return tok.bos_token_id is not None and tok.encode("x")[:1] == [tok.bos_token_id]
 
 
-def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return int(s.getsockname()[1])
-
-
-def _get(url: str, timeout: float = 5.0) -> bytes:
-    with urllib.request.urlopen(url, timeout=timeout) as r:
-        return r.read()
-
-
-def _post(url: str, body: dict, timeout: float = 1200.0) -> dict:
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())
-
-
 def _version(argv: list[str]) -> str:
     try:
         out = subprocess.run(argv, capture_output=True, text=True, timeout=120, check=False)
@@ -70,34 +52,6 @@ def _version(argv: list[str]) -> str:
         return f"b{build.group(1)}"
     found = re.search(r"\d+\.\d+(?:\.\d+)?", text)
     return found.group(0) if found else "unknown"
-
-
-def _serve(cmd: list[str], env: dict[str, str], port: int, health: str, timeout_s: float):
-    url = f"http://127.0.0.1:{port}"
-    log = tempfile.NamedTemporaryFile("w", prefix="quality-server-", suffix=".log", delete=False)
-    proc = subprocess.Popen([sys.executable, "-m", "pie_bench.engines.lifeline", *cmd], env={**os.environ, **env},
-                            stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT)
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        if proc.poll() is not None:
-            raise RuntimeError(f"{cmd[0]} exited during startup (see {log.name})")
-        try:
-            _get(url + health, timeout=3)
-            return proc, url
-        except OSError:
-            time.sleep(0.5)
-    _stop(proc)
-    raise RuntimeError(f"{cmd[0]} did not answer {health} within {timeout_s:.0f}s (see {log.name})")
-
-
-def _stop(proc) -> None:
-    if sys.platform == "win32":  # the lifeline's server child dies with it only through a tree kill
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True, check=False)
-    proc.terminate()
-    try:
-        proc.wait(timeout=30)
-    except subprocess.TimeoutExpired:
-        proc.kill()
 
 
 def _map(fn, items: list) -> list[str]:
@@ -120,23 +74,23 @@ def mlxlm_generate(snapshot: Path, rendered: list[str], max_tokens: int, bos: st
     if family == "qwen4_exp":
         return mlxvlm_generate(snapshot, rendered, max_tokens, bos, log)
     py = os.environ.get("MLX_PY") or "/tmp/pievenv/bin/python"
-    port = _free_port()
+    port = free_port()
     cmd = [py, "-m", "mlx_lm", "server", "--model", str(snapshot), "--host", "127.0.0.1", "--port", str(port),
            "--decode-concurrency", str(PARALLEL), "--prompt-concurrency", str(PARALLEL), "--prompt-cache-size", "0", "--log-level", "ERROR"]
     keep_bos = not adds_bos(snapshot)
     texts: list[str | None] = [None] * len(rendered)
     for attempt in range(6):
-        proc, url = _serve(cmd, {}, port, "/v1/models", 1800)
+        proc, url = serve(cmd, {}, port, "/v1/models", 1800)
         try:
             try:
-                _post(f"{url}/v1/completions", {"model": str(snapshot), "prompt": "Hello", "max_tokens": 1}, timeout=900)
+                post(f"{url}/v1/completions", {"model": str(snapshot), "prompt": "Hello", "max_tokens": 1}, timeout=900)
             except OSError as e:
                 raise RuntimeError(f"mlx-lm loaded no model to answer with ({e})") from e
 
             def one(i: int, url: str = url) -> None:
                 p = rendered[i]
                 body = {"model": str(snapshot), "prompt": p if keep_bos else strip_bos(p, bos), "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0}
-                texts[i] = _post(f"{url}/v1/completions", body)["choices"][0].get("text", "")
+                texts[i] = post(f"{url}/v1/completions", body)["choices"][0].get("text", "")
 
             try:
                 _map(one, [i for i, t in enumerate(texts) if t is None])
@@ -146,7 +100,7 @@ def mlxlm_generate(snapshot: Path, rendered: list[str], max_tokens: int, bos: st
                     raise
                 log(f"mlx-lm server died ({e}); {sum(t is None for t in texts)} prompts left, restarting it")
         finally:
-            _stop(proc)
+            stop(proc)
     return texts, _version([py, "-c", "import mlx_lm; print(mlx_lm.__version__)"])
 
 
@@ -157,34 +111,34 @@ def llamacpp_generate(art, rendered: list[str], max_tokens: int, bos: str | None
     from pie_bench.checkpoints.snapshots import gguf_shards
 
     gguf = [hf_hub_download(art.base_model, f) for f in gguf_shards(art.gguf_file)][0]
-    port = _free_port()
+    port = free_port()
     cmd = [server, "--model", gguf, "--host", "127.0.0.1", "--port", str(port), "--ctx-size", str(4096 * PARALLEL),
            "--parallel", str(PARALLEL), "--n-gpu-layers", "all", "--flash-attn", "on"]
-    proc, url = _serve(cmd, {}, port, "/health", 1800)
+    proc, url = serve(cmd, {}, port, "/health", 1800)
     try:
         def one(p: str) -> str:
             body = {"prompt": strip_bos(p, bos), "n_predict": max_tokens, "temperature": 0.0, "top_k": 1, "top_p": 1.0,
                     "cache_prompt": False, "seed": 0}
-            return _post(f"{url}/completion", body)["content"]
+            return post(f"{url}/completion", body)["content"]
 
         texts = _map(one, rendered)
     finally:
-        _stop(proc)
+        stop(proc)
     return texts, _version([server, "--version"])
 
 
 def splash_generate(art, questions: list[str], system: str, max_tokens: int, log) -> tuple[list[str], str]:
     binary = os.environ.get("SPLASH_BIN") or "splash"
-    port = _free_port()
+    port = free_port()
     cmd = [binary, "serve", "--model", art.base_model, "--host", "127.0.0.1", "--port", str(port), "--no-webui"]
-    proc, url = _serve(cmd, {}, port, "/v1/models", 1800)
+    proc, url = serve(cmd, {}, port, "/v1/models", 1800)
     try:
         def one(q: str) -> str:
             body = {"model": art.base_model, "max_tokens": max_tokens, "temperature": 0.0, "top_p": 1.0, "reasoning_effort": "none",
                     "messages": [{"role": "system", "content": system}, {"role": "user", "content": q}]}
-            return _post(f"{url}/v1/chat/completions", body)["choices"][0]["message"].get("content") or ""
+            return post(f"{url}/v1/chat/completions", body)["choices"][0]["message"].get("content") or ""
 
         texts = _map(one, questions)
     finally:
-        _stop(proc)
+        stop(proc)
     return texts, _version([binary, "--version"])

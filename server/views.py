@@ -14,7 +14,7 @@ import yaml
 
 from pie_bench.paths import CONFIG, MATRIX
 from pie_bench.plan.suites import all_models, suites
-from pie_bench.quality.parity import rows as parity_rows
+from pie_bench.quality.parity_table import rows as parity_rows
 from server import split
 
 THROUGHPUT = ["c32", "c64", "c256", "c8", "c4", "c16", "c128", "c512", "c1024"]
@@ -642,7 +642,7 @@ def cells_on(platform_ids):
 
 @functools.cache
 def reasoned_gpu_cells() -> list[tuple]:
-    from pie_bench.plan.matrix import selector_matches
+    from pie_bench.plan.selectors import selector_matches
 
     m = catalog_matrix()
     out = []
@@ -657,7 +657,7 @@ def reasoned_gpu_cells() -> list[tuple]:
 
 
 def unsupported_reasons(a2m: dict[str, str], config: dict, hardware_ids: list[str], engine_ids: list[str], model_ids: list[str]) -> dict[tuple, str]:
-    from pie_bench.plan.matrix import selector_matches
+    from pie_bench.plan.selectors import selector_matches
     from pie_bench.schema import Tier
 
     m = catalog_matrix()

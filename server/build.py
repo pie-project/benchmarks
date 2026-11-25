@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from pie_bench.results.store import PgStore
+from pie_bench.results.pg_store import PgStore
 from server import headline, split, views
 
 

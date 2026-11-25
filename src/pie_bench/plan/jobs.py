@@ -4,7 +4,7 @@ import hashlib
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from pie_bench.results.store import Store
+from pie_bench.results.store import BaseStore
 from pie_bench.schema import Cell, JobSpec, RepetitionPolicy, Tier
 
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ def make_jobs(
     tier: Tier,
     *,
     pie_commit: str | None,
-    store: Store | None = None,
+    store: BaseStore | None = None,
     platforms: list[str] | None = None,
     engines: list[str] | None = None,
     cells: list[Cell] | None = None,

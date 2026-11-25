@@ -23,7 +23,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from pie_bench import submit
+from pie_bench import submission
 from pie_bench.metrics.perf import perf_from_common_json
 from pie_bench.metrics.stats import cov
 from pie_bench.schema import Backend, CellStatus, ErrorClass, PlatformSpec, Provenance, Record, Tier
@@ -337,7 +337,7 @@ def pack(good: list[tuple[PhoneRow, Record]], out: Path, *, tag: str) -> list[Pa
         (d / "records.jsonl").write_text("".join(rec.model_dump_json() + "\n" for _, rec in pairs))
         pie = {rec.provenance.pie_commit for _, rec in pairs if rec.provenance.pie_commit}
         commit = pie.pop() if len(pie) == 1 else None
-        submit.pack(d, {"run_id": run_id, "tier": str(Tier.TARGETED), "tag": tag,
+        submission.pack(d, {"run_id": run_id, "tier": str(Tier.TARGETED), "tag": tag,
                         "tag_kind": "manual" if tag.startswith((TEST_TAG_PREFIX, "manual-")) else "release",
                         "platform": pairs[0][1].cell.platform.model_dump(mode="json"),
                         "pie_commit": commit if commit and re.fullmatch(r"[0-9a-f]{40}", commit) else None})
