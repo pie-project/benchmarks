@@ -1,6 +1,7 @@
 // CUDA injection (CUDA_INJECTION64_PATH) that records only the device's kernel, copy and memset intervals through
 // CUPTI's activity API: no API tracing, nothing enabled until the profiler asks. A thread polls
-// $PIE_CUPTI_DIR/on: while it exists (it holds the round's number N) the activities are on; when it goes, they are
+// $PIE_CUPTI_DIR/on: while it exists (it holds the round's number N) the activities are on (each process says so in
+// <pid>-<N>.armed, beside the <pid>.alive it writes at CUDA init); when it goes, they are
 // flushed and the process writes <pid>-<N>.bin (start, end pairs of uint64 CUPTI ns), <pid>-<N>.clock (a CUPTI
 // timestamp and the CLOCK_REALTIME ns taken together) and <pid>-<N>.done.
 #include <cupti.h>
@@ -81,6 +82,10 @@ static void *control(void *arg) {
             cuptiActivityEnable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
             cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMCPY);
             cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMSET);
+            path(p, sizeof p, "armed");  // the profiler starts the round once every process is recording
+            FILE *a = fopen(p, "w");
+            if (a)
+                fclose(a);
             active = 1;
         } else if (!f && active) {
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
@@ -108,6 +113,11 @@ int InitializeInjection(void) {
     dir = getenv("PIE_CUPTI_DIR");
     if (!dir || cuptiActivityRegisterCallbacks(request, complete) != CUPTI_SUCCESS)
         return 1;
+    char p[4096];
+    snprintf(p, sizeof p, "%s/%d.alive", dir, (int)getpid());
+    FILE *f = fopen(p, "w");
+    if (f)
+        fclose(f);
     pthread_t t;
     pthread_attr_t a;
     pthread_attr_init(&a);
