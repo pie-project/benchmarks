@@ -94,6 +94,32 @@ def make_jobs(
     cells: list[Cell] | None = None,
     label: str | None = None,
 ) -> list[JobSpec]:
+    by_plat: dict[str, list[Cell]] = {}
+    for c in _runnable_cells(matrix, tier, platforms, engines, cells):
+        by_plat.setdefault(c.platform.id, []).append(c)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+    kill_s = int(matrix.job_budget_minutes * matrix.kill_factor * 60)
+    if tier == Tier.TARGETED:
+        kill_s = max(kill_s, 6 * 3600)
+    jobs = []
+    for plat, plat_cells in sorted(by_plat.items()):
+        for idx, shard in enumerate(shard_groups(plat_cells, matrix.job_budget_minutes)):
+            seed = f"{tier}|{plat}|{idx}|{pie_commit}|{stamp}|{label or ''}"
+            job_id = (
+                f"{tier}-{plat}-s{idx:02d}-{stamp}-" + hashlib.sha256(seed.encode()).hexdigest()[:6]
+            )
+            jobs.append(_shard_job(matrix, tier, job_id, plat, idx, shard, pie_commit, kill_s))
+    jobs.sort(key=lambda j: (-len({str(c.engine) for c in j.cells}), -j.est_minutes))
+    return jobs
+
+
+def _runnable_cells(
+    matrix: Matrix,
+    tier: Tier,
+    platforms: list[str] | None,
+    engines: list[str] | None,
+    cells: list[Cell] | None,
+) -> list[Cell]:
     if cells is None and platforms:
         cells = matrix.expand(platforms=platforms)
     cells = matrix.runnable(tier, cells)
@@ -101,72 +127,53 @@ def make_jobs(
         cells = [c for c in cells if c.platform.id in platforms]
     if engines:
         cells = [c for c in cells if str(c.engine) in engines]
-    by_plat: dict[str, list[Cell]] = {}
-    for c in cells:
-        by_plat.setdefault(c.platform.id, []).append(c)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-    budget = matrix.job_budget_minutes
-    kill_s = int(budget * matrix.kill_factor * 60)
-    if tier == Tier.TARGETED:
-        kill_s = max(kill_s, 6 * 3600)
-    jobs = []
-    for plat, plat_cells in sorted(by_plat.items()):
-        for idx, shard in enumerate(shard_groups(plat_cells, budget)):
-            shard.sort(
-                key=lambda c: (
-                    str(c.engine),
-                    c.artifact.id,
-                    c.mode.key,
-                    c.program.id,
-                    c.workload.id,
-                )
-            )
-            backend = shard[0].platform.backend.value
-            pins = {
-                e.id: e.pin_for(backend)
-                for e in matrix.engines.values()
-                if e.pin_for(backend) and any(str(c.engine) == e.id for c in shard)
-            }
-            seed = f"{tier}|{plat}|{idx}|{pie_commit}|{stamp}|{label or ''}"
-            job_id = (
-                f"{tier}-{plat}-s{idx:02d}-{stamp}-" + hashlib.sha256(seed.encode()).hexdigest()[:6]
-            )
-            est = sum(cell_minutes(c) for c in shard) + sum(
-                load_minutes(g[0]) for g in _groups(shard)
-            )
-            job_kill_s = max(kill_s, int(est * matrix.kill_factor * 60))
-            jobs.append(
-                JobSpec(
-                    job_id=job_id,
-                    tier=tier,
-                    platform_id=plat,
-                    shard=idx,
-                    pie_commit=pie_commit,
-                    pie_build_features=[_feature_for(shard[0].platform.backend.value)],
-                    baseline_versions=pins,
-                    cells=shard,
-                    repetition=RepetitionPolicy(
-                        min_rounds=1 if tier in (Tier.SMOKE, Tier.TARGETED) else 3,
-                        single_stream_rounds=3 if tier == Tier.TARGETED else None,
-                    ),
-                    per_cell_timeout_s=min(
-                        max(
-                            1800 if tier in (Tier.SMOKE, Tier.TARGETED) else 5400,
-                            int(max(load_minutes(c) for c in shard) * 2 * 60),
-                        ),
-                        job_kill_s,
-                    ),
-                    budget_s=job_kill_s,
-                    kill_s=job_kill_s,
-                    control_marks_noisy=tier == Tier.TARGETED,
-                    est_minutes=est,
-                    load_timeout_s=max(
-                        1200, int(600 + max(float(c.artifact.expected_gib or 0) for c in shard) * 6)
-                    ),
-                )
-            )
-    jobs.sort(key=lambda j: (-len({str(c.engine) for c in j.cells}), -j.est_minutes))
-    return jobs
+    return cells
+
+
+def _shard_job(
+    matrix: Matrix,
+    tier: Tier,
+    job_id: str,
+    plat: str,
+    idx: int,
+    shard: list[Cell],
+    pie_commit: str | None,
+    kill_s: int,
+) -> JobSpec:
+    shard.sort(
+        key=lambda c: (str(c.engine), c.artifact.id, c.mode.key, c.program.id, c.workload.id)
+    )
+    backend = shard[0].platform.backend.value
+    pins = {
+        e.id: e.pin_for(backend)
+        for e in matrix.engines.values()
+        if e.pin_for(backend) and any(str(c.engine) == e.id for c in shard)
+    }
+    est = sum(cell_minutes(c) for c in shard) + sum(load_minutes(g[0]) for g in _groups(shard))
+    job_kill_s = max(kill_s, int(est * matrix.kill_factor * 60))
+    quick = tier in (Tier.SMOKE, Tier.TARGETED)
+    load_cap_s = int(max(load_minutes(c) for c in shard) * 2 * 60)
+    biggest_gib = max(float(c.artifact.expected_gib or 0) for c in shard)
+    return JobSpec(
+        job_id=job_id,
+        tier=tier,
+        platform_id=plat,
+        shard=idx,
+        pie_commit=pie_commit,
+        pie_build_features=[_feature_for(backend)],
+        baseline_versions=pins,
+        cells=shard,
+        repetition=RepetitionPolicy(
+            min_rounds=1 if quick else 3,
+            single_stream_rounds=3 if tier == Tier.TARGETED else None,
+        ),
+        per_cell_timeout_s=min(max(1800 if quick else 5400, load_cap_s), job_kill_s),
+        budget_s=job_kill_s,
+        kill_s=job_kill_s,
+        control_marks_noisy=tier == Tier.TARGETED,
+        est_minutes=est,
+        load_timeout_s=max(1200, int(600 + biggest_gib * 6)),
+    )
 
 
 def _feature_for(backend: str) -> str:
