@@ -1,6 +1,7 @@
-"""Profile one grid cell on this machine: python -m pie_bench.profiler --model gemma-4-e2b --setup decode [--upload]
+"""Rerun grid cells on this machine, benchmark and profile in one job:
+python -m pie_bench.profiler gemma-4-e2b:prefill qwen3.5-4b:pbatch [--upload]
 
-Under a tracer that must launch the run (nsys, rocprofv3), the command runs itself again inside it.
+Under a tracer that must launch the run (nsys), the command runs itself again inside it.
 """
 
 from __future__ import annotations
@@ -12,41 +13,61 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pie_bench import local
+from pie_bench import local, submit
 
 from . import cell, tracer_for, unit
 
 TRACED = "PIE_BENCH_PROFILER_TRACED"
 
 
+def judged(docs: list[dict]) -> list[dict]:
+    """Each cell as the API judges it (server/profiles.py, from a checkout of the repo with its server extra)."""
+    try:
+        from server import profiles
+    except ImportError:
+        return [{"cell": f"{d['hardware']}|{d['model']}|{d['setup']}", "verdict": "not judged here: run from a checkout with fastapi"} for d in docs]
+    out = []
+    for d in docs:
+        key = f"{d['hardware']}|{d['model']}|{d['setup']}"
+        if d["gap_pct"] is None or any("why" in d[s] for s in ("fastest", "second")):
+            out.append({"cell": key, "verdict": "not profiled", "why": "; ".join(f"{d[s]['engine']}: {d[s]['why']}" for s in ("fastest", "second") if "why" in d[s])})
+        else:
+            out.append({"cell": key, **profiles.judge(profiles.check({"profiles": [d]})[0])})
+    return out
+
+
 def main() -> None:
-    ap = argparse.ArgumentParser(prog="python -m pie_bench.profiler", description="Profile a cell's two fastest engines end to end.")
-    ap.add_argument("--model", required=True, help="model id as the site names it, e.g. gemma-4-e2b")
-    ap.add_argument("--setup", required=True, choices=unit.SETUPS)
+    ap = argparse.ArgumentParser(prog="python -m pie_bench.profiler", description="Rerun cells' two fastest engines: the benchmark, then its profile, in one job.")
+    ap.add_argument("cells", nargs="+", help="model:setup, the model as the site names it, e.g. gemma-4-e2b:prefill (setups: " + ", ".join(unit.SETUPS) + ")")
     ap.add_argument("--machine", default=None, help="this machine's id when it is not detected")
-    ap.add_argument("--engines", default=None, help="two engines to compare instead of the cell's two fastest, comma-separated")
+    ap.add_argument("--engines", default=None, help="the engines to compare instead of each cell's two fastest, comma-separated")
     ap.add_argument("--pie-root", type=Path, default=None, help="pie checkout to build and use (default ~/.pie-bench/pie)")
+    ap.add_argument("--tag", default=None, help="the release the records join (default: the live one, so they replace its rows)")
     ap.add_argument("--out", type=Path, default=None, help="folder for the run (default ~/.pie-bench/profiles/<time>)")
-    ap.add_argument("--upload", action="store_true", help="post the cell to /v1/profiles")
+    ap.add_argument("--upload", action="store_true", help="post the records to /v1/submissions (one of the token's quota) and the cells to /v1/profiles")
     a = ap.parse_args()
+    cells = [tuple(c.split(":", 1)) for c in a.cells]
+    if any(len(c) != 2 or c[1] not in unit.SETUPS for c in cells):
+        ap.error("each cell is model:setup")
     a.out = (a.out or local.HOME / "profiles" / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")).resolve()
     a.out.mkdir(parents=True, exist_ok=True)
     from pie_bench.paths import MATRIX
     from pie_bench.plan.matrix import Matrix
 
     backend = str(local.detect(Matrix.load(MATRIX), a.machine).platform.backend)
-    prefix = tracer_for(backend, a.out).prefix
-    if prefix and not os.environ.get(TRACED):
+    tracer = tracer_for(backend, a.out)
+    if tracer.prefix and not getattr(tracer, "whole_run", False) and not os.environ.get(TRACED):
         os.environ[TRACED] = "1"
         argv = [*sys.argv[1:], "--out", str(a.out)] if "--out" not in sys.argv else sys.argv[1:]
-        os.execvp(prefix[0], [*prefix, sys.executable, "-m", "pie_bench.profiler", *argv])
-    doc = cell.profile(a.machine, a.model, a.setup, a.out, a.engines.split(",") if a.engines else None, a.pie_root)
-    print(json.dumps(doc, indent=1))
-    failed = [f"{s['engine']}: {s['why']}" for s in (doc["fastest"], doc["second"]) if "why" in s]
-    if failed:
-        sys.exit("not profiled, nothing uploaded: " + "; ".join(failed))
+        os.execvp(tracer.prefix[0], [*tracer.prefix, sys.executable, "-m", "pie_bench.profiler", *argv])
+    docs = cell.profile(a.machine, cells, a.out, a.engines.split(",") if a.engines else None, a.pie_root, a.tag)
+    verdicts = judged(docs)
+    (a.out / "verdicts.json").write_text(json.dumps(verdicts, indent=1))
+    print(json.dumps(verdicts, indent=1))
+    print(f"records: {a.out / submit.SUBMISSION}\nprofiles: {a.out / 'profiles.json'}")
     if a.upload:
-        print(cell.upload(doc))
+        print(submit.upload(a.out / submit.SUBMISSION))
+        print(submit.upload_profiles(docs))
 
 
 if __name__ == "__main__":

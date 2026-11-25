@@ -39,15 +39,15 @@ def _mask_gpus(count: int) -> None:
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(i) for i in range(count))
 
 
-def _upload(out: Path) -> None:
-    path = out / submit.SUBMISSION
+def _upload(out: Path, path: Path | None = None) -> None:
+    path = path or out / submit.SUBMISSION
     _say(f"uploading {path} to {submit.API}")
     try:
         res = submit.upload(path)
     except submit.ApiError as e:
         _say(f"upload failed: {e}\nyour results are safe in {out}; retry with: pie-bench upload {out}")
         sys.exit(1)
-    _say(f"uploaded: run {res.get('run_id')}, {res.get('results', 0)} results")
+    _say(f"uploaded: run {res.get('run_id')}, {res.get('results', 0)} results, {res.get('quota_left')} uploads left")
 
 
 @click.group()
@@ -149,15 +149,30 @@ def login(name):
     _say(f"token saved to {submit.TOKEN_FILE} (quota {res.get('quota')} uploads)")
 
 
-@main.command(help="Upload a finished run's folder.")
-@click.argument("out", type=click.Path(exists=True, file_okay=False, path_type=Path))
-def upload(out):
-    if not (out / submit.SUBMISSION).exists():
-        job = json.loads((out / "job.json").read_text())
-        run_id = (out / "run_id.txt").read_text().strip() if (out / "run_id.txt").exists() else job["job_id"]
-        submit.pack(out, {"run_id": run_id, "tier": job["tier"], "tag": None, "tag_kind": "manual",
-                          "platform": job["cells"][0]["platform"] if job["cells"] else None, "pie_commit": job.get("pie_commit")})
-    _upload(out.resolve())
+@main.command(help="Upload finished runs' folders: several of one machine go as one submission, with the profiles they hold.")
+@click.argument("outs", nargs=-1, required=True, type=click.Path(exists=True, file_okay=False, path_type=Path))
+def upload(outs):
+    for out in outs:
+        if not (out / submit.SUBMISSION).exists():
+            job = json.loads((out / "job.json").read_text())
+            run_id = (out / "run_id.txt").read_text().strip() if (out / "run_id.txt").exists() else job["job_id"]
+            submit.pack(out, {"run_id": run_id, "tier": job["tier"], "tag": None, "tag_kind": "manual",
+                              "platform": job["cells"][0]["platform"] if job["cells"] else None, "pie_commit": job.get("pie_commit")})
+    out = outs[0].resolve()
+    try:
+        merged = submit.merge(list(outs), out / "merged" / submit.SUBMISSION) if len(outs) > 1 else None
+    except submit.ApiError as e:
+        _say(str(e))
+        sys.exit(2)
+    _upload(out, merged)
+    profiles = [c for o in outs if (o / "profiles.json").exists() for c in json.loads((o / "profiles.json").read_text())["profiles"]]
+    if profiles:
+        try:
+            res = submit.upload_profiles(profiles)
+        except submit.ApiError as e:
+            _say(f"the records are in; the profiles upload failed: {e}")
+            sys.exit(1)
+        _say(f"profiles: {res}")
 
 
 @main.command("import-phone", help="Turn the phone app's shared records.jsonl into submissions for `pie-bench upload`.")

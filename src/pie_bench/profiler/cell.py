@@ -1,22 +1,24 @@
-"""Cell: profiles a grid cell's two fastest engines end to end and writes the cell for POST /v1/profiles.
+"""Cell: reruns grid cells' two fastest engines on this machine, benchmark and profile in one job.
 
-Each engine runs its benchmark row's workload through the harness (the same boot, recipe and bench client, one round
-with fewer requests) under the platform's tracer. Both engines are measured in one unit, taken from the faster engine's
-benchmark, and the benchmark's own step is worked out from its published rate in that unit.
+Each engine reruns its benchmark row's matrix cell through the harness (the row's pie commit and engine version, the
+same boot, recipe and bench client): the standard rounds, untraced, then one short round under the platform's tracer in
+the same engine session. The run writes the benchmark records as `pie-bench run` uploads them (records.jsonl,
+submission.json.gz) and the cells for POST /v1/profiles (profiles.json), each judged against the fresh benchmark: both
+engines in one unit, taken from the faster engine's benchmark, and its step worked out from the fresh rate.
 """
 
 from __future__ import annotations
 
-import gzip
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 
 from pie_bench import local, submit
 from pie_bench.paths import MATRIX
 from pie_bench.plan.matrix import Matrix
-from pie_bench.schema import RepetitionPolicy
+from pie_bench.schema import Tier
 
 from . import tracer_for, unit
 
@@ -53,32 +55,32 @@ def same_cut(artifact, label: str) -> bool:
     if not m or not label:
         return not m and not label
     kept = sum(int(x.split("-")[-1]) - int(x.split("-")[0]) + 1 for x in str(m.layers).split(","))
-    return label.startswith(f"{kept} ") and (m.experts is None or f"{m.experts} experts" in label)
+    # a label that names no experts ("7 of 78 layers", the NVIDIA rows) is matched by its layers alone
+    return label.startswith(f"{kept} ") and (m.experts is None or "experts" not in label or f"{m.experts} experts" in label)
 
 
 def cell_of(m: Matrix, machine, row: dict, commit: str):
-    """The matrix cell a results row measured, its requests cut to one short round."""
-    job = local.plan(m, machine, pie_commit=commit, models=[row["model"]], engines=[row["engine"]], workloads=[row["benchmark"]], suite="targeted")
-    found = [c for c in (job.cells if job else []) if c.workload.id == row["benchmark"] and str(c.engine) == row["engine"]
-             and str(c.artifact.scheme) == row["scheme"] and same_cut(c.artifact, row.get("miniature") or "")]
+    """The matrix cell a results row measured, with the job that plans it."""
+    # the machine's own tier first, then any tier that holds the benchmarked cell (NVIDIA's full runs are weekly cells)
+    for tier in (local.tier_for(machine), *Tier):
+        job = local.plan(m, machine, pie_commit=commit, models=[row["model"]], engines=[row["engine"]], workloads=[row["benchmark"]], suite="targeted", tier=tier)
+        found = [c for c in (job.cells if job else []) if c.workload.id == row["benchmark"] and str(c.engine) == row["engine"]
+                 and str(c.artifact.scheme) == row["scheme"] and same_cut(c.artifact, row.get("miniature") or "")]
+        if found:
+            break
     if len(found) != 1:
         raise SystemExit(f"{row['engine']} {row['model']} {row['benchmark']}: {len(found)} matrix cells match, need one: {[c.artifact.id for c in found]}")
-    c, p = found[0], dict(found[0].workload.params)
-    if "num_requests" in p:
-        p["num_requests"] = min(int(p["num_requests"]), 3 * int(p.get("concurrency", 1)))
-    else:
-        p["requests"] = min(int(p.get("requests", 4)), 4)
-    return job, c.model_copy(update={"workload": c.workload.model_copy(update={"params": p})})
+    return job, found[0]
 
 
-def side(rec, row: dict, setup: str, concurrency: int, prompt: int, tracer, out: Path) -> dict:
-    """One engine's profile in the shared unit, from its round's bench JSON and trace."""
-    rate = row[RATES[setup][1]]
-    base = {"engine": row["engine"], "benchmark_step_ms": step_ms(rate, setup, concurrency, prompt), "benchmark_status": row["status"],
-            "tracer": tracer.name}
-    if rec is None or str(rec.status) not in MEASURED:
-        return {**base, "why": f"the profiled run failed: {rec and (rec.error_message or rec.invalid_reason)}"}
-    rnd = out / "cells" / rec.cell_id / "r0"
+def side(rec, engine: str, setup: str, concurrency: int, prompt: int, tracer, out: Path) -> dict:
+    """One engine's profile in the shared unit, from its fresh benchmark record and its profiled round's bench JSON and trace."""
+    base = {"engine": engine, "tracer": tracer.name}
+    rate = getattr(rec.perf, RATES[setup][1], None) if rec is not None and rec.perf else None
+    if rec is None or str(rec.status) not in MEASURED or not rate:
+        return {**base, "why": f"the benchmark run failed: {rec and (rec.error_message or rec.invalid_reason)}"}
+    base.update(benchmark_step_ms=step_ms(rate, setup, concurrency, prompt), benchmark_status=str(rec.status))
+    rnd = out / "cells" / rec.cell_id / "profile"
     try:
         measured = unit.measured(json.loads((rnd / "bench.json").read_text()), setup, concurrency, prompt)
         span = json.loads((rnd / "span.json").read_text())
@@ -86,41 +88,73 @@ def side(rec, row: dict, setup: str, concurrency: int, prompt: int, tracer, out:
             raise ValueError("the measured windows fall outside the recording")
         return {**base, **unit.split(measured, tracer.intervals(rnd))}
     except (OSError, ValueError, KeyError, RuntimeError) as e:
-        return {**base, "why": str(e)}
+        return {**base, "why": f"the profiled round: {e}"}
 
 
-def profile(hardware: str | None, model: str, setup: str, out: Path, engines: list[str] | None = None, pie_root: Path | None = None) -> dict:
-    """Profiles the cell's two fastest engines on this machine and writes out/cell.json."""
+def versions(rows: list[dict]) -> dict[str, str]:
+    """Each rival's engine version as its rows measured it, so the rerun replaces them like for like."""
+    out: dict[str, str] = {}
+    for r in rows:
+        if r["engine"] == "pie" or not re.fullmatch(r"[A-Za-z0-9._-]+", r.get("version") or ""):
+            continue  # pie runs at its commit; "0.33.0 (vllm 0.33.0+cpu)", "mlx-vlm 0.7.11" name no installable pin
+        if out.setdefault(r["engine"], r["version"]) != r["version"]:
+            raise SystemExit(f"{r['engine']} rows at {out[r['engine']]} and {r['version']}: one job runs one version, so run these cells apart")
+    return out
+
+
+def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engines: list[str] | None = None, pie_root: Path | None = None,
+            tag: str | None = None) -> list[dict]:
+    """Reruns the cells' two fastest engines on this machine, benchmark and profile, and writes the run's records,
+    its submission and out/profiles.json."""
     from pie_bench.node.machine import machine_lock
     from pie_bench.node.runner import NodeRunner
 
     m = Matrix.load(MATRIX)
     machine = local.detect(m, hardware)
     hw = machine.platform.id
-    first, second = pair(submit.request("GET", "/v1/results")["results"], hw, model, setup, engines)
-    pie = next((r for r in (first, second) if r["engine"] == "pie"), None)
-    commit = local.resolve_pie(pie["commit"])[0] if pie else "0" * 40
-    (job, a), (_, b) = cell_of(m, machine, first, commit), cell_of(m, machine, second, commit)
-    params = a.workload.params
-    concurrency, prompt = int(params.get("concurrency", 1)), int(params.get("prefill", 512))
-    job = job.model_copy(update={"cells": [a, b], "control_required": False, "pie_commit": commit if pie else None,
-                                 "repetition": RepetitionPolicy(min_rounds=1, max_rounds=1, confirm_rounds=0)})
     tracer = tracer_for(str(machine.platform.backend), out)
+    if getattr(tracer, "whole_run", False):
+        raise SystemExit(f"{tracer.name} traces the whole run, so the benchmark rounds would carry its cost: no combined job on this platform")
+    live = submit.request("GET", "/v1/results")
+    pairs = {(model, setup): pair(live["results"], hw, model, setup, engines) for model, setup in cells}
+    rows = [r for p in pairs.values() for r in p]
+    commits = {r["commit"] for r in rows if r["engine"] == "pie"}
+    if len(commits) > 1:
+        raise SystemExit(f"the cells' pie rows were measured at pie {', '.join(sorted(commits))}: one job builds one commit, so run them apart")
+    commit = local.resolve_pie(commits.pop())[0] if commits else None
+    key = lambda r: (r["engine"], r["model"], r["benchmark"], r["scheme"], r.get("miniature") or "")
+    planned = {}
+    for r in rows:
+        planned.setdefault(key(r), cell_of(m, machine, r, commit or "0" * 40))
+    jobs = [j for j, _ in planned.values()]
+    runs = {c.cell_id: c for _, c in planned.values()}
+    # each process's control A/A, as the standard job runs it
+    controls = {x.cell_id: x for j, c in planned.values() for x in j.cells if str(x.workload.kind) == "control_aa"
+                and (str(x.engine), x.artifact.artifact_key, x.mode.key) == (str(c.engine), c.artifact.artifact_key, c.mode.key)}
+    # each engine's own pin (vLLM-TPU, SGLang-JAX), as its own plan carries it, then the version its rows ran
+    pins = {k: v for j in jobs for k, v in j.baseline_versions.items()} | versions(rows)
+    job = jobs[0].model_copy(update={"cells": [*controls.values(), *runs.values()], "pie_commit": commit, "baseline_versions": pins,
+                                     "budget_s": sum(j.budget_s for j in jobs), "kill_s": sum(j.kill_s for j in jobs)})
     os.environ.update({**local.setup_engines(m, job, log=print), **tracer.env})
-    with machine_lock(f"profile {hw} {model} {setup}", max_wait_s=3600, log=print):
-        records = NodeRunner(job, pie_root=(pie_root or local.HOME / "pie").resolve(), out_dir=out, download=True, tracer=tracer).run()
+    with machine_lock(f"profile {hw} {len(cells)} cells", max_wait_s=3600, log=print):
+        runner = NodeRunner(job, pie_root=(pie_root or local.HOME / "pie").resolve(), out_dir=out, download=True, tracer=tracer)
+        records = runner.run()
+    submit.pack(out, {"run_id": runner.run_id, "tier": str(job.tier), "tag": tag or live["id"], "tag_kind": "manual",
+                      "platform": machine.platform.model_dump(mode="json"), "pie_commit": commit})
     by_cell = {r.cell_id: r for r in records}
-    sides = [side(by_cell.get(c.cell_id), row, setup, concurrency, prompt, tracer, out) for c, row in ((a, first), (b, second))]
-    doc = {"hardware": hw, "model": model, "setup": setup, "gap_pct": 100 * (first[RATES[setup][1]] / second[RATES[setup][1]] - 1),
-           "slice": first.get("miniature") or None, "fastest": sides[0], "second": sides[1]}
-    (out / "cell.json").write_text(json.dumps(doc, indent=1))
-    for pattern in TRACES:
+    docs = []
+    for (model, setup), (first, second) in pairs.items():
+        params = planned[key(first)][1].workload.params
+        concurrency, prompt = int(params.get("concurrency", 1)), int(params.get("prefill", 512))
+        recs = [by_cell.get(planned[key(r)][1].cell_id) for r in (first, second)]
+        sides = [side(rec, r["engine"], setup, concurrency, prompt, tracer, out) for rec, r in zip(recs, (first, second))]
+        if all("benchmark_step_ms" in s for s in sides):
+            sides.sort(key=lambda s: s["benchmark_step_ms"])  # the fresh benchmark decides which engine is the faster
+        steps = [s.get("benchmark_step_ms") for s in sides]
+        docs.append({"hardware": hw, "model": model, "setup": setup, "gap_pct": 100 * (steps[1] / steps[0] - 1) if all(steps) else None,
+                     "slice": first.get("miniature") or None, "fastest": sides[0], "second": sides[1]})
+    (out / "profiles.json").write_text(json.dumps({"format": 1, "profiles": docs}, indent=1))
+    for pattern in TRACES if not os.environ.get("PIE_BENCH_PROFILER_KEEP_TRACES") else ():
         for p in out.rglob(pattern):
             shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink(missing_ok=True)
-    return doc
-
-
-def upload(doc: dict) -> dict:
-    """Posts one cell to /v1/profiles, which judges it."""
-    body = gzip.compress(json.dumps({"format": 1, "profiles": [doc]}).encode())
-    return submit.request("POST", "/v1/profiles", body, token=submit.token(), content_type="application/gzip")
+    return docs

@@ -7,6 +7,7 @@ device intervals from a tracer. Forward is the device's busy time inside the win
 from __future__ import annotations
 
 import bisect
+import statistics
 from dataclasses import dataclass
 
 SETUPS = ("decode", "prefill", "spec", "batching", "pbatch")
@@ -19,6 +20,8 @@ class Measured:
     unit: str
     windows: list[tuple[int, int]]
     units: float
+    # each window's own units where the benchmark's number is the median of its requests' rates (decode, spec, prefill)
+    each: list[float] | None = None
 
 
 def union(intervals) -> list[tuple[int, int]]:
@@ -62,11 +65,13 @@ def measured(bench: dict, setup: str, concurrency: int, prompt: int) -> Measured
     if setup in ("decode", "spec"):
         reqs = [r for r in reqs if r["output_tokens"] > 1]
         return Measured("ms per output token", [(ns(sent(r) + r["ttft_s"]), ns(sent(r) + r["latency_s"])) for r in reqs],
-                        sum(r["output_tokens"] - 1 for r in reqs))
+                        sum(r["output_tokens"] - 1 for r in reqs), [r["output_tokens"] - 1 for r in reqs])
     if setup == "prefill":
         return Measured(f"ms per {prompt}-token prompt", [(ns(sent(r)), ns(sent(r) + r["ttft_s"])) for r in reqs],
-                        sum(r["prompt_tokens"] for r in reqs) / prompt)
-    window = [(ns(min(sent(r) for r in reqs)), ns(max(sent(r) + r["latency_s"] for r in reqs)))]
+                        sum(r["prompt_tokens"] for r in reqs) / prompt, [r["prompt_tokens"] / prompt for r in reqs])
+    # a request that waited for a seat counts the wait in its latency (pie's client), so it ends at its return
+    end = lambda r: r["client_return_s"] if r.get("client_return_s") is not None else sent(r) + r["latency_s"]
+    window = [(ns(min(sent(r) for r in reqs)), ns(max(end(r) for r in reqs)))]
     if setup == "batching":
         return Measured(f"ms per batched decode step ({concurrency} requests)", window, sum(r["output_tokens"] for r in reqs) / concurrency)
     if setup == "pbatch":
@@ -80,5 +85,10 @@ def split(m: Measured, intervals) -> dict:
     busy = [covered(merged, w) for w in m.windows]
     if not all(busy):
         raise ValueError(f"the trace shows no device work in {busy.count(0)} of {len(busy)} measured windows")
+    if m.each:
+        # the benchmark's rate is the median of its requests' own rates (node/fair.py, engines/base.py), so the profiled
+        # step is taken the same way: one slow request moves neither
+        rate = lambda ns: statistics.median(u / t for u, t in zip(m.each, ns))
+        return {"unit": m.unit, "wall_ms": 1 / rate([e - s for s, e in m.windows]) / 1e6, "forward_ms": 1 / rate(busy) / 1e6}
     wall = sum(e - s for s, e in m.windows)
     return {"unit": m.unit, "wall_ms": wall / m.units / 1e6, "forward_ms": sum(busy) / m.units / 1e6}

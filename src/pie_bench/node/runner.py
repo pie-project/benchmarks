@@ -550,13 +550,13 @@ class NodeRunner:
         tight = policy.cov_noisy_threshold if int(cell.mode.tp) <= 1 else policy.cov_noisy_threshold_concurrent
         return tight if cell.workload.kind.value in ("single_stream", "control_aa", "long_context") else policy.cov_noisy_threshold_concurrent
 
-    def _round(self, cell: Cell, engine, common: list[str], out_dir: Path, first: bool):
+    def _round(self, cell: Cell, engine, common: list[str], out_dir: Path, first: bool, traced: bool = False):
         pre = getattr(self, "_pre", None)
         if not first and pre is not None and hasattr(pre, "settle") and os.environ.get("PIE_BENCH_SETTLE", "1") != "0":
             settled = pre.settle(self.platform.os if self.platform else None)
             if settled:
                 self.log(f"{cell.workload.id}: cooled {settled['settle_s']}s before the next round ({settled['thermal_state_before_settle']} -> {settled['thermal_state']})")
-        if self.tracer is None:
+        if not traced:
             return engine.run(cell.workload, common, out_dir, self.cell_timeout_s(cell))
         # a profiled round: the device traced while it runs, each request timed on a clock the trace lines up with
         with self.tracer.recording(out_dir):
@@ -599,6 +599,14 @@ class NodeRunner:
         except Exception as e:
             self.log(f"{cell.workload.id}/{cell.program.id}: harness exception {e}\n{traceback.format_exc()}")
             return self._failed(cell, ErrorClass.HARNESS_INVALID, f"harness: {e}", fingerprint, duration=time.monotonic() - t0)
+        if self.tracer is not None and cell.workload.kind.value != "control_aa":
+            # the cell's profile: one short traced round in the same engine session, right after its benchmark rounds
+            from pie_bench.profiler import short
+
+            try:
+                self._round(cell.model_copy(update={"workload": short(cell.workload)}), engine, common, cell_out / "profile", first=False, traced=True)
+            except Exception as e:
+                self.log(f"{cell.workload.id}/{cell.program.id}: profiled round failed: {e}")
         steady = list(range(len(rounds)))[-need:] if need > 1 else list(range(len(rounds)))
         if len(rounds) >= 5:
             mid = median(rounds)

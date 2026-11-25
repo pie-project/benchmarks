@@ -19,7 +19,13 @@ FILES = ("*kernel_trace.csv", "*memory_copy_trace.csv")
 
 class Tracer:
     name = "rocprof"
-    env: dict[str, str] = {}
+    # rocprofv3 traces every dispatch of the run from launch, so no round of it runs untraced
+    whole_run = True
+    # rocprofv3's tool brings up HSA in every process it is preloaded into, so a model worker forked from the engine's
+    # first process (vLLM's EngineCore) hangs on its first GPU signal: vLLM starts it with spawn instead.
+    # Each traced dispatch's completion is waited on by one of rocprofiler's async handler threads (4 by default); pie
+    # keeps hundreds of dispatches in flight across streams that wait on each other, so a small pool deadlocks it
+    env: dict[str, str] = {"VLLM_WORKER_MULTIPROC_METHOD": "spawn", "ROCPROFILER_ASYNC_SIGNAL_HANDLER_THREADS": "4096"}
 
     def __init__(self, out: Path):
         self.root = out / "rocprof"
