@@ -42,9 +42,8 @@ In this repo:
   - `pieproject/benchmark-digitalocean-rocm`: AMD Developer Cloud droplets
   - `pieproject/benchmark-gcloud-tpu`: Google Cloud TPU VMs
 
-Engine folks, model folks: bring your engine, tune its flags, call out a bad
-number. PRs and [issues](https://github.com/pie-project/pie-evals/issues) welcome;
-start with [Develop](#develop).
+Want to add an engine or a model, tune flags, or question a number? See
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Install
 
@@ -132,6 +131,7 @@ driver under `src/pie_bench/node/engines`, its client under
 
 [Discord](https://discord.gg/R62Udyzum) ·
 [Issues](https://github.com/pie-project/pie-evals/issues) ·
+[Contributing](CONTRIBUTING.md) ·
 [Pie](https://github.com/pie-project/pie)
 
 [Apache License 2.0](LICENSE).
