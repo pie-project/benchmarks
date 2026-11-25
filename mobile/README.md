@@ -3,7 +3,7 @@
 The phone benchmark app. It runs the phone workloads on the phone and shares the results as `records.jsonl`; `pie-bench import-phone` turns that file into a pie-bench submission. They show on the site's Mobile page next to the Mac rows.
 
 - **Workloads:** `raw-512-256` (Raw), `c4` (Batching) and `pf4-512` (Batched Prefill).
-- **Same prompts as the Macs:** `shared/workloads.json` is made by `tools/gen_workloads.py` from the harness's own seeded prompt code. It holds each model's chat template and the prompt token counts.
+- **Same prompts as the Macs:** `shared/workloads.json` is made by `shared/generate_workloads.py` from the harness's own seeded prompt code. It holds each model's chat template and the prompt token counts.
 - **Method:** load the model once, then a warmup and 3 rounds. The server computes decode tok/s, prefill tok/s and TTFT from the raw per-request timings with the harness's own code, and keeps the median round.
 
 ## Engines and weights
@@ -21,11 +21,11 @@ The phone benchmark app. It runs the phone workloads on the phone and shares the
 
 ## Install
 
-- **Android:** download `app-debug.apk` from the GitHub release `mobile-v0.1.0` and open it on the phone (allow "install unknown apps"). Or run `adb install -r app-debug.apk`.
+- **Android:** download `pie-phone-bench-0.1.0-debug.apk` from the GitHub release `mobile-v0.1.0` and open it on the phone (allow "install unknown apps"). Or run `adb install -r pie-phone-bench-0.1.0-debug.apk`.
   - To build it yourself: `cd android && ./gradlew assembleDebug`, which needs JDK 17 and the Android SDK with NDK 28.
   - Pie and MLC need their libraries in `android/app/libs/` (not committed). Without them the APK builds, and those engines report "not built".
 - **iPhone:**
-  1. Open `ios/PieBench.xcodeproj`.
+  1. Run `xcodegen generate` in `ios/` (`brew install xcodegen`), which writes `ios/PieBench.xcodeproj` from `ios/project.yml`, then open it.
   2. Under Signing & Capabilities, pick your Team.
   3. Plug in the iPhone and press Run.
   4. Turn on Developer Mode on the phone, and trust the developer under Settings › General › VPN & Device Management.
