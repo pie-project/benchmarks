@@ -23,7 +23,7 @@ and the same hardware, each at a pinned version, across GPUs, TPUs, Apple
 Silicon, browsers and phones. Every kernel optimization an engine ships becomes a
 measured, verified result, and every gap becomes a clear target for the next one.
 
-Every result is reproducible. One command detects the machine, selects the
+Every result is [reproducible][PyPI]. One command detects the machine, selects the
 models that fit, installs each engine at a pinned version, measures them all, and
 uploads a signed submission to [benchmarks.pie-project.org][Benchmarks].
 
