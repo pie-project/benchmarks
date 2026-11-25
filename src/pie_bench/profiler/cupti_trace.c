@@ -3,7 +3,8 @@
 // $PIE_CUPTI_DIR/on: while it exists (it holds the round's number N) the activities are on (each process says so in
 // <pid>-<N>.armed, beside the <pid>.alive it writes at CUDA init); when it goes, they are
 // flushed and the process writes <pid>-<N>.bin (start, end pairs of uint64 CUPTI ns), <pid>-<N>.clock (a CUPTI
-// timestamp and the CLOCK_REALTIME ns taken together) and <pid>-<N>.done.
+// timestamp and the CLOCK_REALTIME ns taken together) and <pid>-<N>.done. A process that exits during a round (vLLM's
+// offline engine stops with its bench client, before the profiler ends the round) flushes its records on the way out.
 #include <cupti.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -46,7 +47,7 @@ static void CUPTIAPI complete(CUcontext ctx, uint32_t stream, uint8_t *buffer, s
         default:
             continue;
         }
-        if (out)
+        if (out && se[0])  // a forced flush hands over a record its device has not finished: no timestamps yet
             fwrite(se, sizeof se[0], 2, out);
     }
     pthread_mutex_unlock(&mu);
@@ -54,6 +55,30 @@ static void CUPTIAPI complete(CUcontext ctx, uint32_t stream, uint8_t *buffer, s
 }
 
 static void path(char *p, size_t n, const char *ext) { snprintf(p, n, "%s/%d-%ld.%s", dir, (int)getpid(), round_no, ext); }
+
+static void finish(void) {
+    char p[4096];
+    cuptiActivityFlushAll(CUPTI_ACTIVITY_FLAG_FLUSH_FORCED);
+    pthread_mutex_lock(&mu);
+    int had = out != NULL;
+    if (out)
+        fclose(out), out = NULL;
+    path(p, sizeof p, "done");
+    pthread_mutex_unlock(&mu);
+    if (had) {
+        FILE *d = fopen(p, "w");
+        if (d)
+            fclose(d);
+    }
+}
+
+static void at_exit(void) {
+    pthread_mutex_lock(&mu);
+    int on = out != NULL;
+    pthread_mutex_unlock(&mu);
+    if (on)
+        finish();
+}
 
 static void *control(void *arg) {
     (void)arg;
@@ -91,15 +116,7 @@ static void *control(void *arg) {
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_MEMCPY);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_MEMSET);
-            cuptiActivityFlushAll(CUPTI_ACTIVITY_FLAG_FLUSH_FORCED);
-            pthread_mutex_lock(&mu);
-            if (out)
-                fclose(out), out = NULL;
-            pthread_mutex_unlock(&mu);
-            path(p, sizeof p, "done");
-            FILE *d = fopen(p, "w");
-            if (d)
-                fclose(d);
+            finish();
             active = 0;
         }
         if (f)
@@ -118,6 +135,7 @@ int InitializeInjection(void) {
     FILE *f = fopen(p, "w");
     if (f)
         fclose(f);
+    atexit(at_exit);
     pthread_t t;
     pthread_attr_t a;
     pthread_attr_init(&a);
