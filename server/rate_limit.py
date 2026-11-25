@@ -21,5 +21,9 @@ class RateLimit:
             while q and now - q[0] > self.window_s:
                 q.popleft()
             if len(q) >= self.limit:
-                raise HTTPException(429, "too many requests, try again later", headers={"Retry-After": str(int(self.window_s))})
+                raise HTTPException(
+                    429,
+                    "too many requests, try again later",
+                    headers={"Retry-After": str(int(self.window_s))},
+                )
             q.append(now)

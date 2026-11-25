@@ -29,12 +29,16 @@ class ViewCache:
     def build(self) -> None:
         t0 = time.monotonic()
         with self.db.tx() as cur:
-            cur.execute("SELECT DISTINCT ON (platform) platform, machine->'platform' FROM runs "
-                        "WHERE platform IS NOT NULL AND jsonb_typeof(machine->'platform') = 'object' ORDER BY platform, submitted_at DESC")
+            cur.execute(
+                "SELECT DISTINCT ON (platform) platform, machine->'platform' FROM runs "
+                "WHERE platform IS NOT NULL AND jsonb_typeof(machine->'platform') = 'object' ORDER BY platform, submitted_at DESC"
+            )
             contributed = {pid: spec for pid, spec in cur.fetchall()}
             cur.execute("SELECT count(*) FROM runs")
             submissions = cur.fetchone()[0]
-        with ProcessPoolExecutor(max_workers=1, mp_context=multiprocessing.get_context("spawn")) as pool:
+        with ProcessPoolExecutor(
+            max_workers=1, mp_context=multiprocessing.get_context("spawn")
+        ) as pool:
             data = pool.submit(publish.blobs, self.db.dsn, contributed, submissions).result()
         sizes = self.sizes()
         if sizes:
@@ -44,7 +48,12 @@ class ViewCache:
             blobs = {k: _blob(v) for k, v in data.items()}
             self.blobs, self.built_at, self.built = blobs, time.time(), True
         self.save(data)
-        log.info("views built in %.1fs: %d files, %.0f MB compressed", time.monotonic() - t0, len(blobs), sum(len(v) for v in data.values()) / 1e6)
+        log.info(
+            "views built in %.1fs: %d files, %.0f MB compressed",
+            time.monotonic() - t0,
+            len(blobs),
+            sum(len(v) for v in data.values()) / 1e6,
+        )
 
     def sizes(self) -> bytes | None:
         try:
@@ -66,7 +75,10 @@ class ViewCache:
         with self.lock:
             self.blobs = {**self.blobs, key: _blob(data)}
         with self.db.tx() as cur:
-            cur.execute("INSERT INTO views (key, data) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, built_at = now()", (key, data))
+            cur.execute(
+                "INSERT INTO views (key, data) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, built_at = now()",
+                (key, data),
+            )
 
     def load(self) -> None:
         with self.db.tx() as cur:
@@ -74,7 +86,10 @@ class ViewCache:
             rows = cur.fetchall()
         if rows:
             with self.lock:
-                self.blobs, self.built_at = {k: _blob(bytes(d)) for k, d, _ in rows}, float(max(t for _, _, t in rows))
+                self.blobs, self.built_at = (
+                    {k: _blob(bytes(d)) for k, d, _ in rows},
+                    float(max(t for _, _, t in rows)),
+                )
             log.info("serving %d saved views until the first build", len(rows))
 
     def get(self, key: str) -> tuple[bytes, str]:
@@ -82,7 +97,9 @@ class ViewCache:
             hit = self.blobs.get(key)
         if hit is None:
             if not self.built:
-                raise HTTPException(503, "warming up, try again in a minute", headers={"Retry-After": "30"})
+                raise HTTPException(
+                    503, "warming up, try again in a minute", headers={"Retry-After": "30"}
+                )
             raise HTTPException(404, "not found")
         return hit
 

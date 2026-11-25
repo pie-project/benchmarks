@@ -24,7 +24,11 @@ def new_token_id() -> str:
 
 
 def issue(token_id: str) -> str:
-    return jwt.encode({"sub": token_id, "iat": int(time.time()), "iss": "pie-bench"}, signing_key(), algorithm=ALGORITHM)
+    return jwt.encode(
+        {"sub": token_id, "iat": int(time.time()), "iss": "pie-bench"},
+        signing_key(),
+        algorithm=ALGORITHM,
+    )
 
 
 def bearer(request: Request) -> str:
@@ -36,7 +40,9 @@ def bearer(request: Request) -> str:
 
 def token_id(request: Request) -> str:
     try:
-        claims = jwt.decode(bearer(request), signing_key(), algorithms=[ALGORITHM], issuer="pie-bench")
+        claims = jwt.decode(
+            bearer(request), signing_key(), algorithms=[ALGORITHM], issuer="pie-bench"
+        )
     except jwt.PyJWTError:
         raise HTTPException(401, "invalid token: run `pie-bench login` again") from None
     return claims["sub"]
@@ -45,7 +51,11 @@ def token_id(request: Request) -> str:
 def is_admin(request: Request) -> bool:
     expected = os.environ.get("ADMIN_TOKEN")
     header = request.headers.get("authorization", "")
-    return bool(expected) and header.lower().startswith("bearer ") and hmac.compare_digest(header[7:].strip(), expected)
+    return (
+        bool(expected)
+        and header.lower().startswith("bearer ")
+        and hmac.compare_digest(header[7:].strip(), expected)
+    )
 
 
 def require_admin(request: Request) -> None:

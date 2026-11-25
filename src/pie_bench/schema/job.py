@@ -6,7 +6,6 @@ from .cell import Cell, Tier
 
 
 class RepetitionPolicy(BaseModel):
-
     min_rounds: int = 1
     single_stream_rounds: int | None = None
     confirm_rounds: int = 2
@@ -22,22 +21,29 @@ class JobSpec(BaseModel):
     tier: Tier
     platform_id: str
     shard: int = 0
-    pie_commit: str | None = Field(default=None, description="pie commit to build/use; None for baseline-only jobs")
+    pie_commit: str | None = Field(
+        default=None, description="pie commit to build/use; None for baseline-only jobs"
+    )
     pie_build_features: list[str] = Field(default_factory=list)
-    baseline_versions: dict[str, str] = Field(default_factory=dict, description="engine -> pinned version")
+    baseline_versions: dict[str, str] = Field(
+        default_factory=dict, description="engine -> pinned version"
+    )
     cells: list[Cell]
     repetition: RepetitionPolicy = Field(default_factory=RepetitionPolicy)
     per_cell_timeout_s: int = 1800
     load_timeout_s: int = 1200
     history: dict[str, list[float]] = Field(
         default_factory=dict,
-        description="cell_id -> recent primary-metric values, shipped with the job so the node can decide repetitions offline",
+        description="cell_id -> recent primary-metric values, shipped with the job so the runner can decide repetitions offline",
     )
     control_required: bool = True
     control_marks_noisy: bool = False
     output_dir: str = "out"
     budget_s: int = Field(default=3600, description="soft budget: no new cell starts after this")
-    kill_s: int = Field(default=5400, description="hard deadline: the runner's watchdog kills everything at this point")
+    kill_s: int = Field(
+        default=5400,
+        description="hard deadline: the runner's watchdog kills everything at this point",
+    )
     est_minutes: float = 0.0
 
     def cells_by_process(self) -> dict[tuple, list[Cell]]:

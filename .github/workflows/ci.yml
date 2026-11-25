@@ -18,7 +18,9 @@ jobs:
           uv venv --quiet --python 3.12 .venv
           uv pip install --quiet --python .venv/bin/python -e ".[dev,server]"
       - name: lint
-        run: .venv/bin/ruff check src server
+        run: |
+          .venv/bin/ruff check src server
+          .venv/bin/ruff format --check src server
       - name: package
         run: |
           rm -rf dist

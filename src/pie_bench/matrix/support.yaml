@@ -356,11 +356,6 @@ unsupported:
   - when: {family: mini_dit, program_category: adapter}
     reason: "diffusion model"
 
-first_token_broken:
-  muse-glimmer-30b-mlx4: "pie reports the first token before prefill ends on this model, so its prefill and TTFT are not shown"
-  qwen3.8-27b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.47 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
-  qwen3.6-35b-a3b-mlx4: "pie's first token does not get later as the prompt grows on this model (about 0.09 s at both 4k and 8k tokens), so its prefill and TTFT are not shown"
-
 quality_gaps:
   - platform: [rtx4090-x1, rtx5090-x1, pro4500-x1]
     model: gemma-4-31b

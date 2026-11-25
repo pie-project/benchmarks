@@ -607,9 +607,6 @@ hardware:
   gpu_cores: 6144
   bandwidth_gbs: 300
   memory_type: LPDDR5X
-  # NVIDIA quotes only 1 PFLOP of sparse FP4 for this GPU; the dense FP16 (FP32 accumulate) and FP8 peaks are the
-  # RTX 5090's whitepaper figures (209.5, 838) scaled by the same ratio (1,000 / 3,352 sparse FP4), as GeForce
-  # Blackwell parts share one tensor-core rate per SM-clock. No RTX Spark run beats them (best prefill 82%)
   tflops_fp16: 62.5
   tflops_fp8: 250
   tflops_mxfp8: 250

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import gzip
-import logging
 import os
 import threading
 from contextlib import asynccontextmanager
@@ -16,7 +15,6 @@ from server.db import Database
 from server.hit_counter import HitCounter
 from server.view_cache import ViewCache
 
-log = logging.getLogger("pie-bench-api")
 READS = rate_limit.RateLimit(int(os.environ.get("READ_LIMIT", "600")), 60)
 WRITES = rate_limit.RateLimit(int(os.environ.get("WRITE_LIMIT", "30")), 3600)
 TOKENS = rate_limit.RateLimit(int(os.environ.get("TOKEN_LIMIT", "5")), 3600)
@@ -27,11 +25,17 @@ def _cached(request: Request, key: str, media_type: str) -> Response:
     data, etag = app.state.views.get(key)
     if request.method == "GET":
         app.state.hits.add(request.url.path)
-    headers = {"ETag": etag, "Cache-Control": "public, max-age=60, stale-while-revalidate=600", "Vary": "Accept-Encoding"}
+    headers = {
+        "ETag": etag,
+        "Cache-Control": "public, max-age=60, stale-while-revalidate=600",
+        "Vary": "Accept-Encoding",
+    }
     if request.headers.get("if-none-match") == etag:
         return Response(status_code=304, headers=headers)
     if "gzip" in request.headers.get("accept-encoding", ""):
-        return Response(data, media_type=media_type, headers={**headers, "Content-Encoding": "gzip"})
+        return Response(
+            data, media_type=media_type, headers={**headers, "Content-Encoding": "gzip"}
+        )
     return Response(gzip.decompress(data), media_type=media_type, headers=headers)
 
 
@@ -49,9 +53,21 @@ async def lifespan(app: FastAPI):
     app.state.db.close()
 
 
-app = FastAPI(title="Pie Benchmarks API", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
-app.add_middleware(CORSMiddleware, allow_origins=[o for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o],
-                   allow_methods=["GET"], allow_headers=["*"], expose_headers=["ETag"])
+app = FastAPI(
+    title="Pie Benchmarks API",
+    version=__version__,
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+    expose_headers=["ETag"],
+)
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
@@ -106,8 +122,14 @@ def create_token(request: Request, body: dict = Body(default={})):
     quota = int(body.get("quota") or auth.DEFAULT_QUOTA) if admin else auth.DEFAULT_QUOTA
     tid = auth.new_token_id()
     with app.state.db.tx() as cur:
-        cur.execute("INSERT INTO tokens (id, name, quota, admin_issued, address) VALUES (%s, %s, %s, %s, %s)", (tid, name, quota, admin, addr))
-        cur.execute("INSERT INTO ingest_log (token_id, address, action, detail) VALUES (%s, %s, 'token', %s)", (tid, addr, name))
+        cur.execute(
+            "INSERT INTO tokens (id, name, quota, admin_issued, address) VALUES (%s, %s, %s, %s, %s)",
+            (tid, name, quota, admin, addr),
+        )
+        cur.execute(
+            "INSERT INTO ingest_log (token_id, address, action, detail) VALUES (%s, %s, 'token', %s)",
+            (tid, addr, name),
+        )
     return {"id": tid, "token": auth.issue(tid), "quota": quota}
 
 
@@ -146,7 +168,10 @@ async def upload_profiles(request: Request):
 def rebuild(request: Request):
     auth.require_admin(request)
     with app.state.db.tx() as cur:
-        cur.execute("INSERT INTO ingest_log (address, action) VALUES (%s, 'rebuild')", (auth.address(request),))
+        cur.execute(
+            "INSERT INTO ingest_log (address, action) VALUES (%s, 'rebuild')",
+            (auth.address(request),),
+        )
     app.state.views.dirty.set()
     return {"rebuilding": True, "views_built_at": app.state.views.built_at or None}
 
@@ -156,7 +181,10 @@ def stats(request: Request, days: int = 30):
     auth.require_admin(request)
     app.state.hits.flush()
     with app.state.db.tx() as cur:
-        cur.execute("SELECT day, path, count FROM hits WHERE day > current_date - %s ORDER BY day DESC, path", (max(1, min(days, 366)),))
+        cur.execute(
+            "SELECT day, path, count FROM hits WHERE day > current_date - %s ORDER BY day DESC, path",
+            (max(1, min(days, 366)),),
+        )
         rows = cur.fetchall()
     by_day: dict[str, dict[str, int]] = {}
     for day, path, n in rows:
@@ -170,11 +198,14 @@ def update_token(tid: str, request: Request, body: dict = Body(...)):
     try:
         quota = int(body["quota"])
     except (KeyError, TypeError, ValueError):
-        raise HTTPException(422, "body must be {\"quota\": <number>}") from None
+        raise HTTPException(422, 'body must be {"quota": <number>}') from None
     with app.state.db.tx() as cur:
         cur.execute("UPDATE tokens SET quota = %s WHERE id = %s RETURNING used", (quota, tid))
         row = cur.fetchone()
         if not row:
             raise HTTPException(404, "no such token")
-        cur.execute("INSERT INTO ingest_log (token_id, address, action, detail) VALUES (%s, %s, 'quota', %s)", (tid, auth.address(request), str(quota)))
+        cur.execute(
+            "INSERT INTO ingest_log (token_id, address, action, detail) VALUES (%s, %s, 'quota', %s)",
+            (tid, auth.address(request), str(quota)),
+        )
     return {"id": tid, "quota": quota, "used": row[0]}

@@ -11,16 +11,29 @@ from pathlib import Path
 from pie_bench import __version__
 
 API = os.environ.get("PIE_BENCH_API") or "https://bench-api.pie-project.org"
-TOKEN_FILE = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "pie-bench" / "token"
+TOKEN_FILE = (
+    Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "pie-bench" / "token"
+)
 
 
 class ApiError(RuntimeError):
     pass
 
 
-def request(method: str, path: str, body: bytes | None = None, *, token: str | None = None, content_type: str = "application/json") -> dict:
-    req = urllib.request.Request(f"{API.rstrip('/')}{path}", data=body, method=method,
-                                 headers={"User-Agent": f"pie-bench/{__version__}", "Accept": "application/json"})
+def request(
+    method: str,
+    path: str,
+    body: bytes | None = None,
+    *,
+    token: str | None = None,
+    content_type: str = "application/json",
+) -> dict:
+    req = urllib.request.Request(
+        f"{API.rstrip('/')}{path}",
+        data=body,
+        method=method,
+        headers={"User-Agent": f"pie-bench/{__version__}", "Accept": "application/json"},
+    )
     if body is not None:
         req.add_header("Content-Type", content_type)
     if token:
@@ -57,12 +70,17 @@ def token() -> str:
 
 
 def upload(path: Path) -> dict:
-    return request("POST", "/v1/submissions", path.read_bytes(), token=token(), content_type="application/gzip")
+    return request(
+        "POST", "/v1/submissions", path.read_bytes(), token=token(), content_type="application/gzip"
+    )
 
 
 def upload_profiles(cells: list[dict]) -> dict:
-    """Posts profiled cells to /v1/profiles, which judges each one (no quota); a cell with an engine not measured stays out."""
-    cells = [c for c in cells if c.get("gap_pct") is not None and not any("why" in c[s] for s in ("fastest", "second"))]
+    cells = [
+        c
+        for c in cells
+        if c.get("gap_pct") is not None and not any("why" in c[s] for s in ("fastest", "second"))
+    ]
     if not cells:
         return {"profiles": 0}
     body = gzip.compress(json.dumps({"format": 1, "profiles": cells}).encode())

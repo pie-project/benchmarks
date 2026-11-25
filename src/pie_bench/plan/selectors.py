@@ -10,7 +10,15 @@ if TYPE_CHECKING:
     from pie_bench.plan.matrix import Matrix
 
 _CMP = re.compile(r"^(>=|<=|>|<|!=|==)?\s*(-?\d+)$")
-_OPS = {">=": operator.ge, "<=": operator.le, ">": operator.gt, "<": operator.lt, "!=": operator.ne, "==": operator.eq, None: operator.eq}
+_OPS = {
+    ">=": operator.ge,
+    "<=": operator.le,
+    ">": operator.gt,
+    "<": operator.lt,
+    "!=": operator.ne,
+    "==": operator.eq,
+    None: operator.eq,
+}
 
 
 _FIELD_SOURCES: dict[str, tuple[str, Any]] = {
@@ -42,7 +50,9 @@ def _on_cell(attr: str, get: Any) -> Any:
 _CELL_FIELDS = {k: _on_cell(attr, get) for k, (attr, get) in _FIELD_SOURCES.items()}
 
 
-def _narrow(sels: list[tuple[Any, dict[str, Any]]], attr: str, obj: Any) -> list[tuple[Any, dict[str, Any]]]:
+def _narrow(
+    sels: list[tuple[Any, dict[str, Any]]], attr: str, obj: Any
+) -> list[tuple[Any, dict[str, Any]]]:
     out = []
     for payload, sel in sels:
         rest: dict[str, Any] = {}
@@ -58,18 +68,16 @@ def _narrow(sels: list[tuple[Any, dict[str, Any]]], attr: str, obj: Any) -> list
     return out
 
 
-def _narrow_all(groups: list[list[tuple[Any, dict[str, Any]]]], attr: str, obj: Any) -> list[list[tuple[Any, dict[str, Any]]]]:
+def narrow_all(
+    groups: list[list[tuple[Any, dict[str, Any]]]], attr: str, obj: Any
+) -> list[list[tuple[Any, dict[str, Any]]]]:
     return [_narrow(g, attr, obj) for g in groups]
-
-
-def _cell_field(cell: Cell, key: str) -> Any:
-    return _CELL_FIELDS[key](cell)
 
 
 def selector_matches(sel: dict[str, Any], cell: Cell) -> bool:
     for key, want in sel.items():
         negate = key.startswith("not_")
-        have = _cell_field(cell, key[4:] if negate else key)
+        have = _CELL_FIELDS[key[4:] if negate else key](cell)
         if negate:
             if _field_matches(have, want):
                 return False
@@ -80,22 +88,31 @@ def selector_matches(sel: dict[str, Any], cell: Cell) -> bool:
 
 
 def _field_matches(have: Any, want: Any) -> bool:
-    if True:
-        if isinstance(want, list):
-            return have in want
-        if isinstance(want, str) and isinstance(have, int) and _CMP.match(want.strip()):
-            op, num = _CMP.match(want.strip()).groups()
-            return bool(_OPS[op](have, int(num)))
-        return have == want
+    if isinstance(want, list):
+        return have in want
+    compare = _CMP.match(want.strip()) if isinstance(want, str) and isinstance(have, int) else None
+    if compare:
+        op, num = compare.groups()
+        return bool(_OPS[op](have, int(num)))
+    return have == want
 
 
 _ARTIFACT_KEYS = {"engine", "artifact", "family", "scheme", "source_format"}
 
 
 def cannot_load(m: Matrix, engine: str, artifact: ArtifactSpec) -> str | None:
-    have = {"engine": engine, "artifact": artifact.id, "family": artifact.family,
-            "scheme": str(artifact.scheme), "source_format": str(artifact.source_format)}
+    have = {
+        "engine": engine,
+        "artifact": artifact.id,
+        "family": artifact.family,
+        "scheme": str(artifact.scheme),
+        "source_format": str(artifact.source_format),
+    }
     for rule in m.unsupported:
-        if rule.when and set(rule.when) <= _ARTIFACT_KEYS and all(_field_matches(have[k], v) for k, v in rule.when.items()):
+        if (
+            rule.when
+            and set(rule.when) <= _ARTIFACT_KEYS
+            and all(_field_matches(have[k], v) for k, v in rule.when.items())
+        ):
             return rule.reason
     return None
