@@ -8,13 +8,13 @@ concurrency:
   cancel-in-progress: true
 jobs:
   check:
-    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '["self-hosted", "liszt"]') }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
       - name: install
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           uv venv --quiet --python 3.12 .venv
           uv pip install --quiet --python .venv/bin/python -e ".[dev,server]"
       - name: lint

@@ -7,7 +7,7 @@ permissions:
   id-token: write
 jobs:
   publish:
-    runs-on: ${{ fromJSON(vars.RELEASE_RUNS_ON || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     environment: pypi
     steps:
       - uses: actions/checkout@v4
