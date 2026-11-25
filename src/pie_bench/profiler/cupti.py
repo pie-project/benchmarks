@@ -27,7 +27,8 @@ ARM_S = 120  # how long a process may take to start recording: CUPTI's first ena
 
 def _cupti() -> tuple[Path, Path]:
     """The include and lib folders of a CUDA 13 CUPTI: the toolkit's, or an nvidia-cuda-cupti wheel's."""
-    roots = [Path("/usr/local/cuda/extras/CUPTI")]
+    # the toolkit's CUPTI: extras/CUPTI, or the targets/ layout of the cuda-cupti-dev package
+    roots = [Path("/usr/local/cuda/extras/CUPTI"), Path("/usr/local/cuda/targets/x86_64-linux"), Path("/usr/local/cuda/targets/sbsa-linux")]
     roots += [Path(p).parent.parent for p in glob.glob(str(Path.home() / ".cache/pie-bench/venv-*/lib/python3*/site-packages/nvidia/cu13/lib/libcupti.so*"))]
     roots += [Path(p).parent.parent for p in glob.glob(str(Path(sys.prefix) / "lib/python3*/site-packages/nvidia/cu13/lib/libcupti.so*"))]
     for r in roots:

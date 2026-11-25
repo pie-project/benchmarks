@@ -44,6 +44,9 @@ static void CUPTIAPI complete(CUcontext ctx, uint32_t stream, uint8_t *buffer, s
         case CUPTI_ACTIVITY_KIND_MEMSET:
             se[0] = ((CUpti_ActivityMemset4 *)rec)->start, se[1] = ((CUpti_ActivityMemset4 *)rec)->end;
             break;
+        case CUPTI_ACTIVITY_KIND_GRAPH_TRACE:
+            se[0] = ((CUpti_ActivityGraphTrace2 *)rec)->start, se[1] = ((CUpti_ActivityGraphTrace2 *)rec)->end;
+            break;
         default:
             continue;
         }
@@ -104,15 +107,25 @@ static void *control(void *arg) {
             FILE *c = fopen(p, "w");
             if (c)
                 fprintf(c, "%llu %lld\n", (unsigned long long)ts, (long long)rt.tv_sec * 1000000000LL + rt.tv_nsec), fclose(c);
-            cuptiActivityEnable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
-            cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMCPY);
-            cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMSET);
+            // PIE_CUPTI_MODE: "graph" traces each CUDA graph launch whole (one record, not one per node), "hw" takes
+            // kernel times from the GPU's hardware events (Blackwell), "off" records nothing (tracer cost A/B)
+            const char *mode = getenv("PIE_CUPTI_MODE");
+            if (!mode || !strstr(mode, "off")) {
+                if (mode && strstr(mode, "hw"))
+                    cuptiActivityEnableHWTrace(1);
+                if (mode && strstr(mode, "graph"))
+                    cuptiActivityEnable(CUPTI_ACTIVITY_KIND_GRAPH_TRACE);
+                cuptiActivityEnable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
+                cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMCPY);
+                cuptiActivityEnable(CUPTI_ACTIVITY_KIND_MEMSET);
+            }
             path(p, sizeof p, "armed");  // the profiler starts the round once every process is recording
             FILE *a = fopen(p, "w");
             if (a)
                 fclose(a);
             active = 1;
         } else if (!f && active) {
+            cuptiActivityDisable(CUPTI_ACTIVITY_KIND_GRAPH_TRACE);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_MEMCPY);
             cuptiActivityDisable(CUPTI_ACTIVITY_KIND_MEMSET);
