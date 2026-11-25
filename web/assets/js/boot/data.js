@@ -9,9 +9,9 @@ window.Pie = window.Pie || {};
   const APP = [
     "config/icons", "config/engines", "config/schema", "config/architectures",
     "core/state", "core/format", "core/store", "core/query",
-    "ui/preferences", "ui/sidebar", "ui/toolbar", "ui/palette", "ui/report", "ui/popover", "ui/tap-card", "ui/segmented",
-    "ui/filters", "ui/dates", "ui/table", "ui/overview", "ui/platform", "ui/welcome", "ui/inferlets", "ui/services",
-    "ui/approach", "ui/reports", "config/gapnotes", "ui/gaps", "ui/reasons", "ui/profiler", "ui/fairness", "ui/methodology",
+    "ui/preferences", "ui/sidebar", "ui/toolbar", "ui/palette", "ui/popover", "ui/tap-card", "ui/segmented",
+    "ui/filters", "ui/dates", "ui/table", "ui/overview", "ui/platform", "ui/welcome",
+    "ui/approach", "ui/reports", "config/gapnotes", "ui/gaps", "ui/reasons", "ui/fairness", "ui/methodology",
     "ui/methods", "ui/board", "ui/tour", "ui/checks", "app",
   ];
 

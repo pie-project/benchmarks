@@ -73,7 +73,7 @@
     const isPlatform = Pie.schema[state.table]?.view === "platform";
     // the miniatures' banner over every page that can show their results
     document.getElementById("mini-banner").hidden = true;  // the miniatures note, off: !(Pie.store.miniatures && (isPlatform || ["results", "measurements", "welcome"].includes(state.table)));
-    const isMethod = ["welcome", "inferlets", "services", "approach", "reports", "gaps", "reasons", "profiler", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
+    const isMethod = ["welcome", "approach", "reports", "gaps", "reasons", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
     // Reports keeps the tables' bar above its table (empty for now, the info button at its end), as Performance does
     filterBar.hidden = (isOverview || isMethod || isPlatform) && state.table !== "reports" && state.table !== "gaps" && state.table !== "approach";
     // the catalog lists what was measured on, not how: no Configuration there
@@ -94,13 +94,10 @@
     // the outline gives way to the page, which fades in; a platform's numbers roll in instead
     if (Pie.skeleton.hide() && isPlatform) Pie.platform.roll();
     Pie.welcome.render(state);
-    Pie.inferlets.render(state);
-    Pie.services.render(state);
     Pie.approach.render(state);
     Pie.reports.render(state);
     Pie.gaps.render(state);
     Pie.reasons.render(state);
-    Pie.profiler.render(state);
     Pie.methodology.render(state);
     Pie.methods.render(state);
     Pie.board.render(state);

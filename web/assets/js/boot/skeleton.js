@@ -6,7 +6,7 @@ window.Pie = window.Pie || {};
 (() => {
   const element = document.getElementById("skeleton");
   const GRIDS = ["speedups", "tps", "all_hardware", "mac", "nvidia", "amd", "tpu", "cerebras", "android", "web", "checks"];
-  const TEXTS = ["methods", "fit", "methodology", "inferlets", "services", "approach", "reports", "profiler", "accuracy"];
+  const TEXTS = ["methods", "fit", "methodology", "approach", "reports", "accuracy"];
   // the page a reload opens, read as app.js reads it: the address first, then the view kept in the browser
   const opening = () => {
     let address = "";
@@ -75,7 +75,7 @@ window.Pie = window.Pie || {};
       if (!element) return;
       // no outline is drawn: the page stays empty until its data arrives
       shown = page;
-      for (const id of ["table-container", "overview", "platform", "welcome", "inferlets", "services", "approach", "reports", "profiler", "methodology", "methods", "board", "checks"]) {
+      for (const id of ["table-container", "overview", "platform", "welcome", "approach", "reports", "methodology", "methods", "board", "checks"]) {
         const other = document.getElementById(id);
         if (other) other.hidden = true;
       }

@@ -19,7 +19,6 @@
   <link rel="stylesheet" href="assets/css/platform.css">
   <link rel="stylesheet" href="assets/css/overview.css">
   <link rel="stylesheet" href="assets/css/inferlets.css">
-  <link rel="stylesheet" href="assets/css/profiler.css">
   <link rel="stylesheet" href="assets/css/welcome-band.css">
   <link rel="stylesheet" href="assets/css/methods.css">
   <link rel="stylesheet" href="assets/css/book.css">
@@ -98,11 +97,6 @@
         <svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
       </button>
 
-      <!-- Report an Issue, hidden for now
-      <button class="tool-button report-button" id="report-button" type="button" aria-label="Report a problem or suggest a measurement" title="Report an Issue">
-        <svg viewBox="0 0 24 24"><path d="M5 4.5h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H10l-4.5 3.5V17.5H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z"/><path d="M12 8v4.2M12 15h.01"/></svg>
-      </button>
-      -->
 
 
       <button class="tool-button theme-toggle" id="theme-toggle" type="button" aria-label="Switch light or dark mode" title="Light / dark">
@@ -114,21 +108,6 @@
     </header>
 
     <p class="mini-banner" id="mini-banner" hidden>Model slices: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</p>
-
-    <dialog class="report-dialog" id="report-dialog" aria-labelledby="report-title">
-      <form method="dialog" class="report-form">
-        <header class="report-head">
-          <h2 id="report-title">Report an Issue</h2>
-          <p class="report-hint">We review every report and follow up on GitHub.</p>
-        </header>
-        <textarea id="report-text" rows="5" placeholder="What did you notice?" aria-label="Description"></textarea>
-        <p class="report-status" id="report-status" role="status"></p>
-        <div class="report-actions">
-          <button type="button" class="report-cancel" id="report-cancel">Cancel</button>
-          <button type="submit" value="send" class="report-send" id="report-send">Send</button>
-        </div>
-      </form>
-    </dialog>
 
     <div class="rules-popover" id="rules-popover" role="dialog" aria-label="Test Conditions" hidden></div>
 
@@ -161,13 +140,10 @@
     <div class="overview" id="overview" hidden></div>
     <div class="platform" id="platform" hidden></div>
     <div class="method" id="welcome" hidden></div>
-    <div class="method" id="inferlets" hidden></div>
-    <div class="method" id="services" hidden></div>
     <div class="method" id="approach" hidden></div>
     <div class="method" id="reports" hidden></div>
     <div class="method" id="gaps" hidden></div>
     <div class="method" id="reasons" hidden></div>
-    <div class="method" id="profiler" hidden></div>
     <div class="method" id="methodology" hidden></div>
     <div class="method" id="methods" hidden></div>
     <div class="method" id="board" hidden></div>

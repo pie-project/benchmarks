@@ -31,25 +31,6 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    // Inferlets and Services, hidden for now
-    // inferlets: {
-    //   label: "Inferlets",
-    //   tag: "Alpha",  // not yet beta
-    //   section: "home",
-    //   view: "inferlets",  // not a table yet: the page is under development
-    //   filters: [],
-    //   columns: [],
-    // },
-    // services: { label: "Services", tag: "Alpha", section: "home", view: "services", filters: [], columns: [] },
-    // the Profiler, hidden for now
-    // profiler: {
-    //   label: "Profiler",
-    //   tag: "Alpha",
-    //   section: "home",
-    //   view: "profiler",  // not a table: uploaded traces of long workloads, empty until uploads open
-    //   filters: [],
-    //   columns: [],
-    // },
     // every platform's machines in one grid, a header row per platform, every model a column
     // every engine side by side on one model, as Artificial Analysis ranks models
     board: {
