@@ -158,7 +158,7 @@ def create_token(request: Request, body: dict = Body(default={})):
     return {"id": tid, "token": auth.issue(tid), "quota": quota}
 
 
-@app.post("/v1/submissions")
+@app.post("/v1/submissions", name="submissions")
 async def upload_submission(request: Request):
     addr = auth.address(request)
     WRITES.check(addr)
