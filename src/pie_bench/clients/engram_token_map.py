@@ -61,8 +61,12 @@ def write_plane(path: Path, lookup: list[int]) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("snapshot", help="checkpoint directory holding tokenizer.json (and config.json)")
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "snapshot", help="checkpoint directory holding tokenizer.json (and config.json)"
+    )
     ap.add_argument("--out", default=None, help=f"output file (default: <snapshot>/{FILE})")
     args = ap.parse_args()
     snap = Path(args.snapshot).expanduser()
@@ -85,7 +89,9 @@ def main() -> int:
             return 1
     out = Path(args.out) if args.out else snap / FILE
     write_plane(out, lookup)
-    print(f"{out}: {len(lookup)} ids -> {compressed} compressed (pad {lookup[2] if len(lookup) > 2 else '?'})")
+    print(
+        f"{out}: {len(lookup)} ids -> {compressed} compressed (pad {lookup[2] if len(lookup) > 2 else '?'})"
+    )
     return 0
 
 

@@ -11,10 +11,10 @@ from typing import Any
 
 from bench_results import percentile
 
+THERMAL_STATES = ("nominal", "fair", "serious", "critical")
 
-def arrival_schedule(
-    n: int, rate: float, process: str, seed: int
-) -> list[float]:
+
+def arrival_schedule(n: int, rate: float, process: str, seed: int) -> list[float]:
     if rate <= 0:
         return [0.0] * n
     rng = random.Random(seed)
@@ -27,7 +27,6 @@ def arrival_schedule(
 
 
 class ArrivalPacer:
-
     def __init__(self, offsets: list[float]) -> None:
         self._offsets = offsets
         self._t0: float | None = None
@@ -60,20 +59,27 @@ class ArrivalPacer:
         }
 
 
+def _objc_runtime():
+    objc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("objc"))
+    ctypes.cdll.LoadLibrary("/System/Library/Frameworks/Foundation.framework/Foundation")
+    objc.objc_getClass.restype = ctypes.c_void_p
+    objc.objc_getClass.argtypes = [ctypes.c_char_p]
+    objc.sel_registerName.restype = ctypes.c_void_p
+    objc.sel_registerName.argtypes = [ctypes.c_char_p]
+    return objc
+
+
 def mac_thermal_state() -> str | None:
     if sys.platform != "darwin":
         return None
     try:
-        objc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("objc"))
-        ctypes.cdll.LoadLibrary("/System/Library/Frameworks/Foundation.framework/Foundation")
-        objc.objc_getClass.restype = ctypes.c_void_p
-        objc.objc_getClass.argtypes = [ctypes.c_char_p]
-        objc.sel_registerName.restype = ctypes.c_void_p
-        objc.sel_registerName.argtypes = [ctypes.c_char_p]
-        obj = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)(("objc_msgSend", objc))
-        num = ctypes.CFUNCTYPE(ctypes.c_long, ctypes.c_void_p, ctypes.c_void_p)(("objc_msgSend", objc))
+        objc = _objc_runtime()
+        send_for_object = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)
+        send_for_long = ctypes.CFUNCTYPE(ctypes.c_long, ctypes.c_void_p, ctypes.c_void_p)
+        obj = send_for_object(("objc_msgSend", objc))
+        num = send_for_long(("objc_msgSend", objc))
         info = obj(objc.objc_getClass(b"NSProcessInfo"), objc.sel_registerName(b"processInfo"))
-        return ("nominal", "fair", "serious", "critical")[num(info, objc.sel_registerName(b"thermalState"))]
+        return THERMAL_STATES[num(info, objc.sel_registerName(b"thermalState"))]
     except Exception:
         return None
 
@@ -87,29 +93,32 @@ def cool_before_request(timeout_s: float = 600, poll_s: float = 5) -> float:
     return time.monotonic() - t0
 
 
+def _report_warmup(label: str, passes: int, start: float) -> None:
+    print(
+        f"[{label}-bench] warmup: {passes} extra pass(es) over {time.monotonic() - start:.1f}s",
+        flush=True,
+    )
+
+
 async def run_timed_warmup(run_once, seconds: float, label: str = "pie") -> int:
     if seconds <= 0:
         return 0
-    import time as _time
-    start = _time.monotonic()
+    start = time.monotonic()
     passes = 0
-    while _time.monotonic() - start < seconds:
+    while time.monotonic() - start < seconds:
         await run_once()
         passes += 1
-    print(f"[{label}-bench] warmup: {passes} extra pass(es) over "
-          f"{_time.monotonic() - start:.1f}s", flush=True)
+    _report_warmup(label, passes, start)
     return passes
 
 
 def run_timed_warmup_sync(run_once, seconds: float, label: str = "vllm") -> int:
     if seconds <= 0:
         return 0
-    import time as _time
-    start = _time.monotonic()
+    start = time.monotonic()
     passes = 0
-    while _time.monotonic() - start < seconds:
+    while time.monotonic() - start < seconds:
         run_once()
         passes += 1
-    print(f"[{label}-bench] warmup: {passes} extra pass(es) over "
-          f"{_time.monotonic() - start:.1f}s", flush=True)
+    _report_warmup(label, passes, start)
     return passes
