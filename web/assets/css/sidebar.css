@@ -34,7 +34,6 @@
 
 .sidebar-home { display: flex; flex: 1; align-self: stretch; align-items: center; gap: 8px; margin: 0 -8px; padding: 0 8px; color: var(--color-label); text-decoration: none; }
 
-
 .sidebar-logo {
   width: 16px;
   height: 16px;
@@ -62,31 +61,6 @@
   .sidebar-logo.is-spinning {
     animation: none;
   }
-}
-
-.sidebar-help {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  margin: 0 -4px 0 auto;
-  border-radius: var(--radius-control);
-  color: var(--color-label-secondary);
-}
-
-.sidebar-help:hover {
-  background: var(--color-hover);
-  color: var(--color-label);
-}
-
-.sidebar-help svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
 }
 
 .sidebar-heading {
@@ -207,17 +181,6 @@
     height: 20px;
   }
 
-  .sidebar-help {
-    width: 44px;
-    height: 44px;
-    margin-right: -10px;
-  }
-
-  .sidebar-help svg {
-    width: 20px;
-    height: 20px;
-  }
-
   .sidebar-heading {
     padding: 20px 10px 6px;
     font-size: 13px;
@@ -275,9 +238,6 @@
     padding-bottom: 0;
   }
 
-
-
-
   .sidebar-item.is-selected .sidebar-glyph[style] {
     box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .85);
   }
@@ -299,7 +259,6 @@
   }
 }
 
-
 .sidebar-glyph { display: inline-flex; }
 .sidebar-glyph[style] {
   align-items: center;
@@ -314,7 +273,6 @@
 .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
 .sidebar-item .sidebar-glyph[style] svg .is-filled { fill: #fff; stroke: none; }
 .sidebar-item svg .is-filled { fill: var(--color-label); stroke: none; }
-
 
 .sidebar-item.is-link { text-decoration: none; color: inherit; }
 .sidebar-item .sidebar-out { width: 12px; height: 12px; margin-left: auto; fill: none; stroke: var(--color-label-tertiary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }

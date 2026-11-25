@@ -58,14 +58,6 @@ svg {
   flex: 1;
 }
 
-.muted {
-  color: var(--color-label-secondary);
-}
-
-.mono {
-  font-family: var(--font-mono);
-}
-
 .plain-button {
   height: var(--control-height);
   padding: 0 9px;
@@ -199,11 +191,7 @@ svg {
     overflow-x: hidden;
     overscroll-behavior: none;
   }
-  .table-container,
-  .platform-scroll,
-  .filter-list,
-  .store-list,
-  .term-body {
+  .table-container, .platform-scroll, .filter-list {
     overscroll-behavior: none;
   }
 }
@@ -223,7 +211,6 @@ svg {
   .sidebar,
   .sidebar-nav { overscroll-behavior-x: none; overscroll-behavior-y: contain; }
 }
-
 
 button:focus:not(:focus-visible) { outline: none; }
 

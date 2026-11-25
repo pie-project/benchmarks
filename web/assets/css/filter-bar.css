@@ -29,7 +29,6 @@
   background: var(--color-hover);
 }
 
-
 .filter-button {
   display: inline-flex;
   white-space: nowrap;
@@ -42,12 +41,10 @@
   color: inherit;
 }
 
-
 .filter.is-set {
   background: var(--color-accent-tint);
   color: var(--color-accent);
 }
-
 
 .filter.is-set .engine-tag,
 .filter.is-set .hardware-tag,
@@ -79,7 +76,6 @@
 .filter.is-set .filter-button {
   padding-right: 10px;
 }
-
 
 @media (max-width: 899px) {
   .filter-bar {
