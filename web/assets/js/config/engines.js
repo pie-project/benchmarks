@@ -17,8 +17,4 @@ Pie.engines = {
     const own = (Pie.store?.tables?.engines || []).find((e) => e.id === id)?.color;
     return this.colors[id] || own || "var(--color-engine-default)";
   },
-
-  isPrimary(id) {
-    return id === this.primary;
-  },
 };

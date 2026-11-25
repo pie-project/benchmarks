@@ -41,10 +41,8 @@ window.Pie = window.Pie || {};
     const tag = tags.find((t) => arms(t).some((x) => x.platform === accuracyPlatform));
     return { platforms, tag, items: tag ? arms(tag).filter((x) => x.platform === accuracyPlatform).sort(byRank) : [] };
   };
-  const platformBar = (platforms) => platforms.length ? `<span class="platform-compare qc-picker" role="group" aria-label="Platform">${platforms.map((p) =>
-    `<button type="button" data-qc-platform="${esc(p)}" class="plain-button${p === accuracyPlatform ? " is-active" : ""}" aria-pressed="${p === accuracyPlatform}">${esc(platformLabel(p))}</button>`).join("")}</span>` : "";
 
-  const deltaChart = (items, bare = false) => {
+  const deltaChart = (items) => {
     const half = (a) => (isNum(a?.ci_low) && isNum(a?.ci_high) ? (a.ci_high - a.ci_low) / 2 : 0);
     const engines = [...new Set(items.map((x) => x.arm.engine))];
     const other = engines.length === 1 ? engineLabel(engines[0]) : "The other engine";
@@ -75,11 +73,7 @@ window.Pie = window.Pie || {};
       </g>`;
     }).join("");
     const svg = `<svg class="qc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`${other} minus Pie, in points`)}">${ticks}${marks}</svg>`;
-    if (bare) return `${svg}<p class="qc-chart-key"><span><i class="qc-key-band"></i>Tolerance</span><span><i class="qc-key-dot"></i>Within it</span><span><i class="qc-key-dot is-off"></i>Mismatch</span></p>`;
-    return `<div class="qc-chart-card">
-      ${svg}
-      <p class="qc-chart-key"><span><i class="qc-key-band"></i>Tolerance</span><span><i class="qc-key-dot"></i>Within it</span><span><i class="qc-key-dot is-off"></i>Mismatch</span><span>${esc(other)} minus Pie, in points; right of zero, Pie scores lower</span></p>
-    </div>`;
+    return `${svg}<p class="qc-chart-key"><span><i class="qc-key-band"></i>Tolerance</span><span><i class="qc-key-dot"></i>Within it</span><span><i class="qc-key-dot is-off"></i>Mismatch</span></p>`;
   };
 
   const QUALITY_MAC = "m5-max-128g";
@@ -259,12 +253,6 @@ window.Pie = window.Pie || {};
         }
         return;
       }
-      const platform = event.target.closest("[data-qc-platform]");
-      if (platform) {
-        accuracyPlatform = platform.dataset.qcPlatform;
-        Pie.checks.render(Pie.state);
-        return;
-      }
       const button = event.target.closest("[data-kernel]");
       const pop = element.querySelector(".qc-pop");
       if (!button) {
@@ -299,14 +287,9 @@ window.Pie = window.Pie || {};
 
   Pie.checks = {
     element,
-    accuracyBlock(state) {
-      const { platforms, items } = accuracyRows(state);
-      const chart = deltaChart(items);
-      return chart ? `${platformBar(platforms)}${chart}` : "";
-    },
     accuracyChart(state) {
       const { platforms, items } = accuracyRows(state);
-      return { platforms, platform: accuracyPlatform, label: platformLabel(accuracyPlatform), chart: deltaChart(items, true) };
+      return { platforms, platform: accuracyPlatform, label: platformLabel(accuracyPlatform), chart: deltaChart(items) };
     },
     pick(platform) { accuracyPlatform = platform; },
     onOpenRuns(handler) { openRuns = handler; },

@@ -32,9 +32,5 @@ window.Pie = window.Pie || {};
         delete root.dataset.search;
       }
     },
-
-    focusSearch() {
-      elements.search.focus();
-    },
   };
 })();

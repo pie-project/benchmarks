@@ -383,8 +383,6 @@ window.Pie = window.Pie || {};
   let drawn = null;
 
   element.addEventListener("click", (event) => {
-    const setup = event.target.closest("[data-methods-setup]");
-    if (setup) { event.stopPropagation(); Pie.popover.open(setup, "methods:setup", null); return; }
     const mode = event.target.closest("[data-mode]");
     if (mode && viewState) { viewState.platform.mode = mode.dataset.mode; Pie.platform.changed(); return; }
     const source = event.target.closest("[data-go]");

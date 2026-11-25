@@ -424,18 +424,6 @@ window.Pie = window.Pie || {};
   });
 
   Pie.methods = {
-    setupPick() {
-      const NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
-      return `<button class="filter-button board-title-pick" type="button" data-methods-setup aria-haspopup="menu" aria-label="Workload">${Pie.platform.degree(current)}${esc(NAMES[current] || current)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-    },
-    menu(k) {
-      if (k !== "setup") return [];
-      const NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
-      return Object.keys(NAMES).map((id) => ({ value: id, label: NAMES[id], selected: id === current, detail: id === "decode" || id === "prefill" ? "Latency" : "Throughput", icon: Pie.platform.degree(id) }));
-    },
-    pick(k, value) {
-      if (k === "setup" && state && ["decode", "prefill", "batching", "pbatch"].includes(value)) state.platform.mode = value;
-    },
     chapter(kind, viewState) {
       state = viewState;
       const fixed = kind.startsWith("limit:") ? kind.slice(6) : null;
