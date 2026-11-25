@@ -50,7 +50,7 @@ pie-bench run --engines pie,llamacpp             # only some engines
 pie-bench run --pie 0.6.0                        # a pie release, branch or commit
 pie-bench run --no-upload                        # keep the results local
 pie-bench upload ~/.pie-bench/runs/<time>        # upload later
-pie-bench quality                                # model accuracy on question sets
+pie-bench quality --models <artifact id>         # model accuracy on question sets
 ```
 
 Nothing is sent while a run measures. Each run writes one folder under
@@ -100,13 +100,17 @@ PIE_BENCH_API=http://localhost:8790 pie-bench run
 The [phone app](mobile) runs the phone workloads on iPhone and Android with
 pie, llama.cpp, LiteRT-LM, MLC LLM and MLX Swift, on the same prompts as the
 Macs. `pie-bench import-phone` turns its shared `records.jsonl` into a
-submission, shown on the site's Mobile page.
+submission, shown on the site's Mobile page. The import computes every number
+with the harness's own code, as for a Mac run, and keeps the median round; it
+trusts nothing the phone derived. A phone not listed in
+`src/pie_bench/matrix/phones.yaml` is stored as `<os>-<model>`.
 
 ## Develop
 
 ```bash
 uv venv && uv pip install -e ".[dev,server]"
 .venv/bin/ruff check src server
+.venv/bin/ruff format --check src server
 ```
 
 [`src/pie_bench/matrix`](src/pie_bench/matrix) declares what exists: engines

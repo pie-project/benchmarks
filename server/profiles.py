@@ -1,11 +1,3 @@
-"""Profiles: each grid cell's end-to-end profile of its two fastest engines, judged from its own numbers.
-
-A cell gives, per engine and per benchmark unit, the profiled wall ms, the forward ms (the device's busy time, the
-union of its work intervals) and the benchmark's own step; idle is the rest of the wall. Cells stored in the older
-stage format convert exactly: forward is the sum of their non-idle stages, idle their GPU idle stage; they keep that
-format's own checks (unclassified GPU work, a mostly idle GPU) until a fresh profile replaces them.
-"""
-
 from __future__ import annotations
 
 import json
@@ -66,7 +58,6 @@ def check(doc: dict) -> list[dict]:
 
 
 def times(side: dict) -> dict | None:
-    """A side's wall, forward and idle ms per unit: as measured, or exactly from a stored stage split."""
     if side.get("wall_ms") and side.get("forward_ms") is not None:
         return {"wall": side["wall_ms"], "forward": side["forward_ms"], "idle": side["wall_ms"] - side["forward_ms"]}
     stages = side.get("stage_ms")
@@ -76,13 +67,17 @@ def times(side: dict) -> dict | None:
 
 
 def stage_doubts(side: dict) -> list[str]:
-    """A stored stage cell's own checks: more than a quarter of its step unclassified, or its GPU idle over half of it."""
     stages = side.get("stage_ms")
     total = sum(stages.values()) if stages else 0
     if not total:
         return []
     return ([f"unclassified GPU work is {100 * stages['other_gpu'] / total:.0f}% of {side['engine']}'s step"] if stages["other_gpu"] / total > UNCLASSIFIED_MAX else []) \
         + ([f"the GPU sits idle {100 * stages['gpu_idle'] / total:.0f}% of {side['engine']}'s step"] if stages["gpu_idle"] / total > IDLE_MAX else [])
+
+
+def in_fastest_unit(f: dict, tf: dict, s: dict, ts: dict) -> dict:
+    k = f["speed"] * tf["wall"] / (s["speed"] * ts["wall"])
+    return {key: v * k for key, v in ts.items()}
 
 
 def judge(doc: dict) -> dict | None:
@@ -97,9 +92,7 @@ def judge(doc: dict) -> dict | None:
     why += [f"{b['engine']}'s benchmark run was noisy" for b in (f, s) if b.get("benchmark_status") == "noisy"]
     why += stage_doubts(f) + stage_doubts(s)
     if f.get("speed") and s.get("speed"):
-        # a stored cell whose engines ran different shapes: the second engine moved into the fastest one's unit
-        k = f["speed"] * tf["wall"] / (s["speed"] * ts["wall"])
-        ts = {key: v * k for key, v in ts.items()}
+        ts = in_fastest_unit(f, tf, s, ts)
     ratio = ts["wall"] / tf["wall"]
     if abs(ratio / (1 + doc["gap_pct"] / 100) - 1) > TOL:
         why.append(f"profiled gap {100 * (ratio - 1):+.0f}% vs benchmark {doc['gap_pct']:+.0f}%")

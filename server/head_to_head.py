@@ -1,4 +1,3 @@
-"""How much faster pie decodes than each other engine on each platform: the one number per engine the home page shows."""
 from __future__ import annotations
 
 import math
@@ -9,7 +8,6 @@ MEASURED = {"pass", "noisy"}
 
 
 def platform_of(hw: dict) -> str | None:
-    """The platform a machine belongs to, as the benchmarks site sorts it (core/store.js platformOfAll)."""
     if hw.get("class") == "android":
         return "android"
     if hw.get("class") == "mac" or hw.get("vendor") == "Apple":
@@ -22,9 +20,6 @@ def platform_of(hw: dict) -> str | None:
 
 
 def head_to_head(core: dict, workload: str = "raw", metric: str = "decode_tok_s") -> dict:
-    """Per platform and engine: the geometric mean, over every machine and model both ran, of pie's speed over that engine's.
-
-    Each side counts its fastest measured result on the machine and model, whatever format it ran, as the site's Relative Speed does."""
     tags = core.get("tags") or []
     snapshots = core.get("snapshots") or {}
     release = next((t["id"] for t in tags if snapshots.get(t["id"])), None)

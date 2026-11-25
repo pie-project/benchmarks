@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Runs pie-bench inside a container: caches on the data folder, the machine id when the CLI cannot
-# detect it (TPU), then `pie-bench <args>`. With no args and none in PIE_BENCH_ARGS a RunPod pod
-# stays up for SSH; anywhere else it prints the help.
 set -euo pipefail
 
 provider=${PIE_BENCH_PROVIDER:-}

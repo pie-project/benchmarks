@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Image build steps shared by every Dockerfile here.
-#   install.sh tools <cuda|rocm|tpu> [ssh]   apt packages, uv, Python 3.12, Rust at pie's pins, llama.cpp's
-#                                            release build at its pin; ssh adds sshd (RunPod)
-#   install.sh bench                         pie-bench from /src into /opt/pie-bench, on PATH as `pie-bench`
 set -euo pipefail
 step=$1
 backend=${2:-}

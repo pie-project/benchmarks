@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import gzip
-import logging
 import os
 import threading
 from contextlib import asynccontextmanager
@@ -16,7 +15,6 @@ from server.db import Database
 from server.hit_counter import HitCounter
 from server.view_cache import ViewCache
 
-log = logging.getLogger("pie-bench-api")
 READS = rate_limit.RateLimit(int(os.environ.get("READ_LIMIT", "600")), 60)
 WRITES = rate_limit.RateLimit(int(os.environ.get("WRITE_LIMIT", "30")), 3600)
 TOKENS = rate_limit.RateLimit(int(os.environ.get("TOKEN_LIMIT", "5")), 3600)

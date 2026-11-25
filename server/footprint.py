@@ -6,8 +6,6 @@ import re
 import urllib.request
 from datetime import datetime, timezone
 
-# What you download to serve a model: the compressed linux/amd64 image on Docker Hub,
-# against the Linux CUDA archive of the newest Pie release.
 IMAGES = [("sglang", "SGLang", "lmsysorg/sglang", "latest"), ("vllm", "vLLM", "vllm/vllm-openai", "latest")]
 PIE = "pie-project/pie"
 PIE_ASSET = re.compile(r"pie-x86_64-linux-cuda[\d.]*\.tar\.gz")
