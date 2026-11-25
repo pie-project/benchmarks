@@ -10,20 +10,13 @@ enum DeviceInfo {
         #if targetEnvironment(simulator)
         if let m = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] { return m }
         #endif
-        #if os(macOS)
-        var size = 0
-        sysctlbyname("hw.model", nil, &size, nil, 0)
-        var buf = [CChar](repeating: 0, count: max(1, size))
-        sysctlbyname("hw.model", &buf, &size, nil, 0)
-        return "mac-harness-" + String(cString: buf)
-        #endif
         var u = utsname()
         uname(&u)
         return withUnsafeBytes(of: &u.machine) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
     }
 
     static var isSimulator: Bool {
-        #if targetEnvironment(simulator) || os(macOS)
+        #if targetEnvironment(simulator)
         return true
         #else
         return false

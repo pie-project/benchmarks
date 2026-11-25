@@ -14,10 +14,7 @@ struct PieAdapter: EngineAdapter {
     @MainActor static var booted: String?
     @MainActor static var served: PieModel?
 
-    static var wasm: URL? {
-        ProcessInfo.processInfo.environment["PIEBENCH_PIE_WASM"].map { URL(fileURLWithPath: $0) }
-            ?? Bundle.main.url(forResource: "text-completion-bench", withExtension: "wasm")
-    }
+    static var wasm: URL? { Bundle.main.url(forResource: "text-completion-bench", withExtension: "wasm") }
 
     func unsupportedReason(_ m: ModelEntry) -> String? {
         if PieAdapter.wasm == nil {
@@ -43,7 +40,6 @@ struct PieAdapter: EngineAdapter {
             let share = Double(DeviceInfo.availableBytes - (768 << 20)) / Double(gpu.recommendedMaxWorkingSetSize)
             cfg.deviceMemoryShare = min(0.95, max(0.6, share))
         }
-        if let v = ProcessInfo.processInfo.environment["PIEBENCH_PIE_MEMORY_SHARE"].flatMap(Double.init) { cfg.deviceMemoryShare = v }
         let server = try await PieServer.start(model: file, configuration: cfg)
         let client = try await server.connect()
         let wasm = PieAdapter.wasm!

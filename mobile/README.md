@@ -57,7 +57,6 @@ The phone benchmark app. It runs the phone workloads on the phone and shares the
 - **Everything built:** `ios/scripts/generate-all.sh [pie checkout]` adds MLC when `Vendor/mlc` exists and pie when `Vendor/pie` exists.
 - **Bundled pie models:** `<artifact>.metal.zt` files in `ios/Vendor/pie/models` ship inside the app, so the phone needs no import.
 - **Unattended runs:** launch with `PIEBENCH_AUTORUN=1`, `PIEBENCH_MODELS=<engine>/<artifact>,...`, `PIEBENCH_WORKLOADS=<id>,...`, `PIEBENCH_TAG=<tag>` and `PIEBENCH_EXIT=1`. `xcrun simctl launch` passes them as `SIMCTL_CHILD_*`, and the same keys work as `-PIEBENCH_X value` launch arguments. `PIEBENCH_LLAMA_CPU=1` runs llama.cpp on the CPU where the simulator's Metal falls short.
-- **Mac test harness:** `ios/e2e/run-mac.sh <llama.xcframework> <home dir>` builds the app's engine, runner and row code without the UI as a macOS command-line tool against llama.cpp's macOS slice, then runs it. It reads the same `PIEBENCH_*` keys, plus `PIEBENCH_PIE_WASM` (the bench inferlet) and `PIEBENCH_PIE_MEMORY_SHARE` (pie's GPU memory share). Its rows say `device.emulator=true`, so import them under a `test-*` tag.
 
 ## Sending results
 
@@ -67,5 +66,5 @@ The phone benchmark app. It runs the phone workloads on the phone and shares the
 4. `pie-bench upload ~/.pie-bench/phone/<run id>` sends it to the API.
 
 - **Which release the rows join:** the `--tag` given at import, e.g. the site's current `main-<commit>` tag. A `test-*` tag is never shown on the site.
-- **Simulator and Mac test rows** are taken only under a `test-*` tag.
+- **Simulator rows** are taken only under a `test-*` tag.
 - **Unknown phones:** a phone not in `src/pie_bench/matrix/phones.yaml` is stored as `android-<model>` or `ios-<model>`.

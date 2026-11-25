@@ -29,8 +29,7 @@ struct Contract: Decodable {
     let templates: [String: Template]
 
     static func load() throws -> Contract {
-        let override = ProcessInfo.processInfo.environment["PIEBENCH_WORKLOADS_JSON"].map { URL(fileURLWithPath: $0) }
-        guard let url = override ?? Bundle.main.url(forResource: "workloads", withExtension: "json") else {
+        guard let url = Bundle.main.url(forResource: "workloads", withExtension: "json") else {
             throw BenchError.message("workloads.json is not in the app bundle")
         }
         return try JSONDecoder().decode(Contract.self, from: Data(contentsOf: url))

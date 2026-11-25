@@ -55,15 +55,9 @@ struct ModelEntry: Identifiable, Hashable {
 }
 
 enum Storage {
-    static var home: URL? { ProcessInfo.processInfo.environment["PIEBENCH_HOME"].map { URL(fileURLWithPath: $0, isDirectory: true) } }
-    static var documents: URL {
-        guard let h = home else { return URL.documentsDirectory }
-        let u = h.appending(path: "Documents", directoryHint: .isDirectory)
-        try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true)
-        return u
-    }
+    static var documents: URL { URL.documentsDirectory }
     static var support: URL {
-        let u = home?.appending(path: "Application Support", directoryHint: .isDirectory) ?? URL.applicationSupportDirectory
+        let u = URL.applicationSupportDirectory
         try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true)
         return u
     }
