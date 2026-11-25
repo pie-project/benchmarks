@@ -62,7 +62,8 @@ class Tracer:
         out.mkdir(parents=True, exist_ok=True)
         self.round += 1
         n = self.round
-        (self.dir / "on").write_text(f"{n}\n")
+        (self.dir / "on.tmp").write_text(f"{n}\n")
+        os.replace(self.dir / "on.tmp", self.dir / "on")  # whole: a process that reads it half-written records round 0
         deadline = time.time() + ARM_S
         while time.time() < deadline and not all((self.dir / f"{pid}-{n}.armed").exists() for pid in self._alive()):
             time.sleep(0.05)
