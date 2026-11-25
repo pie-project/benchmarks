@@ -110,6 +110,24 @@ class BenchSummary:
     intertoken_max_ms: float | None = None
 
 
+def end_trace() -> None:
+    """Ends a CUPTI-profiled round (profiler/cupti.py) while an in-process engine still runs: at shutdown SGLang kills
+    its scheduler process, and with it the device records CUPTI has not handed over yet."""
+    d = os.environ.get("PIE_CUPTI_DIR")
+    on = Path(d) / "on" if d else None
+    if on is None or not on.exists():
+        return
+    try:
+        n = on.read_text().strip()
+        on.unlink()
+    except OSError:
+        return
+    started = list(Path(d).glob(f"*-{n}.bin"))
+    deadline = time.time() + 30
+    while time.time() < deadline and not all(b.with_suffix(".done").exists() for b in started):
+        time.sleep(0.05)
+
+
 def percentile(xs: list[float], q: float) -> float | None:
     if not xs:
         return None

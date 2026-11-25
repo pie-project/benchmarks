@@ -6,6 +6,7 @@ import asyncio
 import time
 
 from common import (
+    end_trace,
     ArrivalPacer,
     RequestResult,
     add_mode_subcommands,
@@ -299,6 +300,7 @@ def run(args: argparse.Namespace):
     try:
         results, wall = engine.loop.run_until_complete(drive())
     finally:
+        end_trace()
         engine.shutdown()
 
     summary = summarize(
