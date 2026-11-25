@@ -304,9 +304,6 @@ class PlatformSpec(BaseModel):
         default=True,
         description="false where the pod advertises GPU peer access it cannot deliver: tp>1 baselines then keep their all-reduce on NCCL, as pie does there",
     )
-    runner_labels: list[str] = Field(
-        default_factory=list, description="GitHub self-hosted runner labels"
-    )
     runpod_gpu_type: str | None = None
     runpod_image: str | None = Field(
         default=None,

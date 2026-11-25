@@ -7,7 +7,6 @@ platforms:
     count: 1
     memory_gib: 46
     interconnect: pcie
-    runner_labels: [self-hosted, linux, l40s-x1]
     runpod_gpu_type: "NVIDIA L40S"
     tiers: [smoke, nightly, weekly]
   - id: l40s-x2
@@ -19,7 +18,6 @@ platforms:
     memory_gib: 92
     interconnect: pcie
     peer_access: false
-    runner_labels: [self-hosted, linux, l40s-x2]
     runpod_gpu_type: "NVIDIA L40S"
     tp_capable: true
     tiers: [smoke, nightly, weekly]
@@ -31,7 +29,6 @@ platforms:
     count: 1
     memory_gib: 24
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx4090-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 4090"
     tiers: [smoke, nightly, weekly]
   - id: h100-sxm-x4
@@ -42,7 +39,6 @@ platforms:
     count: 4
     memory_gib: 320
     interconnect: nvlink
-    runner_labels: [self-hosted, linux, h100-sxm-x4]
     runpod_gpu_type: "NVIDIA H100 80GB HBM3"
     tp_capable: true
     container_disk_gb: 700
@@ -55,7 +51,6 @@ platforms:
     count: 1
     memory_gib: 96
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro6000-x1]
     pod: pro6000-x2
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition"
     tiers: [smoke, nightly, weekly]
@@ -67,7 +62,6 @@ platforms:
     count: 4
     memory_gib: 384
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro6000-x4]
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition"
     tp_capable: true
     container_disk_gb: 900
@@ -81,7 +75,6 @@ platforms:
     count: 1
     memory_gib: 32
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro4500-x1]
     runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell"
     tiers: [smoke, nightly, weekly]
   - id: a100-pcie-x1
@@ -92,7 +85,6 @@ platforms:
     count: 1
     memory_gib: 80
     interconnect: pcie
-    runner_labels: [self-hosted, linux, a100-pcie-x1]
     pod: a100-pcie-x2
     runpod_gpu_type: "NVIDIA A100 80GB PCIe"
     tiers: [nightly, weekly]
@@ -104,7 +96,6 @@ platforms:
     count: 2
     memory_gib: 160
     interconnect: nvlink
-    runner_labels: [self-hosted, linux, a100-x2]
     runpod_gpu_type: "NVIDIA A100-SXM4-80GB"
     tp_capable: true
     tiers: [nightly, weekly]
@@ -116,7 +107,6 @@ platforms:
     count: 1
     memory_gib: 80
     interconnect: pcie
-    runner_labels: [self-hosted, linux, h100-pcie-x1]
     runpod_gpu_type: "NVIDIA H100 PCIe"
     tiers: [nightly, weekly]
   - id: rtx5090-x1
@@ -127,7 +117,6 @@ platforms:
     count: 1
     memory_gib: 32
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx5090-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 5090"
     tiers: [nightly, weekly]
   - id: l4-x1
@@ -138,7 +127,6 @@ platforms:
     count: 1
     memory_gib: 24
     interconnect: pcie
-    runner_labels: [self-hosted, linux, l4-x1]
     runpod_gpu_type: "NVIDIA L4"
     tiers: [weekly]
   - id: a40-x1
@@ -149,7 +137,6 @@ platforms:
     count: 1
     memory_gib: 48
     interconnect: pcie
-    runner_labels: [self-hosted, linux, a40-x1]
     runpod_gpu_type: "NVIDIA A40"
     tiers: [weekly]
   - id: m1-max-32g
@@ -159,7 +146,6 @@ platforms:
     arch: apple7
     memory_gib: 32
     interconnect: uma
-    runner_labels: [self-hosted, macos, m1-max-32g]
     tiers: [smoke, nightly, weekly]
   - id: m2-max
     os: macos
@@ -168,7 +154,6 @@ platforms:
     arch: apple8
     memory_gib: 64
     interconnect: uma
-    runner_labels: [self-hosted, macos, m2-max]
     tiers: [nightly, weekly]
   - id: m4-pro-48g
     catalog: apple-m4-pro-20c
@@ -179,7 +164,6 @@ platforms:
     memory_gib: 48
     bandwidth_gbs: 273
     interconnect: uma
-    runner_labels: [self-hosted, macos, m4-pro-48g]
     tiers: [smoke, nightly, weekly]
   - id: m5-max-48g
     catalog: apple-m5-max-40c
@@ -189,7 +173,6 @@ platforms:
     arch: apple10
     memory_gib: 48
     interconnect: uma
-    runner_labels: [self-hosted, macos, m5-max-48g]
     tiers: [smoke, nightly, weekly]
   - id: m5-max-128g
     catalog: apple-m5-max-40c
@@ -200,7 +183,6 @@ platforms:
     memory_gib: 128
     bandwidth_gbs: 614
     interconnect: uma
-    runner_labels: [self-hosted, macos, m5-max-128g]
     tiers: [smoke, nightly, weekly]
   - id: m2-16g
     catalog: apple-m2-10c
@@ -211,7 +193,6 @@ platforms:
     memory_gib: 16
     bandwidth_gbs: 100
     interconnect: uma
-    runner_labels: [self-hosted, macos, m2-16g]
     tiers: [smoke, nightly, weekly]
   - id: m3-16g
     catalog: apple-m3-10c
@@ -222,7 +203,6 @@ platforms:
     memory_gib: 16
     bandwidth_gbs: 100
     interconnect: uma
-    runner_labels: [self-hosted, macos, m3-16g]
     tiers: [smoke, nightly, weekly]
   - id: m5-16g
     catalog: apple-m5-8c
@@ -233,7 +213,6 @@ platforms:
     memory_gib: 16
     bandwidth_gbs: 153
     interconnect: uma
-    runner_labels: [self-hosted, macos, m5-16g]
     tiers: [smoke, nightly, weekly]
   - id: m5-max-64g
     catalog: apple-m5-max-40c
@@ -244,7 +223,6 @@ platforms:
     memory_gib: 64
     bandwidth_gbs: 614
     interconnect: uma
-    runner_labels: [self-hosted, macos, m5-max-64g]
     tiers: [smoke, nightly, weekly]
   - id: rtx-spark-128g
     catalog: nvidia-rtx-spark-n1x
@@ -255,7 +233,6 @@ platforms:
     memory_gib: 128
     bandwidth_gbs: 300
     interconnect: uma
-    runner_labels: [self-hosted, windows, rtx-spark-128g]
     tiers: [targeted]
   - id: a100-pcie-x2
     os: linux
@@ -265,7 +242,6 @@ platforms:
     count: 2
     memory_gib: 160
     interconnect: pcie
-    runner_labels: [self-hosted, linux, a100-pcie-x2]
     runpod_gpu_type: "NVIDIA A100 80GB PCIe"
     tp_capable: true
     tiers: [nightly, weekly]
@@ -277,7 +253,6 @@ platforms:
     count: 2
     memory_gib: 192
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro6000-x2]
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition"
     tp_capable: true
     tiers: [smoke, nightly, weekly]
@@ -289,7 +264,6 @@ platforms:
     count: 2
     memory_gib: 282
     interconnect: nvlink
-    runner_labels: [self-hosted, linux, h200-x2]
     runpod_gpu_type: "NVIDIA H200"
     tp_capable: true
     container_disk_gb: 500
@@ -302,7 +276,6 @@ platforms:
     count: 4
     memory_gib: 564
     interconnect: nvlink
-    runner_labels: [self-hosted, linux, h200-x4]
     runpod_gpu_type: "NVIDIA H200"
     tp_capable: true
     container_disk_gb: 1100
@@ -316,7 +289,6 @@ platforms:
     count: 8
     memory_gib: 640
     interconnect: nvlink
-    runner_labels: [self-hosted, linux, a100-sxm-x8]
     runpod_gpu_type: "NVIDIA A100-SXM4-80GB"
     tp_capable: true
     container_disk_gb: 1000
@@ -329,7 +301,6 @@ platforms:
     count: 8
     memory_gib: 640
     interconnect: nvlink
-    runner_labels: [self-hosted, linux, h100-sxm-x8]
     runpod_gpu_type: "NVIDIA H100 80GB HBM3"
     tp_capable: true
     container_disk_gb: 1200
@@ -342,7 +313,6 @@ platforms:
     count: 8
     memory_gib: 1128
     interconnect: nvlink
-    runner_labels: [self-hosted, linux, h200-x8]
     runpod_gpu_type: "NVIDIA H200"
     tp_capable: true
     container_disk_gb: 1300
@@ -355,7 +325,6 @@ platforms:
     count: 8
     memory_gib: 1440
     interconnect: nvlink
-    runner_labels: [self-hosted, linux, b200-x8]
     runpod_gpu_type: "NVIDIA B200"
     tp_capable: true
     container_disk_gb: 1800
@@ -368,7 +337,6 @@ platforms:
     count: 8
     memory_gib: 2304
     interconnect: nvlink
-    runner_labels: [self-hosted, linux, b300-x8]
     runpod_gpu_type: "NVIDIA B300 SXM6 AC"
     tp_capable: true
     container_disk_gb: 2400
@@ -382,7 +350,6 @@ platforms:
     count: 1
     memory_gib: 192
     interconnect: pcie
-    runner_labels: [self-hosted, linux, mi300x-x1]
     runpod_gpu_type: "AMD Instinct MI300X OAM"
     runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi30x"
     tiers: [weekly]
@@ -395,7 +362,6 @@ platforms:
     count: 1
     memory_gib: 288
     interconnect: pcie
-    runner_labels: [self-hosted, linux, mi350x-x1]
     runpod_gpu_type: "AMD Instinct MI350 OAM"
     runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi35x"
     container_disk_gb: 500
@@ -409,7 +375,6 @@ platforms:
     count: 1
     memory_gib: 256
     interconnect: pcie
-    runner_labels: [self-hosted, linux, mi325x-x1]
     runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi30x"
     container_disk_gb: 500
     tiers: [weekly]
@@ -422,7 +387,6 @@ platforms:
     count: 1
     memory_gib: 288
     interconnect: pcie
-    runner_labels: [self-hosted, linux, mi355x-x1]
     runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi35x"
     container_disk_gb: 500
     tiers: [weekly]
@@ -435,7 +399,6 @@ platforms:
     count: 2
     memory_gib: 576
     interconnect: xgmi
-    runner_labels: [self-hosted, linux, mi350x-x2]
     runpod_gpu_type: "AMD Instinct MI350 OAM"
     runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi35x"
     tp_capable: true
@@ -450,7 +413,6 @@ platforms:
     count: 8
     memory_gib: 1536
     interconnect: xgmi
-    runner_labels: [self-hosted, linux, mi300x-x8]
     runpod_gpu_type: "AMD Instinct MI300X OAM"
     runpod_image: "lmsysorg/sglang:v{sglang}-rocm10-mi30x"
     tp_capable: true
@@ -464,7 +426,6 @@ platforms:
     count: 1
     memory_gib: 40
     interconnect: pcie
-    runner_labels: [self-hosted, linux, a100-sxm40-x1]
     runpod_gpu_type: "NVIDIA A100-SXM4-40GB"
     tiers: []
   - id: a100-sxm-x1
@@ -475,7 +436,6 @@ platforms:
     count: 1
     memory_gib: 80
     interconnect: pcie
-    runner_labels: [self-hosted, linux, a100-sxm-x1]
     runpod_gpu_type: "NVIDIA A100-SXM4-80GB"
     tiers: [weekly]
   - id: b200-x1
@@ -486,7 +446,6 @@ platforms:
     count: 1
     memory_gib: 180
     interconnect: pcie
-    runner_labels: [self-hosted, linux, b200-x1]
     runpod_gpu_type: "NVIDIA B200"
     tiers: [weekly]
   - id: b300-x1
@@ -497,7 +456,6 @@ platforms:
     count: 1
     memory_gib: 288
     interconnect: pcie
-    runner_labels: [self-hosted, linux, b300-x1]
     runpod_gpu_type: "NVIDIA B300 SXM6 AC"
     tiers: [weekly]
     fit_factor: 1.0
@@ -509,7 +467,6 @@ platforms:
     count: 1
     memory_gib: 34
     interconnect: pcie
-    runner_labels: [self-hosted, linux, b300-mig34-x1]
     runpod_gpu_type: "NVIDIA B300 SXM6 AC MIG 1g.34gb"
     tiers: []
   - id: rtx3070-x1
@@ -520,7 +477,6 @@ platforms:
     count: 1
     memory_gib: 8
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx3070-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 3070"
     tiers: []
   - id: rtx3080-x1
@@ -531,7 +487,6 @@ platforms:
     count: 1
     memory_gib: 10
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx3080-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 3080"
     tiers: []
   - id: rtx3080ti-x1
@@ -542,7 +497,6 @@ platforms:
     count: 1
     memory_gib: 12
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx3080ti-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 3080 Ti"
     tiers: []
   - id: rtx3090-x1
@@ -553,7 +507,6 @@ platforms:
     count: 1
     memory_gib: 24
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx3090-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 3090"
     tiers: []
   - id: rtx3090ti-x1
@@ -564,7 +517,6 @@ platforms:
     count: 1
     memory_gib: 24
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx3090ti-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 3090 Ti"
     tiers: []
   - id: rtx4070ti-x1
@@ -575,7 +527,6 @@ platforms:
     count: 1
     memory_gib: 12
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx4070ti-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 4070 Ti"
     tiers: []
   - id: rtx4080-x1
@@ -586,7 +537,6 @@ platforms:
     count: 1
     memory_gib: 16
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx4080-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 4080"
     tiers: []
   - id: rtx4080s-x1
@@ -597,7 +547,6 @@ platforms:
     count: 1
     memory_gib: 16
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx4080s-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 4080 SUPER"
     tiers: []
   - id: rtx5080-x1
@@ -608,7 +557,6 @@ platforms:
     count: 1
     memory_gib: 16
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx5080-x1]
     runpod_gpu_type: "NVIDIA GeForce RTX 5080"
     tiers: []
   - id: h100-sxm-x1
@@ -619,7 +567,6 @@ platforms:
     count: 1
     memory_gib: 80
     interconnect: pcie
-    runner_labels: [self-hosted, linux, h100-sxm-x1]
     runpod_gpu_type: "NVIDIA H100 80GB HBM3"
     tiers: [weekly]
   - id: h100-nvl-x1
@@ -630,7 +577,6 @@ platforms:
     count: 1
     memory_gib: 94
     interconnect: pcie
-    runner_labels: [self-hosted, linux, h100-nvl-x1]
     runpod_gpu_type: "NVIDIA H100 NVL"
     tiers: []
   - id: h200-x1
@@ -641,7 +587,6 @@ platforms:
     count: 1
     memory_gib: 141
     interconnect: pcie
-    runner_labels: [self-hosted, linux, h200-x1]
     runpod_gpu_type: "NVIDIA H200"
     tiers: [weekly]
   - id: h200-nvl-x1
@@ -652,7 +597,6 @@ platforms:
     count: 1
     memory_gib: 143
     interconnect: pcie
-    runner_labels: [self-hosted, linux, h200-nvl-x1]
     runpod_gpu_type: "NVIDIA H200 NVL"
     tiers: []
   - id: l40-x1
@@ -663,7 +607,6 @@ platforms:
     count: 1
     memory_gib: 48
     interconnect: pcie
-    runner_labels: [self-hosted, linux, l40-x1]
     runpod_gpu_type: "NVIDIA L40"
     tiers: []
   - id: rtx2000ada-x1
@@ -674,7 +617,6 @@ platforms:
     count: 1
     memory_gib: 16
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx2000ada-x1]
     runpod_gpu_type: "NVIDIA RTX 2000 Ada Generation"
     tiers: []
   - id: rtx4000ada-x1
@@ -685,7 +627,6 @@ platforms:
     count: 1
     memory_gib: 20
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx4000ada-x1]
     runpod_gpu_type: "NVIDIA RTX 4000 Ada Generation"
     tiers: []
   - id: rtx4000ada-sff-x1
@@ -696,7 +637,6 @@ platforms:
     count: 1
     memory_gib: 20
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx4000ada-sff-x1]
     runpod_gpu_type: "NVIDIA RTX 4000 SFF Ada Generation"
     tiers: []
   - id: rtx5000ada-x1
@@ -707,7 +647,6 @@ platforms:
     count: 1
     memory_gib: 32
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx5000ada-x1]
     runpod_gpu_type: "NVIDIA RTX 5000 Ada Generation"
     tiers: []
   - id: rtx6000ada-x1
@@ -718,7 +657,6 @@ platforms:
     count: 1
     memory_gib: 48
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtx6000ada-x1]
     runpod_gpu_type: "NVIDIA RTX 6000 Ada Generation"
     tiers: []
   - id: rtxa2000-x1
@@ -729,7 +667,6 @@ platforms:
     count: 1
     memory_gib: 6
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtxa2000-x1]
     runpod_gpu_type: "NVIDIA RTX A2000"
     tiers: []
   - id: rtxa4000-x1
@@ -740,7 +677,6 @@ platforms:
     count: 1
     memory_gib: 16
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtxa4000-x1]
     runpod_gpu_type: "NVIDIA RTX A4000"
     tiers: []
   - id: rtxa4500-x1
@@ -751,7 +687,6 @@ platforms:
     count: 1
     memory_gib: 20
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtxa4500-x1]
     runpod_gpu_type: "NVIDIA RTX A4500"
     tiers: []
   - id: rtxa5000-x1
@@ -762,7 +697,6 @@ platforms:
     count: 1
     memory_gib: 24
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtxa5000-x1]
     runpod_gpu_type: "NVIDIA RTX A5000"
     tiers: []
   - id: rtxa6000-x1
@@ -773,7 +707,6 @@ platforms:
     count: 1
     memory_gib: 48
     interconnect: pcie
-    runner_labels: [self-hosted, linux, rtxa6000-x1]
     runpod_gpu_type: "NVIDIA RTX A6000"
     tiers: []
   - id: pro4000-x1
@@ -784,7 +717,6 @@ platforms:
     count: 1
     memory_gib: 24
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro4000-x1]
     runpod_gpu_type: "NVIDIA RTX PRO 4000 Blackwell"
     tiers: []
   - id: pro4500bw-x1
@@ -795,7 +727,6 @@ platforms:
     count: 1
     memory_gib: 32
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro4500bw-x1]
     runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell"
     tiers: []
   - id: pro4500bw-se-x1
@@ -806,7 +737,6 @@ platforms:
     count: 1
     memory_gib: 32
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro4500bw-se-x1]
     runpod_gpu_type: "NVIDIA RTX PRO 4500 Blackwell"
     tiers: []
   - id: pro5000-x1
@@ -817,7 +747,6 @@ platforms:
     count: 1
     memory_gib: 48
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro5000-x1]
     runpod_gpu_type: "NVIDIA RTX PRO 5000 Blackwell"
     tiers: []
   - id: pro6000-maxq-x1
@@ -828,7 +757,6 @@ platforms:
     count: 1
     memory_gib: 96
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro6000-maxq-x1]
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition"
     tiers: []
   - id: pro6000-mig24-x1
@@ -839,7 +767,6 @@ platforms:
     count: 1
     memory_gib: 24
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro6000-mig24-x1]
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 1g.24gb"
     tiers: []
   - id: pro6000-mig48-x1
@@ -850,7 +777,6 @@ platforms:
     count: 1
     memory_gib: 48
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro6000-mig48-x1]
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 2g.48gb"
     tiers: []
   - id: pro6000-wk-x1
@@ -861,7 +787,6 @@ platforms:
     count: 1
     memory_gib: 96
     interconnect: pcie
-    runner_labels: [self-hosted, linux, pro6000-wk-x1]
     runpod_gpu_type: "NVIDIA RTX PRO 6000 Blackwell Workstation Edition"
     tiers: []
   - id: v100-pcie-x1
@@ -872,7 +797,6 @@ platforms:
     count: 1
     memory_gib: 16
     interconnect: pcie
-    runner_labels: [self-hosted, linux, v100-pcie-x1]
     runpod_gpu_type: "Tesla V100-PCIE-16GB"
     tiers: []
   - id: v100-sxm2-x1
@@ -883,7 +807,6 @@ platforms:
     count: 1
     memory_gib: 16
     interconnect: pcie
-    runner_labels: [self-hosted, linux, v100-sxm2-x1]
     runpod_gpu_type: "Tesla V100-SXM2-16GB"
     tiers: []
   - id: tpu-v6e-1
@@ -895,7 +818,6 @@ platforms:
     count: 1
     memory_gib: 32
     interconnect: ici
-    runner_labels: [tpu-v6e-1]
     tiers: [nightly, weekly]
     tpu: {type: v6e-1, runtime: v2-alpha-tpuv6e, zones: [us-east5-b, us-east1-d, europe-west4-a]}
   - id: tpu-v5e-1
@@ -907,7 +829,6 @@ platforms:
     count: 1
     memory_gib: 16
     interconnect: ici
-    runner_labels: [tpu-v5e-1]
     tiers: [weekly]
     fit_factor: 1.0
     tpu: {type: v5litepod-1, runtime: v2-alpha-tpuv5-lite, zones: [us-west4-a, us-east5-a, europe-west4-b, us-central1-a, us-east1-c, us-south1-a]}
@@ -920,7 +841,6 @@ platforms:
     count: 1
     memory_gib: 95
     interconnect: ici
-    runner_labels: [tpu-v5p-8]
     tiers: [weekly]
     tpu: {type: v5p-8, runtime: v2-alpha-tpuv5, zones: [us-east5-a, us-central1-a, europe-west4-b], data_disk_gb: 400}
   - id: tpu-v5p-8-x4
@@ -933,7 +853,6 @@ platforms:
     memory_gib: 380
     interconnect: ici
     tp_capable: true
-    runner_labels: [tpu-v5p-8-x4]
     tiers: [weekly]
     tpu: {type: v5p-8, runtime: v2-alpha-tpuv5, zones: [us-central1-a, europe-west4-b, us-east5-a], data_disk_gb: 300, all_chips: true}
   - id: tpu-v4-8
@@ -945,7 +864,6 @@ platforms:
     count: 1
     memory_gib: 32
     interconnect: ici
-    runner_labels: [tpu-v4-8]
     tiers: [weekly]
     tpu: {type: v4-8, runtime: tpu-ubuntu2204-base, zones: [us-central2-b]}
   - id: tpu7x-4
@@ -957,7 +875,6 @@ platforms:
     count: 1
     memory_gib: 192
     interconnect: ici
-    runner_labels: [tpu7x-4]
     tiers: [weekly]
     tpu: {machine_type: tpu7x-standard-4t, image: "tpu7x|ironwood|tpu-7", data_disk_gb: 400, zones: [us-central1-c, us-central1-ai1a]}
   - id: web-rtx4090
@@ -968,7 +885,6 @@ platforms:
     count: 1
     memory_gib: 24
     interconnect: pcie
-    runner_labels: [self-hosted, linux, web-rtx4090]
     runpod_gpu_type: "NVIDIA GeForce RTX 4090"
     tiers: [targeted]
   - id: web-rtx5090
@@ -979,6 +895,5 @@ platforms:
     count: 1
     memory_gib: 32
     interconnect: pcie
-    runner_labels: [self-hosted, linux, web-rtx5090]
     runpod_gpu_type: "NVIDIA GeForce RTX 5090"
     tiers: [targeted]
