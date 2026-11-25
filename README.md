@@ -26,11 +26,12 @@ Silicon, browsers and phones. Ship a kernel, watch it land. Spot a gap, go close
 that fit in memory, installs every engine at its pinned version, runs the sweep,
 and uploads a signed submission to [benchmarks.pie-project.org][Benchmarks].
 
-No vibes, no cherry-picks. Any gap of 25% or more gets a second opinion: the same
+Trust, but verify. Any gap of 25% or more triggers a verification pass: the same
 build reruns under an end-to-end GPU profiler on fresh prompts, and the trace
-says where the time went, forward pass or idle. A gap only goes green when every
-engine's profiled step time and the gap itself land within 10% of the benchmark;
-anything else gets flagged and rerun. Full method in the [Bench Book].
+pinpoints where the time goes, forward pass or idle. A gap is signed off as
+verified only when each engine's profiled step time and the gap itself are within
+10% of the benchmark; everything else is flagged and queued for a rerun. Full
+methodology in the [Bench Book].
 
 In this repo: the `pie-bench` CLI, the results API, the site, the phone app
 (iPhone and Android, same workloads), and Docker images for cloud GPUs and TPUs.
