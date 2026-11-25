@@ -27,8 +27,12 @@ This repository holds the `pie-bench` command line tool, the results API the
 site reads, the site itself, the phone app that runs the same workloads on
 iPhone and Android, and Docker images for cloud GPUs and TPUs.
 
-Every gap of 25% or more is checked: the same run is profiled end to end, and the
-gap shows green on the site only when the profile agrees within 10%.
+To guard against measurement artifacts, every gap of 25% or more is verified
+independently. The same build is run again under an end-to-end GPU profiler, on
+prompts it has not seen, and the profile attributes the gap to the forward pass
+or to idle time. A gap is reported as verified only when each engine's profiled
+step time and the profiled gap agree with the benchmark to within 10%; gaps that
+fail this check are flagged and measured again.
 
 ## Install
 
