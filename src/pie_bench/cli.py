@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -83,11 +84,7 @@ def run(models, engines, workloads, suite, machine_id, pie_ref, pie_root, out, u
     if job is None:
         _say(f"nothing to measure on {machine.platform.id}; try `pie-bench plan` with other --models")
         sys.exit(1)
-    groups = job.cells_by_process()
-    _say(f"machine   {machine.platform.id} ({machine.platform.accelerator}, {machine.platform.memory_gib:g} GiB){'' if machine.known else ', new to the catalog'}")
-    _say(f"pie       {tag} ({commit[:9]})")
-    _say(f"measure   {len(job.cells)} cells, {len({c.artifact.id for c in job.cells})} models, engines {', '.join(sorted({str(c.engine) for c in job.cells}))}")
-    _say(f"estimate  about {max(1, round(job.est_minutes + 3 * len(groups)))} minutes, plus model downloads on a first run")
+    _describe(machine, job, tag, commit)
     if not yes and not click.confirm("start?", default=True, err=True):
         return
     out = (out or HOME / "runs" / datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")).resolve()
@@ -105,14 +102,28 @@ def run(models, engines, workloads, suite, machine_id, pie_ref, pie_root, out, u
     except MachineBusy as e:
         _say(str(e))
         sys.exit(3)
+    submission.pack(out, {"run_id": runner.run_id, "tier": str(job.tier), "tag": tag, "tag_kind": "release" if not tag.startswith("manual-") else "manual",
+                      "platform": machine.platform.model_dump(mode="json"), "pie_commit": commit})
+    _say(f"done: {len(recs)} results ({_tally(recs)}) in {out}")
+    if upload:
+        _upload(out)
+
+
+def _describe(machine, job, tag: str, commit: str) -> None:
+    p = machine.platform
+    engines = ", ".join(sorted({str(c.engine) for c in job.cells}))
+    minutes = max(1, round(job.est_minutes + 3 * len(job.cells_by_process())))
+    _say(f"machine   {p.id} ({p.accelerator}, {p.memory_gib:g} GiB){'' if machine.known else ', new to the catalog'}")
+    _say(f"pie       {tag} ({commit[:9]})")
+    _say(f"measure   {len(job.cells)} cells, {len({c.artifact.id for c in job.cells})} models, engines {engines}")
+    _say(f"estimate  about {minutes} minutes, plus model downloads on a first run")
+
+
+def _tally(recs) -> str:
     by: dict[str, int] = {}
     for r in recs:
         by[str(r.status)] = by.get(str(r.status), 0) + 1
-    submission.pack(out, {"run_id": runner.run_id, "tier": str(job.tier), "tag": tag, "tag_kind": "release" if not tag.startswith("manual-") else "manual",
-                      "platform": machine.platform.model_dump(mode="json"), "pie_commit": commit})
-    _say(f"done: {len(recs)} results ({', '.join(f'{v} {k}' for k, v in sorted(by.items()))}) in {out}")
-    if upload:
-        _upload(out)
+    return ", ".join(f"{v} {k}" for k, v in sorted(by.items()))
 
 
 @main.command(help="Show what `pie-bench run` would measure here, without running anything.")
@@ -158,10 +169,7 @@ def login(name):
 def upload(outs):
     for out in outs:
         if not (out / submission.SUBMISSION).exists():
-            job = json.loads((out / "job.json").read_text())
-            run_id = (out / "run_id.txt").read_text().strip() if (out / "run_id.txt").exists() else job["job_id"]
-            submission.pack(out, {"run_id": run_id, "tier": job["tier"], "tag": None, "tag_kind": "manual",
-                              "platform": job["cells"][0]["platform"] if job["cells"] else None, "pie_commit": job.get("pie_commit")})
+            _pack_run(out)
     out = outs[0].resolve()
     try:
         merged = submission.merge(list(outs), out / "merged" / submission.SUBMISSION) if len(outs) > 1 else None
@@ -179,14 +187,19 @@ def upload(outs):
         _say(f"profiles: {res}")
 
 
+def _pack_run(out: Path) -> None:
+    job = json.loads((out / "job.json").read_text())
+    run_id = (out / "run_id.txt").read_text().strip() if (out / "run_id.txt").exists() else job["job_id"]
+    submission.pack(out, {"run_id": run_id, "tier": job["tier"], "tag": None, "tag_kind": "manual",
+                          "platform": job["cells"][0]["platform"] if job["cells"] else None, "pie_commit": job.get("pie_commit")})
+
+
 @main.command("import-phone", help="Turn the phone app's shared records.jsonl into submissions for `pie-bench upload`.")
 @click.argument("file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("--tag", required=True, help="the release tag the rows join, e.g. main-f03640150 (a test-* tag for a test)")
 @click.option("--out", type=click.Path(path_type=Path), default=None, help="folder for the submissions (default: ~/.pie-bench/phone)")
 @click.option("--dry-run", is_flag=True, help="check the rows and print a summary, write nothing")
 def import_phone(file, tag, out, dry_run):
-    import re
-
     from pie_bench import phone_import
 
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", tag):

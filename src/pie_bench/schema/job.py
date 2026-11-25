@@ -31,7 +31,7 @@ class JobSpec(BaseModel):
     load_timeout_s: int = 1200
     history: dict[str, list[float]] = Field(
         default_factory=dict,
-        description="cell_id -> recent primary-metric values, shipped with the job so the node can decide repetitions offline",
+        description="cell_id -> recent primary-metric values, shipped with the job so the runner can decide repetitions offline",
     )
     control_required: bool = True
     control_marks_noisy: bool = False

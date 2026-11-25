@@ -1,21 +1,10 @@
-"""Phone results: the rows the mobile app (mobile/android, mobile/ios) shares, made into pie-bench Records.
-
-A phone row (schema ``pie-evals-phone/1``, one JSON object per line of the app's records.jsonl) carries one
-cell's raw timings: per round, per request, the prompt and output token counts, the time to the first token
-and to the last. The numbers a row is stored with are computed here by the harness's own code
-(``perf_from_common_json``, the same decode, prefill and TTFT definitions as a Mac run) and the round kept is
-the median one, as the node runner keeps it. Nothing derived on the phone is trusted.
-
-The phone is mapped to a platform of matrix/phones.yaml by its model code (``device_models``); an
-unknown phone is stored under ``<os>-<model>``. ``pack`` writes one API submission per phone run.
-"""
-
 from __future__ import annotations
 
 import base64
 import gzip
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from statistics import median
@@ -26,16 +15,21 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pie_bench import submission
 from pie_bench.metrics.perf import perf_from_common_json
 from pie_bench.metrics.stats import cov
-from pie_bench.schema import Backend, CellStatus, ErrorClass, PlatformSpec, Provenance, Record, Tier
+from pie_bench.schema import (
+    Backend,
+    CellStatus,
+    ErrorClass,
+    PerfMetrics,
+    PlatformSpec,
+    Provenance,
+    Record,
+    Tier,
+)
 from pie_bench.schema.cell import Cell, EngineName, Mode
 
 SCHEMA = "pie-evals-phone/1"
-PHONE_OS = ("android", "ios")
-#: the matrix workloads a phone runs: one request (Raw), four at once (Batching), four prompts read at once (Batched Prefill)
 PHONE_WORKLOADS = ("raw-512-256", "c4", "pf4-512")
-#: a tag starting with this is a test: emulator and simulator rows are stored only under one, and it can be dropped
 TEST_TAG_PREFIX = "test-"
-#: how far an engine's prompt token count may stray from the harness tokenizer's before the row is not the same prompt
 PROMPT_TOLERANCE = 0.05
 PROGRAM = "text-completion-bench"
 WORKLOADS_JSON = Path(__file__).resolve().parents[2] / "mobile" / "shared" / "workloads.json"
@@ -93,7 +87,7 @@ class PhoneCheckpoint(BaseModel):
 
 class PhoneRow(BaseModel):
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
-    schema_: Literal["pie-evals-phone/1"] = Field(alias="schema")
+    schema_: Literal[SCHEMA] = Field(alias="schema")
     run_id: str = Field(pattern=r"^phone-[A-Za-z0-9._-]{1,120}$")
     tag: str | None = Field(default=None, pattern=r"^[A-Za-z0-9._-]{1,64}$")
     started_at: datetime
@@ -118,10 +112,7 @@ class PhoneRowError(ValueError):
     pass
 
 
-# ---- reading what the app sent ----------------------------------------------------------------------------------
 def parse_text(text: str) -> list[dict]:
-    """The rows in a records.jsonl, a JSON list or ``{"rows": [...]}``, or the app's "Copy for workflow"
-    text (gzip, then base64)."""
     text = text.strip()
     if text and text[0] not in "[{":
         try:
@@ -144,13 +135,11 @@ def read_file(path: Path) -> list[dict]:
     return parse_text(raw.decode())
 
 
-# ---- matrix lookups ---------------------------------------------------------------------------------------------
 def _slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:48] or "unknown"
 
 
-def load_phones(matrix_root: Path | str = "matrix") -> dict[str, PlatformSpec]:
-    """matrix/phones.yaml: the phones the app knows by name (each a platform of its own, never planned)."""
+def load_phones(matrix_root: Path | str) -> dict[str, PlatformSpec]:
     import yaml
 
     path = Path(matrix_root) / "phones.yaml"
@@ -164,7 +153,6 @@ def _matches(code: str, pattern: str) -> bool:
 
 
 def platform_for(device: PhoneDevice, phones: dict[str, PlatformSpec]) -> tuple[PlatformSpec, str | None]:
-    """The phone's platform (matrix/phones.yaml), and a warning when the phone is not listed there."""
     if device.emulator:
         pid = "android-emulator" if device.os == "android" else "ios-simulator"
         if pid in phones:
@@ -182,14 +170,12 @@ def platform_for(device: PhoneDevice, phones: dict[str, PlatformSpec]) -> tuple[
 
 
 def expected_prompt_tokens(model: str | None, workload: str, path: Path = WORKLOADS_JSON) -> list[int]:
-    """The prompt lengths the harness tokenizer counts for this model's measured requests, every round."""
     if not model or not path.exists():
         return []
     t = json.loads(path.read_text()).get("templates", {}).get(model, {})
     return [n for rnd in t.get("prompt_tokens", {}).get(workload, []) for n in rnd]
 
 
-# ---- one row -> one Record -----------------------------------------------------------------------------------------
 _ERROR_CLASSES = {e.value for e in ErrorClass}
 
 
@@ -205,9 +191,34 @@ def _round_perf(rnd: PhoneRound, concurrency: int, cold: bool):
     return perf_from_common_json(summary, reqs, None, concurrency=concurrency, cold_tags=cold)
 
 
+@dataclass
+class Outcome:
+    status: CellStatus
+    perf: PerfMetrics | None = None
+    error_class: ErrorClass | None = None
+    error: str | None = None
+    invalid: str | None = None
+
+
 def to_record(row: PhoneRow, matrix, model_of: dict[str, str] | None = None) -> tuple[Record, list[str]]:
-    """The store Record of one phone row, and warnings. Raises PhoneRowError when the row cannot be stored."""
-    warnings: list[str] = []
+    art, wl = _catalog_entries(row, matrix)
+    plat, warning = platform_for(row.device, load_phones(matrix.root))
+    cell = Cell(engine=EngineName(row.engine), engine_version=row.engine_version, platform=plat, artifact=art,
+                workload=wl, program=matrix.programs[PROGRAM], mode=Mode())
+    outcome = _outcome(row, wl, (model_of or {}).get(row.artifact))
+    rec = Record(
+        run_id=row.run_id, job_id=f"{row.run_id}:{row.engine}:{row.artifact}", tier=Tier.TARGETED,
+        cell_id=cell.cell_id, cell_key=cell.cell_key, cell=cell, status=outcome.status, error_class=outcome.error_class,
+        error_message=outcome.error if outcome.status == CellStatus.FAIL else None, invalid_reason=outcome.invalid,
+        perf=outcome.perf, provenance=_provenance(row), started_at=row.started_at, duration_s=row.duration_s,
+    )
+    missing = rec.validate_for_store()
+    if missing:
+        raise PhoneRowError(f"missing provenance: {', '.join(missing)}")
+    return rec, [warning] if warning else []
+
+
+def _catalog_entries(row: PhoneRow, matrix):
     if row.workload not in PHONE_WORKLOADS:
         raise PhoneRowError(f"workload {row.workload!r} is not a phone workload ({', '.join(PHONE_WORKLOADS)})")
     art = matrix.artifacts.get(row.artifact)
@@ -220,63 +231,74 @@ def to_record(row: PhoneRow, matrix, model_of: dict[str, str] | None = None) -> 
         raise PhoneRowError(f"{row.engine} does not load {art.source_format} weights ({row.artifact})")
     if row.engine == "pie" and not re.fullmatch(r"[0-9a-f]{7,40}", row.engine_version):
         raise PhoneRowError("a pie row's engine_version must be the pie commit it ran")
-    wl = matrix.workloads[row.workload]
-    plat, warn = platform_for(row.device, load_phones(matrix.root))
-    if warn:
-        warnings.append(warn)
-    cell = Cell(engine=EngineName(row.engine), engine_version=row.engine_version, platform=plat, artifact=art,
-                workload=wl, program=matrix.programs[PROGRAM], mode=Mode())
-    status, perf, err_cls, err_msg, invalid = CellStatus(row.status), None, None, row.error, None
-    if row.status == "pass":
-        conc = int(wl.params.get("concurrency", 1))
-        cold = bool(wl.params.get("cold_cache"))
-        want = int(wl.params.get("num_requests") or wl.params.get("requests") or 1)
-        problem = None
-        if not row.rounds:
-            problem = "no rounds"
-        for i, rnd in enumerate(row.rounds):
-            ok = sum(1 for r in rnd.requests if r.ok)
-            if ok != want:
-                problem = f"round {i}: {ok} of {want} requests completed"
-                break
-        if problem:
-            status, err_cls, err_msg = CellStatus.FAIL, ErrorClass.HARNESS_INVALID, problem
-        else:
-            perfs = [_round_perf(r, conc, cold) for r in row.rounds]
-            values = [getattr(p, p.primary) or 0.0 for p in perfs]
-            mid = sorted(range(len(values)), key=lambda i: values[i])[len(values) // 2]
-            perf = perfs[mid]
-            perf.rounds = values
-            perf.cov = cov(values)
-            perf.load_s = row.load_s
-            peaks = [r.peak_mem_gib for r in row.rounds if r.peak_mem_gib is not None]
-            perf.resident_gib = max(peaks) if peaks else None
-            decode = int(wl.params.get("decode", 1))
-            outs = [r.output_tokens for rnd in row.rounds for r in rnd.requests if r.ok]
-            if outs and min(outs) < decode:
-                # an engine that cannot ignore the end of text wrote fewer tokens than the workload asks for
-                perf.counters["short_output"] = 1.0
-                perf.counters["output_tokens_min"] = float(min(outs))
-            expected = expected_prompt_tokens((model_of or {}).get(row.artifact), row.workload)
-            got = [r.prompt_tokens for rnd in row.rounds for r in rnd.requests if r.ok and r.prompt_tokens is not None]
-            if expected and got:
-                exp_mid, got_mid = median(expected), median(got)
-                perf.counters["prompt_tokens_expected_p50"] = float(exp_mid)
-                if abs(got_mid - exp_mid) > PROMPT_TOLERANCE * exp_mid:
-                    status, err_cls = CellStatus.FAIL, ErrorClass.INPUT_MISMATCH
-                    err_msg = f"prompt tokens: the engine read {got_mid:g} per request, the harness tokenizer counts {exp_mid:g}"
-                    perf = None
-    elif row.status == "fail":
-        err_cls = ErrorClass(row.error_class) if row.error_class in _ERROR_CLASSES else ErrorClass.CRASH
-    else:
-        invalid = row.error
+    return art, matrix.workloads[row.workload]
+
+
+def _outcome(row: PhoneRow, wl, model: str | None) -> Outcome:
+    if row.status == "fail":
+        cls = ErrorClass(row.error_class) if row.error_class in _ERROR_CLASSES else ErrorClass.CRASH
+        return Outcome(CellStatus.FAIL, error_class=cls, error=row.error)
+    if row.status != "pass":
+        return Outcome(CellStatus(row.status), invalid=row.error)
+    problem = _incomplete_round(row, wl)
+    if problem:
+        return Outcome(CellStatus.FAIL, error_class=ErrorClass.HARNESS_INVALID, error=problem)
+    perf = _median_perf(row, wl)
+    mismatch = _prompt_mismatch(row, perf, model)
+    if mismatch:
+        return Outcome(CellStatus.FAIL, error_class=ErrorClass.INPUT_MISMATCH, error=mismatch)
+    return Outcome(CellStatus.PASS, perf=perf)
+
+
+def _incomplete_round(row: PhoneRow, wl) -> str | None:
+    if not row.rounds:
+        return "no rounds"
+    want = int(wl.params.get("num_requests") or wl.params.get("requests") or 1)
+    for i, rnd in enumerate(row.rounds):
+        ok = sum(1 for r in rnd.requests if r.ok)
+        if ok != want:
+            return f"round {i}: {ok} of {want} requests completed"
+    return None
+
+
+def _median_perf(row: PhoneRow, wl) -> PerfMetrics:
+    conc = int(wl.params.get("concurrency", 1))
+    cold = bool(wl.params.get("cold_cache"))
+    perfs = [_round_perf(r, conc, cold) for r in row.rounds]
+    values = [getattr(p, p.primary) or 0.0 for p in perfs]
+    perf = perfs[sorted(range(len(values)), key=lambda i: values[i])[len(values) // 2]]
+    perf.rounds = values
+    perf.cov = cov(values)
+    perf.load_s = row.load_s
+    peaks = [r.peak_mem_gib for r in row.rounds if r.peak_mem_gib is not None]
+    perf.resident_gib = max(peaks) if peaks else None
+    outs = [r.output_tokens for rnd in row.rounds for r in rnd.requests if r.ok]
+    if outs and min(outs) < int(wl.params.get("decode", 1)):
+        perf.counters["short_output"] = 1.0
+        perf.counters["output_tokens_min"] = float(min(outs))
+    return perf
+
+
+def _prompt_mismatch(row: PhoneRow, perf: PerfMetrics, model: str | None) -> str | None:
+    expected = expected_prompt_tokens(model, row.workload)
+    got = [r.prompt_tokens for rnd in row.rounds for r in rnd.requests if r.ok and r.prompt_tokens is not None]
+    if not (expected and got):
+        return None
+    exp_mid, got_mid = median(expected), median(got)
+    perf.counters["prompt_tokens_expected_p50"] = float(exp_mid)
+    if abs(got_mid - exp_mid) > PROMPT_TOLERANCE * exp_mid:
+        return f"prompt tokens: the engine read {got_mid:g} per request, the harness tokenizer counts {exp_mid:g}"
+    return None
+
+
+def _provenance(row: PhoneRow) -> Provenance:
     hw = {k: v for k, v in row.device.model_dump().items() if v is not None}
     ck = row.checkpoint
     revision = f"{ck.repo or row.artifact}@{ck.revision or ck.sha256 or 'unknown'}"
     if ck.file:
         revision += f"/{ck.file}"
     config = {**row.engine_config, **({"backend": row.engine_backend} if row.engine_backend else {})}
-    prov = Provenance(
+    return Provenance(
         harness_commit=row.app.harness_commit, pie_commit=row.engine_version if row.engine == "pie" else None,
         engine_version=row.engine_version, engine_config=config, engine_config_recipe="phone-app",
         checkpoint_revision=revision, hardware_fingerprint={**hw, "app_version": row.app.version},
@@ -284,20 +306,9 @@ def to_record(row: PhoneRow, matrix, model_of: dict[str, str] | None = None) -> 
         machine_state={k: v for k, v in (row.device.model_extra or {}).items()
                        if k in ("thermal_start", "thermal_end", "battery_pct", "charging")},
     )
-    rec = Record(
-        run_id=row.run_id, job_id=f"{row.run_id}:{row.engine}:{row.artifact}", tier=Tier.TARGETED,
-        cell_id=cell.cell_id, cell_key=cell.cell_key, cell=cell, status=status, error_class=err_cls,
-        error_message=err_msg if status == CellStatus.FAIL else None, invalid_reason=invalid, perf=perf,
-        provenance=prov, started_at=row.started_at, duration_s=row.duration_s,
-    )
-    missing = rec.validate_for_store()
-    if missing:
-        raise PhoneRowError(f"missing provenance: {', '.join(missing)}")
-    return rec, warnings
 
 
 def validate(raw: list[dict], matrix, model_of: dict[str, str] | None = None, tag: str | None = None) -> tuple[list[tuple[PhoneRow, Record]], list[dict], list[str]]:
-    """Every row checked: (row, record) for the good ones, {line, error} for the rest, and warnings. ``tag`` is the one the rows go under."""
     good, bad, warnings = [], [], []
     for i, obj in enumerate(raw, 1):
         try:
@@ -313,9 +324,7 @@ def validate(raw: list[dict], matrix, model_of: dict[str, str] | None = None, ta
     return good, bad, warnings
 
 
-# ---- writing -----------------------------------------------------------------------------------------------------
 def model_ids(matrix) -> dict[str, str]:
-    """artifact id -> the model id workloads.json keys its templates by (the site's model naming)."""
     drop = {"4bit", "bf16", "gguf", "mlx", "mxfp4", "q4", "q4km", "mtp", "instruct", "it", "base", "8k", "mini5", "mini8",
             "litert", "lm", "mlc", "q4f16_1", "q4f32_1"}
     out = {}
@@ -326,7 +335,6 @@ def model_ids(matrix) -> dict[str, str]:
 
 
 def pack(good: list[tuple[PhoneRow, Record]], out: Path, *, tag: str) -> list[Path]:
-    """One folder per phone run under ``out``, each with records.jsonl and the submission `pie-bench upload` sends."""
     by_run: dict[str, list[tuple[PhoneRow, Record]]] = {}
     for row, rec in good:
         by_run.setdefault(row.run_id, []).append((row, rec))

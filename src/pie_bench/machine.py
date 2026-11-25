@@ -36,7 +36,11 @@ def _mac() -> tuple[str, float]:
 
 def _gpus() -> list[str]:
     out = _run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"])
-    return [ln for ln in out.splitlines() if ln.strip() and "NPU" not in ln.split(",")[0]]  # RTX Spark lists its NPU too
+    return [ln for ln in out.splitlines() if ln.strip() and not _is_npu(ln)]
+
+
+def _is_npu(gpu_line: str) -> bool:
+    return "NPU" in gpu_line.split(",")[0]
 
 
 def detect(m: Matrix, platform_id: str | None = None) -> Machine:

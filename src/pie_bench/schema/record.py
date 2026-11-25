@@ -101,16 +101,28 @@ class Record(BaseModel):
         return missing
 
     def to_row(self) -> dict[str, Any]:
-        c = self.cell
-        p = self.perf or PerfMetrics()
-        a = self.accuracy
-        pv = self.provenance
         return {
             "run_id": self.run_id,
             "job_id": self.job_id,
             "tier": str(self.tier),
             "cell_id": self.cell_id,
             "cell_key": self.cell_key,
+            **cell_columns(self.cell),
+            "status": str(self.status),
+            "error_class": str(self.error_class) if self.error_class else None,
+            "error_message": self.error_message,
+            "invalid_reason": self.invalid_reason,
+            **perf_columns(self.perf or PerfMetrics()),
+            **accuracy_columns(self.accuracy),
+            **provenance_columns(self.provenance),
+            "started_at": self.started_at,
+            "duration_s": self.duration_s,
+            "record_json": self.model_dump_json(),
+        }
+
+
+def cell_columns(c: Cell) -> dict[str, Any]:
+    return {
             "engine": str(c.engine),
             "engine_version": c.engine_version,
             "platform": c.platform.id,
@@ -127,10 +139,11 @@ class Record(BaseModel):
             "program": c.program.id,
             "mode": c.mode.key,
             "tp": c.mode.tp,
-            "status": str(self.status),
-            "error_class": str(self.error_class) if self.error_class else None,
-            "error_message": self.error_message,
-            "invalid_reason": self.invalid_reason,
+    }
+
+
+def perf_columns(p: PerfMetrics) -> dict[str, Any]:
+    return {
             "primary_metric": p.primary,
             "primary_value": getattr(p, p.primary, None),
             "decode_tok_s": p.decode_tok_s,
@@ -152,6 +165,11 @@ class Record(BaseModel):
             "counters_json": json.dumps(p.counters, sort_keys=True),
             "rounds_json": json.dumps(p.rounds),
             "cov": p.cov,
+    }
+
+
+def accuracy_columns(a: AccuracyMetrics) -> dict[str, Any]:
+    return {
             "accuracy_status": str(a.status),
             "accuracy_reference": a.reference,
             "t0_first_divergence_json": json.dumps(a.t0_first_divergence),
@@ -165,6 +183,11 @@ class Record(BaseModel):
             "t2_reference_scores_json": json.dumps(a.t2_reference_scores, sort_keys=True),
             "acceptance_rate": a.acceptance_rate,
             "cosine": a.cosine,
+    }
+
+
+def provenance_columns(pv: Provenance) -> dict[str, Any]:
+    return {
             "harness_commit": pv.harness_commit,
             "pie_commit": pv.pie_commit,
             "pie_build_features": ",".join(pv.pie_build_features),
@@ -180,10 +203,7 @@ class Record(BaseModel):
             "env_json": json.dumps(pv.env, sort_keys=True),
             "runner": pv.runner,
             "machine_state_json": json.dumps(pv.machine_state, sort_keys=True, default=str),
-            "started_at": self.started_at,
-            "duration_s": self.duration_s,
-            "record_json": self.model_dump_json(),
-        }
+    }
 
 
 ARROW_SCHEMA = pa.schema(

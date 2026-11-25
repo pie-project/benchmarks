@@ -135,8 +135,8 @@ class MiniatureRecipe(BaseModel):
     attn_res_block_size: int | None = Field(default=None, description="Kimi-K3: AttnRes block stride of the cut (--attn-res-block-size)")
     shrink_family: str | None = Field(default=None, description="the shrink script's family where the checkpoint's index matches several (--family)")
     keep_fp8: bool = Field(default=False, description="DeepSeek-V4/V4.1: keep the fp8 planes as released (--keep-fp8); read out to bf16 they no longer match the config's quantization_config, which vLLM and SGLang load by")
-    widen_bf16: bool = Field(default=False, description="the cut's quantized planes (MXFP8, NVFP4) read out to bf16 and its quantization_config dropped (node/widen.py), for an engine that cannot load the release's quantization; pie runs the same files")
-    mlx_quantize: str | None = Field(default=None, description="the bf16 cut quantized where it is built, by mlx_lm.convert in mlx-lm's interpreter (MLX_PY), to this MLX scheme (affine_u4_g64: 4 bits in 64-wide groups; node/mlx_quantize.py): a 4-bit slice of a model no MLX release quantizes, for a machine the bf16 cut does not fit; pie and mlx-lm read the same files")
+    widen_bf16: bool = Field(default=False, description="the cut's quantized planes (MXFP8, NVFP4) read out to bf16 and its quantization_config dropped (checkpoints/widen_bf16.py), for an engine that cannot load the release's quantization; pie runs the same files")
+    mlx_quantize: str | None = Field(default=None, description="the bf16 cut quantized where it is built, by mlx_lm.convert in mlx-lm's interpreter (MLX_PY), to this MLX scheme (affine_u4_g64: 4 bits in 64-wide groups; checkpoints/mlx_quantize.py): a 4-bit slice of a model no MLX release quantizes, for a machine the bf16 cut does not fit; pie and mlx-lm read the same files")
     note: str = ""
 
     @property

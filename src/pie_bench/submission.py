@@ -40,8 +40,6 @@ def pack(out: Path, meta: dict) -> Path:
 
 
 def merge(outs: list[Path], path: Path) -> Path:
-    """One submission of several runs' folders on one machine (the quota counts submissions, not runs). Each record
-    keeps its run; the submission names a pie commit only when every run measured that one."""
     docs = [json.loads(gzip.decompress((o / SUBMISSION).read_bytes())) for o in outs]
     machines = {(d.get("platform") or {}).get("id") for d in docs}
     tags = {d.get("tag") for d in docs}

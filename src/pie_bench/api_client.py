@@ -61,7 +61,6 @@ def upload(path: Path) -> dict:
 
 
 def upload_profiles(cells: list[dict]) -> dict:
-    """Posts profiled cells to /v1/profiles, which judges each one (no quota); a cell with an engine not measured stays out."""
     cells = [c for c in cells if c.get("gap_pct") is not None and not any("why" in c[s] for s in ("fastest", "second"))]
     if not cells:
         return {"profiles": 0}
