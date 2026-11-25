@@ -51,8 +51,6 @@ class SupportRule:
 
 @dataclass
 class SuiteDecl:
-    max_jobs_per_platform: int = 1
-    enforce_budget: bool = True
     exclude: list[dict[str, Any]] = field(default_factory=list)
     include: list[dict[str, Any]] = field(default_factory=list)
 
@@ -276,45 +274,6 @@ class Matrix:
 
     def runnable(self, tier: Tier, cells: list[Cell] | None = None) -> list[Cell]:
         return [c for c in self.cells_for(tier, cells) if c.declared_unsupported_reason is None]
-
-    def budget_report(
-        self, tier: Tier, cells: list[Cell] | None = None
-    ) -> dict[str, dict[str, float]]:
-        from pie_bench.plan.jobs import shard_groups
-
-        out: dict[str, dict[str, float]] = {}
-        by_plat: dict[str, list[Cell]] = {}
-        for c in self.runnable(tier, cells):
-            by_plat.setdefault(c.platform.id, []).append(c)
-        for plat, pc in by_plat.items():
-            minutes = sum(c.workload.est_minutes for c in pc)
-            shards = shard_groups(pc, self.job_budget_minutes)
-            out[plat] = {
-                "minutes": minutes,
-                "shards": len(shards),
-                "max_shard_minutes": max(
-                    (sum(c.workload.est_minutes for c in sh) for sh in shards), default=0.0
-                ),
-            }
-        return out
-
-    def check_budget(
-        self, tier: Tier, cells: list[Cell] | None = None, *, enforced_only: bool = False
-    ) -> list[str]:
-        suite = self.suites.get(tier.value)
-        if not suite or (enforced_only and not suite.enforce_budget):
-            return []
-        problems = []
-        for plat, r in self.budget_report(tier, cells).items():
-            if r["shards"] > suite.max_jobs_per_platform:
-                problems.append(
-                    f"{tier}: platform {plat} needs {int(r['shards'])} jobs of ~{self.job_budget_minutes:.0f} min ({r['minutes']:.0f} min total) > max_jobs_per_platform {suite.max_jobs_per_platform}"
-                )
-            if r["max_shard_minutes"] > self.job_budget_minutes * self.kill_factor:
-                problems.append(
-                    f"{tier}: platform {plat} has a single process group of {r['max_shard_minutes']:.0f} min that cannot fit a {self.job_budget_minutes:.0f}-min job"
-                )
-        return problems
 
 
 def drafts(cell: Cell) -> bool:
