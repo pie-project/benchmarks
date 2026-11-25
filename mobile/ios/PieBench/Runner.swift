@@ -4,7 +4,6 @@ import UIKit
 #endif
 
 extension EngineID {
-    /// What a row reports when the engine never loaded.
     var staticVersion: String {
         switch self {
         case .llamacpp: return LlamaModel.tag
@@ -16,7 +15,6 @@ extension EngineID {
     }
 }
 
-/// A row as the results table shows it (display only; the server computes the real metrics).
 struct RowSummary: Identifiable {
     let id = UUID()
     let engine: String
@@ -91,8 +89,6 @@ final class Runner: ObservableObject {
         rows = text.split(separator: "\n").compactMap { J.parse(String($0)) }.map(RowSummary.init)
     }
 
-    // MARK: - rows
-
     static let iso: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -147,8 +143,6 @@ final class Runner: ObservableObject {
         if let o = J.parse(row.text) { rows.append(RowSummary(o)) }
     }
 
-    // MARK: - crash recovery
-
     struct Marker: Codable {
         var runID: String; var tag: String?; var modelID: String; var workload: String
         var started: Date; var thermalStart: String; var loadS: Double; var engineVersion: String; var backend: String
@@ -161,7 +155,6 @@ final class Runner: ObservableObject {
         try? JSONEncoder().encode(m).write(to: Storage.inProgress)
     }
 
-    /// The app died inside a cell (jetsam or a crash): that cell still gets its row.
     func recoverCrashedCell() {
         guard let d = try? Data(contentsOf: Storage.inProgress), let m = try? JSONDecoder().decode(Marker.self, from: d),
               let model = ModelEntry.all.first(where: { $0.id == m.modelID }) else { return }
@@ -173,8 +166,6 @@ final class Runner: ObservableObject {
         emit(r)
         say("recovered a cell the app died in: \(model.artifact) \(m.workload)")
     }
-
-    // MARK: - run
 
     func start(_ plan: RunPlan, then: (@MainActor () async -> Void)? = nil) {
         guard !running else { return }
@@ -192,7 +183,6 @@ final class Runner: ObservableObject {
         Self.keepAwake(true)
         defer { running = false; Self.keepAwake(false); status = "idle"; downloadProgress = nil }
 
-        // records.jsonl keeps every run (each row carries its run id), so a run never loses the one before it.
         let fm = FileManager.default
         if !fm.fileExists(atPath: Storage.records.path) { fm.createFile(atPath: Storage.records.path, contents: nil) }
         rows = []
@@ -220,12 +210,10 @@ final class Runner: ObservableObject {
             for w in workloads { emit(row(cell(w.id), status: "declared_unsupported", error: reason)) }
             return
         }
-        // pie boots once per app process: a second pie model waits for the next launch, and writes no rows here.
         if m.engine == .pie, let served = PieAdapter.booted, served != m.artifact {
             say("\(m.artifact): not run, pie already served \(served) in this launch: force-quit and reopen Pie Bench, then run \(m.artifact)")
             return
         }
-        // Too big for what iOS lets this app have: fail without loading (or downloading).
         let avail = DeviceInfo.availableBytes
         let need = Int64(Double(m.bytes) * 1.1) + 300 << 20
         if avail > 0 && need > avail {
@@ -252,7 +240,6 @@ final class Runner: ObservableObject {
         var base = cell("")
         base.checkpoint = checkpoint
         do {
-            // A load that kills the app is recorded on the next launch.
             mark(base)
             loaded = try await adapter.load(m, checkpoint: checkpoint, contract: contract)
             mark(nil)
@@ -280,7 +267,6 @@ final class Runner: ObservableObject {
                 continue
             }
             let template = contract.templates[m.model]
-            // The rendered prompt (prefix + text + suffix), or just the text for an engine that templates itself.
             let prefix = loaded.rendersTemplate ? "" : template?.prefix ?? "", suffix = loaded.rendersTemplate ? "" : template?.suffix ?? ""
             let maxPrompt = template?.prompt_tokens[w.id]?.flatMap { $0 }.max() ?? Int(Double(w.prefill) * 1.2)
             let perSlot = ((maxPrompt + w.decode + 16 + 255) / 256) * 256
@@ -301,7 +287,6 @@ final class Runner: ObservableObject {
                     let wall = monotonic() - t0
                     let peak = sampler.stop()
                     let expect = template?.prompt_tokens[w.id]?[r]
-                    // LiteRT-LM reports no prompt count (-1): the harness count stands in, as on Android
                     if let expect, expect.count == res.count { for i in res.indices where res[i].promptTokens < 0 { res[i].promptTokens = expect[i] } }
                     rounds.append(.obj([("wall_s", .num(wall)), ("peak_mem_gib", .num(peak)), ("requests", .arr(res.map(\.json)))]))
                     let got = res.map(\.promptTokens)
@@ -311,7 +296,7 @@ final class Runner: ObservableObject {
                 mark(nil)
                 emit(row(c, status: "pass", rounds: rounds))
             } catch is CancellationError {
-                mark(nil)  // stopped by the user: no row for a cell that did not finish
+                mark(nil)
                 break
             } catch {
                 mark(nil)
@@ -323,7 +308,6 @@ final class Runner: ObservableObject {
 }
 
 extension Runner {
-    /// A run may take an hour: the screen stays on.
     static func keepAwake(_ on: Bool) {
         #if canImport(UIKit)
         UIApplication.shared.isIdleTimerDisabled = on

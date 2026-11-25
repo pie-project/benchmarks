@@ -52,10 +52,8 @@
   color: var(--color-label);
 }
 
-/* room for three digits on every table, so the first column starts where Results' does */
 .data-table td.row-number::after { content: "888"; display: block; height: 0; overflow: hidden; visibility: hidden; }
 
-/* row numbers: small and grey, starting at the same edge as any table's first column */
 .data-table .row-number {
   width: 1%;
   padding-right: 4px;
@@ -73,7 +71,7 @@
 
 .data-table .cell-glyphs { display: inline-flex; gap: 14px; }
 .data-table .cell-glyphs.is-slotted { gap: 6px; vertical-align: middle; }
-.data-table .cell-slot { width: 20px; height: 20px; flex: none; }  /* a platform the model was not measured on keeps its place */
+.data-table .cell-slot { width: 20px; height: 20px; flex: none; }
 
 .data-table .col-fill { width: 100%; padding: 0; }
 
@@ -81,7 +79,6 @@
   text-align: right;
 }
 
-/* a note column holds one line: the rest after an ellipsis, all of it on hover */
 .data-table td.is-wide {
   max-width: 280px;
   overflow: hidden;
@@ -89,7 +86,7 @@
 }
 
 .data-table td.is-empty {
-  color: var(--color-label-tertiary);  /* one grey for every empty cell's dash, whatever its row */
+  color: var(--color-label-tertiary);
 }
 
 .data-table td.is-code {
@@ -161,11 +158,9 @@
   text-align: center;
   color: var(--color-label-secondary);
 }
-/* the grids' empty row, as a table's reads: its words at the left in grey over a hairline */
 .platform-nothing { display: flex; align-items: center; height: 36px; padding: 0 20px; font-size: 13px; color: var(--color-label-secondary); border-bottom: .5px solid var(--color-separator); }
-.platform-nothing:hover { background: var(--color-row-hover); }  /* grey under the pointer, as every table row */
+.platform-nothing:hover { background: var(--color-row-hover); }
 
-/* on a phone the table slides sideways inside its own frame, the row numbers and the header held in place */
 @media (max-width: 899px) {
   .table-container {
     overscroll-behavior: contain;
@@ -188,7 +183,6 @@
   }
 }
 
-/* a column's (i): a small outlined glyph after the label; its note opens on hover or focus, as a macOS help tag */
 .column-info { position: relative; display: inline-flex; vertical-align: -2px; margin-left: 4px; color: var(--color-label-tertiary); cursor: help; outline: none; }
 .column-info svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
 .column-info:hover, .column-info:focus-visible { color: var(--color-accent); }
@@ -217,17 +211,15 @@
 .column-info:hover .column-info-pop,
 .column-info:focus-visible .column-info-pop { opacity: 1; transform: none; }
 
-/* a category label: the text in the row's colour, a 7px dot before it; several sit side by side */
 .cell-dot { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; }
-.cell-dot::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--dot); }  /* a square chip, as the Rankings key draws its engines */
-.data-table .cell-glyphs.is-slotted .sidebar-glyph[style] { margin-left: 0; }  /* the tiles on one grid with the empty slots */
+.cell-dot::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--dot); }
+.data-table .cell-glyphs.is-slotted .sidebar-glyph[style] { margin-left: 0; }
 .data-table .cell-glyphs.is-slotted .sidebar-glyph svg { fill: none; }
-.data-table .cell-glyphs.is-slotted .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }  /* Apple's mark is a filled glyph */
-.data-table .cell-glyphs .sidebar-glyph.is-fit { opacity: .35; }  /* would fit, not measured yet */
+.data-table .cell-glyphs.is-slotted .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
+.data-table .cell-glyphs .sidebar-glyph.is-fit { opacity: .35; }
 .data-table .model-name-cell { display: inline-flex; align-items: center; gap: 8px; }
 .data-table .model-name-cell .model-badge { width: 18px; height: 18px; border-radius: 5px; }
 .data-table .model-name-cell .model-badge img { width: 12px; height: 12px; }
-/* an engine's logo on the same white tile, its name as far from it; a single-ink logo takes a dark ink on the white */
 .data-table .engine-tag.is-logo { gap: 8px; }
 .data-table .engine-tag .model-badge { width: 18px; height: 18px; border-radius: 5px; }
 .data-table .engine-tag .model-badge .engine-logo { width: 12px; height: 12px; }
@@ -235,56 +227,46 @@
 .data-table .engine-tag .model-badge .engine-logo.is-glyph .is-stroked { stroke: #1d1d1f; }
 .data-table .engine-tag .model-badge .engine-logo.is-glyph .is-faint { fill: #8e8e93; }
 
-/* a Performance row above its theoretical limit, as CI Reports lists it: a light red wash, a shade deeper under the pointer */
 .data-table tbody tr.is-over-limit td { background: color-mix(in srgb, var(--color-negative) 8%, transparent); }
 .data-table tbody tr.is-over-limit:hover td { background: color-mix(in srgb, var(--color-negative) 14%, transparent); }
 .data-table tbody tr.is-gap td { background: color-mix(in srgb, var(--color-status-noisy) 12%, transparent); }
 .data-table tbody tr.is-gap:hover td { background: color-mix(in srgb, var(--color-status-noisy) 18%, transparent); }
 
-/* a selected Performance or Quality row, as a Mac list fills its selection: the accent, its text in white */
 .data-table tbody tr[data-pick] { user-select: none; -webkit-user-select: none; }
 .data-table tbody tr.is-picked td, .data-table tbody tr.is-picked:hover td { background: var(--color-accent); color: #fff; }
 .data-table tbody tr.is-picked td * { color: #fff; }
 
-/* the bar's Report: a plain toolbar button, the filters' grey, dimmed until rows are selected */
 .report-selected { display: inline-flex; align-items: center; gap: 4px; height: var(--control-height); padding: 0 10px; border: 0; border-radius: var(--radius-control); background: var(--color-fill); color: var(--color-label); font: inherit; font-size: 13px; cursor: pointer; }
 .report-selected[hidden] { display: none; }
 .report-selected:disabled { color: var(--color-label-tertiary); cursor: default; }
 .report-selected:not(:disabled):hover { background: var(--color-fill-secondary); }
 .report-selected svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-/* a selected row's engine square keeps its colour on the blue: a white ring round it, as Finder rings a tag in a selected row */
 .data-table tbody tr.is-picked .engine-tag::before,
 .data-table tbody tr.is-picked .cell-dot::before,
 .data-table tbody tr.is-picked .status-tag.is-pass::before,
 .data-table tbody tr.is-picked .status-tag.is-noisy::before,
-.data-table tbody tr.is-picked .status-tag.is-fail::before { box-shadow: 0 0 0 1.5px #fff; }  /* the status's square too; an icon (the platform's tile) keeps no ring, as Finder rings tags, not icons */
-/* a status drawn as an empty square (not run, unsupported, no fit, no data): its outline in white on the blue */
+.data-table tbody tr.is-picked .status-tag.is-fail::before { box-shadow: 0 0 0 1.5px #fff; }
 .data-table tbody tr.is-picked .status-tag.is-not_run::before,
 .data-table tbody tr.is-picked .status-tag.is-unsupported::before,
 .data-table tbody tr.is-picked .status-tag.is-no_fit::before,
 .data-table tbody tr.is-picked .status-tag.is-no_data::before { box-shadow: inset 0 0 0 1px #fff; }
-.data-table tbody tr.is-picked td.is-empty, .data-table tbody tr.is-picked.is-unmeasured td.is-empty, .data-table tbody tr.is-picked.is-stale td { color: #fff; }  /* a selected row is white throughout, its dashes too */
+.data-table tbody tr.is-picked td.is-empty, .data-table tbody tr.is-picked.is-unmeasured td.is-empty, .data-table tbody tr.is-picked.is-stale td { color: #fff; }
 
-/* every table: each column as wide as what it holds and set to its start, so no column sits in an empty band; the room
-   left over goes to the last column */
 #table-container .data-table { width: 100%; table-layout: auto; }
 #table-container .data-table th, #table-container .data-table td { width: 1%; white-space: nowrap; text-align: left; }
 #table-container .data-table th:last-child, #table-container .data-table td:last-child { width: auto; }
-#table-container .data-table .col-fill { width: 100%; }  /* a catalog table keeps its fill before the Results count */
+#table-container .data-table .col-fill { width: 100%; }
 
-/* Engine Gaps: the note sits at the row's right end, the gap signed in green or red */
 .reports-table th.gaps-note, .reports-table td.gaps-note { text-align: right; color: var(--color-label-secondary); white-space: normal; min-width: 260px; max-width: 440px; }
 .reports-table td.is-positive { color: var(--color-positive); }
 .reports-table td.is-negative { color: var(--color-negative); }
-/* Engine Gaps: every column as narrow as its content, left-aligned; the note takes the rest of the row, right-aligned */
 #gaps .reports-table th, #gaps .reports-table td { width: 1%; white-space: nowrap; text-align: left; }
 #gaps .reports-table th.gaps-note, #gaps .reports-table td.gaps-note { width: auto; min-width: 0; max-width: none; white-space: normal; text-align: right; }
-/* Engine Gaps' conclusion: one tag per row, tinted by what the gap turned out to be */
 .gaps-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 400; color: var(--color-label); white-space: nowrap; }
-.gaps-tag::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--tag); flex: none; }  /* a square chip beside plain text, as the site's keys mark a colour */
+.gaps-tag::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--tag); flex: none; }
 .gaps-tag.is-explained { --tag: var(--color-positive); }
 .gaps-tag.is-study { --tag: var(--color-accent); }
 .gaps-tag.is-rerun { --tag: var(--color-warning); }
 .gaps-tag.is-real { --tag: var(--color-negative); }
 .gaps-tag.is-slice { --tag: var(--color-label-secondary); }
-#gaps .reports-table th.gaps-end, #gaps .reports-table td.gaps-end { text-align: left; padding-left: 20px; }  /* the dots in one line down the column */
+#gaps .reports-table th.gaps-end, #gaps .reports-table td.gaps-end { text-align: left; padding-left: 20px; }

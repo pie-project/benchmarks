@@ -1,16 +1,10 @@
 window.Pie = window.Pie || {};
 
-// CI Reports: the measurements the data itself flags (above the hardware's theoretical limit), worked out from the live
-// data each time and listed as a table, each linking to its platform's issue on GitHub. A visitor's report of a wrong
-// number is a GitHub issue too (flag below), so the site keeps no store of its own.
 (() => {
   const element = document.getElementById("reports");
   const esc = (text) => Pie.format.escape(String(text ?? ""));
-  // every flagged measurement reads Open until the data moves it back inside its band
   const STATUS = { open: "Open" };
 
-  // the Outliers card's red dots, reported on their own: worked out from the live data each time, so they always match
-  // the card and leave once a number comes back inside its band (Pie.board.outliers)
   const outliers = () => {
     try { return Pie.board?.outliers?.() || []; } catch { return []; }
   };
@@ -22,20 +16,15 @@ window.Pie = window.Pie || {};
   };
   const tag = Pie.format;
   const day = (t) => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  // a status as the site's tables draw one: a small square before its name
   const statusTag = (s) => `<span class="status-tag is-noisy">${esc(STATUS[s] || s)}</span>`;
 
-  // a red dot of the Outliers card as a report row: Pie on its machine, model and setup, why it stands out
   const OUTLIER_WORKLOAD = { decode: "decode", prefill: "prefill", batching: "batching", pbatch: "pbatch" };
-  // a row's type, as the site's tables mark a category: a small coloured square before its name
   const TYPES = {
     limit: { label: "Exceeds Theoretical Limit", color: "#FF9500", title: "Pie measures above the hardware's theoretical maximum: the run or the limit's inputs are off" },
   };
   const typeTag = (t) => `<span class="cell-dot" style="--dot: ${TYPES[t].color}" title="${esc(TYPES[t].title)}">${esc(TYPES[t].label)}</span>`;
-  // the Type filter in the bar: every type, or one, kept per browser
   let typeFilter = (() => { try { const v = localStorage.getItem("pieReportsType"); return TYPES[v] ? v : ""; } catch { return ""; } })();
   const keeps = (t) => !typeFilter || t === typeFilter;
-  // one cell, opened from a link (#reports/<machine>/<model>/<setup>): only its rows, until its chip in the bar is cleared
   let focused = null;
   const inFocus = (r) => !focused || (r.hardware === focused.hardware && r.model === focused.model && (!focused.setup || !r.setup || r.setup === focused.setup));
   const outlierRow = (o, i) => `
@@ -53,23 +42,17 @@ window.Pie = window.Pie || {};
       <td>${esc(o.measured ? day(String(o.measured).replace(" ", "T")) : dataDay())}</td>
       <td class="reports-fix-cell">${issueLinks(o)}</td>
     </tr>`;
-  // an outlier's issue on pie: one stays open per platform ("[NVIDIA] Benchmarks", labelled benchmarks), its description the platform's current
-  // list (tools/outlier_issues.py rewrites it as the data changes), so every row links to its platform's issue
   const ISSUES = "https://github.com/pie-project/pie/issues";
   const PLATFORM_NAME = { mac: "Apple", windows: "Windows", nvidia: "NVIDIA", amd: "AMD", tpu: "TPU", android: "Mobile", web: "WebGPU", cerebras: "Cerebras" };
   const issueLinks = (o) => {
     const code = Pie.platformOf(Pie.store.index.hardware[o.hardware] || {});
     const platform = PLATFORM_NAME[code] || "";
     const link = `${ISSUES}?q=${encodeURIComponent(`is:issue is:open label:benchmarks in:title "[${platform}] Benchmarks"`)}`;
-    // plain text as a Mac list sets it, the site's outward arrow after it, as See Runs reads: a link only under the pointer
     return `<a class="reports-issue" href="${esc(link)}" target="_blank" rel="noopener" title="Open [${esc(platform)}] Benchmarks on GitHub">${esc(platform)} Reports<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg></a>`;
   };
   const dataDay = () => { const at = Pie.store.tables.updated_at; return at ? day(at) : ""; };
 
-  // the table is always drawn, its header at once, as the site's other tables are; no rows is the one quiet row the
-  // other tables show when nothing matches
   const COLUMNS = 12;
-  // a header click sorts by its column, as the site's other tables do: up, then down, then the table's own order
   let sort = null;
   const SORTS = [["type", "Type"], ["status", "Status"], ["engine", "Engine"], ["model", "Model"], ["hardware", "Hardware"],
     ["workload", "Workload"], ["value", "Value", true], ["details", "Details"], ["reporter", "Reported by"], ["date", "Date"]];
@@ -88,7 +71,6 @@ window.Pie = window.Pie || {};
       default: return null;
     }
   };
-  // a stable sort; a row with nothing in the column goes last either way, as on Performance
   const ordered = (items) => {
     if (!sort) return items;
     const numeric = SORTS.find(([key]) => key === sort.key)?.[2];
@@ -104,7 +86,6 @@ window.Pie = window.Pie || {};
   const sortHead = ([key, label, numeric]) => `<th${numeric ? ' class="is-numeric"' : ""} data-reports-sort="${key}" title="Sort by ${label}">${label}${sort?.key === key ? `<span class="column-sort">${sort.direction > 0 ? "↑" : "↓"}</span>` : ""}</th>`;
   const list = () => {
     const note = (text) => `<tr><td class="table-empty" colspan="${COLUMNS}">${esc(text)}</td></tr>`;
-    // the outliers the data shows now
     const found = outliers().filter((o) => keeps("limit") && inFocus(o));
     shown = `${found.length.toLocaleString("en-US")} ${found.length === 1 ? "row" : "rows"}`;
     const body = found.length ? ordered(found.map((x) => ({ x }))).map((it, i) => outlierRow(it.x, i)).join("") : note("No reports yet");
@@ -117,8 +98,6 @@ window.Pie = window.Pie || {};
       </div>`;
   };
 
-  // rows selected as the Performance table's are, in the accent: a click selects one alone (again clears it), ⌘-click
-  // adds or drops one, ⇧-click the run from the last one clicked; Engine Gaps selects its rows the same way
   element.addEventListener("click", (event) => {
     const head = event.target.closest("[data-reports-sort]");
     if (!head) return;
@@ -150,15 +129,13 @@ window.Pie = window.Pie || {};
   };
   Pie.pickRows(element);
 
-  let shown = "";  // how many rows the table holds, said under the window's title
+  let shown = "";
   const draw = () => {
     if (element.hidden) return;
-    // no title: the table fills the page as Performance's does, the toolbar naming the page
     element.innerHTML = list();
     if (Pie.toolbar?.elements?.subtitle) Pie.toolbar.elements.subtitle.textContent = shown;
   };
 
-  // a measurement's number in words, for the GitHub issue a report opens
   const fmt = (n) => (typeof n === "number" ? n.toLocaleString("en-US", { maximumFractionDigits: n < 10 ? 2 : 0 }) : n);
   const valueOf = (row, source) => source === "quality"
     ? (row.score != null ? `Score ${fmt(row.score)}` : "")
@@ -176,11 +153,9 @@ window.Pie = window.Pie || {};
 
   Pie.reports = {
     element,
-    // the bar: only the chip of a cell a link narrowed the page to
     focus(hardware, model, setup) { focused = { hardware, model, setup: setup || null }; if (!element.hidden) draw(); },
     bar() {
       const chip = focused ? `<span class="filter is-set"><button class="filter-button" type="button" data-reports-unfocus title="Show every report">${esc([nameOf("hardware", focused.hardware), nameOf("models", focused.model), focused.setup && { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" }[focused.setup]].filter(Boolean).join(" · "))}<svg class="popup-chevron" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></button></span>` : "";
-      // no Type filter: every row on this page is one type, a measurement above its theoretical limit
       return chip;
     },
     menu(k) {
@@ -191,13 +166,11 @@ window.Pie = window.Pie || {};
     pick(k, value) {
       if (k !== "type") return;
       typeFilter = TYPES[value] ? value : "";
-      try { localStorage.setItem("pieReportsType", typeFilter); } catch { /* private windows can refuse storage */ }
+      try { localStorage.setItem("pieReportsType", typeFilter); } catch { }
       draw();
     },
     open: () => openCount(),
-    shown: () => shown,  // the open reports, for the sidebar
-    // a report of the selected rows of the Performance (results) or Quality table: a GitHub issue on the open benchmarks
-    // repo with the numbers filled in, no account here; `sent` runs once it is opened (the table clears its selection)
+    shown: () => shown,
     flag(rows, source, sent) {
       if (!rows.length) return;
       const lines = rows.map((row) => `| ${nameOf("engines", row.engine)} | ${nameOf("models", row.model)} | ${nameOf("hardware", row.hardware || row.platform)} | ${source === "quality" ? row.task : nameOf("workloads", row.workload)} | ${valueOf(row, source) || "—"} |`);

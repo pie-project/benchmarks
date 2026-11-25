@@ -6,7 +6,6 @@ import MLXLLM
 import MLXLMCommon
 import Tokenizers
 
-/// The swift-transformers tokenizer behind mlx-swift-lm's Tokenizer protocol.
 private struct HFTokenizer: MLXLMCommon.Tokenizer {
     let upstream: any Tokenizers.Tokenizer
     func encode(text: String, addSpecialTokens: Bool) -> [Int] { upstream.encode(text: text, addSpecialTokens: addSpecialTokens) }
@@ -48,7 +47,6 @@ struct MLXAdapter: EngineAdapter {
 final class MLXModel: LoadedModel, @unchecked Sendable {
     let engineVersion = MLXAdapter.version
     let backend = "metal"
-    /// mlx-swift-lm has no batched generation: one sequence at a time.
     let concurrencyUnsupportedReason: String? = "serves one request at a time"
     private let context: ModelContext
     private let prefillStep = 2048
@@ -76,7 +74,6 @@ final class MLXModel: LoadedModel, @unchecked Sendable {
         let input = LMInput(tokens: MLXArray(ids.map(Int32.init)))
         var params = GenerateParameters(maxTokens: decode, temperature: 0)
         params.prefill.stepSize = prefillStep
-        // A fresh cache per request: cold prompts. EOS is not checked: exactly `decode` tokens.
         var it = try TokenIterator(input: input, model: context.model, parameters: params)
         var first = 0.0
         var n = 0

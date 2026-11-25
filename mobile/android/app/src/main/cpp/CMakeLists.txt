@@ -4,7 +4,6 @@ project(benchllama C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-# llama.cpp at the same tag as the Mac rows; a local checkout (LLAMA_CPP_DIR) or fetched by tag.
 if (LLAMA_CPP_DIR)
     set(LLAMA_SRC ${LLAMA_CPP_DIR})
 else()
@@ -16,8 +15,6 @@ else()
     set(LLAMA_SRC ${llama_cpp_SOURCE_DIR})
 endif()
 
-# Same CPU setup as llama.cpp's own Android example: every arm64 CPU variant
-# (dotprod, fp16, i8mm, sve2, sme) built as a loadable backend, the best one picked at run time.
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_COMMON OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_TESTS OFF CACHE BOOL "" FORCE)

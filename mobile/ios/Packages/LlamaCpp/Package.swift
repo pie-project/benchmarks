@@ -1,7 +1,4 @@
 // swift-tools-version:5.9
-// llama.cpp b11312, the official release XCFramework (the same pin as the Mac rows).
-// That release ships ios-arm64 and macOS slices only. For an iOS Simulator test build, point
-// LLAMA_XCFRAMEWORK at a local xcframework with a simulator slice (scripts/build-llama-sim.sh).
 
 import Foundation
 import PackageDescription

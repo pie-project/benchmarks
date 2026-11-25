@@ -5,12 +5,10 @@ Pie.state = {
   platform: { metric: "decode", mode: null },
   overview: { hardware: null, workload: "raw", engine: "pie", heatMac: null, standMac: null, model: null, macsView: "rings", modelsView: "rings", bestView: "rings" },
   release: "main",
-  // the models the measurement pages show: the release models (targeted) or every one (full)
   suite: "full",
   query: "",
   filters: {},
   sort: null,
-  // unavailable rows are hidden; U shows them for a moment's look, and every visit starts hidden again
   hideEmpty: true,
 
   reset(table, filters = {}) {

@@ -9,22 +9,17 @@ data class Round(val warmup: List<String>, val measured: List<String>)
 data class Workload(
     val id: String,
     val concurrency: Int,
-    val prefill: Int,
     val decode: Int,
-    val requests: Int,
     val warmup: Int,
-    val coldCache: Boolean,
     val rounds: List<Round>,
 )
 
 data class Template(val prefix: String, val suffix: String, val promptTokens: JSONObject) {
     fun render(user: String) = prefix + user + suffix
-    /** Harness tokenizer count for measured request i of round r. */
     fun expected(workload: String, round: Int, i: Int): Int =
         promptTokens.optJSONArray(workload)?.optJSONArray(round)?.optInt(i, -1) ?: -1
 }
 
-/** mobile/shared/workloads.json, made by the harness (mobile/tools/gen_workloads.py), bundled as an asset. */
 class Workloads(val harnessCommit: String, val system: String, val rounds: Int, val workloads: List<Workload>, val templates: Map<String, Template>) {
     companion object {
         fun load(context: Context): Workloads {
@@ -35,8 +30,7 @@ class Workloads(val harnessCommit: String, val system: String, val rounds: Int, 
                     val w = arr.getJSONObject(k)
                     val rs = w.getJSONArray("rounds")
                     Workload(
-                        w.getString("id"), w.getInt("concurrency"), w.getInt("prefill"), w.getInt("decode"),
-                        w.getInt("requests"), w.getInt("warmup"), w.optBoolean("cold_cache"),
+                        w.getString("id"), w.getInt("concurrency"), w.getInt("decode"), w.getInt("warmup"),
                         (0 until rs.length()).map { r -> rs.getJSONObject(r).let { Round(strs(it.getJSONArray("warmup")), strs(it.getJSONArray("measured"))) } },
                     )
                 }

@@ -1,10 +1,8 @@
-/* a first visit's tour: a welcome sheet (the ⌘K palette's panel over the dimmed window, the mark, a title, push buttons),
-   then a walk that dims the page around one lit element with a callout beside it */
 .tour-backdrop { position: fixed; inset: 0; z-index: 1200; display: flex; justify-content: center; align-items: center; padding: 24px; background: rgba(0, 0, 0, .28); }
 .tour-sheet { display: flex; flex-direction: column; width: min(480px, 100%); max-height: calc(100vh - 48px); overflow: hidden; border-radius: 12px;
   background: var(--color-menu); color: var(--color-label); box-shadow: var(--shadow-menu), 0 0 0 .5px var(--color-separator);
   -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); animation: tour-in .18s ease-out; }
-.tour-body { display: flex; flex-direction: column; justify-content: center; flex: none; aspect-ratio: 48 / 33; overflow-y: auto; padding: 28px; }  /* the message in the middle, its buttons under it */
+.tour-body { display: flex; flex-direction: column; justify-content: center; flex: none; aspect-ratio: 48 / 33; overflow-y: auto; padding: 28px; }
 .tour-mark { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 13px;
   background: var(--color-accent); }
 .tour-mark svg { width: 34px; height: 34px; fill: #fff; stroke: #fff; stroke-width: 1; stroke-linejoin: round; }

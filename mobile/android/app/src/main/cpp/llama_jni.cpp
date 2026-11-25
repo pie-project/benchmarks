@@ -1,11 +1,3 @@
-// JNI bridge from the benchmark app to llama.h (no llama-common, no server).
-//
-// One loaded model + context per handle. run() serves a list of raw prompts through `slots`
-// parallel sequences of one llama_batch (continuous batching, like llama-server's slots):
-// a free slot takes the next prompt, its KV sequence is cleared first (cold prompt, no prefix
-// reuse), prompt tokens of newly admitted slots and the next token of decoding slots share one
-// batch. Greedy (argmax), end-of-generation tokens masked when ignore_eos, exactly max_new tokens.
-// Timestamps are CLOCK_MONOTONIC ns (same clock as System.nanoTime).
 #include <jni.h>
 #include <android/log.h>
 #include <time.h>
@@ -102,7 +94,7 @@ Java_org_pieevals_phonebench_engines_LlamaNative_load(JNIEnv * env, jclass, jstr
     llama_model_params mp = llama_model_default_params();
     mp.n_gpu_layers = n_gpu_layers;
     static ggml_backend_dev_t no_gpu[1] = {nullptr};
-    if (n_gpu_layers == 0) mp.devices = no_gpu;  // CPU run: no GPU device at all, not even for op offload
+    if (n_gpu_layers == 0) mp.devices = no_gpu;
     h->model = llama_model_load_from_file(jstr(env, path).c_str(), mp);
     if (!h->model) {
         delete h;
@@ -116,7 +108,7 @@ Java_org_pieevals_phonebench_engines_LlamaNative_load(JNIEnv * env, jclass, jstr
     cp.n_seq_max = n_seq;
     cp.n_threads = n_threads;
     cp.n_threads_batch = n_threads;
-    cp.kv_unified = false;  // llama-server with an explicit --parallel: n_ctx split across the slots
+    cp.kv_unified = false;
     cp.flash_attn_type = flash_attn ? LLAMA_FLASH_ATTN_TYPE_ENABLED : LLAMA_FLASH_ATTN_TYPE_DISABLED;
     cp.no_perf = true;
     cp.op_offload = n_gpu_layers > 0;
@@ -144,16 +136,7 @@ Java_org_pieevals_phonebench_engines_LlamaNative_modelDesc(JNIEnv * env, jclass,
     return env->NewStringUTF(buf);
 }
 
-extern "C" JNIEXPORT jint JNICALL
-Java_org_pieevals_phonebench_engines_LlamaNative_countTokens(JNIEnv * env, jclass, jlong hp, jstring text) {
-    auto * h = (Handle *) hp;
-    std::string s = jstr(env, text);
-    int n = -llama_tokenize(h->vocab, s.c_str(), (int) s.size(), nullptr, 0, false, true);
-    return n;
-}
-
 static std::vector<llama_token> tokenize(Handle * h, const std::string & s) {
-    // parse_special ON (gemma's prefix carries "<bos>" as text), add_special OFF (no second BOS)
     int n = -llama_tokenize(h->vocab, s.c_str(), (int) s.size(), nullptr, 0, false, true);
     std::vector<llama_token> out(std::max(n, 0));
     if (n > 0) llama_tokenize(h->vocab, s.c_str(), (int) s.size(), out.data(), n, false, true);
@@ -161,16 +144,15 @@ static std::vector<llama_token> tokenize(Handle * h, const std::string & s) {
 }
 
 struct Slot {
-    int req = -1;          // request index, -1 = free
+    int req = -1;
     std::vector<llama_token> prompt;
-    size_t fed = 0;        // prompt tokens already in the KV
+    size_t fed = 0;
     llama_pos pos = 0;
-    llama_token next = -1; // sampled token waiting to be fed
+    llama_token next = -1;
     int produced = 0;
-    int logit_idx = -1;    // index into the current batch's outputs
+    int logit_idx = -1;
 };
 
-// Returns long[n*5]: per request {prompt_tokens, output_tokens, send_ns, first_ns, last_ns}.
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_org_pieevals_phonebench_engines_LlamaNative_run(JNIEnv * env, jclass, jlong hp, jobjectArray jprompts,
                                                     jint max_new, jint slots, jboolean ignore_eos) {
@@ -194,7 +176,6 @@ Java_org_pieevals_phonebench_engines_LlamaNative_run(JNIEnv * env, jclass, jlong
     std::string err;
 
     while (done < n) {
-        // admit queued requests into free slots: clear that sequence first (cold prompt)
         for (int s = 0; s < ns; s++) {
             if (sl[s].req >= 0 || queue.empty()) continue;
             int r = queue.front();
@@ -209,7 +190,6 @@ Java_org_pieevals_phonebench_engines_LlamaNative_run(JNIEnv * env, jclass, jlong
             if (x.prompt.empty()) { err = "empty prompt"; break; }
         }
         if (!err.empty()) break;
-        // one batch: the next token of each decoding slot, then as much prompt as fits
         batch.n_tokens = 0;
         auto add = [&](llama_token t, llama_pos p, int s, bool logits) {
             int i = batch.n_tokens++;

@@ -1,6 +1,5 @@
 import Foundation
 
-/// A JSON value that keeps key order and writes explicit nulls, so a row reads like the contract.
 indirect enum J {
     case null
     case bool(Bool)
@@ -58,7 +57,6 @@ indirect enum J {
         out += "\""
     }
 
-    /// Reads a JSON object back (for showing saved rows).
     static func parse(_ line: String) -> [String: Any]? {
         guard let d = line.data(using: .utf8) else { return nil }
         return (try? JSONSerialization.jsonObject(with: d)) as? [String: Any]

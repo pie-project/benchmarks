@@ -1,7 +1,6 @@
 import Foundation
 
 #if canImport(LiteRtLm)
-/// Google LiteRT-LM 0.19.1 on `.litertlm` files, GPU backend (Metal), one request at a time, as on Android.
 struct LiteRtAdapter: EngineAdapter {
     let id = EngineID.litert
 
@@ -27,7 +26,6 @@ final class LiteRtModel: LoadedModel, @unchecked Sendable {
     static let maxTokens = 2048
     let engineVersion = LiteRtCore.version
     let backend = "metal"
-    /// One Session at a time, as on Android.
     let concurrencyUnsupportedReason: String? = "serves one request at a time"
     private var core: LiteRtCore?
     private let stripBos: Bool
@@ -53,7 +51,6 @@ final class LiteRtModel: LoadedModel, @unchecked Sendable {
             try prompts.map { p0 in
                 let p = self.stripBos && p0.hasPrefix("<bos>") ? String(p0.dropFirst(5)) : p0
                 let s = try core.generate(p, want: decode, clock: monotonic)
-                // -1: the runner fills in the harness count
                 return RequestTiming(promptTokens: -1, outputTokens: s.tokens, ttft: s.first - s.sent, latency: s.last - s.sent)
             }
         }.value

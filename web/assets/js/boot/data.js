@@ -8,10 +8,10 @@ window.Pie = window.Pie || {};
 
   const APP = [
     "config/icons", "config/engines", "config/schema", "config/architectures",
-    "core/state", "core/format", "core/store", "core/query",
+    "core/state", "core/format", "core/limits", "core/store", "core/query",
     "ui/preferences", "ui/sidebar", "ui/toolbar", "ui/palette", "ui/popover", "ui/tap-card", "ui/segmented",
     "ui/filters", "ui/dates", "ui/table", "ui/overview", "ui/platform", "ui/welcome",
-    "ui/approach", "ui/reports", "config/gapnotes", "ui/gaps", "ui/reasons", "ui/fairness", "ui/methodology",
+    "ui/approach", "ui/reports", "config/gapnotes", "ui/gaps", "ui/reasons", "ui/fairness",
     "ui/methods", "ui/board", "ui/tour", "ui/checks", "app",
   ];
 
@@ -28,7 +28,6 @@ window.Pie = window.Pie || {};
 
   read().then(([catalog, latest, profiles]) => {
     Pie.profiles = profiles;
-    // verified: a profile of both engines agrees with the benchmark, by the API's own checks
     Pie.verifiedProfile = (key) => profiles[key]?.verdict === "confirmed";
     window.DB = {
       ...catalog,

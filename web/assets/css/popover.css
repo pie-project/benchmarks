@@ -1,6 +1,6 @@
 .popover {
   position: fixed;
-  z-index: 1000;  /* a menu sits above everything on the page: sticky headers, the sidebar, hover cards */
+  z-index: 1000;
   min-width: 200px;
   max-width: calc(100vw - 16px);
   max-height: 360px;
@@ -45,18 +45,6 @@
   color: var(--color-on-accent);
 }
 
-/* a menu's footnote: small grey text under its items, no wider than the menu it explains */
-.popover-note {
-  width: 0;
-  min-width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 4px 10px 6px;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--color-label-tertiary);
-}
-
 .popover-detail {
   margin-left: auto;
   padding-left: 20px;
@@ -88,7 +76,6 @@
   background: var(--color-separator);
 }
 
-/* on a phone a menu reads as an iOS context menu: wider, rows a finger can hit, the text at body size */
 @media (max-width: 899px) {
   .popover {
     min-width: 240px;
@@ -113,7 +100,6 @@
     font-size: 16px;
   }
 
-  /* a detail sits under its name, as iOS sets a menu item's subtitle */
   .popover-option:has(.popover-detail) {
     flex-wrap: wrap;
     align-content: center;
@@ -147,23 +133,15 @@
   }
 }
 
-/* the setup menu: an icon and a name, as a macOS menu item */
 .popover-option.is-setup { gap: 8px; padding-right: 14px; }
-/* a menu's icons are monochrome in the label color, white on the highlighted row, as macOS draws them */
-.setup-icon { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.filter-button .setup-icon { margin-right: -1px; }  /* the button's own 6px gap, less a point: 5px, as Configuration spaces its glyph */
-/* a click leaves no ring on the button: only keyboard focus draws one, as on macOS */
 .filter-button:focus:not(:focus-visible) { outline: none; }
 
-/* a shortcut in a menu row, as macOS sets one: the key in the secondary grey at the row's end */
 .popover-key { font-variant-numeric: normal; letter-spacing: .02em; }
 
-/* a menu item's symbol, before its name: the label's colour, white with it on the highlighted row */
 .popover-icon { flex: none; width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; color: var(--color-label); }
 .popover-option:hover .popover-icon,
 .popover-option:focus-visible .popover-icon { color: var(--color-on-accent); }
 @media (max-width: 899px) { .popover-icon { width: 18px; height: 18px; } }
-/* a phone's setup menu is an iOS menu: one line each, the checkmark, the name, its symbol at the trailing edge; no keys to press */
 @media (max-width: 899px) {
   .popover-option.is-setup { flex-wrap: nowrap; padding-top: 0; padding-bottom: 0; }
   .popover-option.is-setup .popover-label { flex: 1 1 auto; }
@@ -171,22 +149,18 @@
   .popover-option.is-setup .popover-key { display: none; }
 }
 
-/* a short menu fits its words: a card's Decode or Prefill */
 .popover.is-compact { min-width: 0; }
-.popover .mode-icon { width: 12px; height: 12px; flex: none; margin-right: 6px; }  /* a setup's degree mark before its name */
+.popover .mode-icon { width: 12px; height: 12px; flex: none; margin-right: 6px; }
 
-/* a long menu's search field, over its list: the glass, then the words, on the field's fill */
 .popover-search { flex: none; display: flex; align-items: center; gap: 6px; height: 28px; margin: 0 0 4px; padding: 0 8px; border-radius: var(--radius-field); background: var(--color-fill); }
 .popover-search svg { width: 13px; height: 13px; flex: none; fill: none; stroke: var(--color-label-secondary); stroke-width: 2; stroke-linecap: round; }
 .popover-search input { flex: 1; min-width: 0; border: 0; outline: none; background: none; font: inherit; font-size: 13px; color: var(--color-label); }
 .popover-option[hidden] { display: none; }
-/* a model's maker before its name, as the grid's tile, sized to the menu's line */
 .popover .model-badge { width: 18px; height: 18px; margin-right: 8px; border-radius: 4px; flex: none; }
-.popover-option .sidebar-glyph { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 8px; border-radius: 4px; flex: none; background: var(--tint); }  /* a platform's tile, as the sidebar draws it */
+.popover-option .sidebar-glyph { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 8px; border-radius: 4px; flex: none; background: var(--tint); }
 .popover-option .sidebar-glyph svg { width: 11px; height: 11px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .popover-option .sidebar-glyph svg .is-filled { fill: #fff; stroke: none; }
 .popover .model-badge img { width: 12px; height: 12px; }
-/* a searchable menu: the field fixed at its top, the options scrolling in the space under it */
 .popover.is-searchable { display: flex; flex-direction: column; overflow: hidden; }
 .popover.is-searchable[hidden] { display: none; }
 .popover-scroll { flex: 1; min-height: 0; overflow-y: auto; }
@@ -195,15 +169,13 @@
 .popover-option .model-badge { width: 16px; height: 16px; margin-right: 6px; border-radius: 4px; flex: none; }
 .popover-option .model-badge img { width: 11px; height: 11px; }
 
-/* a model under its group in the Models menu, set in by a logo's width */
 .popover-indent { display: inline-block; width: 24px; flex: none; }
 
-/* a submenu's row: the chevron at its right end, and the row stays lit while its list is open, as a Mac menu's does */
 .popover-chevron { flex: none; width: 7px; height: 10px; margin-left: 8px; fill: none; stroke: var(--color-label-secondary); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .popover-parent .popover-detail { color: var(--color-label-secondary); }
 .popover-parent.is-open { background: var(--color-accent); color: var(--color-on-accent); }
 .popover-parent.is-open *, .popover-option:hover .popover-chevron { color: var(--color-on-accent); stroke: var(--color-on-accent); }
 .popover-parent.is-open .popover-chevron { stroke: var(--color-on-accent); }
 .popover-sub { min-width: 160px; }
-.popover .view-icon { width: 14px; height: 14px; flex: none; margin-right: 2px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }  /* each view after its sidebar symbol */
-.popover .view-icon .is-filled { fill: currentColor; stroke: none; }  /* the solid rack, as the sidebar drew it */
+.popover .view-icon { width: 14px; height: 14px; flex: none; margin-right: 2px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.popover .view-icon .is-filled { fill: currentColor; stroke: none; }

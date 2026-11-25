@@ -1,57 +1,6 @@
-/* Quality: three quiet tables under the page title, hairlines between rows, figures in tabular digits */
-.qc-inner { position: relative; gap: 0; }
-.qc-head { margin-bottom: 8px; }
-.qc-section { margin-top: 40px; }
-.qc-section h2 { margin: 0 0 4px; font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -.01em; color: var(--color-label); }
-.qc-caption { margin: 0 0 16px; max-width: 680px; font-size: 14px; line-height: 1.45; color: var(--color-label-secondary); }
 .qc-empty { margin: 0; padding: 28px 0; font-size: 14px; color: var(--color-label-tertiary); text-align: center; border: .5px solid var(--color-panel-outline); border-radius: 14px; }
-.qc-foot { margin: 12px 0 0; font-size: 12px; line-height: 1.45; color: var(--color-label-secondary); }
-
-/* the miniature note: a soft tinted strip, as a Settings footer that matters */
-.qc-banner {
-  margin: 0 0 16px; padding: 10px 14px; border-radius: 10px;
-  font-size: 13px; line-height: 1.45; color: var(--color-label);
-  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
-}
-
-.qc-scroll { overflow-x: auto; border: .5px solid var(--color-panel-outline); border-radius: 14px; }
-.qc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.qc-table th, .qc-table td { padding: 10px 14px; text-align: left; vertical-align: middle; white-space: nowrap; border-top: .5px solid var(--color-separator-light); }
-.qc-table thead th { border-top: 0; font-size: 12px; font-weight: 500; color: var(--color-label-secondary); }
-.qc-table thead th small { display: block; margin-top: 1px; font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); }
-.qc-table tbody tr:hover { background: var(--color-row-hover); }
-.qc-table .qc-lead { font-weight: 500; color: var(--color-label); }
-.qc-table thead .qc-lead { font-weight: 500; color: var(--color-label-secondary); }
-.qc-table .qc-lead span { display: block; }
-.qc-table .qc-lead code { display: block; margin-top: 1px; font-family: var(--font-mono); font-size: 11px; font-weight: 400; color: var(--color-label-tertiary); }
-.qc-num { text-align: right !important; font-variant-numeric: tabular-nums; }
-.qc-quiet { color: var(--color-label-secondary); }
-.qc-quiet code { font-family: var(--font-mono); font-size: 11px; }
-.qc-none { color: var(--color-label-quaternary); }
-
-.qc-cell { cursor: default; }
-.qc-figure { font-variant-numeric: tabular-nums; color: var(--color-label); }
-.qc-sep { margin: 0 5px; color: var(--color-label-quaternary); }
-.qc-badge {
-  display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
-  font-size: 10px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; vertical-align: 1px;
-  color: var(--color-warning); background: color-mix(in srgb, var(--color-warning) 12%, transparent);
-}
-
-.qc-ok { color: var(--color-label-tertiary); }
-.qc-failed {
-  padding: 2px 9px; border: 0; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer;
-  color: var(--color-negative); background: color-mix(in srgb, var(--color-negative) 10%, transparent);
-}
-.qc-failed:hover { background: color-mix(in srgb, var(--color-negative) 16%, transparent); }
-
-.qc-flag { font-size: 12px; color: var(--color-label-tertiary); }
-.qc-flag.is-ok { color: var(--color-positive); }
-.qc-flag.is-mismatch { font-weight: 600; color: var(--color-negative); }
-.qc-table .is-off { color: var(--color-negative); }
 .qc-picker { margin: 0 0 14px; }
 
-/* the failing tests: a menu-like card under the count */
 .qc-pop {
   position: absolute; z-index: 15; width: 380px; max-height: 320px; overflow: auto; padding: 10px 0;
   border-radius: var(--radius-menu); background: var(--color-menu); box-shadow: var(--shadow-menu);
@@ -63,30 +12,12 @@
 .qc-pop li { padding: 6px 14px; font-size: 12px; line-height: 1.4; border-top: .5px solid var(--color-separator-light); }
 .qc-pop li code { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--color-label); word-break: break-all; }
 .qc-pop li span { display: block; margin-top: 2px; color: var(--color-label-secondary); white-space: pre-wrap; word-break: break-word; }
-
-.qc-unsupported svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; color: var(--color-label-tertiary); vertical-align: middle; }
-
-/* in the Overview's hand: its centred column, 20px section titles over 12px grey ledes, outlined 12px cards, the cards'
-   small type, and the setup control's capsule for the engine pick, its choice in the accent */
-.qc-inner { display: block; max-width: 1080px; margin: 0 auto; padding: 48px var(--edge) 48px; }
-.qc-head { margin: 0 0 8px; }
-.qc-head h1 { margin: 0 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
-.qc-head .method-lede { margin: 0; max-width: none; font-size: 12px; line-height: 1.4; color: var(--color-label-secondary); }
-.qc-section { margin-top: 32px; }
-.qc-section h2 { margin: 0 0 2px; font-family: inherit; font-size: 13px; font-weight: 600; }
-.qc-caption { margin: 0 0 12px; max-width: none; font-size: 11px; line-height: 1.4; }
-.qc-empty, .qc-scroll { border: 0; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--color-separator); }
+.qc-empty { border: 0; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--color-separator); }
 .qc-empty { padding: 24px 0; font-size: 12px; }
-.qc-table { font-size: 12px; }
-.qc-table th, .qc-table td { padding: 8px 16px; border-top-color: var(--color-separator); }
-.qc-table thead th { font-size: 11px; }
-.qc-table tbody tr:hover { background: none; }  /* no hover fill, as the Overview's cards */
-.qc-foot { font-size: 11px; color: var(--color-label-tertiary); }
 .qc-picker { margin: 0 0 12px; gap: 0; }
-.qc-picker .plain-button { padding: 0 8px; transition: none; }  /* the setup control's height, type and spacing */
+.qc-picker .plain-button { padding: 0 8px; transition: none; }
 .qc-picker .plain-button.is-active, :root[data-theme="dark"] .qc-picker .plain-button.is-active { color: var(--color-accent); background: transparent; box-shadow: none; }
 
-/* the accuracy gap chart: an outlined card as the Overview's, rows as its bars' labels, the mismatches in red */
 .qc-chart-card { margin: 0 0 12px; padding: 14px 16px 10px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--color-separator); }
 .qc-chart { display: block; width: 100%; height: auto; overflow: visible; font-family: inherit; }
 .qc-grid { stroke: var(--color-separator); stroke-dasharray: 3 3; }
@@ -107,23 +38,17 @@
 .qc-key-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-label-secondary); }
 .qc-key-dot.is-off { background: var(--color-negative); }
 
-/* the grid page: the platform pages' bar and table; a cell's gap after its score, small and grey, red on a mismatch */
-#checks { display: flex; flex-direction: column; min-height: 0; overflow: hidden; scrollbar-gutter: auto; }  /* its grid scrolls, as Performance's does, so the bar spans the same width */
+#checks { display: flex; flex-direction: column; min-height: 0; overflow: hidden; scrollbar-gutter: auto; }
 #checks[hidden] { display: none; }
 #checks .qc-picker { margin: 0; }
-.qc-bar-note { margin-left: 8px; font-size: 11px; color: var(--color-label-tertiary); }
-.qc-gap { margin-left: 6px; font-size: 10px; font-weight: 400; color: var(--color-label-tertiary); }
-.qc-gap.is-off { color: var(--color-negative); }
-/* pie on par with the other engine: the cell, its gap and the Overall chip in green, as a mismatch is in red */
-.platform-cell.is-same, .platform-cell.is-same .qc-gap { color: var(--color-positive); }
+.platform-cell.is-same { color: var(--color-positive); }
 .platform-table td.is-overall .platform-cell.is-same { color: var(--color-positive); background: color-mix(in srgb, var(--color-positive) 14%, transparent); }
 #checks .platform-scroll > .qc-empty { margin: 24px var(--edge); }
 .board-accuracy .qc-picker { margin: 0 0 12px; }
-/* the hover card in the platform pages' format (.tip-title, .tip-row): name, value, no date column; the verdict a footer */
 .qc-tip-rows .tip-row { grid-template-columns: 8px 1fr auto; }
 .qc-tip-off, .qc-tip-ok { display: flex; align-items: center; gap: 6px; font-weight: 500; }
 .qc-tip-off { color: var(--color-negative); }
 .qc-tip-ok { color: var(--color-positive); }
 .qc-tip-off::before, .qc-tip-ok::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-#checks .platform-main { white-space: nowrap; }  /* a score and its gap stay on one line */
+#checks .platform-main { white-space: nowrap; }
 svg.qc-mark { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }

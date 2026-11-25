@@ -14,7 +14,6 @@ window.Pie = window.Pie || {};
   const plainName = (column, value) =>
     column.type === "reference" ? Pie.store.names.of(column.table, value) : value;
 
-  // One pick shows its tag, two show both names, more show a count, like a macOS pop-up button.
   const summary = (column, values) => {
     if (values.length === 1) return Pie.format.option(column, values[0]);
     if (values.length === 2) return Pie.format.escape(values.map((value) => plainName(column, value)).join(", "));
@@ -31,7 +30,7 @@ window.Pie = window.Pie || {};
       </span>`;
   };
 
-  let shown = null;  // the state the bar was last drawn for
+  let shown = null;
   Pie.filters = {
     plural,
 
@@ -40,9 +39,7 @@ window.Pie = window.Pie || {};
       list.innerHTML = schema.filters
         .map((key) => filter(schema.columns.find((column) => column.key === key), state.selected(key)))
         .join("")
-        // the Results page's dates: a calendar of the days it has results for
         + (["results", "quality"].includes(state.table) && Pie.dates ? Pie.dates.button() : "")
-        // once anything is picked, a Clear puts every filter back, the dates too
         + (Object.keys(state.filters).length || (["results", "quality"].includes(state.table) && Pie.dates?.active()) ? `<button class="filter-clear" type="button" data-filter-clear><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Clear</span></button>` : "");
       shown = state;
     },

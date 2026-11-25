@@ -3,15 +3,11 @@ import Foundation
 #if canImport(LiteRtLm)
 import LiteRtLm
 
-/// Google LiteRT-LM v0.19.1 through its C API: one engine, a fresh Session per request fed the rendered prompt
-/// text, the calls the Android app's LiteRtEngine makes through the Kotlin Session API (same sampler, same
-/// chunk counting), so the iPhone rows read like the Android ones.
 final class LiteRtCore: @unchecked Sendable {
     static let version = "0.19.1"
     let maxNumTokens: Int
     private let engine: OpaquePointer
 
-    /// `backend` is LiteRT-LM's name: "gpu" (Metal on Apple) or "cpu".
     init(path: String, backend: String, maxNumTokens: Int, cacheDir: String) throws {
         self.maxNumTokens = maxNumTokens
         try? FileManager.default.createDirectory(atPath: cacheDir, withIntermediateDirectories: true)
@@ -39,7 +35,6 @@ final class LiteRtCore: @unchecked Sendable {
         throw Failure(message: "\(what): \(msg)")
     }
 
-    /// One generation's timestamps (monotonic seconds): decode steps counted as stream chunks, one per step.
     struct Stream {
         var sent: Double
         var first: Double
@@ -61,13 +56,10 @@ final class LiteRtCore: @unchecked Sendable {
         init(want: Int, clock: @escaping () -> Double) { self.want = want; self.clock = clock }
     }
 
-    /// Greedy generation of up to `want` tokens. LiteRT-LM has no ignore_eos: the stream is cancelled after
-    /// `want` chunks, and a model that stops earlier reports its real count. The session is made before `sent`.
     func generate(_ prompt: String, want: Int, keepText: Bool = false, clock: @escaping () -> Double) throws -> Stream {
         var params: OpaquePointer?
         try LiteRtCore.check(litert_lm_sampler_params_create(kLiteRtLmSamplerTypeTopP, &params), "sampler_params_create")
         defer { litert_lm_sampler_params_delete(params) }
-        // Android's SamplerConfig(topK = 1, topP = 1.0, temperature = 0.0, seed = 0), which its JNI sends as TOP_P
         try LiteRtCore.check(litert_lm_sampler_params_set_top_k(params, 1), "set_top_k")
         try LiteRtCore.check(litert_lm_sampler_params_set_top_p(params, 1), "set_top_p")
         try LiteRtCore.check(litert_lm_sampler_params_set_temperature(params, 0), "set_temperature")
@@ -100,7 +92,6 @@ final class LiteRtCore: @unchecked Sendable {
             if final {
                 var err: UnsafePointer<CChar>?
                 _ = litert_lm_stream_chunk_get_error(chunk, &err)
-                // cancelling after the last wanted token ends the stream with "CANCELLED.": not a failure
                 if let err, box.tokens < box.want { box.error = String(cString: err) }
                 box.done.signal()
                 return
@@ -118,7 +109,6 @@ final class LiteRtCore: @unchecked Sendable {
         var inputs: [OpaquePointer?] = [input]
         try LiteRtCore.check(litert_lm_session_generate_content_stream(session, &inputs, 1, callback, ctx.toOpaque()),
                              "generate_content_stream")
-        // the final chunk comes after a cancel too: wait for it before the session goes
         if box.done.wait(timeout: .now() + 1800) == .timedOut { throw Failure(message: "request timed out") }
         if let e = box.error { throw Failure(message: e) }
         return Stream(sent: sent, first: box.first, last: box.last, tokens: min(box.tokens, want), text: box.text)

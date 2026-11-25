@@ -13,7 +13,6 @@ Pie.format = {
       .replaceAll('"', "&quot;");
   },
 
-  // one formatter a precision, made once: toLocaleString built a new one for every cell
   numberFormats: {},
   number(value, decimals = 0) {
     const f = (this.numberFormats[decimals] ||= new Intl.NumberFormat(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }));
@@ -36,7 +35,6 @@ Pie.format = {
     return `<span class="engine-tag" style="--engine-color: ${Pie.engines.colorOf(id)}">${this.escape(label)}</span>`;
   },
 
-  // a workload's name after the setup marks the platform pages give it; Raw and Speculative as a run carry both phases
   workloadMarks: { raw: ["decode", "prefill"], spec: ["spec", "prefill"], raw_decode: ["decode"], raw_prefill: ["prefill"], spec_decode: ["spec"], spec_prefill: ["prefill"], throughput: ["batching"], prefill_batch: ["pbatch"] },
 
   workloadTag(id) {
@@ -73,7 +71,6 @@ Pie.format = {
     return this.escape(value);
   },
 
-  // a value each machine picks, as macOS marks an adjustable setting: the sliders symbol alone, the range on hover
   sweptTag(range) {
     return `<span class="swept-tag" title="${this.escape(`Picked per machine, ${range}`)}" aria-label="${this.escape(`Picked per machine, ${range}`)}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="10" cy="4" r="1.6"/><circle cx="5" cy="8" r="1.6"/><circle cx="11" cy="12" r="1.6"/></svg></span>`;
   },

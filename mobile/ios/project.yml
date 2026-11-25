@@ -1,7 +1,3 @@
-# XcodeGen spec for PieBench: `xcodegen generate` (brew install xcodegen) rewrites PieBench.xcodeproj.
-# MLC is built in only when MLC_ENABLED=YES with Vendor/mlc filled (scripts/vendor-mlc.sh).
-# Pie is built in only when PIE_SWIFT_PACKAGE points at pie's packages/swift with a built
-# PieServerCore.xcframework (scripts/build-pie.sh sets it up). MLX Swift only when MLX_ENABLED=YES.
 name: PieBench
 options:
   bundleIdPrefix: org.pie-project

@@ -13,10 +13,6 @@ struct PieBenchApp: App {
     }
 }
 
-/// Unattended entry point for tests: PIEBENCH_AUTORUN=1 with
-///   PIEBENCH_MODELS=<engine/artifact,...>  PIEBENCH_WORKLOADS=<id,...>  PIEBENCH_TAG=<tag>
-///   PIEBENCH_POST=<ingest url>  PIEBENCH_TOKEN=<token>  PIEBENCH_EXIT=1
-/// (`xcrun simctl launch` passes them as SIMCTL_CHILD_*). Same keys work as `-PIEBENCH_X value` launch arguments.
 enum AutoRun {
     static func value(_ key: String) -> String? {
         if let v = ProcessInfo.processInfo.environment[key], !v.isEmpty { return v }
@@ -30,11 +26,6 @@ enum AutoRun {
         let workloads = value("PIEBENCH_WORKLOADS").map { $0.split(separator: ",").map(String.init) } ?? contract.workloads.map(\.id)
         runner.say("autorun: \(ids) \(workloads)")
         runner.start(RunPlan(models: models, workloads: workloads, tag: value("PIEBENCH_TAG"))) {
-            if let url = value("PIEBENCH_POST") {
-                do { runner.say("POST: " + (try await Uploader.send(Storage.records, base: url, token: value("PIEBENCH_TOKEN") ?? ""))) } catch {
-                    runner.say("POST failed: \(error.localizedDescription)")
-                }
-            }
             runner.say("autorun finished: \(Storage.records.path)")
             if value("PIEBENCH_EXIT") == "1" { exit(0) }
         }
