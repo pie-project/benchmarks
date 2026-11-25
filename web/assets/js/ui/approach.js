@@ -45,9 +45,6 @@ window.Pie = window.Pie || {};
   ];
 
   const welcome = () => {
-    const n = (v) => Number(v || 0).toLocaleString("en-US");
-    const rows = (t) => (Pie.store.rows(t) || []).length;
-    const chevron = '<svg class="welcome-flow-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
     const STEP_COLOURS = ["#007AFF", "#5E5CE6", "#30B0C7", "var(--color-negative)", "#34C759"];
     const flow = [["Recipe", "Engine settings, public in the repo"], ["CI run", "Dedicated machine, nothing else running"],
       ["Repeated", "Until the noise is small"], ["Limit check", "Above the limit is a CI error", "is-check"], ["Published", "Here and on GitHub, with raw data"]];

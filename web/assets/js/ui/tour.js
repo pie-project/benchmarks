@@ -123,5 +123,4 @@ window.Pie = window.Pie || {};
   const again = new URLSearchParams(location.search).get("tour") === "1";
   const start = () => { if (again || !seen()) open(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
-  Pie.tour = { open };
 })();

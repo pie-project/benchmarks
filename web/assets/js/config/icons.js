@@ -20,7 +20,6 @@ Pie.icons = {
   quality: '<path d="m5 12 4 4 10-10"/>',
   accuracy: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle class="is-filled" cx="12" cy="12" r="1.5"/>',
   scores: '<path class="is-filled" transform="translate(3 3) scale(1.125)" d="M13.982 16h1.996v-3.997h-3.992V16zM7.984 0 3.992 3.997H0v3.998h5.988L9.98 3.997h2.006V0zM7.984 7.995l-3.992 4.008H0V16h5.988l3.992-3.997h2.006V7.995zM15.978 7.995V3.997h-3.992v3.998h3.992"/>',
-  methodology: '<path d="M3.5 17a8.5 8.5 0 1 1 17 0"/><path d="m12 17 4.2-5.2"/><path d="M6.5 13.2l1.2.7M12 8.5v1.4M17.5 13.2l-1.2.7"/>',
   reports: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
   gaps: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
   reasons: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',

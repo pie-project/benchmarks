@@ -26,7 +26,7 @@ window.Pie = window.Pie || {};
 
   const entries = () => {
     const out = [];
-    const shown = (id) => Pie.isOpen(id) && Pie.sections.some((s) => s.id === Pie.schema[id]?.section && (!s.login || Pie.signedIn()));
+    const shown = (id) => Pie.sections.some((s) => s.id === Pie.schema[id]?.section);
     for (const [id, s] of Object.entries(Pie.schema)) {
       if (!s.label || !shown(id)) continue;
       const section = Pie.sections.find((x) => x.id === s.section)?.label || "";

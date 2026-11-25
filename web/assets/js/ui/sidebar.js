@@ -43,7 +43,7 @@ window.Pie = window.Pie || {};
 
   Pie.sidebar = {
     render(state) {
-      nav.innerHTML = Pie.sections.filter((entry) => !entry.login || Pie.signedIn()).map((entry) => section(entry, state)).join("");
+      nav.innerHTML = Pie.sections.map((entry) => section(entry, state)).join("");
     },
 
     spinLogo() {

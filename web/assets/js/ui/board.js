@@ -208,7 +208,6 @@ window.Pie = window.Pie || {};
     }).join("")}</div>`;
   };
 
-  const GAIN = { id: "gain", title: "Spread", sub: "Each engine's typical speed against the median of all engines on the same machine and model" };
   const GAIN_SETUPS = [
     { workload: "raw", key: "decode_tok_s", label: "Single decode", unit: "tok/s" },
     { workload: "raw", key: "prefill_tok_s", label: "Single prefill", unit: "tok/s" },
@@ -216,7 +215,6 @@ window.Pie = window.Pie || {};
     { workload: "throughput", key: "output_tok_s", label: "Batched decode", unit: "tok/s" },
     { workload: "prefill_batch", key: "prefill_tok_s", label: "Batched prefill", unit: "tok/s" },
   ];
-  const signedPct = (g) => `${g >= 0 ? "+" : "−"}${Math.abs(Math.round(g * 100))}%`;
   const GAIN_PICKS = [
     { id: "decode", label: "Single Decode", workload: "raw", key: "decode_tok_s" },
     { id: "prefill", label: "Single Prefill", workload: "raw", key: "prefill_tok_s" },
@@ -245,63 +243,7 @@ window.Pie = window.Pie || {};
     }
     return cells;
   };
-  const jitter = (text) => {
-    let h = 2166136261;
-    for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
-    return ((h >>> 0) / 4294967295) * 2 - 1;
-  };
   const pastLimit = (c) => !c.pie.miniature && c.room != null && c.gain > c.room;
-  const isRed = (c) => c.gain < 0 || pastLimit(c);
-  const SPREAD = 0.5;
-  const gains = (rows) => {
-    const pick = GAIN_PICKS.find((g) => g.id === gainSetup);
-    const by = {};
-    for (const r of rows) if (r.workload === pick.workload && r[pick.key]) (by[`${r.hardware}|${r.model}|${r.miniature || ""}|${r.benchmark || ""}`] ||= []).push(r);
-    const dots = [];
-    for (const list of Object.values(by)) {
-      if (list.length < 2) continue;
-      const v = list.map((r) => r[pick.key]).sort((x, y) => x - y), n = v.length;
-      const med = n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2;
-      for (const r of list) {
-        const limit = r.miniature ? null : limitOf(r, pick);
-        dots.push({ r, d: r[pick.key] / med - 1, med, over: Boolean(limit && r[pick.key] > limit), platform: Pie.platformOf(Pie.store.index.hardware[r.hardware] || {}) });
-      }
-    }
-    const mid = (v) => { const a = [...v].sort((p, q) => p - q), n = a.length; return n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2; };
-    const order = engineIds();
-    const groups = PLATFORM_ORDER.map((p) => {
-      const mine = dots.filter((d) => d.platform === p);
-      const engines = [...new Set(mine.map((d) => d.r.engine))].sort((x, y) => order.indexOf(x) - order.indexOf(y))
-        .map((e) => { const ds = mine.filter((d) => d.r.engine === e); return { e, d: mid(ds.map((x) => x.d)), n: ds.length, over: ds.filter((x) => x.over).length }; });
-      return { p, engines };
-    }).filter((g) => g.engines.length);
-    if (!groups.length) return `<p class="board-empty">No runs yet</p>`;
-    const SCALE = 0.2;
-    const W = 1040, ROW = 26, GAP = 18, NAME = 170, L = NAME + 16, R = 60, T = 6, B = 26;
-    const H = T + groups.reduce((h, g) => h + g.engines.length * ROW + GAP, 0) + B;
-    const x = (d) => L + (W - L - R) * (Math.max(-SCALE, Math.min(SCALE, d)) + SCALE) / (2 * SCALE);
-    const pct = (d) => (Math.round(d * 100) ? `${d > 0 ? "+" : "−"}${Math.abs(Math.round(d * 100))}%` : "0%");
-    let y = T;
-    const body = groups.map((g) => {
-      const head = `<text class="board-row-name" x="8" y="${y + 15}"><tspan class="board-row-platform">${esc(Pie.schema[g.p]?.short || g.p)}</tspan></text>`;
-      const rows = g.engines.map((e, i) => {
-        const top = y + i * ROW, cy = top + ROW / 2;
-        const x0 = x(0), x1 = x(e.d), w = Math.max(2, Math.abs(x1 - x0));
-        const note = `${e.n} ${e.n === 1 ? "cell" : "cells"}${e.over ? `, ${e.over} above the theoretical limit` : ""}`;
-        return `<g class="board-bar" data-tip-engine="${esc(e.e)}" data-tip-head="${esc(names().engine(e.e))}" data-tip-value="${esc(pct(e.d))}" data-tip-rows="${esc(JSON.stringify([["Typical distance from the median", pct(e.d)], ["Over", note]]))}">
-          <rect class="board-hit" x="0" y="${top}" width="${W}" height="${ROW}"/>
-          <rect x="${NAME - 70}" y="${cy - 4}" width="8" height="8" rx="2" style="fill: ${Pie.engines.colorOf(e.e)}"/>
-          <text class="board-machine is-start" x="${NAME - 56}" y="${cy + 4}">${esc(names().engine(e.e))}</text>
-          <rect x="${Math.min(x0, x1)}" y="${cy - 7}" width="${w}" height="14" rx="3" style="fill: ${Pie.engines.colorOf(e.e)}"/>
-          <text class="board-value is-start" x="${Math.max(x0, x1) + 6}" y="${cy + 4}">${pct(e.d)}</text></g>`;
-      }).join("");
-      const out = head + rows;
-      y += g.engines.length * ROW + GAP;
-      return out;
-    }).join("");
-    const ticks = [-SCALE, -SCALE / 2, 0, SCALE / 2, SCALE].map((t) => `<line class="board-grid" x1="${x(t)}" x2="${x(t)}" y1="${T}" y2="${H - B}"/><text class="board-tick" x="${x(t)}" y="${H - B + 18}">${t ? pct(t) : "Median"}</text>`).join("");
-    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(GAIN.title)}">${ticks}<line class="board-band-edge" x1="${x(0)}" x2="${x(0)}" y1="${T}" y2="${H - B}"/>${body}</svg>`;
-  };
 
   const SIZES = [
     { id: "size-decode", label: "Decode", setup: "decode", title: "Decode speed by model size", sub: "Output tokens per second, one request, against parameters · Higher is better", key: "decode_tok_s", unit: "tok/s" },
@@ -320,16 +262,8 @@ window.Pie = window.Pie || {};
   let useMode = kept("pieUseMode", (v) => USE_MODES.some((m) => m.id === v), "decode");
   const useModel = "";
   const engineMark = (engine) => engine ? `<svg class="board-pick-logo${WIDE.has(engine) ? " is-wide" : ""}" viewBox="${WIDE.has(engine) ? "-5.6 0 27.2 16" : "0 0 16 16"}" aria-hidden="true">${logo(engine, 0, 0, 16)}</svg>` : "";
-  const enginePick = (k, engine) => `<button class="filter-button board-card-pick" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="Engine">${engineMark(engine)}${engine === "mlxlm" ? "" : esc(engine ? names().engine(engine) : "Fastest engine")}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-  const engineSub = (sub, engine) => (engine ? sub.replace("fastest engine", names().engine(engine)).replace("Decode speed against", `${names().engine(engine)}'s decode speed against`) : sub);
   const SPEEDS = METRICS.filter((m) => m.setup);
-  const TTFT = METRICS.find((m) => m.id === "ttft");
   const metricIcon = (m) => Pie.platform.degree(m.setup);
-  const gainPick = () => {
-    const g = GAIN_PICKS.find((x) => x.id === gainSetup);
-    const enginePickButton = `<button class="filter-button board-card-pick" type="button" data-board-pick="gain-engine" aria-haspopup="menu" aria-label="Engine">${engineMark(gainEngine)}${gainEngine === "mlxlm" ? "" : esc(names().engine(gainEngine))}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-    return `<span class="board-card-picks"><button class="filter-button board-card-pick" type="button" data-board-pick="gain-setup" aria-haspopup="menu" aria-label="Setup">${Pie.platform.degree(g.id)}${esc(g.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button></span>`;
-  };
   const BY_MODEL = { mac: ["Apple", "#636366"], windows: ["Windows", "#0078D4"], nvidia: ["NVIDIA", "#76b900"], amd: ["AMD", "#ed1c24"], tpu: ["TPU", "#4285f4"], android: ["Mobile", "#1C1C1E"], web: ["Browser", "#8e8e93"] };
   const modelSummary = (metric, rows, g, m = model) => {
     const own = rows.filter((r) => r.workload === metric.workload && r.model === m && r.hardware === g.hardware && r[metric.key]);
@@ -388,65 +322,8 @@ window.Pie = window.Pie || {};
   };
   const SIZE_KEY = "pieSizeMetric";
   let sizeMetric = (() => { try { const k = localStorage.getItem(SIZE_KEY); return SIZES.some((m) => m.id === k) ? k : SIZES[0].id; } catch { return SIZES[0].id; } })();
-  const sizePick = (k, m) => `<button class="filter-button board-card-pick" type="button" data-board-pick="${k}" aria-haspopup="menu" aria-label="Speed">${Pie.platform.degree(m.setup)}${esc(m.label)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-  const sizeCard = (rows) => {
-    const m = SIZES.find((x) => x.id === sizeMetric) || SIZES[0];
-    return card("size", "Dense models by size", m.sub, scatter({ ...m, title: "Dense models by size" }, rows, sizeOf), sizePick("size", m));
-  };
   const MOE_KEY = "pieMoeMetric";
   let moeMetric = (() => { try { const k = localStorage.getItem(MOE_KEY); return SIZES.some((m) => m.id === k) ? k : SIZES[0].id; } catch { return SIZES[0].id; } })();
-  const moeCard = (rows) => {
-    const m = SIZES.find((x) => x.id === moeMetric) || SIZES[0];
-    return card("moe", "MoE models by active size", m.sub.replace("against parameters", "against active parameters"), scatter({ ...m, title: "MoE models by active size" }, rows, activeOf), sizePick("moe", m));
-  };
-  const sizeOf = (id) => {
-    const m = Pie.store.index.models[id];
-    return m?.architecture === "dense" ? m.params_b : null;
-  };
-  const activeOf = (id) => {
-    const m = Pie.store.index.models[id];
-    return m && m.architecture !== "dense" ? m.active_b : null;
-  };
-  const sizeSeries = (rows, key, of) => {
-    const raw = rows.filter((r) => r.workload === "raw" && r[key] && of(r.model));
-    return PLATFORM_ORDER.map((platform) => {
-      const own = raw.filter((r) => Pie.platformOf(Pie.store.index.hardware[r.hardware] || {}) === platform);
-      const best = {};
-      for (const r of own) {
-        const b = of(r.model);
-        if (!best[b] || r[key] > best[b][key]) best[b] = r;
-      }
-      return { platform, points: Object.values(best).sort((a, b) => of(a.model) - of(b.model)) };
-    }).filter((s) => s.points.length > 1);
-  };
-  const scatter = (metric, rows, of = sizeOf) => {
-    const W = 1040, H = 239, L = 44, R = 90, T = 10, B = 30;
-    const series = sizeSeries(rows, metric.key, of);
-    if (!series.length) return `<p class="board-empty">No runs yet</p>`;
-    const all = series.flatMap((s) => s.points);
-    const xs = all.map((r) => of(r.model)), vs = all.map((r) => r[metric.key]);
-    const [x0, x1] = [Math.log10(Math.min(...xs)) - 0.08, Math.log10(Math.max(...xs)) + 0.08];
-    const [y0, y1] = [Math.floor(Math.log10(Math.min(...vs))), Math.ceil(Math.log10(Math.max(...vs)))];
-    const x = (b) => L + (W - L - R) * (Math.log10(b) - x0) / (x1 - x0);
-    const y = (v) => T + (H - B - T) * (1 - (Math.log10(v) - y0) / (y1 - y0));
-    const grid = [];
-    for (let e = y0; e <= y1; e++) grid.push(`<line class="board-grid" x1="${L}" x2="${W - R}" y1="${y(10 ** e)}" y2="${y(10 ** e)}"/><text class="board-tick is-y" x="${L - 8}" y="${y(10 ** e) + 4}">${compact(10 ** e)}</text>`);
-    for (const b of [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500]) if (Math.log10(b) >= x0 && Math.log10(b) <= x1)
-      grid.push(`<text class="board-tick" x="${x(b)}" y="${H - B + 18}">${b}B</text>`);
-    const ends = series.map((s) => { const r = s.points[s.points.length - 1]; return { s, y: y(r[metric.key]) + 4 }; }).sort((a, b) => a.y - b.y);
-    for (let i = 1; i < ends.length; i++) ends[i].y = Math.max(ends[i].y, ends[i - 1].y + 14);
-    const lines = series.map((s) => {
-      const color = Pie.schema[s.platform]?.tint;
-      const label = Pie.schema[s.platform]?.short || s.platform;
-      const path = s.points.map((r, i) => `${i ? "L" : "M"}${x(of(r.model))},${y(r[metric.key])}`).join("");
-      const dots = s.points.map((r) => `<g class="board-point"><title>${esc(`${names().model(r.model)} on ${machineName(r.hardware)}, ${names().engine(r.engine)}: ${full(r[metric.key], metric.unit)}`)}</title>
-          <circle class="board-hit" cx="${x(of(r.model))}" cy="${y(r[metric.key])}" r="10"/><circle class="board-dot-mark" cx="${x(of(r.model))}" cy="${y(r[metric.key])}" r="4" style="fill: ${color}"/></g>`).join("");
-      const last = s.points[s.points.length - 1];
-      return `<g class="board-series"><path class="board-line" d="${path}" style="stroke: ${color}"/>${dots}
-          <text class="board-end" x="${x(of(last.model)) + 10}" y="${ends.find((e) => e.s === s).y}">${esc(label)}</text></g>`;
-    }).join("");
-    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(metric.title)}">${grid.join("")}<line class="board-axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/>${lines}</svg>`;
-  };
 
   const SCALING = { id: "scaling", title: "Scaling with chip count", sub: "Decode speed against the fewest chips, one request · The dashed line is perfect scaling" };
   const scaleFamilies = (rows, id) => {
@@ -463,45 +340,6 @@ window.Pie = window.Pie || {};
   const SCALE_KEY = "pieScaleModel";
   let scaleModel = (() => { try { return localStorage.getItem(SCALE_KEY); } catch { return null; } })();
   const scaleModelOf = (rows) => { const list = scaleModels(rows); return list.includes(scaleModel) ? scaleModel : list[0] || model; };
-  const scaling = (all, which = scaleModelOf(all)) => {
-    const rows = scaleEngine ? all.filter((r) => r.engine === scaleEngine) : all;
-    const W = 1040, H = 219, L = 44, R = 230, T = 10, B = 30;
-    const families = {};
-    for (const r of rows) {
-      const hw = Pie.store.index.hardware[r.hardware];
-      if (r.workload !== "raw" || r.model !== which || !r.decode_tok_s || !hw?.count) continue;
-      const f = (families[`${hw.full_name}|${hw.interconnect}`] ||= { hw, by: {} });
-      if (!f.by[hw.count] || r.decode_tok_s > f.by[hw.count].decode_tok_s) f.by[hw.count] = r;
-    }
-    const series = Object.values(families).filter((f) => Object.keys(f.by).length > 1).map((f) => {
-      const counts = Object.keys(f.by).map(Number).sort((a, b) => a - b);
-      const base = f.by[counts[0]].decode_tok_s;
-      return { hw: f.hw, points: counts.map((n) => ({ n, gain: f.by[n].decode_tok_s / base, row: f.by[n], base: counts[0] })) };
-    });
-    if (!series.length) return `<p class="board-empty">No machine ran this model at more than one chip count yet</p>`;
-    const most = Math.max(...series.flatMap((s) => s.points.map((p) => p.n)));
-    const top = Math.max(most, ...series.flatMap((s) => s.points.map((p) => p.gain)));
-    const x = (n) => L + (W - L - R) * Math.log2(n) / Math.log2(most);
-    const y = (g) => T + (H - B - T) * (1 - (g - 0.5) / (top - 0.5));
-    const grid = [];
-    for (let g = 1; g <= top; g *= 2) grid.push(`<line class="board-grid" x1="${L}" x2="${W - R}" y1="${y(g)}" y2="${y(g)}"/><text class="board-tick is-y" x="${L - 8}" y="${y(g) + 4}">${g}×</text>`);
-    for (let n = 1; n <= most; n *= 2) grid.push(`<text class="board-tick" x="${x(n)}" y="${H - B + 18}">${n} ${n === 1 ? "chip" : "chips"}</text>`);
-    const ideal = `<path class="board-ideal" d="M${x(1)},${y(1)}L${x(most)},${y(most)}"/>`;
-    const ends = series.map((s) => ({ s, y: y(s.points[s.points.length - 1].gain) + 4 })).sort((a, b) => a.y - b.y);
-    for (let i = 1; i < ends.length; i++) ends[i].y = Math.max(ends[i].y, ends[i - 1].y + 14);
-    const link = (hw) => ({ nvlink: "NVLink", pcie: "PCIe", ici: "ICI" })[hw.interconnect] || hw.interconnect || "";
-    const lines = series.map((s) => {
-      const color = Pie.schema[Pie.platformOf(s.hw)]?.tint;
-      const name = String(s.hw.full_name || s.hw.name).replace(/^(NVIDIA|AMD|Google)\s+/, "").replace(/\s+Blackwell Server/, "");
-      const path = s.points.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(p.gain)}`).join("");
-      const dots = s.points.map((p) => `<g class="board-point"><title>${esc(`${name} ×${p.n}, ${names().engine(p.row.engine)}: ${full(p.row.decode_tok_s, "tok/s")}, ${p.gain.toFixed(2)}× of ×${p.base}`)}</title>
-          <circle class="board-hit" cx="${x(p.n)}" cy="${y(p.gain)}" r="10"/><circle class="board-dot-mark" cx="${x(p.n)}" cy="${y(p.gain)}" r="4" style="fill: ${color}"/></g>`).join("");
-      const last = s.points[s.points.length - 1];
-      return `<g class="board-series"><path class="board-line" d="${path}" style="stroke: ${color}"/>${dots}
-          <text class="board-end" x="${x(last.n) + 10}" y="${ends.find((e) => e.s === s).y}">${esc(name)} · ${esc(link(s.hw))} · ${last.gain.toFixed(1)}×</text></g>`;
-    }).join("");
-    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(SCALING.title)}">${grid.join("")}${ideal}<line class="board-axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/>${lines}</svg>`;
-  };
 
   const USE = { id: "use", title: "Share of the theoretical maximum" };
   const USE_CARDS = [["use", "Apple", "mac"], ["use-windows", "Windows", "windows"], ["use-nvidia", "NVIDIA", "nvidia"], ["use-amd", "AMD", "amd"], ["use-tpu", "TPU", "tpu"], ["use-android", "Mobile", "android"], ["use-web", "Browser", "web"]].filter(([, , p]) => !Pie.hiddenPlatforms.has(p));
@@ -635,21 +473,6 @@ window.Pie = window.Pie || {};
           ${card("support", "Platforms", gridCards.has("support") ? "Share of each platform's benchmarks run" : "Platforms each engine has run on", supportTable(support, gridCards.has("support")), "", false)}`;
   };
 
-  let log = null;
-  const changelog = () => log ||= (Pie.store.tables.tags || [])
-    .filter((tag) => /^\d+\.\d+/.test(tag.id))
-    .map((tag) => ({ kind: "New release measured", at: tag.date, run: tag, results: Pie.store.count(tag.id).measured }))
-    .filter((e) => e.results)
-    .sort((a, b) => b.at.localeCompare(a.at));
-  const MONTH = new Intl.DateTimeFormat("en-US", { month: "short" });
-  const DAY = { format: (d) => `${d.getDate()} ${MONTH.format(d)}` };
-  const logItem = (e) => {
-    const [mark, text] = [`<span class="board-log-glyph">${Pie.icon("bars")}</span>`, `${e.run.id} · ${e.results.toLocaleString()} results`];
-    return `<li class="board-log-item">
-        <div class="board-log-kind">${esc(e.kind)} · ${esc(DAY.format(new Date(e.at.replace(" ", "T"))))}</div>
-        <div class="board-log-text">${mark}<span>${esc(text)}</span></div>
-      </li>`;
-  };
   const footer = () => {
     const at = Pie.store.tables.updated_at ? new Date(Pie.store.tables.updated_at) : null;
     const when = at ? at.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
@@ -660,23 +483,6 @@ window.Pie = window.Pie || {};
         </div>
       </footer>`;
   };
-  const hero = (newest = changelog()[0]) => `
-      <div class="board-hero">
-        <div class="welcome-banner board-banner">
-          <a class="board-banner-link" href="https://pie-project.org" target="_blank" rel="noopener" aria-label="Pie website">
-            <span class="board-banner-go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span>
-          </a>
-          <div class="board-banner-foot">
-            ${newest ? `<span class="board-banner-badge">New</span>` : ""}
-            <h2 class="board-banner-title">Programmable Inference Engine</h2>
-          </div>
-        </div>
-        <section class="board-log" aria-label="Changelog">
-          <div class="board-log-head"><h2 class="board-log-title">Changelog</h2><form class="board-subscribe" hidden><input type="email" required placeholder="Email" aria-label="Email"><button type="submit" aria-label="Notify me" title="Notify me"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M9 4.5 12.5 8 9 11.5"/></svg></button></form>
-            <button class="board-log-bell${subscribed() ? " is-subscribed" : ""}" type="button" data-board-subscribe aria-label="Email me new releases" title="Email me new releases"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11.5V7a4 4 0 0 1 8 0v4.5l1 1H3zM6.5 14a1.5 1.5 0 0 0 3 0"/></svg></button></div>
-          <ol class="board-log-list">${changelog().map(logItem).join("")}</ol>
-        </section>
-      </div>`;
 
   const BADGES = {
     index:          ["#5E5CE6", '<circle cx="12" cy="12" r="9"/><path d="m12 12 2.6-5.2"/><circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/><path d="M7 15.5h.01M6.5 11h.01M9 7h.01M17.5 11h.01M17 15.5h.01"/>'],
@@ -702,39 +508,6 @@ window.Pie = window.Pie || {};
     load:           ["#FF9F0A"],
   };
   const TOOLS = (id) => `<button class="board-card-tool" type="button" data-board-link="${id}" aria-label="Copy a link to this chart" title="Copy a link to this chart"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.9 9.1a2.5 2.5 0 0 0 3.5 0l2.1-2.1a2.5 2.5 0 0 0-3.5-3.5l-.9.9"/><path d="M9.1 6.9a2.5 2.5 0 0 0-3.5 0L3.5 9a2.5 2.5 0 0 0 3.5 3.5l.9-.9"/></svg></button><button class="board-card-tool" type="button" data-board-save="${id}" aria-label="Save as image" title="Save as image"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.25" y="3" width="11.5" height="10" rx="2"/><circle cx="5.75" cy="6.25" r="1"/><path d="m2.5 11.5 3.2-3.2 2.3 2.3 2-2 3.5 3.5"/></svg></button><button class="board-card-tool" type="button" data-board-data="${id}" aria-label="Download the data" title="Download the data (log in)"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.25" y="3" width="11.5" height="10" rx="2"/><path d="M2.25 6.5h11.5M2.25 9.75h11.5M7 6.5V13"/></svg></button>`;
-  const COVER_PLATFORMS = [["mac", "Mac"], ["nvidia", "NVIDIA"], ["amd", "AMD"], ["tpu", "TPU"]].filter(([p]) => !Pie.hiddenPlatforms.has(p));
-  const coverage2 = (rows) => {
-    const ran = new Set();
-    for (const r of rows) {
-      if (!(r.decode_tok_s || r.prefill_tok_s || r.output_tok_s)) continue;
-      const p = Pie.platformOf(Pie.store.index.hardware[r.hardware] || {});
-      ran.add(`${r.engine}|${r.model}|${p}`);
-    }
-    const engines = engineIds().filter((e) => [...ran].some((k) => k.startsWith(`${e}|`)));
-    const models = (Pie.store.tables.models || []).map((m) => m.id)
-      .sort((a, b) => (Pie.platform?.makerName(a) || "").localeCompare(Pie.platform?.makerName(b) || "") || names().model(a).localeCompare(names().model(b)));
-    const on = (e, p) => models.filter((m) => ran.has(`${e}|${m}|${p}`));
-    const W = 1040, H = 209, L = 8, R = 8, T = 12, B = 46;
-    const cells = COVER_PLATFORMS.map(([p, l]) => ({ p, l, bars: engines.map((e) => ({ e, list: on(e, p) })).filter((b) => b.list.length) })).filter((c) => c.bars.length);
-    if (!cells.length) return `<p class="board-empty">No runs yet</p>`;
-    const top = niceMax(Math.max(...cells.flatMap((c) => c.bars.map((b) => b.list.length))));
-    const base = H - B;
-    const y = (v) => T + (base - T) * (1 - v / top);
-    const slot = (W - L - R) / cells.length;
-    const most = Math.max(...cells.map((c) => c.bars.length));
-    const BW = Math.min(28, (slot * 0.6 - (most - 1) * 2) / most);
-    const marks = cells.map((c, i) => {
-      const width = c.bars.length * BW + (c.bars.length - 1) * 2;
-      const left = L + slot * i + (slot - width) / 2;
-      const bars = c.bars.map((b, j) => bar(left + j * (BW + 2), y(b.list.length), BW, base, Pie.engines.colorOf(b.e), String(b.list.length),
-        { engine: b.e, head: `${names().engine(b.e)} on ${c.l}`, value: `${b.list.length} of ${models.length} models`, note: b.list.map((m) => names().model(m)).join(", ") },
-        { x: left + j * (BW + 2) - 1, w: BW + 2 })).join("");
-      const cx = L + slot * i + slot / 2;
-      return `${bars}<text class="board-group" x="${cx}" y="${base + 18}">${esc(c.l)}</text>
-        <text class="board-machine" x="${cx}" y="${base + 33}">${esc(`${new Set(c.bars.flatMap((b) => b.list)).size} models run`)}</text>`;
-    }).join("");
-    return `<svg class="board-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Models run by engine and platform">${lines(L, W - R, y, top)}<line class="board-axis" x1="${L}" x2="${W - R}" y1="${base}" y2="${base}"/>${marks}</svg>`;
-  };
   const REL_KEY = "pieRelativeSetup";
   let relSetup = (() => { try { const k = localStorage.getItem(REL_KEY); return GAIN_PICKS.some((g) => g.id === k) ? k : "decode"; } catch { return "decode"; } })();
   const relTests = (rows, pick) => {
@@ -981,7 +754,6 @@ ${relHead(pick)}
 
 
   const SUBSCRIBED_KEY = "pieSubscribed";
-  const subscribed = () => { try { return localStorage.getItem(SUBSCRIBED_KEY) === "1"; } catch { return false; } };
   let tug = null;
   element.addEventListener("pointerdown", (event) => {
     const grid = event.target.closest?.(".board-matrix, .board-chart, .board-legend");
@@ -1064,7 +836,7 @@ ${relHead(pick)}
     if (go?.dataset.chapter) Pie.approach?.open(go.dataset.chapter);
     if (go) document.querySelector(`.sidebar-item[data-table="${go.dataset.boardGoPage}"]`)?.click();
   });
-  element.addEventListener("click", (event) => {
+  element.addEventListener("click", () => {
   });
   const drawBumps = () => {
     for (const box of element.querySelectorAll(".bump")) {

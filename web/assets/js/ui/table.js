@@ -1,7 +1,7 @@
 window.Pie = window.Pie || {};
 
 (() => {
-  const { format, store, engines } = Pie;
+  const { format, store } = Pie;
   const container = document.getElementById("table-container");
   const table = document.getElementById("data-table");
 

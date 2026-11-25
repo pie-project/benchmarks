@@ -92,7 +92,6 @@ window.Pie = window.Pie || {};
   const times = (...xs) => xs.join(o("×"));
   const link = `2${o("×")}${v("Layers")}${o("×")}${par(sum(v("Link latency"), fr(v("Activations exchanged"), v("Link bandwidth"))))}`;
 
-  const EFFECT = { up: "Raises the limit", down: "Lowers the limit", small: "Under 1%", choice: "Choice" };
   const NARROW = ["An FP8 build runs its body's matmuls at the chip's FP8 peak. An MXFP4 build runs its experts there too, against 8-bit activations, on chips whose tensor cores take MX block scales (Blackwell, MI350X); elsewhere they run at 16 bits. Attention, router and output head stay at the 16-bit peak, and no build is taken to cut its activations below 8 bits.", "choice"];
 
   const ceilingOf = (metric) => Pie.ceiling?.({ hardware: EXAMPLE.hardware, model: EXAMPLE.model, scheme: EXAMPLE.scheme, workload: "raw" }, metric);
@@ -212,7 +211,6 @@ window.Pie = window.Pie || {};
         const w = Pie.store.index.workloads?.throughput;
         const hw = Pie.store.index.hardware?.[EXAMPLE.hardware];
         if (!bound || !w || !hw) return null;
-        const md = Pie.store.index.models?.[EXAMPLE.model];
         return {
           inputs: [
             ["Requests", `${w.concurrency}`, "Workload"],
@@ -373,7 +371,6 @@ window.Pie = window.Pie || {};
       const author = r.authors.split(",")[0].replace(/ et al\.?$/, "").split(" ").pop();
       return `<a class="cite" href="${r.url}" target="_blank" rel="noopener" title="${esc(`${r.authors} ${r.title}. ${r.venue}, ${r.year}`)}">${esc(author)} ${r.year}</a>`;
     };
-    const prose = (text) => esc(text).replace(/\s?\{(\w+)\}/g, (_, key) => (REFS[key] ? cite(key) : ""));
     const formulaRows = c.equations.map((e) => `
       <tr><td class="row-number"></td><td class="lim-term">${tag(e.result)}</td><td class="lim-formula"><span class="m-eq">${e.math}</span></td><td class="lim-fill"></td><td class="lim-source">${e.cites.map(cite).join(", ")}</td></tr>`).join("");
 

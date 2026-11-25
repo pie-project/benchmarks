@@ -25,7 +25,6 @@ window.Pie = window.Pie || {};
   const day = (t) => new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const dataDay = () => { const at = Pie.store.tables.updated_at; return at ? day(at) : ""; };
   const speed = (v) => `${Math.round(v).toLocaleString("en-US")} tok/s`;
-  const share = (v) => `${Math.round(v * 100)}%`;
 
   const when = (t) => (t ? day(String(t).replace(" ", "T")) : dataDay());
   const pct = (g) => `${g.gap > 0 ? "+" : "−"}${Math.round(Math.abs(g.gap) * 100)}%`;

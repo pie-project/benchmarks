@@ -4,30 +4,7 @@ window.Pie = window.Pie || {};
   const element = document.getElementById("welcome");
 
   const STACK = { mac: "Metal", windows: "CUDA", nvidia: "CUDA", tpu: "XLA", amd: "ROCm", cerebras: "CSL", android: "Vulkan", web: "WebGPU" };
-  const detailOf = (id, platform) => {
-    const n = SOON.has(id) || !Pie.platform?.machines ? 0 : Pie.platform.machines(platform);
-    return [STACK[id], n ? `${n} ${n === 1 ? "machine" : "machines"}` : ""].filter(Boolean).join(" · ");
-  };
   const platforms = () => Object.entries(Pie.schema).filter(([, s]) => s.view === "platform" && s.platform).sort(([, a], [, b]) => Pie.byPlatformOrder(a, b));
-  const SOON = new Set(["android", "web"].filter((id) => !(DB.hardware || []).some((hw) => Pie.platformOf(hw) === id)));
-  const CHEVRON = '<svg class="welcome-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
-  const tile = ([id, s]) => {
-    const ready = !SOON.has(id);
-    return `
-      <${ready ? `button type="button" data-go="${id}"` : "div"} class="welcome-tile${ready ? "" : " is-soon"}">
-        <span class="sidebar-glyph welcome-tile-icon" style="--tint: ${s.tint}">${Pie.icon(id)}</span>
-        <span class="welcome-tile-copy">
-          <span class="welcome-tile-name">${s.label}</span>
-          <span class="welcome-tile-line">${detailOf(id, s.platform)}</span>
-          
-        </span>
-        ${ready ? `<span class="welcome-tile-status">${CHEVRON}</span>` : '<span class="welcome-tile-status is-soon">Coming Soon</span>'}
-      </${ready ? "button" : "div"}>`;
-  };
-  const list = () => `
-    <section class="welcome-group" aria-label="Platforms">
-      <div class="welcome-platforms">${[...platforms().filter(([id]) => !SOON.has(id)), ...platforms().filter(([id]) => SOON.has(id))].map(tile).join("")}</div>
-    </section>`;
 
   let sortKey = null;
   let sortDir = 1;
@@ -47,16 +24,6 @@ window.Pie = window.Pie || {};
       <tbody>${rows}</tbody>
     </table>`;
   };
-
-  const content = () => `
-    <div class="welcome-banner">
-      <div class="welcome-banner-copy">
-        <h2 class="welcome-banner-title">AI that runs everywhere.</h2>
-        <p class="welcome-banner-sub">The operating system for your silicon.</p>
-      </div>
-    </div>
-    ${list()}
-    `;
 
   let open = null;
   Pie.welcome = {

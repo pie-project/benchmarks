@@ -40,10 +40,6 @@ window.Pie = window.Pie || {};
     return pct > 0 ? `+${pct}%` : pct < 0 ? `−${Math.abs(pct)}%` : "0%";
   };
 
-  const multiple = (r) => `${r >= 10 ? Math.round(r) : r.toFixed(r >= 2 ? 1 : 2)}×`;
-
-  const tone = (r) => (r >= 1.005 ? "is-ahead" : r <= 0.995 ? "is-behind" : "");
-
   const median = (values) => {
     if (!values.length) return null;
     const sorted = [...values].sort((a, b) => a - b);
@@ -216,7 +212,7 @@ window.Pie = window.Pie || {};
   const CELL = 52;
   const cellSvg = (inner) => `<svg class="heat-cell-svg" viewBox="0 0 ${CELL} ${CELL}" width="${CELL}" height="${CELL}" aria-hidden="true">${inner}</svg>`;
 
-  const heatCell = (byModel, model, engine, metric, list, extra = "") => {
+  const heatCell = (model, engine, metric, list, extra = "") => {
     const mid = CELL / 2;
     const c = list.find((entry) => entry.model === model && entry.engine === engine);
     if (!c) {
@@ -253,7 +249,7 @@ window.Pie = window.Pie || {};
         return `<div class="heat-row" role="row">${label}${cells}</div>`;
       }
       const cells = METRICS.map((metric, g) =>
-        engines.map((engine, j) => heatCell(byModel, model, engine, metric, lists[g], g && !j ? " is-group-start" : "")).join("")).join("");
+        engines.map((engine, j) => heatCell(model, engine, metric, lists[g], g && !j ? " is-group-start" : "")).join("")).join("");
       return `<div class="heat-row" role="row">${label}${cells}</div>`;
     }).join("");
     return `<div class="heat-table is-wide" role="table" aria-label="Pie against each engine, decode and prefill"
@@ -272,7 +268,7 @@ window.Pie = window.Pie || {};
         const cells = [0].map((g) => engines.map((_, j) => `<div class="heat-cell${g && !j ? " is-group-start" : ""}" role="cell" data-tip="${tip}">${cellSvg(noFitMark(CELL / 2, CELL / 2))}</div>`).join("")).join("");
         return `<div class="heat-row" role="row">${label}${cells}</div>`;
       }
-      const cells = engines.map((engine) => heatCell(byModel, model, engine, metric, list)).join("");
+      const cells = engines.map((engine) => heatCell(model, engine, metric, list)).join("");
       return `<div class="heat-row" role="row">${label}${cells}</div>`;
     }).join("");
     return `
@@ -462,13 +458,6 @@ window.Pie = window.Pie || {};
         style="--engines: ${n * METRICS.length}">${groups}${heads}${body}</div></div>`, head);
   };
 
-  const qualityMark = (cx, cy, ok, text) => {
-    const kind = ok ? "is-ahead" : "is-behind";
-    return `<circle class="mini-track ${kind}" cx="${cx}" cy="${cy}" r="23" stroke-width="4.5"/>
-      <circle class="mini-arc ${kind}" cx="${cx}" cy="${cy}" r="23" stroke-width="4.5"/>
-      <text class="mini-value ${kind}" x="${cx}" y="${cy + 4}" text-anchor="middle">${text}</text>`;
-  };
-
   const TASK_NAMES = { gsm8k: "GSM8K", ifeval: "IFEval", mmlu: "MMLU", arc: "ARC", math500: "MATH-500" };
 
   const qualityRanking = (rows, models, pick) => {
@@ -522,84 +511,6 @@ window.Pie = window.Pie || {};
     return section("Quality", "Average accuracy", qualityRanking(rows, models, pick),
       tools(popup("overview-quality-engine", "Engine", names().engine(pick))));
   };
-
-  const figure = (model, rows) => {
-    const pie = rows.find((row) => isPie(row) && row.decode_tok_s);
-    const others = rows.filter((row) => !isPie(row) && row.decode_tok_s);
-    const pieNeeds = misfit(model, base);
-    if (!pie && pieNeeds) {
-      return `<div class="figure is-empty">Doesn't fit</div><div class="figure-caption">${esc(fitNote(pieNeeds, model))}</div>`;
-    }
-    if (!pie || !others.length) {
-      return `<div class="figure is-empty">—</div><div class="figure-caption">${pie ? "no other engine yet" : `no ${baseName()} run yet`}</div>`;
-    }
-    const best = others.reduce((a, b) => (b.decode_tok_s > a.decode_tok_s ? b : a));
-    const r = pie.decode_tok_s / best.decode_tok_s;
-    return `<div class="figure ${tone(r)}">${delta(r)}</div>
-      <div class="figure-caption">decode vs ${esc(names().engine(best.engine))}, the fastest other</div>`;
-  };
-
-  const lollipops = (model, rows, metric) => {
-    const bars = rows.filter((row) => row[metric.key]).sort((a, b) => b[metric.key] - a[metric.key]);
-    const engineOrder = Pie.store.tables.engines.map((e) => e.id);
-    const misfits = Object.keys(tooBig[model] || {})
-      .filter((engine) => !rows.some((row) => row.engine === engine))
-      .sort((a, b) => engineOrder.indexOf(a) - engineOrder.indexOf(b));
-    if (!bars.length) return "";
-    const max = bars[0][metric.key];
-    return `
-      <figure class="lollipop-chart">
-        <figcaption>${metric.label} <span>tok/s</span></figcaption>
-        ${bars.map((row) => {
-          const tip = [
-            names().engine(row.engine),
-            `${metric.label}: ${value(row[metric.key])} tok/s`,
-            row.version ? `Version ${row.version}` : "",
-            when(row),
-          ].filter(Boolean).join("\n");
-          const classes = ["lollipop-row", isPie(row) ? "is-primary" : "", row.stale ? "is-stale" : ""].filter(Boolean).join(" ");
-          const x = `${(Math.max(row[metric.key] / max, 0.01) * 100).toFixed(2)}%`;
-          return `
-            <div class="${classes}" data-tip="${esc(tip)}">
-              <span class="lollipop-label">${esc(names().engine(row.engine))}</span>
-              <svg class="lollipop" width="100%" height="12" aria-hidden="true">
-                <line x1="0" y1="6" x2="${x}" y2="6"/>
-                <circle cx="${x}" cy="6" r="4"/>
-              </svg>
-              <span class="lollipop-value">${value(row[metric.key])}</span>
-            </div>`;
-        }).join("")}
-        ${misfits.map((engine) => `
-            <div class="lollipop-row is-nofit${isPie({ engine }) ? " is-primary" : ""}" data-tip="${esc(`${names().engine(engine)}\nDoesn't fit. ${fitNote(tooBig[model][engine], model)}`)}">
-              <span class="lollipop-label">${esc(names().engine(engine))}</span>
-              <span class="lollipop-nofit">Doesn't fit</span>
-              <span class="lollipop-value"></span>
-            </div>`).join("")}
-      </figure>`;
-  };
-
-  const card = (model, rows) => `
-    <article class="model-card">
-      <h3>${esc(names().model(model))}</h3>
-      ${figure(model, rows)}
-      <div class="model-card-charts">${METRICS.map((metric) => lollipops(model, rows, metric)).join("")}</div>
-    </article>`;
-
-  const carousel = (cards) => `
-    <div class="carousel">
-      <div class="carousel-track" tabindex="0" aria-label="Models">${cards.join("")}</div>
-      ${cards.length > 1 ? `
-        <div class="carousel-controls">
-          <div class="carousel-dots" role="tablist">${cards.map((_, i) =>
-            `<button class="carousel-dot${i === 0 ? " is-current" : ""}" type="button" role="tab" aria-label="Model ${i + 1}" data-index="${i}"></button>`).join("")}</div>
-          <div class="carousel-paddles">
-            <button class="carousel-paddle" type="button" data-step="-1" aria-label="Previous model" disabled>
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg></button>
-            <button class="carousel-paddle" type="button" data-step="1" aria-label="Next model">
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
-          </div>
-        </div>` : ""}
-    </div>`;
 
   const syncCarousel = (track) => {
     const cards = [...track.children];
@@ -722,11 +633,11 @@ window.Pie = window.Pie || {};
       if (!state.overview.engine || !ran.has(state.overview.engine)) state.overview.engine = Pie.engines.primary;
       if (!macs.some((m) => m.id === state.overview.heatMac)) state.overview.heatMac = state.overview.hardware;
       if (!macs.some((m) => m.id === state.overview.standMac)) state.overview.standMac = state.overview.hardware;
-      const models = this.models(state).map((m) => m.id);
+      const models = this.models().map((m) => m.id);
       if (!models.includes(state.overview.model)) state.overview.model = models[0] || null;
     },
 
-    models(state) {
+    models() {
       return Pie.store.tables.models.filter((m) => Pie.store.inSuite(m.id)).map((m) => ({ id: m.id, label: names().model(m.id) }));
     },
 

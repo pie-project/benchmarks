@@ -68,14 +68,14 @@ window.Pie = window.Pie || {};
   };
   const typed = () => element.querySelector(".popover-search input")?.value || "";
   const scrolled = () => (element.querySelector(".popover-scroll") || element).scrollTop;
-  const isLimit = (key) => /^(limit|board|grid|reports|gaps|methods|reasons):/.test(String(key));
+  const isLimit = (key) => /^(board|grid|reports|gaps|methods|reasons):/.test(String(key));
   const sub = Object.assign(document.createElement("div"), { className: "popover popover-sub", hidden: true });
   sub.setAttribute("role", "menu");
   document.body.append(sub);
   let subs = [];
   const CHEVRON = '<svg class="popover-chevron" viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4"/></svg>';
   const parentRow = (o) => `<button class="popover-option popover-parent" type="button" aria-haspopup="menu" data-sub="${subs.push(o.submenu) - 1}"${o.value !== undefined ? ` data-value="${Pie.format.escape(o.value)}"${o.key ? ` data-key="${o.key}"` : ""}` : ""}>${check(Boolean(o.selected))}${o.icon || ""}<span class="popover-label">${Pie.format.escape(o.label)}</span><span class="popover-detail">${Pie.format.escape(o.detail || "")}</span>${CHEVRON}</button>`;
-  const limitMenu = (key) => (subs = [], (String(key).startsWith("board:") ? Pie.board : String(key).startsWith("grid:") ? Pie.platform : String(key).startsWith("reports:") ? Pie.reports : String(key).startsWith("gaps:") ? Pie.gaps : String(key).startsWith("reasons:") ? Pie.reasons : String(key).startsWith("methods:") ? Pie.methods : Pie.methodology)?.menu(String(key).slice(String(key).indexOf(":") + 1)) || [])
+  const limitMenu = (key) => (subs = [], (String(key).startsWith("board:") ? Pie.board : String(key).startsWith("grid:") ? Pie.platform : String(key).startsWith("reports:") ? Pie.reports : String(key).startsWith("gaps:") ? Pie.gaps : String(key).startsWith("reasons:") ? Pie.reasons : String(key).startsWith("methods:") ? Pie.methods : null)?.menu(String(key).slice(String(key).indexOf(":") + 1)) || [])
     .map((o) => (o.submenu ? parentRow(o) : o.separator ? `<div class="popover-separator"></div>` : o.heading ? `<div class="popover-heading">${Pie.format.escape(o.heading)}</div>` : (o.key ? (html) => `<div data-key="${o.key}">${html}</div>` : (html) => html)(option(o.value, o.selected, `${o.indent ? '<span class="popover-indent"></span>' : ""}${o.icon || ""}<span class="popover-label">${o.dot ? `<span class="cell-dot" style="--dot: ${o.dot}">${Pie.format.escape(o.label)}</span>` : Pie.format.escape(o.label)}</span>${o.detail ? `<span class="popover-detail">${Pie.format.escape(o.detail)}</span>` : ""}`, o.check ? "menuitemcheckbox" : undefined))))
     .join("");
 
@@ -116,7 +116,7 @@ window.Pie = window.Pie || {};
       .join("");
 
   const modelMenu = (state) =>
-    Pie.overview.models(state)
+    Pie.overview.models()
       .map((model) => option(model.id, model.id === state.overview.model,
         `<span class="popover-label">${Pie.format.escape(model.label)}</span>`))
       .join("");

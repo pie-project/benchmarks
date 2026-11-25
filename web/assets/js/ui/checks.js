@@ -11,8 +11,6 @@ window.Pie = window.Pie || {};
   const isNum = (v) => typeof v === "number" && Number.isFinite(v);
   const pct = (v, d = 1) => (isNum(v) ? `${(v * 100).toFixed(d)}%` : "–");
   const kl = (v) => (!isNum(v) ? "–" : v === 0 ? "0" : v < 0.001 ? v.toExponential(1) : v.toPrecision(2));
-  const err = (v) => (!isNum(v) ? "–" : v === 0 ? "0" : v < 0.001 || v >= 1000 ? v.toExponential(1) : v.toPrecision(2));
-  const short = (v) => (v ? String(v).slice(0, 9) : "");
 
   let accuracyPlatform = null;
   let openFor = null;
@@ -21,85 +19,8 @@ window.Pie = window.Pie || {};
   const card = (title, rows, off = false, ok = "") => `<div class="tip-title">${esc(title)}</div><div class="tip-rows qc-tip-rows">${rows
     .filter(Boolean).map(([k, v, dim, engine]) => `<div class="tip-row${dim ? " is-slack" : ""}">${engine ? `<span class="tip-dot" style="background: ${Pie.engines.colorOf(engine)}"></span>` : "<span></span>"}<span class="tip-name">${esc(k)}</span><span class="tip-value">${esc(v)}</span></div>`).join("")}</div>${off
     ? `<div class="tip-foot qc-tip-off">${esc(off === true ? "Mismatch" : off)}</div>` : ok ? `<div class="tip-foot qc-tip-ok">${esc(ok)}</div>` : ""}`;
-  const range = (a) => (isNum(a?.ci_low) && isNum(a?.ci_high) ? `${pct(a.ci_low)} – ${pct(a.ci_high)}` : "");
-  const section = (title, caption, body) => `
-    <section class="qc-section">
-      <h2>${esc(title)}</h2>
-      <p class="qc-caption">${esc(caption)}</p>
-      ${body}
-    </section>`;
 
   const layersText = (layers) => (isNum(layers) ? `${layers} layers kept` : layers ? `layers ${layers} kept` : "");
-  const miniBadge = (row) => `<span class="qc-badge" title="${esc(["Model slice", layersText(row.layers)].filter(Boolean).join(": "))}">Slice</span>`;
-
-  const parityTip = (r) => [
-    `${engineLabel(r.engine || "pie")} vs ${engineLabel(r.ref_engine)} on ${hardwareName(r.platform)}`,
-    `KL mean ${kl(r.kl_mean)}, p50 ${kl(r.kl_p50)}`,
-    `KL p99 ${kl(r.kl_p99)}, max ${kl(r.kl_max)}`,
-    `Top-1 agreement ${pct(r.top1_agree)}${r.top1_agree_decisive != null ? `, ${pct(r.top1_agree_decisive)} where ${engineLabel(r.ref_engine)} leads by 0.5 nats (${r.decisive_positions})` : ""}`,
-    r.ref_top1_p != null ? `${engineLabel(r.ref_engine)} top-1 holds ${pct(r.ref_top1_p)}, its top-20 ${pct(r.ref_topk_mass)}` : "",
-    isNum(r.first_self_kl) ? `Checked on the answers: first-token KL ${kl(r.first_kl_mean)}, ${engineLabel(r.ref_engine)} against itself ${kl(r.first_self_kl)} (${r.first_self})` : "",
-    `Exact match ${pct(r.exact_match, 0)}`,
-    `${r.positions ?? "–"} positions over ${r.prompts ?? "–"} prompts${r.misaligned_texts ? `, ${r.misaligned_texts} misaligned` : ""}`,
-    `Pie ${short(r.version) || "–"}, ${engineLabel(r.ref_engine)} ${r.ref_version || "–"}`,
-    r.miniature ? ["Model slice", layersText(r.layers)].filter(Boolean).join(": ") : "",
-    r.date ? `Measured ${Pie.format.date(r.date)}` : "",
-  ].filter(Boolean).join("\n");
-
-  const parityTable = () => {
-    const rows = tables().quality_parity || [];
-    if (!rows.length) return empty("No parity runs yet.");
-    const platforms = [...new Set(rows.map((r) => r.platform))]
-      .sort((a, b) => hardwareName(a).localeCompare(hardwareName(b)));
-    const models = new Map();
-    for (const r of rows) {
-      const key = r.artifact;
-      if (!models.has(key)) models.set(key, { artifact: r.artifact, model: r.model, cells: {} });
-      models.get(key).cells[r.platform] = r;
-    }
-    const ordered = [...models.values()].sort((a, b) => Pie.store.names.model(a.model).localeCompare(Pie.store.names.model(b.model)) || a.artifact.localeCompare(b.artifact));
-    const refs = (p) => [...new Set(rows.filter((r) => r.platform === p).map((r) => engineLabel(r.ref_engine)))].join(", ");
-    const head = `<tr><th class="qc-lead">Model</th>${platforms.map((p) => `<th><span>${esc(hardwareName(p))}</span><small>vs ${esc(refs(p))}</small></th>`).join("")}</tr>`;
-    const cell = (r) => (!r ? '<td class="qc-none">–</td>' : r.ref_unsupported ? `
-      <td class="qc-cell qc-unsupported" data-tip="${esc(`${engineLabel(r.ref_engine)} cannot run this model\n${r.ref_unsupported}${r.pie_ok ? "\npie runs it" : ""}`)}" aria-label="${esc(engineLabel(r.ref_engine))} cannot run this model">
-        ${Pie.icon("unsupported")}
-        ${r.miniature ? miniBadge(r) : ""}
-      </td>` : `
-      <td class="qc-cell" data-tip="${esc(parityTip(r))}">
-        <span class="qc-figure">${kl(r.kl_mean)}<span class="qc-sep">/</span>${pct(r.top1_agree)}</span>
-        ${r.miniature ? miniBadge(r) : ""}
-      </td>`);
-    const body = ordered.map((m) => `
-      <tr>
-        <th class="qc-lead" scope="row"><span>${esc(Pie.store.names.model(m.model))}</span><code>${esc(m.artifact)}</code></th>
-        ${platforms.map((p) => cell(m.cells[p])).join("")}
-      </tr>`).join("");
-    return `<div class="qc-scroll"><table class="qc-table qc-parity"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
-  };
-
-  const kernelsTable = () => {
-    const rows = [...(tables().quality_kernels || [])].sort((a, b) => hardwareName(a.platform).localeCompare(hardwareName(b.platform)));
-    if (!rows.length) return empty("No kernel test runs yet.");
-    const body = rows.map((r, i) => {
-      const failing = r.failing || [];
-      const failed = r.failed ?? failing.length;
-      const worst = r.worst;
-      return `
-      <tr>
-        <th class="qc-lead" scope="row"><span>${esc(hardwareName(r.platform))}</span><code>${esc(r.artifact)}</code></th>
-        <td class="qc-num">${esc(r.passed ?? "–")}</td>
-        <td class="qc-num">${failed
-          ? `<button class="qc-failed" type="button" data-kernel="${i}" aria-haspopup="dialog">${esc(failed)} failed</button>`
-          : `<span class="qc-ok">0</span>`}</td>
-        <td class="qc-num qc-quiet">${esc(r.ignored ?? "–")}</td>
-        <td class="qc-num"${worst?.name ? ` data-tip="${esc(`${worst.name}\nmax abs ${err(worst.max_abs)}, max rel ${err(worst.max_rel)}`)}"` : ""}>${worst ? `${err(worst.max_abs)}${isNum(worst.max_rel) ? `<span class="qc-quiet"> abs, ${err(worst.max_rel)} rel</span>` : ""}` : "–"}</td>
-        <td class="qc-quiet"><code>${esc(short(r.version))}</code>${r.date ? ` ${esc(Pie.format.date(r.date))}` : ""}</td>
-      </tr>`;
-    }).join("");
-    return `<div class="qc-scroll"><table class="qc-table qc-kernels">
-      <thead><tr><th class="qc-lead">Platform</th><th class="qc-num">Passed</th><th class="qc-num">Failed</th><th class="qc-num">Ignored</th><th class="qc-num">Worst error</th><th>Pie</th></tr></thead>
-      <tbody>${body}</tbody></table></div>`;
-  };
 
   const failingList = (row) => `
     <div class="qc-pop-head">${esc(hardwareName(row.platform))}: ${esc((row.failing || []).length)} failing</div>
@@ -122,9 +43,6 @@ window.Pie = window.Pie || {};
   };
   const platformBar = (platforms) => platforms.length ? `<span class="platform-compare qc-picker" role="group" aria-label="Platform">${platforms.map((p) =>
     `<button type="button" data-qc-platform="${esc(p)}" class="plain-button${p === accuracyPlatform ? " is-active" : ""}" aria-pressed="${p === accuracyPlatform}">${esc(platformLabel(p))}</button>`).join("")}</span>` : "";
-
-  const flagTag = (flag) => (flag === "mismatch" ? '<span class="qc-flag is-mismatch">Mismatch</span>'
-    : flag === "ok" ? '<span class="qc-flag is-ok">Match</span>' : '<span class="qc-flag">–</span>');
 
   const deltaChart = (items, bare = false) => {
     const half = (a) => (isNum(a?.ci_low) && isNum(a?.ci_high) ? (a.ci_high - a.ci_low) / 2 : 0);
@@ -162,35 +80,6 @@ window.Pie = window.Pie || {};
       ${svg}
       <p class="qc-chart-key"><span><i class="qc-key-band"></i>Tolerance</span><span><i class="qc-key-dot"></i>Within it</span><span><i class="qc-key-dot is-off"></i>Mismatch</span><span>${esc(other)} minus Pie, in points; right of zero, Pie scores lower</span></p>
     </div>`;
-  };
-
-  const accuracyTable = (state) => {
-    const { platforms, tag, items } = accuracyRows(state);
-    if (!items.length) return empty("No accuracy scores to compare yet.");
-    const body = items.map(({ row, arm }) => {
-      const pie = row.arms.find((a) => a.artifact === (arm.vs || row.pie));
-      const other = engineLabel(arm.engine);
-      const flag = isOff(arm) ? "mismatch" : arm.score_flag;
-      const tip = [`Pie ${pie ? `${pct(pie.score)} (95% ${pct(pie.ci_low)} to ${pct(pie.ci_high)}, n ${pie.n})` : "not run"}`,
-        `${other} ${pct(arm.score)} (95% ${pct(arm.ci_low)} to ${pct(arm.ci_high)}, n ${arm.n})`,
-        row.platform ? `On ${hardwareName(row.platform)}` : "",
-        isNum(arm.tolerance) ? `Allowed gap ±${(arm.tolerance * 100).toFixed(1)} pts` : ""].filter(Boolean).join("\n");
-      return `
-      <tr data-tip="${esc(tip)}">
-        <th class="qc-lead" scope="row"><span>${esc(Pie.store.names.model(row.model))}</span></th>
-        <td>${esc(row.task)}</td>
-        <td class="qc-num">${pie ? pct(pie.score) : "–"}</td>
-        <td>${esc(other)}</td>
-        <td class="qc-num">${pct(arm.score)}</td>
-        <td class="qc-num${arm.score_flag === "mismatch" ? " is-off" : ""}">${isNum(arm.diff) ? `${arm.diff > 0 ? "+" : arm.diff < 0 ? "−" : ""}${(Math.abs(arm.diff) * 100).toFixed(1)}` : "–"}</td>
-        <td>${flagTag(flag)}</td>
-      </tr>`;
-    }).join("");
-    return `${platforms.length > 1 ? platformBar(platforms) : ""}${deltaChart(items)}
-      <div class="qc-scroll"><table class="qc-table qc-accuracy">
-        <thead><tr><th class="qc-lead">Model</th><th>Task</th><th class="qc-num">Pie</th><th>Engine</th><th class="qc-num">Its score</th><th class="qc-num">Delta</th><th>Parity</th></tr></thead>
-        <tbody>${body}</tbody></table></div>
-      <p class="qc-foot">Release ${esc(tag)}, ${esc(platformLabel(accuracyPlatform))}. Delta is the engine minus Pie, in points. Only engines on Pie's weights and machine are compared. A mismatch is pie scoring lower by more than both 95% intervals together; only the final answers count.</p>`;
   };
 
   const QUALITY_MAC = "m5-max-128g";
@@ -309,19 +198,6 @@ window.Pie = window.Pie || {};
         </div><div class="platform-section-body"${folded[p] ? " hidden" : ""}><div class="platform-section-scroll">${gridOf(state, g, layout)}</div></div></section>`;
     }).join("")}</div>`;
   };
-
-  const page = (state) => `
-    <div class="method-inner qc-inner">
-      <header class="method-head qc-head">
-        <h1>Quality</h1>
-        <p class="method-lede">Whether Pie computes what a reference engine computes, on the same weights and the same device.</p>
-      </header>
-      ${section("Parity", "KL divergence of Pie's next-token distribution from the reference engine's, mean over answer positions, and how often both pick the same top token.",
-        `<div class="qc-banner" role="note"${(tables().quality_parity || []).length ? "" : " hidden"}>Model slices: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</div>${parityTable()}`)}
-      ${section("Kernels", "Pie's kernel tests on each backend, against reference implementations.", kernelsTable())}
-      ${section("Accuracy", "Benchmark scores of Pie beside every engine that ran the same weights on the same machine, per platform.", accuracyTable(state))}
-      <div class="qc-pop" role="dialog" hidden></div>
-    </div>`;
 
   const closePop = () => {
     openFor = null;

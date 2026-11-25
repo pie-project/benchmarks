@@ -33,7 +33,6 @@ window.Pie = window.Pie || {};
     `<button type="button" class="plain-button${m.id === active ? " is-active" : ""}" data-mode="${m.id}" aria-pressed="${m.id === active}" title="${esc(`${m.title || m.label}, ${m.id === "batching" ? "as many requests at once as the hardware needs to stay busy" : "one request"}`)}"><svg class="mode-icon" viewBox="0 0 16 16" aria-hidden="true">${DEGREE[m.id] || `<path d="${m.icon}"/>`}</svg>${esc(m.id === "spec" ? m.label : m.group)}</button>`).join("")}</span>`;
   const AUTO_MS = 9000;
   const AUTO_ORDER = ["decode", "prefill", "batching", "pbatch"];
-  const SETUP_NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
   const stillMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const auto = { stopped: true, paused: false, timer: null, started: 0, spent: 0, rolling: false };
   const autoOn = () => !auto.stopped && !stillMotion.matches;
@@ -232,7 +231,6 @@ window.Pie = window.Pie || {};
     { test: /^nemotron/, name: "NVIDIA", logo: "nvidia" },
   ];
   const makerOf = (model) => { const id = model.split("~")[0]; const family = Pie.store.index.models[id]?.family || id.replace(/-/g, "_"); return MAKERS.find((m) => m.test.test(family)) || { name: "", logo: "" }; };
-  const MAKER_TINT = { Alibaba: "#615ced", DeepSeek: "#4d6bfe", Google: "#4285f4", Meta: "#0866ff", OpenAI: "#10a37f", Xiaomi: "#ff6900", "Z.ai": "#8e8e93", Moonshot: "#8e8e93", Tencent: "#0055e9", MiniMax: "#e73562", NVIDIA: "#76b900" };
   const CLOUD = '<svg class="model-cloud" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 12.5a3 3 0 0 1-.4-6A4 4 0 0 1 11.8 6a3.25 3.25 0 0 1 .2 6.5z"/></svg>';
   const badge = (maker) => `<span class="model-badge" aria-hidden="true">${maker.logo ? `<img src="assets/img/models/${maker.logo}.svg" alt="">` : CLOUD}</span>`;
 
@@ -270,7 +268,6 @@ window.Pie = window.Pie || {};
       "muse-spark-open-816b-a42b", "nvidia-nemotron-3-ultra-550b-a55b", "minimax-m3.1-flash"]),
     hardware: new Set(["h200-x1", "b200-x1", "pro6000-x1", "a100-sxm-x1", "h100-sxm-x1", "a40-x1", "l40s-x1", "rtx5090-x1", "rtx4090-x1"]),
   };
-  const PENDING = '<svg class="platform-pending" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.8V8l2.2 1.6"/></svg>';
   const NOFIT = '<svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>';
   const signed = (p) => {
     const pct = Math.round(p * 100);
@@ -278,15 +275,9 @@ window.Pie = window.Pie || {};
   };
 
   const COMPARES = { engines: "Relative Speed", ceiling: "Kernel Efficiency", tps: "Tokens per Second" };
-  const SHORT_COMPARES = { engines: "Relative", tps: "Tokens per Second", ceiling: "Efficiency" };
   const COMPARE_ICONS = { engines: "speedups", ceiling: "all_hardware", tps: "tps" };
   const viewIcon = (id) => `<svg class="view-icon" viewBox="0 0 24 24" aria-hidden="true">${id === "engines" ? '<g transform="scale(1.5)" stroke-width="1.2"><path stroke-linejoin="round" d="M14.15 6.63L14.15 9.37L12.81 8.94L12.06 10.74L13.32 11.38L11.38 13.32L10.74 12.06L8.94 12.81L9.37 14.15L6.63 14.15L7.06 12.81L5.26 12.06L4.62 13.32L2.68 11.38L3.94 10.74L3.19 8.94L1.85 9.37L1.85 6.63L3.19 7.06L3.94 5.26L2.68 4.62L4.62 2.68L5.26 3.94L7.06 3.19L6.63 1.85L9.37 1.85L8.94 3.19L10.74 3.94L11.38 2.68L13.32 4.62L12.06 5.26L12.81 7.06z"/><circle cx="8" cy="8" r="2"/></g>' : id === "tps" ? '<path class="is-filled" fill-rule="evenodd" d="M4.5 2.5h15A2 2 0 0 1 21.5 4.5v5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zm2 3v2.75H10V5.5zM4.5 12.5h15a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zm2 3v2.75H10V15.5z"/>' : Pie.icons[COMPARE_ICONS[id]]}</svg>`;
   const nextCompare = (id) => { const ids = Object.keys(COMPARES); return ids[(ids.indexOf(id) + 1) % ids.length]; };
-  const CAPTIONS = {
-    engines: "Speedup over the fastest other engine",
-    ceiling: "Share of the hardware's theoretical peak",
-    tps: "The engine's own speed",
-  };
   const saved = (() => { try { return localStorage.getItem("platformCompare"); } catch { return null; } })();
   let chosen = COMPARES[saved] ? saved : "engines";
   let compare = chosen;
@@ -300,13 +291,12 @@ window.Pie = window.Pie || {};
   function batchedBound(mac, model, scheme, benchmark, row) {
     return Pie.batchedCeiling?.(mac, model, scheme, benchmark, row) || null;
   }
-  const cell = (rows, metric, base, rival) => {
+  const cell = (rows, metric, base) => {
     const pie = rows.find((r) => r.engine === base && r[metric.key]);
     const others = rows.filter((r) => r.engine !== base && r[metric.key]);
     if (!pie) return null;
-    const rivals = rival ? others.filter((r) => r.engine === rival) : others;
-    if (!rivals.length) return { pie, best: null, gain: null, all: [pie, ...others] };
-    const best = rivals.reduce((a, b) => ((metric.higher ? b[metric.key] > a[metric.key] : b[metric.key] < a[metric.key]) ? b : a));
+    if (!others.length) return { pie, best: null, gain: null, all: [pie, ...others] };
+    const best = others.reduce((a, b) => ((metric.higher ? b[metric.key] > a[metric.key] : b[metric.key] < a[metric.key]) ? b : a));
     const gain = metric.higher ? pie[metric.key] / best[metric.key] - 1 : best[metric.key] / pie[metric.key] - 1;
     return { pie, best, gain, all: [pie, ...others] };
   };
@@ -336,11 +326,6 @@ window.Pie = window.Pie || {};
   };
   const times = (x) => `${x >= 10 ? Math.round(x) : x.toFixed(1)}×`;
 
-  const subline = (c, metric, mode, raw) => {
-    if (mode.limit) return "";
-    const gain = overRaw(c.pie, metric, raw);
-    return "";
-  };
 
   const card = (title, sub, lines = [], foot = "") => `
     ${title ? `<div class="tip-title">${esc(title)}</div>` : ""}${sub ? `<div class="tip-sub">${esc(sub)}</div>` : ""}
@@ -469,7 +454,6 @@ window.Pie = window.Pie || {};
     const y = (v) => T + (1 - (v - Y0) / (Y1 - Y0)) * (H - T - B);
     const roof = (v) => Math.min(bw * 1e9 * v, peak * 1e12);
     const start = X0;
-    const at = (p) => `cx="${x(p.ai).toFixed(1)}" cy="${y(p.achieved).toFixed(1)}"`;
     const isPie = (p) => p.r.engine === focus && !p.ghost;
     const point = (cx, cy, cls, color = "") => `<line class="${cls}" x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy}"${color ? ` stroke="${color}"` : ""}/>`;
     const dots = [...points.filter((p) => !isPie(p)), ...points.filter(isPie)]
@@ -860,14 +844,12 @@ window.Pie = window.Pie || {};
       const mode = modes.find((m) => m.id === state.platform.mode) || modes.find((m) => m.id === "decode") || modes[0];
       const metric = mode.metric;
       const base = (!dry && state.platform.engine) || Pie.engines.primary;
-      const rival = null;
       const snapshot = all.filter((r) => r.workload === mode.workload);
       const raw = all.filter((r) => r.workload === "raw" && Pie.store.isMeasured(r));
       const rows = snapshot.filter(Pie.store.isMeasured);
       const only = Pie.schema[state.table]?.platform;
       pagePlatforms = only ? [] : PLATFORMS.filter((pl) => rows.some((r) => platformOf(Pie.store.index.hardware[r.hardware] || {}) === pl)).map((pl) => pl.id);
-      const picked = [];
-      const groups = PLATFORMS.filter((p) => (!only || p.id === only) && (!picked.length || picked.includes(p.id)))
+      const groups = PLATFORMS.filter((p) => !only || p.id === only)
         .map((p) => ({ platform: p, macs: Pie.store.tables.hardware.filter((hw) => platformOf(hw) === p)
           .filter((hw) => !(hw.class === "gpu" && hw.count > 1))
           .filter((hw) => !["a100-pcie-x1", "h100-pcie-x1", "l4-x1"].includes(hw.id))
@@ -942,48 +924,44 @@ window.Pie = window.Pie || {};
         for (const r of list) if (r[metric.key] && (!by[r.engine] || r[metric.key] > by[r.engine][metric.key])) by[r.engine] = r;
         return Object.values(by);
       };
-      const allModels = sortedModels;
-      const realOf = (id) => id;
       const modeOf = (c) => (c?.pie?.workload === "spec" ? SPEC : mode);
-      const miniModels = new Set(snapshot.filter((r) => r.miniature).map((r) => r.model));
       const grid = {};
       for (const mac of macs) {
         grid[mac] = {};
-        for (const model of allModels) {
-          const id = realOf(model);
-          const here = (r) => r.hardware === mac && r.model === id;
+        for (const model of sortedModels) {
+          const here = (r) => r.hardware === mac && r.model === model;
           const base = baseOf(mac);
-          let c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base, rival);
-          const cut = sliceOn && ((TODAY.models.has(id) && TODAY.hardware.has(mac)) || snapshot.some((r) => here(r) && r.miniature));
-          const fullNeeds = Pie.store.index.models[id]?.needs_gib;
-          const formula = noFit[mac]?.[id]?.[base];
-          const sliceOnly = !formula && slicedAt.has(`${mac}|${id}`) && !fullAt.has(`${mac}|${id}`);
+          let c = cell(specRows.length ? bestOf([...rows.filter(here), ...specRows.filter(here)]) : rows.filter(here), metric, base);
+          const cut = sliceOn && ((TODAY.models.has(model) && TODAY.hardware.has(mac)) || snapshot.some((r) => here(r) && r.miniature));
+          const fullNeeds = Pie.store.index.models[model]?.needs_gib;
+          const formula = noFit[mac]?.[model]?.[base];
+          const sliceOnly = !formula && slicedAt.has(`${mac}|${model}`) && !fullAt.has(`${mac}|${model}`);
           let needs = formula || (sliceOnly ? fullNeeds || 1 : undefined);
           if ((compare === "tps" || compare === "ceiling") && cut) c = null;
           const own = snapshot.find((r) => here(r) && r.engine === base);
-          const cloud = Pie.store.index.models[id]?.catalog && compare === "engines";
+          const cloud = Pie.store.index.models[model]?.catalog && compare === "engines";
           const failed = own && own.status === "fail";
           if (cloud && failed && !c) { grid[mac][model] = { c: null, needs, failed: true, why: own.note ? `Failed: ${own.note}` : "The run failed" }; continue; }
           grid[mac][model] = { c, needs, failed, why: sliceOnly ? "The full model does not run on this machine; only a model slice ran here" : needs ? ((compare === "tps" || compare === "ceiling") && cut ? `The full model does not fit one machine${fullNeeds ? `: needs about ${Math.round(fullNeeds)} GB` : ""}. Only a model slice ran` : `Needs about ${Math.round(needs)} GB`) : (compare === "tps" || compare === "ceiling") && cut ? "Only a model slice ran here, which is not the full model's speed" : own?.note || "" };
         }
       }
-      const hide = state.hideEmpty || picked.length > 0;
-      const awaiting = (mac, model) => !grid[mac][model].c && !grid[mac][model].needs && !grid[mac][model].failed && TODAY.models.has(realOf(model)) && TODAY.hardware.has(mac);
+      const hide = state.hideEmpty;
+      const awaiting = (mac, model) => !grid[mac][model].c && !grid[mac][model].needs && !grid[mac][model].failed && TODAY.models.has(model) && TODAY.hardware.has(mac);
       const ranAny = new Set(anySetup.map((r) => `${r.hardware}|${r.model}`));
-      const shows = (mac, model) => grid[mac][model].c || awaiting(mac, model) || ranAny.has(`${mac}|${realOf(model)}`);
+      const shows = (mac, model) => grid[mac][model].c || awaiting(mac, model) || ranAny.has(`${mac}|${model}`);
       const checked = new Set(dry ? (Pie.store.tables.quality_parity || []).filter((r) => !r.ref_unsupported && Number.isFinite(r.kl_mean)).map((r) => `${r.platform}|${r.model}`) : []);
-      const hasData = (mac, model) => grid[mac][model].c || (sliceOn && (awaiting(mac, model) || checked.has(`${mac}|${realOf(model)}`)));
+      const hasData = (mac, model) => grid[mac][model].c || (sliceOn && (awaiting(mac, model) || checked.has(`${mac}|${model}`)));
       const engineRuns = new Map(), modelRows = new Map();
       for (const r of all) {
         if (r.status !== "unsupported") (engineRuns.get(r.hardware) || engineRuns.set(r.hardware, new Set()).get(r.hardware)).add(r.engine);
         if (r.workload === mode.workload) (modelRows.get(`${r.hardware}|${r.model}`) || modelRows.set(`${r.hardware}|${r.model}`, new Map()).get(`${r.hardware}|${r.model}`)).set(r.engine, r.status);
       }
       const comparable = (mac, model) => {
-        if (checked.has(`${mac}|${realOf(model)}`)) return true;
-        const statuses = modelRows.get(`${mac}|${realOf(model)}`) || new Map();
+        if (checked.has(`${mac}|${model}`)) return true;
+        const statuses = modelRows.get(`${mac}|${model}`) || new Map();
         return [...(engineRuns.get(mac) || [])].filter((e) => !["unsupported", "no_fit"].includes(statuses.get(e))).length >= 2;
       };
-      const models = (hide ? allModels.filter((model) => macs.some((mac) => hasData(mac, model))) : allModels)
+      const models = (hide ? sortedModels.filter((model) => macs.some((mac) => hasData(mac, model))) : sortedModels)
         .filter((model) => compare !== "engines" || macs.some((mac) => comparable(mac, model)));
       const median = (list) => {
         const sorted = list.filter((g) => g !== undefined && g !== null).sort((a, b) => a - b);
@@ -1008,8 +986,8 @@ window.Pie = window.Pie || {};
         const c = grid[mac]?.[model]?.c;
         if (!hideUnverified || !c) return false;
         const pair = pairOf(c, metric);
-        if (!pair || pair.first.engine !== c.pie.engine || overLimitOf(mac, realOf(model), modeOf(c), metric, c)) return false;
-        return !Pie.verifiedProfile?.(`${mac}|${realOf(model)}|${modeOf(c).id}`);
+        if (!pair || pair.first.engine !== c.pie.engine || overLimitOf(mac, model, modeOf(c), metric, c)) return false;
+        return !Pie.verifiedProfile?.(`${mac}|${model}|${modeOf(c).id}`);
       };
       const overall = (mac) => median(models.map((model) => (unverified(mac, model) ? null : compare === "tps" ? grid[mac][model].c?.pie[metric.key] : grid[mac][model].c?.gain)));
       const sortFor = (k) => p.sortBy?.[k] || null;
@@ -1044,12 +1022,12 @@ window.Pie = window.Pie || {};
         const kind = Math.abs(gain) < EVEN ? "is-even" : gain > 0 ? "is-ahead" : "is-behind";
         return { kind, html: Math.round(gain * 100) ? signed(gain) : "0%" };
       };
-      const terse = (name) => name.replace(/^RTX (PRO )?/, (m, pro) => (pro ? "PRO " : "")).replace(/ (SXM|PCIe)\b/, "");
+      const terse = (name) => name.replace(/^RTX (PRO )?/, (_, pro) => (pro ? "PRO " : "")).replace(/ (SXM|PCIe)\b/, "");
       const pageNames = macs.map((mac) => chipName(mac));
       const shortOf = (mac) => {
         const name = chipName(mac);
         const short = terse(name);
-        return pageNames.some((other) => other !== name && terse(other) === short) ? name.replace(/^RTX (PRO )?/, (m, pro) => (pro ? "PRO " : "")) : short;
+        return pageNames.some((other) => other !== name && terse(other) === short) ? name.replace(/^RTX (PRO )?/, (_, pro) => (pro ? "PRO " : "")) : short;
       };
       const EYE = "M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8z";
       const eye = (mac) => {
@@ -1057,7 +1035,7 @@ window.Pie = window.Pie || {};
         const label = off ? "Show this machine's numbers" : "Hide this machine's numbers";
         return `<button type="button" class="platform-eye" data-hide-mac="${esc(mac)}" aria-pressed="${off}" aria-label="${label}" title="${label}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="${EYE}"/>${off ? '<path d="M3 13 13 3"/>' : '<circle cx="8" cy="8" r="2"/>'}</svg></button>`;
       };
-      const machine = (mac, platform) => {
+      const machine = (mac) => {
         const hw = Pie.store.index.hardware[mac];
         const short = shortOf(mac);
         return `<th class="platform-row" scope="row" data-hide-mac="${esc(mac)}"${hw ? ` data-tip="${esc(specSheet(hw))}"` : ""}><span class="platform-chip">${badgeOf(platformOf(hw || {})?.id)}<span class="platform-name">${esc(chipName(mac))}</span>${short !== chipName(mac) ? `<span class="platform-short">${esc(short)}</span>` : ""}${specOf(hw)}</span>${eye(mac)}</th>`;
@@ -1073,26 +1051,26 @@ window.Pie = window.Pie || {};
         bandwidth: { title: "Bandwidth-bound: the share of the bandwidth bound", path: "M2 5.5h9M8.5 3l2.5 2.5L8.5 8M14 10.5H5M7.5 8 5 10.5 7.5 13" },
         interconnect: { title: "Interconnect-bound: the share of the bound set by the link between the GPUs", path: "M6.5 9.5l3-3M7.2 4.6l1.4-1.4a2.6 2.6 0 0 1 3.7 3.7l-1.4 1.4M8.8 11.4l-1.4 1.4a2.6 2.6 0 0 1-3.7-3.7l1.4-1.4" },
       };
-      const tableOf = ({ macs: list, models, platform: own }, first = true) => {
+      const tableOf = ({ macs: list, models, platform: own }) => {
       const key = own?.id || only || "all";
       const { key: sortKey = null, dir = 1 } = sortFor(key) || {};
       const tight = p.narrowBy?.[key] ?? (p.narrow ?? false);
       const narrowLabel = tight ? "Show Overall and memory" : "Hide Overall and memory";
       const shownGroups = [{ platform: null, macs: list }];
       const sliceMark = (cut, model) => {
-        const all = Pie.store.index.models[realOf(model)]?.layers;
+        const all = Pie.store.index.models[model]?.layers;
         const kept = parseInt(cut, 10);
         const experts = String(cut).match(/, (\d+) experts$/)?.[1];
         const how = (kept && all ? `${kept} of ${all} layers kept (${Math.round((kept / all) * 100)}%)` : String(cut).replace(/, \d+ experts$/, "")) + (experts ? `, the first ${experts} experts` : "");
         return `<span class="column-info slice-mark" tabindex="0" role="button" aria-label="Model slice"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg><span class="column-info-pop" role="tooltip">${esc(`Model slice: ${how}, to fit one device. For engine-to-engine comparison only, not the full model's speed.`)}</span></span>`;
       };
-      const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac, i) => {
-        if (hidden.has(mac)) return `<tr class="is-hidden-row" data-empty="1">${machine(mac, g.platform)}<td class="is-overall" data-hide-mac="${esc(mac)}">${eye(mac)}</td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
+      const body = shownGroups.map((g) => (g.platform ? groupRow(g) : "") + (g.platform && folded(g.platform.id) ? [] : g.macs).map((mac) => {
+        if (hidden.has(mac)) return `<tr class="is-hidden-row" data-empty="1">${machine(mac)}<td class="is-overall" data-hide-mac="${esc(mac)}">${eye(mac)}</td>${models.map((model) => `<td data-col="${esc(model)}"></td>`).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
         const o = overall(mac);
         const overallCell = o === null ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-empty">–</span>${eye(mac)}</td>`
           : compare === "tps" ? `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell is-even"><span class="platform-main">${fmtNum(o)}<span class="platform-unit">${esc(metric.unit)}</span></span></span>${eye(mac)}</td>`
           : (() => { const n = number(o); n.html = Math.round(o * 100) ? signed(o) : "0%"; return `<td class="is-overall" data-hide-mac="${esc(mac)}"><span class="platform-cell ${n.kind}" data-tip="${esc(card(macName(mac), Math.abs(o) < EVEN ? "On par with the next best" : `${Math.abs(Math.round(o * 100))}% ${o > 0 ? "faster" : "slower"} than the next best`))}"><span class="platform-main">${n.html}</span></span>${eye(mac)}</td>`; })();
-        return `<tr>${machine(mac, g.platform)}${overallCell}${models.map((model) => {
+        return `<tr>${machine(mac)}${overallCell}${models.map((model) => {
           const { c, needs, why } = grid[mac][model];
           const sorted = sortKey === model ? " is-sorted" : "";
           if (c && unverified(mac, model)) {
@@ -1100,7 +1078,7 @@ window.Pie = window.Pie || {};
           }
           if (c) {
             cells.push(c.gain);
-            const ceil = compare === "ceiling" ? boundOf(mac, realOf(model), modeOf(c), metric, c.pie) : null;
+            const ceil = compare === "ceiling" ? boundOf(mac, model, modeOf(c), metric, c.pie) : null;
             const n = compare === "ceiling"
               ? (() => {
                   if (!ceil) return { kind: "is-even", html: "–" };
@@ -1113,25 +1091,25 @@ window.Pie = window.Pie || {};
               : compare === "tps" ? { kind: "is-even", html: `${esc(fmtNum(c.pie[metric.key]))}<span class="platform-unit">${esc(metric.unit)}</span>` }
               : c.gain === null ? { kind: "is-even", html: c.pie.miniature ? "–" : esc(value(c.pie[metric.key], metric.unit)) } : number(c.gain);
             const PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
-            const open = { hardware: [mac], model: [realOf(model)], workload: [PHASE[modeOf(c).id] || modeOf(c).workload],
+            const open = { hardware: [mac], model: [model], workload: [PHASE[modeOf(c).id] || modeOf(c).workload],
               engine: compare === "engines" ? [...new Set((c.all || [c.pie]).map((r) => r.engine))] : [c.pie.engine] };
-            if (compare === "engines" && c.gain === null && c.pie.miniature) return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty is-nofit" data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}">${NOFIT}N/A</span>${eye(mac)}</td>`;
-            const overLimit = overLimitOf(mac, realOf(model), modeOf(c), metric, c);
+            if (compare === "engines" && c.gain === null && c.pie.miniature) return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty is-nofit" data-tip="${esc(tip(mac, model, metric, c, modeOf(c), raw))}">${NOFIT}N/A</span>${eye(mac)}</td>`;
+            const overLimit = overLimitOf(mac, model, modeOf(c), metric, c);
             const pair = compare === "engines" ? pairOf(c, metric) : null;
             const flagged = !!pair && pair.first.engine === c.pie.engine && !overLimit;
-            const profiled = (Pie.profiles || {})[`${mac}|${realOf(model)}|${modeOf(c).id}`];
-            const explained = flagged && Pie.verifiedProfile?.(`${mac}|${realOf(model)}|${modeOf(c).id}`);
+            const profiled = (Pie.profiles || {})[`${mac}|${model}|${modeOf(c).id}`];
+            const explained = flagged && Pie.verifiedProfile?.(`${mac}|${model}|${modeOf(c).id}`);
             const rerun = flagged && profiled && !explained;
-            const reasonAt = explained ? ` data-gap="${esc(JSON.stringify({ engine: pair.second.engine, hardware: mac, model: realOf(model), setup: modeOf(c).id }))}"` : "";
-            return `<td class="${sorted} is-openable${overLimit ? " is-over-limit" : explained ? " is-explained" : flagged ? " is-gap" : ""}"${reasonAt} data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">${explained ? "See Reason" : "See Runs"}<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && topIn(g.macs.filter((m) => !hidden.has(m)), model) === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, realOf(model), metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}${explained ? `<span class="verified-mark" aria-hidden="true"><svg viewBox="0 0 16 16"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>` : rerun ? `<span class="verified-mark is-rerun" aria-hidden="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M8 5.2v3.3"/><circle class="dot" cx="8" cy="10.9" r=".95"/></svg></span>` : ""}<span class="platform-main">${n.html}</span>${subline(c, metric, modeOf(c), raw)}</span></td>`;
+            const reasonAt = explained ? ` data-gap="${esc(JSON.stringify({ engine: pair.second.engine, hardware: mac, model: model, setup: modeOf(c).id }))}"` : "";
+            return `<td class="${sorted} is-openable${overLimit ? " is-over-limit" : explained ? " is-explained" : flagged ? " is-gap" : ""}"${reasonAt} data-col="${esc(model)}" data-open="${esc(JSON.stringify(open))}"><span class="platform-open" aria-hidden="true">${explained ? "See Reason" : "See Runs"}<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell ${n.kind}${c.pie.miniature ? " is-mini" : ""}${compare === "tps" && topIn(g.macs.filter((m) => !hidden.has(m)), model) === c.pie[metric.key] ? " is-top" : ""}"${compare === "tps" ? "" : ` data-tip="${esc(tip(mac, model, metric, c, modeOf(c), raw))}"`}>${c.pie.miniature ? sliceMark(c.pie.miniature, model) : ""}${explained ? `<span class="verified-mark" aria-hidden="true"><svg viewBox="0 0 16 16"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg></span>` : rerun ? `<span class="verified-mark is-rerun" aria-hidden="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="shield" d="M8 1.6 2.6 3.7v3.8c0 3.3 2.3 6 5.4 7 3.1-1 5.4-3.7 5.4-7V3.7Z"/><path class="mark" d="M8 5.2v3.3"/><circle class="dot" cx="8" cy="10.9" r=".95"/></svg></span>` : ""}<span class="platform-main">${n.html}</span></span></td>`;
           }
-          const ranHere = [...new Map(rows.filter((r) => r.hardware === mac && r.model === realOf(model) && r[metric.key]).map((r) => [r.engine, r])).values()]
+          const ranHere = [...new Map(rows.filter((r) => r.hardware === mac && r.model === model && r[metric.key]).map((r) => [r.engine, r])).values()]
             .sort((a, b) => b[metric.key] - a[metric.key]);
           const absent = [...ranHere.map((r) => `<div class="tip-row"><span class="tip-dot" style="background: ${Pie.engines.colorOf(r.engine)}"></span><span class="tip-name">${esc(names().engine(r.engine))}</span>
-            <span class="tip-value">${r.miniature ? "Model slice" : esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`), ...absentRows(mac, realOf(model), modeOf(null), ranHere)];
+            <span class="tip-value">${r.miniature ? "Model slice" : esc(value(r[metric.key], metric.unit))}</span><span class="tip-when">${esc(day(r))}</span></div>`), ...absentRows(mac, model, modeOf(null), ranHere)];
           const emptyTip = compare === "tps" || compare === "ceiling" ? "" : absent.length ? card("", "", absent) : why ? card("", "", [], why) : "";
           const EMPTY_PHASE = { decode: "raw_decode", prefill: "raw_prefill", spec: "spec_decode", batching: "throughput", pbatch: "prefill_batch" };
-          const openEmpty = { hardware: [mac], model: [realOf(model)], workload: [EMPTY_PHASE[state.platform.mode] || "raw_decode"], _unavailable: true };
+          const openEmpty = { hardware: [mac], model: [model], workload: [EMPTY_PHASE[state.platform.mode] || "raw_decode"], _unavailable: true };
           return `<td class="${sorted} is-openable" data-col="${esc(model)}" data-open="${esc(JSON.stringify(openEmpty))}"><span class="platform-open" aria-hidden="true">See Runs<svg viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5"/></svg></span><span class="platform-cell is-empty${needs ? " is-nofit" : ""}"${emptyTip ? ` data-tip="${esc(emptyTip)}"` : ""}>${needs ? `${NOFIT}N/A` : "–"}</span></td>`;
         }).join("")}<td class="platform-fill" aria-hidden="true"></td></tr>`;
       }).join("")).join("");
@@ -1150,12 +1128,12 @@ window.Pie = window.Pie || {};
       const head = `<tr class="platform-head-row">
         <th class="platform-corner is-sortable" scope="col" data-sort="name">Hardware${arrow("name")}</th>
         <th class="platform-corner is-sortable is-overall" scope="col" data-sort="overall"><span class="platform-model">Overall${arrow("overall")}</span><span class="platform-sub">Median</span></th>${models.map((model) => {
-        const m = Pie.store.index.models[realOf(model)] || {};
+        const m = Pie.store.index.models[model] || {};
         const size = m.params_b ? `${m.params_b}B${m.active_b && m.active_b !== m.params_b ? ` · ${m.active_b}B` : ""}` : "";
         const SCHEME = { affine_u4_g64: "4-bit", bf16: "BF16", fp8: "FP8", mxfp4: "MXFP4", gguf_q4_k_m: "Q4_K_M", gguf_ud_q4_k_xl: "UD-Q4_K_XL", gguf_q8_0: "Q8_0", mlx_2bit: "2-bit" };
         const precision = [...new Set(list.map((mac) => grid[mac]?.[model]?.c?.pie?.scheme).filter(Boolean).map((s) => SCHEME[s] || s))].join(" / ");
         const sub = size;
-        const sheet = `<div class="tip-title">${esc(names().model(realOf(model)))}</div><div class="spec-rows">${[
+        const sheet = `<div class="tip-title">${esc(names().model(model))}</div><div class="spec-rows">${[
           ["Maker", makerOf(model).name],
           ["Architecture", m.architecture],
           ["Parameters", m.params_b && `${m.params_b}B`],
@@ -1166,7 +1144,7 @@ window.Pie = window.Pie || {};
           ["Precision here", precision],
         ].filter(([, v]) => v).map(([k, v]) => `<div class="spec-row"><span>${esc(k)}</span><span>${esc(String(v))}</span></div>`).join("")}</div>`;
         return `<th class="is-sortable${sortKey === model ? " is-sorted" : ""}" scope="col" data-sort="${esc(model)}" data-drop="model" data-col="${esc(model)}" data-id="${esc(model)}" data-maker="${esc(makerOf(model).name)}" data-tip="${esc(sheet)}">
-          <span class="platform-col"><span><span class="platform-model">${esc(names().model(realOf(model)))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
+          <span class="platform-col"><span><span class="platform-model">${esc(names().model(model))}${arrow(model)}</span><span class="platform-sub">${esc(sub)}</span></span></span></th>`;
       }).join("")}<th class="platform-fill" aria-hidden="true"></th></tr>`;
       const cols = `<colgroup><col class="col-machine"><col class="col-model">${models.map(() => '<col class="col-model">').join("")}<col class="col-fill"></colgroup>`;
       return `<table class="platform-table${tight ? " is-tight" : ""}" style="--cols: ${models.length + 1}">${cols}<thead>${makerRow}${head}</thead><tbody>${body}</tbody></table>`;
@@ -1177,7 +1155,7 @@ window.Pie = window.Pie || {};
             <span class="platform-group-name">${badgeOf(g.platform.id)}<b>${esc(g.platform.label)}</b><span>${g.macs.length} ${g.macs.length === 1 ? "machine" : "machines"}, ${g.models.length} ${g.models.length === 1 ? "model" : "models"}</span></span>
             <svg class="platform-disclosure" viewBox="0 0 8 14" aria-hidden="true"><path d="M1.5 1.5 6.5 7l-5 5.5"/></svg>
           </span>
-        </div><div class="platform-section-body"${folded(g.platform.id) ? " hidden" : ""}><div class="platform-section-scroll">${tableOf(g, i === 0)}</div></div></section>`).join("");
+        </div><div class="platform-section-body"${folded(g.platform.id) ? " hidden" : ""}><div class="platform-section-scroll">${tableOf(g)}</div></div></section>`).join("");
 
       const nothing = !sections.some((g) => g.macs.length && g.models.length);
       const keptPage = element.querySelector(".platform-scroll");
@@ -1215,7 +1193,7 @@ window.Pie = window.Pie || {};
         requestAnimationFrame(put);
       }
       afterDraw();
-      return { macs: macsShown, models: new Set(sections.flatMap((g) => g.models).map(realOf)).size, metric };
+      return { macs: macsShown, models: new Set(sections.flatMap((g) => g.models)).size, metric };
     },
 
     bind(state) {

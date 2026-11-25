@@ -46,7 +46,7 @@
 
   let shownTable = null;
   const render = () => {
-    if (!Pie.isOpen(state.table) || Pie.schema[state.table]?.href) state.table = "board";
+    if (Pie.schema[state.table]?.href) state.table = "board";
     Pie.palette?.refresh();
     if (state.table !== shownTable) {
       const gridOf = (t) => (Pie.schema[t]?.view === "platform" ? "platform" : t === "checks" ? "checks" : null);
@@ -60,8 +60,7 @@
     toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isPlatform = Pie.schema[state.table]?.view === "platform";
-    document.getElementById("mini-banner").hidden = true;
-    const isMethod = ["welcome", "approach", "reports", "gaps", "reasons", "methodology", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
+    const isMethod = ["welcome", "approach", "reports", "gaps", "reasons", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
     filterBar.hidden = (isOverview || isMethod || isPlatform) && state.table !== "reports" && state.table !== "gaps" && state.table !== "approach";
     const rules = filterBar.querySelector("[data-rules]");
     if (rules) rules.hidden = Pie.schema[state.table]?.section === "catalog" || Pie.schema[state.table]?.section === "reports" || state.table === "approach";
@@ -75,13 +74,12 @@
     toolbar.elements.metricPicker.hidden = true;
     toolbar.elements.releasePicker.hidden = true;
     toolbar.elements.viewPicker.hidden = true;
-    if (Pie.skeleton.hide() && isPlatform) Pie.platform.roll();
+    if (Pie.loading.done() && isPlatform) Pie.platform.roll();
     Pie.welcome.render(state);
     Pie.approach.render(state);
     Pie.reports.render(state);
     Pie.gaps.render(state);
     Pie.reasons.render(state);
-    Pie.methodology.render(state);
     Pie.methods.render(state);
     Pie.board.render(state);
     const checked = Pie.checks.render(state);
@@ -244,8 +242,6 @@
         state.overview.standMac = value;
       } else if (key === popover.QUAL_ENGINE) {
         state.overview.qualityEngine = value;
-      } else if (String(key).startsWith("limit:")) {
-        Pie.methodology.pick(key.slice(6), value);
       } else if (String(key).startsWith("board:")) {
         Pie.board.pick(key.slice(6), value);
 
@@ -439,7 +435,7 @@
 
   Pie.saveView = saveView;
 
-  const SCROLLERS = ["#platform .platform-scroll", "#board .board-scroll", "#table-container", "#methodology", ".method:not([hidden])", "#overview"];
+  const SCROLLERS = ["#platform .platform-scroll", "#board .board-scroll", "#table-container", ".method:not([hidden])", "#overview"];
   const pageScroller = () => SCROLLERS.map((selector) => document.querySelector(selector))
     .find((el) => el && el.offsetParent !== null && (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth));
 

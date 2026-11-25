@@ -13,7 +13,7 @@ window.Pie = window.Pie || {};
     return [...by].map(([id, cells]) => [id, cells.length, cells.sort((x, y) => y.gap - x.gap)])
       .sort(([a, x], [b, y]) => (a === primary ? -1 : b === primary ? 1 : y - x));
   };
-  const lede = (id, cells) => `${cells.toLocaleString("en-US")} ${cells === 1 ? "cell" : "cells"} behind`;
+  const lede = (cells) => `${cells.toLocaleString("en-US")} ${cells === 1 ? "cell" : "cells"} behind`;
   const pct = (v) => `${Math.round(v * 100)}%`;
   const rowOf = (table, id) => (Pie.store.rows(table) || []).find((r) => r.id === id);
   const modelName = (id) => rowOf("models", id)?.name || id;
@@ -184,7 +184,6 @@ window.Pie = window.Pie || {};
     }
     const keep = (c) => (slices || !c.miniature) && (!verifiedOnly || verified(c));
     const reasons = all.filter(keep);
-    const engines = list.map(([e, , cs]) => [e, cs.filter(keep)]).filter(([, cs]) => cs.length);
     if (overview) {
       const ids = new Set();
       for (const c of Pie.platform?.seconds?.(Pie.state) || []) if ((Pie.profiles || {})[`${c.hardware}|${c.model}|${c.setup}`]) ids.add(c.engine).add(c.rival);
@@ -194,7 +193,7 @@ window.Pie = window.Pie || {};
     const cells = overview ? summaryEngines.find(([e]) => e === summaryEngine)?.[1] || 0 : reasons.length;
     const head = overview
       ? `<h1 class="board-title">Summary</h1><p class="board-lede">${summaryEngine ? `${esc(nameOf(summaryEngine))} in ${cellsWord(cells)} profiled against the other fastest engine` : "No profiled cells yet"}</p>`
-      : `<h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))} Profile</h1><p class="board-lede">${lede(id, cells)}</p>`;
+      : `<h1 class="board-title"><i class="board-title-dot" style="background: ${colorOf(id)}" aria-hidden="true"></i>${esc(nameOf(id))} Profile</h1><p class="board-lede">${lede(cells)}</p>`;
     const body = overview
       ? (summaryEngine ? summaryOf(summaryEngine) : `<p class="reasons-empty">No profiled cells yet.</p>`)
       : reasons.length ? `<div class="reasons-group">${reasons.map((c) => item(id, c)).join("")}</div>` : `<p class="reasons-empty">${verifiedOnly && all.length ? "No verified cells yet." : "No cells behind."}</p>`;

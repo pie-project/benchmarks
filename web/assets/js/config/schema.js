@@ -13,8 +13,6 @@ window.Pie = window.Pie || {};
     { id: "catalog", label: "Catalog" },
     { id: "resources", label: "Resources" },
   ];
-  Pie.signedIn = () => true;
-  Pie.isOpen = (table) => Pie.signedIn() || !Pie.sections.find((s) => s.id === Pie.schema[table]?.section)?.login;
 
   Pie.platformOrder = ["nvidia", "amd", "tpu", "cerebras", "mac", "windows", "web", "android"];
   const platformRank = (s) => (s.view === "platform" && s.platform ? Pie.platformOrder.indexOf(s.platform) : -1);

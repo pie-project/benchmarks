@@ -98,9 +98,6 @@ window.Pie = window.Pie || {};
     }
   }
   const isMeasured = (row) => !row.status || row.status === "pass" || row.status === "noisy";
-  const local = ["localhost", "127.0.0.1"].includes(location.hostname);
-  const today = new Date().toLocaleDateString("sv-SE");
-  Pie.isNew = (row) => local && Boolean(row?.measured) && String(row.measured).slice(0, 10) >= today;
   const newestTag = (tables.tags || []).find((tag) => snapshots[tag.id]?.length || tag.counts?.all[0])?.id;
 
   const SUITES = [

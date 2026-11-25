@@ -34,7 +34,7 @@
       <a class="sidebar-home" href="https://github.com/pie-project/benchmarks" aria-label="Benchmarks on GitHub">
         <svg class="sidebar-logo" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round">
           <path d="M12 2.75 21 5.25V7.75L12 10.25 3 7.75V5.25Z" fill="currentColor"/>
-          
+
           <path d="M3 10.75 12 13.25 21 10.75V13.25L12 15.75 3 13.25Z" fill="currentColor"/>
           <path d="M3 16.25 12 18.75 21 16.25V18.75L12 21.25 3 18.75Z" fill="currentColor"/>
         </svg>
@@ -93,16 +93,12 @@
         <svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
       </button>
 
-
-
       <button class="tool-button theme-toggle" id="theme-toggle" type="button" aria-label="Switch light or dark mode" title="Light / dark">
         <svg class="theme-icon-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
         <svg class="theme-icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 1.75v3M12 19.25v3M1.75 12h3M19.25 12h3M4.75 4.75l2.1 2.1M17.15 17.15l2.1 2.1M4.75 19.25l2.1-2.1M17.15 6.85l2.1-2.1"/></svg>
       </button>
       <a class="toolbar-login toolbar-install" href="https://pypi.org/project/pie-bench/" target="_blank" rel="noopener" title="pip install pie-bench"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>Get pie-bench</a>
     </header>
-
-    <p class="mini-banner" id="mini-banner" hidden>Model slices: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</p>
 
     <div class="rules-popover" id="rules-popover" role="dialog" aria-label="Test Conditions" hidden></div>
 
@@ -124,12 +120,10 @@
       </button>
     </div>
 
-
     <div class="table-container" id="table-container">
       <table class="data-table" id="data-table"></table>
     </div>
 
-    <div class="skeleton" id="skeleton" aria-busy="true" aria-label="Loading" hidden></div>
     <div class="overview" id="overview" hidden></div>
     <div class="platform" id="platform" hidden></div>
     <div class="method" id="welcome" hidden></div>
@@ -137,7 +131,6 @@
     <div class="method" id="reports" hidden></div>
     <div class="method" id="gaps" hidden></div>
     <div class="method" id="reasons" hidden></div>
-    <div class="method" id="methodology" hidden></div>
     <div class="method" id="methods" hidden></div>
     <div class="method" id="board" hidden></div>
     <div class="method" id="checks" hidden></div>
@@ -146,7 +139,7 @@
   <div class="popover" id="popover" role="menu" hidden></div>
   <div class="chart-tooltip" id="chart-tooltip" role="tooltip" hidden></div>
 
-  <script src="assets/js/boot/skeleton.js"></script>
+  <script src="assets/js/boot/loading.js"></script>
   <script src="assets/js/boot/data.js"></script>
 </body>
 </html>
