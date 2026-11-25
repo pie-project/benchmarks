@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from pie_bench import __version__
-from server import auth, profiles, rate_limit, submissions
+from server import auth, profiles, publish, rate_limit, submissions
 from server.db import Database
 from server.hit_counter import HitCounter
 from server.view_cache import ViewCache
@@ -87,29 +87,16 @@ def catalog(request: Request):
     return _cached(request, "catalog", "application/json")
 
 
-@app.api_route("/v1/machines", methods=["GET", "HEAD"])
-def machines(request: Request):
-    return _cached(request, "machines", "application/json")
+def _part(name: str):
+    def read(request: Request):
+        return _cached(request, name, "application/json")
+
+    read.__name__ = name.replace("-", "_")
+    return read
 
 
-@app.api_route("/v1/models", methods=["GET", "HEAD"])
-def models(request: Request):
-    return _cached(request, "models", "application/json")
-
-
-@app.api_route("/v1/engines", methods=["GET", "HEAD"])
-def engines(request: Request):
-    return _cached(request, "engines", "application/json")
-
-
-@app.api_route("/v1/workloads", methods=["GET", "HEAD"])
-def workloads(request: Request):
-    return _cached(request, "workloads", "application/json")
-
-
-@app.api_route("/v1/releases", methods=["GET", "HEAD"])
-def releases(request: Request):
-    return _cached(request, "releases", "application/json")
+for _name in publish.CATALOG_PARTS:
+    app.add_api_route(f"/v1/{_name}", _part(_name), methods=["GET", "HEAD"])
 
 
 @app.api_route("/v1/results", methods=["GET", "HEAD"])

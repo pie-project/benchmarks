@@ -14,6 +14,18 @@ CATALOG_PARTS = {
     "engines": "engines",
     "workloads": "workloads",
     "releases": "releases",
+    "suites": "suites",
+    "install": "install",
+    "totals": "totals",
+    "miniatures": "miniatures",
+    "parity": "parity",
+    "no-fit": "no_fit",
+    "speed-gaps": "speed_gaps",
+    "quality": "quality",
+    "quality-tasks": "quality_tasks",
+    "quality-parity": "quality_parity",
+    "quality-kernels": "quality_kernels",
+    "quality-gaps": "quality_gaps",
 }
 
 
@@ -106,8 +118,8 @@ def blobs(dsn: str, contributed: dict[str, dict], submissions: int = 0) -> dict[
     catalog["totals"] = {**(catalog.get("totals") or {}), "submissions": submissions}
     newest = {latest: json.loads(rows_json(sealed[latest]))} if latest else {}
     out = {"catalog": gz(catalog), "head-to-head": gz(head_to_head({**db, "snapshots": newest}))}
-    for key, field in CATALOG_PARTS.items():
-        out[key] = gz({"updated_at": catalog.get("updated_at"), key: catalog.get(field) or []})
+    for name, field in CATALOG_PARTS.items():
+        out[name] = gz({"updated_at": catalog.get("updated_at"), name: catalog.get(field)})
     if results:
         out["results"] = results
     return out

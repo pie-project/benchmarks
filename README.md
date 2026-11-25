@@ -14,7 +14,7 @@
 [Benchmarks]: https://benchmarks.pie-project.org/
 [Bench Book]: https://benchmarks.pie-project.org/#approach
 [PyPI]: https://pypi.org/project/pie-bench/
-[API]: https://bench-api.pie-project.org/v1/catalog
+[API]: #results-and-the-api
 [Pie]: https://github.com/pie-project/pie
 
 Pie Bench is an open, apples-to-apples benchmark for LLM inference. vLLM,
@@ -77,7 +77,9 @@ after each upload; writes need a token with an upload quota.
 | GET | `/v1/engines` | every engine, with its pinned version |
 | GET | `/v1/workloads` | every workload |
 | GET | `/v1/releases` | the published releases |
-| GET | `/v1/catalog` | all of the above in one document, as the site reads it |
+| GET | `/v1/suites` | the models each suite measures |
+| GET | `/v1/quality` | accuracy scores, with `/v1/quality-tasks`, `-parity`, `-kernels` and `-gaps` |
+| GET | `/v1/no-fit`, `/v1/speed-gaps`, `/v1/parity`, `/v1/install`, `/v1/totals` | models that don't fit each machine, open gaps, parity, install sizes per engine, run totals |
 | GET | `/v1/results` | the newest release: its results and quality scores |
 | GET | `/v1/releases/latest` | the same as `/v1/results` |
 | GET | `/v1/head-to-head` | pie against each engine, per platform |
