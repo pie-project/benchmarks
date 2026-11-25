@@ -30,13 +30,6 @@ Every gap over 25% is re-measured under an end-to-end
 GPU profiler on fresh prompts. It's marked verified only if the profile agrees
 with the benchmark within 10%; otherwise it's rerun. Details in the [Bench Book].
 
-Ready-to-run images for each cloud ([`docker/`](docker/README.md)):
-- `pieproject/benchmark-runpod-cuda`: RunPod, NVIDIA
-- `pieproject/benchmark-runpod-rocm`: RunPod, AMD
-- `pieproject/benchmark-digitalocean-cuda`: DigitalOcean, NVIDIA
-- `pieproject/benchmark-digitalocean-rocm`: AMD Developer Cloud
-- `pieproject/benchmark-gcloud-tpu`: Google Cloud TPU
-
 Want to add an engine or a model, tune flags, or question a number? See
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -126,7 +119,7 @@ driver under `src/pie_bench/node/engines`, its client under
 
 [Discord](https://discord.gg/R62Udyzum) ·
 [Issues](https://github.com/pie-project/pie-evals/issues) ·
-[Contributing](CONTRIBUTING.md) ·
-[Pie](https://github.com/pie-project/pie)
+[Discussions](https://github.com/pie-project/pie/discussions) ·
+[Contributing](CONTRIBUTING.md)
 
-[Apache License 2.0](LICENSE).
+[Apache License 2.0](LICENSE) ([NOTICE](NOTICE)).
