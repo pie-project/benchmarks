@@ -83,6 +83,35 @@ static void at_exit(void) {
         finish();
 }
 
+// PIE_CUPTI_MODES="<word>=<mode>;...": the mode of a process whose command line holds the word (SGLang's scheduler is
+// started by its venv's python), else PIE_CUPTI_MODE
+static char chosen[256];
+static const char *process_mode(void) {
+    const char *modes = getenv("PIE_CUPTI_MODES");
+    if (modes && !chosen[0]) {
+        char cmd[4096] = {0};
+        FILE *f = fopen("/proc/self/cmdline", "r");
+        size_t n = f ? fread(cmd, 1, sizeof cmd - 1, f) : 0;
+        if (f)
+            fclose(f);
+        for (size_t i = 0; i < n; i++)
+            if (!cmd[i])
+                cmd[i] = ' ';
+        char list[1024];
+        snprintf(list, sizeof list, "%s", modes);
+        for (char *save = NULL, *item = strtok_r(list, ";", &save); item; item = strtok_r(NULL, ";", &save)) {
+            char *eq = strchr(item, '=');
+            if (eq && (*eq = 0, strstr(cmd, item))) {
+                snprintf(chosen, sizeof chosen, "%s", eq + 1);
+                break;
+            }
+        }
+        if (!chosen[0])
+            snprintf(chosen, sizeof chosen, "%s", getenv("PIE_CUPTI_MODE") ? getenv("PIE_CUPTI_MODE") : "kernel");
+    }
+    return chosen[0] ? chosen : getenv("PIE_CUPTI_MODE");
+}
+
 static void *control(void *arg) {
     (void)arg;
     char on[4096], p[4096];
@@ -109,7 +138,7 @@ static void *control(void *arg) {
                 fprintf(c, "%llu %lld\n", (unsigned long long)ts, (long long)rt.tv_sec * 1000000000LL + rt.tv_nsec), fclose(c);
             // PIE_CUPTI_MODE: "graph" traces each CUDA graph launch whole (one record, not one per node), "hw" takes
             // kernel times from the GPU's hardware events (Blackwell), "off" records nothing (tracer cost A/B)
-            const char *mode = getenv("PIE_CUPTI_MODE");
+            const char *mode = process_mode();
             if (!mode || !strstr(mode, "off")) {
                 if (mode && strstr(mode, "hw"))
                     cuptiActivityEnableHWTrace(1);
