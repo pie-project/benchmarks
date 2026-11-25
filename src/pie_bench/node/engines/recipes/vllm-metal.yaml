@@ -37,6 +37,15 @@ default:
                 past the M5 Max's free memory (38.2 GB); its hybrid cache then cannot hand the pool to MLX
                 ("[convert] Cannot import a CPU array without a copy", pie-eval 42524574937). 0.6 keeps a ~28 GB
                 pool resident; the 16 GB Macs and the M4 Pro boot at the default.
+        qwen3_6:
+          knobs:
+            gpu_mem_util:
+              value: 0.7
+              rationale: >
+                Qwen3.6-27B and Qwen3.8-27B at the default 0.92 size a 32.6 GB KV pool beside the 15 GB weights, and
+                32 decoding requests then pass the M5 Max's 51.8 GB GPU working set: every request fails with
+                kIOGPUCommandBufferCallbackErrorOutOfMemory 77 s in (2026-11-25). 0.7 still holds the c32 shape's
+                65k tokens several times over.
 
 competitive:
   extends: default
