@@ -12,16 +12,10 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
 object PieFactory {
-    /** pie commit the AAR in app/libs/pie was built from (pie-project/pie origin/main). */
     const val PIE_COMMIT = "a6547509432d48c76e258bfefbb85bd58984f8e4"
     fun create(context: Context): BenchEngine = PieEngine(context)
 }
 
-/**
- * pie in process (org.pieproject.server.PieServer, Vulkan), driven through its own
- * OpenAI-compatible /v1/completions route on 127.0.0.1 with SSE streaming; concurrent
- * requests are batched by the engine (max_forward_requests = 4).
- */
 class PieEngine(private val context: Context) : BenchEngine {
     override val id = "pie"
     override val version = PieFactory.PIE_COMMIT
@@ -78,7 +72,7 @@ class PieEngine(private val context: Context) : BenchEngine {
         val c = URL("$base/v1/completions").openConnection() as HttpURLConnection
         c.requestMethod = "POST"
         c.doOutput = true
-        c.readTimeout = 5 * 60 * 1000  // no token for 5 min = a hung engine, the cell fails instead of the run hanging
+        c.readTimeout = 5 * 60 * 1000
         c.setRequestProperty("Content-Type", "application/json")
         c.outputStream.use { it.write(body.toString().toByteArray()) }
         if (c.responseCode != 200) error("pie HTTP ${c.responseCode}: ${c.errorStream?.bufferedReader()?.readText()}")
@@ -111,7 +105,6 @@ class PieEngine(private val context: Context) : BenchEngine {
     }
 
     override fun close() {
-        // the runtime cannot boot again in this process, so it is shut down only with the process
         runCatching { runBlocking { server?.shutdown() } }
         server = null
     }

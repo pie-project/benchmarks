@@ -15,10 +15,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * Google LiteRT-LM (com.google.ai.edge.litertlm), the runtime behind AI Edge Gallery, on .litertlm files.
- * Uses the Session API, which takes the raw rendered prompt. One request at a time (one session).
- */
 class LiteRtEngine(private val context: Context, private val useGpu: Boolean, private val threads: Int) : BenchEngine {
     override val id = "litert"
     override val version = LITERTLM_VERSION
@@ -56,7 +52,6 @@ class LiteRtEngine(private val context: Context, private val useGpu: Boolean, pr
         return prompts.map { one(it, maxNew) }
     }
 
-    /** Prompt token count is filled in by the runner from workloads.json (-1 here). */
     private fun one(prompt0: String, maxNew: Int): ReqTiming {
         val e = engine ?: error("not loaded")
         val prompt = if (stripBos && prompt0.startsWith("<bos>")) prompt0.removePrefix("<bos>") else prompt0
@@ -78,7 +73,6 @@ class LiteRtEngine(private val context: Context, private val useGpu: Boolean, pr
                 }
                 override fun onDone() { latch.countDown() }
                 override fun onError(throwable: Throwable) {
-                    // cancelProcess() after the last wanted token ends the stream with an error: not a failure
                     if (n.get() < maxNew) err = throwable
                     latch.countDown()
                 }

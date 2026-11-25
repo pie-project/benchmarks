@@ -1,6 +1,3 @@
-// Mac test harness: the app's engine, runner and row code (PieBench/*.swift minus the UI) as a macOS
-// command-line tool, for an end-to-end check where no iOS Simulator is available. Rows say
-// device.emulator=true and must go under a test-* tag. See e2e/run-mac.sh.
 import Foundation
 
 @MainActor func main() async {

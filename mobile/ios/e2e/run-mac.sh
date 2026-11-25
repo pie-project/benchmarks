@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Mac test harness (no iOS Simulator needed): builds e2e/main.swift with the app's non-UI sources against
-# llama.cpp b11312's macOS slice, then runs it. Rows carry device.emulator=true: use a test-* tag.
-#   e2e/run-mac.sh <llama.xcframework> <home dir>
-#   env: PIEBENCH_MODELS PIEBENCH_WORKLOADS PIEBENCH_TAG PIEBENCH_POST PIEBENCH_TOKEN
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 xcf="$(cd "${1:?llama.xcframework}" && pwd)"; home="${2:?home dir}"

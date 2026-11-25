@@ -15,7 +15,6 @@ import java.util.zip.GZIPOutputStream
 object Results {
     fun file(context: Context): File = context.filesDir.resolve("records.jsonl")
 
-    /** POST records.jsonl to <url>/v1/results; returns "HTTP <code>: <body>". */
     fun send(context: Context, baseUrl: String, token: String): String {
         val f = file(context)
         if (!f.exists() || f.length() == 0L) return "no records.jsonl yet"
@@ -45,7 +44,6 @@ object Results {
         context.startActivity(Intent.createChooser(send, "Share records.jsonl").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
-    /** gzip + base64 of records.jsonl on the clipboard (to paste into a workflow input). */
     fun copyForWorkflow(context: Context): Int {
         val bytes = file(context).takeIf { it.exists() }?.readBytes() ?: ByteArray(0)
         val bo = ByteArrayOutputStream()

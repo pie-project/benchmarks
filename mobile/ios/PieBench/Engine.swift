@@ -1,10 +1,8 @@
 import Foundation
 
-/// One request's raw timings, as the row sends them.
 struct RequestTiming {
     var promptTokens: Int
     var outputTokens: Int
-    /// From the request's send time (the batch start for concurrent shapes).
     var ttft: Double
     var latency: Double
 
@@ -14,19 +12,13 @@ struct RequestTiming {
     }
 }
 
-/// A model loaded into an engine; load happens once per (engine, model).
 protocol LoadedModel: AnyObject {
     var engineVersion: String { get }
     var backend: String { get }
     var config: [(String, J)] { get }
-    /// Runs `concurrency` requests at once as real parallel sequences; nil when the engine cannot.
     var concurrencyUnsupportedReason: String? { get }
-    /// True when the engine applies the chat template itself (pie's bench inferlet): it gets the user text only.
     var rendersTemplate: Bool { get }
-    /// Size the engine for a workload (context, sequence slots). Not timed.
     func prepare(slots: Int, contextPerSlot: Int) throws
-    /// Runs all `prompts` (full rendered text) with up to `concurrency` in flight, greedy, ignoring EOS,
-    /// `decode` output tokens each, prompts cold. Results in prompt order.
     func run(prompts: [String], concurrency: Int, decode: Int) async throws -> [RequestTiming]
     func unload()
 }
@@ -37,7 +29,6 @@ extension LoadedModel {
 
 protocol EngineAdapter {
     var id: EngineID { get }
-    /// Non-nil when this build/engine cannot serve the model at all (becomes declared_unsupported).
     func unsupportedReason(_ m: ModelEntry) -> String?
     func load(_ m: ModelEntry, checkpoint: Checkpoint, contract: Contract) async throws -> LoadedModel
 }

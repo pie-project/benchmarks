@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Simulator-only: the b11312 release XCFramework has no iOS Simulator slice. This builds llama.cpp b11312
-# for the simulator from source and joins it with the release's ios-arm64 slice into
-# Packages/LlamaCpp/local/llama.xcframework. Then build with LLAMA_XCFRAMEWORK=local/llama.xcframework.
-#   scripts/build-llama-sim.sh [workdir]
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 work="${1:-$(mktemp -d)}"

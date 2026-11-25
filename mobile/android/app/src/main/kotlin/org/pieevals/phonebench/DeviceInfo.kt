@@ -50,7 +50,6 @@ object DeviceInfo {
             Build.HARDWARE.contains("ranchu") || Build.HARDWARE.contains("goldfish") ||
             Build.PRODUCT.contains("sdk") || Build.MODEL.contains("Emulator") || Build.MODEL.contains("Android SDK")
 
-    /** GL_RENDERER from a throwaway offscreen EGL context (cheap, once). */
     @Synchronized
     fun gpu(): String? {
         if (gpuQueried) return gpuName
@@ -76,7 +75,6 @@ object DeviceInfo {
         return gpuName
     }
 
-    /** Cores whose max frequency is within 70% of the fastest (the performance cluster(s)). */
     fun defaultThreads(): Int {
         val cores = Runtime.getRuntime().availableProcessors()
         val freqs = (0 until cores).mapNotNull { File("/sys/devices/system/cpu/cpu$it/cpufreq/cpuinfo_max_freq").takeIf { f -> f.canRead() }?.readText()?.trim()?.toLongOrNull() }
@@ -128,7 +126,6 @@ object Mem {
     fun rssGib(): Double = (statusKb("VmRSS") ?: 0L) * 1024.0 / DeviceInfo.GIB
     fun hwmGib(): Double = (statusKb("VmHWM") ?: 0L) * 1024.0 / DeviceInfo.GIB
 
-    /** Reset VmHWM to the current RSS (Linux clear_refs "5"); false if the kernel/SELinux refuses. */
     fun resetPeak(): Boolean = runCatching {
         File("/proc/self/clear_refs").writeText("5")
         true

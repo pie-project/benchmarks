@@ -15,7 +15,6 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@android:style/Theme.Material.NoActionBar">
 
-        <!-- OpenCL / Vulkan driver libraries for GPU engines (optional on the device) -->
         <uses-native-library android:name="libOpenCL.so" android:required="false" />
         <uses-native-library android:name="libOpenCL-pixel.so" android:required="false" />
         <uses-native-library android:name="libvndksupport.so" android:required="false" />

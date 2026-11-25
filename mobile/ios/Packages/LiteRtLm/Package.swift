@@ -1,6 +1,4 @@
 // swift-tools-version:5.9
-// LiteRT-LM v0.19.1, Google's release XCFrameworks (the version the Android app runs). The app calls its
-// C API directly: the Session API takes the rendered prompt as is, as Android's LiteRtEngine does.
 
 import PackageDescription
 

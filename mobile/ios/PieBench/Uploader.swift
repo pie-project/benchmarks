@@ -1,7 +1,6 @@
 import Foundation
 
 enum Uploader {
-    /// POST records.jsonl to <url>/v1/results as NDJSON; returns "HTTP <code>: <body>".
     static func send(_ file: URL, base: String, token: String) async throws -> String {
         let body = try Data(contentsOf: file)
         guard !body.isEmpty else { throw BenchError.message("records.jsonl is empty") }
@@ -18,7 +17,6 @@ enum Uploader {
         return "HTTP \(code): \(String(decoding: data.prefix(2000), as: UTF8.self))"
     }
 
-    /// gzip (RFC 1952) of `data`, base64: what the workflow input takes.
     static func gzipBase64(_ data: Data) throws -> String {
         guard let deflated = try? (data as NSData).compressed(using: .zlib) as Data else {
             throw BenchError.message("deflate failed")

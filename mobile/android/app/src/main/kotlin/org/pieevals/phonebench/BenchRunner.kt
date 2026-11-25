@@ -19,19 +19,18 @@ import java.util.TimeZone
 
 data class RunConfig(
     val engines: List<String>,
-    val models: List<String>,       // site model ids
+    val models: List<String>,
     val workloads: List<String>,
     val tag: String?,
     val litertGpu: Boolean = true,
-    val llamaGpu: Boolean = false,  // llama.cpp on the APK's GPU backend (Vulkan) instead of CPU
-    val threads: Int = 0,           // 0 = DeviceInfo.defaultThreads()
+    val llamaGpu: Boolean = false,
+    val threads: Int = 0,
     val download: Boolean = true,
     val send: Boolean = false,
     val url: String = "",
     val token: String = "",
 )
 
-/** A display row (computed locally, display only; the server recomputes from the raw timings). */
 data class ResultRow(val engine: String, val artifact: String, val workload: String, val status: String,
                      val decodeTokS: Double?, val prefillTokS: Double?, val ttftS: Double?, val peakGib: Double?, val error: String?)
 
@@ -94,12 +93,11 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
             val c = Ctx(runId, a, engine, local, loadS, Mem.rssGib(), thermalStart)
             for (w in workloads) emit(c, w, status, cls, msg, emptyList(), System.currentTimeMillis(), 0.0)
         }
-        if (engine.maxConcurrency == 0) {  // engine not in this APK
+        if (engine.maxConcurrency == 0) {
             BenchState.say("${a.id}: declared_unsupported: ${(engine.config().optString("unavailable_reason"))}")
             failAll(null, "declared_unsupported", engine.config().optString("unavailable_reason"))
             return
         }
-        // a model clearly too big for this phone's RAM is not loaded at all
         if (a.approxBytes > ram * FIT_FRACTION) {
             val msg = "model %.2f GiB > %.0f%% of device RAM %.2f GiB".format(a.approxBytes / DeviceInfo.GIB, FIT_FRACTION * 100, ram / DeviceInfo.GIB)
             BenchState.say("${a.id}: doesnt_fit: $msg")
@@ -164,7 +162,6 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
         for ((r, round) in w.rounds.withIndex()) {
             if (BenchState.cancel) error("cancelled")
             BenchState.progress.value = "${c.a.id} ${w.id} round ${r + 1}/${w.rounds.size}: warmup"
-            // warmup one request at a time, as the Mac harness does
             for (p in round.warmup) c.engine.run(listOf(tpl.render(p)), w.decode, 1)
             val reset = Mem.resetPeak()
             BenchState.progress.value = "${c.a.id} ${w.id} round ${r + 1}/${w.rounds.size}: ${round.measured.size} measured"
@@ -172,7 +169,6 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
             val reqs = if (w.concurrency <= 1) prompts.flatMap { c.engine.run(listOf(it), w.decode, 1) }
                        else c.engine.run(prompts, w.decode, w.concurrency)
             val peak = Mem.hwmGib()
-            // engines that do not count prompt tokens take the harness tokenizer's count
             val fixed = reqs.mapIndexed { i, q ->
                 val exp = tpl.expected(w.id, r, i)
                 if (q.promptTokens < 0) q.copy(promptTokens = exp)
@@ -189,7 +185,6 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
 
     private fun fmt(v: Double?, d: Int = 1) = v?.let { "%.${d}f".format(it) } ?: "-"
 
-    /** Medians over requests: decode tok/s, prefill tok/s, TTFT s (display only). */
     private fun summarize(rounds: List<RoundOut>): Triple<Double?, Double?, Double?> {
         val reqs = rounds.flatMap { it.reqs }
         fun med(xs: List<Double>) = xs.sorted().takeIf { it.isNotEmpty() }?.let { if (it.size % 2 == 1) it[it.size / 2] else (it[it.size / 2 - 1] + it[it.size / 2]) / 2 }
@@ -247,7 +242,6 @@ class BenchRunner(private val context: Context, private val cfg: RunConfig) {
     }
 
     companion object {
-        /** A model whose file is over this share of total RAM is reported doesnt_fit without loading. */
         const val FIT_FRACTION = 0.7
     }
 }

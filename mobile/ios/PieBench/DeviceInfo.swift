@@ -22,7 +22,6 @@ enum DeviceInfo {
         return withUnsafeBytes(of: &u.machine) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
     }
 
-    /// Not a phone: the iOS Simulator, or the Mac test harness (e2e/), whose rows are test-only.
     static var isSimulator: Bool {
         #if targetEnvironment(simulator) || os(macOS)
         return true
@@ -31,7 +30,6 @@ enum DeviceInfo {
         #endif
     }
 
-    /// iPhone/iPad identifier -> A-series (or M-series) chip.
     static let socTable: [String: String] = [
         "iPhone14,2": "A15 Bionic", "iPhone14,3": "A15 Bionic", "iPhone14,4": "A15 Bionic", "iPhone14,5": "A15 Bionic",
         "iPhone14,6": "A15 Bionic", "iPhone14,7": "A15 Bionic", "iPhone14,8": "A15 Bionic",
@@ -80,7 +78,6 @@ enum DeviceInfo {
         #endif
     }
 
-    /// What iOS still lets this process allocate (0 when unknown, e.g. on a simulator).
     static var availableBytes: Int64 {
         #if os(iOS)
         return Int64(os_proc_available_memory())
@@ -102,7 +99,6 @@ enum DeviceInfo {
     }
 }
 
-/// Memory as the kernel charges it to this process (includes Metal buffers).
 enum Memory {
     static func footprint() -> (current: UInt64, peak: UInt64) {
         var info = task_vm_info_data_t()
@@ -117,7 +113,6 @@ enum Memory {
     }
 }
 
-/// Samples phys_footprint during a round; the round's peak is the max sample.
 final class MemorySampler: @unchecked Sendable {
     private var peak: UInt64 = 0
     private let lock = NSLock()

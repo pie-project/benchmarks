@@ -13,10 +13,6 @@ struct PieBenchApp: App {
     }
 }
 
-/// Unattended entry point for tests: PIEBENCH_AUTORUN=1 with
-///   PIEBENCH_MODELS=<engine/artifact,...>  PIEBENCH_WORKLOADS=<id,...>  PIEBENCH_TAG=<tag>
-///   PIEBENCH_POST=<ingest url>  PIEBENCH_TOKEN=<token>  PIEBENCH_EXIT=1
-/// (`xcrun simctl launch` passes them as SIMCTL_CHILD_*). Same keys work as `-PIEBENCH_X value` launch arguments.
 enum AutoRun {
     static func value(_ key: String) -> String? {
         if let v = ProcessInfo.processInfo.environment[key], !v.isEmpty { return v }

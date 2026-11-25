@@ -19,12 +19,10 @@ data class Workload(
 
 data class Template(val prefix: String, val suffix: String, val promptTokens: JSONObject) {
     fun render(user: String) = prefix + user + suffix
-    /** Harness tokenizer count for measured request i of round r. */
     fun expected(workload: String, round: Int, i: Int): Int =
         promptTokens.optJSONArray(workload)?.optJSONArray(round)?.optInt(i, -1) ?: -1
 }
 
-/** mobile/shared/workloads.json, made by the harness (mobile/tools/gen_workloads.py), bundled as an asset. */
 class Workloads(val harnessCommit: String, val system: String, val rounds: Int, val workloads: List<Workload>, val templates: Map<String, Template>) {
     companion object {
         fun load(context: Context): Workloads {

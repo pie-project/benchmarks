@@ -29,7 +29,6 @@ object LlamaNative {
     @JvmStatic external fun free(handle: Long)
 }
 
-/** llama.cpp through llama.h: GGUF, CPU (all arm64 variants) or a GPU backend if this APK was built with one. */
 class LlamaCppEngine(private val context: Context, private val threads: Int, private val wantGpu: Boolean) : BenchEngine {
     override val id = "llamacpp"
     override val version = BuildConfig.LLAMA_CPP_TAG

@@ -65,12 +65,6 @@ class MainActivity : ComponentActivity() {
         handleDebugIntent(intent)
     }
 
-    /**
-     * Debug-only scripted run, no UI clicks:
-     * am start -n org.pieevals.phonebench/.MainActivity --es engines llamacpp --es models qwen3.5-0.8b-llamacpp
-     *   --es workloads raw-512-256 --es tag test-phone-e2e --ez send true --es url http://127.0.0.1:8787 --es token T
-     * models: site model ids or artifact ids, comma separated.
-     */
     private fun handleDebugIntent(i: Intent?) {
         if (!BuildConfig.DEBUG || i == null || !i.hasExtra("engines")) return
         val engines = i.getStringExtra("engines")!!.split(",").map { it.trim() }.filter { it.isNotEmpty() }

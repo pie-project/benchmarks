@@ -2,8 +2,6 @@ import Accelerate
 import Foundation
 import llama
 
-/// llama.cpp b11312 (release XCFramework), Metal, every layer on the GPU. Concurrent shapes run as
-/// real parallel sequences: one llama_batch carrying a seq_id per in-flight request.
 struct LlamaAdapter: EngineAdapter {
     let id = EngineID.llamacpp
 
@@ -44,7 +42,6 @@ final class LlamaModel: LoadedModel, @unchecked Sendable {
 
     init(path: String) throws {
         _ = LlamaModel.initOnce
-        // The simulator's Metal lacks what ggml-metal needs on some hosts; PIEBENCH_LLAMA_CPU=1 forces CPU.
         let cpu = ProcessInfo.processInfo.environment["PIEBENCH_LLAMA_CPU"] == "1"
         var mp = llama_model_default_params()
         mp.n_gpu_layers = cpu ? 0 : -1
@@ -85,7 +82,6 @@ final class LlamaModel: LoadedModel, @unchecked Sendable {
         let utf8 = Array(text.utf8CString)
         var n = Int32(utf8.count + 8)
         var out = [llama_token](repeating: 0, count: Int(n))
-        // The rendered prompt already carries any BOS: no add_special, special tokens parsed.
         var got = llama_tokenize(vocab, utf8, Int32(utf8.count - 1), &out, n, false, true)
         if got < 0 {
             n = -got
@@ -121,7 +117,6 @@ final class LlamaModel: LoadedModel, @unchecked Sendable {
         while !queue.isEmpty || active.contains(where: { $0 != nil }) {
             for s in 0..<lanes where active[s] == nil && !queue.isEmpty {
                 let r = queue.removeFirst()
-                // Cold: nothing of an earlier request stays in this sequence.
                 llama_memory_seq_rm(mem, llama_seq_id(s), -1, -1)
                 let sent = monotonic()
                 let toks = tokenize(prompts[r])
@@ -142,7 +137,6 @@ final class LlamaModel: LoadedModel, @unchecked Sendable {
                 batch.logits[i] = logits ? 1 : 0
                 batch.n_tokens += 1
             }
-            // Decoding sequences first (one token each), then prompt chunks in the room left.
             for s in 0..<lanes {
                 guard var slot = active[s] else { continue }
                 slot.logitIndex = -1
@@ -190,7 +184,6 @@ final class LlamaModel: LoadedModel, @unchecked Sendable {
         return results.map { $0! }
     }
 
-    /// Greedy with end-of-generation tokens masked: ignore_eos, as llama-server does it.
     private func argmax(_ logits: UnsafeMutablePointer<Float>) -> llama_token {
         for e in eog { logits[e] = -.infinity }
         var maxV: Float = 0
