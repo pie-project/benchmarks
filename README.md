@@ -17,8 +17,7 @@
 [API]: https://bench-api.pie-project.org/v1/catalog
 [Pie]: https://github.com/pie-project/pie
 
-Pie Bench is an open, fully transparent benchmark for LLM inference, and it
-belongs to the open-source community. vLLM, SGLang, TensorRT-LLM, llama.cpp, MLX,
+Pie Bench is an open, fully transparent benchmark for LLM inference. vLLM, SGLang, TensorRT-LLM, llama.cpp, MLX,
 Ollama, MLC, pie and more run side by side on the same models, the same prompts
 and the same hardware, each at a pinned version, across GPUs, TPUs, Apple
 Silicon, browsers and phones. Every kernel optimization an engine ships becomes a
