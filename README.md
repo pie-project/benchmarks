@@ -29,7 +29,6 @@ iPhone and Android, and Docker images for cloud GPUs and TPUs.
 
 Every gap of 25% or more is checked: the same run is profiled end to end, and the
 gap shows green on the site only when the profile agrees within 10%.
-44 machines · 6 platforms · 33 models · 13 engines · 10,176 results · 322 verified profiles.
 
 ## Install
 
