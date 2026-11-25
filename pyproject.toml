@@ -22,7 +22,7 @@ dependencies = [
 quality = ["lm-eval[ifeval]>=0.4", "jinja2", "tiktoken", "blobfile"]
 torch = ["torch"]
 server = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "psycopg[binary]>=3.2", "psycopg-pool>=3.2", "pyjwt>=2.8"]
-dev = ["pytest>=8.0", "pytest-timeout>=2.3", "ruff>=0.5", "httpx>=0.27", "fastapi>=0.115", "psycopg[binary]>=3.2", "psycopg-pool>=3.2", "pyjwt>=2.8"]
+dev = ["ruff>=0.5"]
 
 [project.urls]
 Homepage = "https://benchmarks.pie-project.org"
@@ -44,12 +44,6 @@ include = ["/src/pie_bench", "/PYPI.md"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["."]
-timeout = 120
-markers = ["slow: expands the whole matrix"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

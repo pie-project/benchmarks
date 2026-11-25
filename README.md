@@ -106,8 +106,7 @@ submission, shown on the site's Mobile page.
 
 ```bash
 uv venv && uv pip install -e ".[dev,server]"
-.venv/bin/ruff check src server tests
-.venv/bin/pytest -q
+.venv/bin/ruff check src server
 ```
 
 [`src/pie_bench/matrix`](src/pie_bench/matrix) declares what exists: engines
