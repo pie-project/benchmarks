@@ -10,7 +10,7 @@ from pie_bench.paths import MATRIX
 from pie_bench.plan.matrix import Matrix
 from pie_bench.workloads import prompt_words_for_tokens
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "mobile" / "shared" / "workloads.json"
 SYSTEM = "You are a helpful benchmarking assistant."
 ROUNDS = 3

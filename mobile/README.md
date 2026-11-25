@@ -3,7 +3,7 @@
 The phone benchmark app. It runs the phone workloads on the phone and shares the results as `records.jsonl`; `pie-bench import-phone` turns that file into a pie-bench submission. They show on the site's Mobile page next to the Mac rows.
 
 - **Workloads:** `raw-512-256` (Raw), `c4` (Batching) and `pf4-512` (Batched Prefill).
-- **Same prompts as the Macs:** `shared/workloads.json` is made by `shared/generate_workloads.py` from the harness's own seeded prompt code. It holds each model's chat template and the prompt token counts, so a phone engine can check it read the same prompt. To regenerate it, run `python mobile/shared/generate_workloads.py` from the repository root with `pie-bench` and `transformers` installed.
+- **Same prompts as the Macs:** `shared/workloads.json` is made by `generate_workloads.py` from the harness's own seeded prompt code. It holds each model's chat template and the prompt token counts, so a phone engine can check it read the same prompt. To regenerate it, run `python mobile/generate_workloads.py` from the repository root with `pie-bench` and `transformers` installed.
 - **Method:** load the model once, then a warmup and 3 rounds. The server computes decode tok/s, prefill tok/s and TTFT from the raw per-request timings with the harness's own code, and keeps the median round.
 
 ## Engines and weights
