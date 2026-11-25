@@ -4,3 +4,4 @@
 !src
 !docker
 **/__pycache__
+**/node_modules
