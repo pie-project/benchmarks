@@ -8,10 +8,11 @@
     <p></p>
   </picture>
 
-[Benchmarks] | [API] | [Pie] | [Docs] | [Paper (SOSP'25)]
+[Benchmarks] | [Bench Book] | [API] | [Pie] | [Docs] | [Paper (SOSP'25)]
 </div>
 
 [Benchmarks]: https://benchmarks.pie-project.org/
+[Bench Book]: https://benchmarks.pie-project.org/#approach
 [API]: https://bench-api.pie-project.org/v1/catalog
 [Pie]: https://github.com/pie-project/pie
 [Docs]: https://pie-project.org/docs
@@ -32,7 +33,8 @@ independently. The same build is run again under an end-to-end GPU profiler, on
 prompts it has not seen, and the profile attributes the gap to the forward pass
 or to idle time. A gap is reported as verified only when each engine's profiled
 step time and the profiled gap agree with the benchmark to within 10%; gaps that
-fail this check are flagged and measured again.
+fail this check are flagged and measured again. The full method is described in
+the [Bench Book].
 
 ## Install
 
