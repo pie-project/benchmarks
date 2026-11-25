@@ -30,17 +30,12 @@ Every gap over 25% is re-measured under an end-to-end
 GPU profiler on fresh prompts. It's marked verified only if the profile agrees
 with the benchmark within 10%; otherwise it's rerun. Details in the [Bench Book].
 
-In this repo:
-- **`pie-bench`**, the command line tool, on [PyPI].
-- **The results API** behind [benchmarks.pie-project.org][Benchmarks], deployed on Render.
-- **The site**, a static page that reads the API.
-- **The phone app** for iPhone and Android, running the same workloads as the Macs.
-- **Docker images**, one per cloud, built by [`docker/build.sh`](docker/README.md):
-  - `pieproject/benchmark-runpod-cuda`: RunPod NVIDIA pods
-  - `pieproject/benchmark-runpod-rocm`: RunPod AMD pods
-  - `pieproject/benchmark-digitalocean-cuda`: DigitalOcean NVIDIA droplets
-  - `pieproject/benchmark-digitalocean-rocm`: AMD Developer Cloud droplets
-  - `pieproject/benchmark-gcloud-tpu`: Google Cloud TPU VMs
+Ready-to-run images for each cloud ([`docker/`](docker/README.md)):
+- `pieproject/benchmark-runpod-cuda`: RunPod, NVIDIA
+- `pieproject/benchmark-runpod-rocm`: RunPod, AMD
+- `pieproject/benchmark-digitalocean-cuda`: DigitalOcean, NVIDIA
+- `pieproject/benchmark-digitalocean-rocm`: AMD Developer Cloud
+- `pieproject/benchmark-gcloud-tpu`: Google Cloud TPU
 
 Want to add an engine or a model, tune flags, or question a number? See
 [CONTRIBUTING.md](CONTRIBUTING.md).
