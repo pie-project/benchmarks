@@ -1,7 +1,6 @@
 let pie = null;
 let client = null;
 let program = null;
-let topkProgram = null;
 
 export async function load(o) {
   pie = await import(new URL(o.pie_module, location.href).href);
@@ -13,20 +12,11 @@ export async function load(o) {
   });
   const bytes = new Uint8Array(await (await fetch(new URL(o.inferlet_url, location.href))).arrayBuffer());
   program = await pie.install(bytes, "text-completion-bench.wasm");
-  if (o.topk_url) topkProgram = await pie.install(new Uint8Array(await (await fetch(new URL(o.topk_url, location.href))).arrayBuffer()), "first-token-topk.wasm");
   client = await pie.connect();
   return { pie_summary: summary };
 }
 
-export async function generate({ ids, prompt, max_tokens, temperature, top_p, seed, ignore_eos, return_text, topk, timing, onToken }) {
-  if (topk) {
-    const proc = await client.launchProcess(topkProgram, { prompt_tokens: ids, k: topk });
-    for (;;) {
-      const { event, value } = await proc.recv();
-      if (event === "error") throw new Error(String(value));
-      if (event === "return") { onToken(); return { prompt_tokens: ids.length, output_tokens: 1, topk: JSON.parse(value) }; }
-    }
-  }
+export async function generate({ ids, prompt, max_tokens, temperature, top_p, seed, ignore_eos, return_text, timing }) {
   const input = {
     max_tokens, temperature: temperature ?? 0, top_p: top_p ?? 1, ignore_eos: ignore_eos !== false, return_text: !!return_text,
     report_timing: !!timing,

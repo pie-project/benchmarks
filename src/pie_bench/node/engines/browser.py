@@ -273,9 +273,6 @@ class PieWebEngine(BrowserEngine):
         )
         out = {"pie_module": "/files/pie/pie.mjs", "model_url": "/files/model.wgpu.zt", "inferlet_url": "/files/text_completion_bench.wasm",
                "config": config, "worker": bool(r.get("web_worker", True))}
-        if r.get("topk_wasm"):
-            _link(files / "first_token_topk.wasm", Path(r["topk_wasm"]))
-            out["topk_url"] = "/files/first_token_topk.wasm"
         return out
 
     def version(self) -> str:

@@ -40,7 +40,7 @@ async function one(req, sampling) {
     const end = performance.now();
     tick();
     const s = r.stamps || stamps;
-    return { ok: true, send_ms: send, first_ms: r.first_ms ?? s[0] ?? null, end_ms: end, stamps_ms: s, prompt_tokens: r.prompt_tokens, output_tokens: r.output_tokens ?? s.length, text: r.text, topk: r.topk };
+    return { ok: true, send_ms: send, first_ms: r.first_ms ?? s[0] ?? null, end_ms: end, stamps_ms: s, prompt_tokens: r.prompt_tokens, output_tokens: r.output_tokens ?? s.length, text: r.text };
   } catch (e) {
     return { ok: false, send_ms: send, end_ms: performance.now(), error: String(e?.message ?? e) };
   }

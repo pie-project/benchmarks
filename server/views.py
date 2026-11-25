@@ -323,8 +323,7 @@ def mismatched_arms() -> dict[str, str]:
 
 
 def quality_tasks() -> list[dict]:
-    from pie_bench.quality.dist_run import ANSWER_TOKENS, PARITY_TASKS
-    from pie_bench.quality.tasks import TASKS
+    from pie_bench.quality.tasks import ANSWER_TOKENS, PARITY_TASKS, TASKS
 
     scored = [{"id": t, "task": t, "description": d, "source": src, "scoring": sc, "max_tokens": TASKS[t][2]}
               for t, d, src, sc in QUALITY_TASKS if t in TASKS]

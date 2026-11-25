@@ -15,6 +15,9 @@ class Item:
     gold: object
 
 
+ANSWER_TOKENS = 256
+PARITY_TASKS = ("gsm8k", "mmlu", "arc", "math500", "ifeval")
+
 GSM8K_SUFFIX = "\n\nSolve the problem step by step. End with a line of the form '#### <number>'."
 
 
