@@ -8,27 +8,26 @@
     <p></p>
   </picture>
 
-[Benchmarks] | [Bench Book] | [API] | [Pie] | [Docs] | [Paper (SOSP'25)]
+[Benchmarks] | [Bench Book] | [PyPI] | [API] | [Pie] | [Docs] | [Paper (SOSP'25)]
 </div>
 
 [Benchmarks]: https://benchmarks.pie-project.org/
 [Bench Book]: https://benchmarks.pie-project.org/#approach
+[PyPI]: https://pypi.org/project/pie-bench/
 [API]: https://bench-api.pie-project.org/v1/catalog
 [Pie]: https://github.com/pie-project/pie
 [Docs]: https://pie-project.org/docs
 [Paper (SOSP'25)]: https://ingim.org/papers/gim2025pie.pdf
 
-Pie Bench is a fully transparent platform to compare existing inference engines,
-keep up with kernel optimizations, and monitor the gaps between them. It measures
-[pie](https://github.com/pie-project/pie) against other inference engines on your
-own machine: the same models, the same prompts, each
-engine at a pinned version. One command detects the machine, picks the models
-that fit, installs every engine, builds pie, measures them all, and uploads one
-signed submission to [benchmarks.pie-project.org][Benchmarks].
+Pie Bench is an open, fully transparent benchmark for LLM inference. It tracks
+how [pie](https://github.com/pie-project/pie) and the leading engines (vLLM,
+SGLang, TensorRT-LLM, llama.cpp, MLX and others) perform on the same models,
+prompts and hardware, so kernel optimizations and the gaps between engines can be
+followed over time across GPUs, TPUs, Apple Silicon, browsers and phones.
 
-This repository holds the `pie-bench` command line tool, the results API the
-site reads, the site itself, the phone app that runs the same workloads on
-iPhone and Android, and Docker images for cloud GPUs and TPUs.
+Every result is reproducible. One command detects the machine, selects the
+models that fit, installs each engine at a pinned version, builds pie, measures
+them all, and uploads a signed submission to [benchmarks.pie-project.org][Benchmarks].
 
 To guard against measurement artifacts, every gap of 25% or more is verified
 independently. The same build is run again under an end-to-end GPU profiler, on
@@ -37,6 +36,10 @@ or to idle time. A gap is reported as verified only when each engine's profiled
 step time and the profiled gap agree with the benchmark to within 10%; gaps that
 fail this check are flagged and measured again. The full method is described in
 the [Bench Book].
+
+This repository holds the `pie-bench` command line tool, the results API the
+site reads, the site itself, the phone app that runs the same workloads on
+iPhone and Android, and Docker images for cloud GPUs and TPUs.
 
 ## Install
 
