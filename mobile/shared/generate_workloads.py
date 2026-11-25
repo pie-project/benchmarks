@@ -1,6 +1,6 @@
 """Write mobile/shared/workloads.json: the prompts a phone sends, made by the harness's own code.
 
-    .venv/bin/python mobile/tools/gen_workloads.py
+    .venv/bin/python mobile/shared/generate_workloads.py
 
 Each phone workload is a matrix workload (raw-512-256, c4, pf4-512). Its prompts come from
 pie_evals.node.workloads.synthetic and pie_evals.node.fair exactly as a Mac run makes them: the same
@@ -15,9 +15,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from pie_evals.node.fair import COLD_SEED, cold_prompts, cold_request_count
-from pie_evals.node.workloads.synthetic import prompt_words_for_tokens
-from pie_evals.plan.matrix import Matrix
+from pie_bench.metrics.fairness import COLD_SEED, cold_prompts, cold_request_count
+from pie_bench.paths import MATRIX
+from pie_bench.plan.matrix import Matrix
+from pie_bench.workloads import prompt_words_for_tokens
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "mobile" / "shared" / "workloads.json"
@@ -52,7 +53,7 @@ def round_prompts(wl, r: int) -> tuple[list[str], list[str]]:
 def main() -> None:
     from transformers import AutoTokenizer
 
-    m = Matrix.load(ROOT / "matrix")
+    m = Matrix.load(MATRIX)
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
     workloads = []
     for wid in PHONE_WORKLOADS:
