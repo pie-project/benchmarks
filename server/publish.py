@@ -8,6 +8,13 @@ from server.encoding import dumps, gz, gz_text
 from server.head_to_head import head_to_head
 
 PLATFORMS = ["Mac", "Windows", "GPU", "TPU", "AMD", "Wafer"]
+CATALOG_PARTS = {
+    "machines": "hardware",
+    "models": "models",
+    "engines": "engines",
+    "workloads": "workloads",
+    "releases": "releases",
+}
 
 
 def counts(db: dict, rows: list[dict]) -> dict[str, list[int]]:
@@ -99,6 +106,8 @@ def blobs(dsn: str, contributed: dict[str, dict], submissions: int = 0) -> dict[
     catalog["totals"] = {**(catalog.get("totals") or {}), "submissions": submissions}
     newest = {latest: json.loads(rows_json(sealed[latest]))} if latest else {}
     out = {"catalog": gz(catalog), "head-to-head": gz(head_to_head({**db, "snapshots": newest}))}
+    for key, field in CATALOG_PARTS.items():
+        out[key] = gz({"updated_at": catalog.get("updated_at"), key: catalog.get(field) or []})
     if results:
         out["results"] = results
     return out

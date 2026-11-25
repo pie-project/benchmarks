@@ -2,30 +2,33 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/assets/bench-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset=".github/assets/bench-light.svg">
-    <img alt="Pie Bench: pie against other inference engines, on your own machine"
+    <img alt="Pie Bench: an open benchmark for LLM inference engines"
          src=".github/assets/bench-light.svg"
          width="30%">
     <p></p>
   </picture>
 
-[Benchmarks] | [API] | [Pie] | [Docs] | [Paper (SOSP'25)]
+[Benchmarks] | [Bench Book] | [PyPI] | [API] | [Pie]
 </div>
 
 [Benchmarks]: https://benchmarks.pie-project.org/
+[Bench Book]: https://benchmarks.pie-project.org/#approach
+[PyPI]: https://pypi.org/project/pie-bench/
 [API]: https://bench-api.pie-project.org/v1/catalog
 [Pie]: https://github.com/pie-project/pie
-[Docs]: https://pie-project.org/docs
-[Paper (SOSP'25)]: https://ingim.org/papers/gim2025pie.pdf
 
-Pie Bench measures [pie](https://github.com/pie-project/pie) against other
-inference engines on your own machine: the same models, the same prompts, each
-engine at a pinned version. One command detects the machine, picks the models
-that fit, installs every engine, builds pie, measures them all, and uploads one
-signed submission to [benchmarks.pie-project.org][Benchmarks].
+Pie Bench is an open, apples-to-apples benchmark for LLM inference. vLLM,
+SGLang, TensorRT-LLM, llama.cpp, MLX, Ollama, MLC, pie and friends: same weights,
+same prompts, same silicon, pinned versions. Datacenter GPUs, TPUs, Apple
+Silicon, browsers and phones. Ship a kernel, watch it land. Spot a gap, go close it.
 
-This repository holds the `pie-bench` command line tool, the results API the
-site reads, the site itself, the phone app that runs the same workloads on
-iPhone and Android, and Docker images for cloud GPUs and TPUs.
+[Reproducible][PyPI] by default. One command sizes up the box, picks the models
+that fit in memory, installs every engine at its pinned version, runs the sweep,
+and uploads a signed submission to [benchmarks.pie-project.org][Benchmarks].
+
+Every gap over 25% is re-measured under an end-to-end
+GPU profiler on fresh prompts. It's marked verified only if the profile agrees
+with the benchmark within 10%; otherwise it's rerun. Details in the [Bench Book].
 
 ## Install
 
@@ -35,10 +38,8 @@ pie-bench doctor
 ```
 
 Needs Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs.astral.sh/uv/):
-Apple Silicon on a Mac, NVIDIA or AMD GPUs on Linux, or a Cloud TPU. Or skip the
-setup with a ready image, one per cloud (`pieproject/benchmark-runpod-cuda`,
-`-runpod-rocm`, `-digitalocean-cuda`, `-digitalocean-rocm`, `-gcloud-tpu`); see
-[docker/](docker/README.md).
+Apple Silicon on a Mac, NVIDIA or AMD GPUs on Linux, or a Cloud TPU. Or run it in
+the Docker image for your cloud (listed above); see [docker/](docker/README.md).
 
 ## Run a benchmark
 
@@ -56,11 +57,9 @@ pie-bench quality --models <artifact id>         # model accuracy on question se
 Nothing is sent while a run measures. Each run writes one folder under
 `~/.pie-bench/runs/`:
 
-| File | What |
-|---|---|
-| `records.jsonl` | one line per measured cell |
-| `run.log` | the full log, for audit and debugging |
-| `submission.json.gz` | both, with machine specs and versions: what gets uploaded |
+- `records.jsonl`: one line per measured cell
+- `run.log`: the full log, for audit and debugging
+- `submission.json.gz`: both, with machine specs and versions; this is what gets uploaded
 
 Uploads need a token, made the first time (`pie-bench login`) and kept in
 `~/.config/pie-bench/token`.
@@ -73,7 +72,12 @@ after each upload; writes need a token with an upload quota.
 | Method | Path | What |
 |---|---|---|
 | GET | `/healthz` | service health |
-| GET | `/v1/catalog` | machines, models, engines, workloads and the newest release |
+| GET | `/v1/machines` | every machine, with its chip, memory and bandwidth |
+| GET | `/v1/models` | every model |
+| GET | `/v1/engines` | every engine, with its pinned version |
+| GET | `/v1/workloads` | every workload |
+| GET | `/v1/releases` | the published releases |
+| GET | `/v1/catalog` | all of the above in one document, as the site reads it |
 | GET | `/v1/results` | the newest release: its results and quality scores |
 | GET | `/v1/releases/latest` | the same as `/v1/results` |
 | GET | `/v1/head-to-head` | pie against each engine, per platform |
@@ -124,6 +128,7 @@ the wheel and sdist for PyPI and a GitHub release.
 
 [Discord](https://discord.gg/R62Udyzum) ·
 [Issues](https://github.com/pie-project/benchmarks/issues) ·
-[Pie](https://github.com/pie-project/pie)
+[Discussions](https://github.com/pie-project/pie/discussions) ·
+[Contributing](CONTRIBUTING.md)
 
-[Apache License 2.0](LICENSE).
+[Apache License 2.0](LICENSE) ([NOTICE](NOTICE)).
