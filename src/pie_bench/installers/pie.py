@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import subprocess
+import tarfile
 import time
 import urllib.request
 from datetime import datetime, timezone
@@ -13,9 +14,6 @@ from pathlib import Path
 from pie_bench.installers.bench_env import _cache_root, _pip_install, bench_python
 
 PIE_UPSTREAM = "https://github.com/pie-project/pie.git"
-
-
-DEFAULT_PIE_ROOT = Path("/root/pie")
 PIE_EXE = "pie.exe" if os.name == "nt" else "pie"
 
 
@@ -71,16 +69,7 @@ def ensure_checkout(pie_root: Path, commit: str, mirror: Path | None = None, ups
             subprocess.run(["git", "-C", str(pie_root), "checkout", "--quiet", "--force", "FETCH_HEAD"], check=True)
 
 
-def update_mirror(mirror: Path, upstream: str = PIE_UPSTREAM) -> None:
-    if not os.environ.get("PIE_BENCH_VOLUME") and not mirror.exists():
-        return
-    if not mirror.exists():
-        _git(["clone", "--quiet", "--mirror", upstream, str(mirror)], timeout_s=3600)
-    else:
-        subprocess.run(["git", "-C", str(mirror), "fetch", "--quiet", "--prune"], check=False, timeout=1800)
-
-
-def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path | None = None, target_dir: Path | None = None, python: str = "python3", timeout_s: int = 3600, log=print) -> Path:
+def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path | None = None, target_dir: Path | None = None, timeout_s: int = 3600, log=print) -> Path:
     out = cache_dir(commit, features, cache_root)
     out.mkdir(parents=True, exist_ok=True)
     env = {**os.environ}
@@ -107,9 +96,7 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
         log("build: @pie-project/server-web (wasm32-unknown-unknown + wasm-bindgen)")
         if not shutil.which("wasm-bindgen"):
             lock = (pie_root / "Cargo.lock").read_text()
-            import re as _re
-
-            ver = _re.search(r'name = "wasm-bindgen"\nversion = "([^"]+)"', lock).group(1)
+            ver = re.search(r'name = "wasm-bindgen"\nversion = "([^"]+)"', lock).group(1)
             subprocess.run(["cargo", "install", "wasm-bindgen-cli", "--locked", "--version", ver], cwd=pie_root, env=env, check=True, timeout=timeout_s)
         if shutil.which("rustup"):
             subprocess.run(["rustup", "target", "add", "wasm32-unknown-unknown"], cwd=pie_root, env=env, check=False, timeout=timeout_s)
@@ -138,10 +125,6 @@ def build(pie_root: Path, commit: str, features: list[str], *, cache_root: Path 
 
 
 def ensure_slangc(pie_root: Path, cache: Path, log=print) -> Path:
-    import re
-    import tarfile
-    import urllib.request
-
     action = pie_root / ".github/actions/toolchain/action.yml"
     m = re.search(r"SLANG_VERSION:\s*'?([0-9.]+)", action.read_text()) if action.exists() else None
     ver = m.group(1) if m else "2026.17"
@@ -172,7 +155,7 @@ def wasm_target(pie_root: Path) -> str:
     return "wasm32-wasip3" if pinned.exists() and "wasm32-wasip3" in pinned.read_text() else "wasm32-wasip2"
 
 
-def restore(pie_root: Path, commit: str, features: list[str], *, cache_root: Path | None = None, python: str = "python3", set_env: bool = True, log=print) -> bool:
+def restore(pie_root: Path, commit: str, features: list[str], *, cache_root: Path | None = None, set_env: bool = True, log=print) -> bool:
     d = cache_dir(commit, features, cache_root)
     if not is_cached(commit, features, cache_root):
         return False
@@ -199,11 +182,11 @@ def restore(pie_root: Path, commit: str, features: list[str], *, cache_root: Pat
     return True
 
 
-def ensure(pie_root: Path, commit: str, features: list[str], *, cache_root: Path | None = None, target_dir: Path | None = None, python: str = "python3", log=print) -> None:
-    if restore(pie_root, commit, features, cache_root=cache_root, python=python, log=log):
+def ensure(pie_root: Path, commit: str, features: list[str], *, cache_root: Path | None = None, target_dir: Path | None = None, log=print) -> None:
+    if restore(pie_root, commit, features, cache_root=cache_root, log=log):
         return
-    build(pie_root, commit, features, cache_root=cache_root, target_dir=target_dir, python=python, log=log)
-    restore(pie_root, commit, features, cache_root=cache_root, python=python, log=log)
+    build(pie_root, commit, features, cache_root=cache_root, target_dir=target_dir, log=log)
+    restore(pie_root, commit, features, cache_root=cache_root, log=log)
 
 
 PIE_REPO = "pie-project/pie"

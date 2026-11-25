@@ -5,7 +5,6 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Any
 
 from pie_bench.engines import register
 from pie_bench.engines.engine import EngineLaunchError
@@ -84,9 +83,6 @@ class OllamaEngine(ServedEngine):
             raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"merging the split GGUF failed: {(out.stderr or out.stdout).strip()[-300:]}")
         os.replace(tmp, merged)
         return merged
-
-    def extra_body(self) -> dict[str, Any]:
-        return {}
 
     def version(self) -> str:
         try:

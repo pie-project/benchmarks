@@ -77,20 +77,19 @@ def draft_artifact(artifact: ArtifactSpec) -> ArtifactSpec | None:
                         source_format=artifact.source_format, gguf_file=artifact.draft_gguf_file, tiers=[])
 
 
-def ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path | None = None, python: str = "python3", download: bool = True, log=print) -> Path:
-    path = _ensure_snapshot(artifact, hf_cache, pie_root=pie_root, python=python, download=download, log=log)
+def ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, python: str = "python3", download: bool = True, log=print) -> Path:
+    path = _ensure_snapshot(artifact, hf_cache, python=python, download=download, log=log)
     draft = draft_artifact(artifact)
     if draft is not None:
         _ensure_snapshot(draft, hf_cache, download=download, log=log)
     return path
 
 
-def _ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, pie_root: Path | None = None, python: str = "python3", download: bool = True, log=print) -> Path:
+def _ensure_snapshot(artifact: ArtifactSpec, hf_cache: Path, *, python: str = "python3", download: bool = True, log=print) -> Path:
     if artifact.kind == ArtifactKind.MINIATURE:
         from .miniature import ensure_miniature
 
-        assert pie_root is not None
-        return ensure_miniature(artifact, pie_root, hf_cache, python=python)
+        return ensure_miniature(artifact, hf_cache, python=python)
     have = snapshot_dir_if_present(artifact, hf_cache)
     if have:
         return _with_gguf_config(artifact, have, log)

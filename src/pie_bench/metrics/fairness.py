@@ -29,22 +29,6 @@ def cold_request_count(params: Mapping[str, Any]) -> int:
     return measured + COLD_SLACK
 
 
-def shared_prefix_len(a: str, b: str) -> int:
-    n = min(len(a), len(b))
-    i = 0
-    while i < n and a[i] == b[i]:
-        i += 1
-    return i
-
-
-def max_pairwise_prefix(prompts: Sequence[str]) -> int:
-    best = 0
-    for i in range(len(prompts)):
-        for j in range(i + 1, len(prompts)):
-            best = max(best, shared_prefix_len(prompts[i], prompts[j]))
-    return best
-
-
 def prefill_tok_s_one(prompt_tokens: int | None, ttft_s: float | None) -> float | None:
     if not prompt_tokens or ttft_s is None or ttft_s <= 0:
         return None

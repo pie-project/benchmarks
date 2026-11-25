@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 
 from pie_bench.installers.bench_env import bench_dir
-from pie_bench.schema import ArtifactKind, ArtifactSpec, MiniatureRecipe
+from pie_bench.schema import ArtifactKind, ArtifactSpec
 
 SHRINK_SCRIPT = "shrink_checkpoint.py"
 
@@ -23,7 +23,7 @@ def miniature_snapshot_dir(artifact: ArtifactSpec, hf_cache: Path) -> Path:
 
 
 def miniature_argv(
-    artifact: ArtifactSpec, pie_root: Path, out_dir: Path, python: str, cache_dir: Path | None = None
+    artifact: ArtifactSpec, out_dir: Path, python: str, cache_dir: Path | None = None
 ) -> list[str]:
     r = artifact.miniature
     if r is None:
@@ -61,7 +61,7 @@ def _stamp(artifact: ArtifactSpec) -> dict:
 
 
 def ensure_miniature(
-    artifact: ArtifactSpec, pie_root: Path, hf_cache: Path, python: str, timeout_s: int = 3600
+    artifact: ArtifactSpec, hf_cache: Path, python: str, timeout_s: int = 3600
 ) -> Path:
     if artifact.kind != ArtifactKind.MINIATURE:
         raise ValueError(f"artifact {artifact.id} is not a miniature")
@@ -96,7 +96,7 @@ def ensure_miniature(
         argv = [sys.executable, "-m", "pie_bench.checkpoints.gguf_slice", "--repo", artifact.base_model, "--revision", artifact.revision or "main",
                 "--file", artifact.gguf_file, "--layers", r.layers, "--experts", str(r.experts or 0), "--out", str(tmp)]
     else:
-        argv = miniature_argv(artifact, pie_root, tmp, python, cache_dir=cache_dir)
+        argv = miniature_argv(artifact, tmp, python, cache_dir=cache_dir)
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s, check=False)
     if proc.returncode != 0 or not (tmp / marker).exists():
         shutil.rmtree(tmp, ignore_errors=True)
@@ -125,45 +125,6 @@ def ensure_miniature(
     return out
 
 
-def pattern_period(layer_types: list[str]) -> int:
-    n = len(layer_types)
-    if n == 0:
-        return 1
-    for p in range(1, n):
-        if all(layer_types[i] == layer_types[i + p] for i in range(n - p)):
-            return p
-    return n
-
-
-def _ranges(idx: list[int]) -> str:
-    if not idx:
-        return ""
-    idx = sorted(set(idx))
-    parts: list[str] = []
-    start = prev = idx[0]
-    for i in idx[1:]:
-        if i == prev + 1:
-            prev = i
-            continue
-        parts.append(f"{start}-{prev}" if prev > start else f"{start}")
-        start = prev = i
-    parts.append(f"{start}-{prev}" if prev > start else f"{start}")
-    return ",".join(parts)
-
-
-def plan_layers(layer_types: list[str], periods: int, always_last: bool = True) -> str:
-    n = len(layer_types)
-    if n == 0:
-        raise ValueError("no layers")
-    if periods < 1:
-        raise ValueError("periods must be >= 1")
-    p = pattern_period(layer_types)
-    keep = list(range(min(n, p * periods)))
-    if always_last and (n - 1) not in keep:
-        keep.append(n - 1)
-    return _ranges(keep)
-
-
 def num_layers_of(snapshot_dir: str | Path) -> int | None:
     cfg_path = Path(snapshot_dir) / "config.json"
     if not cfg_path.exists():
@@ -177,9 +138,3 @@ def num_layers_of(snapshot_dir: str | Path) -> int | None:
         n = cfg["text_config"].get("num_hidden_layers")
     return int(n) if n is not None else None
 
-
-def recipe_from_snapshot(snapshot_dir: str | Path) -> MiniatureRecipe | None:
-    p = Path(snapshot_dir) / ".miniature.json"
-    if not p.exists():
-        return None
-    return MiniatureRecipe.model_validate(json.loads(p.read_text())["recipe"])

@@ -162,8 +162,7 @@ class JobRunner:
             return
         pb.ensure_checkout(self.pie_root, self.job.pie_commit, mirror=mirror)
         pb.ensure(self.pie_root, self.job.pie_commit, self.job.pie_build_features,
-                  target_dir=Path(os.environ["CARGO_TARGET_DIR"]) if os.environ.get("CARGO_TARGET_DIR") else None,
-                  python=os.environ.get("PIE_PY", "python3"), log=self.log)
+                  target_dir=Path(os.environ["CARGO_TARGET_DIR"]) if os.environ.get("CARGO_TARGET_DIR") else None, log=self.log)
         self.log(f"pie interpreter for the bench: {os.environ.get('PIE_PY', 'python3')}")
 
     def snapshot_dir(self, cell: Cell) -> Path:
@@ -188,7 +187,7 @@ class JobRunner:
             pending = getattr(self, "_prefetch", {}).get(cell.artifact.id)
             if pending is not None:
                 pending.result()
-            return ensure_snapshot(cell.artifact, self.hf_cache, pie_root=self.pie_root, python=py, download=self.download, log=self.log)
+            return ensure_snapshot(cell.artifact, self.hf_cache, python=py, download=self.download, log=self.log)
         except EngineLaunchError:
             raise
         except Exception as e:
@@ -379,7 +378,7 @@ class JobRunner:
                 random.Random(self.run_id).shuffle(order)
             order.sort(key=cell_priority)
             control_ok = (engine_name, artifact_key, mode_key.split("@")[0]) not in control_failed
-            model_state = pre.before_model(self.platform) if hasattr(pre, "before_model") else machine_before
+            model_state = machine_before
             self._last_state = model_state
             for cell in order:
                 if cell.cell_id in self._done:
@@ -397,22 +396,21 @@ class JobRunner:
                 recipe = recipe_for_cell(engine.recipe, recipe_name, cell)
                 engine.recipe = recipe
                 state = machine_before
-                if hasattr(pre, "settle") and os.environ.get("PIE_BENCH_SETTLE", "1") != "0":
+                if os.environ.get("PIE_BENCH_SETTLE", "1") != "0":
                     settled = pre.settle(self.platform.os if self.platform else None)
                     if settled:
                         self.log(f"{cell.workload.id}: settled {settled['settle_s']}s, thermal {settled['thermal_state_before_settle']} -> {settled['thermal_state']}")
                         state = {**machine_before, **settled}
-                if hasattr(pre, "before_cell"):
-                    idle = pre.before_cell(self.platform.os if self.platform else None)
-                    if idle.get("gpu_busy_error"):
-                        rec = self._invalid(cell, idle["gpu_busy_error"], fingerprint)
-                        records.append(rec)
-                        self._done.add(cell.cell_id)
-                        self.emit(rec)
-                        continue
-                    if idle:
-                        self.log(f"{cell.workload.id}: GPU idle after {idle['gpu_idle_wait_s']}s (was {idle['gpu_util_before_cell']}%)")
-                        state = {**state, **idle}
+                idle = pre.before_cell(self.platform.os if self.platform else None)
+                if idle.get("gpu_busy_error"):
+                    rec = self._invalid(cell, idle["gpu_busy_error"], fingerprint)
+                    records.append(rec)
+                    self._done.add(cell.cell_id)
+                    self.emit(rec)
+                    continue
+                if idle:
+                    self.log(f"{cell.workload.id}: GPU idle after {idle['gpu_idle_wait_s']}s (was {idle['gpu_util_before_cell']}%)")
+                    state = {**state, **idle}
                 rec = self._run_cell(cell, engine, snapshot, engine_version, recipe, recipe_name, fingerprint, state)
                 if not control_ok and rec.status == CellStatus.PASS:
                     rec = rec.model_copy(update={"status": CellStatus.NOISY, "invalid_reason": "control A/A failed on this process"})
@@ -489,9 +487,8 @@ class JobRunner:
         return tight if cell.workload.kind.value in ("single_stream", "control_aa", "long_context") else policy.cov_noisy_threshold_concurrent
 
     def _round(self, cell: Cell, engine, common: list[str], out_dir: Path, first: bool, traced: bool = False):
-        pre = getattr(self, "_pre", None)
-        if not first and pre is not None and hasattr(pre, "settle") and os.environ.get("PIE_BENCH_SETTLE", "1") != "0":
-            settled = pre.settle(self.platform.os if self.platform else None)
+        if not first and os.environ.get("PIE_BENCH_SETTLE", "1") != "0":
+            settled = self._pre.settle(self.platform.os if self.platform else None)
             if settled:
                 self.log(f"{cell.workload.id}: cooled {settled['settle_s']}s before the next round ({settled['thermal_state_before_settle']} -> {settled['thermal_state']})")
         if not traced:
@@ -604,8 +601,7 @@ class JobRunner:
             from pie_bench.checkpoints.snapshots import with_tokenizer
 
             snapshot = with_tokenizer(cell.artifact, snapshot, self.hf_cache, log=self.log)
-            outputs = t0_engine_outputs(engine, snapshot, pie_root=self.pie_root,
-                                        out_dir=self.out / "cells" / cell.cell_id / "t0", timeout_s=self.job.per_cell_timeout_s)
+            outputs = t0_engine_outputs(engine, snapshot, out_dir=self.out / "cells" / cell.cell_id / "t0", timeout_s=self.job.per_cell_timeout_s)
         except Exception as e:
             self.log(f"accuracy gate skipped: {e}")
             return AccuracyMetrics(status=AccuracyStatus.SKIPPED_NO_REFERENCE, detail={"error": str(e)[:300]})

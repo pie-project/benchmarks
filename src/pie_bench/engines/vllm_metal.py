@@ -47,9 +47,6 @@ class VllmMetalEngine(MlxlmEngine):
     def draft_args(self) -> list[str]:
         return []
 
-    def extra_body(self) -> dict:
-        return {}
-
     def version(self) -> str:
         out = subprocess.run([self.server_python(), "-c", "from importlib.metadata import version; print(version('vllm-metal'), version('vllm'))"],
                              capture_output=True, text=True, timeout=120, check=False)

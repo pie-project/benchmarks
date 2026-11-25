@@ -112,8 +112,6 @@ def ensure_cuda_devkit(py: Path | None = None, log=print) -> bool:
     return ok
 
 
-ensure_nvcc = ensure_cuda_devkit
-
 
 def ensure_nvrtc_matches_toolkit(py: Path, log=print) -> None:
     import json as _json

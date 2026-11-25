@@ -26,7 +26,7 @@ from pie_bench.schema import Backend, EngineName, ErrorClass, WorkloadKind, Work
 _NCCL_SONAMES = ("libnccl.so", "libnccl.so.13", "libnccl.so.12", "libnccl.so.11", "libnccl.so.10", "libnccl.so.9", "libnccl.so.1")
 
 
-def nccl_shim_dir(root: Path | None = None) -> Path | None:
+def nccl_shim_dir() -> Path | None:
     if sys.platform != "linux":
         return None
     try:
@@ -43,7 +43,7 @@ def nccl_shim_dir(root: Path | None = None) -> Path | None:
         return None
     from pie_bench.installers.baselines import cache_root
 
-    d = cache_root(root) / "lib"
+    d = cache_root() / "lib"
     d.mkdir(parents=True, exist_ok=True)
     link = d / "libnccl.so"
     target = Path(found["libnccl.so.2"])

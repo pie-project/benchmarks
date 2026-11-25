@@ -4,13 +4,13 @@ import os
 import re
 import shutil
 import subprocess
+import urllib.request
 from pathlib import Path
 
 from pie_bench.installers.cuda_toolkit import (
     ensure_cuda_devkit,
     ensure_flashinfer_aot,
     ensure_mpi,
-    ensure_nvcc,
     ensure_nvrtc_matches_toolkit,
     ensure_pip_nvcc_matches_cudart,
     ensure_python_headers,
@@ -34,9 +34,6 @@ VLLM_ROCM_INDEX = "https://wheels.vllm.ai/rocm"
 
 
 def rocm_vllm_variant(version: str) -> str:
-    import re
-    import urllib.request
-
     with urllib.request.urlopen(f"{VLLM_ROCM_INDEX}/{version}/", timeout=60) as r:
         found = re.findall(r'href="(rocm\d+)/"', r.read().decode())
     if not found:
@@ -104,8 +101,6 @@ def _image_sglang(d: Path, version: str, log=print) -> Path:
 
 
 def ensure_fork(engine: str, version: str, py: Path, log=print, backend: str | None = None) -> str | None:
-    import urllib.request
-
     from pie_bench.engines.recipes import recipe_fork
 
     fork = recipe_fork(engine)
@@ -127,8 +122,6 @@ def ensure_fork(engine: str, version: str, py: Path, log=print, backend: str | N
     if stamp.exists() and stamp.read_text().strip() == sha:
         return sha
     if stamp.exists():
-        import shutil
-
         if editable:
             subprocess.run(["git", "-C", str(site.parent), "checkout", "--", "."], check=True)
             subprocess.run(["git", "-C", str(site.parent), "clean", "-fdq", "--", str(site / engine)], check=True)
@@ -178,7 +171,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
         if fork:
             ensure_fork(engine, version, py, log=log, backend=backend)
         if cuda:
-            ensure_nvcc(py, log=log)
+            ensure_cuda_devkit(py, log=log)
             ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
             if engine == "sglang":
                 ensure_pip_nvcc_matches_cudart(py, log=log)
@@ -213,7 +206,7 @@ def ensure_baseline(engine: str, version: str, root: Path | None = None, *, back
     if fork:
         ensure_fork(engine, version, py, log=log, backend=backend)
     if cuda:
-        ensure_nvcc(py, log=log)
+        ensure_cuda_devkit(py, log=log)
         ensure_flashinfer_aot(py, d / ".flashinfer-aot", log=log)
         if engine == "sglang":
             ensure_pip_nvcc_matches_cudart(py, log=log)

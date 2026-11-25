@@ -107,7 +107,7 @@ def _answer(ids: list[int], stops: Collection[int]) -> list[int]:
 BENCH_SYSTEM_DEFAULT = "You are a helpful benchmarking assistant."
 
 
-def bench_system_prompt(pie_root: str | Path) -> str:
+def bench_system_prompt() -> str:
     import re
 
     try:
@@ -174,7 +174,6 @@ def t0_engine_outputs(
     engine: Any,
     snapshot_dir: str | Path,
     *,
-    pie_root: str | Path,
     out_dir: str | Path,
     max_new_tokens: int = 64,
     timeout_s: int = 900,
@@ -184,7 +183,7 @@ def t0_engine_outputs(
     from .prompts import t0_prompts
 
     out_dir = Path(out_dir)
-    system = bench_system_prompt(pie_root)
+    system = bench_system_prompt()
     prompts = t0_prompts()
     engine_ids: list[list[int]] = []
     prompt_ids: list[list[int]] = []

@@ -229,7 +229,7 @@ def slice_gguf(repo: str, file: str, layers: str, experts: int | None, out_dir: 
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser()
     ap.add_argument("--repo", required=True)
     ap.add_argument("--file", required=True)
     ap.add_argument("--revision", default="main")

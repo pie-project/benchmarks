@@ -83,8 +83,7 @@ class VllmEngine(Engine):
             extra["hf_overrides"] = {"architectures": ["Gemma4ForCausalLM"]}
         if extra:
             env["PIE_BENCH_VLLM_ENGINE_ARGS"] = json.dumps(extra)
-            existing = self.env.get("PYTHONPATH") if hasattr(self, "env") else None
-            existing = existing or os.environ.get("PYTHONPATH")
+            existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
             env["PYTHONPATH"] = ":".join([str(Path(__file__).resolve().parent / "site_hooks" / "vllm_tpu")] + ([existing] if existing else []))
         return env
 

@@ -26,7 +26,7 @@ def main() -> None:
     index: dict[str, str] = {}
     shard = [0, 0]
 
-    def flush(last: bool = False) -> None:
+    def flush() -> None:
         if not out:
             return
         name = f"model-{shard[0]:05d}.safetensors"
@@ -67,7 +67,7 @@ def main() -> None:
                     break
             else:
                 emit(key, value)
-    flush(last=True)
+    flush()
     total = sum(os.path.getsize(os.path.join(dst, f)) for f in set(index.values()))
     with open(os.path.join(dst, "model.safetensors.index.json"), "w") as f:
         json.dump({"metadata": {"total_size": total}, "weight_map": dict(sorted(index.items()))}, f, indent=1)

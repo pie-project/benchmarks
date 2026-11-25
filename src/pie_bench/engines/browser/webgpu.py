@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -49,10 +51,7 @@ NVIDIA_ICD = {"file_format_version": "1.0.0", "ICD": {"library_path": "libGLX_nv
 
 
 def _ensure_vulkan(log=print) -> None:
-    import json
-    import platform as _platform
-
-    if _platform.system() != "Linux" or not shutil.which("nvidia-smi"):
+    if platform.system() != "Linux" or not shutil.which("nvidia-smi"):
         return
     libs = subprocess.run(["ldconfig", "-p"], capture_output=True, text=True).stdout
     has = {name: name in libs for name in ("libvulkan.so.1", "libGLX_nvidia.so.0", "libnvidia-glvkspirv.so", "libnvidia-gpucomp.so")}
@@ -87,10 +86,6 @@ class BrowserEngine(ServedEngine):
 
     def script_path(self) -> Path:
         return SCRIPT
-
-    def engine_args(self, workload) -> list[str]:
-        args = super().engine_args(workload)
-        return args
 
     def files_dir(self) -> Path:
         d = _cache() / "browser-files" / f"{self.page_engine}-{re.sub(r'[^A-Za-z0-9._-]', '_', self.artifact.id)}-{os.getpid()}"
@@ -191,8 +186,6 @@ class LlamacppWebgpuEngine(BrowserEngine):
 
     def build_dir(self) -> Path:
         tag = str(self.recipe.get("pin") or "b11312")
-        import hashlib
-
         src = hashlib.sha256(b"".join((LLAMACPP_WASM / f).read_bytes() for f in ("llama_webgpu.cpp", "build.sh"))).hexdigest()[:8]
         out = _cache() / "llamacpp-webgpu" / f"{tag}-{src}"
         if not (out / "lw.wasm").exists():

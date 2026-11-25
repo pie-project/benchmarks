@@ -61,6 +61,3 @@ class SplashEngine(ServedEngine):
             return "unknown"
         found = re.findall(r"(\d+\.\d+(?:\.\d+)?)", (out.stdout or "") + (out.stderr or ""))
         return found[-1] if found else "unknown"
-
-    def leftover_process_names(self) -> list[str]:
-        return []

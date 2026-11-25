@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import platform
 import re
+import shutil
 import subprocess
 import uuid
 from pathlib import Path
@@ -66,19 +67,14 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
         argv = [str(pie_bin), "model", "import", str(source), "--out", str(tmp), "--keep-source"]
     if sku:
         argv += [row_flag(pie_bin), sku]
-    env = {**os.environ}
     log(f"import: {' '.join(argv)}")
-    proc = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s, env=env)
+    proc = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s)
     zt = find_zt(tmp)
     if proc.returncode != 0 or zt is None:
-        import shutil
-
         shutil.rmtree(tmp, ignore_errors=True)
         tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-12:]
         raise RuntimeError(f"pie model import failed for {artifact.id} (exit {proc.returncode}):\n" + "\n".join(tail))
     if find_zt(d):
-        import shutil
-
         shutil.rmtree(tmp, ignore_errors=True)
         return find_zt(d)
     d.parent.mkdir(parents=True, exist_ok=True)
@@ -88,8 +84,6 @@ def ensure_artifact(artifact: ArtifactSpec, snapshot: Path, pie_bin: Path, commi
 
 
 def _tokenizer_beside(snapshot: Path, d: Path) -> None:
-    import shutil
-
     if not snapshot.is_dir():
         return
     for f in snapshot.iterdir():

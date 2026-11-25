@@ -87,6 +87,3 @@ class MlxlmEngine(ServedEngine):
             return v[-1] if out.returncode == 0 and v else "unknown"
         except Exception:
             return "unknown"
-
-    def leftover_process_names(self) -> list[str]:
-        return []
