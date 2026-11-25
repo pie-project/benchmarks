@@ -99,6 +99,9 @@ def cell_of(m: Matrix, machine, row: dict, commit: str):
                 break
         if found:
             break
+    if len(found) > 1 and machine.platform.os != "macos":
+        # an MLX checkpoint is a Mac's: off a Mac the grid takes the row of the safetensors one (server/views.py pick)
+        found = [c for c in found if str(c.artifact.source_format) != "mlx"] or found
     if len(found) > 1:
         found = [c for c in found if not c.mode.spec_dec] or found  # the grid's rows are the plain, unspeculated runs
     if len(found) > 1 and row.get("mini_params_b"):
