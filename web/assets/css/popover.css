@@ -45,17 +45,6 @@
   color: var(--color-on-accent);
 }
 
-.popover-note {
-  width: 0;
-  min-width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 4px 10px 6px;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--color-label-tertiary);
-}
-
 .popover-detail {
   margin-left: auto;
   padding-left: 20px;

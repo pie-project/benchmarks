@@ -2,9 +2,6 @@ window.Pie = window.Pie || {};
 
 (() => {
   const element = document.getElementById("popover");
-  const RELEASE = "release";
-  const SUITE = "suite";
-  const VIEW = "view";
   const METRIC = "metric";
   const COMPARE = "platform-compare";
   const MAC = "overview-mac";
@@ -26,23 +23,6 @@ window.Pie = window.Pie || {};
     <button class="popover-option" type="button" role="${role}" aria-checked="${selected}" data-value="${Pie.format.escape(value)}">
       ${check(selected)}${label}
     </button>`;
-
-  const releaseMenu = (state) => {
-    const options = Pie.query.releaseOptions();
-    const groups = [...new Set(options.map((release) => release.group))]
-      .sort((a, b) => (/manual/i.test(a) ? 1 : 0) - (/manual/i.test(b) ? 1 : 0));
-    return groups
-      .map((group) =>
-        `<div class="popover-heading">${group}</div>` +
-        options
-          .filter((release) => release.group === group)
-          .map((release) => option(release.id, release.id === state.release,
-            `<span class="popover-label">${Pie.format.escape(release.title)}</span>` +
-            (release.date ? `<span class="popover-detail">${Pie.format.escape(release.date)}</span>` : "")))
-          .join(""))
-      .join(`<div class="popover-separator"></div>`) +
-      `<div class="popover-separator"></div><p class="popover-note">Updated with each release.</p>`;
-  };
 
   const metricMenu = (state) => {
     const setups = Pie.platform.metrics(state);
@@ -84,17 +64,6 @@ window.Pie = window.Pie || {};
     const key = '<span class="popover-detail popover-key">Hold R</span>';
     return option("engines", current === "engines", `<span class="popover-label">Performance</span>${current === "engines" ? "" : key}`) + option("ceiling", current === "ceiling", `<span class="popover-label">Roofline</span>${current === "ceiling" ? "" : key}`) +
       `<div class="popover-separator"></div>` + option("hide", state.hideEmpty, `<span class="popover-label">Hide Unavailable</span>`, "menuitemcheckbox");
-  };
-
-  const suiteMenu = (state) =>
-    Pie.store.suites()
-      .map((suite) => option(suite.id, suite.id === state.suite,
-        `<span class="popover-label">${Pie.format.escape(suite.title)}</span>` +
-        `<span class="popover-detail">${Pie.format.escape(suite.detail)}</span>`))
-      .join("");
-
-  const viewMenu = (state) => {
-    return `<div data-key="${RELEASE}">${releaseMenu(state)}</div>`;
   };
 
   const macMenu = (state, current = state.overview.hardware) =>
@@ -172,9 +141,6 @@ window.Pie = window.Pie || {};
   window.addEventListener("resize", follow);
 
   Pie.popover = {
-    RELEASE,
-    SUITE,
-    VIEW,
     METRIC,
     COMPARE,
     MAC,
@@ -204,7 +170,7 @@ window.Pie = window.Pie || {};
       owner = key;
       anchor = target;
       element.classList.toggle("is-fit", String(key).startsWith("board:"));
-      element.innerHTML = isLimit(key) ? limitMenu(key) : key === RELEASE ? releaseMenu(state) : key === VIEW ? viewMenu(state) : key === SUITE ? suiteMenu(state) : key === COMPARE ? compareMenu(state) : key === METRIC ? metricMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
+      element.innerHTML = isLimit(key) ? limitMenu(key) : key === COMPARE ? compareMenu(state) : key === METRIC ? metricMenu(state) : key === MAC ? macMenu(state) : key === WORKLOAD ? workloadMenu(state) : key === ENGINE ? engineMenu(state) : key === HEAT_MAC ? macMenu(state, state.overview.heatMac) : key === STAND_MAC ? macMenu(state, state.overview.standMac) : key === QUAL_ENGINE ? qualityEngineMenu(state) : key === MODEL ? modelMenu(state) : filterMenu(state, key);
       element.classList.toggle("is-compact", COMPACT.has(key));
       searchWrap(key);
       element.scrollTop = 0;
@@ -221,7 +187,7 @@ window.Pie = window.Pie || {};
         if (openSub >= 0) { const row = element.querySelectorAll(".popover-parent")[openSub]; if (row) showSub(row); else hideSub(); }
         return;
       }
-      if (element.hidden || !owner || isLimit(owner) || owner === RELEASE || owner === SUITE || owner === VIEW || owner === METRIC || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC || owner === QUAL_ENGINE) return;
+      if (element.hidden || !owner || isLimit(owner) || owner === METRIC || owner === MAC || owner === WORKLOAD || owner === ENGINE || owner === HEAT_MAC || owner === MODEL || owner === STAND_MAC || owner === QUAL_ENGINE) return;
       const query = typed(), scroll = scrolled();
       element.innerHTML = filterMenu(state, owner);
       searchWrap(owner, query, scroll);
@@ -264,7 +230,7 @@ window.Pie = window.Pie || {};
         if (!target || target.disabled) return;
         const key = target.closest("[data-key]")?.dataset.key || owner;
         const several = key === "grid:maker" || key === "grid:platform" || key === "grid:size" || key === "grid:model";
-        if (!several && (isLimit(key) || key === RELEASE || key === SUITE || key === METRIC || key === COMPARE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === QUAL_ENGINE)) this.close();
+        if (!several && (isLimit(key) || key === METRIC || key === COMPARE || key === MAC || key === WORKLOAD || key === ENGINE || key === HEAT_MAC || key === MODEL || key === STAND_MAC || key === QUAL_ENGINE)) this.close();
         onPick(key, target.dataset.value);
       };
       element.addEventListener("click", choose);

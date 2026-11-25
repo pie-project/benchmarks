@@ -57,7 +57,6 @@
     }
     ensureSuite();
     ensureRelease();
-    toolbar.renderSuite(state);
     const isOverview = state.table === "overview";
     const isPlatform = Pie.schema[state.table]?.view === "platform";
     const isMethod = ["welcome", "approach", "reports", "gaps", "reasons", "methods", "fit", "board", "accuracy", "checks"].includes(state.table);
@@ -67,13 +66,6 @@
     table.container.hidden = isOverview || isMethod || isPlatform;
     overview.element.hidden = !isOverview;
     Pie.platform.element.hidden = !isPlatform;
-    const inFolder = isPlatform && Pie.schema[state.table]?.platform;
-    toolbar.elements.nav.hidden = true;
-    toolbar.elements.back.disabled = !inFolder;
-    toolbar.elements.forward.disabled = state.table !== "speedups" || !forwardTo;
-    toolbar.elements.metricPicker.hidden = true;
-    toolbar.elements.releasePicker.hidden = true;
-    toolbar.elements.viewPicker.hidden = true;
     if (Pie.loading.done() && isPlatform) Pie.platform.roll();
     Pie.welcome.render(state);
     Pie.approach.render(state);
@@ -87,7 +79,6 @@
     if (!isPlatform) Pie.platform.left();
     if (isPlatform) {
       const shown = Pie.platform.render(state);
-      toolbar.elements.metricValue.textContent = shown.metric.label;
       toolbar.render(state, 0, 0);
       toolbar.elements.subtitle.textContent = shown.macs ? `${shown.macs} ${shown.macs === 1 ? "machine" : "machines"}, ${shown.models} ${shown.models === 1 ? "model" : "models"}` : "";
     } else if (isOverview) {
@@ -116,7 +107,6 @@
         const machines = Pie.platform.machines();
         toolbar.elements.subtitle.textContent = `${platforms} ${platforms === 1 ? "platform" : "platforms"}, ${machines} ${machines === 1 ? "machine" : "machines"}`;
       }
-      toolbar.renderRelease(state);
     } else {
       const rows = query.visibleRows(state);
       if (state.table === "results") {
@@ -132,9 +122,7 @@
     saveView();
   };
 
-  let forwardTo = null;
   const navigate = (tableName, initialFilters = {}) => {
-    forwardTo = null;
     state.reset(tableName, initialFilters);
     toolbar.clearSearch();
     popover.close();
@@ -146,22 +134,6 @@
     const { elements } = toolbar;
 
     elements.sidebarToggle.addEventListener("click", () => preferences.toggleSidebar());
-    const back = () => {
-      const from = state.table;
-      navigate("speedups");
-      forwardTo = from;
-      render();
-    };
-    const forward = () => navigate(forwardTo);
-    elements.back.addEventListener("click", back);
-    elements.forward.addEventListener("click", forward);
-    document.addEventListener("keydown", (event) => {
-      if (!event.metaKey || elements.nav.hidden) return;
-      const button = event.key === "[" ? elements.back : event.key === "]" ? elements.forward : null;
-      if (!button || button.disabled) return;
-      event.preventDefault();
-      button === elements.back ? back() : forward();
-    });
     elements.themeToggle.addEventListener("click", () => preferences.toggleTheme());
     document.getElementById("sidebar-theme").addEventListener("click", () => preferences.toggleTheme());
 
@@ -183,26 +155,6 @@
         render();
       }
     });
-
-    elements.viewPicker.addEventListener("click", (event) => {
-      event.stopPropagation();
-      popover.open(elements.viewPicker, popover.VIEW, state);
-    });
-
-    elements.releasePicker.addEventListener("click", (event) => {
-      event.stopPropagation();
-      popover.open(elements.releasePicker, popover.RELEASE, state);
-    });
-
-    elements.metricPicker.addEventListener("click", (event) => {
-      event.stopPropagation();
-      popover.open(elements.metricPicker, popover.METRIC, state);
-    });
-
-    elements.suitePicker.addEventListener("click", (event) => {
-      event.stopPropagation();
-      popover.open(elements.suitePicker, popover.SUITE, state);
-    });
   };
 
   const bindFilters = () => {
@@ -213,13 +165,8 @@
 
     popover.bind();
     popover.onPick((key, value) => {
-      if (key === popover.RELEASE) {
-        state.release = value;
-      } else if (key === popover.METRIC) {
+      if (key === popover.METRIC) {
         state.platform.mode = value;
-      } else if (key === popover.SUITE) {
-        state.suite = value;
-        state.suitePicked = true;
       } else if (key === popover.COMPARE && value === "hide") {
         state.hideEmpty = !state.hideEmpty;
         try {
@@ -427,7 +374,7 @@
   const saveView = () => {
     try {
       localStorage.setItem(VIEW_KEY, JSON.stringify({
-        table: state.table, suite: state.suite, suitePicked: Boolean(state.suitePicked), overview: { ...state.overview }, platform: { ...state.platform }, hideEmpty: state.hideEmpty, filters: { ...state.filters },
+        table: state.table, suite: state.suite, overview: { ...state.overview }, platform: { ...state.platform }, hideEmpty: state.hideEmpty, filters: { ...state.filters },
       }));
     } catch {
     }

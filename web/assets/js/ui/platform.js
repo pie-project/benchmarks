@@ -131,8 +131,6 @@ window.Pie = window.Pie || {};
       }, Math.max(0, end - now));
     }
     element.classList.toggle("is-auto-paused", auto.paused);
-    const sw = document.getElementById("auto-switch");
-    if (sw) { sw.hidden = stillMotion.matches || !element.querySelector(".setup-pick"); showAuto(); }
     nextTurn();
   };
   const pauseTurns = (on) => {
@@ -183,13 +181,6 @@ window.Pie = window.Pie || {};
     }
   };
   const stopTurns = () => { auto.spent = 0; clearTimeout(auto.timer); };
-  function showAuto() {
-    const sw = document.getElementById("auto-switch");
-    if (!sw) return;
-    sw.setAttribute("aria-pressed", String(!auto.stopped));
-    sw.title = auto.stopped ? "Play" : "Pause";
-    sw.setAttribute("aria-label", auto.stopped ? "Turn the setups automatically" : "Pause the setups' turn");
-  }
   let openResults = () => {};
   let openGap = () => {};
 
@@ -1193,7 +1184,7 @@ window.Pie = window.Pie || {};
         requestAnimationFrame(put);
       }
       afterDraw();
-      return { macs: macsShown, models: new Set(sections.flatMap((g) => g.models)).size, metric };
+      return { macs: macsShown, models: new Set(sections.flatMap((g) => g.models)).size };
     },
 
     bind(state) {
