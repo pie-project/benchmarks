@@ -26,7 +26,7 @@ from . import tracer_for, unit
 RATES = {"decode": ("raw", "decode_tok_s"), "spec": ("spec", "decode_tok_s"), "prefill": ("raw", "prefill_tok_s"),
          "batching": ("throughput", "output_tok_s"), "pbatch": ("prefill_batch", "prefill_tok_s")}
 MEASURED = ("pass", "noisy")
-TRACES = ("*.trace", "*.nsys-rep", "*.sqlite", "*.xml", "rocprof", "xla", "hsa")
+TRACES = ("*.trace", "*.nsys-rep", "*.sqlite", "*.xml", "rocprof", "xla", "hsa", "cupti")
 
 
 def pair(results: list[dict], hardware: str, model: str, setup: str, engines: list[str] | None = None) -> tuple[dict, dict]:
