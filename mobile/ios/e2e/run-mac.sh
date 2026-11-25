@@ -5,7 +5,7 @@ xcf="$(cd "${1:?llama.xcframework}" && pwd)"; home="${2:?home dir}"
 fw="$xcf/macos-arm64_x86_64"
 mkdir -p "$home"
 files=()
-for f in JSON Contract Catalog DeviceInfo Downloader Engine LlamaEngine MLXEngine MLCEngine PieEngine PieBuild Runner Uploader; do
+for f in JSON Contract Catalog DeviceInfo Downloader Engine LlamaEngine MLXEngine MLCEngine PieEngine PieBuild Runner; do
   files+=("$here/PieBench/$f.swift")
 done
 xcrun swiftc -O -swift-version 5 -target arm64-apple-macos14 -o "$home/piebench-e2e" "${files[@]}" "$here/e2e/main.swift" \

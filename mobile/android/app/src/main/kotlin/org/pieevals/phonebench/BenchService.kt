@@ -29,12 +29,6 @@ class BenchService : Service() {
         Thread({
             try {
                 BenchRunner(applicationContext, cfg).run()
-                if (cfg.send && cfg.url.isNotBlank()) {
-                    BenchState.say("sending to ${cfg.url}/v1/results")
-                    val reply = runCatching { Results.send(applicationContext, cfg.url, cfg.token) }.getOrElse { "send failed: $it" }
-                    BenchState.lastReply.value = reply
-                    BenchState.say("server: $reply")
-                }
             } catch (t: Throwable) {
                 BenchState.say("run crashed: $t")
             } finally {

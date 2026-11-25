@@ -9,11 +9,6 @@ import Foundation
     let workloads = env["PIEBENCH_WORKLOADS"].map { $0.split(separator: ",").map(String.init) } ?? contract.workloads.map(\.id)
     await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
         runner.start(RunPlan(models: models, workloads: workloads, tag: env["PIEBENCH_TAG"])) {
-            if let url = env["PIEBENCH_POST"] {
-                do { runner.say("POST: " + (try await Uploader.send(Storage.records, base: url, token: env["PIEBENCH_TOKEN"] ?? ""))) } catch {
-                    runner.say("POST failed: \(error.localizedDescription)")
-                }
-            }
             runner.say("records: \(Storage.records.path)")
             done.resume()
         }

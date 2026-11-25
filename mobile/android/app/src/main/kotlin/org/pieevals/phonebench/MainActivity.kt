@@ -79,16 +79,12 @@ class MainActivity : ComponentActivity() {
             llamaGpu = i.getStringExtra("llama_backend")?.let { it != "cpu" } ?: p.getBoolean("llama_gpu", false),
             threads = i.getIntExtra("threads", p.getString("threads", "0")!!.toIntOrNull() ?: 0),
             download = i.getBooleanExtra("download", true),
-            send = i.getBooleanExtra("send", false),
-            url = i.getStringExtra("url") ?: p.getString("url", DEFAULT_URL)!!,
-            token = i.getStringExtra("token") ?: p.getString("token", "")!!,
         )
-        BenchState.say("debug intent: $cfg".replace(cfg.token.ifEmpty { "\u0000" }, "***"))
+        BenchState.say("debug intent: $cfg")
         BenchService.start(this, cfg)
     }
 
     companion object {
-        const val DEFAULT_URL = "http://100.85.194.44:8787"
         fun prefs(c: Context) = c.getSharedPreferences("bench", Context.MODE_PRIVATE)
     }
 }
@@ -104,13 +100,10 @@ private fun Screen() {
     val log by BenchState.log.collectAsState()
     val progress by BenchState.progress.collectAsState()
     val results by BenchState.results.collectAsState()
-    val reply by BenchState.lastReply.collectAsState()
     var device by remember { mutableStateOf("") }
     val engines = remember { mutableStateListOf(*(p.getString("engines", "llamacpp,litert,mlc,pie")!!.split(",").filter { it.isNotEmpty() }.toTypedArray())) }
     val models = remember { mutableStateListOf(*(p.getString("models", "qwen3.5-0.8b")!!.split(",").filter { it.isNotEmpty() }.toTypedArray())) }
     val wls = remember { mutableStateListOf(*(p.getString("workloads", "raw-512-256,c4,pf4-512")!!.split(",").filter { it.isNotEmpty() }.toTypedArray())) }
-    var url by remember { mutableStateOf(p.getString("url", MainActivity.DEFAULT_URL)!!) }
-    var token by remember { mutableStateOf(p.getString("token", "")!!) }
     var tag by remember { mutableStateOf(p.getString("tag", "")!!) }
     var threads by remember { mutableStateOf(p.getString("threads", "0")!!) }
     var litertGpu by remember { mutableStateOf(p.getBoolean("litert_gpu", true)) }
@@ -128,7 +121,7 @@ private fun Screen() {
     }
     fun save() {
         p.edit().putString("engines", engines.joinToString(",")).putString("models", models.joinToString(","))
-            .putString("workloads", wls.joinToString(",")).putString("url", url).putString("token", token)
+            .putString("workloads", wls.joinToString(","))
             .putString("tag", tag).putString("threads", threads).putBoolean("litert_gpu", litertGpu).putBoolean("llama_gpu", llamaGpu).apply()
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
@@ -204,8 +197,6 @@ private fun Screen() {
             }
         }
         item { Section("Settings") }
-        item { OutlinedTextField(url, { url = it; save() }, label = { Text("Ingest URL") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
-        item { OutlinedTextField(token, { token = it; save() }, label = { Text("Token") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
         item { OutlinedTextField(tag, { tag = it; save() }, label = { Text("Tag (empty = server default)") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -225,21 +216,9 @@ private fun Screen() {
             }
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                OutlinedButton(enabled = !running, onClick = {
-                    status = "sending…"
-                    scope.launch(Dispatchers.IO) {
-                        val r = runCatching { Results.send(ctx, url, token) }.getOrElse { "send failed: $it" }
-                        BenchState.lastReply.value = r
-                        status = ""
-                    }
-                }) { Text("Send") }
-                OutlinedButton(onClick = { runCatching { Results.share(ctx) }.onFailure { status = "share failed: $it" } }) { Text("Share records.jsonl") }
-                OutlinedButton(onClick = { status = "copied ${Results.copyForWorkflow(ctx)} chars (gzip+base64)" }) { Text("Copy for workflow") }
-            }
+            OutlinedButton(onClick = { runCatching { Results.share(ctx) }.onFailure { status = "share failed: $it" } }) { Text("Share records.jsonl") }
         }
         if (status.isNotEmpty()) item { Text(status, fontSize = 12.sp) }
-        if (reply.isNotEmpty()) item { Text("Server: $reply", fontSize = 12.sp, fontFamily = FontFamily.Monospace) }
         if (progress.isNotEmpty()) item { Text(progress, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary) }
         item { Section("Results (local, display only)") }
         item { Text("engine  artifact  workload  status  decode tok/s  prefill tok/s  TTFT s  peak GiB", fontSize = 11.sp, fontFamily = FontFamily.Monospace) }

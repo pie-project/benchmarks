@@ -26,9 +26,6 @@ data class RunConfig(
     val llamaGpu: Boolean = false,
     val threads: Int = 0,
     val download: Boolean = true,
-    val send: Boolean = false,
-    val url: String = "",
-    val token: String = "",
 )
 
 data class ResultRow(val engine: String, val artifact: String, val workload: String, val status: String,
@@ -39,7 +36,6 @@ object BenchState {
     val running = MutableStateFlow(false)
     val progress = MutableStateFlow("")
     val results = MutableStateFlow<List<ResultRow>>(emptyList())
-    val lastReply = MutableStateFlow("")
     @Volatile var cancel = false
 
     fun say(s: String) {
