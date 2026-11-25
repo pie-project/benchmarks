@@ -5,8 +5,6 @@ import json
 from pathlib import Path
 
 BENCH_SYSTEM = "You are a helpful benchmarking assistant."
-
-
 BENCH_PROMPT = "Write a short story about a robot."
 
 

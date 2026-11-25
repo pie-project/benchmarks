@@ -22,7 +22,6 @@ SPECS = {
     "trtllm": lambda v: [f"tensorrt-llm=={v}"],
 }
 
-
 BACKEND_SPECS = {
     ("vllm", "xla"): lambda v: [f"vllm-tpu=={v}"],
     ("sglang", "xla"): lambda v: [f"sglang-jax[tpu] @ git+https://github.com/sgl-project/sglang-jax@{v[4:]}#subdirectory=python", "torch", "torchvision"]
@@ -30,7 +29,6 @@ BACKEND_SPECS = {
     ("vllm", "rocm"): lambda v: [f"vllm=={rocm_vllm_version(v)}"],
     ("sglang", "rocm"): lambda v: [],
 }
-
 
 VLLM_ROCM_INDEX = "https://wheels.vllm.ai/rocm"
 

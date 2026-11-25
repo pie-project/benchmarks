@@ -16,8 +16,6 @@ PIE_UPSTREAM = "https://github.com/pie-project/pie.git"
 
 
 DEFAULT_PIE_ROOT = Path("/root/pie")
-
-
 PIE_EXE = "pie.exe" if os.name == "nt" else "pie"
 
 

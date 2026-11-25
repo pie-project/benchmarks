@@ -8,8 +8,6 @@ from pie_bench import __version__
 from pie_bench.api_client import ApiError
 
 SUBMISSION = "submission.json.gz"
-
-
 FORMAT = 1
 
 

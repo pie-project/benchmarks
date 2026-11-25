@@ -7,8 +7,6 @@ from pie_bench.schema import Tier
 from pie_bench.schema.record import ARROW_SCHEMA
 
 _PG_TYPES = {pa.string(): "text", pa.float64(): "double precision", pa.int64(): "bigint", pa.int32(): "integer", pa.bool_(): "boolean"}
-
-
 _LEAN = [n for n in ARROW_SCHEMA.names if n != "record_json"]
 
 

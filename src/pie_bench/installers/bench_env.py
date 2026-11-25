@@ -8,8 +8,6 @@ from pathlib import Path
 from pie_bench.paths import CLIENTS
 
 BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2", "tiktoken"]
-
-
 if os.name == "nt":  # cryptography has no Windows Arm64 wheel and nothing in the bench imports it
     BENCH_DEPS = [d for d in BENCH_DEPS if d != "cryptography"] + ["psutil"]
 

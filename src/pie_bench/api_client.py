@@ -11,8 +11,6 @@ from pathlib import Path
 from pie_bench import __version__
 
 API = os.environ.get("PIE_BENCH_API") or "https://bench-api.pie-project.org"
-
-
 TOKEN_FILE = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "pie-bench" / "token"
 
 

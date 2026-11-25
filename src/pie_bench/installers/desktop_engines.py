@@ -15,11 +15,7 @@ from pie_bench.plan.matrix import Matrix
 from pie_bench.schema import JobSpec
 
 MAC_ENGINES = ("pie", "llamacpp", "mlxlm", "splash")
-
-
 WINDOWS_ENGINES = ("pie", "llamacpp", "ollama")
-
-
 MLX_VLM_PIN = "0.7.11"
 
 

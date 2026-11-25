@@ -4,7 +4,6 @@ from pie_bench.schema import WorkloadSpec
 
 MAX_MODEL_LEN_QUANTUM = 2048
 
-
 CHAT_TEMPLATE_MARGIN_TOKENS = 64
 
 

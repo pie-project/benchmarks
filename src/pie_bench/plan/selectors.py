@@ -10,8 +10,6 @@ if TYPE_CHECKING:
     from pie_bench.plan.matrix import Matrix
 
 _CMP = re.compile(r"^(>=|<=|>|<|!=|==)?\s*(-?\d+)$")
-
-
 _OPS = {">=": operator.ge, "<=": operator.le, ">": operator.gt, "<": operator.lt, "!=": operator.ne, "==": operator.eq, None: operator.eq}
 
 

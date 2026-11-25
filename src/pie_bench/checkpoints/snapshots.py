@@ -8,13 +8,8 @@ from pathlib import Path
 from pie_bench.schema import ArtifactKind, ArtifactSpec, SourceFormat
 
 WEIGHT_PATTERNS = ["*.json", "*.safetensors", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.py", "*.jinja"]
-
-
 TOKENIZER_PATTERNS = ["*.json", "*.txt", "*.model", "*.tiktoken", "tokenizer*", "*.jinja"]
-
-
 MLC_PATTERNS = ["*.json", "*.bin", "*.txt", "*.model", "tokenizer*"]
-
 
 _SPLIT = re.compile(r"-00001-of-(\d{5})\.gguf$")
 

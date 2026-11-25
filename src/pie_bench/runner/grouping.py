@@ -5,8 +5,6 @@ from pie_bench.engines.shapes import context_tokens_for, max_model_len_for, work
 from pie_bench.schema import Backend
 
 SHORT_CONTEXT_TOKENS = 8192
-
-
 MEMORY_BOUND_MARKS = ("device memory exhausted", "weight residency", "does not hold this deployment", "bytes of elastic device memory")
 
 
