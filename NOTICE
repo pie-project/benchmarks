@@ -1,0 +1,15 @@
+Pie Bench (pie-project)
+Copyright 2025 Pie Team
+
+This product includes software developed at the Pie project, licensed under the
+Apache License, Version 2.0 (see LICENSE).
+
+It also includes the following third-party work.
+
+--------------------------------------------------------------------------------
+Lobe Icons
+https://github.com/lobehub/lobe-icons
+MIT License
+Copyright (c) 2023 LobeHub
+
+  The model maker logos in `web/assets/img/models` (see the LICENSE there).
