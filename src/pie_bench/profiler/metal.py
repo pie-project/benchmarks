@@ -1,4 +1,4 @@
-"""Metal: the GPU's work intervals on Apple silicon, from an Instruments Metal System Trace.
+"""Metal: the GPU's work intervals on Apple silicon, from an Instruments recording of the GPU alone.
 
 xctrace records every process; the intervals kept are those of the processes under this profiler (the engine and its
 bench client), on the trace's own clock moved to Unix time by the trace's start date.
@@ -20,7 +20,10 @@ from pathlib import Path
 
 from . import span
 
-TEMPLATE = "Metal System Trace"
+# the GPU instrument alone: the same metal-gpu-intervals as the Metal System Trace template (an M5 Max mlx-lm server's GPU
+# busy time 8.65 s either way), in a trace 30 times smaller that saves in seconds, not minutes. Either way the kernel
+# tracing under it costs a host-bound engine time: mlx-lm's 512-token prefill 8 to 15% (pie's 0 to 3%)
+INSTRUMENT = "GPU"
 TABLE = '/trace-toc/run[@number="1"]/data/table[@schema="metal-gpu-intervals"]'
 LIMIT_S = 3600
 
@@ -75,12 +78,12 @@ class Tracer:
 
     @contextmanager
     def recording(self, out: Path):
-        """Records a Metal System Trace of the whole machine while the block runs, noting the processes below this one."""
+        """Records the whole machine's GPU work while the block runs, noting the processes below this one."""
         out.mkdir(parents=True, exist_ok=True)
         trace = out / "metal.trace"
         shutil.rmtree(trace, ignore_errors=True)
         before = spool()
-        proc = subprocess.Popen(["xctrace", "record", "--template", TEMPLATE, "--all-processes", "--time-limit", f"{LIMIT_S}s", "--output", str(trace)],
+        proc = subprocess.Popen(["xctrace", "record", "--instrument", INSTRUMENT, "--all-processes", "--time-limit", f"{LIMIT_S}s", "--output", str(trace)],
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         started, done, pids = threading.Event(), threading.Event(), set()
 

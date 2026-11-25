@@ -128,7 +128,7 @@ def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engin
         planned.setdefault(key(r), cell_of(m, machine, r, commit or "0" * 40))
     jobs = [j for j, _ in planned.values()]
     runs = {c.cell_id: c for _, c in planned.values()}
-    # each process's control A/A, as the standard job runs it (the targeted tier has none)
+    # each process's control A/A, as the standard job runs it
     controls = {x.cell_id: x for j, c in planned.values() for x in j.cells if str(x.workload.kind) == "control_aa"
                 and (str(x.engine), x.artifact.artifact_key, x.mode.key) == (str(c.engine), c.artifact.artifact_key, c.mode.key)}
     # each engine's own pin (vLLM-TPU, SGLang-JAX), as its own plan carries it, then the version its rows ran
