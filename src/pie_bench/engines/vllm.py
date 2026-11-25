@@ -11,7 +11,14 @@ from pie_bench.engines.engine import Engine
 from pie_bench.engines.shapes import is_prefix_workload, max_model_len_for, workload_concurrency
 from pie_bench.schema import EngineName, WorkloadSpec
 
-_VLLM_KV_DTYPES = {"bf16": "auto", "fp16": "auto", "auto": "auto", "fp8": "fp8", "fp8_e4m3": "fp8_e4m3", "fp8_e5m2": "fp8_e5m2"}
+_VLLM_KV_DTYPES = {
+    "bf16": "auto",
+    "fp16": "auto",
+    "auto": "auto",
+    "fp8": "fp8",
+    "fp8_e4m3": "fp8_e4m3",
+    "fp8_e5m2": "fp8_e5m2",
+}
 
 
 @register
@@ -36,23 +43,53 @@ class VllmEngine(Engine):
         if self.platform is not None and str(self.platform.backend) == "rocm":
             env["VLLM_ROCM_USE_AITER"] = "1"
             venv = os.environ.get("VIRTUAL_ENV") or "/opt/venv"
-            env["PATH"] = ":".join(d for d in os.environ.get("PATH", "").split(":") if d and not d.startswith(venv + "/"))
+            env["PATH"] = ":".join(
+                d
+                for d in os.environ.get("PATH", "").split(":")
+                if d and not d.startswith(venv + "/")
+            )
             if self.artifact.family in ("qwen3_6", "mimo_v2"):
                 env["VLLM_USE_V2_MODEL_RUNNER"] = "0"
-        if self.platform is not None and str(self.platform.backend) == "xla" and str(self.artifact.scheme) == "mxfp4":
+        if (
+            self.platform is not None
+            and str(self.platform.backend) == "xla"
+            and str(self.artifact.scheme) == "mxfp4"
+        ):
             env["MOE_REQUANTIZE_BLOCK_SIZE"] = "32"
             env["MOE_REQUANTIZE_WEIGHT_DTYPE"] = "int8"
         if self.platform is not None and str(self.platform.backend) == "xla":
             env.update(self._tpu_env())
-        if self.artifact.family == "mimo_v2" and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" in str(self.platform.accelerator):
+        if (
+            self.artifact.family == "mimo_v2"
+            and self.platform is not None
+            and str(self.platform.arch) == "blackwell"
+            and "RTX" in str(self.platform.accelerator)
+        ):
             env["VLLM_DISABLED_KERNELS"] = "CutlassFp8BlockScaledMMKernel"
-        if self.artifact.family in ("deepseek_v41", "deepseek_v4") and self.platform is not None and str(self.platform.arch) == "blackwell" and "RTX" not in str(self.platform.accelerator):
+        if (
+            self.artifact.family in ("deepseek_v41", "deepseek_v4")
+            and self.platform is not None
+            and str(self.platform.arch) == "blackwell"
+            and "RTX" not in str(self.platform.accelerator)
+        ):
             env["VLLM_USE_DEEP_GEMM"] = "1"
-        if self.artifact.family == "deepseek_v4" and self.platform is not None and str(self.platform.arch) == "hopper":
+        if (
+            self.artifact.family == "deepseek_v4"
+            and self.platform is not None
+            and str(self.platform.arch) == "hopper"
+        ):
             env["VLLM_USE_DEEP_GEMM"] = "1"
-        if self.artifact.family in ("gpt_oss", "gemma4", "gemma4_moe", "deepseek_v41") and self.platform is not None and str(self.platform.arch) == "hopper":
+        if (
+            self.artifact.family in ("gpt_oss", "gemma4", "gemma4_moe", "deepseek_v41")
+            and self.platform is not None
+            and str(self.platform.arch) == "hopper"
+        ):
             env["VLLM_USE_V2_MODEL_RUNNER"] = "0"
-        if self.artifact.family in ("deepseek_v41", "deepseek_v4") and self.platform is not None and self.platform.id == "l4-x1":
+        if (
+            self.artifact.family in ("deepseek_v41", "deepseek_v4")
+            and self.platform is not None
+            and self.platform.id == "l4-x1"
+        ):
             env["VLLM_USE_BREAKABLE_CUDAGRAPH"] = "0"
         if int(self.mode.tp) > 1:
             env["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
@@ -72,7 +109,9 @@ class VllmEngine(Engine):
         extra: dict[str, Any] = {}
         if "kv_lora_rank" in keys or str(cfg.get("model_type", "")).startswith("deepseek"):
             env["NEW_MODEL_DESIGN"] = "1"
-            extra["additional_config"] = {"sharding": {"sharding_strategy": {"enable_dp_attention": True}}}
+            extra["additional_config"] = {
+                "sharding": {"sharding_strategy": {"enable_dp_attention": True}}
+            }
         if cfg.get("model_type") == "deepseek_v4":
             env["MODEL_IMPL_TYPE"] = "vllm"
             env["PIE_BENCH_TPU_XLA_CSA_GATHER"] = "1"
@@ -81,11 +120,23 @@ class VllmEngine(Engine):
         if extra:
             env["PIE_BENCH_VLLM_ENGINE_ARGS"] = json.dumps(extra)
             existing = self.env.get("PYTHONPATH") or os.environ.get("PYTHONPATH")
-            env["PYTHONPATH"] = ":".join([str(Path(__file__).resolve().parent / "site_hooks" / "vllm_tpu")] + ([existing] if existing else []))
+            env["PYTHONPATH"] = ":".join(
+                [str(Path(__file__).resolve().parent / "site_hooks" / "vllm_tpu")]
+                + ([existing] if existing else [])
+            )
         return env
 
-    ROCM_IMAGE_ENV = ("LD_LIBRARY_PATH", "LIBRARY_PATH", "CPATH", "ROCM_PATH", "ROCM_HOME", "VIRTUAL_ENV",
-                      "PIP_CONSTRAINT", "TORCHINDUCTOR_MAX_AUTOTUNE", "TORCHINDUCTOR_MAX_AUTOTUNE_POINTWISE")
+    ROCM_IMAGE_ENV = (
+        "LD_LIBRARY_PATH",
+        "LIBRARY_PATH",
+        "CPATH",
+        "ROCM_PATH",
+        "ROCM_HOME",
+        "VIRTUAL_ENV",
+        "PIP_CONSTRAINT",
+        "TORCHINDUCTOR_MAX_AUTOTUNE",
+        "TORCHINDUCTOR_MAX_AUTOTUNE_POINTWISE",
+    )
 
     def drop_env(self) -> set[str]:
         if self.platform is not None and str(self.platform.backend) == "rocm":
@@ -105,13 +156,15 @@ class VllmEngine(Engine):
     def model_arg(self) -> str:
         return str(self.recipe.get("snapshot_dir") or self.artifact.base_model)
 
-    def build_argv(self, workload: WorkloadSpec, common_args: list[str], json_out: Path) -> list[str]:
+    def build_argv(
+        self, workload: WorkloadSpec, common_args: list[str], json_out: Path
+    ) -> list[str]:
         argv = super().build_argv(workload, common_args, json_out)
         i = argv.index("latency") if "latency" in argv[:4] else -1
         if i >= 0 and "--requests" in argv and self.recipe.get("report_timing", True):
             argv[i] = "tput"
             j = argv.index("--requests")
-            argv[j:j + 2] = ["--num-requests", argv[j + 1], "--concurrency", "1"]
+            argv[j : j + 2] = ["--num-requests", argv[j + 1], "--concurrency", "1"]
         return argv
 
     def engine_args(self, workload: WorkloadSpec) -> list[str]:
@@ -120,13 +173,15 @@ class VllmEngine(Engine):
         gmu = r.get("gpu_mem_util", 0.90)
         if gmu is not None:
             card = float(self.platform.memory_gib or 0.0) / max(1, int(self.mode.tp))
-            if self.artifact.family == "kimi_k3" and ((40 <= card < 80 and workload_concurrency(workload) >= 128) or workload_concurrency(workload) >= 512):
+            if self.artifact.family == "kimi_k3" and (
+                (40 <= card < 80 and workload_concurrency(workload) >= 128)
+                or workload_concurrency(workload) >= 512
+            ):
                 gmu = min(float(gmu), 0.85 if card < 80 else 0.75)
             elif self.mode.spec_dec and 0 < card < 40:
                 gmu = min(float(gmu), 0.85)
             args += ["--gpu-mem-util", str(gmu)]
         args += ["--max-model-len", str(max_model_len_for(workload))]
-
 
         if r.get("report_timing", True):
             args += ["--report-timing"]
@@ -155,13 +210,20 @@ class VllmEngine(Engine):
         cfg = r.get("compilation_config")
         c = workload_concurrency(workload)
         if c > 512 and not r.get("enforce_eager") and not isinstance(cfg, str):
-            cfg = {**(cfg or {}), "max_cudagraph_capture_size": int(max((cfg or {}).get("max_cudagraph_capture_size", 0), c))}
+            cfg = {
+                **(cfg or {}),
+                "max_cudagraph_capture_size": int(
+                    max((cfg or {}).get("max_cudagraph_capture_size", 0), c)
+                ),
+            }
         if cfg:
             args += ["--compilation-config", cfg if isinstance(cfg, str) else json.dumps(cfg)]
         if r.get("language_model_only"):
             args.append("--language-model-only")
 
-        kv = r.get("kv_cache_dtype") or _VLLM_KV_DTYPES.get(str(self.artifact.kv_dtype), str(self.artifact.kv_dtype))
+        kv = r.get("kv_cache_dtype") or _VLLM_KV_DTYPES.get(
+            str(self.artifact.kv_dtype), str(self.artifact.kv_dtype)
+        )
         if kv and kv != "auto":
             args += ["--kv-cache-dtype", str(kv)]
 
@@ -172,7 +234,12 @@ class VllmEngine(Engine):
         elif spec == "ngram":
             args += ["--spec-method", "ngram", "--spec-tokens", str(int(r.get("spec_tokens", 4)))]
         elif spec == "mtp" and r.get("mtp_assistant_model"):
-            args += ["--mtp-assistant-model", str(r["mtp_assistant_model"]), "--mtp-method", str(r.get("mtp_method", "gemma4_mtp"))]
+            args += [
+                "--mtp-assistant-model",
+                str(r["mtp_assistant_model"]),
+                "--mtp-method",
+                str(r.get("mtp_method", "gemma4_mtp")),
+            ]
             args += ["--mtp-num-drafts", str(int(r.get("mtp_num_drafts", 3)))]
             if r.get("mtp_draft_tp_size"):
                 args += ["--mtp-draft-tp-size", str(int(r["mtp_draft_tp_size"]))]
@@ -193,7 +260,11 @@ class VllmEngine(Engine):
         try:
             out = subprocess.run(
                 [self.python, "-c", "import vllm; print(vllm.__version__)"],
-                capture_output=True, text=True, timeout=120, check=False, env=self.process_env(),
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
+                env=self.process_env(),
             )
             v = out.stdout.strip().splitlines()
             return v[-1] if out.returncode == 0 and v else "unknown"

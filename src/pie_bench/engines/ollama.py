@@ -43,10 +43,13 @@ class OllamaEngine(ServedEngine):
     def server_env(self) -> dict[str, str]:
         port, slots, context = self._shape
         return {
-            "OLLAMA_HOST": f"127.0.0.1:{port}", "OLLAMA_MODELS": str(self.models_dir()),
-            "OLLAMA_NUM_PARALLEL": str(slots), "OLLAMA_CONTEXT_LENGTH": str(context),
+            "OLLAMA_HOST": f"127.0.0.1:{port}",
+            "OLLAMA_MODELS": str(self.models_dir()),
+            "OLLAMA_NUM_PARALLEL": str(slots),
+            "OLLAMA_CONTEXT_LENGTH": str(context),
             "OLLAMA_FLASH_ATTENTION": "1" if self.recipe.get("flash_attn", "on") == "on" else "0",
-            "OLLAMA_KEEP_ALIVE": "-1", "OLLAMA_MAX_LOADED_MODELS": "1",
+            "OLLAMA_KEEP_ALIVE": "-1",
+            "OLLAMA_MAX_LOADED_MODELS": "1",
         }
 
     def serve(self, workload: WorkloadSpec, log_path: Path, timeout_s: int) -> None:
@@ -56,11 +59,19 @@ class OllamaEngine(ServedEngine):
             return
         modelfile = Path(log_path).with_suffix(".Modelfile")
         modelfile.write_text(f"FROM {self.single_gguf(timeout_s)}\nTEMPLATE {{{{ .Prompt }}}}\n")
-        out = subprocess.run([self.server_bin(), "create", self.tag(), "-f", str(modelfile)], env=self.process_env(self.server_env()),
-                             capture_output=True, text=True, timeout=timeout_s)
+        out = subprocess.run(
+            [self.server_bin(), "create", self.tag(), "-f", str(modelfile)],
+            env=self.process_env(self.server_env()),
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+        )
         if out.returncode != 0:
             self.stop()
-            raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"ollama create failed: {(out.stderr or out.stdout).strip()[-400:]}")
+            raise EngineLaunchError(
+                ErrorClass.LOAD_FAIL,
+                f"ollama create failed: {(out.stderr or out.stdout).strip()[-400:]}",
+            )
 
     def single_gguf(self, timeout_s: int) -> Path:
         path = self.gguf_path()
@@ -70,18 +81,34 @@ class OllamaEngine(ServedEngine):
         merged = self.models_dir().parent / "ollama-merged" / f"{m.group(1)}.gguf"
         if merged.exists():
             return merged
-        tool = Path(os.environ.get("LLAMA_SERVER_BIN") or "llama-server").with_name("llama-gguf-split" + (".exe" if os.name == "nt" else ""))
+        tool = Path(os.environ.get("LLAMA_SERVER_BIN") or "llama-server").with_name(
+            "llama-gguf-split" + (".exe" if os.name == "nt" else "")
+        )
         merged.parent.mkdir(parents=True, exist_ok=True)
         tmp = merged.with_suffix(".part")
-        out = subprocess.run([str(tool), "--merge", str(path), str(tmp)], capture_output=True, text=True, timeout=timeout_s)
+        out = subprocess.run(
+            [str(tool), "--merge", str(path), str(tmp)],
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+        )
         if out.returncode != 0 or not tmp.exists():
-            raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"merging the split GGUF failed: {(out.stderr or out.stdout).strip()[-300:]}")
+            raise EngineLaunchError(
+                ErrorClass.LOAD_FAIL,
+                f"merging the split GGUF failed: {(out.stderr or out.stdout).strip()[-300:]}",
+            )
         os.replace(tmp, merged)
         return merged
 
     def version(self) -> str:
         try:
-            out = subprocess.run([self.server_bin(), "--version"], capture_output=True, text=True, timeout=30, check=False)
+            out = subprocess.run(
+                [self.server_bin(), "--version"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
         except Exception:
             return "unknown"
         m = re.search(r"version is (\S+)", (out.stdout or "") + (out.stderr or ""))

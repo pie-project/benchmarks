@@ -61,7 +61,9 @@ class TrtllmEngine(ServedEngine):
             **self.nccl_env(),
         }
         venv_bin = str(Path(self.server_python()).parent)
-        env["PATH"] = ":".join([venv_bin] + [d for d in os.environ.get("PATH", "").split(":") if d and d != venv_bin])
+        env["PATH"] = ":".join(
+            [venv_bin] + [d for d in os.environ.get("PATH", "").split(":") if d and d != venv_bin]
+        )
         return env
 
     def kv_free_mem_fraction(self) -> float | None:
@@ -75,20 +77,27 @@ class TrtllmEngine(ServedEngine):
         left = card - weights - float(r.get("runtime_gib", TRTLLM_RUNTIME_GIB))
         if share is None or card <= 0 or weights <= 0 or left <= 0:
             return None
-        return round(min(TRTLLM_DEFAULT_FRACTION, max(0.05, 1.0 - (1.0 - float(share)) * card / left)), 3)
+        return round(
+            min(TRTLLM_DEFAULT_FRACTION, max(0.05, 1.0 - (1.0 - float(share)) * card / left)), 3
+        )
 
     def llm_api_options(self, slots: int, context: int) -> dict[str, Any]:
         r = self.recipe
         kv: dict[str, Any] = {
             "enable_block_reuse": bool(r.get("block_reuse", False)),
-            "dtype": str(r.get("kv_cache_dtype") or _KV_DTYPES.get(str(self.artifact.kv_dtype), "auto")),
+            "dtype": str(
+                r.get("kv_cache_dtype") or _KV_DTYPES.get(str(self.artifact.kv_dtype), "auto")
+            ),
         }
         fraction = self.kv_free_mem_fraction()
         if fraction is not None:
             kv["free_gpu_memory_fraction"] = fraction
         opts: dict[str, Any] = {"kv_cache_config": kv}
         if r.get("cuda_graphs", True):
-            opts["cuda_graph_config"] = {"enable_padding": True, "max_batch_size": int(r.get("cuda_graph_max_bs") or slots)}
+            opts["cuda_graph_config"] = {
+                "enable_padding": True,
+                "max_batch_size": int(r.get("cuda_graph_max_bs") or slots),
+            }
         max_tokens = int(r.get("max_num_tokens") or 8192)
         if context > max_tokens or r.get("chunked_prefill"):
             opts["enable_chunked_prefill"] = True
@@ -110,17 +119,38 @@ class TrtllmEngine(ServedEngine):
         cfg.parent.mkdir(parents=True, exist_ok=True)
         cfg.write_text(yaml.safe_dump(self.llm_api_options(slots, context), sort_keys=True))
         return [
-            self.server_python(), str(SCRIPT), "serve", "--model", self.model_arg(), "--port", str(port),
-            "--options", str(cfg), "--tp-size", str(max(1, int(self.mode.tp))),
-            "--max-batch-size", str(max(1, slots)), "--max-seq-len", str(context),
-            "--max-num-tokens", str(int(r.get("max_num_tokens") or 8192)),
+            self.server_python(),
+            str(SCRIPT),
+            "serve",
+            "--model",
+            self.model_arg(),
+            "--port",
+            str(port),
+            "--options",
+            str(cfg),
+            "--tp-size",
+            str(max(1, int(self.mode.tp))),
+            "--max-batch-size",
+            str(max(1, slots)),
+            "--max-seq-len",
+            str(context),
+            "--max-num-tokens",
+            str(int(r.get("max_num_tokens") or 8192)),
         ]
 
     def version(self) -> str:
         try:
             out = subprocess.run(
-                [self.server_python(), "-c", "from importlib.metadata import version; print(version('tensorrt_llm'))"],
-                capture_output=True, text=True, timeout=120, check=False, env=self.process_env(),
+                [
+                    self.server_python(),
+                    "-c",
+                    "from importlib.metadata import version; print(version('tensorrt_llm'))",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
+                env=self.process_env(),
             )
             v = out.stdout.strip().splitlines()
             return v[-1] if out.returncode == 0 and v else "unknown"

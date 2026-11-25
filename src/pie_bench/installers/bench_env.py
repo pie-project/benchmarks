@@ -7,7 +7,16 @@ from pathlib import Path
 
 from pie_bench.paths import CLIENTS
 
-BENCH_DEPS = ["websockets", "msgpack", "blake3", "cryptography", "numpy", "transformers", "jinja2", "tiktoken"]
+BENCH_DEPS = [
+    "websockets",
+    "msgpack",
+    "blake3",
+    "cryptography",
+    "numpy",
+    "transformers",
+    "jinja2",
+    "tiktoken",
+]
 if os.name == "nt":
     BENCH_DEPS = [d for d in BENCH_DEPS if d != "cryptography"] + ["psutil"]
 
@@ -29,7 +38,12 @@ def bench_python(cache_root: Path | None = None, log=print) -> Path:
         else:
             subprocess.run(["python3", "-m", "venv", str(venv)], check=True)
         _pip_install(py, BENCH_DEPS)
-    elif subprocess.run([str(py), "-c", "import transformers, jinja2, tiktoken"], capture_output=True).returncode != 0:
+    elif (
+        subprocess.run(
+            [str(py), "-c", "import transformers, jinja2, tiktoken"], capture_output=True
+        ).returncode
+        != 0
+    ):
         log(f"venv: adding the bench client deps to {venv}")
         _pip_install(py, BENCH_DEPS)
     return py

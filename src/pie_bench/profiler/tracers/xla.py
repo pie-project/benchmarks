@@ -22,9 +22,17 @@ class Tracer:
         self.dir = out / "xla"
         self.dir.mkdir(parents=True, exist_ok=True)
         so = out / "xla_trace.so"
-        subprocess.run(["cc", "-O2", "-shared", "-fPIC", "-o", str(so), str(SHIM), "-ldl", "-lpthread"], check=True)
-        self.env = {"PIE_BENCH_JAX_TRACE_DIR": str(self.dir), "PIE_BENCH_PIE_PRELOAD": str(so),
-                    "PYTHONPATH": os.pathsep.join([str(SITE), *filter(None, [os.environ.get("PYTHONPATH")])])}
+        subprocess.run(
+            ["cc", "-O2", "-shared", "-fPIC", "-o", str(so), str(SHIM), "-ldl", "-lpthread"],
+            check=True,
+        )
+        self.env = {
+            "PIE_BENCH_JAX_TRACE_DIR": str(self.dir),
+            "PIE_BENCH_PIE_PRELOAD": str(so),
+            "PYTHONPATH": os.pathsep.join(
+                [str(SITE), *filter(None, [os.environ.get("PYTHONPATH")])]
+            ),
+        }
 
     @contextmanager
     def recording(self, out: Path):
@@ -54,7 +62,11 @@ class Tracer:
             summary.append({"trace": str(path.relative_to(out)), **info})
         (out / "xla-summary.json").write_text(json.dumps(summary, indent=1))
         if not found:
-            raise RuntimeError("no TPU op in the round's device traces" if summary else "no device trace was written in the round")
+            raise RuntimeError(
+                "no TPU op in the round's device traces"
+                if summary
+                else "no device trace was written in the round"
+            )
         return found
 
 
@@ -80,14 +92,14 @@ def _fields(b: bytes, i: int = 0, end: int | None = None):
             n, i = _varint(b, i)
             v, i = (i, i + n), i + n
         elif kind in (1, 5):
-            v, i = b[i:i + (8 if kind == 1 else 4)], i + (8 if kind == 1 else 4)
+            v, i = b[i : i + (8 if kind == 1 else 4)], i + (8 if kind == 1 else 4)
         else:
             raise ValueError(f"not an XSpace: protobuf wire type {kind}")
         yield key >> 3, v
 
 
 def _text(b: bytes, v) -> str:
-    return b[v[0]:v[1]].decode("utf-8", errors="replace")
+    return b[v[0] : v[1]].decode("utf-8", errors="replace")
 
 
 OP_LINES = ("XLA Ops", "Async XLA Ops", "Sparse Core Ops")
@@ -104,7 +116,9 @@ def _plane(b: bytes, plane):
         elif f in (4, 5):
             entry = dict(_fields(b, *v))
             meta = dict(_fields(b, *entry[2])) if 2 in entry else {}
-            (event_names if f == 4 else stat_names)[entry.get(1)] = _text(b, meta[2]) if 2 in meta else ""
+            (event_names if f == 4 else stat_names)[entry.get(1)] = (
+                _text(b, meta[2]) if 2 in meta else ""
+            )
         elif f == 6:
             stats.append(dict(_fields(b, *v)))
     return name, stat_names, event_names, stats, lines
@@ -142,10 +156,14 @@ def _launch_base(modules: dict, host: list) -> tuple[int, int]:
     lows = [min(t) - modules[r][0] for r, t in launch.items() if r in modules]
     highs = [min(t) - modules[r][1] for r, t in done.items() if r in modules]
     if not lows or not highs:
-        raise ValueError("the device trace's clock is relative and the trace has no profile_start_time or host launches to place it")
+        raise ValueError(
+            "the device trace's clock is relative and the trace has no profile_start_time or host launches to place it"
+        )
     lo, hi = max(lows), min(highs)
     if lo > hi or hi - lo > 1_000_000:
-        raise ValueError(f"the host launches place the device clock within {(hi - lo) / 1e3:.0f} us only")
+        raise ValueError(
+            f"the host launches place the device clock within {(hi - lo) / 1e3:.0f} us only"
+        )
     return (lo + hi) // 2, hi - lo
 
 
@@ -154,30 +172,72 @@ def device_ops(b: bytes) -> tuple[list[tuple[int, int]], dict]:
     for plane in (v for f, v in _fields(b) if f == 1):
         name, stat_names, event_names, stats, lines = _plane(b, plane)
         if name == "Task Environment":
-            start = next((s.get(3, s.get(4)) for s in stats if stat_names.get(s.get(1)) == "profile_start_time"), None)
+            start = next(
+                (
+                    s.get(3, s.get(4))
+                    for s in stats
+                    if stat_names.get(s.get(1)) == "profile_start_time"
+                ),
+                None,
+            )
         device = name.startswith("/device:TPU:")
         if not device and name != "/host:CPU":
             continue
         run_id = next((k for k, n in stat_names.items() if n == "run_id"), None)
         counts = {}
         for v in lines:
-            lname, ts, events = _line(b, v, run_id, (lambda n: n == "XLA Modules") if device else (lambda n: True))
+            lname, ts, events = _line(
+                b, v, run_id, (lambda n: n == "XLA Modules") if device else (lambda n: True)
+            )
             counts[lname] = counts.get(lname, 0) + len(events)
             if device and lname in OP_LINES:
                 raw += [(ts, off, dur) for _, off, dur, _ in events]
             elif device and lname == "XLA Modules":
-                modules.update({run: (ts + off // 1000, ts + (off + dur) // 1000) for _, off, dur, run in events if run is not None})
+                modules.update(
+                    {
+                        run: (ts + off // 1000, ts + (off + dur) // 1000)
+                        for _, off, dur, run in events
+                        if run is not None
+                    }
+                )
             elif not device:
-                host += [(event_names.get(m), run, ts + off // 1000) for m, off, _, run in events if run is not None and event_names.get(m) in (LAUNCH, DONE)]
+                host += [
+                    (event_names.get(m), run, ts + off // 1000)
+                    for m, off, _, run in events
+                    if run is not None and event_names.get(m) in (LAUNCH, DONE)
+                ]
         if device:
-            dropped = next((s.get(3, s.get(4)) for s in stats if stat_names.get(s.get(1)) == "dropped_traces"), None)
-            info["planes"][name] = {**counts, **({"dropped_traces": dropped} if dropped is not None else {})}
+            dropped = next(
+                (s.get(3, s.get(4)) for s in stats if stat_names.get(s.get(1)) == "dropped_traces"),
+                None,
+            )
+            info["planes"][name] = {
+                **counts,
+                **({"dropped_traces": dropped} if dropped is not None else {}),
+            }
     base = 0
     if any(ts < 10**17 for ts, _, _ in raw):
         if any(t < 10**17 for _, _, t in host) and start is None:
-            raise ValueError("the trace's host lines are relative to its session and it carries no profile_start_time")
-        base, width = _launch_base(modules, [(n, r, t + (start if t < 10**17 else 0)) for n, r, t in host])
-        info.update(clock="host launches", clock_window_us=round(width / 1e3, 3), profile_start_ns=start)
-    ops = [((base if ts < 10**17 else 0) + ts + off // 1000, (base if ts < 10**17 else 0) + ts + (off + dur) // 1000) for ts, off, dur in raw]
-    info.update(ops=len(ops), base_ns=base, first_ns=min((s for s, _ in ops), default=None), last_ns=max((e for _, e in ops), default=None))
+            raise ValueError(
+                "the trace's host lines are relative to its session and it carries no profile_start_time"
+            )
+        base, width = _launch_base(
+            modules, [(n, r, t + (start if t < 10**17 else 0)) for n, r, t in host]
+        )
+        info.update(
+            clock="host launches", clock_window_us=round(width / 1e3, 3), profile_start_ns=start
+        )
+    ops = [
+        (
+            (base if ts < 10**17 else 0) + ts + off // 1000,
+            (base if ts < 10**17 else 0) + ts + (off + dur) // 1000,
+        )
+        for ts, off, dur in raw
+    ]
+    info.update(
+        ops=len(ops),
+        base_ns=base,
+        first_ns=min((s for s, _ in ops), default=None),
+        last_ns=max((e for _, e in ops), default=None),
+    )
     return ops, info

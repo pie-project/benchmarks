@@ -17,7 +17,9 @@ def cold_tag(seed: str, workload_id: str, index: int) -> str:
     return digest[:TAG_HEX_CHARS]
 
 
-def cold_prompts(body: str | Callable[[int], str], *, workload_id: str, seed: str, count: int) -> list[str]:
+def cold_prompts(
+    body: str | Callable[[int], str], *, workload_id: str, seed: str, count: int
+) -> list[str]:
     if count < 1:
         raise ValueError("count must be at least 1")
     text = body if callable(body) else (lambda i: body)

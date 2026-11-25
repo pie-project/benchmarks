@@ -33,7 +33,9 @@ def decide_repetition(
     floor_rel: float = 0.01,
 ) -> AdaptiveDecision:
     if len(history) < min_history:
-        return AdaptiveDecision(confirm_rounds, f"history has {len(history)} < {min_history} points")
+        return AdaptiveDecision(
+            confirm_rounds, f"history has {len(history)} < {min_history} points"
+        )
     h = np.asarray(history, dtype=float)
     center = float(np.median(h))
     spread = max(float(np.std(h, ddof=1)), floor_rel * center)
@@ -41,4 +43,3 @@ def decide_repetition(
     if z <= sigma:
         return AdaptiveDecision(0, f"within band (z={z:.2f} ≤ {sigma})")
     return AdaptiveDecision(confirm_rounds, f"outside band (z={z:.2f} > {sigma}); confirming")
-

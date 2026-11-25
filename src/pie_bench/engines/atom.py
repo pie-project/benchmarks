@@ -16,7 +16,13 @@ _KV_DTYPES = {"bf16": "bf16", "fp16": "bf16", "auto": "bf16", "fp8": "fp8", "fp8
 
 def image_python() -> str:
     for c in ("/opt/venv/bin/python3", "/usr/bin/python3", "/usr/local/bin/python3"):
-        if Path(c).exists() and subprocess.run([c, "-c", "import atom"], capture_output=True, timeout=300).returncode == 0:
+        if (
+            Path(c).exists()
+            and subprocess.run(
+                [c, "-c", "import atom"], capture_output=True, timeout=300
+            ).returncode
+            == 0
+        ):
             return c
     return "python3"
 
@@ -38,10 +44,26 @@ class AtomEngine(ServedEngine):
         r = self.recipe
         kv = r.get("kv_cache_dtype") or _KV_DTYPES.get(str(self.artifact.kv_dtype), "bf16")
         cmd = [
-            self.server_python(), "-m", "atom.entrypoints.openai_server", "--model", self.model_arg(),
-            "--host", "127.0.0.1", "--server-port", str(port), "--port", str(free_port()),
-            "--tensor-parallel-size", str(max(1, int(self.mode.tp))), "--max-model-len", str(context),
-            "--max-num-seqs", str(slots), "--kv_cache_dtype", str(kv), "--trust-remote-code",
+            self.server_python(),
+            "-m",
+            "atom.entrypoints.openai_server",
+            "--model",
+            self.model_arg(),
+            "--host",
+            "127.0.0.1",
+            "--server-port",
+            str(port),
+            "--port",
+            str(free_port()),
+            "--tensor-parallel-size",
+            str(max(1, int(self.mode.tp))),
+            "--max-model-len",
+            str(context),
+            "--max-num-seqs",
+            str(slots),
+            "--kv_cache_dtype",
+            str(kv),
+            "--trust-remote-code",
             "--disable-uvicorn-access-log",
         ]
         if r.get("gpu_mem_util") is not None:
@@ -66,13 +88,25 @@ class AtomEngine(ServedEngine):
     def serve(self, workload: WorkloadSpec, log_path: Path, timeout_s: int) -> None:
         pin, have = str(self.recipe.get("pin") or ""), self.version()
         if self._server_proc is None and pin and have.split("+")[0] != pin:
-            raise EngineLaunchError(ErrorClass.LOAD_FAIL, f"the image carries atom {have}, the run pins {pin}: install atom=={pin} into AMD's rocm/atom-dev image")
+            raise EngineLaunchError(
+                ErrorClass.LOAD_FAIL,
+                f"the image carries atom {have}, the run pins {pin}: install atom=={pin} into AMD's rocm/atom-dev image",
+            )
         super().serve(workload, log_path, timeout_s)
 
     def version(self) -> str:
         try:
-            out = subprocess.run([self.server_python(), "-c", "from importlib.metadata import version; print(version('atom'))"],
-                                 capture_output=True, text=True, timeout=120, check=False)
+            out = subprocess.run(
+                [
+                    self.server_python(),
+                    "-c",
+                    "from importlib.metadata import version; print(version('atom'))",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
+            )
             v = out.stdout.strip().splitlines()
             return v[-1] if out.returncode == 0 and v else "unknown"
         except Exception:

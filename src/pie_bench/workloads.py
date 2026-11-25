@@ -31,7 +31,16 @@ def prompt_words_for_tokens(n_tokens: int, seed: int = SEED, salt: str = "") -> 
 def common_args_for(workload: WorkloadSpec, warmup: int = 2) -> list[str]:
     p = workload.params
     kind = str(workload.kind)
-    args: list[str] = ["--temperature", str(p.get("temperature", 0)), "--top-p", str(p.get("top_p", 1)), "--ignore-eos", "--warmup", str(warmup), "--no-think"]
+    args: list[str] = [
+        "--temperature",
+        str(p.get("temperature", 0)),
+        "--top-p",
+        str(p.get("top_p", 1)),
+        "--ignore-eos",
+        "--warmup",
+        str(warmup),
+        "--no-think",
+    ]
     if kind == "long_context":
         prefill = int(p.get("prefill", 2048))
         tail = 64
@@ -39,14 +48,24 @@ def common_args_for(workload: WorkloadSpec, warmup: int = 2) -> list[str]:
         args += ["--shared-prefix-words", str(int(round((prefill - tail) * WORDS_PER_TOKEN)))]
         args += ["--max-tokens", str(int(p.get("decode", 64)))]
     elif kind in ("single_stream", "control_aa", "concurrency"):
-        prompt = str(p["prompt"]) if p.get("prompt") else prompt_words_for_tokens(int(p.get("prefill", 128)), salt=workload.id)
+        prompt = (
+            str(p["prompt"])
+            if p.get("prompt")
+            else prompt_words_for_tokens(int(p.get("prefill", 128)), salt=workload.id)
+        )
         args += ["--prompt", prompt]
         args += ["--max-tokens", str(int(p.get("decode", 64)))]
         if kind == "concurrency":
             args += ["--unique-prompts"]
     elif kind == "prefix_shared":
-        args += ["--prompt", prompt_words_for_tokens(int(p.get("unique_suffix", 64)), salt=workload.id)]
-        args += ["--shared-prefix-words", str(int(round(int(p.get("shared_prefix", 1024)) * WORDS_PER_TOKEN)))]
+        args += [
+            "--prompt",
+            prompt_words_for_tokens(int(p.get("unique_suffix", 64)), salt=workload.id),
+        ]
+        args += [
+            "--shared-prefix-words",
+            str(int(round(int(p.get("shared_prefix", 1024)) * WORDS_PER_TOKEN))),
+        ]
         args += ["--max-tokens", str(int(p.get("decode", 64))), "--unique-prompts"]
     elif kind == "mixed_length":
         mu_p, _ = p.get("prompt_lognormal", [6.0, 0.8])
@@ -61,7 +80,14 @@ def common_args_for(workload: WorkloadSpec, warmup: int = 2) -> list[str]:
         args += ["--output-spread", "4", "--unique-prompts"]
     elif kind == "replay":
         args += ["--prompt", prompt_words_for_tokens(512, salt=workload.id), "--max-tokens", "256"]
-        args += ["--arrival-rate", str(p.get("arrival_rate", 4.0)), "--arrival-process", "poisson", "--arrival-seed", str(SEED)]
+        args += [
+            "--arrival-rate",
+            str(p.get("arrival_rate", 4.0)),
+            "--arrival-process",
+            "poisson",
+            "--arrival-seed",
+            str(SEED),
+        ]
         args += ["--unique-prompts"]
     else:
         raise ValueError(kind)

@@ -47,7 +47,11 @@ def main() -> None:
         for pat, new in rename:
             if pat.search(key):
                 key = pat.sub(new, key)
-        if any(p.search(key) for p in quantize) and key.endswith(".weight") and value.shape[-1] % group == 0:
+        if (
+            any(p.search(key) for p in quantize)
+            and key.endswith(".weight")
+            and value.shape[-1] % group == 0
+        ):
             w, scales, biases = mx.quantize(value, group_size=group, bits=bits)
             stem = key[: -len(".weight")]
             put(stem + ".weight", w)
@@ -70,7 +74,11 @@ def main() -> None:
     flush()
     total = sum(os.path.getsize(os.path.join(dst, f)) for f in set(index.values()))
     with open(os.path.join(dst, "model.safetensors.index.json"), "w") as f:
-        json.dump({"metadata": {"total_size": total}, "weight_map": dict(sorted(index.items()))}, f, indent=1)
+        json.dump(
+            {"metadata": {"total_size": total}, "weight_map": dict(sorted(index.items()))},
+            f,
+            indent=1,
+        )
     config = json.loads(open(os.path.join(src, "config.json")).read())
     for key in rules.get("config_drop", []):
         config.pop(key, None)
@@ -78,7 +86,11 @@ def main() -> None:
     with open(os.path.join(dst, "config.json"), "w") as f:
         json.dump(config, f, indent=2)
     for name in os.listdir(src):
-        if not name.endswith(".safetensors") and name not in ("config.json", "model.safetensors.index.json") and os.path.isfile(os.path.join(src, name)):
+        if (
+            not name.endswith(".safetensors")
+            and name not in ("config.json", "model.safetensors.index.json")
+            and os.path.isfile(os.path.join(src, name))
+        ):
             shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
     print(f"quantized {len(index)} tensors into {shard[0]} shards, {total / 2**30:.2f} GiB")
 

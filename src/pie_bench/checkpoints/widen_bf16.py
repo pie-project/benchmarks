@@ -7,15 +7,28 @@ from pathlib import Path
 
 import numpy as np
 
-_DT = {"F32": np.float32, "F16": np.float16, "U8": np.uint8, "I8": np.int8, "F8_E4M3": np.uint8, "F8_E8M0": np.uint8,
-       "BF16": np.uint16, "I32": np.int32, "I64": np.int64, "U16": np.uint16, "BOOL": np.uint8}
-_FP4 = np.array([0, 0.5, 1, 1.5, 2, 3, 4, 6, -0.0, -0.5, -1, -1.5, -2, -3, -4, -6], dtype=np.float32)
+_DT = {
+    "F32": np.float32,
+    "F16": np.float16,
+    "U8": np.uint8,
+    "I8": np.int8,
+    "F8_E4M3": np.uint8,
+    "F8_E8M0": np.uint8,
+    "BF16": np.uint16,
+    "I32": np.int32,
+    "I64": np.int64,
+    "U16": np.uint16,
+    "BOOL": np.uint8,
+}
+_FP4 = np.array(
+    [0, 0.5, 1, 1.5, 2, 3, 4, 6, -0.0, -0.5, -1, -1.5, -2, -3, -4, -6], dtype=np.float32
+)
 
 
 def _e4m3() -> np.ndarray:
     b = np.arange(256)
     s, e, m = b >> 7, (b >> 3) & 0xF, b & 7
-    v = np.where(e == 0, m / 8.0 * 2.0 ** -6, (1 + m / 8.0) * 2.0 ** (e - 7.0))
+    v = np.where(e == 0, m / 8.0 * 2.0**-6, (1 + m / 8.0) * 2.0 ** (e - 7.0))
     v = np.where((e == 15) & (m == 7), np.nan, v)
     return np.where(s == 1, -v, v).astype(np.float32)
 
@@ -38,7 +51,7 @@ def _read(path: Path) -> tuple[dict, int, np.memmap]:
 def _tensor(header: dict, base: int, mm: np.memmap, name: str) -> np.ndarray:
     h = header[name]
     a, b = h["data_offsets"]
-    return np.frombuffer(mm[base + a: base + b], dtype=_DT[h["dtype"]]).reshape(h["shape"])
+    return np.frombuffer(mm[base + a : base + b], dtype=_DT[h["dtype"]]).reshape(h["shape"])
 
 
 def _mxfp8(w: np.ndarray, s: np.ndarray) -> np.ndarray:
@@ -48,7 +61,9 @@ def _mxfp8(w: np.ndarray, s: np.ndarray) -> np.ndarray:
 
 
 def _nvfp4(packed: np.ndarray, s: np.ndarray, g: np.ndarray) -> np.ndarray:
-    codes = np.stack([packed & 0xF, packed >> 4], axis=-1).reshape(*packed.shape[:-1], packed.shape[-1] * 2)
+    codes = np.stack([packed & 0xF, packed >> 4], axis=-1).reshape(
+        *packed.shape[:-1], packed.shape[-1] * 2
+    )
     block = codes.shape[-1] // s.shape[-1]
     scale = _E4M3[s] / np.float32(g.reshape(-1)[0])
     return _FP4[codes] * np.repeat(scale, block, axis=-1)
@@ -64,23 +79,62 @@ def widen_shard(path: Path) -> dict[str, str] | None:
     for name in sorted(names):
         h = header[name]
         stem = name.rsplit(".", 1)[0]
-        if name.endswith(".weight") and h["dtype"] == "F8_E4M3" and f"{stem}.weight_scale_inv" in names:
+        if (
+            name.endswith(".weight")
+            and h["dtype"] == "F8_E4M3"
+            and f"{stem}.weight_scale_inv" in names
+        ):
             widened += 1
-            out.append((name, "BF16", h["shape"], 2 * int(np.prod(h["shape"])),
-                        lambda n=name, st=stem: _bf16(_mxfp8(_tensor(header, base, mm, n), _tensor(header, base, mm, f"{st}.weight_scale_inv")))))
-        elif name.endswith(".weight_packed") and f"{stem}.weight_scale" in names and f"{stem}.weight_global_scale" in names:
+            out.append(
+                (
+                    name,
+                    "BF16",
+                    h["shape"],
+                    2 * int(np.prod(h["shape"])),
+                    lambda n=name, st=stem: _bf16(
+                        _mxfp8(
+                            _tensor(header, base, mm, n),
+                            _tensor(header, base, mm, f"{st}.weight_scale_inv"),
+                        )
+                    ),
+                )
+            )
+        elif (
+            name.endswith(".weight_packed")
+            and f"{stem}.weight_scale" in names
+            and f"{stem}.weight_global_scale" in names
+        ):
             widened += 1
             shape = [*h["shape"][:-1], h["shape"][-1] * 2]
             renamed[name] = f"{stem}.weight"
-            out.append((f"{stem}.weight", "BF16", shape, 2 * int(np.prod(shape)),
-                        lambda n=name, st=stem: _bf16(_nvfp4(_tensor(header, base, mm, n), _tensor(header, base, mm, f"{st}.weight_scale"),
-                                                             _tensor(header, base, mm, f"{st}.weight_global_scale")))))
-        elif (name.endswith(".weight_scale_inv") and header.get(f"{stem}.weight", {}).get("dtype") == "F8_E4M3") or (
-                name.endswith((".weight_scale", ".weight_global_scale", ".input_global_scale")) and f"{stem}.weight_packed" in names):
+            out.append(
+                (
+                    f"{stem}.weight",
+                    "BF16",
+                    shape,
+                    2 * int(np.prod(shape)),
+                    lambda n=name, st=stem: _bf16(
+                        _nvfp4(
+                            _tensor(header, base, mm, n),
+                            _tensor(header, base, mm, f"{st}.weight_scale"),
+                            _tensor(header, base, mm, f"{st}.weight_global_scale"),
+                        )
+                    ),
+                )
+            )
+        elif (
+            name.endswith(".weight_scale_inv")
+            and header.get(f"{stem}.weight", {}).get("dtype") == "F8_E4M3"
+        ) or (
+            name.endswith((".weight_scale", ".weight_global_scale", ".input_global_scale"))
+            and f"{stem}.weight_packed" in names
+        ):
             renamed[name] = ""
         else:
             a, b = h["data_offsets"]
-            out.append((name, h["dtype"], h["shape"], b - a, lambda a=a, b=b: mm[base + a: base + b]))
+            out.append(
+                (name, h["dtype"], h["shape"], b - a, lambda a=a, b=b: mm[base + a : base + b])
+            )
     if not widened:
         return None
     new_header: dict = {"__metadata__": meta} if meta else {}
@@ -125,4 +179,6 @@ def widen_bf16(snapshot: Path, log=print) -> None:
     if isinstance(cfg.get("text_config"), dict):
         cfg["text_config"].pop("quantization_config", None)
     cfg_path.write_text(json.dumps(cfg, indent=2))
-    log(f"widen: {snapshot.name}: {sum(1 for v in renamed.values() if not v)} scale planes dropped, quantized planes read out to bf16")
+    log(
+        f"widen: {snapshot.name}: {sum(1 for v in renamed.values() if not v)} scale planes dropped, quantized planes read out to bf16"
+    )

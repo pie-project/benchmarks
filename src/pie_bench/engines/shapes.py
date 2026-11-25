@@ -37,7 +37,11 @@ def context_tokens_for(workload: WorkloadSpec) -> int:
     if kind in ("single_stream", "control_aa", "long_context", "concurrency"):
         return int(p.get("prefill", 128)) + int(p.get("decode", 64))
     if kind == "prefix_shared":
-        return int(p.get("shared_prefix", 1024)) + int(p.get("unique_suffix", 64)) + int(p.get("decode", 64))
+        return (
+            int(p.get("shared_prefix", 1024))
+            + int(p.get("unique_suffix", 64))
+            + int(p.get("decode", 64))
+        )
     if kind == "mixed_length":
         return int(p.get("max_prompt", 4096)) + int(p.get("max_output", 1024))
     if kind == "replay":
@@ -62,7 +66,12 @@ def serve_envelope(workloads: list[WorkloadSpec]) -> WorkloadSpec:
     if workload_concurrency(by_ctx) >= conc:
         return by_ctx
     kind = "concurrency" if str(by_ctx.kind) in ("single_stream", "control_aa") else by_ctx.kind
-    return by_ctx.model_copy(update={"kind": kind, "params": {**by_ctx.params, "concurrency": conc, "num_requests": max(reqs, conc * 2)}})
+    return by_ctx.model_copy(
+        update={
+            "kind": kind,
+            "params": {**by_ctx.params, "concurrency": conc, "num_requests": max(reqs, conc * 2)},
+        }
+    )
 
 
 def workload_mode_args(workload: WorkloadSpec) -> tuple[str, list[str]]:
@@ -74,7 +83,12 @@ def workload_mode_args(workload: WorkloadSpec) -> tuple[str, list[str]]:
         conc = int(p.get("concurrency", 1))
         if conc <= 1:
             return "latency", ["--requests", str(p.get("requests", 4))]
-        return "tput", ["--num-requests", str(p.get("num_requests", conc * 2)), "--concurrency", str(conc)]
+        return "tput", [
+            "--num-requests",
+            str(p.get("num_requests", conc * 2)),
+            "--concurrency",
+            str(conc),
+        ]
     if kind in ("concurrency", "prefix_shared", "mixed_length", "replay"):
         conc = int(p.get("concurrency", 8))
         n = int(p.get("num_requests", p.get("variants", conc * 4)))

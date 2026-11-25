@@ -35,8 +35,14 @@ def descendants(root: int) -> set[int]:
 
 
 def spool() -> set[Path]:
-    tmp = subprocess.run(["getconf", "DARWIN_USER_TEMP_DIR"], capture_output=True, text=True).stdout.strip()
-    return {p for pattern in ("instruments*", "xrgpu_aps_*") for p in Path(tmp).glob(pattern)} if tmp else set()
+    tmp = subprocess.run(
+        ["getconf", "DARWIN_USER_TEMP_DIR"], capture_output=True, text=True
+    ).stdout.strip()
+    return (
+        {p for pattern in ("instruments*", "xrgpu_aps_*") for p in Path(tmp).glob(pattern)}
+        if tmp
+        else set()
+    )
 
 
 def rows(path: Path):
@@ -49,7 +55,19 @@ def rows(path: Path):
         for d in el.iter():
             if d is not el and "id" in d.attrib:
                 ids[d.attrib["id"]] = d.text if len(d) == 0 else d.attrib.get("fmt")
-        row = dict(zip(cols, (ids.get(c.attrib["ref"]) if "ref" in c.attrib else c.text if len(c) == 0 else c.attrib.get("fmt") for c in el)))
+        row = dict(
+            zip(
+                cols,
+                (
+                    ids.get(c.attrib["ref"])
+                    if "ref" in c.attrib
+                    else c.text
+                    if len(c) == 0
+                    else c.attrib.get("fmt")
+                    for c in el
+                ),
+            )
+        )
         pid = re.search(r"\((\d+)\)\s*$", str(row.get("process") or ""))
         if pid and row.get("start") and row.get("duration"):
             yield int(row["start"]), int(row["duration"]), int(pid.group(1))
@@ -70,8 +88,22 @@ class Tracer:
         trace = out / "metal.trace"
         shutil.rmtree(trace, ignore_errors=True)
         before = spool()
-        proc = subprocess.Popen(["xctrace", "record", "--instrument", INSTRUMENT, "--all-processes", "--time-limit", f"{LIMIT_S}s", "--output", str(trace)],
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        proc = subprocess.Popen(
+            [
+                "xctrace",
+                "record",
+                "--instrument",
+                INSTRUMENT,
+                "--all-processes",
+                "--time-limit",
+                f"{LIMIT_S}s",
+                "--output",
+                str(trace),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
         started, done, pids = threading.Event(), threading.Event(), set()
 
         def pump():
@@ -103,13 +135,29 @@ class Tracer:
                 raise RuntimeError("xctrace did not save the trace within 15 min") from None
             finally:
                 for p in spool() - before:
-                    shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink(missing_ok=True)
+                    shutil.rmtree(p, ignore_errors=True) if p.is_dir() else p.unlink(
+                        missing_ok=True
+                    )
             (out / "pids.json").write_text(json.dumps(sorted(pids)))
 
     def intervals(self, out: Path) -> list[tuple[int, int]]:
         trace, pids = out / "metal.trace", set(json.loads((out / "pids.json").read_text()))
-        toc = subprocess.run(["xctrace", "export", "--input", str(trace), "--toc"], capture_output=True, text=True, check=True).stdout
-        t0 = round(datetime.fromisoformat(re.search(r"<start-date>([^<]+)</start-date>", toc).group(1)).timestamp() * 1e9)
+        toc = subprocess.run(
+            ["xctrace", "export", "--input", str(trace), "--toc"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        t0 = round(
+            datetime.fromisoformat(
+                re.search(r"<start-date>([^<]+)</start-date>", toc).group(1)
+            ).timestamp()
+            * 1e9
+        )
         table = out / "metal-gpu-intervals.xml"
-        subprocess.run(["xctrace", "export", "--input", str(trace), "--xpath", TABLE, "--output", str(table)], capture_output=True, check=True)
+        subprocess.run(
+            ["xctrace", "export", "--input", str(trace), "--xpath", TABLE, "--output", str(table)],
+            capture_output=True,
+            check=True,
+        )
         return [(t0 + s, t0 + s + d) for s, d, pid in rows(table) if pid in pids]

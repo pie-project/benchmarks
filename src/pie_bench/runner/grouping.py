@@ -5,7 +5,12 @@ from pie_bench.engines.shapes import context_tokens_for, max_model_len_for, work
 from pie_bench.schema import Backend
 
 SHORT_CONTEXT_TOKENS = 8192
-MEMORY_BOUND_MARKS = ("device memory exhausted", "weight residency", "does not hold this deployment", "bytes of elastic device memory")
+MEMORY_BOUND_MARKS = (
+    "device memory exhausted",
+    "weight residency",
+    "does not hold this deployment",
+    "bytes of elastic device memory",
+)
 
 
 HEAVY_FRACTION = 0.35
@@ -34,7 +39,11 @@ def split_draft_processes(groups: dict[tuple, list]) -> dict[tuple, list]:
     for key, cells in groups.items():
         engine, artifact, mode = key
         cls = get_engine(cells[0].engine, str(cells[0].platform.backend))
-        drafts = cells[0].artifact.draft_model and issubclass(cls, ServedEngine) and cls.draft_args is not ServedEngine.draft_args
+        drafts = (
+            cells[0].artifact.draft_model
+            and issubclass(cls, ServedEngine)
+            and cls.draft_args is not ServedEngine.draft_args
+        )
         spec = [c for c in cells if c.workload.kind.value == "single_stream"] if drafts else []
         if not spec or len(spec) == len(cells):
             out[key] = cells
@@ -49,7 +58,9 @@ def split_startups(groups: dict[tuple, list]) -> dict[tuple, list]:
     for key, cells in groups.items():
         engine, artifact, mode = key
         one = [c for c in cells if workload_concurrency(c.workload) == 1]
-        if getattr(get_engine(cells[0].engine, str(cells[0].platform.backend)), "one_request_server", False) and 0 < len(one) < len(cells):
+        if getattr(
+            get_engine(cells[0].engine, str(cells[0].platform.backend)), "one_request_server", False
+        ) and 0 < len(one) < len(cells):
             out[(engine, artifact, f"{mode}@c1")] = one
             out[key] = [c for c in cells if c not in one]
             continue
@@ -58,7 +69,9 @@ def split_startups(groups: dict[tuple, list]) -> dict[tuple, list]:
             continue
         shapes: dict[tuple[int, int], list] = {}
         for c in cells:
-            shapes.setdefault((workload_concurrency(c.workload), max_model_len_for(c.workload)), []).append(c)
+            shapes.setdefault(
+                (workload_concurrency(c.workload), max_model_len_for(c.workload)), []
+            ).append(c)
         if len(shapes) == 1:
             out[key] = cells
             continue

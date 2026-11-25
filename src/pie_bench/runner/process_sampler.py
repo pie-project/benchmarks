@@ -9,7 +9,9 @@ ENV = "PIE_BENCH_SAMPLE_SECS"
 
 
 def _tree(roots: list[int]) -> dict[int, int]:
-    out = subprocess.run(["ps", "-axo", "pid=,ppid=,rss="], capture_output=True, text=True, check=False).stdout
+    out = subprocess.run(
+        ["ps", "-axo", "pid=,ppid=,rss="], capture_output=True, text=True, check=False
+    ).stdout
     kids: dict[int, list[int]] = {}
     rss: dict[int, int] = {}
     for line in out.splitlines():
@@ -39,5 +41,8 @@ def start(pids: list[int], out_path: Path) -> subprocess.Popen | None:
         return None
     target = max(tree, key=tree.get)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    return subprocess.Popen(["sample", str(target), seconds, "-file", str(out_path)],
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return subprocess.Popen(
+        ["sample", str(target), seconds, "-file", str(out_path)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )

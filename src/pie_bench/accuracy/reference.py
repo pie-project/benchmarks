@@ -112,10 +112,15 @@ class MlxReference:
 
 
 class LlamaCppReference:
-
     name = "llamacpp"
 
-    def __init__(self, snapshot_dir: str | Path, gguf_file: str | None = None, device: str = "gpu", n_probs: int = 256):
+    def __init__(
+        self,
+        snapshot_dir: str | Path,
+        gguf_file: str | None = None,
+        device: str = "gpu",
+        n_probs: int = 256,
+    ):
         from pie_bench.checkpoints.snapshots import gguf_shards
         from pie_bench.quality.servers import free_port, get, post, serve
 
@@ -131,15 +136,38 @@ class LlamaCppReference:
             gguf = found[0]
         server = os.environ.get("LLAMA_SERVER_BIN") or "llama-server"
         port = free_port()
-        cmd = [server, "--model", str(gguf), "--host", "127.0.0.1", "--port", str(port), "--ctx-size", "8192",
-               "--parallel", "1", "--n-gpu-layers", "0" if device == "cpu" else "all", "--no-warmup"]
+        cmd = [
+            server,
+            "--model",
+            str(gguf),
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(port),
+            "--ctx-size",
+            "8192",
+            "--parallel",
+            "1",
+            "--n-gpu-layers",
+            "0" if device == "cpu" else "all",
+            "--no-warmup",
+        ]
         self._proc, self.url = serve(cmd, {}, port, "/health", 1800)
         meta = json.loads(get(self.url + "/v1/models"))["data"][0].get("meta", {})
         self.vocab_size = int(meta["n_vocab"])
 
     def _complete(self, ids: list[int], n_predict: int, **extra: Any) -> dict:
-        body = {"prompt": [int(i) for i in ids], "n_predict": n_predict, "temperature": 0.0, "top_k": 1, "top_p": 1.0,
-                "ignore_eos": True, "cache_prompt": False, "seed": 0, **extra}
+        body = {
+            "prompt": [int(i) for i in ids],
+            "n_predict": n_predict,
+            "temperature": 0.0,
+            "top_k": 1,
+            "top_p": 1.0,
+            "ignore_eos": True,
+            "cache_prompt": False,
+            "seed": 0,
+            **extra,
+        }
         return self._post(f"{self.url}/completion", body)
 
     def greedy(self, prompt_ids: list[int], max_new_tokens: int) -> list[int]:
@@ -166,7 +194,9 @@ class LlamaCppReference:
             stop(proc)
 
 
-def load_reference(kind: str, snapshot_dir: str | Path, **kw: Any) -> HFReference | MlxReference | LlamaCppReference:
+def load_reference(
+    kind: str, snapshot_dir: str | Path, **kw: Any
+) -> HFReference | MlxReference | LlamaCppReference:
     if kind == "mlx":
         return MlxReference(snapshot_dir, **kw)
     if kind == "hf":
@@ -177,7 +207,6 @@ def load_reference(kind: str, snapshot_dir: str | Path, **kw: Any) -> HFReferenc
 
 
 class LazyReference:
-
     def __init__(self, kind: str, snapshot_dir: str | Path, **kw: Any):
         self.name = kind
         self._make = lambda: load_reference(kind, snapshot_dir, **kw)
@@ -205,7 +234,6 @@ def prompt_hash(ids: list[int]) -> str:
 
 
 class ReferenceCache:
-
     def __init__(self, cache_dir: str | Path):
         self.cache_dir = Path(cache_dir)
 
@@ -230,7 +258,9 @@ class ReferenceCache:
         tmp.replace(p)
         return p
 
-    def greedy(self, ref: Reference, revision: str, prompt_ids: list[int], max_new_tokens: int) -> list[int]:
+    def greedy(
+        self, ref: Reference, revision: str, prompt_ids: list[int], max_new_tokens: int
+    ) -> list[int]:
         hit = self.get(revision, "argmax", prompt_ids, max_new_tokens)
         if hit is not None:
             return [int(t) for t in hit.tolist()]

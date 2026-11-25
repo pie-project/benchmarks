@@ -21,7 +21,11 @@ class VllmMetalEngine(MlxlmEngine):
         return False
 
     def server_python(self) -> str:
-        return str(self.recipe.get("server_python") or os.environ.get("VLLM_METAL_PY") or "/tmp/pievenv/bin/python")
+        return str(
+            self.recipe.get("server_python")
+            or os.environ.get("VLLM_METAL_PY")
+            or "/tmp/pievenv/bin/python"
+        )
 
     def server_env(self) -> dict[str, str]:
         r = self.recipe
@@ -36,10 +40,23 @@ class VllmMetalEngine(MlxlmEngine):
         if isinstance(extra, str):
             extra = extra.split()
         vllm = Path(self.server_python()).parent / "vllm"
-        cmd = [str(vllm), "serve", self.model_arg(), "--host", "127.0.0.1", "--port", str(port),
-               "--max-num-seqs", str(slots), "--max-model-len", str(context),
-               "--enable-prefix-caching" if r.get("prefix_caching") else "--disable-prefix-caching",
-               "--disable-log-stats", "--uvicorn-log-level", "warning"]
+        cmd = [
+            str(vllm),
+            "serve",
+            self.model_arg(),
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(port),
+            "--max-num-seqs",
+            str(slots),
+            "--max-model-len",
+            str(context),
+            "--enable-prefix-caching" if r.get("prefix_caching") else "--disable-prefix-caching",
+            "--disable-log-stats",
+            "--uvicorn-log-level",
+            "warning",
+        ]
         if r.get("gpu_mem_util") is not None:
             cmd += ["--gpu-memory-utilization", str(r["gpu_mem_util"])]
         return cmd + [str(x) for x in extra]
@@ -48,8 +65,17 @@ class VllmMetalEngine(MlxlmEngine):
         return []
 
     def version(self) -> str:
-        out = subprocess.run([self.server_python(), "-c", "from importlib.metadata import version; print(version('vllm-metal'), version('vllm'))"],
-                             capture_output=True, text=True, timeout=120, check=False)
+        out = subprocess.run(
+            [
+                self.server_python(),
+                "-c",
+                "from importlib.metadata import version; print(version('vllm-metal'), version('vllm'))",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
         v = out.stdout.strip().split()
         return f"{v[0]} (vllm {v[1]})" if out.returncode == 0 and len(v) == 2 else "unknown"
 

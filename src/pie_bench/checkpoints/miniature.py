@@ -19,7 +19,12 @@ def repo_cache_dirname(repo_id: str) -> str:
 def miniature_snapshot_dir(artifact: ArtifactSpec, hf_cache: Path) -> Path:
     if artifact.miniature is None:
         raise ValueError(f"artifact {artifact.id} has no miniature recipe")
-    return Path(hf_cache) / repo_cache_dirname(artifact.base_model) / "snapshots" / artifact.miniature.tag
+    return (
+        Path(hf_cache)
+        / repo_cache_dirname(artifact.base_model)
+        / "snapshots"
+        / artifact.miniature.tag
+    )
 
 
 def miniature_argv(
@@ -29,13 +34,20 @@ def miniature_argv(
     if r is None:
         raise ValueError(f"artifact {artifact.id} has no miniature recipe")
     argv = [
-        python, str(bench_dir() / SHRINK_SCRIPT),
-        "--repo", artifact.base_model,
-        "--revision", artifact.revision or "main",
-        "--out", str(out_dir),
-        "--layers", r.layers,
-        "--repeat", str(r.repeat),
-        "--experts", str(r.experts if r.experts is not None else 0),
+        python,
+        str(bench_dir() / SHRINK_SCRIPT),
+        "--repo",
+        artifact.base_model,
+        "--revision",
+        artifact.revision or "main",
+        "--out",
+        str(out_dir),
+        "--layers",
+        r.layers,
+        "--repeat",
+        str(r.repeat),
+        "--experts",
+        str(r.experts if r.experts is not None else 0),
     ]
     if r.text_only:
         argv.append("--text-only")
@@ -84,7 +96,14 @@ def ensure_miniature(
     import shutil
     import tempfile
 
-    base = Path(os.environ.get("PIE_BENCH_SHRINK_CACHE") or (Path(os.environ["PIE_BENCH_CACHE"]) / "shrink" if os.environ.get("PIE_BENCH_CACHE") else tempfile.gettempdir()))
+    base = Path(
+        os.environ.get("PIE_BENCH_SHRINK_CACHE")
+        or (
+            Path(os.environ["PIE_BENCH_CACHE"]) / "shrink"
+            if os.environ.get("PIE_BENCH_CACHE")
+            else tempfile.gettempdir()
+        )
+    )
     cache_dir = base / f"{platform.node()}-{os.getpid()}" / repo_cache_dirname(artifact.base_model)
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.parent / f".tmp-{out.name}-{platform.node()}-{os.getpid()}-{uuid.uuid4().hex[:6]}"
@@ -93,8 +112,23 @@ def ensure_miniature(
         import sys
 
         r = artifact.miniature
-        argv = [sys.executable, "-m", "pie_bench.checkpoints.gguf_slice", "--repo", artifact.base_model, "--revision", artifact.revision or "main",
-                "--file", artifact.gguf_file, "--layers", r.layers, "--experts", str(r.experts or 0), "--out", str(tmp)]
+        argv = [
+            sys.executable,
+            "-m",
+            "pie_bench.checkpoints.gguf_slice",
+            "--repo",
+            artifact.base_model,
+            "--revision",
+            artifact.revision or "main",
+            "--file",
+            artifact.gguf_file,
+            "--layers",
+            r.layers,
+            "--experts",
+            str(r.experts or 0),
+            "--out",
+            str(tmp),
+        ]
     else:
         argv = miniature_argv(artifact, tmp, python, cache_dir=cache_dir)
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=timeout_s, check=False)
@@ -102,7 +136,8 @@ def ensure_miniature(
         shutil.rmtree(tmp, ignore_errors=True)
         tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-20:]
         raise RuntimeError(
-            f"shrink_checkpoint failed for {artifact.id} (exit {proc.returncode}):\n" + "\n".join(tail)
+            f"shrink_checkpoint failed for {artifact.id} (exit {proc.returncode}):\n"
+            + "\n".join(tail)
         )
     if artifact.miniature.widen_bf16:
         from pie_bench.checkpoints.widen_bf16 import widen_bf16
@@ -112,7 +147,9 @@ def ensure_miniature(
         from .mlx_quantize import mlx_quantize
 
         shutil.rmtree(cache_dir, ignore_errors=True)
-        mlx_quantize(tmp, artifact.miniature.mlx_quantize, family=artifact.family, timeout_s=timeout_s)
+        mlx_quantize(
+            tmp, artifact.miniature.mlx_quantize, family=artifact.family, timeout_s=timeout_s
+        )
     (tmp / ".miniature.json").write_text(
         json.dumps({"artifact": artifact.id, "recipe": _stamp(artifact), "argv": argv}, indent=2)
     )
@@ -137,4 +174,3 @@ def num_layers_of(snapshot_dir: str | Path) -> int | None:
     if n is None and isinstance(cfg.get("text_config"), dict):
         n = cfg["text_config"].get("num_hidden_layers")
     return int(n) if n is not None else None
-

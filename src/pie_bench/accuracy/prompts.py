@@ -42,7 +42,10 @@ T0_PROMPTS: list[tuple[str, str]] = [
     ("json", 'Convert to JSON: name=Ada, born=1815, fields=["math", "computing"]\n{'),
     ("story", "Once upon a time, in a small village by the river,"),
     ("zh", "请用一句话解释什么是机器学习。答："),
-    ("mixed", "Die Hauptstadt von Japan ist Tokio. La capitale de l'Italie est Rome. The capital of Canada is"),
+    (
+        "mixed",
+        "Die Hauptstadt von Japan ist Tokio. La capitale de l'Italie est Rome. The capital of Canada is",
+    ),
     ("long-1k", _long_prompt()),
 ]
 

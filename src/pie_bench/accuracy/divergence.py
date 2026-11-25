@@ -43,5 +43,6 @@ def t0_verdict(
         return AccuracyStatus.FAIL
     if len(gaps) != len(benign_flags):
         raise ValueError("gaps and benign_flags must be aligned")
-    return AccuracyStatus.PASS if all(bool(b) for b in benign_flags[:n_div]) else AccuracyStatus.FAIL
-
+    return (
+        AccuracyStatus.PASS if all(bool(b) for b in benign_flags[:n_div]) else AccuracyStatus.FAIL
+    )
