@@ -68,11 +68,9 @@ pie-bench quality                                # model accuracy on question se
 Nothing is sent while a run measures. Each run writes one folder under
 `~/.pie-bench/runs/`:
 
-| File | What |
-|---|---|
-| `records.jsonl` | one line per measured cell |
-| `run.log` | the full log, for audit and debugging |
-| `submission.json.gz` | both, with machine specs and versions: what gets uploaded |
+- `records.jsonl`: one line per measured cell
+- `run.log`: the full log, for audit and debugging
+- `submission.json.gz`: both, with machine specs and versions; this is what gets uploaded
 
 Uploads need a token, made the first time (`pie-bench login`) and kept in
 `~/.config/pie-bench/token`.
