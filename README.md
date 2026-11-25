@@ -75,10 +75,13 @@ after each upload; writes need a token with an upload quota.
 | GET | `/healthz` | service health |
 | GET | `/v1/catalog` | machines, models, engines, workloads and the newest release |
 | GET | `/v1/results` | the newest release: its results and quality scores |
+| GET | `/v1/releases/latest` | the same as `/v1/results` |
 | GET | `/v1/head-to-head` | pie against each engine, per platform |
 | GET | `/v1/footprint` | download size of pie, vLLM and SGLang |
+| GET | `/v1/profiles` | each grid cell's forward-pass profile of its two fastest engines |
 | POST | `/v1/tokens` | a signed upload token |
 | POST | `/v1/submissions` | upload a `submission.json.gz` |
+| POST | `/v1/profiles` | upload the profiles a `pie-bench` run made |
 
 Run the API locally against Postgres:
 
@@ -109,14 +112,15 @@ uv venv && uv pip install -e ".[dev,server]"
 
 [`src/pie_bench/matrix`](src/pie_bench/matrix) declares what exists: engines
 and their pins, machines, models and workloads. To add an engine, add its
-driver under `src/pie_bench/node/engines`, its client under
-`src/pie_bench/clients`, and its entry in `matrix/engines.yaml`. A tag
-(`git tag v0.1.4 && git push --tags`) publishes a release to PyPI.
+driver under `src/pie_bench/engines`, its client under
+`src/pie_bench/clients`, and its entry in `matrix/engines.yaml`. A version tag
+(`git tag v0.1.4 && git push --tags`) runs the release workflow, which builds
+the wheel and sdist for PyPI and a GitHub release.
 
 ## Community & License
 
 [Discord](https://discord.gg/R62Udyzum) ·
-[Issues](https://github.com/pie-project/pie-evals/issues) ·
+[Issues](https://github.com/pie-project/benchmarks/issues) ·
 [Pie](https://github.com/pie-project/pie)
 
 [Apache License 2.0](LICENSE).
