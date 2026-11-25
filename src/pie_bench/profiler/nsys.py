@@ -17,7 +17,8 @@ from . import span
 
 SESSION = "pie-bench-profile"
 FLUSH_MS = 500
-TABLES = ("CUPTI_ACTIVITY_KIND_KERNEL", "CUPTI_ACTIVITY_KIND_MEMCPY", "CUPTI_ACTIVITY_KIND_MEMSET")
+# a CUDA graph launch is one interval of its own (whole-graph trace): its kernels are not listed one by one
+TABLES = ("CUPTI_ACTIVITY_KIND_KERNEL", "CUPTI_ACTIVITY_KIND_MEMCPY", "CUPTI_ACTIVITY_KIND_MEMSET", "CUPTI_ACTIVITY_KIND_GRAPH_TRACE")
 
 
 class Tracer:
@@ -25,11 +26,12 @@ class Tracer:
     # engines that fork their model worker without exec (vLLM's EngineCore) are traced too. A CUDA buffer is saved every
     # FLUSH_MS: with the default (saved when full), a server process idle after the round lost its last part-filled
     # buffer at `nsys stop` (SGLang on an A40: the last 620 ms of the round)
-    # no device-side CUDA event trace: on by default since driver 12.8, it can add false dependencies across streams
-    prefix = ["nsys", "launch", "--trace=cuda", "--cuda-graph-trace=node", "--cuda-event-trace=false", "--trace-fork-before-exec=true",
+    # each CUDA graph launch traced whole, not node by node: node tracing slowed graph-replaying engines' profiled decode
+    # (TRT-LLM on an H200: +19% node by node, +1.4% whole). No device-side CUDA event trace (on by default since driver
+    # 12.8, it can add false dependencies across streams)
+    prefix = ["nsys", "launch", "--trace=cuda", "--cuda-graph-trace=graph", "--cuda-event-trace=false", "--trace-fork-before-exec=true",
               f"--cuda-flush-interval={FLUSH_MS}", f"--session-new={SESSION}"]
-    # no CPU IP sampling or context switch trace (on by default for a launched app): only device work is read, and
-    # sampling host-bound engines' Python threads slowed their profiled rounds (SGLang prefill +25%, TRT-LLM decode +18% on an H200)
+    # no CPU IP sampling or context switch trace (on by default for a launched app): only device work is read
     start_args = ["--sample=none", "--cpuctxsw=none"]
     # vLLM's EngineCore forked from its first process kept losing the round's last kernels at stop (1.3 s of a Raw 512
     # round on an A40) even with the flush interval: started with spawn, it is a traced process of its own
@@ -56,7 +58,7 @@ class Tracer:
                             str(out / "nsys.nsys-rep")], check=True)
 
     def intervals(self, out: Path) -> list[tuple[int, int]]:
-        """Every kernel, copy and memset the session recorded, in Unix ns."""
+        """Every kernel, copy, memset and graph launch the session recorded, in Unix ns."""
         with sqlite3.connect(out / "nsys.sqlite") as db:
             t0 = db.execute("SELECT utcEpochNs FROM TARGET_INFO_SESSION_START_TIME").fetchone()[0]
             tables = {name for (name,) in db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
