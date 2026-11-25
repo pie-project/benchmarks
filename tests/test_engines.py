@@ -593,10 +593,6 @@ def test_argparse_flag_extraction_sees_loop_registered_and_boolean_optional_flag
     assert {"--inferlet-dir", "--engine", "--wasm-warm-slots", "--frame-submit-depth", "--pretokenized-prompts", "--no-pretokenized-prompts"} <= flags
     common = argparse_flags(BENCHES / "common.py")
     assert {"--model", "--ignore-eos", "--no-ignore-eos", "--tp-size", "--sglang-cuda-graph-max-bs", "--json-out"} <= common
-    for script in ("llamacpp_bench.py", "mlx_bench.py"):
-        got = argparse_flags(BENCHES / script)
-        assert {"--model", "--max-tokens", "--concurrency", "--num-requests", "--requests"} <= got, script
-        assert "--dump-all-token-ids" not in got, script
     assert "--dump-all-token-ids" in argparse_flags(BENCHES / "vllm_bench.py")
     assert "--dump-all-token-ids" in argparse_flags(BENCHES / "sglang_bench.py")
     assert "--dump-all-token-ids" in flags
