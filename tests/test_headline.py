@@ -1,4 +1,4 @@
-from server.headline import head_to_head
+from server.head_to_head import head_to_head
 
 
 def _row(hw, engine, model, value, workload="raw", status="pass"):

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import gzip
-import io
 import json
-import re
 import zlib
+
+from pie_bench.results.pg_store import PgStore
+from server.encoding import dumps, gz, gz_text
+from server.head_to_head import head_to_head
 
 PLATFORMS = ["Mac", "Windows", "GPU", "TPU", "AMD", "Wafer"]
 
@@ -17,25 +18,6 @@ def counts(db: dict, rows: list[dict]) -> dict[str, list[int]]:
         keep = [r for r in rows if ids is None or r.get("model") in ids or r.get("model") in catalog]
         out[suite] = [len(keep), sum(map(measured, keep)), sum(1 for r in keep if not r.get("stale") and measured(r))]
     return out
-
-
-HOME = re.compile(r"/(?:Users|home)/[A-Za-z0-9._-]+")
-
-
-def dumps(value) -> str:
-    return HOME.sub("~", json.dumps(value, separators=(",", ":"), default=str))
-
-
-def gz(value) -> bytes:
-    out = io.BytesIO()
-    with gzip.GzipFile(fileobj=out, mode="wb", compresslevel=6, mtime=0) as f:
-        for chunk in json.JSONEncoder(separators=(",", ":"), default=str).iterencode(value):
-            f.write(HOME.sub("~", chunk).encode())
-    return out.getvalue()
-
-
-def gz_text(text: str) -> bytes:
-    return gzip.compress(text.encode(), compresslevel=6, mtime=0)
 
 
 def seal(rows: list[dict], ctx: dict) -> dict:
@@ -71,3 +53,18 @@ def publish(db: dict, sealed: dict[str, dict], quality: dict) -> tuple[dict, str
     if not latest:
         return catalog, None, None
     return catalog, latest, gz_text('{"id":' + dumps(latest) + ',"results":' + rows_json(sealed[latest]) + ',"quality":' + dumps(quality.get(latest, [])) + "}")
+
+
+def blobs(dsn: str, contributed: dict[str, dict], submissions: int = 0) -> dict[str, bytes]:
+    from server.views import build
+
+    store = PgStore(dsn)
+    store._ready = True
+    db, sealed, quality = build(store, contributed)
+    catalog, latest, results = publish(db, sealed, quality)
+    catalog["totals"] = {**(catalog.get("totals") or {}), "submissions": submissions}
+    newest = {latest: json.loads(rows_json(sealed[latest]))} if latest else {}
+    out = {"catalog": gz(catalog), "head-to-head": gz(head_to_head({**db, "snapshots": newest}))}
+    if results:
+        out["results"] = results
+    return out

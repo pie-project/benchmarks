@@ -3,9 +3,7 @@ from __future__ import annotations
 import hmac
 import os
 import secrets
-import threading
 import time
-from collections import defaultdict, deque
 
 import jwt
 from fastapi import HTTPException, Request
@@ -58,21 +56,3 @@ def require_admin(request: Request) -> None:
 def address(request: Request) -> str:
     forwarded = request.headers.get("x-forwarded-for", "")
     return forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
-
-
-class RateLimit:
-    def __init__(self, limit: int, window_s: float):
-        self.limit = limit
-        self.window_s = window_s
-        self.hits: dict[str, deque] = defaultdict(deque)
-        self.lock = threading.Lock()
-
-    def check(self, key: str) -> None:
-        now = time.monotonic()
-        with self.lock:
-            q = self.hits[key]
-            while q and now - q[0] > self.window_s:
-                q.popleft()
-            if len(q) >= self.limit:
-                raise HTTPException(429, "too many requests, try again later", headers={"Retry-After": str(int(self.window_s))})
-            q.append(now)

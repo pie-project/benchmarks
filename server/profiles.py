@@ -13,8 +13,8 @@ import math
 
 from fastapi import HTTPException
 
-from server import split
-from server.ingest import NAME
+from server import encoding
+from server.submissions import NAME
 
 TOL = 0.10
 MAX_CELLS = 5000
@@ -134,4 +134,4 @@ def blob(cur) -> bytes:
         judged = judge(doc)
         if judged:
             out[f"{doc['hardware']}|{doc['model']}|{doc['setup']}"] = judged
-    return split.gz(out)
+    return encoding.gz(out)

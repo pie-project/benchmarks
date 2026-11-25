@@ -120,9 +120,10 @@ def test_a_restarted_api_serves_the_saved_views_at_once(client):
     etag = client.get("/v1/catalog").headers["etag"]
     from fastapi import HTTPException
 
-    from server.app import Views, app
+    from server.app import app
+    from server.view_cache import ViewCache
 
-    fresh = Views(app.state.db)
+    fresh = ViewCache(app.state.db)
     fresh.load()
     assert fresh.get("catalog")[1] == etag
     with pytest.raises(HTTPException) as missing:
