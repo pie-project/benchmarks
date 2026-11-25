@@ -35,9 +35,9 @@ def short(workload):
 
 def tracer_for(backend: str, out: Path):
     """The tracer for a platform's backend, its files under out."""
-    from . import metal, nsys, rocprof, xla
+    from . import metal, metal_cb, nsys, rocprof, xla
 
-    tracers = {"metal": metal.Tracer, "cuda": nsys.Tracer, "rocm": rocprof.Tracer, "xla": xla.Tracer}
+    tracers = {"metal": metal_cb.Tracer if metal_cb.chosen() else metal.Tracer, "cuda": nsys.Tracer, "rocm": rocprof.Tracer, "xla": xla.Tracer}
     if backend not in tracers:
         raise SystemExit(f"no device tracer for the {backend} backend")
     return tracers[backend](out)
