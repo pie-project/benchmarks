@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/assets/bench-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset=".github/assets/bench-light.svg">
-    <img alt="Pie Bench: pie against other inference engines, on your own machine"
+    <img alt="Pie Bench: an open benchmark for LLM inference engines"
          src=".github/assets/bench-light.svg"
          width="30%">
     <p></p>
@@ -17,15 +17,16 @@
 [API]: https://bench-api.pie-project.org/v1/catalog
 [Pie]: https://github.com/pie-project/pie
 
-Pie Bench is an open, fully transparent benchmark for LLM inference. It tracks
-how [pie](https://github.com/pie-project/pie) and the leading engines (vLLM,
-SGLang, TensorRT-LLM, llama.cpp, MLX and others) perform on the same models,
-prompts and hardware, so kernel optimizations and the gaps between engines can be
-followed over time across GPUs, TPUs, Apple Silicon, browsers and phones.
+Pie Bench is an open, fully transparent benchmark for LLM inference, and it
+belongs to the open-source community. vLLM, SGLang, TensorRT-LLM, llama.cpp, MLX,
+Ollama, MLC, pie and more run side by side on the same models, the same prompts
+and the same hardware, each at a pinned version, across GPUs, TPUs, Apple
+Silicon, browsers and phones. Every kernel optimization an engine ships becomes a
+measured, verified result, and every gap becomes a clear target for the next one.
 
 Every result is reproducible. One command detects the machine, selects the
-models that fit, installs each engine at a pinned version, builds pie, measures
-them all, and uploads a signed submission to [benchmarks.pie-project.org][Benchmarks].
+models that fit, installs each engine at a pinned version, measures them all, and
+uploads a signed submission to [benchmarks.pie-project.org][Benchmarks].
 
 To guard against measurement artifacts, every gap of 25% or more is verified
 independently. The same build is run again under an end-to-end GPU profiler, on
@@ -38,6 +39,10 @@ the [Bench Book].
 This repository holds the `pie-bench` command line tool, the results API the
 site reads, the site itself, the phone app that runs the same workloads on
 iPhone and Android, and Docker images for cloud GPUs and TPUs.
+
+Engine and model authors are warmly invited to add their work, tune its
+settings, or challenge any number: see [Develop](#develop), or open an
+[issue](https://github.com/pie-project/pie-evals/issues) or a pull request.
 
 ## Install
 
