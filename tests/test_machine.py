@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from pie_bench.node.machine import MachineBusy, machine_lock
+from pie_bench.runner.machine_lock import MachineBusy, machine_lock
 
 
 @pytest.fixture(autouse=True)

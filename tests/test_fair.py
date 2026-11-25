@@ -5,10 +5,10 @@ import types
 
 import pytest
 
-from pie_bench.node import fair
-from pie_bench.node.engines.base import Engine, EngineLaunchError, perf_from_common_json
-from pie_bench.node.workloads.synthetic import prompt_words_for_tokens
+from pie_bench.engines.engine import Engine, EngineLaunchError, perf_from_common_json
+from pie_bench.metrics import fairness as fair
 from pie_bench.schema import ErrorClass, WorkloadSpec
+from pie_bench.workloads import prompt_words_for_tokens
 
 
 def req(prompt_tokens: int, ttft_s: float, cached: int | None = 0, ok: bool = True, output_tokens: int = 200, latency_s: float = 1.3) -> dict:
@@ -215,7 +215,7 @@ def test_cold_prompt_file_hash_is_recorded_and_decodable(tmp_path, monkeypatch):
 
 
 def test_cold_tagged_run_without_a_cache_count_is_cold_by_construction():
-    from pie_bench.node.engines.base import perf_from_common_json
+    from pie_bench.engines.engine import perf_from_common_json
     reqs = [{"ok": True, "latency_s": 1.0, "ttft_s": 0.2, "output_tokens": 64, "prompt_tokens": 512, "intertoken_us": []}] * 4
     summary = {"config": {"concurrency": 1}}
     cold = perf_from_common_json(summary, reqs, None, concurrency=1, cold_tags=True)
@@ -226,7 +226,7 @@ def test_cold_tagged_run_without_a_cache_count_is_cold_by_construction():
 
 
 def test_a_cold_tagged_run_with_a_cached_opening_is_cold():
-    from pie_bench.node.engines.base import perf_from_common_json
+    from pie_bench.engines.engine import perf_from_common_json
     reqs = [{"ok": True, "latency_s": 1.0, "ttft_s": 0.2, "output_tokens": 64, "prompt_tokens": 555, "intertoken_us": []}] * 8
     opening = perf_from_common_json({"config": {"concurrency": 1, "cached_prompt_tokens": 120}}, reqs, None, concurrency=1, cold_tags=True)
     assert opening.prefill_tok_s is not None and opening.counters["cold_opening_cached_per_request"] == 15
@@ -235,7 +235,7 @@ def test_a_cold_tagged_run_with_a_cached_opening_is_cold():
 
 
 def test_each_cold_prompt_has_its_own_body():
-    from pie_bench.node.workloads.synthetic import prompt_words_for_tokens
+    from pie_bench.workloads import prompt_words_for_tokens
 
     prompts = fair.cold_prompts(lambda i: prompt_words_for_tokens(128, salt=f"c256|{i}"), workload_id="c256", seed=fair.COLD_SEED, count=8)
     bodies = [p.split("] ", 1)[1] for p in prompts]

@@ -1,4 +1,4 @@
-from pie_bench.node import build as pb
+from pie_bench.installers import pie as pb
 
 
 def test_cache_key_and_miss(tmp_path):

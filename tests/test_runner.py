@@ -3,12 +3,12 @@ from pathlib import Path
 
 import pytest
 
-from pie_bench.node import runner as runner_mod
-from pie_bench.node.engines.base import BenchResult, Engine, EngineLaunchError
+from pie_bench.engines.engine import BenchResult, Engine, EngineLaunchError
 from pie_bench.paths import MATRIX
 from pie_bench.plan.jobs import make_jobs
 from pie_bench.plan.matrix import Matrix
 from pie_bench.results.store import Store
+from pie_bench.runner import job as runner_mod
 from pie_bench.schema import CellStatus, ErrorClass, PerfMetrics, Record, Tier, WorkloadSpec
 
 os.environ.setdefault("PIE_BENCH_SETTLE", "0")
@@ -19,8 +19,8 @@ REAL_ACCURACY = runner_mod.NodeRunner._accuracy
 
 
 def _asked(workload):
-    from pie_bench.node.engines.base import workload_mode_args
-    from pie_bench.node.validate import expected_requests
+    from pie_bench.engines.engine import workload_mode_args
+    from pie_bench.runner.round_checks import expected_requests
     return expected_requests(workload_mode_args(workload)[1]) or 1
 
 class FakeEngine(Engine):
@@ -101,8 +101,8 @@ def patched(monkeypatch, tmp_path):
     monkeypatch.setattr(runner_mod.prov, "hardware_fingerprint", lambda: {"gpu": "fake"})
     monkeypatch.setattr(runner_mod.prov, "build_provenance", lambda *a, **k: runner_mod.prov.Provenance(harness_commit="h", engine_version="deadbeef", checkpoint_revision="abc", hardware_fingerprint={"gpu": "fake"}))
     monkeypatch.setattr(runner_mod.NodeRunner, "_accuracy", lambda self, cell, engine, snap: runner_mod.AccuracyMetrics())
-    monkeypatch.setattr("pie_bench.node.reclaim.reclaim", lambda *a, **k: 0.0)
-    monkeypatch.setattr("pie_bench.node.importer.ensure_artifact", lambda art, snap, *a, **k: snap)
+    monkeypatch.setattr("pie_bench.runner.disk_space.reclaim", lambda *a, **k: 0.0)
+    monkeypatch.setattr("pie_bench.checkpoints.pie_import.ensure_artifact", lambda art, snap, *a, **k: snap)
     return tmp_path / "hf"
 
 
@@ -221,7 +221,7 @@ def test_out_dir_is_absolute_for_subprocesses(job, patched, tmp_path, monkeypatc
 def test_cell_priority_runs_control_then_cheap_shapes_first():
     from types import SimpleNamespace as NS
 
-    from pie_bench.node.runner import cell_priority
+    from pie_bench.runner.job import cell_priority
 
     def cell(kind, est):
         return NS(workload=NS(kind=NS(value=kind), est_minutes=est))
@@ -233,10 +233,10 @@ def test_cell_priority_runs_control_then_cheap_shapes_first():
 
 def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
 
-    from pie_bench.node.engines.shape import context_tokens_for
-    from pie_bench.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
+    from pie_bench.engines.shapes import context_tokens_for
     from pie_bench.plan.jobs import make_jobs
     from pie_bench.plan.matrix import Matrix
+    from pie_bench.runner.job import SHORT_CONTEXT_TOKENS, split_heavy_processes
     from pie_bench.schema import Tier
 
     m = Matrix.load(MATRIX)
@@ -260,9 +260,9 @@ def test_heavy_model_on_a_small_card_boots_short_and_long_shapes_apart():
 
 
 def test_pie_cuda_cells_boot_at_their_own_shape_as_vllm_does():
-    from pie_bench.node.engines.shape import max_model_len_for, workload_concurrency
-    from pie_bench.node.runner import split_startups
+    from pie_bench.engines.shapes import max_model_len_for, workload_concurrency
     from pie_bench.plan.jobs import make_jobs
+    from pie_bench.runner.job import split_startups
 
     m = Matrix.load(MATRIX)
     cells = [c for c in m.expand(artifacts=["minimax-m3.1-flash-mini60-e16"]) if c.program.id == "text-completion-bench"]
@@ -280,10 +280,10 @@ def test_pie_cuda_cells_boot_at_their_own_shape_as_vllm_does():
 
 
 def test_mac_rivals_serve_one_request_rows_on_one_slot():
-    from pie_bench.node.engines.llamacpp import LlamacppEngine
-    from pie_bench.node.engines.shape import workload_concurrency
-    from pie_bench.node.runner import serve_envelope, split_startups
+    from pie_bench.engines.llamacpp import LlamacppEngine
+    from pie_bench.engines.shapes import workload_concurrency
     from pie_bench.plan.jobs import process_key
+    from pie_bench.runner.job import serve_envelope, split_startups
 
     m = Matrix.load(MATRIX)
     for aid, split in (("gemma-4-e2b-llamacpp", True), ("gemma-4-e2b-mlxlm", False)):
@@ -335,9 +335,9 @@ def test_one_slow_boot_among_five_rounds_is_dropped(job, patched, tmp_path):
 
 
 def test_heavy_model_on_a_small_mac_boots_short_and_long_shapes_apart():
-    from pie_bench.node.engines.shape import context_tokens_for
-    from pie_bench.node.runner import SHORT_CONTEXT_TOKENS, split_heavy_processes
+    from pie_bench.engines.shapes import context_tokens_for
     from pie_bench.plan.jobs import process_key
+    from pie_bench.runner.job import SHORT_CONTEXT_TOKENS, split_heavy_processes
 
     m = Matrix.load(MATRIX)
     lc16k = WorkloadSpec(id="lc-16k-128", kind="long_context", params={"prefill": 16384, "decode": 128, "concurrency": 1})
@@ -386,7 +386,7 @@ def test_mac_happy_path_runs_every_targeted_shape(mac_job, patched, tmp_path):
 def test_checkpoints_download_in_the_background(mac_job, patched, tmp_path, monkeypatch):
     import threading
 
-    from pie_bench.node import snapshots
+    from pie_bench.checkpoints import snapshots
 
     real = snapshots.ensure_snapshot
     threads = []
@@ -396,7 +396,7 @@ def test_checkpoints_download_in_the_background(mac_job, patched, tmp_path, monk
         return real(art, hf, download=False)
 
     monkeypatch.setattr(snapshots, "ensure_snapshot", spy)
-    from pie_bench.node import reclaim
+    from pie_bench.runner import disk_space as reclaim
 
     monkeypatch.setattr(reclaim, "free_gib", lambda *a, **k: 10_000.0)
     r = runner_mod.NodeRunner(mac_job, pie_root=tmp_path / "pie", out_dir=tmp_path / "out", hf_cache=patched, build=False, download=True)
@@ -405,7 +405,8 @@ def test_checkpoints_download_in_the_background(mac_job, patched, tmp_path, monk
 
 
 def test_an_imported_artifact_needs_no_source_weights(mac_job, patched, tmp_path, monkeypatch):
-    from pie_bench.node import importer, snapshots
+    from pie_bench.checkpoints import pie_import as importer
+    from pie_bench.checkpoints import snapshots
 
     monkeypatch.setenv("PIE_BENCH_CACHE", str(tmp_path / "cache"))
     art = mac_job.cells[0].artifact
@@ -423,13 +424,13 @@ def test_an_imported_artifact_needs_no_source_weights(mac_job, patched, tmp_path
 
 
 def test_t0_is_judged_once_the_engine_is_down(job, patched, tmp_path, monkeypatch):
-    from pie_bench.node.accuracy import gate
+    from pie_bench.accuracy import gate
     from pie_bench.schema import AccuracyMetrics, AccuracyStatus
 
     events: list[str] = []
     monkeypatch.setattr(runner_mod.NodeRunner, "_accuracy", REAL_ACCURACY)
     monkeypatch.setattr(gate, "skip_reason", lambda cell: None)
-    monkeypatch.setattr("pie_bench.node.snapshots.with_tokenizer", lambda art, snap, hf, log=None: snap)
+    monkeypatch.setattr("pie_bench.checkpoints.snapshots.with_tokenizer", lambda art, snap, hf, log=None: snap)
     monkeypatch.setattr(gate, "t0_engine_outputs", lambda engine, snap, **kw: gate.T0Outputs([[1]], [[2]]))
     monkeypatch.setattr(FakeEngine, "stop", lambda self: events.append("stop"), raising=False)
 

@@ -9,7 +9,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pie_bench.node.build import python_dir
+from pie_bench.installers.pie import python_dir
 from pie_bench.paths import MATRIX
 
 from .engines import ENGINES, engine_for, llamacpp_generate, mlxlm_generate, splash_generate
@@ -42,12 +42,12 @@ def _render(snapshot: Path, prompts: list[str]) -> list[str]:
 
 
 def _pie_generate(art, snapshot: Path, pie_root: Path, prompts: list[str], max_tokens: int, log) -> tuple[list[str], str]:
-    from pie_bench.node.build import bench_dir, bench_python
-    from pie_bench.node.importer import ensure_artifact, needs_import
+    from pie_bench.checkpoints.pie_import import ensure_artifact, needs_import
+    from pie_bench.installers.pie import bench_dir, bench_python
 
     commit = subprocess.run(["git", "-C", str(pie_root), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
     model = ensure_artifact(art, snapshot, pie_root / "target/release/pie", commit, log=log) if needs_import(art) else snapshot
-    script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "quality_pie.py"
+    script = Path(__file__).resolve().parent / "scripts" / "quality_pie.py"
     env = {**os.environ, "PIE_ROOT": str(pie_root), "PYTHONPATH": os.pathsep.join([str(bench_dir()), str(python_dir(pie_root) / "client/src"), str(python_dir(pie_root) / "server/python")])}
     tok = _tokenizer(snapshot)
     token_ids = [tok.encode(r, add_special_tokens=False) for r in _render(snapshot, prompts)]
@@ -64,7 +64,7 @@ def _pie_generate(art, snapshot: Path, pie_root: Path, prompts: list[str], max_t
 def tokenizer_dir(art, hf_cache: Path, log=print) -> Path:
     from huggingface_hub import snapshot_download
 
-    from pie_bench.node.snapshots import TOKENIZER_PATTERNS
+    from pie_bench.checkpoints.snapshots import TOKENIZER_PATTERNS
 
     repo = art.tokenizer_from or art.gguf_config_from
     if not repo:
@@ -104,7 +104,7 @@ def load_items(task: str, n: int, log=print):
 
 
 def run_quality(artifact_id: str, tasks: list[str], n: int, *, matrix_dir: str = str(MATRIX), store_dir: str | None = None, pie_root: Path, tag: str | None = None, tag_kind: str | None = None, platform: str | None = None, log=print) -> list[str]:
-    from pie_bench.node.snapshots import ensure_snapshot, hf_cache_dir
+    from pie_bench.checkpoints.snapshots import ensure_snapshot, hf_cache_dir
     from pie_bench.plan.matrix import Matrix
     from pie_bench.results.store import Store
 

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from pie_bench.node import build as pb
+from pie_bench.installers import pie as pb
 from pie_bench.paths import MATRIX
 from pie_bench.plan.matrix import Matrix
 from pie_bench.schema import CellStatus, PerfMetrics, Provenance, Record, Tier

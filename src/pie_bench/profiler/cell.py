@@ -148,8 +148,8 @@ def profile(hardware: str | None, cells: list[tuple[str, str]], out: Path, engin
             tag: str | None = None, pie_commit: str | None = None) -> list[dict]:
     """Reruns the cells' two fastest engines on this machine, benchmark and profile, and writes the run's records,
     its submission and out/profiles.json."""
-    from pie_bench.node.machine import machine_lock
-    from pie_bench.node.runner import NodeRunner
+    from pie_bench.runner.job import NodeRunner
+    from pie_bench.runner.machine_lock import machine_lock
 
     m = Matrix.load(MATRIX)
     machine = local.detect(m, hardware)

@@ -1,4 +1,4 @@
-from pie_bench.node.engines.shape import context_tokens_for, serve_envelope, workload_concurrency
+from pie_bench.engines.shapes import context_tokens_for, serve_envelope, workload_concurrency
 from pie_bench.schema import WorkloadSpec
 
 
@@ -23,7 +23,7 @@ def test_envelope_is_the_widest_workload_when_it_already_covers_the_rest():
 
 
 def test_envelope_keeps_a_long_context_shape_so_its_prompt_stays_a_shared_prefix():
-    from pie_bench.node.workloads.synthetic import common_args_for
+    from pie_bench.workloads import common_args_for
 
     cells = [w("c8", "concurrency", concurrency=8, num_requests=32, prefill=128, decode=128), w("lc", "long_context", prefill=8192, decode=128)]
     env = serve_envelope(cells)

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from pie_bench.node.snapshots import gguf_shards
+from pie_bench.checkpoints.snapshots import gguf_shards
 from pie_bench.paths import CONFIG, MATRIX
 from pie_bench.plan.matrix import Matrix, cannot_load
 from pie_bench.plan.suites import all_models, load_config, suite_models, suites

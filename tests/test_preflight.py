@@ -1,7 +1,7 @@
 import os
 import platform
 
-from pie_bench.node import preflight as pf
+from pie_bench.runner import preflight as pf
 
 THERM_OK = """Note: No thermal warning level has been recorded
 Note: No performance warning level has been recorded
@@ -179,7 +179,7 @@ def test_after_model_names_every_change(monkeypatch):
 def test_the_runner_holding_the_gpu_is_no_other_process(monkeypatch):
     import os
 
-    import pie_bench.node.preflight as pf
+    import pie_bench.runner.preflight as pf
 
     monkeypatch.setattr(pf, "_run", lambda cmd, *a, **k: "")
     monkeypatch.setattr(pf, "gpu_processes", lambda: [

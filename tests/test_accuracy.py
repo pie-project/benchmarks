@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import pytest
 
-from pie_bench.node.accuracy import (
+from pie_bench.accuracy.divergence import (
     COSINE_GATE,
     adjudicate_divergence,
     bootstrap_ci,
@@ -18,14 +18,9 @@ from pie_bench.node.accuracy import (
     t0_verdict,
     topk_agreement,
 )
-from pie_bench.node.accuracy.gate import SAME_WEIGHTS_REFERENCE, run_t0, skip_reason
-from pie_bench.node.accuracy.prompts import LONG_PROMPT_TARGET_WORDS, t0_prompts
-from pie_bench.node.accuracy.reference import (
-    LazyReference,
-    ReferenceCache,
-    prompt_hash,
-    reference_for,
-)
+from pie_bench.accuracy.gate import SAME_WEIGHTS_REFERENCE, run_t0, skip_reason
+from pie_bench.accuracy.prompts import LONG_PROMPT_TARGET_WORDS, t0_prompts
+from pie_bench.accuracy.reference import LazyReference, ReferenceCache, prompt_hash, reference_for
 from pie_bench.schema import (
     AccuracyStatus,
     ArtifactKind,
@@ -46,8 +41,8 @@ from pie_bench.schema import (
 def test_package_imports_without_heavy_deps():
     assert "torch" not in sys.modules
     assert "transformers" not in sys.modules
-    importlib.import_module("pie_bench.node.accuracy.reference")
-    importlib.import_module("pie_bench.node.accuracy.prompts")
+    importlib.import_module("pie_bench.accuracy.reference")
+    importlib.import_module("pie_bench.accuracy.prompts")
     assert "torch" not in sys.modules
     assert "transformers" not in sys.modules
 
@@ -257,7 +252,7 @@ def test_run_t0_an_engine_that_stops_early_is_judged_by_its_stop():
 
 
 def test_stop_ids_read_generation_config_then_config(tmp_path):
-    from pie_bench.node.accuracy.gate import stop_ids
+    from pie_bench.accuracy.gate import stop_ids
 
     (tmp_path / "config.json").write_text('{"text_config": {"eos_token_id": 1}}')
     assert stop_ids(tmp_path) == {1}
@@ -266,7 +261,7 @@ def test_stop_ids_read_generation_config_then_config(tmp_path):
 
 
 def test_stop_ids_take_the_tokenizers_turn_end(tmp_path):
-    from pie_bench.node.accuracy.gate import stop_ids
+    from pie_bench.accuracy.gate import stop_ids
 
     (tmp_path / "config.json").write_text('{"text_config": {"eos_token_id": 248044}}')
     (tmp_path / "tokenizer_config.json").write_text('{"eos_token": "<|im_end|>", "pad_token": "<|endoftext|>"}')
@@ -331,7 +326,7 @@ def test_reference_for():
 
 
 def _llamacpp_ref(reply):
-    from pie_bench.node.accuracy.reference import LlamaCppReference
+    from pie_bench.accuracy.reference import LlamaCppReference
 
     sent = []
     ref = object.__new__(LlamaCppReference)
@@ -403,7 +398,7 @@ def test_reference_cache_roundtrip(tmp_path):
 def test_a_program_that_states_no_prompt_count_is_not_judged(tmp_path, monkeypatch):
     from types import SimpleNamespace
 
-    from pie_bench.node.accuracy import gate
+    from pie_bench.accuracy import gate
 
     monkeypatch.setattr(gate, "bench_system_prompt", lambda root: "sys")
     monkeypatch.setattr(gate, "render_like_bench", lambda snap, system, text, enable_thinking=False: [1, 2, 3])
@@ -418,7 +413,7 @@ def test_a_program_that_states_no_prompt_count_is_not_judged(tmp_path, monkeypat
 
 
 def test_a_cached_reference_never_loads_beside_the_engine(tmp_path, monkeypatch):
-    import pie_bench.node.accuracy.reference as reference
+    import pie_bench.accuracy.reference as reference
 
     cache = ReferenceCache(tmp_path / "refcache")
     cache.put("rev", "argmax", [1, 2, 3], 4, np.asarray([5, 6, 7, 8]))
@@ -443,7 +438,7 @@ def test_a_cached_reference_never_loads_beside_the_engine(tmp_path, monkeypatch)
 
 
 def test_a_reply_cached_by_the_eos_masking_reference_is_read_again(tmp_path, monkeypatch):
-    import pie_bench.node.accuracy.reference as reference
+    import pie_bench.accuracy.reference as reference
 
     cache = ReferenceCache(tmp_path / "refcache")
     cache.put("rev", "greedy", [1, 2, 3], 2, np.asarray([5, 6]))
@@ -463,7 +458,7 @@ def test_the_hf_reference_writes_the_end_of_turn_it_ranks_first():
     torch = pytest.importorskip("torch")
     from types import SimpleNamespace
 
-    from pie_bench.node.accuracy.reference import HFReference
+    from pie_bench.accuracy.reference import HFReference
 
     eos, vocab = 3, 8
     script = [5, eos, 6, 7]

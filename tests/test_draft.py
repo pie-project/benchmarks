@@ -4,17 +4,17 @@ from pathlib import Path
 
 import pytest
 
-from pie_bench.node.engines import EngineLaunchError
-from pie_bench.node.engines.llamacpp import LlamacppEngine
-from pie_bench.node.engines.mlxlm import MlxlmEngine
-from pie_bench.node.engines.recipes import load_recipe
-from pie_bench.node.engines.shape import serve_envelope
-from pie_bench.node.engines.splash import SplashEngine
-from pie_bench.node.runner import split_draft_processes
-from pie_bench.node.snapshots import draft_artifact, ensure_snapshot
+from pie_bench.checkpoints.snapshots import draft_artifact, ensure_snapshot
+from pie_bench.engines import EngineLaunchError
+from pie_bench.engines.llamacpp import LlamacppEngine
+from pie_bench.engines.mlxlm import MlxlmEngine
+from pie_bench.engines.recipes import load_recipe
+from pie_bench.engines.shapes import serve_envelope
+from pie_bench.engines.splash import SplashEngine
 from pie_bench.paths import MATRIX
 from pie_bench.plan.jobs import process_key
 from pie_bench.plan.matrix import Matrix
+from pie_bench.runner.job import split_draft_processes
 from pie_bench.schema import ArtifactSpec, Backend, Mode, PlatformSpec, Tier, WorkloadSpec
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -107,7 +107,7 @@ def test_a_speculative_shape_drafts_wherever_the_engine_can(hub):
 
 
 def test_the_server_drafts_only_for_the_rows_that_speculate(hub, tmp_path, monkeypatch):
-    from pie_bench.node.engines import served
+    from pie_bench.engines import served
 
     booted = []
 

@@ -9,22 +9,21 @@ from pathlib import Path
 
 import pytest
 
-from pie_bench.node.build import bench_dir
-from pie_bench.node.engines import get_engine
-from pie_bench.node.engines.base import Engine
-from pie_bench.node.engines.llamacpp import LlamacppEngine
-from pie_bench.node.engines.mlxlm import MlxlmEngine
-from pie_bench.node.engines.pie import PieEngine
-from pie_bench.node.engines.recipes import load_recipe, recipe_names
-from pie_bench.node.engines.served import SCRIPT as OPENAI_SCRIPT
-from pie_bench.node.engines.sglang import SglangEngine
-from pie_bench.node.engines.shape import max_model_len_for, workload_concurrency
-from pie_bench.node.engines.splash import SplashEngine
-from pie_bench.node.engines.vllm import VllmEngine
-from pie_bench.node.workloads import common_args_for
-from pie_bench.node.workloads.synthetic import WORDS_PER_TOKEN
+from pie_bench.engines import get_engine
+from pie_bench.engines.engine import Engine
+from pie_bench.engines.llamacpp import LlamacppEngine
+from pie_bench.engines.mlxlm import MlxlmEngine
+from pie_bench.engines.pie import PieEngine
+from pie_bench.engines.recipes import load_recipe, recipe_names
+from pie_bench.engines.served import SCRIPT as OPENAI_SCRIPT
+from pie_bench.engines.sglang import SglangEngine
+from pie_bench.engines.shapes import max_model_len_for, workload_concurrency
+from pie_bench.engines.splash import SplashEngine
+from pie_bench.engines.vllm import VllmEngine
+from pie_bench.installers.pie import bench_dir
 from pie_bench.paths import MATRIX
 from pie_bench.schema import ArtifactSpec, Backend, Mode, PlatformSpec, WorkloadSpec
+from pie_bench.workloads import WORDS_PER_TOKEN, common_args_for
 
 
 def _default_pie_root() -> str:
@@ -473,7 +472,7 @@ def test_llamacpp_version_is_the_release_tag_the_matrix_pins(printed, tag, tmp_p
 def test_llamacpp_missing_gguf_is_load_fail(hf_cache):
     art = artifact(base_model="Qwen/Qwen3-8B-GGUF", scheme="gguf_q4_k_m", source_format="gguf", gguf_file="nope.gguf")
     eng = make(LlamacppEngine, art=art, python="/usr/bin/python3")
-    from pie_bench.node.engines import EngineLaunchError
+    from pie_bench.engines import EngineLaunchError
 
     with pytest.raises(EngineLaunchError) as e:
         eng.gguf_path()
@@ -552,7 +551,7 @@ def test_served_engines_boot_and_stop_a_server(tmp_path, hf_cache, monkeypatch):
 def test_a_served_engine_that_dies_at_startup_is_a_load_fail(tmp_path, hf_cache):
     import sys
 
-    from pie_bench.node.engines import EngineLaunchError
+    from pie_bench.engines import EngineLaunchError
 
     class Dead(SplashEngine):
         def server_cmd(self, port, slots, context):
@@ -615,7 +614,7 @@ def test_baselines_keep_all_reduce_on_nccl_without_peer_access():
     assert make(VllmEngine, plat=nopeer, mode=tp2).env["VLLM_DISABLE_CUSTOM_AR"] == "1"
     for cls in (VllmEngine, SglangEngine):
         env = make(cls, plat=nopeer, mode=tp2).env
-        assert env["PIE_BENCH_NO_CUSTOM_AR"] == "1" and env["PYTHONPATH"].split(":")[0].endswith("no_peer_site")
+        assert env["PIE_BENCH_NO_CUSTOM_AR"] == "1" and env["PYTHONPATH"].split(":")[0].endswith("no_peer_all_reduce")
     for cls in (VllmEngine, SglangEngine):
         for plat, mode in ((platform(), tp2), (nopeer, Mode())):
             env = make(cls, plat=plat, mode=mode).env
@@ -628,7 +627,7 @@ def test_no_peer_sitecustomize_turns_the_p2p_checks_off(tmp_path):
     import subprocess
     import sys
 
-    from pie_bench.node.engines.base import NO_PEER_SITE
+    from pie_bench.engines.engine import NO_PEER_SITE
 
     mods = {"vllm/distributed/device_communicators/custom_all_reduce.py": "_can_p2p",
             "sglang/srt/distributed/device_communicators/custom_all_reduce_utils.py": "can_p2p"}
@@ -1027,7 +1026,7 @@ def test_openai_bench_resends_only_a_request_the_server_never_read(monkeypatch):
 def test_a_shape_can_score_on_prefill(tmp_path):
     import sys
 
-    from pie_bench.node.engines.base import Engine
+    from pie_bench.engines.engine import Engine
 
     fake = tmp_path / "fake_bench.py"
     fake.write_text(
@@ -1064,7 +1063,7 @@ def test_lifeline_stops_its_child_when_the_parent_goes_away():
     import sys
     import time
 
-    sup = subprocess.Popen([sys.executable, "-m", "pie_bench.node.engines.lifeline", sys.executable, "-c", "import time; time.sleep(60)"],
+    sup = subprocess.Popen([sys.executable, "-m", "pie_bench.engines.lifeline", sys.executable, "-c", "import time; time.sleep(60)"],
                            stdin=subprocess.PIPE)
     time.sleep(0.5)
     sup.stdin.close()
@@ -1076,7 +1075,7 @@ def test_an_idle_bench_is_stopped_as_a_hang():
     import subprocess
     import sys
 
-    from pie_bench.node.engines.base import wait_with_stall_check
+    from pie_bench.engines.engine import wait_with_stall_check
 
     idle = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
     rc, timed_out, stalled = wait_with_stall_check(idle, timeout_s=60, stall_s=2, poll_s=0.5, device_busy=lambda: False)
@@ -1087,7 +1086,7 @@ def test_a_bench_waiting_on_a_busy_mac_gpu_is_left_to_finish():
     import subprocess
     import sys
 
-    from pie_bench.node.engines.base import wait_with_stall_check
+    from pie_bench.engines.engine import wait_with_stall_check
 
     waiting = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(4)"])
     rc, timed_out, stalled = wait_with_stall_check(waiting, timeout_s=60, stall_s=2, poll_s=0.5, device_busy=lambda: True)
@@ -1099,7 +1098,7 @@ def test_a_hang_leaves_a_dump_of_what_the_tree_was_doing():
     import subprocess
     import sys
 
-    from pie_bench.node.engines.base import stall_dump, wait_with_stall_check
+    from pie_bench.engines.engine import stall_dump, wait_with_stall_check
 
     idle = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
     dumps = []
@@ -1115,7 +1114,7 @@ def test_a_busy_bench_is_left_to_finish():
     import subprocess
     import sys
 
-    from pie_bench.node.engines.base import wait_with_stall_check
+    from pie_bench.engines.engine import wait_with_stall_check
 
     busy = subprocess.Popen([sys.executable, "-c", "import time\nt = time.time()\nwhile time.time() - t < 4: pass"])
     rc, timed_out, stalled = wait_with_stall_check(busy, timeout_s=60, stall_s=2, poll_s=0.5)
@@ -1193,12 +1192,12 @@ def test_a_dflash2_row_of_a_moe_target_verifies_what_its_draft_pays_for(tmp_path
 
 
 def test_mlxlm_blocks_every_special_token(tmp_path, monkeypatch):
-    from pie_bench.node.engines import served
+    from pie_bench.engines import served
 
     snap = tmp_path / "snap"
     snap.mkdir()
     (snap / "tokenizer.json").write_text(json.dumps({"added_tokens": [{"id": 248046, "content": "<|im_end|>"}, {"id": 248069, "content": "</think>"}]}))
-    monkeypatch.setattr("pie_bench.node.engines.shape.hf_snapshot_dir", lambda *a, **k: snap)
+    monkeypatch.setattr("pie_bench.engines.shapes.hf_snapshot_dir", lambda *a, **k: snap)
     from types import SimpleNamespace
     eng = SimpleNamespace(artifact=SimpleNamespace(base_model="m", revision=None))
     assert served.ServedEngine.stop_token_bias(eng) == {"248046": -100.0, "248069": -100.0}
@@ -1212,7 +1211,7 @@ def test_vllm_single_stream_streams_one_request_at_a_time(tmp_path):
 
 
 def test_vllm_on_the_tpu_runs_its_tpu_build(tmp_path, monkeypatch):
-    from pie_bench.node import baselines
+    from pie_bench.installers import baselines
 
     monkeypatch.setenv("PIE_BENCH_CACHE", str(tmp_path))
     monkeypatch.delenv("VLLM_PY", raising=False)
@@ -1252,8 +1251,8 @@ def test_the_tpu_runs_pie_vllm_and_sglang_raw_prefill_and_batch_rows():
 
 
 def test_sglang_on_the_tpu_serves_its_jax_build(tmp_path, monkeypatch):
-    from pie_bench.node import baselines
-    from pie_bench.node.engines.sglang import SglangTpuEngine
+    from pie_bench.engines.sglang import SglangTpuEngine
+    from pie_bench.installers import baselines
 
     monkeypatch.setenv("PIE_BENCH_CACHE", str(tmp_path))
     monkeypatch.delenv("SGLANG_PY", raising=False)
@@ -1275,7 +1274,7 @@ def test_sglang_on_the_tpu_serves_its_jax_build(tmp_path, monkeypatch):
 
 
 def test_a_queued_single_stream_request_starts_when_the_one_before_it_ends():
-    from pie_bench.node.engines.base import serial_clock
+    from pie_bench.engines.engine import serial_clock
 
     rows = [{"ok": True, "client_send_s": 0.0, "client_return_s": 9.9, "ttft_s": 0.1, "latency_s": 9.9},
             {"ok": True, "client_send_s": 0.0, "client_return_s": 19.8, "ttft_s": 10.0, "latency_s": 19.8}]
@@ -1315,7 +1314,7 @@ def test_a_16_gb_mac_gets_a_smaller_forward_budget(tmp_path):
 def test_trtllm_serves_the_checkpoint_with_graphs_to_the_batch_and_no_block_reuse(tmp_path):
     import yaml
 
-    from pie_bench.node.engines.trtllm import TrtllmEngine
+    from pie_bench.engines.trtllm import TrtllmEngine
 
     eng = make(TrtllmEngine, plat=platform(count=1))
     eng.recipe["options_dir"] = str(tmp_path)
@@ -1334,7 +1333,7 @@ def test_trtllm_serves_the_checkpoint_with_graphs_to_the_batch_and_no_block_reus
 
 
 def test_trtllm_takes_the_same_share_of_the_card_as_the_other_engines():
-    from pie_bench.node.engines.trtllm import TRTLLM_RUNTIME_GIB, TrtllmEngine
+    from pie_bench.engines.trtllm import TRTLLM_RUNTIME_GIB, TrtllmEngine
 
     eng = make(TrtllmEngine, plat=platform(count=1).model_copy(update={"memory_gib": 80}), art=artifact(expected_gib=50.0))
     f = eng.kv_free_mem_fraction()
@@ -1361,7 +1360,7 @@ def test_trtllm_runs_on_nvidia_gpus_only():
 
 
 def test_atom_serves_its_openai_server_at_the_shape_with_exact_lengths(tmp_path, monkeypatch):
-    from pie_bench.node.engines.atom import AtomEngine
+    from pie_bench.engines.atom import AtomEngine
 
     monkeypatch.setenv("ATOM_PY", "/opt/venv/bin/python3")
     assert get_engine("atom") is AtomEngine
@@ -1389,7 +1388,7 @@ def test_atom_runs_on_amd_gpus_only():
 
 
 def _browser_stubs(monkeypatch, tmp_path):
-    from pie_bench.node.engines import browser
+    from pie_bench.engines.browser import webgpu as browser
 
     monkeypatch.setattr(browser, "ensure_harness", lambda log=print: "/usr/bin/node")
     monkeypatch.setenv("PIE_BENCH_CACHE", str(tmp_path / "cache"))
@@ -1401,7 +1400,7 @@ def _options(cmd: list[str]) -> dict:
 
 
 def test_pie_on_a_webgpu_platform_is_its_browser_runtime():
-    from pie_bench.node.engines.browser import LlamacppWebgpuEngine, PieWebEngine, WebllmEngine
+    from pie_bench.engines.browser.webgpu import LlamacppWebgpuEngine, PieWebEngine, WebllmEngine
 
     assert get_engine("pie", "webgpu") is PieWebEngine
     assert get_engine("pie", "cuda") is PieEngine and get_engine("pie") is PieEngine
@@ -1478,5 +1477,5 @@ def test_every_engine_resolves_without_importing_its_module_first():
     import subprocess
     import sys
 
-    code = "from pie_bench.node.engines import get_engine; [get_engine(e, 'metal') for e in ('pie', 'llamacpp', 'mlxlm', 'splash', 'vllm', 'sglang')]"
+    code = "from pie_bench.engines import get_engine; [get_engine(e, 'metal') for e in ('pie', 'llamacpp', 'mlxlm', 'splash', 'vllm', 'sglang')]"
     assert subprocess.run([sys.executable, "-c", code]).returncode == 0

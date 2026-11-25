@@ -26,7 +26,6 @@ from common import (
     cool_before_request,
     cuda_profiler_start,
     cuda_profiler_stop,
-    xla_trace,
     finish,
     gpu_clock_state,
     hash_output_tokens,
@@ -38,6 +37,7 @@ from common import (
     run_timed_warmup,
     summarize,
     visible_cuda_devices,
+    xla_trace,
 )
 
 SERVER_PY = ROOT / "packages" / "python" / "server" / "python"

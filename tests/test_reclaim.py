@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from pie_bench.node import reclaim
 from pie_bench.paths import MATRIX
 from pie_bench.plan.jobs import make_jobs
 from pie_bench.plan.matrix import Matrix
+from pie_bench.runner import disk_space as reclaim
 from pie_bench.schema import Tier
 
 ROOT = Path(__file__).resolve().parents[1]

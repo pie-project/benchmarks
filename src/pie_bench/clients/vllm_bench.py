@@ -10,7 +10,6 @@ import time
 from typing import Any
 
 from common import (
-    end_trace,
     ArrivalPacer,
     RequestResult,
     add_mode_subcommands,
@@ -18,6 +17,7 @@ from common import (
     arrival_schedule,
     cuda_profiler_start,
     cuda_profiler_stop,
+    end_trace,
     finish,
     gpu_clock_state,
     hash_output_tokens,

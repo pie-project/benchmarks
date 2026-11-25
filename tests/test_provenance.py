@@ -1,7 +1,7 @@
 import json
 import subprocess
 
-from pie_bench.node.provenance import (
+from pie_bench.runner.provenance import (
     build_provenance,
     checkpoint_revision,
     git_commit,
@@ -135,14 +135,14 @@ def test_build_provenance_fills_record_fields(tmp_path):
 
 
 def test_gpu_links_reads_the_matrix_not_the_legend():
-    from pie_bench.node.provenance import gpu_links
+    from pie_bench.runner.provenance import gpu_links
     topo = "\tGPU0\tGPU1\tCPU Affinity\tNUMA Affinity\nGPU0\t X \tSYS\t0-31\t0\nGPU1\tSYS\t X \t32-63\t1\n\nLegend:\n  X    = Self\n  SYS  = ...\n  NODE = ...\n  PIX  = ...\n"
     assert gpu_links(topo) == "GPU0-GPU1:SYS"
 
 
 def test_an_installed_package_still_names_its_harness(tmp_path, monkeypatch):
     from pie_bench import __version__
-    from pie_bench.node import provenance
+    from pie_bench.runner import provenance
 
     monkeypatch.setattr(provenance, "harness_root", lambda: None)
     monkeypatch.delenv("PIE_BENCH_HARNESS_COMMIT", raising=False)

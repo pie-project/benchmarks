@@ -1,4 +1,4 @@
-from pie_bench.node.engines.base import classify_failure
+from pie_bench.engines.engine import classify_failure
 from pie_bench.schema import ErrorClass
 
 

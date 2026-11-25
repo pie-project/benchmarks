@@ -91,8 +91,8 @@ def run(models, engines, workloads, suite, machine_id, pie_ref, pie_root, out, u
     (out / "job.json").write_text(job.model_dump_json(indent=1))
     os.environ.update(local.setup_engines(m, job, log=_say))
     _mask_gpus(machine.platform.count)
-    from pie_bench.node.machine import MachineBusy, machine_lock
-    from pie_bench.node.runner import NodeRunner
+    from pie_bench.runner.job import NodeRunner
+    from pie_bench.runner.machine_lock import MachineBusy, machine_lock
 
     try:
         with machine_lock(job.job_id, max_wait_s=3600, log=_say):

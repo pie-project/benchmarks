@@ -75,7 +75,7 @@ def _version(argv: list[str]) -> str:
 def _serve(cmd: list[str], env: dict[str, str], port: int, health: str, timeout_s: float):
     url = f"http://127.0.0.1:{port}"
     log = tempfile.NamedTemporaryFile("w", prefix="quality-server-", suffix=".log", delete=False)
-    proc = subprocess.Popen([sys.executable, "-m", "pie_bench.node.engines.lifeline", *cmd], env={**os.environ, **env},
+    proc = subprocess.Popen([sys.executable, "-m", "pie_bench.engines.lifeline", *cmd], env={**os.environ, **env},
                             stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT)
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
@@ -107,7 +107,7 @@ def _map(fn, items: list) -> list[str]:
 
 def mlxvlm_generate(snapshot: Path, rendered: list[str], max_tokens: int, bos: str | None, log) -> tuple[list[str], str]:
     py = os.environ.get("MLX_VLM_PY") or "/tmp/pievenv/bin/python"
-    script = Path(__file__).resolve().parents[1] / "node" / "engines" / "scripts" / "quality_mlxvlm.py"
+    script = Path(__file__).resolve().parent / "scripts" / "quality_mlxvlm.py"
     with tempfile.TemporaryDirectory() as tmp:
         items, out = Path(tmp) / "items.json", Path(tmp) / "out.json"
         items.write_text(json.dumps([{"prompt": strip_bos(p, bos), "max_tokens": max_tokens} for p in rendered]))
@@ -154,7 +154,7 @@ def llamacpp_generate(art, rendered: list[str], max_tokens: int, bos: str | None
     from huggingface_hub import hf_hub_download
 
     server = os.environ.get("LLAMA_SERVER_BIN") or "llama-server"
-    from pie_bench.node.snapshots import gguf_shards
+    from pie_bench.checkpoints.snapshots import gguf_shards
 
     gguf = [hf_hub_download(art.base_model, f) for f in gguf_shards(art.gguf_file)][0]
     port = _free_port()

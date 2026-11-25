@@ -6,12 +6,12 @@ import asyncio
 import time
 
 from common import (
-    end_trace,
     ArrivalPacer,
     RequestResult,
     add_mode_subcommands,
     add_output_dump_args,
     arrival_schedule,
+    end_trace,
     finish,
     hf_chat_token_ids_and_counts,
     make_prompts,

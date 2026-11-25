@@ -3,8 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from pie_bench.node.build import bench_dir
-from pie_bench.node.miniature import (
+from pie_bench.checkpoints.miniature import (
     SHRINK_SCRIPT,
     ensure_miniature,
     miniature_argv,
@@ -15,6 +14,7 @@ from pie_bench.node.miniature import (
     recipe_from_snapshot,
     repo_cache_dirname,
 )
+from pie_bench.installers.pie import bench_dir
 from pie_bench.schema import ArtifactKind, ArtifactSpec, MiniatureRecipe, QuantScheme
 
 
@@ -145,7 +145,7 @@ def test_num_layers_of(tmp_path):
 def test_stale_recipe_snapshot_is_rebuilt(tmp_path, monkeypatch):
     import json
 
-    from pie_bench.node import miniature as mm
+    from pie_bench.checkpoints import miniature as mm
 
     art = _mini(text_only=False)
     out = mm.miniature_snapshot_dir(art, tmp_path)
@@ -178,7 +178,7 @@ def test_an_mlx_quantized_cut_is_its_own_snapshot():
 
 
 def test_mlx_convert_argv_names_the_scheme():
-    from pie_bench.node.mlx_quantize import convert_argv
+    from pie_bench.checkpoints.mlx_quantize import convert_argv
 
     argv = convert_argv("py", Path("cut"), Path("cut-mlx"), "affine_u4_g64")
     assert argv[:4] == ["py", "-m", "mlx_lm", "convert"]
@@ -231,7 +231,7 @@ def test_a_muse_spark_cut_is_quantized_in_place_under_the_release_names(tmp_path
     import re
     import subprocess
 
-    from pie_bench.node import mlx_quantize as mq
+    from pie_bench.checkpoints import mlx_quantize as mq
 
     rules = mq.IN_PLACE["muse_spark"]
     quantized = lambda k: any(re.search(p, k) for p in rules["quantize"])

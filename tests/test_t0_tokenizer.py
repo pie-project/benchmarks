@@ -10,7 +10,7 @@ def _art() -> ArtifactSpec:
 def test_t0_fetches_the_tokenizer_files_of_the_revision_it_reads(tmp_path: Path, monkeypatch):
     import huggingface_hub
 
-    from pie_bench.node.snapshots import TOKENIZER_PATTERNS, with_tokenizer
+    from pie_bench.checkpoints.snapshots import TOKENIZER_PATTERNS, with_tokenizer
 
     snap = tmp_path / "models--mlx-community--Qwen3.6-35B-A3B-4bit" / "snapshots" / "38740b847e4cb78f352aba30aa41c76e08e6eb46"
     calls = []

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pie_bench.node import importer as im
+from pie_bench.checkpoints import pie_import as im
 from pie_bench.schema import ArtifactSpec, QuantScheme, SourceFormat
 
 
@@ -33,7 +33,7 @@ def test_ensure_artifact_runs_import_once(tmp_path, monkeypatch):
 
 
 def test_a_pinned_sku_is_always_imported():
-    from pie_bench.node.importer import needs_import
+    from pie_bench.checkpoints.pie_import import needs_import
     from pie_bench.schema import ArtifactSpec
 
     base = {"id": "g", "base_model": "meta-models/Muse-Glimmer-30B", "family": "muse_glimmer", "scheme": "affine_u4_g64"}
@@ -68,7 +68,7 @@ def test_a_drafter_row_is_imported_by_repository_id_with_its_drafter(tmp_path, m
 
 
 def test_a_failed_import_is_recorded_by_the_line_that_says_why():
-    from pie_bench.node.runner import import_reason
+    from pie_bench.runner.job import import_reason
 
     e = RuntimeError("pie model import failed for q (exit 1):\n✗ --deployment r: `r` does not read this checkpoint: no `aux.fc.weight`\n"
                      "This import converts for the deployment named and for no other")

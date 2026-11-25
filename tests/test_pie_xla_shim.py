@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-SHIM = Path(__file__).resolve().parents[1] / "src" / "pie_bench" / "node" / "engines" / "scripts" / "pie_xla.py"
+SHIM = Path(__file__).resolve().parents[1] / "src" / "pie_bench" / "clients" / "pie_xla.py"
 CONFIG = '[engine]\ntype = "metal"\ntotal_pages = 4096\nmax_forward_requests = 256\n[server]\nlisten = "127.0.0.1:0"\n'
 
 

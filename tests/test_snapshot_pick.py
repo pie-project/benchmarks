@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pie_bench.node.snapshots import snapshot_dir_if_present
+from pie_bench.checkpoints.snapshots import snapshot_dir_if_present
 from pie_bench.schema.cell import ArtifactSpec
 
 
