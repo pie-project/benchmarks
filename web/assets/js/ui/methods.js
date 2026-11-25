@@ -1,14 +1,9 @@
 window.Pie = window.Pie || {};
 
-// Methods: how the theoretical limit is worked out, a chapter per workload, written as a short paper. Each chapter
-// gives its numbered formulas with the work each rests on, why they hold, every simplification and which way it moves
-// the limit, a check against every measured result, a worked example, and the references. A bar over the page picks the
-// chapter with the grid's own workload pop-up, so the grid and the Methods page always show the same workload.
 (() => {
   const element = document.getElementById("methods");
   const esc = (text) => Pie.format.escape(text);
 
-  // the works the formulas rest on, checked against arXiv and the DOI registry
   const REFS = {
     roofline: { authors: "S. Williams, A. Waterman, D. Patterson", title: "Roofline: An Insightful Visual Performance Model for Multicore Architectures", venue: "Communications of the ACM 52(4)", year: 2009, url: "https://doi.org/10.1145/1498765.1498785" },
     kaplan: { authors: "J. Kaplan et al.", title: "Scaling Laws for Neural Language Models", venue: "arXiv:2001.08361", year: 2020, url: "https://arxiv.org/abs/2001.08361" },
@@ -23,21 +18,15 @@ window.Pie = window.Pie || {};
   };
 
 
-  // the worked examples: one machine and one model from the catalog, at the 4-bit weights the runs use
   const EXAMPLE = { hardware: "m5-max-128g", model: "qwen3.5-4b", scheme: "affine_u4_g64" };
-  // the Limit page's speculation defaults: 70% accepted, a half-billion-parameter drafter that proposes its whole block
-  // in one pass (DFlash), and draft widths up to 16 to pick the best from
   const SPEC = { a: 0.7, drafter: 0.5, widest: 16 };
 
   const num = (n) => (n >= 100 ? Math.round(n).toLocaleString("en-US") : n >= 10 ? n.toFixed(0) : n.toFixed(1));
   const ms = (s) => `${(s * 1e3).toFixed(s * 1e3 >= 10 ? 0 : 2)} ms`;
   const gb = (n) => `${n.toFixed(2)} GB`;
 
-  // a formula as a paper typesets it: the result's name, the equation in symbols, and the works it rests on
   const eq = (result, math, cites = []) => ({ result, math, cites });
 
-  // each quantity's symbol, as a paper's notation table states them: a letter, italic, with an upright subscript; the
-  // symbol names its quantity on hover
   const SYM = {
     "Memory time": ["T", "mem"], "Math time": ["T", "math"], "Interconnect time": ["T", "link"],
     "Weights read": ["W"], "Weights touched": ["W"], "Cache read": ["C"], "Caches read": ["C"], "Prompt cache": ["C"], "Prompt caches": ["C"],
@@ -53,10 +42,8 @@ window.Pie = window.Pie || {};
   };
   const v = (name) => {
     const [base, sub] = SYM[name];
-    // a quantity as Numbers writes a reference in a formula: a rounded token with its name; its symbol on hover
     return `<span class="m-var" data-name="${name}" title="${base}${sub ? `_${sub}` : ""}">${name}</span>`;
   };
-  // where each input comes from, in a sentence, and the catalog page that holds its numbers
   const SOURCES = {
     "Weights read": ["Active parameters × bits per weight: 4.5 for 4-bit, 8.5 for 8-bit, 16 for bf16; in a 2-bit build the experts' own 2-bit size.", "models"],
     "Weights touched": ["As Weights read, with every expert the prompt's tokens reach.", "models"],
@@ -89,30 +76,22 @@ window.Pie = window.Pie || {};
     "Memory": ["The machine's memory, every GPU's together.", "hardware"],
     "Headroom": ["1.25: a quarter more for the KV cache, activations and the runtime.", null],
   };
-  // a quantity's colour says where it comes from, the same on every workload, as Numbers colours each table's
-  // references: the machine blue, the model green, the workload orange, an assumption grey, a worked-out term purple
   const KIND = { hardware: "#0a84ff", models: "#30d158", workloads: "#ff9f0a" };
   const GROUPS = ["workloads", "models", "hardware", null];
   const ASSUMED = new Set(["Acceptance", "Drafts", "Drafter weights read", "Headroom", "Usable share"]);
   const colorOf = (name) => KIND[SOURCES[name]?.[1]] || (ASSUMED.has(name) ? "#8e8e93" : "#bf5af2");
   const tint = (html) => html.replace(/class="m-(?:var|tag)" data-name="([^"]+)"/g, (m, name) => `${m} style="--pill: ${colorOf(name)}"`);
-  // a term as Finder lists a tagged file: its colour as a dot before the name
   const tag = (name) => `<span class="m-tag" data-name="${name}"><span class="m-dot"></span>${name}</span>`;
   const o = (x) => `<span class="m-op">${x}</span>`;
   const par = (x) => `<span class="m-paren">(</span>${x}<span class="m-paren">)</span>`;
-  // a fraction in one line, as Math Notes and Numbers write one: a slash, and brackets round a side that holds an
-  // operator outside its own brackets, so every formula stays a single row
   const bare = (x) => x.replace(/<span class="m-paren[^"]*">\(<\/span>.*<span class="m-paren[^"]*">\)<\/span>/s, "");
-  const side = (x) => (/class="m-op">[+−]</.test(bare(x)) ? par(x) : x);  // × binds before ÷, so only a sum needs them
+  const side = (x) => (/class="m-op">[+−]</.test(bare(x)) ? par(x) : x);
   const fr = (num, den) => `${side(num)}${o("÷")}${side(den)}`;
   const fn = (name, ...args) => `<span class="m-fn">${name}</span>${par(args.join(`<span class="m-comma">,</span>`))}`;
   const sum = (...xs) => xs.join(o("+"));
   const times = (...xs) => xs.join(o("×"));
   const link = `2${o("×")}${v("Layers")}${o("×")}${par(sum(v("Link latency"), fr(v("Activations exchanged"), v("Link bandwidth"))))}`;
 
-  // the effect of a simplification on the limit, as one quiet tag on its row
-  const EFFECT = { up: "Raises the limit", down: "Lowers the limit", small: "Under 1%", choice: "Choice" };
-  // which matmuls run at the FP8 peak rather than the 16-bit one, on every compute-bound chapter
   const NARROW = ["An FP8 build runs its body's matmuls at the chip's FP8 peak. An MXFP4 build runs its experts there too, against 8-bit activations, on chips whose tensor cores take MX block scales (Blackwell, MI350X); elsewhere they run at 16 bits. Attention, router and output head stay at the 16-bit peak, and no build is taken to cut its activations below 8 bits.", "choice"];
 
   const ceilingOf = (metric) => Pie.ceiling?.({ hardware: EXAMPLE.hardware, model: EXAMPLE.model, scheme: EXAMPLE.scheme, workload: "raw" }, metric);
@@ -158,7 +137,7 @@ window.Pie = window.Pie || {};
       },
     },
     {
-      id: "spec",  // the setup pop-up's id for Spec Decode, so picking it opens this chapter
+      id: "spec",
       lede: "A small drafter proposes the next few tokens and the model checks all of them in one pass, keeping each one it agrees with. More drafts cost more and add less, so the limit is the draft width that gives the most tokens per second.",
       equations: [
         eq("Tokens per step", fr(`1${o("−")}${v("Acceptance")}${o("^")}${par(sum(v("Drafts"), "1"))}`, `1${o("−")}${v("Acceptance")}`), ["leviathan"]),
@@ -232,7 +211,6 @@ window.Pie = window.Pie || {};
         const w = Pie.store.index.workloads?.throughput;
         const hw = Pie.store.index.hardware?.[EXAMPLE.hardware];
         if (!bound || !w || !hw) return null;
-        const md = Pie.store.index.models?.[EXAMPLE.model];
         return {
           inputs: [
             ["Requests", `${w.concurrency}`, "Workload"],
@@ -273,7 +251,6 @@ window.Pie = window.Pie || {};
         ["On Apple M1 to M4 chips pie splits a dense SwiGLU model's MLP between the GPU and the Neural Engine, so pie's limit there adds the Neural Engine's FP16 peak to the GPU's. No other engine uses the Neural Engine, and its peak is far above what a matmul reaches on it. pie runs its share in int8, which Apple rates at twice the FP16 peak from M4 on; the limit counts FP16, as for every unit.", "up"],
       ],
       check: { workload: "raw", metric: "prefill", key: "prefill_tok_s" },
-      // shown only while results run above the limit: what is known about why, and what is not
       open: "The result above the limit is on the Apple M5, whose FLOPS figure is the weakest input here: Apple publishes none, and per GPU core the catalog's M5 figure is a fifth below its M5 Max figure (0.94 against 1.18 TFLOPS), so it is probably too low. A prompt-cache hit in the engine, which the timing would not see, is the other open explanation.",
       example: () => {
         const c = ceilingOf("prefill");
@@ -313,8 +290,6 @@ window.Pie = window.Pie || {};
     },
   ];
 
-  // Memory Fit: whether a model fits a machine, worked out for every pair whether it ran or not; a crossed circle in
-  // the grid where it does not
   const FIT = {
     id: "fit",
     equations: [
@@ -324,25 +299,20 @@ window.Pie = window.Pie || {};
     ],
   };
 
-  // a chapter per workload in the grid's pop-up: the same names, in the same order (decode, then prefill), taken from
-  // its list so the two cannot drift apart. A workload without a chapter written for it has none
   const CHAPTERS = (Pie.platform?.metrics() || []).map((m) => {
     const text = CONTENT.find((t) => t.id === m.id);
     return text && { ...text, title: m.label };
   }).filter(Boolean);
 
-  // batched decode drawn as a roofline: tokens per second against requests at once, both axes doubling;
-  // the bandwidth line climbs with the batch until it meets the flat compute ceiling, and the lower of the two is the limit
   const roofline = (bound, at) => {
     const W = 640, H = 220, L = 8, R = 8, T = 18, Bm = 30;
     const batches = [1, 2, 4, 8, 16, 32, 64, 128, 256];
-    const perOne = bound.bandwidth / at;  // the bandwidth limit of one request
+    const perOne = bound.bandwidth / at;
     const lo = Math.min(perOne, bound.compute) / 2;
     const hi = Math.max(bound.compute, perOne * 256) * 1.6;
     const x = (n) => L + (Math.log2(n) / 8) * (W - L - R);
     const y = (t) => T + (1 - Math.log(t / lo) / Math.log(hi / lo)) * (H - T - Bm);
     const knee = Math.min(256, Math.max(1, bound.compute / perOne));
-    // the knee is a point of its own, so the limit turns a sharp corner where the two bounds meet
     const points = [...new Set([...batches, knee])].sort((p, q) => p - q);
     const line = (f) => points.map((n, i) => `${i ? "L" : "M"}${x(n).toFixed(1)},${y(f(n)).toFixed(1)}`).join("");
     const limit = (n) => Math.min(perOne * n, bound.compute);
@@ -362,12 +332,9 @@ window.Pie = window.Pie || {};
       </figure>`;
   };
 
-  // the chapter is the grid's workload: one choice for both pages, kept with the rest of the view
   let current = CHAPTERS[0].id;
   let state = null;
 
-  // a Methodology chapter's page of it, read as a document rather than a table: the workload's tabs, its lede, each
-  // formula on a line of its own with its sources, the terms as a definition list, then why and what is assumed
   const doc = (kind) => {
     const c = kind === "fit" ? FIT : CHAPTERS.find((ch) => ch.id === current);
     const cite = (key) => {
@@ -396,35 +363,28 @@ window.Pie = window.Pie || {};
       ${c.assumptions?.length ? `<h3>Assumptions</h3><ul class="m-doc-list">${c.assumptions.map(([t]) => `<li>${prose(t)}</li>`).join("")}</ul>` : ""}</div>`);
   };
 
-  // `kind` is "fit" for Memory Fit, else the workload's limit
   const page = (kind = state.table === "fit" ? "fit" : "limit") => {
     const c = kind === "fit" ? FIT : CHAPTERS.find((ch) => ch.id === current);
 
-    // a citation is the work's first author and year, a link straight to the paper
     const cite = (key) => {
       const r = REFS[key];
       const author = r.authors.split(",")[0].replace(/ et al\.?$/, "").split(" ").pop();
       return `<a class="cite" href="${r.url}" target="_blank" rel="noopener" title="${esc(`${r.authors} ${r.title}. ${r.venue}, ${r.year}`)}">${esc(author)} ${r.year}</a>`;
     };
-    const prose = (text) => esc(text).replace(/\s?\{(\w+)\}/g, (_, key) => (REFS[key] ? cite(key) : ""));
-    // the formulas as rows of the site's data table: the result's name, then its equation in symbols
     const formulaRows = c.equations.map((e) => `
       <tr><td class="row-number"></td><td class="lim-term">${tag(e.result)}</td><td class="lim-formula"><span class="m-eq">${e.math}</span></td><td class="lim-fill"></td><td class="lim-source">${e.cites.map(cite).join(", ")}</td></tr>`).join("");
 
-    // every quantity the formulas use and none of them works out, in order of first use: how it is found and where
     const made = new Set(c.equations.map((e) => e.result));
     const used = [...new Set(c.equations.flatMap((e) => [...e.math.matchAll(/data-name="([^"]+)"/g)].map((m) => m[1])))]
       .filter((name) => !made.has(name) && SOURCES[name])
-      // grouped by where they come from, so each colour reads as one block: workload, model, machine, the rest
       .sort((x, y) => GROUPS.indexOf(SOURCES[x][1]) - GROUPS.indexOf(SOURCES[y][1]));
     const inputRows = used.map((name) => {
       const [text, from] = SOURCES[name];
-      const how = typeof text === "function" ? text() : text;  // a workload's number, read from the catalog
+      const how = typeof text === "function" ? text() : text;
       const source = from ? `<a class="cite" role="link" tabindex="0" data-go="${from}">${esc(Pie.schema[from].label)}</a>` : "";
       return `<tr><td class="row-number"></td><td class="lim-term">${tag(name)}</td><td class="lim-how" title="${esc(how)}">${esc(how)}</td><td class="lim-fill"></td><td class="lim-source">${source}</td></tr>`;
     }).join("");
 
-    // the bar: the grid's setup control, with Spec Decode as a segment of its own since this page has a chapter for it
     const bar = `
       <div class="platform-bar limit-bar methods-bar">
         ${Pie.platform.setupControl(c.id, ["decode", "spec", "prefill", "batching"])}
@@ -432,10 +392,6 @@ window.Pie = window.Pie || {};
         ${Pie.specField()}` : ""}
       </div>`;
 
-    // the chapter as the site's other pages: the formulas as a data table under the bar, each citing its works by
-    // name, linked
-    // Memory has no workload to pick, but keeps the bar, empty, so the page sits under the toolbar as the rest do and
-    // filters have a place when it grows them
     return `${c === FIT || kind === "fixed" ? `<div class="platform-bar limit-bar methods-bar" aria-hidden="true"></div>` : bar}
       <div class="lim-tables">
         <table class="data-table lim-table">
@@ -447,14 +403,11 @@ window.Pie = window.Pie || {};
 
 
   element.addEventListener("click", (event) => {
-    // a citation scrolls to its reference, as a footnote link does
-    // a catalog link opens that page, as the sidebar would
     const go = event.target.closest("[data-go]");
     if (go) {
       document.querySelector(`.sidebar-item[data-table="${go.dataset.go}"]`)?.click();
       return;
     }
-    // a setup segment: the grid's own setup, so a pick changes both pages
     const tab = event.target.closest("[data-mode]");
     if (tab && state) {
       state.platform.mode = tab.dataset.mode;
@@ -463,39 +416,17 @@ window.Pie = window.Pie || {};
     }
   });
 
-  // the acceptance field: the input follows the shared value when it changes elsewhere
   Pie.bindSpecField(element, () => {
     const input = element.querySelector("[data-alpha]");
     if (input && document.activeElement !== input) input.value = Pie.specAlpha;
-    // and the Acceptance row says the new value
     const row = element.querySelector('.m-tag[data-name="Acceptance"]')?.closest("tr")?.querySelector(".lim-how");
     if (row) row.textContent = row.title = SOURCES.Acceptance[0]();
   });
 
   Pie.methods = {
-    // the limit's workload as a pop-up button at the right of the chapter's title, as the Overview sets a card's pick:
-    // its mark, its name and the menu's chevron; it opens Pie.platform's setup menu
-    setupPick() {
-      const NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
-      return `<button class="filter-button board-title-pick" type="button" data-methods-setup aria-haspopup="menu" aria-label="Workload">${Pie.platform.degree(current)}${esc(NAMES[current] || current)}<svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg></button>`;
-    },
-    // its menu (the popover's "methods:setup"): the four workloads after their marks, the picked one checked; a pick is the
-    // grid's workload too, so both pages agree
-    menu(k) {
-      if (k !== "setup") return [];
-      const NAMES = { decode: "Single Decode", prefill: "Single Prefill", batching: "Batched Decode", pbatch: "Batched Prefill" };
-      return Object.keys(NAMES).map((id) => ({ value: id, label: NAMES[id], selected: id === current, detail: id === "decode" || id === "prefill" ? "Latency" : "Throughput", icon: Pie.platform.degree(id) }));
-    },
-    pick(k, value) {
-      if (k === "setup" && state && ["decode", "prefill", "batching", "pbatch"].includes(value)) state.platform.mode = value;
-    },
-    // a Methodology chapter's tables: the limit for the grid's workload (its setup bar on top) or Memory Fit, and the key
-    // that changes when they would read differently
     chapter(kind, viewState) {
       state = viewState;
-      // a Limits chapter names its setup (limit:<setup>); it draws that one, with no setup to pick above it
       const fixed = kind.startsWith("limit:") ? kind.slice(6) : null;
-      // no Speculative Decode here: the grid on it opens the first chapter
       current = fixed && CHAPTERS.some((c) => c.id === fixed) ? fixed
         : CHAPTERS.some((c) => c.id === state.platform.mode && c.id !== "spec") ? state.platform.mode : CHAPTERS[0].id;
       return { html: doc(fixed ? "fixed" : kind), key: `${kind === "fit" ? "fit" : current}@${state.release}@${Pie.specAlpha}` };
@@ -503,7 +434,6 @@ window.Pie = window.Pie || {};
     render(viewState) {
       state = viewState;
       element.hidden = state.table !== "methods" && state.table !== "fit";
-      // the grid's workload, or the first chapter when that workload has none written yet
       current = CHAPTERS.some((c) => c.id === state.platform.mode) ? state.platform.mode : CHAPTERS[0].id;
       const key = `${state.table === "fit" ? "fit" : current}@${state.release}`;
       if (!element.hidden && element.dataset.key !== key) {

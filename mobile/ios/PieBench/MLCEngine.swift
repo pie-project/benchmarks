@@ -3,11 +3,6 @@ import Foundation
 #if PIEBENCH_MLC && canImport(MLCEngineObjC)
 import MLCEngineObjC
 
-/// MLC LLM through its JSON FFI engine (MLCSwift's MLCEngineObjC), model libs compiled ahead of time
-/// (`mlc_llm package`, device iphone) and linked in. The pre-rendered prompt goes in verbatim: the
-/// downloaded mlc-chat-config.json's conv_template is replaced by a pass-through one (as MLC's "LM"
-/// template, keeping the model's stop ids). Greedy (temperature 0), debug_config.ignore_eos, max_tokens.
-/// Concurrent shapes: the engine in "local" mode with max_num_sequence 4 batches the requests.
 struct MLCAdapter: EngineAdapter {
     let id = EngineID.mlc
     static var version: String { "mlc-llm \(MLCVendored.commit.prefix(12)) / tvm \(MLCVendored.tvm.prefix(12))" }
@@ -33,7 +28,6 @@ struct MLCAdapter: EngineAdapter {
         return engine
     }
 
-    /// The prompt is rendered already (system + user + cue, thinking off): no template on top.
     static func passThroughTemplate(_ dir: URL) throws {
         let url = dir.appending(path: "mlc-chat-config.json")
         let data = try Data(contentsOf: url)
@@ -101,7 +95,6 @@ final class MLCModel: LoadedModel, @unchecked Sendable {
 
     func prepare(slots: Int, contextPerSlot: Int) throws {}
 
-    /// One request; `sent` is its send time.
     private func request(_ prompt: String, decode: Int) async throws -> RequestTiming {
         let id = UUID().uuidString
         let body: [String: Any] = [

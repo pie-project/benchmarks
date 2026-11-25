@@ -18,27 +18,21 @@
   <link rel="stylesheet" href="assets/css/popover.css">
   <link rel="stylesheet" href="assets/css/platform.css">
   <link rel="stylesheet" href="assets/css/overview.css">
-  <link rel="stylesheet" href="assets/css/inferlets.css">
-  <link rel="stylesheet" href="assets/css/profiler.css">
   <link rel="stylesheet" href="assets/css/welcome-band.css">
   <link rel="stylesheet" href="assets/css/methods.css">
   <link rel="stylesheet" href="assets/css/book.css">
   <link rel="stylesheet" href="assets/css/board.css">
   <link rel="stylesheet" href="assets/css/palette.css">
   <link rel="stylesheet" href="assets/css/checks.css">
-  <link rel="stylesheet" href="assets/css/skeleton.css">
   <link rel="stylesheet" href="assets/css/tour.css">
 </head>
 <body>
   <aside class="sidebar" id="sidebar">
-    <!-- the mark and "Pie" go to pie-project.org, as Apple's subdomains set their logo -->
     <div class="sidebar-brand">
-      <!-- the mark: three layers, a model's weights on top, the hardware below, and the engine that joins them in the middle,
-           filled, the one layer these benchmarks measure; it leads to the open repository -->
       <a class="sidebar-home" href="https://github.com/pie-project/benchmarks" aria-label="Benchmarks on GitHub">
         <svg class="sidebar-logo" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round">
           <path d="M12 2.75 21 5.25V7.75L12 10.25 3 7.75V5.25Z" fill="currentColor"/>
-          
+
           <path d="M3 10.75 12 13.25 21 10.75V13.25L12 15.75 3 13.25Z" fill="currentColor"/>
           <path d="M3 16.25 12 18.75 21 16.25V18.75L12 21.25 3 18.75Z" fill="currentColor"/>
         </svg>
@@ -57,15 +51,6 @@
         <svg viewBox="0 0 24 24"><path d="M7 3.5h10a3.5 3.5 0 0 1 3.5 3.5v10a3.5 3.5 0 0 1-3.5 3.5H7A3.5 3.5 0 0 1 3.5 17V7A3.5 3.5 0 0 1 7 3.5zM9.5 3.5v17"/></svg>
       </button>
 
-      <div class="nav-buttons" id="nav-buttons" hidden>
-        <button class="tool-button nav-button" id="back-button" type="button" aria-label="Back" title="Back (⌘[)">
-          <svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>
-        </button>
-        <button class="tool-button nav-button" id="forward-button" type="button" aria-label="Forward" title="Forward (⌘])">
-          <svg viewBox="0 0 24 24"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
-        </button>
-      </div>
-
       <div class="toolbar-titles">
         <h1 class="toolbar-title" id="toolbar-title"></h1>
         <div class="toolbar-subtitle" id="toolbar-subtitle"></div>
@@ -73,7 +58,6 @@
 
       <span class="spacer"></span>
 
-      <!-- search is the ⌘K palette (ui/palette.js); this field stays, hidden, to hold the words a page is filtered for -->
       <label class="search-field" hidden>
         <svg viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14ZM16 16l4 4"/></svg>
         <input id="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search">
@@ -81,54 +65,12 @@
       <button class="search-cancel" id="search-cancel" type="button" hidden>Cancel</button>
       <button class="toolbar-search" id="toolbar-search" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"></button>
 
-      <button class="release-picker" id="metric-picker" type="button" aria-haspopup="menu" hidden>
-        <span class="release-picker-label">Metric</span>
-        <span class="release-picker-value" id="metric-value"></span>
-        <svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
-      </button>
-
-      <button class="release-picker" id="suite-picker" type="button" aria-haspopup="menu" hidden>
-        <span class="release-picker-label">Suite</span>
-        <span class="release-picker-value" id="suite-value"></span>
-        <svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
-      </button>
-
-      <button hidden class="release-picker view-picker" id="view-picker" type="button" aria-haspopup="menu" aria-label="Release and suite">
-        <span class="release-picker-value" id="view-value"></span>
-        <svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
-      </button>
-
-      <!-- Report an Issue, hidden for now
-      <button class="tool-button report-button" id="report-button" type="button" aria-label="Report a problem or suggest a measurement" title="Report an Issue">
-        <svg viewBox="0 0 24 24"><path d="M5 4.5h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H10l-4.5 3.5V17.5H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z"/><path d="M12 8v4.2M12 15h.01"/></svg>
-      </button>
-      -->
-
-
       <button class="tool-button theme-toggle" id="theme-toggle" type="button" aria-label="Switch light or dark mode" title="Light / dark">
         <svg class="theme-icon-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
         <svg class="theme-icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 1.75v3M12 19.25v3M1.75 12h3M19.25 12h3M4.75 4.75l2.1 2.1M17.15 17.15l2.1 2.1M4.75 19.25l2.1-2.1M17.15 6.85l2.1-2.1"/></svg>
       </button>
-      <!-- pie-bench on PyPI, the toolbar's one prominent button, after the search -->
       <a class="toolbar-login toolbar-install" href="https://pypi.org/project/pie-bench/" target="_blank" rel="noopener" title="pip install pie-bench"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M3 13.5h10"/></svg>Get pie-bench</a>
     </header>
-
-    <p class="mini-banner" id="mini-banner" hidden>Model slices: layers removed to fit one device. For engine-to-engine comparison only, not real model speed.</p>
-
-    <dialog class="report-dialog" id="report-dialog" aria-labelledby="report-title">
-      <form method="dialog" class="report-form">
-        <header class="report-head">
-          <h2 id="report-title">Report an Issue</h2>
-          <p class="report-hint">We review every report and follow up on GitHub.</p>
-        </header>
-        <textarea id="report-text" rows="5" placeholder="What did you notice?" aria-label="Description"></textarea>
-        <p class="report-status" id="report-status" role="status"></p>
-        <div class="report-actions">
-          <button type="button" class="report-cancel" id="report-cancel">Cancel</button>
-          <button type="submit" value="send" class="report-send" id="report-send">Send</button>
-        </div>
-      </form>
-    </dialog>
 
     <div class="rules-popover" id="rules-popover" role="dialog" aria-label="Test Conditions" hidden></div>
 
@@ -136,39 +78,27 @@
       <div class="filter-list" id="filter-list"></div>
       <button class="plain-button rules-button" type="button" data-rules aria-expanded="false" aria-label="Test Conditions" title="Test Conditions"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v3.6M8 5.2v.1"/></svg><span class="rules-label">Test Conditions</span></button>
       <span class="spacer"></span>
-      <!-- what the row colours mean, on Performance and Quality: the latest run in blue, a CI Error in red -->
       <span class="table-keys" id="table-keys" hidden>
         <span class="platform-key" title="Measured in the latest run"><i class="platform-key-swatch is-latest" aria-hidden="true"></i>Latest</span>
         <span class="platform-key" id="table-key-error" title="Measured above the hardware's theoretical limit"><i class="platform-key-swatch is-over-limit" aria-hidden="true"></i>CI Error</span>
         <span class="platform-key" id="table-key-review" title="Pie is 25% or more faster than the strongest other engine, with no traced cause yet"><i class="platform-key-swatch is-gap" aria-hidden="true"></i>Needs Review</span>
       </span>
-      <!-- Submit Result, off for now (reports.js keeps its sheet): <button hidden class="report-selected" id="submit-result" type="button">Submit Result</button> -->
       <button hidden class="report-selected" id="download-rows" type="button" title="Download these rows as a CSV file"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v7.5M5 7l3 3 3-3"/><path d="M3 10.5v1.75c0 .7.55 1.25 1.25 1.25h7.5c.7 0 1.25-.55 1.25-1.25V10.5"/></svg><span>Download</span></button>
       <button hidden disabled class="report-selected" id="report-selected" type="button" title="Report the picked measurements as wrong"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 14V2.5M4 2.5h7.5l-1.5 3 1.5 3H4"/></svg><span>Report</span></button>
-      <button hidden class="release-picker is-prominent" id="release-picker" type="button" aria-haspopup="menu" aria-label="Release">
-        <span class="release-picker-label">Release</span>
-        <span class="release-picker-value" id="release-value"></span>
-        <svg class="popup-chevron" viewBox="0 0 10 14" aria-hidden="true"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
-      </button>
-    </div>
 
+    </div>
 
     <div class="table-container" id="table-container">
       <table class="data-table" id="data-table"></table>
     </div>
 
-    <div class="skeleton" id="skeleton" aria-busy="true" aria-label="Loading" hidden></div>
     <div class="overview" id="overview" hidden></div>
     <div class="platform" id="platform" hidden></div>
     <div class="method" id="welcome" hidden></div>
-    <div class="method" id="inferlets" hidden></div>
-    <div class="method" id="services" hidden></div>
     <div class="method" id="approach" hidden></div>
     <div class="method" id="reports" hidden></div>
     <div class="method" id="gaps" hidden></div>
     <div class="method" id="reasons" hidden></div>
-    <div class="method" id="profiler" hidden></div>
-    <div class="method" id="methodology" hidden></div>
     <div class="method" id="methods" hidden></div>
     <div class="method" id="board" hidden></div>
     <div class="method" id="checks" hidden></div>
@@ -177,8 +107,7 @@
   <div class="popover" id="popover" role="menu" hidden></div>
   <div class="chart-tooltip" id="chart-tooltip" role="tooltip" hidden></div>
 
-  <!-- the page's outline first, drawn while the data below is read -->
-  <script src="assets/js/boot/skeleton.js"></script>
+  <script src="assets/js/boot/loading.js"></script>
   <script src="assets/js/boot/data.js"></script>
 </body>
 </html>

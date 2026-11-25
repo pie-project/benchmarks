@@ -1,21 +1,17 @@
 window.Pie = window.Pie || {};
 
-// A first visit's tour: a welcome sheet, then a walk through the site that dims the page and lights one thing at a
-// time, opening the pages it talks about. Shown once per browser; ?tour=1 shows it again.
 (() => {
   const KEY = "pieTourSeen";
   const seen = () => { try { return localStorage.getItem(KEY) === "1"; } catch { return true; } };
-  const remember = () => { try { localStorage.setItem(KEY, "1"); } catch { /* private windows can refuse storage */ } };
+  const remember = () => { try { localStorage.setItem(KEY, "1"); } catch { } };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const nav = (id) => document.querySelector(`.sidebar-item[data-table="${id}"]`);
   const go = async (id) => { if (Pie.state?.table !== id) { nav(id)?.click(); await sleep(400); } };
-  // the first element a selector finds once the page has drawn it, or nothing after a few seconds
   const find = async (selector) => {
     for (let i = 0; i < 40; i++) { const el = [...document.querySelectorAll(selector)].find((e) => e.offsetParent); if (el) return el; await sleep(150); }
     return null;
   };
 
-  // the sidebar's mark: a model's weights on top, the hardware below, the engine between
   const MARK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.75 21 5.25V7.75L12 10.25 3 7.75V5.25Z"/>
     <path d="M3 10.75 12 13.25 21 10.75V13.25L12 15.75 3 13.25Z"/><path d="M3 16.25 12 18.75 21 16.25V18.75L12 21.25 3 18.75Z"/></svg>`;
 
@@ -54,7 +50,6 @@ window.Pie = window.Pie || {};
         </div>
         <div class="tour-actions">
           <a class="tour-button" href="https://github.com/pie-project/benchmarks" target="_blank" rel="noopener"><svg class="tour-button-icon is-filled" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.5 15.6c.4 0 .5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.3 1.9.9 2.4.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.6 7.6 0 0 1 4 0c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4A8 8 0 0 0 8 .2z"/></svg>Open Source</a>
-          <!-- the pip package for self-hosted runs that add data -->
           <a class="tour-button" href="https://pypi.org/project/pie-bench/" target="_blank" rel="noopener" title="pip install pie-bench"><svg class="tour-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>pie-bench</a>
           <span class="tour-spacer"></span>
           <button type="button" class="tour-button is-default" data-tour-next>Take the Tour</button>
@@ -62,7 +57,6 @@ window.Pie = window.Pie || {};
       </section>
     </div>`;
 
-  // the walk: a blocker over the page, a lit hole around the target, and a callout beside it
   let step = -1, lit = null, token = 0;
   const layer = () => document.querySelector("[data-tour-walk]");
   const place = () => {
@@ -80,7 +74,7 @@ window.Pie = window.Pie || {};
   const close = () => {
     const walked = !!layer();
     document.querySelector("[data-tour]")?.remove(); layer()?.remove(); lit = null; step = -1; token++; remember();
-    if (walked) go("board");  // the tour ends where it began, on the Overview
+    if (walked) go("board");
   };
   const show = async (i) => {
     const mine = ++token;
@@ -93,7 +87,7 @@ window.Pie = window.Pie || {};
     walk.classList.add("is-moving");
     const target = await STEPS[i].target();
     if (mine !== token) return;
-    if (!target) return show(i + 1);  // nothing to show on this page today: the next step
+    if (!target) return show(i + 1);
     target.scrollIntoView({ block: "center", inline: "nearest" });
     await sleep(60);
     lit = target;
@@ -129,5 +123,4 @@ window.Pie = window.Pie || {};
   const again = new URLSearchParams(location.search).get("tour") === "1";
   const start = () => { if (again || !seen()) open(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
-  Pie.tour = { open };
 })();

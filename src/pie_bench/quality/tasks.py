@@ -4,8 +4,10 @@ import json
 import math
 import random
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import NamedTuple
 
 
 @dataclass
@@ -14,6 +16,9 @@ class Item:
     prompt: str
     gold: object
 
+
+ANSWER_TOKENS = 256
+PARITY_TASKS = ("gsm8k", "mmlu", "arc", "math500", "ifeval")
 
 GSM8K_SUFFIX = "\n\nSolve the problem step by step. End with a line of the form '#### <number>'."
 
@@ -29,11 +34,22 @@ def load_gsm8k(n: int, seed: int = 20260929) -> list[Item]:
 
     rows = pq.read_table(_download("openai/gsm8k", "main/test-00000-of-00001.parquet")).to_pylist()
     rows = random.Random(seed).sample(rows, min(n, len(rows)))
-    return [Item(f"gsm8k-{i}", r["question"] + GSM8K_SUFFIX, r["answer"].split("####")[-1].strip().replace(",", "")) for i, r in enumerate(rows)]
+    return [
+        Item(
+            f"gsm8k-{i}",
+            r["question"] + GSM8K_SUFFIX,
+            r["answer"].split("####")[-1].strip().replace(",", ""),
+        )
+        for i, r in enumerate(rows)
+    ]
 
 
 def load_ifeval(n: int, seed: int = 20260929) -> list[Item]:
-    rows = [json.loads(line) for line in _download("google/IFEval", "ifeval_input_data.jsonl").read_text().splitlines() if line.strip()]
+    rows = [
+        json.loads(line)
+        for line in _download("google/IFEval", "ifeval_input_data.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
     rows = random.Random(seed).sample(rows, min(n, len(rows)))
     return [Item(f"ifeval-{r['key']}", r["prompt"], r) for r in rows]
 
@@ -44,7 +60,12 @@ LETTERS = "ABCDEFGH"
 
 
 def _choices(question: str, options: list[str]) -> str:
-    return question.strip() + "\n\n" + "\n".join(f"{LETTERS[i]}. {o}" for i, o in enumerate(options)) + MC_SUFFIX
+    return (
+        question.strip()
+        + "\n\n"
+        + "\n".join(f"{LETTERS[i]}. {o}" for i, o in enumerate(options))
+        + MC_SUFFIX
+    )
 
 
 def load_mmlu(n: int, seed: int = 20260929) -> list[Item]:
@@ -52,25 +73,42 @@ def load_mmlu(n: int, seed: int = 20260929) -> list[Item]:
 
     rows = pq.read_table(_download("cais/mmlu", "all/test-00000-of-00001.parquet")).to_pylist()
     rows = random.Random(seed).sample(rows, min(n, len(rows)))
-    return [Item(f"mmlu-{i}", _choices(r["question"], list(r["choices"])), LETTERS[int(r["answer"])]) for i, r in enumerate(rows)]
+    return [
+        Item(f"mmlu-{i}", _choices(r["question"], list(r["choices"])), LETTERS[int(r["answer"])])
+        for i, r in enumerate(rows)
+    ]
 
 
 def load_arc(n: int, seed: int = 20260929) -> list[Item]:
     import pyarrow.parquet as pq
 
-    rows = pq.read_table(_download("allenai/ai2_arc", "ARC-Challenge/test-00000-of-00001.parquet")).to_pylist()
+    rows = pq.read_table(
+        _download("allenai/ai2_arc", "ARC-Challenge/test-00000-of-00001.parquet")
+    ).to_pylist()
     rows = random.Random(seed).sample(rows, min(n, len(rows)))
     out = []
     for r in rows:
         labels = list(r["choices"]["label"])
-        out.append(Item(f"arc-{r['id']}", _choices(r["question"], list(r["choices"]["text"])), LETTERS[labels.index(r["answerKey"])]))
+        out.append(
+            Item(
+                f"arc-{r['id']}",
+                _choices(r["question"], list(r["choices"]["text"])),
+                LETTERS[labels.index(r["answerKey"])],
+            )
+        )
     return out
 
 
 def load_math500(n: int, seed: int = 20260929) -> list[Item]:
-    rows = [json.loads(line) for line in _download("HuggingFaceH4/MATH-500", "test.jsonl").read_text().splitlines() if line.strip()]
+    rows = [
+        json.loads(line)
+        for line in _download("HuggingFaceH4/MATH-500", "test.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
     rows = random.Random(seed).sample(rows, min(n, len(rows)))
-    return [Item(f"math500-{r['unique_id']}", r["problem"] + MATH_SUFFIX, r["answer"]) for r in rows]
+    return [
+        Item(f"math500-{r['unique_id']}", r["problem"] + MATH_SUFFIX, r["answer"]) for r in rows
+    ]
 
 
 def _number(text: str) -> str | None:
@@ -91,7 +129,9 @@ def answer_part(text: str) -> str:
             return ""
         last = final[-1]
         nxt = next((m.start() for m in marks if m.start() > last.end()), len(text))
-        return re.sub(r"<\|(eot|eom|end|start)\|>.*$", "", text[last.end():nxt], flags=re.S).strip()
+        return re.sub(
+            r"<\|(eot|eom|end|start)\|>.*$", "", text[last.end() : nxt], flags=re.S
+        ).strip()
     text = re.sub(r"<think>.*?</think>", "", text, flags=re.S)
     if "<channel|>" in text:
         text = text.split("<channel|>")[-1]
@@ -137,7 +177,7 @@ def _boxed(text: str) -> str | None:
     for i in range(start, len(text)):
         depth += (text[i] == "{") - (text[i] == "}")
         if depth == 0:
-            return text[start + 1:i]
+            return text[start + 1 : i]
     return None
 
 
@@ -145,7 +185,14 @@ def _normalize_math(answer: str) -> str:
     a = answer.strip()
     a = re.sub(r"\\text\{([^}]*)\}", r"\1", a)
     a = re.sub(r"\\(?:left|right|!|,|;|:| )", "", a)
-    a = a.replace("dfrac", "frac").replace("tfrac", "frac").replace("^\\circ", "").replace("^{\\circ}", "").replace("\\%", "").replace("$", "")
+    a = (
+        a.replace("dfrac", "frac")
+        .replace("tfrac", "frac")
+        .replace("^\\circ", "")
+        .replace("^{\\circ}", "")
+        .replace("\\%", "")
+        .replace("$", "")
+    )
     a = re.sub(r"\s+", "", a).rstrip(".")
     a = re.sub(r"\\frac(\d)(\d)", r"\\frac{\1}{\2}", a)
     if re.fullmatch(r"-?\d+\.0+", a):
@@ -158,12 +205,18 @@ def score_math(item: Item, text: str) -> float:
     return float(got is not None and _normalize_math(got) == _normalize_math(str(item.gold)))
 
 
+class Task(NamedTuple):
+    load: Callable[[int], list[Item]]
+    score: Callable[[Item, str], float]
+    max_tokens: int
+
+
 TASKS = {
-    "gsm8k": (load_gsm8k, score_gsm8k, 512),
-    "ifeval": (load_ifeval, score_ifeval, 1024),
-    "mmlu": (load_mmlu, score_choice, 512),
-    "arc": (load_arc, score_choice, 512),
-    "math500": (load_math500, score_math, 1024),
+    "gsm8k": Task(load_gsm8k, score_gsm8k, 512),
+    "ifeval": Task(load_ifeval, score_ifeval, 1024),
+    "mmlu": Task(load_mmlu, score_choice, 512),
+    "arc": Task(load_arc, score_choice, 512),
+    "math500": Task(load_math500, score_math, 1024),
 }
 
 

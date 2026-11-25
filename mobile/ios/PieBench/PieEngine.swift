@@ -1,9 +1,7 @@
 import Foundation
 
-/// Pie commit this build's PieServerCore came from (scripts/build-pie.sh writes PieBuild.swift).
 enum PieInfo {
     static var commit: String? { PieBuild.commit }
-    /// The pie main commit this app's pie path was built and checked against; reported by rows of a build without pie.
     static let evaluated = "a6547509432d48c76e258bfefbb85bd58984f8e4"
 }
 
@@ -11,21 +9,12 @@ enum PieInfo {
 import Metal
 import PieServer
 
-/// Pie in-process (PieServer, Metal), driven through the harness's bench inferlet
-/// (examples/text-completion-bench) as the Mac rows are. Each request is its own inferlet process;
-/// concurrent shapes run `concurrency` processes at once, which pie batches into shared forwards.
 struct PieAdapter: EngineAdapter {
     let id = EngineID.pie
-    /// The runtime boots once per process (PieServer.shutdown is final).
     @MainActor static var booted: String?
-    /// The model `booted` serves, kept for a second run of it in the same launch.
     @MainActor static var served: PieModel?
 
-    /// The bundled bench inferlet (PIEBENCH_PIE_WASM overrides it for the Mac test harness).
-    static var wasm: URL? {
-        ProcessInfo.processInfo.environment["PIEBENCH_PIE_WASM"].map { URL(fileURLWithPath: $0) }
-            ?? Bundle.main.url(forResource: "text-completion-bench", withExtension: "wasm")
-    }
+    static var wasm: URL? { Bundle.main.url(forResource: "text-completion-bench", withExtension: "wasm") }
 
     func unsupportedReason(_ m: ModelEntry) -> String? {
         if PieAdapter.wasm == nil {
@@ -36,30 +25,21 @@ struct PieAdapter: EngineAdapter {
 
     func load(_ m: ModelEntry, checkpoint: Checkpoint, contract: Contract) async throws -> LoadedModel {
         if let other = await PieAdapter.booted {
-            // the same model again in this launch: the server it booted is still up
             if other == m.artifact, let served = await PieAdapter.served { return served }
             throw BenchError.message("pie boots once per app process and already served \(other); relaunch the app to run \(m.artifact)")
         }
         guard let file = Downloader.pieFile(m) else { throw BenchError.message("no .metal.zt for \(m.artifact)") }
         await MainActor.run { PieAdapter.booted = m.artifact }
         var cfg = PieServer.Configuration()
-        // A window-ring model (Gemma 4) runs a prompt in one fire: room for the longest prompt this contract sends, its chat
-        // template included (512 refused raw's ~550 tokens), as the next power of two.
         let longest = (contract.workloads.map(\.prefill).max() ?? 0) + 128
         cfg.maxForwardTokens = max(512, 1 << Int(ceil(log2(Double(longest)))))
         cfg.maxForwardRequests = 4
         cfg.maxConcurrentProcesses = 8
-        // PieServer's default of 16 state slots starves Qwen3.5's recurrent layers ("state pool starved"); 256 is pie's own default
-        // (64 starved Qwen3.5-4B: 32 slots a request).
         cfg.maxStateSlots = 256
-        // pie is the phone's only GPU user: its share is what iOS lets this app have now, less 768 MiB for the app itself, of the
-        // GPU's working set (0.6 of 5.73 GB left Gemma 4 E4B's 4.25 GB of weights no room on a 7.5 GiB iPhone 17).
         if let gpu = MTLCreateSystemDefaultDevice(), gpu.recommendedMaxWorkingSetSize > 0, DeviceInfo.availableBytes > 0 {
             let share = Double(DeviceInfo.availableBytes - (768 << 20)) / Double(gpu.recommendedMaxWorkingSetSize)
             cfg.deviceMemoryShare = min(0.95, max(0.6, share))
         }
-        // Test knob (the Mac harness shares its GPU with other work): PIEBENCH_PIE_MEMORY_SHARE overrides the share.
-        if let v = ProcessInfo.processInfo.environment["PIEBENCH_PIE_MEMORY_SHARE"].flatMap(Double.init) { cfg.deviceMemoryShare = v }
         let server = try await PieServer.start(model: file, configuration: cfg)
         let client = try await server.connect()
         let wasm = PieAdapter.wasm!
@@ -78,7 +58,6 @@ final class PieModel: LoadedModel, @unchecked Sendable {
     let cfg: PieServer.Configuration
     let backend = "metal"
     let concurrencyUnsupportedReason: String? = nil
-    /// The inferlet renders system + user + the no-think cue with pie's own template.
     let rendersTemplate = true
     var engineVersion: String { PieInfo.commit ?? PieInfo.evaluated }
 
@@ -115,7 +94,6 @@ final class PieModel: LoadedModel, @unchecked Sendable {
         let num_output_tokens: Int
     }
 
-    /// One request: launch, wait for "ready", stamp the send, "start", first token at "t0".
     private func request(_ text: String, decode: Int, startGate: @escaping () async -> Void) async throws -> RequestTiming {
         let p = try await client.launch(inferlet, json: JSONEncoder().encode(Input(prompt: text, system: system, max_tokens: decode)))
         var sent = 0.0, first = 0.0
@@ -139,7 +117,6 @@ final class PieModel: LoadedModel, @unchecked Sendable {
     }
 
     func run(prompts: [String], concurrency: Int, decode: Int) async throws -> [RequestTiming] {
-        // A concurrent wave starts together: every process of the wave is ready before any is released.
         var results = [RequestTiming?](repeating: nil, count: prompts.count)
         var offset = 0
         while offset < prompts.count {

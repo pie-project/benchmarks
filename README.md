@@ -39,7 +39,7 @@ pie-bench doctor
 
 Needs Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs.astral.sh/uv/):
 Apple Silicon on a Mac, NVIDIA or AMD GPUs on Linux, or a Cloud TPU. Or run it in
-the Docker image for your cloud (listed above); see [docker/](docker/README.md).
+the Docker image for your cloud; see [docker/](docker/README.md).
 
 ## Run a benchmark
 
@@ -51,7 +51,7 @@ pie-bench run --engines pie,llamacpp             # only some engines
 pie-bench run --pie 0.6.0                        # a pie release, branch or commit
 pie-bench run --no-upload                        # keep the results local
 pie-bench upload ~/.pie-bench/runs/<time>        # upload later
-pie-bench quality                                # model accuracy on question sets
+pie-bench quality --models <artifact id>         # model accuracy on question sets
 ```
 
 Nothing is sent while a run measures. Each run writes one folder under
@@ -81,10 +81,13 @@ after each upload; writes need a token with an upload quota.
 | GET | `/v1/quality` | accuracy scores, with `/v1/quality-tasks`, `-parity`, `-kernels` and `-gaps` |
 | GET | `/v1/no-fit`, `/v1/speed-gaps`, `/v1/parity`, `/v1/install`, `/v1/totals` | models that don't fit each machine, open gaps, parity, install sizes per engine, run totals |
 | GET | `/v1/results` | the newest release: its results and quality scores |
+| GET | `/v1/releases/latest` | the same as `/v1/results` |
 | GET | `/v1/head-to-head` | pie against each engine, per platform |
 | GET | `/v1/footprint` | download size of pie, vLLM and SGLang |
+| GET | `/v1/profiles` | each grid cell's forward-pass profile of its two fastest engines |
 | POST | `/v1/tokens` | a signed upload token |
 | POST | `/v1/submissions` | upload a `submission.json.gz` |
+| POST | `/v1/profiles` | upload the profiles a `pie-bench` run made |
 
 Run the API locally against Postgres:
 
@@ -103,26 +106,52 @@ PIE_BENCH_API=http://localhost:8790 pie-bench run
 The [phone app](mobile) runs the phone workloads on iPhone and Android with
 pie, llama.cpp, LiteRT-LM, MLC LLM and MLX Swift, on the same prompts as the
 Macs. `pie-bench import-phone` turns its shared `records.jsonl` into a
-submission, shown on the site's Mobile page.
+submission, shown on the site's Mobile page. The import computes every number
+with the harness's own code, as for a Mac run, and keeps the median round; it
+trusts nothing the phone derived. A phone not listed in
+`src/pie_bench/matrix/phones.yaml` is stored as `<os>-<model>`.
+
+## Repository layout
+
+```
+src/pie_bench/       the pie-bench package and CLI
+  matrix/            what exists: engines and their pins, machines, models, workloads
+  plan/              the cells a machine runs, grouped into jobs
+  engines/           one driver per engine, with its recipes
+  clients/           the bench scripts, run in each engine's own interpreter
+  runner/            boots an engine, runs the rounds and checks them
+  installers/        builds pie and installs every other engine at its pin
+  checkpoints/       model snapshots, slices and format conversions
+  accuracy/          checks each engine's output against a reference
+  metrics/           stats and fairness checks on the raw timings
+  quality/           model accuracy on question sets
+  profiler/          reruns a cell's two fastest engines under a device profiler
+  schema/ results/   the record format, and local or Postgres storage
+server/              the results API, deployed by render.yaml
+web/                 the site at benchmarks.pie-project.org
+mobile/              the phone app: ios/, android/ and the shared workloads
+docker/              one image per cloud
+```
 
 ## Develop
 
 ```bash
 uv venv && uv pip install -e ".[dev,server]"
-.venv/bin/ruff check src server tests
-.venv/bin/pytest -q
+.venv/bin/ruff check src server
+.venv/bin/ruff format --check src server
 ```
 
 [`src/pie_bench/matrix`](src/pie_bench/matrix) declares what exists: engines
 and their pins, machines, models and workloads. To add an engine, add its
-driver under `src/pie_bench/node/engines`, its client under
-`src/pie_bench/clients`, and its entry in `matrix/engines.yaml`. A tag
-(`git tag v0.1.4 && git push --tags`) publishes a release to PyPI.
+driver under `src/pie_bench/engines`, its client under
+`src/pie_bench/clients`, and its entry in `matrix/engines.yaml`. A version tag
+(`git tag v0.1.4 && git push --tags`) runs the release workflow, which builds
+the wheel and sdist for PyPI and a GitHub release.
 
 ## Community & License
 
 [Discord](https://discord.gg/R62Udyzum) ·
-[Issues](https://github.com/pie-project/pie-evals/issues) ·
+[Issues](https://github.com/pie-project/benchmarks/issues) ·
 [Discussions](https://github.com/pie-project/pie/discussions) ·
 [Contributing](CONTRIBUTING.md)
 

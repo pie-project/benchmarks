@@ -1,8 +1,5 @@
 window.Pie = window.Pie || {};
 
-// The Results and Quality pages' dates: a pop-up button in the filter bar that opens a month calendar, as macOS's date pickers do.
-// A first click picks the day the range starts, a second the day it ends (the same day twice keeps that day alone);
-// the days with results wear a dot, and the months run only from the first measured result to the last.
 (() => {
   const KEY = "pieResultDates";
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -14,20 +11,18 @@ window.Pie = window.Pie || {};
   document.body.appendChild(element);
 
   let range = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch { return null; } })();
-  let picking = null;  // the first day of a range being picked
-  let month = null;    // the month on show, "YYYY-MM"
+  let picking = null;
+  let month = null;
   let anchor = null;
 
-  const save = () => { try { range ? localStorage.setItem(KEY, JSON.stringify(range)) : localStorage.removeItem(KEY); } catch { /* private windows */ } };
-  const dayOf = (row) => String(row?.measured || row?.date || "").slice(0, 10);  // a result's run, a quality score's day
-  // how many results each day holds, in the release on show (the Results page's, or the Quality page's scores)
+  const save = () => { try { range ? localStorage.setItem(KEY, JSON.stringify(range)) : localStorage.removeItem(KEY); } catch { } };
+  const dayOf = (row) => String(row?.measured || row?.date || "").slice(0, 10);
   const counts = (state) => {
     const out = {};
     for (const row of state.table === "quality" ? Pie.store.qualitySnapshot(state.release) : Pie.store.snapshot(state.release)) { const d = dayOf(row); if (d) out[d] = (out[d] || 0) + 1; }
     return out;
   };
   const label = (iso) => SHORT.format(new Date(`${iso}T12:00`));
-  // a range with a plain hyphen, no dash: "Oct 25-31" within a month, "Oct 28 - Nov 2" across two, one day alone as "Oct 25"
   const span = (r) => (r.to === r.from ? label(r.from)
     : SHORT.formatRange(new Date(`${r.from}T12:00`), new Date(`${r.to}T12:00`)).replace(/\s*[–—]\s*/, r.from.slice(0, 7) === r.to.slice(0, 7) ? "-" : " - "));
   const pad = (n) => String(n).padStart(2, "0");
@@ -39,7 +34,7 @@ window.Pie = window.Pie || {};
     const [first, last] = [days[0].slice(0, 7), days[days.length - 1].slice(0, 7)];
     month = month && month >= first && month <= last ? month : (range?.to || days[days.length - 1]).slice(0, 7);
     const [y, m] = month.split("-").map(Number);
-    const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7;  // weeks start on Monday
+    const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7;
     const total = new Date(y, m, 0).getDate();
     const [from, to] = picking ? [picking, picking] : range ? [range.from, range.to] : [null, null];
     const cells = [...Array(lead)].map(() => `<span></span>`);
@@ -69,7 +64,7 @@ window.Pie = window.Pie || {};
   const close = () => { element.hidden = true; picking = null; anchor = null; };
   const changed = () => { save(); document.dispatchEvent(new CustomEvent("pie:refresh")); };
 
-  let current = null;  // the state the calendar was opened on
+  let current = null;
   element.addEventListener("click", (event) => {
     event.stopPropagation();
     const nav = event.target.closest("[data-month]");
@@ -90,7 +85,6 @@ window.Pie = window.Pie || {};
   window.addEventListener("resize", () => { if (anchor) place(); });
 
   Pie.dates = {
-    // the filter bar's button: the range it keeps, or "Dates"
     button: () => `<span class="filter${range ? " is-set" : ""}"><button class="filter-button" type="button" data-dates aria-haspopup="dialog">${range ? span(range) : "Dates"}${chevron}</button></span>`,
     open(target, state) {
       if (!element.hidden && anchor === target) { close(); return; }
@@ -101,10 +95,9 @@ window.Pie = window.Pie || {};
       draw(state);
       place();
     },
-    close: () => { if (!element.hidden) close(); },  // another menu opening shuts the calendar
+    close: () => { if (!element.hidden) close(); },
     active: () => Boolean(range),
-    clear: () => { range = null; picking = null; try { localStorage.removeItem(KEY); } catch { /* private windows can refuse storage */ } },  // the bar's Clear
-    // a result shown under the range: measured on a day inside it (a setup not yet measured has no day, so it goes)
+    clear: () => { range = null; picking = null; try { localStorage.removeItem(KEY); } catch { } },
     keeps: (row) => !range || (dayOf(row) >= range.from && dayOf(row) <= range.to),
   };
 })();

@@ -6,19 +6,14 @@ window.Pie = window.Pie || {};
   const reference = (key, label, group, table, options = {}) => ({ key, label, group, type: "reference", table, ...options });
 
   Pie.sections = [
-    { id: "start", label: "" },  // the home page on its own at the top, under no heading, as a Mac app sets its first page
+    { id: "start", label: "" },
     { id: "home", label: "Compare" },
     { id: "platforms", label: "Platforms" },
-    { id: "measurements", label: "Measurements" },  // open to everyone for now (login: true closes it again)
-    { id: "catalog", label: "Catalog" },  // open to everyone for now (login: true closes it again)
-    { id: "resources", label: "Resources" },  // how the numbers are worked out, after the data itself
+    { id: "measurements", label: "Measurements" },
+    { id: "catalog", label: "Catalog" },
+    { id: "resources", label: "Resources" },
   ];
-  // the sections an account opens: hidden, and their pages closed, (no accounts now: every section is open)
-  // everything on the site is public: no page, section or card waits for an account
-  Pie.signedIn = () => true;
-  Pie.isOpen = (table) => Pie.signedIn() || !Pie.sections.find((s) => s.id === Pie.schema[table]?.section)?.login;
 
-  // the order every list of platforms takes: the sidebar, the Performance page, the Platforms page and Platform Support
   Pie.platformOrder = ["nvidia", "amd", "tpu", "cerebras", "mac", "windows", "web", "android"];
   const platformRank = (s) => (s.view === "platform" && s.platform ? Pie.platformOrder.indexOf(s.platform) : -1);
   Pie.byPlatformOrder = (a, b) => platformRank(a) - platformRank(b);
@@ -27,50 +22,26 @@ window.Pie = window.Pie || {};
     welcome: {
       label: "Platforms",
       section: "catalog",
-      view: "welcome",  // not a table: why the numbers can be trusted
+      view: "welcome",
       filters: [],
       columns: [],
     },
-    // Inferlets and Services, hidden for now
-    // inferlets: {
-    //   label: "Inferlets",
-    //   tag: "Alpha",  // not yet beta
-    //   section: "home",
-    //   view: "inferlets",  // not a table yet: the page is under development
-    //   filters: [],
-    //   columns: [],
-    // },
-    // services: { label: "Services", tag: "Alpha", section: "home", view: "services", filters: [], columns: [] },
-    // the Profiler, hidden for now
-    // profiler: {
-    //   label: "Profiler",
-    //   tag: "Alpha",
-    //   section: "home",
-    //   view: "profiler",  // not a table: uploaded traces of long workloads, empty until uploads open
-    //   filters: [],
-    //   columns: [],
-    // },
-    // every platform's machines in one grid, a header row per platform, every model a column
-    // every engine side by side on one model, as Artificial Analysis ranks models
     board: {
       label: "Overview",
       section: "start",
-      tint: "#0A84FF",  // a tile in System Settings' blue, as the platforms below wear theirs
+      tint: "#0A84FF",
       view: "board",
       filters: [],
       columns: [],
     },
-    // every machine in one table: pie against the other engines
-    // Relative Speed, Tokens per Second and Kernel Efficiency as one page, switched in its bar
     speedups: {
       label: "Performance",
       section: "home",
-      tint: "#FF2D55",  // pink
+      tint: "#FF2D55",
       view: "platform",
       filters: [],
       columns: [],
     },
-    // how close the engines come to one another's answers, across every measurement: off for now, Quality Checks shows it
     accuracy: {
       label: "Accuracy",
       section: null,
@@ -78,48 +49,44 @@ window.Pie = window.Pie || {};
       filters: [],
       columns: [],
     },
-    // every machine in one table: the engine's own tokens per second
     tps: {
       label: "Tokens per Second",
-      section: null,  // a view of Speed now; the page stays for links
-      tint: "#FF9F0A",  // orange
+      section: null,
+      tint: "#FF9F0A",
       view: "platform",
       compare: "tps",
       filters: [],
       columns: [],
     },
-    // every machine in one table: each engine against the hardware's theoretical limit
     all_hardware: {
       label: "Kernel Efficiency",
-      section: null,  // a view of Speed now; the page stays for links
-      tint: "#30B0C7",  // teal
+      section: null,
+      tint: "#30B0C7",
       view: "platform",
       compare: "ceiling",
       filters: [],
       columns: [],
     },
-    // pie against a reference engine: token distributions, kernel tests and benchmark scores side by side
     checks: {
       label: "Quality",
       title: "Quality",
-      section: "home",  // in Compare, where Accuracy was
-      tint: "#7a4cf5",  // Intelligence's purple
+      section: "home",
+      tint: "#7a4cf5",
       view: "checks",
       filters: [],
       columns: [],
     },
-    // how well models answer: Artificial Analysis measures it, so the sidebar links there rather than to a page of ours
     scores: {
-      label: "Intelligence",  // the model's own smarts (Artificial Analysis's Intelligence Index), not an engine's
-      section: null,  // off the sidebar
+      label: "Intelligence",
+      section: null,
       href: "https://artificialanalysis.ai/",
-      tint: "#7a4cf5",  // Artificial Analysis's purple, as the platforms' tiles wear theirs
+      tint: "#7a4cf5",
       filters: [],
       columns: [],
     },
     mac: {
       label: "Apple Silicon",
-      short: "Mac",  // as the tables name it
+      short: "Mac",
       section: "platforms",
       view: "platform",
       platform: "mac",
@@ -129,7 +96,7 @@ window.Pie = window.Pie || {};
     },
     windows: {
       label: "Windows PC",
-      short: "Windows",  // as the tables name it
+      short: "Windows",
       section: "platforms",
       view: "platform",
       platform: "windows",
@@ -139,7 +106,7 @@ window.Pie = window.Pie || {};
     },
     nvidia: {
       label: "NVIDIA GPU",
-      short: "NVIDIA",  // as the tables name it
+      short: "NVIDIA",
       section: "platforms",
       view: "platform",
       platform: "nvidia",
@@ -149,7 +116,7 @@ window.Pie = window.Pie || {};
     },
     amd: {
       label: "AMD GPU",
-      short: "AMD",  // as the tables name it
+      short: "AMD",
       section: "platforms",
       view: "platform",
       platform: "amd",
@@ -159,7 +126,7 @@ window.Pie = window.Pie || {};
     },
     tpu: {
       label: "Google TPU",
-      short: "TPU",  // as the tables name it
+      short: "TPU",
       section: "platforms",
       view: "platform",
       platform: "tpu",
@@ -169,7 +136,7 @@ window.Pie = window.Pie || {};
     },
     cerebras: {
       label: "Cerebras",
-      short: "Cerebras",  // as the tables name it
+      short: "Cerebras",
       section: "platforms",
       view: "platform",
       platform: "cerebras",
@@ -179,28 +146,28 @@ window.Pie = window.Pie || {};
     },
     android: {
       label: "Mobile",
-      short: "Mobile",  // as the tables name it
+      short: "Mobile",
       section: "platforms",
       view: "platform",
       platform: "android",
-      tint: "#1C1C1E",  // black: no other platform wears it
+      tint: "#1C1C1E",
       filters: [],
       columns: [],
     },
     web: {
       label: "Browser",
-      short: "Browser",  // as the tables name it
-      section: null,  // its page once a browser is on the site (store.js); still a row in the Platforms list
+      short: "Browser",
+      section: null,
       view: "platform",
       platform: "web",
-      tint: "#AEAEB2",  // light gray
+      tint: "#AEAEB2",
       filters: [],
       columns: [],
     },
     results: {
       label: "Performance",
       section: "measurements",
-      filters: ["engine", "model", "platform", "hardware", "workload", "status"],  // in the order of the columns they filter
+      filters: ["engine", "model", "platform", "hardware", "workload", "status"],
       numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
@@ -211,12 +178,10 @@ window.Pie = window.Pie || {};
         text("status", "Status", "Setup", { status: true }),
         text("release", "Release", "Setup", { code: true }),
         text("scheme", "Quantization", "Setup", { code: true }),
-        // a datacenter model cut to fit one device: how much of it ran ("8 of 93 layers"), and its own size
         text("miniature", "Model slice", "Setup", { hint: "Layers kept when a model too big for the device ran as a slice; for engine-to-engine comparison only" }),
         number("mini_params_b", "Mini size", "Setup", "B", 1, { hint: "The cut-down model's parameters (an estimate from the full model's)" }),
         number("decode_tok_s", "Decode", "Speed", "tok/s", 1),
         number("prefill_tok_s", "Prefill", "Speed", "tok/s", 0, {
-          // under load the first token waits behind other requests, so no fair prefill rate exists
           na: (row) => row.workload === "throughput",
           naHint: "Not measured under load: with 32 requests at once, time to first token is mostly queueing, not prefill",
         }),
@@ -237,7 +202,7 @@ window.Pie = window.Pie || {};
     quality: {
       label: "Quality",
       section: "measurements",
-      filters: ["engine", "status", "model", "hardware", "task"],  // in the order of the columns they filter
+      filters: ["engine", "status", "model", "hardware", "task"],
       numbered: true,
       columns: [
         reference("engine", "Engine", "Setup", "engines"),
@@ -258,15 +223,13 @@ window.Pie = window.Pie || {};
       ],
     },
 
-    // how the benchmark is run, as prose: the model slices behind the datacenter rows
     approach: {
-      label: "Bench Book",  // the benchmark's rule book: how every number is made
-      section: "start",  // right under the Overview, the site's two front pages
+      label: "Bench Book",
+      section: "start",
       view: "approach",
       filters: [],
       columns: [],
     },
-    // the explained gaps, one row per cause: why Pie is faster and what the other engine could change
     reasons: {
       label: "Profiling Gaps",
       section: "start",
@@ -276,30 +239,18 @@ window.Pie = window.Pie || {};
     },
     methods: {
       label: "Roofline",
-      section: null,  // now a Methodology chapter (approach.js); the page stays for old links
-      view: "methods",  // how each theoretical limit is worked out, a table of formulas per workload
-      filters: [],
-      columns: [],
-    },
-    // how a model is judged to fit a machine, the same table as Roofline
-    fit: {
-      label: "Memory",
-      section: null,  // now a Methodology chapter (approach.js); the page stays for old links
+      section: null,
       view: "methods",
       filters: [],
       columns: [],
     },
-
-    // the Limit calculator, hidden for now; its code stays (methodology.js), and Pie.ceiling there still feeds the grid
-    // methodology: {
-    //   label: "Limit",
-    //   title: "Theoretical Limit",  // the page title in the top bar; the sidebar keeps the short label
-    //   tag: "Beta",  // still under development
-    //   section: "measurements",
-    //   view: "methodology",  // not a table: a calculator of the theoretical maximum
-    //   filters: [],
-    //   columns: [],
-    // },
+    fit: {
+      label: "Memory",
+      section: null,
+      view: "methods",
+      filters: [],
+      columns: [],
+    },
 
     hardware: {
       label: "Hardware",

@@ -9,18 +9,10 @@ import java.io.RandomAccessFile
 import java.net.HttpURLConnection
 import java.net.URL
 
-/** A model on disk: `path` is the file (GGUF, .litertlm, .zt) or the directory (MLC weights). */
 data class LocalModel(val path: File, val repo: String, val file: String?, val revision: String?, val bytes: Long)
 
-/**
- * Models live in <app files>/models/<artifact-id>/ (adb: push to /data/local/tmp, then run-as cp), with
- * meta.json {repo, file, revision, bytes}. Downloads come from Hugging Face with resume; the
- * revision is the X-Repo-Commit header of the resolve response.
- */
 class ModelStore(private val context: Context) {
-    /** Downloads go to internal storage (adb: `run-as org.pieevals.phonebench cp /data/local/tmp/... files/models/<id>/`). */
     val root: File = context.filesDir.resolve("models").apply { mkdirs() }
-    /** Also searched: the app's external files dir. */
     private val external: File? = context.getExternalFilesDir(null)?.resolve("models")
 
     fun dir(a: Artifact) = root.resolve(a.id)
@@ -39,7 +31,6 @@ class ModelStore(private val context: Context) {
             val m = meta?.optJSONObject(file)
             return LocalModel(f, m?.optString("repo") ?: a.repo, file, m?.optString("revision")?.ifEmpty { null }, f.length())
         }
-        // whole-repo artifact: complete when meta.json lists it as done
         if (meta?.optBoolean("complete") != true) return null
         val path = meta.optString("path").takeIf { it.isNotEmpty() }?.let { d.resolve(it) } ?: d
         return LocalModel(path, meta.optString("repo", a.repo), null, meta.optString("revision").ifEmpty { null }, meta.optLong("bytes"))
@@ -52,7 +43,6 @@ class ModelStore(private val context: Context) {
         f.writeText(j.toString(1))
     }
 
-    /** Size of the file(s) from the HF API (null if offline). */
     fun remoteSize(a: Artifact, litertCpu: Boolean = false): Long? = runCatching {
         val sib = siblings(a.repo)
         val file = fileFor(a, litertCpu)
@@ -89,7 +79,6 @@ class ModelStore(private val context: Context) {
         return local(a, litertCpu)!!
     }
 
-    /** One file with HTTP Range resume; redirects followed by hand so the first X-Repo-Commit is kept. */
     private fun fetch(repo: String, name: String, dest: File, progress: (String, Long, Long) -> Unit, cancelled: () -> Boolean): Pair<Long, String?> {
         dest.parentFile?.mkdirs()
         val part = File(dest.path + ".part")
@@ -113,7 +102,7 @@ class ModelStore(private val context: Context) {
                 if (++hops > 10) throw IOException("too many redirects")
                 continue
             }
-            if (code == 416 && have > 0) { // already complete
+            if (code == 416 && have > 0) {
                 c.disconnect()
                 break
             }
@@ -146,7 +135,6 @@ class ModelStore(private val context: Context) {
         return dest.length() to rev
     }
 
-    /** Copy a user-picked local file in as this artifact's model (revision unknown). */
     fun importFile(a: Artifact, uri: Uri, litertCpu: Boolean, progress: (String, Long, Long) -> Unit): LocalModel {
         val file = fileFor(a, litertCpu) ?: throw IOException("${a.id} is a directory artifact; push the directory with adb instead")
         val d = dir(a).apply { mkdirs() }

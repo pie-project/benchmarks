@@ -39,8 +39,6 @@ global_exclude:
 
 suites:
   smoke:
-    max_jobs_per_platform: 2
-    enforce_budget: true
     exclude:
       - {program_category: speculative, not_workload: [ss-128-64]}
       - {program_category: adapter, not_workload: [ss-128-64]}
@@ -56,8 +54,6 @@ suites:
       - {tp: ">=2", not_workload: [control-aa, ss-128-64, c8, lc-2k-128]}
       - {tp: ">=2", not_artifact: [qwen3.5-0.8b-bf16, qwen3.6-35b-a3b-mini5, gpt-oss-20b-mxfp4-mini5, deepseek-v4-flash-mini5, deepseek-v4.1-flash-mini8, glm-5.3-flash-mini8, kimi-k3-mini8]}
   nightly:
-    max_jobs_per_platform: 48
-    enforce_budget: true
     exclude:
       - {engine: vllm, workload: control-aa}
       - {engine: sglang, workload: control-aa}
@@ -67,12 +63,8 @@ suites:
       - {backend: xla, workload: [pf256-512, raw-512-256]}
       - {backend: xla, artifact: qwen3.5-0.8b-xla, workload: c256}
   weekly:
-    max_jobs_per_platform: 900
-    enforce_budget: true
     exclude: []
   targeted:
-    max_jobs_per_platform: 20
-    enforce_budget: false
     exclude:
       - {not_engine: pie, baseline: false}
     include:
@@ -179,6 +171,3 @@ suites:
         tp: 1
         os: windows
         workload: [raw-512-256, spec-512-256, c32, pf32-512]
-
-escalation:
-  on_smoke_regression_promote_family_to_nightly: true

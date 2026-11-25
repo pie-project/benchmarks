@@ -1,7 +1,3 @@
-# pie-bench on RunPod AMD Instinct GPUs. The base is AMD's SGLang image at the engines.yaml pin (ROCm 10,
-# SGLang in /opt/venv), which is where the harness takes SGLang from on ROCm; mi30x is MI300X/MI325X, build
-# with --build-arg GFX=mi35x for MI350/MI355X. llama.cpp's ROCm build at its pin; vLLM installs on the first run.
-# sshd (PUBLIC_KEY); the pod stays up after a run.
 ARG GFX=mi30x
 FROM lmsysorg/sglang:v0.5.22-rocm10-${GFX}
 ARG RUST_STABLE=1.98.1

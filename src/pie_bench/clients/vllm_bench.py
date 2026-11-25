@@ -2,36 +2,35 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
+import asyncio
 import json
 import os
-import sys
 import time
 from typing import Any
 
-from common import (
-    end_trace,
-    ArrivalPacer,
-    RequestResult,
-    add_mode_subcommands,
-    add_output_dump_args,
-    arrival_schedule,
-    cuda_profiler_start,
-    cuda_profiler_stop,
-    finish,
-    gpu_clock_state,
-    hash_output_tokens,
+from bench_args import add_mode_subcommands, add_output_dump_args
+from bench_devices import gpu_clock_state, maybe_set_cpu_affinity, visible_cuda_devices
+from bench_pacing import ArrivalPacer, arrival_schedule, run_timed_warmup_sync
+from bench_prompts import (
     hf_chat_token_ids_and_counts,
     make_prompts,
-    maybe_set_cpu_affinity,
-    print_first_output,
     request_max_tokens,
     request_max_tokens_varies,
-    run_timed_warmup_sync,
-    summarize,
-    visible_cuda_devices,
+)
+from bench_replicas import run_replicas
+from bench_results import RequestResult, finish, hash_output_tokens, print_first_output, summarize
+from bench_streaming import StreamTimer
+from bench_tracing import (
+    cuda_profiler_start,
+    cuda_profiler_stop,
+    end_trace,
+    monotonic_ns,
+    start_measured_profiler,
+    stop_measured_profiler,
     xla_trace,
 )
+
+REPLICA_FLAGS = {"--dp-size", "--json-out", "--requests", "--num-requests"}
 
 
 def _vllm_metric_value(llm: Any, name: str) -> int:
@@ -71,12 +70,8 @@ def _vllm_metric_vector(llm: Any, name: str) -> list[int]:
 def _vllm_spec_metrics(llm: Any) -> dict[str, Any]:
     return {
         "drafts": _vllm_metric_value(llm, "vllm:spec_decode_num_drafts"),
-        "draft_tokens": _vllm_metric_value(
-            llm, "vllm:spec_decode_num_draft_tokens"
-        ),
-        "accepted_tokens": _vllm_metric_value(
-            llm, "vllm:spec_decode_num_accepted_tokens"
-        ),
+        "draft_tokens": _vllm_metric_value(llm, "vllm:spec_decode_num_draft_tokens"),
+        "accepted_tokens": _vllm_metric_value(llm, "vllm:spec_decode_num_accepted_tokens"),
         "accepted_per_position": _vllm_metric_vector(
             llm, "vllm:spec_decode_num_accepted_tokens_per_pos"
         ),
@@ -88,17 +83,12 @@ def _vllm_spec_delta(after: dict[str, Any], before: dict[str, Any]) -> dict[str,
     pos_before = before.get("accepted_per_position") or []
     pos_len = max(len(pos_after), len(pos_before))
     accepted_per_position = [
-        (pos_after[i] if i < len(pos_after) else 0)
-        - (pos_before[i] if i < len(pos_before) else 0)
+        (pos_after[i] if i < len(pos_after) else 0) - (pos_before[i] if i < len(pos_before) else 0)
         for i in range(pos_len)
     ]
     drafts = int(after.get("drafts", 0)) - int(before.get("drafts", 0))
-    draft_tokens = int(after.get("draft_tokens", 0)) - int(
-        before.get("draft_tokens", 0)
-    )
-    accepted_tokens = int(after.get("accepted_tokens", 0)) - int(
-        before.get("accepted_tokens", 0)
-    )
+    draft_tokens = int(after.get("draft_tokens", 0)) - int(before.get("draft_tokens", 0))
+    accepted_tokens = int(after.get("accepted_tokens", 0)) - int(before.get("accepted_tokens", 0))
     out: dict[str, Any] = {
         "vllm spec drafts": drafts,
         "vllm spec draft tokens": draft_tokens,
@@ -109,212 +99,209 @@ def _vllm_spec_delta(after: dict[str, Any], before: dict[str, Any]) -> dict[str,
     if draft_tokens > 0:
         out["vllm spec acceptance rate"] = accepted_tokens / draft_tokens
     if drafts > 0:
-        out["vllm spec mean acceptance length"] = 1.0 + (
-            accepted_tokens / drafts
-        )
+        out["vllm spec mean acceptance length"] = 1.0 + (accepted_tokens / drafts)
     return out
 
 
-def run(args: argparse.Namespace):
-    from vllm import LLM, SamplingParams
-
-    cpu_affinity = maybe_set_cpu_affinity(args, visible_cuda_devices(args.tp_size))
-    n = args.requests if args.mode == "latency" else args.num_requests
-    token_ids, prompt_counts = hf_chat_token_ids_and_counts(
-        args.model, args.system, make_prompts(args, n + args.warmup), getattr(args, "think", None)
-    )
-    prompts = [{"prompt_token_ids": ids} for ids in token_ids]
+def max_num_seqs_for(args: argparse.Namespace) -> int:
     if args.mode == "latency":
-        max_num_seqs = 1
+        seqs = 1
     elif args.concurrency == 0:
-        max_num_seqs = max(1, args.num_requests)
+        seqs = max(1, args.num_requests)
     else:
-        max_num_seqs = args.concurrency
-    if getattr(args, "max_num_seqs", 0):
-        max_num_seqs = min(max_num_seqs, args.max_num_seqs)
-    llm_kwargs = {}
+        seqs = args.concurrency
+    if args.max_num_seqs:
+        seqs = min(seqs, args.max_num_seqs)
+    return seqs
+
+
+def engine_kwargs(args: argparse.Namespace, *, offline: bool) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {}
     if args.attention_backend:
-        llm_kwargs["attention_config"] = {"backend": args.attention_backend}
-    if getattr(args, "moe_backend", None):
-        llm_kwargs["kernel_config"] = {"moe_backend": args.moe_backend}
+        kwargs["attention_config"] = {"backend": args.attention_backend}
+    if args.moe_backend:
+        kwargs["kernel_config"] = {"moe_backend": args.moe_backend}
     if args.enforce_eager:
-        llm_kwargs["enforce_eager"] = True
-    if getattr(args, "compilation_config", None):
-        llm_kwargs["compilation_config"] = json.loads(args.compilation_config)
-    if getattr(args, "language_model_only", False):
-        llm_kwargs["language_model_only"] = True
-    if os.environ.get("VLLM_DISABLE_CUSTOM_AR"):
-        llm_kwargs["disable_custom_all_reduce"] = True
-    if getattr(args, "num_gpu_blocks_override", 0):
-        llm_kwargs["num_gpu_blocks_override"] = args.num_gpu_blocks_override
-    if getattr(args, "block_size", 0):
-        llm_kwargs["block_size"] = args.block_size
-    if getattr(args, "kv_cache_dtype", "auto") != "auto":
-        llm_kwargs["kv_cache_dtype"] = args.kv_cache_dtype
-    if getattr(args, "no_chunked_prefill", False):
-        llm_kwargs["enable_chunked_prefill"] = False
-    speculative_config = None
-    if args.speculative_config is not None:
-        speculative_config = json.loads(args.speculative_config)
+        kwargs["enforce_eager"] = True
+    if args.compilation_config:
+        kwargs["compilation_config"] = json.loads(args.compilation_config)
+    if args.language_model_only:
+        kwargs["language_model_only"] = True
+    if offline and os.environ.get("VLLM_DISABLE_CUSTOM_AR"):
+        kwargs["disable_custom_all_reduce"] = True
+    if args.num_gpu_blocks_override:
+        kwargs["num_gpu_blocks_override"] = args.num_gpu_blocks_override
+    if args.block_size:
+        kwargs["block_size"] = args.block_size
+    if offline and args.kv_cache_dtype != "auto":
+        kwargs["kv_cache_dtype"] = args.kv_cache_dtype
+    if offline and args.no_chunked_prefill:
+        kwargs["enable_chunked_prefill"] = False
+    return kwargs
+
+
+def _claim(config: dict[str, Any], key: str, value: Any, flag: str) -> None:
+    if key in config:
+        raise ValueError(f"{flag} conflicts with speculative_config.{key}")
+    config[key] = value
+
+
+def speculative_config_for(args: argparse.Namespace) -> dict[str, Any] | None:
+    config = json.loads(args.speculative_config) if args.speculative_config is not None else None
     if args.spec_method is not None or args.spec_tokens is not None:
-        speculative_config = dict(speculative_config or {})
+        config = dict(config or {})
         if args.spec_method is not None:
-            if "method" in speculative_config:
-                raise ValueError("--spec-method conflicts with speculative_config.method")
-            speculative_config["method"] = args.spec_method
+            _claim(config, "method", args.spec_method, "--spec-method")
         if args.spec_tokens is not None:
-            if "num_speculative_tokens" in speculative_config:
-                raise ValueError(
-                    "--spec-tokens conflicts with speculative_config.num_speculative_tokens"
-                )
-            speculative_config["num_speculative_tokens"] = args.spec_tokens
+            _claim(config, "num_speculative_tokens", args.spec_tokens, "--spec-tokens")
     if args.mtp_assistant_model is not None:
-        speculative_config = dict(speculative_config or {})
-        if "model" in speculative_config:
-            raise ValueError("--mtp-assistant-model conflicts with speculative_config.model")
-        speculative_config["model"] = args.mtp_assistant_model
-        if "method" in speculative_config:
-            raise ValueError("--mtp-method conflicts with speculative_config.method")
-        speculative_config["method"] = args.mtp_method
-        if "num_speculative_tokens" in speculative_config:
-            raise ValueError(
-                "--mtp-num-drafts conflicts with "
-                "speculative_config.num_speculative_tokens"
-            )
-        speculative_config["num_speculative_tokens"] = args.mtp_num_drafts
+        config = dict(config or {})
+        _claim(config, "model", args.mtp_assistant_model, "--mtp-assistant-model")
+        _claim(config, "method", args.mtp_method, "--mtp-method")
+        _claim(config, "num_speculative_tokens", args.mtp_num_drafts, "--mtp-num-drafts")
         if args.mtp_draft_tp_size is not None:
-            if "draft_tensor_parallel_size" in speculative_config:
-                raise ValueError(
-                    "--mtp-draft-tp-size conflicts with "
-                    "speculative_config.draft_tensor_parallel_size"
-                )
-            speculative_config["draft_tensor_parallel_size"] = args.mtp_draft_tp_size
-    summary_speculative_config = dict(speculative_config) if speculative_config else None
-    if speculative_config is not None:
-        llm_kwargs["speculative_config"] = dict(speculative_config)
-    if args.print_llm_kwargs:
-        print(
-            json.dumps(
-                {
-                    "model": args.model,
-                    "gpu_memory_utilization": args.gpu_mem_util,
-                    "max_num_seqs": max_num_seqs,
-                    "max_num_batched_tokens": args.max_num_batched_tokens,
-                    "tensor_parallel_size": args.tp_size,
-                    "max_model_len": args.max_model_len,
-                    "enable_prefix_caching": args.prefix_caching,
-                    "disable_log_stats": False,
-                    **llm_kwargs,
-                },
-                indent=2,
+            _claim(
+                config, "draft_tensor_parallel_size", args.mtp_draft_tp_size, "--mtp-draft-tp-size"
             )
-        )
+    return config
 
-    llm = LLM(
-        model=args.model,
-        trust_remote_code=True,
-        gpu_memory_utilization=args.gpu_mem_util,
-        max_num_seqs=max_num_seqs,
-        max_num_batched_tokens=args.max_num_batched_tokens,
-        tensor_parallel_size=args.tp_size,
-        max_model_len=args.max_model_len,
-        enable_prefix_caching=args.prefix_caching,
-        disable_log_stats=False,
-        **llm_kwargs,
-    )
-    sampling = SamplingParams(
-        temperature=args.temperature,
-        top_p=args.top_p,
-        max_tokens=args.max_tokens,
-        ignore_eos=args.ignore_eos,
-    )
 
-    def sampling_for(i: int) -> SamplingParams:
-        mt = request_max_tokens(args, i)
-        if mt == args.max_tokens:
-            return sampling
-        return SamplingParams(
+class Sampling:
+    def __init__(self, args: argparse.Namespace) -> None:
+        from vllm import SamplingParams
+
+        self.args = args
+        self.make = SamplingParams
+        self.base = self.with_max_tokens(args.max_tokens)
+
+    def with_max_tokens(self, max_tokens: int):
+        args = self.args
+        return self.make(
             temperature=args.temperature,
             top_p=args.top_p,
-            max_tokens=mt,
+            max_tokens=max_tokens,
             ignore_eos=args.ignore_eos,
         )
 
-    if args.warmup:
-        warmup_sampling = sampling
-        if args.warmup_max_tokens is not None:
-            warmup_sampling = SamplingParams(
-                temperature=args.temperature,
-                top_p=args.top_p,
-                max_tokens=args.warmup_max_tokens,
-                ignore_eos=args.ignore_eos,
-            )
-        def warmup_pass() -> None:
-            llm.generate(prompts[: args.warmup], warmup_sampling)
+    def for_request(self, i: int):
+        max_tokens = request_max_tokens(self.args, i)
+        return self.base if max_tokens == self.args.max_tokens else self.with_max_tokens(max_tokens)
 
-        warmup_pass()
-        if args.mode == "tput" and max_num_seqs > 1:
-            llm.generate([prompts[k % args.warmup] for k in range(max_num_seqs)], SamplingParams(
-                temperature=args.temperature, top_p=args.top_p, max_tokens=8, ignore_eos=args.ignore_eos))
-        run_timed_warmup_sync(
-            warmup_pass, args.warmup_seconds, label="vllm")
+
+def chat_token_prompts(
+    args: argparse.Namespace, n: int
+) -> tuple[list[dict[str, list[int]]], list[int]]:
+    token_ids, prompt_counts = hf_chat_token_ids_and_counts(
+        args.model, args.system, make_prompts(args, n + args.warmup), args.think
+    )
+    return [{"prompt_token_ids": ids} for ids in token_ids], prompt_counts
+
+
+def _warm_up_offline(
+    llm, args: argparse.Namespace, prompts: list, sampling: Sampling, max_num_seqs: int
+) -> None:
+    warmup_sampling = sampling.base
+    if args.warmup_max_tokens is not None:
+        warmup_sampling = sampling.with_max_tokens(args.warmup_max_tokens)
+
+    def warmup_pass() -> None:
+        llm.generate(prompts[: args.warmup], warmup_sampling)
+
+    warmup_pass()
+    if args.mode == "tput" and max_num_seqs > 1:
+        llm.generate(
+            [prompts[k % args.warmup] for k in range(max_num_seqs)], sampling.with_max_tokens(8)
+        )
+    run_timed_warmup_sync(warmup_pass, args.warmup_seconds, label="vllm")
+
+
+def _offline_result(
+    args: argparse.Namespace, out: Any, req_wall: float, prompt_count: int
+) -> RequestResult:
+    token_ids = [int(t) for t in out.outputs[0].token_ids]
+    result = RequestResult(True, float(req_wall), len(token_ids), prompt_count)
+    result.output_token_sha256 = hash_output_tokens(token_ids)
+    if args.dump_all_token_ids:
+        result.output_token_ids = token_ids
+    if args.dump_all_texts:
+        result.output_text = out.outputs[0].text
+    return result
+
+
+def _generate_measured(
+    llm, args, prompts: list, counts: list[int], sampling: Sampling, results: list, texts: list
+) -> None:
+    def record(out: Any, req_wall: float, prompt_count: int) -> None:
+        results.append(_offline_result(args, out, req_wall, prompt_count))
+        texts.append(out.outputs[0].text)
+
+    if args.mode == "latency":
+        for i, (p, prompt_count) in enumerate(zip(prompts, counts), start=args.warmup):
+            req_start = time.perf_counter()
+            outputs = llm.generate([p], sampling.for_request(i))
+            req_wall = time.perf_counter() - req_start
+            for out in outputs:
+                record(out, req_wall, prompt_count)
+        return
+    measured_sampling = (
+        [sampling.for_request(args.warmup + i) for i in range(len(prompts))]
+        if request_max_tokens_varies(args)
+        else sampling.base
+    )
+    for out, prompt_count in zip(llm.generate(prompts, measured_sampling), counts):
+        record(out, 0.0, prompt_count)
+
+
+def run(args: argparse.Namespace):
+    from vllm import LLM
+
+    cpu_affinity = maybe_set_cpu_affinity(args, visible_cuda_devices(args.tp_size))
+    n = args.requests if args.mode == "latency" else args.num_requests
+    prompts, prompt_counts = chat_token_prompts(args, n)
+    max_num_seqs = max_num_seqs_for(args)
+    llm_kwargs = engine_kwargs(args, offline=True)
+    speculative_config = speculative_config_for(args)
+    if speculative_config is not None:
+        llm_kwargs["speculative_config"] = dict(speculative_config)
+    shared = {
+        "model": args.model,
+        "gpu_memory_utilization": args.gpu_mem_util,
+        "max_num_seqs": max_num_seqs,
+        "max_num_batched_tokens": args.max_num_batched_tokens,
+        "tensor_parallel_size": args.tp_size,
+        "max_model_len": args.max_model_len,
+        "enable_prefix_caching": args.prefix_caching,
+        "disable_log_stats": False,
+    }
+    if args.print_llm_kwargs:
+        print(json.dumps({**shared, **llm_kwargs}, indent=2))
+    llm = LLM(trust_remote_code=True, **shared, **llm_kwargs)
+    sampling = Sampling(args)
+    if args.warmup:
+        _warm_up_offline(llm, args, prompts, sampling, max_num_seqs)
 
     spec_metrics_before = _vllm_spec_metrics(llm)
     clocks_at_start = gpu_clock_state()
-    run_prompts = prompts[args.warmup:]
-    run_prompt_counts = prompt_counts[args.warmup:]
     results: list[RequestResult] = []
-    first_output_text: str | None = None
-
-    def record(out: Any, req_wall: float, prompt_count: int) -> None:
-        nonlocal first_output_text
-        token_ids = [int(t) for t in out.outputs[0].token_ids]
-        result = RequestResult(
-            True,
-            float(req_wall),
-            len(token_ids),
-            prompt_count,
-        )
-        result.output_token_sha256 = hash_output_tokens(token_ids)
-        if getattr(args, "dump_all_token_ids", False):
-            result.output_token_ids = token_ids
-        if getattr(args, "dump_all_texts", False):
-            result.output_text = out.outputs[0].text
-        if first_output_text is None:
-            first_output_text = out.outputs[0].text
-        results.append(result)
-
+    texts: list[str] = []
     cuda_profiler_start(args.cuda_profiler_capture)
     start = time.perf_counter()
     try:
-        if args.mode == "latency":
-            for i, (p, prompt_count) in enumerate(
-                zip(run_prompts, run_prompt_counts),
-                start=args.warmup,
-            ):
-                req_start = time.perf_counter()
-                outputs = llm.generate([p], sampling_for(i))
-                req_wall = time.perf_counter() - req_start
-                for out in outputs:
-                    record(out, req_wall, prompt_count)
-        else:
-            measured_sampling = (
-                [
-                    sampling_for(args.warmup + i)
-                    for i in range(len(run_prompts))
-                ]
-                if request_max_tokens_varies(args)
-                else sampling
-            )
-            outputs = llm.generate(run_prompts, measured_sampling)
-            for out, prompt_count in zip(outputs, run_prompt_counts):
-                record(out, 0.0, prompt_count)
+        _generate_measured(
+            llm,
+            args,
+            prompts[args.warmup :],
+            prompt_counts[args.warmup :],
+            sampling,
+            results,
+            texts,
+        )
     finally:
         wall = time.perf_counter() - start
         cuda_profiler_stop(args.cuda_profiler_capture)
         clocks_at_end = gpu_clock_state()
     spec_metrics_after = _vllm_spec_metrics(llm)
-    print_first_output(args, first_output_text)
+    print_first_output(args, texts[0] if texts else None)
 
     summary = summarize(
         mode=args.mode,
@@ -328,7 +315,7 @@ def run(args: argparse.Namespace):
             "max_num_batched_tokens": args.max_num_batched_tokens,
             "attention_backend": args.attention_backend,
             "enforce_eager": args.enforce_eager,
-            "speculative_config": summary_speculative_config,
+            "speculative_config": dict(speculative_config) if speculative_config else None,
             "temperature": args.temperature,
             "top_p": args.top_p,
             "ignore_eos": args.ignore_eos,
@@ -345,46 +332,116 @@ def run(args: argparse.Namespace):
     return summary, results
 
 
-def run_streaming(args: argparse.Namespace):
-    import asyncio
+async def stream_request(
+    engine,
+    request_id: str,
+    prompt,
+    prompt_count: int,
+    params,
+    epoch_ns: int | None,
+    want_text: bool,
+) -> RequestResult:
+    timer = StreamTimer(epoch_ns)
+    text: str | None = None
+    try:
+        async for out in engine.generate(prompt, params, request_id):
+            stamp = timer.stamp()
+            if want_text:
+                text = out.outputs[0].text
+            timer.saw(len(out.outputs[0].token_ids), stamp)
+        return timer.result(prompt_count, process_id=request_id, output_text=text)
+    except Exception as e:
+        return timer.failure(prompt_count, e)
 
-    from vllm import SamplingParams
+
+def _streaming_batched_tokens(args: argparse.Namespace, engine_args_cls) -> int | None:
+    if args.max_num_batched_tokens is not None or not hasattr(
+        engine_args_cls, "get_batch_defaults"
+    ):
+        return args.max_num_batched_tokens
+    from vllm.usage.usage_lib import UsageContext
+
+    serve = engine_args_cls.get_batch_defaults(args.tp_size)[0].get(UsageContext.OPENAI_API_SERVER)
+    return max(serve or 0, 2048)
+
+
+async def _warm_up_streaming(
+    engine,
+    args,
+    prompts: list,
+    counts: list[int],
+    sampling: Sampling,
+    max_num_seqs: int,
+    want_text: bool,
+) -> None:
+    for j, p in enumerate(prompts[: args.warmup]):
+        await stream_request(engine, f"warmup-{j}", p, counts[j], sampling.base, None, want_text)
+    if max_num_seqs > 1:
+        short = sampling.with_max_tokens(8)
+        await asyncio.gather(
+            *(
+                stream_request(
+                    engine,
+                    f"warmup-batch-{k}",
+                    prompts[k % args.warmup],
+                    counts[k % args.warmup],
+                    short,
+                    None,
+                    want_text,
+                )
+                for k in range(max_num_seqs)
+            )
+        )
+
+
+async def _drive_streaming(
+    engine,
+    args,
+    prompts: list,
+    counts: list[int],
+    sampling: Sampling,
+    max_num_seqs: int,
+    pacer: ArrivalPacer,
+):
+    n = args.num_requests
+    want_text = args.dump_all_texts or args.dump_first_text
+    if args.warmup:
+        await _warm_up_streaming(engine, args, prompts, counts, sampling, max_num_seqs, want_text)
+    await asyncio.to_thread(xla_trace, "start")
+    epoch_unix_s = time.time()
+    epoch_ns = monotonic_ns()
+    profiler_window = start_measured_profiler(args)
+    start = time.perf_counter()
+    pacer.start()
+
+    async def offer(i: int, paced: bool = True) -> RequestResult:
+        if paced:
+            await pacer.wait(i)
+        k = args.warmup + i
+        return await stream_request(
+            engine, f"req-{i}", prompts[k], counts[k], sampling.for_request(k), epoch_ns, want_text
+        )
+
+    try:
+        if args.concurrency == 1 and not args.arrival_rate:
+            results = [await offer(i, paced=False) for i in range(n)]
+        else:
+            results = list(await asyncio.gather(*(offer(i) for i in range(n))))
+    finally:
+        await stop_measured_profiler(args, profiler_window)
+    wall = time.perf_counter() - start
+    await asyncio.to_thread(xla_trace, "stop")
+    return results, wall, epoch_unix_s, epoch_ns
+
+
+def run_streaming(args: argparse.Namespace):
     from vllm.engine.arg_utils import AsyncEngineArgs
     from vllm.v1.engine.async_llm import AsyncLLM
 
     cpu_affinity = maybe_set_cpu_affinity(args, visible_cuda_devices(args.tp_size))
-    n = args.num_requests
-    token_ids, prompt_counts = hf_chat_token_ids_and_counts(
-        args.model, args.system, make_prompts(args, n + args.warmup), getattr(args, "think", None)
-    )
-    prompts = [{"prompt_token_ids": ids} for ids in token_ids]
-    if args.concurrency == 0:
-        max_num_seqs = max(1, args.num_requests)
-    else:
-        max_num_seqs = args.concurrency
-    if getattr(args, "max_num_seqs", 0):
-        max_num_seqs = min(max_num_seqs, args.max_num_seqs)
-    engine_kwargs = {}
-    if args.enforce_eager:
-        engine_kwargs["enforce_eager"] = True
-    if getattr(args, "compilation_config", None):
-        engine_kwargs["compilation_config"] = json.loads(args.compilation_config)
-    if getattr(args, "language_model_only", False):
-        engine_kwargs["language_model_only"] = True
-    if getattr(args, "num_gpu_blocks_override", 0):
-        engine_kwargs["num_gpu_blocks_override"] = args.num_gpu_blocks_override
-    if getattr(args, "block_size", 0):
-        engine_kwargs["block_size"] = args.block_size
-    if getattr(args, "attention_backend", None):
-        engine_kwargs["attention_config"] = {"backend": args.attention_backend}
-    if getattr(args, "moe_backend", None):
-        engine_kwargs["kernel_config"] = {"moe_backend": args.moe_backend}
-    max_num_batched_tokens = args.max_num_batched_tokens
-    if max_num_batched_tokens is None and hasattr(AsyncEngineArgs, "get_batch_defaults"):
-        from vllm.usage.usage_lib import UsageContext
-
-        serve = AsyncEngineArgs.get_batch_defaults(args.tp_size)[0].get(UsageContext.OPENAI_API_SERVER)
-        max_num_batched_tokens = max(serve or 0, 2048)
+    prompts, prompt_counts = chat_token_prompts(args, args.num_requests)
+    max_num_seqs = max_num_seqs_for(args)
+    max_num_batched_tokens = _streaming_batched_tokens(args, AsyncEngineArgs)
     engine = AsyncLLM.from_engine_args(
         AsyncEngineArgs(
             model=args.model,
@@ -396,195 +453,19 @@ def run_streaming(args: argparse.Namespace):
             max_model_len=args.max_model_len,
             enable_prefix_caching=args.prefix_caching,
             disable_log_stats=False,
-            **engine_kwargs,
+            **engine_kwargs(args, offline=False),
         )
     )
-    sampling = SamplingParams(
-        temperature=args.temperature,
-        top_p=args.top_p,
-        max_tokens=args.max_tokens,
-        ignore_eos=args.ignore_eos,
-    )
-
-    def sampling_for(i: int) -> SamplingParams:
-        mt = request_max_tokens(args, i)
-        if mt == args.max_tokens:
-            return sampling
-        return SamplingParams(
-            temperature=args.temperature,
-            top_p=args.top_p,
-            max_tokens=mt,
-            ignore_eos=args.ignore_eos,
-        )
-
-    async def stream_one(
-        request_id: str,
-        prompt,
-        prompt_count: int,
-        params=None,
-        measured_epoch_monotonic_ns: int | None = None,
-    ) -> RequestResult:
-        start = time.perf_counter()
-        send_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
-        client_send_s = (
-            (send_monotonic_ns - measured_epoch_monotonic_ns)
-            / 1_000_000_000.0
-            if measured_epoch_monotonic_ns is not None
-            else None
-        )
-        ttft_s = None
-        last_tick = None
-        gaps_us: list[int] = []
-        token_arrival_s: list[float] = []
-        token_arrival_monotonic_ns: list[int] = []
-        n_tokens = 0
-        want_text = getattr(args, "dump_all_texts", False) or getattr(
-            args, "dump_first_text", False
-        )
-        text: str | None = None
-        try:
-            async for out in engine.generate(
-                prompt, params or sampling, request_id
-            ):
-                now = time.perf_counter()
-                now_monotonic_ns = time.clock_gettime_ns(
-                    time.CLOCK_MONOTONIC
-                )
-                if want_text:
-                    text = out.outputs[0].text
-                new_total = len(out.outputs[0].token_ids)
-                if new_total > n_tokens:
-                    if measured_epoch_monotonic_ns is not None:
-                        token_arrival_s.extend(
-                            [
-                                (
-                                    now_monotonic_ns
-                                    - measured_epoch_monotonic_ns
-                                )
-                                / 1_000_000_000.0
-                            ]
-                            * (new_total - n_tokens)
-                        )
-                        token_arrival_monotonic_ns.extend(
-                            [now_monotonic_ns] * (new_total - n_tokens)
-                        )
-                    if ttft_s is None:
-                        ttft_s = now - start
-                    else:
-                        gaps_us.append(int((now - last_tick) * 1e6))
-                    last_tick = now
-                    n_tokens = new_total
-            returned = time.perf_counter()
-            returned_monotonic_ns = time.clock_gettime_ns(
-                time.CLOCK_MONOTONIC
-            )
-            return RequestResult(
-                True,
-                returned - start,
-                n_tokens,
-                prompt_count,
-                ttft_s=ttft_s,
-                intertoken_us=gaps_us or None,
-                client_send_s=client_send_s,
-                token_arrival_s=token_arrival_s or None,
-                token_arrival_monotonic_ns=(
-                    token_arrival_monotonic_ns or None
-                ),
-                client_return_s=(
-                    (
-                        returned_monotonic_ns
-                        - measured_epoch_monotonic_ns
-                    )
-                    / 1_000_000_000.0
-                    if measured_epoch_monotonic_ns is not None
-                    else None
-                ),
-                process_id=request_id,
-                output_text=text,
-            )
-        except Exception as e:
-            return RequestResult(
-                False,
-                time.perf_counter() - start,
-                n_tokens,
-                prompt_count,
-                error=f"{type(e).__name__}: {e}",
-            )
-
+    sampling = Sampling(args)
     pacer = ArrivalPacer(
         arrival_schedule(
-            n, args.arrival_rate, args.arrival_process, args.arrival_seed
+            args.num_requests, args.arrival_rate, args.arrival_process, args.arrival_seed
         )
     )
-
-    async def drive() -> tuple[list[RequestResult], float, float, int]:
-        if args.warmup:
-            for j, p in enumerate(prompts[: args.warmup]):
-                await stream_one(f"warmup-{j}", p, prompt_counts[j])
-            if max_num_seqs > 1:
-                short = SamplingParams(temperature=args.temperature, top_p=args.top_p, max_tokens=8, ignore_eos=args.ignore_eos)
-                await asyncio.gather(*(stream_one(f"warmup-batch-{k}", prompts[k % args.warmup], prompt_counts[k % args.warmup], short)
-                                       for k in range(max_num_seqs)))
-
-        await asyncio.to_thread(xla_trace, "start")
-        epoch_unix_s = time.time()
-        epoch_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
-        profiler_task = None
-        if (
-            args.cuda_profiler_capture
-            and args.cuda_profiler_duration_s > 0
-        ):
-            async def capture_profiler_window() -> None:
-                await asyncio.sleep(args.cuda_profiler_delay_s)
-                cuda_profiler_start(True)
-                try:
-                    await asyncio.sleep(args.cuda_profiler_duration_s)
-                finally:
-                    cuda_profiler_stop(True)
-
-            profiler_task = asyncio.create_task(capture_profiler_window())
-        else:
-            cuda_profiler_start(args.cuda_profiler_capture)
-        start = time.perf_counter()
-        pacer.start()
-
-        async def offer(i: int, paced: bool = True) -> RequestResult:
-            if paced:
-                await pacer.wait(i)
-            return await stream_one(
-                f"req-{i}",
-                prompts[args.warmup + i],
-                prompt_counts[args.warmup + i],
-                sampling_for(args.warmup + i),
-                epoch_monotonic_ns,
-            )
-
-        try:
-            if args.concurrency == 1 and not args.arrival_rate:
-                results = [await offer(i, paced=False) for i in range(n)]
-            else:
-                results = list(
-                    await asyncio.gather(*(offer(i) for i in range(n)))
-                )
-        finally:
-            if profiler_task is None:
-                cuda_profiler_stop(args.cuda_profiler_capture)
-            else:
-                if not profiler_task.done():
-                    profiler_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await profiler_task
-        wall = time.perf_counter() - start
-        await asyncio.to_thread(xla_trace, "stop")
-        return (
-            results,
-            wall,
-            epoch_unix_s,
-            epoch_monotonic_ns,
-        )
-
     try:
-        results, wall, epoch_unix_s, epoch_monotonic_ns = asyncio.run(drive())
+        results, wall, epoch_unix_s, epoch_ns = asyncio.run(
+            _drive_streaming(engine, args, prompts, prompt_counts, sampling, max_num_seqs, pacer)
+        )
     finally:
         end_trace()
         engine.shutdown()
@@ -598,7 +479,7 @@ def run_streaming(args: argparse.Namespace):
         config={
             "streaming_client": True,
             "client timing epoch unix s": epoch_unix_s,
-            "client timing epoch monotonic ns": epoch_monotonic_ns,
+            "client timing epoch monotonic ns": epoch_ns,
             "enable_prefix_caching": args.prefix_caching,
             "max_num_seqs": max_num_seqs,
             "max_num_batched_tokens": max_num_batched_tokens,
@@ -616,202 +497,155 @@ def run_streaming(args: argparse.Namespace):
     return summary, results
 
 
-def main() -> None:
+def _add_engine_args(sp: argparse.ArgumentParser) -> None:
+    sp.add_argument("--attention-backend", default=None)
+    sp.add_argument(
+        "--moe-backend",
+        default=None,
+        help="Override vLLM's MoE kernel choice (kernel_config.moe_backend): "
+        "auto, triton, flashinfer_trtllm, flashinfer_cutlass, marlin, "
+        "... Default None leaves vLLM's own 'auto' selection alone, "
+        "which is what a deployment gets and therefore what the "
+        "headline baseline should report.",
+    )
+    sp.add_argument("--enforce-eager", action="store_true")
+    sp.add_argument(
+        "--compilation-config",
+        default=None,
+        help="JSON object passed through to vLLM's compilation_config, e.g. "
+        '\'{"cudagraph_mode": "PIECEWISE"}\' where vLLM drops to eager because '
+        "its attention backend has no full-graph support.",
+    )
+    sp.add_argument(
+        "--language-model-only",
+        action="store_true",
+        help="Build the text tower alone: a miniature carved without its "
+        "vision tower loads, and a multimodal row skips its encoder "
+        "budget.",
+    )
+    sp.add_argument(
+        "--no-chunked-prefill",
+        action="store_true",
+        help="disable vLLM's chunked prefill. Prefill then does not share "
+        "a step with decode, which is the mechanism a fanned "
+        "--output-spread is thought to tax.",
+    )
+
+
+def _add_kv_cache_args(sp: argparse.ArgumentParser) -> None:
+    sp.add_argument(
+        "--num-gpu-blocks-override",
+        type=int,
+        default=0,
+        help="Exact KV block count, the counterpart of pie's `[model] "
+        "device_kv_budget` in blocks, so both engines can be sized "
+        "by the same budget instead of by a calibrated memory "
+        "fraction.",
+    )
+    sp.add_argument(
+        "--block-size",
+        type=int,
+        default=0,
+        help="KV block size in tokens. 0 leaves vLLM's default; set 16 to "
+        "match pie's page size when using --num-gpu-blocks-override.",
+    )
+    sp.add_argument(
+        "--prefix-caching",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+    )
+    sp.add_argument("--max-num-batched-tokens", type=int, default=None)
+    sp.add_argument(
+        "--max-num-seqs",
+        type=int,
+        default=0,
+        help="Cap on vLLM's max_num_seqs (0: the concurrency). For a hybrid "
+        "model whose per-sequence state pool cannot hold every offered "
+        "request at once; the rest queue in vLLM's scheduler.",
+    )
+    sp.add_argument(
+        "--kv-cache-dtype",
+        default="auto",
+        help="vLLM KV cache dtype. DeepSeek-V4 needs 'fp8' because its "
+        "fp8_ds_mla cache layout refuses anything else.",
+    )
+
+
+def _add_speculation_args(sp: argparse.ArgumentParser) -> None:
+    sp.add_argument(
+        "--speculative-config",
+        default=None,
+        help="JSON object passed through to vLLM's speculative_config.",
+    )
+    sp.add_argument("--spec-method", default=None)
+    sp.add_argument("--spec-tokens", type=int, default=None)
+    sp.add_argument(
+        "--mtp-assistant-model",
+        default=None,
+        help="Assistant checkpoint/model for vLLM Gemma4 MTP speculative decoding.",
+    )
+    sp.add_argument(
+        "--mtp-method",
+        default="gemma4_mtp",
+        help="vLLM speculative method for the assistant. Default: gemma4_mtp.",
+    )
+    sp.add_argument(
+        "--mtp-num-drafts",
+        type=int,
+        default=3,
+        help="Number of vLLM speculative tokens. Match Pie --mtp-num-drafts.",
+    )
+    sp.add_argument(
+        "--mtp-draft-tp-size",
+        type=int,
+        default=None,
+        help="Optional draft_tensor_parallel_size for vLLM speculative_config.",
+    )
+
+
+def _add_reporting_args(sp: argparse.ArgumentParser) -> None:
+    sp.add_argument(
+        "--print-llm-kwargs",
+        action="store_true",
+        help="Print the vLLM LLM kwargs used by the benchmark before loading.",
+    )
+    sp.add_argument(
+        "--report-timing",
+        action="store_true",
+        help="Collect per-request TTFT and inter-token gap distributions. "
+        "Switches tput mode to the AsyncLLM streaming engine with a "
+        "closed-loop client (mirrors pie's client vantage: stamps on "
+        "token delivery, all requests submitted at t=0 when "
+        "num_requests == concurrency).",
+    )
+    sp.add_argument(
+        "--report-arrivals",
+        action="store_true",
+        help="Collect absolute per-token client arrivals without enabling "
+        "additional latency reporting.",
+    )
+
+
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="vLLM canonical latency/throughput benchmark")
-    add_mode_subcommands(parser)
-    for sp in parser._subparsers._group_actions[0].choices.values():
+    for sp in add_mode_subcommands(parser):
         add_output_dump_args(sp)
-        sp.add_argument("--attention-backend", default=None)
-        sp.add_argument(
-            "--moe-backend",
-            default=None,
-            help="Override vLLM's MoE kernel choice (kernel_config.moe_backend): "
-                 "auto, triton, flashinfer_trtllm, flashinfer_cutlass, marlin, "
-                 "... Default None leaves vLLM's own 'auto' selection alone, "
-                 "which is what a deployment gets and therefore what the "
-                 "headline baseline should report.",
-        )
-        sp.add_argument("--enforce-eager", action="store_true")
-        sp.add_argument(
-            "--compilation-config",
-            default=None,
-            help="JSON object passed through to vLLM's compilation_config, e.g. "
-                 '\'{"cudagraph_mode": "PIECEWISE"}\' where vLLM drops to eager because '
-                 "its attention backend has no full-graph support.",
-        )
-        sp.add_argument(
-            "--language-model-only", action="store_true",
-            help="Build the text tower alone: a miniature carved without its "
-                 "vision tower loads, and a multimodal row skips its encoder "
-                 "budget.")
-        sp.add_argument(
-            "--no-chunked-prefill", action="store_true",
-            help="disable vLLM's chunked prefill. Prefill then does not share "
-                 "a step with decode, which is the mechanism a fanned "
-                 "--output-spread is thought to tax.")
-        sp.add_argument(
-            "--num-gpu-blocks-override",
-            type=int,
-            default=0,
-            help="Exact KV block count, the counterpart of pie's `[model] "
-                 "device_kv_budget` in blocks, so both engines can be sized "
-                 "by the same budget instead of by a calibrated memory "
-                 "fraction.",
-        )
-        sp.add_argument(
-            "--block-size",
-            type=int,
-            default=0,
-            help="KV block size in tokens. 0 leaves vLLM's default; set 16 to "
-                 "match pie's page size when using --num-gpu-blocks-override.",
-        )
-        sp.add_argument(
-            "--prefix-caching",
-            action=argparse.BooleanOptionalAction,
-            default=False,
-        )
-        sp.add_argument("--max-num-batched-tokens", type=int, default=None)
-        sp.add_argument(
-            "--max-num-seqs",
-            type=int,
-            default=0,
-            help="Cap on vLLM's max_num_seqs (0: the concurrency). For a hybrid "
-                 "model whose per-sequence state pool cannot hold every offered "
-                 "request at once; the rest queue in vLLM's scheduler.",
-        )
-        sp.add_argument(
-            "--kv-cache-dtype",
-            default="auto",
-            help="vLLM KV cache dtype. DeepSeek-V4 needs 'fp8' because its "
-                 "fp8_ds_mla cache layout refuses anything else.",
-        )
-        sp.add_argument(
-            "--speculative-config",
-            default=None,
-            help="JSON object passed through to vLLM's speculative_config.",
-        )
-        sp.add_argument("--spec-method", default=None)
-        sp.add_argument("--spec-tokens", type=int, default=None)
-        sp.add_argument(
-            "--mtp-assistant-model",
-            default=None,
-            help="Assistant checkpoint/model for vLLM Gemma4 MTP speculative decoding.",
-        )
-        sp.add_argument(
-            "--mtp-method",
-            default="gemma4_mtp",
-            help="vLLM speculative method for the assistant. Default: gemma4_mtp.",
-        )
-        sp.add_argument(
-            "--mtp-num-drafts",
-            type=int,
-            default=3,
-            help="Number of vLLM speculative tokens. Match Pie --mtp-num-drafts.",
-        )
-        sp.add_argument(
-            "--mtp-draft-tp-size",
-            type=int,
-            default=None,
-            help="Optional draft_tensor_parallel_size for vLLM speculative_config.",
-        )
-        sp.add_argument(
-            "--print-llm-kwargs",
-            action="store_true",
-            help="Print the vLLM LLM kwargs used by the benchmark before loading.",
-        )
-        sp.add_argument(
-            "--report-timing",
-            action="store_true",
-            help="Collect per-request TTFT and inter-token gap distributions. "
-                 "Switches tput mode to the AsyncLLM streaming engine with a "
-                 "closed-loop client (mirrors pie's client vantage: stamps on "
-                 "token delivery, all requests submitted at t=0 when "
-                 "num_requests == concurrency).",
-        )
-        sp.add_argument(
-            "--report-arrivals",
-            action="store_true",
-            help="Collect absolute per-token client arrivals without enabling "
-            "additional latency reporting.",
-        )
-    args = parser.parse_args()
-    if args.dp_size > 1 and not os.environ.get("_VLLM_BENCH_REPLICA"):
-        summary, results = run_data_parallel(args)
-        finish(summary, results, args.json_out)
-        return
-    if (
-        getattr(args, "report_timing", False)
-        or getattr(args, "report_arrivals", False)
-    ) and args.mode == "tput":
+        _add_engine_args(sp)
+        _add_kv_cache_args(sp)
+        _add_speculation_args(sp)
+        _add_reporting_args(sp)
+    return parser
+
+
+def main() -> None:
+    args = build_parser().parse_args()
+    if args.dp_size > 1:
+        summary, results = run_replicas(args, "vllm", os.path.abspath(__file__), REPLICA_FLAGS)
+    elif (args.report_timing or args.report_arrivals) and args.mode == "tput":
         summary, results = run_streaming(args)
     else:
         summary, results = run(args)
     finish(summary, results, args.json_out)
-
-
-def run_data_parallel(args):
-    import subprocess
-    import tempfile
-
-    total = args.requests if args.mode == "latency" else args.num_requests
-    per = [total // args.dp_size] * args.dp_size
-    for i in range(total % args.dp_size):
-        per[i] += 1
-
-    procs, outs = [], []
-    tmpdir = tempfile.mkdtemp(prefix="vllm-dp-")
-    for replica, count in enumerate(per):
-        if count == 0:
-            continue
-        devices = ",".join(
-            str(replica * args.tp_size + i) for i in range(args.tp_size))
-        out = os.path.join(tmpdir, f"replica{replica}.json")
-        outs.append(out)
-        rewritten = {"--dp-size", "--json-out", "--requests", "--num-requests"}
-        forwarded, skip_next = [], False
-        for token in sys.argv[1:]:
-            if skip_next:
-                skip_next = False
-                continue
-            if token in rewritten:
-                skip_next = True
-                continue
-            if any(token.startswith(f"{flag}=") for flag in rewritten):
-                continue
-            forwarded.append(token)
-        argv = [sys.executable, os.path.abspath(__file__), *forwarded]
-        argv += ["--json-out", out]
-        argv += (["--requests", str(count)] if args.mode == "latency"
-                 else ["--num-requests", str(count)])
-        env = {**os.environ, "CUDA_VISIBLE_DEVICES": devices,
-               "_VLLM_BENCH_REPLICA": str(replica)}
-        procs.append(subprocess.Popen(argv, env=env))
-    failures = [p.wait() for p in procs]
-    if any(rc != 0 for rc in failures):
-        raise RuntimeError(f"vllm data-parallel replica failed: {failures}")
-
-    merged: list = []
-    wall = 0.0
-    for path in outs:
-        with open(path) as fh:
-            payload = json.load(fh)
-        wall = max(wall, float(payload["summary"]["wall_s"]))
-        for record in payload["requests"]:
-            merged.append(RequestResult(**record))
-    summary = summarize(
-        mode=args.mode,
-        engine="vllm",
-        model=args.model,
-        results=merged,
-        wall_s=wall,
-        config={
-            "data_parallel_size": args.dp_size,
-            "tensor_parallel_size": args.tp_size,
-            "dp_replica_requests": per,
-            "max_tokens": args.max_tokens,
-        },
-    )
-    return summary, merged
 
 
 if __name__ == "__main__":

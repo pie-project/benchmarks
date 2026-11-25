@@ -3,24 +3,29 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import inspect
 import time
+from typing import Any
 
-from common import (
-    end_trace,
-    ArrivalPacer,
-    RequestResult,
-    add_mode_subcommands,
-    add_output_dump_args,
-    arrival_schedule,
-    finish,
+from bench_args import add_mode_subcommands, add_output_dump_args
+from bench_devices import maybe_set_cpu_affinity, visible_cuda_devices
+from bench_pacing import ArrivalPacer, arrival_schedule
+from bench_prompts import (
     hf_chat_token_ids_and_counts,
     make_prompts,
-    maybe_set_cpu_affinity,
-    print_first_output,
     request_max_tokens,
     request_max_tokens_varies,
-    summarize,
-    visible_cuda_devices,
+)
+from bench_results import RequestResult, finish, print_first_output, summarize
+from bench_streaming import StreamTimer
+from bench_tracing import end_trace, monotonic_ns
+
+PASSED_WHEN_SET = (
+    ("sglang_attention_backend", "attention_backend"),
+    ("sglang_sampling_backend", "sampling_backend"),
+    ("sglang_moe_runner_backend", "moe_runner_backend"),
+    ("sglang_flashinfer_mxfp4_moe_precision", "flashinfer_mxfp4_moe_precision"),
+    ("sglang_kv_cache_dtype", "kv_cache_dtype"),
 )
 
 
@@ -31,17 +36,53 @@ def server_arg_names(server_args_cls) -> set[str]:
     fields = getattr(server_args_cls, "model_fields", None)
     if fields:
         return set(fields)
-    import inspect
-
     return set(inspect.signature(server_args_cls).parameters)
 
 
-def build_engine(args: argparse.Namespace, max_running_requests: int):
-    import sglang as sgl
-    from sglang.srt.server_args import ServerArgs
+def _graph_kwargs(args: argparse.Namespace, supported: set[str]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {}
+    if "disable_piecewise_cuda_graph" in supported:
+        kwargs["disable_piecewise_cuda_graph"] = args.sglang_disable_piecewise_cuda_graph
+    elif args.sglang_disable_piecewise_cuda_graph and "cuda_graph_backend_prefill" in supported:
+        kwargs["cuda_graph_backend_prefill"] = "disabled"
+    elif args.sglang_disable_piecewise_cuda_graph:
+        raise SystemExit(
+            "--sglang-disable-piecewise-cuda-graph: installed SGLang has no such server arg"
+        )
+    if "disable_hybrid_swa_memory" in supported:
+        kwargs["disable_hybrid_swa_memory"] = args.sglang_disable_hybrid_swa_memory
+    elif args.sglang_disable_hybrid_swa_memory:
+        raise SystemExit(
+            "--sglang-disable-hybrid-swa-memory: installed SGLang has no such server arg"
+        )
+    return kwargs
 
-    supported = server_arg_names(ServerArgs)
-    engine_kwargs = {
+
+def _chosen_kwargs(args: argparse.Namespace, supported: set[str]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        key: getattr(args, flag) for flag, key in PASSED_WHEN_SET if getattr(args, flag)
+    }
+    if args.sglang_dsa_backend:
+        kwargs["dsa_prefill_backend"] = args.sglang_dsa_backend
+        kwargs["dsa_decode_backend"] = args.sglang_dsa_backend
+    if args.sglang_max_total_tokens is not None:
+        kwargs["max_total_tokens"] = args.sglang_max_total_tokens
+    if args.sglang_page_size is not None:
+        kwargs["page_size"] = args.sglang_page_size
+    if args.sglang_cuda_graph_max_bs is not None:
+        key = (
+            "cuda_graph_max_bs_decode"
+            if "cuda_graph_max_bs_decode" in supported
+            else "cuda_graph_max_bs"
+        )
+        kwargs[key] = args.sglang_cuda_graph_max_bs
+    return kwargs
+
+
+def engine_kwargs(
+    args: argparse.Namespace, max_running_requests: int, supported: set[str]
+) -> dict[str, Any]:
+    return {
         "model_path": args.model,
         "trust_remote_code": True,
         "mem_fraction_static": args.gpu_mem_util,
@@ -50,235 +91,159 @@ def build_engine(args: argparse.Namespace, max_running_requests: int):
         "max_running_requests": max_running_requests,
         "tp_size": args.tp_size,
         "context_length": args.max_model_len,
+        **_graph_kwargs(args, supported),
+        **_chosen_kwargs(args, supported),
     }
-    if "disable_piecewise_cuda_graph" in supported:
-        engine_kwargs["disable_piecewise_cuda_graph"] = (
-            args.sglang_disable_piecewise_cuda_graph
-        )
-    elif args.sglang_disable_piecewise_cuda_graph and "cuda_graph_backend_prefill" in supported:
-        engine_kwargs["cuda_graph_backend_prefill"] = "disabled"
-    elif args.sglang_disable_piecewise_cuda_graph:
+
+
+def _check_kv_pool(engine, args: argparse.Namespace) -> None:
+    got = engine.get_server_info().get("max_total_num_tokens")
+    if got != args.sglang_max_total_tokens:
+        engine.shutdown()
         raise SystemExit(
-            "--sglang-disable-piecewise-cuda-graph: installed SGLang has no "
-            "such server arg"
+            f"SGLang KV pool is {got} tokens, not the requested "
+            f"{args.sglang_max_total_tokens}: raise --gpu-mem-util "
+            f"(currently {args.gpu_mem_util}) until the memory-derived "
+            f"pool exceeds the request."
         )
-    if "disable_hybrid_swa_memory" in supported:
-        engine_kwargs["disable_hybrid_swa_memory"] = (
-            args.sglang_disable_hybrid_swa_memory
-        )
-    elif args.sglang_disable_hybrid_swa_memory:
-        raise SystemExit(
-            "--sglang-disable-hybrid-swa-memory: installed SGLang has no "
-            "such server arg"
-        )
-    if args.sglang_attention_backend:
-        engine_kwargs["attention_backend"] = args.sglang_attention_backend
-    if args.sglang_sampling_backend:
-        engine_kwargs["sampling_backend"] = args.sglang_sampling_backend
-    if args.sglang_moe_runner_backend:
-        engine_kwargs["moe_runner_backend"] = args.sglang_moe_runner_backend
-    if args.sglang_flashinfer_mxfp4_moe_precision:
-        engine_kwargs["flashinfer_mxfp4_moe_precision"] = args.sglang_flashinfer_mxfp4_moe_precision
-    if args.sglang_kv_cache_dtype:
-        engine_kwargs["kv_cache_dtype"] = args.sglang_kv_cache_dtype
-    if args.sglang_dsa_backend:
-        engine_kwargs["dsa_prefill_backend"] = args.sglang_dsa_backend
-        engine_kwargs["dsa_decode_backend"] = args.sglang_dsa_backend
-    if args.sglang_max_total_tokens is not None:
-        engine_kwargs["max_total_tokens"] = args.sglang_max_total_tokens
-    if args.sglang_page_size is not None:
-        engine_kwargs["page_size"] = args.sglang_page_size
-    if args.sglang_cuda_graph_max_bs is not None:
-        key = (
-            "cuda_graph_max_bs_decode"
-            if "cuda_graph_max_bs_decode" in supported
-            else "cuda_graph_max_bs"
-        )
-        engine_kwargs[key] = args.sglang_cuda_graph_max_bs
-    missing = [k for k in engine_kwargs if k not in supported]
+
+
+def build_engine(args: argparse.Namespace, max_running_requests: int):
+    import sglang as sgl
+    from sglang.srt.server_args import ServerArgs
+
+    supported = server_arg_names(ServerArgs)
+    kwargs = engine_kwargs(args, max_running_requests, supported)
+    missing = [k for k in kwargs if k not in supported]
     if missing:
         raise SystemExit(f"installed SGLang lacks server args: {missing}")
-    engine = sgl.Engine(**engine_kwargs)
+    engine = sgl.Engine(**kwargs)
     if args.sglang_max_total_tokens is not None:
-        got = engine.get_server_info().get("max_total_num_tokens")
-        if got != args.sglang_max_total_tokens:
-            engine.shutdown()
-            raise SystemExit(
-                f"SGLang KV pool is {got} tokens, not the requested "
-                f"{args.sglang_max_total_tokens}: raise --gpu-mem-util "
-                f"(currently {args.gpu_mem_util}) until the memory-derived "
-                f"pool exceeds the request."
-            )
+        _check_kv_pool(engine, args)
     return engine
 
 
-def run(args: argparse.Namespace):
-    cpu_affinity = maybe_set_cpu_affinity(args, visible_cuda_devices(args.tp_size))
-    n = args.requests if args.mode == "latency" else args.num_requests
-    prompts, prompt_counts = hf_chat_token_ids_and_counts(
-        args.model, args.system, make_prompts(args, n + args.warmup), getattr(args, "think", None)
-    )
+def max_running_requests_for(args: argparse.Namespace) -> int:
     if args.mode == "latency":
-        max_running_requests = 1
-    elif args.concurrency == 0:
-        max_running_requests = max(1, args.num_requests)
-    else:
-        max_running_requests = args.concurrency
+        return 1
+    if args.concurrency == 0:
+        return max(1, args.num_requests)
+    return args.concurrency
 
-    base_sampling = {
+
+def base_sampling(args: argparse.Namespace) -> dict[str, Any]:
+    return {
         "temperature": args.temperature,
         "top_p": args.top_p,
         "max_new_tokens": args.max_tokens,
         "ignore_eos": args.ignore_eos,
     }
 
-    all_sampling = [
-        base_sampling
+
+def sampling_per_request(args: argparse.Namespace, count: int) -> list[dict[str, Any]]:
+    base = base_sampling(args)
+    return [
+        base
         if request_max_tokens(args, i) == args.max_tokens
-        else {**base_sampling, "max_new_tokens": request_max_tokens(args, i)}
-        for i in range(len(prompts))
+        else {**base, "max_new_tokens": request_max_tokens(args, i)}
+        for i in range(count)
     ]
 
-    engine = build_engine(args, max_running_requests)
-    want_timing = getattr(args, "report_timing", False)
-    want_text = getattr(args, "dump_all_texts", False) or getattr(
-        args, "dump_first_text", False
-    )
 
-    async def stream_one(
-        prompt,
-        prompt_count: int,
-        params: dict,
-        measured_epoch_monotonic_ns: int | None = None,
-    ) -> RequestResult:
-        start = time.perf_counter()
-        send_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
-        client_send_s = (
-            (send_monotonic_ns - measured_epoch_monotonic_ns) / 1_000_000_000.0
-            if measured_epoch_monotonic_ns is not None
-            else None
+async def _generate_whole(
+    engine, timer: StreamTimer, prompt, prompt_count: int, params: dict, want_text: bool
+) -> RequestResult:
+    try:
+        out = await engine.async_generate(input_ids=prompt, sampling_params=params, stream=False)
+        meta = out.get("meta_info") or {}
+        return RequestResult(
+            True,
+            time.perf_counter() - timer.start,
+            int(meta.get("completion_tokens", 0)),
+            prompt_count,
+            client_send_s=timer.client_send_s,
+            output_text=out.get("text") if want_text else None,
         )
-        if not want_timing:
-            try:
-                out = await engine.async_generate(
-                    input_ids=prompt, sampling_params=params, stream=False
-                )
-                meta = out.get("meta_info") or {}
-                return RequestResult(
-                    True,
-                    time.perf_counter() - start,
-                    int(meta.get("completion_tokens", 0)),
-                    prompt_count,
-                    client_send_s=client_send_s,
-                    output_text=out.get("text") if want_text else None,
-                )
-            except Exception as e:
-                return RequestResult(
-                    False,
-                    time.perf_counter() - start,
-                    0,
-                    prompt_count,
-                    error=f"{type(e).__name__}: {e}",
-                )
-        ttft_s = None
-        last_tick = None
-        gaps_us: list[int] = []
-        token_arrival_s: list[float] = []
-        token_arrival_monotonic_ns: list[int] = []
-        n_tokens = 0
-        text: str | None = None
-        try:
-            generator = await engine.async_generate(
-                input_ids=prompt, sampling_params=params, stream=True
-            )
-            async for out in generator:
-                now = time.perf_counter()
-                now_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
-                if want_text:
-                    text = out.get("text")
-                meta = out.get("meta_info") or {}
-                new_total = int(meta.get("completion_tokens", n_tokens))
-                if new_total > n_tokens:
-                    if measured_epoch_monotonic_ns is not None:
-                        delta = new_total - n_tokens
-                        token_arrival_s.extend(
-                            [
-                                (now_monotonic_ns - measured_epoch_monotonic_ns)
-                                / 1_000_000_000.0
-                            ]
-                            * delta
-                        )
-                        token_arrival_monotonic_ns.extend(
-                            [now_monotonic_ns] * delta
-                        )
-                    if ttft_s is None:
-                        ttft_s = now - start
-                    else:
-                        gaps_us.append(int((now - last_tick) * 1e6))
-                    last_tick = now
-                    n_tokens = new_total
-            returned = time.perf_counter()
-            returned_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
-            return RequestResult(
-                True,
-                returned - start,
-                n_tokens,
-                prompt_count,
-                ttft_s=ttft_s,
-                intertoken_us=gaps_us or None,
-                client_send_s=client_send_s,
-                token_arrival_s=token_arrival_s or None,
-                token_arrival_monotonic_ns=token_arrival_monotonic_ns or None,
-                client_return_s=(
-                    (returned_monotonic_ns - measured_epoch_monotonic_ns)
-                    / 1_000_000_000.0
-                    if measured_epoch_monotonic_ns is not None
-                    else None
-                ),
-                output_text=text,
-            )
-        except Exception as e:
-            return RequestResult(
-                False,
-                time.perf_counter() - start,
-                n_tokens,
-                prompt_count,
-                error=f"{type(e).__name__}: {e}",
-            )
+    except Exception as e:
+        return timer.failure(prompt_count, e, tokens=0)
 
-    pacer = ArrivalPacer(
-        arrival_schedule(
-            n, args.arrival_rate, args.arrival_process, args.arrival_seed
+
+async def stream_request(
+    engine,
+    prompt,
+    prompt_count: int,
+    params: dict,
+    epoch_ns: int | None = None,
+    *,
+    timed: bool,
+    want_text: bool,
+) -> RequestResult:
+    timer = StreamTimer(epoch_ns)
+    if not timed:
+        return await _generate_whole(engine, timer, prompt, prompt_count, params, want_text)
+    text: str | None = None
+    try:
+        generator = await engine.async_generate(
+            input_ids=prompt, sampling_params=params, stream=True
         )
-    )
+        async for out in generator:
+            stamp = timer.stamp()
+            if want_text:
+                text = out.get("text")
+            meta = out.get("meta_info") or {}
+            timer.saw(int(meta.get("completion_tokens", timer.tokens)), stamp)
+        return timer.result(prompt_count, output_text=text)
+    except Exception as e:
+        return timer.failure(prompt_count, e)
 
-    epoch: dict[str, float] = {}
 
-    async def drive() -> tuple[list[RequestResult], float]:
-        if args.warmup:
-            warmup_budget = args.warmup_max_tokens
-            for j, p in enumerate(prompts[: args.warmup]):
-                params = all_sampling[j]
-                if warmup_budget is not None:
-                    params = {**params, "max_new_tokens": warmup_budget}
-                await stream_one(p, prompt_counts[j], params)
-            if args.mode != "latency" and max_running_requests > 1:
-                short = {**base_sampling, "max_new_tokens": 8}
-                await asyncio.gather(*(stream_one(prompts[k % args.warmup], prompt_counts[k % args.warmup], short)
-                                       for k in range(max_running_requests)))
+class Driver:
+    def __init__(
+        self, engine, args: argparse.Namespace, prompts: list, counts: list[int], max_running: int
+    ) -> None:
+        self.engine = engine
+        self.args = args
+        self.prompts = prompts
+        self.counts = counts
+        self.max_running = max_running
+        self.sampling = sampling_per_request(args, len(prompts))
+        self.timed = args.report_timing
+        self.want_text = args.dump_all_texts or args.dump_first_text
 
-        epoch_monotonic_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
-        epoch.update({"client timing epoch unix s": time.time(), "client timing epoch monotonic ns": epoch_monotonic_ns})
+    def request(self, idx: int, params: dict, epoch_ns: int | None = None):
+        return stream_request(
+            self.engine,
+            self.prompts[idx],
+            self.counts[idx],
+            params,
+            epoch_ns,
+            timed=self.timed,
+            want_text=self.want_text,
+        )
+
+    async def warm_up(self) -> None:
+        args = self.args
+        for j in range(args.warmup):
+            params = self.sampling[j]
+            if args.warmup_max_tokens is not None:
+                params = {**params, "max_new_tokens": args.warmup_max_tokens}
+            await self.request(j, params)
+        if args.mode != "latency" and self.max_running > 1:
+            short = {**base_sampling(args), "max_new_tokens": 8}
+            await asyncio.gather(
+                *(self.request(k % args.warmup, short) for k in range(self.max_running))
+            )
+
+    async def measured(
+        self, n: int, pacer: ArrivalPacer, epoch_ns: int
+    ) -> tuple[list[RequestResult], float]:
+        args = self.args
         if args.mode == "latency":
             out: list[RequestResult] = []
             begin = time.perf_counter()
             for i in range(n):
                 idx = args.warmup + i
-                out.append(
-                    await stream_one(
-                        prompts[idx], prompt_counts[idx], all_sampling[idx], epoch_monotonic_ns
-                    )
-                )
+                out.append(await self.request(idx, self.sampling[idx], epoch_ns))
             return out, time.perf_counter() - begin
 
         begin = time.perf_counter()
@@ -287,18 +252,39 @@ def run(args: argparse.Namespace):
         async def offer(i: int) -> RequestResult:
             await pacer.wait(i)
             idx = args.warmup + i
-            return await stream_one(
-                prompts[idx],
-                prompt_counts[idx],
-                all_sampling[idx],
-                epoch_monotonic_ns,
-            )
+            return await self.request(idx, self.sampling[idx], epoch_ns)
 
         gathered = list(await asyncio.gather(*(offer(i) for i in range(n))))
         return gathered, time.perf_counter() - begin
 
+    async def drive(
+        self, n: int, pacer: ArrivalPacer
+    ) -> tuple[list[RequestResult], float, dict[str, Any]]:
+        if self.args.warmup:
+            await self.warm_up()
+        epoch_ns = monotonic_ns()
+        epoch = {
+            "client timing epoch unix s": time.time(),
+            "client timing epoch monotonic ns": epoch_ns,
+        }
+        results, wall = await self.measured(n, pacer, epoch_ns)
+        return results, wall, epoch
+
+
+def run(args: argparse.Namespace):
+    cpu_affinity = maybe_set_cpu_affinity(args, visible_cuda_devices(args.tp_size))
+    n = args.requests if args.mode == "latency" else args.num_requests
+    prompts, prompt_counts = hf_chat_token_ids_and_counts(
+        args.model, args.system, make_prompts(args, n + args.warmup), args.think
+    )
+    max_running_requests = max_running_requests_for(args)
+    engine = build_engine(args, max_running_requests)
+    driver = Driver(engine, args, prompts, prompt_counts, max_running_requests)
+    pacer = ArrivalPacer(
+        arrival_schedule(n, args.arrival_rate, args.arrival_process, args.arrival_seed)
+    )
     try:
-        results, wall = engine.loop.run_until_complete(drive())
+        results, wall, epoch = engine.loop.run_until_complete(driver.drive(n, pacer))
     finally:
         end_trace()
         engine.shutdown()
@@ -333,27 +319,30 @@ def run(args: argparse.Namespace):
                 "seed": args.arrival_seed,
                 **pacer.stats(),
             },
-            "report timing": want_timing,
-            **(epoch if want_timing else {}),
+            "report timing": driver.timed,
+            **(epoch if driver.timed else {}),
         },
     )
     return summary, results
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="SGLang canonical latency/throughput benchmark")
-    add_mode_subcommands(parser)
-    for sp in parser._subparsers._group_actions[0].choices.values():
+    for sp in add_mode_subcommands(parser):
         add_output_dump_args(sp)
         sp.add_argument(
             "--report-timing",
             action="store_true",
             help="Collect per-request TTFT and inter-token gap distributions. "
-                 "Streams every request so the client vantage matches pie's "
-                 "and vLLM's (stamps on token delivery, all requests "
-                 "submitted at t=0 with the engine enforcing the cap).",
+            "Streams every request so the client vantage matches pie's "
+            "and vLLM's (stamps on token delivery, all requests "
+            "submitted at t=0 with the engine enforcing the cap).",
         )
-    args = parser.parse_args()
+    return parser
+
+
+def main() -> None:
+    args = build_parser().parse_args()
     summary, results = run(args)
     first = next((r.output_text for r in results if r.ok and r.output_text), None)
     print_first_output(args, first)

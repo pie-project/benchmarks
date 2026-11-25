@@ -14,7 +14,6 @@ import kotlin.concurrent.thread
 object MlcFactory {
     const val MLC_COMMIT = "44fd06d04f22c87820e205b0f2b2e5e6a1f6ca85"
     const val TVM_COMMIT = "629cc65820b8699db4d777f5749bb9d3b7444be0"
-    /** Model libraries compiled into libtvm4j_runtime_packed.so (mlc_llm package, android/OpenCL). */
     val MODEL_LIBS = mapOf(
         "qwen3.5-0.8b-mlc" to "qwen3_5_q4f32_1_74360ec5594368cd833f5174680568d9",
         "qwen3.5-4b-mlc" to "qwen3_5_q4f16_1_5765e01927a6e834b4f68cb410e5cf36",
@@ -23,11 +22,6 @@ object MlcFactory {
     fun create(context: Context): BenchEngine = MlcEngine(context)
 }
 
-/**
- * MLC LLM through its JSON FFI engine (mlc4j, TVM runtime, OpenCL). Mode "local" with 4 sequences:
- * concurrent chat completions decode as one batch. MLC takes chat messages only, so the rendered
- * prompt is split back into system + user and MLC applies the model's conversation template.
- */
 class MlcEngine(private val context: Context) : BenchEngine {
     override val id = "mlc"
     override val version = MlcFactory.MLC_COMMIT.take(12)
@@ -60,14 +54,12 @@ class MlcEngine(private val context: Context) : BenchEngine {
 
     override fun load(artifact: Artifact, model: File) {
         modelLib = MlcFactory.MODEL_LIBS[artifact.id] ?: throw IllegalArgumentException("no compiled MLC model library for ${artifact.id}")
-        // TVM's OpenCL init dereferences null (SIGSEGV, killing the app) when there is no OpenCL driver: check first
         val cl = listOf("/vendor/lib64/libOpenCL.so", "/system/vendor/lib64/libOpenCL.so", "/vendor/lib64/egl/libGLES_mali.so", "/system/lib64/libOpenCL.so")
         if (cl.none { File(it).exists() }) throw IllegalStateException("no OpenCL driver on this device (looked for ${cl.joinToString()})")
         val wl = Workloads.load(context)
         template = wl.templates[artifact.model]
         system = wl.system
         gemma = artifact.model.startsWith("gemma")
-        // Qwen3.5's MLC template has no empty think block: patch the device copy so thinking is off as on the Mac
         if (artifact.model.startsWith("qwen")) {
             val f = model.resolve("mlc-chat-config.json")
             val j = JSONObject(f.readText())
@@ -100,7 +92,7 @@ class MlcEngine(private val context: Context) : BenchEngine {
         val e = ffi ?: error("not loaded")
         val tpl = template ?: error("no template")
         val results = arrayOfNulls<ReqTiming>(prompts.size)
-        val inflight = HashMap<String, Triple<Int, Long, LongArray>>() // id -> (index, send, [first,last,chunks])
+        val inflight = HashMap<String, Triple<Int, Long, LongArray>>()
         var next = 0
         events.clear()
         fun submit() {
@@ -118,7 +110,6 @@ class MlcEngine(private val context: Context) : BenchEngine {
         }
         while (next < prompts.size && inflight.size < maxOf(1, concurrency)) submit()
         while (inflight.isNotEmpty()) {
-            // a silent engine for 5 minutes is a hang: the cell fails instead of the run hanging
             val o = events.poll(5, TimeUnit.MINUTES) ?: error("MLC: no stream output for 5 minutes")
             val id = o.optString("id")
             val (i, send, st) = inflight[id] ?: continue

@@ -1,13 +1,9 @@
 window.Pie = window.Pie || {};
 
-// Methodology: how the benchmark is run, written as prose, a chapter at a time, with the overview's outline down
-// the left; a chapter added to CHAPTERS joins the outline and the previous and next links.
 (() => {
   const element = document.getElementById("approach");
 
-  const REPO = "https://github.com/pie-project/benchmarks";  // the open repository the Welcome chapter points to
-  // [outline group, [id, title, colour, summary, body]]
-  // the Limits chapters: one a setup, in the order the grid's setup menu lists them
+  const REPO = "https://github.com/pie-project/benchmarks";
   const LIMITS = [
     ["decode", "Single Decode", "#FF3B30", "One request writing its answer: the ceiling each engine's Single Decode is measured against."],
     ["prefill", "Single Prefill", "#FF9500", "One request reading its prompt: the ceiling each engine's Single Prefill is measured against."],
@@ -15,7 +11,7 @@ window.Pie = window.Pie || {};
     ["pbatch", "Batched Prefill", "#007AFF", "Many prompts read at once: the ceiling each engine's Batched Prefill is measured against."],
   ];
   const CHAPTERS = [
-    ["", [  // Welcome on its own at the top, under no heading, as the sidebar sets Overview
+    ["", [
       ["welcome", "Welcome", "#0A84FF", "Open benchmarks for every inference engine.", () => welcome()],
       ["trust", "Why Trust Us", "#A2845E", "The safeguards behind every number.", () => trust()],
     ]],
@@ -28,13 +24,11 @@ window.Pie = window.Pie || {};
     ]],
     ["Models", [
       ["slices", "Model Slices", "#5E5CE6", "A fair comparison on one device, and a baseline for modeling scale.", () => slices()],
-      // the former Memory page, its formulas drawn by methods.js
       ["fit", "Memory Fit", "#AF52DE", "How we decide whether a model fits a machine.", () => `
         <p>A model runs only where its weights, KV cache and engine buffers fit the GPU's memory. Where it does not, the grid shows a crossed mark <svg class="platform-nofit" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M4 12 12 4"/></svg>.</p>
         ${tables("fit")}`],
     ]],
     ["Limits", [
-      // the former Roofline page, one chapter a setup: each draws the limit of its own workload, no setup to pick
       ...LIMITS.map(([setup, title, colour, summary]) => [`limit-${setup}`, title, colour, summary, () => `
         <p>These limits follow the roofline model (Williams et al., 2009): a step can run no faster than its memory traffic at peak bandwidth or its FLOPs at peak compute, whichever takes longer. Kernel Efficiency is an engine's measured throughput as a percentage of this limit.</p>
         ${tables(`limit:${setup}`)}`]),
@@ -50,14 +44,8 @@ window.Pie = window.Pie || {};
     ]],
   ];
 
-  // Welcome as a landing page, as a vendor's docs open: the live counts, the path a number takes, what is measured, why
-  // to trust it and how to take part, each linking on to its chapter or page
   const welcome = () => {
-    const n = (v) => Number(v || 0).toLocaleString("en-US");
-    const rows = (t) => (Pie.store.rows(t) || []).length;
-    const chevron = '<svg class="welcome-flow-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
-    // the path every number takes; the limit check in the grid's CI Error red, the step that catches a wrong one
-    const STEP_COLOURS = ["#007AFF", "#5E5CE6", "#30B0C7", "var(--color-negative)", "#34C759"];  // each step its own system colour
+    const STEP_COLOURS = ["#007AFF", "#5E5CE6", "#30B0C7", "var(--color-negative)", "#34C759"];
     const flow = [["Recipe", "Engine settings, public in the repo"], ["CI run", "Dedicated machine, nothing else running"],
       ["Repeated", "Until the noise is small"], ["Limit check", "Above the limit is a CI error", "is-check"], ["Published", "Here and on GitHub, with raw data"]];
     const workloads = [["decode", "Single Decode", "One request writing its answer"], ["prefill", "Single Prefill", "One request reading its prompt"],
@@ -69,19 +57,13 @@ window.Pie = window.Pie || {};
       <ul class="welcome-list">${workloads.map(([id, t, d]) => `<li><button type="button" data-chapter-go="workloads">${Pie.platform.degree(id)}<b>${t}</b><span>${d}</span></button></li>`).join("")}</ul>`;
   };
 
-  // the chapters' own parts, as Welcome and Why Trust Us draw theirs: a lead line, rows marked by a coloured square,
-  // and numbered steps in their colours
   const lead = (text) => `<p class="welcome-lead">${text}</p>`;
   const facts = (rows) => `<ul class="welcome-list is-trust">${rows.map(([colour, t, d]) =>
     `<li><div class="welcome-row"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><span>${d}</span></div></li>`).join("")}</ul>`;
-  // a run of numbered steps as a carousel: each step keeps its width and the row slides sideways, with the Overview's
-  // paddles above it (shown only when the steps do not fit) and the far edge fading while more steps follow
   const FLOW_PADDLES = `<span class="platform-compare board-view board-carousel-nav flow-nav" role="group" aria-label="Steps" hidden><button type="button" class="plain-button" data-flow="-1" aria-label="Previous steps" title="Previous"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg></button><button type="button" class="plain-button" data-flow="1" aria-label="Next steps" title="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button></span>`;
-  // its title (a heading or the chapter's lead) on the left of one line, the paddles on its right
   const flowCarousel = (items, head = "") => `<div class="flow-carousel${head.startsWith("<h3") ? " has-title" : ""}"><div class="flow-head">${head}${FLOW_PADDLES}</div><ol class="welcome-flow">${items}</ol></div>`;
   const steps = (rows, head = "") => flowCarousel(rows.map(([colour, t, d, cls], i) =>
     `<li class="${cls || ""}" style="--step: ${colour}"><i>${i + 1}</i><b>${t}</b><span>${d}</span></li>`).join(""), head);
-  // each carousel's paddles: shown only when its steps overflow, each greyed at its end; the fade off at the last step
   const flowPaddles = () => element.querySelectorAll(".flow-carousel").forEach((box) => {
     const row = box.querySelector(".welcome-flow"), nav = box.querySelector(".flow-nav");
     if (!row || !nav) return;
@@ -93,11 +75,9 @@ window.Pie = window.Pie || {};
     row.classList.toggle("is-end", !over || on.disabled);
   });
 
-  // each platform's CI workflow, a row each that opens its file on GitHub
   const workflow = (file) => `${REPO}/blob/main/.github/workflows/${file}`;
   const flows = (rows) => `<ul class="welcome-list is-trust is-flows">${rows.map(([colour, t, file, d]) =>
     `<li><a href="${workflow(file)}" target="_blank" rel="noopener"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><code>${file}</code><span>${d}</span></a></li>`).join("")}</ul>`;
-  // the engines we fork: each fork's branch, a row that opens it on GitHub
   const forks = (rows) => `<ul class="welcome-list is-trust is-flows">${rows.map(([colour, t, repo, branch, d]) =>
     `<li><a href="https://github.com/${repo}/tree/${branch}" target="_blank" rel="noopener"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><code>${branch}</code><span>${d}</span></a></li>`).join("")}</ul>`;
   const setup = () => `
@@ -147,15 +127,12 @@ window.Pie = window.Pie || {};
         ["var(--color-negative)", "Limit check", "Above the limit is a CI error", "is-check"]], "<h3>How a cell is measured</h3>")}
       <p>Rounds that still disagree are marked noisy. Macs cool down between rounds.</p>`;
 
-  // Install Size: what the Overview's cards count, then every figure with how it was counted and where it came from
-  // (matrix/install.yaml, exported as the `install` table)
   const installPage = () => {
     const esc = (text) => Pie.format.escape(text);
     const rows = Pie.store.tables.install || [];
     const size = (b) => (b >= 1e9 ? `${(b / 1e9).toFixed(2)} GB` : `${(b / 1e6).toFixed(1)} MB`);
     const on = [["mac", "Apple"], ["windows", "Windows"], ["nvidia", "NVIDIA"], ["amd", "AMD"], ["tpu", "TPU"], ["web", "Browser"]].filter(([p]) => !Pie.hiddenPlatforms.has(p) && rows.some((r) => r.platform === p));
     const when = rows[0]?.measured ? new Date(`${rows[0].measured}T12:00`).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "";
-    // one line an engine (logo, name, version, size); what it counts and how it was measured in its hover card
     const card = (r) => `<div class="tip-title">${esc(Pie.store.names.engine(r.engine))} ${esc(r.version)}</div><div class="tip-sub">${size(r.bytes)} on disk</div><div class="tip-foot">${esc(r.method)}</div><div class="tip-foot install-tip-source">${esc(r.source)}</div>`;
     const entry = (r) => `<li data-tip-html="${esc(card(r))}"><div class="install-head">${Pie.engines.logo?.(r.engine) || ""}<b>${esc(Pie.store.names.engine(r.engine))}</b><span>${esc(r.version)}</span><b class="install-bytes">${size(r.bytes)}</b></div></li>`;
     return `
@@ -187,7 +164,6 @@ window.Pie = window.Pie || {};
         ["#8E8E93", "Compared with", "One other engine on the same machine"],
         ["#34C759", "Pass", "Within the run's own noise of the other engine; 5 points where it has none"]])}`;
 
-  // Profiling: how a gap the grid marks is timed on the device, end to end, in the colours the Profiling page draws it in
   const profiling = () => `
       ${lead("Where one engine is 25% or more ahead of the next on a cell, we profile both to see where the time goes.")}
       ${steps([["#5AC8FA", "Same run", "Both engines, same machine and workload"], ["#5E5CE6", "Trace", "The platform's own device tracer"],
@@ -207,21 +183,16 @@ window.Pie = window.Pie || {};
         ["#8E8E93", "Not profiled", "One engine could not be traced yet"]])}
       <p>The results API applies this rule to the uploaded numbers, so no verdict is set by hand. A verified cell turns green in the grid and carries a shield on the Profiling page.</p>`;
 
-  // Contribute: the files an engine is added in, each a row that opens it on GitHub (its name in the file column, the
-  // whole path in its title); commands as facts whose lines stay on a phone; links out as the trust rows' links
   const repoFiles = (rows) => `<ul class="welcome-list is-trust is-flows">${rows.map(([colour, t, path, name, d]) =>
     `<li><a href="${path.startsWith("https://") ? path : `${REPO}/${path.endsWith("/") ? "tree" : "blob"}/main/${path}`}" target="_blank" rel="noopener" title="${path}"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><code>${name}</code><span>${d}</span></a></li>`).join("")}</ul>`;
   const commands = (rows) => facts(rows).replace("is-trust", "is-trust is-install");
   const links = (rows) => `<ul class="welcome-list is-trust">${rows.map(([colour, t, href, d]) =>
     `<li><a href="${href}" target="_blank" rel="noopener"><span class="trust-tile" style="--tile: ${colour}" aria-hidden="true"></span><b>${t}</b><span>${d}</span></a></li>`).join("")}</ul>`;
 
-  // Model Slices: its two claims as numbered steps, each then stated in a line, its formula set as the limit chapters
-  // set theirs (a named result, its terms as coloured pills), and the facts it rests on; real cuts from matrix/models.yaml
   const mv = (name, colour, sym) => `<span class="m-var" data-name="${name}" title="${sym}" style="--pill: ${colour}">${name}</span>`;
   const mt = (name, colour) => `<span class="m-tag" data-name="${name}" style="--pill: ${colour}"><span class="m-dot"></span>${name}</span>`;
   const mo = (x) => `<span class="m-op">${x}</span>`;
   const mp = (x) => `<span class="m-paren">(</span>${x}<span class="m-paren">)</span>`;
-  // the works each formula rests on, cited as the limit chapters cite theirs: the most cited statement of each idea
   const REFS = {
     kaplan: { authors: "J. Kaplan et al.", title: "Scaling Laws for Neural Language Models", venue: "arXiv:2001.08361", year: 2020, url: "https://arxiv.org/abs/2001.08361" },
     pope: { authors: "R. Pope et al.", title: "Efficiently Scaling Transformer Inference", venue: "MLSys 2023, arXiv:2211.05102", year: 2022, url: "https://arxiv.org/abs/2211.05102" },
@@ -337,9 +308,6 @@ window.Pie = window.Pie || {};
       ${links([["#FF2D55", "Open an issue", `${REPO}/issues/new`, "Results, a question or a gap you found"],
         ["#007AFF", "Open a pull request", `${REPO}/pulls`, "An engine, a recipe or a fix"]])}`;
 
-  // Why Trust Us: the safeguards as the workloads' rows, each marked by a small square in its chapter's colour, as the
-  // outline marks the chapters; the name and its line, each row opening its chapter
-  // every run in one store, its size as the site's export counts it: the runs, and the compute hours behind them
   const db = () => {
     const t = Pie.store.tables.totals || {};
     const runs = t.runs ? `${(Math.floor(t.runs / 1000) * 1000).toLocaleString("en-US")}+ runs` : "Every run";
@@ -360,19 +328,14 @@ window.Pie = window.Pie || {};
       : `<a href="${REPO}" target="_blank" rel="noopener">${mark(colour)}<b>${t}</b><span>${d}</span></a>`}</li>`).join("")}</ul>`;
   };
 
-  // a chapter's formula tables, from the Roofline and Memory pages they replace
   let viewState = null;
   const tables = (kind) => (viewState && Pie.methods?.chapter ? Pie.methods.chapter(kind, viewState).html : "");
-  // a chapter with formula tables: a Limits one (limit-<setup>) or Memory Fit, the kind its tables are drawn for
   const kindOf = (id) => (id === "fit" ? "fit" : id.startsWith("limit-") ? `limit:${id.slice(6)}` : null);
   const keyOf = () => (viewState && Pie.methods?.chapter && kindOf(current) ? Pie.methods.chapter(kindOf(current), viewState).key : current);
 
-  // the outline as the overview draws its own: a heading per group, a coloured square and a name per chapter
   const outline = CHAPTERS.map(([head, items]) => `${head ? `<div class="board-outline-head">${head}</div>` : ""}${items.map(([id, title, colour]) =>
     `<button type="button" class="board-outline-item" data-chapter-go="${id}"><i class="board-outline-dot" style="background: ${colour}" aria-hidden="true"></i><span>${title}</span></button>`).join("")}`).join("");
 
-  // one chapter at a time, as Apple's documentation shows one article a page: the outline picks it, a push past
-  // either end turns to the one before or after; the pick is kept across visits
   const LIST = CHAPTERS.flatMap(([, items]) => items);
   const KEY = "pieChapter";
   let current = (() => { try { return localStorage.getItem(KEY); } catch { return null; } })();
@@ -381,31 +344,25 @@ window.Pie = window.Pie || {};
 
   const place = () => `Chapter ${LIST.findIndex(([id]) => id === current) + 1} of ${LIST.length}`;
 
-  // the chapter a push past an end turns to, named beyond that end in small grey words as the push builds
   const turnCue = (at, way) => (LIST[at] ? `<p class="chapter-turn is-${way}" aria-hidden="true">${way === "next" ? "Next" : "Previous"}: ${LIST[at][1]}<svg viewBox="0 0 16 16"><path d="${way === "next" ? "M4 6.5 8 10.5 12 6.5" : "M4 9.5 8 5.5 12 9.5"}"/></svg></p>` : "");
 
   const draw = () => {
     const at = LIST.findIndex(([id]) => id === current);
     const [, title, , summary, body] = LIST[at];
     drawn = keyOf();
-    // a chapter as the Overview sets a section: its title and line above, the text in a card of the Overview's shape
     element.querySelector(".approach-main").innerHTML = `
       <div class="board-section-head"><div class="board-section-text"><h1 class="board-title">${title}</h1>
         <p class="board-lede">${summary}</p></div></div>
       <article class="board-card method-article${typeof body === "function" ? " has-tables" : ""}">
         <div class="method-pane-body">${typeof body === "function" ? body() : body}</div>
       </article>${turnCue(at - 1, "back")}${turnCue(at + 1, "next")}
-`;  // no previous and next links: the outline beside the chapter, or a push past its end, is the way between them
+`;
     for (const item of element.querySelectorAll(".board-outline [data-chapter-go]")) item.classList.toggle("is-current", item.dataset.chapterGo === current);
-    // the window's subtitle names the chapter's place, as Books does under a title
     if (Pie.toolbar?.elements?.subtitle) Pie.toolbar.elements.subtitle.textContent = place();
-    // one fill that glides from the old chapter's row to the new, as the overview's outline moves its own
     const nav = element.querySelector(".board-outline"), on = nav?.querySelector(".is-current");
     if (!nav || !on) return;
     let thumb = nav.querySelector(":scope > .board-outline-thumb");
     if (!thumb) { thumb = document.createElement("span"); thumb.className = "board-outline-thumb"; thumb.setAttribute("aria-hidden", "true"); nav.prepend(thumb); }
-    // placed once the page shows: a chapter opened from another page (the Overview's Add Engine) is drawn while the page
-    // is still hidden, where every row reads as at the top, so the fill waits a frame or two for the page to appear
     const placeFill = (tries) => {
       const row = nav.querySelector(".is-current");
       if (!row) return;
@@ -423,20 +380,13 @@ window.Pie = window.Pie || {};
       <div class="board-main approach-main"></div>
     </div>`;
 
-  let drawn = null;  // the chapter as last drawn: a new workload or release draws its tables again
+  let drawn = null;
 
-  // a chapter picked in the outline or the links under it opens at its top
   element.addEventListener("click", (event) => {
-    // the limit's workload bar: the grid's own setup, so a pick changes both pages
-    // the limit's workload pop-up opens the grid's own setup menu, so a pick changes both pages
-    const setup = event.target.closest("[data-methods-setup]");
-    if (setup) { event.stopPropagation(); Pie.popover.open(setup, "methods:setup", null); return; }
     const mode = event.target.closest("[data-mode]");
     if (mode && viewState) { viewState.platform.mode = mode.dataset.mode; Pie.platform.changed(); return; }
-    // a term's source opens its catalog page, as the sidebar would
     const source = event.target.closest("[data-go]");
     if (source) { document.querySelector(`.sidebar-item[data-table="${source.dataset.go}"]`)?.click(); return; }
-    // a step carousel's paddle: one step back or on
     const flow = event.target.closest("[data-flow]");
     if (flow) {
       const row = flow.closest(".flow-carousel")?.querySelector(".welcome-flow"), step = row?.firstElementChild;
@@ -446,7 +396,7 @@ window.Pie = window.Pie || {};
     const go = event.target.closest("[data-chapter-go]");
     if (!go || go.dataset.chapterGo === current) return;
     current = go.dataset.chapterGo;
-    try { localStorage.setItem(KEY, current); } catch { /* private windows can refuse storage */ }
+    try { localStorage.setItem(KEY, current); } catch { }
     draw();
     element.scrollTop = 0;
   });
@@ -454,7 +404,6 @@ window.Pie = window.Pie || {};
   element.addEventListener("scroll", (event) => { if (event.target.classList?.contains("welcome-flow")) flowPaddles(); }, { capture: true, passive: true });
   window.addEventListener("resize", () => flowPaddles(), { passive: true });
 
-  // a row's hover card (the Install Size chapter's engines) in the site's chart tooltip, as the other pages show theirs
   const tooltip = document.getElementById("chart-tooltip");
   element.addEventListener("mousemove", (event) => {
     const target = event.target.closest("[data-tip-html]");
@@ -470,27 +419,19 @@ window.Pie = window.Pie || {};
   });
   element.addEventListener("mouseleave", () => { if (tooltip) tooltip.hidden = true; });
 
-  // turning the page by scrolling, as Books turns one: a push on past a chapter's end opens the next at its top, a
-  // push back past its start the one before at its bottom. The gesture that brings the chapter to an end only arrives
-  // there, its glide counting for nothing; a fresh one, TURN pixels past the end, turns the page, the chapter giving a
-  // little and the next one's name showing beyond the end as it builds
-  const TURN = 120;  // px of push past the end, or of a finger's travel on a phone
-  const QUIET = 140;  // ms with no wheel event that end a gesture: a trackpad's glide sends one every frame
-  const GIVE = 24;  // px the chapter gives at the full push, as a rubber band
+  const TURN = 120;
+  const QUIET = 140;
+  const GIVE = 24;
   const still = matchMedia("(prefers-reduced-motion: reduce)");
-  let push = 0, way = 0, give = 0;  // the push so far, its way (1 on, -1 back) and how far the chapter has given
-  let turning = false;  // the old chapter leaving and the new one arriving: input waits
-  let relaxing = 0, settling = 0;  // timers: a push left alone springs back; the turn's own glide dies away
-  // the wheel gesture: its last event, whether it counts, when it came to rest at an end and its smallest step since
+  let push = 0, way = 0, give = 0;
+  let turning = false;
+  let relaxing = 0, settling = 0;
   const wheel = { at: -Infinity, spent: false, rest: Infinity, ebb: Infinity };
 
   const at = () => LIST.findIndex(([id]) => id === current);
-  // the chapter at its end (w 1) or its start (w -1): one shorter than the window is at both
   const atEdge = (w) => (w > 0 ? element.scrollTop + element.clientHeight >= element.scrollHeight - 2 : element.scrollTop <= 1);
-  // a menu open stays open and text chosen in the chapter stays chosen: no turn under either
   const busy = () => { const chosen = getSelection(); return Pie.popover?.isOpen() || (chosen && !chosen.isCollapsed && element.contains(chosen.anchorNode)); };
 
-  // the push as it builds: the chapter gives toward the end pushed, easing off as it goes, and the cue there fades up
   const show = () => {
     const main = element.querySelector(".approach-main"), p = Math.min(1, push / TURN);
     give = p ? -way * GIVE * (1 - (1 - p) ** 2) : 0;
@@ -498,7 +439,6 @@ window.Pie = window.Pie || {};
     for (const cue of main.querySelectorAll(".chapter-turn")) cue.style.opacity = cue.classList.contains(way > 0 ? "is-next" : "is-back") ? p : 0;
   };
   const relax = () => { clearTimeout(relaxing); if (!push && !give) return; push = 0; show(); };
-  // the push set one way; none where it leads nowhere, the first chapter's start or the last one's end
   const pushTo = (w, amount) => {
     clearTimeout(relaxing);
     if (!LIST[at() + w]) { relax(); return false; }
@@ -508,20 +448,17 @@ window.Pie = window.Pie || {};
     return true;
   };
 
-  // the turn: the old chapter fades and drifts the way of the push as the new one comes in from the other side;
-  // with reduced motion it simply changes
   const turn = (w) => {
     const to = LIST[at() + w], main = element.querySelector(".approach-main");
     clearTimeout(relaxing);
     push = 0;
     if (!to) return;
     turning = true;
-    element.classList.add("is-turning");  // the turn's own glide scrolls nothing
-    if (tooltip) tooltip.hidden = true;  // a row's hover card goes with its chapter
-    // the same way in as a pick in the outline, the new chapter at its top going on and at its bottom going back
+    element.classList.add("is-turning");
+    if (tooltip) tooltip.hidden = true;
     const open = () => {
       Pie.approach.open(to[0]);
-      main.style.transition = "none";  // the give goes at once, under the fade
+      main.style.transition = "none";
       give = 0;
       main.style.transform = "";
       element.scrollTop = w > 0 ? 0 : element.scrollHeight;
@@ -539,36 +476,32 @@ window.Pie = window.Pie || {};
       leave.cancel();
     };
   };
-  // the chapter scrolls again once the glide that turned it has died away: each of its events puts this off again
   const settle = () => {
     clearTimeout(settling);
     settling = setTimeout(() => { if (!turning) element.classList.remove("is-turning"); }, QUIET);
   };
 
   element.addEventListener("wheel", (event) => {
-    if (event.ctrlKey || event.shiftKey) return;  // a pinch zooms; Shift scrolls sideways
+    if (event.ctrlKey || event.shiftKey) return;
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? element.clientHeight : 1;
     const dy = event.deltaY * unit, step = Math.abs(dy), now = event.timeStamp;
-    // a new gesture: after a pause, or a swipe cutting short a glide that has rested at an end a while
     const fresh = now - wheel.at > QUIET || (now - wheel.rest > 250 && step > 3 * wheel.ebb + 6);
     wheel.at = now;
     if (fresh) Object.assign(wheel, { rest: Infinity, ebb: Infinity });
     else if (wheel.rest < Infinity) wheel.ebb = Math.min(wheel.ebb, step);
     if (fresh && !turning) element.classList.remove("is-turning");
     else if (element.classList.contains("is-turning")) settle();
-    if (turning || step <= Math.abs(event.deltaX * unit) || busy()) return;  // sideways is a carousel's
+    if (turning || step <= Math.abs(event.deltaX * unit) || busy()) return;
     const w = Math.sign(dy);
-    if (fresh) wheel.spent = !atEdge(w);  // only a gesture that starts at the end counts
+    if (fresh) wheel.spent = !atEdge(w);
     if (!atEdge(w)) { wheel.spent = true; relax(); return; }
-    if (wheel.spent) { if (wheel.rest === Infinity) Object.assign(wheel, { rest: now, ebb: step }); return; }  // the gesture that arrived, gliding on
+    if (wheel.spent) { if (wheel.rest === Infinity) Object.assign(wheel, { rest: now, ebb: step }); return; }
     if (!pushTo(w, (w === way ? push : 0) + step)) return;
     if (push < TURN) { relaxing = setTimeout(relax, 600); return; }
     turn(w);
-    Object.assign(wheel, { spent: true, rest: now, ebb: step });  // the rest of this glide turns nothing more
+    Object.assign(wheel, { spent: true, rest: now, ebb: step });
   }, { passive: true });
 
-  // a finger: the same push, counted from where it came down and only if the chapter was at that end then; the page
-  // turns as it lifts, and a sideways drag is a carousel's
   let finger = null;
   element.addEventListener("touchstart", (event) => {
     const t = event.touches[0];
@@ -585,14 +518,12 @@ window.Pie = window.Pie || {};
   element.addEventListener("touchend", () => { if (finger && push >= TURN) turn(way); else relax(); finger = null; }, { passive: true });
   element.addEventListener("touchcancel", () => { finger = null; relax(); }, { passive: true });
 
-  // the keys that scroll a page, pressed at an end: the press that reaches the end only arrives, the next one turns,
-  // and a held key's repeats never do
   const KEYS = { PageDown: 1, ArrowDown: 1, " ": 1, PageUp: -1, ArrowUp: -1 };
   document.addEventListener("keydown", (event) => {
     const target = event.target, w = event.key === " " && event.shiftKey ? -1 : KEYS[event.key];
     if (!w || element.hidden || event.repeat || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || (event.shiftKey && event.key !== " ")) return;
-    if (target !== document.body && !element.contains(target)) return;  // the sidebar's and the bar's own keys
-    if (target.closest("input, textarea, select") || target.isContentEditable || (event.key === " " && target.closest("button, a"))) return;  // typing, or Space pressing a button
+    if (target !== document.body && !element.contains(target)) return;
+    if (target.closest("input, textarea, select") || target.isContentEditable || (event.key === " " && target.closest("button, a"))) return;
     if (turning || busy() || !atEdge(w) || !LIST[at() + w]) return;
     event.preventDefault();
     turn(w);
@@ -600,11 +531,10 @@ window.Pie = window.Pie || {};
 
   Pie.approach = {
     element,
-    // a chapter opened from elsewhere (the Overview's welcome): it is the one drawn the next time the page shows
     open(id) {
       if (!LIST.some(([c]) => c === id)) return;
       current = id;
-      try { localStorage.setItem(KEY, current); } catch { /* private windows can refuse storage */ }
+      try { localStorage.setItem(KEY, current); } catch { }
       if (element.dataset.ready === "1") draw();
     },
     chapters: LIST.length,
@@ -614,10 +544,8 @@ window.Pie = window.Pie || {};
       element.hidden = state.table !== "approach";
       if (element.hidden) return;
       if (element.dataset.ready !== "1") {
-        element.innerHTML = content + (Pie.board?.footer?.() || "");  // the overview's foot, read once the overview has loaded
+        element.innerHTML = content + (Pie.board?.footer?.() || "");
         element.dataset.ready = "1";
-        // Spec Decode's acceptance, typed in the limit's bar, works out its rows again
-        // (not while the field is being typed in, which a redraw would take the focus from)
         Pie.bindSpecField?.(element, () => { if (current.startsWith("limit-") && !document.activeElement?.matches("[data-alpha]")) draw(); });
         element.addEventListener("focusout", (event) => { if (event.target.matches("[data-alpha]") && current.startsWith("limit-")) requestAnimationFrame(draw); });
         draw();

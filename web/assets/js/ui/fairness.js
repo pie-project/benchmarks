@@ -1,8 +1,6 @@
 window.Pie = window.Pie || {};
 
-// The rules every engine is measured under, in a popover that drops down from "Test Conditions" beside the numbers.
 (() => {
-  // as a macOS Get Info panel: a column per topic, a row per rule, the value on the right and a short note under it
   const GROUPS = [
     ["Workload", [
       { tint: "#30d158", icon: "M4 6h16M4 12h16M4 18h10", big: "512", unit: "tokens", label: "Prompt", line: "Same seeded text everywhere." },
@@ -29,7 +27,6 @@ window.Pie = window.Pie || {};
       { tint: "#ffd60a", icon: "M5 5h14v14H5zM5 12h14M12 5v14", big: "bf16", label: "KV cache", line: "On every engine." },
       { tint: "#5e5ce6", icon: "M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z", big: "Latest", label: "Releases", line: "Newest at run time, same on every Mac." },
     ]],
-    // the keys, as a menu shows each command's shortcut at its right
     ["Shortcuts", [
       { big: "1 2 3 4", label: "Setup", line: "Latency Decode, Prefill; Throughput Decode, Prefill, on a grid page." },
       { big: "V", label: "Switch view", line: "Relative Speed and Kernel Efficiency, on a platform's page." },
@@ -40,7 +37,6 @@ window.Pie = window.Pie || {};
     ]],
 
   ];
-  // the Quality page's rules: what each cell compares and what passes
   const QUALITY = [
     ["Full model", [
       { big: "MATH-500", label: "Benchmark", line: "Pie and one other engine, the same weights on the same machine." },
@@ -57,9 +53,6 @@ window.Pie = window.Pie || {};
   ];
   const esc = (text) => Pie.format.escape(text);
 
-  // facts as Get Info lists them: a grey heading per topic, one plain label-value row per rule, no icons (those mark
-  // what a menu can pick),
-  // a separator between topics; the rule's note shows when the pointer rests on its row
   const listOf = (groups) => groups.map(([title, items]) => `
     <div class="popover-heading">${esc(title)}</div>${items.map((t) => `
     <div class="rules-row" title="${esc(t.line)}">
@@ -68,8 +61,6 @@ window.Pie = window.Pie || {};
     </div>`).join("")}`).join(`<div class="popover-separator"></div>`);
   const content = listOf(GROUPS), quality = listOf(QUALITY);
 
-  // the rules drop down under their "Test Conditions" button, as a macOS popover: a click outside,
-  // Escape or the button again closes it
   const panel = document.getElementById("rules-popover");
   panel.innerHTML = content;
   let owner = null;
@@ -86,29 +77,24 @@ window.Pie = window.Pie || {};
     panel.hidden = false;
     panel.scrollTop = 0;
     const r = button.getBoundingClientRect();
-    // anchored to the button's leading edge, or its trailing edge when it sits on the right, and never closer than 8px
-    // to the window's edge (its width without a scrollbar)
     const width = document.documentElement.clientWidth;
     const left = r.left + r.width / 2 > width / 2 ? r.right - panel.offsetWidth : r.left;
     panel.style.left = `${Math.max(8, Math.min(left, width - panel.offsetWidth - 8))}px`;
     panel.style.top = `${r.bottom + 6}px`;
-    // the whole list shows; it scrolls only when the window is too short to hold it
     panel.style.maxHeight = `${window.innerHeight - r.bottom - 16}px`;
   };
-  // listened in the capture phase: the other pickers stop their clicks from bubbling, and opening one must close this
   document.addEventListener("click", (event) => {
     const button = event.target.closest("[data-rules]");
     if (button) {
       if (owner === button) close();
       else {
-        Pie.popover?.close();  // one menu open at a time
+        Pie.popover?.close();
         open(button);
       }
       return;
     }
     if (!panel.hidden && !panel.contains(event.target)) close();
   }, true);
-  // scrolling the page or a table moves the button away from the menu, so the menu closes, as a macOS menu does
   document.addEventListener("scroll", (event) => {
     if (!panel.hidden && !panel.contains(event.target)) close();
   }, true);

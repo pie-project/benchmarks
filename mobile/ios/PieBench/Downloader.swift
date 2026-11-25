@@ -1,6 +1,5 @@
 import Foundation
 
-/// What was downloaded for a model, kept next to it.
 struct Checkpoint: Codable {
     var repo: String
     var file: String?
@@ -29,7 +28,6 @@ enum Downloader {
         let siblings: [Sibling]
     }
 
-    /// Files a repo snapshot needs on the phone (weights, configs, tokenizer); images/docs skipped.
     static func wanted(_ name: String) -> Bool {
         if name.hasPrefix(".") || name.hasSuffix(".md") || name.hasSuffix(".png") || name.hasSuffix(".jpg") { return false }
         return true
@@ -44,7 +42,6 @@ enum Downloader {
         return try JSONDecoder().decode(RepoInfo.self, from: data)
     }
 
-    /// The model's checkpoint when it is on the phone already (downloaded or imported).
     static func present(_ m: ModelEntry) -> Checkpoint? {
         if m.engine == .pie {
             guard let f = pieFile(m) else { return nil }
@@ -57,7 +54,6 @@ enum Downloader {
         return Checkpoint.read(m.directory)
     }
 
-    /// A pie `.metal.zt` in the model's folder, `Documents/models/<artifact>.metal.zt` from Finder/Files, or one bundled in the app.
     static func pieFile(_ m: ModelEntry) -> URL? {
         let fm = FileManager.default
         var candidates = [Storage.importFolder.appending(path: "\(m.artifact).metal.zt"), m.directory.appending(path: "model.metal.zt")]
@@ -105,10 +101,8 @@ enum Downloader {
         return c
     }
 
-    /// Where pie artifacts are hosted: `metal/<pie commit, 8 chars>/<artifact>.metal.zt`, made with `pie model import` at that commit.
     static let pieRepo = "antonmeln/pie-bench-phone"
 
-    /// A pie model's `.metal.zt` for this app's pie commit, downloaded from `pieRepo` when it is not on the phone already.
     static func ensurePie(_ m: ModelEntry, log: @escaping (String) -> Void, progress: @escaping (Double) -> Void) async throws -> Checkpoint {
         let howto = "run `pie model import \(m.repo) --deployment \(m.pieSku ?? "?")` on a Mac and copy the .metal.zt into PieBench/models/ (Files or Finder)"
         guard let commit = PieInfo.commit else { throw BenchError.message("this build has no pie commit to fetch \(m.artifact).metal.zt for: \(howto)") }
@@ -129,7 +123,6 @@ enum Downloader {
         return c
     }
 
-    /// Downloads to a temp file, reporting bytes; returns the X-Repo-Commit header seen on the way.
     static func fetch(_ url: URL, progress: @escaping (Int64) -> Void) async throws -> (URL, String?) {
         let watcher = RedirectWatcher()
         let session = URLSession(configuration: .default, delegate: watcher, delegateQueue: nil)
@@ -143,7 +136,6 @@ enum Downloader {
                     cont.resume(throwing: BenchError.message("HTTP \((resp as? HTTPURLResponse)?.statusCode ?? -1) for \(url.lastPathComponent)"))
                     return
                 }
-                // The temp file is deleted when this handler returns: move it first.
                 let keep = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
                 do { try FileManager.default.moveItem(at: tmp, to: keep) } catch { cont.resume(throwing: error); return }
                 cont.resume(returning: (keep, watcher.commit ?? http.value(forHTTPHeaderField: "X-Repo-Commit")))
@@ -164,7 +156,6 @@ enum Downloader {
         }
     }
 
-    /// Copies a user-picked file or folder in as this model's weights.
     static func importItem(_ src: URL, for m: ModelEntry) throws {
         let fm = FileManager.default
         let scoped = src.startAccessingSecurityScopedResource()
@@ -187,7 +178,6 @@ enum Downloader {
             try fm.copyItem(at: src, to: d)
             bytes = Int64((try? d.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
         }
-        // An import carries no Hugging Face commit: revision stays null unless a downloaded .checkpoint.json came along.
         if Checkpoint.read(m.directory) == nil {
             try Checkpoint(repo: m.repo, file: m.file, revision: nil, bytes: bytes, imported: true).write(m.directory)
         }

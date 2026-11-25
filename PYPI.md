@@ -31,4 +31,4 @@ Each run writes a folder under `~/.pie-bench/runs/`:
 
 Uploading needs a token, made automatically the first time and kept in `~/.config/pie-bench/token`.
 
-Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs.astral.sh/uv/). On a Mac, Apple Silicon. On Linux, NVIDIA GPUs.
+Requirements: Python 3.11+, git, [Rust](https://rustup.rs) and [uv](https://docs.astral.sh/uv/). On a Mac, Apple Silicon. On Linux, NVIDIA or AMD GPUs, or a Cloud TPU.

@@ -1,8 +1,4 @@
 window.Pie = window.Pie || {};
-// Engine Gaps conclusions by "hardware|model|setup" as [conclusion, short note, detail on hover]: a quick smoke
-// classification of every cell where pie and the strongest other engine are 25% or more apart (2026-11-10).
-// explained: a known cause; plausible: inside the hardware limit, cause not traced; rerun: the numbers look wrong;
-// real: pie is slower. A slice keeps the full model's layer shapes, so its gap is classified like any other.
 Pie.gapNotes = {
  "web-rtx5090|gemma-4-e4b|prefill": [
   "rerun",
