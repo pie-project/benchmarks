@@ -35,9 +35,14 @@ def short(workload):
 
 def tracer_for(backend: str, out: Path):
     """The tracer for a platform's backend, its files under out."""
-    from . import metal, metal_cb, nsys, rocprof, xla
+    import os
 
-    tracers = {"metal": metal_cb.Tracer if metal_cb.chosen() else metal.Tracer, "cuda": nsys.Tracer, "rocm": rocprof.Tracer, "xla": xla.Tracer}
+    from . import cupti, metal, metal_cb, nsys, rocprof, xla
+
+    # CUPTI's activity records alone by default: nsys also traces every CUDA API call, which cost SGLang's and vLLM's
+    # eager prefill 10 to 38% of the profiled round (PIE_BENCH_CUDA_TRACER=nsys still selects it)
+    cuda = {"nsys": nsys.Tracer, "cupti": cupti.Tracer}[os.environ.get("PIE_BENCH_CUDA_TRACER", "cupti")]
+    tracers = {"metal": metal_cb.Tracer if metal_cb.chosen() else metal.Tracer, "cuda": cuda, "rocm": rocprof.Tracer, "xla": xla.Tracer}
     if backend not in tracers:
         raise SystemExit(f"no device tracer for the {backend} backend")
     return tracers[backend](out)
