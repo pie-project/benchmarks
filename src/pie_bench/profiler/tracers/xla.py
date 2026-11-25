@@ -39,7 +39,7 @@ class Tracer:
     def recording(self, out: Path):
         """Traces the round: the served engines' processes from start to end, pie's around its measured requests.
         The traces made in it move to out/xla."""
-        from pie_bench.clients.common import xla_trace
+        from pie_bench.clients.bench_tracing import xla_trace
 
         out.mkdir(parents=True, exist_ok=True)
         since = time.time()
