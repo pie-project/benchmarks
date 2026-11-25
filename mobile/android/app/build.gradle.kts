@@ -15,7 +15,6 @@ val llamaGpu: String = (project.findProperty("llamaGpu") as String?)
     ?: if (localProps.getProperty("vulkan.headers.dir") != null) "vulkan" else "none"
 
 val pieAars = fileTree("libs/pie") { include("*.aar", "*.jar") }
-val mlcLibs = file("libs/mlc")
 val hasPie = !pieAars.isEmpty && file("src/pie/kotlin").exists()
 val hasMlc = file("libs/mlc/mlc4j/output/tvm4j_core.jar").exists() && file("src/mlc/kotlin").exists()
 
