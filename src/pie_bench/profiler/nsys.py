@@ -25,8 +25,12 @@ class Tracer:
     # engines that fork their model worker without exec (vLLM's EngineCore) are traced too. A CUDA buffer is saved every
     # FLUSH_MS: with the default (saved when full), a server process idle after the round lost its last part-filled
     # buffer at `nsys stop` (SGLang on an A40: the last 620 ms of the round)
-    prefix = ["nsys", "launch", "--trace=cuda", "--cuda-graph-trace=node", "--trace-fork-before-exec=true",
+    # no device-side CUDA event trace: on by default since driver 12.8, it can add false dependencies across streams
+    prefix = ["nsys", "launch", "--trace=cuda", "--cuda-graph-trace=node", "--cuda-event-trace=false", "--trace-fork-before-exec=true",
               f"--cuda-flush-interval={FLUSH_MS}", f"--session-new={SESSION}"]
+    # no CPU IP sampling or context switch trace (on by default for a launched app): only device work is read, and
+    # sampling host-bound engines' Python threads slowed their profiled rounds (SGLang prefill +25%, TRT-LLM decode +18% on an H200)
+    start_args = ["--sample=none", "--cpuctxsw=none"]
     # vLLM's EngineCore forked from its first process kept losing the round's last kernels at stop (1.3 s of a Raw 512
     # round on an A40) even with the flush interval: started with spawn, it is a traced process of its own
     env: dict[str, str] = {"VLLM_WORKER_MULTIPROC_METHOD": "spawn"}
@@ -38,7 +42,7 @@ class Tracer:
     def recording(self, out: Path):
         """One collection of the launched session while the block runs, saved as nsys.sqlite."""
         out.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["nsys", "start", f"--session={SESSION}", "--output", str(out / "nsys"), "--force-overwrite=true"], check=True)
+        subprocess.run(["nsys", "start", f"--session={SESSION}", *self.start_args, "--output", str(out / "nsys"), "--force-overwrite=true"], check=True)
         # every traced process collecting before the round's first request (SGLang's scheduler on an RTX 5090 had
         # no device work in its first measured window without it)
         time.sleep(3 * FLUSH_MS / 1000)
